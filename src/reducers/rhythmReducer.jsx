@@ -8,13 +8,6 @@ const initialState = {
   timeSignature: "4/4",
   numberOfBars: 4,
   composition: Array(4).fill([]),
-  settings: {
-    isSidebarOpen: false,
-  },
-  gameProgress: {
-    score: 0,
-    completedExercises: 0,
-  },
 };
 
 export const rhythmReducer = (state = initialState, action) => {
@@ -27,13 +20,9 @@ export const rhythmReducer = (state = initialState, action) => {
       return {
         ...state,
         numberOfBars: action.payload,
-        composition:
-          action.payload < state.composition.length
-            ? state.composition.slice(0, action.payload)
-            : [
-                ...state.composition,
-                ...Array(action.payload - state.composition.length).fill([]),
-              ],
+        composition: action.payload < state.composition.length
+          ? state.composition.slice(0, action.payload)
+          : [...state.composition, ...Array(action.payload - state.composition.length).fill([])],
       };
     case "ADD_RHYTHM":
       const newComposition = [...state.composition];
@@ -45,34 +34,10 @@ export const rhythmReducer = (state = initialState, action) => {
     case "REMOVE_NOTE":
       const updatedComposition = [...state.composition];
       updatedComposition[action.payload.barIndex] = [
-        ...state.composition[action.payload.barIndex].slice(
-          0,
-          action.payload.noteIndex
-        ),
-        ...state.composition[action.payload.barIndex].slice(
-          action.payload.noteIndex + 1
-        ),
+        ...state.composition[action.payload.barIndex].slice(0, action.payload.noteIndex),
+        ...state.composition[action.payload.barIndex].slice(action.payload.noteIndex + 1),
       ];
       return { ...state, composition: updatedComposition };
-    case "TOGGLE_SIDEBAR":
-      return {
-        ...state,
-        settings: {
-          ...state.settings,
-          isSidebarOpen: !state.settings.isSidebarOpen,
-        },
-      };
-    case "UPDATE_GAME_PROGRESS":
-      return {
-        ...state,
-        gameProgress: {
-          ...state.gameProgress,
-          score: state.gameProgress.score + action.payload.score,
-          completedExercises:
-            state.gameProgress.completedExercises +
-            action.payload.completedExercises,
-        },
-      };
     default:
       return state;
   }
