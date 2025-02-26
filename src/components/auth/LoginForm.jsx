@@ -7,8 +7,8 @@ import SignupForm from "../../components/auth/SignupForm";
 // import Spinner from "../ui/Spinner";
 
 function LoginForm() {
-  const [email, setEmail] = useState("pagis.daniel@gmail.com");
-  const [password, setPassword] = useState("piano1289");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
   const { login, isPending } = useLogin();
