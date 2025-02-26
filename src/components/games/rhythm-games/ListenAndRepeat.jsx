@@ -7,7 +7,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
-import BackButton from "../../BackButton";
+import BackButton from "../../ui/BackButton";
 
 const rhythmPatterns = [
   {
@@ -196,8 +196,8 @@ export function ListenAndRepeat() {
             {result !== null && (
               <div
                 className={`flex items-center justify-center p-4 rounded-lg backdrop-blur-md border ${
-                  result 
-                    ? "bg-green-500/10 text-green-200 border-green-200/20" 
+                  result
+                    ? "bg-green-500/10 text-green-200 border-green-200/20"
                     : "bg-red-500/10 text-red-200 border-red-200/20"
                 }`}
               >

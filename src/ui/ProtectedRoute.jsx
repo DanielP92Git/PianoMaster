@@ -1,24 +1,26 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../features/authentication/useUser";
 import Spinner from "./Spinner";
-import { useEffect } from "react";
 
 function ProtectedRoute({ children }) {
+  const { isAuthenticated, isLoading } = useUser();
   const navigate = useNavigate();
-  //1. Load authenticated user
-  const { isPending, isAuthenticated } = useUser();
 
-  //2. if user is not authenticated redirect to login page
   useEffect(() => {
-    if (!isAuthenticated && !isPending) {
+    if (!isAuthenticated && !isLoading) {
       navigate("/login");
     }
-  }, [isAuthenticated, isPending, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
-  //3. while loading show spinner
-  if (isPending) return <Spinner />;
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+        <Spinner />
+      </div>
+    );
+  }
 
-  //4. if user is authenticated show children (render the App)
   if (isAuthenticated) return children;
 }
 
