@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Award, Flame, Music, Clock, X } from "lucide-react";
+import { Award, Flame, Music, Clock, X, Loader2 } from "lucide-react";
 import alarmMelody from "../../../public/audio/alarm.mp3";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
 import { useModal } from "../../context/ModalContext";
+import { Link } from "react-router-dom";
 
 export function Dashboard() {
   const [timer, setTimer] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [reminderMessage, setReminderMessage] = useState("");
   const alarmRef = useRef(new Audio(alarmMelody));
-  // const { user } = useUser();
-  const { scores } = useScores();
-  // const score = scores?.scores[0].score;
+  const { user } = useUser();
+  const { scores, isLoading } = useScores();
   let totalScore = scores?.totalScore;
 
   const [selectedDate, setSelectedDate] = useState("");
@@ -104,111 +104,95 @@ export function Dashboard() {
     alarmRef.current.currentTime = 0;
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[80vh]">
+        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg">
-          <div className="flex items-center">
-            <div className="bg-indigo-100 p-3 rounded-lg">
-              <Flame className="h-6 w-6 text-indigo-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-300">Daily Streak</p>
-              <p className="text-2xl font-bold text-white">7 days</p>
-            </div>
+      {/* Welcome Section */}
+      <div className="text-center lg:text-left">
+        <h1 className="text-3xl lg:text-4xl font-bold text-white">
+          Welcome back
+          {user?.user_metadata?.full_name
+            ? `, ${user.user_metadata.full_name}`
+            : ""}
+          !
+        </h1>
+        <p className="mt-2 text-gray-300">
+          Ready to continue your musical journey?
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Daily Streak */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+          <div className="flex flex-col items-center text-center">
+            <h3 className="text-sm lg:text-lg font-medium text-gray-300">
+              Daily Streak
+            </h3>
+            <p className="mt-1 lg:mt-2 text-2xl lg:text-4xl font-bold text-white">
+              {scores?.daily_streak || 0}
+              <span className="text-base lg:text-xl ml-1">days</span>
+            </p>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg">
-          <div className="flex items-center">
-            <div className="bg-green-100 p-3 rounded-lg">
-              <Music className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-300">Songs Mastered</p>
-              <p className="text-2xl font-bold text-white">12</p>
-            </div>
+        {/* Songs Mastered */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+          <div className="flex flex-col items-center text-center">
+            <h3 className="text-sm lg:text-lg font-medium text-gray-300">
+              Songs Mastered
+            </h3>
+            <p className="mt-1 lg:mt-2 text-2xl lg:text-4xl font-bold text-white">
+              {scores?.songs_mastered || 0}
+            </p>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg">
-          <div className="flex items-center">
-            <div className="bg-purple-100 p-3 rounded-lg">
-              <Award className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-300">Total Points</p>
-              <p className="text-2xl font-bold text-white">{totalScore}</p>
-            </div>
+        {/* Total Points */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+          <div className="flex flex-col items-center text-center">
+            <h3 className="text-sm lg:text-lg font-medium text-gray-300">
+              Total Points
+            </h3>
+            <p className="mt-1 lg:mt-2 text-2xl lg:text-4xl font-bold text-white">
+              {totalScore || 0}
+            </p>
           </div>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg">
-          <div className="flex items-center">
-            <div className="bg-blue-100 p-3 rounded-lg">
-              <Clock className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm text-gray-300">Practice Time</p>
-              <p className="text-2xl font-bold text-white">24h</p>
-            </div>
+        {/* Practice Time */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
+          <div className="flex flex-col items-center text-center">
+            <h3 className="text-sm lg:text-lg font-medium text-gray-300">
+              Practice Time
+            </h3>
+            <p className="mt-1 lg:mt-2 text-2xl lg:text-4xl font-bold text-white">
+              {scores?.practice_time || 0}
+              <span className="text-base lg:text-xl ml-1">h</span>
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            Recent Progress
-          </h2>
-          <div className="space-y-4">
-            Progress chart would go here
-            <div className="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
-              Progress Chart Placeholder
-            </div>
-          </div>
-        </div> */}
-
-        <div className="bg-white/10 backdrop-blur-md p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-bold text-white mb-4">
+      {/* Set Reminder Section */}
+      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+        <div className="text-center lg:text-left">
+          <h2 className="text-2xl font-bold text-white mb-4">
             Set a Practice Reminder
           </h2>
-          <div className="space-y-4">
-            <button
-              onClick={handleSetTimer}
-              className="w-full py-3 px-6 text-lg font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Set Reminder
-            </button>
-            {timeLeft > 0 && (
-              <div className="space-y-2">
-                <div className="text-center text-white">
-                  Time left: {Math.floor(timeLeft / 60)}:
-                  {timeLeft % 60 < 10 ? "0" : ""}
-                  {timeLeft % 60} minutes
-                </div>
-                <button
-                  onClick={handleStopTimer}
-                  className="w-full py-2 px-4 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
-                >
-                  Cancel Reminder
-                </button>
-              </div>
-            )}
-            {reminderMessage && (
-              <div>
-                <div className="text-center text-green-400 font-bold">
-                  {reminderMessage}
-                </div>
-                <button
-                  onClick={handleStopTimer}
-                  className="w-full py-3 px-6 text-lg font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Stop
-                </button>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={handleSetTimer}
+            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"
+          >
+            Set Reminder
+          </button>
         </div>
       </div>
     </div>

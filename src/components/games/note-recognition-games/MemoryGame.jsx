@@ -7,7 +7,7 @@ import faImage from "../../../assets/noteImages/fa.jpg";
 import solImage from "../../../assets/noteImages/sol.jpg";
 import laImage from "../../../assets/noteImages/la.jpg";
 import siImage from "../../../assets/noteImages/si.jpg";
-import BackButton from "../../BackButton";
+import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
 
@@ -160,14 +160,17 @@ export function MemoryGame() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      <BackButton 
-        to="/note-recognition-mode" 
-        name="Note Recognition" 
+      <BackButton
+        to="/note-recognition-mode"
+        name="Note Recognition"
         className="text-white/80 hover:text-white"
       />
       {showFireworks && <Firework />}
       {showMatchFirework && (
-        <div className="fixed" style={{ left: matchPosition.x, top: matchPosition.y, zIndex: 50 }}>
+        <div
+          className="fixed"
+          style={{ left: matchPosition.x, top: matchPosition.y, zIndex: 50 }}
+        >
           <Firework scale={0.5} />
         </div>
       )}

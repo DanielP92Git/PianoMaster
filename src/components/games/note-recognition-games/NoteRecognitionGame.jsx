@@ -6,7 +6,7 @@ import faImage from "../../../assets/noteImages/fa.jpg";
 import solImage from "../../../assets/noteImages/sol.jpg";
 import laImage from "../../../assets/noteImages/la.jpg";
 import siImage from "../../../assets/noteImages/si.jpg";
-import BackButton from "../../BackButton";
+import BackButton from "../../ui/BackButton";
 import { useScores } from "../../../features/userData/useScores";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";

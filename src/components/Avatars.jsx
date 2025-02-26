@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { getAvatar } from "../services/apiAvatars";
 import { Check, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import BackButton from "./ui/BackButton";
 
 function Avatars({ onSelect, selectedAvatar }) {
 
@@ -29,7 +30,8 @@ const {isPending, data: avatars, error} = useQuery({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900">Choose Your Avatar</h2>
+      <BackButton to="/settings" name="Settings" />
+      <h2 className="text-xl font-semibold text-white">Choose Your Avatar</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {avatars.map((avatar) => (
           <button

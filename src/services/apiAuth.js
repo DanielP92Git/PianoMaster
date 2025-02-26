@@ -28,3 +28,65 @@ export async function logout() {
   const { err } = await supabase.auth.signOut();
   if (err) throw new Error(err.message);
 }
+
+export async function signup({ email, password }) {
+  // First check if user exists
+  const { data: existingUser, error: checkError } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+
+  if (existingUser) {
+    throw new Error(
+      "An account with this email already exists. Please log in instead."
+    );
+  }
+
+  // If no existing user, proceed with signup
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${window.location.origin}/`,
+    },
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function socialAuth({ provider, mode = "login" }) {
+  // First check if we're in an OAuth redirect
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  // If we already have a session, don't start a new OAuth flow
+  if (session) return { session };
+
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/`,
+      queryParams: {
+        access_type: "offline",
+        prompt: "consent",
+        ...(mode === "signup" && {
+          signup_mode: true,
+        }),
+      },
+    },
+  });
+
+  if (error) {
+    if (error.message.includes("already exists")) {
+      throw new Error(
+        "An account with this email already exists. Please log in instead."
+      );
+    }
+    throw new Error(error.message);
+  }
+
+  return data;
+}
