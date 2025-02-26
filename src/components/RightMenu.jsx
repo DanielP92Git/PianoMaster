@@ -8,9 +8,10 @@ function RightMenu({ onToggleMenu, isMenuOpen }) {
   const { isAuthenticated } = useUser();
   return (
     <div
-      className={`fixed top-0 right-0 h-full w-1/2 bg-white shadow-lg transform transition-transform duration-300 z-10 ${
+      className={`fixed top-0 right-0 h-full w-1/2 bg-white shadow-lg transform transition-transform duration-300 ${
         isMenuOpen ? "translate-x-0" : "translate-x-full"
       }`}
+      style={{ zIndex: 50 }}
     >
       <div className="p-4 h-full flex flex-col">
         <div className="flex justify-end">

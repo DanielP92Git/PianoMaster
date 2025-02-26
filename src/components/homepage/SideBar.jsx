@@ -1,52 +1,92 @@
-import { BarChart2, Music2, Trophy, Users, Settings } from "lucide-react";
-
-import { Link } from "react-router-dom";
+import { BarChart2, Music2, Trophy, Users, Settings, Home } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
 
 function Aside({ onPracticeModesClick }) {
   return (
-    <aside className="w-64 bg-white h-screen shadow-lg fixed left-0 top-16">
-      <div className="p-4">
-        <nav className="space-y-2">
-          <Link
+    <aside className="fixed left-4 top-20 bottom-4 w-60 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl border border-white/20">
+      <nav className="h-full flex flex-col p-4">
+        <div className="space-y-2">
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            <Home className="h-5 w-5" />
+            <span>Dashboard</span>
+          </NavLink>
+
+          <NavLink
             to={"/practice-modes"}
             onClick={onPracticeModesClick}
-            className="w-full flex items-center p-3 text-gray-700 rounded-lg hover:bg-indigo-50"
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`
+            }
           >
             <Music2 className="h-5 w-5 mr-3" />
             Practice Modes
-          </Link>
-          <Link
+          </NavLink>
+
+          <NavLink
             to={"/achievements"}
-            className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-indigo-50"
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`
+            }
           >
             <Trophy className="h-5 w-5 mr-3" />
             Achievements
-          </Link>
+          </NavLink>
 
           {/* <button
             // onClick={onCommunityClick}
-            className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-indigo-50"
+            className="flex items-center p-3 text-white/90 rounded-lg hover:bg-white/10 transition-colors duration-200"
           >
             <Users className="h-5 w-5 mr-3" />
             Community
           </button> */}
-          <button
+
+          {/* <NavLink
             // onClick={onProgressClick}
-            href="#"
-            className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-indigo-50"
+            to=""
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`
+            }
           >
             <BarChart2 className="h-5 w-5 mr-3" />
             Progress
-          </button>
-          <Link
+          </NavLink> */}
+
+          <NavLink
             to={"/settings"}
-            className="flex items-center p-3 text-gray-700 rounded-lg hover:bg-indigo-50"
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`
+            }
           >
             <Settings className="h-5 w-5 mr-3" />
             Settings
-          </Link>
-        </nav>
-      </div>
+          </NavLink>
+        </div>
+      </nav>
     </aside>
   );
 }

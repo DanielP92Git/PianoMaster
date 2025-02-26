@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
 import {
   ArrowLeft,
   Play,
@@ -8,6 +7,7 @@ import {
   XCircle,
   AlertCircle,
 } from "lucide-react";
+import BackButton from "../../BackButton";
 
 const rhythmPatterns = [
   {
@@ -30,9 +30,11 @@ const rhythmPatterns = [
   },
 ];
 
-export function ListenAndRepeat({ onBack }) {
-  const gameProgress = useSelector((state) => state.rhythm.gameProgress);
-  const dispatch = useDispatch();
+export function ListenAndRepeat() {
+  const [gameProgress, setGameProgress] = useState({
+    score: 0,
+    completedExercises: 0,
+  });
   const [currentPattern, setCurrentPattern] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -90,13 +92,10 @@ export function ListenAndRepeat({ onBack }) {
         const isCorrect = Math.random() > 0.5;
         setResult(isCorrect);
         if (isCorrect) {
-          dispatch({
-            type: "UPDATE_GAME_PROGRESS",
-            payload: {
-              score: 10,
-              completedExercises: 1,
-            },
-          });
+          setGameProgress((prev) => ({
+            score: prev.score + 10,
+            completedExercises: prev.completedExercises + 1,
+          }));
         }
         setTimeout(() => {
           setCurrentPattern((prev) => (prev + 1) % rhythmPatterns.length);
@@ -123,30 +122,25 @@ export function ListenAndRepeat({ onBack }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100 p-8">
+    <div className="min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <button
-          onClick={onBack}
-          className="flex items-center text-indigo-600 hover:text-indigo-800 mb-8"
-        >
-          <ArrowLeft className="h-5 w-5 mr-2" />
-          Back to Rhythm Master
-        </button>
-
-        <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-8 border border-white/20">
+          <BackButton
+            to={"/rhythm-mode"}
+            name="Rhythm Master"
+            className="flex items-center text-white/80 hover:text-white mb-2"
+          />
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">
-              Listen and Repeat
-            </h1>
-            <div className="flex items-center space-x-6">
+            <h1 className="text-2xl font-bold text-white">Listen and Repeat</h1>
+            <div className="flex items-center space-x-6 bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-8 border border-white/20">
               <div className="text-lg">
-                <span className="text-gray-600">Score: </span>
+                <span className="text-white">Score: </span>
                 <span className="font-semibold text-indigo-600">
                   {gameProgress.score}
                 </span>
               </div>
               <div className="text-lg">
-                <span className="text-gray-600">Completed: </span>
+                <span className="text-white">Completed: </span>
                 <span className="font-semibold text-indigo-600">
                   {gameProgress.completedExercises}
                 </span>
@@ -155,17 +149,17 @@ export function ListenAndRepeat({ onBack }) {
           </div>
 
           <div className="space-y-8">
-            <div className="bg-gray-50 rounded-lg p-8 text-center">
-              <div className="text-4xl font-musical mb-4">
+            <div className="bg-white/10 backdrop-blur-md rounded-lg p-8 border border-white/20">
+              <div className="text-4xl font-musical mb-4 text-white">
                 {rhythmPatterns[currentPattern].pattern}
               </div>
-              <div className="text-sm text-gray-500 mb-4">
+              <div className="text-sm text-gray-300 mb-4">
                 Difficulty: {rhythmPatterns[currentPattern].difficulty}
               </div>
             </div>
 
             {micError && (
-              <div className="flex items-center p-4 text-amber-700 bg-amber-50 rounded-lg">
+              <div className="flex items-center p-4 text-amber-200 bg-amber-500/10 backdrop-blur-md rounded-lg border border-amber-200/20">
                 <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
                 <p>{micError}</p>
               </div>
@@ -177,9 +171,9 @@ export function ListenAndRepeat({ onBack }) {
                 disabled={isPlaying || isRecording}
                 className={`flex items-center px-6 py-3 rounded-lg ${
                   isPlaying
-                    ? "bg-gray-100 text-gray-400"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700"
-                }`}
+                    ? "bg-white/5 text-gray-400"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                } backdrop-blur-md border border-white/20 transition-colors`}
               >
                 <Play className="h-5 w-5 mr-2" />
                 {isPlaying ? "Playing..." : "Play Pattern"}
@@ -190,9 +184,9 @@ export function ListenAndRepeat({ onBack }) {
                 disabled={isPlaying || isRecording}
                 className={`flex items-center px-6 py-3 rounded-lg ${
                   isRecording
-                    ? "bg-red-100 text-red-400"
-                    : "bg-red-600 text-white hover:bg-red-700"
-                }`}
+                    ? "bg-red-500/10 text-red-200"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                } backdrop-blur-md border border-white/20 transition-colors`}
               >
                 <Mic className="h-5 w-5 mr-2" />
                 {isRecording ? "Recording..." : "Record Your Rhythm"}
@@ -201,17 +195,19 @@ export function ListenAndRepeat({ onBack }) {
 
             {result !== null && (
               <div
-                className={`flex items-center justify-center p-4 rounded-lg ${
-                  result ? "bg-green-100" : "bg-red-100"
+                className={`flex items-center justify-center p-4 rounded-lg backdrop-blur-md border ${
+                  result 
+                    ? "bg-green-500/10 text-green-200 border-green-200/20" 
+                    : "bg-red-500/10 text-red-200 border-red-200/20"
                 }`}
               >
                 {result ? (
-                  <div className="flex items-center text-green-700">
+                  <div className="flex items-center">
                     <CheckCircle className="h-6 w-6 mr-2" />
                     Perfect rhythm! Keep going!
                   </div>
                 ) : (
-                  <div className="flex items-center text-red-700">
+                  <div className="flex items-center">
                     <XCircle className="h-6 w-6 mr-2" />
                     Try again! Listen carefully to the pattern.
                   </div>

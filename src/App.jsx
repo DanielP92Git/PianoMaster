@@ -2,8 +2,8 @@ import React, { useRef, useState } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { AppLayout } from "./components/homepage/AppLayout";
 import { Dashboard } from "./components/homepage/Dashboard";
-import { NoteRecognitionMode } from "./components/NoteRecognitionMode";
-import { RhythmMasterMode } from "./components/RhythmMasterMode";
+import { NoteRecognitionMode } from "./components/games/NoteRecognitionMode";
+import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import { Achievements } from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
 import AppSettings from "./pages/AppSettings";
@@ -13,31 +13,11 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Login from "./pages/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
-
-// const gameModes = [
-//   {
-//     id: "1",
-//     name: "Note Recognition",
-//     description:
-//       "Train your ear to identify musical notes quickly and accurately",
-//     difficulty: "beginner",
-//     type: "note-recognition",
-//   },
-//   {
-//     id: "2",
-//     name: "Rhythm Master",
-//     description: "Match complex rhythms and improve your timing",
-//     difficulty: "intermediate",
-//     type: "rhythm",
-//   },
-//   {
-//     id: "3",
-//     name: "Sight Reading Challenge",
-//     description: "Practice reading and playing sheet music in real-time",
-//     difficulty: "advanced",
-//     type: "sight-reading",
-//   },
-// ];
+import { MemoryGame } from "./components/games/note-recognition-games/MemoryGame";
+import { NoteRecognitionGame } from "./components/games/note-recognition-games/NoteRecognitionGame";
+import { ListenAndRepeat } from "./components/games/rhythm-games/ListenAndRepeat";
+import { RhythmProvider } from "./reducers/RhythmReducer";
+import { YourGroove } from "./components/games/rhythm-games/YourGroove";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,8 +62,40 @@ function App() {
         >
           <Route index element={<Dashboard />} />
           <Route path="/achievements" element={<Achievements />} />
-          <Route path="/note-recognition" element={<NoteRecognitionMode />} />
-          <Route path="/rhythm" element={<RhythmMasterMode />} />
+          <Route
+            path="/practice-modes"
+            element={
+              <PracticeModes
+                practiceModesSectionRef={practiceModesSectionRef}
+                // onSelect={handleGameModeSelect}
+              />
+            }
+          />
+          <Route path="/note-recognition-mode" element={<NoteRecognitionMode />} />
+          <Route
+            path="/note-recognition-mode/memory-game"
+            element={<MemoryGame />}
+          />
+          <Route
+            path="/note-recognition-mode/note-recognition-game"
+            element={<NoteRecognitionGame />}
+          />
+
+          <Route />
+          <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
+          <Route
+            path="/rhythm-mode/listen-and-repeat"
+            element={<ListenAndRepeat />}
+          />
+          <Route
+            path="/rhythm-mode/create-own"
+            element={
+              <RhythmProvider>
+                <YourGroove />
+              </RhythmProvider>
+            }
+          />
+
           <Route path="/settings" element={<AppSettings />} />
           <Route
             path="/avatars"
@@ -91,16 +103,6 @@ function App() {
               <Avatars
                 onSelect={handleAvatarSelect}
                 selectedAvatar={selectedAvatar}
-              />
-            }
-          />
-          <Route
-            path="/practice-modes"
-            element={
-              <PracticeModes
-                // gameModes={gameModes}
-                practiceModesSectionRef={practiceModesSectionRef}
-                onSelect={handleGameModeSelect}
               />
             }
           />

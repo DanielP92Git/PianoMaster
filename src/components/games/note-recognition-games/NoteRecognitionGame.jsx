@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import doImage from "../assets/noteImages/do.jpg";
-import reImage from "../assets/noteImages/re.jpg";
-import miImage from "../assets/noteImages/mi.jpg";
-import faImage from "../assets/noteImages/fa.jpg";
-import solImage from "../assets/noteImages/sol.jpg";
-import laImage from "../assets/noteImages/la.jpg";
-import siImage from "../assets/noteImages/si.jpg";
-import BackButton from "./BackButton";
-import { updateStudentScore, getStudentScores } from "../services/apiScores";
-import { useScores } from "../features/userData/useScores";
+import doImage from "../../../assets/noteImages/do.jpg";
+import reImage from "../../../assets/noteImages/re.jpg";
+import miImage from "../../../assets/noteImages/mi.jpg";
+import faImage from "../../../assets/noteImages/fa.jpg";
+import solImage from "../../../assets/noteImages/sol.jpg";
+import laImage from "../../../assets/noteImages/la.jpg";
+import siImage from "../../../assets/noteImages/si.jpg";
+import BackButton from "../../BackButton";
+import { useScores } from "../../../features/userData/useScores";
+import { Firework } from "../../animations/Firework";
+import VictoryScreen from "../VictoryScreen";
 
 const notes = [
   { note: "Do", image: doImage },
@@ -22,12 +23,13 @@ const notes = [
 
 const options = ["Do", "Re", "Mi", "Fa", "Sol", "La", "Si"];
 
-export function NoteRecognitionMode({ onBack }) {
+export function NoteRecognitionGame() {
   const [currentNote, setCurrentNote] = useState(0);
   const [score, setScore] = useState(0);
   const [totalAttempts, setTotalAttempts] = useState(0);
   const [wrongAnswer, setWrongAnswer] = useState(false);
   const [gameFinished, setGameFinished] = useState(false);
+  const [showFireworks, setShowFireworks] = useState(false);
   const { updateScore } = useScores();
 
   const getRandomNoteIndex = (currentIndex) => {
@@ -42,20 +44,26 @@ export function NoteRecognitionMode({ onBack }) {
     setTotalAttempts((prevTotalAttempts) => {
       const newTotalAttempts = prevTotalAttempts + 1;
 
-      // Check if the game is finished
       if (newTotalAttempts === notes.length * 2) {
         setGameFinished(true);
         updateScore({ score, gameType: "note-recognition" });
+
+        const finalScore =
+          ((score + (answer === notes[currentNote].note ? 1 : 0)) /
+            (notes.length * 2)) *
+          100;
+        if (finalScore >= 80) {
+          setShowFireworks(true);
+          setTimeout(() => setShowFireworks(false), 2000);
+        }
       }
 
       return newTotalAttempts;
     });
 
-    // Check the answer
-    // if the answer is wrong:
     if (answer !== notes[currentNote].note) {
       setWrongAnswer(true);
-    } else { // if the answer is correct:
+    } else {
       setScore((prevScore) => prevScore + 1);
       setWrongAnswer(false);
       setCurrentNote(getRandomNoteIndex(currentNote));
@@ -67,32 +75,38 @@ export function NoteRecognitionMode({ onBack }) {
     setTotalAttempts(0);
     setWrongAnswer(false);
     setGameFinished(false);
+    setShowFireworks(false);
     setCurrentNote(getRandomNoteIndex(currentNote));
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-100 to-purple-100 p-8">
-      <div className="max-w-4xl mx-auto">
-        <BackButton to={"/practice-modes"} name={"Practice Modes"} />
+  const scorePercentage =
+    totalAttempts > 0 ? Math.round((score / totalAttempts) * 100) : 0;
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
+  return (
+    <div className="min-h-screen ">
+      {showFireworks && <Firework />}
+      <div className="max-w-4xl mx-auto">
+        
+
+        <div className="bg-white/20 backdrop-blur-md  rounded-xl shadow-lg p-8">
+        <BackButton to={"/note-recognition-mode"} name={"Note Recognition"} />
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-800">
+            <h1 className="text-2xl font-bold text-white">
               Note Recognition
             </h1>
             <div className="flex items-center space-x-6">
               <div className="text-lg">
-                <span className="text-gray-600">Score: </span>
-                <span className="font-semibold text-indigo-600">{score}</span>
+                <span className="text-white">Score: </span>
+                <span className="font-semibold text-indigo-200">{score}</span>
                 {totalAttempts > 0 && (
                   <span className="text-sm text-gray-500 ml-2">
-                    ({Math.round((score / totalAttempts) * 100)}%)
+                    ({scorePercentage}%)
                   </span>
                 )}
               </div>
               <div className="text-lg">
-                <span className="text-gray-600">Question: </span>
-                <span className="font-semibold text-indigo-600">
+                <span className="text-white">Question: </span>
+                <span className="font-semibold text-indigo-200">
                   {totalAttempts}/{notes.length * 2}
                 </span>
               </div>
@@ -100,21 +114,11 @@ export function NoteRecognitionMode({ onBack }) {
           </div>
 
           {gameFinished ? (
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-green-600">Finished!</h2>
-              <p className="text-lg text-gray-700">
-                You have completed the game.
-              </p>
-              <p className="text-lg text-gray-700">
-                Your final score is {score} out of {notes.length * 2}.
-              </p>
-              <button
-                className="mt-8 py-3 px-5 text-lg font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
-                onClick={() => handleReset()}
-              >
-                Try Again
-              </button>
-            </div>
+            <VictoryScreen
+              score={score}
+              totalPossibleScore={notes.length * 2}
+              onReset={handleReset}
+            />
           ) : (
             <div className="flex flex-col items-center gap-8">
               <div className="flex justify-center items-center bg-gray-50 rounded-lg p-8">
