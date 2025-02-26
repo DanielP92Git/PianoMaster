@@ -1,8 +1,5 @@
 import React, { useState } from "react";
 import { Music, Plus } from "lucide-react";
-import { ListenAndRepeat } from "./rhythm-games/ListenAndRepeat";
-import { YourGroove } from "./rhythm-games/YourGroove";
-import { RhythmProvider } from "../../reducers/RhythmReducer";
 import Spinner from "../../ui/Spinner";
 import BackButton from "../BackButton";
 import { Link } from "react-router-dom";
