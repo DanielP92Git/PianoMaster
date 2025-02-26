@@ -16,7 +16,7 @@ import ProtectedRoute from "./ui/ProtectedRoute";
 import { MemoryGame } from "./components/games/note-recognition-games/MemoryGame";
 import { NoteRecognitionGame } from "./components/games/note-recognition-games/NoteRecognitionGame";
 import { ListenAndRepeat } from "./components/games/rhythm-games/ListenAndRepeat";
-import { RhythmProvider } from "./reducers/RhythmReducer";
+import { RhythmProvider } from "./reducers/rhythmReducer";
 import { YourGroove } from "./components/games/rhythm-games/YourGroove";
 
 const queryClient = new QueryClient({
