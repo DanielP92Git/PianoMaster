@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import doImage from "../../../assets/noteImages/do.jpg";
 import reImage from "../../../assets/noteImages/re.jpg";
 import miImage from "../../../assets/noteImages/mi.jpg";
@@ -31,6 +31,24 @@ export function NoteRecognitionGame() {
   const [gameFinished, setGameFinished] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
   const { updateScore } = useScores();
+
+  useEffect(() => {
+    // Check if the screen orientation API is supported
+    if (screen.orientation && screen.orientation.lock) {
+        // Lock the screen orientation to landscape
+        screen.orientation.lock("landscape").catch((error) => {
+            console.error("Error locking orientation: ", error);
+        });
+    }
+
+    // Cleanup function to unlock orientation when the component unmounts
+    return () => {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+    };
+}, []);
+
 
   const getRandomNoteIndex = (currentIndex) => {
     let newIndex;
