@@ -65,10 +65,15 @@ export async function socialAuth({ provider, mode = "login" }) {
   // If we already have a session, don't start a new OAuth flow
   if (session) return { session };
 
+  const redirectTo =
+    process.env.NODE_ENV === "production"
+      ? "https://piano-master-nine.vercel.app/auth/v1/callback"
+      : "http://localhost:3000/auth/v1/callback";
+
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo,
       queryParams: {
         access_type: "offline",
         prompt: "consent",
