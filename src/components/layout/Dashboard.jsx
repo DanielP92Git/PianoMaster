@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Award, Flame, Music, Clock, X, Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import alarmMelody from "../../../public/audio/alarm.mp3";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
-import { useModal } from "../../context/ModalContext";
-import { Link } from "react-router-dom";
+import { useModal } from "../../contexts/ModalContext";
 
-export function Dashboard() {
+function Dashboard() {
   const [timer, setTimer] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   const [reminderMessage, setReminderMessage] = useState("");
@@ -113,7 +112,7 @@ export function Dashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-4">
       {/* Welcome Section */}
       <div className="text-center lg:text-left">
         <h1 className="text-3xl lg:text-4xl font-bold text-white">
@@ -198,3 +197,5 @@ export function Dashboard() {
     </div>
   );
 }
+
+export default Dashboard;

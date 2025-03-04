@@ -1,7 +1,7 @@
 import { Menu, Music2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-function Header({ onToggleSidebar, selectedAvatar }) {
+export default function Header({ onMenuClick, selectedAvatar }) {
   return (
     <nav className="shadow-lg">
       <div className="max-w-7xl mx-auto px-4">
@@ -20,9 +20,9 @@ function Header({ onToggleSidebar, selectedAvatar }) {
             </span>
           </Link>
           <div className="flex items-center space-x-4">
-            <button 
-              className="p-2 rounded-lg lg:hidden" 
-              onClick={onToggleSidebar}
+            <button
+              className="p-2 rounded-lg lg:hidden"
+              onClick={onMenuClick}
             >
               <Menu className="h-6 w-6 text-white hover:text-gray-200" />
             </button>
@@ -33,4 +33,3 @@ function Header({ onToggleSidebar, selectedAvatar }) {
   );
 }
 
-export default Header;

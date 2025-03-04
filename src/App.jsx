@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import { AppLayout } from "./components/homepage/AppLayout";
-import { Dashboard } from "./components/homepage/Dashboard";
+import AppLayout from "./components/layout/AppLayout";
+import Dashboard from "./components/layout/Dashboard";
 import { NoteRecognitionMode } from "./components/games/NoteRecognitionMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import { Achievements } from "./pages/Achievements";
@@ -20,6 +20,7 @@ import { RhythmProvider } from "./reducers/rhythmReducer";
 import { YourGroove } from "./components/games/rhythm-games/YourGroove";
 import { useUser } from "./features/authentication/useUser";
 import { Loader2 } from "lucide-react";
+import { ModalProvider } from "./contexts/ModalContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,7 +33,6 @@ const queryClient = new QueryClient({
 function AppRoutes() {
   const { isLoading } = useUser();
   const [selectedAvatar, setSelectedAvatar] = useState(null);
-  const [currentGame, setCurrentGame] = useState(null);
   const practiceModesSectionRef = useRef(null);
 
   const scrollToPracticeModes = () => {
@@ -41,10 +41,6 @@ function AppRoutes() {
 
   const handleAvatarSelect = (avatar) => {
     setSelectedAvatar(avatar);
-  };
-
-  const handleGameModeSelect = (mode) => {
-    setCurrentGame(mode.type);
   };
 
   if (isLoading) {
@@ -120,9 +116,11 @@ function AppRoutes() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ReactQueryDevtools initialIsOpen={false} />
-      <Toaster />
-      <AppRoutes />
+      <ModalProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+        <Toaster />
+        <AppRoutes />
+      </ModalProvider>
     </QueryClientProvider>
   );
 }
