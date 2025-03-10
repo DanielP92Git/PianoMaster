@@ -1,13 +1,13 @@
 import { Flame, Loader2 } from "lucide-react";
 import { streakService } from "../../services/streakService";
-import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function StreakDisplay() {
   const { data: streak, isLoading } = useQuery({
     queryKey: ["streak"],
     queryFn: () => streakService.getStreak(),
-    refetchInterval: 1000 * 60 * 5, // Refetch every 5 minutes
+    refetchInterval: 1000 * 30, // Refetch every 30 seconds
+    staleTime: 1000 * 30, // Consider data stale after 30 seconds
   });
 
   if (isLoading) {

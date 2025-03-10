@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import StreakDisplay from "../components/streak/StreakDisplay";
 import { streakService } from "../services/streakService";
 
-export default function PracticeModes({ practiceModesSectionRef, onSelect }) {
+export default function PracticeModes({ practiceModesSectionRef }) {
   const navigate = useNavigate();
   const {
     isPending,

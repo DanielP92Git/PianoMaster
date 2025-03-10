@@ -1,4 +1,5 @@
 import supabase from "./supabase";
+import toast from "react-hot-toast";
 
 export async function login({ email, password }) {
   let { data, error } = await supabase.auth.signInWithPassword({
@@ -27,33 +28,6 @@ export async function getCurrentUser() {
 export async function logout() {
   const { err } = await supabase.auth.signOut();
   if (err) throw new Error(err.message);
-}
-
-export async function signup({ email, password }) {
-  // First check if user exists
-  const { data: existingUser, error: checkError } = await supabase
-    .from("profiles")
-    .select("id")
-    .eq("email", email)
-    .single();
-
-  if (existingUser) {
-    throw new Error(
-      "An account with this email already exists. Please log in instead."
-    );
-  }
-
-  // If no existing user, proceed with signup
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${window.location.origin}/`,
-    },
-  });
-
-  if (error) throw new Error(error.message);
-  return data;
 }
 
 export async function socialAuth({ provider, mode = "login" }) {
@@ -94,6 +68,30 @@ export async function socialAuth({ provider, mode = "login" }) {
       );
     }
     throw new Error(error.message);
+  }
+
+  return data;
+}
+
+export async function updateUserAvatar(userId, avatarId) {
+  // First try to upsert the student record
+  const { data, error } = await supabase
+    .from("students")
+    .upsert(
+      {
+        id: userId, // This will be both the PK and FK to auth.users
+        avatar_id: avatarId,
+      },
+      {
+        onConflict: "id",
+        ignoreDuplicates: false,
+      }
+    )
+    .select("*, avatars(*)");
+
+  if (error) {
+    console.error("Error upserting avatar:", error);
+    throw new Error("Failed to update avatar");
   }
 
   return data;

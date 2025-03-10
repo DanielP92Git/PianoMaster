@@ -1,21 +1,34 @@
 import { Trophy, Star, Sparkles } from "lucide-react";
+import { streakService } from "../../services/streakService";
+import { useEffect } from "react";
+
 const VictoryScreen = ({ score, totalPossibleScore, onReset }) => {
   const scorePercentage = (score / totalPossibleScore) * 100;
-  
+
+  useEffect(() => {
+    // Update streak if score is 80% or higher
+    if (scorePercentage >= 80) {
+      streakService.updateStreak();
+    }
+  }, [scorePercentage]);
+
   return (
     <div className="relative w-full max-w-md mx-auto p-8 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm font-outfit animate-floatUp">
       <div className="absolute -top-6 left-1/2 -translate-x-1/2">
         <div className="relative">
           <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 blur-xl opacity-20 animate-celebration" />
-          <Trophy className="w-12 h-12 text-yellow-500 animate-celebration" strokeWidth={1.5} />
+          <Trophy
+            className="w-12 h-12 text-yellow-500 animate-celebration"
+            strokeWidth={1.5}
+          />
         </div>
       </div>
-      
+
       <div className="text-center mt-8 space-y-4">
         <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600 animate-shimmer bg-[length:200%_auto]">
           Victory!
         </h2>
-        
+
         <div className="flex items-center justify-center gap-2 text-gray-600">
           <Sparkles className="w-5 h-5 text-yellow-500" />
           <p className="text-lg">
@@ -44,4 +57,5 @@ const VictoryScreen = ({ score, totalPossibleScore, onReset }) => {
     </div>
   );
 };
+
 export default VictoryScreen;
