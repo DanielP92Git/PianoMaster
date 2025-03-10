@@ -1,107 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
-import { X, Loader2 } from "lucide-react";
-import alarmMelody from "../../../public/audio/alarm.mp3";
+import React from "react";
+import { Loader2 } from "lucide-react";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
-import { useModal } from "../../contexts/ModalContext";
+import { useQuery } from "@tanstack/react-query";
+import { streakService } from "../../services/streakService";
+import PracticeRecorder from "../practice/PracticeRecorder";
+import PracticeReminder from "../practice/PracticeReminder";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
-  const [timer, setTimer] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [reminderMessage, setReminderMessage] = useState("");
-  const alarmRef = useRef(new Audio(alarmMelody));
   const { user } = useUser();
   const { scores, isLoading } = useScores();
+  const { data: streak } = useQuery({
+    queryKey: ["streak"],
+    queryFn: () => streakService.getStreak(),
+    refetchInterval: 1000 * 30,
+    staleTime: 1000 * 30,
+  });
   let totalScore = scores?.totalScore;
-
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const { openModal, closeModal } = useModal();
-
-  useEffect(() => {
-    let timerInterval;
-    if (timeLeft > 0) {
-      timerInterval = setInterval(() => {
-        setTimeLeft((prevTime) => prevTime - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && timer > 0) {
-      setReminderMessage("Time to practice your instrument!");
-      alarmRef.current.play();
-    }
-    return () => clearInterval(timerInterval);
-  }, [timeLeft, timer]);
-
-  const handleSetTimer = () => {
-    openModal(
-      <>
-        <button
-          onClick={closeModal}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="h-6 w-6" />
-        </button>
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
-          Set Practice Reminder
-        </h3>
-        <form onSubmit={handleSubmitReminder} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
-            </label>
-            <input
-              type="date"
-              required
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
-            </label>
-            <input
-              type="time"
-              required
-              value={selectedTime}
-              onChange={(e) => setSelectedTime(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-3 px-6 text-lg font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors"
-          >
-            Set Reminder
-          </button>
-        </form>
-      </>
-    );
-  };
-
-  const handleSubmitReminder = (e) => {
-    e.preventDefault();
-    const dateTime = new Date(`${selectedDate}T${selectedTime}`);
-    const now = new Date();
-    const timeDifferenceInMinutes = Math.floor((dateTime - now) / (1000 * 60));
-
-    if (timeDifferenceInMinutes > 0) {
-      setTimer(timeDifferenceInMinutes);
-      setTimeLeft(timeDifferenceInMinutes);
-      setReminderMessage("");
-      closeModal();
-    } else {
-      alert("Please select a future date and time");
-    }
-  };
-
-  const handleStopTimer = () => {
-    setTimer(0);
-    setTimeLeft(0);
-    setReminderMessage("");
-    alarmRef.current.pause();
-    alarmRef.current.currentTime = 0;
-  };
 
   if (isLoading) {
     return (
@@ -128,7 +44,7 @@ function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {/* Daily Streak */}
         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
           <div className="flex flex-col items-center text-center">
@@ -136,20 +52,8 @@ function Dashboard() {
               Daily Streak
             </h3>
             <p className="mt-1 lg:mt-2 text-2xl lg:text-4xl font-bold text-white">
-              {scores?.daily_streak || 0}
+              {streak || 0}
               <span className="text-base lg:text-xl ml-1">days</span>
-            </p>
-          </div>
-        </div>
-
-        {/* Songs Mastered */}
-        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 lg:p-6 border border-white/20">
-          <div className="flex flex-col items-center text-center">
-            <h3 className="text-sm lg:text-lg font-medium text-gray-300">
-              Songs Mastered
-            </h3>
-            <p className="mt-1 lg:mt-2 text-2xl lg:text-4xl font-bold text-white">
-              {scores?.songs_mastered || 0}
             </p>
           </div>
         </div>
@@ -180,18 +84,27 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Set Reminder Section */}
-      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
-        <div className="text-center lg:text-left">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            Set a Practice Reminder
-          </h2>
-          <button
-            onClick={handleSetTimer}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"
-          >
-            Set Reminder
-          </button>
+      {/* Practice Tools Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Practice Reminder Section */}
+        <PracticeReminder />
+
+        {/* Practice Recorder Section */}
+        <PracticeRecorder />
+
+        {/* View Practice Sessions */}
+        <div className="lg:col-span-1 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
+          <div className="text-center lg:text-left">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              View Practice History
+            </h2>
+            <Link
+              to="/practice-sessions"
+              className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"
+            >
+              View All Sessions
+            </Link>
+          </div>
         </div>
       </div>
     </div>

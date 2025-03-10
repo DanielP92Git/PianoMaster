@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { Routes, Route } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
@@ -6,6 +6,7 @@ import { NoteRecognitionMode } from "./components/games/NoteRecognitionMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import { Achievements } from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
+import PracticeSessions from "./pages/PracticeSessions";
 import AppSettings from "./pages/AppSettings";
 import Avatars from "./components/Avatars";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -32,15 +33,10 @@ const queryClient = new QueryClient({
 
 function AppRoutes() {
   const { isLoading } = useUser();
-  const [selectedAvatar, setSelectedAvatar] = useState(null);
   const practiceModesSectionRef = useRef(null);
 
   const scrollToPracticeModes = () => {
     practiceModesSectionRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleAvatarSelect = (avatar) => {
-    setSelectedAvatar(avatar);
   };
 
   if (isLoading) {
@@ -57,21 +53,16 @@ function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <AppLayout
-              selectedAvatar={selectedAvatar}
-              onPracticeModesClick={scrollToPracticeModes}
-            />
+            <AppLayout onPracticeModesClick={scrollToPracticeModes} />
           </ProtectedRoute>
         }
       >
         <Route index element={<Dashboard />} />
+        <Route path="/practice-modes" element={<PracticeModes />} />
+        <Route path="practice-sessions" element={<PracticeSessions />} />
         <Route path="/achievements" element={<Achievements />} />
-        <Route
-          path="/practice-modes"
-          element={
-            <PracticeModes practiceModesSectionRef={practiceModesSectionRef} />
-          }
-        />
+        <Route path="/settings" element={<AppSettings />} />
+        <Route path="/avatars" element={<Avatars />} />
         <Route
           path="/note-recognition-mode"
           element={<NoteRecognitionMode />}
@@ -97,16 +88,6 @@ function AppRoutes() {
             </RhythmProvider>
           }
         />
-        <Route path="/settings" element={<AppSettings />} />
-        <Route
-          path="/avatars"
-          element={
-            <Avatars
-              onSelect={handleAvatarSelect}
-              selectedAvatar={selectedAvatar}
-            />
-          }
-        />
       </Route>
       <Route path="/login" element={<Login />} />
     </Routes>
@@ -117,10 +98,14 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ModalProvider>
-        <ReactQueryDevtools initialIsOpen={false} />
-        <Toaster />
-        <AppRoutes />
+        <RhythmProvider>
+          <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+            <Toaster position="top-center" />
+            <AppRoutes />
+          </div>
+        </RhythmProvider>
       </ModalProvider>
+      <ReactQueryDevtools />
     </QueryClientProvider>
   );
 }

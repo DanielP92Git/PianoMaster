@@ -1,9 +1,13 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Music2, Settings, Trophy } from "lucide-react";
+import { Home, Music2, Settings, Trophy, Mic } from "lucide-react";
 import AuthButton from "../auth/AuthButton";
+import { useUser } from "../../features/authentication/useUser";
+import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 
 export default function Sidebar({ isOpen, onClose, isGameRoute }) {
+  const { user } = useUser();
+  const { newCount } = useNewRecordingsCount(user?.id);
 
   // Don't render sidebar at all for game routes
   if (isGameRoute) {
@@ -35,7 +39,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </NavLink>
 
           <NavLink
-            to={"/practice-modes"}
+            to="/practice-modes"
             onClick={onClose}
             className={({ isActive }) =>
               `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
@@ -45,27 +49,32 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
               }`
             }
           >
-            <Music2 className="h-5 w-5 mr-3" />
-            Practice Modes
+            <Music2 className="h-5 w-5" />
+            <span>Practice Modes</span>
           </NavLink>
 
           <NavLink
-            to={"/achievements"}
+            to="/practice-sessions"
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors relative ${
                 isActive
                   ? "bg-indigo-600 text-white"
                   : "text-gray-300 hover:bg-white/10 hover:text-white"
               }`
             }
           >
-            <Trophy className="h-5 w-5 mr-3" />
-            Achievements
+            <Mic className="h-5 w-5" />
+            <span>Practice Recordings</span>
+            {newCount > 0 && (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-medium text-white bg-red-500 rounded-full px-1">
+                {newCount}
+              </span>
+            )}
           </NavLink>
 
           <NavLink
-            to={"/settings"}
+            to="/achievements"
             onClick={onClose}
             className={({ isActive }) =>
               `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
@@ -75,8 +84,23 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
               }`
             }
           >
-            <Settings className="h-5 w-5 mr-3" />
-            Settings
+            <Trophy className="h-5 w-5" />
+            <span>Achievements</span>
+          </NavLink>
+
+          <NavLink
+            to="/settings"
+            onClick={onClose}
+            className={({ isActive }) =>
+              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                isActive
+                  ? "bg-indigo-600 text-white"
+                  : "text-gray-300 hover:bg-white/10 hover:text-white"
+              }`
+            }
+          >
+            <Settings className="h-5 w-5" />
+            <span>Settings</span>
           </NavLink>
         </div>
 
