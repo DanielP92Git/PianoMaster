@@ -18,11 +18,26 @@ export default function PracticeRecorder() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // First check if the device supports getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Your device doesn't support audio recording");
+        return;
+      }
+
+      // Request microphone access with specific audio constraints for iOS
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100,
+        },
+      });
+
       mediaRecorder.current = new MediaRecorder(stream, {
         mimeType: "audio/webm",
         audioBitsPerSecond: 128000,
       });
+
       chunks.current = []; // Reset chunks
       isCancelling.current = false;
 
@@ -37,6 +52,9 @@ export default function PracticeRecorder() {
         }
         setIsRecording(false);
         chunks.current = []; // Clear chunks after use
+
+        // Stop all tracks to properly release the microphone
+        stream.getTracks().forEach((track) => track.stop());
       };
 
       // Start recording in 100ms chunks to ensure smooth data collection
@@ -45,7 +63,27 @@ export default function PracticeRecorder() {
       toast.success("Recording started");
     } catch (error) {
       console.error("Error accessing microphone:", error);
-      toast.error("Could not access microphone");
+
+      // Handle specific iOS and permission errors
+      if (error.name === "NotAllowedError") {
+        toast.error(
+          "Microphone access was denied. Please allow microphone access in your device settings and try again."
+        );
+      } else if (error.name === "NotFoundError") {
+        toast.error("No microphone found. Please check your device settings.");
+      } else if (error.name === "NotSupportedError") {
+        toast.error(
+          "Audio recording is not supported on this device or browser."
+        );
+      } else if (error.name === "SecurityError") {
+        toast.error(
+          "Microphone access is blocked. Please check your browser settings."
+        );
+      } else {
+        toast.error("Could not access microphone. Please try again.");
+      }
+
+      setIsRecording(false);
     }
   };
 
@@ -53,6 +91,7 @@ export default function PracticeRecorder() {
     if (mediaRecorder.current && isRecording) {
       isCancelling.current = false;
       mediaRecorder.current.stop();
+      // Stop all tracks to properly release the microphone
       mediaRecorder.current.stream.getTracks().forEach((track) => track.stop());
       toast.success("Recording stopped");
     }
@@ -64,6 +103,7 @@ export default function PracticeRecorder() {
     if (mediaRecorder.current) {
       if (mediaRecorder.current.state === "recording") {
         mediaRecorder.current.stop();
+        // Stop all tracks to properly release the microphone
         mediaRecorder.current.stream
           .getTracks()
           .forEach((track) => track.stop());
