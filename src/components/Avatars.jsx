@@ -47,25 +47,16 @@ function Avatars() {
 
   // Mutation to update avatar
   const updateAvatarMutation = useMutation({
-    mutationFn: ({ userId, avatarId }) => {
-      console.log("Updating avatar with:", { userId, avatarId });
-      return updateUserAvatar(userId, avatarId);
-    },
-    onSuccess: (data) => {
-      console.log("Avatar update response:", data);
+    mutationFn: ({ userId, avatarId }) => updateUserAvatar(userId, avatarId),
+    onSuccess: () => {
       queryClient.invalidateQueries(["student", user?.id]);
-      toast.success("Avatar updated successfully!");
-      navigate("/settings");
     },
-    onError: (error) => {
+    onError: () => {
       toast.error("Failed to update avatar");
-      console.error("Error updating avatar:", error);
     },
   });
 
   const handleAvatarSelect = (avatar) => {
-    console.log("Selected avatar:", avatar);
-    console.log("Current user:", user);
     setSelectedAvatar(avatar);
     if (user?.id) {
       updateAvatarMutation.mutate({
@@ -95,6 +86,7 @@ function Avatars() {
     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 mx-4 my-4 space-y-6">
       <BackButton to="/settings" name="Settings" />
       <h2 className="text-xl font-semibold text-white">Choose Your Avatar</h2>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {avatars.map((avatar) => (
           <button

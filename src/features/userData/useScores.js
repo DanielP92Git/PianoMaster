@@ -15,13 +15,13 @@ export function useScores() {
   } = useQuery({
     queryKey: ["scores"],
     queryFn: () => getStudentScores(studentId),
-    // enabled: !!studentId, // Only fetch scores if the student ID is available
+    enabled: !!studentId, // Only fetch scores if the student ID is available
     onError: (error) => {
       console.error(error);
       toast.error("Failed to fetch scores");
     },
   });
-  
+
   // Update student score
   const {
     mutate: updateScore,
@@ -32,7 +32,6 @@ export function useScores() {
       updateStudentScore(studentId, score, gameType),
     onSuccess: () => {
       queryClient.invalidateQueries(["scores"]);
-      toast.success("Score updated successfully");
     },
     onError: (error) => {
       console.error(error);
