@@ -175,36 +175,42 @@ export default function PracticeReminder() {
             <p className="text-white">
               Next practice reminder in: {formatTimeLeft(timeLeft)}
             </p>
-            <button
-              onClick={handleStopTimer}
-              className="flex gap-2 items-center px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
-            >
-              <BellOff className="w-5 h-5" />
-              Cancel Reminder
-            </button>
+            <div className="flex justify-center lg:justify-start">
+              <button
+                onClick={handleStopTimer}
+                className="flex gap-2 items-center px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
+              >
+                <BellOff className="w-5 h-5" />
+                Cancel Reminder
+              </button>
+            </div>
           </div>
         ) : (
-          <button
-            onClick={handleSetTimer}
-            className="flex gap-2 items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            Set Reminder
-          </button>
+          <div className="flex justify-center lg:justify-start">
+            <button
+              onClick={handleSetTimer}
+              className="flex gap-2 items-center px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              Set Reminder
+            </button>
+          </div>
         )}
         {reminderMessage && (
           <div className="mt-4 p-4 bg-green-600/20 border border-green-500/30 rounded-xl">
             <p className="text-white">{reminderMessage}</p>
-            <button
-              onClick={() => {
-                setReminderMessage("");
-                alarmRef.current.pause();
-                alarmRef.current.currentTime = 0;
-              }}
-              className="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
-            >
-              Dismiss
-            </button>
+            <div className="flex justify-center lg:justify-start mt-2">
+              <button
+                onClick={() => {
+                  setReminderMessage("");
+                  alarmRef.current.pause();
+                  alarmRef.current.currentTime = 0;
+                }}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         )}
       </div>

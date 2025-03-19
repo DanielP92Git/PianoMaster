@@ -70,6 +70,13 @@ export function GameSettings({
     Hard: 30, // 30 seconds
   };
 
+  // Add memory game time limits
+  const MEMORY_GAME_TIME_LIMITS = {
+    Easy: 90, // 90 seconds
+    Medium: 75, // 75 seconds
+    Hard: 60, // 60 seconds
+  };
+
   // Update parent component when settings change
   useEffect(() => {
     if (onChange) {
@@ -99,9 +106,9 @@ export function GameSettings({
       const prevArray = Array.isArray(prev) ? prev : [];
 
       if (prevArray.includes(note)) {
-        // Don't allow removing the last note
-        if (prevArray.length <= 1) {
-          console.log("Cannot remove the last note");
+        // Don't allow removing if it would result in fewer than 2 notes
+        if (prevArray.length <= 2) {
+          console.log("Cannot remove - minimum 2 notes required");
           return prevArray;
         }
         const newNotes = prevArray.filter((n) => n !== note);
@@ -144,6 +151,31 @@ export function GameSettings({
         difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
     }
 
+    // Calculate the correct time limit based on difficulty and game type
+    let timeLimit = 45; // Default Medium difficulty
+    if (timedMode) {
+      if (gameType === "note-recognition") {
+        if (capitalizedDifficulty === "Easy") {
+          timeLimit = 60;
+        } else if (capitalizedDifficulty === "Medium") {
+          timeLimit = 45;
+        } else if (capitalizedDifficulty === "Hard") {
+          timeLimit = 30;
+        }
+      } else if (gameType === "memory") {
+        // For memory game
+        if (capitalizedDifficulty === "Easy") {
+          timeLimit = 90;
+        } else if (capitalizedDifficulty === "Medium") {
+          timeLimit = 75;
+        } else if (capitalizedDifficulty === "Hard") {
+          timeLimit = 60;
+        }
+      }
+    }
+
+    console.log("Setting time limit to:", timeLimit);
+
     // Call the onStart callback with the current settings
     onStart({
       clef,
@@ -151,6 +183,7 @@ export function GameSettings({
       timedMode,
       difficulty: capitalizedDifficulty,
       gridSize,
+      timeLimit: timeLimit, // Add the timeLimit property
     });
   };
 
@@ -158,7 +191,7 @@ export function GameSettings({
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
-    <div className="flex-1 flex flex-col items-center justify-center py-1">
+    <div className="flex flex-col items-center justify-center py-1">
       <h1 className="text-2xl font-bold text-white mb-2">
         {gameType === "note-recognition"
           ? "Note Recognition Game"
@@ -182,10 +215,10 @@ export function GameSettings({
                 <img
                   src={trebleClefImage}
                   alt="Treble Clef"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain invert"
                 />
               </div>
-              <span className="font-medium">Treble Clef</span>
+              <span className="font-medium text-white/90">Treble Clef</span>
             </button>
 
             <button
@@ -200,10 +233,10 @@ export function GameSettings({
                 <img
                   src={bassClefImage}
                   alt="Bass Clef"
-                  className="w-full h-full object-contain"
+                  className="w-full h-full object-contain invert"
                 />
               </div>
-              <span className="font-medium">Bass Clef</span>
+              <span className="font-medium text-white/90">Bass Clef</span>
             </button>
           </div>
 
@@ -250,7 +283,7 @@ export function GameSettings({
                     className={`p-1 rounded-lg transition-colors flex flex-col items-center min-w-[50px] ${
                       selectedNotes.includes(note.note)
                         ? "bg-indigo-600 text-white"
-                        : "bg-white/20 text-white/90 hover:bg-white/30"
+                        : "bg-white/20 text-white hover:bg-white/30"
                     }`}
                   >
                     <div className="w-10 h-10 bg-white/90 rounded-md flex items-center justify-center">
@@ -457,9 +490,77 @@ export function GameSettings({
       <h1 className="text-2xl font-bold text-white mb-2">Memory Game</h1>
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
         <h2 className="text-lg font-bold text-white mb-3">
-          Step 3: Choose Difficulty
+          Step 3: Choose Game Mode
         </h2>
         <div className="space-y-4">
+          {/* Game Mode Selection (Practice or Timed) */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => setTimedMode(false)}
+              className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
+                !timedMode
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+              }`}
+            >
+              <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center p-2 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-10 w-10 text-indigo-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <span className="font-medium">Practice Mode</span>
+              <span className="text-xs text-white/80">No time limit</span>
+            </button>
+
+            <button
+              onClick={() => setTimedMode(true)}
+              className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
+                timedMode
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+              }`}
+            >
+              <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center p-2 mb-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-10 w-10 text-indigo-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              <span className="font-medium">Timed Mode</span>
+              <span className="text-xs text-white/80">
+                Race against the clock
+              </span>
+            </button>
+          </div>
+
+          {/* Difficulty Selection */}
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">
               Select Difficulty:
@@ -483,6 +584,13 @@ export function GameSettings({
                     <span className="font-medium block">{diff}</span>
                     <span className="text-xs">
                       {GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs
+                      {timedMode && <br />}
+                      {timedMode &&
+                        (diff === "Easy"
+                          ? "90 seconds"
+                          : diff === "Medium"
+                          ? "75 seconds"
+                          : "60 seconds")}
                     </span>
                   </div>
                 </button>
@@ -509,92 +617,110 @@ export function GameSettings({
     </div>
   );
 
-  // Settings Modal for both games
+  // SettingsModal component for in-game settings
   const SettingsModal = () => (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
       <div
-        className="bg-purple-700 rounded-xl p-4 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto"
-        style={{ overscrollBehavior: "contain" }}
-      >
-        <h2 className="text-lg font-bold text-white mb-3">Game Settings</h2>
-        <div className="space-y-3">
+        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        onClick={onCancel}
+      ></div>
+      <div className="bg-gradient-to-b from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl p-6 max-w-md w-full mx-auto border border-white/20 shadow-lg z-10">
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold text-white">Game Settings</h2>
+
+          {/* Clef Selection */}
           <div>
             <label className="block text-sm font-medium text-white/80 mb-1">
-              Choose a Clef
+              Clef
             </label>
-            <select
-              value={clef}
-              onChange={(e) => setClef(e.target.value)}
-              className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <option value="Treble" className="bg-gray-800">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => setClef("Treble")}
+                className={`p-2 rounded-lg transition-colors ${
+                  clef === "Treble"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
                 Treble Clef
-              </option>
-              <option value="Bass" className="bg-gray-800">
+              </button>
+              <button
+                onClick={() => setClef("Bass")}
+                className={`p-2 rounded-lg transition-colors ${
+                  clef === "Bass"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
                 Bass Clef
-              </option>
-            </select>
+              </button>
+            </div>
           </div>
 
+          {/* Note Selection */}
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-1">
+              Notes
+            </label>
+            <div className="w-full overflow-x-auto">
+              <div className="inline-flex gap-1 p-1 bg-white/10 backdrop-blur-sm rounded-lg mb-1 border border-white/20">
+                {/* Display notes based on clef selection */}
+                {(clef === "Treble" ? trebleNotes : bassNotes).map((note) => (
+                  <button
+                    key={note.note}
+                    onClick={() => handleNoteToggle(note.note)}
+                    className={`p-1 rounded-lg transition-colors flex flex-col items-center min-w-[50px] ${
+                      selectedNotes.includes(note.note)
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white/20 text-white hover:bg-white/30"
+                    }`}
+                  >
+                    <div className="w-10 h-10 bg-white/90 rounded-md flex items-center justify-center">
+                      <img
+                        src={note.image}
+                        alt={note.note}
+                        className="w-9 h-9 object-contain"
+                      />
+                    </div>
+                    <span className="text-xs mt-1 font-medium">
+                      {note.note}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <p className="text-sm text-white/80">
+              Selected: {selectedNotes.length} notes
+            </p>
+          </div>
+
+          {/* Game mode for Note Recognition */}
           {gameType === "note-recognition" && (
             <>
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">
-                  Select Notes to Include
-                </label>
-                <div className="grid grid-cols-7 gap-1 overflow-x-auto pb-2">
-                  {displayNotes.map((note) => (
-                    <button
-                      key={note.note}
-                      onClick={() => handleNoteToggle(note.note)}
-                      className={`p-1 rounded-lg transition-colors flex flex-col items-center ${
-                        selectedNotes.includes(note.note)
-                          ? "bg-indigo-600 text-white"
-                          : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="w-10 h-10 bg-white/90 rounded-lg flex items-center justify-center p-1">
-                        <img
-                          src={note.image}
-                          alt={note.note}
-                          className="max-w-full max-h-full object-contain"
-                        />
-                      </div>
-                      <span className="text-xs mt-1 font-medium">
-                        {note.note}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-                <p className="text-xs text-white/60 mt-1">
-                  Selected: {selectedNotes.length} notes
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">
                   Game Mode
                 </label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => setTimedMode(false)}
-                    className={`flex-1 px-3 py-1.5 rounded-lg transition-colors ${
+                    className={`p-2 rounded-lg transition-colors ${
                       !timedMode
                         ? "bg-indigo-600 text-white"
                         : "bg-white/10 text-white/90 hover:bg-white/20"
                     }`}
                   >
-                    Practice
+                    Practice Mode
                   </button>
                   <button
                     onClick={() => setTimedMode(true)}
-                    className={`flex-1 px-3 py-1.5 rounded-lg transition-colors ${
+                    className={`p-2 rounded-lg transition-colors ${
                       timedMode
                         ? "bg-indigo-600 text-white"
                         : "bg-white/10 text-white/90 hover:bg-white/20"
                     }`}
                   >
-                    Timed
+                    Timed Mode
                   </button>
                 </div>
               </div>
@@ -613,7 +739,10 @@ export function GameSettings({
                           : "bg-white/10 text-white/90 hover:bg-white/20"
                       }`}
                     >
-                      Easy
+                      <div className="text-center">
+                        <span className="font-medium block">Easy</span>
+                        <span className="text-xs">60 seconds</span>
+                      </div>
                     </button>
                     <button
                       onClick={() => setDifficulty("Medium")}
@@ -623,7 +752,10 @@ export function GameSettings({
                           : "bg-white/10 text-white/90 hover:bg-white/20"
                       }`}
                     >
-                      Medium
+                      <div className="text-center">
+                        <span className="font-medium block">Medium</span>
+                        <span className="text-xs">45 seconds</span>
+                      </div>
                     </button>
                     <button
                       onClick={() => setDifficulty("Hard")}
@@ -633,7 +765,10 @@ export function GameSettings({
                           : "bg-white/10 text-white/90 hover:bg-white/20"
                       }`}
                     >
-                      Hard
+                      <div className="text-center">
+                        <span className="font-medium block">Hard</span>
+                        <span className="text-xs">30 seconds</span>
+                      </div>
                     </button>
                   </div>
                 </div>
@@ -665,13 +800,13 @@ export function GameSettings({
               onClick={onCancel}
               className="flex-1 px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
             >
-              Cancel
+              Resume
             </button>
             <button
               onClick={handleStart}
               className="flex-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
             >
-              {isModal ? "Restart Game" : "Start Game"}
+              Restart Game
             </button>
           </div>
         </div>
@@ -711,11 +846,7 @@ export function GameSettings({
   };
 
   return (
-    <div
-      className={`flex flex-col ${
-        isModal ? "h-full" : "min-h-[calc(100vh-64px)]"
-      } text-white p-4`}
-    >
+    <div className={`flex flex-col ${isModal ? "h-full" : ""} text-white p-4`}>
       {renderScreen()}
     </div>
   );

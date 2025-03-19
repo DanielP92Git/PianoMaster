@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useScores } from "../../../features/userData/useScores";
+import React, { useCallback } from "react";
 import doImage from "../../../assets/noteImages/treble-do-middle.svg";
 import reImage from "../../../assets/noteImages/treble-re-first.svg";
 import miImage from "../../../assets/noteImages/treble-mi-first.svg";
@@ -17,8 +16,12 @@ import bassSiImage from "../../../assets/noteImages/bass-si-small.svg";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
+import GameOverScreen from "../GameOverScreen";
 import { FaPlay, FaPause } from "react-icons/fa";
 import { GameSettings } from "../shared/GameSettings";
+import { useGameSettings } from "../../../features/games/hooks/useGameSettings";
+import { useGameProgress } from "../../../features/games/hooks/useGameProgress";
+import { useGameTimer } from "../../../features/games/hooks/useGameTimer";
 
 const trebleNotes = [
   { note: "דו", image: doImage },
@@ -40,469 +43,824 @@ const bassNotes = [
   { note: "רה", image: bassReImage },
 ];
 
-const TIME_LIMITS = {
-  Easy: 60, // 60 seconds
-  Medium: 45, // 45 seconds
-  Hard: 30, // 30 seconds
-};
-
 export function NoteRecognitionGame() {
-  const [clef, setClef] = useState("Treble");
-  const [selectedNotes, setSelectedNotes] = useState([]);
-  const [gameStarted, setGameStarted] = useState(false);
-  const [currentNote, setCurrentNote] = useState(null);
-  const [score, setScore] = useState(0);
-  const [totalQuestions, setTotalQuestions] = useState(0);
-  const [correctAnswers, setCorrectAnswers] = useState(0);
-  const [showFireworks, setShowFireworks] = useState(false);
-  const [gameFinished, setGameFinished] = useState(false);
-  const [gameLost, setGameLost] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showPauseModal, setShowPauseModal] = useState(false);
-  const [timedMode, setTimedMode] = useState(false);
-  const [difficulty, setDifficulty] = useState("Medium");
-  const [timeRemaining, setTimeRemaining] = useState(TIME_LIMITS.Medium);
-  const timerRef = useRef(null);
-  const { updateScore } = useScores();
+  const { settings, updateSettings, resetSettings } = useGameSettings();
 
-  // Get time limit based on difficulty
-  const getTimeLimit = (difficulty) => {
-    console.log("Getting time limit for difficulty:", difficulty);
-    const TIME_LIMITS = {
-      Easy: 60,
-      Medium: 45,
-      Hard: 30,
-    };
+  const { progress, updateProgress, handleAnswer, finishGame, resetProgress } =
+    useGameProgress();
 
-    // Handle case sensitivity and default to Medium if not found
-    if (typeof difficulty === "string") {
-      const capitalizedDifficulty =
-        difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
-      console.log("Capitalized difficulty:", capitalizedDifficulty);
-      return TIME_LIMITS[capitalizedDifficulty] || TIME_LIMITS.Medium;
-    }
+  // Create refs for sound effects using direct URLs
+  const correctSound = React.useRef(null);
+  const wrongSound = React.useRef(null);
+  const victorySound = React.useRef(null);
+  const gameOverSound = React.useRef(null);
 
-    return TIME_LIMITS.Medium; // Default to Medium if difficulty is not a string
-  };
+  // Create a Web Audio API context for fallback sounds
+  const audioContext = React.useRef(null);
 
-  // Start timer function
-  const startTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+  // Initialize sounds on component mount
+  React.useEffect(() => {
+    try {
+      console.log("Initializing sound effects...");
 
-    timerRef.current = setInterval(() => {
-      setTimeRemaining((prevTime) => {
-        if (prevTime <= 1) {
-          clearInterval(timerRef.current);
-          handleGameOver();
-          return 0;
+      // Attempt to load sounds from multiple possible locations
+      const possibleCorrectPaths = [
+        "/sounds/correct.mp3", // From public/sounds folder (preferred)
+        "./sounds/correct.mp3", // Relative path
+        "../sounds/correct.mp3", // One level up
+        "../../sounds/correct.mp3", // Two levels up
+        "/assets/sounds/correct.mp3", // Alternative location
+        "correct.mp3", // Directly in public folder
+      ];
+
+      const possibleWrongPaths = [
+        "/sounds/wrong.mp3", // From public/sounds folder (preferred)
+        "./sounds/wrong.mp3", // Relative path
+        "../sounds/wrong.mp3", // One level up
+        "../../sounds/wrong.mp3", // Two levels up
+        "/assets/sounds/wrong.mp3", // Alternative location
+        "wrong.mp3", // Directly in public folder
+      ];
+
+      const possibleVictoryPaths = [
+        "/sounds/success-fanfare-trumpets.mp3", // From public/sounds folder (preferred)
+        "./sounds/success-fanfare-trumpets.mp3", // Relative path
+        "../sounds/success-fanfare-trumpets.mp3", // One level up
+        "../../sounds/success-fanfare-trumpets.mp3", // Two levels up
+        "/assets/sounds/success-fanfare-trumpets.mp3", // Alternative location
+        "success-fanfare-trumpets.mp3", // Directly in public folder
+      ];
+
+      const possibleGameOverPaths = [
+        "/sounds/game-over.wav", // From public/sounds folder (preferred)
+        "./sounds/game-over.wav", // Relative path
+        "../sounds/game-over.wav", // One level up
+        "../../sounds/game-over.wav", // Two levels up
+        "/assets/sounds/game-over.wav", // Alternative location
+        "game-over.wav", // Directly in public folder
+      ];
+
+      // Try each path until one works
+      let correctSoundLoaded = false;
+      for (const path of possibleCorrectPaths) {
+        try {
+          console.log(`Trying to load correct sound from: ${path}`);
+          correctSound.current = new Audio(path);
+          correctSound.current.volume = 0.7; // Set volume to 70%
+          correctSound.current.load();
+          correctSoundLoaded = true;
+          console.log(`Successfully loaded correct sound from: ${path}`);
+          break;
+        } catch (e) {
+          console.warn(`Failed to load correct sound from: ${path}`);
         }
-        return prevTime - 1;
-      });
-    }, 1000);
-  };
+      }
 
-  // Format time as MM:SS
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, "0")}:${secs
-      .toString()
-      .padStart(2, "0")}`;
-  };
+      let wrongSoundLoaded = false;
+      for (const path of possibleWrongPaths) {
+        try {
+          console.log(`Trying to load wrong sound from: ${path}`);
+          wrongSound.current = new Audio(path);
+          wrongSound.current.volume = 0.7; // Set volume to 70%
+          wrongSound.current.load();
+          wrongSoundLoaded = true;
+          console.log(`Successfully loaded wrong sound from: ${path}`);
+          break;
+        } catch (e) {
+          console.warn(`Failed to load wrong sound from: ${path}`);
+        }
+      }
 
-  // Handle game settings from the GameSettings component
-  const handleGameSettings = (settings) => {
-    console.log("Received game settings:", settings);
+      let victorySoundLoaded = false;
+      for (const path of possibleVictoryPaths) {
+        try {
+          console.log(`Trying to load victory sound from: ${path}`);
+          victorySound.current = new Audio(path);
+          victorySound.current.volume = 0.7; // Set volume to 70%
+          victorySound.current.load();
+          victorySoundLoaded = true;
+          console.log(`Successfully loaded victory sound from: ${path}`);
+          break;
+        } catch (e) {
+          console.warn(`Failed to load victory sound from: ${path}`);
+        }
+      }
 
-    // Extract settings
-    const { clef, selectedNotes, timedMode, difficulty } = settings;
+      let gameOverSoundLoaded = false;
+      for (const path of possibleGameOverPaths) {
+        try {
+          console.log(`Trying to load game over sound from: ${path}`);
+          gameOverSound.current = new Audio(path);
+          gameOverSound.current.volume = 0.7; // Set volume to 70%
+          gameOverSound.current.load();
+          gameOverSoundLoaded = true;
+          console.log(`Successfully loaded game over sound from: ${path}`);
+          break;
+        } catch (e) {
+          console.warn(`Failed to load game over sound from: ${path}`);
+        }
+      }
 
-    // Ensure selectedNotes is an array
-    const notesArray = Array.isArray(selectedNotes) ? selectedNotes : [];
-    console.log("Selected notes for game:", notesArray);
-
-    // Set state based on settings
-    setClef(clef);
-    setSelectedNotes(notesArray);
-    setTimedMode(timedMode);
-    setDifficulty(difficulty);
-
-    // Set time limit for timed mode
-    if (timedMode) {
-      const timeLimit = getTimeLimit(difficulty);
-      console.log(
-        `Setting time limit to ${timeLimit} seconds for difficulty ${difficulty}`
-      );
-      setTimeRemaining(timeLimit);
+      if (!correctSoundLoaded) {
+        console.error("Failed to load correct sound from any path");
+      }
+      if (!wrongSoundLoaded) {
+        console.error("Failed to load wrong sound from any path");
+      }
+      if (!victorySoundLoaded) {
+        console.error("Failed to load victory sound from any path");
+      }
+      if (!gameOverSoundLoaded) {
+        console.error("Failed to load game over sound from any path");
+      }
+    } catch (error) {
+      console.error("Error initializing sounds:", error);
     }
+  }, []);
 
-    // Start the game with a slight delay to ensure state updates are processed
-    setTimeout(() => {
-      console.log("Starting game with settings:", {
-        clef,
-        selectedNotes: notesArray,
-        timedMode,
-        difficulty,
-      });
-      startGame(clef, notesArray, timedMode, difficulty);
-    }, 100);
-  };
-
-  // Separate function to start the game with explicit parameters
-  const startGame = (gameClef, gameNotes, isTimedMode, gameDifficulty) => {
-    console.log("Starting game with:", {
-      gameClef,
-      gameNotes,
-      isTimedMode,
-      gameDifficulty,
-    });
-
-    // Ensure gameNotes is an array
-    const notesArray = Array.isArray(gameNotes) ? gameNotes : [];
-
-    if (!notesArray || notesArray.length === 0) {
-      console.error("No notes selected for the game");
-      return;
+  // Initialize Web Audio API context for fallback sounds
+  React.useEffect(() => {
+    try {
+      // Initialize Web Audio API for fallback sounds
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) {
+        audioContext.current = new AudioContext();
+        console.log("Audio context initialized for fallback sounds");
+      }
+    } catch (e) {
+      console.error("Failed to initialize audio context:", e);
     }
+  }, []);
 
-    setGameStarted(true);
-    setShowSettingsModal(false);
-    setScore(0);
-    setTotalQuestions(0);
-    setCorrectAnswers(0);
-    setGameFinished(false);
+  // Function to play a fallback sound using Web Audio API
+  const playFallbackSound = (isCorrect) => {
+    if (!audioContext.current) return;
 
-    // Get notes based on clef
-    const clefNotes = gameClef === "Treble" ? trebleNotes : bassNotes;
+    try {
+      // Create oscillator for beep sound
+      const oscillator = audioContext.current.createOscillator();
+      const gainNode = audioContext.current.createGain();
 
-    // Filter notes based on selection
-    const filteredNotes = clefNotes.filter((note) =>
-      notesArray.includes(note.note)
-    );
+      // Configure sound parameters
+      if (isCorrect) {
+        // Correct answer: higher pitch, pleasant sound
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(
+          880,
+          audioContext.current.currentTime
+        ); // A5 note
 
-    console.log("Filtered notes for game:", filteredNotes);
-
-    // Set initial note
-    if (filteredNotes.length > 0) {
-      const randomIndex = Math.floor(Math.random() * filteredNotes.length);
-      setCurrentNote(filteredNotes[randomIndex]);
-
-      // Start timer if in timed mode
-      if (isTimedMode) {
-        const timeLimit = getTimeLimit(gameDifficulty);
-        console.log(
-          `Starting timer with ${timeLimit} seconds for ${gameDifficulty} difficulty`
+        // Create a "chirp" effect for correct answers
+        oscillator.frequency.exponentialRampToValueAtTime(
+          1760,
+          audioContext.current.currentTime + 0.1
         );
-        setTimeRemaining(timeLimit);
-        startTimer();
+
+        gainNode.gain.setValueAtTime(0.3, audioContext.current.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.current.currentTime + 0.3
+        );
+      } else {
+        // Wrong answer: lower pitch, dissonant sound
+        oscillator.type = "square";
+        oscillator.frequency.setValueAtTime(
+          220,
+          audioContext.current.currentTime
+        ); // A3 note
+
+        // Create a descending effect for wrong answers
+        oscillator.frequency.exponentialRampToValueAtTime(
+          110,
+          audioContext.current.currentTime + 0.2
+        );
+
+        gainNode.gain.setValueAtTime(0.2, audioContext.current.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(
+          0.01,
+          audioContext.current.currentTime + 0.3
+        );
+      }
+
+      // Connect nodes
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.current.destination);
+
+      // Play sound
+      oscillator.start();
+      oscillator.stop(
+        audioContext.current.currentTime + (isCorrect ? 0.3 : 0.3)
+      );
+
+      console.log(
+        `Played fallback ${
+          isCorrect ? "correct" : "wrong"
+        } sound with Web Audio API`
+      );
+    } catch (e) {
+      console.error("Failed to play fallback sound:", e);
+    }
+  };
+
+  // Function to play sounds
+  const playSound = (isCorrect) => {
+    try {
+      // Try to play MP3 files first
+      const soundRef = isCorrect ? correctSound.current : wrongSound.current;
+
+      if (soundRef) {
+        console.log(
+          `Attempting to play ${isCorrect ? "correct" : "wrong"} sound...`
+        );
+
+        // Stop any currently playing sounds
+        if (correctSound.current) {
+          correctSound.current.pause();
+          correctSound.current.currentTime = 0;
+        }
+        if (wrongSound.current) {
+          wrongSound.current.pause();
+          wrongSound.current.currentTime = 0;
+        }
+
+        // Play the sound
+        const playPromise = soundRef.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() =>
+              console.log(
+                `${isCorrect ? "Correct" : "Wrong"} sound played successfully`
+              )
+            )
+            .catch((e) => {
+              console.error(
+                `Failed to play ${isCorrect ? "correct" : "wrong"} sound:`,
+                e
+              );
+              // Use fallback sound
+              playFallbackSound(isCorrect);
+            });
+        }
+      } else {
+        // No audio element available, use fallback
+        console.log(
+          `No ${
+            isCorrect ? "correct" : "wrong"
+          } sound available, using fallback`
+        );
+        playFallbackSound(isCorrect);
+      }
+    } catch (error) {
+      console.error("Error playing sound:", error);
+      // Try to play fallback sound as last resort
+      try {
+        playFallbackSound(isCorrect);
+      } catch (fallbackError) {
+        console.error("Failed to play even fallback sound:", fallbackError);
       }
     }
   };
 
-  // Start the game (original function, now calls startGame)
-  const handleStartGame = () => {
-    startGame(clef, selectedNotes, timedMode, difficulty);
+  // Create a ref to store the game over handler
+  const gameOverHandlerRef = React.useRef();
+
+  // Add a ref to track current time limit to avoid stale values in effects
+  const currentTimeLimitRef = React.useRef(settings.timeLimit);
+
+  React.useEffect(() => {
+    // Update the ref when settings.timeLimit changes
+    currentTimeLimitRef.current = settings.timeLimit;
+  }, [settings.timeLimit]);
+
+  // First initialize the timeRemaining with an empty handler
+  const {
+    timeRemaining,
+    formattedTime,
+    isActive,
+    startTimer,
+    pauseTimer,
+    resetTimer,
+  } = useGameTimer(settings.timeLimit, () => {
+    // This will call the current handler in the ref
+    if (gameOverHandlerRef.current) {
+      gameOverHandlerRef.current();
+    }
+  });
+
+  // Function to play victory fanfare sound
+  const playVictorySound = () => {
+    try {
+      if (victorySound.current) {
+        console.log("Attempting to play victory fanfare sound...");
+
+        // Stop any currently playing sounds
+        if (correctSound.current) {
+          correctSound.current.pause();
+          correctSound.current.currentTime = 0;
+        }
+        if (wrongSound.current) {
+          wrongSound.current.pause();
+          wrongSound.current.currentTime = 0;
+        }
+
+        // Play the victory sound
+        const playPromise = victorySound.current.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => console.log("Victory sound played successfully"))
+            .catch((e) => {
+              console.error("Failed to play victory sound:", e);
+              // Use fallback victory sound
+              playVictoryFallbackSound();
+            });
+        }
+      } else {
+        // No audio element available, use fallback
+        console.log("No victory sound available, using fallback");
+        playVictoryFallbackSound();
+      }
+    } catch (error) {
+      console.error("Error playing victory sound:", error);
+      try {
+        playVictoryFallbackSound();
+      } catch (fallbackError) {
+        console.error(
+          "Failed to play even fallback victory sound:",
+          fallbackError
+        );
+      }
+    }
   };
 
-  // Handle answer selection
-  const handleAnswerSelect = (selectedAnswer) => {
-    if (!currentNote) return;
+  // Fallback victory sound using Web Audio API
+  const playVictoryFallbackSound = () => {
+    if (!audioContext.current) return;
 
-    const isCorrect = selectedAnswer === currentNote.note;
+    try {
+      // Create a more complex victory fanfare with the Web Audio API
+      const ctx = audioContext.current;
+      const now = ctx.currentTime;
 
-    // Update score and stats
-    setTotalQuestions((prev) => prev + 1);
-    if (isCorrect) {
-      setScore((prev) => prev + 10);
-      setCorrectAnswers((prev) => prev + 1);
-      setShowFireworks(true);
-      setTimeout(() => setShowFireworks(false), 1000);
+      // Create nodes
+      const masterGain = ctx.createGain();
+      masterGain.gain.value = 0.4;
+      masterGain.connect(ctx.destination);
+
+      // Play a short fanfare
+      const notes = [
+        { freq: 523.25, start: 0.0, duration: 0.2 }, // C5
+        { freq: 659.25, start: 0.2, duration: 0.2 }, // E5
+        { freq: 783.99, start: 0.4, duration: 0.2 }, // G5
+        { freq: 1046.5, start: 0.6, duration: 0.8 }, // C6 (longer)
+      ];
+
+      notes.forEach((note) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.frequency.value = note.freq;
+        osc.type = "triangle";
+
+        gain.gain.setValueAtTime(0.01, now + note.start);
+        gain.gain.exponentialRampToValueAtTime(0.3, now + note.start + 0.05);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          now + note.start + note.duration
+        );
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start(now + note.start);
+        osc.stop(now + note.start + note.duration + 0.1);
+      });
+
+      console.log("Played fallback victory sound with Web Audio API");
+    } catch (e) {
+      console.error("Failed to play fallback victory sound:", e);
+    }
+  };
+
+  // Function to play game over sound
+  const playGameOverSound = () => {
+    try {
+      if (gameOverSound.current) {
+        console.log("Attempting to play game over sound...");
+
+        // Stop any currently playing sounds
+        if (correctSound.current) {
+          correctSound.current.pause();
+          correctSound.current.currentTime = 0;
+        }
+        if (wrongSound.current) {
+          wrongSound.current.pause();
+          wrongSound.current.currentTime = 0;
+        }
+        if (victorySound.current) {
+          victorySound.current.pause();
+          victorySound.current.currentTime = 0;
+        }
+
+        // Play the game over sound
+        const playPromise = gameOverSound.current.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => console.log("Game over sound played successfully"))
+            .catch((e) => {
+              console.error("Failed to play game over sound:", e);
+              // Use fallback game over sound
+              playGameOverFallbackSound();
+            });
+        }
+      } else {
+        // No audio element available, use fallback
+        console.log("No game over sound available, using fallback");
+        playGameOverFallbackSound();
+      }
+    } catch (error) {
+      console.error("Error playing game over sound:", error);
+      try {
+        playGameOverFallbackSound();
+      } catch (fallbackError) {
+        console.error(
+          "Failed to play even fallback game over sound:",
+          fallbackError
+        );
+      }
+    }
+  };
+
+  // Fallback game over sound using Web Audio API
+  const playGameOverFallbackSound = () => {
+    if (!audioContext.current) return;
+
+    try {
+      // Create a more dramatic game over sound with the Web Audio API
+      const ctx = audioContext.current;
+      const now = ctx.currentTime;
+
+      // Create nodes
+      const masterGain = ctx.createGain();
+      masterGain.gain.value = 0.4;
+      masterGain.connect(ctx.destination);
+
+      // Play a sad descending melody for game over
+      const notes = [
+        { freq: 440.0, start: 0.0, duration: 0.2, type: "sawtooth" }, // A4
+        { freq: 349.23, start: 0.2, duration: 0.2, type: "sawtooth" }, // F4
+        { freq: 293.66, start: 0.4, duration: 0.2, type: "sawtooth" }, // D4
+        { freq: 261.63, start: 0.6, duration: 0.8, type: "sawtooth" }, // C4 (longer)
+      ];
+
+      notes.forEach((note) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.frequency.value = note.freq;
+        osc.type = note.type;
+
+        gain.gain.setValueAtTime(0.3, now + note.start);
+        gain.gain.exponentialRampToValueAtTime(
+          0.01,
+          now + note.start + note.duration
+        );
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start(now + note.start);
+        osc.stop(now + note.start + note.duration + 0.1);
+      });
+
+      console.log("Played fallback game over sound with Web Audio API");
+    } catch (e) {
+      console.error("Failed to play fallback game over sound:", e);
+    }
+  };
+
+  // Then define and store the actual handleGameOver with access to timeRemaining
+  const handleGameOver = useCallback(() => {
+    // Calculate score percentage
+    const scorePercentage =
+      (progress.correctAnswers / Math.max(1, progress.totalQuestions)) * 100;
+
+    // Game is lost if score is less than 50% or if time ran out in timed mode
+    const isLost =
+      scorePercentage < 50 || (settings.timedMode && timeRemaining === 0);
+
+    // Determine if time ran out
+    const timeRanOut = settings.timedMode && timeRemaining === 0;
+
+    // Add a small delay before playing sound to ensure it's played after the UI updates
+    setTimeout(() => {
+      if (isLost) {
+        // Play game over sound if the player lost
+        console.log("Game lost! Playing game over sound...");
+        playGameOverSound();
+      } else {
+        // Play victory sound if the player won
+        console.log("Game won! Playing victory sound...");
+        playVictorySound();
+      }
+    }, 300);
+
+    finishGame(isLost, timeRanOut);
+  }, [
+    progress.correctAnswers,
+    progress.totalQuestions,
+    settings.timedMode,
+    timeRemaining,
+    finishGame,
+    playVictorySound,
+    playGameOverSound,
+  ]);
+
+  // Update the ref whenever handleGameOver changes
+  React.useEffect(() => {
+    gameOverHandlerRef.current = handleGameOver;
+  }, [handleGameOver]);
+
+  // Get random note based on current settings
+  const getRandomNote = () => {
+    // Use the current settings to determine which notes to use
+    const notesArray = settings.clef === "Treble" ? trebleNotes : bassNotes;
+
+    console.log("Current settings in getRandomNote:", {
+      clef: settings.clef,
+      selectedNotes: settings.selectedNotes,
+    });
+
+    // Ensure selectedNotes exists and has at least 2 notes
+    let selectedNotes = settings.selectedNotes;
+    if (!Array.isArray(selectedNotes) || selectedNotes.length < 2) {
+      console.warn(
+        "Less than 2 selected notes, using all notes for current clef"
+      );
+      selectedNotes = notesArray.map((note) => note.note);
+
+      // Update settings to prevent future issues
+      updateSettings({
+        ...settings,
+        selectedNotes: selectedNotes,
+      });
     }
 
-    // Get next note
-    const notesArray = clef === "Treble" ? trebleNotes : bassNotes;
+    // Filter notes based on selection
     const filteredNotes = notesArray.filter((note) =>
       selectedNotes.includes(note.note)
     );
 
-    // Check if all questions have been answered
-    if (totalQuestions >= 9) {
+    console.log(
+      "Available filtered notes:",
+      filteredNotes.map((n) => n.note)
+    );
+
+    if (filteredNotes.length === 0) {
+      console.error("No notes available after filtering, using all notes");
+      // If something went wrong with filtering, use all notes as a fallback
+      const allNotes = notesArray;
+      const randomNote = allNotes[Math.floor(Math.random() * allNotes.length)];
+      console.log("Selected fallback random note:", randomNote.note);
+      return randomNote;
+    }
+
+    const randomNote =
+      filteredNotes[Math.floor(Math.random() * filteredNotes.length)];
+    console.log("Selected random note:", randomNote.note);
+    return randomNote;
+  };
+
+  // Handle game settings from the GameSettings component
+  const handleGameSettings = (newSettings) => {
+    console.log("Received game settings:", newSettings);
+
+    // Ensure all required properties exist
+    if (!newSettings) {
+      console.error("No settings provided");
+      return;
+    }
+
+    // Ensure clef is valid
+    const clef = newSettings.clef === "Bass" ? "Bass" : "Treble";
+
+    // Ensure selectedNotes is an array
+    let selectedNotes = Array.isArray(newSettings.selectedNotes)
+      ? newSettings.selectedNotes
+      : [];
+
+    // If fewer than 2 notes are selected, use all notes for the selected clef
+    if (selectedNotes.length < 2) {
+      console.log(
+        "Less than 2 notes selected, using all notes for the selected clef"
+      );
+      selectedNotes =
+        clef === "Treble"
+          ? trebleNotes.map((note) => note.note)
+          : bassNotes.map((note) => note.note);
+    }
+
+    // Create a complete settings object with all required properties
+    const completeSettings = {
+      clef,
+      selectedNotes,
+      timedMode: !!newSettings.timedMode,
+      difficulty: newSettings.difficulty || "Medium",
+      timeLimit: newSettings.timeLimit || 45,
+    };
+
+    console.log("Prepared complete settings:", completeSettings);
+
+    // First update the settings in our state
+    updateSettings(completeSettings);
+
+    // Start the game with a slight delay to ensure state updates are processed
+    setTimeout(() => {
+      startGame(completeSettings);
+    }, 100);
+  };
+
+  // Start the game with current or new settings
+  const startGame = (gameSettings = settings) => {
+    console.log("Starting game with settings:", gameSettings);
+
+    // Ensure we have valid selectedNotes before starting
+    if (!gameSettings.selectedNotes || gameSettings.selectedNotes.length < 2) {
+      console.log(
+        "No selected notes in settings, using all notes for the current clef"
+      );
+      // Use all notes for the current clef
+      gameSettings.selectedNotes =
+        gameSettings.clef === "Treble"
+          ? trebleNotes.map((note) => note.note)
+          : bassNotes.map((note) => note.note);
+    }
+
+    // First update settings to ensure they're available when getting the initial note
+    updateSettings(gameSettings);
+
+    // Reset game state after settings are updated
+    resetProgress();
+
+    // Wait a tiny bit to ensure state updates have propagated
+    setTimeout(() => {
+      // Get initial note based on updated settings
+      const firstNote = getRandomNote();
+      console.log("Initial note:", firstNote);
+
+      if (!firstNote) {
+        console.error("Failed to get initial note");
+        return;
+      }
+
+      // Update progress with the initial note
+      updateProgress({
+        currentNote: firstNote,
+        isStarted: true,
+        totalQuestions: 0,
+        correctAnswers: 0,
+        score: 0,
+      });
+
+      // Start timer if in timed mode
+      if (gameSettings.timedMode) {
+        pauseTimer();
+        setTimeout(() => {
+          resetTimer(gameSettings.timeLimit);
+          setTimeout(() => {
+            startTimer();
+          }, 20);
+        }, 20);
+      }
+    }, 50);
+  };
+
+  // Update the effect to properly handle timeLimit changes
+  React.useEffect(() => {
+    // Only reset the timer if the game is active and the time limit has changed
+    if (
+      settings.timedMode &&
+      isActive &&
+      settings.timeLimit &&
+      settings.timeLimit !== currentTimeLimitRef.current &&
+      progress.isStarted &&
+      !progress.isFinished
+    ) {
+      console.log(
+        "Time limit changed, resetting timer to:",
+        settings.timeLimit
+      );
+      // Pause the timer first
+      pauseTimer();
+      // Reset with the new time limit and restart
+      setTimeout(() => {
+        resetTimer(settings.timeLimit);
+        // Start the timer after a small delay to ensure clean state
+        setTimeout(() => {
+          startTimer();
+        }, 50);
+      }, 50);
+    }
+  }, [
+    settings.timeLimit,
+    settings.timedMode,
+    isActive,
+    pauseTimer,
+    resetTimer,
+    startTimer,
+    progress.isStarted,
+    progress.isFinished,
+  ]);
+
+  // Clean up timer on unmount
+  React.useEffect(() => {
+    return () => {
+      pauseTimer();
+    };
+  }, [pauseTimer]);
+
+  // Handle answer selection
+  const handleAnswerSelect = (selectedAnswer) => {
+    if (!progress.currentNote) return;
+
+    const isCorrect = handleAnswer(selectedAnswer, progress.currentNote.note);
+
+    // Play the appropriate sound
+    playSound(isCorrect);
+
+    // Check if game should end
+    if (progress.totalQuestions >= 9) {
       handleGameOver();
       return;
     }
 
     // Set next note
-    const randomIndex = Math.floor(Math.random() * filteredNotes.length);
-    setCurrentNote(filteredNotes[randomIndex]);
-  };
+    const nextNote = getRandomNote();
+    console.log("Next note:", nextNote); // Debug log
 
-  // Handle game over
-  const handleGameOver = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-
-    // Calculate score percentage
-    const scorePercentage =
-      (correctAnswers / Math.max(1, totalQuestions)) * 100;
-
-    // Determine if game was lost:
-    // 1. If all 10 questions were answered but score is less than 50%
-    // 2. If in timed mode and time ran out before answering all questions
-    const isGameLost =
-      (totalQuestions >= 10 && scorePercentage < 50) ||
-      (timedMode && totalQuestions < 10 && timeRemaining <= 0);
-
-    setGameLost(isGameLost);
-    updateScore({ score, gameType: "note-recognition" });
-    setGameFinished(true);
+    updateProgress({
+      currentNote: nextNote,
+    });
   };
 
   // Handle pause game
   const handlePauseGame = () => {
-    if (timedMode && timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    if (settings.timedMode) {
+      // In timed mode, always pause the timer and open settings
+      pauseTimer();
+      updateProgress({ showSettingsModal: true });
+    } else {
+      // For non-timed mode, just show settings modal
+      updateProgress({ showSettingsModal: true });
     }
-    setShowPauseModal(true);
   };
 
-  // Handle resume game
+  // Handle resume game from settings modal
   const handleResumeGame = () => {
-    setShowPauseModal(false);
-    if (timedMode && timeRemaining > 0) {
+    updateProgress({ showSettingsModal: false });
+    // If in timed mode, resume the timer
+    if (settings.timedMode) {
       startTimer();
     }
   };
 
-  // Handle open settings
-  const handleOpenSettings = () => {
-    setShowPauseModal(false);
-    setShowSettingsModal(true);
-  };
+  // Handle restart game from settings modal
+  const handleRestartGame = (newSettings) => {
+    updateProgress({ showSettingsModal: false });
 
-  // Handle close settings modal
-  const handleCloseSettingsModal = () => {
-    setShowSettingsModal(false);
-    if (timedMode && timeRemaining > 0 && gameStarted && !gameFinished) {
-      startTimer();
-    }
-  };
+    // Use the new settings passed from the modal
+    console.log("Restarting game with new settings:", newSettings);
 
-  // Handle restart game
-  const handleRestartGame = () => {
-    setShowSettingsModal(false);
-    setShowPauseModal(false);
-    setGameLost(false);
-
-    // Use the same startGame function for consistency
-    startGame(clef, selectedNotes, timedMode, difficulty);
-  };
-
-  // Handle reset game
-  const handleReset = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
+    // Make sure we have the selected notes
+    if (!newSettings || !newSettings.selectedNotes) {
+      console.error(
+        "No selectedNotes in the new settings, using current settings"
+      );
+      newSettings = {
+        clef: settings.clef,
+        selectedNotes: settings.selectedNotes,
+        timedMode: settings.timedMode,
+        difficulty: settings.difficulty,
+        timeLimit: settings.timeLimit,
+      };
+    } else {
+      console.log("Selected notes from settings:", newSettings.selectedNotes);
     }
 
-    setGameStarted(false);
-    setGameFinished(false);
-    setGameLost(false);
-    setScore(0);
-    setTotalQuestions(0);
-    setCorrectAnswers(0);
-    setCurrentNote(null);
-    setTimeRemaining(getTimeLimit(difficulty));
-  };
+    // First update the game settings to reflect the new choices
+    updateSettings(newSettings);
 
-  // Clean up timer on unmount
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, []);
-
-  // Initialize the game with default settings if needed
-  useEffect(() => {
-    // If no notes are selected, set default notes
-    if (selectedNotes.length === 0) {
-      console.log("No notes selected, setting default notes");
-      const defaultNotes =
-        clef === "Treble"
-          ? trebleNotes.slice(0, 3).map((note) => note.note)
-          : bassNotes.slice(0, 3).map((note) => note.note);
-      setSelectedNotes(defaultNotes);
-    }
-  }, [clef]);
-
-  // Game screen component
-  const GameScreen = () => (
-    <div className="flex-1 flex flex-col items-center">
-      {showFireworks && <Firework />}
-
-      <div className="absolute top-1 right-2 flex gap-1">
-        {timedMode && (
-          <div
-            className={`px-2 py-0.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-lg ${
-              timeRemaining <= 10
-                ? "text-red-500 animate-pulse font-bold"
-                : "text-white"
-            } text-sm`}
-          >
-            {formatTime(timeRemaining)}
-          </div>
-        )}
-        <button
-          onClick={handlePauseGame}
-          className="p-1 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
-        >
-          <FaPause size={14} />
-        </button>
-      </div>
-
-      <div className="text-center mb-1 mt-1">
-        <p className="text-lg font-bold text-white">Score: {score}</p>
-        <p className="text-xs text-white/80">
-          Question {totalQuestions + 1}/10
-        </p>
-      </div>
-
-      {/* Horizontal layout container - further optimized for height */}
-      <div className="flex flex-row w-full justify-center items-center gap-4 px-2">
-        {/* Note display on the left - further reduced size */}
-        <div className="bg-white rounded-xl p-3 w-48 h-48 flex items-center justify-center">
-          {currentNote && (
-            <img
-              src={currentNote.image}
-              alt="Musical Note"
-              className="max-w-full max-h-full"
-            />
-          )}
-        </div>
-
-        {/* Answer buttons on the right - more compact layout */}
-        <div className="grid grid-cols-3 gap-2 max-w-xl">
-          {(clef === "Treble" ? trebleNotes : bassNotes)
-            .filter((note) => selectedNotes.includes(note.note))
-            .map((note) => (
-              <button
-                key={note.note}
-                onClick={() => handleAnswerSelect(note.note)}
-                className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors text-sm"
-              >
-                {note.note}
-              </button>
-            ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Pause modal component
-  const PauseModal = () => (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-purple-700 rounded-xl p-6 max-w-md w-full mx-4">
-        <h2 className="text-xl font-bold text-white mb-4 text-center">
-          Game Paused
-        </h2>
-        <div className="space-y-3">
-          <button
-            onClick={handleResumeGame}
-            className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
-          >
-            <FaPlay /> Resume Game
-          </button>
-          <button
-            onClick={handleRestartGame}
-            className="w-full px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
-          >
-            Restart Game
-          </button>
-          <button
-            onClick={() => (window.location.href = "/note-recognition-mode")}
-            className="w-full px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
-          >
-            Exit Game
-          </button>
-          <button
-            onClick={handleOpenSettings}
-            className="w-full px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
-          >
-            Settings
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  // Game Over Screen component
-  const GameOverScreen = () => {
-    const scorePercentage = (score / 100) * 100;
-    const timeUsed = timedMode
-      ? getTimeLimit(difficulty) - timeRemaining
-      : null;
-    const reason = totalQuestions < 10 ? "Time's up!" : "Score too low";
-
-    return (
-      <div className="relative w-full max-w-md mx-auto p-8 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm font-outfit animate-floatUp">
-        <div className="text-center mt-2 space-y-4">
-          <h2 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-600 to-orange-600 animate-shimmer bg-[length:200%_auto]">
-            Game Over
-          </h2>
-
-          <div className="flex items-center justify-center gap-2 text-gray-600">
-            <p className="text-lg">Final Score: {score}/100</p>
-          </div>
-
-          <div className="py-3 px-4 rounded-xl bg-gradient-to-r from-red-50 to-orange-50 border border-red-100">
-            <p className="text-red-700 font-semibold">{reason}</p>
-            {totalQuestions < 10 && timedMode && (
-              <p className="text-gray-600 text-sm mt-1">
-                You answered {totalQuestions} out of 10 questions
-              </p>
-            )}
-            {totalQuestions === 10 && (
-              <p className="text-gray-600 text-sm mt-1">
-                You need at least 50% correct answers to win
-              </p>
-            )}
-          </div>
-
-          {timedMode && timeUsed !== null && (
-            <div className="text-gray-600">
-              <p>
-                Time used: {Math.floor(timeUsed / 60)}:
-                {(timeUsed % 60).toString().padStart(2, "0")}
-              </p>
-            </div>
-          )}
-
-          <div className="flex gap-3 mt-6">
-            <button
-              onClick={handleRestartGame}
-              className="flex-1 py-3 px-6 text-lg font-semibold text-white rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
-            >
-              Try Again
-            </button>
-            <button
-              onClick={() => (window.location.href = "/note-recognition-mode")}
-              className="flex-1 py-3 px-6 text-lg font-semibold text-gray-700 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:outline-none"
-            >
-              Exit
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    // Then start the game with these settings
+    setTimeout(() => {
+      startGame(newSettings);
+    }, 100);
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
-      <div className="p-1">
+    <div className="flex flex-col overflow-hidden">
+      <div className="p-2">
         <BackButton
           to="/note-recognition-mode"
           name="Note Recognition"
@@ -510,57 +868,194 @@ export function NoteRecognitionGame() {
         />
       </div>
 
-      <div className="flex-1 flex flex-col">
-        {!gameStarted ? (
-          <GameSettings
-            gameType="note-recognition"
-            onStart={handleGameSettings}
-            initialClef={clef}
-            initialSelectedNotes={selectedNotes}
-            initialTimedMode={timedMode}
-            initialDifficulty={difficulty}
-            trebleNotes={trebleNotes}
-            bassNotes={bassNotes}
+      {progress.showFireworks && <Firework />}
+
+      {!progress.isStarted ? (
+        <GameSettings
+          gameType="note-recognition"
+          onStart={handleGameSettings}
+          initialClef={settings.clef}
+          initialSelectedNotes={settings.selectedNotes}
+          initialTimedMode={settings.timedMode}
+          initialDifficulty={settings.difficulty}
+          trebleNotes={trebleNotes}
+          bassNotes={bassNotes}
+          noteOptions={settings.selectedNotes}
+        />
+      ) : progress.isFinished ? (
+        progress.isLost ? (
+          <GameOverScreen
+            score={progress.score}
+            totalQuestions={progress.totalQuestions}
+            timeRanOut={progress.timeRanOut}
+            onReset={() => {
+              resetProgress();
+              resetSettings();
+            }}
           />
-        ) : gameFinished ? (
-          gameLost ? (
-            <GameOverScreen />
-          ) : (
-            <VictoryScreen
-              score={score}
-              totalPossibleScore={100}
-              onReset={handleReset}
-              timedMode={timedMode}
-              timeRemaining={timeRemaining}
-              initialTime={getTimeLimit(difficulty)}
-            />
-          )
         ) : (
-          <GameScreen />
+          <VictoryScreen
+            score={progress.score}
+            totalPossibleScore={progress.totalQuestions * 10}
+            onReset={() => {
+              resetProgress();
+              resetSettings();
+            }}
+          />
+        )
+      ) : (
+        <div className="flex-1 flex flex-col">
+          {/* Score at the top */}
+          <div className="text-2xl font-bold text-white text-center mt-2 mb-4">
+            Score: {progress.score}
+            {settings.timedMode && (
+              <span className="ml-8">Time: {formattedTime}</span>
+            )}
+          </div>
+
+          {/* Main game area */}
+          <div className="flex items-center justify-center pt-10">
+            <div className="flex flex-col w-full max-w-3xl px-4">
+              <div className="flex w-full">
+                {/* Note Buttons on the left */}
+                <div className="grid grid-cols-2 gap-2 w-1/2 mr-4">
+                  {/* Show all notes with same styling */}
+                  {(settings.clef === "Treble" ? trebleNotes : bassNotes).map(
+                    (note) => (
+                      <button
+                        key={note.note}
+                        onClick={() => handleAnswerSelect(note.note)}
+                        className="px-3 py-1.5 backdrop-blur-sm border rounded-lg transition-colors bg-white/20 border-white/30 text-white hover:bg-white/30"
+                      >
+                        {note.note}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                {/* Current Note on the right */}
+                <div className="w-1/2 flex justify-center">
+                  {progress.currentNote ? (
+                    <div className="bg-white rounded-xl p-2 w-48 h-48 flex items-center justify-center">
+                      <img
+                        src={progress.currentNote.image}
+                        alt={`Musical Note: ${progress.currentNote.note}`}
+                        className="w-full h-full object-contain"
+                        onError={(e) => {
+                          console.error("Error loading image:", e);
+                          console.log(
+                            "Image source:",
+                            progress.currentNote.image
+                          );
+                          e.target.onerror = null;
+                          e.target.src =
+                            settings.clef === "Treble"
+                              ? trebleNotes[0].image
+                              : bassNotes[0].image;
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="bg-white rounded-xl p-2 w-48 h-48 flex items-center justify-center">
+                      <span className="text-red-500">Note Image</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Feedback Message - Below the game elements */}
+              {progress.feedbackMessage && (
+                <div
+                  className={`mt-4 mb-2 rounded-lg p-3 animate-fadeIn text-center shadow-lg text-xl font-bold ${
+                    progress.feedbackMessage.type === "correct"
+                      ? "bg-emerald-600/80 text-white"
+                      : "bg-rose-600/80 text-white"
+                  }`}
+                  dir="rtl"
+                >
+                  {progress.feedbackMessage.type === "correct" ? (
+                    <span className="flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                      {progress.feedbackMessage.text}
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 mr-1"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                      {progress.feedbackMessage.text}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Settings/Pause Button */}
+      <div className="absolute top-2 right-2">
+        {progress.isStarted && !progress.isFinished && (
+          <>
+            {settings.timedMode ? (
+              <button
+                onClick={handlePauseGame}
+                className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center"
+                aria-label="Pause"
+              >
+                <FaPause className="mr-1" />
+                Pause
+              </button>
+            ) : (
+              <button
+                onClick={handlePauseGame}
+                className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors text-sm"
+              >
+                Settings
+              </button>
+            )}
+          </>
         )}
       </div>
 
-      {showPauseModal && <PauseModal />}
-
-      {showSettingsModal && (
+      {/* Settings Modal */}
+      {progress.showSettingsModal && (
         <GameSettings
           gameType="note-recognition"
           isModal={true}
           onStart={handleRestartGame}
-          onCancel={handleCloseSettingsModal}
-          initialClef={clef}
-          initialSelectedNotes={selectedNotes}
-          initialTimedMode={timedMode}
-          initialDifficulty={difficulty}
+          onCancel={handleResumeGame}
+          initialClef={settings.clef}
+          initialSelectedNotes={settings.selectedNotes}
+          initialTimedMode={settings.timedMode}
+          initialDifficulty={settings.difficulty}
           trebleNotes={trebleNotes}
           bassNotes={bassNotes}
-          onChange={(settings) => {
-            setClef(settings.clef);
-            setSelectedNotes(settings.selectedNotes);
-            setTimedMode(settings.timedMode);
-            setDifficulty(settings.difficulty);
-            setTimeRemaining(getTimeLimit(settings.difficulty));
-          }}
+          noteOptions={settings.selectedNotes}
         />
       )}
     </div>

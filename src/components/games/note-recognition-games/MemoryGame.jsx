@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import { useScores } from "../../../features/userData/useScores";
 import doImage from "../../../assets/noteImages/treble-do-middle.svg";
 import reImage from "../../../assets/noteImages/treble-re-first.svg";
@@ -18,6 +20,8 @@ import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
 import { GameSettings } from "../shared/GameSettings";
+import { useGameTimer } from "../../../features/games/hooks/useGameTimer";
+import GameOverScreen from "../GameOverScreen";
 
 const trebleNotes = [
   { note: "דו", image: doImage },
@@ -28,7 +32,6 @@ const trebleNotes = [
   { note: "לה", image: laImage },
   { note: "סי", image: siImage },
 ];
-
 const bassNotes = [
   { note: "דו", image: bassDoImage },
   { note: "רה", image: bassReImage },
@@ -67,15 +70,57 @@ export function MemoryGame() {
   const [gameFinished, setGameFinished] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [timedMode, setTimedMode] = useState(false);
+  const [timeLimit, setTimeLimit] = useState(60);
+  const [isLost, setIsLost] = useState(false);
   const { updateScore } = useScores();
 
+  // Game over handler ref to avoid stale closures
+  const gameOverHandlerRef = React.useRef();
+
+  // Initialize the timer with a callback to handle game over
+  const {
+    timeRemaining,
+    formattedTime,
+    isActive,
+    startTimer,
+    pauseTimer,
+    resetTimer,
+  } = useGameTimer(timeLimit, () => {
+    // This will call the current handler in the ref
+    if (gameOverHandlerRef.current) {
+      gameOverHandlerRef.current();
+    }
+  });
+
+  // Handle game over when time runs out
+  const handleGameOver = useCallback(() => {
+    console.log("Game over - time ran out!");
+    pauseTimer();
+    setGameFinished(true);
+    setIsLost(true);
+  }, [pauseTimer]);
+
+  // Update the ref whenever handleGameOver changes
+  useEffect(() => {
+    gameOverHandlerRef.current = handleGameOver;
+  }, [handleGameOver]);
+
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      pauseTimer();
+    };
+  }, [pauseTimer]);
+
   // Create cards based on grid size
-  const createCards = () => {
+  const createCards = (currentClef = clef) => {
     const totalCards = GRID_SIZES[gridSize];
     const pairs = totalCards / 2;
 
     // Select the appropriate notes based on clef
-    const selectedNotesArray = clef === "Treble" ? trebleNotes : bassNotes;
+    const selectedNotesArray =
+      currentClef === "Treble" ? trebleNotes : bassNotes;
 
     // Create an array of notes that can be duplicated to fill the required number of pairs
     let selectedNotes = [];
@@ -115,64 +160,75 @@ export function MemoryGame() {
 
   // Handle settings from the GameSettings component
   const handleGameSettings = (settings) => {
-    const {
-      clef: newClef,
-      difficulty: newDifficulty,
-      gridSize: newGridSize,
-    } = settings;
+    console.log("Received game settings:", settings);
+    setClef(settings.clef);
+    setDifficulty(settings.difficulty);
+    setGridSize(DIFFICULTIES[settings.difficulty]);
+    setTimedMode(settings.timedMode);
+    setTimeLimit(settings.timeLimit || 60);
 
-    // Update settings
-    setClef(newClef);
-    setDifficulty(newDifficulty);
-    setGridSize(DIFFICULTIES[newDifficulty] || newGridSize);
-
-    // Create new cards with the updated settings
-    const newCards = createCards();
-    setCards(newCards);
-    setFlippedIndexes([]);
-    setMatchedIndexes([]);
-    setScore(0);
-    setShowFireworks(false);
-    setGameFinished(false);
-    setGameStarted(true);
+    // Start game with a slight delay to ensure state updates
+    setTimeout(() => {
+      handleStartGame(settings.clef);
+    }, 100);
   };
 
-  const handleStartGame = () => {
-    // Create new cards with current settings
-    const newCards = createCards();
-    setCards(newCards);
+  const handleStartGame = (currentClef = clef) => {
+    setGameStarted(true);
+    setGameFinished(false);
+    setIsLost(false);
     setFlippedIndexes([]);
     setMatchedIndexes([]);
     setScore(0);
     setShowFireworks(false);
-    setGameFinished(false);
-    setGameStarted(true);
+    createCards(currentClef);
+
+    // Start timer if in timed mode
+    if (timedMode) {
+      pauseTimer();
+      setTimeout(() => {
+        resetTimer(timeLimit);
+        setTimeout(() => {
+          startTimer();
+        }, 50);
+      }, 50);
+    }
   };
 
   const handlePauseGame = () => {
+    if (timedMode) {
+      pauseTimer();
+    }
     setShowSettingsModal(true);
   };
 
   const handleRestartGame = (settings) => {
     setShowSettingsModal(false);
-    // Update settings first
-    if (settings) {
-      setClef(settings.clef);
-      setDifficulty(settings.difficulty);
-      setGridSize(DIFFICULTIES[settings.difficulty] || settings.gridSize);
+
+    // Update settings
+    setClef(settings.clef);
+    setDifficulty(settings.difficulty);
+    setGridSize(DIFFICULTIES[settings.difficulty]);
+    setTimedMode(settings.timedMode);
+    setTimeLimit(settings.timeLimit || 60);
+
+    // Restart game with a slight delay
+    setTimeout(() => {
+      handleStartGame(settings.clef);
+    }, 100);
+  };
+
+  const handleResumeGame = () => {
+    setShowSettingsModal(false);
+    // Resume timer if in timed mode
+    if (timedMode) {
+      startTimer();
     }
-    // Then create new cards with current settings
-    setCards(createCards());
-    setFlippedIndexes([]);
-    setMatchedIndexes([]);
-    setScore(0);
-    setShowFireworks(false);
-    setGameFinished(false);
   };
 
   const handleReset = () => {
     setGameStarted(false);
-    setCards(createCards());
+    setCards(createCards(clef));
     setFlippedIndexes([]);
     setMatchedIndexes([]);
     setScore(0);
@@ -254,13 +310,66 @@ export function MemoryGame() {
     return `grid gap-2 ${gridCols} ${gridRows} max-w-7xl mx-auto max-h-screen`;
   };
 
+  // Check if the game is won when matchedIndexes changes
+  useEffect(() => {
+    if (
+      gameStarted &&
+      !gameFinished &&
+      matchedIndexes.length > 0 &&
+      matchedIndexes.length === cards.length
+    ) {
+      console.log("Game won!");
+
+      // Pause timer if it's running
+      if (timedMode) {
+        pauseTimer();
+      }
+
+      setTimeout(() => {
+        setGameFinished(true);
+        setShowFireworks(true);
+        // Update the user's score in the database
+        updateScore("memory", score);
+      }, 500);
+    }
+  }, [
+    matchedIndexes,
+    cards.length,
+    gameStarted,
+    gameFinished,
+    score,
+    updateScore,
+    timedMode,
+    pauseTimer,
+  ]);
+
   return (
-    <div className="flex flex-col p-8">
-      <BackButton
-        to="/note-recognition-mode"
-        name="Note Recognition"
-        styling="text-white/80 hover:text-white mb-2"
-      />
+    <div className="flex flex-col h-screen">
+      <div className="p-3 flex justify-between">
+        <Link
+          to="/note-recognition-mode"
+          className="text-white/80 hover:text-white flex items-center text-sm"
+        >
+          <FaArrowLeft className="mr-1" /> Back to Games
+        </Link>
+
+        {/* Timer and Score Display */}
+        <div className="text-2xl font-bold text-white flex items-center space-x-4">
+          <span>Score: {score}</span>
+          {timedMode && <span>Time: {formattedTime}</span>}
+        </div>
+
+        {/* Settings Button */}
+        {gameStarted && !gameFinished && (
+          <button
+            onClick={handlePauseGame}
+            className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors text-sm"
+          >
+            {timedMode ? "Pause" : "Settings"}
+          </button>
+        )}
+      </div>
+
       {showFireworks && <Firework />}
       {showMatchFirework && (
         <div
@@ -276,80 +385,85 @@ export function MemoryGame() {
           gameType="memory"
           onStart={handleGameSettings}
           initialClef={clef}
-          initialSelectedNotes={noteNames}
+          initialTimedMode={timedMode}
           initialDifficulty={difficulty}
           trebleNotes={trebleNotes}
           bassNotes={bassNotes}
-          noteOptions={noteNames}
         />
       ) : gameFinished ? (
-        <VictoryScreen
-          score={score}
-          totalPossibleScore={cards.length * 5}
-          onReset={handleReset}
-        />
+        isLost ? (
+          <GameOverScreen
+            score={score}
+            totalQuestions={cards.length / 2}
+            timeRanOut={true}
+            onReset={handleReset}
+          />
+        ) : (
+          <VictoryScreen
+            score={score}
+            totalPossibleScore={cards.length * 10}
+            onReset={handleReset}
+          />
+        )
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="absolute top-4 right-4">
-            <button
-              onClick={handlePauseGame}
-              className="px-4 py-2 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
-            >
-              Settings
-            </button>
-          </div>
-          <div className="text-center mb-4">
-            <p className="text-2xl font-bold text-white">Score: {score}</p>
-          </div>
-          <div className="flex-1 flex items-center justify-center">
-            <div className={getGridClassName()}>
-              {cards.map((card, index) => (
+        <div className="flex-1 flex flex-col items-center justify-center p-4">
+          {/* Game grid */}
+          <div className={`mt-2 mb-6 ${getGridClassName()}`}>
+            {cards.map((card, index) => (
+              <div
+                key={index}
+                className={`relative perspective-500 transition-transform duration-300 ${
+                  flippedIndexes.includes(index) ||
+                  matchedIndexes.includes(index)
+                    ? "rotate-y-180"
+                    : ""
+                }`}
+                onClick={() => handleCardClick(index)}
+                ref={(el) => {
+                  if (el && matchedIndexes.includes(index)) {
+                    const rect = el.getBoundingClientRect();
+                    setMatchPosition({
+                      x: rect.x + rect.width / 2,
+                      y: rect.y + rect.height / 2,
+                    });
+                  }
+                }}
+              >
+                {/* Front of card (hidden when flipped) */}
                 <div
-                  key={index}
-                  id={`card-${index}`}
-                  onClick={() => handleCardClick(index)}
-                  className={`w-32 h-32 rounded-xl border cursor-pointer transform transition-all duration-300 ease-in-out relative overflow-hidden ${
+                  className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-lg border-2 border-white/20 transform ${
+                    flippedIndexes.includes(index) ||
                     matchedIndexes.includes(index)
-                      ? "opacity-0 pointer-events-none"
-                      : "hover:scale-105"
-                  } ${
+                      ? "rotate-y-180 opacity-0 pointer-events-none"
+                      : ""
+                  } transition-all duration-300 cursor-pointer hover:from-indigo-500 hover:to-purple-600`}
+                >
+                  <div className="text-white text-4xl font-bold">?</div>
+                </div>
+
+                {/* Back of card (visible when flipped) */}
+                <div
+                  className={`absolute inset-0 flex items-center justify-center bg-white rounded-xl shadow-lg transform ${
                     flippedIndexes.includes(index) ||
                     matchedIndexes.includes(index)
                       ? ""
-                      : "bg-white/10 backdrop-blur-md border-white/20"
-                  }`}
+                      : "rotate-y-180 opacity-0 pointer-events-none"
+                  } transition-all duration-300`}
                 >
-                  {/* Card content when flipped */}
-                  {(flippedIndexes.includes(index) ||
-                    matchedIndexes.includes(index)) &&
-                    (card.type === "note" ? (
-                      <div className="absolute inset-0 bg-white">
-                        <img
-                          src={card.image}
-                          alt={`Musical Note ${card.value}`}
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <div className="absolute inset-0 bg-white flex items-center justify-center">
-                        <span className="text-base font-medium text-black">
-                          {card.name}
-                        </span>
-                      </div>
-                    ))}
-
-                  {/* Question mark when not flipped */}
-                  {!(
-                    flippedIndexes.includes(index) ||
-                    matchedIndexes.includes(index)
-                  ) && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-2xl text-white/80">?</span>
+                  {card.type === "note" ? (
+                    <img
+                      src={card.image}
+                      alt={card.value}
+                      className="w-16 h-16 object-contain"
+                    />
+                  ) : (
+                    <div className="text-gray-900 text-xl font-bold">
+                      {card.value}
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -360,13 +474,12 @@ export function MemoryGame() {
           gameType="memory"
           isModal={true}
           onStart={handleRestartGame}
-          onCancel={() => setShowSettingsModal(false)}
+          onCancel={handleResumeGame}
           initialClef={clef}
-          initialSelectedNotes={noteNames}
+          initialTimedMode={timedMode}
           initialDifficulty={difficulty}
           trebleNotes={trebleNotes}
           bassNotes={bassNotes}
-          noteOptions={noteNames}
         />
       )}
     </div>
