@@ -32,11 +32,12 @@ function Dashboard() {
       {/* Welcome Section */}
       <div className="text-center lg:text-left">
         <h1 className="text-3xl lg:text-4xl font-bold text-white">
-          Welcome back
-          {user?.user_metadata?.full_name
-            ? `, ${user.user_metadata.full_name}`
-            : ""}
-          !
+          Welcome back,
+          {user?.user_metadata?.full_name ? (
+            <span className="block mt-1">{user.user_metadata.full_name}!</span>
+          ) : (
+            "!"
+          )}
         </h1>
         <p className="mt-2 text-gray-300">
           Ready to continue your musical journey?

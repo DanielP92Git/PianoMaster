@@ -33,11 +33,16 @@ export default {
           "0%": { backgroundPosition: "200% 0" },
           "100%": { backgroundPosition: "-200% 0" },
         },
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
       animation: {
         celebration: "celebration 2s ease-in-out infinite",
         floatUp: "floatUp 0.6s ease-out forwards",
         shimmer: "shimmer 3s linear infinite",
+        fadeIn: "fadeIn 0.3s ease-in-out forwards",
       },
       colors: {
         border: "hsl(var(--border))",
@@ -90,10 +95,10 @@ export default {
         sm: "calc(var(--radius) - 4px)",
       },
       gridTemplateColumns: {
-        '3': 'repeat(3, minmax(0, 1fr))',
-        '4': 'repeat(4, minmax(0, 1fr))',
-        '6': 'repeat(6, minmax(0, 1fr))',
-        '8': 'repeat(8, minmax(0, 1fr))',
+        3: "repeat(3, minmax(0, 1fr))",
+        4: "repeat(4, minmax(0, 1fr))",
+        6: "repeat(6, minmax(0, 1fr))",
+        8: "repeat(8, minmax(0, 1fr))",
       },
     },
   },
