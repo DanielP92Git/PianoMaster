@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import trebleClefImage from "../../../assets/noteImages/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass-clef.svg";
 
@@ -16,9 +16,20 @@ export function GameSettings({
   bassNotes = [],
   noteOptions = [],
 }) {
+  // Ref to track if we're in the middle of an update from props
+  const isUpdatingFromProps = useRef(false);
+  // Ref to skip the first render for onChange
+  const isFirstRender = useRef(true);
+  // Ref to track previous initialTimedMode to avoid unnecessary updates
+  const prevInitialTimedMode = useRef(initialTimedMode);
+
   const [setupStep, setSetupStep] = useState(1);
   const [clef, setClef] = useState(initialClef);
-
+  const [timedMode, setTimedMode] = useState(initialTimedMode);
+  const [difficulty, setDifficulty] = useState(initialDifficulty);
+  const [gridSize, setGridSize] = useState(
+    gameType === "memory" ? "3 X 4" : null
+  );
   // Ensure initialSelectedNotes is an array
   const initialNotesArray =
     Array.isArray(initialSelectedNotes) && initialSelectedNotes.length > 0
@@ -38,17 +49,46 @@ export function GameSettings({
     }
   }, [clef, trebleNotes, bassNotes]);
 
-  const [timedMode, setTimedMode] = useState(initialTimedMode);
-  // Ensure difficulty is properly capitalized
-  const capitalizedInitialDifficulty =
-    typeof initialDifficulty === "string"
-      ? initialDifficulty.charAt(0).toUpperCase() +
-        initialDifficulty.slice(1).toLowerCase()
-      : "Medium";
-  const [difficulty, setDifficulty] = useState(capitalizedInitialDifficulty);
-  const [gridSize, setGridSize] = useState(
-    gameType === "memory" ? "3 X 4" : null
-  );
+  // Update internal state ONLY when initialTimedMode prop changes from parent
+  useEffect(() => {
+    // Only update if the value actually changed to prevent loops
+    if (prevInitialTimedMode.current !== initialTimedMode) {
+      // Mark that we're updating from props so we don't trigger the onChange effect
+      isUpdatingFromProps.current = true;
+
+      // Update state with new value from props
+      setTimedMode(initialTimedMode);
+
+      // Update our ref for the next comparison
+      prevInitialTimedMode.current = initialTimedMode;
+    }
+  }, [initialTimedMode]);
+
+  // Call onChange when internal state changes, but not on first render and not when updating from props
+  useEffect(() => {
+    // Skip the first render
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
+    // Skip if we're currently updating from props
+    if (isUpdatingFromProps.current) {
+      isUpdatingFromProps.current = false; // Reset for next time
+      return;
+    }
+
+    // Only call onChange if it exists and we're not updating from props
+    if (onChange) {
+      onChange({
+        clef,
+        selectedNotes,
+        timedMode,
+        difficulty,
+        gridSize,
+      });
+    }
+  }, [clef, selectedNotes, timedMode, difficulty, gridSize, onChange]);
 
   // Memory game specific constants
   const GRID_SIZES = {
@@ -76,19 +116,6 @@ export function GameSettings({
     Medium: 75, // 75 seconds
     Hard: 60, // 60 seconds
   };
-
-  // Update parent component when settings change
-  useEffect(() => {
-    if (onChange) {
-      onChange({
-        clef,
-        selectedNotes,
-        timedMode,
-        difficulty,
-        gridSize,
-      });
-    }
-  }, [clef, selectedNotes, timedMode, difficulty, gridSize, onChange]);
 
   const handleNextStep = () => {
     setSetupStep(setupStep + 1);
@@ -123,8 +150,27 @@ export function GameSettings({
   };
 
   const handleMemoryDifficultyChange = (newDifficulty) => {
+    console.log(`===== DIFFICULTY CHANGED IN SETTINGS =====`);
+    console.log(
+      `Previous difficulty: ${difficulty}, changing to: ${newDifficulty}`
+    );
+
+    // Update difficulty
     setDifficulty(newDifficulty);
-    setGridSize(MEMORY_DIFFICULTIES[newDifficulty]);
+
+    // Also update the grid size based on the new difficulty
+    const newGridSize = MEMORY_DIFFICULTIES[newDifficulty];
+    console.log(`Also updating gridSize from ${gridSize} to ${newGridSize}`);
+    setGridSize(newGridSize);
+  };
+
+  const handleTimedModeToggle = (newMode) => {
+    // Only update if the value is actually changing
+    if (timedMode !== newMode) {
+      // Update state directly - the useEffect will handle notifying the parent
+      setTimedMode(newMode);
+      // We don't need to call onChange here as the useEffect will handle it
+    }
   };
 
   const handleStart = () => {
@@ -136,54 +182,38 @@ export function GameSettings({
       return;
     }
 
-    console.log("Starting game with settings:", {
-      clef,
-      selectedNotes: notesArray,
-      timedMode,
-      difficulty,
-      gridSize,
-    });
-
-    // Ensure difficulty is properly capitalized
-    let capitalizedDifficulty = difficulty;
-    if (typeof difficulty === "string") {
-      capitalizedDifficulty =
-        difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
-    }
+    // Convert timedMode to boolean explicitly
+    const isTimedMode = timedMode;
 
     // Calculate the correct time limit based on difficulty and game type
     let timeLimit = 45; // Default Medium difficulty
-    if (timedMode) {
+    if (isTimedMode) {
       if (gameType === "note-recognition") {
-        if (capitalizedDifficulty === "Easy") {
-          timeLimit = 60;
-        } else if (capitalizedDifficulty === "Medium") {
-          timeLimit = 45;
-        } else if (capitalizedDifficulty === "Hard") {
-          timeLimit = 30;
-        }
+        timeLimit = NOTE_RECOGNITION_TIME_LIMITS[difficulty] || 45;
       } else if (gameType === "memory") {
-        // For memory game
-        if (capitalizedDifficulty === "Easy") {
-          timeLimit = 90;
-        } else if (capitalizedDifficulty === "Medium") {
-          timeLimit = 75;
-        } else if (capitalizedDifficulty === "Hard") {
-          timeLimit = 60;
-        }
+        timeLimit = MEMORY_GAME_TIME_LIMITS[difficulty] || 75;
       }
     }
 
-    console.log("Setting time limit to:", timeLimit);
+    // For memory game, ensure gridSize matches the selected difficulty
+    let gridSizeToSend = gridSize;
+    if (gameType === "memory") {
+      gridSizeToSend = MEMORY_DIFFICULTIES[difficulty];
+      console.log(
+        `Sending settings with difficulty: ${difficulty}, gridSize: ${gridSizeToSend}, pairs: ${
+          GRID_SIZES[gridSizeToSend] / 2
+        }`
+      );
+    }
 
     // Call the onStart callback with the current settings
     onStart({
       clef,
       selectedNotes: notesArray,
-      timedMode,
-      difficulty: capitalizedDifficulty,
-      gridSize,
-      timeLimit: timeLimit, // Add the timeLimit property
+      timedMode: isTimedMode,
+      difficulty: difficulty,
+      gridSize: gridSizeToSend,
+      timeLimit,
     });
   };
 
@@ -255,9 +285,6 @@ export function GameSettings({
 
   // Note Selection Screen
   const NoteSelectionScreen = () => {
-    // Log current state for debugging
-    console.log("Current state in note selection:", { clef, selectedNotes });
-
     return (
       <div className="flex-1 flex flex-col items-center justify-center py-1">
         <h1 className="text-2xl font-bold text-white mb-2">
@@ -332,26 +359,17 @@ export function GameSettings({
 
   // Game Mode Selection Screen for Note Recognition
   const NoteRecognitionModeScreen = () => {
-    // Log current state for debugging
-    console.log("Current state in mode screen:", {
-      timedMode,
-      difficulty,
-      selectedNotes,
-    });
-
     return (
-      <div className="flex-1 flex flex-col items-center justify-center py-1">
-        <h1 className="text-2xl font-bold text-white mb-2">
-          Note Recognition Game
-        </h1>
+      <div className="flex flex-col items-center justify-center py-1">
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
           <h2 className="text-lg font-bold text-white mb-3">
             Step 3: Choose Game Mode
           </h2>
           <div className="space-y-4">
+            {/* Game Mode Toggle */}
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => setTimedMode(false)}
+                onClick={() => handleTimedModeToggle(false)}
                 className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
                   !timedMode
                     ? "bg-indigo-600 text-white"
@@ -385,7 +403,7 @@ export function GameSettings({
               </button>
 
               <button
-                onClick={() => setTimedMode(true)}
+                onClick={() => handleTimedModeToggle(true)}
                 className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
                   timedMode
                     ? "bg-indigo-600 text-white"
@@ -415,65 +433,54 @@ export function GameSettings({
               </button>
             </div>
 
+            {/* Difficulty Selection - only show if timed mode is active */}
             {timedMode && (
-              <div className="mt-4">
-                <h3 className="text-sm font-medium text-white mb-2">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-2">
                   Select Difficulty:
-                </h3>
+                </label>
                 <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setDifficulty("Easy")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      difficulty === "Easy" || difficulty === "easy"
-                        ? "bg-green-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium block">Easy</span>
-                      <span className="text-xs">60 seconds</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setDifficulty("Medium")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      difficulty === "Medium" || difficulty === "medium"
-                        ? "bg-yellow-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium block">Medium</span>
-                      <span className="text-xs">45 seconds</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setDifficulty("Hard")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      difficulty === "Hard" || difficulty === "hard"
-                        ? "bg-red-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium block">Hard</span>
-                      <span className="text-xs">30 seconds</span>
-                    </div>
-                  </button>
+                  {["Easy", "Medium", "Hard"].map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => setDifficulty(level)}
+                      className={`p-2 rounded-lg transition-colors ${
+                        difficulty === level
+                          ? level === "Easy"
+                            ? "bg-green-600 text-white"
+                            : level === "Medium"
+                            ? "bg-yellow-600 text-white"
+                            : "bg-red-600 text-white"
+                          : "bg-white/10 text-white/90 hover:bg-white/20"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <span className="font-medium block">{level}</span>
+                        <span className="text-xs">
+                          {level === "Easy"
+                            ? "60 seconds"
+                            : level === "Medium"
+                            ? "45 seconds"
+                            : "30 seconds"}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               </div>
             )}
 
-            <div className="flex justify-between mt-4">
+            {/* Navigation Buttons */}
+            <div className="flex justify-between mt-3">
               <button
                 onClick={handlePrevStep}
-                className="px-3 py-1.5 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors font-medium border border-white/20 shadow-md"
+                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-md"
               >
                 Back
               </button>
               <button
                 onClick={handleStart}
-                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
               >
                 Start Game
               </button>
@@ -487,11 +494,17 @@ export function GameSettings({
   // Game Mode Selection Screen for Memory Game
   const MemoryGameModeScreen = () => (
     <div className="flex-1 flex flex-col items-center justify-center py-1">
-      <h1 className="text-2xl font-bold text-white mb-2">Memory Game</h1>
       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
         <h2 className="text-lg font-bold text-white mb-3">
-          Step 3: Choose Game Mode
+          Step 2: Choose Game Settings
         </h2>
+
+        {/* Display debug info for troubleshooting */}
+        <div className="text-xs text-yellow-300 mb-3">
+          Current Settings: {difficulty} difficulty, grid size: {gridSize},
+          pairs: {GRID_SIZES[gridSize] / 2}
+        </div>
+
         <div className="space-y-4">
           {/* Game Mode Selection (Practice or Timed) */}
           <div className="grid grid-cols-2 gap-3">
@@ -562,35 +575,29 @@ export function GameSettings({
 
           {/* Difficulty Selection */}
           <div>
-            <label className="block text-sm font-medium text-white/80 mb-2">
-              Select Difficulty:
+            <label className="text-white/80 font-medium block mb-1">
+              Difficulty Level:
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {Object.keys(MEMORY_DIFFICULTIES).map((diff) => (
+              {Object.entries(MEMORY_DIFFICULTIES).map(([diff, size]) => (
                 <button
                   key={diff}
-                  onClick={() => handleMemoryDifficultyChange(diff)}
-                  className={`p-2 rounded-lg transition-colors ${
+                  onClick={() => {
+                    console.log(
+                      `Clicked ${diff} difficulty button, grid size: ${size}`
+                    );
+                    handleMemoryDifficultyChange(diff);
+                  }}
+                  className={`py-1.5 px-2 rounded-lg transition-colors ${
                     difficulty === diff
-                      ? diff === "Easy"
-                        ? "bg-green-600 text-white"
-                        : diff === "Medium"
-                        ? "bg-yellow-600 text-white"
-                        : "bg-red-600 text-white"
+                      ? "bg-indigo-600 text-white"
                       : "bg-white/10 text-white/90 hover:bg-white/20"
                   }`}
                 >
                   <div className="text-center">
-                    <span className="font-medium block">{diff}</span>
-                    <span className="text-xs">
-                      {GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs
-                      {timedMode && <br />}
-                      {timedMode &&
-                        (diff === "Easy"
-                          ? "90 seconds"
-                          : diff === "Medium"
-                          ? "75 seconds"
-                          : "60 seconds")}
+                    <span className="font-medium">{diff}</span>
+                    <span className="text-xs block">
+                      {GRID_SIZES[size] / 2} pairs
                     </span>
                   </div>
                 </button>
@@ -598,16 +605,16 @@ export function GameSettings({
             </div>
           </div>
 
-          <div className="flex justify-between mt-4">
+          <div className="flex justify-between mt-3">
             <button
               onClick={handlePrevStep}
-              className="px-3 py-1.5 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors font-medium border border-white/20 shadow-md"
+              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-md"
             >
               Back
             </button>
             <button
               onClick={handleStart}
-              className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
             >
               Start Game
             </button>
@@ -703,7 +710,7 @@ export function GameSettings({
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
-                    onClick={() => setTimedMode(false)}
+                    onClick={() => handleTimedModeToggle(false)}
                     className={`p-2 rounded-lg transition-colors ${
                       !timedMode
                         ? "bg-indigo-600 text-white"
@@ -713,7 +720,7 @@ export function GameSettings({
                     Practice Mode
                   </button>
                   <button
-                    onClick={() => setTimedMode(true)}
+                    onClick={() => handleTimedModeToggle(true)}
                     className={`p-2 rounded-lg transition-colors ${
                       timedMode
                         ? "bg-indigo-600 text-white"
@@ -725,54 +732,52 @@ export function GameSettings({
                 </div>
               </div>
 
-              {timedMode && (
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Difficulty
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => setDifficulty("Easy")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === "Easy" || difficulty === "easy"
-                          ? "bg-green-600 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">Easy</span>
-                        <span className="text-xs">60 seconds</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setDifficulty("Medium")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === "Medium" || difficulty === "medium"
-                          ? "bg-yellow-600 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">Medium</span>
-                        <span className="text-xs">45 seconds</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setDifficulty("Hard")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === "Hard" || difficulty === "hard"
-                          ? "bg-red-600 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">Hard</span>
-                        <span className="text-xs">30 seconds</span>
-                      </div>
-                    </button>
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">
+                  Difficulty
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setDifficulty("Easy")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      difficulty === "Easy" || difficulty === "easy"
+                        ? "bg-green-600 text-white"
+                        : "bg-white/10 text-white/90 hover:bg-white/20"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <span className="font-medium block">Easy</span>
+                      <span className="text-xs">60 seconds</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDifficulty("Medium")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      difficulty === "Medium" || difficulty === "medium"
+                        ? "bg-yellow-600 text-white"
+                        : "bg-white/10 text-white/90 hover:bg-white/20"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <span className="font-medium block">Medium</span>
+                      <span className="text-xs">45 seconds</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDifficulty("Hard")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      difficulty === "Hard" || difficulty === "hard"
+                        ? "bg-red-600 text-white"
+                        : "bg-white/10 text-white/90 hover:bg-white/20"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <span className="font-medium block">Hard</span>
+                      <span className="text-xs">30 seconds</span>
+                    </div>
+                  </button>
                 </div>
-              )}
+              </div>
             </>
           )}
 

@@ -24,7 +24,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-900">
-      <Header onMenuClick={toggleSidebar} />
+      {!isGameRoute && <Header onMenuClick={toggleSidebar} />}
       {!isGameRoute && (
         <Sidebar
           isOpen={isSidebarOpen}
@@ -33,7 +33,7 @@ export default function AppLayout() {
           onToggle={toggleSidebar}
         />
       )}
-      <main className={`pt-2 ${!isGameRoute ? "md:pl-64" : ""}`}>
+      <main className={`${!isGameRoute ? "pt-2 md:pl-64" : ""}`}>
         <Outlet />
       </main>
     </div>
