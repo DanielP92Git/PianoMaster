@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Bell, BellOff, X } from "lucide-react";
 import { useModal } from "../../contexts/ModalContext";
 import { toast } from "react-hot-toast";
-import alarmMelody from "../../../public/audio/alarm.mp3";
 
 export default function PracticeReminder() {
   const [timer, setTimer] = useState(() => {
@@ -19,7 +18,7 @@ export default function PracticeReminder() {
   const [reminderMessage, setReminderMessage] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const alarmRef = useRef(new Audio(alarmMelody));
+  const alarmRef = useRef(new Audio("/audio/alarm.mp3"));
   const { openModal, closeModal } = useModal();
 
   useEffect(() => {

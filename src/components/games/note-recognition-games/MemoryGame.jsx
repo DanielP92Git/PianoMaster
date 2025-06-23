@@ -97,6 +97,7 @@ export function MemoryGame() {
   const [difficulty, setDifficulty] = useState("Easy");
   const [gridSize, setGridSize] = useState(DIFFICULTIES["Easy"]);
   const [clef, setClef] = useState("Treble");
+  const [timeDifficulty, setTimeDifficulty] = useState("Medium");
 
   // Create cards based on grid size
   const createCards = (currentClef = clef, currentGridSize = gridSize) => {
@@ -298,12 +299,13 @@ export function MemoryGame() {
     console.log("Settings received:", JSON.stringify(settings));
     console.log("Current difficulty before update:", difficulty);
     console.log("Current gridSize before update:", gridSize);
+    console.log("Current timeDifficulty before update:", timeDifficulty);
 
     // Always update clef
     let newClef = clef;
     if (settings.clef !== undefined) {
       newClef = settings.clef;
-      setClef(settings.clef);
+    setClef(settings.clef);
     }
 
     // Update difficulty and grid size
@@ -324,17 +326,23 @@ export function MemoryGame() {
       );
 
       // Update all states at once
-      setDifficulty(settings.difficulty);
+    setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
       setCards(newCards);
       console.log(`Set cards state with ${newCards.length} cards`);
+    }
+
+    // Handle time difficulty separately
+    if (settings.timeDifficulty !== undefined) {
+      console.log(`Setting time difficulty to: ${settings.timeDifficulty}`);
+      setTimeDifficulty(settings.timeDifficulty);
     }
 
     // Handle timed mode
     let newTimedMode = timedMode;
     if (settings.timedMode !== undefined) {
       newTimedMode = settings.timedMode;
-      setTimedMode(settings.timedMode);
+    setTimedMode(settings.timedMode);
     }
 
     // Handle time limit
@@ -342,21 +350,21 @@ export function MemoryGame() {
     if (settings.timeLimit !== undefined) {
       newTimeLimit = settings.timeLimit;
       setTimeLimit(settings.timeLimit);
-    } else if (settings.timedMode && settings.difficulty) {
-      // If timed mode with difficulty specified, set appropriate time limit
+    } else if (settings.timedMode && settings.timeDifficulty) {
+      // If timed mode with time difficulty specified, set appropriate time limit
       const difficultyTimeMap = {
         Easy: 90,
         Medium: 75,
         Hard: 60,
       };
-      newTimeLimit = difficultyTimeMap[settings.difficulty] || 60;
+      newTimeLimit = difficultyTimeMap[settings.timeDifficulty] || 60;
       setTimeLimit(newTimeLimit);
     }
 
     // Start game with a slight delay to ensure state updates
     setTimeout(() => {
       console.log(
-        `Finalizing game with: difficulty=${newDifficulty}, clef=${newClef}, gridSize=${newGridSize}, cards=${GRID_SIZES[newGridSize]}, timedMode=${newTimedMode}, timeLimit=${newTimeLimit}`
+        `Finalizing game with: grid difficulty=${newDifficulty}, time difficulty=${timeDifficulty}, clef=${newClef}, gridSize=${newGridSize}, cards=${GRID_SIZES[newGridSize]}, timedMode=${newTimedMode}, timeLimit=${newTimeLimit}`
       );
 
       // Set game started state
@@ -413,7 +421,7 @@ export function MemoryGame() {
     console.log(`Updated cards state with ${newCards.length} cards`);
 
     // Properly reset the timer with the updated time limit
-    pauseTimer();
+      pauseTimer();
     resetTimer(newTimeLimit);
 
     // Timer will auto-start via the useEffect if in timed mode
@@ -434,16 +442,24 @@ export function MemoryGame() {
     console.log("Settings received from modal:", JSON.stringify(settings));
     console.log("Current difficulty before update:", difficulty);
     console.log("Current gridSize before update:", gridSize);
+    console.log("Current timeDifficulty before update:", timeDifficulty);
 
     // Update clef and other settings
     const newClef = settings.clef !== undefined ? settings.clef : clef;
     const newDifficulty =
       settings.difficulty !== undefined ? settings.difficulty : difficulty;
 
+    // Handle time difficulty separately
+    const newTimeDifficulty =
+      settings.timeDifficulty !== undefined
+        ? settings.timeDifficulty
+        : timeDifficulty;
+
     // Always get the grid size from the difficulty
     const newGridSize = DIFFICULTIES[newDifficulty];
     console.log(`Will set difficulty to: ${newDifficulty}`);
     console.log(`Will set gridSize to: ${newGridSize}`);
+    console.log(`Will set time difficulty to: ${newTimeDifficulty}`);
 
     // IMPORTANT: If difficulty changed, create new cards immediately
     if (
@@ -469,24 +485,32 @@ export function MemoryGame() {
       setGridSize(newGridSize);
     }
 
+    // Update time difficulty if provided
+    if (settings.timeDifficulty !== undefined) {
+      setTimeDifficulty(settings.timeDifficulty);
+    }
+
     // Handle other settings
     if (settings.clef !== undefined) {
-      setClef(settings.clef);
+    setClef(settings.clef);
     }
 
     if (settings.timedMode !== undefined) {
-      setTimedMode(settings.timedMode);
+    setTimedMode(settings.timedMode);
     }
 
+    // Handle time limit based on time difficulty
     if (settings.timeLimit !== undefined) {
       setTimeLimit(settings.timeLimit);
-    } else if (settings.timedMode && settings.difficulty) {
+    } else if (settings.timedMode) {
       const difficultyTimeMap = {
         Easy: 90,
         Medium: 75,
         Hard: 60,
       };
-      setTimeLimit(difficultyTimeMap[newDifficulty] || 60);
+      const difficultyToUse = settings.timeDifficulty || newTimeDifficulty;
+      const newTimeLimit = difficultyTimeMap[difficultyToUse] || 60;
+      setTimeLimit(newTimeLimit);
     }
 
     // Restart game with explicit settings - ensure we use the right grid size
@@ -494,7 +518,7 @@ export function MemoryGame() {
     setTimeout(() => {
       const actualTimeLimit = settings.timeLimit || timeLimit;
       console.log(
-        `Starting game with: clef=${newClef}, gridSize=${newGridSize}, totalCards=${GRID_SIZES[newGridSize]}, timeLimit=${actualTimeLimit}`
+        `Starting game with: clef=${newClef}, gridSize=${newGridSize}, totalCards=${GRID_SIZES[newGridSize]}, timeDifficulty=${newTimeDifficulty}, timeLimit=${actualTimeLimit}`
       );
 
       // Reset game state
@@ -783,9 +807,9 @@ export function MemoryGame() {
         {/* Timer and Score Display - only show when game is started */}
         {gameStarted && (
           <div className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-2 sm:space-x-4">
-            <span>Score: {score}</span>
-            {timedMode && <span>Time: {formattedTime}</span>}
-          </div>
+          <span>Score: {score}</span>
+          {timedMode && <span>Time: {formattedTime}</span>}
+        </div>
         )}
 
         {/* Settings Button */}
@@ -883,7 +907,7 @@ export function MemoryGame() {
                       margin: "0",
                     }}
                     className="hover:scale-105 hover:shadow-lg"
-                    onClick={() => handleCardClick(index)}
+                onClick={() => handleCardClick(index)}
                   >
                     <div
                       style={{
@@ -926,7 +950,7 @@ export function MemoryGame() {
                           ?
                         </div>
                         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-40 hover:opacity-70 transition-opacity duration-300"></div>
-                      </div>
+                </div>
 
                       {/* Back face */}
                       <div
@@ -945,11 +969,11 @@ export function MemoryGame() {
                           overflow: "hidden",
                         }}
                         className="back-face relative"
-                      >
-                        {card.type === "note" ? (
-                          <img
-                            src={card.image}
-                            alt={card.value}
+                >
+                  {card.type === "note" ? (
+                    <img
+                      src={card.image}
+                      alt={card.value}
                             style={{
                               width: difficulty === "Hard" ? "70%" : "75%",
                               height: difficulty === "Hard" ? "70%" : "75%",
@@ -957,8 +981,8 @@ export function MemoryGame() {
                               position: "relative",
                               zIndex: 10,
                             }}
-                          />
-                        ) : (
+                    />
+                  ) : (
                           <div
                             style={{
                               color: "#111827",
@@ -973,13 +997,13 @@ export function MemoryGame() {
                               zIndex: 10,
                             }}
                           >
-                            {card.value}
-                          </div>
-                        )}
+                      {card.value}
+                    </div>
+                  )}
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/50 to-transparent opacity-40 hover:opacity-70 transition-opacity duration-300"></div>
                       </div>
-                    </div>
-                  </div>
+                </div>
+              </div>
                 );
               })}
             </div>

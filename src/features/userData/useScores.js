@@ -42,7 +42,7 @@ export function useScores() {
   return {
     scores,
     fetchError,
-    isFetching,
+    isLoading: isFetching,
     updateScore,
     updateError,
     isUpdating,

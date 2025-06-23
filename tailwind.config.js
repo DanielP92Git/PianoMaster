@@ -1,12 +1,7 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   darkMode: ["class"],
-  content: [
-    "./pages/**/*.{js,jsx}",
-    "./components/**/*.{js,jsx}",
-    "./app/**/*.{js,jsx}",
-    "./src/**/*.{js,jsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -48,16 +43,10 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
+        background: "#121212",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
+        primary: "#3b82f6",
+        secondary: "#6366f1",
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -66,10 +55,7 @@ export default {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
         },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
+        accent: "#4f46e5",
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
@@ -88,6 +74,10 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        surface: "#1e1e1e",
+        error: "#ef4444",
+        success: "#22c55e",
+        warning: "#f59e0b",
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -100,7 +90,10 @@ export default {
         6: "repeat(6, minmax(0, 1fr))",
         8: "repeat(8, minmax(0, 1fr))",
       },
+      spacing: {
+        // Add custom spacing if needed
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [],
 };
