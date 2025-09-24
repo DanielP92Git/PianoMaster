@@ -1,0 +1,273 @@
+{
+  "tasks": [
+    {
+      "id": 1,
+      "title": "Setup React Project Structure",
+      "description": "Initialize the React application with proper component structure and routing for the rhythm training game.",
+      "details": "Create a new React application using Create React App or Vite. Set up the folder structure following best practices with components, hooks, contexts, and utilities folders. Initialize routing with React Router for different game modes (Practice, Challenge, Custom). Set up global state management using Context API or Redux. Configure ESLint and Prettier for code quality. Implement responsive design foundation with CSS frameworks like Tailwind CSS or styled-components. Create placeholder components for main game screens.",
+      "testStrategy": "Verify project structure with linting rules. Test routing between different game modes. Ensure responsive design works on various screen sizes. Run unit tests for basic component rendering.",
+      "priority": "high",
+      "dependencies": [],
+      "status": "done",
+      "subtasks": []
+    },
+    {
+      "id": 2,
+      "title": "Implement Web Audio API Core",
+      "description": "Create the audio engine that will handle metronome clicks, pattern playback, and precise timing.",
+      "details": "Create a custom hook useAudioEngine that initializes Web Audio API context. Implement audio scheduling with lookahead buffer for precise timing. Create sound generators for metronome clicks (higher pitch for downbeat, lower for other beats) and pattern sounds (different timbre). Implement tempo control (60-200 BPM) with dynamic adjustment. Add audio latency compensation mechanisms. Create audio caching for consistent performance. Implement fallback for browsers with limited Web Audio support. Code example: \n```javascript\nconst useAudioEngine = (tempo = 120) => {\n  const audioContext = new (window.AudioContext || window.webkitAudioContext)();\n  const lookaheadTime = 0.1; // seconds\n  const scheduleAheadTime = 0.1; // seconds\n  \n  // Metronome click generator\n  const createMetronomeClick = (time, isDownbeat) => {\n    const osc = audioContext.createOscillator();\n    const gain = audioContext.createGain();\n    osc.frequency.value = isDownbeat ? 1000 : 800; // Higher pitch for downbeat\n    osc.connect(gain);\n    gain.connect(audioContext.destination);\n    osc.start(time);\n    osc.stop(time + 0.05);\n  };\n  \n  // Pattern sound generator\n  const createPatternSound = (time) => {\n    // Different timbre from metronome\n    const osc = audioContext.createOscillator();\n    const gain = audioContext.createGain();\n    osc.type = 'triangle';\n    osc.frequency.value = 600;\n    osc.connect(gain);\n    gain.connect(audioContext.destination);\n    osc.start(time);\n    osc.stop(time + 0.05);\n  };\n  \n  // Rest of the implementation...\n};\n```",
+      "testStrategy": "Test audio output with different browsers. Measure timing precision using oscilloscope visualization. Verify metronome consistency at various tempos. Test latency compensation effectiveness. Ensure audio works on both desktop and mobile devices.",
+      "priority": "high",
+      "dependencies": [
+        1
+      ],
+      "status": "done",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Initialize Web Audio API Context",
+          "description": "Create the useAudioEngine hook with basic Web Audio API context initialization and browser compatibility checks.",
+          "dependencies": [],
+          "details": "Implement the hook to create an AudioContext with fallback for webkit. Add error handling for browsers without Web Audio API support. Set up the basic structure with state variables for tempo, playing status, and audio nodes. Include context resume handling for browsers that require user interaction.",
+          "status": "done",
+          "testStrategy": "Test initialization across different browsers. Verify context creation and state management."
+        },
+        {
+          "id": 2,
+          "title": "Implement Metronome Click Generator",
+          "description": "Create functions to generate metronome click sounds with different pitches for downbeats and regular beats.",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement the createMetronomeClick function that takes time and isDownbeat parameters. Use oscillators with appropriate frequency values (higher for downbeat, lower for regular beats). Configure gain nodes and proper connection to audio destination. Ensure clean start/stop with appropriate envelope to avoid clicks/pops.",
+          "status": "done",
+          "testStrategy": "Test sound generation with different parameters. Verify distinct sounds for downbeats vs regular beats."
+        },
+        {
+          "id": 3,
+          "title": "Implement Pattern Sound Generator",
+          "description": "Create functions to generate pattern sounds with a different timbre from the metronome clicks.",
+          "dependencies": [
+            1
+          ],
+          "details": "Implement the createPatternSound function using triangle wave oscillators. Configure with appropriate frequency and duration parameters. Add options for different timbres (sine, square, sawtooth) for pattern variety. Include amplitude envelope for natural sound decay.",
+          "status": "done",
+          "testStrategy": "Test different waveforms and parameters. Verify distinct sound from metronome clicks."
+        },
+        {
+          "id": 4,
+          "title": "Implement Precise Timing Scheduler",
+          "description": "Create a scheduling system with lookahead buffer for precise timing of audio events.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "Implement a scheduler using lookaheadTime and scheduleAheadTime parameters. Create a scheduling loop with requestAnimationFrame or setInterval. Maintain a queue of scheduled events to prevent duplicates. Calculate precise timing based on current audio context time and tempo.",
+          "status": "done",
+          "testStrategy": "Test timing accuracy at different tempos. Measure actual vs expected event timing using audioContext.currentTime."
+        },
+        {
+          "id": 5,
+          "title": "Implement Tempo Control",
+          "description": "Add functionality to set and dynamically adjust tempo between 60-200 BPM with smooth transitions.",
+          "dependencies": [
+            4
+          ],
+          "details": "Create setTempo function with validation for the 60-200 BPM range. Implement smooth tempo transitions by gradually changing the tempo value over time. Update the scheduler timing calculations when tempo changes. Add BPM to time conversion utilities.",
+          "status": "done",
+          "testStrategy": "Test tempo changes during playback. Verify smooth transitions and accurate timing after tempo changes."
+        },
+        {
+          "id": 6,
+          "title": "Implement Audio Latency Compensation",
+          "description": "Add mechanisms to detect and compensate for audio output latency across different devices and browsers.",
+          "dependencies": [
+            4
+          ],
+          "details": "Implement a calibration routine to measure system latency. Add offset parameters to scheduling calculations. Create a user-adjustable latency compensation setting. Use performance.now() alongside audioContext.currentTime for more accurate scheduling.",
+          "status": "done",
+          "testStrategy": "Test on different devices and browsers. Measure actual latency and verify compensation effectiveness."
+        },
+        {
+          "id": 7,
+          "title": "Implement Audio Caching System",
+          "description": "Create a caching system for audio nodes and buffers to improve performance and reduce garbage collection.",
+          "dependencies": [
+            2,
+            3
+          ],
+          "details": "Implement a pool of reusable oscillator and gain nodes. Create a buffer cache for pre-generated sounds. Add cleanup mechanisms to prevent memory leaks. Optimize node creation and connection for better performance.",
+          "status": "done",
+          "testStrategy": "Benchmark performance with and without caching. Monitor memory usage during extended playback."
+        },
+        {
+          "id": 8,
+          "title": "Integrate Components and Create Public API",
+          "description": "Connect all components and create a clean, documented API for the useAudioEngine hook.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ],
+          "details": "Create public methods: start(), stop(), setTempo(), schedulePattern(), etc. Add event listeners/callbacks for beat events and pattern triggers. Implement proper cleanup in useEffect return function. Add comprehensive error handling and status reporting. Document the API with JSDoc comments.",
+          "status": "done",
+          "testStrategy": "Create integration tests for the complete hook. Test all public methods and verify correct interaction between components."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Develop Timing Engine",
+      "description": "Create a precise timing detection system that measures user input against expected rhythm patterns.",
+      "details": "Implement a timing engine that captures user taps with millisecond precision. Create timing threshold categories (Perfect: ±50ms, Good: ±100ms, Fair: ±150ms, Miss: >150ms). Develop algorithms to compare user tap timing against expected pattern timing. Implement compensation for device-specific audio latency. Create a calibration system to measure and adjust for user's device latency. Use performance.now() for high-resolution timing. Store timing data for analysis and feedback. Example implementation:\n```javascript\nconst useTimingEngine = (pattern, bpm) => {\n  const beatDuration = 60000 / bpm; // in milliseconds\n  const thresholds = {\n    perfect: 50,\n    good: 100,\n    fair: 150\n  };\n  \n  // Calculate expected tap times based on pattern\n  const expectedTapTimes = pattern.map(beat => beat * beatDuration);\n  \n  // Evaluate a user tap\n  const evaluateTap = (tapTime) => {\n    // Find closest expected tap\n    const closestTapIndex = expectedTapTimes.findIndex(expected => {\n      return Math.abs(tapTime - expected) === Math.min(\n        ...expectedTapTimes.map(exp => Math.abs(tapTime - exp))\n      );\n    });\n    \n    if (closestTapIndex === -1) return { rating: 'miss', deviation: Infinity };\n    \n    const deviation = Math.abs(tapTime - expectedTapTimes[closestTapIndex]);\n    let rating;\n    \n    if (deviation <= thresholds.perfect) rating = 'perfect';\n    else if (deviation <= thresholds.good) rating = 'good';\n    else if (deviation <= thresholds.fair) rating = 'fair';\n    else rating = 'miss';\n    \n    return { rating, deviation, expectedTime: expectedTapTimes[closestTapIndex] };\n  };\n  \n  return { evaluateTap };\n};\n```",
+      "testStrategy": "Create automated tests with simulated taps at known offsets. Measure system latency on different devices. Test edge cases (simultaneous taps, very fast taps). Verify correct categorization of timing accuracy. Test with different BPM settings to ensure consistent behavior.",
+      "priority": "high",
+      "dependencies": [
+        2
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 4,
+      "title": "Implement Pattern Generation System",
+      "description": "Create a system to generate rhythm patterns of varying difficulty levels and time signatures.",
+      "details": "Develop a pattern generation system that creates rhythmic patterns based on difficulty levels. Implement different pattern categories: Beginner (quarter and half notes), Intermediate (eighth notes and simple syncopation), Advanced (sixteenth notes, complex syncopation), Expert (polyrhythms and irregular patterns). Support multiple time signatures (4/4, 3/4, 2/4). Create pattern validation to ensure generated patterns are playable and appropriate for the difficulty level. Store patterns as arrays of beat positions (e.g., [0, 1, 2, 3] for quarter notes in 4/4). Example implementation:\n```javascript\nconst generatePattern = (difficulty, timeSignature = '4/4') => {\n  const [beats, noteValue] = timeSignature.split('/').map(Number);\n  const possiblePositions = [];\n  \n  // Generate all possible positions based on difficulty\n  switch(difficulty) {\n    case 'beginner':\n      // Quarter and half notes only\n      for (let i = 0; i < beats; i++) {\n        possiblePositions.push(i);\n      }\n      break;\n    case 'intermediate':\n      // Eighth notes\n      for (let i = 0; i < beats; i += 0.5) {\n        possiblePositions.push(i);\n      }\n      break;\n    case 'advanced':\n      // Sixteenth notes\n      for (let i = 0; i < beats; i += 0.25) {\n        possiblePositions.push(i);\n      }\n      break;\n    case 'expert':\n      // Sixteenth notes plus triplets\n      for (let i = 0; i < beats; i += 0.25) {\n        possiblePositions.push(i);\n      }\n      // Add triplet positions\n      for (let i = 0; i < beats; i++) {\n        possiblePositions.push(i + 1/3);\n        possiblePositions.push(i + 2/3);\n      }\n      break;\n  }\n  \n  // Select a subset of positions based on difficulty\n  let patternLength;\n  switch(difficulty) {\n    case 'beginner': patternLength = Math.floor(beats * 0.75); break;\n    case 'intermediate': patternLength = Math.floor(beats); break;\n    case 'advanced': patternLength = Math.floor(beats * 1.5); break;\n    case 'expert': patternLength = Math.floor(beats * 2); break;\n  }\n  \n  // Always include the downbeat (position 0)\n  let pattern = [0];\n  \n  // Randomly select remaining positions\n  const remainingPositions = possiblePositions.filter(pos => pos !== 0);\n  while (pattern.length < patternLength && remainingPositions.length > 0) {\n    const randomIndex = Math.floor(Math.random() * remainingPositions.length);\n    pattern.push(remainingPositions[randomIndex]);\n    remainingPositions.splice(randomIndex, 1);\n  }\n  \n  // Sort pattern by position\n  return pattern.sort((a, b) => a - b);\n};\n```",
+      "testStrategy": "Generate and validate patterns for each difficulty level. Test with different time signatures. Verify pattern complexity increases appropriately with difficulty. Check edge cases like very slow or fast tempos. Ensure patterns are musically sensible and playable.",
+      "priority": "medium",
+      "dependencies": [
+        2
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 5,
+      "title": "Create Game UI Components",
+      "description": "Develop the visual interface components for the rhythm game, including tap area, metronome indicator, and feedback displays.",
+      "details": "Create React components for the game interface: TapArea (large, responsive area for user input, minimum 300x300px on mobile), MetronomeIndicator (pulsing circle or flashing beat markers), BeatIndicator (shows current beat during all phases), PhaseIndicator (displays current game phase), FeedbackDisplay (shows real-time tap feedback), and ScoreDisplay (shows accuracy and points). Implement responsive design that works well on both mobile and desktop. Use CSS animations for visual feedback with 60fps performance. Ensure tap area has good touch response on mobile devices. Example TapArea component:\n```javascript\nconst TapArea = ({ onTap, currentPhase, activeBeat }) => {\n  const handleTap = (e) => {\n    // Prevent default to avoid double-tap zoom on mobile\n    e.preventDefault();\n    \n    if (currentPhase === 'performance') {\n      onTap(performance.now());\n    }\n  };\n  \n  return (\n    <div \n      className={`tap-area ${currentPhase === 'performance' ? 'active' : ''}`}\n      onClick={handleTap}\n      onTouchStart={handleTap}\n      style={{\n        width: '100%',\n        height: '300px',\n        maxWidth: '600px',\n        margin: '0 auto',\n        backgroundColor: currentPhase === 'performance' ? '#e0f7fa' : '#f5f5f5',\n        borderRadius: '8px',\n        display: 'flex',\n        justifyContent: 'center',\n        alignItems: 'center',\n        position: 'relative',\n        overflow: 'hidden'\n      }}\n    >\n      <MetronomeIndicator activeBeat={activeBeat} />\n      <div className=\"tap-instruction\">\n        {currentPhase === 'preparation' && 'Get Ready'}\n        {currentPhase === 'count-in' && 'Listen to Metronome'}\n        {currentPhase === 'pattern' && 'Listen to Pattern'}\n        {currentPhase === 'wait' && 'Get Ready to Tap'}\n        {currentPhase === 'performance' && 'Tap Now!'}\n        {currentPhase === 'evaluation' && 'Evaluating...'}\n      </div>\n    </div>\n  );\n};\n```",
+      "testStrategy": "Test UI components on various screen sizes and devices. Verify responsive design breakpoints. Measure rendering performance to ensure 60fps animations. Test touch input latency on mobile devices. Verify accessibility features work correctly. Test keyboard navigation support.",
+      "priority": "medium",
+      "dependencies": [
+        1
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 6,
+      "title": "Implement Game Flow Controller",
+      "description": "Create the main game controller that manages the flow between different game phases.",
+      "details": "Develop a GameController component that orchestrates the entire game flow. Implement state management for game phases (Preparation, Metronome Count-in, Pattern Playback, Silent Wait, User Performance, Evaluation & Feedback). Create transitions between phases with appropriate timing. Integrate audio engine for metronome and pattern playback. Connect timing engine for user performance evaluation. Handle user interactions during appropriate phases. Implement game reset and retry functionality. Example implementation:\n```javascript\nconst GameController = ({ difficulty = 'beginner', tempo = 120, timeSignature = '4/4' }) => {\n  const [phase, setPhase] = useState('preparation'); // preparation, count-in, pattern, wait, performance, evaluation\n  const [pattern, setPattern] = useState([]);\n  const [userTaps, setUserTaps] = useState([]);\n  const [currentBeat, setCurrentBeat] = useState(0);\n  const [results, setResults] = useState(null);\n  \n  const audioEngine = useAudioEngine(tempo);\n  const timingEngine = useTimingEngine(pattern, tempo);\n  \n  // Initialize game\n  useEffect(() => {\n    // Generate a new pattern based on difficulty\n    const newPattern = generatePattern(difficulty, timeSignature);\n    setPattern(newPattern);\n  }, [difficulty, timeSignature]);\n  \n  // Start game flow\n  const startGame = () => {\n    setPhase('count-in');\n    audioEngine.startMetronome();\n    \n    // Schedule phase transitions\n    const beatDuration = 60000 / tempo; // ms\n    const [beats] = timeSignature.split('/').map(Number);\n    \n    // After count-in (1 bar)\n    setTimeout(() => {\n      setPhase('pattern');\n      audioEngine.playPattern(pattern);\n    }, beats * beatDuration);\n    \n    // After pattern playback (1 bar)\n    setTimeout(() => {\n      setPhase('wait');\n    }, 2 * beats * beatDuration);\n    \n    // After wait period (1 beat)\n    setTimeout(() => {\n      setPhase('performance');\n      setUserTaps([]);\n    }, (2 * beats + 1) * beatDuration);\n    \n    // After performance period (1 bar)\n    setTimeout(() => {\n      setPhase('evaluation');\n      evaluatePerformance();\n    }, (3 * beats + 1) * beatDuration);\n  };\n  \n  // Handle user tap during performance phase\n  const handleTap = (tapTime) => {\n    if (phase === 'performance') {\n      setUserTaps(prev => [...prev, tapTime]);\n      audioEngine.playTapSound();\n    }\n  };\n  \n  // Evaluate user performance\n  const evaluatePerformance = () => {\n    const evaluations = userTaps.map(tap => timingEngine.evaluateTap(tap));\n    \n    // Calculate score\n    let totalScore = 0;\n    let perfectCount = 0;\n    \n    evaluations.forEach(eval => {\n      switch(eval.rating) {\n        case 'perfect': \n          totalScore += 100;\n          perfectCount++;\n          break;\n        case 'good': totalScore += 70; break;\n        case 'fair': totalScore += 40; break;\n        default: break;\n      }\n    });\n    \n    // Add streak bonus\n    if (perfectCount >= 3) {\n      totalScore += perfectCount * 10;\n    }\n    \n    // Calculate accuracy percentage\n    const expectedTaps = pattern.length;\n    const accuracy = Math.min(100, Math.round((totalScore / (expectedTaps * 100)) * 100));\n    \n    setResults({ evaluations, totalScore, accuracy, perfectCount });\n  };\n  \n  // Reset game\n  const resetGame = () => {\n    setPhase('preparation');\n    setUserTaps([]);\n    setResults(null);\n    audioEngine.stop();\n    \n    // Generate a new pattern\n    const newPattern = generatePattern(difficulty, timeSignature);\n    setPattern(newPattern);\n  };\n  \n  return (\n    <div className=\"game-container\">\n      <PhaseIndicator phase={phase} />\n      <BeatIndicator currentBeat={currentBeat} timeSignature={timeSignature} />\n      \n      <TapArea \n        onTap={handleTap} \n        currentPhase={phase} \n        activeBeat={currentBeat} \n      />\n      \n      {phase === 'preparation' && (\n        <button onClick={startGame} className=\"start-button\">Start</button>\n      )}\n      \n      {phase === 'evaluation' && results && (\n        <FeedbackDisplay results={results} pattern={pattern} userTaps={userTaps} />\n      )}\n      \n      {phase === 'evaluation' && (\n        <button onClick={resetGame} className=\"retry-button\">Try Again</button>\n      )}\n    </div>\n  );\n};\n```",
+      "testStrategy": "Test complete game flow from start to finish. Verify correct timing of phase transitions. Test with different tempos and time signatures. Simulate user taps and verify evaluation logic. Test edge cases like user tapping during incorrect phases. Verify game reset functionality.",
+      "priority": "high",
+      "dependencies": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 7,
+      "title": "Implement Scoring and Feedback System",
+      "description": "Create the scoring system that evaluates user performance and provides detailed feedback.",
+      "details": "Implement a scoring system based on timing accuracy: Perfect (±50ms): 100 points, Good (±100ms): 70 points, Fair (±150ms): 40 points, Miss (>150ms): 0 points. Add pattern completion bonus for getting the rhythm right. Implement streak bonuses for consecutive perfect taps. Calculate overall accuracy percentage. Create visual feedback components that show expected vs. actual tap timing. Implement detailed performance analytics. Example implementation:\n```javascript\nconst FeedbackDisplay = ({ results, pattern, userTaps }) => {\n  const { evaluations, totalScore, accuracy, perfectCount } = results;\n  \n  // Calculate timing statistics\n  const timingStats = evaluations.reduce((stats, eval) => {\n    stats[eval.rating] = (stats[eval.rating] || 0) + 1;\n    return stats;\n  }, {});\n  \n  // Prepare data for visualization\n  const visualizationData = pattern.map((expectedTime, index) => {\n    const matchingEval = evaluations.find(e => e.expectedTime === expectedTime);\n    return {\n      expectedTime,\n      actualTime: matchingEval ? matchingEval.actualTime : null,\n      deviation: matchingEval ? matchingEval.deviation : null,\n      rating: matchingEval ? matchingEval.rating : 'miss'\n    };\n  });\n  \n  return (\n    <div className=\"feedback-container\">\n      <h2>Performance Results</h2>\n      \n      <div className=\"score-display\">\n        <div className=\"total-score\">{totalScore} points</div>\n        <div className=\"accuracy-meter\">\n          <div className=\"accuracy-fill\" style={{ width: `${accuracy}%` }}></div>\n          <span>{accuracy}% accuracy</span>\n        </div>\n      </div>\n      \n      <div className=\"timing-breakdown\">\n        <div className=\"timing-stat\">\n          <span className=\"stat-label\">Perfect:</span>\n          <span className=\"stat-value\">{timingStats.perfect || 0}</span>\n        </div>\n        <div className=\"timing-stat\">\n          <span className=\"stat-label\">Good:</span>\n          <span className=\"stat-value\">{timingStats.good || 0}</span>\n        </div>\n        <div className=\"timing-stat\">\n          <span className=\"stat-label\">Fair:</span>\n          <span className=\"stat-value\">{timingStats.fair || 0}</span>\n        </div>\n        <div className=\"timing-stat\">\n          <span className=\"stat-label\">Miss:</span>\n          <span className=\"stat-value\">{timingStats.miss || 0}</span>\n        </div>\n      </div>\n      \n      <div className=\"timing-visualization\">\n        {visualizationData.map((data, index) => (\n          <div key={index} className={`tap-result ${data.rating}`}>\n            <div className=\"expected-tap\"></div>\n            {data.actualTime && (\n              <div \n                className=\"actual-tap\" \n                style={{ \n                  left: `${(data.deviation / 150) * 50}%`,\n                  transform: 'translateX(-50%)'\n                }}\n              ></div>\n            )}\n            <div className=\"rating-label\">{data.rating}</div>\n          </div>\n        ))}\n      </div>\n      \n      {perfectCount >= 3 && (\n        <div className=\"streak-bonus\">\n          Streak Bonus: +{perfectCount * 10} points for {perfectCount} perfect taps in a row!\n        </div>\n      )}\n    </div>\n  );\n};\n```",
+      "testStrategy": "Test scoring calculations with various input patterns. Verify correct point allocation for different timing accuracies. Test streak bonus calculations. Verify accuracy percentage calculation. Test visualization of expected vs. actual taps. Test with edge cases like all perfect/all miss performances.",
+      "priority": "medium",
+      "dependencies": [
+        3,
+        6
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 8,
+      "title": "Implement Game Modes",
+      "description": "Create the different game modes: Practice Mode, Challenge Mode, and Custom Mode.",
+      "details": "Implement three distinct game modes with different features and UI: Practice Mode (single pattern practice with adjustable tempo, immediate feedback, option to replay pattern multiple times, no scoring pressure), Challenge Mode (progressive difficulty increase, target score requirements to advance, limited attempts per pattern, leaderboard integration), and Custom Mode (placeholder for future user-defined patterns, custom tempo settings). Create mode selection screen with clear descriptions. Implement mode-specific settings and controls. Example implementation:\n```javascript\nconst GameModeSelector = ({ onSelectMode }) => {\n  return (\n    <div className=\"mode-selector\">\n      <h1>Metronome Rhythm Training</h1>\n      <p>Select a game mode to begin:</p>\n      \n      <div className=\"mode-cards\">\n        <div className=\"mode-card\" onClick={() => onSelectMode('practice')}>\n          <h2>Practice Mode</h2>\n          <p>Focus on learning without pressure. Adjust tempo and repeat patterns as needed.</p>\n          <ul>\n            <li>Adjustable tempo</li>\n            <li>Repeat patterns</li>\n            <li>Detailed feedback</li>\n            <li>No scoring pressure</li>\n          </ul>\n          <button>Start Practice</button>\n        </div>\n        \n        <div className=\"mode-card\" onClick={() => onSelectMode('challenge')}>\n          <h2>Challenge Mode</h2>\n          <p>Test your skills with progressively difficult patterns.</p>\n          <ul>\n            <li>Progressive difficulty</li>\n            <li>Score requirements</li>\n            <li>Limited attempts</li>\n            <li>Leaderboard rankings</li>\n          </ul>\n          <button>Start Challenge</button>\n        </div>\n        \n        <div className=\"mode-card\" onClick={() => onSelectMode('custom')}>\n          <h2>Custom Mode</h2>\n          <p>Create your own practice patterns.</p>\n          <ul>\n            <li>Custom tempo settings</li>\n            <li>Define your patterns</li>\n            <li>Share with others</li>\n            <li>Coming soon!</li>\n          </ul>\n          <button>Coming Soon</button>\n        </div>\n      </div>\n    </div>\n  );\n};\n\nconst PracticeMode = () => {\n  const [tempo, setTempo] = useState(120);\n  const [difficulty, setDifficulty] = useState('beginner');\n  const [timeSignature, setTimeSignature] = useState('4/4');\n  const [repeatEnabled, setRepeatEnabled] = useState(false);\n  \n  return (\n    <div className=\"practice-mode\">\n      <h2>Practice Mode</h2>\n      \n      <div className=\"settings-panel\">\n        <div className=\"setting\">\n          <label>Tempo: {tempo} BPM</label>\n          <input \n            type=\"range\" \n            min=\"60\" \n            max=\"200\" \n            value={tempo} \n            onChange={(e) => setTempo(parseInt(e.target.value))} \n          />\n        </div>\n        \n        <div className=\"setting\">\n          <label>Difficulty:</label>\n          <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}>\n            <option value=\"beginner\">Beginner</option>\n            <option value=\"intermediate\">Intermediate</option>\n            <option value=\"advanced\">Advanced</option>\n            <option value=\"expert\">Expert</option>\n          </select>\n        </div>\n        \n        <div className=\"setting\">\n          <label>Time Signature:</label>\n          <select value={timeSignature} onChange={(e) => setTimeSignature(e.target.value)}>\n            <option value=\"4/4\">4/4</option>\n            <option value=\"3/4\">3/4</option>\n            <option value=\"2/4\">2/4</option>\n          </select>\n        </div>\n        \n        <div className=\"setting\">\n          <label>\n            <input \n              type=\"checkbox\" \n              checked={repeatEnabled} \n              onChange={() => setRepeatEnabled(!repeatEnabled)} \n            />\n            Enable pattern repeat\n          </label>\n        </div>\n      </div>\n      \n      <GameController \n        mode=\"practice\"\n        tempo={tempo}\n        difficulty={difficulty}\n        timeSignature={timeSignature}\n        repeatEnabled={repeatEnabled}\n      />\n    </div>\n  );\n};\n\n// Similar implementations for ChallengeMode and CustomMode\n```",
+      "testStrategy": "Test navigation between different game modes. Verify mode-specific settings are applied correctly. Test practice mode pattern repetition. Test challenge mode progression logic. Verify custom mode placeholder UI. Test responsive design of mode selection screen.",
+      "priority": "medium",
+      "dependencies": [
+        6,
+        7
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 9,
+      "title": "Implement Accessibility Features",
+      "description": "Add accessibility features to make the game usable for people with different abilities.",
+      "details": "Implement visual indicators for deaf/hard-of-hearing users that clearly show rhythm patterns. Add keyboard navigation support (spacebar for tapping, arrow keys for navigation). Create high contrast mode for visual indicators. Implement adjustable audio volumes for metronome and patterns. Add screen reader support with ARIA attributes. Ensure color choices meet WCAG contrast requirements. Example implementation:\n```javascript\nconst AccessibilitySettings = ({ settings, updateSettings }) => {\n  const { highContrast, visualIntensity, metronomeVolume, patternVolume, useKeyboard } = settings;\n  \n  return (\n    <div className=\"accessibility-settings\" role=\"region\" aria-label=\"Accessibility Settings\">\n      <h2 id=\"accessibility-heading\">Accessibility Settings</h2>\n      \n      <div className=\"setting\">\n        <label htmlFor=\"high-contrast\">\n          <input \n            id=\"high-contrast\"\n            type=\"checkbox\" \n            checked={highContrast} \n            onChange={() => updateSettings({ highContrast: !highContrast })} \n          />\n          High Contrast Mode\n        </label>\n      </div>\n      \n      <div className=\"setting\">\n        <label htmlFor=\"visual-intensity\">Visual Intensity: {visualIntensity}%</label>\n        <input \n          id=\"visual-intensity\"\n          type=\"range\" \n          min=\"50\" \n          max=\"200\" \n          value={visualIntensity} \n          onChange={(e) => updateSettings({ visualIntensity: parseInt(e.target.value) })} \n          aria-valuemin=\"50\"\n          aria-valuemax=\"200\"\n          aria-valuenow={visualIntensity}\n        />\n      </div>\n      \n      <div className=\"setting\">\n        <label htmlFor=\"metronome-volume\">Metronome Volume: {metronomeVolume}%</label>\n        <input \n          id=\"metronome-volume\"\n          type=\"range\" \n          min=\"0\" \n          max=\"100\" \n          value={metronomeVolume} \n          onChange={(e) => updateSettings({ metronomeVolume: parseInt(e.target.value) })} \n          aria-valuemin=\"0\"\n          aria-valuemax=\"100\"\n          aria-valuenow={metronomeVolume}\n        />\n      </div>\n      \n      <div className=\"setting\">\n        <label htmlFor=\"pattern-volume\">Pattern Volume: {patternVolume}%</label>\n        <input \n          id=\"pattern-volume\"\n          type=\"range\" \n          min=\"0\" \n          max=\"100\" \n          value={patternVolume} \n          onChange={(e) => updateSettings({ patternVolume: parseInt(e.target.value) })} \n          aria-valuemin=\"0\"\n          aria-valuemax=\"100\"\n          aria-valuenow={patternVolume}\n        />\n      </div>\n      \n      <div className=\"setting\">\n        <label htmlFor=\"use-keyboard\">\n          <input \n            id=\"use-keyboard\"\n            type=\"checkbox\" \n            checked={useKeyboard} \n            onChange={() => updateSettings({ useKeyboard: !useKeyboard })} \n          />\n          Enable Keyboard Controls (Space to tap, Arrow keys to navigate)\n        </label>\n      </div>\n    </div>\n  );\n};\n\n// Add keyboard event listeners to TapArea\nconst TapArea = ({ onTap, currentPhase, activeBeat, useKeyboard }) => {\n  useEffect(() => {\n    if (!useKeyboard) return;\n    \n    const handleKeyDown = (e) => {\n      if (e.code === 'Space' && currentPhase === 'performance') {\n        e.preventDefault();\n        onTap(performance.now());\n      }\n    };\n    \n    window.addEventListener('keydown', handleKeyDown);\n    return () => window.removeEventListener('keydown', handleKeyDown);\n  }, [useKeyboard, currentPhase, onTap]);\n  \n  // Rest of the component...\n};\n```",
+      "testStrategy": "Test with screen readers to verify ARIA attributes. Verify keyboard navigation works correctly. Test high contrast mode with color contrast analyzers. Verify volume controls affect audio output correctly. Test with different input methods (mouse, touch, keyboard). Validate against WCAG 2.1 AA standards.",
+      "priority": "medium",
+      "dependencies": [
+        5,
+        6
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 10,
+      "title": "Implement Progress Tracking",
+      "description": "Create a system to track user progress across sessions and show improvement over time.",
+      "details": "Implement local storage to save user progress and performance history. Create a progress dashboard showing improvement over time. Track metrics like accuracy percentage, perfect tap rate, and highest scores. Implement progress visualization with charts (using libraries like Chart.js or Recharts). Add achievement system for reaching milestones. Store session data including date, difficulty, tempo, and scores. Example implementation:\n```javascript\nconst useProgressTracking = () => {\n  // Load progress data from localStorage\n  const loadProgress = () => {\n    try {\n      const savedData = localStorage.getItem('rhythmGameProgress');\n      return savedData ? JSON.parse(savedData) : {\n        sessions: [],\n        achievements: [],\n        stats: {\n          totalSessions: 0,\n          averageAccuracy: 0,\n          highestScore: 0,\n          perfectTapRate: 0\n        }\n      };\n    } catch (error) {\n      console.error('Error loading progress data:', error);\n      return {\n        sessions: [],\n        achievements: [],\n        stats: {\n          totalSessions: 0,\n          averageAccuracy: 0,\n          highestScore: 0,\n          perfectTapRate: 0\n        }\n      };\n    }\n  };\n  \n  // Save progress data to localStorage\n  const saveProgress = (data) => {\n    try {\n      localStorage.setItem('rhythmGameProgress', JSON.stringify(data));\n    } catch (error) {\n      console.error('Error saving progress data:', error);\n    }\n  };\n  \n  // Add a new session to progress data\n  const addSession = (sessionData) => {\n    const progress = loadProgress();\n    const newSession = {\n      id: Date.now(),\n      date: new Date().toISOString(),\n      ...sessionData\n    };\n    \n    progress.sessions.push(newSession);\n    progress.stats = calculateStats(progress.sessions);\n    progress.achievements = checkAchievements(progress);\n    \n    saveProgress(progress);\n    return progress;\n  };\n  \n  // Calculate overall stats from sessions\n  const calculateStats = (sessions) => {\n    if (sessions.length === 0) return {\n      totalSessions: 0,\n      averageAccuracy: 0,\n      highestScore: 0,\n      perfectTapRate: 0\n    };\n    \n    const totalSessions = sessions.length;\n    const averageAccuracy = sessions.reduce((sum, session) => sum + session.accuracy, 0) / totalSessions;\n    const highestScore = Math.max(...sessions.map(session => session.score));\n    \n    const totalTaps = sessions.reduce((sum, session) => sum + session.totalTaps, 0);\n    const perfectTaps = sessions.reduce((sum, session) => sum + session.perfectTaps, 0);\n    const perfectTapRate = totalTaps > 0 ? (perfectTaps / totalTaps) * 100 : 0;\n    \n    return {\n      totalSessions,\n      averageAccuracy,\n      highestScore,\n      perfectTapRate\n    };\n  };\n  \n  // Check for new achievements\n  const checkAchievements = (progress) => {\n    const { sessions, stats, achievements } = progress;\n    const newAchievements = [...achievements];\n    \n    // Example achievement checks\n    if (stats.totalSessions >= 10 && !achievements.includes('practice_makes_perfect')) {\n      newAchievements.push('practice_makes_perfect');\n    }\n    \n    if (stats.averageAccuracy >= 90 && !achievements.includes('rhythm_master')) {\n      newAchievements.push('rhythm_master');\n    }\n    \n    if (stats.perfectTapRate >= 80 && !achievements.includes('precision_perfect')) {\n      newAchievements.push('precision_perfect');\n    }\n    \n    return newAchievements;\n  };\n  \n  return {\n    loadProgress,\n    addSession,\n    calculateStats\n  };\n};\n```",
+      "testStrategy": "Test localStorage saving and loading. Verify progress calculations are correct. Test with simulated session history data. Verify achievement unlocking logic. Test data visualization components. Test with edge cases like first-time users or users with extensive history.",
+      "priority": "low",
+      "dependencies": [
+        7,
+        8
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 11,
+      "title": "Implement Performance Optimization",
+      "description": "Optimize the application for smooth 60fps performance and low input latency.",
+      "details": "Implement performance optimizations to ensure 60fps visual feedback and <50ms input latency. Use React.memo and useMemo for expensive component renders. Implement requestAnimationFrame for smooth animations. Optimize audio scheduling with Web Audio API. Use Web Workers for heavy calculations that might block the main thread. Implement debouncing for rapid user inputs. Add performance monitoring to track frame rate and input latency. Example implementation:\n```javascript\n// Performance monitoring hook\nconst usePerformanceMonitoring = () => {\n  const [metrics, setMetrics] = useState({\n    fps: 0,\n    inputLatency: 0,\n    audioLatency: 0\n  });\n  \n  useEffect(() => {\n    let frameCount = 0;\n    let lastTime = performance.now();\n    let rafId;\n    \n    // Measure FPS\n    const measureFps = (timestamp) => {\n      frameCount++;\n      \n      if (timestamp - lastTime >= 1000) { // Update every second\n        setMetrics(prev => ({\n          ...prev,\n          fps: frameCount\n        }));\n        \n        frameCount = 0;\n        lastTime = timestamp;\n      }\n      \n      rafId = requestAnimationFrame(measureFps);\n    };\n    \n    rafId = requestAnimationFrame(measureFps);\n    \n    // Measure input latency\n    const originalAddEventListener = EventTarget.prototype.addEventListener;\n    EventTarget.prototype.addEventListener = function(type, listener, options) {\n      if (type === 'click' || type === 'touchstart') {\n        const wrappedListener = (event) => {\n          const startTime = performance.now();\n          \n          // Use requestAnimationFrame to measure when the UI updates\n          requestAnimationFrame(() => {\n            const latency = performance.now() - startTime;\n            setMetrics(prev => ({\n              ...prev,\n              inputLatency: Math.min(prev.inputLatency || 1000, latency)\n            }));\n          });\n          \n          return listener(event);\n        };\n        \n        return originalAddEventListener.call(this, type, wrappedListener, options);\n      }\n      \n      return originalAddEventListener.call(this, type, listener, options);\n    };\n    \n    return () => {\n      cancelAnimationFrame(rafId);\n      EventTarget.prototype.addEventListener = originalAddEventListener;\n    };\n  }, []);\n  \n  return metrics;\n};\n\n// Optimized TapArea component with React.memo\nconst TapArea = React.memo(({ onTap, currentPhase, activeBeat }) => {\n  // Implementation as before\n}, (prevProps, nextProps) => {\n  // Custom comparison function to prevent unnecessary re-renders\n  return (\n    prevProps.currentPhase === nextProps.currentPhase &&\n    prevProps.activeBeat === nextProps.activeBeat\n  );\n});\n\n// Use Web Worker for pattern evaluation\nconst createPatternEvaluationWorker = () => {\n  const workerCode = `\n    self.onmessage = function(e) {\n      const { userTaps, pattern, tempo } = e.data;\n      const beatDuration = 60000 / tempo;\n      \n      // Calculate expected tap times\n      const expectedTapTimes = pattern.map(beat => beat * beatDuration);\n      \n      // Evaluate each user tap\n      const evaluations = userTaps.map(tapTime => {\n        // Evaluation logic here\n        // ...\n      });\n      \n      self.postMessage(evaluations);\n    };\n  `;\n  \n  const blob = new Blob([workerCode], { type: 'application/javascript' });\n  return new Worker(URL.createObjectURL(blob));\n};\n```",
+      "testStrategy": "Measure frame rate during animations. Test input latency with performance.now(). Profile memory usage during extended gameplay. Test on lower-end devices to ensure acceptable performance. Verify audio timing precision. Test with Chrome DevTools Performance tab to identify bottlenecks.",
+      "priority": "high",
+      "dependencies": [
+        2,
+        5,
+        6
+      ],
+      "status": "pending",
+      "subtasks": []
+    },
+    {
+      "id": 12,
+      "title": "Implement Comprehensive Testing and Deployment",
+      "description": "Set up testing infrastructure and deployment pipeline for the application.",
+      "details": "Set up comprehensive testing infrastructure including unit tests, integration tests, and end-to-end tests. Implement Jest for unit testing React components. Use React Testing Library for component integration tests. Set up Cypress for end-to-end testing of game flow. Create test cases for all core functionality. Implement CI/CD pipeline with GitHub Actions or similar. Configure deployment to hosting service (Netlify, Vercel, etc.). Set up error tracking with Sentry or similar service. Example implementation:\n```javascript\n// Example Jest test for Pattern Generator\ndescribe('Pattern Generator', () => {\n  test('generates beginner patterns with correct complexity', () => {\n    const pattern = generatePattern('beginner', '4/4');\n    \n    // Beginner patterns should only have quarter and half notes\n    expect(pattern.length).toBeLessThanOrEqual(4); // At most 4 notes in 4/4 time\n    expect(pattern.every(pos => Number.isInteger(pos))).toBe(true); // Only whole positions\n    expect(pattern).toContain(0); // Should always include the downbeat\n  });\n  \n  test('generates intermediate patterns with eighth notes', () => {\n    const pattern = generatePattern('intermediate', '4/4');\n    \n    // Should have some eighth notes (positions with .5)\n    const hasEighthNotes = pattern.some(pos => pos % 1 === 0.5);\n    expect(hasEighthNotes).toBe(true);\n  });\n  \n  // More tests...\n});\n\n// Example React Testing Library test for TapArea\nimport { render, fireEvent, screen } from '@testing-library/react';\n\ntest('TapArea registers taps only during performance phase', () => {\n  const mockTapHandler = jest.fn();\n  \n  const { rerender } = render(\n    <TapArea \n      onTap={mockTapHandler} \n      currentPhase=\"preparation\" \n      activeBeat={0} \n    />\n  );\n  \n  fireEvent.click(screen.getByTestId('tap-area'));\n  expect(mockTapHandler).not.toHaveBeenCalled();\n  \n  rerender(\n    <TapArea \n      onTap={mockTapHandler} \n      currentPhase=\"performance\" \n      activeBeat={0} \n    />\n  );\n  \n  fireEvent.click(screen.getByTestId('tap-area'));\n  expect(mockTapHandler).toHaveBeenCalledTimes(1);\n});\n\n// Example Cypress E2E test\ndescribe('Game Flow', () => {\n  it('completes a full game cycle in practice mode', () => {\n    cy.visit('/');\n    cy.contains('Practice Mode').click();\n    \n    // Start the game\n    cy.contains('Start').click();\n    \n    // Wait for count-in phase\n    cy.contains('Listen to Metronome').should('be.visible');\n    \n    // Wait for pattern phase\n    cy.contains('Listen to Pattern', { timeout: 10000 }).should('be.visible');\n    \n    // Wait for performance phase\n    cy.contains('Tap Now!', { timeout: 10000 }).should('be.visible');\n    \n    // Perform some taps\n    cy.get('[data-testid=tap-area]').click({ multiple: true, times: 4 });\n    \n    // Wait for evaluation phase\n    cy.contains('Performance Results', { timeout: 10000 }).should('be.visible');\n    \n    // Verify results are displayed\n    cy.get('.accuracy-meter').should('exist');\n    cy.get('.timing-breakdown').should('exist');\n  });\n});\n```",
+      "testStrategy": "Run unit tests for all core functions. Test React components with React Testing Library. Run end-to-end tests with Cypress for complete game flow. Test deployment process to staging environment. Verify error tracking captures exceptions correctly. Test application on multiple browsers and devices.",
+      "priority": "medium",
+      "dependencies": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ],
+      "status": "pending",
+      "subtasks": []
+    }
+  ]
+}

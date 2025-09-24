@@ -1,0 +1,70 @@
+# Task ID: 9
+# Title: Implement Rhythm Master Game
+# Status: done
+# Dependencies: 4, 7, 8
+# Priority: medium
+# Description: Develop the Rhythm Master practice mode with interactive rhythm training, audio feedback, and scoring based on timing accuracy.
+# Details:
+1. Design rhythm visualization interface
+2. Implement rhythm pattern generation with varying complexity
+3. Create tap/click input mechanism with timing detection
+4. Develop audio metronome with configurable tempo
+5. Implement scoring based on timing accuracy
+6. Add visual feedback for timing (early, late, perfect)
+7. Create difficulty progression system
+8. Implement rhythm notation rendering
+9. Add session summary with performance metrics
+10. Integrate with recording system for session capture
+
+# Test Strategy:
+Test rhythm detection accuracy across different devices and browsers. Verify that scoring correctly reflects timing accuracy. Test with various rhythm patterns and tempos. Ensure that visual and audio feedback is synchronized and helpful for the user.
+
+# Subtasks:
+## 1. Design Rhythm Visualization Interface [done]
+### Dependencies: None
+### Description: Create a clean, intuitive UI for displaying rhythm patterns that users need to follow. Include visual elements for beats, measures, and timing indicators.
+### Details:
+Implement a responsive grid-based layout with clear visual distinction between beats. Use animation frames for smooth rendering. Include measure lines, beat indicators, and a progress tracker showing the current position in the rhythm sequence.
+
+## 2. Implement Rhythm Pattern Generation [done]
+### Dependencies: 9.1
+### Description: Create an algorithm to generate rhythm patterns of varying complexity levels, from simple quarter notes to complex syncopated patterns.
+### Details:
+Develop a pattern generator that creates rhythmic sequences based on difficulty level. Store patterns as arrays of timing values. Include parameters for note density, syncopation level, and pattern length. Implement at least 5 difficulty levels with progressively complex patterns.
+
+## 3. Develop Audio Metronome System [done]
+### Dependencies: None
+### Description: Create an audio metronome with configurable tempo that provides the underlying beat for rhythm practice.
+### Details:
+Implement using Web Audio API for precise timing. Allow tempo adjustment from 40-220 BPM. Include different sound options for downbeats vs. regular beats. Ensure accurate timing with compensation for system latency. Add volume control and mute option.
+
+## 4. Create Tap/Click Input Mechanism [done]
+### Dependencies: 9.2, 9.3
+### Description: Implement a system to detect user taps/clicks and measure their timing accuracy relative to the expected rhythm pattern.
+### Details:
+Use event listeners for mouse clicks, touch events, and keyboard inputs. Calculate timing difference between user input and expected beat timing. Account for system latency. Store timing data for each input for later analysis and scoring.
+
+## 5. Implement Scoring and Feedback System [done]
+### Dependencies: 9.4
+### Description: Create a scoring mechanism based on timing accuracy and provide immediate visual feedback on each tap (early, perfect, late).
+### Details:
+Implement scoring tiers: Perfect (±20ms), Good (±50ms), OK (±100ms), and Miss (>100ms). Award points based on accuracy tier. Provide color-coded visual feedback for each tap. Include combo multiplier for consecutive accurate taps. Display running score during practice.
+
+## 6. Develop Rhythm Notation Rendering [done]
+### Dependencies: 9.2
+### Description: Implement a system to display standard music notation for the rhythm patterns to help users learn to read rhythms.
+### Details:
+Create a canvas-based notation renderer that displays notes, rests, time signatures, and measure lines. Implement proper spacing based on note duration. Highlight current beat position during playback. Support common time signatures (4/4, 3/4, 6/8).
+
+## 7. Create Difficulty Progression System [done]
+### Dependencies: 9.5
+### Description: Implement a system that tracks user performance and adjusts difficulty levels accordingly to provide appropriate challenge.
+### Details:
+Track performance metrics across sessions. Implement an algorithm that increases difficulty when user consistently scores above 85% accuracy. Include manual difficulty selection option. Store user progress data. Create at least 10 progression levels with increasing complexity.
+
+## 8. Implement Session Summary and Analytics [done]
+### Dependencies: 9.5, 9.7
+### Description: Create a comprehensive session summary screen showing performance metrics and integrate with the recording system for session capture.
+### Details:
+Display accuracy percentage, timing distribution graph, score breakdown, and areas for improvement. Calculate and show performance trends over time. Implement export functionality for session data. Integrate with the recording system to capture and playback practice sessions.
+

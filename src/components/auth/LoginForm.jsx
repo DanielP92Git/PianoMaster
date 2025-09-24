@@ -15,7 +15,7 @@ function LoginForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!email || !password) return;
+    if (!email || !password || isPending) return;
     login({ email, password });
   };
 

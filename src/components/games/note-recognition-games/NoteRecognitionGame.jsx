@@ -23,7 +23,12 @@ import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
 import GameOverScreen from "../GameOverScreen";
-import { FaPlay, FaPause } from "react-icons/fa";
+import {
+  FaPlay,
+  FaPause,
+  FaMicrophone,
+  FaMicrophoneSlash,
+} from "react-icons/fa";
 import { GameSettings } from "../shared/GameSettings";
 import { useGameSettings } from "../../../features/games/hooks/useGameSettings";
 import { useGameProgress } from "../../../features/games/hooks/useGameProgress";
@@ -115,6 +120,14 @@ export function NoteRecognitionGame() {
   // Game state
   const [gameOver, setGameOver] = useState(false);
 
+  // Audio input state
+  const [isListening, setIsListening] = useState(false);
+  const [audioContext, setAudioContext] = useState(null);
+  const [analyser, setAnalyser] = useState(null);
+  const [microphone, setMicrophone] = useState(null);
+  const [detectedNote, setDetectedNote] = useState(null);
+  const [audioInputLevel, setAudioInputLevel] = useState(0);
+
   // Timer implementation
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -151,6 +164,17 @@ export function NoteRecognitionGame() {
     setIsTimerActive(false);
   }, []);
 
+  // Reset game state when component mounts to ensure clean state
+  useEffect(() => {
+    resetProgress();
+    // Don't reset settings on mount as it causes issues with GameSettings component
+    setGameOver(false);
+    resetTimer();
+    setIsListening(false);
+    setDetectedNote(null);
+    setAudioInputLevel(0);
+  }, [resetProgress, resetTimer]);
+
   // Handle game over logic
   const handleGameOver = useCallback(() => {
     if (gameOver) return;
@@ -162,6 +186,15 @@ export function NoteRecognitionGame() {
     const isLost =
       scorePercentage < 50 || (settings.timedMode && timeRemaining === 0);
     const timeRanOut = settings.timedMode && timeRemaining === 0;
+
+    console.log(
+      "Game Over - Score:",
+      progress.score,
+      "Total Questions:",
+      progress.totalQuestions,
+      "Is Lost:",
+      isLost
+    );
 
     setTimeout(() => {
       if (isLost) {
@@ -340,9 +373,16 @@ export function NoteRecognitionGame() {
     const isCorrect = handleAnswer(selectedAnswer, progress.currentNote.note);
     playSound(isCorrect);
 
-    // In timed mode, we end after 10 questions
-    // In non-timed mode, keep going until user chooses to end
-    if (settings.timedMode && progress.totalQuestions >= 9) {
+    // Check for game completion based on mode
+    // Note: totalQuestions is incremented in handleAnswer, so we check the new value
+    const newTotalQuestions = progress.totalQuestions + 1;
+
+    if (settings.timedMode && newTotalQuestions >= 10) {
+      // Timed mode: end after 10 questions
+      handleGameOver();
+      return;
+    } else if (!settings.timedMode && newTotalQuestions >= 20) {
+      // Practice mode: end after 20 questions
       handleGameOver();
       return;
     }
@@ -461,8 +501,187 @@ export function NoteRecognitionGame() {
     }
   };
 
+  // Note frequency mapping (A4 = 440Hz)
+  const noteFrequencies = {
+    דו: [261.63, 523.25, 1046.5], // C4, C5, C6
+    רה: [293.66, 587.33, 1174.66], // D4, D5, D6
+    מי: [329.63, 659.25, 1318.51], // E4, E5, E6
+    פה: [349.23, 698.46, 1396.91], // F4, F5, F6
+    סול: [392.0, 783.99, 1567.98], // G4, G5, G6
+    לה: [440.0, 880.0, 1760.0], // A4, A5, A6
+    סי: [493.88, 987.77, 1975.53], // B4, B5, B6
+  };
+
+  // Pitch detection using autocorrelation
+  const detectPitch = useCallback((buffer) => {
+    const SIZE = buffer.length;
+    const MAX_SAMPLES = Math.floor(SIZE / 2);
+    let bestOffset = -1;
+    let bestCorrelation = 0;
+    let rms = 0;
+    let foundGoodCorrelation = false;
+    const GOOD_ENOUGH_CORRELATION = 0.9;
+
+    // Calculate RMS
+    for (let i = 0; i < SIZE; i++) {
+      const val = buffer[i];
+      rms += val * val;
+    }
+    rms = Math.sqrt(rms / SIZE);
+
+    // Not enough signal
+    if (rms < 0.01) return -1;
+
+    let lastCorrelation = 1;
+    for (let offset = 1; offset < MAX_SAMPLES; offset++) {
+      let correlation = 0;
+
+      for (let i = 0; i < MAX_SAMPLES; i++) {
+        correlation += Math.abs(buffer[i] - buffer[i + offset]);
+      }
+      correlation = 1 - correlation / MAX_SAMPLES;
+
+      if (
+        correlation > GOOD_ENOUGH_CORRELATION &&
+        correlation > lastCorrelation
+      ) {
+        foundGoodCorrelation = true;
+        if (correlation > bestCorrelation) {
+          bestCorrelation = correlation;
+          bestOffset = offset;
+        }
+      } else if (foundGoodCorrelation) {
+        break;
+      }
+      lastCorrelation = correlation;
+    }
+
+    if (bestCorrelation > 0.01) {
+      return 44100 / bestOffset;
+    }
+    return -1;
+  }, []);
+
+  // Convert frequency to note name
+  const frequencyToNote = useCallback((frequency) => {
+    if (frequency <= 0) return null;
+
+    let closestNote = null;
+    let minDifference = Infinity;
+
+    Object.entries(noteFrequencies).forEach(([note, frequencies]) => {
+      frequencies.forEach((freq) => {
+        const difference = Math.abs(frequency - freq);
+        const tolerance = freq * 0.05; // 5% tolerance
+        if (difference < tolerance && difference < minDifference) {
+          minDifference = difference;
+          closestNote = note;
+        }
+      });
+    });
+
+    return closestNote;
+  }, []);
+
+  // Start audio input
+  const startAudioInput = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      const source = context.createMediaStreamSource(stream);
+      const analyserNode = context.createAnalyser();
+
+      analyserNode.fftSize = 2048;
+      analyserNode.smoothingTimeConstant = 0.8;
+
+      source.connect(analyserNode);
+
+      setAudioContext(context);
+      setAnalyser(analyserNode);
+      setMicrophone(stream);
+      setIsListening(true);
+
+      // Start pitch detection loop
+      const bufferLength = analyserNode.frequencyBinCount;
+      const dataArray = new Float32Array(bufferLength);
+
+      const detectLoop = () => {
+        if (!analyserNode) return;
+
+        analyserNode.getFloatTimeDomainData(dataArray);
+
+        // Calculate audio level
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i] * dataArray[i];
+        }
+        const level = Math.sqrt(sum / bufferLength);
+        setAudioInputLevel(level);
+
+        // Detect pitch
+        const pitch = detectPitch(dataArray);
+        const note = frequencyToNote(pitch);
+        setDetectedNote(note);
+
+        // Check if detected note matches current note
+        if (
+          note &&
+          progress.currentNote &&
+          note === progress.currentNote.note
+        ) {
+          handleAnswerSelect(note);
+        }
+
+        requestAnimationFrame(detectLoop);
+      };
+
+      detectLoop();
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+    }
+  }, [detectPitch, frequencyToNote, progress.currentNote, handleAnswerSelect]);
+
+  // Stop audio input
+  const stopAudioInput = useCallback(() => {
+    if (microphone) {
+      microphone.getTracks().forEach((track) => track.stop());
+    }
+    if (audioContext) {
+      audioContext.close();
+    }
+    setIsListening(false);
+    setAudioContext(null);
+    setAnalyser(null);
+    setMicrophone(null);
+    setDetectedNote(null);
+    setAudioInputLevel(0);
+  }, [microphone, audioContext]);
+
+  // Toggle audio input
+  const toggleAudioInput = useCallback(() => {
+    if (isListening) {
+      stopAudioInput();
+    } else {
+      startAudioInput();
+    }
+  }, [isListening, stopAudioInput, startAudioInput]);
+
+  // Cleanup audio input on unmount or game end
+  useEffect(() => {
+    return () => {
+      stopAudioInput();
+    };
+  }, [stopAudioInput]);
+
+  // Stop audio input when game finishes
+  useEffect(() => {
+    if (progress.isFinished) {
+      stopAudioInput();
+    }
+  }, [progress.isFinished, stopAudioInput]);
+
   return (
-    <div className="flex flex-col overflow-hidden">
+    <div className="flex flex-col overflow-hidden min-h-screen">
       <div className="p-2">
         <BackButton
           to="/note-recognition-mode"
@@ -544,6 +763,34 @@ export function NoteRecognitionGame() {
               total={settings.timedMode ? 10 : 20} // Set higher goal for non-timed mode
             />
           </div>
+
+          {/* Audio Input Status */}
+          {isListening && (
+            <div className="w-full max-w-3xl mx-auto px-6 mb-4">
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3">
+                <div className="text-white/80 text-sm mb-2 text-center">
+                  🎤 מאזין לנגינה
+                </div>
+
+                {/* Audio Level Meter */}
+                <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-green-500 h-2 rounded-full transition-all duration-100"
+                    style={{
+                      width: `${Math.min(audioInputLevel * 1000, 100)}%`,
+                    }}
+                  />
+                </div>
+
+                {/* Detected Note */}
+                {detectedNote && (
+                  <div className="text-lg font-bold text-yellow-300 text-center">
+                    זיהיתי: {detectedNote}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Main game area */}
           <div className="flex items-center justify-center pt-5">
@@ -643,17 +890,35 @@ export function NoteRecognitionGame() {
         </div>
       )}
 
-      {/* Settings/Pause Button */}
-      <div className="absolute top-2 right-2">
+      {/* Control Buttons */}
+      <div className="absolute top-2 right-2 flex gap-2">
         {progress.isStarted && !progress.isFinished && (
-          <button
-            onClick={handlePauseGame}
-            className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center"
-            aria-label="Pause"
-          >
-            <FaPause className="mr-1" />
-            Pause
-          </button>
+          <>
+            <button
+              onClick={toggleAudioInput}
+              className={`px-3 py-1.5 backdrop-blur-md border border-white/20 text-white rounded-lg transition-colors flex items-center ${
+                isListening
+                  ? "bg-red-600/80 hover:bg-red-700/80"
+                  : "bg-green-600/80 hover:bg-green-700/80"
+              }`}
+              aria-label={isListening ? "Stop Listening" : "Start Listening"}
+            >
+              {isListening ? (
+                <FaMicrophoneSlash className="mr-1" />
+              ) : (
+                <FaMicrophone className="mr-1" />
+              )}
+              {isListening ? "Stop" : "Listen"}
+            </button>
+            <button
+              onClick={handlePauseGame}
+              className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center"
+              aria-label="Pause"
+            >
+              <FaPause className="mr-1" />
+              Pause
+            </button>
+          </>
         )}
       </div>
 

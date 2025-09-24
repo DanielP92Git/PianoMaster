@@ -1,0 +1,300 @@
+# Piano Practice App - Product Requirements Document
+
+## Overview
+The Piano Practice App is a gamified learning platform designed to empower children (7+) and their teachers to build daily piano practice habits through engaging practice modes, comprehensive progress tracking, and seamless teacher-student interaction. The app transforms traditional piano practice into an interactive, rewarding experience that motivates consistent learning and skill development.
+
+**Vision**: Empower children (7+) and their teachers to build daily piano practice habits through gamified modes, progress tracking, and seamless teacher–student interaction.
+
+**Primary Goal**: Launch an MVP that delivers engaging practice games, progress dashboards (for students & teachers), and in-app messaging.
+
+**Long-term Goal**: Integrate AI-driven feedback (tempo/note accuracy), multi-source score uploads, and rich media feedback loops (video/audio).
+
+## Core Features
+
+### 1. Authentication & User Management
+- **Email/password sign-up & login** using Supabase Auth
+- **Role-based access control** with Student vs. Teacher role selection
+- **Avatar customization** for personalized user experience
+- **Profile management** with basic user information and preferences
+
+### 2. Dashboard System
+- **Student Dashboard**: Daily streak counter, total points earned, practice time tracking, last session date, quick access to practice modes
+- **Teacher Dashboard**: Class overview, per-student streak & points visualization, recent recordings review, student progress monitoring
+- **Progress Visualization**: Charts and graphs showing improvement over time
+
+### 3. Practice Modes & Games
+- **Rhythm Master**: Interactive rhythm training with audio feedback and scoring
+- **Note Recognition**: Visual note identification games with treble and bass clef support
+- **Sight-Reading**: Progressive sight-reading exercises with difficulty scaling
+- **Memory Games**: Note pattern recognition and recall exercises
+- **Gamification Elements**: Points, streaks, achievements, and rewards system
+
+### 4. Practice Tracking & Recording
+- **Session Recording**: Audio recording capability with Supabase Storage integration
+- **Session History**: Comprehensive list of all practice sessions with playback functionality
+- **Progress Metrics**: Detailed analytics on practice time, accuracy, and improvement
+- **Performance Scoring**: Automated scoring system for each practice mode
+
+### 5. Communication System
+- **In-app Messaging**: Text-based communication between students and teachers
+- **Session-linked Feedback**: Messages tied to specific practice sessions
+- **Progress Notifications**: Automatic updates on student achievements and milestones
+
+### 6. Reminders & Notifications
+- **Daily Practice Reminders**: Configurable notification system
+- **Web and Push Notifications**: Multi-platform notification support
+- **Achievement Alerts**: Notifications for streaks, milestones, and accomplishments
+
+## User Experience
+
+### User Personas & Key Flows
+
+**Student (Ages 7-16)**
+- **Needs**: Fun, bite-sized practice sessions; immediate rewards; streak maintenance; easy navigation
+- **User Flow**: Sign up → Choose avatar → Play games → Record practice session → View progress stats → Message teacher
+- **Motivations**: Entertainment, achievement, progress visualization, teacher recognition
+
+**Teacher (Ages 25-65)**
+- **Needs**: Monitor multiple students; provide feedback; assign practice tasks; track class progress
+- **User Flow**: Sign up → Create class → View student dashboards → Send targeted feedback → Schedule practice reminders
+- **Motivations**: Student progress tracking, efficient feedback delivery, class management
+
+**Parent (Future - Ages 30-50)**
+- **Needs**: Oversee child's progress; receive alerts; manage subscription
+- **User Flow**: View child's statistics → Configure notifications → Upgrade plan
+- **Motivations**: Child's educational progress, value for investment
+
+### UI/UX Considerations
+- **Child-Friendly Design**: Large buttons, bright colors, intuitive navigation
+- **High-Contrast Mode**: Accessibility support for visual impairments
+- **Simple Language**: Age-appropriate instructions and feedback
+- **Responsive Design**: Seamless experience across devices
+- **Performance**: <200ms game load times, <5s audio upload times
+
+## Technical Architecture
+
+### System Components
+- **Frontend**: Vite + React with React-Query for state management and Tailwind CSS for styling
+- **Backend**: Supabase (PostgreSQL database, Authentication, Real-time subscriptions, Storage)
+- **Audio Processing**: Web Audio API for recording and playback
+- **Notifications**: Web Push API and Supabase real-time subscriptions
+- **Deployment**: Vercel for web hosting with CI/CD integration
+
+### Data Models
+
+**Users Table**
+```sql
+- id (UUID, primary key)
+- email (string, unique)
+- role (enum: student, teacher)
+- avatar (string, asset reference)
+- created_at (timestamp)
+- preferences (JSON)
+- streak_count (integer)
+- total_points (integer)
+```
+
+**Sessions Table**
+```sql
+- id (UUID, primary key)
+- user_id (UUID, foreign key)
+- type (enum: rhythm, note_recognition, sight_reading)
+- timestamp (timestamp)
+- recording_url (string, Supabase Storage reference)
+- score_metadata (JSON)
+- duration (integer, seconds)
+- accuracy_score (decimal)
+```
+
+**Games Table**
+```sql
+- id (UUID, primary key)
+- name (string)
+- type (string)
+- parameters (JSON)
+- difficulty_levels (JSON)
+- scoring_rules (JSON)
+```
+
+**Messages Table**
+```sql
+- id (UUID, primary key)
+- from_id (UUID, foreign key to users)
+- to_id (UUID, foreign key to users)
+- session_id (UUID, foreign key to sessions, nullable)
+- body (text)
+- timestamp (timestamp)
+- read_at (timestamp, nullable)
+```
+
+**Teacher_Students Table**
+```sql
+- teacher_id (UUID, foreign key)
+- student_id (UUID, foreign key)
+- created_at (timestamp)
+- active (boolean)
+```
+
+### APIs and Integrations
+- **Supabase Auth API**: User authentication and session management
+- **Supabase Database API**: Real-time data synchronization
+- **Supabase Storage API**: Audio file upload and retrieval
+- **Web Audio API**: Audio recording and playback functionality
+- **Notification API**: Push notifications for reminders and achievements
+
+### Infrastructure Requirements
+- **Database**: PostgreSQL via Supabase with row-level security
+- **Storage**: Supabase Storage for audio files with CDN delivery
+- **Security**: HTTPS encryption, input validation, role-based access control
+- **Scalability**: React-Query caching, modular component architecture
+- **Monitoring**: Error tracking with Sentry integration
+
+## Development Roadmap
+
+### Phase 1: MVP Foundation (0-4 weeks)
+**Scope**: Core functionality that delivers immediate value
+- Complete authentication system with role selection
+- Basic student and teacher dashboards
+- One fully functional practice mode (Note Recognition)
+- Session recording and playback
+- Basic progress tracking
+- Simple in-app messaging
+- Daily reminder system
+
+**MVP Requirements**:
+- Users can sign up, log in, and select their role
+- Students can play note recognition games and see their scores
+- Teachers can view student progress and send messages
+- Audio recording works reliably across browsers
+- Basic responsive design for mobile and desktop
+
+### Phase 2: Game Expansion & Polish (5-8 weeks)
+**Scope**: Enhanced gaming experience and improved UX
+- Refactor and complete Rhythm Master mode
+- Implement Sight-Reading practice mode
+- Polish in-app messaging with session linking
+- Add avatar customization
+- Implement streak system and achievements
+- UX improvements based on user feedback
+- Performance optimizations
+
+### Phase 3: AI Integration & Analytics (9-12 weeks)
+**Scope**: Intelligent feedback and data insights
+- AI-driven tempo accuracy scoring (± BPM tolerance)
+- Basic note-accuracy detection (pitch recognition)
+- Inline suggestions in session history
+- Video recording capability
+- Advanced analytics dashboard
+- Weekly progress reports
+- Enhanced notification system
+
+### Phase 4: Advanced Features & Mobile (13-16 weeks)
+**Scope**: Platform expansion and monetization
+- React Native mobile app development
+- Subscription and freemium tier implementation
+- Bulk score import (OneDrive/Google Drive/Camera)
+- Advanced reminder system with calendar integration
+- Parent dashboard (optional)
+- Cross-platform synchronization
+- Advanced reporting and analytics
+
+## Logical Dependency Chain
+
+### Foundation Layer (Must Build First)
+1. **Authentication & User Management**: Essential for all other features
+2. **Database Schema & API Setup**: Required for data persistence
+3. **Basic UI Components**: Reusable components for consistent design
+4. **Audio Recording Infrastructure**: Core functionality for practice tracking
+
+### Core Functionality Layer (Build Upon Foundation)
+1. **Dashboard Framework**: Student and teacher views
+2. **First Practice Mode**: Note Recognition as proof of concept
+3. **Session Management**: Recording, storage, and playback
+4. **Basic Progress Tracking**: Points and streak system
+
+### Enhanced Experience Layer (Iterative Improvements)
+1. **Additional Practice Modes**: Rhythm Master and Sight-Reading
+2. **Communication System**: In-app messaging
+3. **Gamification**: Achievements, avatars, advanced scoring
+4. **Notifications**: Reminders and progress alerts
+
+### Advanced Features Layer (Future Enhancements)
+1. **AI Feedback**: Tempo and pitch accuracy
+2. **Media Integration**: Video recording and file imports
+3. **Analytics**: Advanced reporting and insights
+4. **Platform Expansion**: Mobile apps and cross-platform sync
+
+## Success Metrics & Analytics
+
+### Engagement Metrics
+- **Daily/Weekly/Monthly Active Users** (DAU/WAU/MAU ratios)
+- **Streak Retention**: Percentage of users maintaining ≥3-day streaks
+- **Average Session Length**: Minutes per practice session
+- **Session Frequency**: Practice sessions per user per week
+- **Game Completion Rate**: Percentage of started games completed
+
+### Growth Metrics
+- **User Acquisition**: New signups per week/month
+- **Teacher Conversion**: Percentage of users selecting teacher role
+- **Student-Teacher Connections**: Active teacher-student relationships
+- **Referral Rate**: Invitations sent and accepted
+- **Retention Rate**: Users active after 7, 30, and 90 days
+
+### Quality Metrics
+- **Crash/Error Rate**: Application stability monitoring via Sentry
+- **Upload Success Rate**: Audio/video file upload reliability
+- **Performance**: Page load times and API response times
+- **User Satisfaction**: In-app feedback and rating scores
+
+### Business Metrics (Future)
+- **Subscription Conversion**: Freemium to paid upgrade rate
+- **Revenue Per User**: Average monthly revenue per active user
+- **Churn Rate**: Subscription cancellation rate
+- **Customer Lifetime Value**: Long-term revenue per user
+
+## Risks and Mitigations
+
+### Technical Challenges
+**Risk**: Audio recording compatibility across different browsers and devices
+**Mitigation**: Implement progressive enhancement with fallback options; extensive cross-browser testing; use established Web Audio API patterns
+
+**Risk**: Real-time synchronization issues between student and teacher dashboards
+**Mitigation**: Leverage Supabase real-time subscriptions; implement optimistic UI updates; add manual refresh options
+
+**Risk**: Storage costs for audio/video files may exceed budget
+**Mitigation**: Implement file compression; set storage limits per user; consider tiered storage pricing
+
+### User Experience Risks
+**Risk**: 7-year-olds may find in-app messaging too complex
+**Mitigation**: Design simplified UI with large buttons and icons; implement voice messages; extensive user testing with target age group
+
+**Risk**: Teacher adoption may be slower than student adoption
+**Mitigation**: Focus on clear value proposition for teachers; implement teacher-specific onboarding; gather feedback from music educators
+
+### Business Risks
+**Risk**: Competition from established music education platforms
+**Mitigation**: Focus on unique gamification approach; emphasize teacher-student connection; rapid iteration based on user feedback
+
+**Risk**: Scaling infrastructure costs as user base grows
+**Mitigation**: Implement efficient caching strategies; monitor usage patterns; plan for gradual infrastructure scaling
+
+## Appendix
+
+### Research Findings
+- **Target Age Group**: Children aged 7-16 show highest engagement with gamified learning
+- **Practice Habits**: Daily 15-20 minute sessions show better retention than longer, less frequent sessions
+- **Teacher Needs**: Progress monitoring and feedback tools are highest priority for music educators
+- **Technology Adoption**: Web-based apps preferred over downloads for initial user acquisition
+
+### Technical Specifications
+- **Supported Browsers**: Chrome 90+, Firefox 88+, Safari 14+, Edge 90+
+- **Audio Formats**: WebM, MP4, WAV for recording; MP3, AAC for playback
+- **File Size Limits**: 10MB per audio recording, 50MB per video recording
+- **API Rate Limits**: 100 requests per minute per user for database operations
+
+### Success Criteria for MVP Launch
+- **Functional**: All core features work without critical bugs
+- **Performance**: <200ms page load times, <5s audio upload
+- **User Experience**: Positive feedback from 10+ beta testers
+- **Scalability**: Support for 100+ concurrent users
+- **Security**: Pass basic security audit and penetration testing 

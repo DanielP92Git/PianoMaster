@@ -6,8 +6,9 @@ export function useScores() {
   const queryClient = useQueryClient();
   const user = queryClient.getQueryData(["user"]); // Retrieve the user data from the QueryClient
   const studentId = user?.id;
+  const isStudent = user?.isStudent; // Check if user is actually a student
 
-  // Fetch student scores
+  // Fetch student scores (only for students)
   const {
     data: scores,
     error: fetchError,
@@ -15,7 +16,9 @@ export function useScores() {
   } = useQuery({
     queryKey: ["scores"],
     queryFn: () => getStudentScores(studentId),
-    enabled: !!studentId, // Only fetch scores if the student ID is available
+    enabled: !!studentId && isStudent, // Only fetch scores if the user is a student
+    staleTime: 3 * 60 * 1000, // 3 minutes - scores can change during gameplay
+    refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
     onError: (error) => {
       console.error(error);
       toast.error("Failed to fetch scores");

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { practiceService } from "../services/practiceService";
 import { useUser } from "../features/authentication/useUser";
-import { Pencil, Trash2, Save, X, Play, Pause, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Save, X, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../components/ui/BackButton";
+import PracticeSessionPlayer from "../components/ui/PracticeSessionPlayer";
 import { useNewRecordingsCount } from "../hooks/useNewRecordingsCount";
 
 export default function PracticeSessions() {
@@ -13,14 +14,9 @@ export default function PracticeSessions() {
   const [editingId, setEditingId] = useState(null);
   const [editedNotes, setEditedNotes] = useState("");
   const [playingId, setPlayingId] = useState(null);
-  const audioRef = useRef(new Audio());
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
   const { clearNewRecordings } = useNewRecordingsCount(user?.id);
   const [sessions, setSessions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentAudio, setCurrentAudio] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -65,7 +61,9 @@ export default function PracticeSessions() {
       // Optimistically update the sessions
       setSessions((currentSessions) =>
         currentSessions.map((session) =>
-          session.id === sessionId ? { ...session, notes } : session
+          session.id === sessionId
+            ? { ...session, recording_description: notes }
+            : session
         )
       );
 
@@ -99,32 +97,39 @@ export default function PracticeSessions() {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries(["practice-sessions", user?.id]);
 
-      // Snapshot the previous value
+      // Snapshot the previous values
       const previousSessions = queryClient.getQueryData([
         "practice-sessions",
         user?.id,
       ]);
+      const previousLocalSessions = sessions;
 
-      // Optimistically update to the new value
+      // Optimistically update React Query cache
       queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
         old?.filter((session) => session.id !== sessionId)
       );
 
+      // Optimistically update local state immediately
+      setSessions((currentSessions) =>
+        currentSessions.filter((session) => session.id !== sessionId)
+      );
+
       // Stop playing if the deleted session was being played
       if (playingId === sessionId) {
-        audioRef.current.pause();
         setPlayingId(null);
       }
 
-      return { previousSessions };
+      return { previousSessions, previousLocalSessions };
     },
     onError: (error, sessionId, context) => {
       console.error("Delete mutation error:", error);
-      // Rollback on error
+      // Rollback React Query cache
       queryClient.setQueryData(
         ["practice-sessions", user?.id],
         context.previousSessions
       );
+      // Rollback local state
+      setSessions(context.previousLocalSessions);
       toast.error(`Failed to delete recording: ${error.message}`);
     },
     onSuccess: () => {
@@ -141,77 +146,52 @@ export default function PracticeSessions() {
   // Add cleanup mutation
   const cleanupMutation = useMutation({
     mutationFn: () => practiceService.cleanupAllSessions(user.id),
+    onMutate: async () => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries(["practice-sessions", user?.id]);
+
+      // Snapshot the previous values
+      const previousSessions = queryClient.getQueryData([
+        "practice-sessions",
+        user?.id,
+      ]);
+      const previousLocalSessions = sessions;
+
+      // Optimistically clear both cache and local state
+      queryClient.setQueryData(["practice-sessions", user?.id], []);
+      setSessions([]);
+
+      // Stop any playing audio
+      if (playingId) {
+        setPlayingId(null);
+      }
+
+      return { previousSessions, previousLocalSessions };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(["practice-sessions", user?.id]);
       toast.success("All practice sessions have been deleted");
-      // Stop any playing audio
-      if (playingId) {
-        audioRef.current.pause();
-        setPlayingId(null);
-      }
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       console.error("Cleanup error:", error);
+      // Rollback on error
+      queryClient.setQueryData(
+        ["practice-sessions", user?.id],
+        context.previousSessions
+      );
+      setSessions(context.previousLocalSessions);
       toast.error("Failed to delete all sessions");
     },
   });
 
-  // Format time helper function
-  const formatTime = (time) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-  };
-
-  // Format status helper function
-  const formatStatus = (status) => {
-    if (!status) return "";
-    return status
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-  };
-
-  // Update time tracking
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleTimeUpdate = () => {
-      setCurrentTime(audio.currentTime || 0);
-    };
-
-    const handleDurationChange = () => {
-      setDuration(audio.duration || 0);
-    };
-
-    const handleEnded = () => {
-      setPlayingId(null);
-      setCurrentTime(0);
-    };
-
-    audio.addEventListener("timeupdate", handleTimeUpdate);
-    audio.addEventListener("durationchange", handleDurationChange);
-    audio.addEventListener("ended", handleEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
-      audio.removeEventListener("durationchange", handleDurationChange);
-      audio.removeEventListener("ended", handleEnded);
-    };
-  }, []);
-
-  const handleSeek = (e) => {
-    const time = parseFloat(e.target.value);
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-    }
+  // Handle play state changes
+  const handlePlayStateChange = (sessionId) => {
+    setPlayingId(sessionId);
   };
 
   const handleEdit = (session) => {
     setEditingId(session.id);
-    setEditedNotes(session.notes || "");
+    setEditedNotes(session.recording_description || "");
   };
 
   const handleSave = async (sessionId) => {
@@ -230,76 +210,6 @@ export default function PracticeSessions() {
     }
   };
 
-  const handlePlay = async (session) => {
-    try {
-      // If currently playing this session, pause it
-      if (playingId === session.id) {
-        audioRef.current.pause();
-        setPlayingId(null);
-        return;
-      }
-
-      // If playing a different session, stop it first
-      if (playingId) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-        setCurrentTime(0);
-        setPlayingId(null);
-      }
-
-      // If this session was previously loaded and paused, just resume
-      if (
-        audioRef.current.src &&
-        audioRef.current.src.includes(session.recording_url)
-      ) {
-        try {
-          await audioRef.current.play();
-          setPlayingId(session.id);
-          return;
-        } catch (playError) {
-          console.error("Play error:", playError);
-          toast.error("Failed to play recording");
-          setPlayingId(null);
-        }
-      }
-
-      // Get the signed URL
-      const url = await practiceService.getRecordingUrl(session.recording_url);
-
-      // Reset audio states
-      setCurrentTime(0);
-      setDuration(0);
-
-      // Set up the audio element
-      audioRef.current.src = url;
-      audioRef.current.load();
-
-      // Set up error handling for the audio element
-      audioRef.current.onerror = (e) => {
-        console.error("Audio playback error:", e.target.error);
-        toast.error("Failed to play recording");
-        setPlayingId(null);
-      };
-
-      // Wait for the audio to be loaded before playing
-      audioRef.current.oncanplay = async () => {
-        try {
-          await audioRef.current.play();
-          setPlayingId(session.id);
-          setDuration(audioRef.current.duration);
-        } catch (playError) {
-          console.error("Play error:", playError);
-          toast.error("Failed to play recording");
-          setPlayingId(null);
-        }
-      };
-    } catch (error) {
-      console.error("Error getting recording URL:", error);
-      toast.error("Failed to play recording");
-      setPlayingId(null);
-    }
-  };
-
   const handleCleanup = async () => {
     if (
       window.confirm(
@@ -313,17 +223,6 @@ export default function PracticeSessions() {
       }
     }
   };
-
-  // Clean up audio on unmount
-  useEffect(() => {
-    return () => {
-      const audio = audioRef.current;
-      if (audio) {
-        audio.pause();
-        audio.src = "";
-      }
-    };
-  }, []);
 
   if (isLoading) {
     return (
@@ -364,124 +263,109 @@ export default function PracticeSessions() {
           </div>
         ) : (
           sessions?.map((session, index) => (
-            <div
-              key={session.id}
-              className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-2">
-                  <p className="flex items-center gap-2 text-sm text-gray-700">
-                    Status:
-                    <div className="text-indigo-300">
-                      {formatStatus(session.status)}
-                    </div>
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePlay(session)}
-                      className="p-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 transition-colors"
-                    >
-                      {playingId === session.id ? (
-                        <Pause className="w-5 h-5 text-white" />
-                      ) : (
-                        <Play className="w-5 h-5 text-white" />
-                      )}
-                    </button>
-                    {playingId === session.id && (
-                      <div className="flex-1 flex items-center gap-2">
-                        <div className="text-xs text-gray-400 w-16 text-right">
-                          {formatTime(currentTime)}
-                        </div>
-                        <input
-                          type="range"
-                          min="0"
-                          max={duration || 100}
-                          value={currentTime || 0}
-                          onChange={handleSeek}
-                          className="flex-1 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer 
-                            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 
-                            [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full 
-                            [&::-webkit-slider-thumb]:bg-white hover:[&::-webkit-slider-thumb]:bg-indigo-400
-                            [&::-webkit-slider-runnable-track]:bg-white/20 [&::-webkit-slider-runnable-track]:rounded-lg
-                            [&::-moz-range-thumb]:w-3 [&::-moz-range-thumb]:h-3 [&::-moz-range-thumb]:rounded-full 
-                            [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-0
-                            [&::-moz-range-track]:bg-white/20 [&::-moz-range-track]:rounded-lg"
-                        />
-                        <div className="text-xs text-gray-400 w-16">
-                          {formatTime(duration)}
-                        </div>
-                      </div>
-                    )}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-gray-400">
-                          {new Date(session.submitted_at).toLocaleDateString()}{" "}
-                          at{" "}
-                          {new Date(session.submitted_at).toLocaleTimeString()}
-                        </p>
-                        {index === 0 && (
-                          <span className="px-2 py-0.5 text-xs font-medium text-white bg-green-500 rounded-full">
-                            New recording
-                          </span>
-                        )}
-                      </div>
+            <div key={session.id} className="space-y-4">
+              {/* New Recording Badge */}
+              {index === 0 && (
+                <div className="flex justify-center">
+                  <span className="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-full">
+                    Latest Recording
+                  </span>
+                </div>
+              )}
+
+              {/* Combined Practice Session Container */}
+              <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+                {/* Practice Session Player */}
+                <div className="p-4 border-b border-white/10">
+                  <PracticeSessionPlayer
+                    session={session}
+                    isPlaying={playingId === session.id}
+                    onPlayStateChange={handlePlayStateChange}
+                    showDownload={true}
+                    className="bg-transparent border-none p-0"
+                  />
+                </div>
+
+                {/* Notes Section */}
+                <div className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-white font-medium flex items-center gap-2">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                      Session Notes
+                    </h4>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleEdit(session)}
+                        className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
+                        title="Edit notes"
+                      >
+                        <Pencil className="w-4 h-4 text-white" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(session.id)}
+                        disabled={deleteSessionMutation.isLoading}
+                        className="p-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
+                        title="Delete session"
+                      >
+                        <Trash2 className="w-4 h-4 text-white" />
+                      </button>
                     </div>
                   </div>
 
                   {editingId === session.id ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <textarea
                         value={editedNotes}
                         onChange={(e) => setEditedNotes(e.target.value)}
-                        className="w-full p-2 rounded-lg bg-white/10 border border-white/20 text-white"
-                        rows="3"
+                        className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 resize-none"
+                        rows="4"
+                        placeholder="Add notes about this practice session..."
                       />
                       <div className="flex gap-2">
                         <button
                           onClick={() => handleSave(session.id)}
                           disabled={updateNotesMutation.isLoading}
-                          className="p-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors"
+                          className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
-                          <Save className="w-5 h-5 text-white" />
+                          <Save className="w-4 h-4" />
+                          {updateNotesMutation.isLoading ? "Saving..." : "Save"}
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
-                          className="p-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors"
+                          className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors flex items-center gap-2"
                         >
-                          <X className="w-5 h-5 text-white" />
+                          <X className="w-4 h-4" />
+                          Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-white">
-                      {session.notes || "No notes added"}
-                    </p>
+                    <div className="text-white/80 text-sm">
+                      {session.recording_description ? (
+                        <div className="whitespace-pre-wrap">
+                          {session.recording_description}
+                        </div>
+                      ) : (
+                        <div className="text-white/50 italic">
+                          No notes added yet. Click the edit button to add
+                          notes.
+                        </div>
+                      )}
+                    </div>
                   )}
-                </div>
-
-                <div className="flex items-end gap-2">
-                  <button
-                    onClick={() => handleEdit(session)}
-                    className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
-                  >
-                    <Pencil className="w-5 h-5 text-white" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(session.id)}
-                    disabled={deleteSessionMutation.isLoading}
-                    className="p-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
-                  >
-                    <Trash2 className="w-5 h-5 text-white" />
-                  </button>
                 </div>
               </div>
 
+              {/* Teacher Feedback */}
               {session.teacher_feedback && (
-                <div className="mt-4 p-3 rounded-lg bg-indigo-900/50 border border-indigo-500/30">
-                  <p className="text-sm font-medium text-indigo-300">
-                    Teacher Feedback:
-                  </p>
-                  <p className="text-white">{session.teacher_feedback}</p>
+                <div className="bg-indigo-900/30 rounded-xl p-4 border border-indigo-500/30">
+                  <h4 className="text-indigo-300 font-medium mb-2 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-indigo-400 rounded-full"></span>
+                    Teacher Feedback
+                  </h4>
+                  <div className="text-white text-sm whitespace-pre-wrap">
+                    {session.teacher_feedback}
+                  </div>
                 </div>
               )}
             </div>

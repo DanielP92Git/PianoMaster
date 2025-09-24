@@ -1,0 +1,91 @@
+{
+  "timeSignature": "3/4",
+  "beatsPerMeasure": 3,
+  "subdivision": 12,
+  "measureLength": "dotted-half",
+  "patterns": {
+    "beginner": [
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": false },
+        { "duration": "quarter", "note": false }
+      ],
+      [
+        { "duration": "half", "note": true },
+        { "duration": "quarter", "note": false }
+      ],
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": true }
+      ],
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": false },
+        { "duration": "quarter", "note": true }
+      ],
+      [
+        { "duration": "quarter", "note": false },
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": true }
+      ],
+      [{ "duration": "dotted-half", "note": true }]
+    ],
+    "intermediate": [
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "quarter", "note": false }
+      ],
+      [
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": false }
+      ],
+      [
+        { "duration": "dotted-quarter", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "quarter", "note": true }
+      ],
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "quarter", "note": true }
+      ]
+    ],
+    "advanced": [
+      [
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "eighth", "note": true },
+        { "duration": "quarter", "note": true }
+      ],
+      [
+        { "duration": "sixteenth", "note": true },
+        { "duration": "sixteenth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "quarter", "note": true },
+        { "duration": "quarter", "note": false }
+      ],
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "sixteenth", "note": true },
+        { "duration": "sixteenth", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "quarter", "note": true }
+      ]
+    ]
+  },
+  "metadata": {
+    "feel": "simple",
+    "tempoRanges": {
+      "beginner": { "min": 60, "max": 100 },
+      "intermediate": { "min": 90, "max": 130 },
+      "advanced": { "min": 120, "max": 180 }
+    }
+  }
+}

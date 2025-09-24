@@ -1,12 +1,19 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Home, Music2, Settings, Trophy, Mic } from "lucide-react";
+import {
+  Home,
+  Music2,
+  Settings,
+  Trophy,
+  Mic,
+  GraduationCap,
+} from "lucide-react";
 import AuthButton from "../auth/AuthButton";
 import { useUser } from "../../features/authentication/useUser";
 import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 
 export default function Sidebar({ isOpen, onClose, isGameRoute }) {
-  const { user } = useUser();
+  const { user, isTeacher, isStudent } = useUser();
   const { newCount } = useNewRecordingsCount(user?.id);
 
   // Don't render sidebar at all for game routes
@@ -27,9 +34,9 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
             to="/"
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+              `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                 isActive
-                  ? "bg-indigo-600 text-white"
+                  ? "bg-indigo-500 text-white"
                   : "text-gray-300 hover:bg-white/10 hover:text-white"
               }`
             }
@@ -38,63 +45,87 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
             <span>Dashboard</span>
           </NavLink>
 
-          <NavLink
-            to="/practice-modes"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
-                isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-300 hover:bg-white/10 hover:text-white"
-              }`
-            }
-          >
-            <Music2 className="h-5 w-5" />
-            <span>Practice Modes</span>
-          </NavLink>
+          {/* Student-specific features */}
+          {isStudent && (
+            <>
+              <NavLink
+                to="/practice-modes"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                    isActive
+                      ? "bg-indigo-500 text-white"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`
+                }
+              >
+                <Music2 className="h-5 w-5" />
+                <span>Practice Games</span>
+              </NavLink>
 
-          <NavLink
-            to="/practice-sessions"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors relative ${
-                isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-300 hover:bg-white/10 hover:text-white"
-              }`
-            }
-          >
-            <Mic className="h-5 w-5" />
-            <span>Practice Recordings</span>
-            {newCount > 0 && (
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-medium text-white bg-red-500 rounded-full px-1">
-                {newCount}
-              </span>
-            )}
-          </NavLink>
+              <NavLink
+                to="/practice-sessions"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-colors relative ${
+                    isActive
+                      ? "bg-indigo-500 text-white"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`
+                }
+              >
+                <Mic className="h-5 w-5" />
+                <span>Recordings</span>
+                {newCount > 0 && (
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-semibold text-white bg-red-500 rounded-full px-1">
+                    {newCount}
+                  </span>
+                )}
+              </NavLink>
 
-          <NavLink
-            to="/achievements"
-            onClick={onClose}
-            className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
-                isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-gray-300 hover:bg-white/10 hover:text-white"
-              }`
-            }
-          >
-            <Trophy className="h-5 w-5" />
-            <span>Achievements</span>
-          </NavLink>
+              <NavLink
+                to="/achievements"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                    isActive
+                      ? "bg-indigo-500 text-white"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
+                  }`
+                }
+              >
+                <Trophy className="h-5 w-5" />
+                <span>Achievements</span>
+              </NavLink>
+            </>
+          )}
 
+          {/* Teacher-specific features */}
+          {isTeacher && (
+            <NavLink
+              to="/teacher"
+              onClick={onClose}
+              className={({ isActive }) =>
+                `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+                  isActive
+                    ? "bg-purple-500 text-white"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
+                }`
+              }
+            >
+              <GraduationCap className="h-5 w-5" />
+              <span>Teacher Dashboard</span>
+            </NavLink>
+          )}
+
+          {/* Common features for all users */}
           <NavLink
             to="/settings"
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
+              `flex font-semibold   items-center space-x-3 px-4 py-3 rounded-xl transition-colors ${
                 isActive
-                  ? "bg-indigo-600 text-white"
+                  ? "bg-indigo-500 text-white"
                   : "text-gray-300 hover:bg-white/10 hover:text-white"
               }`
             }

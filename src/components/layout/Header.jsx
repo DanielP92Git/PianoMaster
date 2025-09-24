@@ -7,17 +7,29 @@ import supabase from "../../services/supabase";
 export default function Header({ onMenuClick }) {
   const { user } = useUser();
 
-  const { data: student } = useQuery({
-    queryKey: ["student", user?.id],
+  // Fetch profile data (student or teacher) with avatar
+  const { data: profileData } = useQuery({
+    queryKey: ["profile-with-avatar", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("students")
-        .select("*, avatars(*)")
-        .eq("id", user.id)
-        .single();
-      return data;
+      if (user?.isStudent) {
+        const { data } = await supabase
+          .from("students")
+          .select("*, avatars(*)")
+          .eq("id", user.id)
+          .single();
+        return data;
+      } else if (user?.isTeacher) {
+        const { data } = await supabase
+          .from("teachers")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        return data;
+      }
+      return null;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && (user?.isStudent || user?.isTeacher),
+    staleTime: 10 * 60 * 1000, // 10 minutes - profile data rarely changes
   });
 
   return (
@@ -25,11 +37,11 @@ export default function Header({ onMenuClick }) {
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4">
-            {student?.avatars && (
+            {(profileData?.avatars || profileData?.avatar_url) && (
               <Link to="/avatars">
                 <img
                   className="w-12 h-12 rounded-full object-cover ring-2 ring-white/20 hover:ring-white transition-all cursor-pointer"
-                  src={student.avatars.image_url}
+                  src={profileData.avatars?.image_url || profileData.avatar_url}
                   alt="User avatar"
                 />
               </Link>

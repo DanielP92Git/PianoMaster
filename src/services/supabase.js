@@ -21,6 +21,19 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
     flowType: "pkce",
     redirectTo: siteUrl,
   },
+  global: {
+    headers: {
+      "X-Client-Info": "piano-app@1.0.0",
+    },
+  },
+  db: {
+    schema: "public",
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+  },
 });
 
 export default supabase;

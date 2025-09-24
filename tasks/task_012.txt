@@ -1,0 +1,20 @@
+# Task ID: 12
+# Title: Develop In-app Messaging System
+# Status: pending
+# Dependencies: 3, 5, 6
+# Priority: medium
+# Description: Implement text-based communication between students and teachers with session-linked feedback and message management.
+# Details:
+1. Design messaging interface for both student and teacher views
+2. Implement message composition with text formatting
+3. Create conversation threading and organization
+4. Add session linking capability for contextual feedback
+5. Implement real-time message delivery using Supabase
+6. Add read receipts and typing indicators
+7. Create notification system for new messages
+8. Implement message search and filtering
+9. Add media attachment support for feedback
+10. Create message templates for common feedback
+
+# Test Strategy:
+Test message sending and receiving between different user roles. Verify that session linking works correctly and provides context. Test real-time updates and notifications. Ensure that message history is correctly preserved and searchable.

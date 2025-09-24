@@ -13,6 +13,8 @@ export default function AppLayout() {
     "/note-recognition-mode/memory-game",
     "/rhythm-mode/listen-and-repeat",
     "/rhythm-mode/create-own",
+    "/rhythm-mode/metronome-trainer",
+    "/rhythm-mode/enhanced",
   ];
 
   // Exact route matching
@@ -23,7 +25,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-900">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
       {!isGameRoute && <Header onMenuClick={toggleSidebar} />}
       {!isGameRoute && (
         <Sidebar

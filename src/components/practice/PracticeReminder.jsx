@@ -166,7 +166,7 @@ export default function PracticeReminder() {
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20">
       <div className="text-center lg:text-left">
-        <h2 className="text-2xl font-bold text-white mb-4">
+        <h2 className="text-xl font-bold text-white mb-4 whitespace-nowrap">
           Set a Practice Reminder
         </h2>
         {timeLeft > 0 ? (

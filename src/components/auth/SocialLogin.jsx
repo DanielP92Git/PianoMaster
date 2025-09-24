@@ -1,11 +1,11 @@
 import { FcGoogle } from "react-icons/fc";
 import { useSocialAuth } from "../../features/authentication/useSocialAuth";
 
-export function SocialLogin({ mode = "login" }) {
+export function SocialLogin({ mode = "login", role = "student" }) {
   const { socialAuth, isPending } = useSocialAuth();
 
   const handleSocialAuth = (provider) => {
-    socialAuth({ provider, mode });
+    socialAuth({ provider, mode, role });
   };
 
   return (

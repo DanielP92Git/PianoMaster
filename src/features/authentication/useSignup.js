@@ -7,44 +7,107 @@ export function useSignup() {
   const navigate = useNavigate();
 
   const { mutate: signup, isLoading } = useMutation({
-    mutationFn: async ({ email, password }) => {
+    mutationFn: async ({ email, password, firstName, lastName, role }) => {
       try {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-          },
-        });
+        // Create the auth user first
+        const { data: authData, error: authError } = await supabase.auth.signUp(
+          {
+            email,
+            password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: {
+                full_name: `${firstName} ${lastName}`.trim(),
+                first_name: firstName,
+                last_name: lastName,
+                role: role,
+              },
+            },
+          }
+        );
 
-        if (error) {
-          console.log("Supabase error:", error); // Debug log
-          // Check for various "user exists" error patterns
+        if (authError) {
+          console.log("Supabase auth error:", authError);
           if (
-            error.message?.toLowerCase().includes("already exists") ||
-            error.message?.toLowerCase().includes("already registered") ||
-            error.status === 400
+            authError.message?.toLowerCase().includes("already exists") ||
+            authError.message?.toLowerCase().includes("already registered") ||
+            authError.status === 400
           ) {
             throw new Error(
               "An account with this email already exists. Please log in instead."
             );
           }
-          throw new Error(error.message);
+          throw new Error(authError.message);
         }
 
-        if (!data?.user) {
+        if (!authData?.user) {
           throw new Error("Signup failed. Please try again.");
         }
 
-        return data;
+        const userId = authData.user.id;
+
+        // Create the appropriate profile record based on role
+        if (role === "teacher") {
+          const { error: teacherError } = await supabase
+            .from("teachers")
+            .upsert(
+              [
+                {
+                  id: userId,
+                  first_name: firstName,
+                  last_name: lastName,
+                  email: email,
+                  is_active: true,
+                },
+              ],
+              {
+                onConflict: "id",
+              }
+            );
+
+          if (teacherError) {
+            console.log("Teacher profile creation result:", teacherError);
+            // Don't throw here - let the user complete signup even if profile creation fails
+            // The profile can be created later when they try to access teacher features
+          }
+        } else {
+          // Create student record - use upsert to handle potential duplicates
+          const { error: studentError } = await supabase
+            .from("students")
+            .upsert(
+              [
+                {
+                  id: userId,
+                  first_name: firstName,
+                  last_name: lastName || "", // Fix: Add the missing last_name field
+                  email: email,
+                  username: `${firstName.toLowerCase()}${Math.random().toString(36).substr(2, 4)}`,
+                  level: "Beginner",
+                  studying_year: "1st Year", // Fix: Add default studying_year
+                },
+              ],
+              {
+                onConflict: "id",
+              }
+            );
+
+          if (studentError) {
+            console.log("Student profile creation result:", studentError);
+            // Don't throw here - let the user complete signup even if profile creation fails  
+            // The profile can be created later when they try to access student features
+          }
+        }
+
+        return authData;
       } catch (error) {
         console.error("Signup error:", error);
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
+      const { role } = variables;
       toast.success(
-        "Account created successfully! Please check your email to confirm your account."
+        `${role === "teacher" ? "Teacher" : "Student"} account created successfully! Please check your email to confirm your account.`
       );
       navigate("/");
     },

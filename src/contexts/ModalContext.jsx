@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from "react";
+import Modal from "../components/ui/Modal";
 
 const ModalContext = createContext();
 
@@ -21,17 +22,9 @@ export function ModalProvider({ children }) {
       value={{ isOpen, modalContent, openModal, closeModal }}
     >
       {children}
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50"
-            onClick={closeModal}
-          ></div>
-          <div className="relative z-50 bg-white rounded-lg p-6 max-w-lg w-full mx-4">
-            {modalContent}
-          </div>
-        </div>
-      )}
+      <Modal isOpen={isOpen} onClose={closeModal} showCloseButton={false}>
+        {modalContent}
+      </Modal>
     </ModalContext.Provider>
   );
 }

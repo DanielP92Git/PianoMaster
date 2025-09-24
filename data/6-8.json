@@ -1,0 +1,77 @@
+{
+  "timeSignature": "6/8",
+  "beatsPerMeasure": 6,
+  "subdivision": 12,
+  "measureLength": "dotted-half",
+  "patterns": {
+    "beginner": [
+      [
+        { "duration": "dotted-quarter", "note": true },
+        { "duration": "dotted-quarter", "note": false }
+      ],
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": false }
+      ],
+      [
+        { "duration": "dotted-quarter", "note": true },
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": false }
+      ],
+      [
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "eighth", "note": true },
+        { "duration": "dotted-quarter", "note": false }
+      ]
+    ],
+    "intermediate": [
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": false }
+      ],
+      [
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "quarter", "note": true },
+        { "duration": "eighth", "note": true }
+      ],
+      [
+        { "duration": "dotted-quarter", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": false }
+      ]
+    ],
+    "advanced": [
+      [
+        { "duration": "eighth", "note": true },
+        { "duration": "sixteenth", "note": true },
+        { "duration": "sixteenth", "note": false },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": true },
+        { "duration": "eighth", "note": false }
+      ],
+      [
+        { "duration": "quarter", "note": true },
+        { "duration": "sixteenth", "note": true },
+        { "duration": "sixteenth", "note": true },
+        { "duration": "eighth", "note": false },
+        { "duration": "eighth", "note": true }
+      ]
+    ]
+  },
+  "metadata": {
+    "feel": "compound",
+    "tempoRanges": {
+      "beginner": { "min": 50, "max": 80 },
+      "intermediate": { "min": 70, "max": 110 },
+      "advanced": { "min": 100, "max": 150 }
+    }
+  }
+}

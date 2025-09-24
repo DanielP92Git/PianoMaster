@@ -91,10 +91,10 @@ export function useSounds() {
   }, []);
 
   // Play correct answer sound
-  const playCorrectSound = () => {
+  const playCorrectSound = async () => {
     try {
       if (correctSound.current) {
-        // Stop other sounds
+        // Stop other sounds safely
         [wrongSound, victorySound, gameOverSound].forEach((ref) => {
           if (ref.current) {
             ref.current.pause();
@@ -102,9 +102,11 @@ export function useSounds() {
           }
         });
 
-        // Play correct sound
+        // Play correct sound with promise handling
         correctSound.current.currentTime = 0;
-        correctSound.current.play();
+        await correctSound.current.play().catch((error) => {
+          console.warn("Could not play correct sound:", error);
+        });
       }
     } catch (error) {
       console.error("Error playing correct sound:", error);
@@ -112,10 +114,10 @@ export function useSounds() {
   };
 
   // Play wrong answer sound
-  const playWrongSound = () => {
+  const playWrongSound = async () => {
     try {
       if (wrongSound.current) {
-        // Stop other sounds
+        // Stop other sounds safely
         [correctSound, victorySound, gameOverSound].forEach((ref) => {
           if (ref.current) {
             ref.current.pause();
@@ -123,9 +125,11 @@ export function useSounds() {
           }
         });
 
-        // Play wrong sound
+        // Play wrong sound with promise handling
         wrongSound.current.currentTime = 0;
-        wrongSound.current.play();
+        await wrongSound.current.play().catch((error) => {
+          console.warn("Could not play wrong sound:", error);
+        });
       }
     } catch (error) {
       console.error("Error playing wrong sound:", error);
@@ -133,10 +137,10 @@ export function useSounds() {
   };
 
   // Play victory sound
-  const playVictorySound = () => {
+  const playVictorySound = async () => {
     try {
       if (victorySound.current) {
-        // Stop other sounds
+        // Stop other sounds safely
         [correctSound, wrongSound, gameOverSound].forEach((ref) => {
           if (ref.current) {
             ref.current.pause();
@@ -144,9 +148,11 @@ export function useSounds() {
           }
         });
 
-        // Play victory sound
+        // Play victory sound with promise handling
         victorySound.current.currentTime = 0;
-        victorySound.current.play();
+        await victorySound.current.play().catch((error) => {
+          console.warn("Could not play victory sound:", error);
+        });
       }
     } catch (error) {
       console.error("Error playing victory sound:", error);
@@ -154,10 +160,10 @@ export function useSounds() {
   };
 
   // Play game over sound
-  const playGameOverSound = () => {
+  const playGameOverSound = async () => {
     try {
       if (gameOverSound.current) {
-        // Stop other sounds
+        // Stop other sounds safely
         [correctSound, wrongSound, victorySound].forEach((ref) => {
           if (ref.current) {
             ref.current.pause();
@@ -165,9 +171,11 @@ export function useSounds() {
           }
         });
 
-        // Play game over sound
+        // Play game over sound with promise handling
         gameOverSound.current.currentTime = 0;
-        gameOverSound.current.play();
+        await gameOverSound.current.play().catch((error) => {
+          console.warn("Could not play game over sound:", error);
+        });
       }
     } catch (error) {
       console.error("Error playing game over sound:", error);

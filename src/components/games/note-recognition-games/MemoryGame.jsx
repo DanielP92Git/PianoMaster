@@ -98,9 +98,14 @@ export function MemoryGame() {
   const [gridSize, setGridSize] = useState(DIFFICULTIES["Easy"]);
   const [clef, setClef] = useState("Treble");
   const [timeDifficulty, setTimeDifficulty] = useState("Medium");
+  const [selectedNotes, setSelectedNotes] = useState([]);
 
   // Create cards based on grid size
-  const createCards = (currentClef = clef, currentGridSize = gridSize) => {
+  const createCards = (
+    currentClef = clef,
+    currentGridSize = gridSize,
+    currentSelectedNotes = selectedNotes
+  ) => {
     const totalCards = GRID_SIZES[currentGridSize];
     const pairs = totalCards / 2;
     console.log(
@@ -108,11 +113,26 @@ export function MemoryGame() {
     );
 
     // Select the appropriate notes based on clef
-    const selectedNotesArray =
-      currentClef === "Treble" ? trebleNotes : bassNotes;
+    const allNotesArray = currentClef === "Treble" ? trebleNotes : bassNotes;
 
-    // Create a copy of the notes array and shuffle it to randomize selection
-    const availableNotes = [...selectedNotesArray];
+    // Filter notes based on user selection, fallback to all notes if none selected
+    let filteredNotes = allNotesArray;
+    if (
+      Array.isArray(currentSelectedNotes) &&
+      currentSelectedNotes.length > 0
+    ) {
+      filteredNotes = allNotesArray.filter((note) =>
+        currentSelectedNotes.includes(note.note)
+      );
+    }
+
+    console.log(
+      `Using ${filteredNotes.length} filtered notes:`,
+      filteredNotes.map((n) => n.note)
+    );
+
+    // Create a copy of the filtered notes array and shuffle it to randomize selection
+    const availableNotes = [...filteredNotes];
     availableNotes.sort(() => Math.random() - 0.5);
 
     // Prepare the final array of notes we'll use (may include duplicates)
@@ -226,10 +246,12 @@ export function MemoryGame() {
       "Creating initial cards with clef:",
       clef,
       "grid size:",
-      DIFFICULTIES["Easy"]
+      DIFFICULTIES["Easy"],
+      "selected notes:",
+      selectedNotes
     );
-    return createCards(clef, DIFFICULTIES["Easy"]);
-  }, [clef]);
+    return createCards(clef, DIFFICULTIES["Easy"], selectedNotes);
+  }, [clef, selectedNotes]);
 
   const [cards, setCards] = useState(initialCards);
   const [flippedIndexes, setFlippedIndexes] = useState([]);
@@ -305,7 +327,18 @@ export function MemoryGame() {
     let newClef = clef;
     if (settings.clef !== undefined) {
       newClef = settings.clef;
-    setClef(settings.clef);
+      setClef(settings.clef);
+    }
+
+    // Handle selected notes
+    let newSelectedNotes = selectedNotes;
+    if (
+      settings.selectedNotes !== undefined &&
+      Array.isArray(settings.selectedNotes)
+    ) {
+      newSelectedNotes = settings.selectedNotes;
+      setSelectedNotes(settings.selectedNotes);
+      console.log("Updated selectedNotes to:", settings.selectedNotes);
     }
 
     // Update difficulty and grid size
@@ -319,14 +352,15 @@ export function MemoryGame() {
         `Will set gridSize to: ${newGridSize}, expected cards: ${GRID_SIZES[newGridSize]}`
       );
 
-      // Create cards immediately with the new grid size
-      const newCards = createCards(newClef, newGridSize);
+      // Create cards immediately with the new grid size and selected notes
+      const newCards = createCards(newClef, newGridSize, newSelectedNotes);
       console.log(
-        `Created ${newCards.length} cards immediately for ${newGridSize}`
+        `Created ${newCards.length} cards immediately for ${newGridSize} with selected notes:`,
+        newSelectedNotes
       );
 
       // Update all states at once
-    setDifficulty(settings.difficulty);
+      setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
       setCards(newCards);
       console.log(`Set cards state with ${newCards.length} cards`);
@@ -342,7 +376,7 @@ export function MemoryGame() {
     let newTimedMode = timedMode;
     if (settings.timedMode !== undefined) {
       newTimedMode = settings.timedMode;
-    setTimedMode(settings.timedMode);
+      setTimedMode(settings.timedMode);
     }
 
     // Handle time limit
@@ -388,7 +422,8 @@ export function MemoryGame() {
   const handleStartGame = (
     currentClef = clef,
     newTimeLimit = timeLimit,
-    newGridSize = gridSize
+    newGridSize = gridSize,
+    currentSelectedNotes = selectedNotes
   ) => {
     // Always verify grid size matches difficulty
     const expectedGridSize = DIFFICULTIES[difficulty];
@@ -411,17 +446,22 @@ export function MemoryGame() {
     setScore(0);
     setShowFireworks(false);
 
-    // Create cards with explicit grid size to ensure correct count
-    const newCards = createCards(currentClef, newGridSize);
+    // Create cards with explicit grid size and selected notes to ensure correct count
+    const newCards = createCards(
+      currentClef,
+      newGridSize,
+      currentSelectedNotes
+    );
     console.log(
-      `Created ${newCards.length} cards for grid size ${newGridSize}`
+      `Created ${newCards.length} cards for grid size ${newGridSize} with selected notes:`,
+      currentSelectedNotes
     );
 
     setCards(newCards);
     console.log(`Updated cards state with ${newCards.length} cards`);
 
     // Properly reset the timer with the updated time limit
-      pauseTimer();
+    pauseTimer();
     resetTimer(newTimeLimit);
 
     // Timer will auto-start via the useEffect if in timed mode
@@ -449,6 +489,14 @@ export function MemoryGame() {
     const newDifficulty =
       settings.difficulty !== undefined ? settings.difficulty : difficulty;
 
+    // Handle selected notes
+    const newSelectedNotes =
+      settings.selectedNotes !== undefined &&
+      Array.isArray(settings.selectedNotes)
+        ? settings.selectedNotes
+        : selectedNotes;
+    console.log("Updated selectedNotes for restart:", newSelectedNotes);
+
     // Handle time difficulty separately
     const newTimeDifficulty =
       settings.timeDifficulty !== undefined
@@ -470,19 +518,31 @@ export function MemoryGame() {
         `Difficulty changed, creating new cards immediately for ${newGridSize}`
       );
 
-      // Create new cards with the new grid size
-      const newCards = createCards(newClef, newGridSize);
-      console.log(`Created ${newCards.length} cards for immediate update`);
+      // Create new cards with the new grid size and selected notes
+      const newCards = createCards(newClef, newGridSize, newSelectedNotes);
+      console.log(
+        `Created ${newCards.length} cards for immediate update with selected notes:`,
+        newSelectedNotes
+      );
 
       // Update all state values at once
       setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
+      setSelectedNotes(newSelectedNotes);
       setCards(newCards);
       console.log(`New cards set with ${newCards.length} cards`);
     } else if (settings.difficulty !== undefined) {
       // Same difficulty but explicitly set
       setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
+    }
+
+    // Always update selected notes if they changed, even if difficulty didn't
+    if (
+      settings.selectedNotes !== undefined &&
+      Array.isArray(settings.selectedNotes)
+    ) {
+      setSelectedNotes(newSelectedNotes);
     }
 
     // Update time difficulty if provided
@@ -492,11 +552,11 @@ export function MemoryGame() {
 
     // Handle other settings
     if (settings.clef !== undefined) {
-    setClef(settings.clef);
+      setClef(settings.clef);
     }
 
     if (settings.timedMode !== undefined) {
-    setTimedMode(settings.timedMode);
+      setTimedMode(settings.timedMode);
     }
 
     // Handle time limit based on time difficulty
@@ -530,14 +590,18 @@ export function MemoryGame() {
       setScore(0);
       setShowFireworks(false);
 
-      // Only create new cards if we didn't already do it
+      // Only create new cards if we didn't already do it for difficulty change
+      // But always recreate if selectedNotes changed
       if (
         settings.difficulty === undefined ||
-        settings.difficulty === difficulty
+        settings.difficulty === difficulty ||
+        (settings.selectedNotes !== undefined &&
+          Array.isArray(settings.selectedNotes))
       ) {
-        const gameCards = createCards(newClef, newGridSize);
+        const gameCards = createCards(newClef, newGridSize, newSelectedNotes);
         console.log(
-          `Created ${gameCards.length} cards for grid size ${newGridSize}`
+          `Created ${gameCards.length} cards for grid size ${newGridSize} with selected notes:`,
+          newSelectedNotes
         );
         setCards(gameCards);
       }
@@ -807,9 +871,9 @@ export function MemoryGame() {
         {/* Timer and Score Display - only show when game is started */}
         {gameStarted && (
           <div className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-2 sm:space-x-4">
-          <span>Score: {score}</span>
-          {timedMode && <span>Time: {formattedTime}</span>}
-        </div>
+            <span>Score: {score}</span>
+            {timedMode && <span>Time: {formattedTime}</span>}
+          </div>
         )}
 
         {/* Settings Button */}
@@ -907,7 +971,7 @@ export function MemoryGame() {
                       margin: "0",
                     }}
                     className="hover:scale-105 hover:shadow-lg"
-                onClick={() => handleCardClick(index)}
+                    onClick={() => handleCardClick(index)}
                   >
                     <div
                       style={{
@@ -950,7 +1014,7 @@ export function MemoryGame() {
                           ?
                         </div>
                         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent opacity-40 hover:opacity-70 transition-opacity duration-300"></div>
-                </div>
+                      </div>
 
                       {/* Back face */}
                       <div
@@ -969,11 +1033,11 @@ export function MemoryGame() {
                           overflow: "hidden",
                         }}
                         className="back-face relative"
-                >
-                  {card.type === "note" ? (
-                    <img
-                      src={card.image}
-                      alt={card.value}
+                      >
+                        {card.type === "note" ? (
+                          <img
+                            src={card.image}
+                            alt={card.value}
                             style={{
                               width: difficulty === "Hard" ? "70%" : "75%",
                               height: difficulty === "Hard" ? "70%" : "75%",
@@ -981,8 +1045,8 @@ export function MemoryGame() {
                               position: "relative",
                               zIndex: 10,
                             }}
-                    />
-                  ) : (
+                          />
+                        ) : (
                           <div
                             style={{
                               color: "#111827",
@@ -990,20 +1054,20 @@ export function MemoryGame() {
                                 difficulty === "Hard"
                                   ? "0.9rem"
                                   : difficulty === "Medium"
-                                  ? "1.05rem"
-                                  : "1.2rem",
+                                    ? "1.05rem"
+                                    : "1.2rem",
                               fontWeight: "bold",
                               position: "relative",
                               zIndex: 10,
                             }}
                           >
-                      {card.value}
-                    </div>
-                  )}
+                            {card.value}
+                          </div>
+                        )}
                         <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/50 to-transparent opacity-40 hover:opacity-70 transition-opacity duration-300"></div>
                       </div>
-                </div>
-              </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -1019,6 +1083,7 @@ export function MemoryGame() {
           onStart={handleRestartGame}
           onCancel={handleResumeGame}
           initialClef={clef}
+          initialSelectedNotes={selectedNotes}
           initialTimedMode={timedMode}
           initialDifficulty={difficulty}
           trebleNotes={trebleNotes}

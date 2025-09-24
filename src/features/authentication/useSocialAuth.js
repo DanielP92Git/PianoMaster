@@ -7,7 +7,8 @@ export function useSocialAuth() {
   const navigate = useNavigate();
 
   const { mutate: socialAuthMutation, isPending } = useMutation({
-    mutationFn: socialAuth,
+    mutationFn: ({ provider, mode, role }) =>
+      socialAuth({ provider, mode, role }),
     onSuccess: (user) => {
       toast.success("Successfully authenticated!");
       navigate("/");

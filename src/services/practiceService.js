@@ -1,4 +1,5 @@
 import supabase from "./supabase";
+import AudioCompressionService from "./audioCompressionService";
 
 // Practice session status enum
 export const PRACTICE_SESSION_STATUS = {
@@ -8,26 +9,52 @@ export const PRACTICE_SESSION_STATUS = {
   EXCELLENT: "excellent",
 };
 
+// Upload progress callback type
+const DEFAULT_UPLOAD_OPTIONS = {
+  maxRetries: 3,
+  retryDelay: 1000, // ms
+  compressionQuality: "MEDIUM",
+  onProgress: null,
+  onRetry: null,
+};
+
 export const practiceService = {
-  async uploadPracticeSession(file, studentId, notes) {
+  async uploadPracticeSession(
+    file,
+    studentId,
+    notes,
+    duration = 0,
+    options = {}
+  ) {
+    const uploadOptions = { ...DEFAULT_UPLOAD_OPTIONS, ...options };
+
     try {
-      // Create a consistent filename format
-      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-      const fileName = `${studentId}/${timestamp}.webm`;
-
-      // Upload the audio file to Supabase storage with proper content type
-      const { data: fileData, error: uploadError } = await supabase.storage
-        .from("practice-recordings")
-        .upload(fileName, file, {
-          cacheControl: "3600",
-          contentType: "audio/webm",
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
+      // Validate the audio file
+      const validation = AudioCompressionService.validateAudioBlob(file);
+      if (!validation.isValid) {
+        throw new Error(`Invalid audio file: ${validation.errors.join(", ")}`);
       }
+
+      // Compress the audio if needed
+      const compressionResult = await AudioCompressionService.compressAudioBlob(
+        file,
+        uploadOptions.compressionQuality
+      );
+
+      // Detect format and create appropriate filename
+      const format = AudioCompressionService.detectBlobFormat(
+        compressionResult.blob
+      );
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+      const fileName = `${studentId}/${timestamp}.${format.extension}`;
+
+      // Upload with retry logic
+      const uploadResult = await this._uploadWithRetry(
+        compressionResult.blob,
+        fileName,
+        format.mimeType,
+        uploadOptions
+      );
 
       // Create a record in the practice_sessions table
       const { data: sessionData, error: sessionError } = await supabase
@@ -35,9 +62,12 @@ export const practiceService = {
         .insert({
           student_id: studentId,
           recording_url: fileName,
-          notes: notes,
+          recording_description:
+            notes ||
+            `Recording: ${format.label}, Quality: ${compressionResult.quality?.label || "Unknown"}, Size: ${Math.round(compressionResult.blob.size / 1024)}KB`,
           status: PRACTICE_SESSION_STATUS.PENDING_REVIEW,
           submitted_at: new Date().toISOString(),
+          duration: Math.floor(duration || 0),
         })
         .select()
         .single();
@@ -47,11 +77,86 @@ export const practiceService = {
         throw sessionError;
       }
 
-      return sessionData;
+      return {
+        ...sessionData,
+        uploadInfo: {
+          originalSize: compressionResult.originalSize,
+          compressedSize: compressionResult.compressedSize,
+          compressionRatio: compressionResult.compressionRatio,
+          format: format.label,
+          quality: compressionResult.quality?.label || "Unknown",
+          fileSize: compressionResult.blob.size,
+        },
+      };
     } catch (error) {
       console.error("Error uploading practice session:", error);
       throw error;
     }
+  },
+
+  // Private method for upload with retry logic
+  async _uploadWithRetry(blob, fileName, contentType, options) {
+    let lastError;
+
+    for (let attempt = 1; attempt <= options.maxRetries; attempt++) {
+      try {
+        // Report progress
+        if (options.onProgress) {
+          options.onProgress({
+            phase: "uploading",
+            attempt,
+            totalAttempts: options.maxRetries,
+            percentage: 0,
+          });
+        }
+
+        const { data: fileData, error: uploadError } = await supabase.storage
+          .from("practice-recordings")
+          .upload(fileName, blob, {
+            cacheControl: "3600",
+            contentType: contentType,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // Success
+        if (options.onProgress) {
+          options.onProgress({
+            phase: "completed",
+            attempt,
+            totalAttempts: options.maxRetries,
+            percentage: 100,
+          });
+        }
+
+        return fileData;
+      } catch (error) {
+        lastError = error;
+        console.warn(`Upload attempt ${attempt} failed:`, error);
+
+        if (attempt < options.maxRetries) {
+          // Report retry
+          if (options.onRetry) {
+            options.onRetry({
+              attempt,
+              error: error.message,
+              retryIn: options.retryDelay,
+            });
+          }
+
+          // Wait before retry
+          await new Promise((resolve) =>
+            setTimeout(resolve, options.retryDelay)
+          );
+        }
+      }
+    }
+
+    // All retries failed
+    throw lastError;
   },
 
   async getPracticeSessions(studentId) {
@@ -70,7 +175,7 @@ export const practiceService = {
   async updatePracticeSessionNotes(sessionId, notes) {
     const { data, error } = await supabase
       .from("practice_sessions")
-      .update({ notes })
+      .update({ recording_description: notes })
       .eq("id", sessionId)
       .select()
       .single();
@@ -81,7 +186,7 @@ export const practiceService = {
 
   async deletePracticeSession(sessionId) {
     try {
-    //   console.log("Starting deletion process for session:", sessionId);
+      //   console.log("Starting deletion process for session:", sessionId);
 
       // First get the session to get the recording URL
       const { data: session, error: fetchError } = await supabase
@@ -95,7 +200,7 @@ export const practiceService = {
         throw fetchError;
       }
 
-    //   console.log("Found session with recording URL:", session?.recording_url);
+      //   console.log("Found session with recording URL:", session?.recording_url);
 
       // Delete the session record first
       const { error: deleteError } = await supabase
@@ -108,7 +213,7 @@ export const practiceService = {
         throw deleteError;
       }
 
-    //   console.log("Successfully deleted session record");
+      //   console.log("Successfully deleted session record");
 
       // Then delete the recording from storage if it exists
       if (session?.recording_url) {

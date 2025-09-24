@@ -12,20 +12,21 @@ export async function getStudentScores(studentId) {
       .from("students_total_score")
       .select("total_score")
       .eq("student_id", studentId)
-      .single();
+      .maybeSingle(); // Use maybeSingle() instead of single() to handle no records
 
     if (scoresError) throw scoresError;
-    if (totalScoreError) throw totalScoreError;
-    if (scoresError) console.error("Error fetching asdad scores:", scoresError);
-    if (totalScoreError)
-      console.error("Error fetching total score:", totalScoreError);
+
+    // Handle case where student doesn't have a total score record yet
+    if (totalScoreError && totalScoreError.code !== "PGRST116") {
+      throw totalScoreError;
+    }
 
     return {
-      scores,
+      scores: scores || [],
       totalScore: totalScore?.total_score ?? 0,
     };
   } catch (error) {
-    // console.error("Error fetching scores:", error);
+    console.error("Error fetching scores:", error);
     throw new Error("Failed to fetch scores");
   }
 }
@@ -52,17 +53,39 @@ export async function updateStudentScore(studentId, score, gameType) {
       .from("students_total_score")
       .select("total_score")
       .eq("student_id", studentId)
-      .single();
+      .maybeSingle();
 
-    if (totalScoreError) throw totalScoreError;
+    let updatedTotalScore;
+    let updateTotalScoreError;
 
-    const currentTotalScore = totalScoreData?.total_score || 0;
-    const updatedTotalScore = currentTotalScore + score;
+    if (totalScoreError && totalScoreError.code !== "PGRST116") {
+      throw totalScoreError;
+    }
 
-    const { error: updateTotalScoreError } = await supabase
-      .from("students_total_score")
-      .update({ total_score: updatedTotalScore })
-      .eq("student_id", studentId);
+    if (totalScoreData) {
+      // Update existing record
+      const currentTotalScore = totalScoreData.total_score || 0;
+      updatedTotalScore = currentTotalScore + score;
+
+      const { error } = await supabase
+        .from("students_total_score")
+        .update({ total_score: updatedTotalScore })
+        .eq("student_id", studentId);
+
+      updateTotalScoreError = error;
+    } else {
+      // Create new record for first-time student
+      updatedTotalScore = score;
+
+      const { error } = await supabase.from("students_total_score").insert([
+        {
+          student_id: studentId,
+          total_score: updatedTotalScore,
+        },
+      ]);
+
+      updateTotalScoreError = error;
+    }
 
     if (updateTotalScoreError) {
       console.error("Error updating total score:", updateTotalScoreError);

@@ -74,11 +74,10 @@ export default function PracticeModes({ practiceModesSectionRef }) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {enhancedGameModes.map((mode) => (
-          <Link
+          <div
             key={mode.id}
-            to={`/${mode.type}`}
             onClick={(e) => handleStartMode(e, mode.type)}
-            className="relative group h-[250px] w-full"
+            className="relative group h-[250px] w-full cursor-pointer"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-2xl backdrop-blur-sm border border-white/20 transition-all duration-300 group-hover:from-indigo-600/30 group-hover:to-purple-600/30">
               <div className="h-full flex flex-col p-6">
@@ -101,7 +100,7 @@ export default function PracticeModes({ practiceModesSectionRef }) {
                 </div>
               </div>
             </div>
-          </Link>
+          </div>
         ))}
       </div>
     </div>

@@ -20,24 +20,35 @@ export const rhythmReducer = (state = initialState, action) => {
       return {
         ...state,
         numberOfBars: action.payload,
-        composition: action.payload < state.composition.length
-          ? state.composition.slice(0, action.payload)
-          : [...state.composition, ...Array(action.payload - state.composition.length).fill([])],
+        composition:
+          action.payload < state.composition.length
+            ? state.composition.slice(0, action.payload)
+            : [
+                ...state.composition,
+                ...Array(action.payload - state.composition.length).fill([]),
+              ],
       };
-    case "ADD_RHYTHM":
+    case "ADD_RHYTHM": {
       const newComposition = [...state.composition];
       newComposition[action.payload.barIndex] = [
         ...newComposition[action.payload.barIndex],
         action.payload.rhythm,
       ];
       return { ...state, composition: newComposition };
-    case "REMOVE_NOTE":
+    }
+    case "REMOVE_NOTE": {
       const updatedComposition = [...state.composition];
       updatedComposition[action.payload.barIndex] = [
-        ...state.composition[action.payload.barIndex].slice(0, action.payload.noteIndex),
-        ...state.composition[action.payload.barIndex].slice(action.payload.noteIndex + 1),
+        ...state.composition[action.payload.barIndex].slice(
+          0,
+          action.payload.noteIndex
+        ),
+        ...state.composition[action.payload.barIndex].slice(
+          action.payload.noteIndex + 1
+        ),
       ];
       return { ...state, composition: updatedComposition };
+    }
     default:
       return state;
   }

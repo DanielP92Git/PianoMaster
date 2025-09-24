@@ -1,0 +1,137 @@
+# Metronome Rhythm Training Game - Product Requirements Document
+
+## Overview
+A rhythm training game where users listen to musical patterns and then reproduce them by tapping. The game focuses on ear training, rhythm memory, and precise timing skills.
+
+## Core Game Flow
+
+### Phase 1: Preparation
+- User sees a clean game interface with a large tap area
+- "Start" button initiates the training sequence
+- Game displays current difficulty level and pattern information
+
+### Phase 2: Metronome Count-in
+- Metronome begins playing with audio click sounds
+- Visual metronome indicator (flashing or pulsing) synchronizes with audio
+- Plays for exactly one full bar (4 beats in 4/4 time) as count-in
+- No user interaction required - just listening and preparing
+
+### Phase 3: Pattern Playback
+- The rhythm pattern plays as audio clicks/sounds (different tone from metronome)
+- NO visual representation of the pattern - audio only for ear training
+- Pattern plays for one complete measure/bar
+- User must listen carefully and memorize the rhythm
+
+### Phase 4: Silent Wait
+- Pattern playback ends
+- Metronome continues clicking steadily
+- User waits for the next downbeat (start of next measure)
+- Visual indicator shows when the recording window will begin
+
+### Phase 5: User Performance
+- On the downbeat, user begins tapping the pattern they heard
+- Large tap area captures finger/mouse clicks with precise timing
+- Metronome continues to provide steady beat reference
+- User has one full measure to reproduce the pattern
+- Real-time visual feedback for each tap (timing accuracy)
+
+### Phase 6: Evaluation & Feedback
+- System analyzes timing accuracy of each tap
+- Compares user's pattern to the original pattern
+- Displays detailed feedback:
+  - Overall accuracy percentage
+  - Individual tap timing (perfect/good/fair/miss)
+  - Visual representation showing expected vs actual taps
+  - Score based on timing precision and pattern correctness
+
+## Technical Requirements
+
+### Audio System
+- Web Audio API for precise timing and low latency
+- Metronome click sound (higher pitch for downbeat, lower for other beats)
+- Pattern playback sounds (different timbre from metronome)
+- Configurable tempo (60-200 BPM)
+- Audio compression and caching for consistent performance
+
+### Timing Engine
+- Millisecond-precise timing detection
+- Compensation for audio latency
+- Timing thresholds:
+  - Perfect: ±50ms
+  - Good: ±100ms 
+  - Fair: ±150ms
+  - Miss: >150ms or no tap when expected
+
+### Pattern System
+- Multiple difficulty levels:
+  - Beginner: Simple quarter and half notes
+  - Intermediate: Eighth notes and simple syncopation
+  - Advanced: Sixteenth notes, complex syncopation
+  - Expert: Polyrhythms and irregular patterns
+- Time signatures: 4/4, 3/4, 2/4
+- Pattern length: 1 bar (4 beats in 4/4)
+- Random pattern generation within difficulty constraints
+
+### Visual Interface
+- Large, responsive tap area (minimum 300x300px on mobile)
+- Metronome visual indicator (pulsing circle or flashing beat markers)
+- Current beat indicator during all phases
+- Phase indicators ("Listening...", "Get Ready...", "Tap Now!", etc.)
+- Real-time tap feedback (visual confirmation of tap registration)
+- Score display and accuracy meters
+
+### Scoring System
+- Points per tap based on timing accuracy:
+  - Perfect: 100 points
+  - Good: 70 points
+  - Fair: 40 points
+  - Miss: 0 points
+- Pattern completion bonus for getting the rhythm right
+- Streak bonuses for consecutive perfect taps
+- Overall accuracy percentage calculation
+- Progress tracking across sessions
+
+## Game Modes
+
+### Practice Mode
+- Single pattern practice with adjustable tempo
+- Immediate feedback after each attempt
+- Option to replay the pattern multiple times
+- No scoring pressure - focus on learning
+
+### Challenge Mode
+- Progressive difficulty increase
+- Target score requirements to advance
+- Limited attempts per pattern
+- Leaderboard integration
+
+### Custom Mode
+- User-defined patterns (future enhancement)
+- Custom tempo settings
+- Recording and sharing patterns
+
+## Accessibility Features
+- Visual indicators for deaf/hard-of-hearing users
+- Keyboard navigation support
+- High contrast mode for visual indicators
+- Adjustable audio volumes for metronome and patterns
+
+## Technical Architecture
+- React component structure with clean separation of concerns
+- Custom hooks for audio management, timing, and game state
+- Web Audio API integration with fallbacks
+- Responsive design for mobile and desktop
+- Performance optimization for 60fps visual feedback
+
+## Success Metrics
+- User engagement: Session length and return rate
+- Learning progression: Accuracy improvement over time
+- Technical performance: <50ms input latency, stable 60fps
+- User satisfaction: Feedback ratings and completion rates
+
+## Future Enhancements
+- Multiplayer rhythm battles
+- Integration with music theory lessons
+- Custom sound packs (drums, percussion, etc.)
+- Social features (sharing scores, challenges)
+- AI-generated personalized practice patterns 

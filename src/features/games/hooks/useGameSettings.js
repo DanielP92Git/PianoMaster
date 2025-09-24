@@ -39,8 +39,8 @@ export function useGameSettings(initialSettings = {}) {
         newSettings.timeLimit !== undefined
           ? newSettings.timeLimit
           : newSettings.difficulty
-          ? TIME_LIMITS[newSettings.difficulty]
-          : prev.timeLimit;
+            ? TIME_LIMITS[newSettings.difficulty]
+            : prev.timeLimit;
 
       // IMPORTANT: Make sure timedMode is correctly handled
       // If timedMode is explicitly provided in newSettings, use that value

@@ -1,21 +1,37 @@
 import { useState } from "react";
-import { Music, Piano, Sparkles, Loader2 } from "lucide-react";
+import {
+  Music,
+  Piano,
+  Sparkles,
+  Loader2,
+  Users,
+  GraduationCap,
+} from "lucide-react";
 import { SocialLogin } from "./SocialLogin";
 import { useSignup } from "../../features/authentication/useSignup";
 
 function SignupForm({ onBackToLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [role, setRole] = useState("student"); // Default to student
   const { signup, isPending } = useSignup();
   const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
-    if (!email || !password) return;
+    if (!email || !password || !firstName) return;
 
     try {
-      await signup({ email, password });
+      await signup({
+        email,
+        password,
+        firstName,
+        lastName: lastName || "",
+        role,
+      });
     } catch (err) {
       setError(err.message);
     }
@@ -48,7 +64,87 @@ function SignupForm({ onBackToLogin }) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Role Selection */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-white/90 mb-2">
+            I am a...
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setRole("student")}
+              className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                role === "student"
+                  ? "border-indigo-500 bg-indigo-500/20 text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <Users className="w-6 h-6" />
+                <span className="font-medium">Student</span>
+                <span className="text-xs text-center">
+                  Learn and practice piano
+                </span>
+              </div>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("teacher")}
+              className={`p-4 rounded-xl border-2 transition-all duration-300 ${
+                role === "teacher"
+                  ? "border-purple-500 bg-purple-500/20 text-white"
+                  : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:bg-white/10"
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <GraduationCap className="w-6 h-6" />
+                <span className="font-medium">Teacher</span>
+                <span className="text-xs text-center">
+                  Teach and track students
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+
         <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="group">
+              <label
+                htmlFor="signup-firstName"
+                className="block text-sm font-medium text-white/90 mb-1 group-hover:text-indigo-300 transition-colors"
+              >
+                First Name
+              </label>
+              <input
+                type="text"
+                id="signup-firstName"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                disabled={isPending}
+                className="w-full px-4 py-3 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
+                placeholder="Enter your first name"
+                required
+              />
+            </div>
+            <div className="group">
+              <label
+                htmlFor="signup-lastName"
+                className="block text-sm font-medium text-white/90 mb-1 group-hover:text-indigo-300 transition-colors"
+              >
+                Last Name
+              </label>
+              <input
+                type="text"
+                id="signup-lastName"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                disabled={isPending}
+                className="w-full px-4 py-3 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
+                placeholder="Enter your last name"
+              />
+            </div>
+          </div>
           <div className="group">
             <label
               htmlFor="signup-email"
@@ -95,7 +191,7 @@ function SignupForm({ onBackToLogin }) {
           {isPending ? (
             <Loader2 className="h-6 w-6 animate-spin" />
           ) : (
-            "Create Account"
+            `Create ${role === "teacher" ? "Teacher" : "Student"} Account`
           )}
         </button>
 
@@ -112,7 +208,7 @@ function SignupForm({ onBackToLogin }) {
           </div>
 
           <div className="mt-6">
-            <SocialLogin mode="signup" />
+            <SocialLogin mode="signup" role={role} />
           </div>
         </div>
 

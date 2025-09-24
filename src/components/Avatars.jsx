@@ -24,32 +24,51 @@ function Avatars() {
     queryFn: getAvatar,
   });
 
-  // Query for user's current avatar
-  const { data: student } = useQuery({
-    queryKey: ["student", user?.id],
+  // Query for user's current avatar (student or teacher)
+  const { data: profileData } = useQuery({
+    queryKey: ["profile-with-avatar", user?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from("students")
-        .select("*, avatars(*)")
-        .eq("id", user.id)
-        .single();
-      return data;
+      if (user?.isStudent) {
+        const { data } = await supabase
+          .from("students")
+          .select("*, avatars(*)")
+          .eq("id", user.id)
+          .single();
+        return data;
+      } else if (user?.isTeacher) {
+        const { data } = await supabase
+          .from("teachers")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        return data;
+      }
+      return null;
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && (user?.isStudent || user?.isTeacher),
   });
 
-  // Set initial selected avatar from student profile
+  // Set initial selected avatar from profile
   useEffect(() => {
-    if (student?.avatars) {
-      setSelectedAvatar(student.avatars);
+    if (profileData?.avatars) {
+      // Student has avatar relationship
+      setSelectedAvatar(profileData.avatars);
+    } else if (profileData?.avatar_url && avatars) {
+      // Teacher has avatar_url - find matching avatar from list
+      const matchingAvatar = avatars.find(
+        (avatar) => avatar.image_url === profileData.avatar_url
+      );
+      if (matchingAvatar) {
+        setSelectedAvatar(matchingAvatar);
+      }
     }
-  }, [student]);
+  }, [profileData, avatars]);
 
   // Mutation to update avatar
   const updateAvatarMutation = useMutation({
     mutationFn: ({ userId, avatarId }) => updateUserAvatar(userId, avatarId),
     onSuccess: () => {
-      queryClient.invalidateQueries(["student", user?.id]);
+      queryClient.invalidateQueries(["profile-with-avatar", user?.id]);
     },
     onError: () => {
       toast.error("Failed to update avatar");

@@ -1,5 +1,8 @@
 import { useState, useCallback } from "react";
 import { useScores } from "../../../features/userData/useScores";
+import { createPracticeSession } from "../../../services/apiDatabase";
+import { useUser } from "../../authentication/useUser";
+import { showPointsGain } from "../../../components/ui/Toast";
 
 export function useGameProgress() {
   const [progress, setProgress] = useState({
@@ -15,6 +18,7 @@ export function useGameProgress() {
   });
 
   const { updateScore: updateUserScore } = useScores();
+  const { user } = useUser();
 
   const updateProgress = useCallback((updates) => {
     setProgress((prev) => ({ ...prev, ...updates }));
@@ -46,16 +50,54 @@ export function useGameProgress() {
   }, []);
 
   const finishGame = useCallback(
-    (isLost = false, timeRanOut = false) => {
+    async (isLost = false, timeRanOut = false) => {
       setProgress((prev) => {
-        // Calculate final score
+        // Calculate final score and session data
         const finalScore = prev.score;
+        const accuracy =
+          prev.totalQuestions > 0
+            ? (prev.correctAnswers / prev.totalQuestions) * 100
+            : 0;
 
         // Update user's score in the database
         updateUserScore({
           score: finalScore,
           gameType: "note-recognition",
         });
+
+        // Show points gain notification
+        if (finalScore > 0) {
+          showPointsGain(finalScore, "note-recognition");
+        }
+
+        // Create practice session record
+        if (user?.id) {
+          // Determine status based on performance
+          const status =
+            accuracy >= 80
+              ? "excellent"
+              : accuracy >= 60
+                ? "reviewed"
+                : "needs_work";
+
+          const sessionData = {
+            student_id: user.id,
+            recording_url: "", // No audio recording for note recognition game
+            recording_description: `Note Recognition Game - Score: ${finalScore}, Accuracy: ${accuracy.toFixed(1)}%, Questions: ${prev.totalQuestions}/${prev.totalQuestions}`,
+            has_recording: false,
+            duration: 0, // Game duration would need to be tracked separately
+            analysis_score: accuracy,
+            notes_played: prev.totalQuestions,
+            unique_notes: prev.totalQuestions, // Each question is a unique note
+            status: status,
+            submitted_at: new Date().toISOString(),
+          };
+
+          // Create the practice session
+          createPracticeSession(sessionData).catch((error) => {
+            console.error("Failed to create practice session:", error);
+          });
+        }
 
         return {
           ...prev,
@@ -65,7 +107,7 @@ export function useGameProgress() {
         };
       });
     },
-    [updateUserScore]
+    [updateUserScore, user]
   );
 
   const resetProgress = useCallback(() => {

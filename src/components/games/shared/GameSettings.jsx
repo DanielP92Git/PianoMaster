@@ -36,8 +36,8 @@ export function GameSettings({
     Array.isArray(initialSelectedNotes) && initialSelectedNotes.length > 0
       ? initialSelectedNotes
       : clef === "Treble"
-      ? trebleNotes.map((note) => note.note)
-      : bassNotes.map((note) => note.note);
+        ? trebleNotes.map((note) => note.note)
+        : bassNotes.map((note) => note.note);
 
   const [selectedNotes, setSelectedNotes] = useState(initialNotesArray);
 
@@ -230,7 +230,16 @@ export function GameSettings({
     });
   };
 
-  const displayNotes = clef === "Treble" ? trebleNotes : bassNotes;
+  // For bass clef, display notes starting with דו then descending: דו, סי, לה, סול, פה, מי, רה
+  const displayNotes =
+    clef === "Treble"
+      ? trebleNotes
+      : bassNotes.length > 0
+        ? [
+            bassNotes.find((note) => note.note === "דו"),
+            ...bassNotes.filter((note) => note.note !== "דו").reverse(),
+          ].filter(Boolean)
+        : bassNotes;
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
@@ -451,19 +460,19 @@ export function GameSettings({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-2">
                   Select Difficulty:
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {["Easy", "Medium", "Hard"].map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => setDifficulty(level)}
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {["Easy", "Medium", "Hard"].map((level) => (
+                    <button
+                      key={level}
+                      onClick={() => setDifficulty(level)}
                       className={`p-2 rounded-lg transition-colors ${
-                      difficulty === level
+                        difficulty === level
                           ? level === "Easy"
                             ? "bg-emerald-500 text-white"
                             : level === "Medium"
-                            ? "bg-amber-500 text-white"
-                            : "bg-rose-500 text-white"
+                              ? "bg-amber-500 text-white"
+                              : "bg-rose-500 text-white"
                           : "bg-white/10 text-white/90 hover:bg-white/20"
                       }`}
                     >
@@ -473,13 +482,13 @@ export function GameSettings({
                           {level === "Easy"
                             ? "60 seconds"
                             : level === "Medium"
-                            ? "45 seconds"
-                            : "30 seconds"}
+                              ? "45 seconds"
+                              : "30 seconds"}
                         </span>
                       </div>
-                  </button>
-                ))}
-              </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -600,8 +609,8 @@ export function GameSettings({
                       ? diff === "Easy"
                         ? "bg-teal-500 text-white"
                         : diff === "Medium"
-                        ? "bg-orange-500 text-white"
-                        : "bg-red-500 text-white"
+                          ? "bg-orange-500 text-white"
+                          : "bg-red-500 text-white"
                       : "bg-white/10 text-white/90 hover:bg-white/20"
                   }`}
                 >
@@ -632,8 +641,8 @@ export function GameSettings({
                         ? level === "Easy"
                           ? "bg-emerald-500 text-white"
                           : level === "Medium"
-                          ? "bg-amber-500 text-white"
-                          : "bg-rose-500 text-white"
+                            ? "bg-amber-500 text-white"
+                            : "bg-rose-500 text-white"
                         : "bg-white/10 text-white/90 hover:bg-white/20"
                     }`}
                   >
@@ -643,14 +652,14 @@ export function GameSettings({
                         {level === "Easy"
                           ? "90 seconds"
                           : level === "Medium"
-                          ? "75 seconds"
-                          : "60 seconds"}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                            ? "75 seconds"
+                            : "60 seconds"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
           )}
 
           <div className="flex justify-between mt-3">
@@ -720,7 +729,17 @@ export function GameSettings({
             <div className="w-full overflow-x-auto">
               <div className="inline-flex gap-1 p-1 bg-white/10 backdrop-blur-sm rounded-lg mb-1 border border-white/20">
                 {/* Display notes based on clef selection */}
-                {(clef === "Treble" ? trebleNotes : bassNotes).map((note) => (
+                {(clef === "Treble"
+                  ? trebleNotes
+                  : bassNotes.length > 0
+                    ? [
+                        bassNotes.find((note) => note.note === "דו"),
+                        ...bassNotes
+                          .filter((note) => note.note !== "דו")
+                          .reverse(),
+                      ].filter(Boolean)
+                    : bassNotes
+                ).map((note) => (
                   <button
                     key={note.note}
                     onClick={() => handleNoteToggle(note.note)}
@@ -780,60 +799,60 @@ export function GameSettings({
                 </div>
               </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Difficulty
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <button
-                      onClick={() => setDifficulty("Easy")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === "Easy" || difficulty === "easy"
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">
+                  Difficulty
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    onClick={() => setDifficulty("Easy")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      difficulty === "Easy" || difficulty === "easy"
                         ? "bg-emerald-500 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">Easy</span>
-                        <span className="text-xs">60 seconds</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setDifficulty("Medium")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === "Medium" || difficulty === "medium"
+                        : "bg-white/10 text-white/90 hover:bg-white/20"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <span className="font-medium block">Easy</span>
+                      <span className="text-xs">60 seconds</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDifficulty("Medium")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      difficulty === "Medium" || difficulty === "medium"
                         ? "bg-amber-500 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">Medium</span>
-                        <span className="text-xs">45 seconds</span>
-                      </div>
-                    </button>
-                    <button
-                      onClick={() => setDifficulty("Hard")}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === "Hard" || difficulty === "hard"
+                        : "bg-white/10 text-white/90 hover:bg-white/20"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <span className="font-medium block">Medium</span>
+                      <span className="text-xs">45 seconds</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => setDifficulty("Hard")}
+                    className={`p-2 rounded-lg transition-colors ${
+                      difficulty === "Hard" || difficulty === "hard"
                         ? "bg-rose-500 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">Hard</span>
-                        <span className="text-xs">30 seconds</span>
-                      </div>
-                    </button>
-                  </div>
+                        : "bg-white/10 text-white/90 hover:bg-white/20"
+                    }`}
+                  >
+                    <div className="text-center">
+                      <span className="font-medium block">Hard</span>
+                      <span className="text-xs">30 seconds</span>
+                    </div>
+                  </button>
                 </div>
+              </div>
             </>
           )}
 
           {/* Memory Game Settings in Modal */}
           {gameType === "memory" && (
             <>
-            <div>
-              <label className="block text-sm font-medium text-white/80 mb-1">
+              <div>
+                <label className="block text-sm font-medium text-white/80 mb-1">
                   Game Mode
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -863,15 +882,15 @@ export function GameSettings({
               <div>
                 <label className="block text-sm font-medium text-white/80 mb-1">
                   Card Count
-              </label>
-              <select
-                value={difficulty}
-                onChange={(e) => handleMemoryDifficultyChange(e.target.value)}
-                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                {Object.keys(MEMORY_DIFFICULTIES).map((diff) => (
-                  <option key={diff} value={diff} className="bg-gray-800">
-                    {diff} ({GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs)
+                </label>
+                <select
+                  value={difficulty}
+                  onChange={(e) => handleMemoryDifficultyChange(e.target.value)}
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {Object.keys(MEMORY_DIFFICULTIES).map((diff) => (
+                    <option key={diff} value={diff} className="bg-gray-800">
+                      {diff} ({GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs)
                     </option>
                   ))}
                 </select>
@@ -897,10 +916,10 @@ export function GameSettings({
                     {Object.keys(MEMORY_GAME_TIME_LIMITS).map((diff) => (
                       <option key={diff} value={diff} className="bg-gray-800">
                         {diff} ({MEMORY_GAME_TIME_LIMITS[diff]} seconds)
-                  </option>
-                ))}
-              </select>
-            </div>
+                      </option>
+                    ))}
+                  </select>
+                </div>
               )}
             </>
           )}
@@ -953,6 +972,8 @@ export function GameSettings({
           return <ClefSelectionScreen />;
       }
     }
+
+    return null;
   };
 
   return (
