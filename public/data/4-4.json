@@ -9,7 +9,7 @@
         { "duration": "quarter", "note": true },
         { "duration": "quarter", "note": false },
         { "duration": "quarter", "note": false },
-        { "duration": "quarter", "note": false }
+        { "duration": "quarter", "note": true }
       ],
       [
         { "duration": "half", "note": true },

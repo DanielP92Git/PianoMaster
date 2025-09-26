@@ -7,6 +7,7 @@ import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import { Achievements } from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
 import PracticeSessions from "./pages/PracticeSessions";
+import StudentAssignments from "./pages/StudentAssignments";
 import AppSettings from "./pages/AppSettings";
 import Avatars from "./components/Avatars";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -80,6 +81,7 @@ function AppRoutes() {
           <Route index element={<Dashboard />} />
           <Route path="/practice-modes" element={<PracticeModes />} />
           <Route path="practice-sessions" element={<PracticeSessions />} />
+          <Route path="/assignments" element={<StudentAssignments />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/settings" element={<AppSettings />} />
           <Route path="/avatars" element={<Avatars />} />
@@ -97,7 +99,10 @@ function AppRoutes() {
             element={<NoteRecognitionGame />}
           />
           <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
-          <Route path="/rhythm-mode/metronome-trainer" element={<MetronomeTrainer />} />
+          <Route
+            path="/rhythm-mode/metronome-trainer"
+            element={<MetronomeTrainer />}
+          />
           {/* TODO: Add new rhythm game routes here */}
         </Route>
         <Route path="/login" element={<Login />} />

@@ -248,12 +248,10 @@ export function NoteRecognitionGame() {
     const notesArray = settings.clef === "Treble" ? trebleNotes : bassNotes;
 
     let selectedNotes = settings.selectedNotes;
-    if (!Array.isArray(selectedNotes) || selectedNotes.length < 2) {
+    // Only use all notes as fallback if no notes are selected at all
+    if (!Array.isArray(selectedNotes) || selectedNotes.length === 0) {
       selectedNotes = notesArray.map((note) => note.note);
-      updateSettings({
-        ...settings,
-        selectedNotes: selectedNotes,
-      });
+      // Don't call updateSettings here as it causes re-renders and overrides
     }
 
     const filteredNotes = notesArray.filter((note) =>
@@ -278,7 +276,8 @@ export function NoteRecognitionGame() {
       ? newSettings.selectedNotes
       : [];
 
-    if (selectedNotes.length < 2) {
+    // Only use all notes as fallback if no notes are selected at all
+    if (selectedNotes.length === 0) {
       selectedNotes =
         clef === "Treble"
           ? trebleNotes.map((note) => note.note)
@@ -310,7 +309,11 @@ export function NoteRecognitionGame() {
 
   // Start the game with current or new settings
   const startGame = (gameSettings = settings) => {
-    if (!gameSettings.selectedNotes || gameSettings.selectedNotes.length < 2) {
+    // Only use all notes as fallback if no notes are selected at all
+    if (
+      !gameSettings.selectedNotes ||
+      gameSettings.selectedNotes.length === 0
+    ) {
       gameSettings.selectedNotes =
         gameSettings.clef === "Treble"
           ? trebleNotes.map((note) => note.note)
@@ -334,7 +337,21 @@ export function NoteRecognitionGame() {
     pauseTimer();
     resetTimer(timeLimit);
 
-    const firstNote = getRandomNote();
+    // Generate first note using the passed gameSettings instead of global settings
+    const notesArray = gameSettings.clef === "Treble" ? trebleNotes : bassNotes;
+    let selectedNotes = gameSettings.selectedNotes;
+
+    // Only use all notes as fallback if no notes are selected at all
+    if (!Array.isArray(selectedNotes) || selectedNotes.length === 0) {
+      selectedNotes = notesArray.map((note) => note.note);
+    }
+
+    const filteredNotes = notesArray.filter((note) =>
+      selectedNotes.includes(note.note)
+    );
+
+    const firstNote =
+      filteredNotes[Math.floor(Math.random() * filteredNotes.length)];
     if (!firstNote) {
       console.error("Failed to get initial note");
       return;
@@ -798,17 +815,27 @@ export function NoteRecognitionGame() {
               <div className="flex w-full">
                 {/* Note Buttons on the left */}
                 <div className="grid grid-cols-2 gap-2 w-1/2 mr-4">
-                  {(settings.clef === "Treble" ? trebleNotes : bassNotes).map(
-                    (note) => (
-                      <button
-                        key={note.note}
-                        onClick={() => handleAnswerSelect(note.note)}
-                        className="px-3 py-1.5 backdrop-blur-sm border rounded-lg transition-colors bg-white/20 border-white/30 text-white hover:bg-white/30"
-                      >
-                        {note.note}
-                      </button>
-                    )
-                  )}
+                  {(() => {
+                    const allNotes =
+                      settings.clef === "Treble" ? trebleNotes : bassNotes;
+                    const filteredNotes =
+                      Array.isArray(settings.selectedNotes) &&
+                      settings.selectedNotes.length > 0
+                        ? allNotes.filter((note) =>
+                            settings.selectedNotes.includes(note.note)
+                          )
+                        : allNotes;
+
+                    return filteredNotes;
+                  })().map((note) => (
+                    <button
+                      key={note.note}
+                      onClick={() => handleAnswerSelect(note.note)}
+                      className="px-3 py-1.5 backdrop-blur-sm border rounded-lg transition-colors bg-white/20 border-white/30 text-white hover:bg-white/30"
+                    >
+                      {note.note}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Current Note on the right */}

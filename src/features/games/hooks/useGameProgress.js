@@ -51,10 +51,15 @@ export function useGameProgress() {
 
   const finishGame = useCallback(
     async (isLost = false, timeRanOut = false) => {
+      let finalScore = 0;
+      let accuracy = 0;
+      let totalQuestions = 0;
+
       setProgress((prev) => {
         // Calculate final score and session data
-        const finalScore = prev.score;
-        const accuracy =
+        finalScore = prev.score;
+        totalQuestions = prev.totalQuestions;
+        accuracy =
           prev.totalQuestions > 0
             ? (prev.correctAnswers / prev.totalQuestions) * 100
             : 0;
@@ -65,39 +70,7 @@ export function useGameProgress() {
           gameType: "note-recognition",
         });
 
-        // Show points gain notification
-        if (finalScore > 0) {
-          showPointsGain(finalScore, "note-recognition");
-        }
-
-        // Create practice session record
-        if (user?.id) {
-          // Determine status based on performance
-          const status =
-            accuracy >= 80
-              ? "excellent"
-              : accuracy >= 60
-                ? "reviewed"
-                : "needs_work";
-
-          const sessionData = {
-            student_id: user.id,
-            recording_url: "", // No audio recording for note recognition game
-            recording_description: `Note Recognition Game - Score: ${finalScore}, Accuracy: ${accuracy.toFixed(1)}%, Questions: ${prev.totalQuestions}/${prev.totalQuestions}`,
-            has_recording: false,
-            duration: 0, // Game duration would need to be tracked separately
-            analysis_score: accuracy,
-            notes_played: prev.totalQuestions,
-            unique_notes: prev.totalQuestions, // Each question is a unique note
-            status: status,
-            submitted_at: new Date().toISOString(),
-          };
-
-          // Create the practice session
-          createPracticeSession(sessionData).catch((error) => {
-            console.error("Failed to create practice session:", error);
-          });
-        }
+        // Don't call showPointsGain here - will be called after state update
 
         return {
           ...prev,
@@ -106,6 +79,40 @@ export function useGameProgress() {
           timeRanOut,
         };
       });
+
+      // Show points gain notification after state update
+      if (finalScore > 0) {
+        showPointsGain(finalScore, "note-recognition");
+      }
+
+      // Create practice session record after state update
+      if (user?.id) {
+        // Determine status based on performance
+        const status =
+          accuracy >= 80
+            ? "excellent"
+            : accuracy >= 60
+              ? "reviewed"
+              : "needs_work";
+
+        const sessionData = {
+          student_id: user.id,
+          recording_url: "", // No audio recording for note recognition game
+          recording_description: `Note Recognition Game - Score: ${finalScore}, Accuracy: ${accuracy.toFixed(1)}%, Questions: ${totalQuestions}/${totalQuestions}`,
+          has_recording: false,
+          duration: 0, // Game duration would need to be tracked separately
+          analysis_score: accuracy,
+          notes_played: totalQuestions,
+          unique_notes: totalQuestions, // Each question is a unique note
+          status: status,
+          submitted_at: new Date().toISOString(),
+        };
+
+        // Create the practice session
+        createPracticeSession(sessionData).catch((error) => {
+          console.error("Failed to create practice session:", error);
+        });
+      }
     },
     [updateUserScore, user]
   );

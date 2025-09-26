@@ -26,12 +26,14 @@ export function useGameSettings(initialSettings = {}) {
 
   const updateSettings = (newSettings) => {
     setSettings((prev) => {
-      // Don't update if timedMode hasn't changed
+      // Only skip update if ONLY timedMode is being set and it hasn't changed
       if (
         newSettings.timedMode !== undefined &&
-        prevValues.current.timedMode === newSettings.timedMode
+        prevValues.current.timedMode === newSettings.timedMode &&
+        Object.keys(newSettings).length === 1 && // Only timedMode is being updated
+        Object.keys(newSettings)[0] === "timedMode"
       ) {
-        return prev; // Return previous state unchanged if timedMode hasn't changed
+        return prev; // Return previous state unchanged if only timedMode hasn't changed
       }
 
       // Calculate the new time limit based on difficulty or use provided value
@@ -66,6 +68,10 @@ export function useGameSettings(initialSettings = {}) {
       updatedSettings.timedMode = updatedTimedMode;
       updatedSettings.timeLimit = newTimeLimit;
 
+      console.log(
+        "useGameSettings.updateSettings - returning updated settings:",
+        updatedSettings
+      );
       return updatedSettings;
     });
   };

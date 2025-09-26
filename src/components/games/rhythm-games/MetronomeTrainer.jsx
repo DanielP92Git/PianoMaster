@@ -7,16 +7,33 @@ import {
   DIFFICULTY_LEVELS,
   TIME_SIGNATURES,
 } from "./RhythmPatternGenerator";
-import {
-  MetronomeDisplay,
-  TapArea,
-  GameControls,
-  PreGameSettingsScreen,
-} from "./components";
+import { MetronomeDisplay, TapArea, PreGameSettingsScreen } from "./components";
 import BackButton from "../../ui/BackButton";
 import Button from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
 import { Trophy, RotateCcw, Home } from "lucide-react";
+
+// Progress bar component to track completed exercises
+const ProgressBar = ({ current, total }) => {
+  const progressPercent = Math.min(100, (current / total) * 100);
+  return (
+    <div className="w-full bg-white/20 rounded-full h-3 mb-2 overflow-hidden shadow-inner">
+      <div
+        className="bg-indigo-500 h-3 rounded-full transition-all duration-300 ease-out flex items-center justify-end pr-2"
+        style={{ width: `${progressPercent}%` }}
+      >
+        {progressPercent > 15 && (
+          <span className="text-xs text-white font-medium">
+            {current}/{total}
+          </span>
+        )}
+      </div>
+      <div className="text-xs text-white text-center mt-1 font-medium">
+        Exercise {current} of {total}
+      </div>
+    </div>
+  );
+};
 
 // Game phases
 const GAME_PHASES = {
@@ -29,12 +46,35 @@ const GAME_PHASES = {
   SESSION_COMPLETE: "session-complete",
 };
 
-// Timing thresholds (in milliseconds)
-const TIMING_THRESHOLDS = {
-  PERFECT: 20, // ±20ms
-  GOOD: 50, // ±50ms
-  FAIR: 100, // ±100ms
+// Base timing thresholds (in milliseconds) - these are for 120 BPM
+const BASE_TIMING_THRESHOLDS = {
+  PERFECT: 50, // ±20ms
+  GOOD: 75, // ±50ms
+  FAIR: 125, // ±100ms
   // >100ms = MISS
+};
+
+/**
+ * Calculate dynamic timing thresholds based on tempo
+ * Slower tempos get more generous thresholds, faster tempos get stricter
+ */
+const calculateTimingThresholds = (tempo) => {
+  // Base tempo for reference (120 BPM)
+  const baseTempo = 120;
+
+  // Calculate scaling factor
+  // At 60 BPM: factor = 1.4 (40% more generous)
+  // At 90 BPM: factor = 1.15 (15% more generous)
+  // At 120 BPM: factor = 1.0 (baseline)
+  // At 150 BPM: factor = 0.85 (15% stricter)
+  // At 180 BPM: factor = 0.75 (25% stricter)
+  const scalingFactor = Math.pow(baseTempo / tempo, 0.3); // Gentle exponential scaling
+
+  return {
+    PERFECT: Math.round(BASE_TIMING_THRESHOLDS.PERFECT * scalingFactor),
+    GOOD: Math.round(BASE_TIMING_THRESHOLDS.GOOD * scalingFactor),
+    FAIR: Math.round(BASE_TIMING_THRESHOLDS.FAIR * scalingFactor),
+  };
 };
 
 // Scoring system
@@ -49,16 +89,33 @@ const SCORING = {
 export function MetronomeTrainer() {
   const navigate = useNavigate();
   const audioEngine = useAudioEngine(120);
-  const { playCorrectSound, playWrongSound, playVictorySound } = useSounds();
+  const {
+    playCorrectSound,
+    playWrongSound,
+    playVictorySound,
+    playDrumStickSound,
+  } = useSounds();
 
   // Game state
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
   const [gameSettings, setGameSettings] = useState({
     difficulty: DIFFICULTY_LEVELS.BEGINNER,
     timeSignature: TIME_SIGNATURES.FOUR_FOUR,
-    tempo: 120,
+    tempo: 90,
     adaptiveDifficulty: false,
   });
+
+  // Debug log for initial settings (only log once on mount)
+  useEffect(() => {
+    console.log(
+      `[SETTINGS] Component mounted with gameSettings:`,
+      gameSettings
+    );
+    console.log(
+      `[SETTINGS] Available time signatures:`,
+      Object.values(TIME_SIGNATURES)
+    );
+  }, []); // Only run once on mount
 
   // Pattern and timing state
   const [currentPattern, setCurrentPattern] = useState(null);
@@ -79,6 +136,14 @@ export function MetronomeTrainer() {
     maxCombo: 0,
   });
 
+  // Progress tracking for exercises (similar to NoteRecognitionGame)
+  const [exerciseProgress, setExerciseProgress] = useState({
+    currentExercise: 0,
+    totalExercises: 10,
+    exerciseScores: [], // Array to track individual exercise scores
+    isGameComplete: false,
+  });
+
   // Timing references
   const gameStartTime = useRef(null);
   const patternStartTime = useRef(null);
@@ -89,7 +154,11 @@ export function MetronomeTrainer() {
   const continuousMetronomeRef = useRef(null);
   const visualMetronomeRef = useRef(null);
   const metronomeStartTimeRef = useRef(null);
+  const patternInfoRef = useRef(null); // Store pattern info immediately
+  const userTapsRef = useRef([]); // Track user taps in real-time for evaluation
+  const scheduledOscillatorsRef = useRef([]); // Track scheduled oscillators for manual stopping
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
+  const [countdownToStart, setCountdownToStart] = useState(null); // Countdown until user should start tapping
 
   // Calculate beat duration from tempo
   useEffect(() => {
@@ -129,9 +198,27 @@ export function MetronomeTrainer() {
         oscillator.connect(clickGain);
         clickGain.connect(masterGain);
 
+        // Track oscillator for manual stopping if needed
+        const oscillatorInfo = {
+          oscillator,
+          startTime: time,
+          stopTime: time + 0.02,
+        };
+        scheduledOscillatorsRef.current.push(oscillatorInfo);
+
         // Schedule play
         oscillator.start(time);
         oscillator.stop(time + 0.02); // Shorter duration
+
+        // Clean up tracking when oscillator ends
+        oscillator.onended = () => {
+          const index = scheduledOscillatorsRef.current.findIndex(
+            (info) => info.oscillator === oscillator
+          );
+          if (index !== -1) {
+            scheduledOscillatorsRef.current.splice(index, 1);
+          }
+        };
       } catch (error) {
         console.error("Error creating custom metronome sound:", error);
       }
@@ -143,10 +230,17 @@ export function MetronomeTrainer() {
    * Start continuous metronome that runs throughout the game
    */
   const startContinuousMetronome = useCallback(
-    (startTime) => {
+    (startTime, timeSignatureOverride = null) => {
       const beatDur = beatDuration.current;
-      const beatsPerMeasure = gameSettings.timeSignature.beats;
+      const currentTimeSignature =
+        timeSignatureOverride || gameSettings.timeSignature;
+      const beatsPerMeasure = currentTimeSignature.beats;
 
+      console.log(
+        `[METRONOME] STARTING continuous metronome at ${startTime.toFixed(3)}s`
+      );
+      console.log(`[METRONOME] Time signature: ${currentTimeSignature.name}`);
+      console.log(`[METRONOME] Beats per measure: ${beatsPerMeasure}`);
       metronomeStartTimeRef.current = startTime;
 
       // Clear any existing metronome
@@ -156,6 +250,9 @@ export function MetronomeTrainer() {
       if (visualMetronomeRef.current) {
         clearInterval(visualMetronomeRef.current);
       }
+
+      // Clear any existing oscillator tracking
+      scheduledOscillatorsRef.current = [];
 
       // Schedule continuous metronome beats
       const scheduleMetronomeBeats = (currentTime) => {
@@ -174,12 +271,7 @@ export function MetronomeTrainer() {
             const isDownbeat = beatNumber % beatsPerMeasure === 0;
             const beatInMeasure = (beatNumber % beatsPerMeasure) + 1; // 1-based beat number
 
-            // Debug logging for first few beats
-            if (beatNumber < 8) {
-              console.log(
-                `Scheduling beat ${beatNumber}: beat ${beatInMeasure} of measure ${Math.floor(beatNumber / beatsPerMeasure) + 1}, isDownbeat: ${isDownbeat}, time: ${beatTime.toFixed(3)}`
-              );
-            }
+            // Beat scheduling (logging removed for cleaner console)
 
             // Different volumes based on game phase
             let volume = 0.1;
@@ -216,12 +308,7 @@ export function MetronomeTrainer() {
               const totalBeatsCompleted = Math.floor(totalBeatsFloat);
               const beatInMeasure = (totalBeatsCompleted % beatsPerMeasure) + 1;
 
-              // Debug logging for first few beats
-              if (timeSinceStart < 8 * beatDur) {
-                console.log(
-                  `Visual update: beat ${beatInMeasure}, totalBeats: ${totalBeatsCompleted}, time: ${currentTime.toFixed(3)}`
-                );
-              }
+              // Visual metronome beat tracking
 
               setCurrentBeat(beatInMeasure);
             };
@@ -261,6 +348,9 @@ export function MetronomeTrainer() {
    * Stop continuous metronome
    */
   const stopContinuousMetronome = useCallback(() => {
+    const currentTime = audioEngine.getCurrentTime();
+    console.log(`[METRONOME] Stopping metronome at ${currentTime.toFixed(3)}s`);
+
     if (continuousMetronomeRef.current) {
       clearInterval(continuousMetronomeRef.current);
       continuousMetronomeRef.current = null;
@@ -269,74 +359,99 @@ export function MetronomeTrainer() {
       clearInterval(visualMetronomeRef.current);
       visualMetronomeRef.current = null;
     }
-    // Clear any already scheduled metronome events to stop immediately
+
+    // Stop all future scheduled oscillators
+    const futureOscillators = scheduledOscillatorsRef.current.filter(
+      (info) => info.startTime > currentTime
+    );
+
+    console.log(
+      `[METRONOME] Stopping ${futureOscillators.length} future oscillators`
+    );
+
+    futureOscillators.forEach((info) => {
+      try {
+        if (info.oscillator && info.oscillator.stop) {
+          info.oscillator.stop(currentTime);
+        }
+      } catch (error) {
+        // Oscillator might already be stopped, ignore
+      }
+    });
+
+    // Clear the tracking array
+    scheduledOscillatorsRef.current = [];
+
+    // Clear any already scheduled metronome events
     audioEngine.clearScheduledEvents();
+    console.log(`[METRONOME] All metronome events cleared`);
   }, [audioEngine]);
 
   /**
-   * Start a new game session
+   * Start user performance exactly at beat 1 (no countdown needed)
    */
-  const startGame = useCallback(async () => {
-    try {
-      // Resume audio context if suspended
-      await audioEngine.resumeAudioContext();
-
-      setGamePhase(GAME_PHASES.COUNT_IN);
-      gameStartTime.current = audioEngine.getCurrentTime();
-
-      // Load first pattern
-      const pattern = await getPattern(
-        gameSettings.timeSignature.name,
-        gameSettings.difficulty
-      );
-
-      if (!pattern || !pattern.pattern || !Array.isArray(pattern.pattern)) {
-        console.error(
-          "Failed to load valid pattern, cannot start game. Pattern:",
-          pattern
-        );
-        setGamePhase(GAME_PHASES.SETUP);
-        return;
-      }
-
-      setCurrentPattern(pattern);
-      setCurrentBeat(0);
-      setUserTaps([]);
-      setExpectedTaps([]);
-
-      // Start continuous metronome and count-in
-      const countInStartTime = audioEngine.getCurrentTime() + 0.1;
-      startContinuousMetronome(countInStartTime);
-      startCountInWithPattern(pattern, countInStartTime);
-    } catch (error) {
-      console.error("Error starting game:", error);
-      setGamePhase(GAME_PHASES.SETUP);
-    }
-  }, [gameSettings, audioEngine, startContinuousMetronome]);
+  const startUserPerformanceAtBeat1 = useCallback(() => {
+    setGamePhase(GAME_PHASES.USER_PERFORMANCE);
+    setHasUserStartedTapping(false);
+    setCountdownToStart(null);
+  }, []);
 
   /**
-   * Start metronome count-in phase with pattern
+   * Start get ready phase (metronome continues, taps ignored)
    */
-  const startCountInWithPattern = useCallback(
-    (pattern, countInStartTime) => {
-      const beatDur = beatDuration.current;
-      const beatsInCountIn = gameSettings.timeSignature.beats;
+  const startGetReadyPhase = useCallback(() => {
+    setGamePhase(GAME_PHASES.GET_READY);
+    setHasUserStartedTapping(false);
+    setUserTaps([]);
+    userTapsRef.current = []; // Clear user taps ref
 
-      // Calculate precise timing for pattern start (immediately after count-in)
-      const patternStartTime = countInStartTime + beatsInCountIn * beatDur;
+    // Calculate when the next beat 1 will occur
+    const currentTime = audioEngine.getCurrentTime();
+    const timeSinceStart = currentTime - metronomeStartTimeRef.current;
+    const beatDur = beatDuration.current;
+    const beatsPerMeasure = gameSettings.timeSignature.beats;
+    const currentBeatFloat = timeSinceStart / beatDur;
+    const nextMeasureStart =
+      Math.ceil(currentBeatFloat / beatsPerMeasure) * beatsPerMeasure;
+    const nextBeat1Time =
+      metronomeStartTimeRef.current + nextMeasureStart * beatDur;
 
-      // The continuous metronome handles both audio and visual synchronization
+    // Store this timing for user performance
+    userPerformanceStartTime.current = nextBeat1Time;
 
-      // Schedule pattern playback to start after count-in
-      const delayToPatternStart =
-        (patternStartTime - audioEngine.getCurrentTime()) * 1000;
-      setTimeout(
-        () => startPatternPlaybackWithPattern(pattern, patternStartTime),
-        Math.max(0, delayToPatternStart)
-      );
-    },
-    [audioEngine, gameSettings, beatDuration]
-  );
+    // Calculate expected taps now (since we know when user will start)
+    if (patternInfoRef.current) {
+      const { pattern } = patternInfoRef.current;
+      const currentBeatDur = beatDuration.current; // Use current beat duration
+      const expectedTimes = [];
+
+      pattern.forEach((beat, index) => {
+        if (beat === 1) {
+          // Calculate tap time relative to user performance start time
+          const relativeTime = (index * currentBeatDur) / 4; // Convert to sixteenth note timing
+          const absoluteTapTime = nextBeat1Time + relativeTime;
+          expectedTimes.push(absoluteTapTime);
+        }
+      });
+
+      // Expected taps calculated for user performance phase
+
+      setExpectedTaps(expectedTimes);
+    }
+
+    // Calculate how long until beat 1 arrives, minus a small buffer for user reaction time
+    const reactionTimeBuffer = 0.2; // 200ms before beat 1 to enable tap button
+    const timeUntilBeat1 = nextBeat1Time - currentTime;
+    const getReadyDuration = Math.max(
+      0,
+      (timeUntilBeat1 - reactionTimeBuffer) * 1000
+    ); // Convert to ms
+
+    // Transition timing calculated with reaction buffer
+
+    // Transition to user performance slightly before beat 1 for better UX
+    setTimeout(() => startUserPerformanceAtBeat1(), getReadyDuration);
+  }, [audioEngine, beatDuration, gameSettings, startUserPerformanceAtBeat1]);
 
   /**
    * Start pattern playback phase with specific pattern
@@ -354,15 +469,40 @@ export function MetronomeTrainer() {
       patternStartTime.current = startTime;
       const beatDur = beatDuration.current;
 
-      // Calculate expected tap times for later evaluation
-      const expectedTimes = [];
-      pattern.pattern.forEach((beat, index) => {
-        if (beat === 1) {
-          const tapTime = startTime + (index * beatDur) / 4; // Convert to sixteenth note timing
-          expectedTimes.push(tapTime);
-        }
+      // Store pattern info for later use when calculating expected taps
+      // We can't calculate expected tap times here because we don't know when user will start tapping yet
+      const patternInfo = {
+        pattern: pattern.pattern,
+        startTime: startTime,
+        beatDuration: beatDur,
+      };
+
+      console.log(
+        `[PATTERN] Time signature: ${pattern.timeSignature || "unknown"}`
+      );
+      console.log(
+        `[PATTERN] Expected beats per measure: ${pattern.metadata?.beatsPerMeasure || "unknown"}`
+      );
+      console.log(`[PATTERN] Pattern length: ${pattern.pattern.length}`);
+      console.log(`[PATTERN] Pattern: ${pattern.pattern}`);
+      console.log(`[PATTERN] Pattern source: ${pattern.source || "unknown"}`);
+      console.log(
+        `[PATTERN] Pattern time signature: ${pattern.timeSignature || "unknown"}`
+      );
+
+      // Store pattern info immediately in ref for synchronous access
+      patternInfoRef.current = patternInfo;
+
+      // Store pattern info for later calculation
+      setCurrentPattern({
+        ...pattern,
+        patternInfo: patternInfo,
       });
-      setExpectedTaps(expectedTimes);
+
+      // Pattern info stored for later expected tap calculation
+
+      // Clear expected taps - they'll be calculated when user starts tapping
+      setExpectedTaps([]);
 
       // Play pattern using piano sound (G4.mp3) - metronome is handled by continuous metronome
       pattern.pattern.forEach((beat, index) => {
@@ -376,176 +516,162 @@ export function MetronomeTrainer() {
       const patternDuration = ((pattern.pattern.length * beatDur) / 4) * 1000;
       setTimeout(() => startGetReadyPhase(), patternDuration);
     },
-    [audioEngine, beatDuration, gameSettings]
+    [audioEngine, beatDuration, startGetReadyPhase]
   );
 
   /**
-   * Start get ready phase (metronome continues, taps ignored)
+   * Start metronome count-in phase with pattern
    */
-  const startGetReadyPhase = useCallback(() => {
-    setGamePhase(GAME_PHASES.GET_READY);
-    setHasUserStartedTapping(false);
-    setUserTaps([]);
-
-    // Metronome continues for one full measure as "get ready" time
-    const beatDur = beatDuration.current;
-    const beatsPerMeasure = gameSettings.timeSignature.beats;
-    const getReadyDuration = beatsPerMeasure * beatDur * 1000; // One full measure
-
-    // After get ready period, transition to user performance
-    setTimeout(() => startWaitingForUserResponse(), getReadyDuration);
-  }, [beatDuration, gameSettings]);
-
-  /**
-   * Start waiting for user response (infinite metronome until first tap)
-   */
-  const startWaitingForUserResponse = useCallback(() => {
-    setGamePhase(GAME_PHASES.USER_PERFORMANCE);
-    setHasUserStartedTapping(false);
-
-    // Set the reference time for when user should start tapping (next beat 1)
-    const currentTime = audioEngine.getCurrentTime();
-    const timeSinceStart = currentTime - metronomeStartTimeRef.current;
-    const beatDur = beatDuration.current;
-    const beatsPerMeasure = gameSettings.timeSignature.beats;
-    const currentBeatFloat = timeSinceStart / beatDur;
-    const nextMeasureStart =
-      Math.ceil(currentBeatFloat / beatsPerMeasure) * beatsPerMeasure;
-    const nextBeat1Time =
-      metronomeStartTimeRef.current + nextMeasureStart * beatDur;
-
-    userPerformanceStartTime.current = nextBeat1Time;
-  }, [audioEngine, beatDuration, gameSettings]);
-
-  /**
-   * Handle user tap input
-   */
-  const handleTap = useCallback(() => {
-    // Ignore taps during get ready phase
-    if (gamePhase === GAME_PHASES.GET_READY) return;
-    if (gamePhase !== GAME_PHASES.USER_PERFORMANCE) return;
-
-    const tapTime = audioEngine.getCurrentTime();
-
-    // If this is the first tap, start the timed response phase
-    if (!hasUserStartedTapping) {
-      setHasUserStartedTapping(true);
-
-      // Calculate the current beat position and when this measure will end
-      const currentTime = audioEngine.getCurrentTime();
-      const timeSinceStart = currentTime - metronomeStartTimeRef.current;
+  const startCountInWithPattern = useCallback(
+    (pattern, countInStartTime, timeSignatureOverride = null) => {
       const beatDur = beatDuration.current;
-      const beatsPerMeasure = gameSettings.timeSignature.beats;
-      const currentBeatFloat = timeSinceStart / beatDur;
-      const currentMeasure = Math.floor(currentBeatFloat / beatsPerMeasure);
+      const currentTimeSignature =
+        timeSignatureOverride || gameSettings.timeSignature;
+      const beatsInCountIn = currentTimeSignature.beats;
 
-      // User starts tapping in the current measure
-      const currentMeasureStart = currentMeasure * beatsPerMeasure;
-      const userStartTime =
-        metronomeStartTimeRef.current + currentMeasureStart * beatDur;
-      userPerformanceStartTime.current = userStartTime;
+      // Calculate precise timing for pattern start (immediately after count-in)
+      const patternStartTime = countInStartTime + beatsInCountIn * beatDur;
 
-      // Calculate exactly when this measure ends (not the next one)
-      const currentMeasureEndBeat = (currentMeasure + 1) * beatsPerMeasure;
-      const measureEndTime =
-        metronomeStartTimeRef.current + currentMeasureEndBeat * beatDur;
-      const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
+      // The continuous metronome handles both audio and visual synchronization
 
+      // Schedule pattern playback to start after count-in
+      const delayToPatternStart =
+        (patternStartTime - audioEngine.getCurrentTime()) * 1000;
       setTimeout(
-        () => {
-          stopContinuousMetronome();
-          evaluatePerformance();
-        },
-        Math.max(100, delayToMeasureEnd) // Small minimum to ensure measure completes
+        () => startPatternPlaybackWithPattern(pattern, patternStartTime),
+        Math.max(0, delayToPatternStart)
       );
-    }
-
-    const relativeTime = tapTime - userPerformanceStartTime.current;
-    setUserTaps((prev) => [...prev, { time: tapTime, relativeTime }]);
-
-    // Provide immediate feedback
-    const nearestExpected = findNearestExpectedTap(relativeTime);
-    const accuracy = calculateTapAccuracy(relativeTime, nearestExpected);
-
-    setFeedback({ accuracy, points: SCORING[accuracy] });
-
-    // Play feedback sound
-    if (accuracy === "PERFECT" || accuracy === "GOOD") {
-      playCorrectSound();
-    } else {
-      playWrongSound();
-    }
-
-    // Clear feedback after short delay
-    setTimeout(() => setFeedback(null), 1000);
-  }, [
-    gamePhase,
-    audioEngine,
-    expectedTaps,
-    playCorrectSound,
-    playWrongSound,
-    hasUserStartedTapping,
-    beatDuration,
-    gameSettings,
-    stopContinuousMetronome,
-  ]);
-
-  /**
-   * Find the nearest expected tap time
-   */
-  const findNearestExpectedTap = useCallback(
-    (userTime) => {
-      if (expectedTaps.length === 0) return null;
-
-      // Convert expected absolute times to relative times
-      const relativeExpectedTaps = expectedTaps.map(
-        (time) => time - userPerformanceStartTime.current
-      );
-
-      let nearest = relativeExpectedTaps[0];
-      let minDiff = Math.abs(userTime - nearest);
-
-      relativeExpectedTaps.forEach((expectedTime) => {
-        const diff = Math.abs(userTime - expectedTime);
-        if (diff < minDiff) {
-          minDiff = diff;
-          nearest = expectedTime;
-        }
-      });
-
-      return nearest;
     },
-    [expectedTaps]
+    [audioEngine, gameSettings, beatDuration, startPatternPlaybackWithPattern]
   );
 
   /**
-   * Calculate tap accuracy based on timing
+   * Start a new game session
    */
-  const calculateTapAccuracy = useCallback((userTime, expectedTime) => {
-    if (!expectedTime) return "MISS";
+  const startGame = useCallback(
+    async (overrideSettings = null) => {
+      try {
+        // Use override settings if provided, otherwise use current state
+        const currentSettings = overrideSettings || gameSettings;
+        console.log(`[GAME START] Using settings:`, currentSettings);
+        console.log(
+          `[GAME START] Time signature: ${currentSettings.timeSignature.name}`
+        );
 
-    const timingError = Math.abs(userTime - expectedTime) * 1000; // Convert to milliseconds
+        // Resume audio context if suspended
+        await audioEngine.resumeAudioContext();
 
-    if (timingError <= TIMING_THRESHOLDS.PERFECT) return "PERFECT";
-    if (timingError <= TIMING_THRESHOLDS.GOOD) return "GOOD";
-    if (timingError <= TIMING_THRESHOLDS.FAIR) return "FAIR";
-    return "MISS";
-  }, []);
+        setGamePhase(GAME_PHASES.COUNT_IN);
+        gameStartTime.current = audioEngine.getCurrentTime();
+
+        // Load first pattern using current settings
+        const pattern = await getPattern(
+          currentSettings.timeSignature.name,
+          currentSettings.difficulty
+        );
+
+        if (!pattern || !pattern.pattern || !Array.isArray(pattern.pattern)) {
+          console.error(
+            "Failed to load valid pattern, cannot start game. Pattern:",
+            pattern
+          );
+          setGamePhase(GAME_PHASES.SETUP);
+          return;
+        }
+
+        setCurrentPattern(pattern);
+        setCurrentBeat(0);
+        setUserTaps([]);
+        setExpectedTaps([]);
+        setCountdownToStart(null); // Clear countdown
+        patternInfoRef.current = null; // Clear previous pattern info
+        userTapsRef.current = []; // Clear user taps ref
+
+        // Reset exercise progress
+        setExerciseProgress({
+          currentExercise: 0,
+          totalExercises: 10,
+          exerciseScores: [],
+          isGameComplete: false,
+        });
+
+        // Update gameSettings state with current settings if override was provided
+        if (overrideSettings) {
+          setGameSettings(overrideSettings);
+        }
+
+        // Start continuous metronome and count-in
+        const countInStartTime = audioEngine.getCurrentTime() + 0.1;
+        startContinuousMetronome(
+          countInStartTime,
+          currentSettings.timeSignature
+        );
+        startCountInWithPattern(
+          pattern,
+          countInStartTime,
+          currentSettings.timeSignature
+        );
+      } catch (error) {
+        console.error("Error starting game:", error);
+        setGamePhase(GAME_PHASES.SETUP);
+      }
+    },
+    [
+      gameSettings,
+      audioEngine,
+      startContinuousMetronome,
+      startCountInWithPattern,
+    ]
+  );
 
   /**
-   * Evaluate user performance and provide feedback
+   * Evaluate user performance using metronome-based timing
    */
   const evaluatePerformance = useCallback(() => {
-    // Ensure metronome is stopped
-    stopContinuousMetronome();
-    setGamePhase(GAME_PHASES.FEEDBACK);
-
-    // Calculate detailed performance metrics
-    const relativeExpectedTaps = expectedTaps.map(
-      (time) => time - userPerformanceStartTime.current
+    console.log(
+      `[TIMING] Victory sound evaluation started at ${audioEngine.getCurrentTime().toFixed(3)}s`
     );
 
-    const relativeUserTaps = userTaps.map((tap) => tap.relativeTime);
+    // Metronome is already stopped at measure end
+    setGamePhase(GAME_PHASES.FEEDBACK);
+
+    // Use ref for real-time user taps data
+    const currentUserTaps = userTapsRef.current;
+
+    if (!patternInfoRef.current || currentUserTaps.length === 0) {
+      setSessionStats((prev) => ({
+        patternsCompleted: prev.patternsCompleted + 1,
+        totalScore: prev.totalScore,
+        perfectTaps: prev.perfectTaps,
+        goodTaps: prev.goodTaps,
+        fairTaps: prev.fairTaps,
+        missedTaps:
+          prev.missedTaps +
+          (patternInfoRef.current?.pattern?.filter((beat) => beat === 1)
+            .length || 0),
+        comboCount: 0,
+        maxCombo: prev.maxCombo,
+      }));
+      console.log(
+        `[TIMING] Playing wrong sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
+      );
+      playWrongSound();
+      return;
+    }
+
+    // Get pattern and timing info
+    const { pattern } = patternInfoRef.current;
+    const currentBeatDur = beatDuration.current;
+    const beatsPerMeasure = gameSettings.timeSignature.beats;
+
+    // Calculate expected tap positions within the measure (in beats, not seconds)
+    const expectedBeatPositions = [];
+    pattern.forEach((beat, index) => {
+      if (beat === 1) {
+        const beatPosition = index / 4; // Convert sixteenth note index to beat position
+        expectedBeatPositions.push(beatPosition);
+      }
+    });
 
     let perfectCount = 0,
       goodCount = 0,
@@ -555,16 +681,47 @@ export function MetronomeTrainer() {
     let combo = 0,
       maxCombo = 0;
 
-    // Analyze each expected tap
-    relativeExpectedTaps.forEach((expectedTime) => {
-      const nearestUserTap = findNearestUserTap(expectedTime, relativeUserTaps);
-      const accuracy = calculateTapAccuracy(
-        nearestUserTap?.time || 0,
-        expectedTime
-      );
+    // Evaluate each expected tap using the same logic as immediate feedback
+    expectedBeatPositions.forEach((expectedBeatPos) => {
+      // Find the user tap that best matches this expected beat position
+      let bestAccuracy = "MISS";
+      let bestUserTap = null;
+
+      currentUserTaps.forEach((userTap) => {
+        // Convert user tap relative time to beat position within the measure
+        const userBeatPos =
+          (userTap.relativeTime / currentBeatDur) % beatsPerMeasure;
+
+        // Calculate timing error between expected and user beat positions
+        let timingError = Math.abs(userBeatPos - expectedBeatPos);
+
+        // Handle wrap-around (e.g., user tapped at beat 0.9, expected at beat 0.1)
+        if (timingError > beatsPerMeasure / 2) {
+          timingError = beatsPerMeasure - timingError;
+        }
+
+        // Convert beat timing error to seconds for accuracy calculation
+        const timingErrorSeconds = timingError * currentBeatDur;
+
+        // Use the same accuracy calculation as immediate feedback
+        const thresholds = calculateTimingThresholds(gameSettings.tempo);
+        const timingErrorMs = timingErrorSeconds * 1000;
+
+        let accuracy = "MISS";
+        if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
+        else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";
+        else if (timingErrorMs <= thresholds.FAIR) accuracy = "FAIR";
+
+        // Keep the best accuracy for this expected tap
+        const accuracyRank = { PERFECT: 4, GOOD: 3, FAIR: 2, MISS: 1 };
+        if (accuracyRank[accuracy] > accuracyRank[bestAccuracy]) {
+          bestAccuracy = accuracy;
+          bestUserTap = userTap;
+        }
+      });
 
       // Update counts
-      switch (accuracy) {
+      switch (bestAccuracy) {
         case "PERFECT":
           perfectCount++;
           combo++;
@@ -586,7 +743,7 @@ export function MetronomeTrainer() {
       maxCombo = Math.max(maxCombo, combo);
 
       // Calculate score with combo multiplier
-      let points = SCORING[accuracy];
+      let points = SCORING[bestAccuracy];
       if (combo >= 3) {
         points *= SCORING.COMBO_MULTIPLIER;
       }
@@ -605,48 +762,276 @@ export function MetronomeTrainer() {
       maxCombo: Math.max(prev.maxCombo, maxCombo),
     }));
 
-    // Play feedback sound
-    const accuracy =
-      perfectCount + goodCount >= relativeExpectedTaps.length * 0.7;
-    if (accuracy) {
+    // Calculate exercise score as percentage
+    const totalAccurateTaps = perfectCount + goodCount + fairCount;
+    const totalExpectedTaps = expectedBeatPositions.length;
+    const exerciseAccuracy =
+      totalExpectedTaps > 0 ? (totalAccurateTaps / totalExpectedTaps) * 100 : 0;
+
+    // Update exercise progress
+    const newExerciseNumber = exerciseProgress.currentExercise + 1;
+    const newExerciseScores = [
+      ...exerciseProgress.exerciseScores,
+      Math.round(exerciseAccuracy),
+    ];
+
+    setExerciseProgress((prev) => ({
+      ...prev,
+      currentExercise: newExerciseNumber,
+      exerciseScores: newExerciseScores,
+      isGameComplete: newExerciseNumber >= prev.totalExercises,
+    }));
+
+    // Check if this is the last exercise
+    if (newExerciseNumber >= exerciseProgress.totalExercises) {
+      // Calculate final score percentage
+      const finalScorePercentage =
+        newExerciseScores.reduce((sum, score) => sum + score, 0) /
+        newExerciseScores.length;
+
+      console.log(
+        `[GAME COMPLETE] Final score: ${finalScorePercentage.toFixed(1)}% - Playing CORRECT sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
+      );
+
+      // Use correct.mp3 for successful session completion
+      playCorrectSound();
+
+      // Show final results after a delay
+      setTimeout(() => {
+        setGamePhase(GAME_PHASES.SESSION_COMPLETE);
+      }, 2000);
+
+      return;
+    }
+
+    // For individual exercises, play victory or wrong sound based on accuracy
+    const exercisePassed = exerciseAccuracy >= 50; // 50% threshold
+    if (exercisePassed) {
+      console.log(
+        `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - Playing VICTORY sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
+      );
       playVictorySound();
     } else {
+      console.log(
+        `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - Playing WRONG sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
+      );
       playWrongSound();
     }
+
+    // Stay in FEEDBACK phase - user must click "Next Pattern" button to continue
   }, [
-    expectedTaps,
-    userTaps,
+    patternInfoRef,
+    userTapsRef,
+    beatDuration,
+    gameSettings,
+    exerciseProgress.currentExercise,
+    exerciseProgress.exerciseScores,
+    exerciseProgress.totalExercises,
     playVictorySound,
     playWrongSound,
-    calculateTapAccuracy,
-    stopContinuousMetronome,
+    playCorrectSound,
+    audioEngine,
   ]);
 
   /**
-   * Find nearest user tap to expected time
+   * Handle user tap input
    */
-  const findNearestUserTap = useCallback((expectedTime, userTapTimes) => {
-    if (userTapTimes.length === 0) return null;
+  const handleTap = useCallback(() => {
+    // Ignore taps during get ready phase
+    if (gamePhase === GAME_PHASES.GET_READY) return;
+    if (gamePhase !== GAME_PHASES.USER_PERFORMANCE) return;
 
-    let nearest = userTapTimes[0];
-    let minDiff = Math.abs(expectedTime - nearest);
+    const tapTime = audioEngine.getCurrentTime();
 
-    userTapTimes.forEach((tapTime) => {
-      const diff = Math.abs(expectedTime - tapTime);
-      if (diff < minDiff) {
-        minDiff = diff;
-        nearest = tapTime;
+    // If this is the first tap, start the timed response phase
+    if (!hasUserStartedTapping) {
+      // Calculate which beat 1 the user actually tapped on
+      const currentTime = audioEngine.getCurrentTime();
+      const timeSinceMetronomeStart =
+        currentTime - metronomeStartTimeRef.current;
+      const beatDur = beatDuration.current;
+      const beatsPerMeasure = gameSettings.timeSignature.beats;
+      const totalBeatsFloat = timeSinceMetronomeStart / beatDur;
+
+      // Find the nearest beat 1 (downbeat) - look both forward and backward
+      const currentMeasureFloat = totalBeatsFloat / beatsPerMeasure;
+      const prevMeasure = Math.floor(currentMeasureFloat);
+      const nextMeasure = Math.ceil(currentMeasureFloat);
+
+      const prevBeat1Time =
+        metronomeStartTimeRef.current + prevMeasure * beatsPerMeasure * beatDur;
+      const nextBeat1Time =
+        metronomeStartTimeRef.current + nextMeasure * beatsPerMeasure * beatDur;
+
+      // Choose the closest beat 1
+      const prevError = Math.abs(currentTime - prevBeat1Time);
+      const nextError = Math.abs(currentTime - nextBeat1Time);
+
+      const nearestBeat1Time =
+        prevError < nextError ? prevBeat1Time : nextBeat1Time;
+      const nearestMeasure = prevError < nextError ? prevMeasure : nextMeasure;
+      const timingError = Math.min(prevError, nextError);
+
+      // Very generous tolerance - allow up to 1.2 beats worth of error
+      // This gives users plenty of room to sync with the metronome
+      const maxAllowedError = beatDur * 1.2; // 120% of a beat duration
+
+      if (timingError > maxAllowedError) {
+        // Don't start the performance yet, let them try again
+        return;
       }
-    });
 
-    return { time: nearest, difference: minDiff };
-  }, []);
+      // Now we can mark that the user has started tapping
+      setHasUserStartedTapping(true);
+
+      const actualBeat1Time = nearestBeat1Time;
+
+      // Update the user performance start time to the actual beat 1 they tapped on
+      userPerformanceStartTime.current = actualBeat1Time;
+
+      // Recalculate expected taps relative to the new start time
+      if (patternInfoRef.current) {
+        const { pattern } = patternInfoRef.current;
+        const currentBeatDur = beatDuration.current; // Use current beat duration, not stored one
+        const expectedTimes = [];
+
+        pattern.forEach((beat, index) => {
+          if (beat === 1) {
+            const relativeTime = (index * currentBeatDur) / 4; // Convert to sixteenth note timing
+            const absoluteTapTime = actualBeat1Time + relativeTime;
+            expectedTimes.push(absoluteTapTime);
+          }
+        });
+
+        setExpectedTaps(expectedTimes);
+      }
+
+      // Wait for the full measure to complete before evaluation
+      // This ensures victory sound plays at the end of the measure, not immediately after last tap
+      const measureDuration = beatsPerMeasure * beatDur;
+      const measureEndTime = actualBeat1Time + measureDuration;
+      const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
+
+      console.log(
+        `[METRONOME] Scheduling metronome stop at measure end: ${measureEndTime.toFixed(3)}s (in ${delayToMeasureEnd.toFixed(0)}ms)`
+      );
+      console.log(
+        `[METRONOME] Scheduling victory sound evaluation: ${(measureEndTime + 0.2).toFixed(3)}s (in ${(delayToMeasureEnd + 200).toFixed(0)}ms)`
+      );
+
+      // Stop metronome exactly at the end of the measure (beat 4)
+      setTimeout(
+        () => {
+          console.log(
+            `[METRONOME] STOPPING metronome NOW at ${audioEngine.getCurrentTime().toFixed(3)}s`
+          );
+          stopContinuousMetronome();
+          console.log(
+            `[METRONOME] Metronome STOPPED at ${audioEngine.getCurrentTime().toFixed(3)}s`
+          );
+        },
+        Math.max(0, delayToMeasureEnd) // Stop exactly at measure end
+      );
+
+      // Evaluate and play victory sound slightly after metronome stops
+      const evaluationDelay = delayToMeasureEnd + 200; // 200ms after measure end
+      setTimeout(
+        () => {
+          console.log(
+            `[METRONOME] Starting victory sound evaluation at ${audioEngine.getCurrentTime().toFixed(3)}s`
+          );
+          evaluatePerformance();
+        },
+        Math.max(200, evaluationDelay) // Small pause after metronome stops
+      );
+    }
+
+    const relativeTime = tapTime - userPerformanceStartTime.current;
+    const tapData = { time: tapTime, relativeTime };
+
+    // Store in both state (for UI) and ref (for real-time evaluation)
+    setUserTaps((prev) => [...prev, tapData]);
+    userTapsRef.current = [...userTapsRef.current, tapData];
+
+    // Tap analysis for accuracy calculation
+
+    // Provide immediate feedback using the same logic as final evaluation
+    let accuracy = "MISS";
+
+    if (patternInfoRef.current) {
+      const { pattern } = patternInfoRef.current;
+      const currentBeatDur = beatDuration.current;
+      const beatsPerMeasure = gameSettings.timeSignature.beats;
+
+      // Convert user tap to beat position
+      const userBeatPos = (relativeTime / currentBeatDur) % beatsPerMeasure;
+
+      // Find expected beat positions
+      const expectedBeatPositions = [];
+      pattern.forEach((beat, index) => {
+        if (beat === 1) {
+          const beatPosition = index / 4;
+          expectedBeatPositions.push(beatPosition);
+        }
+      });
+
+      // Find best matching expected beat position
+      let bestTimingError = Infinity;
+      expectedBeatPositions.forEach((expectedBeatPos) => {
+        let timingError = Math.abs(userBeatPos - expectedBeatPos);
+
+        // Handle wrap-around
+        if (timingError > beatsPerMeasure / 2) {
+          timingError = beatsPerMeasure - timingError;
+        }
+
+        if (timingError < bestTimingError) {
+          bestTimingError = timingError;
+        }
+      });
+
+      // Convert to seconds and calculate accuracy
+      if (bestTimingError < Infinity) {
+        const timingErrorSeconds = bestTimingError * currentBeatDur;
+        const timingErrorMs = timingErrorSeconds * 1000;
+        const thresholds = calculateTimingThresholds(gameSettings.tempo);
+
+        if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
+        else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";
+        else if (timingErrorMs <= thresholds.FAIR) accuracy = "FAIR";
+      }
+    }
+
+    // Immediate feedback provided to user
+
+    setFeedback({ accuracy, points: SCORING[accuracy] });
+
+    // Play feedback sound for individual tap - use drum-stick sound for all taps
+    playDrumStickSound();
+
+    // Clear feedback after short delay
+    setTimeout(() => setFeedback(null), 1000);
+  }, [
+    gamePhase,
+    audioEngine,
+    playDrumStickSound,
+    hasUserStartedTapping,
+    beatDuration,
+    gameSettings,
+    stopContinuousMetronome,
+    evaluatePerformance,
+  ]);
 
   /**
    * Start next pattern
    */
   const nextPattern = useCallback(async () => {
     try {
+      // Check if game is complete before loading next pattern
+      if (exerciseProgress.isGameComplete) {
+        return;
+      }
+
       // Stop any existing metronome
       stopContinuousMetronome();
 
@@ -667,6 +1052,7 @@ export function MetronomeTrainer() {
       setExpectedTaps([]);
       setFeedback(null);
       setHasUserStartedTapping(false);
+      userTapsRef.current = []; // Clear user taps ref
 
       setGamePhase(GAME_PHASES.COUNT_IN);
 
@@ -679,10 +1065,12 @@ export function MetronomeTrainer() {
       setGamePhase(GAME_PHASES.SETUP);
     }
   }, [
+    exerciseProgress.isGameComplete,
     gameSettings,
     stopContinuousMetronome,
     startContinuousMetronome,
     audioEngine,
+    startCountInWithPattern,
   ]);
 
   /**
@@ -697,6 +1085,7 @@ export function MetronomeTrainer() {
     setExpectedTaps([]);
     setFeedback(null);
     setHasUserStartedTapping(false);
+    userTapsRef.current = []; // Clear user taps ref
     setSessionStats({
       patternsCompleted: 0,
       totalScore: 0,
@@ -706,6 +1095,12 @@ export function MetronomeTrainer() {
       missedTaps: 0,
       comboCount: 0,
       maxCombo: 0,
+    });
+    setExerciseProgress({
+      currentExercise: 0,
+      totalExercises: 10,
+      exerciseScores: [],
+      isGameComplete: false,
     });
   }, [stopContinuousMetronome]);
 
@@ -721,7 +1116,11 @@ export function MetronomeTrainer() {
     return (
       <PreGameSettingsScreen
         settings={gameSettings}
-        onUpdateSettings={setGameSettings}
+        onUpdateSettings={(newSettings) => {
+          console.log(`[SETTINGS] Updating settings:`, newSettings);
+          console.log(`[SETTINGS] Time signature:`, newSettings.timeSignature);
+          setGameSettings(newSettings);
+        }}
         onStart={startGame}
         title="Metronome Rhythm Trainer"
         subtitle="Listen to rhythm patterns and tap them back with precise timing"
@@ -731,14 +1130,12 @@ export function MetronomeTrainer() {
 
   // Show session complete screen
   if (gamePhase === GAME_PHASES.SESSION_COMPLETE) {
-    const accuracy =
-      sessionStats.patternsCompleted > 0
-        ? ((sessionStats.perfectTaps + sessionStats.goodTaps) /
-            (sessionStats.perfectTaps +
-              sessionStats.goodTaps +
-              sessionStats.fairTaps +
-              sessionStats.missedTaps)) *
-          100
+    const finalScorePercentage =
+      exerciseProgress.exerciseScores.length > 0
+        ? exerciseProgress.exerciseScores.reduce(
+            (sum, score) => sum + score,
+            0
+          ) / exerciseProgress.exerciseScores.length
         : 0;
 
     return (
@@ -758,53 +1155,68 @@ export function MetronomeTrainer() {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-400">
-                  {sessionStats.patternsCompleted}
+                  {exerciseProgress.exerciseScores.length}
                 </div>
-                <div className="text-sm text-gray-300">Patterns Completed</div>
+                <div className="text-sm text-gray-300">Exercises Completed</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-green-400">
-                  {sessionStats.totalScore}
+                  {Math.round(finalScorePercentage)}%
                 </div>
-                <div className="text-sm text-gray-300">Total Score</div>
+                <div className="text-sm text-gray-300">Final Score</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-yellow-400">
-                  {Math.round(accuracy)}%
+                  {
+                    exerciseProgress.exerciseScores.filter(
+                      (score) => score >= 80
+                    ).length
+                  }
                 </div>
-                <div className="text-sm text-gray-300">Accuracy</div>
+                <div className="text-sm text-gray-300">Excellent (80%+)</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-400">
-                  {sessionStats.maxCombo}
+                  {
+                    exerciseProgress.exerciseScores.filter(
+                      (score) => score >= 50
+                    ).length
+                  }
                 </div>
-                <div className="text-sm text-gray-300">Max Combo</div>
+                <div className="text-sm text-gray-300">Passed (50%+)</div>
               </div>
             </div>
 
             {/* Detailed Breakdown */}
             <div className="bg-white/5 rounded-lg p-4">
               <h3 className="text-lg font-semibold text-white mb-3">
-                Tap Accuracy Breakdown
+                Individual Exercise Scores
               </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-green-400">Perfect Taps:</span>
-                  <span className="text-white">{sessionStats.perfectTaps}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-yellow-400">Good Taps:</span>
-                  <span className="text-white">{sessionStats.goodTaps}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-orange-400">Fair Taps:</span>
-                  <span className="text-white">{sessionStats.fairTaps}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-red-400">Missed Taps:</span>
-                  <span className="text-white">{sessionStats.missedTaps}</span>
-                </div>
+              <div className="grid grid-cols-5 gap-2">
+                {exerciseProgress.exerciseScores.map((score, index) => (
+                  <div key={index} className="text-center">
+                    <div
+                      className={`text-lg font-bold ${
+                        score >= 80
+                          ? "text-green-400"
+                          : score >= 50
+                            ? "text-yellow-400"
+                            : "text-red-400"
+                      }`}
+                    >
+                      {score}%
+                    </div>
+                    <div className="text-xs text-gray-300">Ex {index + 1}</div>
+                  </div>
+                ))}
               </div>
+              {exerciseProgress.exerciseScores.length > 0 && (
+                <div className="mt-4 text-center text-sm text-gray-300">
+                  Average: {Math.round(finalScorePercentage)}% | Best:{" "}
+                  {Math.max(...exerciseProgress.exerciseScores)}% | Worst:{" "}
+                  {Math.min(...exerciseProgress.exerciseScores)}%
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -812,17 +1224,17 @@ export function MetronomeTrainer() {
               <Button
                 onClick={resetGame}
                 variant="outline"
+                icon={RotateCcw}
                 className="px-6 py-3"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
                 Play Again
               </Button>
               <Button
                 onClick={() => navigate("/practice-modes")}
                 variant="primary"
+                icon={Home}
                 className="px-6 py-3"
               >
-                <Home className="w-4 h-4 mr-2" />
                 Home
               </Button>
             </div>
@@ -868,10 +1280,18 @@ export function MetronomeTrainer() {
               {gamePhase === GAME_PHASES.USER_PERFORMANCE &&
                 (hasUserStartedTapping
                   ? "Keep tapping the pattern!"
-                  : "Start tapping on beat 1")}
+                  : "Listen for the strong beat - tap to start!")}
               {gamePhase === GAME_PHASES.FEEDBACK && "How did you do?"}
             </span>
           </div>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="w-full max-w-3xl mx-auto px-6 mb-4">
+          <ProgressBar
+            current={exerciseProgress.currentExercise}
+            total={exerciseProgress.totalExercises}
+          />
         </div>
 
         {/* Metronome Display */}
@@ -897,7 +1317,7 @@ export function MetronomeTrainer() {
                     : gamePhase === GAME_PHASES.USER_PERFORMANCE
                       ? hasUserStartedTapping
                         ? "Continue tapping with the metronome"
-                        : "Now tap the pattern starting on beat 1"
+                        : "Listen for the strong downbeat, then tap to start"
                       : "Listen to the steady beat"
             }
           />
@@ -963,24 +1383,25 @@ export function MetronomeTrainer() {
         </div>
 
         {/* Game Controls */}
-        {gamePhase === GAME_PHASES.FEEDBACK && (
-          <div className="flex justify-center gap-4">
-            <Button
-              onClick={nextPattern}
-              variant="primary"
-              className="px-8 py-3"
-            >
-              Next Pattern
-            </Button>
-            <Button
-              onClick={endSession}
-              variant="outline"
-              className="px-8 py-3"
-            >
-              End Session
-            </Button>
-          </div>
-        )}
+        {gamePhase === GAME_PHASES.FEEDBACK &&
+          !exerciseProgress.isGameComplete && (
+            <div className="flex justify-center gap-4">
+              <Button
+                onClick={nextPattern}
+                variant="primary"
+                className="px-8 py-3"
+              >
+                Next Pattern
+              </Button>
+              <Button
+                onClick={endSession}
+                variant="outline"
+                className="px-8 py-3"
+              >
+                End Session
+              </Button>
+            </div>
+          )}
       </div>
     </div>
   );

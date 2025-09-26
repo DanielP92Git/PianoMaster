@@ -10,6 +10,7 @@ export function useSounds() {
   const wrongSound = useRef(null);
   const victorySound = useRef(null);
   const gameOverSound = useRef(null);
+  const drumStickSound = useRef(null);
 
   // Initialize sounds on component mount
   useEffect(() => {
@@ -51,6 +52,18 @@ export function useSounds() {
         "game-over.wav",
       ];
 
+      const possibleDrumStickPaths = [
+        "/sounds/drum-stick.mp3",
+        "./sounds/drum-stick.mp3",
+        "../sounds/drum-stick.mp3",
+        "../../sounds/drum-stick.mp3",
+        "/assets/sounds/drum-stick.mp3",
+        "drum-stick.mp3",
+        "/src/assets/sounds/drum-stick.mp3",
+        "./src/assets/sounds/drum-stick.mp3",
+        "src/assets/sounds/drum-stick.mp3",
+      ];
+
       // Load each sound by trying different paths
       const loadSound = (pathsArray, ref) => {
         for (const path of pathsArray) {
@@ -71,13 +84,20 @@ export function useSounds() {
       loadSound(possibleWrongPaths, wrongSound);
       loadSound(possibleVictoryPaths, victorySound);
       loadSound(possibleGameOverPaths, gameOverSound);
+      loadSound(possibleDrumStickPaths, drumStickSound);
     } catch (error) {
       console.error("Error initializing sounds:", error);
     }
 
     // Cleanup function
     return () => {
-      [correctSound, wrongSound, victorySound, gameOverSound].forEach((ref) => {
+      [
+        correctSound,
+        wrongSound,
+        victorySound,
+        gameOverSound,
+        drumStickSound,
+      ].forEach((ref) => {
         if (ref.current) {
           try {
             ref.current.pause();
@@ -95,12 +115,14 @@ export function useSounds() {
     try {
       if (correctSound.current) {
         // Stop other sounds safely
-        [wrongSound, victorySound, gameOverSound].forEach((ref) => {
-          if (ref.current) {
-            ref.current.pause();
-            ref.current.currentTime = 0;
+        [wrongSound, victorySound, gameOverSound, drumStickSound].forEach(
+          (ref) => {
+            if (ref.current) {
+              ref.current.pause();
+              ref.current.currentTime = 0;
+            }
           }
-        });
+        );
 
         // Play correct sound with promise handling
         correctSound.current.currentTime = 0;
@@ -118,12 +140,14 @@ export function useSounds() {
     try {
       if (wrongSound.current) {
         // Stop other sounds safely
-        [correctSound, victorySound, gameOverSound].forEach((ref) => {
-          if (ref.current) {
-            ref.current.pause();
-            ref.current.currentTime = 0;
+        [correctSound, victorySound, gameOverSound, drumStickSound].forEach(
+          (ref) => {
+            if (ref.current) {
+              ref.current.pause();
+              ref.current.currentTime = 0;
+            }
           }
-        });
+        );
 
         // Play wrong sound with promise handling
         wrongSound.current.currentTime = 0;
@@ -141,12 +165,14 @@ export function useSounds() {
     try {
       if (victorySound.current) {
         // Stop other sounds safely
-        [correctSound, wrongSound, gameOverSound].forEach((ref) => {
-          if (ref.current) {
-            ref.current.pause();
-            ref.current.currentTime = 0;
+        [correctSound, wrongSound, gameOverSound, drumStickSound].forEach(
+          (ref) => {
+            if (ref.current) {
+              ref.current.pause();
+              ref.current.currentTime = 0;
+            }
           }
-        });
+        );
 
         // Play victory sound with promise handling
         victorySound.current.currentTime = 0;
@@ -164,12 +190,14 @@ export function useSounds() {
     try {
       if (gameOverSound.current) {
         // Stop other sounds safely
-        [correctSound, wrongSound, victorySound].forEach((ref) => {
-          if (ref.current) {
-            ref.current.pause();
-            ref.current.currentTime = 0;
+        [correctSound, wrongSound, victorySound, drumStickSound].forEach(
+          (ref) => {
+            if (ref.current) {
+              ref.current.pause();
+              ref.current.currentTime = 0;
+            }
           }
-        });
+        );
 
         // Play game over sound with promise handling
         gameOverSound.current.currentTime = 0;
@@ -182,6 +210,31 @@ export function useSounds() {
     }
   };
 
+  // Play drum stick sound
+  const playDrumStickSound = async () => {
+    try {
+      if (drumStickSound.current) {
+        // Stop other sounds safely
+        [correctSound, wrongSound, victorySound, gameOverSound].forEach(
+          (ref) => {
+            if (ref.current) {
+              ref.current.pause();
+              ref.current.currentTime = 0;
+            }
+          }
+        );
+
+        // Play drum stick sound with promise handling
+        drumStickSound.current.currentTime = 0;
+        await drumStickSound.current.play().catch((error) => {
+          console.warn("Could not play drum stick sound:", error);
+        });
+      }
+    } catch (error) {
+      console.error("Error playing drum stick sound:", error);
+    }
+  };
+
   // Return the audio refs and play functions
   return {
     soundRefs: {
@@ -189,10 +242,12 @@ export function useSounds() {
       wrongSound,
       victorySound,
       gameOverSound,
+      drumStickSound,
     },
     playCorrectSound,
     playWrongSound,
     playVictorySound,
     playGameOverSound,
+    playDrumStickSound,
   };
 }

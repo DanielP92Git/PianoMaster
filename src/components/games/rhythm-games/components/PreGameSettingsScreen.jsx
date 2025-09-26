@@ -50,7 +50,8 @@ export function PreGameSettingsScreen({
 
   const handleStart = () => {
     onUpdateSettings(localSettings);
-    onStart();
+    // Pass the updated settings directly to avoid stale state
+    onStart(localSettings);
   };
 
   const difficulties = getAvailableDifficulties();

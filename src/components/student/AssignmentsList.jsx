@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getStudentAssignments } from "../../services/apiStudent";
 import {
   FaCalendarAlt as CalendarIcon,
@@ -10,6 +11,7 @@ import {
 const AssignmentsList = () => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -165,7 +167,10 @@ const AssignmentsList = () => {
 
       {assignments.length > 5 && (
         <div className="mt-4 pt-4 border-t border-gray-200">
-          <button className="w-full text-sm text-blue-400 hover:text-blue-300 transition-colors">
+          <button
+            onClick={() => navigate("/assignments")}
+            className="w-full text-sm text-blue-400 hover:text-blue-300 transition-colors"
+          >
             View all {assignments.length} assignments
           </button>
         </div>

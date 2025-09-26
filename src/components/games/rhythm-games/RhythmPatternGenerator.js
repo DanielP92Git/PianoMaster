@@ -677,6 +677,10 @@ export async function getPattern(
   difficulty,
   preferCurated = true
 ) {
+  console.log(
+    `[PATTERN LOADING] Requesting pattern for: ${timeSignature}, difficulty: ${difficulty}`
+  );
+
   const generator = createPatternGenerator();
   const timeSignatureObj =
     TIME_SIGNATURES[
@@ -689,16 +693,24 @@ export async function getPattern(
     throw new Error(`Unsupported time signature: ${timeSignature}`);
   }
 
+  console.log(`[PATTERN LOADING] Time signature object:`, timeSignatureObj);
+
   let result = null;
 
   // Try curated pattern first if preferred
   if (preferCurated) {
+    console.log(`[PATTERN LOADING] Trying to load curated pattern...`);
     result = await generator.getCuratedPattern(timeSignature, difficulty);
+    console.log(`[PATTERN LOADING] Curated pattern result:`, result);
   }
 
   // Fallback to generated pattern
   if (!result) {
+    console.log(
+      `[PATTERN LOADING] Curated pattern failed, generating pattern...`
+    );
     result = generator.generatePattern(timeSignatureObj, difficulty);
+    console.log(`[PATTERN LOADING] Generated pattern result:`, result);
   }
 
   // Convert legacy fractional patterns to binary if needed
@@ -719,12 +731,26 @@ export async function getPattern(
     !generator.validateBinaryPattern(result.pattern, timeSignatureObj)
   ) {
     console.warn("Invalid pattern generated, falling back to simple pattern");
+    console.log(
+      `[PATTERN LOADING] Pattern validation failed for:`,
+      result.pattern
+    );
+    console.log(`[PATTERN LOADING] Expected time signature:`, timeSignatureObj);
+
+    // Create appropriate fallback pattern for the time signature
+    const fallbackPattern = new Array(timeSignatureObj.measureLength).fill(0);
+    // Add quarter note beats
+    for (let i = 0; i < timeSignatureObj.beats; i++) {
+      fallbackPattern[i * 4] = 1; // Quarter note on each beat
+    }
+
     result = {
-      pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // Simple quarter notes
+      pattern: fallbackPattern,
       source: "fallback",
       timeSignature: timeSignatureObj.name,
       difficulty,
     };
+    console.log(`[PATTERN LOADING] Created fallback pattern:`, result.pattern);
   }
 
   return result;

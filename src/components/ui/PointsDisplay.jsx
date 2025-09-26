@@ -1,14 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {
-  Star,
-  TrendingUp,
-  Trophy,
-  Target,
-  Zap,
-  Award,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { Star, TrendingUp, Trophy, Target, Zap, Award } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentScores } from "../../services/apiDatabase";
 import { useUser } from "../../features/authentication/useUser";
@@ -123,54 +114,6 @@ const getPointsVisuals = (points) => {
   }
 };
 
-// Calculate points breakdown by game type
-const calculatePointsBreakdown = (scores) => {
-  if (!scores || !Array.isArray(scores)) return [];
-
-  const breakdown = {};
-  let totalEarned = 0;
-
-  scores.forEach((score) => {
-    const gameType = score.game_type || "other";
-    const points = score.score || 0;
-
-    if (!breakdown[gameType]) {
-      breakdown[gameType] = {
-        name:
-          gameType === "note-recognition"
-            ? "Note Recognition"
-            : gameType === "rhythm-master"
-              ? "Rhythm Master"
-              : gameType === "sight-reading"
-                ? "Sight Reading"
-                : "Other Games",
-        points: 0,
-        sessions: 0,
-        icon:
-          gameType === "note-recognition"
-            ? "🎵"
-            : gameType === "rhythm-master"
-              ? "🥁"
-              : gameType === "sight-reading"
-                ? "📖"
-                : "🎮",
-      };
-    }
-
-    breakdown[gameType].points += points;
-    breakdown[gameType].sessions += 1;
-    totalEarned += points;
-  });
-
-  // Convert to array and calculate percentages
-  return Object.values(breakdown)
-    .map((item) => ({
-      ...item,
-      percentage: totalEarned > 0 ? (item.points / totalEarned) * 100 : 0,
-    }))
-    .sort((a, b) => b.points - a.points);
-};
-
 // Recent points trend (last 7 sessions)
 const calculateRecentTrend = (scores) => {
   if (!scores || !Array.isArray(scores) || scores.length === 0) return 0;
@@ -191,7 +134,6 @@ const calculateRecentTrend = (scores) => {
 
 const PointsDisplay = ({ variant = "default", className = "" }) => {
   const { user } = useUser();
-  const [showBreakdown, setShowBreakdown] = useState(false);
   const previousPoints = useRef();
 
   // Fetch user scores and total (only for students)
@@ -218,7 +160,6 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
   }, [totalPoints]);
 
   const visuals = getPointsVisuals(totalPoints);
-  const breakdown = calculatePointsBreakdown(scoresData);
   const trend = calculateRecentTrend(scoresData);
   const IconComponent = visuals.icon;
 
@@ -313,48 +254,6 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
                   className={`h-1 rounded-full bg-gradient-to-r ${visuals.bgGradient} transition-all duration-1000`}
                   style={{ width: `${Math.min(progressToNext, 100)}%` }}
                 />
-              </div>
-            </div>
-          )}
-
-          {/* Expandable breakdown */}
-          {breakdown.length > 0 && (
-            <button
-              onClick={() => setShowBreakdown(!showBreakdown)}
-              className="flex items-center gap-1 mt-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              View Breakdown
-              {showBreakdown ? (
-                <ChevronUp className="w-3 h-3" />
-              ) : (
-                <ChevronDown className="w-3 h-3" />
-              )}
-            </button>
-          )}
-
-          {/* Points breakdown */}
-          {showBreakdown && breakdown.length > 0 && (
-            <div className="w-full mt-1 pt-1 border-t border-gray-200">
-              <div className="space-y-1">
-                {breakdown.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between text-xs"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span>{item.icon}</span>
-                      <span className="text-gray-600">{item.name}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-900 font-medium">
-                        {item.points}
-                      </span>
-                      <span className="text-gray-500">
-                        ({item.sessions} sessions)
-                      </span>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           )}
