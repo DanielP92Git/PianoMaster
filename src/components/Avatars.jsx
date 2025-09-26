@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getAvatar } from "../services/apiAvatars";
-import { Check, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import BackButton from "./ui/BackButton";
 import { useUser } from "../features/authentication/useUser";
@@ -8,12 +8,14 @@ import { updateUserAvatar } from "../services/apiAuth";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import supabase from "../services/supabase";
+import AnimatedAvatar from "./ui/AnimatedAvatar";
 
 function Avatars() {
   const { user } = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedAvatar, setSelectedAvatar] = useState(null);
+  const [currentlyAnimatingId, setCurrentlyAnimatingId] = useState(null);
 
   const {
     isPending,
@@ -75,6 +77,41 @@ function Avatars() {
     },
   });
 
+  // Helper function to detect if an avatar is Beethoven
+  const isBeethovenAvatar = (avatar) => {
+    // Check if the avatar image URL contains 'beethoven' (case insensitive)
+    return avatar.image_url?.toLowerCase().includes("beethoven");
+  };
+
+  // Helper function to detect if an avatar is Bach
+  const isBachAvatar = (avatar) => {
+    // Check if the avatar image URL contains 'bach' (case insensitive)
+    return avatar.image_url?.toLowerCase().includes("bach");
+  };
+
+  // Get animation video URL for composer avatars
+  const getAnimationVideoUrl = (avatar) => {
+    if (isBeethovenAvatar(avatar)) {
+      return "/avatars/Beethoven_Animation_Bowing.mp4";
+    }
+    if (isBachAvatar(avatar)) {
+      return "/avatars/Bach_Animation_Generation.mp4";
+    }
+    return null;
+  };
+
+  const handleAnimationStart = (avatarId) => {
+    // Set the currently animating avatar ID to stop others
+    setCurrentlyAnimatingId(avatarId);
+  };
+
+  const handleAnimationEnd = (avatarId) => {
+    // Clear the currently animating ID when animation ends
+    if (currentlyAnimatingId === avatarId) {
+      setCurrentlyAnimatingId(null);
+    }
+  };
+
   const handleAvatarSelect = (avatar) => {
     setSelectedAvatar(avatar);
     if (user?.id) {
@@ -108,31 +145,19 @@ function Avatars() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {avatars.map((avatar) => (
-          <button
+          <AnimatedAvatar
             key={avatar.id}
-            onClick={() => handleAvatarSelect(avatar)}
-            className={`relative group aspect-square rounded-xl overflow-hidden transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${
-              selectedAvatar?.id === avatar.id
-                ? "ring-2 ring-indigo-600"
-                : "ring-1 ring-gray-200"
-            }`}
-          >
-            <img
-              src={avatar.image_url}
-              alt={`Avatar ${avatar.id}`}
-              className="w-full h-full object-cover"
-            />
-
-            {/* Hover Overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity" />
-
-            {/* Selection Indicator */}
-            {selectedAvatar?.id === avatar.id && (
-              <div className="absolute inset-0 bg-indigo-600 bg-opacity-20 flex items-center justify-center">
-                <Check className="w-8 h-8 text-white" />
-              </div>
-            )}
-          </button>
+            avatar={avatar}
+            isSelected={selectedAvatar?.id === avatar.id}
+            onClick={handleAvatarSelect}
+            animationVideoUrl={getAnimationVideoUrl(avatar)}
+            onAnimationStart={handleAnimationStart}
+            onAnimationEnd={handleAnimationEnd}
+            shouldStopAnimation={
+              currentlyAnimatingId !== null &&
+              currentlyAnimatingId !== avatar.id
+            }
+          />
         ))}
       </div>
 
