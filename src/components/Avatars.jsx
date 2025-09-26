@@ -89,6 +89,12 @@ function Avatars() {
     return avatar.image_url?.toLowerCase().includes("bach");
   };
 
+  // Helper function to detect if an avatar is Mozart
+  const isMozartAvatar = (avatar) => {
+    // Check if the avatar image URL contains 'mozart' (case insensitive)
+    return avatar.image_url?.toLowerCase().includes("mozart");
+  };
+
   // Get animation video URL for composer avatars
   const getAnimationVideoUrl = (avatar) => {
     if (isBeethovenAvatar(avatar)) {
@@ -96,6 +102,9 @@ function Avatars() {
     }
     if (isBachAvatar(avatar)) {
       return "/avatars/Bach_Animation_Generation.mp4";
+    }
+    if (isMozartAvatar(avatar)) {
+      return "/avatars/Mozart_Animation_Bowing.mp4";
     }
     return null;
   };
