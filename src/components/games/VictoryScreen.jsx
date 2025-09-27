@@ -1,7 +1,7 @@
 import React from "react";
 import { Trophy, Star, Sparkles } from "lucide-react";
-import { streakService } from "../../services/streakService";
 import { useEffect } from "react";
+import { useStreakWithAchievements } from "../../hooks/useStreakWithAchievements";
 
 const VictoryScreen = ({
   score,
@@ -13,13 +13,14 @@ const VictoryScreen = ({
 }) => {
   const scorePercentage = (score / totalPossibleScore) * 100;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
+  const updateStreakWithAchievements = useStreakWithAchievements();
 
   useEffect(() => {
-    // Update streak if score is 80% or higher
+    // Update streak and check achievements if score is 80% or higher
     if (scorePercentage >= 80) {
-      streakService.updateStreak();
+      updateStreakWithAchievements.mutate();
     }
-  }, [scorePercentage]);
+  }, [scorePercentage, updateStreakWithAchievements]);
 
   return (
     <div className="flex items-center justify-center h-screen fixed inset-0 p-4">

@@ -4,10 +4,12 @@ import BackButton from "../components/ui/BackButton";
 import { getGamesCategories } from "../services/apiGamesLibrary";
 import { useQuery } from "@tanstack/react-query";
 import StreakDisplay from "../components/streak/StreakDisplay";
-import { streakService } from "../services/streakService";
+import { useStreakWithAchievements } from "../hooks/useStreakWithAchievements";
 
 export default function PracticeModes({ practiceModesSectionRef }) {
   const navigate = useNavigate();
+  const updateStreakWithAchievements = useStreakWithAchievements();
+
   const {
     isPending,
     data: gameModes,
@@ -19,7 +21,11 @@ export default function PracticeModes({ practiceModesSectionRef }) {
 
   const handleStartMode = async (e, modeType) => {
     e.preventDefault();
-    await streakService.updateStreak();
+    try {
+      await updateStreakWithAchievements.mutateAsync();
+    } catch (error) {
+      console.error("Error updating streak:", error);
+    }
     navigate(`/${modeType}`);
   };
 

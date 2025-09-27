@@ -236,22 +236,45 @@ class AchievementService {
     }
   }
 
+  // Get practice sessions for a student
+  async getPracticeSessions(studentId) {
+    try {
+      const { data, error } = await supabase
+        .from("practice_sessions")
+        .select("*")
+        .eq("student_id", studentId)
+        .order("submitted_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching practice sessions:", error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching practice sessions:", error);
+      return [];
+    }
+  }
+
   // Check for new achievements based on user progress
   async checkForNewAchievements(studentId) {
     try {
       const newAchievements = [];
 
-      // Get user data
-      const [scores, streak, earnedAchievements] = await Promise.all([
-        getStudentScores(studentId),
-        streakService.getStreak(),
-        this.getEarnedAchievements(studentId),
-      ]);
+      // Get user data including practice sessions
+      const [scores, streak, earnedAchievements, practiceSessions] =
+        await Promise.all([
+          getStudentScores(studentId),
+          streakService.getStreak(),
+          this.getEarnedAchievements(studentId),
+          this.getPracticeSessions(studentId),
+        ]);
 
       const earnedIds = earnedAchievements.map((a) => a.achievement_id);
 
-      // Calculate user stats
-      const stats = this.calculateUserStats(scores);
+      // Calculate user stats including practice sessions
+      const stats = this.calculateUserStats(scores, practiceSessions);
       stats.streak = streak;
 
       // Check each achievement
@@ -278,20 +301,16 @@ class AchievementService {
   }
 
   // Calculate user statistics from scores
-  calculateUserStats(scores) {
+  calculateUserStats(scores, practiceSessions = []) {
     if (!scores || !Array.isArray(scores)) {
-      return {
-        sessions: 0,
-        total_points: 0,
-        correct_notes: 0,
-        perfect_games: 0,
-        practice_hours: 0,
-        avg_accuracy_10: 0,
-      };
+      scores = [];
+    }
+    if (!practiceSessions || !Array.isArray(practiceSessions)) {
+      practiceSessions = [];
     }
 
     const stats = {
-      sessions: scores.length,
+      sessions: scores.length + practiceSessions.length,
       total_points: scores.reduce((sum, score) => sum + (score.score || 0), 0),
       correct_notes: scores.reduce(
         (sum, score) => sum + (score.notes_played || 0),
@@ -404,14 +423,16 @@ class AchievementService {
   // Get achievement with progress info
   async getAchievementsWithProgress(studentId) {
     try {
-      const [scores, streak, earnedAchievements] = await Promise.all([
-        getStudentScores(studentId),
-        streakService.getStreak(),
-        this.getEarnedAchievements(studentId),
-      ]);
+      const [scores, streak, earnedAchievements, practiceSessions] =
+        await Promise.all([
+          getStudentScores(studentId),
+          streakService.getStreak(),
+          this.getEarnedAchievements(studentId),
+          this.getPracticeSessions(studentId),
+        ]);
 
       const earnedIds = earnedAchievements.map((a) => a.achievement_id);
-      const stats = this.calculateUserStats(scores);
+      const stats = this.calculateUserStats(scores, practiceSessions);
       stats.streak = streak;
 
       return Object.values(this.achievements).map((achievement) => ({

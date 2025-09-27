@@ -33,7 +33,7 @@ export default function Header({ onMenuClick }) {
   });
 
   return (
-    <nav className="shadow-lg">
+    <nav className="shadow-lg lg:ml-72">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4">
@@ -54,7 +54,11 @@ export default function Header({ onMenuClick }) {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="p-2 rounded-lg lg:hidden" onClick={onMenuClick}>
+            <button
+              className="p-2 rounded-lg lg:hidden hover:bg-white/10 transition-colors"
+              onClick={onMenuClick}
+              aria-label="Toggle menu"
+            >
               <Menu className="h-6 w-6 text-white hover:text-gray-200" />
             </button>
           </div>

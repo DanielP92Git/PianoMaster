@@ -17,6 +17,7 @@ import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
 import { Send, Loader2, Mic } from "lucide-react";
+import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, userRole, profile } = useUser();
@@ -163,8 +164,8 @@ function Dashboard() {
       const [recordingBlob, setRecordingBlob] = useState(null);
       const [recordingDuration, setRecordingDuration] = useState(0);
       const [notes, setNotes] = useState("");
-      const [isUploading, setIsUploading] = useState(false);
       const [uploadProgress, setUploadProgress] = useState(null);
+      const uploadPracticeSession = usePracticeSessionWithAchievements();
 
       const handleRecordingComplete = (blob, duration) => {
         setRecordingBlob(blob);
@@ -190,16 +191,14 @@ function Dashboard() {
       const handleSubmit = async () => {
         if (!recordingBlob) return;
 
-        setIsUploading(true);
         try {
           setUploadProgress({ phase: "preparing", percentage: 0 });
 
-          const session = await practiceService.uploadPracticeSession(
+          const result = await uploadPracticeSession.mutateAsync({
             recordingBlob,
-            user.id,
             notes,
             recordingDuration,
-            {
+            options: {
               compressionQuality: "MEDIUM",
               maxRetries: 3,
               onProgress: (progress) => {
@@ -210,20 +209,16 @@ function Dashboard() {
                   `Upload failed, retrying... (${retryInfo.attempt}/3)`
                 );
               },
-            }
-          );
+            },
+          });
 
-          toast.success("Practice session submitted successfully!");
-
-          if (session?.id) {
-            addNewRecording(session.id);
+          if (result?.session?.id) {
+            addNewRecording(result.session.id);
           }
 
           closeModal();
         } catch (error) {
-          toast.error("Failed to upload recording");
-        } finally {
-          setIsUploading(false);
+          // Error handling is done in the hook
         }
       };
 
@@ -286,10 +281,10 @@ function Dashboard() {
                 <div className="flex gap-4">
                   <button
                     onClick={handleSubmit}
-                    disabled={isUploading}
+                    disabled={uploadPracticeSession.isPending}
                     className="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   >
-                    {isUploading ? (
+                    {uploadPracticeSession.isPending ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
                         {uploadProgress?.phase === "preparing" &&
@@ -309,7 +304,7 @@ function Dashboard() {
                   </button>
                   <button
                     onClick={handleRecordingCancel}
-                    disabled={isUploading}
+                    disabled={uploadPracticeSession.isPending}
                     className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   >
                     <X className="w-5 h-5" />

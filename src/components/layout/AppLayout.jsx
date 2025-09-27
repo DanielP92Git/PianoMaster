@@ -35,7 +35,7 @@ export default function AppLayout() {
           onToggle={toggleSidebar}
         />
       )}
-      <main className={`${!isGameRoute ? "pt-2 md:pl-64" : ""}`}>
+      <main className={`${!isGameRoute ? "pt-2 lg:pl-72" : ""}`}>
         <Outlet />
       </main>
     </div>

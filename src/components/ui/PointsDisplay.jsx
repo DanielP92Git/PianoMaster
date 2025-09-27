@@ -226,7 +226,7 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
                 <TrendingUp
                   className={`w-3 h-3 ${trend < 0 ? "rotate-180" : ""}`}
                 />
-                {Math.abs(trend).toFixed(1)}%
+                {Math.round(Math.abs(trend))}%
               </div>
             </div>
           )}
@@ -285,7 +285,7 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
               <TrendingUp
                 className={`w-3 h-3 ${trend < 0 ? "rotate-180" : ""}`}
               />
-              {Math.abs(trend).toFixed(1)}%
+              {Math.round(Math.abs(trend))}%
             </span>
           )}
         </div>

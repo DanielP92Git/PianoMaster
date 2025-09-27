@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Send, Loader2, X, Mic } from "lucide-react";
-import { practiceService } from "../../services/practiceService";
 import { useUser } from "../../features/authentication/useUser";
 import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 import { useModal } from "../../contexts/ModalContext";
+import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
 import toast from "react-hot-toast";
@@ -164,6 +164,7 @@ export default function PracticeRecorder() {
   const { user } = useUser();
   const { addNewRecording } = useNewRecordingsCount(user?.id);
   const { openModal, closeModal } = useModal();
+  const uploadPracticeSession = usePracticeSessionWithAchievements();
 
   // Open recording modal
   const openRecordingModal = () => {
@@ -182,12 +183,11 @@ export default function PracticeRecorder() {
 
     setUploadProgress({ phase: "preparing", percentage: 0 });
 
-    const session = await practiceService.uploadPracticeSession(
+    const result = await uploadPracticeSession.mutateAsync({
       recordingBlob,
-      user.id,
       notes,
       recordingDuration,
-      {
+      options: {
         compressionQuality: "MEDIUM",
         maxRetries: 3,
         onProgress: (progress) => {
@@ -196,14 +196,12 @@ export default function PracticeRecorder() {
         onRetry: (retryInfo) => {
           toast.error(`Upload failed, retrying... (${retryInfo.attempt}/3)`);
         },
-      }
-    );
-
-    toast.success("Practice session submitted successfully!");
+      },
+    });
 
     // Add the new recording to the count
-    if (session?.id) {
-      addNewRecording(session.id);
+    if (result?.session?.id) {
+      addNewRecording(result.session.id);
     }
   };
 
