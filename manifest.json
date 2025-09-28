@@ -23,7 +23,7 @@
       "type": "image/png"
     }
   ],
-  "start_url": "http://localhost:5174",
+  "start_url": "https://keystars.netlify.app",
   "display": "standalone",
   "theme_color": "#6366f1",
   "background_color": "#6366f1",
