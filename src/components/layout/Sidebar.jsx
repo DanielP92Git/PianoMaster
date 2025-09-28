@@ -1,15 +1,15 @@
-import React, { useEffect, useRef } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import React, { useEffect, useRef } from "react"; // eslint-disable-line
+import { NavLink, useLocation } from "react-router-dom"; // eslint-disable-line
 import {
-  Home,
-  Music2,
-  Settings,
-  Trophy,
-  Mic,
-  GraduationCap,
-  X,
+  Home, // eslint-disable-line
+  Music2, // eslint-disable-line
+  Settings, // eslint-disable-line
+  Trophy, // eslint-disable-line
+  Mic, // eslint-disable-line
+  GraduationCap, // eslint-disable-line
+  X, // eslint-disable-line
 } from "lucide-react";
-import AuthButton from "../auth/AuthButton";
+import AuthButton from "../auth/AuthButton"; // eslint-disable-line
 import { useUser } from "../../features/authentication/useUser";
 import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 
@@ -82,7 +82,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
         className={`
           fixed left-0 top-0 h-screen w-80 max-w-[85vw] 
           bg-white/95 backdrop-blur-xl shadow-2xl border-r border-white/20 
-          transition-transform duration-300 ease-in-out z-50
+          transition-transform duration-300 ease-in-out z-50 flex flex-col
           lg:fixed lg:left-4 lg:top-[5vh] lg:h-[90vh] lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
           lg:rounded-2xl lg:shadow-xl lg:border lg:border-white/20 lg:translate-x-0
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
@@ -102,8 +102,8 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </button>
         </div>
 
-        <nav className="flex-1 flex flex-col p-4 lg:p-6 overflow-hidden h-full">
-          <div className="flex-1 space-y-2 overflow-y-auto lg:space-y-1 min-h-0">
+        <nav className="flex-1 flex flex-col p-4 lg:p-6 min-h-0">
+          <div className="space-y-2 lg:space-y-1">
             <NavLink
               to="/"
               onClick={onClose}
@@ -209,8 +209,11 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
             </NavLink>
           </div>
 
-          {/* Auth Button */}
-          <div className="mt-auto pt-4 border-t border-gray-200 lg:border-white/10 flex-shrink-0">
+          {/* Flexible spacer to push auth button to bottom */}
+          <div className="flex-1 min-h-0"></div>
+
+          {/* Auth Button - Always at bottom */}
+          <div className="pt-6 border-t border-gray-200 lg:border-white/10 flex-shrink-0">
             <AuthButton />
           </div>
         </nav>
