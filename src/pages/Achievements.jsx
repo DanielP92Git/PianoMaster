@@ -85,10 +85,8 @@ export function Achievements() {
         <BackButton />
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Achievements
-            </h1>
-            <p className="text-gray-600">Loading your achievements...</p>
+            <h1 className="text-2xl font-bold text-white mb-2">Achievements</h1>
+            <p className="text-white/80">Loading your achievements...</p>
           </div>
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
@@ -116,10 +114,8 @@ export function Achievements() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Achievements
-          </h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-white mb-2">Achievements</h1>
+          <p className="text-white/80">
             Track your progress and unlock badges as you practice
           </p>
         </div>

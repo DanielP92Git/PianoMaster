@@ -26,6 +26,9 @@ import { ModalProvider } from "./contexts/ModalContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
 import TeacherDashboard from "./components/layout/TeacherDashboard";
 import { RoleSelection } from "./components/auth/RoleSelection";
+import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
+import PWAUpdateNotification from "./components/pwa/PWAUpdateNotification";
+import NetworkStatus from "./components/pwa/NetworkStatus";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -120,6 +123,11 @@ function App() {
             <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
               <Toaster position="top-center" />
               <AppRoutes />
+
+              {/* PWA Components */}
+              <PWAInstallPrompt />
+              <PWAUpdateNotification />
+              <NetworkStatus />
             </div>
           </RhythmProvider>
         </ModalProvider>
