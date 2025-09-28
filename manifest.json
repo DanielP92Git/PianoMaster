@@ -6,7 +6,7 @@
   "display": "standalone",
   "theme_color": "#581c87",
   "background_color": "#312e81",
-  "orientation": "portrait-primary",
+  "orientation": "landscape-primary",
   "categories": ["music", "education", "entertainment"],
   "lang": "en",
   "scope": "/",
@@ -14,25 +14,26 @@
     {
       "src": "/icons/favicon_96x96.png",
       "sizes": "96x96",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/favicon_192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/favicon_384x384.png",
       "sizes": "384x384",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/icons/favicon_512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ],
   "shortcuts": [
