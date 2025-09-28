@@ -43,5 +43,6 @@
       "form_factor": "narrow",
       "label": "PianoMaster"
     }
-  ]
+  ],
+  "description": "PianoMaster is a piano learning app that helps you learn to play the piano and keep motivated to practice."
 }
