@@ -61,5 +61,18 @@
       ]
     }
   ],
-  "screenshots": []
+  "screenshots": [
+    {
+      "src": "/icons/favicon_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/icons/favicon_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
 }
