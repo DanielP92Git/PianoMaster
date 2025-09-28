@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { practiceService } from "../services/practiceService";
 import { useUser } from "../features/authentication/useUser";
 import { Pencil, Trash2, Save, X, Loader2 } from "lucide-react";
@@ -15,27 +15,25 @@ export default function PracticeSessions() {
   const [editedNotes, setEditedNotes] = useState("");
   const [playingId, setPlayingId] = useState(null);
   const { clearNewRecordings } = useNewRecordingsCount(user?.id);
-  const [sessions, setSessions] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch practice sessions using React Query
+  const {
+    data: sessions = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["practice-sessions", user?.id],
+    queryFn: () => practiceService.getPracticeSessions(user.id),
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    refetchOnWindowFocus: true, // Refetch when user returns to tab
+  });
 
   useEffect(() => {
     if (user?.id) {
       clearNewRecordings();
-      fetchSessions();
     }
   }, [user?.id, clearNewRecordings]);
-
-  // Fetch practice sessions
-  const fetchSessions = async () => {
-    try {
-      const data = await practiceService.getPracticeSessions(user.id);
-      setSessions(data);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching practice sessions:", error);
-      setIsLoading(false);
-    }
-  };
 
   // Get the latest recording timestamp
   const latestRecordingTime = sessions?.[0]?.submitted_at;
@@ -58,9 +56,9 @@ export default function PracticeSessions() {
         user?.id,
       ]);
 
-      // Optimistically update the sessions
-      setSessions((currentSessions) =>
-        currentSessions.map((session) =>
+      // Optimistically update the cache
+      queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
+        old?.map((session) =>
           session.id === sessionId
             ? { ...session, recording_description: notes }
             : session
@@ -71,7 +69,10 @@ export default function PracticeSessions() {
     },
     onError: (error, { sessionId }, context) => {
       // Revert to the previous sessions on error
-      setSessions(context.previousSessions);
+      queryClient.setQueryData(
+        ["practice-sessions", user?.id],
+        context.previousSessions
+      );
       toast.error("Failed to update notes");
     },
     onSuccess: () => {
@@ -102,16 +103,10 @@ export default function PracticeSessions() {
         "practice-sessions",
         user?.id,
       ]);
-      const previousLocalSessions = sessions;
 
       // Optimistically update React Query cache
       queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
         old?.filter((session) => session.id !== sessionId)
-      );
-
-      // Optimistically update local state immediately
-      setSessions((currentSessions) =>
-        currentSessions.filter((session) => session.id !== sessionId)
       );
 
       // Stop playing if the deleted session was being played
@@ -119,7 +114,7 @@ export default function PracticeSessions() {
         setPlayingId(null);
       }
 
-      return { previousSessions, previousLocalSessions };
+      return { previousSessions };
     },
     onError: (error, sessionId, context) => {
       console.error("Delete mutation error:", error);
@@ -128,8 +123,6 @@ export default function PracticeSessions() {
         ["practice-sessions", user?.id],
         context.previousSessions
       );
-      // Rollback local state
-      setSessions(context.previousLocalSessions);
       toast.error(`Failed to delete recording: ${error.message}`);
     },
     onSuccess: () => {
@@ -155,18 +148,16 @@ export default function PracticeSessions() {
         "practice-sessions",
         user?.id,
       ]);
-      const previousLocalSessions = sessions;
 
-      // Optimistically clear both cache and local state
+      // Optimistically clear cache
       queryClient.setQueryData(["practice-sessions", user?.id], []);
-      setSessions([]);
 
       // Stop any playing audio
       if (playingId) {
         setPlayingId(null);
       }
 
-      return { previousSessions, previousLocalSessions };
+      return { previousSessions };
     },
     onSuccess: () => {
       queryClient.invalidateQueries(["practice-sessions", user?.id]);
@@ -179,7 +170,6 @@ export default function PracticeSessions() {
         ["practice-sessions", user?.id],
         context.previousSessions
       );
-      setSessions(context.previousLocalSessions);
       toast.error("Failed to delete all sessions");
     },
   });
@@ -228,6 +218,20 @@ export default function PracticeSessions() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 text-white animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <BackButton to="/" name="Dashboard" />
+        <div className="text-center py-8">
+          <p className="text-red-400">Failed to load practice recordings.</p>
+          <p className="text-gray-400 text-sm mt-2">
+            {error.message || "Please try again later."}
+          </p>
+        </div>
       </div>
     );
   }

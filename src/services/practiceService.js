@@ -62,9 +62,8 @@ export const practiceService = {
         .insert({
           student_id: studentId,
           recording_url: fileName,
-          recording_description:
-            notes ||
-            `Recording: ${format.label}, Quality: ${compressionResult.quality?.label || "Unknown"}, Size: ${Math.round(compressionResult.blob.size / 1024)}KB`,
+          recording_description: notes || "Practice session recording",
+          has_recording: true, // Mark as having an actual audio recording
           status: PRACTICE_SESSION_STATUS.PENDING_REVIEW,
           submitted_at: new Date().toISOString(),
           duration: Math.floor(duration || 0),
@@ -166,6 +165,9 @@ export const practiceService = {
       .from("practice_sessions")
       .select("*")
       .eq("student_id", studentId)
+      .eq("has_recording", true) // Only show actual practice recordings with audio
+      .not("recording_url", "is", null) // Ensure recording_url is not null
+      .neq("recording_url", "") // Ensure recording_url is not empty
       .order("submitted_at", { ascending: false });
 
     if (error) throw error;

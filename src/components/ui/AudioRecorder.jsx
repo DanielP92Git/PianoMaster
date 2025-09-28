@@ -331,7 +331,7 @@ export default function AudioRecorder({
         mediaRecorder.current.state === "paused")
     ) {
       mediaRecorder.current.stop();
-      toast.success("Recording stopped");
+      // Note: Parent components will show "Recording completed" with duration
     }
   }, []);
 

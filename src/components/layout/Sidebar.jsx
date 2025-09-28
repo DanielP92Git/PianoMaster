@@ -1,6 +1,15 @@
-import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-
+import React, { useEffect, useRef } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+import {
+  Home,
+  Music2,
+  Settings,
+  Trophy,
+  Mic,
+  GraduationCap,
+  X,
+} from "lucide-react";
+import AuthButton from "../auth/AuthButton";
 import { useUser } from "../../features/authentication/useUser";
 import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 
@@ -74,7 +83,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           fixed left-0 top-0 h-screen w-80 max-w-[85vw] 
           bg-white/95 backdrop-blur-xl shadow-2xl border-r border-white/20 
           transition-transform duration-300 ease-in-out z-50
-          lg:fixed lg:left-4 lg:top-4 lg:bottom-4 lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
+          lg:fixed lg:left-4 lg:top-[5vh] lg:h-[90vh] lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
           lg:rounded-2xl lg:shadow-xl lg:border lg:border-white/20 lg:translate-x-0
           ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
@@ -93,8 +102,8 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </button>
         </div>
 
-        <nav className="flex-1 flex flex-col p-4 lg:p-6 overflow-hidden">
-          <div className="flex-1 space-y-2 overflow-y-auto lg:space-y-1">
+        <nav className="flex-1 flex flex-col p-4 lg:p-6 overflow-hidden h-full">
+          <div className="flex-1 space-y-2 overflow-y-auto lg:space-y-1 min-h-0">
             <NavLink
               to="/"
               onClick={onClose}

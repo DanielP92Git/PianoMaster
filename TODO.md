@@ -1,11 +1,11 @@
 # TODO — Quick daily list
 
 ## Today (yyyy-mm-dd)
-- [ ] Implement dashboard spinner fix (see issue #45)
+- [ ] Implement dashboard spinner fix (see issue #1)
 - [ ] Round points % display to integer — create PR linking #46
 
 ## This week
-- [ ] Finish achievements API (epic #12)
+- [ ] Finish achievements API (epic #1)
 - [ ] Add tests to scores module
 
 ## Backlog
