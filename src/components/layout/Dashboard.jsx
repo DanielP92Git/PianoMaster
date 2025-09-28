@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
 import AssignmentsList from "../student/AssignmentsList";
@@ -8,7 +9,6 @@ import { achievementService } from "../../services/achievementService";
 import StreakDisplay from "../streak/StreakDisplay";
 import PointsDisplay from "../ui/PointsDisplay";
 import LevelDisplay from "../ui/LevelDisplay";
-import { Link } from "react-router-dom";
 import { useModal } from "../../contexts/ModalContext";
 import { Bell, X } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -40,31 +40,93 @@ function Dashboard() {
   // Check if connected to real-time updates
   const isConnected = true; // Placeholder for real-time connection status
 
-  // Fetch all achievements
-  const { data: allAchievements = [], isLoading: achievementsLoading } =
-    useQuery({
-      queryKey: ["achievements"],
-      queryFn: () => Promise.resolve(achievementService.getAllAchievements()),
-      staleTime: 30 * 60 * 1000, // 30 minutes - achievements list rarely changes
-    });
-
-  // Fetch user's earned achievements
-  const { data: earnedAchievements = [], isLoading: earnedLoading } = useQuery({
+  // Fetch user's earned achievements to filter out completed next steps
+  const { data: earnedAchievements = [] } = useQuery({
     queryKey: ["earned-achievements", user?.id],
     queryFn: () => achievementService.getEarnedAchievements(user.id),
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes - earned achievements don't change often
-    refetchInterval: 10 * 60 * 1000, // Check every 10 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Fetch recent achievements
-  const recentAchievements = earnedAchievements.slice(0, 3);
+  // Create a set of earned achievement IDs for quick lookup
+  const earnedAchievementIds = new Set(
+    earnedAchievements.map((achievement) => achievement.achievement_id)
+  );
 
-  // Calculate upcoming achievements
-  const earnedIds = earnedAchievements.map((a) => a.achievement_id);
-  const upcomingAchievements = allAchievements
-    .filter((achievement) => !earnedIds.includes(achievement.id))
-    .slice(0, 3);
+  // Define next steps with their corresponding achievement IDs
+  const allNextSteps = [
+    {
+      id: "first_session",
+      icon: "🎯",
+      title: "Record Your First Session",
+      description:
+        'Complete your first practice session to earn the "First Steps" badge',
+      points: 50,
+      colors: {
+        bg: "from-blue-50 to-indigo-50",
+        border: "border-blue-100",
+        icon: "from-blue-500 to-indigo-500",
+        text: "text-blue-600",
+      },
+    },
+    {
+      id: "streak_3",
+      icon: "🔥",
+      title: "Build a Practice Streak",
+      description: 'Practice for 3 days in a row to unlock "Building Habits"',
+      points: 100,
+      colors: {
+        bg: "from-orange-50 to-red-50",
+        border: "border-orange-100",
+        icon: "from-orange-500 to-red-500",
+        text: "text-orange-600",
+      },
+    },
+    {
+      id: "perfect_score",
+      icon: "🎵",
+      title: "Master Practice Games",
+      description: "Score 100% in a rhythm or note recognition game",
+      points: 150,
+      colors: {
+        bg: "from-purple-50 to-pink-50",
+        border: "border-purple-100",
+        icon: "from-purple-500 to-pink-500",
+        text: "text-purple-600",
+      },
+    },
+    {
+      id: "high_scorer",
+      icon: "💎",
+      title: "Reach 1000 Points",
+      description: 'Accumulate 1000 total points to become a "High Scorer"',
+      points: 250,
+      colors: {
+        bg: "from-green-50 to-emerald-50",
+        border: "border-green-100",
+        icon: "from-green-500 to-emerald-500",
+        text: "text-green-600",
+      },
+    },
+    {
+      id: "streak_7",
+      icon: "⭐",
+      title: "Weekly Warrior",
+      description: "Practice for 7 days in a row",
+      points: 200,
+      colors: {
+        bg: "from-yellow-50 to-amber-50",
+        border: "border-yellow-100",
+        icon: "from-yellow-500 to-amber-500",
+        text: "text-yellow-600",
+      },
+    },
+  ];
+
+  // Filter out completed achievements and limit to 4 items
+  const availableNextSteps = allNextSteps
+    .filter((step) => !earnedAchievementIds.has(step.id))
+    .slice(0, 4);
 
   // Modal opening functions
   const openReminderModal = () => {
@@ -424,77 +486,69 @@ function Dashboard() {
 
         {/* Bottom Section - Three Equal Width Containers */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Achievements Section */}
+          {/* Next Steps Section */}
           <div className="card p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">
-              Recent Achievements
+              Next Steps to Earn Badges
             </h3>
 
-            {achievementsLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
+            <div className="space-y-4">
+              {availableNextSteps.length > 0 ? (
+                availableNextSteps.map((step) => (
                   <div
-                    key={i}
-                    className="h-16 bg-gray-200 rounded-xl animate-pulse"
-                  ></div>
-                ))}
-              </div>
-            ) : recentAchievements.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-16 h-16 text-gray-500 mx-auto mb-4 text-4xl">
-                  🏆
-                </div>
-                <div className="text-gray-600 mb-2">No achievements yet</div>
-                <div className="text-gray-500 text-sm mb-6">
-                  Complete practice sessions to earn badges!
-                </div>
-
-                <div className="text-left">
-                  <div className="text-gray-900 font-medium mb-4">
-                    Coming up:
-                  </div>
-                  <div className="space-y-3">
-                    {upcomingAchievements.map((achievement) => (
-                      <div
-                        key={achievement.id}
-                        className="flex items-center gap-3 p-3 bg-gray-100 rounded-xl border border-gray-200"
-                      >
-                        <div className="text-2xl">{achievement.icon}</div>
-                        <div className="flex-1">
-                          <div className="font-medium text-gray-900">
-                            {achievement.title}
-                          </div>
-                          <div className="text-sm text-gray-600">
-                            {achievement.description}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {recentAchievements.map((achievement) => (
-                  <div
-                    key={achievement.id}
-                    className="flex items-center gap-3 p-3 bg-gray-100 rounded-xl"
+                    key={step.id}
+                    className={`flex items-start gap-3 p-4 bg-gradient-to-r ${step.colors.bg} rounded-xl border ${step.colors.border}`}
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
-                      🏆
+                    <div
+                      className={`w-10 h-10 bg-gradient-to-br ${step.colors.icon} rounded-full flex items-center justify-center flex-shrink-0`}
+                    >
+                      <span className="text-white text-lg">{step.icon}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-gray-900 truncate">
-                        {achievement.title}
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        {achievement.description}
-                      </p>
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900 mb-1">
+                        {step.title}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-2">
+                        {step.description}
+                      </div>
+                      <div
+                        className={`text-xs ${step.colors.text} font-medium`}
+                      >
+                        +{step.points} points
+                      </div>
                     </div>
                   </div>
-                ))}
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <div className="text-4xl mb-4">🎉</div>
+                  <div className="font-medium text-gray-900 mb-2">
+                    Great Progress!
+                  </div>
+                  <div className="text-sm text-gray-600 mb-4">
+                    You've completed the main achievement milestones. Keep
+                    practicing to unlock more advanced badges!
+                  </div>
+                  <Link
+                    to="/achievements"
+                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                  >
+                    View All Achievements
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <div className="text-center">
+                <Link
+                  to="/achievements"
+                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                >
+                  View All Achievements →
+                </Link>
               </div>
-            )}
+            </div>
           </div>
 
           {/* Assignments Section */}
@@ -513,12 +567,12 @@ function Dashboard() {
                 onClick={openReminderModal}
                 className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
                     🔔
                   </div>
-                  <div>
-                    <div className="text-gray-900 font-medium">
+                  <div className="flex-1">
+                    <div className="text-gray-900 font-medium mb-1">
                       Set a Practice Reminder
                     </div>
                     <div className="text-gray-600 text-sm">
@@ -533,12 +587,12 @@ function Dashboard() {
                 onClick={openRecordModal}
                 className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                     🎤
                   </div>
-                  <div>
-                    <div className="text-gray-900 font-medium">
+                  <div className="flex-1">
+                    <div className="text-gray-900 font-medium mb-1">
                       Record Practice Session
                     </div>
                     <div className="text-gray-600 text-sm">
@@ -553,12 +607,12 @@ function Dashboard() {
                 to="/practice-sessions"
                 className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block transition-colors"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                     📊
                   </div>
-                  <div>
-                    <div className="text-gray-900 font-medium">
+                  <div className="flex-1">
+                    <div className="text-gray-900 font-medium mb-1">
                       View Practice History
                     </div>
                     <div className="text-gray-600 text-sm">
