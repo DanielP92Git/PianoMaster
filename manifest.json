@@ -27,5 +27,21 @@
   "display": "standalone",
   "theme_color": "#6366f1",
   "background_color": "#6366f1",
-  "orientation": "portrait-primary"
+  "orientation": "portrait-primary",
+  "screenshots": [
+    {
+      "src": "/icons/favicon_512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "PianoMaster"
+    },
+    {
+      "src": "/icons/favicon_384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "PianoMaster"
+    }
+  ]
 }
