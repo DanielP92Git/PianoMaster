@@ -4,7 +4,11 @@ import { BrowserRouter } from "react-router-dom";
 import { Provider } from "react-redux";
 import App from "./App.jsx";
 import store from "./store";
+import { registerServiceWorker } from "./utils/pwa.js";
 import "./index.css";
+
+// Register service worker
+registerServiceWorker();
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
