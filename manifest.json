@@ -3,27 +3,27 @@
   "name": "PianoMaster",
   "icons": [
     {
-      "src": "./public/icons/favicon_96x96.png",
+      "src": "/icons/favicon_96x96.png",
       "sizes": "96x96",
       "type": "image/png"
     },
     {
-      "src": "./public/icons/favicon_192x192.png",
+      "src": "/icons/favicon_192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "./public/icons/favicon_384x384.png",
+      "src": "/icons/favicon_384x384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "./public/icons/favicon_512x512.png",
+      "src": "/icons/favicon_512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
-  "start_url": "https://keystars.netlify.app",
+  "start_url": "/",
   "display": "standalone",
   "theme_color": "#6366f1",
   "background_color": "#6366f1",
