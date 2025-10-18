@@ -58,8 +58,8 @@ export function PreGameSettingsScreen({
   const timeSignatures = getTimeSignatures();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white p-6">
-      <div className="w-full max-w-2xl">
+    <div className="flex flex-col items-center justify-start h-screen overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white p-6">
+      <div className="w-full max-w-2xl my-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-4">{title}</h1>
           <p className="text-gray-200 text-lg">{subtitle}</p>
