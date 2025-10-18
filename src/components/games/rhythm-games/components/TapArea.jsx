@@ -1,52 +1,52 @@
-import React from "react";
-import { Card, CardContent } from "../../../ui/Card";
-
 /**
  * Interactive tap area component for rhythm games
- * Provides visual feedback for user taps and timing accuracy
+ * Large, prominent button for tapping - Simplified design
  */
 export function TapArea({
   onTap,
   feedback = null,
   isActive = true,
   title = "TAP HERE",
-  subtitle = "Tap in rhythm with the pattern",
   className = "",
 }) {
   return (
-    <Card
-      className={`bg-white/10 backdrop-blur-md border-white/20 cursor-pointer ${className} ${
-        isActive
-          ? "hover:bg-white/15 transition-colors"
-          : "opacity-50 cursor-not-allowed"
-      }`}
+    <button
       onClick={isActive ? onTap : undefined}
+      disabled={!isActive}
+      className={`
+        w-full h-full max-w-md max-h-96
+        bg-white/10 backdrop-blur-md
+        flex flex-col items-center justify-center
+        text-white font-bold
+        transition-all duration-200 rounded-3xl
+        ${className}
+        ${
+          isActive
+            ? "hover:bg-white/20 active:scale-95 cursor-pointer"
+            : "opacity-50 cursor-not-allowed"
+        }
+      `}
     >
-      <CardContent className="pt-6">
-        <div className="text-center py-12">
-          <div className="text-4xl font-bold text-white mb-4">{title}</div>
-          <div className="text-lg text-gray-300">{subtitle}</div>
-          {feedback && (
-            <div
-              className={`
-              mt-4 text-2xl font-bold animate-pulse
-              ${
-                feedback.accuracy === "PERFECT"
-                  ? "text-green-400"
-                  : feedback.accuracy === "GOOD"
-                    ? "text-yellow-400"
-                    : feedback.accuracy === "FAIR"
-                      ? "text-orange-400"
-                      : "text-red-400"
-              }
-            `}
-            >
-              {feedback.accuracy}! +{feedback.points}
-            </div>
-          )}
+      <div className="text-5xl sm:text-6xl mb-4">{title}</div>
+      {feedback && (
+        <div
+          className={`
+            text-3xl sm:text-4xl font-bold animate-pulse
+            ${
+              feedback.accuracy === "PERFECT"
+                ? "text-green-400"
+                : feedback.accuracy === "GOOD"
+                  ? "text-yellow-400"
+                  : feedback.accuracy === "FAIR"
+                    ? "text-orange-400"
+                    : "text-red-400"
+            }
+          `}
+        >
+          {feedback.accuracy}! +{feedback.points}
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </button>
   );
 }
 
