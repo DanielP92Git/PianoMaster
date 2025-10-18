@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "../../features/authentication/useLogin";
-import { Music, Piano, Sparkles, Star, Loader2 } from "lucide-react";
+import {
+  Music,
+  Piano,
+  Sparkles,
+  Star,
+  Loader2,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
 // import Spinner from "../ui/Spinner";
@@ -9,6 +17,7 @@ import SignupForm from "../../components/auth/SignupForm";
 function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
   const { login, isPending } = useLogin();
@@ -112,16 +121,30 @@ function LoginForm() {
                     >
                       Password
                     </label>
-                    <input
-                      type="password"
-                      id="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={isPending}
-                      className="w-full px-4 py-3 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
-                      placeholder="Enter your password"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        disabled={isPending}
+                        className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
+                        placeholder="Enter your password"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors focus:outline-none"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

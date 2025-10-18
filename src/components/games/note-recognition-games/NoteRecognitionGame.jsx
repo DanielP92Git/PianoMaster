@@ -698,8 +698,8 @@ export function NoteRecognitionGame() {
   }, [progress.isFinished, stopAudioInput]);
 
   return (
-    <div className="flex flex-col overflow-hidden min-h-screen">
-      <div className="p-2">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <div className="p-2 flex-shrink-0">
         <BackButton
           to="/note-recognition-mode"
           name="Note Recognition"

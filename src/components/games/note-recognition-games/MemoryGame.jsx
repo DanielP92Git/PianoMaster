@@ -710,13 +710,13 @@ export function MemoryGame() {
     // Always use the difficulty to determine the grid layout
     switch (difficulty) {
       case "Easy":
-        return "grid grid-cols-4 gap-2 gap-x-10 max-w-xl place-content-center justify-center mb-2";
+        return "grid grid-cols-4 gap-3 sm:gap-4 gap-x-2 sm:gap-x-4 max-w-xl place-content-center justify-center mb-2";
       case "Medium":
-        return "grid max-w-3xl grid-cols-6 gap-2 gap-x-10 place-content-center justify-center mb-2";
+        return "grid max-w-3xl grid-cols-6 gap-3 sm:gap-4 gap-x-2 sm:gap-x-3 place-content-center justify-center mb-2";
       case "Hard":
-        return "grid max-w-5xl grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 gap-x-10 place-content-center justify-center mb-2";
+        return "grid max-w-5xl grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 sm:gap-4 gap-x-1.5 sm:gap-x-2 place-content-center justify-center mb-2";
       default:
-        return "grid grid-cols-4 gap-2 gap-x-10 place-content-center justify-center mb-2";
+        return "grid grid-cols-4 gap-3 sm:gap-4 gap-x-2 sm:gap-x-4 place-content-center justify-center mb-2";
     }
   };
 
@@ -926,7 +926,9 @@ export function MemoryGame() {
         <div className="flex-1 flex flex-col overflow-auto">
           {/* Game grid - scrollable container that shows all cards */}
           <div className="flex-1 overflow-auto py-1  px-2 flex justify-center items-center">
-            <div className={`${getGridClassName()}  w-full mx-auto px-10`}>
+            <div
+              className={`${getGridClassName()}  w-full mx-auto px-2 sm:px-4`}
+            >
               {(() => {
                 // Always use the current difficulty to determine how many cards to show
                 const expectedGridSize = DIFFICULTIES[difficulty];
@@ -948,7 +950,12 @@ export function MemoryGame() {
                   matchedIndexes.includes(index);
 
                 // Calculate responsive card sizes based on difficulty
-                const cardHeight = "min(125px, 16vh)";
+                const cardHeight =
+                  difficulty === "Hard"
+                    ? "min(140px, 16vh)" // Smaller for many cards
+                    : difficulty === "Medium"
+                      ? "min(160px, 18vh)" // Medium size
+                      : "min(180px, 20vh)"; // Larger for fewer cards
 
                 return (
                   <div
@@ -967,7 +974,7 @@ export function MemoryGame() {
                         : "auto",
                       height: cardHeight,
                       maxHeight: cardHeight,
-                      minHeight: "40px",
+                      minHeight: "80px",
                       margin: "0",
                     }}
                     className="hover:scale-105 hover:shadow-lg"
@@ -1005,7 +1012,7 @@ export function MemoryGame() {
                         <div
                           style={{
                             color: "white",
-                            fontSize: "1.875rem",
+                            fontSize: "2.5rem",
                             fontWeight: "bold",
                             position: "relative",
                             zIndex: 10,
@@ -1039,8 +1046,8 @@ export function MemoryGame() {
                             src={card.image}
                             alt={card.value}
                             style={{
-                              width: difficulty === "Hard" ? "70%" : "75%",
-                              height: difficulty === "Hard" ? "70%" : "75%",
+                              width: difficulty === "Hard" ? "80%" : "85%",
+                              height: difficulty === "Hard" ? "80%" : "85%",
                               objectFit: "contain",
                               position: "relative",
                               zIndex: 10,

@@ -6,6 +6,8 @@ import {
   Loader2,
   Users,
   GraduationCap,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { SocialLogin } from "./SocialLogin";
 import { useSignup } from "../../features/authentication/useSignup";
@@ -13,6 +15,7 @@ import { useSignup } from "../../features/authentication/useSignup";
 function SignupForm({ onBackToLogin }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [role, setRole] = useState("student"); // Default to student
@@ -170,16 +173,30 @@ function SignupForm({ onBackToLogin }) {
             >
               Password
             </label>
-            <input
-              type="password"
-              id="signup-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={isPending}
-              className="w-full px-4 py-3 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
-              placeholder="Create a password"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="signup-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isPending}
+                className="w-full px-4 py-3 pr-12 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
+                placeholder="Create a password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition-colors focus:outline-none"
+                tabIndex={-1}
+              >
+                {showPassword ? (
+                  <EyeOff className="w-5 h-5" />
+                ) : (
+                  <Eye className="w-5 h-5" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

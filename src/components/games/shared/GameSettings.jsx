@@ -24,6 +24,7 @@ export function GameSettings({
   const prevInitialTimedMode = useRef(initialTimedMode);
 
   const [setupStep, setSetupStep] = useState(1);
+  const [modalStep, setModalStep] = useState(1);
   const [clef, setClef] = useState(initialClef);
   const [timedMode, setTimedMode] = useState(initialTimedMode);
   const [difficulty, setDifficulty] = useState(initialDifficulty);
@@ -31,6 +32,18 @@ export function GameSettings({
   const [gridSize, setGridSize] = useState(
     gameType === "memory" ? "3 X 4" : null
   );
+
+  // Track when modal is opened to reset step
+  const prevIsModalRef = useRef(false);
+
+  useEffect(() => {
+    // Reset modal step when modal is opened (not on every render)
+    if (isModal && !prevIsModalRef.current) {
+      setModalStep(1);
+      console.log("Modal opened, reset to step 1");
+    }
+    prevIsModalRef.current = isModal;
+  }, [isModal]);
   // Ensure initialSelectedNotes is an array
   const initialNotesArray =
     Array.isArray(initialSelectedNotes) && initialSelectedNotes.length > 0
@@ -124,6 +137,14 @@ export function GameSettings({
 
   const handlePrevStep = () => {
     setSetupStep(setupStep - 1);
+  };
+
+  const handleModalNextStep = () => {
+    setModalStep(modalStep + 1);
+  };
+
+  const handleModalPrevStep = () => {
+    setModalStep(modalStep - 1);
   };
 
   const handleNoteToggle = (note) => {
@@ -243,63 +264,71 @@ export function GameSettings({
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
-    <div className="flex flex-col items-center justify-center py-1">
-      <h1 className="text-2xl font-bold text-white mb-2">
-        {gameType === "note-recognition"
-          ? "Note Recognition Game"
-          : "Memory Game"}
-      </h1>
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
-        <h2 className="text-lg font-bold text-white mb-3">
-          Step 1: Choose a Clef
-        </h2>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setClef("Treble")}
-              className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
-                clef === "Treble"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-              }`}
-            >
-              <div className="w-24 h-24 rounded-lg flex items-center justify-center p-2 mb-1">
-                <img
-                  src={trebleClefImage}
-                  alt="Treble Clef"
-                  className="w-full h-full object-contain invert"
-                />
-              </div>
-              <span className="font-medium text-white/90">Treble Clef</span>
-            </button>
+    <div className="flex-1 flex items-center justify-center overflow-hidden px-2 py-1">
+      <div
+        className="flex flex-row gap-3 w-full max-w-5xl items-stretch"
+        style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
+      >
+        {/* Settings Container */}
+        <div className="flex-1 flex items-center overflow-hidden">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 w-full border border-white/20 shadow-lg h-full flex flex-col">
+            <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+              Step 1: Choose a Clef
+            </h2>
+            <div className="space-y-2 flex-1 flex flex-col justify-center">
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setClef("Treble")}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors flex flex-col items-center ${
+                    clef === "Treble"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+                  }`}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center p-2 mb-1">
+                    <img
+                      src={trebleClefImage}
+                      alt="Treble Clef"
+                      className="w-full h-full object-contain invert"
+                    />
+                  </div>
+                  <span className="font-medium text-white/90 text-xs sm:text-sm">
+                    Treble Clef
+                  </span>
+                </button>
 
-            <button
-              onClick={() => setClef("Bass")}
-              className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
-                clef === "Bass"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-              }`}
-            >
-              <div className="w-24 h-24 rounded-lg flex items-center justify-center p-2 mb-1">
-                <img
-                  src={bassClefImage}
-                  alt="Bass Clef"
-                  className="w-full h-full object-contain invert"
-                />
+                <button
+                  onClick={() => setClef("Bass")}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors flex flex-col items-center ${
+                    clef === "Bass"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+                  }`}
+                >
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center p-2 mb-1">
+                    <img
+                      src={bassClefImage}
+                      alt="Bass Clef"
+                      className="w-full h-full object-contain invert"
+                    />
+                  </div>
+                  <span className="font-medium text-white/90 text-xs sm:text-sm">
+                    Bass Clef
+                  </span>
+                </button>
               </div>
-              <span className="font-medium text-white/90">Bass Clef</span>
-            </button>
+            </div>
           </div>
+        </div>
 
-          <div className="flex justify-end mt-3">
-            <button
-              onClick={handleNextStep}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
-            >
-              Next
-            </button>
-          </div>
+        {/* Buttons Container - On the Right */}
+        <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+          <button
+            onClick={handleNextStep}
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg"
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
@@ -308,71 +337,75 @@ export function GameSettings({
   // Note Selection Screen
   const NoteSelectionScreen = () => {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center py-1">
-        <h1 className="text-2xl font-bold text-white mb-2">
-          {gameType === "note-recognition"
-            ? "Note Recognition Game"
-            : "Memory Game"}
-        </h1>
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
-          <h2 className="text-lg font-bold text-white mb-3">
-            Step 2: Choose Notes
-          </h2>
-          <div className="space-y-3">
-            <p className="text-sm text-white/80">
-              Select which notes you want to practice with:
-            </p>
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-3 py-2">
+        <div className="flex lg:flex-row gap-4 w-full max-w-5xl items-center lg:items-stretch h-full">
+          {/* Settings Container (Left/Top) */}
+          <div className="flex-1 h-full overflow-y-auto">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 w-full border border-white/20 shadow-lg h-full flex flex-col">
+              <h2 className="text-base sm:text-lg font-bold text-white mb-2 flex-shrink-0">
+                Step 2: Choose Notes
+              </h2>
+              <div className="flex flex-col flex-1 min-h-0">
+                <p className="text-sm text-white/80 flex-shrink-0 mb-2">
+                  Select which notes you want to practice with:
+                </p>
 
-            <div className="w-full overflow-x-auto">
-              <div className="inline-flex gap-1 p-1 bg-white/10 backdrop-blur-sm rounded-lg mb-1 border border-white/20">
-                {displayNotes.map((note) => (
-                  <button
-                    key={note.note}
-                    onClick={() => handleNoteToggle(note.note)}
-                    className={`p-1 rounded-lg transition-colors flex flex-col items-center min-w-[50px] ${
-                      selectedNotes.includes(note.note)
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white/20 text-white hover:bg-white/30"
-                    }`}
-                  >
-                    <div className="w-10 h-10 bg-white/90 rounded-md flex items-center justify-center">
-                      <img
-                        src={note.image}
-                        alt={note.note}
-                        className="w-9 h-9 object-contain"
-                      />
-                    </div>
-                    <span className="text-xs mt-1 font-medium">
-                      {note.note}
-                    </span>
-                  </button>
-                ))}
+                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 flex items-center">
+                  <div className="flex h-full gap-1 sm:gap-2 p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 justify-center items-center w-full">
+                    {displayNotes.map((note) => (
+                      <button
+                        key={note.note}
+                        onClick={() => handleNoteToggle(note.note)}
+                        className={` rounded-lg transition-colors flex flex-col items-center justify-between flex-1 h-full min-w-0 ${
+                          selectedNotes.includes(note.note)
+                            ? "bg-indigo-600 text-white"
+                            : "bg-white/20 text-white hover:bg-white/30"
+                        }`}
+                        style={{
+                          maxWidth: "150px",
+                        }}
+                      >
+                        <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
+                          <img
+                            src={note.image}
+                            alt={note.note}
+                            className="w-[85%] h-[85%] object-contain"
+                          />
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
+                          {note.note}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <p className="text-sm text-white/80 flex-shrink-0 mt-2">
+                  Selected: {selectedNotes.length} notes
+                </p>
               </div>
             </div>
+          </div>
 
-            <p className="text-sm text-white/80">
-              Selected: {selectedNotes.length} notes
-            </p>
-
-            <div className="flex justify-between mt-2">
-              <button
-                onClick={handlePrevStep}
-                className="px-3 py-1.5 bg-white/10 backdrop-blur-sm text-white rounded-lg hover:bg-white/20 transition-colors font-medium border border-white/20 shadow-md"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleNextStep}
-                disabled={selectedNotes.length === 0}
-                className={`px-3 py-1.5 ${
-                  selectedNotes.length === 0
-                    ? "bg-gray-500 cursor-not-allowed"
-                    : "bg-indigo-600 hover:bg-indigo-700"
-                } text-white rounded-lg transition-colors font-medium shadow-md`}
-              >
-                Next
-              </button>
-            </div>
+          {/* Buttons Container (Right/Bottom) */}
+          <div className="flex flex-col lg:flex-col gap-6 justify-center lg:justify-center">
+            <button
+              onClick={handlePrevStep}
+              className="px-6 py-3 min-w-[120px] lg:min-w-[140px] text-base bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-lg"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleNextStep}
+              disabled={selectedNotes.length === 0}
+              className={`px-6 py-3 min-w-[120px] lg:min-w-[140px] text-base ${
+                selectedNotes.length === 0
+                  ? "bg-gray-500 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700"
+              } text-white rounded-lg transition-colors font-medium shadow-lg`}
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
@@ -382,131 +415,142 @@ export function GameSettings({
   // Game Mode Selection Screen for Note Recognition
   const NoteRecognitionModeScreen = () => {
     return (
-      <div className="flex flex-col items-center justify-center py-1">
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
-          <h2 className="text-lg font-bold text-white mb-3">
-            Step 3: Choose Game Mode
-          </h2>
-          <div className="space-y-4">
-            {/* Game Mode Toggle */}
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => handleTimedModeToggle(false)}
-                className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
-                  !timedMode
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-                }`}
-              >
-                <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center p-2 mb-1">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-10 w-10 text-indigo-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-2 py-1">
+        <div className="flex flex-row gap-3 w-full max-w-5xl items-stretch h-[calc(100vh-100px)] max-h-[600px]">
+          {/* Settings Container */}
+          <div className="flex-1 flex items-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 w-full border border-white/20 shadow-lg">
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-3 text-center">
+                Step 3: Choose Game Mode
+              </h2>
+              <div className="space-y-3">
+                {/* Game Mode Toggle */}
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => handleTimedModeToggle(false)}
+                    className={`p-2 rounded-lg transition-colors flex flex-col items-center ${
+                      !timedMode
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                    />
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-                <span className="font-medium">Practice Mode</span>
-                <span className="text-xs text-white/80">No time limit</span>
-              </button>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/90 rounded-lg flex items-center justify-center p-1 mb-1">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-xs sm:text-sm font-medium">
+                      Practice Mode
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-white/80">
+                      No time limit
+                    </span>
+                  </button>
 
-              <button
-                onClick={() => handleTimedModeToggle(true)}
-                className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
-                  timedMode
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-                }`}
-              >
-                <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center p-2 mb-1">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-10 w-10 text-indigo-600"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+                  <button
+                    onClick={() => handleTimedModeToggle(true)}
+                    className={`p-2 rounded-lg transition-colors flex flex-col items-center ${
+                      timedMode
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+                    }`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/90 rounded-lg flex items-center justify-center p-1 mb-1">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 sm:h-7 sm:w-7 text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-xs sm:text-sm font-medium">
+                      Timed Mode
+                    </span>
+                    <span className="text-[10px] sm:text-xs text-white/80">
+                      Race against the clock
+                    </span>
+                  </button>
                 </div>
-                <span className="font-medium">Timed Mode</span>
-                <span className="text-xs text-white/80">
-                  Race against the clock
-                </span>
-              </button>
-            </div>
 
-            {/* Difficulty Selection - only show if timed mode is active */}
-            {timedMode && (
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-2">
-                  Select Difficulty:
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {["Easy", "Medium", "Hard"].map((level) => (
-                    <button
-                      key={level}
-                      onClick={() => setDifficulty(level)}
-                      className={`p-2 rounded-lg transition-colors ${
-                        difficulty === level
-                          ? level === "Easy"
-                            ? "bg-emerald-500 text-white"
-                            : level === "Medium"
-                              ? "bg-amber-500 text-white"
-                              : "bg-rose-500 text-white"
-                          : "bg-white/10 text-white/90 hover:bg-white/20"
-                      }`}
-                    >
-                      <div className="text-center">
-                        <span className="font-medium block">{level}</span>
-                        <span className="text-xs">
-                          {level === "Easy"
-                            ? "60 seconds"
-                            : level === "Medium"
-                              ? "45 seconds"
-                              : "30 seconds"}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                {/* Difficulty Selection - only show if timed mode is active */}
+                {timedMode && (
+                  <div>
+                    <label className="block text-xs sm:text-sm text-white/80 font-medium mb-1">
+                      Select Difficulty:
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {["Easy", "Medium", "Hard"].map((level) => (
+                        <button
+                          key={level}
+                          onClick={() => setDifficulty(level)}
+                          className={`py-1.5 px-2 rounded-lg transition-colors text-xs sm:text-sm ${
+                            difficulty === level
+                              ? level === "Easy"
+                                ? "bg-emerald-500 text-white"
+                                : level === "Medium"
+                                  ? "bg-amber-500 text-white"
+                                  : "bg-rose-500 text-white"
+                              : "bg-white/10 text-white/90 hover:bg-white/20"
+                          }`}
+                        >
+                          <div className="text-center">
+                            <span className="font-medium block">{level}</span>
+                            <span className="text-[10px] sm:text-xs">
+                              {level === "Easy"
+                                ? "60s"
+                                : level === "Medium"
+                                  ? "45s"
+                                  : "30s"}
+                            </span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-3">
-              <button
-                onClick={handlePrevStep}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-md"
-              >
-                Back
-              </button>
-              <button
-                onClick={handleStart}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
-              >
-                Start Game
-              </button>
             </div>
+          </div>
+
+          {/* Buttons Container - On the Right */}
+          <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+            <button
+              onClick={handlePrevStep}
+              className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleStart}
+              className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg"
+            >
+              Start Game
+            </button>
           </div>
         </div>
       </div>
@@ -515,221 +559,268 @@ export function GameSettings({
 
   // Game Mode Selection Screen for Memory Game
   const MemoryGameModeScreen = () => (
-    <div className="flex-1 flex flex-col items-center justify-center py-1">
-      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 max-w-md w-full mx-auto border border-white/20 shadow-lg">
-        <h2 className="text-lg font-bold text-white mb-3">
-          Step 2: Choose Game Settings
-        </h2>
+    <div className="flex-1 flex items-center justify-center overflow-hidden px-2 py-1">
+      <div
+        className="flex flex-row gap-3 w-full max-w-5xl items-stretch"
+        style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
+      >
+        {/* Settings Container */}
+        <div className="flex-1 flex items-center overflow-hidden">
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 sm:p-3 w-full border border-white/20 shadow-lg h-full flex flex-col">
+            <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+              Step 3: Choose Game Settings
+            </h2>
 
-        <div className="space-y-4">
-          {/* Game Mode Selection (Practice or Timed) */}
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => setTimedMode(false)}
-              className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
-                !timedMode
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-              }`}
-            >
-              <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center p-2 mb-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10 text-indigo-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <span className="font-medium">Practice Mode</span>
-              <span className="text-xs text-white/80">No time limit</span>
-            </button>
-
-            <button
-              onClick={() => setTimedMode(true)}
-              className={`p-3 rounded-lg transition-colors flex flex-col items-center ${
-                timedMode
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
-              }`}
-            >
-              <div className="w-16 h-16 bg-white/90 rounded-lg flex items-center justify-center p-2 mb-1">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-10 w-10 text-indigo-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <span className="font-medium">Timed Mode</span>
-              <span className="text-xs text-white/80">
-                Race against the clock
-              </span>
-            </button>
-          </div>
-
-          {/* Card Count / Difficulty Level */}
-          <div>
-            <label className="text-white/80 font-medium block mb-1">
-              Card Count:
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {Object.entries(MEMORY_DIFFICULTIES).map(([diff, size]) => (
+            <div className="space-y-2 flex-1 flex flex-col justify-center">
+              {/* Game Mode Selection (Practice or Timed) */}
+              <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
                 <button
-                  key={diff}
-                  onClick={() => {
-                    console.log(
-                      `Clicked ${diff} difficulty button, grid size: ${size}`
-                    );
-                    handleMemoryDifficultyChange(diff);
-                  }}
-                  className={`py-1.5 px-2 rounded-lg transition-colors ${
-                    difficulty === diff
-                      ? diff === "Easy"
-                        ? "bg-teal-500 text-white"
-                        : diff === "Medium"
-                          ? "bg-orange-500 text-white"
-                          : "bg-red-500 text-white"
-                      : "bg-white/10 text-white/90 hover:bg-white/20"
+                  onClick={() => setTimedMode(false)}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors flex flex-col items-center ${
+                    !timedMode
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
                   }`}
                 >
-                  <div className="text-center">
-                    <span className="font-medium">{diff}</span>
-                    <span className="text-xs block">
-                      {GRID_SIZES[size] / 2} pairs
-                    </span>
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/90 rounded-lg flex items-center justify-center p-1 mb-0.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
                   </div>
+                  <span className="text-[10px] sm:text-xs font-medium">
+                    Practice Mode
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-white/80">
+                    No time limit
+                  </span>
                 </button>
-              ))}
-            </div>
-          </div>
 
-          {/* Time Difficulty Selection - only show if timed mode is active */}
-          {timedMode && (
-            <div>
-              <label className="text-white/80 font-medium block mb-1">
-                Time Difficulty:
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {["Easy", "Medium", "Hard"].map((level) => (
-                  <button
-                    key={level}
-                    onClick={() => handleTimeMemoryDifficultyChange(level)}
-                    className={`py-1.5 px-2 rounded-lg transition-colors ${
-                      timeDifficulty === level
-                        ? level === "Easy"
-                          ? "bg-emerald-500 text-white"
-                          : level === "Medium"
-                            ? "bg-amber-500 text-white"
-                            : "bg-rose-500 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium">{level}</span>
-                      <span className="text-xs block">
-                        {level === "Easy"
-                          ? "90 seconds"
-                          : level === "Medium"
-                            ? "75 seconds"
-                            : "60 seconds"}
-                      </span>
-                    </div>
-                  </button>
-                ))}
+                <button
+                  onClick={() => setTimedMode(true)}
+                  className={`p-1.5 sm:p-2 rounded-lg transition-colors flex flex-col items-center ${
+                    timedMode
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 hover:bg-white/20"
+                  }`}
+                >
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/90 rounded-lg flex items-center justify-center p-1 mb-0.5">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-[10px] sm:text-xs font-medium">
+                    Timed Mode
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-white/80">
+                    Race against the clock
+                  </span>
+                </button>
               </div>
-            </div>
-          )}
 
-          <div className="flex justify-between mt-3">
-            <button
-              onClick={handlePrevStep}
-              className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-md"
-            >
-              Back
-            </button>
-            <button
-              onClick={handleStart}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium shadow-md"
-            >
-              Start Game
-            </button>
+              {/* Card Count / Difficulty Level */}
+              <div className="flex-shrink-0">
+                <label className="text-[10px] sm:text-xs text-white/80 font-medium block mb-0.5">
+                  Card Count:
+                </label>
+                <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+                  {Object.entries(MEMORY_DIFFICULTIES).map(([diff, size]) => (
+                    <button
+                      key={diff}
+                      onClick={() => {
+                        console.log(
+                          `Clicked ${diff} difficulty button, grid size: ${size}`
+                        );
+                        handleMemoryDifficultyChange(diff);
+                      }}
+                      className={`py-0.5 sm:py-1 px-1 sm:px-1.5 rounded-lg transition-colors text-xs ${
+                        difficulty === diff
+                          ? diff === "Easy"
+                            ? "bg-teal-500 text-white"
+                            : diff === "Medium"
+                              ? "bg-orange-500 text-white"
+                              : "bg-red-500 text-white"
+                          : "bg-white/10 text-white/90 hover:bg-white/20"
+                      }`}
+                    >
+                      <div className="text-center">
+                        <span className="font-medium block text-[10px] sm:text-xs">
+                          {diff}
+                        </span>
+                        <span className="text-[9px] sm:text-[10px] block">
+                          {GRID_SIZES[size] / 2} pairs
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Time Difficulty Selection - only show if timed mode is active */}
+              {timedMode && (
+                <div className="flex-shrink-0">
+                  <label className="text-[10px] sm:text-xs text-white/80 font-medium block mb-0.5">
+                    Time Difficulty:
+                  </label>
+                  <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+                    {["Easy", "Medium", "Hard"].map((level) => (
+                      <button
+                        key={level}
+                        onClick={() => handleTimeMemoryDifficultyChange(level)}
+                        className={`py-0.5 sm:py-1 px-1 sm:px-1.5 rounded-lg transition-colors text-xs ${
+                          timeDifficulty === level
+                            ? level === "Easy"
+                              ? "bg-emerald-500 text-white"
+                              : level === "Medium"
+                                ? "bg-amber-500 text-white"
+                                : "bg-rose-500 text-white"
+                            : "bg-white/10 text-white/90 hover:bg-white/20"
+                        }`}
+                      >
+                        <div className="text-center">
+                          <span className="font-medium block text-[10px] sm:text-xs">
+                            {level}
+                          </span>
+                          <span className="text-[9px] sm:text-[10px] block">
+                            {level === "Easy"
+                              ? "90s"
+                              : level === "Medium"
+                                ? "75s"
+                                : "60s"}
+                          </span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
+        </div>
+
+        {/* Buttons Container - On the Right */}
+        <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+          <button
+            onClick={handlePrevStep}
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleStart}
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg"
+          >
+            Start Game
+          </button>
         </div>
       </div>
     </div>
   );
 
-  // SettingsModal component for in-game settings
-  const SettingsModal = () => (
-    <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onCancel}
-      ></div>
-      <div className="bg-gradient-to-b from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl p-6 max-w-md w-full mx-auto border border-white/20 shadow-lg z-10">
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold text-white">Game Settings</h2>
-
-          {/* Clef Selection */}
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Clef
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={() => setClef("Treble")}
-                className={`p-2 rounded-lg transition-colors ${
-                  clef === "Treble"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white/10 text-white/90 hover:bg-white/20"
-                }`}
-              >
-                Treble Clef
-              </button>
-              <button
-                onClick={() => setClef("Bass")}
-                className={`p-2 rounded-lg transition-colors ${
-                  clef === "Bass"
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white/10 text-white/90 hover:bg-white/20"
-                }`}
-              >
-                Bass Clef
-              </button>
+  // Mobile Modal Step Components
+  const MobileModalClefStep = () => (
+    <div className="flex flex-col h-full">
+      <h2 className="text-base sm:text-lg font-bold text-white mb-3 flex-shrink-0">
+        Step 1 of 3: Choose Clef
+      </h2>
+      <div className="flex-1 flex items-center justify-center min-h-0">
+        <div className="grid grid-cols-2 gap-4 w-full">
+          <button
+            onClick={() => setClef("Treble")}
+            className={`p-4 rounded-lg transition-colors flex flex-col items-center ${
+              clef === "Treble"
+                ? "bg-indigo-600 text-white"
+                : "bg-white/10 text-white/90 hover:bg-white/20"
+            }`}
+          >
+            <div className="w-24 h-24 flex items-center justify-center mb-2">
+              <img
+                src={trebleClefImage}
+                alt="Treble Clef"
+                className="w-full h-full object-contain invert"
+              />
             </div>
-          </div>
+            <span className="text-sm font-medium">Treble Clef</span>
+          </button>
+          <button
+            onClick={() => setClef("Bass")}
+            className={`p-4 rounded-lg transition-colors flex flex-col items-center ${
+              clef === "Bass"
+                ? "bg-indigo-600 text-white"
+                : "bg-white/10 text-white/90 hover:bg-white/20"
+            }`}
+          >
+            <div className="w-24 h-24 flex items-center justify-center mb-2">
+              <img
+                src={bassClefImage}
+                alt="Bass Clef"
+                className="w-full h-full object-contain invert"
+              />
+            </div>
+            <span className="text-sm font-medium">Bass Clef</span>
+          </button>
+        </div>
+      </div>
+      <div className="flex justify-end mt-4 flex-shrink-0">
+        <button
+          onClick={handleModalNextStep}
+          className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
 
-          {/* Note Selection */}
-          <div>
-            <label className="block text-sm font-medium text-white/80 mb-1">
-              Notes
-            </label>
-            <div className="w-full overflow-x-auto">
-              <div className="inline-flex gap-1 p-1 bg-white/10 backdrop-blur-sm rounded-lg mb-1 border border-white/20">
-                {/* Display notes based on clef selection */}
-                {(clef === "Treble"
+  const MobileModalNoteStep = () => (
+    <div className="flex flex-col h-full">
+      <div className="flex-shrink-0">
+        <h2 className="text-base sm:text-lg font-bold text-white mb-2">
+          Step 2 of 3: Choose Notes
+        </h2>
+        <p className="text-sm text-white/80 mb-3">
+          Select which notes you want to practice with:
+        </p>
+      </div>
+      <div className="flex-1 flex items-center justify-center min-h-0 overflow-hidden">
+        <div
+          className="w-full overflow-x-auto overflow-y-hidden pb-2 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-gray-700/50 [&::-webkit-scrollbar-thumb]:bg-indigo-600 [&::-webkit-scrollbar-thumb]:rounded-full"
+          style={{
+            scrollbarWidth: "thin",
+            scrollbarColor: "#4F46E5 #1F2937",
+          }}
+        >
+          <div className="flex gap-1.5 p-1.5 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 justify-start">
+            {(() => {
+              const notes =
+                clef === "Treble"
                   ? trebleNotes
                   : bassNotes.length > 0
                     ? [
@@ -738,210 +829,545 @@ export function GameSettings({
                           .filter((note) => note.note !== "דו")
                           .reverse(),
                       ].filter(Boolean)
-                    : bassNotes
-                ).map((note) => (
-                  <button
-                    key={note.note}
-                    onClick={() => handleNoteToggle(note.note)}
-                    className={`p-1 rounded-lg transition-colors flex flex-col items-center min-w-[50px] ${
-                      selectedNotes.includes(note.note)
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white/20 text-white hover:bg-white/30"
-                    }`}
-                  >
-                    <div className="w-10 h-10 bg-white/90 rounded-md flex items-center justify-center">
-                      <img
-                        src={note.image}
-                        alt={note.note}
-                        className="w-9 h-9 object-contain"
-                      />
-                    </div>
-                    <span className="text-xs mt-1 font-medium">
-                      {note.note}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <p className="text-sm text-white/80">
-              Selected: {selectedNotes.length} notes
-            </p>
-          </div>
-
-          {/* Game mode for Note Recognition */}
-          {gameType === "note-recognition" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">
-                  Game Mode
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => handleTimedModeToggle(false)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      !timedMode
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    Practice Mode
-                  </button>
-                  <button
-                    onClick={() => handleTimedModeToggle(true)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      timedMode
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    Timed Mode
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">
-                  Difficulty
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => setDifficulty("Easy")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      difficulty === "Easy" || difficulty === "easy"
-                        ? "bg-emerald-500 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium block">Easy</span>
-                      <span className="text-xs">60 seconds</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setDifficulty("Medium")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      difficulty === "Medium" || difficulty === "medium"
-                        ? "bg-amber-500 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium block">Medium</span>
-                      <span className="text-xs">45 seconds</span>
-                    </div>
-                  </button>
-                  <button
-                    onClick={() => setDifficulty("Hard")}
-                    className={`p-2 rounded-lg transition-colors ${
-                      difficulty === "Hard" || difficulty === "hard"
-                        ? "bg-rose-500 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    <div className="text-center">
-                      <span className="font-medium block">Hard</span>
-                      <span className="text-xs">30 seconds</span>
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-
-          {/* Memory Game Settings in Modal */}
-          {gameType === "memory" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">
-                  Game Mode
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => handleTimedModeToggle(false)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      !timedMode
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    Practice Mode
-                  </button>
-                  <button
-                    onClick={() => handleTimedModeToggle(true)}
-                    className={`p-2 rounded-lg transition-colors ${
-                      timedMode
-                        ? "bg-indigo-600 text-white"
-                        : "bg-white/10 text-white/90 hover:bg-white/20"
-                    }`}
-                  >
-                    Timed Mode
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-white/80 mb-1">
-                  Card Count
-                </label>
-                <select
-                  value={difficulty}
-                  onChange={(e) => handleMemoryDifficultyChange(e.target.value)}
-                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    : bassNotes;
+              return notes.map((note) => (
+                <button
+                  key={note.note}
+                  onClick={() => handleNoteToggle(note.note)}
+                  className={`p-1 rounded-lg transition-colors flex flex-col items-center flex-shrink-0 ${
+                    selectedNotes.includes(note.note)
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                  style={{
+                    width: "70px",
+                    minWidth: "70px",
+                  }}
                 >
-                  {Object.keys(MEMORY_DIFFICULTIES).map((diff) => (
-                    <option key={diff} value={diff} className="bg-gray-800">
-                      {diff} ({GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs)
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-1 mt-1">
-                  <div className="h-1.5 w-4 rounded-full bg-teal-500"></div>
-                  <div className="h-1.5 w-4 rounded-full bg-orange-500"></div>
-                  <div className="h-1.5 w-4 rounded-full bg-red-500"></div>
-                </div>
-              </div>
-
-              {timedMode && (
-                <div>
-                  <label className="block text-sm font-medium text-white/80 mb-1">
-                    Time Difficulty
-                  </label>
-                  <select
-                    value={timeDifficulty}
-                    onChange={(e) =>
-                      handleTimeMemoryDifficultyChange(e.target.value)
-                    }
-                    className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                  >
-                    {Object.keys(MEMORY_GAME_TIME_LIMITS).map((diff) => (
-                      <option key={diff} value={diff} className="bg-gray-800">
-                        {diff} ({MEMORY_GAME_TIME_LIMITS[diff]} seconds)
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="flex gap-2 mt-3">
-            <button
-              onClick={onCancel}
-              className="flex-1 px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
-            >
-              Resume
-            </button>
-            <button
-              onClick={handleStart}
-              className="flex-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              Restart Game
-            </button>
+                  <div className="w-full aspect-square bg-white/90 rounded flex items-center justify-center p-0.5">
+                    <img
+                      src={note.image}
+                      alt={note.note}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <span className="text-[10px] mt-0.5 font-medium truncate w-full text-center">
+                    {note.note}
+                  </span>
+                </button>
+              ));
+            })()}
           </div>
+        </div>
+      </div>
+      <div className="flex-shrink-0">
+        <p className="text-sm text-white/80 mb-3">
+          Selected: {selectedNotes.length} notes
+        </p>
+        <div className="flex justify-between gap-3">
+          <button
+            onClick={handleModalPrevStep}
+            className="px-4 py-2 bg-white/10 border border-white/20 text-white text-sm font-medium rounded-lg hover:bg-white/20 transition-colors"
+          >
+            Back
+          </button>
+          <button
+            onClick={handleModalNextStep}
+            disabled={selectedNotes.length === 0}
+            className={`px-4 py-2 text-sm font-medium ${
+              selectedNotes.length === 0
+                ? "bg-gray-500 cursor-not-allowed"
+                : "bg-indigo-600 hover:bg-indigo-700"
+            } text-white rounded-lg transition-colors`}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>
   );
+
+  const MobileModalGameSettingsStep = () => (
+    <div className="flex flex-col h-full">
+      <h2 className="text-sm font-bold text-white mb-2 flex-shrink-0">
+        Step 3 of 3: Game Settings
+      </h2>
+
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-2">
+        {/* Game Mode */}
+        <div>
+          <label className="block text-xs font-medium text-white/80 mb-1">
+            Game Mode
+          </label>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              onClick={() => handleTimedModeToggle(false)}
+              className={`p-2 rounded-lg transition-colors text-xs ${
+                !timedMode
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white/10 text-white/90 hover:bg-white/20"
+              }`}
+            >
+              Practice Mode
+            </button>
+            <button
+              onClick={() => handleTimedModeToggle(true)}
+              className={`p-2 rounded-lg transition-colors text-xs ${
+                timedMode
+                  ? "bg-indigo-600 text-white"
+                  : "bg-white/10 text-white/90 hover:bg-white/20"
+              }`}
+            >
+              Timed Mode
+            </button>
+          </div>
+        </div>
+
+        {/* Difficulty/Card Count */}
+        {gameType === "note-recognition" ? (
+          <div>
+            <label className="block text-xs font-medium text-white/80 mb-1">
+              Difficulty
+            </label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {["Easy", "Medium", "Hard"].map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setDifficulty(level)}
+                  className={`p-1.5 rounded-lg transition-colors text-xs ${
+                    difficulty === level
+                      ? level === "Easy"
+                        ? "bg-emerald-500 text-white"
+                        : level === "Medium"
+                          ? "bg-amber-500 text-white"
+                          : "bg-rose-500 text-white"
+                      : "bg-white/10 text-white/90 hover:bg-white/20"
+                  }`}
+                >
+                  <div className="text-center">
+                    <span className="font-medium block text-[10px]">
+                      {level}
+                    </span>
+                    <span className="text-[9px]">
+                      {level === "Easy"
+                        ? "60s"
+                        : level === "Medium"
+                          ? "45s"
+                          : "30s"}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div>
+              <label className="block text-xs font-medium text-white/80 mb-1">
+                Card Count
+              </label>
+              <select
+                value={difficulty}
+                onChange={(e) => handleMemoryDifficultyChange(e.target.value)}
+                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {Object.keys(MEMORY_DIFFICULTIES).map((diff) => (
+                  <option key={diff} value={diff} className="bg-gray-800">
+                    {diff} ({GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs)
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {timedMode && (
+              <div>
+                <label className="block text-xs font-medium text-white/80 mb-1">
+                  Time Difficulty
+                </label>
+                <select
+                  value={timeDifficulty}
+                  onChange={(e) =>
+                    handleTimeMemoryDifficultyChange(e.target.value)
+                  }
+                  className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  {Object.keys(MEMORY_GAME_TIME_LIMITS).map((diff) => (
+                    <option key={diff} value={diff} className="bg-gray-800">
+                      {diff} ({MEMORY_GAME_TIME_LIMITS[diff]} seconds)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2 mt-3 flex-shrink-0">
+        <button
+          onClick={handleStart}
+          className="w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          Restart Game
+        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleModalPrevStep}
+            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 text-white text-sm font-medium rounded-lg hover:bg-white/20 transition-colors"
+          >
+            Back
+          </button>
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 text-white text-sm font-medium rounded-lg hover:bg-white/20 transition-colors"
+          >
+            Resume
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Desktop Modal (original single-page design)
+  const DesktopModal = () => (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">Game Settings</h2>
+
+      {/* Clef Selection */}
+      <div>
+        <label className="block text-sm font-medium text-white/80 mb-1">
+          Clef
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => setClef("Treble")}
+            className={`p-2 rounded-lg transition-colors ${
+              clef === "Treble"
+                ? "bg-indigo-600 text-white"
+                : "bg-white/10 text-white/90 hover:bg-white/20"
+            }`}
+          >
+            Treble Clef
+          </button>
+          <button
+            onClick={() => setClef("Bass")}
+            className={`p-2 rounded-lg transition-colors ${
+              clef === "Bass"
+                ? "bg-indigo-600 text-white"
+                : "bg-white/10 text-white/90 hover:bg-white/20"
+            }`}
+          >
+            Bass Clef
+          </button>
+        </div>
+      </div>
+
+      {/* Note Selection */}
+      <div>
+        <label className="block text-sm font-medium text-white/80 mb-1">
+          Notes
+        </label>
+        <div className="w-full overflow-hidden px-2 sm:px-3">
+          <div className="flex gap-0.5 sm:gap-1 p-0.5 sm:p-1 bg-white/10 backdrop-blur-sm rounded-lg mb-1 border border-white/20 justify-center">
+            {/* Display notes based on clef selection */}
+            {(() => {
+              const notes =
+                clef === "Treble"
+                  ? trebleNotes
+                  : bassNotes.length > 0
+                    ? [
+                        bassNotes.find((note) => note.note === "דו"),
+                        ...bassNotes
+                          .filter((note) => note.note !== "דו")
+                          .reverse(),
+                      ].filter(Boolean)
+                    : bassNotes;
+              return notes.map((note) => (
+                <button
+                  key={note.note}
+                  onClick={() => handleNoteToggle(note.note)}
+                  className={`p-0.5 sm:p-1 rounded-lg transition-colors flex flex-col items-center flex-shrink-0 ${
+                    selectedNotes.includes(note.note)
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/20 text-white hover:bg-white/30"
+                  }`}
+                  style={{
+                    width: `calc((100% - ${(notes.length - 1) * 2}px) / ${notes.length})`,
+                    maxWidth: "60px",
+                  }}
+                >
+                  <div className="w-full aspect-square bg-white/90 rounded-md flex items-center justify-center">
+                    <img
+                      src={note.image}
+                      alt={note.note}
+                      className="w-[85%] h-[85%] object-contain"
+                    />
+                  </div>
+                  <span className="text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center">
+                    {note.note}
+                  </span>
+                </button>
+              ));
+            })()}
+          </div>
+        </div>
+        <p className="text-sm text-white/80">
+          Selected: {selectedNotes.length} notes
+        </p>
+      </div>
+
+      {/* Game mode for Note Recognition */}
+      {gameType === "note-recognition" && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-1">
+              Game Mode
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleTimedModeToggle(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  !timedMode
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                Practice Mode
+              </button>
+              <button
+                onClick={() => handleTimedModeToggle(true)}
+                className={`p-2 rounded-lg transition-colors ${
+                  timedMode
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                Timed Mode
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-1">
+              Difficulty
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                onClick={() => setDifficulty("Easy")}
+                className={`p-2 rounded-lg transition-colors ${
+                  difficulty === "Easy" || difficulty === "easy"
+                    ? "bg-emerald-500 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                <div className="text-center">
+                  <span className="font-medium block">Easy</span>
+                  <span className="text-xs">60 seconds</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setDifficulty("Medium")}
+                className={`p-2 rounded-lg transition-colors ${
+                  difficulty === "Medium" || difficulty === "medium"
+                    ? "bg-amber-500 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                <div className="text-center">
+                  <span className="font-medium block">Medium</span>
+                  <span className="text-xs">45 seconds</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setDifficulty("Hard")}
+                className={`p-2 rounded-lg transition-colors ${
+                  difficulty === "Hard" || difficulty === "hard"
+                    ? "bg-rose-500 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                <div className="text-center">
+                  <span className="font-medium block">Hard</span>
+                  <span className="text-xs">30 seconds</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Memory Game Settings in Modal */}
+      {gameType === "memory" && (
+        <>
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-1">
+              Game Mode
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleTimedModeToggle(false)}
+                className={`p-2 rounded-lg transition-colors ${
+                  !timedMode
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                Practice Mode
+              </button>
+              <button
+                onClick={() => handleTimedModeToggle(true)}
+                className={`p-2 rounded-lg transition-colors ${
+                  timedMode
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/10 text-white/90 hover:bg-white/20"
+                }`}
+              >
+                Timed Mode
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white/80 mb-1">
+              Card Count
+            </label>
+            <select
+              value={difficulty}
+              onChange={(e) => handleMemoryDifficultyChange(e.target.value)}
+              className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {Object.keys(MEMORY_DIFFICULTIES).map((diff) => (
+                <option key={diff} value={diff} className="bg-gray-800">
+                  {diff} ({GRID_SIZES[MEMORY_DIFFICULTIES[diff]] / 2} pairs)
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-1 mt-1">
+              <div className="h-1.5 w-4 rounded-full bg-teal-500"></div>
+              <div className="h-1.5 w-4 rounded-full bg-orange-500"></div>
+              <div className="h-1.5 w-4 rounded-full bg-red-500"></div>
+            </div>
+          </div>
+
+          {timedMode && (
+            <div>
+              <label className="block text-sm font-medium text-white/80 mb-1">
+                Time Difficulty
+              </label>
+              <select
+                value={timeDifficulty}
+                onChange={(e) =>
+                  handleTimeMemoryDifficultyChange(e.target.value)
+                }
+                className="w-full bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {Object.keys(MEMORY_GAME_TIME_LIMITS).map((diff) => (
+                  <option key={diff} value={diff} className="bg-gray-800">
+                    {diff} ({MEMORY_GAME_TIME_LIMITS[diff]} seconds)
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </>
+      )}
+
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={onCancel}
+          className="flex-1 px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors"
+        >
+          Resume
+        </button>
+        <button
+          onClick={handleStart}
+          className="flex-1 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          Restart Game
+        </button>
+      </div>
+    </div>
+  );
+
+  // Main SettingsModal component that switches between mobile and desktop
+  const SettingsModal = () => {
+    // Detect mobile based on screen height (important for landscape mode)
+    // Mobile devices in landscape typically have height < 500px
+    const checkIsMobile = () => {
+      if (typeof window === "undefined") return false;
+      const height = window.innerHeight;
+      const width = window.innerWidth;
+      // Use height as primary indicator for landscape mobile devices
+      // Also check if it's a touch device
+      const isTouchDevice =
+        "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      return height < 500 || (isTouchDevice && width < 1024);
+    };
+
+    const [isMobile, setIsMobile] = useState(checkIsMobile());
+
+    useEffect(() => {
+      const handleResize = () => {
+        const newIsMobile = checkIsMobile();
+        setIsMobile(newIsMobile);
+        console.log(
+          "Window resized, isMobile:",
+          newIsMobile,
+          "width:",
+          window.innerWidth,
+          "height:",
+          window.innerHeight
+        );
+      };
+      window.addEventListener("resize", handleResize);
+      console.log(
+        "Initial isMobile:",
+        isMobile,
+        "width:",
+        window.innerWidth,
+        "height:",
+        window.innerHeight
+      );
+      return () => window.removeEventListener("resize", handleResize);
+    }, [isMobile]);
+
+    const renderMobileModalStep = () => {
+      console.log("Rendering mobile step:", modalStep);
+      switch (modalStep) {
+        case 1:
+          return <MobileModalClefStep />;
+        case 2:
+          return <MobileModalNoteStep />;
+        case 3:
+          return <MobileModalGameSettingsStep />;
+        default:
+          return <MobileModalClefStep />;
+      }
+    };
+
+    console.log(
+      "SettingsModal render - isMobile:",
+      isMobile,
+      "modalStep:",
+      modalStep
+    );
+
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div
+          className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+          onClick={onCancel}
+        ></div>
+        <div
+          className={`bg-gradient-to-b from-gray-800/90 to-gray-900/90 backdrop-blur-md rounded-xl ${
+            isMobile ? "p-4 h-[80vh] overflow-y-auto" : "p-6"
+          } ${isMobile ? "max-w-2xl" : "max-w-md"} w-full mx-auto border border-white/20 shadow-lg z-10`}
+        >
+          {isMobile ? renderMobileModalStep() : <DesktopModal />}
+        </div>
+      </div>
+    );
+  };
 
   // Render the appropriate screen based on the current step
   const renderScreen = () => {
@@ -977,7 +1403,9 @@ export function GameSettings({
   };
 
   return (
-    <div className={`flex flex-col ${isModal ? "h-full" : ""} text-white p-4`}>
+    <div
+      className={`flex flex-col ${isModal ? "h-full" : "flex-1 min-h-0"} text-white`}
+    >
       {renderScreen()}
     </div>
   );
