@@ -43,6 +43,7 @@ export function PreGameSettingsScreen({
   subtitle = "Configure your rhythm training session",
 }) {
   const [localSettings, setLocalSettings] = useState(settings);
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     setLocalSettings(settings);
@@ -54,24 +55,30 @@ export function PreGameSettingsScreen({
     onStart(localSettings);
   };
 
+  const handleNextStep = () => {
+    setStep((prev) => Math.min(prev + 1, 3));
+  };
+
+  const handlePrevStep = () => {
+    setStep((prev) => Math.max(prev - 1, 1));
+  };
+
   const difficulties = getAvailableDifficulties();
   const timeSignatures = getTimeSignatures();
 
-  return (
-    <div className="flex flex-col items-center justify-start h-screen overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white p-6">
-      <div className="w-full max-w-2xl my-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4">{title}</h1>
-          <p className="text-gray-200 text-lg">{subtitle}</p>
-        </div>
-
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 space-y-8">
-          {/* Difficulty Selection */}
-          <div>
-            <label className="block text-lg font-medium text-white mb-4">
-              Difficulty Level
-            </label>
-            <div className="grid grid-cols-1 gap-3">
+  // Step 1: Difficulty Selection
+  const DifficultyStep = () => (
+    <div
+      className="flex flex-row gap-3 w-full max-w-5xl items-stretch"
+      style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
+    >
+      <div className="flex-1 flex items-center overflow-hidden">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col p-2.5 sm:p-3 w-full">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+            Step 1 of 3: Choose Difficulty
+          </h2>
+          <div className="space-y-2 flex-1 flex flex-col justify-center">
+            <div className="grid grid-cols-1 gap-1.5 sm:gap-2">
               {difficulties.map((difficulty) => {
                 const diffInfo = getDifficultyInfo(difficulty);
                 return (
@@ -80,14 +87,16 @@ export function PreGameSettingsScreen({
                     onClick={() =>
                       setLocalSettings((prev) => ({ ...prev, difficulty }))
                     }
-                    className={`p-4 rounded-lg border text-base font-medium transition-all ${
+                    className={`p-2 sm:p-3 rounded-lg transition-colors ${
                       localSettings.difficulty === difficulty
-                        ? "bg-blue-500 text-white border-blue-500"
-                        : "bg-white/10 text-white border-white/30 hover:border-blue-300 hover:bg-white/20"
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white/20 text-white hover:bg-white/30"
                     }`}
                   >
-                    <div className="font-semibold">{diffInfo.name}</div>
-                    <div className="text-sm opacity-75">
+                    <div className="font-semibold text-sm sm:text-base">
+                      {diffInfo.name}
+                    </div>
+                    <div className="text-xs opacity-75">
                       {diffInfo.description}
                     </div>
                   </button>
@@ -95,23 +104,42 @@ export function PreGameSettingsScreen({
               })}
             </div>
           </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+        <button
+          onClick={handleNextStep}
+          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
 
-          {/* Time Signature */}
-          <div>
-            <label className="block text-lg font-medium text-white mb-4">
-              Time Signature
-            </label>
-            <div className="grid grid-cols-2 gap-3">
+  // Step 2: Time Signature Selection
+  const TimeSignatureStep = () => (
+    <div
+      className="flex flex-row gap-3 w-full max-w-5xl items-stretch"
+      style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
+    >
+      <div className="flex-1 flex items-center overflow-hidden">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col p-2.5 sm:p-3 w-full">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+            Step 2 of 3: Choose Time Signature
+          </h2>
+          <div className="space-y-2 flex-1 flex flex-col justify-center">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
               {timeSignatures.map((timeSignature) => (
                 <button
                   key={timeSignature.name}
                   onClick={() =>
                     setLocalSettings((prev) => ({ ...prev, timeSignature }))
                   }
-                  className={`p-4 rounded-lg border text-base font-medium transition-all ${
+                  className={`p-2 sm:p-3 rounded-lg transition-colors text-sm sm:text-base ${
                     localSettings.timeSignature.name === timeSignature.name
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white/10 text-white border-white/30 hover:border-blue-300 hover:bg-white/20"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/20 text-white hover:bg-white/30"
                   }`}
                 >
                   {timeSignature.name}
@@ -119,75 +147,92 @@ export function PreGameSettingsScreen({
               ))}
             </div>
           </div>
+        </div>
+      </div>
+      <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+        <button
+          onClick={handlePrevStep}
+          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleNextStep}
+          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
 
-          {/* Tempo Range */}
-          <div>
-            <label className="block text-lg font-medium text-white mb-4">
-              Tempo: {localSettings.tempo} BPM
-            </label>
-            <input
-              type="range"
-              min="60"
-              max="180"
-              value={localSettings.tempo}
-              onChange={(e) =>
-                setLocalSettings((prev) => ({
-                  ...prev,
-                  tempo: parseInt(e.target.value),
-                }))
-              }
-              className="w-full h-3 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
-              style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
-                  ((localSettings.tempo - 60) / (180 - 60)) * 100
-                }%, rgba(255,255,255,0.2) ${
-                  ((localSettings.tempo - 60) / (180 - 60)) * 100
-                }%, rgba(255,255,255,0.2) 100%)`,
-              }}
-            />
-            <div className="flex justify-between text-sm text-gray-300 mt-2">
-              <span>60 BPM</span>
-              <span>180 BPM</span>
+  // Step 3: Tempo Selection
+  const TempoStep = () => (
+    <div
+      className="flex flex-row gap-3 w-full max-w-5xl items-stretch"
+      style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
+    >
+      <div className="flex-1 flex items-center overflow-hidden">
+        <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col p-2.5 sm:p-3 w-full">
+          <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+            Step 3 of 3: Set Tempo
+          </h2>
+          <div className="space-y-2 flex-1 flex flex-col justify-center">
+            <div>
+              <label className="block text-sm sm:text-base font-medium text-white mb-2 text-center">
+                Tempo: {localSettings.tempo} BPM
+              </label>
+              <input
+                type="range"
+                min="60"
+                max="180"
+                value={localSettings.tempo}
+                onChange={(e) =>
+                  setLocalSettings((prev) => ({
+                    ...prev,
+                    tempo: parseInt(e.target.value),
+                  }))
+                }
+                className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
+                style={{
+                  background: `linear-gradient(to right, #4F46E5 0%, #4F46E5 ${
+                    ((localSettings.tempo - 60) / (180 - 60)) * 100
+                  }%, rgba(255,255,255,0.2) ${
+                    ((localSettings.tempo - 60) / (180 - 60)) * 100
+                  }%, rgba(255,255,255,0.2) 100%)`,
+                }}
+              />
+              <div className="flex justify-between text-xs text-white/70 mt-2">
+                <span>60 BPM</span>
+                <span>180 BPM</span>
+              </div>
             </div>
           </div>
-
-          {/* Adaptive Difficulty */}
-          <div className="flex items-center justify-between">
-            <label className="text-lg font-medium text-white">
-              Adaptive Difficulty
-            </label>
-            <button
-              onClick={() =>
-                setLocalSettings((prev) => ({
-                  ...prev,
-                  adaptiveDifficulty: !prev.adaptiveDifficulty,
-                }))
-              }
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                localSettings.adaptiveDifficulty ? "bg-blue-600" : "bg-white/20"
-              }`}
-            >
-              <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
-                  localSettings.adaptiveDifficulty
-                    ? "translate-x-7"
-                    : "translate-x-1"
-                }`}
-              />
-            </button>
-          </div>
-
-          {/* Start Button */}
-          <div className="text-center pt-6">
-            <Button
-              onClick={handleStart}
-              variant="primary"
-              className="px-12 py-4 text-xl font-semibold bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
-            >
-              Start Training
-            </Button>
-          </div>
         </div>
+      </div>
+      <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+        <button
+          onClick={handlePrevStep}
+          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+        >
+          Back
+        </button>
+        <button
+          onClick={handleStart}
+          className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg"
+        >
+          Start Training
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white">
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-2 py-1">
+        {step === 1 && <DifficultyStep />}
+        {step === 2 && <TimeSignatureStep />}
+        {step === 3 && <TempoStep />}
       </div>
     </div>
   );

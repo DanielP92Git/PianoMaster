@@ -790,11 +790,11 @@ export function MetronomeTrainer() {
         newExerciseScores.length;
 
       console.log(
-        `[GAME COMPLETE] Final score: ${finalScorePercentage.toFixed(1)}% - Playing CORRECT sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
+        `[GAME COMPLETE] Final score: ${finalScorePercentage.toFixed(1)}% - Playing VICTORY sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
       );
 
-      // Use correct.mp3 for successful session completion
-      playCorrectSound();
+      // Play victory sound for successful session completion
+      playVictorySound();
 
       // Show final results after a delay
       setTimeout(() => {
@@ -804,18 +804,17 @@ export function MetronomeTrainer() {
       return;
     }
 
-    // For individual exercises, play victory or wrong sound based on accuracy
+    // For individual exercises, only play wrong sound if failed
     const exercisePassed = exerciseAccuracy >= 50; // 50% threshold
-    if (exercisePassed) {
-      console.log(
-        `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - Playing VICTORY sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
-      );
-      playVictorySound();
-    } else {
+    if (!exercisePassed) {
       console.log(
         `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - Playing WRONG sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
       );
       playWrongSound();
+    } else {
+      console.log(
+        `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - No sound (waiting for next pattern)`
+      );
     }
 
     // Stay in FEEDBACK phase - user must click "Next Pattern" button to continue
@@ -829,7 +828,6 @@ export function MetronomeTrainer() {
     exerciseProgress.totalExercises,
     playVictorySound,
     playWrongSound,
-    playCorrectSound,
     audioEngine,
   ]);
 
@@ -1244,87 +1242,73 @@ export function MetronomeTrainer() {
     );
   }
 
-  // Main game interface
+  // Get guidance text based on game phase
+  const getGuidanceText = () => {
+    if (gamePhase === GAME_PHASES.COUNT_IN) {
+      return "Listen for the strong beat - tap to start!";
+    }
+    if (gamePhase === GAME_PHASES.PATTERN_PLAYBACK) {
+      return "Listen to the pattern";
+    }
+    if (gamePhase === GAME_PHASES.GET_READY) {
+      return "Get ready to tap the pattern";
+    }
+    if (gamePhase === GAME_PHASES.USER_PERFORMANCE) {
+      return hasUserStartedTapping
+        ? "Keep tapping the pattern!"
+        : "Listen for the strong downbeat, then tap to start";
+    }
+    if (gamePhase === GAME_PHASES.FEEDBACK) {
+      return "How did you do?";
+    }
+    return "Listen to the steady beat";
+  };
+
+  // Main game interface - New compact layout
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <BackButton
-            to="/rhythm-mode"
-            name="Rhythm Games"
-            className="text-white/80 hover:text-white"
-          />
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-white">
-              Metronome Rhythm Trainer
-            </h1>
-            <p className="text-gray-300 text-sm">
-              {gameSettings.timeSignature.name} • {gameSettings.tempo} BPM •{" "}
-              {gameSettings.difficulty}
-            </p>
-          </div>
-          <div className="w-24"> {/* Spacer for centering */}</div>
+    <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+      {/* Compact Header */}
+      <div className="flex-shrink-0 px-4 py-2 flex items-center justify-between">
+        <BackButton
+          to="/rhythm-mode"
+          name="Rhythm Games"
+          className="text-white/80 hover:text-white text-sm"
+        />
+        <div className="text-center text-white">
+          <h1 className="text-base sm:text-lg font-bold">
+            Metronome Rhythm Trainer
+          </h1>
+          <p className="text-xs">
+            {gameSettings.timeSignature.name} • {gameSettings.tempo} BPM •{" "}
+            {gameSettings.difficulty}
+          </p>
         </div>
-
-        {/* Game Status */}
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center bg-white/10 backdrop-blur-md rounded-full px-4 py-2 border border-white/20">
-            <span className="text-white font-medium">
-              {gamePhase === GAME_PHASES.COUNT_IN &&
-                `Count-in: ${currentBeat || 1} of ${gameSettings.timeSignature.beats}`}
-              {gamePhase === GAME_PHASES.PATTERN_PLAYBACK &&
-                "Listen to the pattern"}
-              {gamePhase === GAME_PHASES.GET_READY &&
-                "Get ready to tap the pattern"}
-              {gamePhase === GAME_PHASES.USER_PERFORMANCE &&
-                (hasUserStartedTapping
-                  ? "Keep tapping the pattern!"
-                  : "Listen for the strong beat - tap to start!")}
-              {gamePhase === GAME_PHASES.FEEDBACK && "How did you do?"}
-            </span>
-          </div>
+        <div className="text-xs text-white text-right whitespace-nowrap">
+          Ex {exerciseProgress.currentExercise}/
+          {exerciseProgress.totalExercises}
         </div>
+      </div>
 
-        {/* Progress Bar */}
-        <div className="w-full max-w-3xl mx-auto px-6 mb-4">
-          <ProgressBar
-            current={exerciseProgress.currentExercise}
-            total={exerciseProgress.totalExercises}
-          />
-        </div>
-
-        {/* Metronome Display */}
-        <div className="mb-6">
+      {/* Main Game Area - Side by Side */}
+      <div className="flex-1 flex flex-col sm:flex-row gap-4 px-4 overflow-hidden min-h-0">
+        {/* Left Side: Metronome + Guidance */}
+        <div className="flex-1 flex flex-col justify-center space-y-4 min-h-0">
+          {/* Metronome Beats - Horizontal */}
           <MetronomeDisplay
             currentBeat={currentBeat}
             timeSignature={gameSettings.timeSignature}
             isActive={gamePhase !== GAME_PHASES.FEEDBACK}
             isCountIn={gamePhase === GAME_PHASES.COUNT_IN}
-            showInstructions={
-              gamePhase === GAME_PHASES.COUNT_IN ||
-              gamePhase === GAME_PHASES.PATTERN_PLAYBACK ||
-              gamePhase === GAME_PHASES.GET_READY ||
-              gamePhase === GAME_PHASES.USER_PERFORMANCE
-            }
-            instructionText={
-              gamePhase === GAME_PHASES.COUNT_IN
-                ? "Count-in: Get ready to listen to the pattern"
-                : gamePhase === GAME_PHASES.PATTERN_PLAYBACK
-                  ? "Listen to how the pattern fits with the beat"
-                  : gamePhase === GAME_PHASES.GET_READY
-                    ? "Get ready - you'll tap on the next beat 1"
-                    : gamePhase === GAME_PHASES.USER_PERFORMANCE
-                      ? hasUserStartedTapping
-                        ? "Continue tapping with the metronome"
-                        : "Listen for the strong downbeat, then tap to start"
-                      : "Listen to the steady beat"
-            }
           />
+
+          {/* User Guidance Text */}
+          <div className="text-center text-white text-sm sm:text-base px-4">
+            {getGuidanceText()}
+          </div>
         </div>
 
-        {/* Tap Area */}
-        <div className="mb-6">
+        {/* Right Side: TAP HERE Button */}
+        <div className="flex-1 flex items-center justify-center min-h-0">
           <TapArea
             onTap={handleTap}
             feedback={feedback}
@@ -1336,67 +1320,55 @@ export function MetronomeTrainer() {
                   ? "TAP HERE"
                   : "LISTEN"
             }
-            subtitle={
-              gamePhase === GAME_PHASES.GET_READY
-                ? "Prepare to tap on beat 1"
-                : gamePhase === GAME_PHASES.USER_PERFORMANCE
-                  ? "Tap the rhythm pattern"
-                  : gamePhase === GAME_PHASES.PATTERN_PLAYBACK
-                    ? "Listen carefully to the rhythm pattern"
-                    : "Wait for your turn to tap"
-            }
           />
         </div>
+      </div>
 
-        {/* Session Stats */}
-        <div className="mb-6">
-          <Card className="bg-white/10 backdrop-blur-md border-white/20">
-            <CardContent className="pt-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-blue-400">
-                    {sessionStats.patternsCompleted}
-                  </div>
-                  <div className="text-xs text-gray-300">Patterns</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-green-400">
-                    {sessionStats.totalScore}
-                  </div>
-                  <div className="text-xs text-gray-300">Score</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-yellow-400">
-                    {sessionStats.maxCombo}
-                  </div>
-                  <div className="text-xs text-gray-300">Max Combo</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-purple-400">
-                    {sessionStats.perfectTaps + sessionStats.goodTaps}
-                  </div>
-                  <div className="text-xs text-gray-300">Good Taps</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      {/* Bottom Stats + Controls */}
+      <div className="flex-shrink-0 px-4 pb-4 space-y-3">
+        {/* Compact Stats Row */}
+        <div className="flex justify-around text-center text-white text-xs sm:text-sm">
+          <div>
+            <div className="text-lg sm:text-2xl font-bold text-blue-400">
+              {sessionStats.patternsCompleted}
+            </div>
+            <div>Patterns</div>
+          </div>
+          <div>
+            <div className="text-lg sm:text-2xl font-bold text-green-400">
+              {sessionStats.totalScore}
+            </div>
+            <div>Score</div>
+          </div>
+          <div>
+            <div className="text-lg sm:text-2xl font-bold text-yellow-400">
+              {sessionStats.maxCombo}
+            </div>
+            <div>Max Combo</div>
+          </div>
+          <div>
+            <div className="text-lg sm:text-2xl font-bold text-purple-400">
+              {sessionStats.perfectTaps + sessionStats.goodTaps}
+            </div>
+            <div>Good Taps</div>
+          </div>
         </div>
 
-        {/* Game Controls */}
+        {/* Navigation Buttons (feedback phase only) */}
         {gamePhase === GAME_PHASES.FEEDBACK &&
           !exerciseProgress.isGameComplete && (
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-3">
               <Button
                 onClick={nextPattern}
                 variant="primary"
-                className="px-8 py-3"
+                className="px-6 py-2 text-sm sm:text-base"
               >
                 Next Pattern
               </Button>
               <Button
                 onClick={endSession}
                 variant="outline"
-                className="px-8 py-3"
+                className="px-6 py-2 text-sm sm:text-base"
               >
                 End Session
               </Button>
