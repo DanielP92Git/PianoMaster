@@ -1004,15 +1004,14 @@ export function MetronomeTrainer() {
 
     setFeedback({ accuracy, points: SCORING[accuracy] });
 
-    // Play feedback sound for individual tap - use drum-stick sound for all taps
-    playDrumStickSound();
+    // Play feedback sound for individual tap - use Web Audio for instant response
+    audioEngine.createTapSound(0.8);
 
     // Clear feedback after short delay
     setTimeout(() => setFeedback(null), 1000);
   }, [
     gamePhase,
     audioEngine,
-    playDrumStickSound,
     hasUserStartedTapping,
     beatDuration,
     gameSettings,

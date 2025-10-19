@@ -34,6 +34,10 @@ export const useAudioEngine = (initialTempo = 120) => {
   const pianoSoundBufferRef = useRef(null);
   const pianoSoundLoadedRef = useRef(false);
 
+  // Tap sound management (for instant feedback)
+  const tapSoundBufferRef = useRef(null);
+  const tapSoundLoadedRef = useRef(false);
+
   /**
    * Initialize Web Audio API context with browser compatibility
    */
@@ -68,6 +72,9 @@ export const useAudioEngine = (initialTempo = 120) => {
 
       // Load piano sound after initialization
       await loadPianoSound();
+
+      // Load tap sound for instant feedback
+      await loadTapSound();
 
       console.log("Audio engine initialized successfully");
       return true;
@@ -123,6 +130,50 @@ export const useAudioEngine = (initialTempo = 120) => {
     }
 
     console.log("❌ Failed to load piano sound from all paths");
+    return false;
+  }, []);
+
+  /**
+   * Load tap/drum-stick sound for immediate feedback
+   */
+  const loadTapSound = useCallback(async () => {
+    if (tapSoundLoadedRef.current && tapSoundBufferRef.current) {
+      console.log("🥁 Tap sound already loaded");
+      return true;
+    }
+
+    const possibleTapPaths = [
+      "/sounds/drum-stick.mp3",
+      "/public/sounds/drum-stick.mp3",
+      "/src/assets/sounds/drum-stick.mp3",
+    ];
+
+    for (const path of possibleTapPaths) {
+      try {
+        console.log(`🥁 Attempting to load tap sound from: ${path}`);
+        const response = await fetch(path);
+
+        if (!response.ok) {
+          console.log(
+            `❌ Failed to load from ${path}: ${response.status} ${response.statusText}`
+          );
+          continue;
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer =
+          await audioContextRef.current.decodeAudioData(arrayBuffer);
+
+        tapSoundBufferRef.current = audioBuffer;
+        tapSoundLoadedRef.current = true;
+        console.log(`✅ Successfully loaded tap sound from: ${path}`);
+        return true;
+      } catch (err) {
+        console.log(`❌ Error loading from ${path}:`, err.message);
+      }
+    }
+
+    console.log("⚠️ Failed to load tap sound, will use synthetic fallback");
     return false;
   }, []);
 
@@ -356,6 +407,80 @@ export const useAudioEngine = (initialTempo = 120) => {
       return createPianoSound(currentTime + 0.01, volume, 1.0) !== null;
     },
     [createPianoSound, isReady]
+  );
+
+  /**
+   * Synthesize tap sound (ultra-low latency fallback)
+   * @param {number} volume - Volume level (0-1)
+   */
+  const createTapSoundSynthetic = useCallback((volume = 0.8) => {
+    if (!audioContextRef.current) return;
+
+    try {
+      const now = audioContextRef.current.currentTime;
+
+      const oscillator = audioContextRef.current.createOscillator();
+      const gainNode = audioContextRef.current.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContextRef.current.destination);
+
+      // Create "click" sound
+      oscillator.frequency.value = 2000; // 2kHz click
+      oscillator.type = "sine";
+
+      // Envelope: quick attack, fast decay
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(volume, now + 0.001); // 1ms attack
+      gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05); // 50ms decay
+
+      oscillator.start(now);
+      oscillator.stop(now + 0.05);
+
+      console.log(`🥁 Synthetic tap sound played at ${now.toFixed(3)}s`);
+    } catch (err) {
+      console.error("Error creating synthetic tap sound:", err);
+    }
+  }, []);
+
+  /**
+   * Create tap sound with ZERO latency
+   * @param {number} volume - Volume level (0-1)
+   */
+  const createTapSound = useCallback(
+    (volume = 0.8) => {
+      if (!audioContextRef.current) {
+        console.warn("❌ Audio context not initialized");
+        return;
+      }
+
+      // Option 1: Use loaded buffer (if available)
+      if (tapSoundBufferRef.current) {
+        try {
+          const source = audioContextRef.current.createBufferSource();
+          source.buffer = tapSoundBufferRef.current;
+
+          const gainNode = audioContextRef.current.createGain();
+          gainNode.gain.value = volume;
+
+          source.connect(gainNode);
+          gainNode.connect(audioContextRef.current.destination);
+
+          // Play IMMEDIATELY
+          source.start(audioContextRef.current.currentTime);
+
+          console.log(
+            `🥁 Tap sound played at ${audioContextRef.current.currentTime.toFixed(3)}s`
+          );
+        } catch (err) {
+          console.error("Error playing tap sound:", err);
+        }
+      } else {
+        // Option 2: Fallback to synthetic click (no file needed)
+        createTapSoundSynthetic(volume);
+      }
+    },
+    [createTapSoundSynthetic]
   );
 
   /**
@@ -992,6 +1117,8 @@ export const useAudioEngine = (initialTempo = 120) => {
     playPatternSound,
     createPianoSound,
     playPianoSound,
+    createTapSound,
+    createTapSoundSynthetic,
     playRhythmPattern,
 
     // Timing and scheduling
