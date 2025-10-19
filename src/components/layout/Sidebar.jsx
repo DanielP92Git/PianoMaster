@@ -91,7 +91,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
         role="navigation"
       >
         {/* Mobile Header */}
-        <div className="flex items-center justify-between p-4 border-b border-white/20 lg:hidden">
+        <div className="flex items-center justify-between p-4 border-b border-white/20 lg:hidden flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-800">Menu</h2>
           <button
             onClick={onClose}
@@ -102,8 +102,9 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </button>
         </div>
 
-        <nav className="flex-1 flex flex-col p-4 lg:p-6 min-h-0">
-          <div className="space-y-2 lg:space-y-1">
+        <nav className="flex-1 flex flex-col p-4 lg:p-6 min-h-0 overflow-hidden">
+          <div className="space-y-2 lg:space-y-1 overflow-y-auto flex-shrink min-h-0 pb-4"
+               style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent' }}>
             <NavLink
               to="/"
               onClick={onClose}
@@ -209,11 +210,8 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
             </NavLink>
           </div>
 
-          {/* Flexible spacer to push auth button to bottom */}
-          <div className="flex-1 min-h-0"></div>
-
           {/* Auth Button - Always at bottom */}
-          <div className="pt-6 border-t border-gray-200 lg:border-white/10 flex-shrink-0">
+          <div className="mt-auto pt-4 border-t border-gray-200 lg:border-white/10 flex-shrink-0">
             <AuthButton />
           </div>
         </nav>
