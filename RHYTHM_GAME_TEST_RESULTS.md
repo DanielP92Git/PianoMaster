@@ -304,6 +304,7 @@ First tap received **PERFECT** rating, indicating timing error < 60ms ✅
    - Activated by user clicking "Start Training"
 
 3. **Throughout Gameplay**:
+
    ```
    🎹 Creating piano sound at time: X.XXX, volume: 0.8, context state: running
    ```
@@ -345,6 +346,7 @@ First tap received **PERFECT** rating, indicating timing error < 60ms ✅
    - **Priority**: Informational only
 
 2. **Audio Context Suspended** (Initial):
+
    ```
    Audio context suspended - will resume on user interaction
    ```
