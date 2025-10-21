@@ -212,7 +212,6 @@ const CreateAssignmentModal = ({
               <option value="any">Any Mode</option>
               <option value="note-recognition">Note Recognition</option>
               <option value="rhythm-master">Rhythm Master</option>
-              <option value="sight-reading">Sight Reading</option>
             </select>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, Link } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 
@@ -9,12 +9,9 @@ export default function AppLayout() {
 
   // Updated game routes to match actual URL structure
   const gameRoutes = [
-    "/note-recognition-mode/note-recognition-game",
-    "/note-recognition-mode/memory-game",
-    "/rhythm-mode/listen-and-repeat",
-    "/rhythm-mode/create-own",
+    "/notes-reading-mode/notes-reading-game",
+    "/notes-reading-mode/memory-game",
     "/rhythm-mode/metronome-trainer",
-    "/rhythm-mode/enhanced",
   ];
 
   // Exact route matching
@@ -25,7 +22,7 @@ export default function AppLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col">
       {!isGameRoute && <Header onMenuClick={toggleSidebar} />}
       {!isGameRoute && (
         <Sidebar
@@ -35,9 +32,21 @@ export default function AppLayout() {
           onToggle={toggleSidebar}
         />
       )}
-      <main className={`${!isGameRoute ? "pt-2 lg:pl-72" : ""}`}>
+      <main className={`${!isGameRoute ? "pt-2 lg:pl-72" : ""} flex-1`}>
         <Outlet />
       </main>
+      {!isGameRoute && (
+        <footer
+          className={`${!isGameRoute ? "lg:pl-72" : ""} py-4 text-center border-t border-white/10`}
+        >
+          <Link
+            to="/legal"
+            className="text-white/50 hover:text-white/80 text-sm transition-colors duration-200 underline"
+          >
+            Legal & Attributions
+          </Link>
+        </footer>
+      )}
     </div>
   );
 }

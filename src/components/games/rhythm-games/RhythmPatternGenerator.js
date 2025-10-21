@@ -154,18 +154,13 @@ class HybridPatternService {
    * Validate pattern database structure
    */
   validatePatternDatabase(data) {
-    console.log("Validating pattern database:", data?.timeSignature);
 
     if (!data || typeof data !== "object") {
-      console.log("Validation failed: data is not an object");
+      
       return false;
     }
     if (!data.timeSignature || !data.patterns || !data.metadata) {
-      console.log("Validation failed: missing required fields", {
-        hasTimeSignature: !!data.timeSignature,
-        hasPatterns: !!data.patterns,
-        hasMetadata: !!data.metadata,
-      });
+      
       return false;
     }
 
@@ -175,9 +170,7 @@ class HybridPatternService {
         !data.patterns[difficulty] ||
         !Array.isArray(data.patterns[difficulty])
       ) {
-        console.log(
-          `Validation failed: missing or invalid ${difficulty} patterns`
-        );
+        
         return false;
       }
 
@@ -185,16 +178,12 @@ class HybridPatternService {
       for (let i = 0; i < data.patterns[difficulty].length; i++) {
         const pattern = data.patterns[difficulty][i];
         if (!this.validatePattern(pattern, data.timeSignature)) {
-          console.log(
-            `Validation failed: invalid pattern at ${difficulty}[${i}]`,
-            pattern
-          );
+          
           return false;
         }
       }
     }
 
-    console.log("Pattern database validation successful");
     return true;
   }
 
@@ -203,41 +192,31 @@ class HybridPatternService {
    */
   validatePattern(pattern, timeSignature = "4/4") {
     if (!Array.isArray(pattern)) {
-      console.log("Pattern validation failed: not an array", pattern);
+      
       return false;
     }
 
     // Handle different pattern formats
     if (typeof pattern[0] === "number") {
       // JSON format: array of fractional values (e.g., [0.25, 0, 0.25, 0.25])
-      console.log("Validating JSON format pattern:", pattern);
+      
       return this.validatePatternDuration(pattern, timeSignature);
     } else {
       // Schema format: array of objects with duration and note properties
-      console.log("Validating schema format pattern:", pattern);
 
       // Check each note object
       for (let i = 0; i < pattern.length; i++) {
         const note = pattern[i];
         if (!note || typeof note !== "object") {
-          console.log(
-            `Pattern validation failed: note ${i} is not an object`,
-            note
-          );
+          
           return false;
         }
         if (typeof note.duration !== "string") {
-          console.log(
-            `Pattern validation failed: note ${i} duration is not a string`,
-            note.duration
-          );
+          
           return false;
         }
         if (typeof note.note !== "boolean") {
-          console.log(
-            `Pattern validation failed: note ${i} note property is not boolean`,
-            note.note
-          );
+          
           return false;
         }
       }
@@ -248,10 +227,7 @@ class HybridPatternService {
         timeSignature
       );
       if (!durationValid) {
-        console.log(
-          "Pattern validation failed: duration validation failed for",
-          timeSignature
-        );
+        
       }
       return durationValid;
     }
@@ -281,9 +257,7 @@ class HybridPatternService {
           (frac) => Math.abs(value - frac) < tolerance
         );
         if (!isValidFraction && value !== 0) {
-          console.log(
-            `Duration validation failed: invalid fractional value "${value}"`
-          );
+          
           return false;
         }
       }
@@ -291,22 +265,17 @@ class HybridPatternService {
       // For JSON patterns, just ensure they're not empty and have reasonable values
       const hasNotes = pattern.some((value) => value > 0);
       if (!hasNotes) {
-        console.log("Duration validation failed: pattern has no notes");
+        
         return false;
       }
 
-      console.log(
-        `Duration check for ${timeSignature}: JSON pattern with ${pattern.length} elements, valid fractions`
-      );
       return true;
     } else {
       // Schema format: array of objects with duration properties
       for (const note of pattern) {
         const duration = this.getDurationValue(note.duration);
         if (duration === null) {
-          console.log(
-            `Duration validation failed: unknown duration "${note.duration}"`
-          );
+          
           return false;
         }
         totalDuration += duration;
@@ -318,16 +287,10 @@ class HybridPatternService {
         ? timeSignatureObj.measureLength
         : 16;
 
-      console.log(
-        `Duration check for ${timeSignature}: total=${totalDuration}, expected=${expectedLength}`
-      );
-
       // Allow small floating point tolerance
       const isValid = Math.abs(totalDuration - expectedLength) < 0.001;
       if (!isValid) {
-        console.log(
-          `Duration validation failed: ${totalDuration} !== ${expectedLength}`
-        );
+        
       }
       return isValid;
     }
@@ -677,9 +640,6 @@ export async function getPattern(
   difficulty,
   preferCurated = true
 ) {
-  console.log(
-    `[PATTERN LOADING] Requesting pattern for: ${timeSignature}, difficulty: ${difficulty}`
-  );
 
   const generator = createPatternGenerator();
   const timeSignatureObj =
@@ -693,24 +653,20 @@ export async function getPattern(
     throw new Error(`Unsupported time signature: ${timeSignature}`);
   }
 
-  console.log(`[PATTERN LOADING] Time signature object:`, timeSignatureObj);
-
   let result = null;
 
   // Try curated pattern first if preferred
   if (preferCurated) {
-    console.log(`[PATTERN LOADING] Trying to load curated pattern...`);
+    
     result = await generator.getCuratedPattern(timeSignature, difficulty);
-    console.log(`[PATTERN LOADING] Curated pattern result:`, result);
+    
   }
 
   // Fallback to generated pattern
   if (!result) {
-    console.log(
-      `[PATTERN LOADING] Curated pattern failed, generating pattern...`
-    );
+    
     result = generator.generatePattern(timeSignatureObj, difficulty);
-    console.log(`[PATTERN LOADING] Generated pattern result:`, result);
+    
   }
 
   // Convert legacy fractional patterns to binary if needed
@@ -731,11 +687,6 @@ export async function getPattern(
     !generator.validateBinaryPattern(result.pattern, timeSignatureObj)
   ) {
     console.warn("Invalid pattern generated, falling back to simple pattern");
-    console.log(
-      `[PATTERN LOADING] Pattern validation failed for:`,
-      result.pattern
-    );
-    console.log(`[PATTERN LOADING] Expected time signature:`, timeSignatureObj);
 
     // Create appropriate fallback pattern for the time signature
     const fallbackPattern = new Array(timeSignatureObj.measureLength).fill(0);
@@ -750,7 +701,7 @@ export async function getPattern(
       timeSignature: timeSignatureObj.name,
       difficulty,
     };
-    console.log(`[PATTERN LOADING] Created fallback pattern:`, result.pattern);
+    
   }
 
   return result;

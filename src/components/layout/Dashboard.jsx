@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
@@ -10,7 +10,7 @@ import StreakDisplay from "../streak/StreakDisplay";
 import PointsDisplay from "../ui/PointsDisplay";
 import LevelDisplay from "../ui/LevelDisplay";
 import { useModal } from "../../contexts/ModalContext";
-import { Bell, X } from "lucide-react";
+import { Bell, X, BellOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { practiceService } from "../../services/practiceService";
 import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
@@ -18,12 +18,33 @@ import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
 import { Send, Loader2, Mic } from "lucide-react";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
+import {
+  dashboardReminderService,
+  formatTimeRemaining,
+} from "../../services/dashboardReminderService";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, userRole, profile } = useUser();
   const { scores, isLoading } = useScores();
   const { openModal, closeModal } = useModal();
   const { addNewRecording } = useNewRecordingsCount(user?.id);
+  const [activeReminder, setActiveReminder] = useState(null);
+
+  // Poll for active reminder status
+  useEffect(() => {
+    const updateReminderStatus = () => {
+      const reminder = dashboardReminderService.getActiveReminder();
+      setActiveReminder(reminder);
+    };
+
+    // Initial check
+    updateReminderStatus();
+
+    // Update every second
+    const interval = setInterval(updateReminderStatus, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Fetch user streak
   const {
@@ -128,8 +149,35 @@ function Dashboard() {
     .filter((step) => !earnedAchievementIds.has(step.id))
     .slice(0, 4);
 
+  // Handle cancel reminder
+  const handleCancelReminder = () => {
+    dashboardReminderService.cancelReminder();
+    toast.success("Reminder cancelled");
+  };
+
   // Modal opening functions
-  const openReminderModal = () => {
+  const openReminderModal = async () => {
+    // Request notification permission if not granted
+    const permission = dashboardReminderService.getPermissionStatus();
+    if (permission === "default") {
+      try {
+        const result = await dashboardReminderService.requestPermission();
+        if (result !== "granted") {
+          toast.error("Please allow notifications to enable reminders");
+          return;
+        }
+      } catch (error) {
+        console.error("Permission request failed:", error);
+        toast.error("Failed to request notification permission");
+        return;
+      }
+    } else if (permission === "denied") {
+      toast.error(
+        "Notifications are blocked. Please enable them in your browser settings."
+      );
+      return;
+    }
+
     const now = new Date();
     const minDate = now.toISOString().split("T")[0];
     const currentTime = now.toLocaleTimeString([], {
@@ -150,16 +198,10 @@ function Dashboard() {
         );
 
         if (timeDifferenceInMinutes > 0) {
-          // Save to localStorage
+          // Schedule reminder using the service
           const dateTimeMs =
             new Date().getTime() + timeDifferenceInMinutes * 60 * 1000;
-          localStorage.setItem(
-            "practiceTimer",
-            JSON.stringify({
-              timeLeft: timeDifferenceInMinutes,
-              dateTime: dateTimeMs,
-            })
-          );
+          dashboardReminderService.scheduleReminder(dateTimeMs);
           closeModal();
           toast.success("Reminder set successfully!");
         } else {
@@ -562,25 +604,63 @@ function Dashboard() {
               Practice Tools
             </h3>
             <div className="grid grid-cols-1 gap-4">
-              {/* Practice Reminder */}
-              <button
-                onClick={openReminderModal}
-                className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    🔔
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-gray-900 font-medium mb-1">
-                      Set a Practice Reminder
+              {/* Active Reminder Indicator */}
+              {activeReminder && (
+                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/40 rounded-xl p-4">
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+                        🔔
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-gray-900 font-medium mb-1">
+                          ⏰ Practice reminder in:{" "}
+                          {formatTimeRemaining(activeReminder.timeLeft)}
+                        </div>
+                        <div className="text-gray-600 text-sm">
+                          Set for{" "}
+                          {new Date(activeReminder.dateTime).toLocaleTimeString(
+                            [],
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-gray-600 text-sm">
-                      Stay consistent with your practice
-                    </div>
+                    <button
+                      onClick={handleCancelReminder}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium text-sm"
+                    >
+                      <BellOff className="w-4 h-4" />
+                      Cancel
+                    </button>
                   </div>
                 </div>
-              </button>
+              )}
+
+              {/* Practice Reminder Button */}
+              {!activeReminder && (
+                <button
+                  onClick={openReminderModal}
+                  className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                      🔔
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-gray-900 font-medium mb-1">
+                        Set a Practice Reminder
+                      </div>
+                      <div className="text-gray-600 text-sm">
+                        Stay consistent with your practice
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              )}
 
               {/* Record Practice Session */}
               <button

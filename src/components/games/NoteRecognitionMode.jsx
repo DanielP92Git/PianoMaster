@@ -10,19 +10,19 @@ const games = [
     description: "Match notes with their names",
     icon: <Grid className="w-8 h-8 text-white" />,
     difficulty: "Easy",
-    path: "/note-recognition-mode/memory-game",
+    path: "/notes-reading-mode/memory-game",
   },
   {
-    id: "note-recognition",
-    name: "Note Recognition",
+    id: "notes-reading",
+    name: "Notes Reading",
     description: "Identify notes on the staff",
     icon: <Music className="w-8 h-8 text-white" />,
     difficulty: "Medium",
-    path: "/note-recognition-mode/note-recognition-game",
+    path: "/notes-reading-mode/notes-reading-game",
   },
 ];
 
-export function NoteRecognitionMode() {
+export function NotesReadingMode() {
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
       <BackButton
@@ -31,7 +31,7 @@ export function NoteRecognitionMode() {
         className="text-white/80 hover:text-white"
       />
       <h1 className="text-2xl font-bold text-white mb-4">
-        Note Recognition Games
+        Notes Reading Games
       </h1>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

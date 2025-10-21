@@ -18,7 +18,6 @@ export function useRealTimeSubscriptions() {
 
   // Stable cleanup function
   const cleanupSubscriptions = useCallback(() => {
-    console.log("🧹 Cleaning up realtime subscriptions...");
 
     if (globalSubscriptionState.subscription) {
       try {
@@ -53,10 +52,6 @@ export function useRealTimeSubscriptions() {
 
       // Mark as setting up
       globalSubscriptionState.isSettingUp = true;
-      console.log(
-        "🚀 Setting up optimized realtime subscriptions for user:",
-        userId
-      );
 
       // Clean up any existing subscription
       if (globalSubscriptionState.subscription) {
@@ -79,7 +74,7 @@ export function useRealTimeSubscriptions() {
             filter: `student_id=eq.${userId}`,
           },
           (payload) => {
-            console.log("🏆 Achievement change:", payload.eventType);
+            
             setTimeout(() => {
               queryClient.invalidateQueries({
                 queryKey: ["achievements", userId],
@@ -99,7 +94,7 @@ export function useRealTimeSubscriptions() {
             filter: `student_id=eq.${userId}`,
           },
           (payload) => {
-            console.log("👤 Profile change:", payload.eventType);
+            
             setTimeout(() => {
               queryClient.invalidateQueries({ queryKey: ["scores"] });
               queryClient.invalidateQueries({
@@ -117,7 +112,7 @@ export function useRealTimeSubscriptions() {
             filter: `student_id=eq.${userId}`,
           },
           (payload) => {
-            console.log("🎵 Practice session change:", payload.eventType);
+            
             setTimeout(() => {
               queryClient.invalidateQueries({
                 queryKey: ["practice-sessions", userId],
@@ -134,7 +129,7 @@ export function useRealTimeSubscriptions() {
             filter: `student_id=eq.${userId}`,
           },
           (payload) => {
-            console.log("🔥 Streak change:", payload.eventType);
+            
             setTimeout(() => {
               queryClient.invalidateQueries({ queryKey: ["streak"] });
             }, 50);
@@ -149,7 +144,7 @@ export function useRealTimeSubscriptions() {
             filter: `student_id=eq.${userId}`,
           },
           (payload) => {
-            console.log("📊 Total score change:", payload.eventType);
+            
             setTimeout(() => {
               queryClient.invalidateQueries({ queryKey: ["scores"] });
               queryClient.invalidateQueries({
@@ -159,7 +154,7 @@ export function useRealTimeSubscriptions() {
           }
         )
         .subscribe((status) => {
-          console.log("📡 Subscription status:", status);
+          
           globalSubscriptionState.isSettingUp = false;
         });
 

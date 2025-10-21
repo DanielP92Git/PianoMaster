@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Button from "../../../ui/Button";
+import BackButton from "../../../ui/BackButton";
 import {
   DIFFICULTY_LEVELS,
   TIME_SIGNATURES,
@@ -229,6 +230,13 @@ export function PreGameSettingsScreen({
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white">
+      <div className="p-2 flex-shrink-0">
+        <BackButton
+          to="/practice-modes"
+          name="Game Modes"
+          styling="text-white/80 hover:text-white text-sm"
+        />
+      </div>
       <div className="flex-1 flex items-center justify-center overflow-hidden px-2 py-1">
         {step === 1 && <DifficultyStep />}
         {step === 2 && <TimeSignatureStep />}

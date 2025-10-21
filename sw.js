@@ -89,6 +89,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Skip Vite dev server HMR and module requests
+  const url = new URL(event.request.url);
+  if (
+    url.pathname.includes("@vite") ||
+    url.pathname.includes("@react-refresh") ||
+    url.pathname.includes("@id") ||
+    url.pathname.includes("node_modules") ||
+    url.searchParams.has("t") || // Vite timestamp query param
+    url.pathname.endsWith(".jsx") ||
+    url.pathname.endsWith(".tsx") ||
+    url.pathname.endsWith(".ts")
+  ) {
+    return;
+  }
+
   event.respondWith(
     (async () => {
       try {
@@ -151,46 +166,217 @@ self.addEventListener("sync", (event) => {
   }
 });
 
-// Handle push notifications (for future use)
+// Handle push notifications
 self.addEventListener("push", (event) => {
-  console.log("Push event received");
+  console.log("Push event received:", event);
 
-  const options = {
-    body: event.data ? event.data.text() : "Time to practice piano!",
+  let notificationData = {
+    title: "PianoMaster",
+    body: "You have a new notification",
     icon: "/icons/favicon_192x192.png",
     badge: "/icons/favicon_96x96.png",
+    tag: "default",
+    data: {},
+  };
+
+  // Parse notification data from push event
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      notificationData = {
+        title: payload.title || notificationData.title,
+        body: payload.body || notificationData.body,
+        icon: payload.icon || notificationData.icon,
+        badge: payload.badge || notificationData.badge,
+        tag: payload.tag || payload.type || notificationData.tag,
+        data: payload.data || {},
+      };
+    } catch (error) {
+      console.error("Error parsing push notification data:", error);
+      notificationData.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: notificationData.body,
+    icon: notificationData.icon,
+    badge: notificationData.badge,
     vibrate: [100, 50, 100],
+    tag: notificationData.tag,
+    requireInteraction: false,
     data: {
+      ...notificationData.data,
       dateOfArrival: Date.now(),
-      primaryKey: 1,
+      clickAction: notificationData.data.url || "/",
     },
     actions: [
       {
-        action: "explore",
-        title: "Start Practice",
+        action: "open",
+        title: "Open",
         icon: "/icons/favicon_96x96.png",
       },
       {
         action: "close",
-        title: "Close",
+        title: "Dismiss",
         icon: "/icons/favicon_96x96.png",
       },
     ],
   };
 
-  event.waitUntil(self.registration.showNotification("PianoMaster", options));
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, options)
+  );
 });
 
 // Handle notification clicks
 self.addEventListener("notificationclick", (event) => {
-  console.log("Notification click received.");
+  console.log("Notification click received:", event);
 
+  const notificationType = event.notification.data?.type;
+  const action = event.action;
+
+  // Handle dashboard practice reminder actions
+  if (notificationType === "dashboard-practice-reminder") {
+    if (action === "snooze") {
+      event.notification.close();
+      // Send message to client to snooze reminder
+      event.waitUntil(
+        (async () => {
+          const allClients = await self.clients.matchAll({ type: "window" });
+          for (const client of allClients) {
+            client.postMessage({
+              type: "SNOOZE_DASHBOARD_REMINDER",
+              minutes: 15,
+            });
+          }
+        })()
+      );
+      return;
+    }
+
+    if (action === "dismiss") {
+      event.notification.close();
+      // Send message to stop alarm
+      event.waitUntil(
+        (async () => {
+          const allClients = await self.clients.matchAll({ type: "window" });
+          for (const client of allClients) {
+            client.postMessage({
+              type: "STOP_ALARM",
+            });
+          }
+        })()
+      );
+      return;
+    }
+
+    if (!action) {
+      event.notification.close();
+      // Open dashboard
+      event.waitUntil(
+        (async () => {
+          const urlToOpen = new URL("/", self.location.origin).href;
+          const allClients = await self.clients.matchAll({
+            type: "window",
+            includeUncontrolled: true,
+          });
+
+          // Focus existing window or open new one
+          for (const client of allClients) {
+            if ("focus" in client) {
+              return client.focus();
+            }
+          }
+
+          if (self.clients.openWindow) {
+            return self.clients.openWindow(urlToOpen);
+          }
+        })()
+      );
+      return;
+    }
+  }
+
+  // Handle practice reminder actions (from settings)
+  if (notificationType === "practice-reminder") {
+    if (action === "snooze") {
+      event.notification.close();
+      // Send message to client to snooze reminder
+      event.waitUntil(
+        (async () => {
+          const allClients = await self.clients.matchAll({ type: "window" });
+          for (const client of allClients) {
+            client.postMessage({
+              type: "SNOOZE_REMINDER",
+              minutes: 15,
+            });
+          }
+        })()
+      );
+      return;
+    }
+
+    if (action === "practice" || !action) {
+      event.notification.close();
+      // Open practice mode
+      event.waitUntil(
+        (async () => {
+          const urlToOpen = new URL("/practice", self.location.origin).href;
+          const allClients = await self.clients.matchAll({
+            type: "window",
+            includeUncontrolled: true,
+          });
+
+          // Focus existing window or open new one
+          for (const client of allClients) {
+            if (client.url.includes("/practice") && "focus" in client) {
+              return client.focus();
+            }
+          }
+
+          if (self.clients.openWindow) {
+            return self.clients.openWindow(urlToOpen);
+          }
+        })()
+      );
+      return;
+    }
+  }
+
+  // Default behavior for other notifications
   event.notification.close();
 
-  if (event.action === "explore") {
-    // Open the app
-    event.waitUntil(self.clients.openWindow("/"));
+  if (event.action === "close") {
+    return;
   }
+
+  // Get the URL to open
+  const urlToOpen =
+    event.notification.data?.clickAction ||
+    event.notification.data?.url ||
+    (event.action === "open" ? "/" : "/");
+
+  // Open or focus the app window
+  event.waitUntil(
+    (async () => {
+      const allClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      // Check if there's already a window open
+      for (const client of allClients) {
+        if (client.url === urlToOpen && "focus" in client) {
+          return client.focus();
+        }
+      }
+
+      // If no window is open, open a new one
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(urlToOpen);
+      }
+    })()
+  );
 });
 
 // Utility function for syncing practice sessions (placeholder)

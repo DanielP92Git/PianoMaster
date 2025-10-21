@@ -7,13 +7,6 @@ function AuthButton({ className = "" }) {
   const { isAuthenticated, user } = useUser();
   const { logout, isPending } = useLogout();
 
-  console.log(
-    "AuthButton render - isAuthenticated:",
-    isAuthenticated,
-    "user:",
-    user?.email
-  );
-
   if (isAuthenticated) {
     return (
       <button

@@ -670,7 +670,7 @@ export const getTeacherRecordings = async (filters = {}) => {
     }
 
     if (!connections || connections.length === 0) {
-      console.log("⚠️ No student connections found for teacher:", user.id);
+      
       return [];
     }
 
@@ -726,7 +726,7 @@ export const getTeacherRecordings = async (filters = {}) => {
     }
 
     if (!recordings || recordings.length === 0) {
-      console.log("⚠️ No practice sessions found with recordings");
+      
       return [];
     }
 

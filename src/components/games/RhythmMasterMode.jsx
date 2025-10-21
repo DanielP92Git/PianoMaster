@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Music, Plus, Volume2 } from "lucide-react";
+import React from "react";
+import { Volume2 } from "lucide-react";
 import BackButton from "../ui/BackButton";
 import { Link } from "react-router-dom";
 
@@ -13,38 +13,9 @@ const games = [
     difficulty: "All Levels",
     path: "/rhythm-mode/metronome-trainer",
   },
-  {
-    id: "create-own",
-    name: "Your Groove",
-    description: "Create your own rhythm patterns",
-    icon: <Plus className="w-12 h-12 text-white" />,
-    difficulty: "Intermediate",
-    path: "/rhythm-mode/create-own",
-  },
 ];
 
-// const GAME_COMPONENTS = {
-//   "listen-repeat": ListenAndRepeat,
-//   "create-own": YourGroove,
-// };
-
 export function RhythmMasterMode() {
-  // const [selectedGame, setSelectedGame] = useState(null);
-
-  // if (selectedGame) {
-  //   const GameComponent = GAME_COMPONENTS[selectedGame];
-  //   return (
-  //     // Only wrap YourGroove with RhythmProvider
-  //     selectedGame === "create-own" ? (
-  //       <RhythmProvider>
-  //         <GameComponent onBack={() => setSelectedGame(null)} />
-  //       </RhythmProvider>
-  //     ) : (
-  //       <GameComponent onBack={() => setSelectedGame(null)} />
-  //     )
-  //   );
-  // }
-
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto">
       <BackButton

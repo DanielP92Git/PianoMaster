@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Music, Glasses, Search } from "lucide-react";
+import { Loader2, Music2, Drum } from "lucide-react";
 import BackButton from "../components/ui/BackButton";
 import { getGamesCategories } from "../services/apiGamesLibrary";
 import { useQuery } from "@tanstack/react-query";
@@ -58,23 +58,20 @@ export default function PracticeModes({ practiceModesSectionRef }) {
     progress: Math.floor(Math.random() * 100),
     icon:
       mode.type === "rhythm-mode" ? (
-        <Music className="w-8 h-8 text-white" />
-      ) : mode.type === "note-recognition-mode" ? (
-        <Search className="w-8 h-8 text-white" />
+        <Drum className="w-8 h-8 text-white" />
+      ) : mode.type === "notes-reading-mode" ? (
+        <Music2 className="w-8 h-8 text-white" />
       ) : (
-        <Glasses className="w-8 h-8 text-white" />
+        <Music2 className="w-8 h-8 text-white" />
       ),
   }));
 
   return (
-    <div ref={practiceModesSectionRef} className="space-y-6 p-4">
-      <BackButton to="/" name="Dashboard" styling="mb-12" />
+    <div ref={practiceModesSectionRef} className="p-4 lg:p-8 max-w-7xl mx-auto">
+      <BackButton to="/" name="Dashboard" />
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Practice Modes</h1>
-          <p className="text-gray-300">Choose your musical challenge</p>
-        </div>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-white">Practice Modes</h1>
         <StreakDisplay />
       </div>
 
@@ -83,24 +80,26 @@ export default function PracticeModes({ practiceModesSectionRef }) {
           <div
             key={mode.id}
             onClick={(e) => handleStartMode(e, mode.type)}
-            className="relative group h-[250px] w-full cursor-pointer"
+            className="relative group h-[200px] w-full cursor-pointer"
           >
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-2xl backdrop-blur-sm border border-white/20 transition-all duration-300 group-hover:from-indigo-600/30 group-hover:to-purple-600/30">
-              <div className="h-full flex flex-col p-6">
-                <div className="flex items-center justify-between mb-4">
-                  {mode.icon}
-                  <div className="text-sm text-white/60">
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-xl backdrop-blur-sm border border-white/20 transition-all duration-300 group-hover:from-indigo-600/30 group-hover:to-purple-600/30">
+              <div className="h-full flex flex-col p-3">
+                <div className="flex items-start justify-between">
+                  <div className="bg-white/5 rounded-lg p-1.5">{mode.icon}</div>
+                  <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium text-white/80 ring-1 ring-inset ring-white/20">
                     {mode.progress}% Complete
-                  </div>
+                  </span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">
-                  {mode.name}
-                </h3>
-                <p className="text-white/60 text-sm mb-auto">
-                  {mode.description}
-                </p>
-                <div className="mt-4">
-                  <button className="w-full py-2 px-4 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-colors">
+                <div className="mt-2 flex-1">
+                  <h2 className="text-base font-semibold text-white group-hover:text-blue-200 transition-colors">
+                    {mode.name}
+                  </h2>
+                  <p className="mt-0.5 text-xs text-gray-300">
+                    {mode.description}
+                  </p>
+                </div>
+                <div className="mt-2 flex justify-end">
+                  <button className="inline-flex items-center justify-center px-2 py-1 text-xs bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors">
                     Start Mode
                   </button>
                 </div>

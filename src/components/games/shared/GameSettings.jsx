@@ -40,7 +40,7 @@ export function GameSettings({
     // Reset modal step when modal is opened (not on every render)
     if (isModal && !prevIsModalRef.current) {
       setModalStep(1);
-      console.log("Modal opened, reset to step 1");
+      
     }
     prevIsModalRef.current = isModal;
   }, [isModal]);
@@ -148,7 +148,6 @@ export function GameSettings({
   };
 
   const handleNoteToggle = (note) => {
-    console.log("Toggling note:", note);
 
     setSelectedNotes((prev) => {
       // Ensure prev is an array
@@ -157,40 +156,32 @@ export function GameSettings({
       if (prevArray.includes(note)) {
         // Don't allow removing if it would result in fewer than 2 notes
         if (prevArray.length <= 2) {
-          console.log("Cannot remove - minimum 2 notes required");
+          
           return prevArray;
         }
         const newNotes = prevArray.filter((n) => n !== note);
-        console.log("Removed note, new selection:", newNotes);
+        
         return newNotes;
       } else {
         const newNotes = [...prevArray, note];
-        console.log("Added note, new selection:", newNotes);
+        
         return newNotes;
       }
     });
   };
 
   const handleMemoryDifficultyChange = (newDifficulty) => {
-    console.log(`===== CARD COUNT DIFFICULTY CHANGED =====`);
-    console.log(
-      `Previous difficulty: ${difficulty}, changing to: ${newDifficulty}`
-    );
 
     // Update difficulty for grid size only
     setDifficulty(newDifficulty);
 
     // Also update the grid size based on the new difficulty
     const newGridSize = MEMORY_DIFFICULTIES[newDifficulty];
-    console.log(`Updating gridSize from ${gridSize} to ${newGridSize}`);
+    
     setGridSize(newGridSize);
   };
 
   const handleTimeMemoryDifficultyChange = (newTimeDifficulty) => {
-    console.log(`===== TIME DIFFICULTY CHANGED =====`);
-    console.log(
-      `Previous time difficulty: ${timeDifficulty}, changing to: ${newTimeDifficulty}`
-    );
 
     // Update time difficulty only
     setTimeDifficulty(newTimeDifficulty);
@@ -232,11 +223,7 @@ export function GameSettings({
     let gridSizeToSend = gridSize;
     if (gameType === "memory") {
       gridSizeToSend = MEMORY_DIFFICULTIES[difficulty];
-      console.log(
-        `Sending settings with grid difficulty: ${difficulty}, time difficulty: ${timeDifficulty}, gridSize: ${gridSizeToSend}, pairs: ${
-          GRID_SIZES[gridSizeToSend] / 2
-        }, timeLimit: ${timeLimit}`
-      );
+      
     }
 
     // Call the onStart callback with the current settings
@@ -655,9 +642,7 @@ export function GameSettings({
                     <button
                       key={diff}
                       onClick={() => {
-                        console.log(
-                          `Clicked ${diff} difficulty button, grid size: ${size}`
-                        );
+                        
                         handleMemoryDifficultyChange(diff);
                       }}
                       className={`py-0.5 sm:py-1 px-1 sm:px-1.5 rounded-lg transition-colors text-xs ${
@@ -1310,29 +1295,15 @@ export function GameSettings({
       const handleResize = () => {
         const newIsMobile = checkIsMobile();
         setIsMobile(newIsMobile);
-        console.log(
-          "Window resized, isMobile:",
-          newIsMobile,
-          "width:",
-          window.innerWidth,
-          "height:",
-          window.innerHeight
-        );
+        
       };
       window.addEventListener("resize", handleResize);
-      console.log(
-        "Initial isMobile:",
-        isMobile,
-        "width:",
-        window.innerWidth,
-        "height:",
-        window.innerHeight
-      );
+      
       return () => window.removeEventListener("resize", handleResize);
     }, [isMobile]);
 
     const renderMobileModalStep = () => {
-      console.log("Rendering mobile step:", modalStep);
+      
       switch (modalStep) {
         case 1:
           return <MobileModalClefStep />;
@@ -1344,13 +1315,6 @@ export function GameSettings({
           return <MobileModalClefStep />;
       }
     };
-
-    console.log(
-      "SettingsModal render - isMobile:",
-      isMobile,
-      "modalStep:",
-      modalStep
-    );
 
     return (
       <div className="fixed inset-0 flex items-center justify-center z-50 p-4">

@@ -191,8 +191,8 @@ const RecordingsReview = () => {
   // Debug effect to log component lifecycle
   useEffect(() => {
     // Component mounted or filters changed
-    // console.log("🔍 [UI DEBUG] RecordingsReview component mounted/filters changed");
-    // console.log("🔍 [UI DEBUG] Current filters:", filters);
+    // 
+    // 
   }, [filters]);
 
   // Memoize query key to prevent unnecessary refetches
@@ -209,13 +209,13 @@ const RecordingsReview = () => {
   } = useQuery({
     queryKey: recordingsQueryKey,
     queryFn: () => {
-      // console.log("🔍 [UI DEBUG] RecordingsReview - Fetching recordings with filters:", filters);
+      // 
       return getTeacherRecordings(filters);
     },
     refetchInterval: 180000, // Refresh every 3 minutes (reduced from 30 seconds)
     staleTime: 120000, // Consider data fresh for 2 minutes
     onSuccess: (data) => {
-      // console.log("✅ [UI DEBUG] RecordingsReview - Recordings fetched successfully:", data);
+      // 
     },
     onError: (error) => {
       console.error("❌ RecordingsReview - Error fetching recordings:", error);
@@ -226,13 +226,13 @@ const RecordingsReview = () => {
   const { data: students = [] } = useQuery({
     queryKey: ["teacher-students-for-recordings"],
     queryFn: () => {
-      // console.log("🔍 [UI DEBUG] RecordingsReview - Fetching students for dropdown");
+      // 
       return getTeacherStudents();
     },
     staleTime: 300000, // Consider data fresh for 5 minutes
     refetchInterval: false, // No polling for dropdown data
     onSuccess: (data) => {
-      // console.log("✅ [UI DEBUG] RecordingsReview - Students fetched for dropdown:", data);
+      // 
     },
     onError: (error) => {
       console.error("❌ RecordingsReview - Error fetching students:", error);
@@ -270,18 +270,7 @@ const RecordingsReview = () => {
   });
 
   // Debug logging for component state (disabled to prevent HMR spam)
-  // console.log("🔍 [UI DEBUG] RecordingsReview component state:", {
-  //   recordings: recordings,
-  //   recordingsCount: recordings.length,
-  //   filteredRecordings: filteredRecordings,
-  //   filteredCount: filteredRecordings.length,
-  //   students: students,
-  //   studentsCount: students.length,
-  //   isLoading: recordingsLoading,
-  //   error: recordingsError,
-  //   filters: filters,
-  //   searchTerm: searchTerm,
-  // });
+  // 
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({

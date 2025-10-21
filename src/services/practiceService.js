@@ -188,7 +188,7 @@ export const practiceService = {
 
   async deletePracticeSession(sessionId) {
     try {
-      //   console.log("Starting deletion process for session:", sessionId);
+      //   
 
       // First get the session to get the recording URL
       const { data: session, error: fetchError } = await supabase
@@ -202,7 +202,7 @@ export const practiceService = {
         throw fetchError;
       }
 
-      //   console.log("Found session with recording URL:", session?.recording_url);
+      //   
 
       // Delete the session record first
       const { error: deleteError } = await supabase
@@ -215,7 +215,7 @@ export const practiceService = {
         throw deleteError;
       }
 
-      //   console.log("Successfully deleted session record");
+      //   
 
       // Then delete the recording from storage if it exists
       if (session?.recording_url) {
@@ -227,7 +227,7 @@ export const practiceService = {
           console.error("Error deleting recording file:", storageError);
           // Don't throw here as the database record is already deleted
         } else {
-          console.log("Successfully deleted recording file");
+          
         }
       }
 

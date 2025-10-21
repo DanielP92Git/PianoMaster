@@ -11,8 +11,6 @@ export async function registerServiceWorker() {
         scope: "/",
       });
 
-      console.log("ServiceWorker registration successful:", registration);
-
       // Handle service worker updates
       registration.addEventListener("updatefound", () => {
         const newWorker = registration.installing;
@@ -36,7 +34,7 @@ export async function registerServiceWorker() {
       return null;
     }
   } else {
-    console.log("ServiceWorker is not supported in this browser");
+    
     return null;
   }
 }
@@ -49,7 +47,7 @@ function showUpdateAvailableNotification() {
   if (window.showUpdateNotification) {
     window.showUpdateNotification();
   } else {
-    console.log("App update available! Refresh to get the latest version.");
+    
   }
 }
 
@@ -81,7 +79,6 @@ export class PWAInstaller {
   init() {
     // Listen for the beforeinstallprompt event
     window.addEventListener("beforeinstallprompt", (e) => {
-      console.log("PWA install prompt available");
 
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
@@ -96,7 +93,7 @@ export class PWAInstaller {
 
     // Listen for app installed event
     window.addEventListener("appinstalled", () => {
-      console.log("PWA was installed");
+      
       this.isInstalled = true;
       this.canInstall = false;
       this.deferredPrompt = null;
@@ -113,7 +110,7 @@ export class PWAInstaller {
     // Check if running in standalone mode (installed)
     if (window.matchMedia("(display-mode: standalone)").matches) {
       this.isInstalled = true;
-      console.log("PWA is running in standalone mode");
+      
     }
 
     // Check for related applications (more accurate but limited browser support)
@@ -122,14 +119,14 @@ export class PWAInstaller {
         const relatedApps = await navigator.getInstalledRelatedApps();
         this.isInstalled = relatedApps.length > 0;
       } catch (error) {
-        console.log("Could not check for installed related apps:", error);
+        
       }
     }
   }
 
   async showInstallPrompt() {
     if (!this.deferredPrompt) {
-      console.log("Install prompt not available");
+      
       return false;
     }
 
@@ -139,8 +136,6 @@ export class PWAInstaller {
 
       // Wait for the user to respond to the prompt
       const { outcome } = await this.deferredPrompt.userChoice;
-
-      console.log(`User response to install prompt: ${outcome}`);
 
       // Clear the deferredPrompt
       this.deferredPrompt = null;
@@ -155,12 +150,12 @@ export class PWAInstaller {
 
   // Override these methods in your implementation
   onInstallAvailable() {
-    console.log("PWA can be installed");
+    
     // Show install button/banner
   }
 
   onInstalled() {
-    console.log("PWA has been installed");
+    
     // Hide install button, show success message
   }
 }
@@ -218,7 +213,7 @@ export async function requestBackgroundSync(tag) {
     try {
       const registration = await navigator.serviceWorker.ready;
       await registration.sync.register(tag);
-      console.log(`Background sync registered: ${tag}`);
+      
       return true;
     } catch (error) {
       console.error("Background sync registration failed:", error);
@@ -226,7 +221,6 @@ export async function requestBackgroundSync(tag) {
     }
   }
 
-  console.log("Background sync not supported");
   return false;
 }
 
@@ -251,7 +245,6 @@ export async function subscribeToPushNotifications() {
         });
       }
 
-      console.log("Push notification subscription:", subscription);
       return subscription;
     } catch (error) {
       console.error("Push notification subscription failed:", error);
@@ -259,7 +252,6 @@ export async function subscribeToPushNotifications() {
     }
   }
 
-  console.log("Push notifications not supported");
   return null;
 }
 

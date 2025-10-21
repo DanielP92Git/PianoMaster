@@ -46,7 +46,7 @@ const GameOverScreen = ({ score, totalQuestions, timeRanOut, onReset }) => {
             Try Again
           </button>
           <button
-            onClick={() => (window.location.href = "/note-recognition-mode")}
+            onClick={() => (window.location.href = "/notes-reading-mode")}
             className="flex-1 py-3 px-6 text-lg font-semibold text-gray-700 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:outline-none"
           >
             Exit

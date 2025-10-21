@@ -187,15 +187,6 @@ export function NoteRecognitionGame() {
       scorePercentage < 50 || (settings.timedMode && timeRemaining === 0);
     const timeRanOut = settings.timedMode && timeRemaining === 0;
 
-    console.log(
-      "Game Over - Score:",
-      progress.score,
-      "Total Questions:",
-      progress.totalQuestions,
-      "Is Lost:",
-      isLost
-    );
-
     setTimeout(() => {
       if (isLost) {
         playGameOverSound();
@@ -701,8 +692,8 @@ export function NoteRecognitionGame() {
     <div className="flex flex-col h-screen overflow-hidden">
       <div className="p-2 flex-shrink-0">
         <BackButton
-          to="/note-recognition-mode"
-          name="Note Recognition"
+          to="/notes-reading-mode"
+          name="Notes Reading"
           styling="text-white/80 hover:text-white text-sm"
         />
       </div>

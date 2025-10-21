@@ -105,17 +105,7 @@ export function MetronomeTrainer() {
     adaptiveDifficulty: false,
   });
 
-  // Debug log for initial settings (only log once on mount)
-  useEffect(() => {
-    console.log(
-      `[SETTINGS] Component mounted with gameSettings:`,
-      gameSettings
-    );
-    console.log(
-      `[SETTINGS] Available time signatures:`,
-      Object.values(TIME_SIGNATURES)
-    );
-  }, []); // Only run once on mount
+
 
   // Pattern and timing state
   const [currentPattern, setCurrentPattern] = useState(null);
@@ -235,12 +225,6 @@ export function MetronomeTrainer() {
       const currentTimeSignature =
         timeSignatureOverride || gameSettings.timeSignature;
       const beatsPerMeasure = currentTimeSignature.beats;
-
-      console.log(
-        `[METRONOME] STARTING continuous metronome at ${startTime.toFixed(3)}s`
-      );
-      console.log(`[METRONOME] Time signature: ${currentTimeSignature.name}`);
-      console.log(`[METRONOME] Beats per measure: ${beatsPerMeasure}`);
       metronomeStartTimeRef.current = startTime;
 
       // Clear any existing metronome
@@ -349,8 +333,6 @@ export function MetronomeTrainer() {
    */
   const stopContinuousMetronome = useCallback(() => {
     const currentTime = audioEngine.getCurrentTime();
-    console.log(`[METRONOME] Stopping metronome at ${currentTime.toFixed(3)}s`);
-
     if (continuousMetronomeRef.current) {
       clearInterval(continuousMetronomeRef.current);
       continuousMetronomeRef.current = null;
@@ -363,10 +345,6 @@ export function MetronomeTrainer() {
     // Stop all future scheduled oscillators
     const futureOscillators = scheduledOscillatorsRef.current.filter(
       (info) => info.startTime > currentTime
-    );
-
-    console.log(
-      `[METRONOME] Stopping ${futureOscillators.length} future oscillators`
     );
 
     futureOscillators.forEach((info) => {
@@ -384,7 +362,7 @@ export function MetronomeTrainer() {
 
     // Clear any already scheduled metronome events
     audioEngine.clearScheduledEvents();
-    console.log(`[METRONOME] All metronome events cleared`);
+    
   }, [audioEngine]);
 
   /**
@@ -477,19 +455,6 @@ export function MetronomeTrainer() {
         beatDuration: beatDur,
       };
 
-      console.log(
-        `[PATTERN] Time signature: ${pattern.timeSignature || "unknown"}`
-      );
-      console.log(
-        `[PATTERN] Expected beats per measure: ${pattern.metadata?.beatsPerMeasure || "unknown"}`
-      );
-      console.log(`[PATTERN] Pattern length: ${pattern.pattern.length}`);
-      console.log(`[PATTERN] Pattern: ${pattern.pattern}`);
-      console.log(`[PATTERN] Pattern source: ${pattern.source || "unknown"}`);
-      console.log(
-        `[PATTERN] Pattern time signature: ${pattern.timeSignature || "unknown"}`
-      );
-
       // Store pattern info immediately in ref for synchronous access
       patternInfoRef.current = patternInfo;
 
@@ -553,10 +518,6 @@ export function MetronomeTrainer() {
       try {
         // Use override settings if provided, otherwise use current state
         const currentSettings = overrideSettings || gameSettings;
-        console.log(`[GAME START] Using settings:`, currentSettings);
-        console.log(
-          `[GAME START] Time signature: ${currentSettings.timeSignature.name}`
-        );
 
         // Resume audio context if suspended
         await audioEngine.resumeAudioContext();
@@ -628,10 +589,6 @@ export function MetronomeTrainer() {
    * Evaluate user performance using metronome-based timing
    */
   const evaluatePerformance = useCallback(() => {
-    console.log(
-      `[TIMING] Victory sound evaluation started at ${audioEngine.getCurrentTime().toFixed(3)}s`
-    );
-
     // Metronome is already stopped at measure end
     setGamePhase(GAME_PHASES.FEEDBACK);
 
@@ -652,9 +609,6 @@ export function MetronomeTrainer() {
         comboCount: 0,
         maxCombo: prev.maxCombo,
       }));
-      console.log(
-        `[TIMING] Playing wrong sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
-      );
       playWrongSound();
       return;
     }
@@ -789,10 +743,6 @@ export function MetronomeTrainer() {
         newExerciseScores.reduce((sum, score) => sum + score, 0) /
         newExerciseScores.length;
 
-      console.log(
-        `[GAME COMPLETE] Final score: ${finalScorePercentage.toFixed(1)}% - Playing VICTORY sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
-      );
-
       // Play victory sound for successful session completion
       playVictorySound();
 
@@ -807,14 +757,7 @@ export function MetronomeTrainer() {
     // For individual exercises, only play wrong sound if failed
     const exercisePassed = exerciseAccuracy >= 50; // 50% threshold
     if (!exercisePassed) {
-      console.log(
-        `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - Playing WRONG sound at ${audioEngine.getCurrentTime().toFixed(3)}s`
-      );
       playWrongSound();
-    } else {
-      console.log(
-        `[EXERCISE COMPLETE] Exercise ${newExerciseNumber}: ${exerciseAccuracy.toFixed(1)}% - No sound (waiting for next pattern)`
-      );
     }
 
     // Stay in FEEDBACK phase - user must click "Next Pattern" button to continue
@@ -910,23 +853,10 @@ export function MetronomeTrainer() {
       const measureEndTime = actualBeat1Time + measureDuration;
       const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
 
-      console.log(
-        `[METRONOME] Scheduling metronome stop at measure end: ${measureEndTime.toFixed(3)}s (in ${delayToMeasureEnd.toFixed(0)}ms)`
-      );
-      console.log(
-        `[METRONOME] Scheduling victory sound evaluation: ${(measureEndTime + 0.2).toFixed(3)}s (in ${(delayToMeasureEnd + 200).toFixed(0)}ms)`
-      );
-
       // Stop metronome exactly at the end of the measure (beat 4)
       setTimeout(
         () => {
-          console.log(
-            `[METRONOME] STOPPING metronome NOW at ${audioEngine.getCurrentTime().toFixed(3)}s`
-          );
           stopContinuousMetronome();
-          console.log(
-            `[METRONOME] Metronome STOPPED at ${audioEngine.getCurrentTime().toFixed(3)}s`
-          );
         },
         Math.max(0, delayToMeasureEnd) // Stop exactly at measure end
       );
@@ -935,9 +865,6 @@ export function MetronomeTrainer() {
       const evaluationDelay = delayToMeasureEnd + 200; // 200ms after measure end
       setTimeout(
         () => {
-          console.log(
-            `[METRONOME] Starting victory sound evaluation at ${audioEngine.getCurrentTime().toFixed(3)}s`
-          );
           evaluatePerformance();
         },
         Math.max(200, evaluationDelay) // Small pause after metronome stops
@@ -1114,8 +1041,7 @@ export function MetronomeTrainer() {
       <PreGameSettingsScreen
         settings={gameSettings}
         onUpdateSettings={(newSettings) => {
-          console.log(`[SETTINGS] Updating settings:`, newSettings);
-          console.log(`[SETTINGS] Time signature:`, newSettings.timeSignature);
+
           setGameSettings(newSettings);
         }}
         onStart={startGame}
