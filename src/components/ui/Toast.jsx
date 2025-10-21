@@ -293,9 +293,7 @@ export const showPointsGain = (points, gameType = "game") => {
       ? "🎵"
       : gameType === "rhythm-master"
         ? "🥁"
-        : gameType === "sight-reading"
-          ? "📖"
-          : "🎮";
+        : "🎮";
 
   toast.success(
     <div className="flex items-center gap-3">

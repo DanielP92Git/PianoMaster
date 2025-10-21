@@ -61,9 +61,7 @@ export const useAudioEngine = (initialTempo = 120) => {
 
       // Handle context state for browsers requiring user interaction
       if (context.state === "suspended") {
-        console.log(
-          "Audio context suspended - will resume on user interaction"
-        );
+        await context.resume();
       }
 
       setAudioSupported(true);
@@ -76,7 +74,6 @@ export const useAudioEngine = (initialTempo = 120) => {
       // Load tap sound for instant feedback
       await loadTapSound();
 
-      console.log("Audio engine initialized successfully");
       return true;
     } catch (err) {
       const errorMessage = `Failed to initialize audio engine: ${err.message}`;
@@ -93,7 +90,7 @@ export const useAudioEngine = (initialTempo = 120) => {
    */
   const loadPianoSound = useCallback(async () => {
     if (pianoSoundLoadedRef.current && pianoSoundBufferRef.current) {
-      console.log("🎹 Piano sound already loaded");
+      
       return true;
     }
 
@@ -106,13 +103,11 @@ export const useAudioEngine = (initialTempo = 120) => {
 
     for (const path of possiblePianoPaths) {
       try {
-        console.log(`🎹 Attempting to load piano sound from: ${path}`);
+        
         const response = await fetch(path);
 
         if (!response.ok) {
-          console.log(
-            `❌ Failed to load from ${path}: ${response.status} ${response.statusText}`
-          );
+          
           continue;
         }
 
@@ -122,14 +117,13 @@ export const useAudioEngine = (initialTempo = 120) => {
 
         pianoSoundBufferRef.current = audioBuffer;
         pianoSoundLoadedRef.current = true;
-        console.log(`✅ Successfully loaded piano sound from: ${path}`);
+        
         return true;
       } catch (err) {
-        console.log(`❌ Error loading from ${path}:`, err.message);
+        console.error("Error loading piano sound:", err);
       }
     }
 
-    console.log("❌ Failed to load piano sound from all paths");
     return false;
   }, []);
 
@@ -138,7 +132,7 @@ export const useAudioEngine = (initialTempo = 120) => {
    */
   const loadTapSound = useCallback(async () => {
     if (tapSoundLoadedRef.current && tapSoundBufferRef.current) {
-      console.log("🥁 Tap sound already loaded");
+      
       return true;
     }
 
@@ -150,13 +144,11 @@ export const useAudioEngine = (initialTempo = 120) => {
 
     for (const path of possibleTapPaths) {
       try {
-        console.log(`🥁 Attempting to load tap sound from: ${path}`);
+        
         const response = await fetch(path);
 
         if (!response.ok) {
-          console.log(
-            `❌ Failed to load from ${path}: ${response.status} ${response.statusText}`
-          );
+          
           continue;
         }
 
@@ -166,14 +158,14 @@ export const useAudioEngine = (initialTempo = 120) => {
 
         tapSoundBufferRef.current = audioBuffer;
         tapSoundLoadedRef.current = true;
-        console.log(`✅ Successfully loaded tap sound from: ${path}`);
+        
         return true;
       } catch (err) {
-        console.log(`❌ Error loading from ${path}:`, err.message);
+        
+        console.error("Error loading tap sound:", err);
       }
     }
 
-    console.log("⚠️ Failed to load tap sound, will use synthetic fallback");
     return false;
   }, []);
 
@@ -186,7 +178,7 @@ export const useAudioEngine = (initialTempo = 120) => {
     try {
       if (audioContextRef.current.state === "suspended") {
         await audioContextRef.current.resume();
-        console.log("Audio context resumed");
+        
       }
       return true;
     } catch (err) {
@@ -329,33 +321,23 @@ export const useAudioEngine = (initialTempo = 120) => {
   const createPianoSound = useCallback(
     (time, volume = 0.6, duration = 1.0) => {
       if (!audioContextRef.current || !gainNodeRef.current) {
-        console.log(
-          "❌ createPianoSound: Audio context or gain node not available"
-        );
+        
         return null;
       }
 
       // Check audio context state
       if (audioContextRef.current.state !== "running") {
-        console.log(`❌ Audio context state: ${audioContextRef.current.state}`);
+        
         return null;
       }
 
       try {
         if (pianoSoundLoadedRef.current && pianoSoundBufferRef.current) {
-          console.log(
-            `🎹 Creating piano sound at time: ${time.toFixed(3)}, volume: ${volume}, context state: ${audioContextRef.current.state}`
-          );
-
           // Create buffer source from loaded piano sound
           const source = audioContextRef.current.createBufferSource();
           const pianoGain = audioContextRef.current.createGain();
 
           source.buffer = pianoSoundBufferRef.current;
-          console.log(
-            "🎹 Buffer assigned to source, duration:",
-            source.buffer.duration
-          );
 
           // Configure volume envelope for natural decay
           pianoGain.gain.setValueAtTime(0, time);
@@ -366,20 +348,13 @@ export const useAudioEngine = (initialTempo = 120) => {
           // Connect nodes
           source.connect(pianoGain);
           pianoGain.connect(gainNodeRef.current);
-          console.log("🎹 Nodes connected, scheduling playback");
 
           // Schedule play
           source.start(time);
           source.stop(time + duration);
-          console.log(
-            `🎹 Piano sound scheduled: start at ${time.toFixed(3)}, stop at ${(time + duration).toFixed(3)}`
-          );
-
           return { source, gain: pianoGain };
         } else {
-          console.log(
-            "🎹 Piano sound not loaded, falling back to synthetic sound"
-          );
+          
           // Fallback to synthetic sound if piano sound not loaded
           return createPatternSound(time, "triangle", 600, 0.1);
         }
@@ -398,12 +373,12 @@ export const useAudioEngine = (initialTempo = 120) => {
   const playPianoSound = useCallback(
     (volume = 0.6) => {
       if (!isReady()) {
-        console.log("❌ playPianoSound: Audio engine not ready");
+        
         return false;
       }
 
       const currentTime = audioContextRef.current.currentTime;
-      console.log("🎹 Playing piano sound immediately");
+      
       return createPianoSound(currentTime + 0.01, volume, 1.0) !== null;
     },
     [createPianoSound, isReady]
@@ -414,13 +389,16 @@ export const useAudioEngine = (initialTempo = 120) => {
    * @param {number} volume - Volume level (0-1)
    */
   const createTapSoundSynthetic = useCallback((volume = 0.8) => {
-    if (!audioContextRef.current) return;
+    if (!audioContextRef.current) {
+      return;
+    }
 
     try {
-      const now = audioContextRef.current.currentTime;
+      const ctx = audioContextRef.current;
+      const now = ctx.currentTime;
 
-      const oscillator = audioContextRef.current.createOscillator();
-      const gainNode = audioContextRef.current.createGain();
+      const oscillator = ctx.createOscillator();
+      const gainNode = ctx.createGain();
 
       oscillator.connect(gainNode);
       gainNode.connect(audioContextRef.current.destination);
@@ -436,8 +414,6 @@ export const useAudioEngine = (initialTempo = 120) => {
 
       oscillator.start(now);
       oscillator.stop(now + 0.05);
-
-      console.log(`🥁 Synthetic tap sound played at ${now.toFixed(3)}s`);
     } catch (err) {
       console.error("Error creating synthetic tap sound:", err);
     }
@@ -468,10 +444,6 @@ export const useAudioEngine = (initialTempo = 120) => {
 
           // Play IMMEDIATELY
           source.start(audioContextRef.current.currentTime);
-
-          console.log(
-            `🥁 Tap sound played at ${audioContextRef.current.currentTime.toFixed(3)}s`
-          );
         } catch (err) {
           console.error("Error playing tap sound:", err);
         }
@@ -837,19 +809,8 @@ export const useAudioEngine = (initialTempo = 120) => {
     const currentTime = audioContextRef.current.currentTime;
     const scheduleWindow = currentTime + lookaheadTime;
 
-    console.log(
-      `🔄 Processing scheduled events. Current time: ${currentTime.toFixed(3)}, Schedule window: ${scheduleWindow.toFixed(3)}`
-    );
-    console.log(
-      `📋 Total scheduled events: ${scheduledEventsRef.current.length}`
-    );
-
     scheduledEventsRef.current.forEach((event) => {
       if (!event.scheduled && event.time <= scheduleWindow) {
-        console.log(
-          `🎵 Executing event at time: ${event.time.toFixed(3)}, data:`,
-          event.data
-        );
         event.callback(event.time, event.data);
         event.scheduled = true;
       }
@@ -863,9 +824,7 @@ export const useAudioEngine = (initialTempo = 120) => {
     const afterCleanup = scheduledEventsRef.current.length;
 
     if (beforeCleanup !== afterCleanup) {
-      console.log(
-        `🧹 Cleaned up ${beforeCleanup - afterCleanup} events. Remaining: ${afterCleanup}`
-      );
+      console.error("Scheduled events were not cleaned up correctly");
     }
   }, [lookaheadTime]);
 
@@ -962,31 +921,13 @@ export const useAudioEngine = (initialTempo = 120) => {
       metronomeBeats = 4,
       timeSignature = { beats: 4 }
     ) => {
-      console.log("🎼 scheduleRhythmSequence called with pattern:", pattern);
-      console.log(
-        "Current scheduled events before:",
-        scheduledEventsRef.current.length
-      );
 
       if (!isReady() || !Array.isArray(pattern)) {
-        console.log(
-          "❌ Cannot schedule rhythm sequence - ready:",
-          isReady(),
-          "pattern valid:",
-          Array.isArray(pattern)
-        );
         return false;
       }
 
       const start = startTime || audioContextRef.current.currentTime + 0.1;
       const beatDuration = getBeatDuration();
-
-      console.log(
-        "📅 Scheduling rhythm sequence - start time:",
-        start.toFixed(3),
-        "beat duration:",
-        beatDuration.toFixed(3)
-      );
 
       // Schedule metronome count-in
       const beatsPerMeasure = timeSignature.beats;
@@ -1003,14 +944,10 @@ export const useAudioEngine = (initialTempo = 120) => {
 
       // Schedule pattern playback with PIANO SOUNDS
       const patternStartTime = start + metronomeBeats * beatDuration;
-      console.log("🎹 Pattern start time:", patternStartTime.toFixed(3));
 
       pattern.forEach((beat, index) => {
         if (beat === 1) {
           const beatTime = patternStartTime + index * beatDuration;
-          console.log(
-            `  Scheduling piano sound at beat ${index}, time: ${beatTime.toFixed(3)}`
-          );
           scheduleEvent((time) => createPianoSound(time, 0.8, 0.5), beatTime, {
             phase: "pattern",
             beat: index,
@@ -1044,8 +981,6 @@ export const useAudioEngine = (initialTempo = 120) => {
           { phase: "user-performance", beat: i, isDownbeat }
         );
       }
-
-      console.log("Scheduled events after:", scheduledEventsRef.current.length);
 
       return {
         countInStart: start,

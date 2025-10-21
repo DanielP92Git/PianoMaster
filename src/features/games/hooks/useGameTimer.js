@@ -12,7 +12,15 @@ export function useGameTimer(options) {
 
   // Only log if debug mode is enabled
   const debugLog = (message, data) => {
-    if (DEBUG) console.log(message, data);
+    if (DEBUG) {
+      if (data !== undefined) {
+        // eslint-disable-next-line no-console
+        console.log(message, data);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log(message);
+      }
+    }
   };
 
   debugLog("useGameTimer initialized with:", { initialTime, isTimedMode });

@@ -1,34 +1,39 @@
-import React, { useRef } from "react";
+import React, { useRef, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
-import { NoteRecognitionMode } from "./components/games/NoteRecognitionMode";
+import { NotesReadingMode } from "./components/games/NotesReadingMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import { Achievements } from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
 import PracticeSessions from "./pages/PracticeSessions";
 import StudentAssignments from "./pages/StudentAssignments";
 import AppSettings from "./pages/AppSettings";
+import Legal from "./pages/Legal";
 import Avatars from "./components/Avatars";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Login from "./components/auth/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
-import { MemoryGame } from "./components/games/note-recognition-games/MemoryGame";
-import { NoteRecognitionGame } from "./components/games/note-recognition-games/NoteRecognitionGame";
+import { MemoryGame } from "./components/games/notes-reading-games/MemoryGame";
+import { NotesReadingGame } from "./components/games/notes-reading-games/NotesReadingGame";
 import MetronomeTrainer from "./components/games/rhythm-games/MetronomeTrainer";
 import { RhythmProvider } from "./reducers/rhythmReducer";
+import { reminderService } from "./services/reminderService";
+import { dashboardReminderService } from "./services/dashboardReminderService";
 
 import { useUser } from "./features/authentication/useUser";
 import { Loader2 } from "lucide-react";
 import { ModalProvider } from "./contexts/ModalContext";
 import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import TeacherDashboard from "./components/layout/TeacherDashboard";
 import { RoleSelection } from "./components/auth/RoleSelection";
 import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
 import PWAUpdateNotification from "./components/pwa/PWAUpdateNotification";
 import NetworkStatus from "./components/pwa/NetworkStatus";
+import AlarmModal from "./components/ui/AlarmModal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -87,19 +92,17 @@ function AppRoutes() {
           <Route path="/assignments" element={<StudentAssignments />} />
           <Route path="/achievements" element={<Achievements />} />
           <Route path="/settings" element={<AppSettings />} />
+          <Route path="/legal" element={<Legal />} />
           <Route path="/avatars" element={<Avatars />} />
           <Route path="/teacher/*" element={<TeacherDashboard />} />
+          <Route path="/notes-reading-mode" element={<NotesReadingMode />} />
           <Route
-            path="/note-recognition-mode"
-            element={<NoteRecognitionMode />}
-          />
-          <Route
-            path="/note-recognition-mode/memory-game"
+            path="/notes-reading-mode/memory-game"
             element={<MemoryGame />}
           />
           <Route
-            path="/note-recognition-mode/note-recognition-game"
-            element={<NoteRecognitionGame />}
+            path="/notes-reading-mode/notes-reading-game"
+            element={<NotesReadingGame />}
           />
           <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
           <Route
@@ -115,22 +118,55 @@ function AppRoutes() {
 }
 
 function App() {
+  // Initialize dashboard reminder service
+  useEffect(() => {
+    dashboardReminderService.initialize();
+  }, []);
+
+  // Listen for service worker messages (e.g., snooze from notification action)
+  useEffect(() => {
+    if ("serviceWorker" in navigator) {
+      const handleMessage = (event) => {
+        if (event.data && event.data.type === "SNOOZE_REMINDER") {
+          reminderService.snooze(event.data.minutes || 15);
+        }
+        if (event.data && event.data.type === "SNOOZE_DASHBOARD_REMINDER") {
+          dashboardReminderService.snooze(event.data.minutes || 15);
+        }
+        if (event.data && event.data.type === "STOP_ALARM") {
+          dashboardReminderService.stopAlarm();
+        }
+      };
+
+      navigator.serviceWorker.addEventListener("message", handleMessage);
+
+      return () => {
+        navigator.serviceWorker.removeEventListener("message", handleMessage);
+      };
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <AccessibilityProvider>
-        <ModalProvider>
-          <RhythmProvider>
-            <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-              <Toaster position="top-center" />
-              <AppRoutes />
+        <SettingsProvider>
+          <ModalProvider>
+            <RhythmProvider>
+              <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+                <Toaster position="top-center" />
+                <AppRoutes />
 
-              {/* PWA Components */}
-              <PWAInstallPrompt />
-              <PWAUpdateNotification />
-              <NetworkStatus />
-            </div>
-          </RhythmProvider>
-        </ModalProvider>
+                {/* PWA Components */}
+                <PWAInstallPrompt />
+                <PWAUpdateNotification />
+                <NetworkStatus />
+
+                {/* Alarm Modal */}
+                <AlarmModal />
+              </div>
+            </RhythmProvider>
+          </ModalProvider>
+        </SettingsProvider>
       </AccessibilityProvider>
       <ReactQueryDevtools />
     </QueryClientProvider>

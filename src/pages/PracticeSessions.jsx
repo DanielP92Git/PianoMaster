@@ -88,13 +88,13 @@ export default function PracticeSessions() {
   // Delete session mutation
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId) => {
-      console.log("Starting delete mutation for session:", sessionId);
+      
       const result = await practiceService.deletePracticeSession(sessionId);
-      console.log("Delete mutation completed:", result);
+      
       return result;
     },
     onMutate: async (sessionId) => {
-      console.log("Optimistic update starting for session:", sessionId);
+      
       // Cancel any outgoing refetches
       await queryClient.cancelQueries(["practice-sessions", user?.id]);
 
@@ -126,11 +126,11 @@ export default function PracticeSessions() {
       toast.error(`Failed to delete recording: ${error.message}`);
     },
     onSuccess: () => {
-      console.log("Delete mutation succeeded");
+      
       toast.success("Recording deleted successfully");
     },
     onSettled: () => {
-      console.log("Delete mutation settled, invalidating queries");
+      
       // Always refetch after error or success to ensure cache is in sync
       queryClient.invalidateQueries(["practice-sessions", user?.id]);
     },
@@ -191,7 +191,7 @@ export default function PracticeSessions() {
 
   const handleDelete = async (sessionId) => {
     if (window.confirm("Are you sure you want to delete this recording?")) {
-      console.log("User confirmed deletion of session:", sessionId);
+      
       try {
         await deleteSessionMutation.mutateAsync(sessionId);
       } catch (error) {

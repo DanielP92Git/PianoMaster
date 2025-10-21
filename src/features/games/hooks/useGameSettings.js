@@ -68,10 +68,6 @@ export function useGameSettings(initialSettings = {}) {
       updatedSettings.timedMode = updatedTimedMode;
       updatedSettings.timeLimit = newTimeLimit;
 
-      console.log(
-        "useGameSettings.updateSettings - returning updated settings:",
-        updatedSettings
-      );
       return updatedSettings;
     });
   };

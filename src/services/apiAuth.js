@@ -241,9 +241,6 @@ export async function socialAuth({
     ? "http://localhost:5174"
     : "https://piano-master-nine.vercel.app";
 
-  console.log("Environment:", process.env.NODE_ENV);
-  console.log("Site URL:", siteUrl);
-
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {

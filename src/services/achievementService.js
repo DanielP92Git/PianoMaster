@@ -60,7 +60,7 @@ const ACHIEVEMENTS = {
   },
   NOTE_MASTER: {
     id: "note_master",
-    title: "Note Recognition Master",
+    title: "Notes Reading Master",
     description: "Answer 100 note recognition questions correctly",
     icon: "🎼",
     category: "skill",

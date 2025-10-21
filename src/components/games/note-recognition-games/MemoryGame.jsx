@@ -5,8 +5,6 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { Link } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import doImage from "../../../assets/noteImages/treble-do-middle.svg";
@@ -108,9 +106,6 @@ export function MemoryGame() {
   ) => {
     const totalCards = GRID_SIZES[currentGridSize];
     const pairs = totalCards / 2;
-    console.log(
-      `Creating cards with totalCards=${totalCards}, pairs=${pairs}, gridSize=${currentGridSize}`
-    );
 
     // Select the appropriate notes based on clef
     const allNotesArray = currentClef === "Treble" ? trebleNotes : bassNotes;
@@ -123,13 +118,10 @@ export function MemoryGame() {
     ) {
       filteredNotes = allNotesArray.filter((note) =>
         currentSelectedNotes.includes(note.note)
-      );
+
     }
 
-    console.log(
-      `Using ${filteredNotes.length} filtered notes:`,
-      filteredNotes.map((n) => n.note)
-    );
+     => n.note)
 
     // Create a copy of the filtered notes array and shuffle it to randomize selection
     const availableNotes = [...filteredNotes];
@@ -142,9 +134,7 @@ export function MemoryGame() {
     if (pairs <= availableNotes.length) {
       // We have enough unique notes, just take what we need
       selectedNotes = availableNotes.slice(0, pairs);
-      console.log(
-        `Using ${selectedNotes.length} unique notes for ${pairs} pairs`
-      );
+      
     } else {
       // We need more pairs than unique notes available
       // First, use all available unique notes
@@ -156,25 +146,20 @@ export function MemoryGame() {
         const notesToAdd = Math.min(
           pairs - selectedNotes.length,
           availableNotes.length
-        );
+
         selectedNotes = [
           ...selectedNotes,
           ...availableNotes.slice(0, notesToAdd),
         ];
       }
 
-      console.log(
-        `Using ${availableNotes.length} unique notes (with ${
-          selectedNotes.length - availableNotes.length
-        } duplicates) for ${pairs} pairs`
-      );
+       for ${pairs} pairs`
+
     }
 
     // Double-check we have exactly the right number of pairs
     if (selectedNotes.length !== pairs) {
-      console.log(
-        `Adjusting selected notes from ${selectedNotes.length} to ${pairs}`
-      );
+      
       selectedNotes = selectedNotes.slice(0, pairs);
     }
 
@@ -195,15 +180,11 @@ export function MemoryGame() {
 
     // Double-check total card count
     const allCards = [...noteCards, ...nameCards];
-    console.log(
-      `Final card count: ${allCards.length} (should be ${totalCards})`
-    );
 
     // CRITICAL: Verify we have the correct number of cards
     if (allCards.length !== totalCards) {
       console.error(
         `ERROR: Created ${allCards.length} cards but needed ${totalCards}!`
-      );
 
       // Handle the edge case where we didn't create enough cards
       if (allCards.length < totalCards) {
@@ -217,15 +198,12 @@ export function MemoryGame() {
           const cardsToAdd = allCards.slice(
             0,
             Math.min(neededCards, allCards.length)
-          );
+
           additionalCards = [...additionalCards, ...cardsToAdd];
         }
 
         // Add the additional cards and re-shuffle
         const finalCards = [...allCards, ...additionalCards];
-        console.log(
-          `Added ${additionalCards.length} extra cards to reach ${finalCards.length} total`
-        );
 
         // Return the fixed number of cards
         return finalCards
@@ -242,14 +220,7 @@ export function MemoryGame() {
 
   // Fix the initial cards creation to use the proper grid size
   const initialCards = useMemo(() => {
-    console.log(
-      "Creating initial cards with clef:",
-      clef,
-      "grid size:",
-      DIFFICULTIES["Easy"],
-      "selected notes:",
-      selectedNotes
-    );
+    
     return createCards(clef, DIFFICULTIES["Easy"], selectedNotes);
   }, [clef, selectedNotes]);
 
@@ -291,7 +262,7 @@ export function MemoryGame() {
 
   // Handle game over when time runs out
   const handleGameOver = useCallback(() => {
-    console.log("Game over - time ran out!");
+    
     pauseTimer();
     setGameFinished(true);
     setIsLost(true);
@@ -317,11 +288,6 @@ export function MemoryGame() {
   // Handle settings from the GameSettings component
   const handleGameSettings = (settings) => {
     // ADD DETAILED LOGGING
-    console.log("===== INITIAL GAME SETTINGS =====");
-    console.log("Settings received:", JSON.stringify(settings));
-    console.log("Current difficulty before update:", difficulty);
-    console.log("Current gridSize before update:", gridSize);
-    console.log("Current timeDifficulty before update:", timeDifficulty);
 
     // Always update clef
     let newClef = clef;
@@ -338,7 +304,7 @@ export function MemoryGame() {
     ) {
       newSelectedNotes = settings.selectedNotes;
       setSelectedNotes(settings.selectedNotes);
-      console.log("Updated selectedNotes to:", settings.selectedNotes);
+      
     }
 
     // Update difficulty and grid size
@@ -347,28 +313,20 @@ export function MemoryGame() {
     if (settings.difficulty !== undefined) {
       newDifficulty = settings.difficulty;
       newGridSize = DIFFICULTIES[settings.difficulty];
-      console.log(`Will set difficulty to: ${newDifficulty}`);
-      console.log(
-        `Will set gridSize to: ${newGridSize}, expected cards: ${GRID_SIZES[newGridSize]}`
-      );
 
       // Create cards immediately with the new grid size and selected notes
       const newCards = createCards(newClef, newGridSize, newSelectedNotes);
-      console.log(
-        `Created ${newCards.length} cards immediately for ${newGridSize} with selected notes:`,
-        newSelectedNotes
-      );
 
       // Update all states at once
       setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
       setCards(newCards);
-      console.log(`Set cards state with ${newCards.length} cards`);
+      
     }
 
     // Handle time difficulty separately
     if (settings.timeDifficulty !== undefined) {
-      console.log(`Setting time difficulty to: ${settings.timeDifficulty}`);
+      
       setTimeDifficulty(settings.timeDifficulty);
     }
 
@@ -397,9 +355,6 @@ export function MemoryGame() {
 
     // Start game with a slight delay to ensure state updates
     setTimeout(() => {
-      console.log(
-        `Finalizing game with: grid difficulty=${newDifficulty}, time difficulty=${timeDifficulty}, clef=${newClef}, gridSize=${newGridSize}, cards=${GRID_SIZES[newGridSize]}, timedMode=${newTimedMode}, timeLimit=${newTimeLimit}`
-      );
 
       // Set game started state
       setGameStarted(true);
@@ -415,7 +370,7 @@ export function MemoryGame() {
       resetTimer(newTimeLimit);
 
       // Print final card count
-      console.log(`Game starting with ${cards.length} cards`);
+      
     }, 200);
   };
 
@@ -428,15 +383,9 @@ export function MemoryGame() {
     // Always verify grid size matches difficulty
     const expectedGridSize = DIFFICULTIES[difficulty];
     if (newGridSize !== expectedGridSize) {
-      console.log(
-        `Grid size mismatch: received ${newGridSize} but expected ${expectedGridSize} for difficulty ${difficulty}`
-      );
+      
       newGridSize = expectedGridSize;
     }
-
-    console.log(
-      `handleStartGame called with clef=${currentClef}, difficulty=${difficulty}, gridSize=${newGridSize}, expectedCards=${GRID_SIZES[newGridSize]}`
-    );
 
     setGameStarted(true);
     setGameFinished(false);
@@ -451,14 +400,8 @@ export function MemoryGame() {
       currentClef,
       newGridSize,
       currentSelectedNotes
-    );
-    console.log(
-      `Created ${newCards.length} cards for grid size ${newGridSize} with selected notes:`,
-      currentSelectedNotes
-    );
 
     setCards(newCards);
-    console.log(`Updated cards state with ${newCards.length} cards`);
 
     // Properly reset the timer with the updated time limit
     pauseTimer();
@@ -478,11 +421,6 @@ export function MemoryGame() {
     setShowSettingsModal(false);
 
     // ADD DETAILED LOGGING
-    console.log("===== RESTART GAME SETTINGS =====");
-    console.log("Settings received from modal:", JSON.stringify(settings));
-    console.log("Current difficulty before update:", difficulty);
-    console.log("Current gridSize before update:", gridSize);
-    console.log("Current timeDifficulty before update:", timeDifficulty);
 
     // Update clef and other settings
     const newClef = settings.clef !== undefined ? settings.clef : clef;
@@ -495,7 +433,6 @@ export function MemoryGame() {
       Array.isArray(settings.selectedNotes)
         ? settings.selectedNotes
         : selectedNotes;
-    console.log("Updated selectedNotes for restart:", newSelectedNotes);
 
     // Handle time difficulty separately
     const newTimeDifficulty =
@@ -505,32 +442,22 @@ export function MemoryGame() {
 
     // Always get the grid size from the difficulty
     const newGridSize = DIFFICULTIES[newDifficulty];
-    console.log(`Will set difficulty to: ${newDifficulty}`);
-    console.log(`Will set gridSize to: ${newGridSize}`);
-    console.log(`Will set time difficulty to: ${newTimeDifficulty}`);
 
     // IMPORTANT: If difficulty changed, create new cards immediately
     if (
       settings.difficulty !== undefined &&
       settings.difficulty !== difficulty
     ) {
-      console.log(
-        `Difficulty changed, creating new cards immediately for ${newGridSize}`
-      );
 
       // Create new cards with the new grid size and selected notes
       const newCards = createCards(newClef, newGridSize, newSelectedNotes);
-      console.log(
-        `Created ${newCards.length} cards for immediate update with selected notes:`,
-        newSelectedNotes
-      );
 
       // Update all state values at once
       setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
       setSelectedNotes(newSelectedNotes);
       setCards(newCards);
-      console.log(`New cards set with ${newCards.length} cards`);
+      
     } else if (settings.difficulty !== undefined) {
       // Same difficulty but explicitly set
       setDifficulty(settings.difficulty);
@@ -577,9 +504,6 @@ export function MemoryGame() {
     // Use a longer timeout to ensure state updates have completed
     setTimeout(() => {
       const actualTimeLimit = settings.timeLimit || timeLimit;
-      console.log(
-        `Starting game with: clef=${newClef}, gridSize=${newGridSize}, totalCards=${GRID_SIZES[newGridSize]}, timeDifficulty=${newTimeDifficulty}, timeLimit=${actualTimeLimit}`
-      );
 
       // Reset game state
       setGameStarted(true);
@@ -599,10 +523,7 @@ export function MemoryGame() {
           Array.isArray(settings.selectedNotes))
       ) {
         const gameCards = createCards(newClef, newGridSize, newSelectedNotes);
-        console.log(
-          `Created ${gameCards.length} cards for grid size ${newGridSize} with selected notes:`,
-          newSelectedNotes
-        );
+        
         setCards(gameCards);
       }
 
@@ -625,9 +546,6 @@ export function MemoryGame() {
 
     // Ensure we use the right grid size based on current difficulty
     const resetGridSize = DIFFICULTIES[difficulty];
-    console.log(
-      `Resetting game with difficulty ${difficulty}, grid size ${resetGridSize}`
-    );
 
     // Create cards with explicit grid size
     const newCards = createCards(clef, resetGridSize);
@@ -705,7 +623,6 @@ export function MemoryGame() {
 
   const getGridClassName = () => {
     // Return appropriate grid layout based on current difficulty
-    console.log("Current difficulty:", difficulty, "gridSize:", gridSize);
 
     // Always use the difficulty to determine the grid layout
     switch (difficulty) {
@@ -728,7 +645,6 @@ export function MemoryGame() {
       matchedIndexes.length > 0 &&
       matchedIndexes.length === cards.length
     ) {
-      console.log("Game won!");
 
       // Pause timer if it's running
       if (timedMode) {
@@ -781,13 +697,13 @@ export function MemoryGame() {
       !isActive &&
       timeRemaining > 0
     ) {
-      console.log("Starting timer automatically");
+      
       startTimer();
     }
 
     // End condition - if timer has reached 0 in timed mode
     if (gameStarted && !gameFinished && timedMode && timeRemaining === 0) {
-      console.log("Time's up - game over");
+      
       handleGameOver();
     }
   }, [
@@ -802,16 +718,12 @@ export function MemoryGame() {
 
   // Add this useEffect to monitor card count and grid size
   useEffect(() => {
-    console.log(
-      `Current grid size: ${gridSize}, should have ${GRID_SIZES[gridSize]} cards`
-    );
-    console.log(`Actual card count: ${cards.length}`);
 
     // Alert if there's a mismatch
     if (cards.length > GRID_SIZES[gridSize]) {
       console.warn(
         `Card count mismatch! Expected ${GRID_SIZES[gridSize]} but got ${cards.length}`
-      );
+
     }
   }, [cards, gridSize]);
 
@@ -822,15 +734,9 @@ export function MemoryGame() {
   useEffect(() => {
     // Only run this effect if gridSize has changed and game has started
     if (prevGridSizeRef.current !== gridSize && gameStarted) {
-      console.log(
-        `Grid size changed from ${prevGridSizeRef.current} to ${gridSize}, recreating cards`
-      );
 
       // Create new cards with the updated grid size
       const newCards = createCards(clef, gridSize);
-      console.log(
-        `Created ${newCards.length} cards for new grid size ${gridSize}`
-      );
 
       // Update cards state
       setCards(newCards);
@@ -851,9 +757,7 @@ export function MemoryGame() {
     // This ensures gridSize is always in sync with difficulty
     const newGridSize = DIFFICULTIES[difficulty];
     if (gridSize !== newGridSize) {
-      console.log(
-        `Syncing gridSize with difficulty: ${difficulty} -> ${newGridSize}`
-      );
+      
       setGridSize(newGridSize);
     }
   }, [difficulty]);
@@ -861,12 +765,11 @@ export function MemoryGame() {
   return (
     <div className="flex flex-col h-screen">
       <div className="p-2 sm:p-3 flex justify-between items-center">
-        <Link
-          to="/note-recognition-mode"
-          className="text-white/80 hover:text-white flex items-center text-xs sm:text-sm"
-        >
-          <FaArrowLeft className="mr-1" /> Back to Games
-        </Link>
+        <BackButton
+          to="/notes-reading-mode"
+          name="Notes Reading"
+          styling="text-white/80 hover:text-white text-xs sm:text-sm"
+        />
 
         {/* Timer and Score Display - only show when game is started */}
         {gameStarted && (
@@ -934,15 +837,9 @@ export function MemoryGame() {
                 const expectedGridSize = DIFFICULTIES[difficulty];
                 const expectedCardCount = GRID_SIZES[expectedGridSize];
 
-                console.log(
-                  `Rendering cards for difficulty ${difficulty}: grid=${expectedGridSize}, expectedCards=${expectedCardCount}, available=${cards.length}`
-                );
-
                 // Create a debug message for the counts
                 const debugCards = cards.slice(0, expectedCardCount);
-                console.log(
-                  `After slicing: showing ${debugCards.length} cards`
-                );
+                
                 return debugCards;
               })().map((card, index) => {
                 const isFlipped =
@@ -1075,7 +972,7 @@ export function MemoryGame() {
                       </div>
                     </div>
                   </div>
-                );
+
               })}
             </div>
           </div>
@@ -1098,5 +995,6 @@ export function MemoryGame() {
         />
       )}
     </div>
-  );
+
 }
+

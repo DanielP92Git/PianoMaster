@@ -28,12 +28,12 @@ export function useStreakWithAchievements() {
 
       // Log new achievements for debugging
       if (newAchievements.length > 0) {
-        console.log("🏆 New achievements earned:", newAchievements);
+        
       }
 
       // Optionally show toast notifications for new achievements
       newAchievements.forEach((achievement) => {
-        console.log(`🎉 Achievement unlocked: ${achievement.title}`);
+        
       });
     },
     onError: (error) => {

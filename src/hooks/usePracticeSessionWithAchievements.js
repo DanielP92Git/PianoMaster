@@ -43,13 +43,12 @@ export function usePracticeSessionWithAchievements() {
 
       // Show achievement notifications
       if (newAchievements.length > 0) {
-        console.log("🏆 New achievements earned:", newAchievements);
 
         newAchievements.forEach((achievement) => {
           toast.success(`🎉 Achievement unlocked: ${achievement.title}!`, {
             duration: 5000,
           });
-          console.log(`🎉 Achievement unlocked: ${achievement.title}`);
+          
         });
       }
 

@@ -27,7 +27,7 @@ export function useSignup() {
         );
 
         if (authError) {
-          console.log("Supabase auth error:", authError);
+          
           if (
             authError.message?.toLowerCase().includes("already exists") ||
             authError.message?.toLowerCase().includes("already registered") ||
@@ -66,7 +66,7 @@ export function useSignup() {
             );
 
           if (teacherError) {
-            console.log("Teacher profile creation result:", teacherError);
+            
             // Don't throw here - let the user complete signup even if profile creation fails
             // The profile can be created later when they try to access teacher features
           }
@@ -92,7 +92,7 @@ export function useSignup() {
             );
 
           if (studentError) {
-            console.log("Student profile creation result:", studentError);
+            
             // Don't throw here - let the user complete signup even if profile creation fails  
             // The profile can be created later when they try to access student features
           }
