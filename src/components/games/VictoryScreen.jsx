@@ -23,23 +23,23 @@ const VictoryScreen = ({
   }, [scorePercentage, updateStreakWithAchievements]);
 
   return (
-    <div className="flex items-center justify-center h-screen fixed inset-0 p-4">
-      <div className="relative w-full max-w-md mx-auto p-8 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm font-outfit animate-floatUp">
-        <div className="absolute -top-6 left-1/2 -translate-x-1/2">
+    <div className="flex items-center justify-center min-h-screen fixed inset-0 p-4 overflow-hidden">
+      <div className="relative w-full max-w-md mx-auto p-6 sm:p-8 pt-12 sm:pt-14 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-sm font-outfit animate-floatUp">
+        <div className="absolute top-2 sm:top-3 left-1/2 -translate-x-1/2">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 blur-xl opacity-20 animate-celebration" />
             <Trophy
-              className="w-12 h-12 text-yellow-500 animate-celebration"
+              className="w-10 h-10 sm:w-12 sm:h-12 text-yellow-500 animate-celebration"
               strokeWidth={1.5}
             />
           </div>
         </div>
 
-        <div className="text-center mt-8 space-y-4">
+        <div className="text-center mt-2 sm:mt-4 space-y-3 sm:space-y-4">
           {/* Animated victory title with sparkle effects */}
           <div className="relative">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 blur-lg opacity-30 animate-pulse"></div>
-            <h2 className="relative text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-red-600">
+            <h2 className="relative text-3xl sm:text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-red-600">
               Victory!
             </h2>
             {/* Floating sparkles */}
@@ -49,11 +49,11 @@ const VictoryScreen = ({
           </div>
 
           <div className="flex items-center justify-center gap-2 text-gray-600">
-            <Sparkles className="w-5 h-5 text-yellow-500" />
-            <p className="text-lg">
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
+            <p className="text-base sm:text-lg">
               Final Score: {score}/{totalPossibleScore}
             </p>
-            <Sparkles className="w-5 h-5 text-yellow-500" />
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-500" />
           </div>
 
           {timedMode && timeUsed !== null && (
@@ -66,17 +66,17 @@ const VictoryScreen = ({
           )}
 
           {scorePercentage >= 80 && (
-            <div className="relative py-4 px-6 rounded-xl overflow-hidden">
+            <div className="relative py-3 sm:py-4 px-4 sm:px-6 rounded-xl overflow-hidden">
               {/* Animated gradient background */}
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 animate-gradient bg-[length:200%_200%] opacity-90"></div>
               {/* Sparkle overlay */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
               <div className="relative flex items-center justify-center gap-2">
-                <Star className="w-6 h-6 text-yellow-300 animate-spin" />
-                <p className="text-white font-bold text-lg drop-shadow-lg">
+                <Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300 animate-spin" />
+                <p className="text-white font-bold text-base sm:text-lg drop-shadow-lg">
                   Master Achievement Unlocked!
                 </p>
-                <Star className="w-6 h-6 text-yellow-300 animate-spin" />
+                <Star className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300 animate-spin" />
               </div>
               {/* Floating particles */}
               <div className="absolute top-1 left-4 w-1 h-1 bg-yellow-300 rounded-full animate-ping delay-100"></div>
@@ -85,16 +85,16 @@ const VictoryScreen = ({
             </div>
           )}
 
-          <div className="flex gap-3 mt-6">
+          <div className="flex gap-2 sm:gap-3 mt-4 sm:mt-6">
             <button
               onClick={onReset}
-              className="flex-1 py-3 px-6 text-lg font-semibold text-white rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
+              className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 text-base sm:text-lg font-semibold text-white rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
             >
               Play Again
             </button>
             <button
               onClick={() => (window.location.href = "/notes-reading-mode")}
-              className="flex-1 py-3 px-6 text-lg font-semibold text-gray-700 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:outline-none"
+              className="flex-1 py-2.5 sm:py-3 px-4 sm:px-6 text-base sm:text-lg font-semibold text-gray-700 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 focus:outline-none"
             >
               Exit
             </button>
