@@ -5,6 +5,8 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import doImage from "../../../assets/noteImages/treble-do-middle.svg";
 import reImage from "../../../assets/noteImages/treble-re-first.svg";
 import miImage from "../../../assets/noteImages/treble-mi-first.svg";
@@ -54,6 +56,28 @@ const bassNotes = [
   { note: "רה", image: bassReImage },
 ];
 
+// Map Hebrew notes to piano sound files based on clef
+const noteSoundFiles = {
+  treble: {
+    דו: () => import("../../../assets/sounds/piano/C4.mp3"),
+    רה: () => import("../../../assets/sounds/piano/D4.mp3"),
+    מי: () => import("../../../assets/sounds/piano/E4.mp3"),
+    פה: () => import("../../../assets/sounds/piano/F4.mp3"),
+    סול: () => import("../../../assets/sounds/piano/G4.mp3"),
+    לה: () => import("../../../assets/sounds/piano/A4.mp3"),
+    סי: () => import("../../../assets/sounds/piano/B4.mp3"),
+  },
+  bass: {
+    דו: () => import("../../../assets/sounds/piano/C3.mp3"),
+    רה: () => import("../../../assets/sounds/piano/D3.mp3"),
+    מי: () => import("../../../assets/sounds/piano/E3.mp3"),
+    פה: () => import("../../../assets/sounds/piano/F3.mp3"),
+    סול: () => import("../../../assets/sounds/piano/G3.mp3"),
+    לה: () => import("../../../assets/sounds/piano/A3.mp3"),
+    סי: () => import("../../../assets/sounds/piano/B3.mp3"),
+  },
+};
+
 // Simple timer display component
 const TimerDisplay = ({ formattedTime }) => {
   return (
@@ -100,6 +124,11 @@ const ProgressBar = ({ current, total }) => {
 };
 
 export function NotesReadingGame() {
+  const navigate = useNavigate();
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [preloadedSounds, setPreloadedSounds] = useState({});
+  const currentAudioRef = useRef(null);
+
   // Game settings with defaults
   const { settings, updateSettings, resetSettings } = useGameSettings({
     timedMode: false,
@@ -163,6 +192,31 @@ export function NotesReadingGame() {
     setTimeRemaining(newTime);
     setIsTimerActive(false);
   }, []);
+
+  // Preload piano sounds for instant playback
+  useEffect(() => {
+    const preloadSounds = async () => {
+      const clefType = settings.clef === "Treble" ? "treble" : "bass";
+      const soundsToLoad = noteSoundFiles[clefType];
+      const loadedSounds = {};
+
+      for (const [noteName, importFunc] of Object.entries(soundsToLoad)) {
+        try {
+          const soundModule = await importFunc();
+          const audio = new Audio(soundModule.default);
+          audio.volume = 1.0;
+          audio.load(); // Preload the audio
+          loadedSounds[noteName] = audio;
+        } catch (error) {
+          console.warn(`Failed to preload sound for ${noteName}:`, error);
+        }
+      }
+
+      setPreloadedSounds(loadedSounds);
+    };
+
+    preloadSounds();
+  }, [settings.clef]);
 
   // Reset game state when component mounts to ensure clean state
   useEffect(() => {
@@ -379,7 +433,7 @@ export function NotesReadingGame() {
     if (!progress.currentNote) return;
 
     const isCorrect = handleAnswer(selectedAnswer, progress.currentNote.note);
-    playSound(isCorrect);
+    playSound(isCorrect, progress.currentNote.note);
 
     // Check for game completion based on mode
     // Note: totalQuestions is incremented in handleAnswer, so we check the new value
@@ -441,14 +495,41 @@ export function NotesReadingGame() {
     }, 100);
   };
 
-  // Function to play sounds
-  const playSound = (isCorrect) => {
-    if (isCorrect) {
-      playCorrectSound();
-    } else {
-      playWrongSound();
-    }
-  };
+  // Function to play sounds based on answer correctness
+  const playSound = useCallback(
+    (isCorrect, noteName) => {
+      if (isCorrect && noteName) {
+        // Stop any currently playing piano note
+        if (currentAudioRef.current) {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.currentTime = 0;
+        }
+
+        // Play the preloaded piano note for instant playback
+        const audio = preloadedSounds[noteName];
+        if (audio) {
+          // Reset audio to beginning in case it was played before
+          audio.currentTime = 0;
+          currentAudioRef.current = audio; // Track this audio
+          audio.play().catch((err) => console.warn("Audio play failed:", err));
+        } else {
+          // Fallback to correct sound if preloaded audio not available
+          console.warn("Preloaded sound not available for:", noteName);
+          playCorrectSound();
+        }
+      } else {
+        // Stop piano note before playing wrong sound
+        if (currentAudioRef.current) {
+          currentAudioRef.current.pause();
+          currentAudioRef.current.currentTime = 0;
+          currentAudioRef.current = null;
+        }
+        // Play wrong sound for incorrect answers
+        playWrongSound();
+      }
+    },
+    [preloadedSounds, playCorrectSound, playWrongSound]
+  );
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -655,7 +736,10 @@ export function NotesReadingGame() {
       microphone.getTracks().forEach((track) => track.stop());
     }
     if (audioContext) {
-      audioContext.close();
+      // Close audio context asynchronously to avoid blocking navigation
+      audioContext.close().catch((err) => {
+        console.warn("Error closing audio context:", err);
+      });
     }
     setIsListening(false);
     setAudioContext(null);
@@ -677,7 +761,10 @@ export function NotesReadingGame() {
   // Cleanup audio input on unmount or game end
   useEffect(() => {
     return () => {
-      stopAudioInput();
+      // Defer cleanup to not block navigation - run asynchronously
+      setTimeout(() => {
+        stopAudioInput();
+      }, 0);
     };
   }, [stopAudioInput]);
 
@@ -688,14 +775,47 @@ export function NotesReadingGame() {
     }
   }, [progress.isFinished, stopAudioInput]);
 
+  // Cleanup: stop audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Handle back navigation with immediate loading feedback
+  const handleBackNavigation = useCallback(() => {
+    setIsNavigating(true);
+    // Let React render the loading state, then navigate
+    setTimeout(() => {
+      navigate("/notes-reading-mode");
+    }, 50);
+  }, [navigate]);
+
+  // Show loading screen during navigation
+  if (isNavigating) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+        <div className="text-center">
+          <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-4" />
+          <p className="text-white text-xl">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       <div className="p-2 flex-shrink-0">
-        <BackButton
-          to="/notes-reading-mode"
-          name="Notes Reading"
-          styling="text-white/80 hover:text-white text-sm"
-        />
+        <button
+          onClick={handleBackNavigation}
+          className="flex items-center text-white/80 hover:text-white text-sm relative z-50 cursor-pointer"
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" />
+          Back to Notes Reading
+        </button>
       </div>
 
       {progress.showFireworks && <Firework />}
