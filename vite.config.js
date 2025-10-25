@@ -7,15 +7,14 @@ export default defineConfig({
   plugins: [
     react(),
     svgr({
-      // svgr options: https://react-svgr.com/docs/options/
+      // Only process SVGs imported with ?react suffix
+      include: "**/*.svg?react",
       svgrOptions: {
-        exportType: "default",
+        // Enable ref forwarding
         ref: true,
-        svgo: false,
+        // Add props to SVG
         titleProp: true,
       },
-      // A minimatch pattern, or array of patterns, which specifies the files in the build the plugin should include
-      include: "**/*.svg?react",
     }),
     viteStaticCopy({
       targets: [
