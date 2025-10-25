@@ -105,8 +105,6 @@ export function MetronomeTrainer() {
     adaptiveDifficulty: false,
   });
 
-
-
   // Pattern and timing state
   const [currentPattern, setCurrentPattern] = useState(null);
   const [currentBeat, setCurrentBeat] = useState(0);
@@ -362,7 +360,6 @@ export function MetronomeTrainer() {
 
     // Clear any already scheduled metronome events
     audioEngine.clearScheduledEvents();
-    
   }, [audioEngine]);
 
   /**
@@ -1041,7 +1038,6 @@ export function MetronomeTrainer() {
       <PreGameSettingsScreen
         settings={gameSettings}
         onUpdateSettings={(newSettings) => {
-
           setGameSettings(newSettings);
         }}
         onStart={startGame}
@@ -1194,11 +1190,14 @@ export function MetronomeTrainer() {
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
       {/* Compact Header */}
       <div className="flex-shrink-0 px-4 py-2 flex items-center justify-between">
-        <BackButton
-          to="/rhythm-mode"
-          name="Rhythm Games"
-          className="text-white/80 hover:text-white text-sm"
-        />
+        {/* Only show back button during gameplay (not on session complete screen) */}
+        {gamePhase !== GAME_PHASES.SESSION_COMPLETE && (
+          <BackButton
+            to="/rhythm-mode"
+            name="Rhythm Games"
+            className="text-white/80 hover:text-white text-sm"
+          />
+        )}
         <div className="text-center text-white">
           <h1 className="text-base sm:text-lg font-bold">
             Metronome Rhythm Trainer

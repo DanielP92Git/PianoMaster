@@ -55,7 +55,6 @@ export default function PracticeModes({ practiceModesSectionRef }) {
 
   const enhancedGameModes = gameModes.map((mode) => ({
     ...mode,
-    progress: Math.floor(Math.random() * 100),
     icon:
       mode.type === "rhythm-mode" ? (
         <Drum className="w-8 h-8 text-white" />
@@ -67,11 +66,9 @@ export default function PracticeModes({ practiceModesSectionRef }) {
   }));
 
   return (
-    <div ref={practiceModesSectionRef} className="p-4 lg:p-8 max-w-7xl mx-auto">
-      <BackButton to="/" name="Dashboard" />
-
+    <div ref={practiceModesSectionRef} className="p-4 lg:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-white">Practice Modes</h1>
+        <BackButton to="/" name="Dashboard" />
         <StreakDisplay />
       </div>
 
@@ -84,11 +81,8 @@ export default function PracticeModes({ practiceModesSectionRef }) {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 rounded-xl backdrop-blur-sm border border-white/20 transition-all duration-300 group-hover:from-indigo-600/30 group-hover:to-purple-600/30">
               <div className="h-full flex flex-col p-3">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start">
                   <div className="bg-white/5 rounded-lg p-1.5">{mode.icon}</div>
-                  <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium text-white/80 ring-1 ring-inset ring-white/20">
-                    {mode.progress}% Complete
-                  </span>
                 </div>
                 <div className="mt-2 flex-1">
                   <h2 className="text-base font-semibold text-white group-hover:text-blue-200 transition-colors">
