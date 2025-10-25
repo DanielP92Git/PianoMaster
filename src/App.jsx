@@ -34,6 +34,7 @@ import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
 import PWAUpdateNotification from "./components/pwa/PWAUpdateNotification";
 import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
+import { useUserProfile } from "./hooks/useUserProfile";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +51,17 @@ const queryClient = new QueryClient({
 // Component to handle role selection for authenticated users without profiles
 function AuthenticatedWrapper({ children }) {
   const { user, isLoading, userRole, profile } = useUser();
+  const { data: profileData } = useUserProfile();
+
+  // Preload avatar image for instant display
+  useEffect(() => {
+    if (profileData?.avatars?.image_url || profileData?.avatar_url) {
+      const avatarUrl =
+        profileData.avatars?.image_url || profileData.avatar_url;
+      const img = new Image();
+      img.src = avatarUrl;
+    }
+  }, [profileData]);
 
   // If user is authenticated but doesn't have a profile, show role selection
   if (user && !isLoading && !profile && !userRole) {

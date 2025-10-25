@@ -5,6 +5,7 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import doImage from "../../../assets/noteImages/treble-do-middle.svg";
@@ -47,8 +48,6 @@ const bassNotes = [
   { note: "סי", image: bassSiImage },
 ];
 
-const noteNames = ["דו", "רה", "מי", "פה", "סול", "לה", "סי"];
-
 const GRID_SIZES = {
   "3 X 4": 12, // 3x4 grid = 12 cards (6 pairs)
   "3 X 6": 18, // 3x6 grid = 18 cards (9 pairs)
@@ -62,6 +61,8 @@ const DIFFICULTIES = {
 };
 
 export function MemoryGame() {
+  const navigate = useNavigate();
+
   // CSS for card flipping
   const styles = {
     cardContainer: {
@@ -118,60 +119,53 @@ export function MemoryGame() {
     ) {
       filteredNotes = allNotesArray.filter((note) =>
         currentSelectedNotes.includes(note.note)
-
+      );
     }
-
-     => n.note)
 
     // Create a copy of the filtered notes array and shuffle it to randomize selection
     const availableNotes = [...filteredNotes];
     availableNotes.sort(() => Math.random() - 0.5);
 
     // Prepare the final array of notes we'll use (may include duplicates)
-    let selectedNotes = [];
+    let notesForCards = [];
 
     // If we need more pairs than unique notes available, we'll reuse notes
     if (pairs <= availableNotes.length) {
       // We have enough unique notes, just take what we need
-      selectedNotes = availableNotes.slice(0, pairs);
-      
+      notesForCards = availableNotes.slice(0, pairs);
     } else {
       // We need more pairs than unique notes available
       // First, use all available unique notes
-      selectedNotes = [...availableNotes];
+      notesForCards = [...availableNotes];
 
       // Then reuse notes as needed (cycle through them)
-      while (selectedNotes.length < pairs) {
+      while (notesForCards.length < pairs) {
         // Start from beginning of shuffled notes and add more until we have enough
         const notesToAdd = Math.min(
-          pairs - selectedNotes.length,
+          pairs - notesForCards.length,
           availableNotes.length
-
-        selectedNotes = [
-          ...selectedNotes,
+        );
+        notesForCards = [
+          ...notesForCards,
           ...availableNotes.slice(0, notesToAdd),
         ];
       }
-
-       for ${pairs} pairs`
-
     }
 
     // Double-check we have exactly the right number of pairs
-    if (selectedNotes.length !== pairs) {
-      
-      selectedNotes = selectedNotes.slice(0, pairs);
+    if (notesForCards.length !== pairs) {
+      notesForCards = notesForCards.slice(0, pairs);
     }
 
     // Create pairs of notes and their names
-    const noteCards = selectedNotes.map((note, index) => ({
+    const noteCards = notesForCards.map((note, index) => ({
       id: index,
       type: "note",
       value: note.note,
       image: note.image,
     }));
 
-    const nameCards = selectedNotes.map((note, index) => ({
+    const nameCards = notesForCards.map((note, index) => ({
       id: index,
       type: "name",
       value: note.note,
@@ -185,6 +179,7 @@ export function MemoryGame() {
     if (allCards.length !== totalCards) {
       console.error(
         `ERROR: Created ${allCards.length} cards but needed ${totalCards}!`
+      );
 
       // Handle the edge case where we didn't create enough cards
       if (allCards.length < totalCards) {
@@ -198,7 +193,7 @@ export function MemoryGame() {
           const cardsToAdd = allCards.slice(
             0,
             Math.min(neededCards, allCards.length)
-
+          );
           additionalCards = [...additionalCards, ...cardsToAdd];
         }
 
@@ -220,7 +215,6 @@ export function MemoryGame() {
 
   // Fix the initial cards creation to use the proper grid size
   const initialCards = useMemo(() => {
-    
     return createCards(clef, DIFFICULTIES["Easy"], selectedNotes);
   }, [clef, selectedNotes]);
 
@@ -262,7 +256,6 @@ export function MemoryGame() {
 
   // Handle game over when time runs out
   const handleGameOver = useCallback(() => {
-    
     pauseTimer();
     setGameFinished(true);
     setIsLost(true);
@@ -304,7 +297,6 @@ export function MemoryGame() {
     ) {
       newSelectedNotes = settings.selectedNotes;
       setSelectedNotes(settings.selectedNotes);
-      
     }
 
     // Update difficulty and grid size
@@ -321,12 +313,10 @@ export function MemoryGame() {
       setDifficulty(settings.difficulty);
       setGridSize(newGridSize);
       setCards(newCards);
-      
     }
 
     // Handle time difficulty separately
     if (settings.timeDifficulty !== undefined) {
-      
       setTimeDifficulty(settings.timeDifficulty);
     }
 
@@ -355,7 +345,6 @@ export function MemoryGame() {
 
     // Start game with a slight delay to ensure state updates
     setTimeout(() => {
-
       // Set game started state
       setGameStarted(true);
       setGameFinished(false);
@@ -370,7 +359,6 @@ export function MemoryGame() {
       resetTimer(newTimeLimit);
 
       // Print final card count
-      
     }, 200);
   };
 
@@ -383,7 +371,6 @@ export function MemoryGame() {
     // Always verify grid size matches difficulty
     const expectedGridSize = DIFFICULTIES[difficulty];
     if (newGridSize !== expectedGridSize) {
-      
       newGridSize = expectedGridSize;
     }
 
@@ -400,7 +387,7 @@ export function MemoryGame() {
       currentClef,
       newGridSize,
       currentSelectedNotes
-
+    );
     setCards(newCards);
 
     // Properly reset the timer with the updated time limit
@@ -448,7 +435,6 @@ export function MemoryGame() {
       settings.difficulty !== undefined &&
       settings.difficulty !== difficulty
     ) {
-
       // Create new cards with the new grid size and selected notes
       const newCards = createCards(newClef, newGridSize, newSelectedNotes);
 
@@ -457,7 +443,6 @@ export function MemoryGame() {
       setGridSize(newGridSize);
       setSelectedNotes(newSelectedNotes);
       setCards(newCards);
-      
     } else if (settings.difficulty !== undefined) {
       // Same difficulty but explicitly set
       setDifficulty(settings.difficulty);
@@ -523,7 +508,7 @@ export function MemoryGame() {
           Array.isArray(settings.selectedNotes))
       ) {
         const gameCards = createCards(newClef, newGridSize, newSelectedNotes);
-        
+
         setCards(gameCards);
       }
 
@@ -627,13 +612,13 @@ export function MemoryGame() {
     // Always use the difficulty to determine the grid layout
     switch (difficulty) {
       case "Easy":
-        return "grid grid-cols-4 gap-3 sm:gap-4 gap-x-2 sm:gap-x-4 max-w-xl place-content-center justify-center mb-2";
+        return "grid grid-cols-4 gap-3 md:gap-4 gap-x-2 md:gap-x-4 max-w-full place-items-center justify-items-center mx-auto mb-2";
       case "Medium":
-        return "grid max-w-3xl grid-cols-6 gap-3 sm:gap-4 gap-x-2 sm:gap-x-3 place-content-center justify-center mb-2";
+        return "grid max-w-3xl grid-cols-6 gap-3 md:gap-4 gap-x-2 md:gap-x-3 place-items-center justify-items-center mx-auto mb-2";
       case "Hard":
-        return "grid max-w-5xl grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 sm:gap-4 gap-x-1.5 sm:gap-x-2 place-content-center justify-center mb-2";
+        return "grid max-w-5xl grid-cols-4 sm:grid-cols-6 md:grid-cols-6 lg:grid-cols-6 gap-2 md:gap-3 gap-x-1.5 md:gap-x-2 place-items-center justify-items-center mx-auto mb-2";
       default:
-        return "grid grid-cols-4 gap-3 sm:gap-4 gap-x-2 sm:gap-x-4 place-content-center justify-center mb-2";
+        return "grid grid-cols-4 gap-3 md:gap-4 gap-x-2 md:gap-x-4 place-items-center justify-items-center mx-auto mb-2";
     }
   };
 
@@ -645,7 +630,6 @@ export function MemoryGame() {
       matchedIndexes.length > 0 &&
       matchedIndexes.length === cards.length
     ) {
-
       // Pause timer if it's running
       if (timedMode) {
         pauseTimer();
@@ -697,13 +681,11 @@ export function MemoryGame() {
       !isActive &&
       timeRemaining > 0
     ) {
-      
       startTimer();
     }
 
     // End condition - if timer has reached 0 in timed mode
     if (gameStarted && !gameFinished && timedMode && timeRemaining === 0) {
-      
       handleGameOver();
     }
   }, [
@@ -718,12 +700,11 @@ export function MemoryGame() {
 
   // Add this useEffect to monitor card count and grid size
   useEffect(() => {
-
     // Alert if there's a mismatch
     if (cards.length > GRID_SIZES[gridSize]) {
       console.warn(
         `Card count mismatch! Expected ${GRID_SIZES[gridSize]} but got ${cards.length}`
-
+      );
     }
   }, [cards, gridSize]);
 
@@ -734,7 +715,6 @@ export function MemoryGame() {
   useEffect(() => {
     // Only run this effect if gridSize has changed and game has started
     if (prevGridSizeRef.current !== gridSize && gameStarted) {
-
       // Create new cards with the updated grid size
       const newCards = createCards(clef, gridSize);
 
@@ -757,7 +737,6 @@ export function MemoryGame() {
     // This ensures gridSize is always in sync with difficulty
     const newGridSize = DIFFICULTIES[difficulty];
     if (gridSize !== newGridSize) {
-      
       setGridSize(newGridSize);
     }
   }, [difficulty]);
@@ -765,11 +744,13 @@ export function MemoryGame() {
   return (
     <div className="flex flex-col h-screen">
       <div className="p-2 sm:p-3 flex justify-between items-center">
-        <BackButton
-          to="/notes-reading-mode"
-          name="Notes Reading"
-          styling="text-white/80 hover:text-white text-xs sm:text-sm"
-        />
+        {!gameFinished && (
+          <BackButton
+            to="/practice-modes"
+            name="Practice Modes"
+            styling="text-white/80 hover:text-white text-xs sm:text-sm"
+          />
+        )}
 
         {/* Timer and Score Display - only show when game is started */}
         {gameStarted && (
@@ -823,14 +804,15 @@ export function MemoryGame() {
             score={score}
             totalPossibleScore={cards.length * 10}
             onReset={handleReset}
+            onExit={() => navigate("/practice-modes")}
           />
         )
       ) : (
         <div className="flex-1 flex flex-col overflow-auto">
           {/* Game grid - scrollable container that shows all cards */}
-          <div className="flex-1 overflow-auto py-1  px-2 flex justify-center items-center">
+          <div className="flex-1 overflow-auto py-1 px-2 flex justify-center items-start md:items-center">
             <div
-              className={`${getGridClassName()}  w-full mx-auto px-2 sm:px-4`}
+              className={`${getGridClassName()} w-full max-w-full px-2 sm:px-4`}
             >
               {(() => {
                 // Always use the current difficulty to determine how many cards to show
@@ -839,7 +821,7 @@ export function MemoryGame() {
 
                 // Create a debug message for the counts
                 const debugCards = cards.slice(0, expectedCardCount);
-                
+
                 return debugCards;
               })().map((card, index) => {
                 const isFlipped =
@@ -956,10 +938,10 @@ export function MemoryGame() {
                               color: "#111827",
                               fontSize:
                                 difficulty === "Hard"
-                                  ? "0.9rem"
+                                  ? "clamp(1.8rem, 4vw, 3rem)"
                                   : difficulty === "Medium"
-                                    ? "1.05rem"
-                                    : "1.2rem",
+                                    ? "clamp(2rem, 4.5vw, 3.5rem)"
+                                    : "clamp(2.5rem, 5vw, 4rem)",
                               fontWeight: "bold",
                               position: "relative",
                               zIndex: 10,
@@ -972,7 +954,7 @@ export function MemoryGame() {
                       </div>
                     </div>
                   </div>
-
+                );
               })}
             </div>
           </div>
@@ -995,6 +977,5 @@ export function MemoryGame() {
         />
       )}
     </div>
-
+  );
 }
-

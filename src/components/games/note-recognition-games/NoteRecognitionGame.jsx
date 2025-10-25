@@ -5,6 +5,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import doImage from "../../../assets/noteImages/treble-do-middle.svg";
 import reImage from "../../../assets/noteImages/treble-re-first.svg";
 import miImage from "../../../assets/noteImages/treble-mi-first.svg";
@@ -100,6 +101,8 @@ const ProgressBar = ({ current, total }) => {
 };
 
 export function NoteRecognitionGame() {
+  const navigate = useNavigate();
+
   // Game settings with defaults
   const { settings, updateSettings, resetSettings } = useGameSettings({
     timedMode: false,
@@ -690,13 +693,16 @@ export function NoteRecognitionGame() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <div className="p-2 flex-shrink-0">
-        <BackButton
-          to="/notes-reading-mode"
-          name="Notes Reading"
-          styling="text-white/80 hover:text-white text-sm"
-        />
-      </div>
+      {/* Only show back button during settings and gameplay (not on victory/game-over screens) */}
+      {!progress.isFinished && (
+        <div className="p-2 flex-shrink-0">
+          <BackButton
+            to="/practice-modes"
+            name="Practice Modes"
+            styling="text-white/80 hover:text-white text-sm"
+          />
+        </div>
+      )}
 
       {progress.showFireworks && <Firework />}
 
@@ -732,6 +738,7 @@ export function NoteRecognitionGame() {
               resetProgress();
               resetSettings();
             }}
+            onExit={() => navigate("/practice-modes")}
           />
         )
       ) : (

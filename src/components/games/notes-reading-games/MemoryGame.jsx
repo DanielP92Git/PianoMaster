@@ -5,22 +5,23 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+import { useNavigate } from "react-router-dom";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
-import doImage from "../../../assets/noteImages/treble-do-middle.svg";
-import reImage from "../../../assets/noteImages/treble-re-first.svg";
-import miImage from "../../../assets/noteImages/treble-mi-first.svg";
-import faImage from "../../../assets/noteImages/treble-fa-first.svg";
-import solImage from "../../../assets/noteImages/treble-sol-first.svg";
-import laImage from "../../../assets/noteImages/treble-la-first.svg";
-import siImage from "../../../assets/noteImages/treble-si-first.svg";
-import bassDoImage from "../../../assets/noteImages/bass-do-middle.svg";
-import bassReImage from "../../../assets/noteImages/bass-re-small.svg";
-import bassMiImage from "../../../assets/noteImages/bass-mi-small.svg";
-import bassFaImage from "../../../assets/noteImages/bass-fa-small.svg";
-import bassSolImage from "../../../assets/noteImages/bass-sol-small.svg";
-import bassLaImage from "../../../assets/noteImages/bass-la-small.svg";
-import bassSiImage from "../../../assets/noteImages/bass-si-small.svg";
+import DoImageSvg from "../../../assets/noteImages/treble-do-middle.svg?react";
+import ReImageSvg from "../../../assets/noteImages/treble-re-first.svg?react";
+import MiImageSvg from "../../../assets/noteImages/treble-mi-first.svg?react";
+import FaImageSvg from "../../../assets/noteImages/treble-fa-first.svg?react";
+import SolImageSvg from "../../../assets/noteImages/treble-sol-first.svg?react";
+import LaImageSvg from "../../../assets/noteImages/treble-la-first.svg?react";
+import SiImageSvg from "../../../assets/noteImages/treble-si-first.svg?react";
+import BassDoImageSvg from "../../../assets/noteImages/bass-do-middle.svg?react";
+import BassReImageSvg from "../../../assets/noteImages/bass-re-small.svg?react";
+import BassMiImageSvg from "../../../assets/noteImages/bass-mi-small.svg?react";
+import BassFaImageSvg from "../../../assets/noteImages/bass-fa-small.svg?react";
+import BassSolImageSvg from "../../../assets/noteImages/bass-sol-small.svg?react";
+import BassLaImageSvg from "../../../assets/noteImages/bass-la-small.svg?react";
+import BassSiImageSvg from "../../../assets/noteImages/bass-si-small.svg?react";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
@@ -29,25 +30,23 @@ import { useGameTimer } from "../../../features/games/hooks/useGameTimer";
 import GameOverScreen from "../GameOverScreen";
 
 const trebleNotes = [
-  { note: "דו", image: doImage },
-  { note: "רה", image: reImage },
-  { note: "מי", image: miImage },
-  { note: "פה", image: faImage },
-  { note: "סול", image: solImage },
-  { note: "לה", image: laImage },
-  { note: "סי", image: siImage },
+  { note: "דו", ImageComponent: DoImageSvg },
+  { note: "רה", ImageComponent: ReImageSvg },
+  { note: "מי", ImageComponent: MiImageSvg },
+  { note: "פה", ImageComponent: FaImageSvg },
+  { note: "סול", ImageComponent: SolImageSvg },
+  { note: "לה", ImageComponent: LaImageSvg },
+  { note: "סי", ImageComponent: SiImageSvg },
 ];
 const bassNotes = [
-  { note: "דו", image: bassDoImage },
-  { note: "רה", image: bassReImage },
-  { note: "מי", image: bassMiImage },
-  { note: "פה", image: bassFaImage },
-  { note: "סול", image: bassSolImage },
-  { note: "לה", image: bassLaImage },
-  { note: "סי", image: bassSiImage },
+  { note: "דו", ImageComponent: BassDoImageSvg },
+  { note: "רה", ImageComponent: BassReImageSvg },
+  { note: "מי", ImageComponent: BassMiImageSvg },
+  { note: "פה", ImageComponent: BassFaImageSvg },
+  { note: "סול", ImageComponent: BassSolImageSvg },
+  { note: "לה", ImageComponent: BassLaImageSvg },
+  { note: "סי", ImageComponent: BassSiImageSvg },
 ];
-
-const noteNames = ["דו", "רה", "מי", "פה", "סול", "לה", "סי"];
 
 const GRID_SIZES = {
   "3 X 4": 12, // 3x4 grid = 12 cards (6 pairs)
@@ -62,6 +61,8 @@ const DIFFICULTIES = {
 };
 
 export function MemoryGame() {
+  const navigate = useNavigate();
+
   // CSS for card flipping
   const styles = {
     cardContainer: {
@@ -161,7 +162,7 @@ export function MemoryGame() {
       id: index,
       type: "note",
       value: note.note,
-      image: note.image,
+      ImageComponent: note.ImageComponent,
     }));
 
     const nameCards = notesForCards.map((note, index) => ({
@@ -604,13 +605,13 @@ export function MemoryGame() {
     // Always use the difficulty to determine the grid layout
     switch (difficulty) {
       case "Easy":
-        return "grid grid-cols-4 gap-3 sm:gap-4 gap-x-2 sm:gap-x-4 max-w-xl place-content-center justify-center mb-2";
+        return "grid grid-cols-4 gap-3 md:gap-4 gap-x-2 md:gap-x-4 max-w-full place-items-center justify-items-center mx-auto mb-2";
       case "Medium":
-        return "grid max-w-3xl grid-cols-6 gap-3 sm:gap-4 gap-x-2 sm:gap-x-3 place-content-center justify-center mb-2";
+        return "grid max-w-3xl grid-cols-6 gap-3 md:gap-4 gap-x-2 md:gap-x-3 place-items-center justify-items-center mx-auto mb-2";
       case "Hard":
-        return "grid max-w-5xl grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3 sm:gap-4 gap-x-1.5 sm:gap-x-2 place-content-center justify-center mb-2";
+        return "grid max-w-5xl grid-cols-4 sm:grid-cols-6 md:grid-cols-6 lg:grid-cols-6 gap-2 md:gap-3 gap-x-1.5 md:gap-x-2 place-items-center justify-items-center mx-auto mb-2";
       default:
-        return "grid grid-cols-4 gap-3 sm:gap-4 gap-x-2 sm:gap-x-4 place-content-center justify-center mb-2";
+        return "grid grid-cols-4 gap-3 md:gap-4 gap-x-2 md:gap-x-4 place-items-center justify-items-center mx-auto mb-2";
     }
   };
 
@@ -736,11 +737,13 @@ export function MemoryGame() {
   return (
     <div className="flex flex-col h-screen">
       <div className="p-2 sm:p-3 flex justify-between items-center">
-        <BackButton
-          to="/notes-reading-mode"
-          name="Notes Reading"
-          styling="text-white/80 hover:text-white text-xs sm:text-sm"
-        />
+        {!gameFinished && (
+          <BackButton
+            to="/notes-reading-mode"
+            name="Notes Reading"
+            styling="text-white/80 hover:text-white text-xs sm:text-sm"
+          />
+        )}
 
         {/* Timer and Score Display - only show when game is started */}
         {gameStarted && (
@@ -794,14 +797,15 @@ export function MemoryGame() {
             score={score}
             totalPossibleScore={cards.length * 10}
             onReset={handleReset}
+            onExit={() => navigate("/notes-reading-mode")}
           />
         )
       ) : (
         <div className="flex-1 flex flex-col overflow-auto">
           {/* Game grid - scrollable container that shows all cards */}
-          <div className="flex-1 overflow-auto py-1  px-2 flex justify-center items-center">
+          <div className="flex-1 overflow-auto py-1 px-2 flex justify-center items-start md:items-center">
             <div
-              className={`${getGridClassName()}  w-full mx-auto px-2 sm:px-4`}
+              className={`${getGridClassName()} w-full max-w-full px-2 sm:px-4`}
             >
               {(() => {
                 // Always use the current difficulty to determine how many cards to show
@@ -909,17 +913,18 @@ export function MemoryGame() {
                         className="back-face relative"
                       >
                         {card.type === "note" ? (
-                          <img
-                            src={card.image}
-                            alt={card.value}
-                            style={{
-                              width: difficulty === "Hard" ? "80%" : "85%",
-                              height: difficulty === "Hard" ? "80%" : "85%",
-                              objectFit: "contain",
-                              position: "relative",
-                              zIndex: 10,
-                            }}
-                          />
+                          card.ImageComponent && (
+                            <card.ImageComponent
+                              aria-label={card.value}
+                              style={{
+                                width: difficulty === "Hard" ? "80%" : "85%",
+                                height: difficulty === "Hard" ? "80%" : "85%",
+                                objectFit: "contain",
+                                position: "relative",
+                                zIndex: 10,
+                              }}
+                            />
+                          )
                         ) : (
                           <div
                             style={{

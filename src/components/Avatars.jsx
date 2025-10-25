@@ -7,8 +7,8 @@ import { useUser } from "../features/authentication/useUser";
 import { updateUserAvatar } from "../services/apiAuth";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
-import supabase from "../services/supabase";
 import AnimatedAvatar from "./ui/AnimatedAvatar";
+import { useUserProfile } from "../hooks/useUserProfile";
 
 function Avatars() {
   const { user } = useUser();
@@ -27,28 +27,7 @@ function Avatars() {
   });
 
   // Query for user's current avatar (student or teacher)
-  const { data: profileData } = useQuery({
-    queryKey: ["profile-with-avatar", user?.id],
-    queryFn: async () => {
-      if (user?.isStudent) {
-        const { data } = await supabase
-          .from("students")
-          .select("*, avatars(*)")
-          .eq("id", user.id)
-          .single();
-        return data;
-      } else if (user?.isTeacher) {
-        const { data } = await supabase
-          .from("teachers")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        return data;
-      }
-      return null;
-    },
-    enabled: !!user?.id && (user?.isStudent || user?.isTeacher),
-  });
+  const { data: profileData } = useUserProfile();
 
   // Set initial selected avatar from profile
   useEffect(() => {
@@ -70,7 +49,7 @@ function Avatars() {
   const updateAvatarMutation = useMutation({
     mutationFn: ({ userId, avatarId }) => updateUserAvatar(userId, avatarId),
     onSuccess: () => {
-      queryClient.invalidateQueries(["profile-with-avatar", user?.id]);
+      queryClient.invalidateQueries(["user-profile", user?.id]);
     },
     onError: () => {
       toast.error("Failed to update avatar");

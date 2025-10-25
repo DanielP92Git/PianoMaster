@@ -40,7 +40,6 @@ export function GameSettings({
     // Reset modal step when modal is opened (not on every render)
     if (isModal && !prevIsModalRef.current) {
       setModalStep(1);
-      
     }
     prevIsModalRef.current = isModal;
   }, [isModal]);
@@ -148,7 +147,6 @@ export function GameSettings({
   };
 
   const handleNoteToggle = (note) => {
-
     setSelectedNotes((prev) => {
       // Ensure prev is an array
       const prevArray = Array.isArray(prev) ? prev : [];
@@ -156,33 +154,30 @@ export function GameSettings({
       if (prevArray.includes(note)) {
         // Don't allow removing if it would result in fewer than 2 notes
         if (prevArray.length <= 2) {
-          
           return prevArray;
         }
         const newNotes = prevArray.filter((n) => n !== note);
-        
+
         return newNotes;
       } else {
         const newNotes = [...prevArray, note];
-        
+
         return newNotes;
       }
     });
   };
 
   const handleMemoryDifficultyChange = (newDifficulty) => {
-
     // Update difficulty for grid size only
     setDifficulty(newDifficulty);
 
     // Also update the grid size based on the new difficulty
     const newGridSize = MEMORY_DIFFICULTIES[newDifficulty];
-    
+
     setGridSize(newGridSize);
   };
 
   const handleTimeMemoryDifficultyChange = (newTimeDifficulty) => {
-
     // Update time difficulty only
     setTimeDifficulty(newTimeDifficulty);
   };
@@ -223,7 +218,6 @@ export function GameSettings({
     let gridSizeToSend = gridSize;
     if (gameType === "memory") {
       gridSizeToSend = MEMORY_DIFFICULTIES[difficulty];
-      
     }
 
     // Call the onStart callback with the current settings
@@ -325,7 +319,7 @@ export function GameSettings({
   const NoteSelectionScreen = () => {
     return (
       <div className="flex-1 flex items-center justify-center overflow-hidden px-3 py-2">
-        <div className="flex lg:flex-row gap-4 w-full max-w-5xl items-center lg:items-stretch h-full">
+        <div className="flex lg:flex-row gap-4 w-full max-w-5xl items-center lg:items-stretch h-[calc(100vh-600px)]">
           {/* Settings Container (Left/Top) */}
           <div className="flex-1 h-full overflow-y-auto">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 w-full border border-white/20 shadow-lg h-full flex flex-col">
@@ -337,7 +331,7 @@ export function GameSettings({
                   Select which notes you want to practice with:
                 </p>
 
-                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 flex items-center">
+                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 md:flex-none md:h-[280px] flex items-center">
                   <div className="flex h-full gap-1 sm:gap-2 p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 justify-center items-center w-full">
                     {displayNotes.map((note) => (
                       <button
@@ -353,11 +347,12 @@ export function GameSettings({
                         }}
                       >
                         <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
-                          <img
-                            src={note.image}
-                            alt={note.note}
-                            className="w-[85%] h-[85%] object-contain"
-                          />
+                          {note.ImageComponent && (
+                            <note.ImageComponent
+                              className="w-[85%] h-[85%] object-contain"
+                              aria-label={note.note}
+                            />
+                          )}
                         </div>
                         <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
                           {note.note}
@@ -642,7 +637,6 @@ export function GameSettings({
                     <button
                       key={diff}
                       onClick={() => {
-                        
                         handleMemoryDifficultyChange(diff);
                       }}
                       className={`py-0.5 sm:py-1 px-1 sm:px-1.5 rounded-lg transition-colors text-xs ${
@@ -830,11 +824,12 @@ export function GameSettings({
                   }}
                 >
                   <div className="w-full aspect-square bg-white/90 rounded flex items-center justify-center p-0.5">
-                    <img
-                      src={note.image}
-                      alt={note.note}
-                      className="w-full h-full object-contain"
-                    />
+                    {note.ImageComponent && (
+                      <note.ImageComponent
+                        className="w-full h-full object-contain"
+                        aria-label={note.note}
+                      />
+                    )}
                   </div>
                   <span className="text-[10px] mt-0.5 font-medium truncate w-full text-center">
                     {note.note}
@@ -1082,11 +1077,12 @@ export function GameSettings({
                   }}
                 >
                   <div className="w-full aspect-square bg-white/90 rounded-md flex items-center justify-center">
-                    <img
-                      src={note.image}
-                      alt={note.note}
-                      className="w-[85%] h-[85%] object-contain"
-                    />
+                    {note.ImageComponent && (
+                      <note.ImageComponent
+                        className="w-[85%] h-[85%] object-contain"
+                        aria-label={note.note}
+                      />
+                    )}
                   </div>
                   <span className="text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center">
                     {note.note}
@@ -1295,15 +1291,13 @@ export function GameSettings({
       const handleResize = () => {
         const newIsMobile = checkIsMobile();
         setIsMobile(newIsMobile);
-        
       };
       window.addEventListener("resize", handleResize);
-      
+
       return () => window.removeEventListener("resize", handleResize);
     }, [isMobile]);
 
     const renderMobileModalStep = () => {
-      
       switch (modalStep) {
         case 1:
           return <MobileModalClefStep />;

@@ -24,15 +24,14 @@ const games = [
 
 export function NotesReadingMode() {
   return (
-    <div className="p-4 lg:p-8 max-w-7xl mx-auto">
-      <BackButton
-        to="/practice-modes"
-        name="Game Modes"
-        className="text-white/80 hover:text-white"
-      />
-      <h1 className="text-2xl font-bold text-white mb-4">
-        Notes Reading Games
-      </h1>
+    <div className="p-4 lg:p-6 max-w-7xl mx-auto">
+      <div className="flex items-center mb-4">
+        <BackButton
+          to="/practice-modes"
+          name="Game Modes"
+          className="text-white/80 hover:text-white"
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {games.map((game) => (

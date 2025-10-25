@@ -17,13 +17,27 @@ export default function AppLayout() {
   // Exact route matching
   const isGameRoute = gameRoutes.includes(location.pathname);
 
+  // Map routes to page titles
+  const getPageTitle = () => {
+    if (location.pathname === "/notes-reading-mode")
+      return "Notes Reading Game";
+    if (location.pathname === "/rhythm-mode") return "Rhythm Master Games";
+    if (location.pathname === "/practice-modes") return "Game Modes";
+    // Add other routes as needed
+    return null; // Default: show PianoMaster logo
+  };
+
+  const pageTitle = getPageTitle();
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col">
-      {!isGameRoute && <Header onMenuClick={toggleSidebar} />}
+      {!isGameRoute && (
+        <Header onMenuClick={toggleSidebar} pageTitle={pageTitle} />
+      )}
       {!isGameRoute && (
         <Sidebar
           isOpen={isSidebarOpen}
@@ -35,7 +49,7 @@ export default function AppLayout() {
       <main className={`${!isGameRoute ? "pt-2 lg:pl-72" : ""} flex-1`}>
         <Outlet />
       </main>
-      {!isGameRoute && (
+      {!isGameRoute && location.pathname === "/" && (
         <footer
           className={`${!isGameRoute ? "lg:pl-72" : ""} py-4 text-center border-t border-white/10`}
         >
