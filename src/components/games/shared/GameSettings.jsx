@@ -319,7 +319,7 @@ export function GameSettings({
   const NoteSelectionScreen = () => {
     return (
       <div className="flex-1 flex items-center justify-center overflow-hidden px-3 py-2">
-        <div className="flex lg:flex-row gap-4 w-full max-w-5xl items-center lg:items-stretch h-[calc(100vh-600px)]">
+        <div className="flex lg:flex-row gap-4 w-full max-w-5xl items-center lg:items-stretch min-h-0">
           {/* Settings Container (Left/Top) */}
           <div className="flex-1 h-full overflow-y-auto">
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 w-full border border-white/20 shadow-lg h-full flex flex-col">
