@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import trebleClefImage from "../../../assets/noteImages/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass-clef.svg";
-import { DebugPanel } from "../../Debug";
 
 export function GameSettings({
   gameType = "note-recognition", // "note-recognition" or "memory"
@@ -234,23 +233,6 @@ export function GameSettings({
   };
 
   // For bass clef, display notes starting with דו then descending: דו, סי, לה, סול, פה, מי, רה
-  // Safety check: If trebleNotes and bassNotes are both empty (default props),
-  // return empty array to prevent rendering issues
-  const hasValidNotes = trebleNotes.length > 0 || bassNotes.length > 0;
-
-  // DEBUG LOGGING FOR PRODUCTION
-  React.useEffect(() => {
-    console.log("[GameSettings] Props received:", {
-      trebleNotesLength: trebleNotes.length,
-      bassNotesLength: bassNotes.length,
-      trebleNotesFirstItem: trebleNotes[0],
-      bassNotesFirstItem: bassNotes[0],
-      hasImageComponent: trebleNotes[0]?.ImageComponent !== undefined,
-      clef,
-      hasValidNotes,
-    });
-  }, [trebleNotes, bassNotes, clef, hasValidNotes]);
-
   const displayNotes =
     clef === "Treble"
       ? trebleNotes
@@ -260,15 +242,6 @@ export function GameSettings({
             ...bassNotes.filter((note) => note.note !== "דו").reverse(),
           ].filter(Boolean)
         : bassNotes;
-
-  // DEBUG: Log displayNotes
-  React.useEffect(() => {
-    console.log("[GameSettings] displayNotes computed:", {
-      length: displayNotes.length,
-      firstNote: displayNotes[0],
-      hasImageComponent: displayNotes[0]?.ImageComponent !== undefined,
-    });
-  }, [displayNotes]);
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
@@ -382,21 +355,12 @@ export function GameSettings({
                             maxWidth: "150px",
                           }}
                         >
-                          <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1 overflow-hidden">
-                            {note.ImageComponent ? (
-                              <note.ImageComponent
-                                className="w-[85%] h-[85%] object-contain"
-                                aria-label={note.note}
-                                style={{
-                                  fontSize: 0,
-                                  color: "transparent",
-                                }}
-                              />
-                            ) : (
-                              <div className="text-red-500 text-xs">
-                                Missing
-                              </div>
-                            )}
+                          <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
+                            <img
+                              src={note.image}
+                              alt={note.note}
+                              className="w-[85%] h-[85%] object-contain"
+                            />
                           </div>
                           <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
                             {note.note}
@@ -869,12 +833,11 @@ export function GameSettings({
                   }}
                 >
                   <div className="w-full aspect-square bg-white/90 rounded flex items-center justify-center p-0.5">
-                    {note.ImageComponent && (
-                      <note.ImageComponent
-                        className="w-full h-full object-contain"
-                        aria-label={note.note}
-                      />
-                    )}
+                    <img
+                      src={note.image}
+                      alt={note.note}
+                      className="w-full h-full object-contain"
+                    />
                   </div>
                   <span className="text-[10px] mt-0.5 font-medium truncate w-full text-center">
                     {note.note}
@@ -1122,12 +1085,11 @@ export function GameSettings({
                   }}
                 >
                   <div className="w-full aspect-square bg-white/90 rounded-md flex items-center justify-center">
-                    {note.ImageComponent && (
-                      <note.ImageComponent
-                        className="w-[85%] h-[85%] object-contain"
-                        aria-label={note.note}
-                      />
-                    )}
+                    <img
+                      src={note.image}
+                      alt={note.note}
+                      className="w-[85%] h-[85%] object-contain"
+                    />
                   </div>
                   <span className="text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center">
                     {note.note}
@@ -1410,7 +1372,6 @@ export function GameSettings({
       className={`flex flex-col ${isModal ? "h-full" : "flex-1 min-h-0"} text-white`}
     >
       {renderScreen()}
-      <DebugPanel trebleNotes={trebleNotes} bassNotes={bassNotes} clef={clef} />
     </div>
   );
 }

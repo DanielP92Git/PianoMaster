@@ -7,20 +7,20 @@ import React, {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import DoImageSvg from "../../../assets/noteImages/treble-do-middle.svg?react";
-import ReImageSvg from "../../../assets/noteImages/treble-re-first.svg?react";
-import MiImageSvg from "../../../assets/noteImages/treble-mi-first.svg?react";
-import FaImageSvg from "../../../assets/noteImages/treble-fa-first.svg?react";
-import SolImageSvg from "../../../assets/noteImages/treble-sol-first.svg?react";
-import LaImageSvg from "../../../assets/noteImages/treble-la-first.svg?react";
-import SiImageSvg from "../../../assets/noteImages/treble-si-first.svg?react";
-import BassDoImageSvg from "../../../assets/noteImages/bass-do-middle.svg?react";
-import BassReImageSvg from "../../../assets/noteImages/bass-re-small.svg?react";
-import BassMiImageSvg from "../../../assets/noteImages/bass-mi-small.svg?react";
-import BassFaImageSvg from "../../../assets/noteImages/bass-fa-small.svg?react";
-import BassSolImageSvg from "../../../assets/noteImages/bass-sol-small.svg?react";
-import BassLaImageSvg from "../../../assets/noteImages/bass-la-small.svg?react";
-import BassSiImageSvg from "../../../assets/noteImages/bass-si-small.svg?react";
+import doImage from "../../../assets/noteImages/treble-do-middle.svg";
+import reImage from "../../../assets/noteImages/treble-re-first.svg";
+import miImage from "../../../assets/noteImages/treble-mi-first.svg";
+import faImage from "../../../assets/noteImages/treble-fa-first.svg";
+import solImage from "../../../assets/noteImages/treble-sol-first.svg";
+import laImage from "../../../assets/noteImages/treble-la-first.svg";
+import siImage from "../../../assets/noteImages/treble-si-first.svg";
+import bassDoImage from "../../../assets/noteImages/bass-do-middle.svg";
+import bassReImage from "../../../assets/noteImages/bass-re-small.svg";
+import bassMiImage from "../../../assets/noteImages/bass-mi-small.svg";
+import bassFaImage from "../../../assets/noteImages/bass-fa-small.svg";
+import bassSolImage from "../../../assets/noteImages/bass-sol-small.svg";
+import bassLaImage from "../../../assets/noteImages/bass-la-small.svg";
+import bassSiImage from "../../../assets/noteImages/bass-si-small.svg";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
@@ -37,23 +37,23 @@ import { useGameProgress } from "../../../features/games/hooks/useGameProgress";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 
 const trebleNotes = [
-  { note: "דו", ImageComponent: DoImageSvg },
-  { note: "רה", ImageComponent: ReImageSvg },
-  { note: "מי", ImageComponent: MiImageSvg },
-  { note: "פה", ImageComponent: FaImageSvg },
-  { note: "סול", ImageComponent: SolImageSvg },
-  { note: "לה", ImageComponent: LaImageSvg },
-  { note: "סי", ImageComponent: SiImageSvg },
+  { note: "דו", image: doImage },
+  { note: "רה", image: reImage },
+  { note: "מי", image: miImage },
+  { note: "פה", image: faImage },
+  { note: "סול", image: solImage },
+  { note: "לה", image: laImage },
+  { note: "סי", image: siImage },
 ];
 
 const bassNotes = [
-  { note: "דו", ImageComponent: BassDoImageSvg },
-  { note: "סי", ImageComponent: BassSiImageSvg },
-  { note: "לה", ImageComponent: BassLaImageSvg },
-  { note: "סול", ImageComponent: BassSolImageSvg },
-  { note: "פה", ImageComponent: BassFaImageSvg },
-  { note: "מי", ImageComponent: BassMiImageSvg },
-  { note: "רה", ImageComponent: BassReImageSvg },
+  { note: "דו", image: bassDoImage },
+  { note: "סי", image: bassSiImage },
+  { note: "לה", image: bassLaImage },
+  { note: "סול", image: bassSolImage },
+  { note: "פה", image: bassFaImage },
+  { note: "מי", image: bassMiImage },
+  { note: "רה", image: bassReImage },
 ];
 
 // Map Hebrew notes to piano sound files based on clef
@@ -957,12 +957,11 @@ export function NotesReadingGame() {
                 <div className="w-1/2 flex justify-center">
                   {progress.currentNote ? (
                     <div className="bg-white rounded-xl p-2 w-48 h-48 flex items-center justify-center">
-                      {progress.currentNote.ImageComponent && (
-                        <progress.currentNote.ImageComponent
-                          className="w-full h-full object-contain"
-                          aria-label={`Musical Note: ${progress.currentNote.note}`}
-                        />
-                      )}
+                      <img
+                        src={progress.currentNote.image}
+                        alt={`Musical Note: ${progress.currentNote.note}`}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
                   ) : (
                     <div className="bg-white rounded-xl p-2 w-48 h-48 flex items-center justify-center">
