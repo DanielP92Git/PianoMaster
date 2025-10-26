@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import trebleClefImage from "../../../assets/noteImages/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass-clef.svg";
 
@@ -233,9 +233,8 @@ export function GameSettings({
   };
 
   // For bass clef, display notes starting with דו then descending: דו, סי, לה, סול, פה, מי, רה
-  // Use useMemo to ensure displayNotes recalculates when props change
-  const displayNotes = useMemo(() => {
-    return clef === "Treble"
+  const displayNotes =
+    clef === "Treble"
       ? trebleNotes
       : bassNotes.length > 0
         ? [
@@ -243,19 +242,6 @@ export function GameSettings({
             ...bassNotes.filter((note) => note.note !== "דו").reverse(),
           ].filter(Boolean)
         : bassNotes;
-  }, [clef, trebleNotes, bassNotes]);
-
-  // Development-only logging to debug note loading issues
-  useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[GameSettings] Props changed:", {
-        trebleNotesLength: trebleNotes.length,
-        bassNotesLength: bassNotes.length,
-        clef,
-        displayNotesLength: displayNotes.length,
-      });
-    }
-  }, [trebleNotes, bassNotes, clef, displayNotes]);
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
@@ -361,11 +347,12 @@ export function GameSettings({
                         }}
                       >
                         <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
-                          <img
-                            src={note.image}
-                            alt={note.note}
-                            className="w-[85%] h-[85%] object-contain"
-                          />
+                          {note.ImageComponent && (
+                            <note.ImageComponent
+                              className="w-[85%] h-[85%] object-contain"
+                              aria-label={note.note}
+                            />
+                          )}
                         </div>
                         <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
                           {note.note}
@@ -837,11 +824,12 @@ export function GameSettings({
                   }}
                 >
                   <div className="w-full aspect-square bg-white/90 rounded flex items-center justify-center p-0.5">
-                    <img
-                      src={note.image}
-                      alt={note.note}
-                      className="w-full h-full object-contain"
-                    />
+                    {note.ImageComponent && (
+                      <note.ImageComponent
+                        className="w-full h-full object-contain"
+                        aria-label={note.note}
+                      />
+                    )}
                   </div>
                   <span className="text-[10px] mt-0.5 font-medium truncate w-full text-center">
                     {note.note}
@@ -1089,11 +1077,12 @@ export function GameSettings({
                   }}
                 >
                   <div className="w-full aspect-square bg-white/90 rounded-md flex items-center justify-center">
-                    <img
-                      src={note.image}
-                      alt={note.note}
-                      className="w-[85%] h-[85%] object-contain"
-                    />
+                    {note.ImageComponent && (
+                      <note.ImageComponent
+                        className="w-[85%] h-[85%] object-contain"
+                        aria-label={note.note}
+                      />
+                    )}
                   </div>
                   <span className="text-[10px] sm:text-xs mt-0.5 font-medium truncate w-full text-center">
                     {note.note}
