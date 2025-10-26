@@ -319,10 +319,10 @@ export function GameSettings({
   const NoteSelectionScreen = () => {
     return (
       <div className="flex-1 flex items-center justify-center overflow-hidden px-2 sm:px-3 py-1 sm:py-2 pb-4 sm:pb-6 md:pb-2">
-        <div className="flex lg:flex-row gap-3 sm:gap-4 w-full max-w-5xl items-start lg:items-stretch h-full mb-4">
+        <div className="flex lg:flex-row gap-3 sm:gap-4 w-full max-w-5xl items-start lg:items-stretch h-full mb-4 md:h-full">
           {/* Settings Container (Left/Top) */}
-          <div className="flex-1 overflow-y-auto h-full">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 w-full border border-white/20 shadow-lg flex flex-col sm:h-full max-h-full">
+          <div className="flex-1 overflow-y-auto h-full md:h-full">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 w-full border border-white/20 shadow-lg flex flex-col sm:h-full md:h-full max-h-full">
               <h2 className="text-base sm:text-lg font-bold text-white mb-2 flex-shrink-0">
                 Step 2: Choose Notes
               </h2>
@@ -331,7 +331,7 @@ export function GameSettings({
                   Select which notes you want to practice with:
                 </p>
 
-                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 md:flex-none md:h-[200px] lg:h-[220px] flex items-center">
+                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 md:h-[200px] lg:h-[220px] flex items-center">
                   <div className="flex h-full gap-1 sm:gap-2 p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 justify-center items-center w-full">
                     {displayNotes.map((note) => (
                       <button
