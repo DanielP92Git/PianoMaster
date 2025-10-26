@@ -382,12 +382,15 @@ export function GameSettings({
                             maxWidth: "150px",
                           }}
                         >
-                          <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
+                          <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1 overflow-hidden">
                             {note.ImageComponent ? (
                               <note.ImageComponent
                                 className="w-[85%] h-[85%] object-contain"
                                 aria-label={note.note}
-                                aria-hidden="true"
+                                style={{
+                                  fontSize: 0,
+                                  color: "transparent",
+                                }}
                               />
                             ) : (
                               <div className="text-red-500 text-xs">

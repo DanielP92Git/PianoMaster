@@ -3,6 +3,25 @@
 @tailwind utilities;
 
 /* ========================================
+   SVG FIX - Hide MuseScore metadata text
+   ======================================== */
+
+/* Hide title and text elements in SVG note images */
+svg title,
+svg text[font-family*="FreeSerif"],
+svg text[font-family*="MuseScore"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  font-size: 0 !important;
+}
+
+/* Ensure SVG images display correctly */
+svg {
+  overflow: visible;
+}
+
+/* ========================================
    PWA ANIMATIONS
    ======================================== */
 
