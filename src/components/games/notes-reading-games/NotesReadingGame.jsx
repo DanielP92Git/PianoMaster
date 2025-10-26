@@ -241,13 +241,23 @@ export function NotesReadingGame() {
       scorePercentage < 50 || (settings.timedMode && timeRemaining === 0);
     const timeRanOut = settings.timedMode && timeRemaining === 0;
 
+    // Allow the piano note to play briefly before stopping it for victory/game over sound
+    setTimeout(() => {
+      // Stop any currently playing piano note before playing victory/game over sound
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.currentTime = 0;
+        currentAudioRef.current = null;
+      }
+    }, 200);
+
     setTimeout(() => {
       if (isLost) {
         playGameOverSound();
       } else {
         playVictorySound();
       }
-    }, 300);
+    }, 400);
 
     pauseTimer();
     setGameOver(true);
