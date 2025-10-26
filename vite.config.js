@@ -1,28 +1,25 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { viteStaticCopy } from "vite-plugin-static-copy";
+import svgr from "vite-plugin-svgr";
 
 export default defineConfig({
   plugins: [
     react(),
-    viteStaticCopy({
-      targets: [
-        {
-          src: "sw.js",
-          dest: "",
-        },
-      ],
+    svgr({
+      // svgr options: https://react-svgr.com/docs/options/
+      svgrOptions: {
+        // pass options to svgr
+      },
+      // esbuild options, to transform jsx to js
+      esbuildOptions: {
+        // ...
+      },
+      // A minimatch pattern, or array of patterns, which specifies the files in the build the plugin should include
+      include: "**/*.svg?react",
     }),
   ],
   optimizeDeps: {
     exclude: ["lucide-react"],
-  },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: undefined,
-      },
-    },
   },
   server: {
     port: 5174,
