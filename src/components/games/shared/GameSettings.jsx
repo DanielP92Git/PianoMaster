@@ -318,26 +318,26 @@ export function GameSettings({
   // Note Selection Screen
   const NoteSelectionScreen = () => {
     return (
-      <div className="flex-1 flex items-center justify-center overflow-hidden px-3 py-2">
-        <div className="flex lg:flex-row gap-4 w-full max-w-5xl items-center lg:items-stretch min-h-0">
+      <div className="flex-1 flex items-center justify-center overflow-hidden px-2 sm:px-3 py-1 sm:py-2 pb-4 sm:pb-6 md:pb-2">
+        <div className="flex lg:flex-row gap-3 sm:gap-4 w-full max-w-5xl items-start lg:items-stretch h-full mb-4">
           {/* Settings Container (Left/Top) */}
-          <div className="flex-1 h-full overflow-y-auto">
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 sm:p-4 w-full border border-white/20 shadow-lg h-full flex flex-col">
+          <div className="flex-1 overflow-y-auto h-full">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2 sm:p-3 w-full border border-white/20 shadow-lg flex flex-col sm:h-full max-h-full">
               <h2 className="text-base sm:text-lg font-bold text-white mb-2 flex-shrink-0">
                 Step 2: Choose Notes
               </h2>
               <div className="flex flex-col flex-1 min-h-0">
-                <p className="text-sm text-white/80 flex-shrink-0 mb-2">
+                <p className="text-xs sm:text-sm text-white/80 flex-shrink-0 mb-2">
                   Select which notes you want to practice with:
                 </p>
 
-                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 md:flex-none md:h-[280px] flex items-center">
+                <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 md:flex-none md:h-[200px] lg:h-[220px] flex items-center">
                   <div className="flex h-full gap-1 sm:gap-2 p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 justify-center items-center w-full">
                     {displayNotes.map((note) => (
                       <button
                         key={note.note}
                         onClick={() => handleNoteToggle(note.note)}
-                        className={` rounded-lg transition-colors flex flex-col items-center justify-between flex-1 h-full min-w-0 ${
+                        className={`rounded-lg transition-colors flex flex-col items-center justify-between flex-1 h-full min-w-0 ${
                           selectedNotes.includes(note.note)
                             ? "bg-indigo-600 text-white"
                             : "bg-white/20 text-white hover:bg-white/30"
@@ -362,7 +362,7 @@ export function GameSettings({
                   </div>
                 </div>
 
-                <p className="text-sm text-white/80 flex-shrink-0 mt-2">
+                <p className="text-xs sm:text-sm text-white/80 flex-shrink-0 mt-2">
                   Selected: {selectedNotes.length} notes
                 </p>
               </div>
@@ -370,17 +370,17 @@ export function GameSettings({
           </div>
 
           {/* Buttons Container (Right/Bottom) */}
-          <div className="flex flex-col lg:flex-col gap-6 justify-center lg:justify-center">
+          <div className="flex flex-col lg:flex-col gap-4 sm:gap-6 justify-center lg:justify-center h-full">
             <button
               onClick={handlePrevStep}
-              className="px-6 py-3 min-w-[120px] lg:min-w-[140px] text-base bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-lg"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 min-w-[100px] sm:min-w-[120px] lg:min-w-[140px] text-sm sm:text-base bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium shadow-lg"
             >
               Back
             </button>
             <button
               onClick={handleNextStep}
               disabled={selectedNotes.length === 0}
-              className={`px-6 py-3 min-w-[120px] lg:min-w-[140px] text-base ${
+              className={`px-4 sm:px-6 py-2.5 sm:py-3 min-w-[100px] sm:min-w-[120px] lg:min-w-[140px] text-sm sm:text-base ${
                 selectedNotes.length === 0
                   ? "bg-gray-500 cursor-not-allowed"
                   : "bg-indigo-600 hover:bg-indigo-700"
