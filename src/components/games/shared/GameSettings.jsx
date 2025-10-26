@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import trebleClefImage from "../../../assets/noteImages/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass-clef.svg";
 
@@ -233,12 +233,9 @@ export function GameSettings({
   };
 
   // For bass clef, display notes starting with דו then descending: דו, סי, לה, סול, פה, מי, רה
-  // Safety check: If trebleNotes and bassNotes are both empty (default props),
-  // return empty array to prevent rendering issues
-  const hasValidNotes = trebleNotes.length > 0 || bassNotes.length > 0;
-
-  const displayNotes =
-    clef === "Treble"
+  // Use useMemo to ensure displayNotes recalculates when props change
+  const displayNotes = useMemo(() => {
+    return clef === "Treble"
       ? trebleNotes
       : bassNotes.length > 0
         ? [
@@ -246,6 +243,19 @@ export function GameSettings({
             ...bassNotes.filter((note) => note.note !== "דו").reverse(),
           ].filter(Boolean)
         : bassNotes;
+  }, [clef, trebleNotes, bassNotes]);
+
+  // Development-only logging to debug note loading issues
+  useEffect(() => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("[GameSettings] Props changed:", {
+        trebleNotesLength: trebleNotes.length,
+        bassNotesLength: bassNotes.length,
+        clef,
+        displayNotesLength: displayNotes.length,
+      });
+    }
+  }, [trebleNotes, bassNotes, clef, displayNotes]);
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
@@ -337,41 +347,31 @@ export function GameSettings({
 
                 <div className="w-full overflow-hidden px-2 sm:px-3 flex-1 md:flex-none md:h-[280px] flex items-center">
                   <div className="flex h-full gap-1 sm:gap-2 p-2 sm:p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 justify-center items-center w-full">
-                    {!hasValidNotes ? (
-                      <div className="text-white/60 text-sm">
-                        Loading notes...
-                      </div>
-                    ) : displayNotes.length === 0 ? (
-                      <div className="text-white/60 text-sm">
-                        No notes available
-                      </div>
-                    ) : (
-                      displayNotes.map((note) => (
-                        <button
-                          key={note.note}
-                          onClick={() => handleNoteToggle(note.note)}
-                          className={` rounded-lg transition-colors flex flex-col items-center justify-between flex-1 h-full min-w-0 ${
-                            selectedNotes.includes(note.note)
-                              ? "bg-indigo-600 text-white"
-                              : "bg-white/20 text-white hover:bg-white/30"
-                          }`}
-                          style={{
-                            maxWidth: "150px",
-                          }}
-                        >
-                          <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
-                            <img
-                              src={note.image}
-                              alt={note.note}
-                              className="w-[85%] h-[85%] object-contain"
-                            />
-                          </div>
-                          <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
-                            {note.note}
-                          </span>
-                        </button>
-                      ))
-                    )}
+                    {displayNotes.map((note) => (
+                      <button
+                        key={note.note}
+                        onClick={() => handleNoteToggle(note.note)}
+                        className={` rounded-lg transition-colors flex flex-col items-center justify-between flex-1 h-full min-w-0 ${
+                          selectedNotes.includes(note.note)
+                            ? "bg-indigo-600 text-white"
+                            : "bg-white/20 text-white hover:bg-white/30"
+                        }`}
+                        style={{
+                          maxWidth: "150px",
+                        }}
+                      >
+                        <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
+                          <img
+                            src={note.image}
+                            alt={note.note}
+                            className="w-[85%] h-[85%] object-contain"
+                          />
+                        </div>
+                        <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
+                          {note.note}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
