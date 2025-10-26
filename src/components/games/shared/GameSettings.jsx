@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import trebleClefImage from "../../../assets/noteImages/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass-clef.svg";
+import { DebugPanel } from "../../Debug";
 
 export function GameSettings({
   gameType = "note-recognition", // "note-recognition" or "memory"
@@ -237,6 +238,19 @@ export function GameSettings({
   // return empty array to prevent rendering issues
   const hasValidNotes = trebleNotes.length > 0 || bassNotes.length > 0;
 
+  // DEBUG LOGGING FOR PRODUCTION
+  React.useEffect(() => {
+    console.log("[GameSettings] Props received:", {
+      trebleNotesLength: trebleNotes.length,
+      bassNotesLength: bassNotes.length,
+      trebleNotesFirstItem: trebleNotes[0],
+      bassNotesFirstItem: bassNotes[0],
+      hasImageComponent: trebleNotes[0]?.ImageComponent !== undefined,
+      clef,
+      hasValidNotes,
+    });
+  }, [trebleNotes, bassNotes, clef, hasValidNotes]);
+
   const displayNotes =
     clef === "Treble"
       ? trebleNotes
@@ -246,6 +260,15 @@ export function GameSettings({
             ...bassNotes.filter((note) => note.note !== "דו").reverse(),
           ].filter(Boolean)
         : bassNotes;
+
+  // DEBUG: Log displayNotes
+  React.useEffect(() => {
+    console.log("[GameSettings] displayNotes computed:", {
+      length: displayNotes.length,
+      firstNote: displayNotes[0],
+      hasImageComponent: displayNotes[0]?.ImageComponent !== undefined,
+    });
+  }, [displayNotes]);
 
   // Clef Selection Screen
   const ClefSelectionScreen = () => (
@@ -360,11 +383,16 @@ export function GameSettings({
                           }}
                         >
                           <div className="w-full flex-1 bg-white rounded-md flex items-center justify-center mb-1">
-                            {note.ImageComponent && (
+                            {note.ImageComponent ? (
                               <note.ImageComponent
                                 className="w-[85%] h-[85%] object-contain"
                                 aria-label={note.note}
+                                aria-hidden="true"
                               />
+                            ) : (
+                              <div className="text-red-500 text-xs">
+                                Missing
+                              </div>
                             )}
                           </div>
                           <span className="text-[10px] sm:text-xs font-medium truncate w-full text-center flex-shrink-0">
@@ -1379,6 +1407,7 @@ export function GameSettings({
       className={`flex flex-col ${isModal ? "h-full" : "flex-1 min-h-0"} text-white`}
     >
       {renderScreen()}
+      <DebugPanel trebleNotes={trebleNotes} bassNotes={bassNotes} clef={clef} />
     </div>
   );
 }

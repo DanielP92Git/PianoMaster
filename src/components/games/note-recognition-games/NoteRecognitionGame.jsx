@@ -55,6 +55,17 @@ const bassNotes = [
   { note: "רה", ImageComponent: BassReImageSvg },
 ];
 
+// DEBUG: Log note arrays on module load
+console.log("[NoteRecognitionGame] Module loaded with note arrays:", {
+  trebleNotesLength: trebleNotes.length,
+  bassNotesLength: bassNotes.length,
+  trebleNotesFirstItem: trebleNotes[0],
+  bassNotesFirstItem: bassNotes[0],
+  DoImageSvg: typeof DoImageSvg,
+  BassDoImageSvg: typeof BassDoImageSvg,
+  hasImageComponent: trebleNotes[0]?.ImageComponent !== undefined,
+});
+
 // Simple timer display component
 const TimerDisplay = ({ formattedTime }) => {
   return (
