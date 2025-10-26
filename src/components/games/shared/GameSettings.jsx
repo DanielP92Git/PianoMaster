@@ -233,6 +233,10 @@ export function GameSettings({
   };
 
   // For bass clef, display notes starting with דו then descending: דו, סי, לה, סול, פה, מי, רה
+  // Safety check: If trebleNotes and bassNotes are both empty (default props),
+  // return empty array to prevent rendering issues
+  const hasValidNotes = trebleNotes.length > 0 || bassNotes.length > 0;
+
   const displayNotes =
     clef === "Treble"
       ? trebleNotes
