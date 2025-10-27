@@ -10,19 +10,19 @@ const games = [
     description: "Match notes with their names",
     icon: <Grid className="w-8 h-8 text-white" />,
     difficulty: "Easy",
-    path: "/notes-reading-mode/memory-game",
+    path: "/notes-master-mode/memory-game",
   },
   {
-    id: "notes-reading",
-    name: "Notes Reading",
+    id: "notes-recognition",
+    name: "Notes Recognition",
     description: "Identify notes on the staff",
     icon: <Music2 className="w-8 h-8 text-white" />,
     difficulty: "Medium",
-    path: "/notes-reading-mode/notes-reading-game",
+    path: "/notes-master-mode/notes-recognition-game",
   },
 ];
 
-export function NotesReadingMode() {
+export function NotesMasterMode() {
   return (
     <div className="p-4 lg:p-6 max-w-7xl mx-auto">
       <div className="flex items-center mb-4">

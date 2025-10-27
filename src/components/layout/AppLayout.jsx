@@ -9,8 +9,8 @@ export default function AppLayout() {
 
   // Updated game routes to match actual URL structure
   const gameRoutes = [
-    "/notes-reading-mode/notes-reading-game",
-    "/notes-reading-mode/memory-game",
+    "/notes-master-mode/notes-recognition-game",
+    "/notes-master-mode/memory-game",
     "/rhythm-mode/metronome-trainer",
   ];
 
@@ -19,9 +19,8 @@ export default function AppLayout() {
 
   // Map routes to page titles
   const getPageTitle = () => {
-    if (location.pathname === "/notes-reading-mode")
-      return "Notes Reading Game";
-    if (location.pathname === "/rhythm-mode") return "Rhythm Master Games";
+    if (location.pathname === "/notes-master-mode") return "Notes Master";
+    if (location.pathname === "/rhythm-mode") return "Rhythm Master";
     if (location.pathname === "/practice-modes") return "Game Modes";
     // Add other routes as needed
     return null; // Default: show PianoMaster logo

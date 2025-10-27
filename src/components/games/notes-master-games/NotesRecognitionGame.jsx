@@ -123,7 +123,7 @@ const ProgressBar = ({ current, total }) => {
   );
 };
 
-export function NotesReadingGame() {
+export function NotesRecognitionGame() {
   const navigate = useNavigate();
   const [isNavigating, setIsNavigating] = useState(false);
   const [preloadedSounds, setPreloadedSounds] = useState({});
@@ -602,13 +602,13 @@ export function NotesReadingGame() {
 
   // Note frequency mapping (A4 = 440Hz)
   const noteFrequencies = {
-    דו: [261.63, 523.25, 1046.5], // C4, C5, C6
-    רה: [293.66, 587.33, 1174.66], // D4, D5, D6
-    מי: [329.63, 659.25, 1318.51], // E4, E5, E6
-    פה: [349.23, 698.46, 1396.91], // F4, F5, F6
-    סול: [392.0, 783.99, 1567.98], // G4, G5, G6
-    לה: [440.0, 880.0, 1760.0], // A4, A5, A6
-    סי: [493.88, 987.77, 1975.53], // B4, B5, B6
+    דו: [130.81, 261.63, 523.25, 1046.5], // C3, C4, C5, C6
+    רה: [146.83, 293.66, 587.33, 1174.66], // D3, D4, D5, D6
+    מי: [164.81, 329.63, 659.25, 1318.51], // E3, E4, E5, E6
+    פה: [174.61, 349.23, 698.46, 1396.91], // F3, F4, F5, F6
+    סול: [196.0, 392.0, 783.99, 1567.98], // G3, G4, G5, G6
+    לה: [220.0, 440.0, 880.0, 1760.0], // A3, A4, A5, A6
+    סי: [246.94, 493.88, 987.77, 1975.53], // B3, B4, B5, B6
   };
 
   // Pitch detection using autocorrelation
@@ -800,7 +800,7 @@ export function NotesReadingGame() {
     setIsNavigating(true);
     // Let React render the loading state, then navigate
     setTimeout(() => {
-      navigate("/notes-reading-mode");
+      navigate("/notes-master-mode");
     }, 50);
   }, [navigate]);
 
@@ -865,7 +865,7 @@ export function NotesReadingGame() {
               resetProgress();
               resetSettings();
             }}
-            onExit={() => navigate("/notes-reading-mode")}
+            onExit={() => navigate("/notes-master-mode")}
           />
         )
       ) : (

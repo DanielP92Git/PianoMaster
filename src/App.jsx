@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Routes, Route } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
-import { NotesReadingMode } from "./components/games/NotesReadingMode";
+import { NotesMasterMode } from "./components/games/NotesMasterMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import { Achievements } from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
@@ -16,8 +16,8 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Login from "./components/auth/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
-import { MemoryGame } from "./components/games/notes-reading-games/MemoryGame";
-import { NotesReadingGame } from "./components/games/notes-reading-games/NotesReadingGame";
+import { MemoryGame } from "./components/games/notes-master-games/MemoryGame";
+import { NotesRecognitionGame } from "./components/games/notes-master-games/NotesRecognitionGame";
 import MetronomeTrainer from "./components/games/rhythm-games/MetronomeTrainer";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
@@ -107,14 +107,14 @@ function AppRoutes() {
           <Route path="/legal" element={<Legal />} />
           <Route path="/avatars" element={<Avatars />} />
           <Route path="/teacher/*" element={<TeacherDashboard />} />
-          <Route path="/notes-reading-mode" element={<NotesReadingMode />} />
+          <Route path="/notes-master-mode" element={<NotesMasterMode />} />
           <Route
-            path="/notes-reading-mode/memory-game"
+            path="/notes-master-mode/memory-game"
             element={<MemoryGame />}
           />
           <Route
-            path="/notes-reading-mode/notes-reading-game"
-            element={<NotesReadingGame />}
+            path="/notes-master-mode/notes-recognition-game"
+            element={<NotesRecognitionGame />}
           />
           <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
           <Route

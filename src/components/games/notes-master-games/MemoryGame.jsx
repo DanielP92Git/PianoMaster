@@ -739,8 +739,8 @@ export function MemoryGame() {
       <div className="p-2 sm:p-3 flex justify-between items-center">
         {!gameFinished && (
           <BackButton
-            to="/notes-reading-mode"
-            name="Notes Reading"
+            to="/notes-master-mode"
+            name="Notes Master"
             styling="text-white/80 hover:text-white text-xs sm:text-sm"
           />
         )}
@@ -797,7 +797,7 @@ export function MemoryGame() {
             score={score}
             totalPossibleScore={cards.length * 10}
             onReset={handleReset}
-            onExit={() => navigate("/notes-reading-mode")}
+            onExit={() => navigate("/notes-master-mode")}
           />
         )
       ) : (
