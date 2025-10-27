@@ -19,14 +19,12 @@ export default function PracticeModes({ practiceModesSectionRef }) {
     queryFn: getGamesCategories,
   });
 
-  const handleStartMode = async (e, modeType) => {
+  const handleStartMode = (e, modeType) => {
     e.preventDefault();
-    try {
-      await updateStreakWithAchievements.mutateAsync();
-    } catch (error) {
-      console.error("Error updating streak:", error);
-    }
+    // Navigate immediately for instant feedback
     navigate(`/${modeType}`);
+    // Update streak/achievements in background (fire-and-forget)
+    updateStreakWithAchievements.mutate();
   };
 
   if (isPending) {
@@ -58,7 +56,7 @@ export default function PracticeModes({ practiceModesSectionRef }) {
     icon:
       mode.type === "rhythm-mode" ? (
         <Drum className="w-8 h-8 text-white" />
-      ) : mode.type === "notes-reading-mode" ? (
+      ) : mode.type === "notes-master-mode" ? (
         <Music2 className="w-8 h-8 text-white" />
       ) : (
         <Music2 className="w-8 h-8 text-white" />
