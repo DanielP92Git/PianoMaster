@@ -74,7 +74,117 @@ function Avatars() {
     return avatar.image_url?.toLowerCase().includes("mozart");
   };
 
+  // Helper function to detect if an avatar is Brahms
+  const isBrahmsAvatar = (avatar) => {
+    return avatar.image_url?.toLowerCase().includes("brahms");
+  };
+
+  // Helper function to detect if an avatar is Schubert
+  const isSchubertAvatar = (avatar) => {
+    return avatar.image_url?.toLowerCase().includes("schubert");
+  };
+
+  // Helper function to detect if an avatar is Chopin
+  const isChopinAvatar = (avatar) => {
+    return avatar.image_url?.toLowerCase().includes("chopin");
+  };
+
+  // Helper function to detect if an avatar is Schumann
+  const isSchumannAvatar = (avatar) => {
+    return avatar.image_url?.toLowerCase().includes("schumann");
+  };
+
+  // Helper function to detect if an avatar is Handel
+  const isHandelAvatar = (avatar) => {
+    return avatar.image_url?.toLowerCase().includes("handel");
+  };
+
+  // Helper function to detect if an avatar is Vivaldi
+  const isVivaldiAvatar = (avatar) => {
+    return avatar.image_url?.toLowerCase().includes("vivaldi");
+  };
+
+  // Helper function to get the full composer name
+  const getComposerFullName = (avatar) => {
+    if (isBeethovenAvatar(avatar)) {
+      return "Ludwig van Beethoven";
+    }
+    if (isBachAvatar(avatar)) {
+      return "Johann Sebastian Bach";
+    }
+    if (isMozartAvatar(avatar)) {
+      return "Wolfgang Amadeus Mozart";
+    }
+    if (isBrahmsAvatar(avatar)) {
+      return "Johannes Brahms";
+    }
+    if (isSchubertAvatar(avatar)) {
+      return "Franz Schubert";
+    }
+    if (isChopinAvatar(avatar)) {
+      return "Frédéric Chopin";
+    }
+    if (isSchumannAvatar(avatar)) {
+      return "Robert Schumann";
+    }
+    if (isHandelAvatar(avatar)) {
+      return "George Frideric Handel";
+    }
+    if (isVivaldiAvatar(avatar)) {
+      return "Antonio Vivaldi";
+    }
+    return null;
+  };
+
+  // Helper function to get composer life years
+  const getComposerLifeYears = (avatar) => {
+    if (isBeethovenAvatar(avatar)) {
+      return "1770 – 1827";
+    }
+    if (isBachAvatar(avatar)) {
+      return "1685 – 1750";
+    }
+    if (isMozartAvatar(avatar)) {
+      return "1756 – 1791";
+    }
+    if (isBrahmsAvatar(avatar)) {
+      return "1833 – 1897";
+    }
+    if (isSchubertAvatar(avatar)) {
+      return "1797 – 1828";
+    }
+    if (isChopinAvatar(avatar)) {
+      return "1810 – 1849";
+    }
+    if (isSchumannAvatar(avatar)) {
+      return "1810 – 1856";
+    }
+    if (isHandelAvatar(avatar)) {
+      return "1685 – 1759";
+    }
+    if (isVivaldiAvatar(avatar)) {
+      return "1678 – 1741";
+    }
+    return null;
+  };
+
+  // Helper function to check if an avatar is a composer
+  const isComposerAvatar = (avatar) => {
+    return (
+      isBeethovenAvatar(avatar) ||
+      isBachAvatar(avatar) ||
+      isMozartAvatar(avatar) ||
+      isBrahmsAvatar(avatar) ||
+      isSchubertAvatar(avatar) ||
+      isChopinAvatar(avatar) ||
+      isSchumannAvatar(avatar) ||
+      isHandelAvatar(avatar) ||
+      isVivaldiAvatar(avatar)
+    );
+  };
+
   // Get animation video URL for composer avatars
+  // Note: Videos are optional - if null is returned, only the static image will show
   const getAnimationVideoUrl = (avatar) => {
     if (isBeethovenAvatar(avatar)) {
       return "/avatars/Beethoven_Animation_Bowing.mp4";
@@ -84,6 +194,25 @@ function Avatars() {
     }
     if (isMozartAvatar(avatar)) {
       return "/avatars/Mozart_Animation_Bowing.mp4";
+    }
+    // New composers - videos not yet added, will work with just images
+    if (isBrahmsAvatar(avatar)) {
+      return null; // Add video path when ready: "/avatars/Brahms_Animation.mp4"
+    }
+    if (isSchubertAvatar(avatar)) {
+      return null; // Add video path when ready: "/avatars/Schubert_Animation.mp4"
+    }
+    if (isChopinAvatar(avatar)) {
+      return null; // Add video path when ready: "/avatars/Chopin_Animation.mp4"
+    }
+    if (isSchumannAvatar(avatar)) {
+      return null; // Add video path when ready: "/avatars/Schumann_Animation.mp4"
+    }
+    if (isHandelAvatar(avatar)) {
+      return null; // Add video path when ready: "/avatars/Handel_Animation.mp4"
+    }
+    if (isVivaldiAvatar(avatar)) {
+      return null; // Add video path when ready: "/avatars/Vivaldi_Animation.mp4"
     }
     return null;
   };
@@ -129,6 +258,19 @@ function Avatars() {
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 mx-4 my-4 space-y-6">
       <BackButton to="/settings" name="Settings" />
+
+      {/* Composer Name Title - shown when a composer avatar is selected */}
+      {selectedAvatar && isComposerAvatar(selectedAvatar) && (
+        <div className="text-center py-4 space-y-2">
+          <h1 className="text-5xl md:text-6xl font-signature text-white drop-shadow-lg">
+            {getComposerFullName(selectedAvatar)}
+          </h1>
+          <p className="text-xl md:text-2xl font-signature text-white/90 drop-shadow-md">
+            {getComposerLifeYears(selectedAvatar)}
+          </p>
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold text-white">Choose Your Avatar</h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

@@ -56,6 +56,9 @@ const bassNotes = [
   { note: "רה", ImageComponent: BassReImageSvg },
 ];
 
+// Audio level threshold for note release detection (percentage)
+const RELEASE_THRESHOLD = 1.5; // 1.5% - low enough to catch release, high enough to avoid background noise
+
 // Map Hebrew notes to piano sound files based on clef
 const noteSoundFiles = {
   treble: {
@@ -151,11 +154,26 @@ export function NotesRecognitionGame() {
 
   // Audio input state
   const [isListening, setIsListening] = useState(false);
+  const isListeningRef = useRef(false); // Ref for immediate access in closures
   const [audioContext, setAudioContext] = useState(null);
   const [analyser, setAnalyser] = useState(null);
   const [microphone, setMicrophone] = useState(null);
   const [detectedNote, setDetectedNote] = useState(null);
   const [audioInputLevel, setAudioInputLevel] = useState(0);
+  const lastMatchTimeRef = useRef(0); // Use ref instead of state for immediate updates
+  const animationFrameRef = useRef(null);
+  const stopAudioInputRef = useRef(null);
+
+  // State for button highlighting feedback
+  const [answerFeedback, setAnswerFeedback] = useState({
+    selectedNote: null,
+    correctNote: null,
+    isCorrect: null,
+  });
+
+  // State for note release detection in Listen mode
+  const [waitingForRelease, setWaitingForRelease] = useState(false);
+  const [pendingNextNote, setPendingNextNote] = useState(null);
 
   // Timer implementation
   const [timeRemaining, setTimeRemaining] = useState(45);
@@ -440,28 +458,71 @@ export function NotesRecognitionGame() {
 
   // Handle answer selection
   const handleAnswerSelect = (selectedAnswer) => {
+    console.log(
+      `📝 [ANSWER SELECT] Called with: "${selectedAnswer}" | isListening: ${isListening} | Current target: "${progress.currentNote?.note}"`
+    );
+
     if (!progress.currentNote) return;
 
     const isCorrect = handleAnswer(selectedAnswer, progress.currentNote.note);
+
+    // Set feedback state to highlight the buttons
+    setAnswerFeedback({
+      selectedNote: selectedAnswer,
+      correctNote: progress.currentNote.note,
+      isCorrect: isCorrect,
+    });
+
     playSound(isCorrect, progress.currentNote.note);
 
-    // Check for game completion based on mode
     // Note: totalQuestions is incremented in handleAnswer, so we check the new value
     const newTotalQuestions = progress.totalQuestions + 1;
 
-    if (settings.timedMode && newTotalQuestions >= 10) {
-      // Timed mode: end after 10 questions
-      handleGameOver();
-      return;
-    } else if (!settings.timedMode && newTotalQuestions >= 20) {
-      // Practice mode: end after 20 questions
-      handleGameOver();
-      return;
-    }
+    // In Listen mode, check game completion BEFORE setting up next note
+    if (isListening) {
+      // Check for game completion based on mode
+      if (settings.timedMode && newTotalQuestions >= 10) {
+        // Timed mode: end after 10 questions (don't wait for release)
+        handleGameOver();
+        return;
+      } else if (!settings.timedMode && newTotalQuestions >= 20) {
+        // Practice mode: end after 20 questions (don't wait for release)
+        handleGameOver();
+        return;
+      }
 
-    updateProgress({
-      currentNote: getRandomNote(),
-    });
+      // Game not finished, wait for note release before advancing
+      const nextNote = getRandomNote();
+      setPendingNextNote(nextNote);
+      setWaitingForRelease(true);
+      console.log(
+        `🎵 [WAITING FOR RELEASE] Next note ready: "${nextNote.note}" - waiting for audio level to drop below ${RELEASE_THRESHOLD}%`
+      );
+    } else {
+      // Normal mode: check for game completion
+      if (settings.timedMode && newTotalQuestions >= 10) {
+        // Timed mode: end after 10 questions
+        handleGameOver();
+        return;
+      } else if (!settings.timedMode && newTotalQuestions >= 20) {
+        // Practice mode: end after 20 questions
+        handleGameOver();
+        return;
+      }
+
+      // Normal mode: clear feedback and move to next question after a brief delay
+      setTimeout(() => {
+        setAnswerFeedback({
+          selectedNote: null,
+          correctNote: null,
+          isCorrect: null,
+        });
+
+        updateProgress({
+          currentNote: getRandomNote(),
+        });
+      }, 800); // 800ms delay to show the feedback
+    }
   };
 
   // Handle pause game
@@ -508,6 +569,14 @@ export function NotesRecognitionGame() {
   // Function to play sounds based on answer correctness
   const playSound = useCallback(
     (isCorrect, noteName) => {
+      // Don't play audio during pitch detection to avoid conflicts
+      if (isListeningRef.current) {
+        console.log(
+          `🔇 [AUDIO MUTED] Skipping playback during Listen mode (note: ${noteName})`
+        );
+        return;
+      }
+
       if (isCorrect && noteName) {
         // Stop any currently playing piano note
         if (currentAudioRef.current) {
@@ -612,7 +681,7 @@ export function NotesRecognitionGame() {
   };
 
   // Pitch detection using autocorrelation
-  const detectPitch = useCallback((buffer) => {
+  const detectPitch = useCallback((buffer, sampleRate) => {
     const SIZE = buffer.length;
     const MAX_SAMPLES = Math.floor(SIZE / 2);
     let bestOffset = -1;
@@ -656,7 +725,7 @@ export function NotesRecognitionGame() {
     }
 
     if (bestCorrelation > 0.01) {
-      return 44100 / bestOffset;
+      return sampleRate / bestOffset;
     }
     return -1;
   }, []);
@@ -671,7 +740,7 @@ export function NotesRecognitionGame() {
     Object.entries(noteFrequencies).forEach(([note, frequencies]) => {
       frequencies.forEach((freq) => {
         const difference = Math.abs(frequency - freq);
-        const tolerance = freq * 0.05; // 5% tolerance
+        const tolerance = freq * 0.05; // 5% tolerance - reduces false fluctuations during note decay
         if (difference < tolerance && difference < minDifference) {
           minDifference = difference;
           closestNote = note;
@@ -685,6 +754,7 @@ export function NotesRecognitionGame() {
   // Start audio input
   const startAudioInput = useCallback(async () => {
     try {
+      console.log("🎤 [PITCH DETECTION] Starting audio input...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const context = new (window.AudioContext || window.webkitAudioContext)();
       const source = context.createMediaStreamSource(stream);
@@ -695,18 +765,25 @@ export function NotesRecognitionGame() {
 
       source.connect(analyserNode);
 
+      console.log(
+        `🎤 [PITCH DETECTION] Audio context created with sample rate: ${context.sampleRate} Hz`
+      );
+      console.log(
+        `🎤 [PITCH DETECTION] Analyser FFT size: ${analyserNode.fftSize}`
+      );
+
       setAudioContext(context);
       setAnalyser(analyserNode);
       setMicrophone(stream);
-      setIsListening(true);
+      // Note: setIsListening(true) is now called in toggleAudioInput BEFORE this function
 
       // Start pitch detection loop
       const bufferLength = analyserNode.frequencyBinCount;
       const dataArray = new Float32Array(bufferLength);
+      const sampleRate = context.sampleRate;
+      let frameCount = 0;
 
       const detectLoop = () => {
-        if (!analyserNode) return;
-
         analyserNode.getFloatTimeDomainData(dataArray);
 
         // Calculate audio level
@@ -715,12 +792,41 @@ export function NotesRecognitionGame() {
           sum += dataArray[i] * dataArray[i];
         }
         const level = Math.sqrt(sum / bufferLength);
+        const levelPercent = level * 100;
         setAudioInputLevel(level);
 
-        // Detect pitch
-        const pitch = detectPitch(dataArray);
+        // Check if we're waiting for note release
+        if (waitingForRelease) {
+          if (levelPercent < RELEASE_THRESHOLD) {
+            console.log(
+              `🎹 [NOTE RELEASED] Audio level dropped to ${levelPercent.toFixed(2)}% - Moving to next question`
+            );
+            setWaitingForRelease(false);
+            setAnswerFeedback({
+              selectedNote: null,
+              correctNote: null,
+              isCorrect: null,
+            });
+            updateProgress({ currentNote: pendingNextNote });
+            setPendingNextNote(null);
+          }
+          // Skip normal match detection while waiting for release
+          animationFrameRef.current = requestAnimationFrame(detectLoop);
+          return;
+        }
+
+        // Detect pitch with correct sample rate
+        const pitch = detectPitch(dataArray, sampleRate);
         const note = frequencyToNote(pitch);
         setDetectedNote(note);
+
+        // Log every 30 frames (~0.5 seconds at 60fps)
+        frameCount++;
+        if (frameCount % 30 === 0) {
+          console.log(
+            `🎵 [PITCH DETECTION] Level: ${levelPercent.toFixed(2)}% | Pitch: ${pitch > 0 ? pitch.toFixed(2) + " Hz" : "N/A"} | Note: ${note || "None"} | Target: ${progress.currentNote?.note || "N/A"}`
+          );
+        }
 
         // Check if detected note matches current note
         if (
@@ -728,28 +834,71 @@ export function NotesRecognitionGame() {
           progress.currentNote &&
           note === progress.currentNote.note
         ) {
-          handleAnswerSelect(note);
+          const now = Date.now();
+          const timeSinceLastMatch =
+            lastMatchTimeRef.current === 0
+              ? 1000
+              : now - lastMatchTimeRef.current;
+
+          console.log(
+            `🎯 [MATCH CHECK] Detected: "${note}" | Target: "${progress.currentNote.note}" | Time since last: ${timeSinceLastMatch}ms | isListening: ${isListeningRef.current}`
+          );
+
+          // Debounce: only process match if 1000ms has passed since last match
+          if (timeSinceLastMatch >= 1000) {
+            console.log(
+              `✅ [MATCH PROCESSED] Calling handleAnswerSelect for "${note}"`
+            );
+            lastMatchTimeRef.current = now; // Update ref immediately
+            handleAnswerSelect(note);
+          } else {
+            console.log(
+              `⏸️ [MATCH BLOCKED] Cooldown active (${timeSinceLastMatch}ms < 1000ms)`
+            );
+          }
         }
 
-        requestAnimationFrame(detectLoop);
+        // Store animation frame ID so it can be cancelled
+        animationFrameRef.current = requestAnimationFrame(detectLoop);
       };
 
+      console.log("🎤 [PITCH DETECTION] Starting detection loop...");
       detectLoop();
     } catch (error) {
-      console.error("Error accessing microphone:", error);
+      console.error("❌ [PITCH DETECTION] Error accessing microphone:", error);
+      setIsListening(false);
     }
-  }, [detectPitch, frequencyToNote, progress.currentNote, handleAnswerSelect]);
+  }, [
+    detectPitch,
+    frequencyToNote,
+    progress.currentNote,
+    handleAnswerSelect,
+    isListening,
+  ]);
 
   // Stop audio input
   const stopAudioInput = useCallback(() => {
+    console.log("🛑 [PITCH DETECTION] Stopping audio input...");
+    lastMatchTimeRef.current = 0; // Reset cooldown when stopping
+    isListeningRef.current = false; // Reset ref
+    setWaitingForRelease(false); // Reset note release state
+    setPendingNextNote(null); // Clear pending note
+    // Cancel the animation frame loop
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+      console.log("🛑 [PITCH DETECTION] Animation frame cancelled");
+    }
     if (microphone) {
       microphone.getTracks().forEach((track) => track.stop());
+      console.log("🛑 [PITCH DETECTION] Microphone tracks stopped");
     }
     if (audioContext) {
       // Close audio context asynchronously to avoid blocking navigation
       audioContext.close().catch((err) => {
-        console.warn("Error closing audio context:", err);
+        console.warn("⚠️ [PITCH DETECTION] Error closing audio context:", err);
       });
+      console.log("🛑 [PITCH DETECTION] Audio context closed");
     }
     setIsListening(false);
     setAudioContext(null);
@@ -757,13 +906,21 @@ export function NotesRecognitionGame() {
     setMicrophone(null);
     setDetectedNote(null);
     setAudioInputLevel(0);
+    console.log("🛑 [PITCH DETECTION] Audio input stopped successfully");
   }, [microphone, audioContext]);
+
+  // Store the stopAudioInput function in a ref for cleanup useEffects
+  useEffect(() => {
+    stopAudioInputRef.current = stopAudioInput;
+  }, [stopAudioInput]);
 
   // Toggle audio input
   const toggleAudioInput = useCallback(() => {
     if (isListening) {
       stopAudioInput();
     } else {
+      setIsListening(true); // Update state for UI
+      isListeningRef.current = true; // Update ref immediately for closures
       startAudioInput();
     }
   }, [isListening, stopAudioInput, startAudioInput]);
@@ -773,17 +930,19 @@ export function NotesRecognitionGame() {
     return () => {
       // Defer cleanup to not block navigation - run asynchronously
       setTimeout(() => {
-        stopAudioInput();
+        if (stopAudioInputRef.current) {
+          stopAudioInputRef.current();
+        }
       }, 0);
     };
-  }, [stopAudioInput]);
+  }, []); // No dependencies - uses ref to avoid re-running cleanup
 
   // Stop audio input when game finishes
   useEffect(() => {
-    if (progress.isFinished) {
-      stopAudioInput();
+    if (progress.isFinished && stopAudioInputRef.current) {
+      stopAudioInputRef.current();
     }
-  }, [progress.isFinished, stopAudioInput]);
+  }, [progress.isFinished]); // No stopAudioInput dependency - uses ref
 
   // Cleanup: stop audio when component unmounts
   useEffect(() => {
@@ -794,6 +953,27 @@ export function NotesRecognitionGame() {
       }
     };
   }, []);
+
+  // Fallback timeout: force next question if note release is never detected
+  useEffect(() => {
+    if (waitingForRelease && pendingNextNote) {
+      const fallbackTimer = setTimeout(() => {
+        console.log(
+          "⏰ [FALLBACK] Release not detected after 5s - forcing next question"
+        );
+        setWaitingForRelease(false);
+        setAnswerFeedback({
+          selectedNote: null,
+          correctNote: null,
+          isCorrect: null,
+        });
+        updateProgress({ currentNote: pendingNextNote });
+        setPendingNextNote(null);
+      }, 5000); // 5 second fallback
+
+      return () => clearTimeout(fallbackTimer);
+    }
+  }, [waitingForRelease, pendingNextNote, updateProgress]);
 
   // Handle back navigation with immediate loading feedback
   const handleBackNavigation = useCallback(() => {
@@ -924,12 +1104,10 @@ export function NotesRecognitionGame() {
                   />
                 </div>
 
-                {/* Detected Note */}
-                {detectedNote && (
-                  <div className="text-lg font-bold text-yellow-300 text-center">
-                    זיהיתי: {detectedNote}
-                  </div>
-                )}
+                {/* Detected Note - Always visible to prevent layout shifts */}
+                <div className="text-lg font-bold text-yellow-300 text-center">
+                  זיהיתי: {detectedNote || "—"}
+                </div>
               </div>
             </div>
           )}
@@ -952,15 +1130,50 @@ export function NotesRecognitionGame() {
                         : allNotes;
 
                     return filteredNotes;
-                  })().map((note) => (
-                    <button
-                      key={note.note}
-                      onClick={() => handleAnswerSelect(note.note)}
-                      className="px-3 py-1.5 backdrop-blur-sm border rounded-lg transition-colors bg-white/20 border-white/30 text-white hover:bg-white/30"
-                    >
-                      {note.note}
-                    </button>
-                  ))}
+                  })().map((note) => {
+                    // Determine button styling based on feedback
+                    let buttonClass =
+                      "px-3 py-1.5 backdrop-blur-sm border rounded-lg transition-all duration-300 ";
+
+                    if (
+                      answerFeedback.selectedNote &&
+                      answerFeedback.correctNote
+                    ) {
+                      // If this button was the selected wrong answer
+                      if (
+                        note.note === answerFeedback.selectedNote &&
+                        !answerFeedback.isCorrect
+                      ) {
+                        buttonClass +=
+                          "bg-red-500/80 border-red-600 text-white shadow-lg shadow-red-500/50";
+                      }
+                      // If this button is the correct answer
+                      else if (note.note === answerFeedback.correctNote) {
+                        buttonClass +=
+                          "bg-green-500/80 border-green-600 text-white shadow-lg shadow-green-500/50 animate-pulse";
+                      }
+                      // Other buttons remain neutral
+                      else {
+                        buttonClass +=
+                          "bg-white/20 border-white/30 text-white opacity-50";
+                      }
+                    } else {
+                      // Default state when no feedback
+                      buttonClass +=
+                        "bg-white/20 border-white/30 text-white hover:bg-white/30";
+                    }
+
+                    return (
+                      <button
+                        key={note.note}
+                        onClick={() => handleAnswerSelect(note.note)}
+                        className={buttonClass}
+                        disabled={answerFeedback.selectedNote !== null} // Disable buttons during feedback
+                      >
+                        {note.note}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Current Note on the right */}
@@ -982,55 +1195,7 @@ export function NotesRecognitionGame() {
                 </div>
               </div>
 
-              {/* Feedback Message - Below the game elements */}
-              {progress.feedbackMessage && (
-                <div
-                  className={`mt-4 mb-2 rounded-lg p-3 animate-fadeIn text-center shadow-lg text-xl font-bold ${
-                    progress.feedbackMessage.type === "correct"
-                      ? "bg-emerald-600/80 text-white"
-                      : "bg-rose-600/80 text-white"
-                  }`}
-                  dir="rtl"
-                >
-                  {progress.feedbackMessage.type === "correct" ? (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                      {progress.feedbackMessage.text}
-                    </span>
-                  ) : (
-                    <span className="flex items-center justify-center">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-6 w-6 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                      {progress.feedbackMessage.text}
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Feedback is now shown via button highlighting instead of banner */}
             </div>
           </div>
         </div>

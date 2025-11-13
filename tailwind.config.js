@@ -17,6 +17,7 @@ module.exports = {
         comic: ["Comic Neue", "cursive"],
         rounded: ["Nunito", "sans-serif"],
         playful: ["Fredoka One", "cursive"],
+        signature: ["Dancing Script", "cursive"],
       },
       fontSize: {
         xs: ["0.75rem", { lineHeight: "1.5" }],
