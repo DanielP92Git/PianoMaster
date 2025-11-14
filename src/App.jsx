@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
 import { NotesMasterMode } from "./components/games/NotesMasterMode";
@@ -71,6 +71,17 @@ function AuthenticatedWrapper({ children }) {
   return children;
 }
 
+// Component to redirect teachers to their dashboard
+function TeacherRedirect() {
+  const { isTeacher } = useUser();
+  
+  if (isTeacher) {
+    return <Navigate to="/teacher" replace />;
+  }
+  
+  return <Dashboard />;
+}
+
 function AppRoutes() {
   const { isLoading } = useUser();
   const practiceModesSectionRef = useRef(null);
@@ -98,7 +109,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Dashboard />} />
+          <Route index element={<TeacherRedirect />} />
           <Route path="/practice-modes" element={<PracticeModes />} />
           <Route path="practice-sessions" element={<PracticeSessions />} />
           <Route path="/assignments" element={<StudentAssignments />} />

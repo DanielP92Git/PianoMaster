@@ -212,17 +212,21 @@ export const addStudentToTeacher = async (studentData) => {
     } else {
       // Student doesn't exist OR we can't check due to RLS policies
       // Try to create new student, handle potential duplicates gracefully
+      
+      // Generate a UUID for the student (teachers can't create auth users, but can create student records)
       const { data: newStudent, error: createError } = await supabase
         .from("students")
         .insert([
           {
-            // Let Supabase generate the UUID automatically
+            // Generate UUID using Supabase's gen_random_uuid() function
+            // Note: The id should eventually link to auth.users when student signs up
             first_name: studentData.firstName,
             last_name: studentData.lastName,
             email: studentData.email.toLowerCase(),
             level: studentData.level,
             studying_year: studentData.studyingYear,
             username: `${studentData.firstName.toLowerCase()}_${studentData.lastName.toLowerCase()}`,
+            user_role: 'student', // Explicitly set the role
           },
         ])
         .select()

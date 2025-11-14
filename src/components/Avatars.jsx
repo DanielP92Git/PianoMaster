@@ -168,6 +168,70 @@ function Avatars() {
     return null;
   };
 
+  // Helper function to get composer description
+  const getComposerDescription = (avatar) => {
+    if (isBeethovenAvatar(avatar)) {
+      return "A German composer who wrote amazing music even after he became deaf! He loved nature and took long walks to get inspiration for his powerful symphonies.";
+    }
+    if (isBachAvatar(avatar)) {
+      return "A German composer who was a master of the organ and harpsichord. He came from a family of musicians and had 20 children, many of whom became musicians too!";
+    }
+    if (isMozartAvatar(avatar)) {
+      return "An Austrian musical genius who started composing at age 5! He wrote over 600 pieces of music and loved to make people laugh with his jokes and pranks.";
+    }
+    if (isBrahmsAvatar(avatar)) {
+      return "A German composer with a big beard who loved classical music and was friends with Clara Schumann. He was shy but his music was full of warm, beautiful melodies.";
+    }
+    if (isSchubertAvatar(avatar)) {
+      return "An Austrian composer who loved writing songs and melodies. He was very friendly and had a group of artist friends who would gather to hear his latest music!";
+    }
+    if (isChopinAvatar(avatar)) {
+      return "A Polish-French composer known as the 'poet of the piano.' He wrote beautiful, dreamy music mostly for the piano and was born near Warsaw, Poland.";
+    }
+    if (isSchumannAvatar(avatar)) {
+      return "A German composer who loved literature and poetry. He married the famous pianist Clara and wrote music that told stories and painted pictures with sound.";
+    }
+    if (isHandelAvatar(avatar)) {
+      return "A German-British composer famous for his 'Messiah' with the Hallelujah Chorus! He loved writing music for big celebrations and royal events.";
+    }
+    if (isVivaldiAvatar(avatar)) {
+      return "An Italian composer with bright red hair who was also a priest! He taught music to orphan girls in Venice and wrote 'The Four Seasons,' music that sounds like spring, summer, fall, and winter.";
+    }
+    return null;
+  };
+
+  // Helper function to get fun fact
+  const getComposerFunFact = (avatar) => {
+    if (isBeethovenAvatar(avatar)) {
+      return "🎵 Fun Fact: Beethoven loved coffee so much that he counted exactly 60 beans for each cup!";
+    }
+    if (isBachAvatar(avatar)) {
+      return "🎵 Fun Fact: Bach once walked 250 miles just to hear a famous organist play!";
+    }
+    if (isMozartAvatar(avatar)) {
+      return "🎵 Fun Fact: Mozart had a pet starling bird that could sing one of his piano pieces!";
+    }
+    if (isBrahmsAvatar(avatar)) {
+      return "🎵 Fun Fact: When Brahms was a young boy, he helped support his family by playing piano in local inns and taverns—kind of like being a small-town piano superstar!";
+    }
+    if (isSchubertAvatar(avatar)) {
+      return "🎵 Fun Fact: Schubert wrote over 600 songs and sometimes composed up to 8 songs in a single day!";
+    }
+    if (isChopinAvatar(avatar)) {
+      return "🎵 Fun Fact: Chopin gave his first piano concert when he was only 7 years old!";
+    }
+    if (isSchumannAvatar(avatar)) {
+      return "🎵 Fun Fact: Schumann hurt his hand trying to make it stronger with a finger device, so he focused on composing instead!";
+    }
+    if (isHandelAvatar(avatar)) {
+      return "🎵 Fun Fact: Handel wrote his famous 'Messiah' in just 24 days!";
+    }
+    if (isVivaldiAvatar(avatar)) {
+      return "🎵 Fun Fact: Vivaldi wrote over 500 concertos and was nicknamed 'The Red Priest' because of his red hair!";
+    }
+    return null;
+  };
+
   // Helper function to check if an avatar is a composer
   const isComposerAvatar = (avatar) => {
     return (
@@ -259,41 +323,62 @@ function Avatars() {
     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 mx-4 my-4 space-y-6">
       <BackButton to="/settings" name="Settings" />
 
-      {/* Composer Name Title - shown when a composer avatar is selected */}
-      {selectedAvatar && isComposerAvatar(selectedAvatar) && (
-        <div className="text-center py-4 space-y-2">
-          <h1 className="text-5xl md:text-6xl font-signature text-white drop-shadow-lg">
-            {getComposerFullName(selectedAvatar)}
-          </h1>
-          <p className="text-xl md:text-2xl font-signature text-white/90 drop-shadow-md">
-            {getComposerLifeYears(selectedAvatar)}
-          </p>
-        </div>
-      )}
+      <h2 className="text-xl font-semibold text-white text-center">
+        Choose Your Avatar
+      </h2>
 
-      <h2 className="text-xl font-semibold text-white">Choose Your Avatar</h2>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+      {/* Avatar Grid - Smaller size to fit in one row */}
+      <div className="flex flex-wrap justify-center gap-3 px-2">
         {avatars.map((avatar) => (
-          <AnimatedAvatar
-            key={avatar.id}
-            avatar={avatar}
-            isSelected={selectedAvatar?.id === avatar.id}
-            onClick={handleAvatarSelect}
-            animationVideoUrl={getAnimationVideoUrl(avatar)}
-            onAnimationStart={handleAnimationStart}
-            onAnimationEnd={handleAnimationEnd}
-            shouldStopAnimation={
-              currentlyAnimatingId !== null &&
-              currentlyAnimatingId !== avatar.id
-            }
-          />
+          <div key={avatar.id} className="w-20 h-20 sm:w-24 sm:h-24">
+            <AnimatedAvatar
+              avatar={avatar}
+              isSelected={selectedAvatar?.id === avatar.id}
+              onClick={handleAvatarSelect}
+              animationVideoUrl={getAnimationVideoUrl(avatar)}
+              onAnimationStart={handleAnimationStart}
+              onAnimationEnd={handleAnimationEnd}
+              shouldStopAnimation={
+                currentlyAnimatingId !== null &&
+                currentlyAnimatingId !== avatar.id
+              }
+            />
+          </div>
         ))}
       </div>
 
-      {/* Preview of Selected Avatar */}
-      {selectedAvatar && (
-        <div className="mt-8 p-4 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
+      {/* Composer Information - shown when a composer avatar is selected */}
+      {selectedAvatar && isComposerAvatar(selectedAvatar) && (
+        <div className="mt-6 p-6 bg-white/10 backdrop-blur-md rounded-lg border border-white/20 space-y-4">
+          {/* Composer Name and Years */}
+          <div className="text-center space-y-1">
+            <h1 className="text-3xl md:text-4xl font-rounded font-bold text-white">
+              {getComposerFullName(selectedAvatar)}
+            </h1>
+            <p className="text-lg md:text-xl font-rounded font-semibold text-white/80">
+              {getComposerLifeYears(selectedAvatar)}
+            </p>
+          </div>
+
+          {/* Description */}
+          <div className="bg-white/5 rounded-lg p-4">
+            <p className="text-base md:text-lg font-rounded text-white/90 leading-relaxed">
+              {getComposerDescription(selectedAvatar)}
+            </p>
+          </div>
+
+          {/* Fun Fact */}
+          <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg p-4 border border-purple-300/30">
+            <p className="text-base md:text-lg font-rounded font-semibold text-white leading-relaxed">
+              {getComposerFunFact(selectedAvatar)}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Simple selection status for non-composer avatars */}
+      {selectedAvatar && !isComposerAvatar(selectedAvatar) && (
+        <div className="mt-6 p-4 bg-white/10 backdrop-blur-md rounded-lg border border-white/20">
           <div className="flex items-center space-x-4">
             <img
               src={selectedAvatar.image_url}
