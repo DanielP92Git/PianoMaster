@@ -25,13 +25,17 @@ import {
 
 function Dashboard() {
   const { user, isTeacher, isStudent, userRole, profile } = useUser();
-  const { scores, isLoading } = useScores();
+  
+  // Only load student-specific data if user is a student (Performance optimization for teachers)
+  const { scores, isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();
-  const { addNewRecording } = useNewRecordingsCount(user?.id);
+  const { addNewRecording } = useNewRecordingsCount(isStudent ? user?.id : null);
   const [activeReminder, setActiveReminder] = useState(null);
 
-  // Poll for active reminder status
+  // Poll for active reminder status (only for students)
   useEffect(() => {
+    if (!isStudent) return;
+    
     const updateReminderStatus = () => {
       const reminder = dashboardReminderService.getActiveReminder();
       setActiveReminder(reminder);
@@ -44,16 +48,16 @@ function Dashboard() {
     const interval = setInterval(updateReminderStatus, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isStudent]);
 
-  // Fetch user streak
+  // Fetch user streak (only for students)
   const {
     data: streak = { current_streak: 0, longest_streak: 0 },
     isLoading: streakLoading,
   } = useQuery({
     queryKey: ["streak", user?.id],
     queryFn: () => streakService.getUserStreak(user.id),
-    enabled: !!user?.id,
+    enabled: !!user?.id && isStudent, // Only fetch for students
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
   });
@@ -61,11 +65,11 @@ function Dashboard() {
   // Check if connected to real-time updates
   const isConnected = true; // Placeholder for real-time connection status
 
-  // Fetch user's earned achievements to filter out completed next steps
+  // Fetch user's earned achievements to filter out completed next steps (only for students)
   const { data: earnedAchievements = [] } = useQuery({
     queryKey: ["earned-achievements", user?.id],
     queryFn: () => achievementService.getEarnedAchievements(user.id),
-    enabled: !!user?.id,
+    enabled: !!user?.id && isStudent, // Only fetch for students
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 

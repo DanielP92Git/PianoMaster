@@ -105,20 +105,42 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
         <nav className="flex-1 flex flex-col p-4 lg:p-6 min-h-0 overflow-hidden">
           <div className="space-y-2 lg:space-y-1 overflow-y-auto flex-shrink min-h-0 pb-4"
                style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(156, 163, 175, 0.5) transparent' }}>
-            <NavLink
-              to="/"
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? "bg-indigo-500 text-white shadow-lg"
-                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                }`
-              }
-            >
-              <Home className="h-5 w-5 flex-shrink-0" />
-              <span>Dashboard</span>
-            </NavLink>
+            
+            {/* Student Dashboard - Only show for students */}
+            {isStudent && (
+              <NavLink
+                to="/"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-indigo-500 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
+                  }`
+                }
+              >
+                <Home className="h-5 w-5 flex-shrink-0" />
+                <span>Dashboard</span>
+              </NavLink>
+            )}
+
+            {/* Teacher Dashboard - Only show for teachers */}
+            {isTeacher && (
+              <NavLink
+                to="/teacher"
+                onClick={onClose}
+                className={({ isActive }) =>
+                  `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                    isActive
+                      ? "bg-purple-500 text-white shadow-lg"
+                      : "text-gray-700 hover:bg-purple-50 hover:text-purple-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
+                  }`
+                }
+              >
+                <GraduationCap className="h-5 w-5 flex-shrink-0" />
+                <span>Teacher Dashboard</span>
+              </NavLink>
+            )}
 
             {/* Student-specific features */}
             {isStudent && (
@@ -173,24 +195,6 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
                   <span>Achievements</span>
                 </NavLink>
               </>
-            )}
-
-            {/* Teacher-specific features */}
-            {isTeacher && (
-              <NavLink
-                to="/teacher"
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex font-semibold items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    isActive
-                      ? "bg-purple-500 text-white shadow-lg"
-                      : "text-gray-700 hover:bg-purple-50 hover:text-purple-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                  }`
-                }
-              >
-                <GraduationCap className="h-5 w-5 flex-shrink-0" />
-                <span>Teacher Dashboard</span>
-              </NavLink>
             )}
 
             {/* Common features for all users */}
