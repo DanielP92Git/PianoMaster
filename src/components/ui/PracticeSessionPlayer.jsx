@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { Play, Pause, Loader2, AlertCircle, Download } from "lucide-react";
 import AudioPlayer from "./AudioPlayer";
 import { practiceService } from "../../services/practiceService";
@@ -17,6 +17,7 @@ export default function PracticeSessionPlayer({
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
   const [urlExpiry, setUrlExpiry] = useState(null);
+  const audioPlayerRef = useRef(null);
 
   // Get signed URL for the audio file with caching
   const getAudioUrl = useCallback(async () => {
@@ -58,39 +59,18 @@ export default function PracticeSessionPlayer({
     return timeUntilExpiry < 10 * 60 * 1000;
   }, [urlExpiry]);
 
-  // Handle play button click
-  const handlePlay = useCallback(async () => {
-    if (isPlaying) {
-      // If this session is playing, stop it
-      onPlayStateChange?.(null);
-      return;
-    }
-
-    // If no URL or URL needs refresh, get new one
-    if (!audioUrl || needsUrlRefresh()) {
-      await getAudioUrl();
-    }
-
-    if (audioUrl) {
-      onPlayStateChange?.(session.id);
-    }
-  }, [
-    isPlaying,
-    audioUrl,
-    needsUrlRefresh,
-    getAudioUrl,
-    onPlayStateChange,
-    session.id,
-  ]);
-
   // Handle audio player events
   const handleAudioPlay = useCallback(() => {
     // Audio started playing successfully
-  }, []);
+    onPlayStateChange?.(session.id);
+  }, [onPlayStateChange, session.id]);
 
   const handleAudioPause = useCallback(() => {
-    // Audio was paused
-  }, []);
+    // Audio was paused - only clear if this session is currently playing
+    if (isPlaying) {
+      onPlayStateChange?.(null);
+    }
+  }, [isPlaying, onPlayStateChange]);
 
   const handleAudioStop = useCallback(() => {
     onPlayStateChange?.(null);
@@ -137,6 +117,13 @@ export default function PracticeSessionPlayer({
       }
     }
   }, [audioUrl, getAudioUrl, session.id]);
+
+  // Load URL on mount
+  useEffect(() => {
+    if (!audioUrl && session?.recording_url) {
+      getAudioUrl();
+    }
+  }, [session?.recording_url]); // Only run when recording_url changes
 
   // Auto-refresh URL when needed
   useEffect(() => {
@@ -198,8 +185,8 @@ export default function PracticeSessionPlayer({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-2">
-          {showDownload && (
+        {showDownload && (
+          <div className="flex items-center gap-2">
             <button
               onClick={handleDownload}
               disabled={disabled || (!audioUrl && !session.recording_url)}
@@ -208,23 +195,8 @@ export default function PracticeSessionPlayer({
             >
               <Download className="w-4 h-4" />
             </button>
-          )}
-
-          <button
-            onClick={handlePlay}
-            disabled={disabled || isLoadingUrl}
-            className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full transition-colors flex items-center justify-center"
-            title={isPlaying ? "Pause" : "Play"}
-          >
-            {isLoadingUrl ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : isPlaying ? (
-              <Pause className="w-5 h-5" />
-            ) : (
-              <Play className="w-5 h-5" />
-            )}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Session Notes */}
@@ -251,11 +223,16 @@ export default function PracticeSessionPlayer({
         </div>
       )}
 
-      {/* Audio Player */}
-      {isPlaying && audioUrl && !urlError && (
+      {/* Audio Player - Always visible, shows loading state if URL not ready */}
+      {isLoadingUrl ? (
+        <div className="bg-white/5 backdrop-blur-md rounded-xl p-6 border border-white/10 flex items-center justify-center">
+          <Loader2 className="w-6 h-6 animate-spin text-indigo-400 mr-3" />
+          <span className="text-white/70">Loading audio...</span>
+        </div>
+      ) : audioUrl && !urlError ? (
         <AudioPlayer
           src={audioUrl}
-          autoPlay={true}
+          autoPlay={false}
           onPlay={handleAudioPlay}
           onPause={handleAudioPause}
           onStop={handleAudioStop}
@@ -265,9 +242,10 @@ export default function PracticeSessionPlayer({
           showSeekBar={true}
           showTimeDisplay={true}
           disabled={disabled}
+          knownDuration={session?.duration_seconds || null}
           className="bg-transparent border-white/10"
         />
-      )}
+      ) : null}
 
       {/* Status Indicator */}
       {session.status && (

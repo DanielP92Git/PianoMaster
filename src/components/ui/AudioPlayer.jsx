@@ -27,12 +27,13 @@ export default function AudioPlayer({
   onLoadStart,
   onLoadEnd,
   disabled = false,
+  knownDuration = null, // Optional: known duration from database (in seconds)
 }) {
   // Player state
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  const [duration, setDuration] = useState(knownDuration || 0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [error, setError] = useState(null);
@@ -58,9 +59,38 @@ export default function AudioPlayer({
       onLoadStart?.();
     };
 
+    const handleLoadedMetadata = () => {
+      // This fires when metadata (including duration) is loaded
+      if (audio.duration && isFinite(audio.duration)) {
+        console.log("Duration loaded from metadata:", audio.duration);
+        setDuration(audio.duration);
+      } else if (knownDuration) {
+        console.log("Using known duration from database:", knownDuration);
+        setDuration(knownDuration);
+      }
+    };
+
+    const handleDurationChange = () => {
+      // This fires when duration changes or becomes available
+      if (audio.duration && isFinite(audio.duration)) {
+        console.log("Duration changed:", audio.duration);
+        setDuration(audio.duration);
+      } else if (knownDuration) {
+        console.log("Using known duration (durationchange):", knownDuration);
+        setDuration(knownDuration);
+      }
+    };
+
     const handleCanPlay = () => {
       setIsLoading(false);
-      setDuration(audio.duration || 0);
+      // Also try to set duration here as a fallback
+      if (audio.duration && isFinite(audio.duration)) {
+        console.log("Duration from canplay:", audio.duration);
+        setDuration(audio.duration);
+      } else if (knownDuration) {
+        console.log("Using known duration (canplay):", knownDuration);
+        setDuration(knownDuration);
+      }
       onLoadEnd?.();
     };
 
@@ -102,6 +132,8 @@ export default function AudioPlayer({
 
     // Add event listeners
     audio.addEventListener("loadstart", handleLoadStart);
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("durationchange", handleDurationChange);
     audio.addEventListener("canplay", handleCanPlay);
     audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("play", handlePlay);
@@ -113,6 +145,8 @@ export default function AudioPlayer({
     return () => {
       // Cleanup event listeners
       audio.removeEventListener("loadstart", handleLoadStart);
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("durationchange", handleDurationChange);
       audio.removeEventListener("canplay", handleCanPlay);
       audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("play", handlePlay);
@@ -131,6 +165,7 @@ export default function AudioPlayer({
     onError,
     onLoadStart,
     onLoadEnd,
+    knownDuration,
   ]);
 
   // Handle src changes
@@ -372,11 +407,11 @@ export default function AudioPlayer({
             onMouseDown={handleSeekBarMouseDown}
           >
             <div
-              className="h-2 bg-indigo-600 rounded-full transition-all duration-200"
+              className="h-2 bg-indigo-600 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
             <div
-              className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full shadow-lg"
+              className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full shadow-lg transition-all duration-100"
               style={{ left: `calc(${progressPercent}% - 8px)` }}
             />
           </div>

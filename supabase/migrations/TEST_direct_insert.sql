@@ -20,3 +20,4 @@ RETURNING *;
 DELETE FROM public.students 
 WHERE email = 'test.student.delete.me@example.com';
 
+

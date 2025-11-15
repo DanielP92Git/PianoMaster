@@ -52,6 +52,8 @@ import AnalyticsDashboard from "../charts/AnalyticsDashboard";
 import RecordingsReview from "../teacher/RecordingsReview";
 import AssignmentManagement from "../teacher/AssignmentManagement";
 import NotificationCenter from "../teacher/NotificationCenter";
+import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
+import { useUser } from "../../features/authentication/useUser";
 
 import { toast } from "react-hot-toast";
 
@@ -1210,6 +1212,8 @@ const TeacherDashboard = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useUser();
+  const { newRecordingsCount } = useTeacherRecordingNotifications(user?.id);
 
   // Determine active tab from URL path
   const getActiveTab = () => {
@@ -1784,7 +1788,7 @@ const TeacherDashboard = () => {
             <button
               key={tab.id}
               onClick={() => navigate(`/teacher/${tab.id}`)}
-              className={`flex items-center gap-2 pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out ${
+              className={`flex items-center gap-2 pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out relative ${
                 activeTab === tab.id
                   ? "border-blue-500 text-blue-400"
                   : "border-transparent text-gray-200 hover:text-white hover:border-gray-600"
@@ -1792,6 +1796,11 @@ const TeacherDashboard = () => {
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
+              {tab.id === "recordings" && newRecordingsCount > 0 && (
+                <span className="flex items-center justify-center min-w-[18px] h-[18px] text-xs font-bold text-white bg-red-500 rounded-full px-1.5">
+                  {newRecordingsCount}
+                </span>
+              )}
             </button>
           ))}
         </nav>

@@ -11,11 +11,13 @@ import {
 } from "lucide-react";
 import AuthButton from "../auth/AuthButton"; // eslint-disable-line
 import { useUser } from "../../features/authentication/useUser";
-import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
+import { useStudentFeedbackNotifications } from "../../hooks/useStudentFeedbackNotifications";
 
 export default function Sidebar({ isOpen, onClose, isGameRoute }) {
   const { user, isTeacher, isStudent } = useUser();
-  const { newCount } = useNewRecordingsCount(user?.id);
+  const { newFeedbackCount } = useStudentFeedbackNotifications(
+    isStudent ? user?.id : null
+  );
   const sidebarRef = useRef(null);
   const location = useLocation();
   const prevPathname = useRef(location.pathname);
@@ -173,9 +175,9 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
                 >
                   <Mic className="h-5 w-5 flex-shrink-0" />
                   <span>Recordings</span>
-                  {newCount > 0 && (
+                  {newFeedbackCount > 0 && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-bold text-white bg-red-500 rounded-full px-1.5 shadow-sm">
-                      {newCount}
+                      {newFeedbackCount}
                     </span>
                   )}
                 </NavLink>
