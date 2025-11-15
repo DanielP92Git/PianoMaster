@@ -13,7 +13,6 @@ import { useModal } from "../../contexts/ModalContext";
 import { Bell, X, BellOff } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { practiceService } from "../../services/practiceService";
-import { useNewRecordingsCount } from "../../hooks/useNewRecordingsCount";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
 import { Send, Loader2, Mic } from "lucide-react";
@@ -29,7 +28,6 @@ function Dashboard() {
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();
-  const { addNewRecording } = useNewRecordingsCount(isStudent ? user?.id : null);
   const [activeReminder, setActiveReminder] = useState(null);
 
   // Poll for active reminder status (only for students)
@@ -319,10 +317,6 @@ function Dashboard() {
               },
             },
           });
-
-          if (result?.session?.id) {
-            addNewRecording(result.session.id);
-          }
 
           closeModal();
         } catch (error) {

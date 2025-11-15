@@ -53,3 +53,4 @@ SELECT
 FROM public.teachers
 ORDER BY created_at DESC;
 
+

@@ -2,11 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { practiceService } from "../services/practiceService";
 import { useUser } from "../features/authentication/useUser";
-import { Pencil, Trash2, Save, X, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Save, X, Loader2, Square, CheckSquare } from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../components/ui/BackButton";
 import PracticeSessionPlayer from "../components/ui/PracticeSessionPlayer";
-import { useNewRecordingsCount } from "../hooks/useNewRecordingsCount";
+import { useStudentFeedbackNotifications } from "../hooks/useStudentFeedbackNotifications";
 
 export default function PracticeSessions() {
   const { user } = useUser();
@@ -14,7 +14,8 @@ export default function PracticeSessions() {
   const [editingId, setEditingId] = useState(null);
   const [editedNotes, setEditedNotes] = useState("");
   const [playingId, setPlayingId] = useState(null);
-  const { clearNewRecordings } = useNewRecordingsCount(user?.id);
+  const [selectedSessions, setSelectedSessions] = useState([]);
+  const { clearFeedbackNotifications } = useStudentFeedbackNotifications(user?.id);
 
   // Fetch practice sessions using React Query
   const {
@@ -31,9 +32,9 @@ export default function PracticeSessions() {
 
   useEffect(() => {
     if (user?.id) {
-      clearNewRecordings();
+      clearFeedbackNotifications();
     }
-  }, [user?.id, clearNewRecordings]);
+  }, [user?.id, clearFeedbackNotifications]);
 
   // Get the latest recording timestamp
   const latestRecordingTime = sessions?.[0]?.submitted_at;
@@ -174,6 +175,52 @@ export default function PracticeSessions() {
     },
   });
 
+  // Delete selected sessions mutation
+  const deleteSelectedMutation = useMutation({
+    mutationFn: async (sessionIds) => {
+      // Delete sessions one by one
+      await Promise.all(
+        sessionIds.map((id) => practiceService.deletePracticeSession(id))
+      );
+      return sessionIds;
+    },
+    onMutate: async (sessionIds) => {
+      await queryClient.cancelQueries(["practice-sessions", user?.id]);
+
+      const previousSessions = queryClient.getQueryData([
+        "practice-sessions",
+        user?.id,
+      ]);
+
+      // Optimistically remove selected sessions
+      queryClient.setQueryData(["practice-sessions", user?.id], (old) =>
+        old?.filter((session) => !sessionIds.includes(session.id))
+      );
+
+      // Stop playing if any deleted session was being played
+      if (sessionIds.includes(playingId)) {
+        setPlayingId(null);
+      }
+
+      return { previousSessions };
+    },
+    onSuccess: (sessionIds) => {
+      queryClient.invalidateQueries(["practice-sessions", user?.id]);
+      setSelectedSessions([]);
+      toast.success(
+        `Successfully deleted ${sessionIds.length} recording${sessionIds.length > 1 ? "s" : ""}`
+      );
+    },
+    onError: (error, sessionIds, context) => {
+      console.error("Delete selected error:", error);
+      queryClient.setQueryData(
+        ["practice-sessions", user?.id],
+        context.previousSessions
+      );
+      toast.error("Failed to delete selected recordings");
+    },
+  });
+
   // Handle play state changes
   const handlePlayStateChange = (sessionId) => {
     setPlayingId(sessionId);
@@ -214,6 +261,42 @@ export default function PracticeSessions() {
     }
   };
 
+  const handleSessionSelect = (sessionId, isSelected) => {
+    if (isSelected) {
+      setSelectedSessions((prev) => [...prev, sessionId]);
+    } else {
+      setSelectedSessions((prev) => prev.filter((id) => id !== sessionId));
+    }
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      setSelectedSessions(sessions.map((s) => s.id));
+    } else {
+      setSelectedSessions([]);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedSessions.length === 0) return;
+
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedSessions.length} selected recording${selectedSessions.length > 1 ? "s" : ""}?`
+      )
+    ) {
+      try {
+        await deleteSelectedMutation.mutateAsync(selectedSessions);
+      } catch (error) {
+        console.error("Error in handleDeleteSelected:", error);
+      }
+    }
+  };
+
+  const isSessionSelected = (sessionId) => selectedSessions.includes(sessionId);
+  const isAllSelected =
+    sessions?.length > 0 && selectedSessions.length === sessions.length;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -241,23 +324,59 @@ export default function PracticeSessions() {
       <BackButton to="/" name="Dashboard" />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-white">Practice Recordings</h1>
-        {sessions?.length > 0 && (
-          <button
-            onClick={handleCleanup}
-            disabled={cleanupMutation.isLoading}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-          >
-            {cleanupMutation.isLoading ? (
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Cleaning up...
-              </div>
-            ) : (
-              "Delete All Sessions"
-            )}
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-white">Practice Recordings</h1>
+          {sessions?.length > 0 && (
+            <button
+              onClick={() => handleSelectAll(!isAllSelected)}
+              className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+            >
+              {isAllSelected ? (
+                <CheckSquare className="w-5 h-5 text-blue-400" />
+              ) : (
+                <Square className="w-5 h-5" />
+              )}
+              Select All
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedSessions.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              disabled={deleteSelectedMutation.isLoading}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {deleteSelectedMutation.isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4" />
+                  Delete Selected ({selectedSessions.length})
+                </>
+              )}
+            </button>
+          )}
+          {sessions?.length > 0 && (
+            <button
+              onClick={handleCleanup}
+              disabled={cleanupMutation.isLoading}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+            >
+              {cleanupMutation.isLoading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Cleaning up...
+                </div>
+              ) : (
+                "Delete All Sessions"
+              )}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4">
@@ -278,16 +397,44 @@ export default function PracticeSessions() {
               )}
 
               {/* Combined Practice Session Container */}
-              <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
-                {/* Practice Session Player */}
+              <div
+                className={`bg-white/10 backdrop-blur-md rounded-xl border overflow-hidden transition-all ${
+                  isSessionSelected(session.id)
+                    ? "border-blue-500 bg-blue-500/10"
+                    : "border-white/20"
+                }`}
+              >
+                {/* Practice Session Player with Checkbox */}
                 <div className="p-4 border-b border-white/10">
-                  <PracticeSessionPlayer
-                    session={session}
-                    isPlaying={playingId === session.id}
-                    onPlayStateChange={handlePlayStateChange}
-                    showDownload={true}
-                    className="bg-transparent border-none p-0"
-                  />
+                  <div className="flex items-start gap-3">
+                    {/* Selection Checkbox */}
+                    <button
+                      onClick={() =>
+                        handleSessionSelect(
+                          session.id,
+                          !isSessionSelected(session.id)
+                        )
+                      }
+                      className="mt-2 text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0"
+                    >
+                      {isSessionSelected(session.id) ? (
+                        <CheckSquare className="w-5 h-5 text-blue-400" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                    </button>
+
+                    {/* Player */}
+                    <div className="flex-1 min-w-0">
+                      <PracticeSessionPlayer
+                        session={session}
+                        isPlaying={playingId === session.id}
+                        onPlayStateChange={handlePlayStateChange}
+                        showDownload={true}
+                        className="bg-transparent border-none p-0"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Notes Section */}
@@ -358,20 +505,35 @@ export default function PracticeSessions() {
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Teacher Feedback */}
-              {session.teacher_feedback && (
-                <div className="bg-indigo-900/30 rounded-xl p-4 border border-indigo-500/30">
-                  <h4 className="text-indigo-300 font-medium mb-2 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-indigo-400 rounded-full"></span>
-                    Teacher Feedback
-                  </h4>
-                  <div className="text-white text-sm whitespace-pre-wrap">
-                    {session.teacher_feedback}
+                {/* Teacher Feedback - Integrated within recording container */}
+                {session.teacher_feedback && (
+                  <div className="border-t border-white/10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-4">
+                    <h4 className="text-indigo-300 font-semibold mb-3 flex items-center gap-2">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="w-5 h-5 text-indigo-400" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
+                        />
+                      </svg>
+                      Teacher Feedback
+                    </h4>
+                    <div className="bg-white/10 rounded-lg p-3 border border-indigo-400/30">
+                      <div className="text-white text-sm whitespace-pre-wrap leading-relaxed">
+                        {session.teacher_feedback}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           ))
         )}

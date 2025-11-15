@@ -834,6 +834,38 @@ export const updatePracticeSessionReview = async (sessionId, updates) => {
   }
 };
 
+// Delete multiple practice session recordings
+export const deletePracticeSessions = async (sessionIds) => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    // Verify user is a teacher
+    const userRole = user.user_metadata?.role || user.app_metadata?.role;
+    if (userRole !== "teacher") {
+      throw new Error("Only teachers can delete recordings");
+    }
+
+    // Delete the practice sessions
+    const { error } = await supabase
+      .from("practice_sessions")
+      .delete()
+      .in("id", sessionIds);
+
+    if (error) throw error;
+
+    return {
+      success: true,
+      message: `Successfully deleted ${sessionIds.length} recording${sessionIds.length > 1 ? "s" : ""}`,
+    };
+  } catch (error) {
+    console.error("Error deleting practice sessions:", error);
+    throw error;
+  }
+};
+
 // Assignment Management Functions
 
 // Get teacher's assignments

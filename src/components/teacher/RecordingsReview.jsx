@@ -4,10 +4,11 @@ import {
   getTeacherRecordings,
   updatePracticeSessionReview,
   getTeacherStudents,
+  deletePracticeSessions,
 } from "../../services/apiTeacher";
+import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
+import { useUser } from "../../features/authentication/useUser";
 import {
-  Play,
-  Pause,
   Clock,
   User,
   Calendar,
@@ -19,6 +20,9 @@ import {
   Star,
   Search,
   ChevronDown,
+  Trash2,
+  Square,
+  CheckSquare,
 } from "lucide-react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
@@ -94,19 +98,6 @@ const ReviewModal = ({
             </div>
           </div>
         </div>
-
-        {/* Audio Player */}
-        {recording && (
-          <div className="border rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-3">
-              Recording Playback
-            </h4>
-            <PracticeSessionPlayer
-              session={recording}
-              className="bg-gray-50 border border-gray-200 rounded-lg p-4"
-            />
-          </div>
-        )}
 
         {/* Status Selection */}
         <div>
@@ -185,8 +176,19 @@ const RecordingsReview = () => {
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [playingId, setPlayingId] = useState(null);
+  const [selectedRecordings, setSelectedRecordings] = useState([]);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const queryClient = useQueryClient();
+  const { user } = useUser();
+  const { clearTeacherNotifications } = useTeacherRecordingNotifications(user?.id);
+
+  // Clear notifications when component mounts
+  useEffect(() => {
+    if (user?.id) {
+      clearTeacherNotifications();
+    }
+  }, [user?.id, clearTeacherNotifications]);
 
   // Debug effect to log component lifecycle
   useEffect(() => {
@@ -258,6 +260,24 @@ const RecordingsReview = () => {
     },
   });
 
+  // Delete recordings mutation
+  const deleteMutation = useMutation({
+    mutationFn: deletePracticeSessions,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["teacher-recordings"],
+        exact: false,
+      });
+      setSelectedRecordings([]);
+      setShowDeleteConfirmModal(false);
+      toast.success(data.message);
+    },
+    onError: (error) => {
+      console.error("Delete recordings error:", error);
+      toast.error(error.message || "Failed to delete recordings");
+    },
+  });
+
   // Filter recordings based on search term
   const filteredRecordings = recordings.filter((recording) => {
     if (!searchTerm) return true;
@@ -297,6 +317,43 @@ const RecordingsReview = () => {
   const handleSubmitReview = (sessionId, updates) => {
     reviewMutation.mutate({ sessionId, updates });
   };
+
+  const handleRecordingSelect = (recording, isSelected) => {
+    if (isSelected) {
+      setSelectedRecordings((prev) => [...prev, recording]);
+    } else {
+      setSelectedRecordings((prev) =>
+        prev.filter((r) => r.id !== recording.id)
+      );
+    }
+  };
+
+  const handleSelectAll = (isSelected) => {
+    if (isSelected) {
+      setSelectedRecordings(filteredRecordings);
+    } else {
+      setSelectedRecordings([]);
+    }
+  };
+
+  const isRecordingSelected = (recording) => {
+    return selectedRecordings.some((r) => r.id === recording.id);
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedRecordings.length > 0) {
+      setShowDeleteConfirmModal(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    const recordingIds = selectedRecordings.map((r) => r.id);
+    deleteMutation.mutate(recordingIds);
+  };
+
+  const isAllSelected =
+    filteredRecordings.length > 0 &&
+    filteredRecordings.every((recording) => isRecordingSelected(recording));
 
   const getStatusBadge = (status) => {
     const statusObj = REVIEW_STATUSES.find((s) => s.value === status);
@@ -421,9 +478,49 @@ const RecordingsReview = () => {
       {/* Recordings List */}
       <Card className="p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-white">
-            Recent Recordings ({filteredRecordings.length})
-          </h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold text-white">
+              Recent Recordings ({filteredRecordings.length})
+            </h2>
+            {filteredRecordings.length > 0 && (
+              <button
+                onClick={() => handleSelectAll(!isAllSelected)}
+                className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+              >
+                {isAllSelected ? (
+                  <CheckSquare className="w-4 h-4 text-blue-500" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                Select All
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedRecordings.length > 0 && (
+              <Button
+                variant="error"
+                size="small"
+                onClick={handleDeleteSelected}
+                icon={Trash2}
+              >
+                Delete Selected ({selectedRecordings.length})
+              </Button>
+            )}
+            {filteredRecordings.length > 0 && (
+              <Button
+                variant="error"
+                size="small"
+                onClick={() => {
+                  setSelectedRecordings(filteredRecordings);
+                  setShowDeleteConfirmModal(true);
+                }}
+                icon={Trash2}
+              >
+                Delete All
+              </Button>
+            )}
+          </div>
         </div>
 
         {recordingsLoading ? (
@@ -463,15 +560,33 @@ const RecordingsReview = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredRecordings.map((recording) => (
-              <div
-                key={recording.id}
-                className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    {/* Header Row */}
-                    <div className="flex items-center gap-3 mb-2">
+            {filteredRecordings.map((recording) => {
+              const isSelected = isRecordingSelected(recording);
+              return (
+                <div
+                  key={recording.id}
+                  className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border transition-all ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-white/10 hover:border-white/20"
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {/* Selection Checkbox */}
+                    <button
+                      onClick={() => handleRecordingSelect(recording, !isSelected)}
+                      className="mt-1 text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0"
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="w-5 h-5 text-blue-500" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                    </button>
+
+                    <div className="flex-1 min-w-0">
+                      {/* Header Row */}
+                      <div className="flex items-center gap-3 mb-2">
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-blue-400" />
                         <span className="font-medium text-white">
@@ -510,22 +625,23 @@ const RecordingsReview = () => {
                         </p>
                       </div>
                     )}
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 ml-4">
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      onClick={() => handleReviewRecording(recording)}
-                      icon={MessageSquare}
-                    >
-                      Review
-                    </Button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-2 mt-2">
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        onClick={() => handleReviewRecording(recording)}
+                        icon={MessageSquare}
+                      >
+                        Review
+                      </Button>
+                    </div>
+                  </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -538,6 +654,70 @@ const RecordingsReview = () => {
         onSubmitReview={handleSubmitReview}
         isLoading={reviewMutation.isPending}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        title="Delete Recordings"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+              <Trash2 className="w-6 h-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Delete {selectedRecordings.length} Recording{selectedRecordings.length > 1 ? "s" : ""}
+              </h3>
+              <p className="text-sm text-gray-600">
+                This action cannot be undone
+              </p>
+            </div>
+          </div>
+
+          <p className="text-gray-700">
+            Are you sure you want to delete {selectedRecordings.length} selected recording{selectedRecordings.length > 1 ? "s" : ""}? 
+            The audio files and all associated data will be permanently removed.
+          </p>
+
+          {selectedRecordings.length > 0 && (
+            <div className="bg-gray-50 rounded-lg p-3 max-h-40 overflow-y-auto">
+              <p className="text-sm font-medium text-gray-700 mb-2">
+                Recordings to be deleted:
+              </p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                {selectedRecordings.map((recording) => (
+                  <li key={recording.id} className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                    {recording.student_name} - {recording.formatted_date}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-end pt-4">
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteConfirmModal(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="error"
+              onClick={handleConfirmDelete}
+              disabled={deleteMutation.isPending}
+              icon={Trash2}
+            >
+              {deleteMutation.isPending
+                ? "Deleting..."
+                : `Delete ${selectedRecordings.length} Recording${selectedRecordings.length > 1 ? "s" : ""}`}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
