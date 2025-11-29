@@ -147,13 +147,6 @@ function AnimatedAvatar({
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
         </div>
       )}
-
-      {/* Special Animation Hint for Beethoven */}
-      {animationVideoUrl && !isAnimating && (
-        <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 rounded-full p-1">
-          <div className="w-3 h-3 bg-yellow-400 rounded-full animate-pulse" />
-        </div>
-      )}
     </button>
   );
 }
