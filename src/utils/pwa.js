@@ -2,6 +2,50 @@
 // Based on Web.dev PWA best practices
 
 /**
+ * Initialize fullscreen mode for PWA
+ */
+export function initializeFullscreen() {
+  // Lock screen orientation to landscape if supported
+  if (screen.orientation && screen.orientation.lock) {
+    screen.orientation.lock('landscape').catch(err => {
+      console.log('Screen orientation lock failed:', err);
+    });
+  }
+
+  // Handle iOS standalone mode
+  if (window.navigator.standalone) {
+    // Running as standalone PWA on iOS
+    document.body.classList.add('ios-standalone');
+  }
+
+  // Prevent pull-to-refresh on mobile
+  let lastTouchY = 0;
+  document.addEventListener('touchstart', (e) => {
+    lastTouchY = e.touches[0].clientY;
+  }, { passive: false });
+
+  document.addEventListener('touchmove', (e) => {
+    const touchY = e.touches[0].clientY;
+    const touchYDelta = touchY - lastTouchY;
+    lastTouchY = touchY;
+
+    if (touchYDelta > 0 && window.scrollY === 0) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Handle viewport resize for mobile keyboards
+  const setAppHeight = () => {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+  };
+
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  window.addEventListener('orientationchange', setAppHeight);
+}
+
+/**
  * Register the service worker
  */
 export async function registerServiceWorker() {
