@@ -1220,6 +1220,28 @@ const TeacherDashboard = () => {
     lockOrientation("portrait-primary");
   }, []);
 
+  const [isMobileView, setIsMobileView] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const handleChange = () => setIsMobileView(mediaQuery.matches);
+
+    handleChange();
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+    } else {
+      mediaQuery.addListener(handleChange);
+    }
+
+    return () => {
+      if (typeof mediaQuery.removeEventListener === "function") {
+        mediaQuery.removeEventListener("change", handleChange);
+      } else {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
+  }, []);
+
   // Determine active tab from URL path
   const getActiveTab = () => {
     const path = location.pathname;
@@ -1754,10 +1776,10 @@ const TeacherDashboard = () => {
   ];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-bold text-white">Teacher Dashboard</h1>
           {selectedStudents.length > 0 && activeTab === "students" && (
             <div className="flex items-center gap-2">
@@ -1787,13 +1809,13 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-700">
-        <nav className="flex space-x-8">
+      <div className="border-b border-gray-700 overflow-x-auto">
+        <nav className="flex min-w-max gap-6 py-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => navigate(`/teacher/${tab.id}`)}
-              className={`flex items-center gap-2 pb-4 px-1 border-b-2 font-medium text-sm transition-all duration-300 ease-in-out relative ${
+              className={`flex items-center gap-2 pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-300 ease-in-out relative ${
                 activeTab === tab.id
                   ? "border-blue-500 text-blue-400"
                   : "border-transparent text-gray-200 hover:text-white hover:border-gray-600"
@@ -1844,7 +1866,7 @@ const TeacherDashboard = () => {
       {activeTab === "students" && (
         <>
           {/* Summary Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -1912,8 +1934,8 @@ const TeacherDashboard = () => {
 
           {/* Students Section */}
           <Card className="p-6">
-            <div className="flex justify-between items-start mb-6">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <h2 className="text-xl font-semibold text-white">
                   My Students
                 </h2>
@@ -1935,21 +1957,21 @@ const TeacherDashboard = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                 {/* Search */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     type="text"
                     placeholder="Search students..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-full sm:w-64"
                   />
                 </div>
 
                 {/* Sort */}
-                <div className="relative">
+                <div className="relative w-full sm:w-auto">
                   <select
                     value={`${sortBy}-${sortOrder}`}
                     onChange={(e) => {
@@ -1977,7 +1999,7 @@ const TeacherDashboard = () => {
                 {/* Filter Toggle */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center ${
                     showFilters || hasActiveFilters
                       ? "bg-blue-600 text-white"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -2158,13 +2180,21 @@ const TeacherDashboard = () => {
                       key={student.student_id}
                       className={`p-4 hover:shadow-md transition-all ${
                         isSelected ? "ring-2 ring-blue-500 bg-blue-500/10" : ""
-                      }`}
+                      } ${isMobileView ? "cursor-pointer" : ""}`}
+                      onClick={() => {
+                        if (isMobileView) {
+                          handleViewStudent(student);
+                        }
+                      }}
+                      role={isMobileView ? "button" : undefined}
+                      tabIndex={isMobileView ? 0 : undefined}
                     >
                       <div className="flex items-start gap-3 mb-3">
                         <button
-                          onClick={() =>
-                            handleStudentSelect(student, !isSelected)
-                          }
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStudentSelect(student, !isSelected);
+                          }}
                           className="mt-1 text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0"
                         >
                           {isSelected ? (
@@ -2199,21 +2229,30 @@ const TeacherDashboard = () => {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-1">
                                 <button
-                                  onClick={() => handleViewStudent(student)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewStudent(student);
+                                  }}
                                   className="p-1.5 min-w-0 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-colors"
                                   title="View Details"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
                                 </button>
                                 <button
-                                  onClick={() => handleSendMessage(student)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSendMessage(student);
+                                  }}
                                   className="p-1.5 min-w-0 text-green-400 hover:text-green-300 hover:bg-green-500/20 rounded-lg transition-colors"
                                   title="Send Message"
                                 >
                                   <MessageCircle className="h-3.5 w-3.5" />
                                 </button>
                                 <button
-                                  onClick={() => handleEditStudent(student)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditStudent(student);
+                                  }}
                                   className="p-1.5 min-w-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded-lg transition-colors"
                                   title="Edit Student"
                                 >
@@ -2221,7 +2260,10 @@ const TeacherDashboard = () => {
                                 </button>
                               </div>
                               <button
-                                onClick={() => handleDeleteStudent(student)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteStudent(student);
+                                }}
                                 className="p-1.5 min-w-0 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
                                 title="Delete Student"
                               >
@@ -2232,7 +2274,11 @@ const TeacherDashboard = () => {
                         </div>
                       </div>
 
-                      <div className="space-y-3">
+                      <div
+                        className={`space-y-3 ${
+                          isMobileView ? "hidden md:block" : ""
+                        }`}
+                      >
                         {/* Top Performance Indicator */}
                         <div className="flex items-center justify-between">
                           <div
