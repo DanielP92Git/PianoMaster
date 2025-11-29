@@ -11,6 +11,7 @@ export default function AppLayout() {
   const gameRoutes = [
     "/notes-master-mode/notes-recognition-game",
     "/notes-master-mode/memory-game",
+    "/notes-master-mode/sight-reading-game",
     "/rhythm-mode/metronome-trainer",
   ];
 

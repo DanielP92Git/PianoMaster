@@ -8,20 +8,10 @@ import React, {
 import { useNavigate } from "react-router-dom";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
-import DoImageSvg from "../../../assets/noteImages/treble-do-middle.svg?react";
-import ReImageSvg from "../../../assets/noteImages/treble-re-first.svg?react";
-import MiImageSvg from "../../../assets/noteImages/treble-mi-first.svg?react";
-import FaImageSvg from "../../../assets/noteImages/treble-fa-first.svg?react";
-import SolImageSvg from "../../../assets/noteImages/treble-sol-first.svg?react";
-import LaImageSvg from "../../../assets/noteImages/treble-la-first.svg?react";
-import SiImageSvg from "../../../assets/noteImages/treble-si-first.svg?react";
-import BassDoImageSvg from "../../../assets/noteImages/bass-do-middle.svg?react";
-import BassReImageSvg from "../../../assets/noteImages/bass-re-small.svg?react";
-import BassMiImageSvg from "../../../assets/noteImages/bass-mi-small.svg?react";
-import BassFaImageSvg from "../../../assets/noteImages/bass-fa-small.svg?react";
-import BassSolImageSvg from "../../../assets/noteImages/bass-sol-small.svg?react";
-import BassLaImageSvg from "../../../assets/noteImages/bass-la-small.svg?react";
-import BassSiImageSvg from "../../../assets/noteImages/bass-si-small.svg?react";
+import {
+  TREBLE_NOTES,
+  BASS_NOTES,
+} from "../sight-reading-game/constants/gameSettings";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
@@ -29,24 +19,8 @@ import { GameSettings } from "../shared/GameSettings";
 import { useGameTimer } from "../../../features/games/hooks/useGameTimer";
 import GameOverScreen from "../GameOverScreen";
 
-const trebleNotes = [
-  { note: "דו", ImageComponent: DoImageSvg },
-  { note: "רה", ImageComponent: ReImageSvg },
-  { note: "מי", ImageComponent: MiImageSvg },
-  { note: "פה", ImageComponent: FaImageSvg },
-  { note: "סול", ImageComponent: SolImageSvg },
-  { note: "לה", ImageComponent: LaImageSvg },
-  { note: "סי", ImageComponent: SiImageSvg },
-];
-const bassNotes = [
-  { note: "דו", ImageComponent: BassDoImageSvg },
-  { note: "רה", ImageComponent: BassReImageSvg },
-  { note: "מי", ImageComponent: BassMiImageSvg },
-  { note: "פה", ImageComponent: BassFaImageSvg },
-  { note: "סול", ImageComponent: BassSolImageSvg },
-  { note: "לה", ImageComponent: BassLaImageSvg },
-  { note: "סי", ImageComponent: BassSiImageSvg },
-];
+const trebleNotes = TREBLE_NOTES;
+const bassNotes = BASS_NOTES;
 
 const GRID_SIZES = {
   "3 X 4": 12, // 3x4 grid = 12 cards (6 pairs)
@@ -569,10 +543,10 @@ export function MemoryGame() {
         });
       }
 
-      if (
-        firstCard.type !== secondCard.type &&
-        firstCard.value === secondCard.value
-      ) {
+      const isMatchingPair =
+        firstCard.value === secondCard.value && newFlippedIndexes[0] !== index;
+
+      if (isMatchingPair) {
         // Match found - show firework and delay disappearance
         setShowMatchFirework(true);
         playCorrectSound(); // Play sound for correct match

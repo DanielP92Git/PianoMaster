@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
+const METRONOME_TIMING_DEBUG = true;
+
 /**
  * Custom hook for managing Web Audio API operations
  * Handles metronome clicks, pattern playback, and precise timing
@@ -68,11 +70,10 @@ export const useAudioEngine = (initialTempo = 120) => {
       setIsInitialized(true);
       setError(null);
 
-      // Load piano sound after initialization
-      await loadPianoSound();
-
-      // Load tap sound for instant feedback
-      await loadTapSound();
+      // Load sounds asynchronously in the background (don't block initialization)
+      // These will use fallback synthetic sounds if loading fails
+      loadPianoSoundAsync();
+      loadTapSoundAsync();
 
       return true;
     } catch (err) {
@@ -80,17 +81,39 @@ export const useAudioEngine = (initialTempo = 120) => {
       setError(errorMessage);
       setAudioSupported(false);
       setIsInitialized(false);
-      console.error(errorMessage);
+      console.error("❌ Audio initialization error:", err);
+      console.error("❌ Error stack:", err.stack);
       return false;
     }
-  }, []);
+  }, []); // No dependencies to avoid circular refs
+
+  /**
+   * Load piano sound asynchronously (non-blocking helper)
+   */
+  const loadPianoSoundAsync = async () => {
+    try {
+      await loadPianoSound();
+    } catch (err) {
+      // Silently fall back to synthesizer
+    }
+  };
+
+  /**
+   * Load tap sound asynchronously (non-blocking helper)
+   */
+  const loadTapSoundAsync = async () => {
+    try {
+      await loadTapSound();
+    } catch (err) {
+      // Silently fall back to synthesizer
+    }
+  };
 
   /**
    * Load piano sound (G4.mp3) for rhythm pattern playback
    */
   const loadPianoSound = useCallback(async () => {
     if (pianoSoundLoadedRef.current && pianoSoundBufferRef.current) {
-      
       return true;
     }
 
@@ -103,11 +126,9 @@ export const useAudioEngine = (initialTempo = 120) => {
 
     for (const path of possiblePianoPaths) {
       try {
-        
         const response = await fetch(path);
 
         if (!response.ok) {
-          
           continue;
         }
 
@@ -117,7 +138,7 @@ export const useAudioEngine = (initialTempo = 120) => {
 
         pianoSoundBufferRef.current = audioBuffer;
         pianoSoundLoadedRef.current = true;
-        
+
         return true;
       } catch (err) {
         console.error("Error loading piano sound:", err);
@@ -132,7 +153,6 @@ export const useAudioEngine = (initialTempo = 120) => {
    */
   const loadTapSound = useCallback(async () => {
     if (tapSoundLoadedRef.current && tapSoundBufferRef.current) {
-      
       return true;
     }
 
@@ -144,11 +164,9 @@ export const useAudioEngine = (initialTempo = 120) => {
 
     for (const path of possibleTapPaths) {
       try {
-        
         const response = await fetch(path);
 
         if (!response.ok) {
-          
           continue;
         }
 
@@ -158,10 +176,9 @@ export const useAudioEngine = (initialTempo = 120) => {
 
         tapSoundBufferRef.current = audioBuffer;
         tapSoundLoadedRef.current = true;
-        
+
         return true;
       } catch (err) {
-        
         console.error("Error loading tap sound:", err);
       }
     }
@@ -171,14 +188,21 @@ export const useAudioEngine = (initialTempo = 120) => {
 
   /**
    * Resume audio context if suspended (required for user interaction)
+   * Also initializes audio context if not already initialized
    */
   const resumeAudioContext = useCallback(async () => {
-    if (!audioContextRef.current) return false;
+    // If audio context doesn't exist yet, initialize it first
+    if (!audioContextRef.current) {
+      const initialized = await initializeAudioContext();
+      if (!initialized) {
+        console.error("Failed to initialize audio context");
+        return false;
+      }
+    }
 
     try {
       if (audioContextRef.current.state === "suspended") {
         await audioContextRef.current.resume();
-        
       }
       return true;
     } catch (err) {
@@ -187,7 +211,7 @@ export const useAudioEngine = (initialTempo = 120) => {
       console.error(errorMessage);
       return false;
     }
-  }, []);
+  }, [initializeAudioContext]);
 
   /**
    * Get current audio time
@@ -198,15 +222,15 @@ export const useAudioEngine = (initialTempo = 120) => {
 
   /**
    * Check if audio engine is ready for use
+   * Uses direct audio context validation for synchronous checking
    */
   const isReady = useCallback(() => {
     return (
-      isInitialized &&
-      audioSupported &&
-      audioContextRef.current &&
+      audioContextRef.current !== null &&
+      gainNodeRef.current !== null &&
       audioContextRef.current.state === "running"
     );
-  }, [isInitialized, audioSupported]);
+  }, []); // No dependencies - checks refs directly
 
   /**
    * Create a metronome click sound
@@ -217,6 +241,14 @@ export const useAudioEngine = (initialTempo = 120) => {
     if (!audioContextRef.current || !gainNodeRef.current) return;
 
     try {
+      if (METRONOME_TIMING_DEBUG) {
+        console.log("[MetronomeTiming] createMetronomeClick", {
+          requestedTime: time,
+          audioCurrentTime: audioContextRef.current.currentTime,
+          deltaSeconds: time - audioContextRef.current.currentTime,
+          isDownbeat,
+        });
+      }
       // Create oscillator for the click sound
       const oscillator = audioContextRef.current.createOscillator();
       const clickGain = audioContextRef.current.createGain();
@@ -313,21 +345,20 @@ export const useAudioEngine = (initialTempo = 120) => {
   );
 
   /**
-   * Create a piano sound using the loaded G4.mp3 buffer
+   * Create a piano sound using the loaded G4.mp3 buffer with optional pitch shifting
    * @param {number} time - When to play the sound (in audio context time)
    * @param {number} volume - Volume level (0-1)
    * @param {number} duration - Duration of the sound (default 1.0s)
+   * @param {number} pitchShift - Semitones to shift pitch (0 = no shift, 1 = one semitone up, -1 = one semitone down)
    */
   const createPianoSound = useCallback(
-    (time, volume = 0.6, duration = 1.0) => {
+    (time, volume = 0.6, duration = 1.0, pitchShift = 0) => {
       if (!audioContextRef.current || !gainNodeRef.current) {
-        
         return null;
       }
 
       // Check audio context state
       if (audioContextRef.current.state !== "running") {
-        
         return null;
       }
 
@@ -338,6 +369,13 @@ export const useAudioEngine = (initialTempo = 120) => {
           const pianoGain = audioContextRef.current.createGain();
 
           source.buffer = pianoSoundBufferRef.current;
+
+          // Apply pitch shifting by adjusting playback rate
+          // Each semitone = 2^(1/12) ratio in frequency
+          // G4 (392 Hz, MIDI 67) is the base note from the sample
+          if (pitchShift !== 0) {
+            source.playbackRate.value = Math.pow(2, pitchShift / 12);
+          }
 
           // Configure volume envelope for natural decay
           pianoGain.gain.setValueAtTime(0, time);
@@ -354,7 +392,6 @@ export const useAudioEngine = (initialTempo = 120) => {
           source.stop(time + duration);
           return { source, gain: pianoGain };
         } else {
-          
           // Fallback to synthetic sound if piano sound not loaded
           return createPatternSound(time, "triangle", 600, 0.1);
         }
@@ -366,22 +403,65 @@ export const useAudioEngine = (initialTempo = 120) => {
     [createPatternSound]
   );
 
+  const parseNoteToMidi = useCallback((noteName) => {
+    if (typeof noteName !== "string") return null;
+    const match = noteName
+      .trim()
+      .toUpperCase()
+      .match(/^([A-G])(#?)(\d)$/);
+    if (!match) return null;
+    const [, letter, accidental, octaveStr] = match;
+    const SEMITONE_MAP = {
+      C: 0,
+      "C#": 1,
+      D: 2,
+      "D#": 3,
+      E: 4,
+      F: 5,
+      "F#": 6,
+      G: 7,
+      "G#": 8,
+      A: 9,
+      "A#": 10,
+      B: 11,
+    };
+    const key = `${letter}${accidental || ""}`;
+    const semitone = SEMITONE_MAP[key];
+    if (semitone === undefined) return null;
+    const octave = parseInt(octaveStr, 10);
+    if (Number.isNaN(octave)) return null;
+    return (octave + 1) * 12 + semitone;
+  }, []);
+
   /**
-   * Play a piano sound immediately
+   * Play a piano sound immediately with optional pitch
    * @param {number} volume - Volume level (0-1)
+   * @param {string|number} pitch - Note name (e.g., 'C4', 'D4') or semitone shift from G4
    */
   const playPianoSound = useCallback(
-    (volume = 0.6) => {
+    (volume = 0.6, pitch = 0) => {
       if (!isReady()) {
-        
         return false;
       }
 
       const currentTime = audioContextRef.current.currentTime;
-      
-      return createPianoSound(currentTime + 0.01, volume, 1.0) !== null;
+
+      // Calculate pitch shift from G4 (MIDI 67) if pitch is a note name
+      let pitchShift = 0;
+      if (typeof pitch === "string") {
+        const targetMidi = parseNoteToMidi(pitch);
+        if (targetMidi !== null) {
+          pitchShift = targetMidi - 67; // 67 is G4 (the base sample)
+        }
+      } else {
+        pitchShift = pitch; // Direct semitone shift
+      }
+
+      return (
+        createPianoSound(currentTime + 0.01, volume, 1.0, pitchShift) !== null
+      );
     },
-    [createPianoSound, isReady]
+    [createPianoSound, isReady, parseNoteToMidi]
   );
 
   /**
@@ -831,16 +911,38 @@ export const useAudioEngine = (initialTempo = 120) => {
   /**
    * Main scheduler loop - processes events and maintains timing
    */
-  const schedulerLoop = useCallback(() => {
-    if (!isRunningRef.current) return;
+  const schedulerLoop = useCallback(
+    function loop() {
+      if (!isRunningRef.current) {
+        return;
+      }
 
-    processScheduledEvents();
+      // Process scheduled events inline to avoid dependency issues
+      if (audioContextRef.current) {
+        const currentTime = audioContextRef.current.currentTime;
+        const scheduleWindow = currentTime + lookaheadTime;
 
-    // Schedule next iteration
-    schedulerIdRef.current = setTimeout(() => {
-      requestAnimationFrame(schedulerLoop);
-    }, scheduleAheadTime * 1000);
-  }, [processScheduledEvents, scheduleAheadTime]);
+        scheduledEventsRef.current.forEach((event) => {
+          if (!event.scheduled && event.time <= scheduleWindow) {
+            event.callback(event.time, event.data);
+            event.scheduled = true;
+          }
+        });
+
+        // Clean up executed events
+        scheduledEventsRef.current = scheduledEventsRef.current.filter(
+          (event) => !event.scheduled || event.time > currentTime - 0.1
+        );
+      }
+
+      // Schedule next iteration - sync with browser animation frames for precise timing
+      // setTimeout controls the rate, requestAnimationFrame ensures sync with display refresh
+      schedulerIdRef.current = setTimeout(() => {
+        requestAnimationFrame(loop);
+      }, scheduleAheadTime * 1000);
+    },
+    [lookaheadTime, scheduleAheadTime]
+  );
 
   /**
    * Start the scheduler
@@ -885,7 +987,9 @@ export const useAudioEngine = (initialTempo = 120) => {
    */
   const scheduleMetronome = useCallback(
     (beats = 4, startTime = null, timeSignature = { beats: 4 }) => {
-      if (!isReady()) return false;
+      if (!isReady()) {
+        return false;
+      }
 
       const start = startTime || audioContextRef.current.currentTime + 0.1;
       const beatDuration = getBeatDuration();
@@ -921,7 +1025,6 @@ export const useAudioEngine = (initialTempo = 120) => {
       metronomeBeats = 4,
       timeSignature = { beats: 4 }
     ) => {
-
       if (!isReady() || !Array.isArray(pattern)) {
         return false;
       }

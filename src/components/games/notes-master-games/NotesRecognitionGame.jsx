@@ -7,20 +7,6 @@ import React, {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import DoImageSvg from "../../../assets/noteImages/treble-do-middle.svg?react";
-import ReImageSvg from "../../../assets/noteImages/treble-re-first.svg?react";
-import MiImageSvg from "../../../assets/noteImages/treble-mi-first.svg?react";
-import FaImageSvg from "../../../assets/noteImages/treble-fa-first.svg?react";
-import SolImageSvg from "../../../assets/noteImages/treble-sol-first.svg?react";
-import LaImageSvg from "../../../assets/noteImages/treble-la-first.svg?react";
-import SiImageSvg from "../../../assets/noteImages/treble-si-first.svg?react";
-import BassDoImageSvg from "../../../assets/noteImages/bass-do-middle.svg?react";
-import BassReImageSvg from "../../../assets/noteImages/bass-re-small.svg?react";
-import BassMiImageSvg from "../../../assets/noteImages/bass-mi-small.svg?react";
-import BassFaImageSvg from "../../../assets/noteImages/bass-fa-small.svg?react";
-import BassSolImageSvg from "../../../assets/noteImages/bass-sol-small.svg?react";
-import BassLaImageSvg from "../../../assets/noteImages/bass-la-small.svg?react";
-import BassSiImageSvg from "../../../assets/noteImages/bass-si-small.svg?react";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
@@ -31,30 +17,18 @@ import {
   FaMicrophone,
   FaMicrophoneSlash,
 } from "react-icons/fa";
-import { GameSettings } from "../shared/GameSettings";
+import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { useGameSettings } from "../../../features/games/hooks/useGameSettings";
 import { useGameProgress } from "../../../features/games/hooks/useGameProgress";
 import { useSounds } from "../../../features/games/hooks/useSounds";
+import {
+  TREBLE_NOTES,
+  BASS_NOTES,
+} from "../sight-reading-game/constants/gameSettings";
 
-const trebleNotes = [
-  { note: "דו", ImageComponent: DoImageSvg },
-  { note: "רה", ImageComponent: ReImageSvg },
-  { note: "מי", ImageComponent: MiImageSvg },
-  { note: "פה", ImageComponent: FaImageSvg },
-  { note: "סול", ImageComponent: SolImageSvg },
-  { note: "לה", ImageComponent: LaImageSvg },
-  { note: "סי", ImageComponent: SiImageSvg },
-];
-
-const bassNotes = [
-  { note: "דו", ImageComponent: BassDoImageSvg },
-  { note: "סי", ImageComponent: BassSiImageSvg },
-  { note: "לה", ImageComponent: BassLaImageSvg },
-  { note: "סול", ImageComponent: BassSolImageSvg },
-  { note: "פה", ImageComponent: BassFaImageSvg },
-  { note: "מי", ImageComponent: BassMiImageSvg },
-  { note: "רה", ImageComponent: BassReImageSvg },
-];
+// Use comprehensive note definitions from Sight Reading game
+const trebleNotes = TREBLE_NOTES;
+const bassNotes = BASS_NOTES;
 
 // Audio level threshold for note release detection (percentage)
 const RELEASE_THRESHOLD = 1.5; // 1.5% - low enough to catch release, high enough to avoid background noise
@@ -136,6 +110,7 @@ export function NotesRecognitionGame() {
   const { settings, updateSettings, resetSettings } = useGameSettings({
     timedMode: false,
     timeLimit: 45,
+    selectedNotes: ["דו", "רה", "מי", "פה", "סול"], // Default to 5 notes like sight reading
   });
 
   const { progress, updateProgress, handleAnswer, finishGame, resetProgress } =
@@ -998,8 +973,8 @@ export function NotesRecognitionGame() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      {/* Only show back button during settings and gameplay (not on victory/game-over screens) */}
-      {!progress.isFinished && (
+      {/* Only show back button during gameplay (not during settings or on victory/game-over screens) */}
+      {!progress.isFinished && progress.isStarted && (
         <div className="p-2 flex-shrink-0">
           <button
             onClick={handleBackNavigation}
@@ -1014,17 +989,38 @@ export function NotesRecognitionGame() {
       {progress.showFireworks && <Firework />}
 
       {!progress.isStarted ? (
-        <GameSettings
+        <UnifiedGameSettings
           gameType="note-recognition"
+          steps={[
+            {
+              id: "clef",
+              title: "Choose Clef",
+              component: "ClefSelection",
+            },
+            {
+              id: "notes",
+              title: "Select Notes",
+              component: "NoteSelection",
+              config: { showImages: true, minNotes: 2 },
+            },
+            {
+              id: "timedMode",
+              title: "Game Mode",
+              component: "TimedModeSelection",
+            },
+          ]}
+          initialSettings={{
+            clef: settings.clef,
+            selectedNotes: settings.selectedNotes,
+            timedMode: settings.timedMode,
+            difficulty: settings.difficulty,
+          }}
           onStart={handleGameSettings}
-          onChange={handleSettingsChange}
-          initialClef={settings.clef}
-          initialSelectedNotes={settings.selectedNotes}
-          initialTimedMode={settings.timedMode}
-          initialDifficulty={settings.difficulty}
-          trebleNotes={trebleNotes}
-          bassNotes={bassNotes}
-          noteOptions={settings.selectedNotes}
+          backRoute="/notes-master-mode"
+          noteData={{
+            trebleNotes,
+            bassNotes,
+          }}
         />
       ) : progress.isFinished ? (
         progress.isLost ? (
@@ -1121,6 +1117,7 @@ export function NotesRecognitionGame() {
                   {(() => {
                     const allNotes =
                       settings.clef === "Treble" ? trebleNotes : bassNotes;
+
                     const filteredNotes =
                       Array.isArray(settings.selectedNotes) &&
                       settings.selectedNotes.length > 0
@@ -1129,7 +1126,16 @@ export function NotesRecognitionGame() {
                           )
                         : allNotes;
 
-                    return filteredNotes;
+                    const uniqueNotes = [];
+                    const seenNotes = new Set();
+                    for (const note of filteredNotes) {
+                      if (!note?.note) continue;
+                      if (seenNotes.has(note.note)) continue;
+                      seenNotes.add(note.note);
+                      uniqueNotes.push(note);
+                    }
+
+                    return uniqueNotes;
                   })().map((note) => {
                     // Determine button styling based on feedback
                     let buttonClass =
@@ -1235,19 +1241,40 @@ export function NotesRecognitionGame() {
 
       {/* Settings Modal */}
       {progress.showSettingsModal && (
-        <GameSettings
+        <UnifiedGameSettings
           gameType="note-recognition"
           isModal={true}
+          steps={[
+            {
+              id: "clef",
+              title: "Choose Clef",
+              component: "ClefSelection",
+            },
+            {
+              id: "notes",
+              title: "Select Notes",
+              component: "NoteSelection",
+              config: { showImages: true, minNotes: 2 },
+            },
+            {
+              id: "timedMode",
+              title: "Game Mode",
+              component: "TimedModeSelection",
+            },
+          ]}
+          initialSettings={{
+            clef: settings.clef,
+            selectedNotes: settings.selectedNotes,
+            timedMode: settings.timedMode,
+            difficulty: settings.difficulty,
+          }}
           onStart={handleRestartGame}
           onCancel={handleResumeGame}
-          onChange={handleSettingsChange}
-          initialClef={settings.clef}
-          initialSelectedNotes={settings.selectedNotes}
-          initialTimedMode={settings.timedMode}
-          initialDifficulty={settings.difficulty}
-          trebleNotes={trebleNotes}
-          bassNotes={bassNotes}
-          noteOptions={settings.selectedNotes}
+          backRoute="/notes-master-mode"
+          noteData={{
+            trebleNotes,
+            bassNotes,
+          }}
         />
       )}
     </div>

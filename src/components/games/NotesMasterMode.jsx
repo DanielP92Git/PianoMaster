@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Music2, Grid } from "lucide-react";
+import { Music2, Grid, Eye } from "lucide-react";
 import BackButton from "../ui/BackButton";
 
 const games = [
@@ -19,6 +19,14 @@ const games = [
     icon: <Music2 className="w-8 h-8 text-white" />,
     difficulty: "Medium",
     path: "/notes-master-mode/notes-recognition-game",
+  },
+  {
+    id: "sight-reading",
+    name: "Sight Reading",
+    description: "Play patterns with accurate pitch and timing",
+    icon: <Eye className="w-8 h-8 text-white" />,
+    difficulty: "Advanced",
+    path: "/notes-master-mode/sight-reading-game",
   },
 ];
 

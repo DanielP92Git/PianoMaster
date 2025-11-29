@@ -1,0 +1,1271 @@
+# Sight Reading & Pitch Recognition Game
+## Product Requirements Document (PRD)
+
+**Version:** 1.0  
+**Last Updated:** November 2025  
+**Status:** Planning Phase
+
+---
+
+## 📋 Executive Summary
+
+### Game Overview
+**Name:** Note Play - Interactive Sight Reading with Pitch Recognition  
+**Type:** Musical Sight Reading & Real-time Pitch Detection  
+**Target Audience:** Piano/Music students (all levels)  
+**Inspiration:** Simply Piano's sight-reading exercises
+
+### Primary Objectives
+- Teach students to read musical notation in real-time
+- Develop accurate pitch recognition and production skills
+- Build rhythmic timing precision
+- Provide immediate, actionable feedback on performance
+- Track progress and celebrate achievements
+
+### Key Features
+- Real-time pitch detection via microphone input
+- Visual musical staff with standard notation
+- Metronome count-in for tempo establishment
+- Immediate color-coded feedback (green/red/yellow)
+- Timing indicators for rhythm accuracy
+- Comprehensive performance analytics
+- Progressive difficulty levels
+
+---
+
+## 🎯 Game Concept
+
+### Core Gameplay Loop
+
+Students engage in a structured learning cycle:
+
+1. **Configure** - Select difficulty, tempo, and time signature
+2. **Observe** - View musical pattern on treble staff
+3. **Prepare** - Listen to metronome count-in
+4. **Perform** - Play the pattern on their instrument
+5. **Review** - Receive detailed performance feedback
+6. **Progress** - Advance to next pattern or difficulty
+
+### Educational Value
+
+**Skills Developed:**
+- Sight reading fluency
+- Pitch accuracy
+- Rhythmic precision
+- Musical notation comprehension
+- Performance confidence
+- Real-time musical response
+
+---
+
+## 🎮 Detailed Game Flow
+
+### Phase 1: Pre-Game Setup
+
+**Duration:** User-controlled
+
+#### User Interface Elements
+
+**Configuration Options:**
+
+| Setting | Options | Description |
+|---------|---------|-------------|
+| Difficulty | Beginner / Intermediate / Advanced | Controls note count and rhythm complexity |
+| Time Signature | 4/4, 3/4, 2/4 | Establishes rhythmic framework |
+| Tempo | 60-140 BPM | Controls playback speed |
+
+**Difficulty Breakdown:**
+
+- **Beginner**
+  - 4 notes per pattern
+  - Range: C4-G4 (5 notes)
+  - Rhythm: Quarter notes only
+  - Simple stepwise motion
+
+- **Intermediate**
+  - 4-6 notes per pattern
+  - Range: C4-C5 (8 notes)
+  - Rhythm: Quarters and half notes
+  - Some interval jumps allowed
+
+- **Advanced**
+  - 6-8 notes per pattern
+  - Range: A3-D5 (full treble staff)
+  - Rhythm: Quarters, halves, and eighths
+  - Complex melodic patterns
+
+#### Display Components
+
+- Game title and clear instructions
+- Visual settings panel with sliders and selectors
+- Microphone permission status indicator
+- Audio level meter (confirms microphone detection)
+- Large "Start Game" button
+- Preview of expected gameplay
+
+#### Technical Requirements
+
+```javascript
+// Settings persistence
+localStorage.setItem('sightReadingSettings', JSON.stringify({
+  difficulty: 'beginner',
+  timeSignature: '4/4',
+  tempo: 80
+}));
+
+// Microphone validation
+const checkMicrophonePermission = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    return { granted: true, stream };
+  } catch (error) {
+    return { granted: false, error };
+  }
+};
+```
+
+---
+
+### Phase 2: Pattern Generation & Display
+
+**Duration:** Instant  
+**User Action:** Visual observation only
+
+#### Pattern Generation Logic
+
+**Note Selection Algorithm:**
+
+1. Generate rhythm pattern using `RhythmPatternGenerator.js`
+2. Assign pitches from difficulty-appropriate range
+3. Ensure musical coherence:
+   - Avoid large jumps on fast notes (eighths)
+   - Prefer stepwise motion for beginners
+   - Limit repeated notes
+   - Create melodic direction
+
+**Note Range Definitions:**
+
+```javascript
+const noteRanges = {
+  beginner: ['C4', 'D4', 'E4', 'F4', 'G4'],
+  intermediate: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
+  advanced: ['A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5']
+};
+```
+
+#### Visual Display Specifications
+
+**Staff Components:**
+
+- Base staff loaded from `treble-staff.svg`
+- Treble clef positioned at start
+- Time signature indicator (e.g., 4/4)
+- Bar lines to define measure
+- All pattern notes visible from start
+
+**Note Rendering:**
+
+Each note displays:
+- **Position:** Accurate placement on staff lines/spaces
+- **Note head:** Filled circle (●)
+- **Stem:** Vertical line (up/down based on position)
+- **Duration indicator:** Visual rhythm symbol
+  - Quarter note: Standard stem
+  - Half note: Hollow note head
+  - Eighth note: Flag on stem
+
+**Initial State:**
+- All notes colored neutral gray (#9CA3AF)
+- Pattern number displayed (e.g., "Pattern 1 of 5")
+- "Ready?" prompt shown
+
+#### Technical Implementation
+
+**SVG Coordinate Mapping:**
+
+```javascript
+const staffPositions = {
+  // Line positions (y-coordinates)
+  'E4': { y: 240, type: 'line', ledger: false },
+  'G4': { y: 200, type: 'line', ledger: false },
+  'B4': { y: 160, type: 'line', ledger: false },
+  'D5': { y: 120, type: 'line', ledger: false },
+  'F5': { y: 80, type: 'line', ledger: false },
+  
+  // Space positions
+  'F4': { y: 220, type: 'space', ledger: false },
+  'A4': { y: 180, type: 'space', ledger: false },
+  'C5': { y: 140, type: 'space', ledger: false },
+  'E5': { y: 100, type: 'space', ledger: false },
+  
+  // Ledger lines
+  'C4': { y: 280, type: 'line', ledger: true },
+  'D4': { y: 260, type: 'space', ledger: true }
+};
+```
+
+---
+
+### Phase 3: Metronome Count-In
+
+**Duration:** 1 full measure (4 beats in 4/4)  
+**User Action:** Listen and prepare  
+**Microphone:** DISABLED (not capturing input)
+
+#### Audio Specifications
+
+**Metronome Sound Pattern:**
+
+| Beat | Pitch | Volume | Description |
+|------|-------|--------|-------------|
+| 1 (downbeat) | High (1.2x) | 0.6 | Strong emphasis |
+| 2-4 | Normal (1.0x) | 0.5 | Regular beats |
+
+**Implementation:**
+
+```javascript
+const playMetronomeBeat = (beatNumber, isDownbeat) => {
+  const pitch = isDownbeat ? 1.2 : 1.0;
+  const volume = isDownbeat ? 0.6 : 0.5;
+  audioEngine.playPianoSound(volume, pitch);
+};
+```
+
+#### Visual Components
+
+**Metronome Display:**
+- Large pulsing circle or pendulum animation
+- Beat counter: "1... 2... 3... 4..."
+- Current beat highlighted with color/scale
+- Progress bar showing countdown
+- Message: "Get ready to play!"
+- Microphone OFF indicator (🎤 with strikethrough)
+
+#### Technical Requirements
+
+- Web Audio API for precise timing (±10ms accuracy)
+- Visual/audio synchronization
+- No microphone input processing
+- Smooth animations at 60fps
+
+---
+
+### Phase 4: Active Performance
+
+**Duration:** Pattern length + 2 seconds grace period  
+**User Action:** Play instrument, produce pitches  
+**Microphone:** ACTIVE (capturing and analyzing input)
+
+#### Real-Time Feedback System
+
+**Note State Transitions:**
+
+```
+Initial State (Gray) → Playing → Final State (Green/Red/Yellow)
+```
+
+**Feedback Rules:**
+
+1. **✅ Correct Pitch + Good Timing**
+   - Note turns **GREEN** (#10B981)
+   - Optional: Play success sound
+   - Advance to next note expectation
+   - Award full points
+
+2. **❌ Wrong Pitch**
+   - Note turns **RED** (#EF4444)
+   - Display detected vs. expected pitch below note
+   - Example: "Played: E | Expected: C"
+   - Note remains red until pattern completes
+   - Award zero points for pitch component
+
+3. **⚠️ Correct Pitch + Wrong Timing**
+   - Note turns **YELLOW/ORANGE** (#F59E0B)
+   - Display timing indicator below note:
+     - `<` symbol if played too early
+     - `>` symbol if played too late
+   - Optional: Show timing offset in ms
+   - Award partial points
+
+4. **❓ Missed Note**
+   - Note remains **GRAY** with question mark overlay
+   - Marked as missed after timing window expires
+   - Award zero points
+
+#### Timing Tolerance Windows
+
+| Status | Time Range | Score Weight |
+|--------|------------|--------------|
+| Perfect | ±100ms | 100% |
+| Good | ±200ms | 80% |
+| Early | < -200ms | 50% |
+| Late | > +200ms | 50% |
+
+#### Pitch Tolerance
+
+- **Match threshold:** ±50 cents (half-semitone)
+- **Noise threshold:** Minimum amplitude required
+- **Averaging:** 3-frame rolling average for stability
+
+#### Display Elements
+
+**During Performance:**
+
+- All notes from pattern visible on staff
+- Current expected note highlighted (violet glow with pulse)
+- Real-time color changes as notes are played
+- Progress bar showing position in pattern
+- Optional: Subtle visual beat indicator
+- Pitch detection indicator (frequency meter)
+- Score counter updating live
+- Timing indicators (< or >) appearing below notes
+
+#### Technical Requirements
+
+**Pitch Detection:**
+
+```javascript
+// From existing implementation
+const detectPitch = (audioBuffer, sampleRate) => {
+  // Autocorrelation algorithm
+  const autocorrelation = performAutocorrelation(audioBuffer);
+  const fundamentalFrequency = findFundamentalFrequency(autocorrelation, sampleRate);
+  return fundamentalFrequency;
+};
+
+const frequencyToNote = (frequency) => {
+  // Convert Hz to note name
+  const A4 = 440;
+  const C0 = A4 * Math.pow(2, -4.75);
+  const halfStepsFromC0 = Math.round(12 * Math.log2(frequency / C0));
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const octave = Math.floor(halfStepsFromC0 / 12);
+  const noteIndex = halfStepsFromC0 % 12;
+  return `${noteNames[noteIndex]}${octave}`;
+};
+```
+
+**Reference Implementations:**
+- `src/components/games/note-recognition-games/NoteRecognitionGame.jsx`
+- `src/components/games/notes-master-games/NotesRecognitionGame.jsx`
+
+---
+
+### Phase 5: Pattern Completion & Feedback
+
+**Duration:** 3-5 seconds  
+**User Action:** Review performance  
+**Microphone:** DEACTIVATED
+
+#### Completion Triggers
+
+Game ends when:
+1. All notes have been attempted (correct/incorrect/missed), OR
+2. Maximum time limit reached (pattern duration + 2 seconds)
+
+#### Performance Analysis
+
+**Calculations:**
+
+```javascript
+// Pitch Accuracy
+const pitchAccuracy = (correctNotes / totalNotes) × 100;
+
+// Rhythm Accuracy
+const rhythmAccuracy = (onTimeNotes / totalNotes) × 100;
+
+// Overall Score (weighted)
+const overallScore = (pitchAccuracy × 0.7) + (rhythmAccuracy × 0.3);
+
+// Star Rating
+const stars = overallScore >= 90 ? 3 :
+              overallScore >= 75 ? 2 :
+              overallScore >= 60 ? 1 : 0;
+```
+
+#### Feedback Summary Display
+
+**Performance Card:**
+
+```
+┌─────────────────────────────────────┐
+│  🎼 Performance Summary             │
+├─────────────────────────────────────┤
+│  ⭐⭐⭐ Excellent!                   │
+│                                     │
+│  🎯 Pitch Accuracy:    95%          │
+│  ⏱️  Rhythm Accuracy:   85%          │
+│  📊 Overall Score:     92/100       │
+│                                     │
+│  Breakdown:                         │
+│  ✅ Correct: 7 notes                │
+│  ❌ Wrong pitch: 1 note             │
+│  < Too early: 0 notes               │
+│  > Too late: 1 note                 │
+│  ⏭️  Missed: 0 notes                 │
+│                                     │
+│  💬 "Great job! Work on timing."    │
+└─────────────────────────────────────┘
+```
+
+**Action Buttons:**
+
+1. **Try Again** - Replay same pattern
+2. **Next Pattern** - New pattern, same settings
+3. **Change Settings** - Return to setup screen
+4. **Back to Menu** - Exit game
+
+#### Encouraging Messages
+
+```javascript
+const encouragementMessages = {
+  excellent: [
+    "Perfect! You're a natural!",
+    "Outstanding performance!",
+    "Incredible sight reading skills!"
+  ],
+  good: [
+    "Great job! Keep it up!",
+    "Nice work! You're improving!",
+    "Well done! Practice makes perfect!"
+  ],
+  needsWork: [
+    "Good effort! Try again!",
+    "You're learning! Keep practicing!",
+    "Almost there! Don't give up!"
+  ]
+};
+```
+
+---
+
+### Phase 6: Score Recording & Progress Tracking
+
+**Duration:** Background process (automatic)  
+**User Action:** None required
+
+#### Database Integration (Scores Only)
+
+- Sight reading gameplay **does not create `practice_sessions` entries**. That table remains exclusive to user-uploaded home recordings for teacher review.
+- Each completed pattern registers a score through the scoreboard tables already in use by other games:
+  - `students_score` receives a row with `game_type: "sight_reading"` and the numeric `overallScore`.
+  - `students_total_score` is updated to keep the running total.
+- Persisted metrics per attempt:
+  - `overallScore` (weighted value)
+  - `pitchAccuracy` percentage
+  - `rhythmAccuracy` percentage
+- Implementation hook: call `updateStudentScore(studentId, overallScore, "sight_reading")` (see `src/services/apiScores.js`) to insert the score and update totals.
+- Captured metadata alongside the score (initially stored client-side, future-ready for DB extension):
+  - `difficulty`
+  - `tempo` (BPM)
+  - `timeSignature` (e.g., `"4/4"`)
+  - `noteRangePracticed` (array of selected Hebrew/English notes, e.g., `["דו","רה","מי"]`)
+  - `patternSummary` (ordered list of the pitches rendered in the pattern)
+
+#### Per-Note Accuracy & Coaching Feedback
+
+- During each run we compute an in-memory structure:
+  ```javascript
+  {
+    "דו": { total: 3, correct: 2, accuracy: 66 },
+    "רה": { total: 2, correct: 2, accuracy: 100 },
+    // ...
+  }
+  ```
+- This map powers on-screen coaching (e.g., “You have to practice Mi a little more!”) by highlighting the weakest frequently attempted note.
+- The `FeedbackSummary` component renders this guidance beneath the primary rating so players immediately see which note family to focus on before hitting “Try Again”.
+- Only the aggregate score + metadata are persisted for now; per-note accuracy can be added to a dedicated stats table in a later phase.
+
+#### Client Integration Flow
+
+- `SightReadingGame.jsx` already owns the game phases; when the pattern transitions into `FEEDBACK`, we:
+  1. Derive `pitchAccuracy`, `rhythmAccuracy`, and `overallScore` via `scoreCalculator.js`.
+  2. Build the per-note accuracy map described above.
+  3. Assemble the metadata payload: `{ difficulty, tempo, timeSignature, noteRangePracticed, patternSummary }`.
+  4. If a logged-in `studentId` exists, call `updateStudentScore(studentId, overallScore, "sight_reading")`.
+- The scoreboard call is skipped gracefully for guests; the on-screen summary still shows all metrics and coaching tips.
+- Guardrail: ensure scores are registered once per completed feedback cycle (e.g., only after the first transition into `FEEDBACK` for a given pattern).
+
+#### Achievement System
+
+**New Achievements:**
+
+| ID | Name | Description | Points | Condition |
+|----|------|-------------|--------|-----------|
+| sight_reading_first | First Sight Reading | Complete your first pattern | 50 | Complete 1 pattern |
+| perfect_pitch | Perfect Pitch | All notes correct in a pattern | 100 | 100% pitch accuracy |
+| perfect_timing | Perfect Timing | All notes on time in a pattern | 100 | 100% rhythm accuracy |
+| sight_reading_master | Sight Reading Master | Complete 50 patterns | 500 | 50 patterns completed |
+
+#### Progress Statistics
+
+**Student Stats Schema:**
+
+```javascript
+{
+  sight_reading_stats: {
+    total_patterns_completed: 0,
+    total_notes_played: 0,
+    correct_notes: 0,
+    perfect_timing_count: 0,
+    average_pitch_accuracy: 0.0,
+    average_rhythm_accuracy: 0.0,
+    average_score: 0.0,
+    best_score: 0,
+    current_difficulty: 'beginner',
+    time_played_minutes: 0,
+    last_played: null,
+    streak_days: 0
+  }
+}
+```
+
+---
+
+## 🏗️ Technical Architecture
+
+### Component Structure
+
+```
+src/components/games/sight-reading-game/
+│
+├── SightReadingGame.jsx              # Main orchestrator component
+│
+├── components/
+│   ├── PreGameSetup.jsx              # Phase 1: Configuration screen
+│   ├── StaffDisplay.jsx              # Musical staff renderer
+│   ├── NoteRenderer.jsx              # Individual note with feedback
+│   ├── MetronomeCountIn.jsx          # Phase 3: Metronome display
+│   ├── PerformanceDisplay.jsx        # Phase 4: Real-time view
+│   ├── FeedbackSummary.jsx           # Phase 5: Results screen
+│   ├── PitchDetector.jsx             # Microphone + pitch detection
+│   └── TimingEngine.jsx              # Rhythm timing calculations
+│
+├── hooks/
+│   ├── useSightReadingGame.js        # Main game state management
+│   ├── usePitchDetection.js          # Microphone + pitch detection
+│   ├── useMetronome.js               # Metronome audio + visual sync
+│   ├── useTimingAnalysis.js          # Rhythm timing evaluation
+│   └── usePatternGeneration.js       # Note + rhythm pattern creation
+│
+├── utils/
+│   ├── notePatternGenerator.js       # Musical note sequences
+│   ├── pitchDetectionUtils.js        # Frequency ↔ note conversion
+│   ├── timingUtils.js                # Timing tolerance calculations
+│   └── scoreCalculator.js            # Performance scoring
+│
+└── constants/
+    ├── notePositions.js              # SVG coordinates for staff
+    ├── pitchFrequencies.js           # Note ↔ frequency mapping
+    └── gameSettings.js               # Default configurations
+```
+
+### State Management
+
+```javascript
+const gameState = {
+  // Phase control
+  currentPhase: 'setup' | 'display' | 'count-in' | 'performance' | 'feedback',
+  
+  // Game settings
+  settings: {
+    difficulty: 'beginner' | 'intermediate' | 'advanced',
+    timeSignature: { name: '4/4', beats: 4, subdivision: 16 },
+    tempo: 80, // BPM
+    patternCount: 5 // Total patterns in session
+  },
+  
+  // Current pattern
+  currentPattern: {
+    notes: [
+      { 
+        pitch: 'C4', 
+        frequency: 261.63, 
+        duration: 4, 
+        position: { y: 280, ledger: true } 
+      },
+      // ... more notes
+    ],
+    rhythmPattern: [1, 1, 0, 1], // From RhythmPatternGenerator
+    patternNumber: 1
+  },
+  
+  // Performance tracking
+  performance: {
+    currentNoteIndex: 0,
+    startTime: null,
+    results: [
+      {
+        noteIndex: 0,
+        expectedPitch: 'C4',
+        expectedTime: 1000, // ms from start
+        detectedPitch: 'C4',
+        actualTime: 1050,
+        pitchCorrect: true,
+        timingOffset: 50, // ms
+        timingStatus: 'on-time' | 'early' | 'late',
+        score: 95 // out of 100
+      },
+      // ... more results
+    ]
+  },
+  
+  // Microphone state
+  audio: {
+    isListening: false,
+    currentPitch: null,
+    currentFrequency: null,
+    inputLevel: 0.0
+  },
+  
+  // Metronome state
+  metronome: {
+    isPlaying: false,
+    currentBeat: 0,
+    beatsRemaining: 4
+  }
+};
+```
+
+### Custom Hooks Implementation
+
+#### 1. usePitchDetection.js
+
+**Purpose:** Handle microphone input and real-time pitch detection
+
+**Reference:** Based on existing implementations
+- `src/components/games/note-recognition-games/NoteRecognitionGame.jsx`
+- `src/components/games/notes-master-games/NotesRecognitionGame.jsx`
+
+```javascript
+export function usePitchDetection({ isActive, onPitchDetected }) {
+  const [audioContext, setAudioContext] = useState(null);
+  const [analyser, setAnalyser] = useState(null);
+  const [microphone, setMicrophone] = useState(null);
+  const [currentPitch, setCurrentPitch] = useState(null);
+  const [currentFrequency, setCurrentFrequency] = useState(null);
+  const [inputLevel, setInputLevel] = useState(0);
+  
+  const startListening = async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const source = context.createMediaStreamSource(stream);
+    const analyserNode = context.createAnalyser();
+    
+    analyserNode.fftSize = 2048;
+    analyserNode.smoothingTimeConstant = 0.8;
+    source.connect(analyserNode);
+    
+    setAudioContext(context);
+    setAnalyser(analyserNode);
+    setMicrophone(stream);
+    
+    // Start detection loop
+    detectPitchLoop(analyserNode, context.sampleRate);
+  };
+  
+  const detectPitch = (buffer, sampleRate) => {
+    // Autocorrelation algorithm
+    // Returns frequency in Hz
+  };
+  
+  const frequencyToNote = (frequency) => {
+    // Converts Hz to note name (e.g., "C4")
+  };
+  
+  const stopListening = () => {
+    if (microphone) {
+      microphone.getTracks().forEach(track => track.stop());
+    }
+    if (audioContext) {
+      audioContext.close();
+    }
+  };
+  
+  return {
+    currentPitch,
+    currentFrequency,
+    inputLevel,
+    startListening,
+    stopListening,
+    isListening: !!microphone
+  };
+}
+```
+
+#### 2. useMetronome.js
+
+**Purpose:** Control metronome audio and visual synchronization
+
+```javascript
+export function useMetronome({ tempo, timeSignature, isActive }) {
+  const audioEngineRef = useRef(null);
+  const [currentBeat, setCurrentBeat] = useState(0);
+  const intervalRef = useRef(null);
+  
+  useEffect(() => {
+    audioEngineRef.current = useAudioEngine(tempo);
+  }, [tempo]);
+  
+  const start = () => {
+    const beatDuration = (60 / tempo) * 1000; // ms per beat
+    let beat = 0;
+    
+    intervalRef.current = setInterval(() => {
+      const isDownbeat = beat % timeSignature.beats === 0;
+      const pitch = isDownbeat ? 1.2 : 1.0;
+      audioEngineRef.current?.playPianoSound(0.5, pitch);
+      
+      setCurrentBeat(beat % timeSignature.beats);
+      beat++;
+    }, beatDuration);
+  };
+  
+  const stop = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setCurrentBeat(0);
+  };
+  
+  return { currentBeat, start, stop };
+}
+```
+
+#### 3. useTimingAnalysis.js
+
+**Purpose:** Calculate timing expectations and evaluate performance
+
+```javascript
+export function useTimingAnalysis({ tempo, timeSignature }) {
+  const beatDurationMs = (60 / tempo) * 1000;
+  
+  const calculateExpectedTiming = (pattern) => {
+    return pattern.notes.map((note, index) => {
+      const cumulativeDuration = pattern.notes
+        .slice(0, index)
+        .reduce((sum, n) => sum + n.duration, 0);
+      
+      const startTimeMs = (cumulativeDuration / 4) * beatDurationMs;
+      
+      return {
+        noteIndex: index,
+        expectedStartTime: startTimeMs,
+        toleranceWindow: {
+          perfectMin: startTimeMs - 100,
+          perfectMax: startTimeMs + 100,
+          goodMin: startTimeMs - 200,
+          goodMax: startTimeMs + 200
+        }
+      };
+    });
+  };
+  
+  const analyzeNoteTiming = (actualTime, expectedTime) => {
+    const offset = actualTime - expectedTime;
+    const absOffset = Math.abs(offset);
+    
+    if (absOffset <= 100) {
+      return { status: 'perfect', offset, score: 100 };
+    } else if (absOffset <= 200) {
+      return { status: 'good', offset, score: 80 };
+    } else if (offset < -200) {
+      return { status: 'early', offset, score: 50 };
+    } else {
+      return { status: 'late', offset, score: 50 };
+    }
+  };
+  
+  return {
+    calculateExpectedTiming,
+    analyzeNoteTiming,
+    beatDurationMs
+  };
+}
+```
+
+#### 4. usePatternGeneration.js
+
+**Purpose:** Generate musical patterns with rhythm and pitch
+
+```javascript
+import { 
+  createPatternGenerator, 
+  DIFFICULTY_LEVELS 
+} from '../../../rhythm-games/RhythmPatternGenerator';
+
+export function usePatternGeneration() {
+  const rhythmGenerator = useRef(createPatternGenerator());
+  
+  const noteRanges = {
+    beginner: ['C4', 'D4', 'E4', 'F4', 'G4'],
+    intermediate: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
+    advanced: ['A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5']
+  };
+  
+  const generatePattern = async (difficulty, timeSignature) => {
+    // Generate rhythm using existing system
+    const rhythmPattern = await rhythmGenerator.current.generatePattern(
+      DIFFICULTY_LEVELS[difficulty.toUpperCase()],
+      timeSignature
+    );
+    
+    // Assign random notes from range
+    const range = noteRanges[difficulty];
+    const notes = rhythmPattern.sounds
+      .map((sound, index) => {
+        if (sound === 1) {
+          const randomNote = range[Math.floor(Math.random() * range.length)];
+          return {
+            pitch: randomNote,
+            frequency: noteToFrequency(randomNote),
+            duration: rhythmPattern.durations[index],
+            position: getStaffPosition(randomNote)
+          };
+        }
+        return null;
+      })
+      .filter(note => note !== null);
+    
+    return {
+      notes,
+      rhythmPattern: rhythmPattern.sounds,
+      totalDuration: rhythmPattern.totalDuration
+    };
+  };
+  
+  return { generatePattern };
+}
+```
+
+### Rendering System
+
+#### Staff & Note Display
+
+**Option A: SVG Manipulation (Recommended)**
+
+```jsx
+// StaffDisplay.jsx
+export function StaffDisplay({ pattern, noteResults, currentNoteIndex }) {
+  return (
+    <svg viewBox="0 0 5669 1417" className="w-full max-w-4xl">
+      {/* Load base treble-staff.svg */}
+      <use href="/src/assets/musicSymbols/treble-staff.svg#svg11" />
+      
+      {/* Render notes */}
+      {pattern.notes.map((note, index) => (
+        <g key={index} transform={`translate(${getXPosition(index)}, ${note.position.y})`}>
+          {/* Note head */}
+          <circle 
+            cx={0} 
+            cy={0} 
+            r={20} 
+            fill={getNoteColor(noteResults[index])}
+            className={currentNoteIndex === index ? 'animate-pulse' : ''}
+          />
+          
+          {/* Note stem */}
+          <line 
+            x1={0} 
+            y1={0} 
+            x2={0} 
+            y2={-80} 
+            stroke="#000" 
+            strokeWidth={3}
+          />
+          
+          {/* Rhythm indicator */}
+          {getRhythmIndicator(note.duration)}
+          
+          {/* Timing feedback */}
+          {noteResults[index]?.timingStatus === 'early' && (
+            <text x={0} y={40} className="text-2xl">&lt;</text>
+          )}
+          {noteResults[index]?.timingStatus === 'late' && (
+            <text x={0} y={40} className="text-2xl">&gt;</text>
+          )}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+// Helper functions
+const getNoteColor = (result) => {
+  if (!result) return '#9CA3AF'; // Gray
+  if (result.pitchCorrect && result.timingStatus === 'good') return '#10B981'; // Green
+  if (!result.pitchCorrect) return '#EF4444'; // Red
+  if (result.timingStatus !== 'good') return '#F59E0B'; // Yellow
+  return '#9CA3AF';
+};
+```
+
+**Option B: Canvas Rendering (Alternative)**
+
+Similar to existing `RhythmNotationRenderer.jsx` but adapted for pitched notes.
+
+---
+
+## 🎨 UI/UX Specifications
+
+### Color Palette
+
+#### Note Feedback Colors
+
+| State | Color | Hex | Usage |
+|-------|-------|-----|-------|
+| Neutral | Gray-400 | `#9CA3AF` | Unplayed notes |
+| Correct | Emerald-500 | `#10B981` | Correct pitch + timing |
+| Wrong Pitch | Red-500 | `#EF4444` | Incorrect note |
+| Wrong Timing | Amber-500 | `#F59E0B` | Correct pitch, bad timing |
+| Current Note | Violet-500 | `#8B5CF6` | Active note with pulse |
+
+#### UI Elements
+
+- **Background:** Gradient matching existing games
+- **Cards/Panels:** `white/10` backdrop blur
+- **Text:** White with appropriate contrast
+- **Buttons:** Follow existing patterns in `/components/ui/Button.jsx`
+
+### Responsive Design
+
+#### Desktop (≥1024px)
+- Large staff display (max-width: 1200px)
+- Side-by-side controls and feedback
+- Full-size metronome visual
+- Horizontal layout optimization
+
+#### Tablet (768-1023px)
+- Medium staff display (max-width: 900px)
+- Stacked layout for controls
+- Reduced padding and margins
+- Optimized touch targets
+
+#### Mobile (≤767px)
+- Compact staff display (max-width: 100%)
+- Vertical stacked layout
+- Touch-optimized controls (min 44x44px)
+- Simplified notation rendering
+- Bottom-sheet style modals
+
+### Accessibility Features
+
+- ✅ High contrast mode for note colors
+- ✅ Keyboard navigation support (Tab, Enter, Arrows)
+- ✅ Screen reader announcements for phase changes
+- ✅ Visual indicators for all audio events
+- ✅ Adjustable font sizes
+- ✅ Color-blind friendly feedback (icons + colors)
+- ✅ ARIA labels and roles
+- ✅ Focus management
+
+---
+
+## 📊 Scoring & Progression
+
+### Score Calculation
+
+#### Per-Note Scoring
+
+```javascript
+const calculateNoteScore = (noteResult) => {
+  let score = 0;
+  
+  // Pitch accuracy (70% weight)
+  if (noteResult.pitchCorrect) {
+    score += 70;
+  } else {
+    // Partial credit for close pitch (±1 semitone)
+    if (noteResult.pitchOffset <= 100) { // cents
+      score += 35;
+    }
+  }
+  
+  // Timing accuracy (30% weight)
+  switch (noteResult.timingStatus) {
+    case 'perfect':
+      score += 30;
+      break;
+    case 'good':
+      score += 25;
+      break;
+    case 'early':
+    case 'late':
+      score += 15;
+      break;
+    default:
+      score += 0;
+  }
+  
+  return score;
+};
+```
+
+#### Overall Pattern Score
+
+```javascript
+const calculatePatternScore = (noteResults) => {
+  const totalScore = noteResults.reduce(
+    (sum, result) => sum + calculateNoteScore(result), 
+    0
+  );
+  const averageScore = totalScore / noteResults.length;
+  return Math.round(averageScore);
+};
+```
+
+#### Performance Rating
+
+```javascript
+const getPerformanceRating = (score) => {
+  if (score >= 90) return { stars: 3, label: 'Excellent!' };
+  if (score >= 75) return { stars: 2, label: 'Good Job!' };
+  if (score >= 60) return { stars: 1, label: 'Keep Practicing!' };
+  return { stars: 0, label: 'Try Again!' };
+};
+```
+
+---
+
+## 🚀 Implementation Plan
+
+### Phase 1: Foundation (Week 1)
+
+- [ ] Set up component structure and folder organization
+- [ ] Implement `usePitchDetection` hook (adapt from existing games)
+- [ ] Create basic `StaffDisplay` component with SVG rendering
+- [ ] Implement `useMetronome` hook with audio/visual sync
+- [ ] Create `PreGameSetup` screen with settings controls
+- [ ] Test microphone permissions and audio input
+
+### Phase 2: Core Gameplay (Week 2)
+
+- [ ] Implement `usePatternGeneration` hook
+- [ ] Create `NoteRenderer` component with color feedback
+- [ ] Implement `useTimingAnalysis` hook
+- [ ] Build game phase orchestration in `SightReadingGame.jsx`
+- [ ] Add microphone enable/disable logic per phase
+- [ ] Test pattern generation variety and musicality
+
+### Phase 3: Feedback & Scoring (Week 3)
+
+- [ ] Implement real-time note feedback (colors, timing indicators)
+- [ ] Create `FeedbackSummary` component with detailed stats
+- [ ] Build scoring algorithms and calculations
+- [ ] Add performance recording to database
+- [ ] Integrate with achievement system
+- [ ] Test scoring accuracy and fairness
+
+### Phase 4: Polish & Testing (Week 4)
+
+- [ ] Add sound effects and audio polish
+- [ ] Implement responsive design for all screen sizes
+- [ ] Add accessibility features (ARIA, keyboard nav, etc.)
+- [ ] Conduct user testing and gather feedback
+- [ ] Fix bugs and optimize performance
+- [ ] Write documentation and code comments
+
+### Phase 5: Advanced Features (Future)
+
+- [ ] Custom pattern creation by teachers
+- [ ] Teacher-assigned patterns for students
+- [ ] Difficulty auto-adjustment based on performance
+- [ ] Multi-bar patterns (2-4 measures)
+- [ ] Different clefs (bass clef, alto clef)
+- [ ] Chord recognition (multiple simultaneous pitches)
+- [ ] Practice mode with slower playback
+- [ ] MIDI keyboard integration
+
+---
+
+## 🧪 Testing Requirements
+
+### Functional Testing
+
+- [ ] Microphone permission handling (grant/deny scenarios)
+- [ ] Pitch detection accuracy across full note range
+- [ ] Timing accuracy at different tempos (60-140 BPM)
+- [ ] Pattern generation diversity and musicality
+- [ ] Score calculation correctness
+- [ ] Database recording integrity
+- [ ] Achievement unlock triggers
+- [ ] Settings persistence (localStorage)
+
+### Performance Testing
+
+- [ ] Pitch detection latency < 100ms
+- [ ] Visual rendering at stable 60fps
+- [ ] No audio glitches or dropouts
+- [ ] Memory usage optimization (no leaks)
+- [ ] Mobile device performance (iPhone/Android)
+- [ ] Battery consumption on mobile
+- [ ] Concurrent audio stream handling
+
+### User Testing
+
+- [ ] Clear instructions for new users
+- [ ] Intuitive feedback system
+- [ ] Appropriate difficulty progression
+- [ ] Engaging and motivating experience
+- [ ] Accessibility compliance (WCAG 2.1 AA)
+- [ ] Cross-browser compatibility
+- [ ] Different instrument types (piano, guitar, voice)
+
+---
+
+## 📦 Dependencies & Assets
+
+### Existing Dependencies
+
+**Already in Project:**
+- React & React Hooks
+- Web Audio API
+- Lucide React (icons)
+- Tailwind CSS
+- React Query (data fetching)
+- Supabase (database)
+
+### Existing Assets to Reuse
+
+- `/src/assets/musicSymbols/treble-staff.svg` - Staff base
+- `/src/assets/sounds/piano/F4.mp3` - Piano sound
+- `src/components/games/rhythm-games/RhythmPatternGenerator.js` - Rhythm logic
+- `src/hooks/useAudioEngine.js` - Audio playback
+- `src/components/ui/Button.jsx`, `Card.jsx`, `Modal.jsx` - UI components
+- Pitch detection logic from existing note recognition games
+
+### New Assets Needed
+
+**Optional:**
+- Individual note head SVGs (quarter, half, eighth)
+- Metronome click sounds (if not using piano)
+- Success/error sound effects
+- Tutorial images/animations
+
+---
+
+## 🎯 Success Metrics
+
+### Technical Metrics
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Pitch detection accuracy | ≥95% | A/B testing with known inputs |
+| Timing detection precision | ±50ms | Automated timing tests |
+| Game load time | <2 seconds | Performance profiling |
+| Audio latency | <100ms | Web Audio API metrics |
+| Frame rate | Stable 60fps | Performance monitoring |
+
+### User Engagement Metrics
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Average session length | ≥5 minutes | Analytics tracking |
+| Pattern completion rate | ≥70% | Database queries |
+| Return rate after first play | ≥50% | User retention analysis |
+| Score improvement over time | Positive trend | Statistical analysis |
+| User satisfaction rating | ≥4/5 stars | In-app surveys |
+
+### Educational Metrics
+
+| Metric | Target | Measurement |
+|--------|--------|-------------|
+| Pitch accuracy improvement | 10% increase over 10 sessions | Longitudinal study |
+| Rhythm accuracy improvement | 10% increase over 10 sessions | Longitudinal study |
+| Note reading speed increase | Measurable via pattern completion time | Time tracking |
+| Student confidence | Self-reported improvement | Surveys |
+
+---
+
+## 📚 Additional Notes
+
+### Pedagogical Considerations
+
+- Start with simple, stepwise melodic patterns (no large jumps)
+- Gradually introduce rhythmic complexity
+- Provide encouraging feedback for all performance levels
+- Allow unlimited retries without penalty
+- Emphasize progress over perfection
+- Celebrate small wins to build confidence
+- Adapt difficulty based on performance trends
+
+### Technical Constraints
+
+- **Microphone quality** varies by device (implement adaptive filtering)
+- **Browser compatibility** for Web Audio API (provide fallbacks)
+- **Mobile device CPU** limitations (optimize rendering)
+- **Pitch detection in noisy environments** (implement noise filtering)
+- **Network latency** for database writes (queue offline)
+- **Battery consumption** on mobile (optimize background tasks)
+
+### Future Enhancement Ideas
+
+- Sheet music export feature (PDF generation)
+- Practice mode with adjustable playback speed
+- Duet mode (play with metronome accompaniment)
+- Physical MIDI keyboard integration
+- Voice singing mode (vocal pitch matching)
+- Multiplayer challenges and competitions
+- Social sharing of achievements
+- Teacher dashboard with student analytics
+- Custom lesson plans and curricula
+- Integration with music theory lessons
+
+---
+
+## 🔗 Related Files & References
+
+### Files to Reference During Implementation
+
+**Core Game Logic:**
+- `src/components/games/rhythm-games/RhythmPatternGenerator.js` - Pattern generation
+- `src/components/games/note-recognition-games/NoteRecognitionGame.jsx` - Pitch detection
+- `src/components/games/notes-master-games/NotesRecognitionGame.jsx` - Improved pitch detection
+
+**Audio System:**
+- `src/components/ui/AudioRecorder.jsx` - Microphone access handling
+- `src/hooks/useAudioEngine.js` - Audio playback system
+
+**UI Components:**
+- `src/components/games/rhythm-games/components/MetronomeDisplay.jsx` - Visual metronome
+- `src/components/ui/Button.jsx`, `Card.jsx`, `Modal.jsx` - UI components
+
+**Data & Services:**
+- `src/services/practiceService.js` - Database recording patterns
+- `scripts/metronome_prd.txt` - Metronome trainer reference
+
+### Database Tables
+
+- `practice_sessions` - Record game sessions
+- `students_score` - Track individual game scores
+- `students_total_score` - Update overall student points
+- `achievements` - Track achievement unlocks
+
+---
+
+## ✅ Acceptance Criteria
+
+**The game is complete when:**
+
+1. ✅ User can select difficulty, tempo, and time signature
+2. ✅ Visual staff displays correctly with treble clef and notes
+3. ✅ Metronome count-in plays with proper audio and visual sync
+4. ✅ Microphone activates only after count-in
+5. ✅ Pitch detection accurately identifies played notes (≥95% accuracy)
+6. ✅ Real-time color feedback (green/red/yellow) displays correctly
+7. ✅ Timing indicators (< and >) display for early/late notes
+8. ✅ Score calculation accurately reflects performance
+9. ✅ Performance data records to database correctly
+10. ✅ Feedback summary screen shows detailed, actionable results
+11. ✅ Game works smoothly on desktop, tablet, and mobile devices
+12. ✅ All accessibility features implemented and tested
+13. ✅ No critical bugs or performance issues
+14. ✅ Code is well-documented and maintainable
+15. ✅ User testing shows positive feedback and engagement
+
+---
+
+**END OF DOCUMENT**
+
+*Version 1.0 | Last Updated: November 2025*

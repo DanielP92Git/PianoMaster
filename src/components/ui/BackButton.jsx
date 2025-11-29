@@ -2,7 +2,7 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-function BackButton({ to, name, styling }) {
+function BackButton({ to, name, styling, iconOnly = false }) {
   const navigate = useNavigate();
   const [isNavigating, setIsNavigating] = useState(false);
 
@@ -24,16 +24,17 @@ function BackButton({ to, name, styling }) {
       onClick={handleClick}
       disabled={isNavigating}
       className={`flex items-center text-white hover:text-amber-50 relative z-50 cursor-pointer disabled:opacity-50 disabled:cursor-wait ${styling}`}
+      title={iconOnly ? `Back to ${name}` : undefined}
     >
       {isNavigating ? (
         <>
           <Loader2 className="w-5 h-5 mr-1 animate-spin" />
-          Navigating...
+          {!iconOnly && "Navigating..."}
         </>
       ) : (
         <>
-          <ArrowLeft className="w-5 h-5 mr-1" />
-          {`Back to ${name}`}
+          <ArrowLeft className={`w-5 h-5 ${iconOnly ? "" : "mr-1"}`} />
+          {!iconOnly && `Back to ${name}`}
         </>
       )}
     </button>

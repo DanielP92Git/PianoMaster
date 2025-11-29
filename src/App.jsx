@@ -18,6 +18,7 @@ import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
 import { MemoryGame } from "./components/games/notes-master-games/MemoryGame";
 import { NotesRecognitionGame } from "./components/games/notes-master-games/NotesRecognitionGame";
+import { SightReadingGame } from "./components/games/sight-reading-game/SightReadingGame";
 import MetronomeTrainer from "./components/games/rhythm-games/MetronomeTrainer";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
@@ -35,6 +36,7 @@ import PWAUpdateNotification from "./components/pwa/PWAUpdateNotification";
 import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
+import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -74,11 +76,11 @@ function AuthenticatedWrapper({ children }) {
 // Component to redirect teachers to their dashboard
 function TeacherRedirect() {
   const { isTeacher } = useUser();
-  
+
   if (isTeacher) {
     return <Navigate to="/teacher" replace />;
   }
-  
+
   return <Dashboard />;
 }
 
@@ -126,6 +128,10 @@ function AppRoutes() {
           <Route
             path="/notes-master-mode/notes-recognition-game"
             element={<NotesRecognitionGame />}
+          />
+          <Route
+            path="/notes-master-mode/sight-reading-game"
+            element={<SightReadingGame />}
           />
           <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
           <Route
@@ -175,18 +181,20 @@ function App() {
         <SettingsProvider>
           <ModalProvider>
             <RhythmProvider>
-              <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-                <Toaster position="top-center" />
-                <AppRoutes />
+              <SightReadingSessionProvider>
+                <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+                  <Toaster position="top-center" />
+                  <AppRoutes />
 
-                {/* PWA Components */}
-                <PWAInstallPrompt />
-                <PWAUpdateNotification />
-                <NetworkStatus />
+                  {/* PWA Components */}
+                  <PWAInstallPrompt />
+                  <PWAUpdateNotification />
+                  <NetworkStatus />
 
-                {/* Alarm Modal */}
-                <AlarmModal />
-              </div>
+                  {/* Alarm Modal */}
+                  <AlarmModal />
+                </div>
+              </SightReadingSessionProvider>
             </RhythmProvider>
           </ModalProvider>
         </SettingsProvider>

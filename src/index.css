@@ -1136,3 +1136,63 @@ html {
     color: black !important;
   }
 }
+
+/* ========================================
+   VEXFLOW MUSIC NOTATION STYLES
+   ======================================== */
+
+/* VexFlow container with horizontal scroll support */
+.vexflow-container {
+  overflow-x: auto;
+  overflow-y: visible;
+  scroll-behavior: smooth;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.vexflow-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Active note highlighting */
+.vf-note-active {
+  filter: hue-rotate(250deg) brightness(1.2);
+  transition: all 0.3s ease;
+}
+
+/* Ensure VexFlow SVG elements are properly displayed */
+.vexflow-container svg {
+  display: block;
+  margin: 0 auto;
+}
+
+.sightreading-staff-wrapper {
+  overflow: visible;
+}
+
+.sightreading-keyboard-wrapper {
+  overflow: visible;
+  transition: height 0.3s ease;
+}
+
+.sightreading-keyboard-wrapper.feedback-mode {
+  height: auto !important;
+}
+
+.feedback-summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* Landscape mobile optimizations for Sight Reading Game */
+@media (max-width: 900px) and (orientation: landscape) {
+  .sightreading-staff-wrapper {
+    min-height: 130px !important;
+    height: clamp(130px, 24vh, 220px) !important;
+  }
+
+  .sightreading-keyboard-wrapper:not(.feedback-mode) {
+    height: clamp(140px, 30vh, 200px) !important;
+  }
+}

@@ -304,4 +304,68 @@ export const practiceService = {
       throw error;
     }
   },
+
+  /**
+   * Save a practice session without an audio recording (for games)
+   * @param {string} studentId - Student UUID
+   * @param {Object} sessionData - Session details
+   * @param {Object} gameMetadata - Game-specific metadata
+   * @returns {Promise<Object>} Created session object
+   */
+  async savePracticeSessionWithoutRecording(
+    studentId,
+    sessionData = {},
+    gameMetadata = {}
+  ) {
+    try {
+      const {
+        description = "Sight Reading Game Session",
+        duration = 0,
+        analysisScore = 0,
+        notesPlayed = 0,
+        uniqueNotes = 0,
+        status = PRACTICE_SESSION_STATUS.PENDING_REVIEW,
+      } = sessionData;
+
+      // Determine status based on score if not provided
+      let finalStatus = status;
+      if (analysisScore >= 80) {
+        finalStatus = PRACTICE_SESSION_STATUS.EXCELLENT;
+      } else if (analysisScore >= 60) {
+        finalStatus = PRACTICE_SESSION_STATUS.REVIEWED;
+      } else if (analysisScore > 0) {
+        finalStatus = PRACTICE_SESSION_STATUS.NEEDS_WORK;
+      }
+
+      // Create a record in the practice_sessions table
+      const { data, error } = await supabase
+        .from("practice_sessions")
+        .insert({
+          student_id: studentId,
+          recording_url: "", // No recording file
+          recording_description: description,
+          has_recording: false, // Mark as game session without audio file
+          status: finalStatus,
+          submitted_at: new Date().toISOString(),
+          duration: Math.floor(duration || 0),
+          analysis_score: analysisScore,
+          notes_played: notesPlayed,
+          unique_notes: uniqueNotes,
+          game_metadata: gameMetadata, // Store game-specific data as JSON
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Session creation error:", error);
+        throw error;
+      }
+
+      console.log("✅ Practice session saved:", data);
+      return data;
+    } catch (error) {
+      console.error("Error saving practice session:", error);
+      throw error;
+    }
+  },
 };
