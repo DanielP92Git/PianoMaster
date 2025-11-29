@@ -3,23 +3,30 @@ import toast from "react-hot-toast";
 import supabase from "../../services/supabase";
 import { useNavigate } from "react-router-dom";
 
+const normalizeEmail = (value = "") => value.trim().toLowerCase();
+
 export function useSignup() {
   const navigate = useNavigate();
 
   const { mutate: signup, isLoading } = useMutation({
     mutationFn: async ({ email, password, firstName, lastName, role }) => {
       try {
+        const normalizedEmail = normalizeEmail(email);
+        const normalizedFirstName = firstName?.trim() || "";
+        const normalizedLastName = lastName?.trim() || "";
+
         // Create the auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp(
           {
-            email,
+            email: normalizedEmail,
             password,
             options: {
               emailRedirectTo: `${window.location.origin}/`,
               data: {
-                full_name: `${firstName} ${lastName}`.trim(),
-                first_name: firstName,
-                last_name: lastName,
+                full_name:
+                  `${normalizedFirstName} ${normalizedLastName}`.trim(),
+                first_name: normalizedFirstName,
+                last_name: normalizedLastName,
                 role: role,
               },
             },
@@ -27,7 +34,6 @@ export function useSignup() {
         );
 
         if (authError) {
-          
           if (
             authError.message?.toLowerCase().includes("already exists") ||
             authError.message?.toLowerCase().includes("already registered") ||
@@ -54,9 +60,9 @@ export function useSignup() {
               [
                 {
                   id: userId,
-                  first_name: firstName,
-                  last_name: lastName,
-                  email: email,
+                  first_name: normalizedFirstName,
+                  last_name: normalizedLastName,
+                  email: normalizedEmail,
                   is_active: true,
                 },
               ],
@@ -66,7 +72,6 @@ export function useSignup() {
             );
 
           if (teacherError) {
-            
             // Don't throw here - let the user complete signup even if profile creation fails
             // The profile can be created later when they try to access teacher features
           }
@@ -78,10 +83,12 @@ export function useSignup() {
               [
                 {
                   id: userId,
-                  first_name: firstName,
-                  last_name: lastName || "", // Fix: Add the missing last_name field
-                  email: email,
-                  username: `${firstName.toLowerCase()}${Math.random().toString(36).substr(2, 4)}`,
+                  first_name: normalizedFirstName,
+                  last_name: normalizedLastName || "", // Fix: Add the missing last_name field
+                  email: normalizedEmail,
+                  username: `${normalizedFirstName.toLowerCase() || "student"}${Math.random()
+                    .toString(36)
+                    .substr(2, 4)}`,
                   level: "Beginner",
                   studying_year: "1st Year", // Fix: Add default studying_year
                 },
@@ -92,9 +99,20 @@ export function useSignup() {
             );
 
           if (studentError) {
-            
-            // Don't throw here - let the user complete signup even if profile creation fails  
+            // Don't throw here - let the user complete signup even if profile creation fails
             // The profile can be created later when they try to access student features
+          }
+          // Try to promote any placeholder student rows that used this email
+          try {
+            await supabase.rpc("promote_placeholder_student", {
+              p_student_id: userId,
+              p_student_email: normalizedEmail,
+            });
+          } catch (promotionError) {
+            console.warn(
+              "Placeholder promotion skipped (student signup):",
+              promotionError
+            );
           }
         }
 

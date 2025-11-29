@@ -21,9 +21,14 @@ import {
   dashboardReminderService,
   formatTimeRemaining,
 } from "../../services/dashboardReminderService";
+import { lockOrientation } from "../../utils/pwa";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, userRole, profile } = useUser();
+  useEffect(() => {
+    if (!isStudent) return;
+    lockOrientation("landscape-primary");
+  }, [isStudent]);
   
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally

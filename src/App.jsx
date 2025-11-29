@@ -37,6 +37,7 @@ import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
+import { applyRoleBasedOrientation } from "./utils/pwa";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -84,6 +85,31 @@ function TeacherRedirect() {
   return <Dashboard />;
 }
 
+function OrientationController() {
+  const { user, isLoading } = useUser();
+  const lastRoleRef = useRef(null);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    const role =
+      user?.user_metadata?.role ||
+      user?.app_metadata?.role ||
+      user?.role ||
+      null;
+
+    if (lastRoleRef.current === role) return;
+
+    const normalizedRole =
+      typeof role === "string" ? role.toLowerCase() : null;
+
+    applyRoleBasedOrientation(normalizedRole);
+    lastRoleRef.current = role;
+  }, [isLoading, user]);
+
+  return null;
+}
+
 function AppRoutes() {
   const { isLoading } = useUser();
   const practiceModesSectionRef = useRef(null);
@@ -102,6 +128,7 @@ function AppRoutes() {
 
   return (
     <AuthenticatedWrapper>
+      <OrientationController />
       <Routes>
         <Route
           path="/"

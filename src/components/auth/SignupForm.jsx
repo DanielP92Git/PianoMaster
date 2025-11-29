@@ -59,7 +59,9 @@ function SignupForm({ onBackToLogin }) {
           <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient mb-2">
             Create Account
           </h1>
-          <p className="text-white/80 text-sm lg:text-base">Join the musical journey!</p>
+          <p className="text-white/80 text-sm lg:text-base">
+            Join the musical journey!
+          </p>
         </div>
 
         {/* Right side - Form */}

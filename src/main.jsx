@@ -4,11 +4,16 @@ import { BrowserRouter } from "react-router-dom"; // eslint-disable-line
 import { Provider } from "react-redux"; // eslint-disable-line
 import App from "./App.jsx"; // eslint-disable-line
 import store from "./store";
-import { registerServiceWorker, initializeFullscreen } from "./utils/pwa.js";
+import {
+  registerServiceWorker,
+  initializeFullscreen,
+  lockOrientation,
+} from "./utils/pwa.js";
 import "./index.css";
 
 // Initialize fullscreen mode
 initializeFullscreen();
+lockOrientation("portrait-primary");
 
 // Register service worker
 registerServiceWorker();

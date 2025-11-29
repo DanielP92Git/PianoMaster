@@ -5,44 +5,68 @@
  * Initialize fullscreen mode for PWA
  */
 export function initializeFullscreen() {
-  // Lock screen orientation to landscape if supported
-  if (screen.orientation && screen.orientation.lock) {
-    screen.orientation.lock('landscape').catch(err => {
-      console.log('Screen orientation lock failed:', err);
-    });
-  }
-
   // Handle iOS standalone mode
   if (window.navigator.standalone) {
     // Running as standalone PWA on iOS
-    document.body.classList.add('ios-standalone');
+    document.body.classList.add("ios-standalone");
   }
-
-  // Prevent pull-to-refresh on mobile
-  let lastTouchY = 0;
-  document.addEventListener('touchstart', (e) => {
-    lastTouchY = e.touches[0].clientY;
-  }, { passive: false });
-
-  document.addEventListener('touchmove', (e) => {
-    const touchY = e.touches[0].clientY;
-    const touchYDelta = touchY - lastTouchY;
-    lastTouchY = touchY;
-
-    if (touchYDelta > 0 && window.scrollY === 0) {
-      e.preventDefault();
-    }
-  }, { passive: false });
 
   // Handle viewport resize for mobile keyboards
   const setAppHeight = () => {
     const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty('--vh', `${vh}px`);
+    document.documentElement.style.setProperty("--vh", `${vh}px`);
   };
 
   setAppHeight();
-  window.addEventListener('resize', setAppHeight);
-  window.addEventListener('orientationchange', setAppHeight);
+  window.addEventListener("resize", setAppHeight);
+  window.addEventListener("orientationchange", setAppHeight);
+}
+
+/**
+ * Attempt to lock the screen orientation.
+ * Falls back gracefully when the API is unavailable or rejects (iOS/Safari).
+ * @param {"any" | "landscape" | "landscape-primary" | "landscape-secondary" | "natural" | "portrait" | "portrait-primary" | "portrait-secondary"} mode
+ */
+export async function lockOrientation(mode = "portrait-primary") {
+  if (
+    !("orientation" in screen) ||
+    typeof screen.orientation.lock !== "function"
+  ) {
+    console.log("[orientation] lockOrientation unsupported on this platform");
+    return false;
+  }
+
+  try {
+    await screen.orientation.lock(mode);
+    return true;
+  } catch (error) {
+    console.log(
+      "[orientation] lockOrientation failed:",
+      error?.message || error
+    );
+    return false;
+  }
+}
+
+/**
+ * Apply orientation according to current auth role.
+ * @param {"teacher" | "student" | undefined | null} role
+ */
+export function applyRoleBasedOrientation(role) {
+  // Teachers and unauthenticated users stay in portrait.
+  if (!role || role === "teacher") {
+    lockOrientation("portrait-primary");
+    return;
+  }
+
+  // Students practice better in landscape.
+  if (role === "student") {
+    lockOrientation("landscape-primary");
+    return;
+  }
+
+  // Default fallback.
+  lockOrientation("portrait-primary");
 }
 
 /**
@@ -78,7 +102,6 @@ export async function registerServiceWorker() {
       return null;
     }
   } else {
-    
     return null;
   }
 }
@@ -91,7 +114,7 @@ function showUpdateAvailableNotification() {
   if (window.showUpdateNotification) {
     window.showUpdateNotification();
   } else {
-    
+    console.log("No update available notification function found");
   }
 }
 
@@ -123,7 +146,6 @@ export class PWAInstaller {
   init() {
     // Listen for the beforeinstallprompt event
     window.addEventListener("beforeinstallprompt", (e) => {
-
       // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
 
@@ -137,7 +159,6 @@ export class PWAInstaller {
 
     // Listen for app installed event
     window.addEventListener("appinstalled", () => {
-      
       this.isInstalled = true;
       this.canInstall = false;
       this.deferredPrompt = null;
@@ -154,7 +175,6 @@ export class PWAInstaller {
     // Check if running in standalone mode (installed)
     if (window.matchMedia("(display-mode: standalone)").matches) {
       this.isInstalled = true;
-      
     }
 
     // Check for related applications (more accurate but limited browser support)
@@ -163,14 +183,13 @@ export class PWAInstaller {
         const relatedApps = await navigator.getInstalledRelatedApps();
         this.isInstalled = relatedApps.length > 0;
       } catch (error) {
-        
+        console.error("Error checking installed related apps:", error);
       }
     }
   }
 
   async showInstallPrompt() {
     if (!this.deferredPrompt) {
-      
       return false;
     }
 
@@ -194,12 +213,10 @@ export class PWAInstaller {
 
   // Override these methods in your implementation
   onInstallAvailable() {
-    
     // Show install button/banner
   }
 
   onInstalled() {
-    
     // Hide install button, show success message
   }
 }
@@ -257,7 +274,7 @@ export async function requestBackgroundSync(tag) {
     try {
       const registration = await navigator.serviceWorker.ready;
       await registration.sync.register(tag);
-      
+
       return true;
     } catch (error) {
       console.error("Background sync registration failed:", error);
@@ -275,6 +292,10 @@ export async function subscribeToPushNotifications() {
   if ("serviceWorker" in navigator && "PushManager" in window) {
     try {
       const registration = await navigator.serviceWorker.ready;
+      const vapidPublicKey =
+        (typeof import.meta !== "undefined" &&
+          import.meta.env?.VITE_VAPID_PUBLIC_KEY) ||
+        "";
 
       // Check if already subscribed
       let subscription = await registration.pushManager.getSubscription();
@@ -283,9 +304,7 @@ export async function subscribeToPushNotifications() {
         // Subscribe to push notifications
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(
-            process.env.VITE_VAPID_PUBLIC_KEY || ""
-          ),
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
         });
       }
 

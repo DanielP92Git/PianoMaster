@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "../../features/authentication/useLogin";
 import {
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
+import { lockOrientation } from "../../utils/pwa";
 // import Spinner from "../ui/Spinner";
 
 function LoginForm() {
@@ -21,6 +22,10 @@ function LoginForm() {
   const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
   const { login, isPending } = useLogin();
+
+  useEffect(() => {
+    lockOrientation("portrait-primary");
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -85,7 +90,9 @@ function LoginForm() {
                   <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient mb-2">
                     PianoMaster
                   </h1>
-                  <p className="text-white/80 text-sm lg:text-base">Begin your musical adventure!</p>
+                  <p className="text-white/80 text-sm lg:text-base">
+                    Begin your musical adventure!
+                  </p>
                 </div>
 
                 {/* Right side - Form */}

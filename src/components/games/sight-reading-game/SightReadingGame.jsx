@@ -2155,7 +2155,9 @@ export function SightReadingGame() {
       {/* Main Content */}
       <div
         className={`flex flex-col items-center px-2 sm:px-4 gap-2 sm:gap-3 pb-4 ${
-          isFeedbackPhase ? "overflow-y-auto flex-1" : "flex-1 min-h-0 overflow-hidden"
+          isFeedbackPhase
+            ? "overflow-y-auto flex-1"
+            : "flex-1 min-h-0 overflow-hidden"
         }`}
       >
         <div

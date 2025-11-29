@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Routes,
@@ -54,6 +54,7 @@ import AssignmentManagement from "../teacher/AssignmentManagement";
 import NotificationCenter from "../teacher/NotificationCenter";
 import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
 import { useUser } from "../../features/authentication/useUser";
+import { lockOrientation } from "../../utils/pwa";
 
 import { toast } from "react-hot-toast";
 
@@ -1214,6 +1215,10 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { newRecordingsCount } = useTeacherRecordingNotifications(user?.id);
+
+  useEffect(() => {
+    lockOrientation("portrait-primary");
+  }, []);
 
   // Determine active tab from URL path
   const getActiveTab = () => {

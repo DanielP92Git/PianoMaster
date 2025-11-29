@@ -197,140 +197,46 @@ export const addStudentToTeacher = async (studentData) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
-    // Check if student already exists by email
-    const { data: existingStudent, error: studentCheckError } = await supabase
-      .from("students")
-      .select("id, first_name, last_name, email, username")
-      .eq("email", studentData.email.toLowerCase())
-      .maybeSingle();
-
-    let student;
-
-    if (existingStudent) {
-      // Student already exists, use existing record
-      student = existingStudent;
-    } else {
-      // Student doesn't exist OR we can't check due to RLS policies
-      // Try to create new student, handle potential duplicates gracefully
-      
-      // Generate a UUID for the student (teachers can't create auth users, but can create student records)
-      const { data: newStudent, error: createError } = await supabase
-        .from("students")
-        .insert([
-          {
-            // Generate UUID using Supabase's gen_random_uuid() function
-            // Note: The id should eventually link to auth.users when student signs up
-            first_name: studentData.firstName,
-            last_name: studentData.lastName,
-            email: studentData.email.toLowerCase(),
-            level: studentData.level,
-            studying_year: studentData.studyingYear,
-            username: `${studentData.firstName.toLowerCase()}_${studentData.lastName.toLowerCase()}`,
-            user_role: 'student', // Explicitly set the role
-          },
-        ])
-        .select()
-        .single();
-
-      if (createError) {
-        // If duplicate email error, try to find the existing student
-        if (
-          createError.code === "23505" ||
-          createError.message?.includes("duplicate")
-        ) {
-          // Email already exists, try to get the existing student
-          // Use a different approach that might work with RLS
-          const { data: existingByEmail, error: findError } = await supabase
-            .from("students")
-            .select("id, first_name, last_name, email, username")
-            .eq("email", studentData.email.toLowerCase())
-            .maybeSingle();
-
-          if (existingByEmail) {
-            student = existingByEmail;
-          } else {
-            // If we still can't find the student due to RLS, throw the original error
-            throw createError;
-          }
-        } else {
-          throw createError;
-        }
-      } else {
-        student = newStudent;
-      }
+    const normalizedEmail = studentData.email?.trim().toLowerCase();
+    if (!normalizedEmail) {
+      throw new Error("Student email is required to add a connection");
     }
 
-    // Check if connection already exists (remove .single() to avoid 406 on empty results)
-    const { data: existingConnections, error: connectionCheckError } =
-      await supabase
-        .from("teacher_student_connections")
-        .select("id, status")
-        .eq("teacher_id", user.id)
-        .eq("student_id", student.id);
+    const payload = {
+      p_student_email: normalizedEmail,
+      p_first_name: studentData.firstName?.trim() || null,
+      p_last_name: studentData.lastName?.trim() || null,
+      p_level: studentData.level || null,
+      p_studying_year: studentData.studyingYear || null,
+      p_start_date: studentData.startDate
+        ? new Date(studentData.startDate).toISOString()
+        : null,
+    };
 
-    if (connectionCheckError) {
-      throw connectionCheckError;
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "teacher_link_student",
+      payload
+    );
+
+    if (rpcError) {
+      throw rpcError;
     }
 
-    // Check if any connection exists
-    if (existingConnections && existingConnections.length > 0) {
-      const existingConnection = existingConnections[0];
-      throw new Error(
-        `Connection already exists with status: ${existingConnection.status}`
-      );
+    if (!rpcResult) {
+      throw new Error("Failed to link student. No data was returned.");
     }
-
-    // Create a teacher-student connection
-    const { data: connection, error: connectionError } = await supabase
-      .from("teacher_student_connections")
-      .insert([
-        {
-          teacher_id: user.id,
-          student_id: student.id,
-          status: "accepted", // Auto-approved for now
-          connected_at: studentData.startDate
-            ? new Date(studentData.startDate).toISOString()
-            : new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
-
-    if (connectionError) throw connectionError;
-
-    // Temporarily disable notification creation due to RLS policy issues
-    // TODO: Re-enable once policy is fixed
-    /*
-    try {
-      await supabase.from("notifications").insert([
-        {
-          recipient_id: student.id,
-          sender_id: user.id,
-          type: "message",
-          title: "Teacher Connection",
-          message: `You've been connected with teacher ${user.email}. They can now track your practice progress.`,
-          data: {
-            teacher_id: user.id,
-            teacher_email: user.email,
-            connection_id: connection.id,
-          },
-        },
-      ]);
-    } catch (notificationError) {
-      // Notification is optional, don't fail the whole operation
-      console.warn("Could not create notification:", notificationError);
-    }
-    */
 
     const result = {
-      student_id: student.id,
+      student_id: rpcResult.student_id,
       student_name:
-        `${student.first_name || ""} ${student.last_name || ""}`.trim() ||
-        student.username ||
+        rpcResult.student_name ||
+        rpcResult.email?.split("@")[0] ||
         "Unknown Student",
-      student_email: student.email,
-      connection_status: "accepted",
-      connection_id: connection.id,
+      student_email: rpcResult.email,
+      connection_status: rpcResult.connection_status || "accepted",
+      connection_id: rpcResult.connection_id,
+      needs_signup: rpcResult.needs_signup,
+      was_existing_student: rpcResult.was_existing_student,
     };
 
     return result;
@@ -674,7 +580,6 @@ export const getTeacherRecordings = async (filters = {}) => {
     }
 
     if (!connections || connections.length === 0) {
-      
       return [];
     }
 
@@ -687,6 +592,7 @@ export const getTeacherRecordings = async (filters = {}) => {
         `
         id,
         student_id,
+        has_recording,
         recording_url,
         submitted_at,
         duration,
@@ -700,6 +606,7 @@ export const getTeacherRecordings = async (filters = {}) => {
       )
       .in("student_id", studentIds)
       .not("recording_url", "is", null)
+      .neq("recording_url", "")
       .order("submitted_at", { ascending: false });
 
     // Apply filters
@@ -730,7 +637,21 @@ export const getTeacherRecordings = async (filters = {}) => {
     }
 
     if (!recordings || recordings.length === 0) {
-      
+      return [];
+    }
+
+    // Only keep sessions that we know have an audio recording.
+    const audioRecordings = recordings.filter((recording) => {
+      const hasRecordingFlag =
+        recording.has_recording === null || recording.has_recording === true;
+      const hasRecordingUrl =
+        typeof recording.recording_url === "string" &&
+        recording.recording_url.trim().length > 0;
+
+      return hasRecordingFlag && hasRecordingUrl;
+    });
+
+    if (audioRecordings.length === 0) {
       return [];
     }
 
@@ -751,7 +672,7 @@ export const getTeacherRecordings = async (filters = {}) => {
     }, {});
 
     // Format the data
-    const formattedRecordings = recordings.map((recording) => {
+    const formattedRecordings = audioRecordings.map((recording) => {
       const student = studentsMap[recording.student_id];
       return {
         ...recording,
