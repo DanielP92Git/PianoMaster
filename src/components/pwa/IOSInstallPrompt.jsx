@@ -123,7 +123,7 @@ export default function IOSInstallPrompt() {
 
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700 flex items-center gap-2">
             <Share className="h-4 w-4 text-blue-600 animate-bounce" />
-            <span>Safari’s Share button lives at the bottom of the screen</span>
+            <span>Safari’s Share button lives at the top or the bottom of the screen</span>
           </div>
 
           <button

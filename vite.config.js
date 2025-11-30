@@ -23,6 +23,7 @@ export default defineConfig({
   },
   server: {
     port: 5174,
+    host: true,
     strictPort: true, // This will fail if port 5174 is not available
   },
 });
