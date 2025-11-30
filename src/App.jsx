@@ -39,6 +39,8 @@ import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
 import { applyRoleBasedOrientation } from "./utils/pwa";
+import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
+import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -89,6 +91,7 @@ function TeacherRedirect() {
 function OrientationController() {
   const { user, isLoading } = useUser();
   const lastRoleRef = useRef(null);
+  const [showTip, setShowTip] = React.useState(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -101,13 +104,34 @@ function OrientationController() {
 
     if (lastRoleRef.current === role) return;
 
-    const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
+    const normalizedRole =
+      typeof role === "string" ? role.toLowerCase() : null;
 
     applyRoleBasedOrientation(normalizedRole);
     lastRoleRef.current = role;
+
+    const tipDismissed =
+      typeof window !== "undefined" &&
+      window.localStorage.getItem("ios-landscape-tip-dismissed") === "true";
+
+    if (
+      normalizedRole === "student" &&
+      isIOSDevice() &&
+      !isInStandaloneMode() &&
+      !tipDismissed
+    ) {
+      setShowTip(true);
+    }
   }, [isLoading, user]);
 
-  return null;
+  const handleClose = () => {
+    setShowTip(false);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("ios-landscape-tip-dismissed", "true");
+    }
+  };
+
+  return showTip ? <IOSLandscapeTipModal onClose={handleClose} /> : null;
 }
 
 function AppRoutes() {

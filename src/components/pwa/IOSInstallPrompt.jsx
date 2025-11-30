@@ -61,8 +61,8 @@ export default function IOSInstallPrompt() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-40 md:left-auto md:right-4 md:max-w-sm animate-slide-up">
-      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -123,7 +123,9 @@ export default function IOSInstallPrompt() {
 
           <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-700 flex items-center gap-2">
             <Share className="h-4 w-4 text-blue-600 animate-bounce" />
-            <span>Safari’s Share button lives at the top or the bottom of the screen</span>
+            <span>
+              Safari’s Share button lives at the top or the bottom of the screen
+            </span>
           </div>
 
           <button
@@ -137,5 +139,3 @@ export default function IOSInstallPrompt() {
     </div>
   );
 }
-
-
