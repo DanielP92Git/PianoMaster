@@ -1,12 +1,11 @@
 # TODO — Quick daily list
 
 ## Today (yyyy-mm-dd)
-- [ ] Implement dashboard spinner fix (see issue #1)
-- [ ] Round points % display to integer — create PR linking #46
 
 ## This week
+- [ ] Start App Translation
+= [ ] Add a 2-Clefs option to sight reading game
 - [ ] Finish achievements API (epic #1)
-- [ ] Add tests to scores module
 
 ## Backlog
 - [ ] Add MIDI recording export
