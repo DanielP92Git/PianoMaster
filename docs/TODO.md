@@ -4,7 +4,7 @@
 
 ## This week
 - [ ] Start App Translation
-= [ ] Add a 2-Clefs option to sight reading game
+- [ ] Add a 2-Clefs option to sight reading game
 - [ ] Finish achievements API (epic #1)
 
 ## Backlog

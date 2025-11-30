@@ -93,11 +93,13 @@ function OrientationController() {
   const lastRoleRef = useRef(null);
   const [showTip, setShowTip] = React.useState(false);
   const [tipKey, setTipKey] = React.useState(null);
+  const [dismissedKey, setDismissedKey] = React.useState(null);
 
   useEffect(() => {
     if (isLoading) return;
 
     const role =
+      user?.userRole ||
       user?.user_metadata?.role ||
       user?.app_metadata?.role ||
       user?.role ||
@@ -105,8 +107,7 @@ function OrientationController() {
 
     if (lastRoleRef.current === role) return;
 
-    const normalizedRole =
-      typeof role === "string" ? role.toLowerCase() : null;
+    const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
 
     applyRoleBasedOrientation(normalizedRole);
     lastRoleRef.current = role;
@@ -117,23 +118,27 @@ function OrientationController() {
       : "ios-landscape-tip-dismissed-browser";
     setTipKey(key);
 
-    const tipDismissed =
-      typeof window !== "undefined" &&
-      window.localStorage.getItem(key) === "true";
+    const tipDimissInfo =
+      typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
+    setDismissedKey(key);
 
-    if (
-      normalizedRole === "student" &&
-      isIOSDevice() &&
-      !tipDismissed
-    ) {
+    let tipDismissed = false;
+    if (tipDimissInfo) {
+      const timestamp = Number(tipDimissInfo);
+      tipDismissed = Number.isFinite(timestamp)
+        ? Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000
+        : true;
+    }
+
+    if (normalizedRole === "student" && isIOSDevice() && !tipDismissed) {
       setShowTip(true);
     }
   }, [isLoading, user]);
 
   const handleClose = () => {
     setShowTip(false);
-    if (typeof window !== "undefined" && tipKey) {
-      window.localStorage.setItem(tipKey, "true");
+    if (typeof window !== "undefined" && dismissedKey) {
+      window.localStorage.setItem(dismissedKey, Date.now().toString());
     }
   };
 
