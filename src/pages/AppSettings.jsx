@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   User,
@@ -8,6 +8,9 @@ import {
   SmilePlus,
   Play,
   Loader2,
+  Download,
+  Share,
+  Plus,
 } from "lucide-react";
 import BackButton from "../components/ui/BackButton";
 import { useSettings } from "../contexts/SettingsContext";
@@ -20,12 +23,72 @@ import TimePicker from "../components/settings/TimePicker";
 import ProfileForm from "../components/settings/ProfileForm";
 import NotificationPermissionCard from "../components/settings/NotificationPermissionCard";
 import { toast } from "react-hot-toast";
+import {
+  isAndroidDevice,
+  isChromeBrowser,
+  isIOSDevice,
+  isSafariBrowser,
+  isInStandaloneMode,
+} from "../utils/pwaDetection";
 
 function AppSettings() {
   const { preferences, updatePreference, updateNotificationType, isLoading } =
     useSettings();
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
+  const [installEnv, setInstallEnv] = useState({
+    isReady: false,
+    isIOS: false,
+    isSafari: false,
+    isAndroid: false,
+    isChrome: false,
+    isStandalone: false,
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    setInstallEnv({
+      isReady: true,
+      isIOS: isIOSDevice(),
+      isSafari: isSafariBrowser(),
+      isAndroid: isAndroidDevice(),
+      isChrome: isChromeBrowser(),
+      isStandalone: isInStandaloneMode(),
+    });
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleUnavailable = () => {
+      toast.error(
+        "Install button isn't available right now. Visit in Chrome on Android or Safari on iOS and reload."
+      );
+    };
+
+    window.addEventListener("pwa-install-unavailable", handleUnavailable);
+    return () => {
+      window.removeEventListener("pwa-install-unavailable", handleUnavailable);
+    };
+  }, []);
+
+  const handleAndroidInstallRequest = () => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event("request-pwa-install"));
+  };
+
+  const showIOSInstall =
+    installEnv.isReady &&
+    installEnv.isIOS &&
+    installEnv.isSafari &&
+    !installEnv.isStandalone;
+
+  const showAndroidInstall =
+    installEnv.isReady &&
+    installEnv.isAndroid &&
+    installEnv.isChrome &&
+    !installEnv.isStandalone;
 
   const handleTestSound = () => {
     if (audio.shouldPlaySound()) {
@@ -92,6 +155,78 @@ function AppSettings() {
             </p>
           </div>
         </Link>
+        <SettingsSection
+          title="Install PianoMaster"
+          description="Add the app to your home screen for the best experience"
+          icon={Download}
+          defaultOpen={false}
+        >
+          {showIOSInstall && (
+            <div className="space-y-4 text-white">
+              <p className="text-white/80 text-sm">
+                On iPhone or iPad, install PianoMaster manually:
+              </p>
+              <div className="space-y-3">
+                <InstallStep
+                  number={1}
+                  text={
+                    <>
+                      Tap the <strong>Share</strong> button
+                    </>
+                  }
+                  icon={<Share className="h-4 w-4 text-blue-300" />}
+                />
+                <InstallStep
+                  number={2}
+                  text={
+                    <>
+                      Choose <strong>Add to Home Screen</strong>
+                    </>
+                  }
+                  icon={<Plus className="h-4 w-4 text-blue-300" />}
+                />
+                <InstallStep
+                  number={3}
+                  text={
+                    <>
+                      Tap <strong>Add</strong> to confirm
+                    </>
+                  }
+                />
+              </div>
+              <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-xs text-white/80">
+                Safari’s Share button sits at the bottom toolbar. Once installed,
+                reopen PianoMaster from your home screen for a full-screen
+                experience.
+              </div>
+            </div>
+          )}
+
+          {showAndroidInstall && (
+            <div className="space-y-4 text-white">
+              <p className="text-white/80 text-sm">
+                You can install PianoMaster directly from Chrome.
+              </p>
+              <button
+                onClick={handleAndroidInstallRequest}
+                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors text-sm font-medium"
+              >
+                Install via Chrome
+              </button>
+              <p className="text-xs text-white/70">
+                If the button doesn’t appear, open Chrome’s menu (⋮) and choose
+                <strong> Add to Home screen</strong>.
+              </p>
+            </div>
+          )}
+
+          {!showIOSInstall && !showAndroidInstall && (
+            <p className="text-white/70 text-sm">
+              Visit PianoMaster on your mobile device using Safari (iOS) or
+              Chrome (Android) to see install options.
+            </p>
+          )}
+        </SettingsSection>
 
         {/* Profile Settings */}
         <SettingsSection
@@ -397,3 +532,17 @@ function AppSettings() {
 }
 
 export default AppSettings;
+
+function InstallStep({ number, text, icon }) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-white/15 text-xs font-semibold text-white">
+        {number}
+      </div>
+      <div className="flex items-center gap-2 text-sm text-white/90">
+        <span>{text}</span>
+        {icon && <span>{icon}</span>}
+      </div>
+    </div>
+  );
+}

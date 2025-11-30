@@ -38,6 +38,21 @@ const PWAInstallPrompt = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleExternalRequest = () => {
+      if (installer?.canInstall) {
+        setShowPrompt(true);
+      } else {
+        window.dispatchEvent(new CustomEvent("pwa-install-unavailable"));
+      }
+    };
+
+    window.addEventListener("request-pwa-install", handleExternalRequest);
+    return () => {
+      window.removeEventListener("request-pwa-install", handleExternalRequest);
+    };
+  }, [installer]);
+
   const handleInstall = async () => {
     if (!installer) return;
 

@@ -32,6 +32,7 @@ import { SettingsProvider } from "./contexts/SettingsContext";
 import TeacherDashboard from "./components/layout/TeacherDashboard";
 import { RoleSelection } from "./components/auth/RoleSelection";
 import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
+import IOSInstallPrompt from "./components/pwa/IOSInstallPrompt";
 import PWAUpdateNotification from "./components/pwa/PWAUpdateNotification";
 import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
@@ -100,8 +101,7 @@ function OrientationController() {
 
     if (lastRoleRef.current === role) return;
 
-    const normalizedRole =
-      typeof role === "string" ? role.toLowerCase() : null;
+    const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
 
     applyRoleBasedOrientation(normalizedRole);
     lastRoleRef.current = role;
@@ -215,6 +215,7 @@ function App() {
 
                   {/* PWA Components */}
                   <PWAInstallPrompt />
+                  <IOSInstallPrompt />
                   <PWAUpdateNotification />
                   <NetworkStatus />
 
