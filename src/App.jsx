@@ -39,6 +39,11 @@ import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
 import { applyRoleBasedOrientation } from "./utils/pwa";
+import {
+  isIOSDevice,
+  isSafariBrowser,
+  isInStandaloneMode,
+} from "./utils/pwaDetection";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -179,6 +184,14 @@ function App() {
     dashboardReminderService.initialize();
   }, []);
 
+  const isDevEnv =
+    (typeof import.meta !== "undefined" &&
+      import.meta.env &&
+      import.meta.env.MODE === "development") ||
+    (typeof process !== "undefined" &&
+      process.env &&
+      process.env.NODE_ENV === "development");
+
   // Listen for service worker messages (e.g., snooze from notification action)
   useEffect(() => {
     if ("serviceWorker" in navigator) {
@@ -211,6 +224,11 @@ function App() {
               <SightReadingSessionProvider>
                 <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
                   <Toaster position="top-center" />
+                  {isDevEnv && (
+                    <div className="fixed top-4 left-4 z-50 rounded bg-black/70 px-2 py-1 text-xs text-white">
+                      {`iOS:${isIOSDevice()} Safari:${isSafariBrowser()} Standalone:${isInStandaloneMode()}`}
+                    </div>
+                  )}
                   <AppRoutes />
 
                   {/* PWA Components */}
