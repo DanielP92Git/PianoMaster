@@ -92,6 +92,7 @@ function OrientationController() {
   const { user, isLoading } = useUser();
   const lastRoleRef = useRef(null);
   const [showTip, setShowTip] = React.useState(false);
+  const [tipKey, setTipKey] = React.useState(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -110,14 +111,19 @@ function OrientationController() {
     applyRoleBasedOrientation(normalizedRole);
     lastRoleRef.current = role;
 
+    const inStandalone = isInStandaloneMode();
+    const key = inStandalone
+      ? "ios-landscape-tip-dismissed-app"
+      : "ios-landscape-tip-dismissed-browser";
+    setTipKey(key);
+
     const tipDismissed =
       typeof window !== "undefined" &&
-      window.localStorage.getItem("ios-landscape-tip-dismissed") === "true";
+      window.localStorage.getItem(key) === "true";
 
     if (
       normalizedRole === "student" &&
       isIOSDevice() &&
-      !isInStandaloneMode() &&
       !tipDismissed
     ) {
       setShowTip(true);
@@ -126,8 +132,8 @@ function OrientationController() {
 
   const handleClose = () => {
     setShowTip(false);
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("ios-landscape-tip-dismissed", "true");
+    if (typeof window !== "undefined" && tipKey) {
+      window.localStorage.setItem(tipKey, "true");
     }
   };
 
