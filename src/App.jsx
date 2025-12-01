@@ -41,6 +41,7 @@ import { SightReadingSessionProvider } from "./contexts/SightReadingSessionConte
 import { applyRoleBasedOrientation } from "./utils/pwa";
 import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
 import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
+import supabase from "./services/supabase";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -231,6 +232,18 @@ function AppRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+    });
+
+    return () => {
+      subscription?.unsubscribe?.();
+    };
+  }, []);
+
   // Initialize dashboard reminder service
   useEffect(() => {
     dashboardReminderService.initialize();
