@@ -89,47 +89,47 @@ function TeacherRedirect() {
 }
 
 function OrientationController() {
-  const { user, isLoading } = useUser();
+  const {
+    user,
+    isLoading,
+    userRole: derivedRole,
+    isStudent: derivedIsStudent,
+  } = useUser();
   const lastRoleRef = useRef(null);
-  const lastContextRef = useRef(null);
   const [showTip, setShowTip] = React.useState(false);
-  const [tipKey, setTipKey] = React.useState(null);
   const [dismissedKey, setDismissedKey] = React.useState(null);
+  const dismissedKeyRef = useRef(null);
 
   useEffect(() => {
     if (isLoading) return;
 
     const role =
+      derivedRole ||
       user?.userRole ||
       user?.user_metadata?.role ||
       user?.app_metadata?.role ||
       user?.role ||
       null;
 
+    const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
+
     if (lastRoleRef.current !== role) {
       applyRoleBasedOrientation(normalizedRole);
       lastRoleRef.current = role;
     }
 
-    const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
     const inStandalone = isInStandaloneMode();
-    const contextSignature = `${normalizedRole || "guest"}:${
-      inStandalone ? "app" : "browser"
-    }`;
-
-    if (lastContextRef.current === contextSignature) return;
-    lastContextRef.current = contextSignature;
 
     const key = inStandalone
       ? "ios-landscape-tip-dismissed-app"
       : "ios-landscape-tip-dismissed-browser";
-    setTipKey(key);
+    setDismissedKey(key);
+    dismissedKeyRef.current = key;
 
     const tipDimissInfo =
       typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
-    setDismissedKey(key);
 
-    const isStudent = normalizedRole === "student";
+    const isStudent = normalizedRole === "student" || Boolean(derivedIsStudent);
     const isiOS = isIOSDevice();
     if (!isStudent || !isiOS) {
       setShowTip(false);
@@ -151,21 +151,20 @@ function OrientationController() {
     } else {
       setShowTip(false);
     }
-  }, [isLoading, user]);
+  }, [isLoading, user, derivedRole, derivedIsStudent]);
 
   const handleClose = ({ dontShowAgain } = {}) => {
     setShowTip(false);
-    if (typeof window !== "undefined" && dismissedKey) {
+    const storageKey = dismissedKeyRef.current || dismissedKey;
+    if (typeof window !== "undefined" && storageKey) {
       window.localStorage.setItem(
-        dismissedKey,
-        dontShowAgain ? "never" : Date.now().toString(),
+        storageKey,
+        dontShowAgain ? "never" : Date.now().toString()
       );
     }
   };
 
-  return showTip ? (
-    <IOSLandscapeTipModal onClose={handleClose} />
-  ) : null;
+  return showTip ? <IOSLandscapeTipModal onClose={handleClose} /> : null;
 }
 
 function AppRoutes() {
