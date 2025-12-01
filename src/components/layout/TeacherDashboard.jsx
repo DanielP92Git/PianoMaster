@@ -1013,7 +1013,7 @@ const StudentDetailModal = ({
       title={`${student.student_name} - Detailed View`}
       size="large"
     >
-                <div className="max-h-[80vh] overflow-y-auto custom-scrollbar space-y-6">
+      <div className="max-h-[80vh] overflow-y-auto custom-scrollbar space-y-6">
         {/* Header Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">

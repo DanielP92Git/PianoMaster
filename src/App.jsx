@@ -91,6 +91,7 @@ function TeacherRedirect() {
 function OrientationController() {
   const { user, isLoading } = useUser();
   const lastRoleRef = useRef(null);
+  const lastContextRef = useRef(null);
   const [showTip, setShowTip] = React.useState(false);
   const [tipKey, setTipKey] = React.useState(null);
   const [dismissedKey, setDismissedKey] = React.useState(null);
@@ -105,14 +106,20 @@ function OrientationController() {
       user?.role ||
       null;
 
-    if (lastRoleRef.current === role) return;
+    if (lastRoleRef.current !== role) {
+      applyRoleBasedOrientation(normalizedRole);
+      lastRoleRef.current = role;
+    }
 
     const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
-
-    applyRoleBasedOrientation(normalizedRole);
-    lastRoleRef.current = role;
-
     const inStandalone = isInStandaloneMode();
+    const contextSignature = `${normalizedRole || "guest"}:${
+      inStandalone ? "app" : "browser"
+    }`;
+
+    if (lastContextRef.current === contextSignature) return;
+    lastContextRef.current = contextSignature;
+
     const key = inStandalone
       ? "ios-landscape-tip-dismissed-app"
       : "ios-landscape-tip-dismissed-browser";
@@ -122,27 +129,43 @@ function OrientationController() {
       typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
     setDismissedKey(key);
 
-    let tipDismissed = false;
-    if (tipDimissInfo) {
-      const timestamp = Number(tipDimissInfo);
-      tipDismissed = Number.isFinite(timestamp)
-        ? Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000
-        : true;
+    const isStudent = normalizedRole === "student";
+    const isiOS = isIOSDevice();
+    if (!isStudent || !isiOS) {
+      setShowTip(false);
+      return;
     }
 
-    if (normalizedRole === "student" && isIOSDevice() && !tipDismissed) {
+    let tipDismissed = false;
+    if (tipDimissInfo === "never") {
+      tipDismissed = true;
+    } else if (tipDimissInfo) {
+      const timestamp = Number(tipDimissInfo);
+      tipDismissed =
+        Number.isFinite(timestamp) &&
+        Date.now() - timestamp < 7 * 24 * 60 * 60 * 1000;
+    }
+
+    if (!tipDismissed) {
       setShowTip(true);
+    } else {
+      setShowTip(false);
     }
   }, [isLoading, user]);
 
-  const handleClose = () => {
+  const handleClose = ({ dontShowAgain } = {}) => {
     setShowTip(false);
     if (typeof window !== "undefined" && dismissedKey) {
-      window.localStorage.setItem(dismissedKey, Date.now().toString());
+      window.localStorage.setItem(
+        dismissedKey,
+        dontShowAgain ? "never" : Date.now().toString(),
+      );
     }
   };
 
-  return showTip ? <IOSLandscapeTipModal onClose={handleClose} /> : null;
+  return showTip ? (
+    <IOSLandscapeTipModal onClose={handleClose} />
+  ) : null;
 }
 
 function AppRoutes() {

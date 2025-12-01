@@ -55,5 +55,3 @@ export function GameModeGrid({ games }) {
     </div>
   );
 }
-
-

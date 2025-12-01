@@ -1,6 +1,13 @@
-import { X } from "lucide-react";
+import { createElement, useState } from "react";
+import { X as CloseIcon } from "lucide-react";
 
 export default function IOSLandscapeTipModal({ onClose }) {
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  const handleClose = () => {
+    onClose({ dontShowAgain });
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden">
@@ -11,11 +18,11 @@ export default function IOSLandscapeTipModal({ onClose }) {
               <h3 className="text-sm font-semibold">Use landscape on iPad</h3>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="flex h-6 w-6 items-center justify-center rounded-full hover:bg-white/20"
               aria-label="Close tip"
             >
-              <X className="h-4 w-4" />
+              {createElement(CloseIcon, { className: "h-4 w-4" })}
             </button>
           </div>
         </div>
@@ -32,9 +39,21 @@ export default function IOSLandscapeTipModal({ onClose }) {
             PianoMaster from the new icon.
           </p>
 
+          <label className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-700">
+            <input
+              type="checkbox"
+              className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+              checked={dontShowAgain}
+              onChange={(event) => setDontShowAgain(event.target.checked)}
+            />
+            <span>
+              Got it! Don&apos;t show it again<span aria-hidden="true">.</span>
+            </span>
+          </label>
+
           <div className="pt-2">
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="w-full rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors"
             >
               Got it
@@ -45,6 +64,3 @@ export default function IOSLandscapeTipModal({ onClose }) {
     </div>
   );
 }
-
-
-

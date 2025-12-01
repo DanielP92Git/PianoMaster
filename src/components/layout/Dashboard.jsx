@@ -29,7 +29,7 @@ function Dashboard() {
     if (!isStudent) return;
     lockOrientation("landscape-primary");
   }, [isStudent]);
-  
+
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();
@@ -38,7 +38,7 @@ function Dashboard() {
   // Poll for active reminder status (only for students)
   useEffect(() => {
     if (!isStudent) return;
-    
+
     const updateReminderStatus = () => {
       const reminder = dashboardReminderService.getActiveReminder();
       setActiveReminder(reminder);

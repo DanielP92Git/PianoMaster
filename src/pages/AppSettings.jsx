@@ -195,9 +195,9 @@ function AppSettings() {
                 />
               </div>
               <div className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-xs text-white/80">
-                Safari’s Share button sits at the bottom toolbar. Once installed,
-                reopen PianoMaster from your home screen for a full-screen
-                experience.
+                Safari’s Share button sits at the bottom toolbar. Once
+                installed, reopen PianoMaster from your home screen for a
+                full-screen experience.
               </div>
             </div>
           )}
