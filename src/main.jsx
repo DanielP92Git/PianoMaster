@@ -9,6 +9,7 @@ import {
   initializeFullscreen,
   lockOrientation,
 } from "./utils/pwa.js";
+import "./i18n";
 import "./index.css";
 
 // Initialize fullscreen mode

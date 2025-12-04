@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { UnifiedGameSettings } from "../../shared/UnifiedGameSettings";
 import { TREBLE_NOTES, BASS_NOTES } from "../constants/gameSettings";
 import { TIME_SIGNATURES } from "../../rhythm-games/RhythmPatternGenerator";
+import { normalizeSelectedNotes } from "../../shared/noteSelectionUtils";
 
+//
 export function PreGameSetup({
   settings,
   onUpdateSettings,
@@ -40,23 +42,38 @@ export function PreGameSetup({
     if (micMode === "tested") return "Ready";
     return "Not checked";
   };
+  const normalizedSelectedNotes = useMemo(
+    () =>
+      normalizeSelectedNotes({
+        selectedNotes: settings.selectedNotes,
+        clef: settings.clef,
+        trebleNotes: TREBLE_NOTES,
+        bassNotes: BASS_NOTES,
+        targetField: "pitch",
+      }),
+    [settings.selectedNotes, settings.clef]
+  );
+  const preparedInitialSettings = {
+    ...settings,
+    selectedNotes: normalizedSelectedNotes,
+  };
   const config = {
     gameType: "sight-reading",
     steps: [
       {
         id: "clef",
-        title: "Choose Clef",
+        title: "gameSettings.steps.labels.clef",
         component: "ClefSelection",
       },
       {
         id: "notes",
-        title: "Select Notes",
+        title: "gameSettings.steps.labels.notes",
         component: "NoteSelection",
-        config: { showImages: true, minNotes: 2 },
+        config: { showImages: true, minNotes: 2, noteIdField: "pitch" },
       },
       {
         id: "timeSignature",
-        title: "Time Signature",
+        title: "gameSettings.steps.labels.timeSignature",
         component: "TimeSignatureSelection",
         config: {
           timeSignatures: [
@@ -68,12 +85,12 @@ export function PreGameSetup({
       },
       {
         id: "tempo",
-        title: "Set Tempo",
+        title: "gameSettings.steps.labels.tempo",
         component: "TempoSelection",
         config: { minTempo: 60, maxTempo: 180 },
       },
     ],
-    initialSettings: settings,
+    initialSettings: preparedInitialSettings,
     onStart: (finalSettings) => {
       // Stop any mic test before starting the game
       if (micStatus.isListening) {
@@ -84,8 +101,19 @@ export function PreGameSetup({
       setMicMode("not_checked");
       setMicError(null);
 
-      onUpdateSettings(finalSettings);
-      onStart(finalSettings);
+      const preparedSettings = {
+        ...finalSettings,
+        selectedNotes: normalizeSelectedNotes({
+          selectedNotes: finalSettings.selectedNotes,
+          clef: finalSettings.clef,
+          trebleNotes: TREBLE_NOTES,
+          bassNotes: BASS_NOTES,
+          targetField: "pitch",
+        }),
+      };
+
+      onUpdateSettings(preparedSettings);
+      onStart(preparedSettings);
     },
     backRoute: "/notes-master-mode",
     noteData: {

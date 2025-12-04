@@ -2,11 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { practiceService } from "../services/practiceService";
 import { useUser } from "../features/authentication/useUser";
-import { Pencil, Trash2, Save, X, Loader2, Square, CheckSquare } from "lucide-react";
+import {
+  Pencil,
+  Trash2,
+  Save,
+  X,
+  Loader2,
+  Square,
+  CheckSquare,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import BackButton from "../components/ui/BackButton";
 import PracticeSessionPlayer from "../components/ui/PracticeSessionPlayer";
 import { useStudentFeedbackNotifications } from "../hooks/useStudentFeedbackNotifications";
+import { useTranslation } from "react-i18next";
 
 export default function PracticeSessions() {
   const { user } = useUser();
@@ -15,7 +24,10 @@ export default function PracticeSessions() {
   const [editedNotes, setEditedNotes] = useState("");
   const [playingId, setPlayingId] = useState(null);
   const [selectedSessions, setSelectedSessions] = useState([]);
-  const { clearFeedbackNotifications } = useStudentFeedbackNotifications(user?.id);
+  const { clearFeedbackNotifications } = useStudentFeedbackNotifications(
+    user?.id
+  );
+  const { t } = useTranslation("common");
 
   // Fetch practice sessions using React Query
   const {
@@ -89,13 +101,11 @@ export default function PracticeSessions() {
   // Delete session mutation
   const deleteSessionMutation = useMutation({
     mutationFn: async (sessionId) => {
-      
       const result = await practiceService.deletePracticeSession(sessionId);
-      
+
       return result;
     },
     onMutate: async (sessionId) => {
-      
       // Cancel any outgoing refetches
       await queryClient.cancelQueries(["practice-sessions", user?.id]);
 
@@ -127,11 +137,9 @@ export default function PracticeSessions() {
       toast.error(`Failed to delete recording: ${error.message}`);
     },
     onSuccess: () => {
-      
       toast.success("Recording deleted successfully");
     },
     onSettled: () => {
-      
       // Always refetch after error or success to ensure cache is in sync
       queryClient.invalidateQueries(["practice-sessions", user?.id]);
     },
@@ -238,7 +246,6 @@ export default function PracticeSessions() {
 
   const handleDelete = async (sessionId) => {
     if (window.confirm("Are you sure you want to delete this recording?")) {
-      
       try {
         await deleteSessionMutation.mutateAsync(sessionId);
       } catch (error) {
@@ -308,7 +315,7 @@ export default function PracticeSessions() {
   if (error) {
     return (
       <div className="p-8">
-        <BackButton to="/" name="Dashboard" />
+        <BackButton to="/" name={t("navigation.links.studentDashboard")} />
         <div className="text-center py-8">
           <p className="text-red-400">Failed to load practice recordings.</p>
           <p className="text-gray-400 text-sm mt-2">
@@ -321,11 +328,11 @@ export default function PracticeSessions() {
 
   return (
     <div className="p-8 space-y-6">
-      <BackButton to="/" name="Dashboard" />
+      <BackButton to="/" name={t("navigation.links.studentDashboard")} />
 
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <h1 className="text-3xl font-bold text-white">Practice Recordings</h1>
+          <h1 className="text-3xl font-bold text-white">{t("pages.practiceSessions.title")}</h1>
           {sessions?.length > 0 && (
             <button
               onClick={() => handleSelectAll(!isAllSelected)}
@@ -336,7 +343,7 @@ export default function PracticeSessions() {
               ) : (
                 <Square className="w-5 h-5" />
               )}
-              Select All
+              {t("common.actions.selectAll")}
             </button>
           )}
         </div>
@@ -355,7 +362,7 @@ export default function PracticeSessions() {
               ) : (
                 <>
                   <Trash2 className="w-4 h-4" />
-                  Delete Selected ({selectedSessions.length})
+                  {t("common.actions.deleteSelected")} ({selectedSessions.length})
                 </>
               )}
             </button>
@@ -372,7 +379,7 @@ export default function PracticeSessions() {
                   Cleaning up...
                 </div>
               ) : (
-                "Delete All Sessions"
+                t("common.actions.deleteAllSessions")
               )}
             </button>
           )}
@@ -382,7 +389,7 @@ export default function PracticeSessions() {
       <div className="grid gap-4">
         {sessions?.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-400">No practice sessions recorded yet.</p>
+            <p className="text-gray-400">{t("pages.practiceSessions.noPracticeSessions")}</p>
           </div>
         ) : (
           sessions?.map((session, index) => (
@@ -391,7 +398,7 @@ export default function PracticeSessions() {
               {index === 0 && (
                 <div className="flex justify-center">
                   <span className="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-full">
-                    Latest Recording
+                    {t("pages.practiceSessions.latestRecording")}
                   </span>
                 </div>
               )}
@@ -442,13 +449,13 @@ export default function PracticeSessions() {
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-white font-medium flex items-center gap-2">
                       <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
-                      Session Notes
+                      {t("pages.practiceSessions.sessionStudentNotes")}
                     </h4>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleEdit(session)}
                         className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors"
-                        title="Edit notes"
+                        title={t("pages.practiceSessions.editStudentNotes")}
                       >
                         <Pencil className="w-4 h-4 text-white" />
                       </button>
@@ -456,7 +463,7 @@ export default function PracticeSessions() {
                         onClick={() => handleDelete(session.id)}
                         disabled={deleteSessionMutation.isLoading}
                         className="p-2 rounded-lg bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50"
-                        title="Delete session"
+                        title={t("pages.practiceSessions.deleteSession")}
                       >
                         <Trash2 className="w-4 h-4 text-white" />
                       </button>
@@ -470,7 +477,7 @@ export default function PracticeSessions() {
                         onChange={(e) => setEditedNotes(e.target.value)}
                         className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 resize-none"
                         rows="4"
-                        placeholder="Add notes about this practice session..."
+                        placeholder={t("pages.practiceSessions.addStudentNotes")}
                       />
                       <div className="flex gap-2">
                         <button
@@ -479,14 +486,14 @@ export default function PracticeSessions() {
                           className="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
                           <Save className="w-4 h-4" />
-                          {updateNotesMutation.isLoading ? "Saving..." : "Save"}
+                          {updateNotesMutation.isLoading ? t("common.actions.saving") : t("common.actions.save")}
                         </button>
                         <button
                           onClick={() => setEditingId(null)}
                           className="px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-700 transition-colors flex items-center gap-2"
                         >
                           <X className="w-4 h-4" />
-                          Cancel
+                          {t("common.actions.cancel")}
                         </button>
                       </div>
                     </div>
@@ -498,8 +505,7 @@ export default function PracticeSessions() {
                         </div>
                       ) : (
                         <div className="text-white/50 italic">
-                          No notes added yet. Click the edit button to add
-                          notes.
+                          {t("pages.practiceSessions.noStudentNotesAdded")}
                         </div>
                       )}
                     </div>
@@ -510,21 +516,21 @@ export default function PracticeSessions() {
                 {session.teacher_feedback && (
                   <div className="border-t border-white/10 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 p-4">
                     <h4 className="text-indigo-300 font-semibold mb-3 flex items-center gap-2">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="w-5 h-5 text-indigo-400" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="w-5 h-5 text-indigo-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
                         stroke="currentColor"
                       >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" 
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                         />
                       </svg>
-                      Teacher Feedback
+                      {t("pages.practiceSessions.teacherFeedback")}
                     </h4>
                     <div className="bg-white/10 rounded-lg p-3 border border-indigo-400/30">
                       <div className="text-white text-sm whitespace-pre-wrap leading-relaxed">

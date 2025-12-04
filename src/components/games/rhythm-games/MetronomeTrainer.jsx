@@ -8,7 +8,7 @@ import {
   TIME_SIGNATURES,
 } from "./RhythmPatternGenerator";
 import { MetronomeDisplay, TapArea } from "./components";
-import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
+import RhythmGameSetup from "./components/RhythmGameSetup";
 import BackButton from "../../ui/BackButton";
 import Button from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
@@ -1035,51 +1035,17 @@ export function MetronomeTrainer() {
 
   // Show setup screen
   if (gamePhase === GAME_PHASES.SETUP) {
-    const config = {
-      gameType: 'rhythm',
-      steps: [
-        { 
-          id: 'difficulty', 
-          title: 'Choose Difficulty', 
-          component: 'DifficultySelection',
-          config: {
-            difficulties: [
-              { value: DIFFICULTY_LEVELS.BEGINNER, name: 'Beginner', description: '2 bars' },
-              { value: DIFFICULTY_LEVELS.INTERMEDIATE, name: 'Intermediate', description: '4 bars' },
-              { value: DIFFICULTY_LEVELS.ADVANCED, name: 'Advanced', description: '8 bars' }
-            ]
-          }
-        },
-        { 
-          id: 'timeSignature', 
-          title: 'Time Signature', 
-          component: 'TimeSignatureSelection',
-          config: {
-            timeSignatures: [
-              TIME_SIGNATURES.FOUR_FOUR,
-              TIME_SIGNATURES.THREE_FOUR,
-              TIME_SIGNATURES.TWO_FOUR,
-              TIME_SIGNATURES.SIX_EIGHT
-            ]
-          }
-        },
-        { 
-          id: 'tempo', 
-          title: 'Set Tempo', 
-          component: 'TempoSelection',
-          config: { minTempo: 60, maxTempo: 180 }
-        }
-      ],
-      initialSettings: gameSettings,
-      onStart: (finalSettings) => {
-        setGameSettings(finalSettings);
-        startGame(finalSettings);
-      },
-      backRoute: '/rhythm-mode',
-      noteData: { trebleNotes: [], bassNotes: [] }
-    };
-
-    return <UnifiedGameSettings {...config} />;
+    return (
+      <RhythmGameSetup
+        settings={gameSettings}
+        onUpdateSettings={setGameSettings}
+        onStart={(finalSettings) => {
+          setGameSettings(finalSettings);
+          startGame(finalSettings);
+        }}
+        backRoute="/rhythm-mode"
+      />
+    );
   }
 
   // Show session complete screen

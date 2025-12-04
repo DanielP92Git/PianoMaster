@@ -6,20 +6,6 @@ import React, {
   useMemo,
 } from "react";
 import { useNavigate } from "react-router-dom";
-import DoImageSvg from "../../../assets/noteImages/treble-do-middle.svg?react";
-import ReImageSvg from "../../../assets/noteImages/treble-re-first.svg?react";
-import MiImageSvg from "../../../assets/noteImages/treble-mi-first.svg?react";
-import FaImageSvg from "../../../assets/noteImages/treble-fa-first.svg?react";
-import SolImageSvg from "../../../assets/noteImages/treble-sol-first.svg?react";
-import LaImageSvg from "../../../assets/noteImages/treble-la-first.svg?react";
-import SiImageSvg from "../../../assets/noteImages/treble-si-first.svg?react";
-import BassDoImageSvg from "../../../assets/noteImages/bass-do-middle.svg?react";
-import BassReImageSvg from "../../../assets/noteImages/bass-re-small.svg?react";
-import BassMiImageSvg from "../../../assets/noteImages/bass-mi-small.svg?react";
-import BassFaImageSvg from "../../../assets/noteImages/bass-fa-small.svg?react";
-import BassSolImageSvg from "../../../assets/noteImages/bass-sol-small.svg?react";
-import BassLaImageSvg from "../../../assets/noteImages/bass-la-small.svg?react";
-import BassSiImageSvg from "../../../assets/noteImages/bass-si-small.svg?react";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
 import VictoryScreen from "../VictoryScreen";
@@ -30,53 +16,107 @@ import {
   FaMicrophone,
   FaMicrophoneSlash,
 } from "react-icons/fa";
-import { GameSettings } from "../shared/GameSettings";
+import { GameSettings } from "../shared/UnifiedGameSettings";
 import { useGameSettings } from "../../../features/games/hooks/useGameSettings";
 import { useGameProgress } from "../../../features/games/hooks/useGameProgress";
 import { useSounds } from "../../../features/games/hooks/useSounds";
+import {
+  TREBLE_NOTES,
+  BASS_NOTES,
+} from "../sight-reading-game/constants/gameSettings";
+import { useTranslation } from "react-i18next";
 
-const trebleNotes = [
-  { note: "דו", ImageComponent: DoImageSvg },
-  { note: "רה", ImageComponent: ReImageSvg },
-  { note: "מי", ImageComponent: MiImageSvg },
-  { note: "פה", ImageComponent: FaImageSvg },
-  { note: "סול", ImageComponent: SolImageSvg },
-  { note: "לה", ImageComponent: LaImageSvg },
-  { note: "סי", ImageComponent: SiImageSvg },
+const TREBLE_RANGE_ORDER = [
+  "G3",
+  "A3",
+  "B3",
+  "C4",
+  "D4",
+  "E4",
+  "F4",
+  "G4",
+  "A4",
+  "B4",
+  "C5",
+  "D5",
+  "E5",
+  "F5",
+  "G5",
+  "A5",
+  "B5",
+  "C6",
 ];
 
-const bassNotes = [
-  { note: "דו", ImageComponent: BassDoImageSvg },
-  { note: "סי", ImageComponent: BassSiImageSvg },
-  { note: "לה", ImageComponent: BassLaImageSvg },
-  { note: "סול", ImageComponent: BassSolImageSvg },
-  { note: "פה", ImageComponent: BassFaImageSvg },
-  { note: "מי", ImageComponent: BassMiImageSvg },
-  { note: "רה", ImageComponent: BassReImageSvg },
+const BASS_RANGE_ORDER = [
+  "B1",
+  "C2",
+  "D2",
+  "E2",
+  "F2",
+  "G2",
+  "A2",
+  "B2",
+  "C3",
+  "D3",
+  "E3",
+  "F3",
+  "G3",
+  "A3",
+  "B3",
+  "C4",
+  "D4",
+  "E4",
+  "F4",
 ];
 
-// Simple timer display component
-const TimerDisplay = ({ formattedTime }) => {
-  return (
-    <div className="timer-display flex items-center text-white bg-black/30 px-3 py-1 rounded-lg">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-6 w-6 mr-2"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-      Time: {formattedTime || "00:00"}
-    </div>
-  );
+const buildOrderedNotes = (sourceNotes, order) => {
+  const orderMap = new Map(order.map((pitch, index) => [pitch, index]));
+  return sourceNotes
+    .filter((note) => orderMap.has(note.englishName))
+    .sort((a, b) => orderMap.get(a.englishName) - orderMap.get(b.englishName));
 };
+
+const trebleNotes = buildOrderedNotes(TREBLE_NOTES, TREBLE_RANGE_ORDER);
+const bassNotes = buildOrderedNotes(BASS_NOTES, BASS_RANGE_ORDER);
+
+const getClefNotes = (clef) => (clef === "Bass" ? bassNotes : trebleNotes);
+const normalizeSelectedNotes = (selectedNotes, clef) => {
+  const clefNotes = getClefNotes(clef);
+  if (!Array.isArray(selectedNotes) || selectedNotes.length === 0) {
+    return [];
+  }
+
+  const pitchSet = new Set(clefNotes.map((note) => note.pitch));
+  const nameToPitch = new Map(clefNotes.map((note) => [note.note, note.pitch]));
+
+  const normalized = selectedNotes
+    .map((value) => {
+      if (pitchSet.has(value)) return value;
+      return nameToPitch.get(value);
+    })
+    .filter(Boolean);
+
+  return normalized.length > 0 ? normalized : defaultSelection;
+};
+
+const NOTE_RECOGNITION_STEPS = [
+  {
+    id: "clef",
+    title: "gameSettings.steps.labels.clef",
+    component: "ClefSelection",
+  },
+  {
+    id: "notes",
+    title: "gameSettings.steps.labels.notes",
+    component: "NoteSelection",
+    config: { showImages: true, minNotes: 2, noteIdField: "pitch" },
+  },
+  {
+    id: "timedMode",
+    title: "gameSettings.steps.labels.gameMode",
+    component: "TimedModeSelection",
+  },
+];
 
 // Progress bar component to track answered questions
 const ProgressBar = ({ current, total }) => {
@@ -102,12 +142,18 @@ const ProgressBar = ({ current, total }) => {
 
 export function NoteRecognitionGame() {
   const navigate = useNavigate();
+  const { t } = useTranslation("common");
 
   // Game settings with defaults
   const { settings, updateSettings, resetSettings } = useGameSettings({
     timedMode: false,
     timeLimit: 45,
+    selectedNotes: [],
   });
+  const normalizedSelectedNotes = normalizeSelectedNotes(
+    settings.selectedNotes,
+    settings.clef
+  );
 
   const { progress, updateProgress, handleAnswer, finishGame, resetProgress } =
     useGameProgress();
@@ -239,22 +285,13 @@ export function NoteRecognitionGame() {
 
   // Get random note based on current settings
   const getRandomNote = () => {
-    const notesArray = settings.clef === "Treble" ? trebleNotes : bassNotes;
-
-    let selectedNotes = settings.selectedNotes;
-    // Only use all notes as fallback if no notes are selected at all
-    if (!Array.isArray(selectedNotes) || selectedNotes.length === 0) {
-      selectedNotes = notesArray.map((note) => note.note);
-      // Don't call updateSettings here as it causes re-renders and overrides
-    }
-
-    const filteredNotes = notesArray.filter((note) =>
-      selectedNotes.includes(note.note)
+    const clefNotes = getClefNotes(settings.clef);
+    const filteredNotes = clefNotes.filter((note) =>
+      normalizedSelectedNotes.includes(note.pitch)
     );
 
     if (filteredNotes.length === 0) {
-      const allNotes = notesArray;
-      return allNotes[Math.floor(Math.random() * allNotes.length)];
+      return clefNotes[Math.floor(Math.random() * clefNotes.length)];
     }
 
     return filteredNotes[Math.floor(Math.random() * filteredNotes.length)];
@@ -265,18 +302,10 @@ export function NoteRecognitionGame() {
     if (!newSettings) return;
 
     const clef = newSettings.clef === "Bass" ? "Bass" : "Treble";
-
-    let selectedNotes = Array.isArray(newSettings.selectedNotes)
-      ? newSettings.selectedNotes
-      : [];
-
-    // Only use all notes as fallback if no notes are selected at all
-    if (selectedNotes.length === 0) {
-      selectedNotes =
-        clef === "Treble"
-          ? trebleNotes.map((note) => note.note)
-          : bassNotes.map((note) => note.note);
-    }
+    const selectedNotes = normalizeSelectedNotes(
+      newSettings.selectedNotes,
+      clef
+    );
 
     // Make sure timedMode is explicitly set
     const timedMode =
@@ -303,16 +332,10 @@ export function NoteRecognitionGame() {
 
   // Start the game with current or new settings
   const startGame = (gameSettings = settings) => {
-    // Only use all notes as fallback if no notes are selected at all
-    if (
-      !gameSettings.selectedNotes ||
-      gameSettings.selectedNotes.length === 0
-    ) {
-      gameSettings.selectedNotes =
-        gameSettings.clef === "Treble"
-          ? trebleNotes.map((note) => note.note)
-          : bassNotes.map((note) => note.note);
-    }
+    const resolvedSelectedNotes = normalizeSelectedNotes(
+      gameSettings.selectedNotes,
+      gameSettings.clef
+    );
 
     // Make sure we capture the timedMode correctly
     const timedMode =
@@ -320,6 +343,7 @@ export function NoteRecognitionGame() {
 
     const updatedSettings = {
       ...gameSettings,
+      selectedNotes: resolvedSelectedNotes,
       timedMode, // Ensure timedMode is explicitly set
     };
 
@@ -332,16 +356,9 @@ export function NoteRecognitionGame() {
     resetTimer(timeLimit);
 
     // Generate first note using the passed gameSettings instead of global settings
-    const notesArray = gameSettings.clef === "Treble" ? trebleNotes : bassNotes;
-    let selectedNotes = gameSettings.selectedNotes;
-
-    // Only use all notes as fallback if no notes are selected at all
-    if (!Array.isArray(selectedNotes) || selectedNotes.length === 0) {
-      selectedNotes = notesArray.map((note) => note.note);
-    }
-
+    const notesArray = getClefNotes(gameSettings.clef);
     const filteredNotes = notesArray.filter((note) =>
-      selectedNotes.includes(note.note)
+      resolvedSelectedNotes.includes(note.pitch)
     );
 
     const firstNote =
@@ -698,7 +715,7 @@ export function NoteRecognitionGame() {
         <div className="p-2 flex-shrink-0">
           <BackButton
             to="/practice-modes"
-            name="Practice Modes"
+            name={t("games.backToModes")}
             styling="text-white/80 hover:text-white text-sm"
           />
         </div>
@@ -709,6 +726,7 @@ export function NoteRecognitionGame() {
       {!progress.isStarted ? (
         <GameSettings
           gameType="note-recognition"
+          steps={NOTE_RECOGNITION_STEPS}
           onStart={handleGameSettings}
           onChange={handleSettingsChange}
           initialClef={settings.clef}
@@ -718,6 +736,7 @@ export function NoteRecognitionGame() {
           trebleNotes={trebleNotes}
           bassNotes={bassNotes}
           noteOptions={settings.selectedNotes}
+          noteData={{ trebleNotes, bassNotes }}
         />
       ) : progress.isFinished ? (
         progress.isLost ? (
@@ -744,17 +763,26 @@ export function NoteRecognitionGame() {
       ) : (
         <div className="flex-1 flex flex-col">
           {/* Score and Timer at the top */}
-          <div className="text-2xl font-bold text-white text-center mt-2 mb-3 flex justify-center items-center space-x-8">
-            <span>Score: {progress.score}</span>
+          <div className="text-lg sm:text-xl md:text-2xl font-bold text-white mt-2 mb-3 flex justify-center items-center gap-2 sm:gap-3 md:gap-4 px-2">
+            <div className="bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20 flex items-center gap-1 sm:gap-2">
+              <span className="text-white/70 text-sm sm:text-base md:text-lg">
+                {t("games.score")}:
+            </span>
+              <span className="font-mono">{progress.score}</span>
+            </div>
 
-            {/* Always render appropriate mode indicator */}
             {settings.timedMode ? (
-              <TimerDisplay formattedTime={formattedTime} />
+              <div className="bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20 flex items-center gap-1 sm:gap-2">
+                <span className="text-white/70 text-sm sm:text-base md:text-lg">
+                  {t("games.time")}:
+              </span>
+                <span className="font-mono">{formattedTime || "00:00"}</span>
+              </div>
             ) : (
-              <div className="bg-green-600/70 text-white px-3 py-1 rounded-lg text-lg flex items-center">
+              <div className="bg-green-600/80 backdrop-blur-sm text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-green-400/30 text-sm sm:text-base md:text-lg flex items-center gap-1 sm:gap-2">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
+                  className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -766,7 +794,7 @@ export function NoteRecognitionGame() {
                     d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
                   />
                 </svg>
-                Practice Mode
+                <span>{t("games.labels.practiceMode")}</span>
               </div>
             )}
           </div>
@@ -820,7 +848,7 @@ export function NoteRecognitionGame() {
                       Array.isArray(settings.selectedNotes) &&
                       settings.selectedNotes.length > 0
                         ? allNotes.filter((note) =>
-                            settings.selectedNotes.includes(note.note)
+                            settings.selectedNotes.includes(note.pitch)
                           )
                         : allNotes;
 
@@ -921,27 +949,35 @@ export function NoteRecognitionGame() {
           <>
             <button
               onClick={toggleAudioInput}
-              className={`px-3 py-1.5 backdrop-blur-md border border-white/20 text-white rounded-lg transition-colors flex items-center ${
+              className={`px-2 sm:px-3 py-1 sm:py-1.5 backdrop-blur-md border border-white/20 text-white rounded-lg transition-colors flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-medium ${
                 isListening
                   ? "bg-red-600/80 hover:bg-red-700/80"
                   : "bg-green-600/80 hover:bg-green-700/80"
               }`}
-              aria-label={isListening ? "Stop Listening" : "Start Listening"}
+              aria-label={
+                isListening
+                  ? t("games.actions.stopListening")
+                  : t("games.actions.listen")
+              }
             >
               {isListening ? (
-                <FaMicrophoneSlash className="mr-1" />
+                <FaMicrophoneSlash className="flex-shrink-0" />
               ) : (
-                <FaMicrophone className="mr-1" />
+                <FaMicrophone className="flex-shrink-0" />
               )}
-              {isListening ? "Stop" : "Listen"}
+              <span>
+              {isListening
+                  ? t("games.actions.stop")
+                  : t("games.actions.listen")}
+              </span>
             </button>
             <button
               onClick={handlePauseGame}
-              className="px-3 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center"
-              aria-label="Pause"
+              className="px-2 sm:px-3 py-1 sm:py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors flex items-center gap-1 sm:gap-2 text-sm sm:text-base font-medium"
+              aria-label={t("games.actions.pause")}
             >
-              <FaPause className="mr-1" />
-              Pause
+              <FaPause className="flex-shrink-0" />
+              <span>{t("games.actions.pause")}</span>
             </button>
           </>
         )}
@@ -951,6 +987,7 @@ export function NoteRecognitionGame() {
       {progress.showSettingsModal && (
         <GameSettings
           gameType="note-recognition"
+          steps={NOTE_RECOGNITION_STEPS}
           isModal={true}
           onStart={handleRestartGame}
           onCancel={handleResumeGame}
@@ -962,6 +999,7 @@ export function NoteRecognitionGame() {
           trebleNotes={trebleNotes}
           bassNotes={bassNotes}
           noteOptions={settings.selectedNotes}
+          noteData={{ trebleNotes, bassNotes }}
         />
       )}
     </div>

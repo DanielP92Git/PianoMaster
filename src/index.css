@@ -1099,6 +1099,25 @@ body {
   border-radius: 4px !important;
 }
 
+/* Sticky Hover Assistance */
+.sticky-hover button,
+.sticky-hover [role="button"],
+.sticky-hover a,
+.sticky-hover input,
+.sticky-hover select,
+.sticky-hover textarea {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sticky-hover .sticky-hover-active {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
 /* Screen Reader Optimized */
 .screen-reader-optimized [aria-label]::after {
   content: " (" attr(aria-label) ")";

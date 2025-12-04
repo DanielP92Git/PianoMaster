@@ -2,10 +2,13 @@ import { Link } from "react-router-dom";
 import { useUser } from "../../features/authentication/useUser";
 import { useLogout } from "../../features/authentication/useLogout";
 import { Loader2, LogOut } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 function AuthButton({ className = "" }) {
   const { isAuthenticated, user } = useUser();
   const { logout, isPending } = useLogout();
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
 
   if (isAuthenticated) {
     return (
@@ -21,19 +24,20 @@ function AuthButton({ className = "" }) {
           rounded-xl shadow-lg hover:shadow-xl
           transition-all duration-200
           focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2
+          ${isRTL ? "flex-row-reverse" : ""}
           ${className}
         `}
-        aria-label={isPending ? "Logging out..." : "Log out"}
+        aria-label={isPending ? t("auth.loggingOut") : t("auth.logOut")}
       >
         {isPending ? (
           <>
             <Loader2 className="h-5 w-5 animate-spin flex-shrink-0" />
-            <span>Logging out...</span>
+            <span>{t("auth.loggingOut")}</span>
           </>
         ) : (
           <>
-            <LogOut className="w-5 h-5 flex-shrink-0 transition-transform group-hover:-translate-x-1" />
-            <span>Log out</span>
+            <LogOut className={`w-5 h-5 flex-shrink-0 transition-transform ${isRTL ? "group-hover:translate-x-1" : "group-hover:-translate-x-1"}`} />
+            <span>{t("auth.logOut")}</span>
           </>
         )}
       </button>
@@ -51,10 +55,11 @@ function AuthButton({ className = "" }) {
         rounded-xl shadow-lg hover:shadow-xl
         transition-all duration-200
         focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+        ${isRTL ? "flex-row-reverse" : ""}
         ${className}
       `}
     >
-      <span>Log in</span>
+      <span>{t("auth.logIn")}</span>
     </Link>
   );
 }

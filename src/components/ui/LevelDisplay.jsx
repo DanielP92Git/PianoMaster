@@ -3,74 +3,70 @@ import { Target, Star, Award, Zap, Trophy } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentScores } from "../../services/apiDatabase";
 import { useUser } from "../../features/authentication/useUser";
+import { useTranslation } from "react-i18next";
 
 // Get level styling based on points
 const getLevelVisuals = (points) => {
   if (points === 0) {
     return {
       icon: Target,
-      level: "Beginner",
+      levelKey: "beginner",
       color: "text-gray-600",
       iconColor: "text-gray-400",
       bgColor: "bg-white",
       borderColor: "border-gray-200",
-      description: "Just getting started",
     };
   } else if (points < 100) {
     return {
       icon: Star,
-      level: "Student",
+      levelKey: "student",
       color: "text-blue-600",
       iconColor: "text-blue-400",
       bgColor: "bg-blue-50",
       borderColor: "border-blue-200",
-      description: "Learning the basics",
     };
   } else if (points < 500) {
     return {
       icon: Award,
-      level: "Practitioner",
+      levelKey: "practitioner",
       color: "text-green-600",
       iconColor: "text-green-400",
       bgColor: "bg-green-50",
       borderColor: "border-green-200",
-      description: "Building skills",
     };
   } else if (points < 1000) {
     return {
       icon: Zap,
-      level: "Expert",
+      levelKey: "expert",
       color: "text-yellow-600",
       iconColor: "text-yellow-400",
       bgColor: "bg-yellow-50",
       borderColor: "border-yellow-200",
-      description: "Advanced player",
     };
   } else if (points < 2500) {
     return {
       icon: Trophy,
-      level: "Master",
+      levelKey: "master",
       color: "text-purple-600",
       iconColor: "text-purple-400",
       bgColor: "bg-purple-50",
       borderColor: "border-purple-200",
-      description: "Piano master",
     };
   } else {
     return {
       icon: Trophy,
-      level: "Legend",
+      levelKey: "legend",
       color: "text-yellow-600",
       iconColor: "text-yellow-400",
       bgColor: "bg-yellow-50",
       borderColor: "border-yellow-200",
-      description: "Piano legend",
     };
   }
 };
 
 const LevelDisplay = ({ variant = "default", className = "" }) => {
   const { user } = useUser();
+  const { t } = useTranslation("common");
 
   // Fetch user scores and total (only for students)
   const { data: scoresData } = useQuery({
@@ -87,6 +83,10 @@ const LevelDisplay = ({ variant = "default", className = "" }) => {
 
   const visuals = getLevelVisuals(totalPoints);
   const IconComponent = visuals.icon;
+  const levelName = t(`dashboard.levels.${visuals.levelKey}.name`);
+  const levelDescription = t(
+    `dashboard.levels.${visuals.levelKey}.description`
+  );
 
   if (variant === "compact") {
     return (
@@ -108,19 +108,21 @@ const LevelDisplay = ({ variant = "default", className = "" }) => {
           {/* Header with icon */}
           <div className="flex items-center gap-1 mb-1">
             <IconComponent className={`w-3 h-3 ${visuals.iconColor}`} />
-            <h3 className="text-xs font-medium text-gray-600">Level</h3>
+            <h3 className="text-xs font-medium text-gray-600">
+              {t("dashboard.stats.level")}
+            </h3>
           </div>
 
           {/* Main level display */}
           <div className="relative">
             <p className={`text-lg font-bold ${visuals.color}`}>
-              {visuals.level}
+              {levelName}
             </p>
           </div>
 
           {/* Level description */}
           <div className="mt-1">
-            <span className="text-xs text-gray-500">{visuals.description}</span>
+            <span className="text-xs text-gray-500">{levelDescription}</span>
           </div>
 
           {/* Level badge */}
@@ -128,7 +130,7 @@ const LevelDisplay = ({ variant = "default", className = "" }) => {
             <span
               className={`text-xs px-2 py-1 rounded-full ${visuals.bgColor} ${visuals.borderColor} border ${visuals.color} font-medium`}
             >
-              {visuals.level}
+              {levelName}
             </span>
           </div>
         </div>
@@ -147,10 +149,10 @@ const LevelDisplay = ({ variant = "default", className = "" }) => {
       <div>
         <div className="flex items-center gap-2">
           <span className={`text-xl font-bold ${visuals.color}`}>
-            {visuals.level}
+            {levelName}
           </span>
         </div>
-        <div className="text-sm text-gray-500">{visuals.description}</div>
+        <div className="text-sm text-gray-500">{levelDescription}</div>
       </div>
     </div>
   );

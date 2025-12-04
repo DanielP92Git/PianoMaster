@@ -145,7 +145,7 @@ export function VexFlowStaffDisplay({
 
   const responsiveWidth = useMemo(() => {
     if (!containerSize.width) return staffWidth;
-    const padding = 32; // allow for card inner padding
+    const padding = 16; // allow for minimal card inner padding
     const availableWidth = Math.max(containerSize.width - padding, 320);
     const maxWidth = 1400;
     return Math.min(availableWidth, maxWidth);
@@ -153,7 +153,7 @@ export function VexFlowStaffDisplay({
 
   const responsiveHeight = useMemo(() => {
     if (!containerSize.height) return 220;
-    return Math.max(containerSize.height - 12, 180);
+    return Math.max(containerSize.height - 8, 180);
   }, [containerSize.height]);
 
   /**
@@ -875,7 +875,7 @@ export function VexFlowStaffDisplay({
   }
 
   return (
-    <div className="relative w-full h-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-center">
+    <div className="relative w-full h-full max-w-6xl mx-auto flex items-center justify-center">
       {error ? (
         <div className="relative w-full bg-red-50 border border-red-200 rounded-lg p-4 text-center">
           <p className="text-red-600 text-sm">
@@ -886,8 +886,7 @@ export function VexFlowStaffDisplay({
       ) : (
         <div
           ref={containerRef}
-          className="relative w-full h-full bg-transparent vexflow-container flex items-center justify-center overflow-visible"
-          style={{ padding: "8px 0" }}
+          className="relative w-full h-full bg-transparent vexflow-container flex items-center justify-center"
           role="img"
           aria-label={`Musical notation: ${pattern.timeSignature} time signature with ${pattern.notes.length} notes`}
         >
@@ -896,7 +895,7 @@ export function VexFlowStaffDisplay({
             id={containerId}
             ref={vexContainerRef}
             className="w-full h-full"
-            style={{ minHeight: "160px" }}
+            style={{ minHeight: "180px" }}
           />
 
           {/* Cursor overlay - React-managed, centered on staff */}

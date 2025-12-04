@@ -100,7 +100,7 @@ export const BASS_NOTES = BASS_NOTE_DATA.map((note) => ({
 
 export const DEFAULT_SETTINGS = {
   clef: "Treble",
-  selectedNotes: ["C4", "D4", "E4"], // Default to C4, D4, E4 for treble clef (using pitches for unique identification)
+  selectedNotes: [],
   difficulty: DIFFICULTY_LEVELS.BEGINNER,
   timeSignature: { name: "4/4", beats: 4, subdivision: 16 },
   tempo: 80,

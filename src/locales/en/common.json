@@ -1,0 +1,735 @@
+{
+  "app": {
+    "title": "PianoMaster"
+  },
+  "common": {
+    "locale": "en-US",
+    "gotIt": "Got it",
+    "dontShowAgain": "Got it! Don't show it again",
+    "actions": {
+      "next": "Next",
+      "back": "Back",
+      "cancel": "Cancel",
+      "save": "Save",
+      "setReminder": "Set Reminder",
+      "startTraining": "Start Training",
+      "recordAgain": "Record Again",
+      "deleteAllSessions": "Delete All Sessions",
+      "selectAll": "Select All",
+      "unselectAll": "Unselect All",
+      "deleteSelected": "Delete Selected"
+    },
+    "navigating": "Navigating...",
+    "backTo": "Back to {{name}}",
+    "saving": "Saving...",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "auth": {
+    "logIn": "Log in",
+    "logOut": "Log out",
+    "loggingOut": "Logging out...",
+    "login": {
+      "subtitle": "Begin your musical adventure!",
+      "emailLabel": "Email",
+      "emailPlaceholder": "Enter your email",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "Enter your password",
+      "submit": "Sign In",
+      "orSocial": "Or continue with",
+      "noAccountPrompt": "New to PianoMaster?",
+      "signupLink": "Create Account"
+    }
+  },
+  "navigation": {
+    "menuTitle": "Menu",
+    "closeMenu": "Close menu",
+    "links": {
+      "studentDashboard": "Dashboard",
+      "teacherDashboard": "Teacher Dashboard",
+      "practiceGames": "Practice Games",
+      "recordings": "Recordings",
+      "achievements": "Achievements",
+      "settings": "Settings",
+      "legal": "Legal & Attributions"
+    }
+  },
+  "pages": {
+    "notesMaster": "Notes Master",
+    "rhythmMaster": "Rhythm Master",
+    "gameModes": "Game Modes",
+    "practiceSessions": {
+      "title": "Practice Sessions Recordings",
+      "noPracticeSessions": "No practice sessions recorded yet",
+      "latestRecording": "Latest Recording",
+      "deleteSelectedConfirm": "Are you sure you want to delete the selected recordings?",
+      "deleteSelectedConfirmation": "The selected recordings have been deleted successfully",
+      "deleteSelectedError": "Failed to delete the selected recordings",
+      "deleteSelectedErrorConfirm": "Are you sure you want to try again?",
+      "deleteSelectedErrorConfirmation": "Failed to delete the selected recordings, please try again",
+      "sessionStudentNotes": "Student Notes",
+      "editStudentNotes": "Edit Student Notes",
+      "deleteSession": "Delete Session",
+      "addStudentNotes": "Add Student Notes",
+      "noStudentNotesAdded": "No student notes added yet. Click the edit button to add notes.",
+      "teacherFeedback": "Teacher Feedback",
+      "statusLabel": "Status",
+      "status": {
+        "excellent": "Excellent",
+        "reviewed": "Reviewed",
+        "needs_work": "Needs Work",
+        "pending_review": "Pending Review"
+      }
+    },
+    "achievements": {
+      "title": "Achievements",
+      "loading": "Loading achievements...",
+      "earned": "Achievements Earned",
+      "points": "Total Points",
+      "pointsBreakdown": "{{gameplay}} game + {{achievements}} badge points",
+      "completionRate": "Completion Rate",
+      "description": "Track your progress and unlock badges as you practice",
+      "recentAchievements": "Recent Achievements",
+      "achievements": "Achievements",
+      "complete": "Complete",
+      "noAchievementsAvailable": "No Achievements Available",
+      "checkBackLater": "Check back later for new achievements to unlock!",
+      "categories": {
+        "milestone": "Milestone",
+        "streak": "Streak",
+        "performance": "Performance",
+        "points": "Points",
+        "skill": "Skill",
+        "time": "Time"
+      },
+      "items": {
+        "first_session": {
+          "title": "First Steps",
+          "description": "Complete your first practice session"
+        },
+        "streak_3": {
+          "title": "Building Habits",
+          "description": "Maintain a 3-day practice streak"
+        },
+        "streak_7": {
+          "title": "Weekly Warrior",
+          "description": "Practice for 7 days in a row"
+        },
+        "streak_30": {
+          "title": "Monthly Master",
+          "description": "Achieve a 30-day practice streak"
+        },
+        "perfect_score": {
+          "title": "Perfect Pitch",
+          "description": "Score 100% in a note recognition game"
+        },
+        "high_scorer": {
+          "title": "High Scorer",
+          "description": "Earn 1000 total points"
+        },
+        "note_master": {
+          "title": "Notes Reading Master",
+          "description": "Answer 100 note recognition questions correctly"
+        },
+        "practice_time_10": {
+          "title": "Dedicated Learner",
+          "description": "Practice for 10 hours total"
+        },
+        "consistent_player": {
+          "title": "Consistent Player",
+          "description": "Complete 20 practice sessions"
+        },
+        "accuracy_master": {
+          "title": "Accuracy Master",
+          "description": "Maintain 90% average accuracy over 10 sessions"
+        }
+      },
+      "pointsReward": "+{{points}} points"
+    },
+    "settings": {
+      "title": "Settings",
+      "chooseYourAvatar": "Choose Your Avatar",
+      "chooseYourAvatarDescription": "Your avatar will be displayed everywhere you appear",
+      "languageTitle": "Language",
+      "languageDescription": "Choose your preferred language for the app interface.",
+      "languages": {
+        "english": "English",
+        "hebrew": "Hebrew"
+      },
+      "installTitle": "Install PianoMaster",
+      "installDescription": "Add the app to your home screen for the best experience",
+      "installDescriptionNoInstall": "Visit PianoMaster on your mobile device using Safari (iOS) or Chrome (Android) to see install options.",
+      "profile": {
+        "profileSettingsTitle": "Profile Settings",
+        "profileSettingsDescription": "Manage your personal information",
+        "firstName": "First Name",
+        "firstNamePlaceholder": "Enter your first name",
+        "lastName": "Last Name",
+        "lastNamePlaceholder": "Enter your last name",
+        "username": "Username",
+        "usernamePlaceholder": "Enter your username",
+        "usernameDescription": "Username must be 3-20 characters (letters, numbers, - and _ only)",
+        "clickToEditUsername": "Click to edit username",
+        "email": "Email",
+        "emailPlaceholder": "Enter your email",
+        "emailDescription": "Your email will be used for login",
+        "level": "Level",
+        "levelDescription": "Your level will be marked by your teacher",
+        "levelPlaceholder": "Enter your level"
+      },
+      "accessibility": {
+        "accessibilitySettingsTitle": "Accessibility Settings",
+        "accessibilitySettingsDescription": "Accessibility settings for the app",
+        "visualSettingsTitle": "Visual Settings",
+        "visualSettingsDescription": "Visual settings for the app",
+        "navigationSettingsTitle": "Navigation Settings",
+        "navigationSettingsDescription": "Navigation settings for the app",
+        "highContrastMode": "High Contrast Mode",
+        "highContrastModeDescription": "High contrast mode settings for the app",
+        "reducedMotion": "Reduced Motion",
+        "reducedMotionDescription": "Reduced motion settings for the app",
+        "fontSize": "Font Size",
+        "fontSizeDescription": "Font size settings for the app",
+        "fontSizes": {
+          "small": "Small",
+          "normal": "Normal",
+          "large": "Large",
+          "xl": "Extra Large"
+        },
+        "motorSettingsTitle": "Motor Settings",
+        "motorSettingsDescription": "Motor settings for easier interaction",
+        "largeTouchTargets": "Large Touch Targets",
+        "largeTouchTargetsDescription": "Large touch targets settings for the app",
+        "stickyHover": "Sticky Hover",
+        "stickyHoverDescription": "Sticky hover for longer hover effects",
+        "cognitiveSettingsTitle": "Cognitive Settings",
+        "cognitiveSettingsDescription": "Cognitive settings for the app",
+        "simplifiedUI": "Simplified UI",
+        "simplifiedUIDescription": "Simplified UI for easier navigation and reading",
+        "extendedTimeouts": "Extended Timeouts",
+        "extendedTimeoutsDescription": "Extended timeouts for longer in-app notifications rendering",
+        "keyboardNavigation": "Keyboard Navigation",
+        "keyboardNavigationDescription": "Navigate using the keyboard",
+        "focusIndicators": "Focus Indicators",
+        "focusIndicatorsDescription": "Focus indicators settings for the app",
+        "screenReaderOptimization": "Screen Reader Optimization",
+        "screenReaderOptimizationDescription": "Optimize the app for screen readers",
+        "announcements": "Announcements",
+        "announcementsDescription": "Enable audio announcements for game events and navigation using a screen reader"
+      },
+      "notifications": {
+        "notificationsSettingsTitle": "Notifications Settings",
+        "notificationsSettingsDescription": "Notifications settings for the app",
+        "notificationTypesTitle": "Notification Types",
+        "notificationTypesDescription": "Notification types settings for the app",
+        "quietHours": "Quiet Hours",
+        "quietHoursDescription": "You will not receive notifications during these hours",
+        "enableAllNotifications": "Enable All Notifications",
+        "enableAllNotificationsDescription": "Enable all notifications settings for the app",
+        "achievements": "Achievements",
+        "achievementsDescription": "You will receive notifications for the achievements you earn",
+        "assignments": "Assignments",
+        "assignmentsDescription": "You will receive notifications for the assignments you complete",
+        "messages": "Messages",
+        "messagesDescription": "You will receive notifications for the messages you send",
+        "reminders": "Reminders",
+        "remindersDescription": "You will receive notifications for the reminders you set",
+        "system": "System",
+        "systemDescription": "You will receive notifications for the system events",
+        "notificationsEnabled": "Notifications Enabled",
+        "notificationsEnabledDescription": "You will receive notifications for the settings you enable",
+        "startTime": "Start Time",
+        "endTime": "End Time",
+        "dailyPracticeReminder": "Daily Practice Reminder",
+        "dailyPracticeReminderDescription": "Turn on a daily practice reminder to stay consistent with your practice",
+        "reminderTime": "Reminder Time"
+      },
+      "audio": {
+        "audioSettingsTitle": "Audio Settings",
+        "audioSettingsDescription": "Control the audio settings for the app",
+        "enableSounds": "Enable Sounds",
+        "enableSoundsDescription": "Enable sounds for the app",
+        "masterVolume": "Master Volume",
+        "masterVolumeDescription": "Adjust the master volume for the app",
+        "testSound": "Test Sound"
+      }
+    },
+    "install": {
+      "chrome": {
+        "installDescription": "You can install PianoMaster directly from Chrome.",
+        "installButton": "Install via Chrome"
+      },
+      "android": {
+        "installDescription": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose",
+        "installStep": "Add to Home screen"
+      },
+      "ios": {
+        "installDescription": "On iPhone or iPad, install PianoMaster manually:",
+        "installStep": "Tap the Share button"
+      },
+      "safari": {
+        "installDescription": "Safari’s Share button sits at the bottom toolbar. Once installed, reopen PianoMaster from your home screen for a full-screen experience.",
+        "installStep1": "Tap the Share button",
+        "installStep2": "Choose \"Add to Home Screen\"",
+        "installStep3": "Tap \"Add\" to confirm"
+      }
+    }
+  },
+  "avatars": {
+    "title": "Choose Your Avatar",
+    "selected_avatar": "Selected Avatar",
+    "click_another_avatar": "Click another avatar to change your selection",
+    "funFact": "Fun Fact",
+    "saving": "Saving avatar...",
+    "beethoven": {
+      "name": "Ludwig van Beethoven",
+      "description": "Ludwig van Beethoven was a German composer who was one of the most powerful and emotional composers in history. He loved creating music that sounded like storms, celebrations, and huge adventures. Even though he started losing his hearing when he was still a young man, Beethoven refused to give up. He kept composing by feeling the vibrations of the piano and imagining the sounds in his mind. His music, like the famous “Fifth Symphony” and “Für Elise,” is still played everywhere, and people of all ages love the strong feelings his melodies bring.",
+      "fun_fact": "Beethoven was known for having very wild hair and sometimes forgetting to fix it - people in Vienna often recognized him on the street because of his messy hairstyle!"
+    },
+    "bach": {
+      "name": "Johann Sebastian Bach",
+      "description": "Johann Sebastian Bach was a German composer who was one of the greatest musical builders ever. He created music with amazing patterns, layers, and harmonies that fit together like a perfect puzzle. Bach worked very hard, teaching, composing, and playing the organ nearly every day. His music, like the Brandenburg Concertos and Well-Tempered Clavier, is admired for its beauty and structure by musicians all around the world.",
+      "fun_fact": "Bach had 20 children, and several of them also became composers!"
+    },
+    "mozart": {
+      "name": "Wolfgang Amadeus Mozart",
+      "description": "Wolfgang Amadeus Mozart was an Austrian composer who was a musical genius who started composing when he was only five years old! He traveled around Europe with his family, performing for kings and queens. Mozart’s music is full of sparkle, energy, and clever ideas, and he loved making people smile with his melodies. Even though he lived only 35 years, he wrote more than 600 pieces that musicians still play everywhere today.",
+      "fun_fact": "Mozart could hear a piece of music once and then write it down perfectly from memory!"
+    },
+    "brahms": {
+      "name": "Johannes Brahms",
+      "description": "Johannes Brahms wrote music that sounded both powerful and comforting, like big waves mixed with warm hugs. He admired Bach and Beethoven and worked hard to continue their tradition while adding his own rich, emotional style. Brahms was very kind, loved books, and spent many quiet evenings reading or composing. His music, including his symphonies and lullabies, is still treasured today.",
+      "fun_fact": "Brahms wrote one of the most famous lullabies ever - the “Brahms’ Lullaby” that parents still sing to babies today."
+    },
+    "schubert": {
+      "name": "Franz Schubert",
+      "description": "Franz Schubert had a gift for writing melodies that sound warm, sweet, and full of emotion. He loved composing songs - he wrote over 600 of them! People admired how beautifully he could express feelings through music. Although he was shy, Schubert was surrounded by friends who believed in him and held special gatherings called “Schubertiades” where they played his music together.",
+      "fun_fact": "Schubert wrote some of his most famous music in tiny notebooks he carried everywhere - even while walking!"
+    },
+    "chopin": {
+      "name": "Frederic Chopin",
+      "description": "Frédéric Chopin was a Polish composer who was the master of piano music. Almost everything he wrote was for the piano, and his pieces are full of emotion, poetry, and beautiful melodies. He could make the piano sound like whispering winds, dancing steps, or a gentle lullaby. Chopin preferred performing in small rooms rather than big halls because he liked making music that felt personal and delicate.",
+      "fun_fact": "Chopin was so talented that other musicians said he made the piano “sing like a human voice.”"
+    },
+    "schumann": {
+      "name": "Robert Schumann",
+      "description": "Robert Schumann was a German composer who loved to write songs and music. He was friends with a group of composers who were enemies and wrote amazing music that was enemies.",
+      "fun_fact": ""
+    },
+    "handel": {
+      "name": "George Frideric Handel",
+      "description": "Handel was a famous composer who lived more than 300 years ago, and he loved writing music that made people feel powerful and excited. Even though he moved from Germany to England, he became one of Britain’s favorite musicians. Handel was known for working super fast - he wrote his most famous piece, Messiah, in only a few weeks! People loved his music so much that even kings came to hear it. Today, his melodies are still played all over the world, especially the joyful “Hallelujah” chorus that makes everyone want to stand up and sing along. If you listen closely, you can almost hear the energy and fun he put into every note!",
+      "fun_fact": "Handel wrote the entire \"Messiah\" in an incredibly short time - only about 24 days!"
+    },
+    "vivaldi": {
+      "name": "Antonio Vivaldi",
+      "description": "Antonio Vivaldi was an Italian composer who loved to write songs and music. He was friends with a group of composers who were enemies and wrote amazing music that was enemies.",
+      "fun_fact": ""
+    }
+  },
+  "games": {
+    "score": "Score",
+    "time": "Time",
+    "backToModes": "Game Modes",
+    "actions": {
+      "start": "Start Game",
+      "pause": "Pause",
+      "listen": "Listen",
+      "stop": "Stop",
+      "stopListening": "Stop Listening"
+    },
+    "labels": {
+      "practiceMode": "Practice Mode"
+    },
+    "gameOver": {
+      "title": "Game Over",
+      "finalScore": "Final Score",
+      "timeUp": "Time's up!",
+      "scoreTooLow": "Score too low",
+      "timeUpMessage": "You answered {count} out of 10 questions",
+      "scoreTooLowMessage": "You need at least 50% correct answers to win",
+      "tryAgain": "Try Again",
+      "exit": "Exit"
+    },
+    "difficulties": {
+      "easy": "Easy",
+      "medium": "Medium",
+      "advanced": "Advanced",
+      "allLevels": "All Levels"
+    },
+    "cards": {
+      "memory": {
+        "name": "Memory Game",
+        "description": "Match notes with their names"
+      },
+      "notesRecognition": {
+        "name": "Notes Recognition",
+        "description": "Identify notes on the staff"
+      },
+      "sightReading": {
+        "name": "Sight Reading",
+        "description": "Play patterns with accurate pitch and timing"
+      },
+      "notesReading": {
+        "name": "Notes Reading",
+        "description": "Identify notes on the staff"
+      },
+      "metronomeTrainer": {
+        "name": "Metronome Rhythm Trainer",
+        "description": "Listen to rhythm patterns then tap them back with precise timing"
+      }
+    },
+    "modeCard": {
+      "progress": "Progress",
+      "playNow": "Play Now"
+    },
+    "practiceModes": {
+      "loading": "Loading your musical journey...",
+      "errorTitle": "Oops!",
+      "errorMessage": "We couldn't load practice modes. Please try again.",
+      "startMode": "Start Mode"
+    }
+  },
+  "dashboard": {
+    "header": {
+      "welcomeBack": "Welcome back",
+      "defaultName": "Musician"
+    },
+    "assignments": {
+      "title": "Assignments",
+      "pending_zero": "No pending",
+      "pending_one": "{{count}} pending",
+      "pending_other": "{{count}} pending",
+      "completed_zero": "0 completed",
+      "completed_one": "{{count}} completed",
+      "completed_other": "{{count}} completed",
+      "empty": "No assignments yet",
+      "viewAll": "View all {{count}} assignments",
+      "status": {
+        "completed": "Completed",
+        "overdue": "Overdue",
+        "dueIn_one": "Due in {{count}} day",
+        "dueIn_other": "Due in {{count}} days",
+        "noDueDate": "No due date"
+      },
+      "pointsLabel": "{{earned}}/{{possible}} pts"
+    },
+    "stats": {
+      "practiceTime": "Practice Time",
+      "hoursAbbrev": "h",
+      "totalPoints": "Total Points",
+      "dailyStreak": "Daily Streak",
+      "level": "Level"
+    },
+    "teacherPanel": {
+      "students": {
+        "title": "Students",
+        "description": "Manage and track student progress"
+      },
+      "assignments": {
+        "title": "Assignments",
+        "description": "Create and track assignments"
+      }
+    },
+    "nextSteps": {
+      "title": "Next Steps to Earn Badges",
+      "emptyTitle": "Great Progress!",
+      "emptyDescription": "You've completed the main achievement milestones. Keep practicing to unlock more advanced badges!",
+      "viewAll": "View All Achievements",
+      "cta": "View All Achievements →",
+      "points": "+{{points}} points",
+      "items": {
+        "firstSession": {
+          "title": "Record Your First Session",
+          "description": "Complete your first practice session to earn the \"First Steps\" badge"
+        },
+        "streak3": {
+          "title": "Build a Practice Streak",
+          "description": "Practice for 3 days in a row to unlock \"Building Habits\""
+        },
+        "perfectScore": {
+          "title": "Master Practice Games",
+          "description": "Score 100% in a rhythm or note recognition game"
+        },
+        "highScorer": {
+          "title": "Reach 1000 Points",
+          "description": "Accumulate 1000 total points to become a \"High Scorer\""
+        },
+        "streak7": {
+          "title": "Weekly Warrior",
+          "description": "Practice for 7 days in a row"
+        }
+      }
+    },
+    "practiceTools": {
+      "title": "Practice Tools",
+      "activeReminder": {
+        "title": "Practice reminder in:",
+        "setFor": "Set for {{time}}"
+      },
+      "cards": {
+        "reminder": {
+          "title": "Set a Practice Reminder",
+          "description": "Stay consistent with your practice"
+        },
+        "recording": {
+          "title": "Record Practice Session",
+          "description": "Record your practice for feedback"
+        },
+        "history": {
+          "title": "View Practice History",
+          "description": "Review your progress and sessions"
+        }
+      }
+    },
+    "reminders": {
+      "modalTitle": "Set Practice Reminder",
+      "dateLabel": "Date",
+      "timeLabel": "Time"
+    },
+    "toasts": {
+      "reminderCancelled": "Reminder cancelled",
+      "permissionRequired": "Please allow notifications to enable reminders",
+      "requestFailed": "Failed to request notification permission",
+      "notificationsBlocked": "Notifications are blocked. Please enable them in your browser settings.",
+      "reminderScheduled": "Reminder set successfully!",
+      "futureTimeRequired": "Please select a future date and time"
+    },
+    "recording": {
+      "title": "Record Practice Session",
+      "startRecording": "Start Recording",
+      "reviewTitle": "Review Your Recording",
+      "notesLabel": "Practice Notes (Optional)",
+      "notesPlaceholder": "Add notes about your practice session, what you worked on, challenges faced, etc...",
+      "submit": "Submit Recording",
+      "completed": "Recording completed ({{minutes}}:{{seconds}})",
+      "uploadStatus": {
+        "preparing": "Preparing...",
+        "uploading": "Uploading... ({{percentage}}%)",
+        "finalizing": "Finalizing...",
+        "default": "Uploading..."
+      },
+      "retry": "Upload failed, retrying... ({{attempt}}/3)"
+    },
+    "streak": {
+      "loadingLabel": "Daily Streak",
+      "loadingState": "Loading...",
+      "loadingHint": "Please wait...",
+      "dayLabel_one": "day",
+      "dayLabel_other": "days",
+      "streakSummary": "{{count}}-day streak!",
+      "milestoneBadge": "Milestone!",
+      "nextMilestone": "{{remaining}} to {{milestone}} days",
+      "maxReached": "Max level reached!",
+      "messages": {
+        "startJourney": "Start Your Journey!",
+        "buildingMomentum": "Building Momentum",
+        "gettingHot": "Getting Hot!",
+        "onFire": "On Fire!",
+        "superstar": "Superstar!",
+        "legend": "Legend!"
+      },
+      "milestones": {
+        "1": "🎉 First day! You've started your journey!",
+        "3": "🔥 3-day streak! You're building a habit!",
+        "7": "⭐ Week streak! Amazing consistency!",
+        "14": "💫 Two weeks! You're a practice star!",
+        "30": "🏆 30-day streak! You're a legend!",
+        "50": "👑 50 days! Absolutely incredible!",
+        "100": "🌟 100 days! You're a practice master!"
+      }
+    },
+    "points": {
+      "progressLabel": "Progress to {{level}}",
+      "remaining": "{{count}} to go"
+    },
+    "levels": {
+      "beginner": {
+        "name": "Beginner",
+        "description": "Just getting started",
+        "next": "student"
+      },
+      "student": {
+        "name": "Student",
+        "description": "Learning the basics",
+        "next": "practitioner"
+      },
+      "practitioner": {
+        "name": "Practitioner",
+        "description": "Building skills",
+        "next": "expert"
+      },
+      "expert": {
+        "name": "Expert",
+        "description": "Advanced player",
+        "next": "master"
+      },
+      "master": {
+        "name": "Master",
+        "description": "Piano master",
+        "next": "legend"
+      },
+      "legend": {
+        "name": "Legend",
+        "description": "Piano legend",
+        "next": null
+      }
+    }
+  },
+  "gameControls": {
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "settings": "Settings",
+    "title": "Game Settings"
+  },
+  "audioRecorder": {
+    "toasts": {
+      "error": "Recording error occurred",
+      "started": "Recording started",
+      "paused": "Recording paused",
+      "resumed": "Recording resumed",
+      "cancelled": "Recording cancelled",
+      "micDenied": "Microphone access denied. Please allow microphone access and try again.",
+      "noMic": "No microphone found. Please check your device settings.",
+      "notSupported": "Audio recording is not supported on this device.",
+      "browserNotSupported": "Audio recording is not supported in this browser.",
+      "genericFailure": "Failed to start recording"
+    },
+    "status": {
+      "recording": "Recording",
+      "paused": "Paused",
+      "recorded": "Recorded"
+    },
+    "buttons": {
+      "starting": "Starting...",
+      "start": "Start Recording",
+      "pause": "Pause",
+      "stop": "Stop",
+      "cancel": "Cancel",
+      "resume": "Resume"
+    },
+    "quality": {
+      "title": "Audio Quality",
+      "estimatedSize": "Est. Size: {{size}}",
+      "format": "Format: {{format}}",
+      "presets": {
+        "LOW": {
+          "label": "Low (64kbps)",
+          "description": "Smallest files"
+        },
+        "MEDIUM": {
+          "label": "Medium (128kbps)",
+          "description": "Balanced files"
+        },
+        "HIGH": {
+          "label": "High (192kbps)",
+          "description": "Higher quality files"
+        },
+        "LOSSLESS": {
+          "label": "Lossless (320kbps)",
+          "description": "Largest files"
+        }
+      }
+    },
+    "tooltips": {
+      "quality": "Audio Quality Settings"
+    },
+    "labels": {
+      "maxDuration": "Max {{duration}}"
+    }
+  },
+  "gameSettings": {
+    "titles": {
+      "metronomeTrainer": "Metronome Rhythm Trainer",
+      "metronomeSubtitle": "Configure your rhythm training session"
+    },
+    "steps": {
+      "progress": "Step {{current}} of {{total}}: {{title}}",
+      "labels": {
+        "difficulty": "Choose Difficulty",
+        "timeSignature": "Choose Time Signature",
+        "tempo": "Set Tempo",
+        "clef": "Choose Clef",
+        "notes": "Select Notes",
+        "gameMode": "Game Mode",
+        "gridSize": "Choose Grid Size"
+      }
+    },
+    "buttons": {
+      "back": "Back",
+      "next": "Next",
+      "startTraining": "Start Training",
+      "startGame": "Start Game",
+      "saveSettings": "Save Settings",
+      "cancel": "Cancel",
+      "gotIt": "Got it"
+    },
+    "difficulty": {
+      "levels": {
+        "beginner": {
+          "label": "Beginner",
+          "bars_other": "{{count}} bars",
+          "summary": "Simple patterns"
+        },
+        "intermediate": {
+          "label": "Intermediate",
+          "bars_other": "{{count}} bars",
+          "summary": "Moderate patterns"
+        },
+        "advanced": {
+          "label": "Advanced",
+          "bars_other": "{{count}} bars",
+          "summary": "Complex patterns"
+        }
+      }
+    },
+    "noteSelection": {
+      "instruction": "Select which notes you want to practice with:",
+      "deselectAll": "Deselect all",
+      "selectAll": "Select all",
+      "selectedCount_zero": "Selected: 0 notes",
+      "selectedCount_one": "Selected: {{count}} note",
+      "selectedCount_other": "Selected: {{count}} notes",
+      "minNotesTitle": "Select at least {{count}} notes",
+      "minNotesDescription": "Select {{count}} or more notes to practice before continuing."
+    },
+    "tempo": {
+      "label": "Tempo: {{tempo}} BPM",
+      "min": "{{value}} BPM",
+      "max": "{{value}} BPM"
+    },
+    "modes": {
+      "untimed": {
+        "label": "Untimed",
+        "description": "Practice mode"
+      },
+      "timed": {
+        "label": "Timed",
+        "description": "Challenge mode",
+        "durationLabel": "Select timer length",
+        "seconds": "{{value}}s"
+      }
+    },
+    "gridSize": {
+      "pairs_one": "{{count}} pair",
+      "pairs_other": "{{count}} pairs"
+    },
+    "clefs": {
+      "treble": {
+        "label": "Treble",
+        "alt": "Treble Clef"
+      },
+      "bass": {
+        "label": "Bass",
+        "alt": "Bass Clef"
+      }
+    }
+  },
+  "iosTip": {
+    "bestExperienceLabel": "Best experience tip",
+    "title": "Use landscape on iPad",
+    "body": "For the best PianoMaster experience on iPad, rotate your device to landscape and use the installed app from your Home Screen.",
+    "installInstructions": "Install the app by tapping the Share button in Safari and choosing Add to Home Screen, then open PianoMaster from the new icon."
+  }
+}

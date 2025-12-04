@@ -1,11 +1,13 @@
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 function BackButton({ to, name, styling, iconOnly = false }) {
   const navigate = useNavigate();
   const [isNavigating, setIsNavigating] = useState(false);
-
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -29,12 +31,12 @@ function BackButton({ to, name, styling, iconOnly = false }) {
       {isNavigating ? (
         <>
           <Loader2 className="w-5 h-5 mr-1 animate-spin" />
-          {!iconOnly && "Navigating..."}
+          {!iconOnly && t("common.navigating")}
         </>
       ) : (
         <>
-          <ArrowLeft className={`w-5 h-5 ${iconOnly ? "" : "mr-1"}`} />
-          {!iconOnly && `Back to ${name}`}
+          {isRTL ? <ArrowRight className={`w-5 h-5 ${iconOnly ? "" : "ml-1"}`} /> : <ArrowLeft className={`w-5 h-5 ${iconOnly ? "" : "mr-1"}`} />}
+          {!iconOnly && t("common.backTo", { name })}
         </>
       )}
     </button>

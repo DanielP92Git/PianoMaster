@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
 import AssignmentsList from "../student/AssignmentsList";
@@ -25,6 +26,8 @@ import { lockOrientation } from "../../utils/pwa";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, userRole, profile } = useUser();
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
   useEffect(() => {
     if (!isStudent) return;
     lockOrientation("landscape-primary");
@@ -86,9 +89,8 @@ function Dashboard() {
     {
       id: "first_session",
       icon: "🎯",
-      title: "Record Your First Session",
-      description:
-        'Complete your first practice session to earn the "First Steps" badge',
+      title: t("dashboard.nextSteps.items.firstSession.title"),
+      description: t("dashboard.nextSteps.items.firstSession.description"),
       points: 50,
       colors: {
         bg: "from-blue-50 to-indigo-50",
@@ -100,8 +102,8 @@ function Dashboard() {
     {
       id: "streak_3",
       icon: "🔥",
-      title: "Build a Practice Streak",
-      description: 'Practice for 3 days in a row to unlock "Building Habits"',
+      title: t("dashboard.nextSteps.items.streak3.title"),
+      description: t("dashboard.nextSteps.items.streak3.description"),
       points: 100,
       colors: {
         bg: "from-orange-50 to-red-50",
@@ -113,8 +115,8 @@ function Dashboard() {
     {
       id: "perfect_score",
       icon: "🎵",
-      title: "Master Practice Games",
-      description: "Score 100% in a rhythm or note recognition game",
+      title: t("dashboard.nextSteps.items.perfectScore.title"),
+      description: t("dashboard.nextSteps.items.perfectScore.description"),
       points: 150,
       colors: {
         bg: "from-purple-50 to-pink-50",
@@ -126,8 +128,8 @@ function Dashboard() {
     {
       id: "high_scorer",
       icon: "💎",
-      title: "Reach 1000 Points",
-      description: 'Accumulate 1000 total points to become a "High Scorer"',
+      title: t("dashboard.nextSteps.items.highScorer.title"),
+      description: t("dashboard.nextSteps.items.highScorer.description"),
       points: 250,
       colors: {
         bg: "from-green-50 to-emerald-50",
@@ -139,8 +141,8 @@ function Dashboard() {
     {
       id: "streak_7",
       icon: "⭐",
-      title: "Weekly Warrior",
-      description: "Practice for 7 days in a row",
+      title: t("dashboard.nextSteps.items.streak7.title"),
+      description: t("dashboard.nextSteps.items.streak7.description"),
       points: 200,
       colors: {
         bg: "from-yellow-50 to-amber-50",
@@ -159,7 +161,7 @@ function Dashboard() {
   // Handle cancel reminder
   const handleCancelReminder = () => {
     dashboardReminderService.cancelReminder();
-    toast.success("Reminder cancelled");
+    toast.success(t("dashboard.toasts.reminderCancelled"));
   };
 
   // Modal opening functions
@@ -170,18 +172,16 @@ function Dashboard() {
       try {
         const result = await dashboardReminderService.requestPermission();
         if (result !== "granted") {
-          toast.error("Please allow notifications to enable reminders");
+          toast.error(t("dashboard.toasts.permissionRequired"));
           return;
         }
       } catch (error) {
         console.error("Permission request failed:", error);
-        toast.error("Failed to request notification permission");
+        toast.error(t("dashboard.toasts.requestFailed"));
         return;
       }
     } else if (permission === "denied") {
-      toast.error(
-        "Notifications are blocked. Please enable them in your browser settings."
-      );
+      toast.error(t("dashboard.toasts.notificationsBlocked"));
       return;
     }
 
@@ -210,9 +210,9 @@ function Dashboard() {
             new Date().getTime() + timeDifferenceInMinutes * 60 * 1000;
           dashboardReminderService.scheduleReminder(dateTimeMs);
           closeModal();
-          toast.success("Reminder set successfully!");
+          toast.success(t("dashboard.toasts.reminderScheduled"));
         } else {
-          toast.error("Please select a future date and time");
+          toast.error(t("dashboard.toasts.futureTimeRequired"));
         }
       };
 
@@ -220,7 +220,7 @@ function Dashboard() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
+              {t("dashboard.reminders.dateLabel")}
             </label>
             <input
               type="date"
@@ -233,7 +233,7 @@ function Dashboard() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
+              {t("dashboard.reminders.timeLabel")}
             </label>
             <input
               type="time"
@@ -248,7 +248,7 @@ function Dashboard() {
             className="w-full py-3 px-6 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
           >
             <Bell className="w-5 h-5" />
-            Set Reminder
+            {t("common.actions.setReminder")}
           </button>
         </form>
       );
@@ -263,7 +263,7 @@ function Dashboard() {
           <X className="h-6 w-6" />
         </button>
         <h3 className="text-xl font-bold text-gray-800 mb-4">
-          Set Practice Reminder
+          {t("dashboard.reminders.modalTitle")}
         </h3>
         <ReminderForm />
       </>
@@ -283,8 +283,12 @@ function Dashboard() {
         setRecordingDuration(duration);
         const minutes = Math.floor(duration / 60);
         const seconds = duration % 60;
+        const secondsString = seconds.toString().padStart(2, "0");
         toast.success(
-          `Recording completed (${minutes}:${seconds.toString().padStart(2, "0")})`
+          t("dashboard.recording.completed", {
+            minutes,
+            seconds: secondsString,
+          })
         );
       };
 
@@ -317,7 +321,9 @@ function Dashboard() {
               },
               onRetry: (retryInfo) => {
                 toast.error(
-                  `Upload failed, retrying... (${retryInfo.attempt}/3)`
+                  t("dashboard.recording.retry", {
+                    attempt: retryInfo.attempt,
+                  })
                 );
               },
             },
@@ -331,10 +337,10 @@ function Dashboard() {
 
       return (
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-800">
-              Record Practice Session
-            </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">
+            {t("dashboard.recording.title")}
+          </h2>
             <button
               onClick={handleModalClose}
               className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
@@ -361,7 +367,7 @@ function Dashboard() {
               <div className="space-y-6">
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Review Your Recording
+                    {t("dashboard.recording.reviewTitle")}
                   </h3>
                   <AudioPlayer
                     src={URL.createObjectURL(recordingBlob)}
@@ -374,12 +380,12 @@ function Dashboard() {
 
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-2">
-                    Practice Notes (Optional)
+                    {t("dashboard.recording.notesLabel")}
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes about your practice session, what you worked on, challenges faced, etc..."
+                    placeholder={t("dashboard.recording.notesPlaceholder")}
                     className="w-full p-4 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
                     rows="4"
                   />
@@ -395,17 +401,20 @@ function Dashboard() {
                       <>
                         <Loader2 className="w-5 h-5 animate-spin" />
                         {uploadProgress?.phase === "preparing" &&
-                          "Preparing..."}
+                          t("dashboard.recording.uploadStatus.preparing")}
                         {uploadProgress?.phase === "uploading" &&
-                          `Uploading... (${uploadProgress.percentage}%)`}
+                          t("dashboard.recording.uploadStatus.uploading", {
+                            percentage: uploadProgress.percentage,
+                          })}
                         {uploadProgress?.phase === "completed" &&
-                          "Finalizing..."}
-                        {!uploadProgress && "Uploading..."}
+                          t("dashboard.recording.uploadStatus.finalizing")}
+                        {!uploadProgress &&
+                          t("dashboard.recording.uploadStatus.default")}
                       </>
                     ) : (
                       <>
                         <Send className="w-5 h-5" />
-                        Submit Recording
+                        {t("dashboard.recording.submit")}
                       </>
                     )}
                   </button>
@@ -415,7 +424,7 @@ function Dashboard() {
                     className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                   >
                     <X className="w-5 h-5" />
-                    Record Again
+                    {t("common.actions.recordAgain")}
                   </button>
                 </div>
               </div>
@@ -449,9 +458,13 @@ function Dashboard() {
     <div className="min-h-screen  p-6">
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header Section */}
-        <div className="text-center lg:text-left">
+        <div
+          className={`text-center ${
+            isRTL ? "lg:text-right" : "lg:text-left"
+          }`}
+        >
           <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-            Welcome back,
+            {t("dashboard.header.welcomeBack")},
             {profile?.first_name ? (
               <span className="ml-2">{profile.first_name}!</span>
             ) : user?.user_metadata?.full_name ? (
@@ -459,7 +472,9 @@ function Dashboard() {
                 {user.user_metadata.full_name}!
               </span>
             ) : (
-              <span className="block mt-1">Musician!</span>
+              <span className="block mt-1">
+                {t("dashboard.header.defaultName")}!
+              </span>
             )}
           </h1>
         </div>
@@ -478,11 +493,13 @@ function Dashboard() {
             <div className="card-compact p-3">
               <div className="flex flex-col items-center text-center">
                 <h3 className="text-xs font-medium text-gray-600">
-                  Practice Time
+                  {t("dashboard.stats.practiceTime")}
                 </h3>
                 <p className="mt-1 text-lg font-bold text-gray-900">
                   {scores?.practice_time || 0}
-                  <span className="text-xs ml-1">h</span>
+                  <span className="text-xs ml-1">
+                    {t("dashboard.stats.hoursAbbrev")}
+                  </span>
                 </p>
               </div>
             </div>
@@ -503,9 +520,11 @@ function Dashboard() {
                   <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-2xl">👥</span>
                   </div>
-                  <div className="text-gray-900 font-medium mb-2">Students</div>
+                  <div className="text-gray-900 font-medium mb-2">
+                    {t("dashboard.teacherPanel.students.title")}
+                  </div>
                   <div className="text-gray-600 text-sm">
-                    Manage and track student progress
+                    {t("dashboard.teacherPanel.students.description")}
                   </div>
                 </div>
               </Link>
@@ -519,9 +538,11 @@ function Dashboard() {
                   <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-2xl">📋</span>
                   </div>
-                  <div className="text-gray-900 font-medium">Assignments</div>
+                  <div className="text-gray-900 font-medium">
+                    {t("dashboard.teacherPanel.assignments.title")}
+                  </div>
                   <div className="text-gray-600 text-sm">
-                    Create and track assignments
+                    {t("dashboard.teacherPanel.assignments.description")}
                   </div>
                 </div>
               </Link>
@@ -534,7 +555,7 @@ function Dashboard() {
           {/* Next Steps Section */}
           <div className="card p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">
-              Next Steps to Earn Badges
+              {t("dashboard.nextSteps.title")}
             </h3>
 
             <div className="space-y-4">
@@ -559,7 +580,9 @@ function Dashboard() {
                       <div
                         className={`text-xs ${step.colors.text} font-medium`}
                       >
-                        +{step.points} points
+                        {t("dashboard.nextSteps.points", {
+                          points: step.points,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -568,17 +591,16 @@ function Dashboard() {
                 <div className="text-center py-8">
                   <div className="text-4xl mb-4">🎉</div>
                   <div className="font-medium text-gray-900 mb-2">
-                    Great Progress!
+                    {t("dashboard.nextSteps.emptyTitle")}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
-                    You've completed the main achievement milestones. Keep
-                    practicing to unlock more advanced badges!
+                    {t("dashboard.nextSteps.emptyDescription")}
                   </div>
                   <Link
                     to="/achievements"
                     className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
                   >
-                    View All Achievements
+                    {t("dashboard.nextSteps.viewAll")}
                   </Link>
                 </div>
               )}
@@ -590,7 +612,7 @@ function Dashboard() {
                   to="/achievements"
                   className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
                 >
-                  View All Achievements →
+                  {t("dashboard.nextSteps.cta")}
                 </Link>
               </div>
             </div>
@@ -604,40 +626,46 @@ function Dashboard() {
           {/* Practice Tools Section */}
           <div className="card p-6">
             <h3 className="text-lg font-medium text-gray-900 mb-6">
-              Practice Tools
+              {t("dashboard.practiceTools.title")}
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {/* Active Reminder Indicator */}
               {activeReminder && (
                 <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/40 rounded-xl p-4">
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
+                    <div
+                      className={`flex items-center gap-3 ${
+                        isRTL ? "flex-row-reverse text-right" : ""
+                      }`}
+                    >
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
                         🔔
                       </div>
-                      <div className="flex-1">
+                      <div className={`flex-1 ${isRTL ? "text-right" : ""}`}>
                         <div className="text-gray-900 font-medium mb-1">
-                          ⏰ Practice reminder in:{" "}
+                          ⏰ {t("dashboard.practiceTools.activeReminder.title")}{" "}
                           {formatTimeRemaining(activeReminder.timeLeft)}
                         </div>
                         <div className="text-gray-600 text-sm">
-                          Set for{" "}
-                          {new Date(activeReminder.dateTime).toLocaleTimeString(
-                            [],
-                            {
+                          {t("dashboard.practiceTools.activeReminder.setFor", {
+                            time: new Date(
+                              activeReminder.dateTime
+                            ).toLocaleTimeString([], {
                               hour: "2-digit",
                               minute: "2-digit",
-                            }
-                          )}
+                            }),
+                          })}
                         </div>
                       </div>
                     </div>
                     <button
                       onClick={handleCancelReminder}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium text-sm"
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium text-sm ${
+                        isRTL ? "flex-row-reverse" : ""
+                      }`}
                     >
                       <BellOff className="w-4 h-4" />
-                      Cancel
+                      {t("common.actions.cancel")}
                     </button>
                   </div>
                 </div>
@@ -647,18 +675,26 @@ function Dashboard() {
               {!activeReminder && (
                 <button
                   onClick={openReminderModal}
-                  className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
+                  className={`bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block ${
+                    isRTL ? "text-right" : "text-left"
+                  } w-full transition-colors`}
                 >
-                  <div className="flex items-start gap-3">
+                  <div
+                    className={`flex items-start gap-3 ${
+                      isRTL ? "flex-row-reverse text-right" : ""
+                    }`}
+                  >
                     <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
                       🔔
                     </div>
                     <div className="flex-1">
                       <div className="text-gray-900 font-medium mb-1">
-                        Set a Practice Reminder
+                        {t("dashboard.practiceTools.cards.reminder.title")}
                       </div>
                       <div className="text-gray-600 text-sm">
-                        Stay consistent with your practice
+                        {t(
+                          "dashboard.practiceTools.cards.reminder.description"
+                        )}
                       </div>
                     </div>
                   </div>
@@ -668,18 +704,24 @@ function Dashboard() {
               {/* Record Practice Session */}
               <button
                 onClick={openRecordModal}
-                className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
+                className={`bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block ${
+                  isRTL ? "text-right" : "text-left"
+                } w-full transition-colors`}
               >
-                <div className="flex items-start gap-3">
+                <div
+                  className={`flex items-start gap-3 ${
+                    isRTL ? "flex-row-reverse text-right" : ""
+                  }`}
+                >
                   <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
                     🎤
                   </div>
                   <div className="flex-1">
                     <div className="text-gray-900 font-medium mb-1">
-                      Record Practice Session
+                      {t("dashboard.practiceTools.cards.recording.title")}
                     </div>
                     <div className="text-gray-600 text-sm">
-                      Record your practice for feedback
+                      {t("dashboard.practiceTools.cards.recording.description")}
                     </div>
                   </div>
                 </div>
@@ -688,18 +730,24 @@ function Dashboard() {
               {/* View Practice History */}
               <Link
                 to="/practice-sessions"
-                className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block transition-colors"
+                className={`bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block transition-colors ${
+                  isRTL ? "text-right" : "text-left"
+                }`}
               >
-                <div className="flex items-start gap-3">
+                <div
+                  className={`flex items-start gap-3 ${
+                    isRTL ? "flex-row-reverse text-right" : ""
+                  }`}
+                >
                   <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
                     📊
                   </div>
                   <div className="flex-1">
                     <div className="text-gray-900 font-medium mb-1">
-                      View Practice History
+                      {t("dashboard.practiceTools.cards.history.title")}
                     </div>
                     <div className="text-gray-600 text-sm">
-                      Review your progress and sessions
+                      {t("dashboard.practiceTools.cards.history.description")}
                     </div>
                   </div>
                 </div>

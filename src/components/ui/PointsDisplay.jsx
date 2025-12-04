@@ -3,6 +3,9 @@ import { Star, TrendingUp, Trophy, Target, Zap, Award } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getStudentScores } from "../../services/apiDatabase";
 import { useUser } from "../../features/authentication/useUser";
+import { useTranslation } from "react-i18next";
+import { achievementService } from "../../services/achievementService";
+import { calculatePointsSummary } from "../../utils/points";
 
 // Animation for point changes
 const usePointsAnimation = (currentPoints, previousPoints) => {
@@ -52,7 +55,8 @@ const getPointsVisuals = (points) => {
       bgGradient: "from-white to-white",
       textColor: "text-gray-900",
       iconColor: "text-gray-400",
-      level: "Beginner",
+      levelKey: "beginner",
+      nextLevelKey: "student",
       nextMilestone: 100,
       glowEffect: "",
     };
@@ -63,7 +67,8 @@ const getPointsVisuals = (points) => {
       bgGradient: "from-blue-500/20 to-indigo-500/20",
       textColor: "text-blue-400",
       iconColor: "text-blue-400",
-      level: "Student",
+      levelKey: "student",
+      nextLevelKey: "practitioner",
       nextMilestone: 100,
       glowEffect: "",
     };
@@ -74,7 +79,8 @@ const getPointsVisuals = (points) => {
       bgGradient: "from-green-500/20 to-emerald-500/20",
       textColor: "text-green-400",
       iconColor: "text-green-400",
-      level: "Practitioner",
+      levelKey: "practitioner",
+      nextLevelKey: "expert",
       nextMilestone: 500,
       glowEffect: "shadow-green-500/20",
     };
@@ -85,7 +91,8 @@ const getPointsVisuals = (points) => {
       bgGradient: "from-yellow-500/20 to-orange-500/20",
       textColor: "text-yellow-400",
       iconColor: "text-yellow-400",
-      level: "Expert",
+      levelKey: "expert",
+      nextLevelKey: "master",
       nextMilestone: 1000,
       glowEffect: "shadow-yellow-500/30",
     };
@@ -96,7 +103,8 @@ const getPointsVisuals = (points) => {
       bgGradient: "from-purple-500/20 to-violet-500/20",
       textColor: "text-purple-400",
       iconColor: "text-purple-400",
-      level: "Master",
+      levelKey: "master",
+      nextLevelKey: "legend",
       nextMilestone: 2500,
       glowEffect: "shadow-purple-500/40",
     };
@@ -107,7 +115,8 @@ const getPointsVisuals = (points) => {
       bgGradient: "from-yellow-400/30 to-orange-500/30",
       textColor: "text-yellow-300",
       iconColor: "text-yellow-300",
-      level: "Legend",
+      levelKey: "legend",
+      nextLevelKey: null,
       nextMilestone: null,
       glowEffect: "shadow-yellow-500/50 shadow-2xl",
     };
@@ -134,6 +143,7 @@ const calculateRecentTrend = (scores) => {
 
 const PointsDisplay = ({ variant = "default", className = "" }) => {
   const { user } = useUser();
+  const { t } = useTranslation("common");
   const previousPoints = useRef();
 
   // Fetch user scores and total (only for students)
@@ -145,8 +155,17 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes instead of 30 seconds
   });
 
-  const totalPoints =
-    scoresData?.reduce((sum, score) => sum + (score.score || 0), 0) || 0;
+  const { data: earnedAchievementsData } = useQuery({
+    queryKey: ["earned-achievements", user?.id],
+    queryFn: () => achievementService.getEarnedAchievements(user.id),
+    enabled: !!user?.id && user?.isStudent,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const totalPoints = calculatePointsSummary({
+    scores: scoresData || [],
+    earned: earnedAchievementsData || [],
+  }).totalPoints;
   const { displayPoints, isAnimating } = usePointsAnimation(
     totalPoints,
     previousPoints.current
@@ -162,6 +181,13 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
   const visuals = getPointsVisuals(totalPoints);
   const trend = calculateRecentTrend(scoresData);
   const IconComponent = visuals.icon;
+  const levelName = t(`dashboard.levels.${visuals.levelKey}.name`);
+  const levelDescription = t(
+    `dashboard.levels.${visuals.levelKey}.description`
+  );
+  const nextLevelName = visuals.nextLevelKey
+    ? t(`dashboard.levels.${visuals.nextLevelKey}.name`)
+    : null;
 
   // Progress to next milestone
   const progressToNext = visuals.nextMilestone
@@ -205,7 +231,9 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
             <IconComponent
               className={`w-3 h-3 ${visuals.iconColor} ${isAnimating ? "animate-pulse" : ""}`}
             />
-            <h3 className="text-xs font-medium text-gray-600">Total Points</h3>
+            <h3 className="text-xs font-medium text-gray-600">
+              {t("dashboard.stats.totalPoints")}
+            </h3>
           </div>
 
           {/* Main points display */}
@@ -232,22 +260,19 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
           )}
 
           {/* Progress to next milestone */}
-          {visuals.nextMilestone && (
+          {visuals.nextMilestone && nextLevelName && (
             <div className="w-full mt-1">
               <div className="flex justify-between text-xs text-gray-500 mb-1">
                 <span>
-                  Progress to{" "}
-                  {visuals.level === "Beginner"
-                    ? "Student"
-                    : visuals.level === "Student"
-                      ? "Practitioner"
-                      : visuals.level === "Practitioner"
-                        ? "Expert"
-                        : visuals.level === "Expert"
-                          ? "Master"
-                          : "Legend"}
+                  {t("dashboard.points.progressLabel", {
+                    level: nextLevelName,
+                  })}
                 </span>
-                <span>{visuals.nextMilestone - totalPoints} to go</span>
+                <span>
+                  {t("dashboard.points.remaining", {
+                    count: Math.max(visuals.nextMilestone - totalPoints, 0),
+                  })}
+                </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-1">
                 <div
@@ -277,7 +302,7 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
           </span>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-400">
-          <span>{visuals.level}</span>
+          <span>{levelName}</span>
           {trend !== 0 && (
             <span
               className={`flex items-center gap-1 ${trend > 0 ? "text-green-400" : "text-red-400"}`}
@@ -289,6 +314,7 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
             </span>
           )}
         </div>
+        <div className="text-sm text-gray-500">{levelDescription}</div>
       </div>
     </div>
   );

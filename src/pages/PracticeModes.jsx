@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2, Music2, Drum } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import BackButton from "../components/ui/BackButton";
 import { getGamesCategories } from "../services/apiGamesLibrary";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { useStreakWithAchievements } from "../hooks/useStreakWithAchievements";
 export default function PracticeModes({ practiceModesSectionRef }) {
   const navigate = useNavigate();
   const updateStreakWithAchievements = useStreakWithAchievements();
+  const { t } = useTranslation("common");
 
   const {
     isPending,
@@ -33,7 +35,7 @@ export default function PracticeModes({ practiceModesSectionRef }) {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-white animate-spin" />
           <p className="text-white/80 animate-pulse">
-            Loading your musical journey...
+            {t("games.practiceModes.loading")}
           </p>
         </div>
       </div>
@@ -44,29 +46,66 @@ export default function PracticeModes({ practiceModesSectionRef }) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-900 to-pink-900 flex items-center justify-center p-4">
         <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 max-w-md w-full border border-white/20">
-          <h3 className="text-2xl font-bold text-white mb-4">Oops!</h3>
-          <p className="text-white/80">{error}</p>
+          <h3 className="text-2xl font-bold text-white mb-4">
+            {t("games.practiceModes.errorTitle")}
+          </h3>
+          <p className="text-white/80">
+            {t("games.practiceModes.errorMessage")}
+          </p>
         </div>
       </div>
     );
   }
 
-  const enhancedGameModes = gameModes.map((mode) => ({
-    ...mode,
-    icon:
-      mode.type === "rhythm-mode" ? (
-        <Drum className="w-8 h-8 text-white" />
-      ) : mode.type === "notes-master-mode" ? (
-        <Music2 className="w-8 h-8 text-white" />
-      ) : (
-        <Music2 className="w-8 h-8 text-white" />
-      ),
-  }));
+  const translationMap = {
+    "rhythm-mode": {
+      nameKey: "pages.rhythmMaster",
+      descriptionKey: "games.cards.metronomeTrainer.description",
+    },
+    "notes-master-mode": {
+      nameKey: "pages.notesMaster",
+      descriptionKey: "games.cards.notesRecognition.description",
+    },
+    "sight-reading-mode": {
+      nameKey: "games.cards.sightReading.name",
+      descriptionKey: "games.cards.sightReading.description",
+    },
+  };
+
+  const enhancedGameModes = gameModes.map((mode) => {
+    const translation = translationMap[mode.type];
+    const difficultyKey =
+      mode.difficulty &&
+      {
+        easy: "games.difficulties.easy",
+        medium: "games.difficulties.medium",
+        advanced: "games.difficulties.advanced",
+        "all levels": "games.difficulties.allLevels",
+      }[mode.difficulty.toLowerCase()];
+
+    return {
+      ...mode,
+      icon:
+        mode.type === "rhythm-mode" ? (
+          <Drum className="w-8 h-8 text-white" />
+        ) : (
+          <Music2 className="w-8 h-8 text-white" />
+        ),
+      displayName: translation ? t(translation.nameKey) : mode.name,
+      displayDescription: translation
+        ? t(translation.descriptionKey)
+        : mode.description,
+      displayDifficulty: difficultyKey ? t(difficultyKey) : mode.difficulty,
+    };
+  });
 
   return (
     <div ref={practiceModesSectionRef} className="p-4 lg:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <BackButton to="/" name="Dashboard" />
+        <BackButton
+          to="/"
+          name={t("navigation.links.studentDashboard")}
+        />
         <StreakDisplay />
       </div>
 
@@ -84,15 +123,15 @@ export default function PracticeModes({ practiceModesSectionRef }) {
                 </div>
                 <div className="mt-2 flex-1">
                   <h2 className="text-base font-semibold text-white group-hover:text-blue-200 transition-colors">
-                    {mode.name}
+                    {mode.displayName || mode.name}
                   </h2>
                   <p className="mt-0.5 text-xs text-gray-300">
-                    {mode.description}
+                    {mode.displayDescription || mode.description}
                   </p>
                 </div>
                 <div className="mt-2 flex justify-end">
                   <button className="inline-flex items-center justify-center px-2 py-1 text-xs bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors">
-                    Start Mode
+                    {t("games.practiceModes.startMode")}
                   </button>
                 </div>
               </div>

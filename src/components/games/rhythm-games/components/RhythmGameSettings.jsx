@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal } from "../../../ui/Modal";
 import Button from "../../../ui/Button";
 import {
@@ -9,21 +10,27 @@ import {
 } from "../RhythmPatternGenerator";
 
 // Helper function to get difficulty descriptions
-const getDifficultyInfo = (difficulty) => {
+const getDifficultyInfo = (difficulty, t) => {
   const difficultyMap = {
     [DIFFICULTY_LEVELS.BEGINNER]: {
-      name: "Beginner",
-      description: "2 bars",
+      name: t("gameSettings.difficulty.levels.beginner.label"),
+      description: t("gameSettings.difficulty.levels.beginner.bars_other", {
+        count: 2,
+      }),
       bars: 2,
     },
     [DIFFICULTY_LEVELS.INTERMEDIATE]: {
-      name: "Intermediate",
-      description: "4 bars",
+      name: t("gameSettings.difficulty.levels.intermediate.label"),
+      description: t("gameSettings.difficulty.levels.intermediate.bars_other", {
+        count: 4,
+      }),
       bars: 4,
     },
     [DIFFICULTY_LEVELS.ADVANCED]: {
-      name: "Advanced",
-      description: "8 bars",
+      name: t("gameSettings.difficulty.levels.advanced.label"),
+      description: t("gameSettings.difficulty.levels.advanced.bars_other", {
+        count: 8,
+      }),
       bars: 8,
     },
   };
@@ -43,6 +50,7 @@ export function RhythmGameSettings({
   onUpdateSettings,
   title = "Game Settings",
 }) {
+  const { t } = useTranslation("common");
   const [localSettings, setLocalSettings] = useState(settings);
 
   useEffect(() => {
@@ -57,17 +65,19 @@ export function RhythmGameSettings({
   const difficulties = getAvailableDifficulties();
   const timeSignatures = getTimeSignatures();
 
+  const modalTitle = title || t("gameControls.settings");
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title}>
+    <Modal isOpen={isOpen} onClose={onClose} title={modalTitle}>
       <div className="space-y-6">
         {/* Difficulty Selection */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Difficulty Level
+            {t("gameSettings.steps.labels.difficulty")}
           </label>
           <div className="grid grid-cols-1 gap-2">
             {difficulties.map((difficulty) => {
-              const diffInfo = getDifficultyInfo(difficulty);
+              const diffInfo = getDifficultyInfo(difficulty, t);
               return (
                 <button
                   key={difficulty}
@@ -93,7 +103,7 @@ export function RhythmGameSettings({
         {/* Time Signature */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Time Signature
+            {t("gameSettings.steps.labels.timeSignature")}
           </label>
           <div className="grid grid-cols-2 gap-2">
             {timeSignatures.map((timeSignature) => (
@@ -117,7 +127,9 @@ export function RhythmGameSettings({
         {/* Tempo Range */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tempo: {localSettings.tempo} BPM
+            {t("gameSettings.tempo.label", {
+              tempo: localSettings.tempo,
+            })}
           </label>
           <input
             type="range"
@@ -133,18 +145,18 @@ export function RhythmGameSettings({
             className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
-            <span>60 BPM</span>
-            <span>180 BPM</span>
+            <span>{t("gameSettings.tempo.min", { value: 60 })}</span>
+            <span>{t("gameSettings.tempo.max", { value: 180 })}</span>
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <Button onClick={onClose} variant="secondary" className="flex-1">
-            Cancel
+            {t("gameSettings.buttons.cancel")}
           </Button>
           <Button onClick={handleSave} className="flex-1">
-            Save Settings
+            {t("gameSettings.buttons.saveSettings")}
           </Button>
         </div>
       </div>

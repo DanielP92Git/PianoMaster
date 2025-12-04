@@ -3,7 +3,8 @@ import { useAccessibility } from "../contexts/AccessibilityContext";
 
 // Custom hook for screen reader announcements
 export const useScreenReader = () => {
-  const { announcements, screenReaderOptimized } = useAccessibility();
+  const { announcements, screenReaderOptimized, extendedTimeouts } =
+    useAccessibility();
   const liveRegionRef = useRef(null);
   const politeRegionRef = useRef(null);
   const assertiveRegionRef = useRef(null);
@@ -56,12 +57,15 @@ export const useScreenReader = () => {
         setTimeout(() => {
           region.textContent = message;
         }, 100);
-        setTimeout(() => {
-          region.textContent = "";
-        }, 3000);
+        setTimeout(
+          () => {
+            region.textContent = "";
+          },
+          extendedTimeouts ? 6000 : 3000
+        );
       }
     },
-    [announcements]
+    [announcements, extendedTimeouts]
   );
 
   const announcePolite = useCallback(

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { getAvatar } from "../services/apiAvatars";
 import { Loader2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +12,7 @@ import AnimatedAvatar from "./ui/AnimatedAvatar";
 import { useUserProfile } from "../hooks/useUserProfile";
 
 function Avatars() {
+  const { t } = useTranslation("common");
   const { user } = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -107,31 +109,31 @@ function Avatars() {
   // Helper function to get the full composer name
   const getComposerFullName = (avatar) => {
     if (isBeethovenAvatar(avatar)) {
-      return "Ludwig van Beethoven";
+      return t("avatars.beethoven.name");
     }
     if (isBachAvatar(avatar)) {
-      return "Johann Sebastian Bach";
+      return t("avatars.bach.name");
     }
     if (isMozartAvatar(avatar)) {
-      return "Wolfgang Amadeus Mozart";
+      return t("avatars.mozart.name");
     }
     if (isBrahmsAvatar(avatar)) {
-      return "Johannes Brahms";
+      return t("avatars.brahms.name");
     }
     if (isSchubertAvatar(avatar)) {
-      return "Franz Schubert";
+      return t("avatars.schubert.name");
     }
     if (isChopinAvatar(avatar)) {
-      return "Frédéric Chopin";
+      return t("avatars.chopin.name");
     }
     if (isSchumannAvatar(avatar)) {
-      return "Robert Schumann";
+      return t("avatars.schumann.name");
     }
     if (isHandelAvatar(avatar)) {
-      return "George Frideric Handel";
+      return t("avatars.handel.name");
     }
     if (isVivaldiAvatar(avatar)) {
-      return "Antonio Vivaldi";
+      return t("avatars.vivaldi.name");
     }
     return null;
   };
@@ -171,31 +173,31 @@ function Avatars() {
   // Helper function to get composer description
   const getComposerDescription = (avatar) => {
     if (isBeethovenAvatar(avatar)) {
-      return "A German composer who wrote amazing music even after he became deaf! He loved nature and took long walks to get inspiration for his powerful symphonies.";
+      return t("avatars.beethoven.description");
     }
     if (isBachAvatar(avatar)) {
-      return "A German composer who was a master of the organ and harpsichord. He came from a family of musicians and had 20 children, many of whom became musicians too!";
+      return t("avatars.bach.description");
     }
     if (isMozartAvatar(avatar)) {
-      return "An Austrian musical genius who started composing at age 5! He wrote over 600 pieces of music and loved to make people laugh with his jokes and pranks.";
+      return t("avatars.mozart.description");
     }
     if (isBrahmsAvatar(avatar)) {
-      return "A German composer with a big beard who loved classical music and was friends with Clara Schumann. He was shy but his music was full of warm, beautiful melodies.";
+      return t("avatars.brahms.description");
     }
     if (isSchubertAvatar(avatar)) {
-      return "An Austrian composer who loved writing songs and melodies. He was very friendly and had a group of artist friends who would gather to hear his latest music!";
+      return t("avatars.schubert.description");
     }
     if (isChopinAvatar(avatar)) {
-      return "A Polish-French composer known as the 'poet of the piano.' He wrote beautiful, dreamy music mostly for the piano and was born near Warsaw, Poland.";
+      return t("avatars.chopin.description");
     }
     if (isSchumannAvatar(avatar)) {
-      return "A German composer who loved literature and poetry. He married the famous pianist Clara and wrote music that told stories and painted pictures with sound.";
+      return t("avatars.schumann.description");
     }
     if (isHandelAvatar(avatar)) {
-      return "A German-British composer famous for his 'Messiah' with the Hallelujah Chorus! He loved writing music for big celebrations and royal events.";
+      return t("avatars.handel.description");
     }
     if (isVivaldiAvatar(avatar)) {
-      return "An Italian composer with bright red hair who was also a priest! He taught music to orphan girls in Venice and wrote 'The Four Seasons,' music that sounds like spring, summer, fall, and winter.";
+      return t("avatars.vivaldi.description");
     }
     return null;
   };
@@ -203,31 +205,31 @@ function Avatars() {
   // Helper function to get fun fact
   const getComposerFunFact = (avatar) => {
     if (isBeethovenAvatar(avatar)) {
-      return "🎵 Fun Fact: Beethoven loved coffee so much that he counted exactly 60 beans for each cup!";
+      return t("avatars.beethoven.fun_fact");
     }
     if (isBachAvatar(avatar)) {
-      return "🎵 Fun Fact: Bach once walked 250 miles just to hear a famous organist play!";
+      return t("avatars.bach.fun_fact");
     }
     if (isMozartAvatar(avatar)) {
-      return "🎵 Fun Fact: Mozart had a pet starling bird that could sing one of his piano pieces!";
+      return t("avatars.mozart.fun_fact");
     }
     if (isBrahmsAvatar(avatar)) {
-      return "🎵 Fun Fact: When Brahms was a young boy, he helped support his family by playing piano in local inns and taverns—kind of like being a small-town piano superstar!";
+      return t("avatars.brahms.fun_fact");
     }
     if (isSchubertAvatar(avatar)) {
-      return "🎵 Fun Fact: Schubert wrote over 600 songs and sometimes composed up to 8 songs in a single day!";
+      return t("avatars.schubert.fun_fact");
     }
     if (isChopinAvatar(avatar)) {
-      return "🎵 Fun Fact: Chopin gave his first piano concert when he was only 7 years old!";
+      return t("avatars.chopin.fun_fact");
     }
     if (isSchumannAvatar(avatar)) {
-      return "🎵 Fun Fact: Schumann hurt his hand trying to make it stronger with a finger device, so he focused on composing instead!";
+      return t("avatars.schumann.fun_fact");
     }
     if (isHandelAvatar(avatar)) {
-      return "🎵 Fun Fact: Handel wrote his famous 'Messiah' in just 24 days!";
+      return t("avatars.handel.fun_fact");
     }
     if (isVivaldiAvatar(avatar)) {
-      return "🎵 Fun Fact: Vivaldi wrote over 500 concertos and was nicknamed 'The Red Priest' because of his red hair!";
+      return t("avatars.vivaldi.fun_fact");
     }
     return null;
   };
@@ -251,29 +253,29 @@ function Avatars() {
   // Note: Videos are optional - if null is returned, only the static image will show
   const getAnimationVideoUrl = (avatar) => {
     if (isBeethovenAvatar(avatar)) {
-      return "/avatars/Beethoven_Animation_Bowing.mp4";
+      return "/avatars/Beethoven_Animation.mp4";
     }
     if (isBachAvatar(avatar)) {
-      return "/avatars/Bach_Animation_Generation.mp4";
+      return "/avatars/Bach_Animation.mp4";
     }
     if (isMozartAvatar(avatar)) {
-      return "/avatars/Mozart_Animation_Bowing.mp4";
+      return "/avatars/Mozart_Animation.mp4";
     }
     // New composers - videos not yet added, will work with just images
     if (isBrahmsAvatar(avatar)) {
-      return null; // Add video path when ready: "/avatars/Brahms_Animation.mp4"
+      return "/avatars/Brahms_Animation.mp4";
     }
     if (isSchubertAvatar(avatar)) {
-      return null; // Add video path when ready: "/avatars/Schubert_Animation.mp4"
+      return "/avatars/Schubert_Animation.mp4";
+    }
+    if (isHandelAvatar(avatar)) {
+      return "/avatars/Handel_Animation.mp4";
     }
     if (isChopinAvatar(avatar)) {
       return null; // Add video path when ready: "/avatars/Chopin_Animation.mp4"
     }
     if (isSchumannAvatar(avatar)) {
       return null; // Add video path when ready: "/avatars/Schumann_Animation.mp4"
-    }
-    if (isHandelAvatar(avatar)) {
-      return null; // Add video path when ready: "/avatars/Handel_Animation.mp4"
     }
     if (isVivaldiAvatar(avatar)) {
       return null; // Add video path when ready: "/avatars/Vivaldi_Animation.mp4"
@@ -321,10 +323,10 @@ function Avatars() {
 
   return (
     <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 mx-4 my-4 space-y-6">
-      <BackButton to="/settings" name="Settings" />
+      <BackButton to="/settings" name={t("navigation.links.settings")} />
 
       <h2 className="text-xl font-semibold text-white text-center">
-        Choose Your Avatar
+        {t("avatars.title")}
       </h2>
 
       {/* Avatar Grid - Smaller size to fit in one row */}
@@ -370,6 +372,9 @@ function Avatars() {
           {/* Fun Fact */}
           <div className="bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-lg p-4 border border-purple-300/30">
             <p className="text-base md:text-lg font-rounded font-semibold text-white leading-relaxed">
+              ✨ {t("avatars.funFact")}:
+            </p>
+            <p className="text-base md:text-lg font-rounded font-semibold text-white leading-relaxed">
               {getComposerFunFact(selectedAvatar)}
             </p>
           </div>
@@ -386,11 +391,13 @@ function Avatars() {
               className="w-16 h-16 rounded-full object-cover ring-2 ring-white"
             />
             <div>
-              <p className="text-sm font-medium text-white">Selected Avatar</p>
+              <p className="text-sm font-medium text-white">
+                {t("avatars.selected_avatar")}
+              </p>
               <p className="text-sm text-gray-300">
                 {updateAvatarMutation.isPending
-                  ? "Saving your selection..."
-                  : "Click another avatar to change your selection"}
+                  ? t("common.saving")
+                  : t("avatars.click_another_avatar")}
               </p>
             </div>
           </div>

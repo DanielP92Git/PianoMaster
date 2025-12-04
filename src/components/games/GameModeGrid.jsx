@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 /**
  * Reusable game mode grid component
@@ -8,6 +9,7 @@ import { Link } from "react-router-dom";
  * - Maintains consistent layout across all game mode screens
  */
 export function GameModeGrid({ games }) {
+  const { t } = useTranslation("common");
   // Determine grid columns based on number of games
   const getGridClass = () => {
     if (games.length >= 3) {
@@ -32,20 +34,27 @@ export function GameModeGrid({ games }) {
               <div className="flex items-start justify-between">
                 <div className="bg-white/5 rounded-lg p-1.5">{game.icon}</div>
                 <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium text-white/80 ring-1 ring-inset ring-white/20">
-                  {game.difficulty}
+                  {game.displayDifficulty ||
+                    (game.difficultyKey
+                      ? t(game.difficultyKey)
+                      : game.difficulty)}
                 </span>
               </div>
               <div className="mt-2 flex-1">
                 <h2 className="text-base font-semibold text-white group-hover:text-blue-200 transition-colors">
-                  {game.name}
+                  {game.displayName ||
+                    (game.nameKey ? t(game.nameKey) : game.name)}
                 </h2>
                 <p className="mt-0.5 text-xs text-gray-300">
-                  {game.description}
+                  {game.displayDescription ||
+                    (game.descriptionKey
+                      ? t(game.descriptionKey)
+                      : game.description)}
                 </p>
               </div>
               <div className="mt-2 flex justify-end">
                 <button className="inline-flex items-center justify-center px-2 py-1 text-xs bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors">
-                  Start Game
+                  {t("games.actions.start")}
                 </button>
               </div>
             </div>

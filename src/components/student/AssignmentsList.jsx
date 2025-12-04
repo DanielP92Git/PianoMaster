@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getStudentAssignments } from "../../services/apiStudent";
 import {
   FaCalendarAlt as CalendarIcon,
@@ -12,6 +13,7 @@ const AssignmentsList = () => {
   const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -46,22 +48,20 @@ const AssignmentsList = () => {
 
   const getStatusText = (status, daysRemaining) => {
     if (status === "completed") {
-      return "Completed";
+      return t("dashboard.assignments.status.completed");
     }
 
     if (daysRemaining !== null && daysRemaining < 0) {
-      return "Overdue";
-    }
-
-    if (daysRemaining !== null && daysRemaining <= 3) {
-      return `Due in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""}`;
+      return t("dashboard.assignments.status.overdue");
     }
 
     if (daysRemaining !== null) {
-      return `Due in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""}`;
+      return t("dashboard.assignments.status.dueIn", {
+        count: Math.abs(daysRemaining),
+      });
     }
 
-    return "No due date";
+    return t("dashboard.assignments.status.noDueDate");
   };
 
   const getStatusColor = (status, daysRemaining) => {
@@ -84,7 +84,9 @@ const AssignmentsList = () => {
     return (
       <div className="card p-6">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-medium text-gray-900">Assignments</h3>
+          <h3 className="text-lg font-medium text-gray-900">
+            {t("dashboard.assignments.title")}
+          </h3>
           <div className="w-4 h-4 bg-white/20 rounded animate-pulse"></div>
         </div>
         <div className="space-y-3">
@@ -107,13 +109,19 @@ const AssignmentsList = () => {
   return (
     <div className="card p-6">
       <div className="mb-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-3">Assignments</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-3">
+          {t("dashboard.assignments.title")}
+        </h3>
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <span className="bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
-            {pendingAssignments.length} pending
+            {t("dashboard.assignments.pending", {
+              count: pendingAssignments.length,
+            })}
           </span>
           <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded">
-            {completedAssignments.length} completed
+            {t("dashboard.assignments.completed", {
+              count: completedAssignments.length,
+            })}
           </span>
         </div>
       </div>
@@ -121,7 +129,7 @@ const AssignmentsList = () => {
       {assignments.length === 0 ? (
         <div className="text-center py-8">
           <CalendarIcon className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-          <p className="text-gray-600">No assignments yet</p>
+          <p className="text-gray-600">{t("dashboard.assignments.empty")}</p>
         </div>
       ) : (
         <div className="space-y-3 max-h-64 overflow-y-auto custom-scrollbar">
@@ -147,7 +155,10 @@ const AssignmentsList = () => {
               <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-2">
                   <span
-                    className={`text-sm font-medium ${getStatusColor(assignment.status, assignment.daysRemaining)}`}
+                    className={`text-sm font-medium ${getStatusColor(
+                      assignment.status,
+                      assignment.daysRemaining
+                    )}`}
                   >
                     {getStatusText(assignment.status, assignment.daysRemaining)}
                   </span>
@@ -155,8 +166,10 @@ const AssignmentsList = () => {
 
                 {assignment.assignment.points_possible && (
                   <span className="text-sm text-gray-600">
-                    {assignment.points_earned || 0}/
-                    {assignment.assignment.points_possible} pts
+                    {t("dashboard.assignments.pointsLabel", {
+                      earned: assignment.points_earned || 0,
+                      possible: assignment.assignment.points_possible,
+                    })}
                   </span>
                 )}
               </div>
@@ -171,7 +184,9 @@ const AssignmentsList = () => {
             onClick={() => navigate("/assignments")}
             className="w-full text-sm text-blue-400 hover:text-blue-300 transition-colors"
           >
-            View all {assignments.length} assignments
+            {t("dashboard.assignments.viewAll", {
+              count: assignments.length,
+            })}
           </button>
         </div>
       )}

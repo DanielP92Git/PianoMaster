@@ -40,7 +40,9 @@ export function useTeacherRecordingNotifications(teacherId) {
         .from("practice_sessions")
         .select("id, submitted_at")
         .in("student_id", studentIds)
+        .eq("has_recording", true)
         .not("recording_url", "is", null)
+        .neq("recording_url", "")
         .gt("submitted_at", lastViewed.toISOString());
 
       if (recordingsError) throw recordingsError;

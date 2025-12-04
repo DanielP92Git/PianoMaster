@@ -239,7 +239,7 @@ export function SightReadingGame() {
       gameSettings.clef?.toLowerCase() === "bass" ? BASS_NOTES : TREBLE_NOTES;
     const activeNotes =
       selected.length > 0
-        ? noteBank.filter((note) => selected.includes(note.note))
+        ? noteBank.filter((note) => selected.includes(note.pitch))
         : noteBank;
     const mapping = {};
     activeNotes.forEach((note, idx) => {

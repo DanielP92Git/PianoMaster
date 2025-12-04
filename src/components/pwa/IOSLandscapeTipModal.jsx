@@ -1,8 +1,10 @@
 import { createElement, useState } from "react";
 import { X as CloseIcon, Share } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function IOSLandscapeTipModal({ onClose }) {
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const { t } = useTranslation("common");
 
   const handleClose = () => {
     onClose({ dontShowAgain });
@@ -25,8 +27,10 @@ export default function IOSLandscapeTipModal({ onClose }) {
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-white/80">Best experience tip</p>
-              <h3 className="text-sm font-semibold">Use landscape on iPad</h3>
+              <p className="text-xs text-white/80">
+                {t("iosTip.bestExperienceLabel")}
+              </p>
+              <h3 className="text-sm font-semibold">{t("iosTip.title")}</h3>
             </div>
             <button
               onClick={handleClose}
@@ -53,17 +57,10 @@ export default function IOSLandscapeTipModal({ onClose }) {
             </div>
           </div>
 
-          <p>
-            For the best PianoMaster experience on iPad, rotate your device to{" "}
-            <strong>landscape</strong> and use the installed app from your{" "}
-            <strong>Home Screen</strong>.
-          </p>
-          <p className="text-xs text-gray-600">
-            Install the app by tapping the <strong>Share</strong> {"("}
-            <Share className="inline h-3 w-3 text-blue-600 " />
-            {") "}
-            button in Safari and choosing <strong>Add to Home Screen</strong>,
-            then open PianoMaster from the new icon.
+          <p>{t("iosTip.body")}</p>
+          <p className="text-xs text-gray-600 flex items-center gap-1">
+            <Share className="h-3 w-3 text-blue-600" aria-hidden="true" />
+            <span>{t("iosTip.installInstructions")}</span>
           </p>
 
           <label className="flex items-start gap-2 rounded-xl bg-gray-50 px-3 py-2 text-xs text-gray-700">
@@ -73,9 +70,7 @@ export default function IOSLandscapeTipModal({ onClose }) {
               checked={dontShowAgain}
               onChange={(event) => setDontShowAgain(event.target.checked)}
             />
-            <span>
-              Got it! Don&apos;t show it again<span aria-hidden="true">.</span>
-            </span>
+            <span>{t("common.dontShowAgain")}</span>
           </label>
 
           <div className="pt-2">
@@ -83,7 +78,7 @@ export default function IOSLandscapeTipModal({ onClose }) {
               onClick={handleClose}
               className="w-full rounded-xl bg-gray-100 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-200 transition-colors"
             >
-              Got it
+              {t("common.gotIt")}
             </button>
           </div>
         </div>

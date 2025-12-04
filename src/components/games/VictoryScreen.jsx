@@ -1,8 +1,8 @@
-import React from "react";
-import { Trophy, Star, Sparkles } from "lucide-react";
-import { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Trophy, Star, Sparkles, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useStreakWithAchievements } from "../../hooks/useStreakWithAchievements";
+import { useTotalPoints } from "../../hooks/useTotalPoints";
 
 const VictoryScreen = ({
   score,
@@ -17,11 +17,29 @@ const VictoryScreen = ({
   const scorePercentage = (score / totalPossibleScore) * 100;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
   const updateStreakWithAchievements = useStreakWithAchievements();
+  const { data: totalPointsData, isLoading: totalPointsLoading } =
+    useTotalPoints();
+  const [achievementBonus, setAchievementBonus] = useState(0);
+  const pointsEarned = Math.max(score, 0) + achievementBonus;
+  const basePoints = totalPointsData?.totalPoints || 0;
+  const targetPoints = useMemo(
+    () => basePoints + pointsEarned,
+    [basePoints, pointsEarned]
+  );
 
   useEffect(() => {
-    // Update streak and check achievements if score is 80% or higher
     if (scorePercentage >= 80) {
-      updateStreakWithAchievements.mutate();
+      updateStreakWithAchievements.mutate(undefined, {
+        onSuccess: ({ newAchievements }) => {
+          const bonus = newAchievements?.reduce(
+            (sum, achievement) => sum + (achievement?.points || 0),
+            0
+          );
+          if (bonus) {
+            setAchievementBonus(bonus);
+          }
+        },
+      });
     }
   }, [scorePercentage, updateStreakWithAchievements]);
 
@@ -31,14 +49,21 @@ const VictoryScreen = ({
         <div className="absolute top-1 sm:top-2 md:top-3 left-1/2 -translate-x-1/2">
           <div className="relative">
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 blur-xl opacity-20 animate-celebration" />
-            <Trophy
-              className="w-6 h-6 sm:w-10 sm:h-10 md:w-12 md:h-12 text-yellow-500 animate-celebration"
-              strokeWidth={1.5}
-            />
+            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full overflow-hidden border-4 border-white/80 shadow-xl bg-black/20">
+              <video
+                src="/avatars/mozart_happy.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+                aria-label="Mozart celebration animation"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="text-center mt-0.5 sm:mt-2 md:mt-4 space-y-1 sm:space-y-2.5 md:space-y-4">
+        <div className="text-center mt-16 sm:mt-20 md:mt-24 space-y-1 sm:space-y-2.5 md:space-y-4">
           {/* Animated victory title with sparkle effects */}
           <div className="relative py-0.5 sm:py-1">
             <div className="absolute inset-0 bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 blur-lg opacity-30 animate-pulse"></div>
@@ -85,7 +110,15 @@ const VictoryScreen = ({
             </div>
           )} */}
 
-          <div className="flex gap-1.5 sm:gap-2.5 md:gap-3 mt-1.5 sm:mt-2.5 md:mt-6">
+          {!totalPointsLoading && (
+            <PointsCelebration
+              basePoints={basePoints}
+              targetPoints={targetPoints}
+              immediateGain={pointsEarned}
+            />
+          )}
+
+          <div className="flex gap-1.5 sm:gap-2.5 md:gap-3 mt-1.5 sm:mt-3 md:mt-6">
             <button
               onClick={onReset}
               className="flex-1 py-1.5 sm:py-2 md:py-3 px-1.5 sm:px-3 md:px-6 text-xs sm:text-sm md:text-lg font-semibold text-white rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none"
@@ -113,3 +146,66 @@ const VictoryScreen = ({
 };
 
 export default VictoryScreen;
+
+const useCountUp = (start, end, duration = 1400) => {
+  const [value, setValue] = useState(start);
+
+  useEffect(() => {
+    if (start === undefined || end === undefined) return;
+    let frame;
+    const startTime = performance.now();
+    const change = end - start;
+
+    const animate = (currentTime) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = 1 - Math.pow(1 - progress, 3);
+      setValue(Math.round(start + change * easedProgress));
+
+      if (progress < 1) {
+        frame = requestAnimationFrame(animate);
+      }
+    };
+
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [start, end, duration]);
+
+  return value;
+};
+
+function PointsCelebration({
+  basePoints = 0,
+  targetPoints = 0,
+  immediateGain,
+}) {
+  const animatedValue = useCountUp(basePoints, targetPoints);
+  const gain = immediateGain || targetPoints - basePoints;
+
+  if (gain <= 0) return null;
+
+  return (
+    <div className="relative mt-3 sm:mt-5 md:mt-6">
+      <div className="absolute inset-0 bg-gradient-to-r from-yellow-200/40 via-pink-200/30 to-indigo-200/40 blur-lg opacity-70" />
+      <div className="relative p-3 sm:p-4 md:p-5 rounded-2xl bg-white/90 border border-white/60 shadow-lg flex flex-col sm:flex-row items-center gap-3 sm:gap-4">
+        <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 shadow-inner">
+          <ArrowUpRight className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-pulse" />
+        </div>
+        <div className="flex-1 text-center sm:text-left">
+          <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+            Total Points
+          </p>
+          <p className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+            {animatedValue.toLocaleString()}
+          </p>
+        </div>
+        <div className="text-center sm:text-right">
+          <p className="text-xs text-gray-500">Points earned</p>
+          <p className="text-lg sm:text-xl font-bold text-emerald-500">
+            +{gain.toLocaleString()}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

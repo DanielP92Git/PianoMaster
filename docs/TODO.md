@@ -3,9 +3,10 @@
 ## Today (yyyy-mm-dd)
 
 ## This week
-- [ ] Start App Translation
+- [ ~ ] Start App Translation
 - [ ] Add a 2-Clefs option to sight reading game
 - [ ] Finish achievements API (epic #1)
+- [ ] Make sure all settings toggles actually doing something and work
 
 ## Backlog
 - [ ] Add MIDI recording export

@@ -1,9 +1,19 @@
-import React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Star, Clock, Target, Zap, Award, Lock } from "lucide-react";
+import {
+  Trophy,
+  Star,
+  Clock,
+  Target,
+  Zap,
+  Award,
+  Lock as LockIcon, // eslint-disable-line no-unused-vars
+} from "lucide-react";
 import { achievementService } from "../services/achievementService";
 import { useUser } from "../features/authentication/useUser";
-import BackButton from "../components/ui/BackButton";
+import BackButtonComponent from "../components/ui/BackButton"; // eslint-disable-line no-unused-vars
+import { useTranslation } from "react-i18next";
+import { getStudentScores } from "../services/apiDatabase";
+import { calculatePointsSummary } from "../utils/points";
 
 const categoryIcons = {
   milestone: Trophy,
@@ -23,8 +33,9 @@ const categoryColors = {
   time: "from-indigo-500 to-blue-500",
 };
 
-export function Achievements() {
+export default function Achievements() {
   const { user } = useUser();
+  const { t, i18n } = useTranslation();
 
   // Fetch all available achievements
   const { data: allAchievements = [], isLoading: allLoading } = useQuery({
@@ -49,7 +60,15 @@ export function Achievements() {
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  const isLoading = allLoading || earnedLoading || progressLoading;
+  const { data: scoresData = [], isLoading: scoresLoading } = useQuery({
+    queryKey: ["student-scores", user?.id],
+    queryFn: () => getStudentScores(user.id),
+    enabled: !!user?.id,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const isLoading =
+    allLoading || earnedLoading || progressLoading || scoresLoading;
 
   // Create a map of earned achievements for quick lookup
   const earnedMap = new Map(
@@ -67,26 +86,55 @@ export function Achievements() {
   }, {});
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+    if (!dateString) return "";
+    const locale = i18n.language === "he" ? "he-IL" : "en-US";
+    return new Date(dateString).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
     });
   };
 
+  const getAchievementTitle = (achievement) =>
+    t(`pages.achievements.items.${achievement.id}.title`, {
+      defaultValue: achievement.title,
+    });
+
+  const getAchievementDescription = (achievement) =>
+    t(`pages.achievements.items.${achievement.id}.description`, {
+      defaultValue: achievement.description,
+    });
+
+  const getCategoryLabel = (category) =>
+    t(`pages.achievements.categories.${category}`, {
+      defaultValue: category,
+    });
+
   const getProgressInfo = (achievementId) => {
     const progress = progressData.find((p) => p.id === achievementId);
     return progress || null;
   };
 
+  const { totalPoints, gameplayPoints, achievementPoints } =
+    calculatePointsSummary({
+      scores: scoresData,
+      earned: earnedAchievements,
+    });
+
   if (isLoading) {
     return (
       <div className="p-6">
-        <BackButton />
+        <BackButtonComponent
+          to="/practice-modes"
+          name={t("navigation.links.studentDashboard")}
+          styling="text-white/80 hover:text-white text-sm"
+        />
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">Achievements</h1>
-            <p className="text-white/80">Loading your achievements...</p>
+            <h1 className="text-2xl font-bold text-white mb-2">
+              {t("pages.achievements.title")}
+            </h1>
+            <p className="text-white/80">{t("pages.achievements.loading")}</p>
           </div>
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
@@ -110,14 +158,18 @@ export function Achievements() {
 
   return (
     <div className="p-6">
-      <BackButton />
+      <BackButtonComponent
+        to="/practice-modes"
+        name={t("navigation.links.studentDashboard")}
+        styling="text-white/80 hover:text-white text-sm"
+      />
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">Achievements</h1>
-          <p className="text-white/80">
-            Track your progress and unlock badges as you practice
-          </p>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {t("pages.achievements.title")}
+          </h1>
+          <p className="text-white/80">{t("pages.achievements.description")}</p>
         </div>
 
         {/* Stats Summary */}
@@ -126,16 +178,23 @@ export function Achievements() {
             <div className="text-2xl font-bold text-indigo-600 mb-1">
               {earnedAchievements.length}
             </div>
-            <div className="text-sm text-gray-600">Achievements Earned</div>
+            <div className="text-sm text-gray-600">
+              {t("pages.achievements.earned")}
+            </div>
           </div>
           <div className="card p-6 text-center">
             <div className="text-2xl font-bold text-green-600 mb-1">
-              {earnedAchievements.reduce(
-                (sum, achievement) => sum + (achievement.points || 0),
-                0
-              )}
+              {totalPoints.toLocaleString()}
             </div>
-            <div className="text-sm text-gray-600">Achievement Points</div>
+            <div className="text-sm text-gray-600">
+              {t("pages.achievements.points")}
+            </div>
+            <div className="text-xs text-gray-500">
+              {t("pages.achievements.pointsBreakdown", {
+                gameplay: gameplayPoints.toLocaleString(),
+                achievements: achievementPoints.toLocaleString(),
+              })}
+            </div>
           </div>
           <div className="card p-6 text-center">
             <div className="text-2xl font-bold text-purple-600 mb-1">
@@ -144,7 +203,9 @@ export function Achievements() {
               ) || 0}
               %
             </div>
-            <div className="text-sm text-gray-600">Completion Rate</div>
+            <div className="text-sm text-gray-600">
+              {t("pages.achievements.completionRate")}
+            </div>
           </div>
         </div>
 
@@ -152,7 +213,7 @@ export function Achievements() {
         {earnedAchievements.length > 0 && (
           <div className="card p-6 mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Recent Achievements
+              {t("pages.achievements.recentAchievements")}
             </h2>
             <div className="space-y-3">
               {earnedAchievements.slice(0, 5).map((earned) => {
@@ -161,7 +222,8 @@ export function Achievements() {
                 );
                 if (!achievement) return null;
 
-                const IconComponent =
+                // eslint-disable-next-line no-unused-vars
+                const CategoryIcon =
                   categoryIcons[achievement.category] || Trophy;
                 const colorClass =
                   categoryColors[achievement.category] ||
@@ -175,21 +237,28 @@ export function Achievements() {
                     <div
                       className={`w-12 h-12 bg-gradient-to-br ${colorClass} rounded-full flex items-center justify-center flex-shrink-0`}
                     >
-                      <IconComponent className="h-6 w-6 text-white" />
+                      <CategoryIcon className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-gray-900">
-                          {achievement.title}
+                          {getAchievementTitle(achievement)}
                         </h3>
                         <span className="text-xl">{achievement.icon}</span>
                       </div>
                       <p className="text-sm text-gray-600 mb-1">
-                        {achievement.description}
+                        {getAchievementDescription(achievement)}
                       </p>
                       <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>+{achievement.points} points</span>
-                        <span>Earned {formatDate(earned.earned_at)}</span>
+                        <span>
+                          {t("pages.achievements.pointsReward", {
+                            points: achievement.points,
+                          })}
+                        </span>
+                        <span>
+                          {t("pages.achievements.earned")}{" "}
+                          {formatDate(earned.earned_at)}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -203,7 +272,8 @@ export function Achievements() {
         <div className="space-y-8">
           {Object.entries(groupedAchievements).map(
             ([category, achievements]) => {
-              const IconComponent = categoryIcons[category] || Trophy;
+              // eslint-disable-next-line no-unused-vars
+              const CategoryIcon = categoryIcons[category] || Trophy;
               const colorClass =
                 categoryColors[category] || categoryColors.milestone;
 
@@ -213,10 +283,11 @@ export function Achievements() {
                     <div
                       className={`w-10 h-10 bg-gradient-to-br ${colorClass} rounded-lg flex items-center justify-center`}
                     >
-                      <IconComponent className="h-5 w-5 text-white" />
+                      <CategoryIcon className="h-5 w-5 text-white" />
                     </div>
                     <h2 className="text-lg font-semibold text-gray-900 capitalize">
-                      {category} Achievements
+                      {t("pages.achievements.achievements")}{" "}
+                      {getCategoryLabel(category)}
                     </h2>
                   </div>
 
@@ -245,7 +316,7 @@ export function Achievements() {
                                     {achievement.icon}
                                   </span>
                                 ) : (
-                                  <Lock className="h-4 w-4 text-white" />
+                                  <LockIcon className="h-4 w-4 text-white" />
                                 )}
                               </div>
                               {isEarned && (
@@ -258,18 +329,20 @@ export function Achievements() {
                               <h3
                                 className={`font-medium mb-1 ${isEarned ? "text-gray-900" : "text-gray-600"}`}
                               >
-                                {achievement.title}
+                                {getAchievementTitle(achievement)}
                               </h3>
                               <p
                                 className={`text-sm mb-2 ${isEarned ? "text-gray-600" : "text-gray-500"}`}
                               >
-                                {achievement.description}
+                                {getAchievementDescription(achievement)}
                               </p>
                               <div className="flex items-center justify-between">
                                 <span
                                   className={`text-xs font-medium ${isEarned ? "text-green-600" : "text-gray-500"}`}
                                 >
-                                  +{achievement.points} points
+                                  {t("pages.achievements.pointsReward", {
+                                    points: achievement.points,
+                                  })}
                                 </span>
                                 {isEarned && earned && (
                                   <span className="text-xs text-gray-500">
@@ -291,7 +364,7 @@ export function Achievements() {
                                     </div>
                                     <div className="text-xs text-gray-500 mt-1">
                                       {Math.round(progress.progress * 100)}%
-                                      complete
+                                      {t("pages.achievements.complete")}
                                     </div>
                                   </div>
                                 )}
@@ -312,10 +385,10 @@ export function Achievements() {
           <div className="text-center py-12">
             <Trophy className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Achievements Available
+              {t("pages.achievements.noAchievementsAvailable")}
             </h3>
             <p className="text-gray-600">
-              Check back later for new achievements to unlock!
+              {t("pages.achievements.checkBackLater")}
             </p>
           </div>
         )}

@@ -13,6 +13,7 @@ import {
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
 import { lockOrientation } from "../../utils/pwa";
+import { useTranslation } from "react-i18next";
 // import Spinner from "../ui/Spinner";
 
 function LoginForm() {
@@ -22,6 +23,7 @@ function LoginForm() {
   const [isSignup, setIsSignup] = useState(false);
   const navigate = useNavigate();
   const { login, isPending } = useLogin();
+  const { t } = useTranslation("common");
 
   useEffect(() => {
     lockOrientation("portrait-primary");
@@ -91,7 +93,7 @@ function LoginForm() {
                     PianoMaster
                   </h1>
                   <p className="text-white/80 text-sm lg:text-base">
-                    Begin your musical adventure!
+                    {t("auth.login.subtitle")}
                   </p>
                 </div>
 
@@ -104,7 +106,7 @@ function LoginForm() {
                           htmlFor="email"
                           className="block text-sm font-medium text-white/90 mb-1 group-hover:text-indigo-300 transition-colors"
                         >
-                          Email
+                          {t("auth.login.emailLabel")}
                         </label>
                         <input
                           type="email"
@@ -113,7 +115,7 @@ function LoginForm() {
                           onChange={(e) => setEmail(e.target.value)}
                           disabled={isPending}
                           className="w-full px-4 py-2.5 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
-                          placeholder="Enter your email"
+                          placeholder={t("auth.login.emailPlaceholder")}
                           required
                         />
                       </div>
@@ -122,7 +124,7 @@ function LoginForm() {
                           htmlFor="password"
                           className="block text-sm font-medium text-white/90 mb-1 group-hover:text-indigo-300 transition-colors"
                         >
-                          Password
+                          {t("auth.login.passwordLabel")}
                         </label>
                         <div className="relative">
                           <input
@@ -132,7 +134,7 @@ function LoginForm() {
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={isPending}
                             className="w-full px-4 py-2.5 pr-12 rounded-xl border-2 border-white/10 bg-white/5 focus:bg-white/10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 text-white placeholder-white/50"
-                            placeholder="Enter your password"
+                            placeholder={t("auth.login.passwordPlaceholder")}
                             required
                           />
                           <button
@@ -159,7 +161,7 @@ function LoginForm() {
                       {isPending ? (
                         <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
-                        "Login"
+                        t("auth.login.submit")
                       )}
                     </button>
 
@@ -170,7 +172,7 @@ function LoginForm() {
                         </div>
                         <div className="relative flex justify-center text-sm">
                           <span className="px-2 bg-transparent text-white/60">
-                            Or continue with
+                            {t("auth.login.orSocial")}
                           </span>
                         </div>
                       </div>
@@ -181,13 +183,13 @@ function LoginForm() {
                     </div>
 
                     <div className="text-center text-sm text-white/60 pt-2">
-                      New to PianoMaster?{" "}
+                      {t("auth.login.noAccountPrompt")}{" "}
                       <button
                         type="button"
                         onClick={() => setIsSignup(true)}
                         className="font-medium text-indigo-400 hover:text-indigo-300 transition-colors"
                       >
-                        Create Account
+                        {t("auth.login.signupLink")}
                       </button>
                     </div>
                   </form>

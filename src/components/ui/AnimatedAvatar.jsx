@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Check } from "lucide-react";
 
 /**
  * AnimatedAvatar component that supports image-to-video-to-image transitions
@@ -93,12 +92,24 @@ function AnimatedAvatar({
       disabled={isAnimating}
       className={`
         relative group aspect-square rounded-xl overflow-hidden 
-        transition-transform hover:scale-105 focus:outline-none 
+        transition-all duration-300 hover:scale-105 focus:outline-none 
         focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500
-        ${isSelected ? "ring-2 ring-indigo-600" : "ring-1 ring-gray-200"}
+        ${
+          isSelected
+            ? "ring-4 ring-indigo-500 scale-110 shadow-2xl shadow-indigo-500/50"
+            : "ring-1 ring-gray-200"
+        }
         ${isAnimating ? "cursor-wait" : "cursor-pointer"}
         ${className}
       `}
+      style={
+        isSelected
+          ? {
+              boxShadow:
+                "0 0 30px rgba(99, 102, 241, 0.6), 0 0 60px rgba(99, 102, 241, 0.3)",
+            }
+          : undefined
+      }
     >
       {/* Static Avatar Image */}
       <img
@@ -132,13 +143,6 @@ function AnimatedAvatar({
       {/* Hover Overlay - only show when not animating */}
       {!isAnimating && (
         <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-opacity" />
-      )}
-
-      {/* Selection Indicator */}
-      {isSelected && !isAnimating && (
-        <div className="absolute inset-0 bg-indigo-600 bg-opacity-20 flex items-center justify-center">
-          <Check className="w-8 h-8 text-white" />
-        </div>
       )}
 
       {/* Loading Indicator - only show while loading */}

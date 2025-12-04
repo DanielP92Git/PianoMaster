@@ -4,7 +4,7 @@ import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
 import { NotesMasterMode } from "./components/games/NotesMasterMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
-import { Achievements } from "./pages/Achievements";
+import Achievements from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
 import PracticeSessions from "./pages/PracticeSessions";
 import StudentAssignments from "./pages/StudentAssignments";
@@ -27,7 +27,10 @@ import { dashboardReminderService } from "./services/dashboardReminderService";
 import { useUser } from "./features/authentication/useUser";
 import { Loader2 } from "lucide-react";
 import { ModalProvider } from "./contexts/ModalContext";
-import { AccessibilityProvider } from "./contexts/AccessibilityContext";
+import {
+  AccessibilityProvider,
+  useAccessibility,
+} from "./contexts/AccessibilityContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import TeacherDashboard from "./components/layout/TeacherDashboard";
 import { RoleSelection } from "./components/auth/RoleSelection";
@@ -280,7 +283,7 @@ function App() {
             <RhythmProvider>
               <SightReadingSessionProvider>
                 <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-                  <Toaster position="top-center" />
+                  <AccessibleToaster />
                   <AppRoutes />
 
                   {/* PWA Components */}
@@ -303,3 +306,19 @@ function App() {
 }
 
 export default App;
+
+function AccessibleToaster() {
+  const { extendedTimeouts } = useAccessibility();
+  const duration = extendedTimeouts ? 8000 : 4000;
+
+  return (
+    <Toaster
+      position="top-center"
+      toastOptions={{
+        duration,
+        success: { duration },
+        error: { duration: extendedTimeouts ? 9000 : 5000 },
+      }}
+    />
+  );
+}
