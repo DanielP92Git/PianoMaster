@@ -191,6 +191,12 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  /* Safe area insets (PWA / iOS notch) */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
 /* ========================================
@@ -204,6 +210,7 @@ html {
   /* Support for notch/safe areas */
   height: 100%;
   width: 100%;
+  margin: 0;
 }
 
 body {
@@ -213,12 +220,8 @@ body {
   min-height: -webkit-fill-available;
   /* Prevent overscroll bounce */
   overscroll-behavior: none;
-  /* Handle safe areas for notches and home indicators */
-  padding-top: env(safe-area-inset-top);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
-  padding-right: env(safe-area-inset-right);
   margin: 0;
+  padding: 0;
   width: 100%;
   height: 100%;
 }
@@ -235,18 +238,32 @@ body {
   /* Additional iOS-specific styles if needed */
 }
 
-/* Fullscreen PWA styles */
-@media all and (display-mode: fullscreen) {
-  body {
-    /* Ensure full coverage in fullscreen mode */
-    padding: 0;
-  }
+/* Utility helpers for safe-area spacing when needed */
+.safe-area-padding {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
 }
 
-@media all and (display-mode: standalone) {
-  body {
-    /* Standalone PWA mode - respect safe areas */
-  }
+.safe-area-padding-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 /* Custom viewport height using CSS variable (set by JS) */
