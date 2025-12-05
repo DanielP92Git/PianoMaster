@@ -32,7 +32,6 @@ export async function lockOrientation(mode = "portrait-primary") {
     !("orientation" in screen) ||
     typeof screen.orientation.lock !== "function"
   ) {
-    console.log("[orientation] lockOrientation unsupported on this platform");
     return false;
   }
 
@@ -40,10 +39,9 @@ export async function lockOrientation(mode = "portrait-primary") {
     await screen.orientation.lock(mode);
     return true;
   } catch (error) {
-    console.log(
-      "[orientation] lockOrientation failed:",
-      error?.message || error
-    );
+    console.error("[orientation] lockOrientation failed:", {
+      error: error?.message || error,
+    });
     return false;
   }
 }
@@ -114,7 +112,9 @@ function showUpdateAvailableNotification() {
   if (window.showUpdateNotification) {
     window.showUpdateNotification();
   } else {
-    console.log("No update available notification function found");
+    console.error(
+      "showUpdateAvailableNotification: window.showUpdateNotification is not defined"
+    );
   }
 }
 

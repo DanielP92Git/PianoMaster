@@ -25,7 +25,7 @@ function BackButton({ to, name, styling, iconOnly = false }) {
     <button
       onClick={handleClick}
       disabled={isNavigating}
-      className={`flex items-center text-white hover:text-amber-50 relative z-50 cursor-pointer disabled:opacity-50 disabled:cursor-wait ${styling}`}
+      className={`flex items-center text-white hover:text-amber-50 relative z-40 cursor-pointer disabled:opacity-50 disabled:cursor-wait ${styling}`}
       title={iconOnly ? `Back to ${name}` : undefined}
     >
       {isNavigating ? (

@@ -17,12 +17,10 @@ export function PreGameSetup({
   const [micError, setMicError] = useState(null);
 
   const handleTestMic = async () => {
-    console.log("🎤 Starting microphone test...");
     setMicError(null);
     setMicMode("testing");
     try {
       await micStatus.startListening();
-      console.log("✅ Microphone started successfully");
     } catch (error) {
       console.error("❌ Microphone test failed:", error);
       setMicError(error.message || "Microphone access denied");
@@ -31,7 +29,6 @@ export function PreGameSetup({
   };
 
   const handleStopTest = () => {
-    console.log("⏹️ Stopping microphone test...");
     micStatus.stopListening();
     setMicMode("tested");
   };
@@ -94,7 +91,6 @@ export function PreGameSetup({
     onStart: (finalSettings) => {
       // Stop any mic test before starting the game
       if (micStatus.isListening) {
-        console.log("🛑 Stopping mic test before starting game");
         micStatus.stopListening();
       }
       // Reset test mode

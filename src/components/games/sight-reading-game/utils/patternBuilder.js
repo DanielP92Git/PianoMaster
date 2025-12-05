@@ -20,7 +20,6 @@ const isDebugEnabled =
 
 const debugLog = (...args) => {
   if (isDebugEnabled) {
-    console.log(...args);
   }
 };
 

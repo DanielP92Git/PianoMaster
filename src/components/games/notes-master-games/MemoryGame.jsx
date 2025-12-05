@@ -547,13 +547,13 @@ export function MemoryGame() {
   const getGridClassName = () => {
     switch (gridSize) {
       case "3 X 4":
-        return "grid grid-cols-4 gap-4 md:gap-5 max-w-2xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-4 gap-3 md:gap-4 max-w-2xl place-items-center justify-items-center mx-auto";
       case "3 X 6":
-        return "grid grid-cols-6 gap-3 md:gap-4 max-w-4xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-6 gap-2 md:gap-3 max-w-4xl place-items-center justify-items-center mx-auto";
       case "3 X 8":
-        return "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 md:gap-3 max-w-6xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2 md:gap-2.5 max-w-6xl place-items-center justify-items-center mx-auto";
       default:
-        return "grid grid-cols-4 gap-4 md:gap-5 max-w-2xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-4 gap-3 md:gap-4 max-w-2xl place-items-center justify-items-center mx-auto";
     }
   };
 
@@ -677,8 +677,8 @@ export function MemoryGame() {
   }, [gameStarted, gridSize, cards.length, clef, selectedNotes]);
 
   return (
-    <div className="flex flex-col h-screen">
-      <div className="p-2 sm:p-3 flex justify-between items-center gap-2">
+    <div className="flex h-screen flex-col">
+      <div className="flex items-center justify-between gap-2 p-2 sm:p-3">
         {!gameFinished && gameStarted && (
           <BackButton
             to="/notes-master-mode"
@@ -689,17 +689,17 @@ export function MemoryGame() {
 
         {/* Timer and Score Display - only show when game is started */}
         {gameStarted && (
-          <div className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 justify-center">
+          <div className="flex flex-1 items-center justify-center gap-2 text-lg font-bold text-white sm:gap-3 sm:text-xl md:gap-4 md:text-2xl">
             {timedMode && (
-              <div className="bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20 flex items-center gap-1 sm:gap-2">
-                <span className="text-white/70 text-sm sm:text-base md:text-lg">
+              <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
+                <span className="text-sm text-white/70 sm:text-base md:text-lg">
                   {t("games.time")}:
                 </span>
                 <span className="font-mono">{formattedTime}</span>
               </div>
             )}
-            <div className="bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20 flex items-center gap-1 sm:gap-2">
-              <span className="text-white/70 text-sm sm:text-base md:text-lg">
+            <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
+              <span className="text-sm text-white/70 sm:text-base md:text-lg">
                 {t("games.score")}:
               </span>
               <span className="font-mono">{score}</span>
@@ -711,7 +711,7 @@ export function MemoryGame() {
         {gameStarted && !gameFinished && (
           <button
             onClick={handlePauseGame}
-            className="px-2 py-1 sm:px-3 sm:py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors text-xs sm:text-sm font-medium flex-shrink-0"
+            className="flex-shrink-0 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-medium text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:px-3 sm:py-1.5 sm:text-sm"
           >
             {timedMode ? t("games.actions.pause") : t("pages.settings.title")}
           </button>
@@ -798,9 +798,9 @@ export function MemoryGame() {
           />
         )
       ) : (
-        <div className="flex-1 flex flex-col overflow-auto">
-          {/* Game grid - scrollable container that shows all cards */}
-          <div className="flex-1 overflow-auto py-2 sm:py-4 px-2 sm:px-4 flex justify-center items-center">
+        <div className="flex flex-1 flex-col overflow-hidden">
+          {/* Game grid - fits in viewport */}
+          <div className="flex flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
             <div className={`${getGridClassName()} w-full px-2 sm:px-4`}>
               {(() => {
                 const expectedCardCount = GRID_SIZES[gridSize] || cards.length;
@@ -810,12 +810,20 @@ export function MemoryGame() {
                   flippedIndexes.includes(index) ||
                   matchedIndexes.includes(index);
 
+                // Responsive card heights - smaller on mobile for 24-card grid
                 const cardHeight =
                   gridDifficulty === "Hard"
-                    ? "min(130px, 15vh)"
+                    ? "min(90px, 12vh)"
                     : gridDifficulty === "Medium"
-                      ? "min(150px, 17vh)"
-                      : "min(170px, 19vh)";
+                      ? "min(120px, 15vh)"
+                      : "min(140px, 17vh)";
+
+                const minCardHeight =
+                  gridDifficulty === "Hard"
+                    ? "60px"
+                    : gridDifficulty === "Medium"
+                      ? "70px"
+                      : "80px";
 
                 return (
                   <div
@@ -834,10 +842,10 @@ export function MemoryGame() {
                         : "auto",
                       height: cardHeight,
                       maxHeight: cardHeight,
-                      minHeight: "80px",
+                      minHeight: minCardHeight,
                       margin: "0",
                     }}
-                    className="hover:scale-110 hover:shadow-2xl active:scale-95 transition-all"
+                    className="transition-all hover:scale-110 hover:shadow-2xl active:scale-95"
                     onClick={() => handleCardClick(index)}
                   >
                     <div
@@ -909,26 +917,28 @@ export function MemoryGame() {
                       >
                         {card.type === "note" ? (
                           card.ImageComponent && (
-                            <card.ImageComponent
-                              aria-label={card.value}
+                            <div
                               style={{
-                                width:
-                                  gridDifficulty === "Hard"
-                                    ? "180%"
-                                    : gridDifficulty === "Medium"
-                                      ? "94%"
-                                      : "96%",
-                                height:
-                                  gridDifficulty === "Hard"
-                                    ? "120%"
-                                    : gridDifficulty === "Medium"
-                                      ? "94%"
-                                      : "96%",
-                                objectFit: "contain",
-                                position: "relative",
-                                zIndex: 10,
+                                width: "100%",
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                overflow: "hidden",
                               }}
-                            />
+                            >
+                              <card.ImageComponent
+                                aria-label={card.value}
+                                style={{
+                                  width: "130%",
+                                  height: "130%",
+                                  maxWidth: "none",
+                                  objectFit: "contain",
+                                  position: "relative",
+                                  zIndex: 10,
+                                }}
+                              />
+                            </div>
                           )
                         ) : (
                           <div
@@ -936,10 +946,10 @@ export function MemoryGame() {
                               color: "#1e293b",
                               fontSize:
                                 gridDifficulty === "Hard"
-                                  ? "clamp(1.6rem, 3.5vw, 2.6rem)"
+                                  ? "clamp(1.8rem, 4vw, 2.8rem)"
                                   : gridDifficulty === "Medium"
-                                    ? "clamp(1.8rem, 3.8vw, 3rem)"
-                                    : "clamp(2.2rem, 4.2vw, 3.4rem)",
+                                    ? "clamp(2rem, 4.5vw, 3.2rem)"
+                                    : "clamp(2.4rem, 5vw, 3.6rem)",
                               fontWeight: 700,
                               position: "relative",
                               zIndex: 10,

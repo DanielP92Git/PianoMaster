@@ -62,10 +62,8 @@ export default function AudioPlayer({
     const handleLoadedMetadata = () => {
       // This fires when metadata (including duration) is loaded
       if (audio.duration && isFinite(audio.duration)) {
-        console.log("Duration loaded from metadata:", audio.duration);
         setDuration(audio.duration);
       } else if (knownDuration) {
-        console.log("Using known duration from database:", knownDuration);
         setDuration(knownDuration);
       }
     };
@@ -73,10 +71,8 @@ export default function AudioPlayer({
     const handleDurationChange = () => {
       // This fires when duration changes or becomes available
       if (audio.duration && isFinite(audio.duration)) {
-        console.log("Duration changed:", audio.duration);
         setDuration(audio.duration);
       } else if (knownDuration) {
-        console.log("Using known duration (durationchange):", knownDuration);
         setDuration(knownDuration);
       }
     };
@@ -85,10 +81,8 @@ export default function AudioPlayer({
       setIsLoading(false);
       // Also try to set duration here as a fallback
       if (audio.duration && isFinite(audio.duration)) {
-        console.log("Duration from canplay:", audio.duration);
         setDuration(audio.duration);
       } else if (knownDuration) {
-        console.log("Using known duration (canplay):", knownDuration);
         setDuration(knownDuration);
       }
       onLoadEnd?.();

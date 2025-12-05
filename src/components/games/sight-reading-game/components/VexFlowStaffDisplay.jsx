@@ -152,8 +152,9 @@ export function VexFlowStaffDisplay({
   }, [containerSize.width, staffWidth]);
 
   const responsiveHeight = useMemo(() => {
-    if (!containerSize.height) return 220;
-    return Math.max(containerSize.height - 8, 180);
+    if (!containerSize.height) return 240;
+    // Add extra space for ledger lines below the staff (at least 60px buffer)
+    return Math.max(containerSize.height, 200);
   }, [containerSize.height]);
 
   /**
@@ -225,11 +226,13 @@ export function VexFlowStaffDisplay({
     if (!vexContainerRef.current) return;
     const svg = vexContainerRef.current.querySelector("svg");
     if (!svg) return;
-    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    // ViewBox matches canvas size; overflow:visible allows ledger lines to extend beyond
+    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight + 80}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
     svg.style.width = "100%";
     svg.style.height = "100%";
     svg.style.display = "block";
+    svg.style.overflow = "visible";
   }, []);
 
   /**
@@ -247,20 +250,10 @@ export function VexFlowStaffDisplay({
       const expectedDuration = beatsPerMeasure;
 
       // DEBUG: Log pattern details
-      console.log("=== VexFlow Rendering Debug ===");
-      console.log("🎮 Game Phase:", gamePhase);
-      console.log("📊 Performance Results Count:", performanceResults.length);
-      console.log("Time signature:", pattern.timeSignature);
-      console.log("Expected duration (beats):", expectedDuration);
-      console.log("Pattern totalDuration:", pattern.totalDuration);
-      console.log("EasyScore string:", pattern.easyscoreString);
-      console.log("Pattern notes:", pattern.notes);
 
       // Check if pattern needs padding
       let easyscoreString = pattern.easyscoreString;
       const durationDiff = expectedDuration - pattern.totalDuration;
-
-      console.log("Duration difference:", durationDiff);
 
       // More lenient epsilon for floating point comparison
       if (Math.abs(durationDiff) > 0.001) {
@@ -289,20 +282,20 @@ export function VexFlowStaffDisplay({
           }
 
           easyscoreString = `${pattern.easyscoreString}, B4/${restNotation}/r`;
-          console.log(
-            `Padded with ${restNotation} rest (${remainingDuration} beats needed)`
-          );
+          console.debug("[VexFlowStaffDisplay]", {
+            easyscoreString,
+            restNotation,
+            remainingDuration,
+          });
         } else {
           console.warn(`Pattern is ${Math.abs(durationDiff)} beats too long!`);
         }
       } else {
-        console.log(
-          "Pattern duration matches time signature, no padding needed"
-        );
+        console.debug("[VexFlowStaffDisplay]", {
+          pattern,
+          durationDiff,
+        });
       }
-
-      console.log("Final EasyScore string:", easyscoreString);
-      console.log("================================");
 
       // Determine responsive canvas dimensions
       const canvasHeight = responsiveHeight || 200;
@@ -315,15 +308,11 @@ export function VexFlowStaffDisplay({
       // Get the renderer context
       const context = vf.getContext();
 
-      // Center the stave vertically in the container
-      // The staff itself needs space above for high notes and below for low notes
-      // Position the top line of the staff at approximately 20% from the top
-      // The 20 is the padding from the top of the container
-      // CanvasHeight is the height of the canvas 
-      // 0.2 is 20% of the canvas height
-      // The formula is: Math.max(padding, canvasHeight * percentage)
-      // Math.max means the maximum of the two values: 
-      const yPosition = Math.max(20, canvasHeight * 0.2);
+      // Center the staff vertically in the canvas
+      // Staff lines span about 40px, position so staff center is at canvas center
+      // This leaves equal room for ledger lines above and below
+      const staffHeight = 40; // Approximate height of 5 staff lines
+      const yPosition = Math.max(20, (canvasHeight - staffHeight) / 2);
 
       const stave = new Stave(50, yPosition, Math.max(canvasWidth - 100, 240));
       stave.addClef(clef);
@@ -405,9 +394,6 @@ export function VexFlowStaffDisplay({
         );
 
         if (wrongPitchResults.length > 0) {
-          console.log("=== Building Wrong Voice ===");
-          console.log("Wrong pitch results:", wrongPitchResults);
-
           // Build a parallel array of wrong notes (same length as staveNotes)
           const wrongStaveNotes = staveNotes.map((expectedNote, idx) => {
             // Find if this note has a wrong pitch result
@@ -419,9 +405,11 @@ export function VexFlowStaffDisplay({
             );
 
             if (result) {
-              console.log(
-                `Wrong note at index ${idx}: Expected ${result.expected}, Played ${result.detected}`
-              );
+              console.debug("[VexFlowStaffDisplay]", {
+                idx,
+                expected: result.expected,
+                played: result.detected,
+              });
 
               // Create a VexFlow note for the wrong pitch played
               const playedNote = result.detected; // e.g., "E4"
@@ -451,9 +439,10 @@ export function VexFlowStaffDisplay({
                 strokeStyle: "#EF4444",
               });
 
-              console.log(
-                `Created wrong note: ${vexKey} with duration ${cleanDuration}`
-              );
+              console.debug("[VexFlowStaffDisplay]", {
+                vexKey,
+                cleanDuration,
+              });
 
               return wrongNote;
             } else {
@@ -473,8 +462,6 @@ export function VexFlowStaffDisplay({
             }
           });
 
-          console.log("Wrong stave notes created:", wrongStaveNotes.length);
-
           // Create wrong notes voice
           wrongVoice = new Voice({
             num_beats: pattern.totalDuration,
@@ -483,13 +470,14 @@ export function VexFlowStaffDisplay({
           wrongVoice.setMode(Voice.Mode.SOFT);
           wrongVoice.addTickables(wrongStaveNotes);
         } else {
-          console.log("No wrong pitch results, skipping wrong voice creation");
+          console.debug("[VexFlowStaffDisplay]", {
+            wrongVoice: wrongVoice,
+          });
         }
       }
 
       // Format and draw voices
       if (wrongVoice) {
-        console.log("✨ Drawing wrong voice with main voice (FEEDBACK phase)");
         // Format both voices together so they align
         const voices = [voice, wrongVoice];
         new Formatter().joinVoices(voices).format(voices, formatterWidth);
@@ -497,18 +485,16 @@ export function VexFlowStaffDisplay({
         // Draw both voices
         voice.draw(context, stave);
         wrongVoice.draw(context, stave);
-        console.log("Both voices drawn");
 
         // Debug: Check what was actually rendered
         const allNotesInDOM =
           vexContainerRef.current?.querySelectorAll(".vf-stavenote");
-        console.log(
-          `Total notes in DOM after drawing: ${allNotesInDOM?.length || 0}`
-        );
-        console.log(`Expected notes count: ${pattern.notes.length}`);
-        console.log(
-          `Wrong voice notes count: ${wrongVoice.getTickables().length}`
-        );
+        console.debug("[VexFlowStaffDisplay]", {
+          allNotesInDOM: allNotesInDOM?.length || 0,
+        });
+        console.debug("[VexFlowStaffDisplay]", {
+          wrongVoiceNotes: wrongVoice.getTickables().length,
+        });
 
         // Mark wrong notes in the DOM so they don't get recolored
         // We need to find which DOM indices correspond to actual wrong notes
@@ -518,9 +504,9 @@ export function VexFlowStaffDisplay({
             .filter((r) => r.timingStatus === "wrong_pitch" && r.detected)
             .map((r) => r.noteIndex);
 
-          console.log(
-            `Wrong note pattern indices: [${wrongNoteIndices.join(", ")}]`
-          );
+          console.debug("[VexFlowStaffDisplay]", {
+            wrongNoteIndices: wrongNoteIndices.join(", "),
+          });
 
           // The wrong voice starts at pattern.notes.length in the DOM
           // We need to map pattern indices to DOM indices for the wrong voice
@@ -542,28 +528,27 @@ export function VexFlowStaffDisplay({
                 path.setAttribute("stroke", "#EF4444");
               });
 
-              console.log(
-                `Marked wrong note at pattern index ${patternIdx} (DOM index ${domIdx})`
-              );
+              console.debug("[VexFlowStaffDisplay]", {
+                patternIdx,
+                domIdx,
+              });
             }
           });
         }
       } else {
         // Format and draw only the main voice (no wrong notes)
-        console.log(
-          gamePhase === "feedback"
-            ? "⚠️ No wrong voice (no wrong pitches in results)"
-            : "📝 Drawing main voice only (not in feedback phase)"
-        );
+        gamePhase === "feedback"
+          ? "⚠️ No wrong voice (no wrong pitches in results)"
+          : "📝 Drawing main voice only (not in feedback phase)";
         new Formatter().joinVoices([voice]).format([voice], formatterWidth);
         voice.draw(context, stave);
       }
 
       // Extract note elements for highlighting
       notesRef.current = extractNoteElements();
-      console.log(
-        `Notes in notesRef after extraction: ${notesRef.current.length}`
-      );
+      console.debug("[VexFlowStaffDisplay]", {
+        notesRef: notesRef.current.length,
+      });
 
       // Build event geometry for time-based cursor movement
       buildEventGeometry();
@@ -763,7 +748,7 @@ export function VexFlowStaffDisplay({
       justEnteredFeedback ||
       justLeftFeedback
     ) {
-      console.log("🔄 Triggering renderStaff - Reason:", {
+      console.debug("[VexFlowStaffDisplay]", {
         patternChanged,
         clefChanged,
         containerEmpty,
@@ -875,18 +860,21 @@ export function VexFlowStaffDisplay({
   }
 
   return (
-    <div className="relative w-full h-full max-w-6xl mx-auto flex items-center justify-center">
+    <div
+      className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-center"
+      dir="ltr" // Force LTR for music notation - prevents RTL inheritance issues
+    >
       {error ? (
-        <div className="relative w-full bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-          <p className="text-red-600 text-sm">
+        <div className="relative w-full rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+          <p className="text-sm text-red-600">
             Unable to render musical notation
           </p>
-          <p className="text-red-400 text-xs mt-1">{error}</p>
+          <p className="mt-1 text-xs text-red-400">{error}</p>
         </div>
       ) : (
         <div
           ref={containerRef}
-          className="relative w-full h-full bg-transparent vexflow-container flex items-center justify-center"
+          className="vexflow-container relative flex h-full w-full items-center justify-center bg-transparent"
           role="img"
           aria-label={`Musical notation: ${pattern.timeSignature} time signature with ${pattern.notes.length} notes`}
         >
@@ -894,8 +882,8 @@ export function VexFlowStaffDisplay({
           <div
             id={containerId}
             ref={vexContainerRef}
-            className="w-full h-full"
-            style={{ minHeight: "180px" }}
+            className="h-full w-full"
+            style={{ minHeight: "250px", overflow: "visible" }}
           />
 
           {/* Cursor overlay - React-managed, centered on staff */}

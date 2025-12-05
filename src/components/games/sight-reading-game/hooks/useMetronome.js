@@ -45,7 +45,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
 
   const start = useCallback(
     (onBeat, onComplete) => {
-      console.log("=== METRONOME START CALLED - NEW CODE VERSION ===");
 
       // Check if audio engine is ready
       if (
@@ -62,7 +61,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
         return;
       }
 
-      console.log("✅ Audio engine is ready");
 
       // Store callbacks in refs to avoid closure issues
       onBeatCallbackRef.current = onBeat;
@@ -70,7 +68,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
 
       // Clear any existing interval first
       if (intervalRef.current) {
-        console.log("Clearing existing interval:", intervalRef.current);
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
@@ -78,7 +75,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
       const beatDuration = (60 / tempo) * 1000;
       const beatsPerMeasure = timeSignature.beats;
 
-      console.log(
         `Metronome config: ${beatsPerMeasure} beats at ${tempo} BPM (${beatDuration}ms per beat)`
       );
 
@@ -89,7 +85,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
       let lastBeatTime = 0;
       let beat = 0;
 
-      console.log("Starting fast-polling metronome with 100ms interval");
 
       intervalRef.current = setInterval(() => {
         const elapsed = Date.now() - startTime;
@@ -97,7 +92,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
 
         // Fire beat if we've crossed a beat boundary
         if (expectedBeat > beat && beat < beatsPerMeasure) {
-          console.log(`✓ Beat ${beat + 1} fired at ${elapsed}ms`);
 
           const isDownbeat = beat % beatsPerMeasure === 0;
           const frequency = isDownbeat ? 900 : 700;
@@ -150,7 +144,6 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
 
           // Check completion
           if (beat >= beatsPerMeasure && onCompleteCallbackRef.current) {
-            console.log("Count-in complete! Calling onComplete");
             clearInterval(intervalRef.current);
             intervalRef.current = null;
 
@@ -163,13 +156,11 @@ export function useMetronome({ audioEngine, tempo, timeSignature }) {
         }
       }, shortInterval);
 
-      console.log(`Fast-polling interval set with ID: ${intervalRef.current}`);
     },
     [tempo, timeSignature, audioEngine]
   );
 
   const stop = useCallback(() => {
-    console.log(
       "🛑 STOP called on metronome, clearing interval:",
       intervalRef.current
     );

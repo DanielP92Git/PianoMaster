@@ -80,4 +80,3 @@ export function useTeacherRecordingNotifications(teacherId) {
     refreshCount: fetchNewRecordingsCount,
   };
 }
-

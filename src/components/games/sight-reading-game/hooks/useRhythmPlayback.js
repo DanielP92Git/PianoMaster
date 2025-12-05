@@ -161,7 +161,7 @@ export function useRhythmPlayback({ audioEngine, tempo }) {
         // Update visual highlighting
         if (onBeatCallbackRef.current) {
           if (RHYTHM_DEBUG) {
-            console.log("[RhythmPlayback] onBeatCallback", {
+            console.debug("[RhythmPlayback]", {
               currentIndex,
               elapsedTime,
               audioCurrentTime: currentTime,

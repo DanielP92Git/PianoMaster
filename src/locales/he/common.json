@@ -389,6 +389,52 @@
       "progress": "התקדמות",
       "playNow": "שחק עכשיו"
     },
+    "metronomeTrainer": {
+      "headerTitle": "מאמן המטרונום",
+      "progressLabel": "תרגיל {{current}} מתוך {{total}}",
+      "sessionCompleteTitle": "המשחק הושלם!",
+      "sessionCompleteSubtitle": "עבודה נהדרת בתרגול הקצב שלך!",
+      "stats": {
+        "exercisesCompleted": "תרגילים שהושלמו",
+        "finalScore": "ציון סופי",
+        "excellent": "מצוין (80%+)",
+        "passed": "עבר (50%+)",
+        "patterns": "מקצבים",
+        "score": "נקודות",
+        "maxCombo": "קומבו מקסימלי",
+        "goodTaps": "הקשות מוצלחות"
+      },
+      "details": {
+        "title": "ציוני התרגילים",
+        "averageSummary": "ממוצע: {{average}}% | הטוב ביותר: {{best}}% | החלש ביותר: {{worst}}%"
+      },
+      "buttons": {
+        "playAgain": "שחק שוב",
+        "home": "חזרה למסך הבית",
+        "nextPattern": "למקצב הבא",
+        "endSession": "סיום המשחק"
+      },
+      "guidance": {
+        "countIn": "הקשיבו לפעמה החזקה והקישו כדי להתחיל!",
+        "patternPlayback": "הקשיבו למקצב",
+        "getReady": "התכוננו להקיש את המקצב",
+        "userActive": "המשיכו להקיש את המקצב!",
+        "userWaiting": "הקשיבו למקצב ולאחר מכן הקישו כדי להתחיל",
+        "feedback": "איך הלך?",
+        "default": "הקשיבו לפעימה הקבועה"
+      },
+      "tapArea": {
+        "getReady": "התכונן",
+        "tapHere": "הקש כאן",
+        "listen": "הקשב",
+        "accuracy": {
+          "perfect": "בול",
+          "good": "טוב",
+          "fair": "בסדר",
+          "miss": "פספוס"
+        }
+      }
+    },
     "practiceModes": {
       "loading": "טוען את המסע המוזיקלי...",
       "errorTitle": "אופס!",

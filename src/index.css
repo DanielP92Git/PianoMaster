@@ -271,65 +271,65 @@ body {
 @layer components {
   /* Card Components */
   .card {
-    @apply bg-white/80 border border-gray-200 rounded-2xl shadow-sm;
+    @apply rounded-2xl border border-gray-200 bg-white/80 shadow-sm;
   }
 
   .card-hover {
-    @apply card hover:bg-gray-50 transition-colors duration-200;
+    @apply card transition-colors duration-200 hover:bg-gray-50;
   }
 
   .card-glass {
-    @apply bg-white border border-gray-200 rounded-2xl;
+    @apply rounded-2xl border border-gray-200 bg-white;
   }
 
   .card-elevated {
-    @apply card shadow-lg hover:shadow-xl transition-shadow duration-200;
+    @apply card shadow-lg transition-shadow duration-200 hover:shadow-xl;
   }
 
   /* Legacy Glassmorphism Classes (for backward compatibility) */
   .card-glass-legacy {
-    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl;
+    @apply rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md;
   }
 
   .card-glass-legacy-hover {
-    @apply card-glass-legacy hover:bg-white/15 transition-colors duration-200;
+    @apply card-glass-legacy transition-colors duration-200 hover:bg-white/15;
   }
 
   /* Compact Card Variants */
   .card-compact {
-    @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+    @apply rounded-lg border border-gray-200 bg-white shadow-sm;
   }
 
   .card-compact-hover {
-    @apply card-compact hover:bg-gray-50 transition-colors duration-200;
+    @apply card-compact transition-colors duration-200 hover:bg-gray-50;
   }
 
   /* Input and Form Elements */
   .input-white {
-    @apply bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
+    @apply rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 
   .input-glass-legacy {
-    @apply bg-white/10 border-white/30 text-white placeholder:text-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-colors duration-200;
+    @apply rounded-lg border-white/30 bg-white/10 text-white transition-colors duration-200 placeholder:text-white/60 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white/50;
   }
 
   /* Button Variants */
   .btn-glass-legacy {
-    @apply px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors duration-200;
+    @apply rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-colors duration-200 hover:bg-white/20;
   }
 
   /* Loading States */
   .loading-skeleton {
-    @apply bg-gray-200 rounded animate-pulse;
+    @apply animate-pulse rounded bg-gray-200;
   }
 
   .loading-skeleton-legacy {
-    @apply bg-white/10 rounded animate-pulse;
+    @apply animate-pulse rounded bg-white/10;
   }
 
   /* Button Components */
   .btn {
-    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent;
+    @apply rounded-xl px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent;
   }
 
   .btn-primary {
@@ -362,7 +362,7 @@ body {
 
   /* Input Components */
   .input {
-    @apply w-full p-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
+    @apply w-full rounded-lg border border-gray-300 p-3 text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 
   .input-error {
@@ -371,7 +371,7 @@ body {
 
   /* Badge Components */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
   .badge-primary {
@@ -430,11 +430,11 @@ body {
 
   /* Layout Components */
   .container-glass {
-    @apply bg-white border border-gray-200 rounded-2xl p-6 shadow-sm;
+    @apply rounded-2xl border border-gray-200 bg-white p-6 shadow-sm;
   }
 
   .sidebar-glass {
-    @apply bg-gradient-to-b from-gray-900/95 to-gray-800/95 backdrop-blur-xl border-r border-white/10;
+    @apply from-gray-900/95 to-gray-800/95 border-r border-white/10 bg-gradient-to-b backdrop-blur-xl;
   }
 
   /* Animation Classes */
@@ -1239,12 +1239,19 @@ body {
 
 /* Ensure VexFlow SVG elements are properly displayed */
 .vexflow-container svg {
-  display: block;
+  display: flex;
   margin: 0 auto;
 }
 
 .sightreading-staff-wrapper {
   overflow: visible;
+  /* Add padding to prevent ledger lines from being clipped */
+  padding-bottom: 8px;
+}
+
+/* Ensure the white card inside staff wrapper allows overflow for ledger lines */
+.sightreading-staff-wrapper > div {
+  overflow: visible !important;
 }
 
 .sightreading-keyboard-wrapper {
@@ -1262,14 +1269,58 @@ body {
   justify-content: flex-start;
 }
 
+/* Portrait mobile optimizations for Sight Reading Game */
+@media (max-width: 640px) and (orientation: portrait) {
+  .sightreading-staff-wrapper {
+    min-height: 150px !important;
+    padding-bottom: 12px;
+  }
+}
+
 /* Landscape mobile optimizations for Sight Reading Game */
 @media (max-width: 900px) and (orientation: landscape) {
   .sightreading-staff-wrapper {
     min-height: 130px !important;
     height: clamp(130px, 24vh, 220px) !important;
+    padding-bottom: 8px;
   }
 
   .sightreading-keyboard-wrapper:not(.feedback-mode) {
     height: clamp(140px, 30vh, 200px) !important;
+  }
+}
+
+/* ========================================
+   NOTE CARD RESPONSIVE SIZING
+   ======================================== */
+
+/* Mobile: compact cards */
+.note-card-responsive {
+  width: clamp(70px, 20vw, 90px);
+  height: clamp(90px, 22vh, 130px);
+  flex-shrink: 0;
+}
+
+/* Tablet: medium cards */
+@media (min-width: 640px) {
+  .note-card-responsive {
+    width: clamp(85px, 15vw, 110px);
+    height: clamp(110px, 20vh, 150px);
+  }
+}
+
+/* Desktop: larger cards */
+@media (min-width: 1024px) {
+  .note-card-responsive {
+    width: clamp(100px, 10vw, 140px);
+    height: clamp(130px, 22vh, 200px);
+  }
+}
+
+/* Large desktop: even larger cards */
+@media (min-width: 1280px) {
+  .note-card-responsive {
+    width: clamp(110px, 9vw, 150px);
+    height: clamp(150px, 24vh, 220px);
   }
 }

@@ -361,7 +361,6 @@ export const practiceService = {
         throw error;
       }
 
-      console.log("✅ Practice session saved:", data);
       return data;
     } catch (error) {
       console.error("Error saving practice session:", error);

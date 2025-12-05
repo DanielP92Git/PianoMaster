@@ -66,7 +66,6 @@ const DEFAULT_NOTE_FREQUENCIES = {
  * // Basic usage with automatic activation
  * const { detectedNote, isListening, startListening } = usePitchDetection({
  *   isActive: true,
- *   onPitchDetected: (note, freq) => console.log(`Detected: ${note} at ${freq}Hz`)
  * });
  *
  * @example
@@ -285,7 +284,6 @@ export function usePitchDetection({
    * Made idempotent to avoid errors on repeated calls
    */
   const stopListening = useCallback(() => {
-    console.log("🛑 stopListening called");
 
     // Cancel animation frame loop
     if (animationFrameRef.current) {

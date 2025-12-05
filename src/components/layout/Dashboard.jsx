@@ -219,7 +219,7 @@ function Dashboard() {
       return (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               {t("dashboard.reminders.dateLabel")}
             </label>
             <input
@@ -228,11 +228,11 @@ function Dashboard() {
               min={minDate}
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full rounded-md border border-gray-300 p-2"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
               {t("dashboard.reminders.timeLabel")}
             </label>
             <input
@@ -240,14 +240,14 @@ function Dashboard() {
               required
               value={formTime}
               onChange={(e) => setFormTime(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full rounded-md border border-gray-300 p-2"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3 px-6 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-lg font-medium text-white transition-colors hover:bg-blue-700"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="h-5 w-5" />
             {t("common.actions.setReminder")}
           </button>
         </form>
@@ -258,11 +258,11 @@ function Dashboard() {
       <>
         <button
           onClick={closeModal}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
         >
           <X className="h-6 w-6" />
         </button>
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
+        <h3 className="mb-4 text-xl font-bold text-gray-800">
           {t("dashboard.reminders.modalTitle")}
         </h3>
         <ReminderForm />
@@ -336,22 +336,22 @@ function Dashboard() {
       };
 
       return (
-        <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            {t("dashboard.recording.title")}
-          </h2>
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-6 flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-gray-800">
+              {t("dashboard.recording.title")}
+            </h2>
             <button
               onClick={handleModalClose}
-              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+              className="p-2 text-gray-500 transition-colors hover:text-gray-700"
             >
-              <X className="w-6 h-6" />
+              <X className="h-6 w-6" />
             </button>
           </div>
 
           <div className="space-y-6">
             {!recordingBlob && (
-              <div className="bg-gray-50 rounded-xl p-6">
+              <div className="rounded-xl bg-gray-50 p-6">
                 <AudioRecorder
                   onRecordingComplete={handleRecordingComplete}
                   onRecordingCancel={handleRecordingCancel}
@@ -365,8 +365,8 @@ function Dashboard() {
 
             {recordingBlob && (
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                <div className="rounded-xl bg-gray-50 p-6">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-800">
                     {t("dashboard.recording.reviewTitle")}
                   </h3>
                   <AudioPlayer
@@ -379,14 +379,14 @@ function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     {t("dashboard.recording.notesLabel")}
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     placeholder={t("dashboard.recording.notesPlaceholder")}
-                    className="w-full p-4 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    className="w-full resize-none rounded-xl border border-gray-300 p-4 text-gray-900 placeholder-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     rows="4"
                   />
                 </div>
@@ -395,11 +395,11 @@ function Dashboard() {
                   <button
                     onClick={handleSubmit}
                     disabled={uploadPracticeSession.isPending}
-                    className="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {uploadPracticeSession.isPending ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin" />
                         {uploadProgress?.phase === "preparing" &&
                           t("dashboard.recording.uploadStatus.preparing")}
                         {uploadProgress?.phase === "uploading" &&
@@ -413,7 +413,7 @@ function Dashboard() {
                       </>
                     ) : (
                       <>
-                        <Send className="w-5 h-5" />
+                        <Send className="h-5 w-5" />
                         {t("dashboard.recording.submit")}
                       </>
                     )}
@@ -421,9 +421,9 @@ function Dashboard() {
                   <button
                     onClick={handleRecordingCancel}
                     disabled={uploadPracticeSession.isPending}
-                    className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex items-center gap-2 rounded-xl bg-gray-600 px-6 py-3 font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="h-5 w-5" />
                     {t("common.actions.recordAgain")}
                   </button>
                 </div>
@@ -440,12 +440,12 @@ function Dashboard() {
   if (isLoading || streakLoading) {
     return (
       <div className="min-h-screen p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="mx-auto max-w-6xl">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-white/20 rounded w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-8 w-1/3 rounded bg-white/20"></div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-white/20 rounded-2xl"></div>
+                <div key={i} className="h-32 rounded-2xl bg-white/20"></div>
               ))}
             </div>
           </div>
@@ -455,24 +455,22 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen  p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen p-6">
+      <div className="mx-auto max-w-6xl space-y-8">
         {/* Header Section */}
         <div
-          className={`text-center ${
-            isRTL ? "lg:text-right" : "lg:text-left"
-          }`}
+          className={`text-center ${isRTL ? "lg:text-right" : "lg:text-left"}`}
         >
-          <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-            {t("dashboard.header.welcomeBack")},
+          <h1 className="mb-2 text-3xl font-bold text-white lg:text-4xl">
+            {t("dashboard.header.welcomeBack")}, 
             {profile?.first_name ? (
-              <span className="ml-2">{profile.first_name}!</span>
+              <span className="ml-2"> {profile.first_name}!</span>
             ) : user?.user_metadata?.full_name ? (
-              <span className="block mt-1">
+              <span className="mt-1 block">
                 {user.user_metadata.full_name}!
               </span>
             ) : (
-              <span className="block mt-1">
+              <span className="mt-1 block">
                 {t("dashboard.header.defaultName")}!
               </span>
             )}
@@ -482,7 +480,7 @@ function Dashboard() {
         {/* Stats Section */}
         <div className="space-y-8">
           {/* Stats Grid - 4 columns on large, 2 on medium, 1 on small */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
             {/* Daily Streak */}
             <StreakDisplay variant="card" />
 
@@ -497,7 +495,7 @@ function Dashboard() {
                 </h3>
                 <p className="mt-1 text-lg font-bold text-gray-900">
                   {scores?.practice_time || 0}
-                  <span className="text-xs ml-1">
+                  <span className="ml-1 text-xs">
                     {t("dashboard.stats.hoursAbbrev")}
                   </span>
                 </p>
@@ -510,20 +508,20 @@ function Dashboard() {
 
           {/* Quick Access Panel for Teachers */}
           {isTeacher && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {/* Students Overview */}
               <Link
                 to="/teacher/students"
-                className="card-hover p-6 block group"
+                className="card-hover group block p-6"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 transition-transform group-hover:scale-110">
                     <span className="text-2xl">👥</span>
                   </div>
-                  <div className="text-gray-900 font-medium mb-2">
+                  <div className="mb-2 font-medium text-gray-900">
                     {t("dashboard.teacherPanel.students.title")}
                   </div>
-                  <div className="text-gray-600 text-sm">
+                  <div className="text-sm text-gray-600">
                     {t("dashboard.teacherPanel.students.description")}
                   </div>
                 </div>
@@ -532,16 +530,16 @@ function Dashboard() {
               {/* Assignments */}
               <Link
                 to="/teacher/assignments"
-                className="card-hover p-6 block group"
+                className="card-hover group block p-6"
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 transition-transform group-hover:scale-110">
                     <span className="text-2xl">📋</span>
                   </div>
-                  <div className="text-gray-900 font-medium">
+                  <div className="font-medium text-gray-900">
                     {t("dashboard.teacherPanel.assignments.title")}
                   </div>
-                  <div className="text-gray-600 text-sm">
+                  <div className="text-sm text-gray-600">
                     {t("dashboard.teacherPanel.assignments.description")}
                   </div>
                 </div>
@@ -551,10 +549,10 @@ function Dashboard() {
         </div>
 
         {/* Bottom Section - Three Equal Width Containers */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Next Steps Section */}
           <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-6">
+            <h3 className="mb-6 text-lg font-medium text-gray-900">
               {t("dashboard.nextSteps.title")}
             </h3>
 
@@ -563,18 +561,18 @@ function Dashboard() {
                 availableNextSteps.map((step) => (
                   <div
                     key={step.id}
-                    className={`flex items-start gap-3 p-4 bg-gradient-to-r ${step.colors.bg} rounded-xl border ${step.colors.border}`}
+                    className={`flex items-start gap-3 bg-gradient-to-r p-4 ${step.colors.bg} rounded-xl border ${step.colors.border}`}
                   >
                     <div
-                      className={`w-10 h-10 bg-gradient-to-br ${step.colors.icon} rounded-full flex items-center justify-center flex-shrink-0`}
+                      className={`h-10 w-10 bg-gradient-to-br ${step.colors.icon} flex flex-shrink-0 items-center justify-center rounded-full`}
                     >
-                      <span className="text-white text-lg">{step.icon}</span>
+                      <span className="text-lg text-white">{step.icon}</span>
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900 mb-1">
+                      <div className="mb-1 font-medium text-gray-900">
                         {step.title}
                       </div>
-                      <div className="text-sm text-gray-600 mb-2">
+                      <div className="mb-2 text-sm text-gray-600">
                         {step.description}
                       </div>
                       <div
@@ -588,17 +586,17 @@ function Dashboard() {
                   </div>
                 ))
               ) : (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">🎉</div>
-                  <div className="font-medium text-gray-900 mb-2">
+                <div className="py-8 text-center">
+                  <div className="mb-4 text-4xl">🎉</div>
+                  <div className="mb-2 font-medium text-gray-900">
                     {t("dashboard.nextSteps.emptyTitle")}
                   </div>
-                  <div className="text-sm text-gray-600 mb-4">
+                  <div className="mb-4 text-sm text-gray-600">
                     {t("dashboard.nextSteps.emptyDescription")}
                   </div>
                   <Link
                     to="/achievements"
-                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
+                    className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
                   >
                     {t("dashboard.nextSteps.viewAll")}
                   </Link>
@@ -606,11 +604,11 @@ function Dashboard() {
               )}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100">
+            <div className="mt-6 border-t border-gray-100 pt-4">
               <div className="text-center">
                 <Link
                   to="/achievements"
-                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+                  className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700"
                 >
                   {t("dashboard.nextSteps.cta")}
                 </Link>
@@ -625,28 +623,28 @@ function Dashboard() {
 
           {/* Practice Tools Section */}
           <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-6">
+            <h3 className="mb-6 text-lg font-medium text-gray-900">
               {t("dashboard.practiceTools.title")}
             </h3>
             <div className="grid grid-cols-1 gap-4">
               {/* Active Reminder Indicator */}
               {activeReminder && (
-                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/40 rounded-xl p-4">
+                <div className="rounded-xl border-2 border-blue-500/40 bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-4">
                   <div className="flex flex-col gap-3">
                     <div
                       className={`flex items-center gap-3 ${
                         isRTL ? "flex-row-reverse text-right" : ""
                       }`}
                     >
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
+                      <div className="flex h-10 w-10 flex-shrink-0 animate-pulse items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500">
                         🔔
                       </div>
                       <div className={`flex-1 ${isRTL ? "text-right" : ""}`}>
-                        <div className="text-gray-900 font-medium mb-1">
+                        <div className="mb-1 font-medium text-gray-900">
                           ⏰ {t("dashboard.practiceTools.activeReminder.title")}{" "}
                           {formatTimeRemaining(activeReminder.timeLeft)}
                         </div>
-                        <div className="text-gray-600 text-sm">
+                        <div className="text-sm text-gray-600">
                           {t("dashboard.practiceTools.activeReminder.setFor", {
                             time: new Date(
                               activeReminder.dateTime
@@ -660,11 +658,11 @@ function Dashboard() {
                     </div>
                     <button
                       onClick={handleCancelReminder}
-                      className={`w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium text-sm ${
+                      className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 ${
                         isRTL ? "flex-row-reverse" : ""
                       }`}
                     >
-                      <BellOff className="w-4 h-4" />
+                      <BellOff className="h-4 w-4" />
                       {t("common.actions.cancel")}
                     </button>
                   </div>
@@ -675,7 +673,7 @@ function Dashboard() {
               {!activeReminder && (
                 <button
                   onClick={openReminderModal}
-                  className={`bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block ${
+                  className={`block rounded-xl border border-gray-200 bg-gray-100 p-4 hover:bg-gray-200 ${
                     isRTL ? "text-right" : "text-left"
                   } w-full transition-colors`}
                 >
@@ -684,14 +682,14 @@ function Dashboard() {
                       isRTL ? "flex-row-reverse text-right" : ""
                     }`}
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500">
                       🔔
                     </div>
                     <div className="flex-1">
-                      <div className="text-gray-900 font-medium mb-1">
+                      <div className="mb-1 font-medium text-gray-900">
                         {t("dashboard.practiceTools.cards.reminder.title")}
                       </div>
-                      <div className="text-gray-600 text-sm">
+                      <div className="text-sm text-gray-600">
                         {t(
                           "dashboard.practiceTools.cards.reminder.description"
                         )}
@@ -704,7 +702,7 @@ function Dashboard() {
               {/* Record Practice Session */}
               <button
                 onClick={openRecordModal}
-                className={`bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block ${
+                className={`block rounded-xl border border-gray-200 bg-gray-100 p-4 hover:bg-gray-200 ${
                   isRTL ? "text-right" : "text-left"
                 } w-full transition-colors`}
               >
@@ -713,14 +711,14 @@ function Dashboard() {
                     isRTL ? "flex-row-reverse text-right" : ""
                   }`}
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-red-500 to-orange-500">
                     🎤
                   </div>
                   <div className="flex-1">
-                    <div className="text-gray-900 font-medium mb-1">
+                    <div className="mb-1 font-medium text-gray-900">
                       {t("dashboard.practiceTools.cards.recording.title")}
                     </div>
-                    <div className="text-gray-600 text-sm">
+                    <div className="text-sm text-gray-600">
                       {t("dashboard.practiceTools.cards.recording.description")}
                     </div>
                   </div>
@@ -730,7 +728,7 @@ function Dashboard() {
               {/* View Practice History */}
               <Link
                 to="/practice-sessions"
-                className={`bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block transition-colors ${
+                className={`block rounded-xl border border-gray-200 bg-gray-100 p-4 transition-colors hover:bg-gray-200 ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
@@ -739,14 +737,14 @@ function Dashboard() {
                     isRTL ? "flex-row-reverse text-right" : ""
                   }`}
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-500">
                     📊
                   </div>
                   <div className="flex-1">
-                    <div className="text-gray-900 font-medium mb-1">
+                    <div className="mb-1 font-medium text-gray-900">
                       {t("dashboard.practiceTools.cards.history.title")}
                     </div>
-                    <div className="text-gray-600 text-sm">
+                    <div className="text-sm text-gray-600">
                       {t("dashboard.practiceTools.cards.history.description")}
                     </div>
                   </div>

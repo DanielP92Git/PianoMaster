@@ -383,6 +383,52 @@
       "progress": "Progress",
       "playNow": "Play Now"
     },
+    "metronomeTrainer": {
+      "headerTitle": "Metronome Rhythm Trainer",
+      "progressLabel": "Exercise {{current}} of {{total}}",
+      "sessionCompleteTitle": "Session Complete!",
+      "sessionCompleteSubtitle": "Great work on your rhythm training!",
+      "stats": {
+        "exercisesCompleted": "Exercises Completed",
+        "finalScore": "Final Score",
+        "excellent": "Excellent (80%+)",
+        "passed": "Passed (50%+)",
+        "patterns": "Patterns",
+        "score": "Score",
+        "maxCombo": "Max Combo",
+        "goodTaps": "Good Taps"
+      },
+      "details": {
+        "title": "Exercise Scores",
+        "averageSummary": "Average: {{average}}% | Best: {{best}}% | Worst: {{worst}}%"
+      },
+      "buttons": {
+        "playAgain": "Play Again",
+        "home": "Home",
+        "nextPattern": "Next Pattern",
+        "endSession": "End Session"
+      },
+      "guidance": {
+        "countIn": "Listen for the strong beat - tap to start!",
+        "patternPlayback": "Listen to the pattern",
+        "getReady": "Get ready to tap the pattern",
+        "userActive": "Keep tapping the pattern!",
+        "userWaiting": "Listen for the strong downbeat, then tap to start",
+        "feedback": "How did you do?",
+        "default": "Listen to the steady beat"
+      },
+      "tapArea": {
+        "getReady": "GET READY",
+        "tapHere": "TAP HERE",
+        "listen": "LISTEN",
+        "accuracy": {
+          "perfect": "Perfect",
+          "good": "Good",
+          "fair": "Fair",
+          "miss": "Miss"
+        }
+      }
+    },
     "practiceModes": {
       "loading": "Loading your musical journey...",
       "errorTitle": "Oops!",

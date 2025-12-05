@@ -31,7 +31,6 @@ function MyComponent() {
   const { detectedNote, isListening } = usePitchDetection({
     isActive: true, // Automatically starts listening
     onPitchDetected: (note, frequency) => {
-      console.log(`Detected: ${note} at ${frequency.toFixed(2)} Hz`);
     },
   });
 
@@ -232,7 +231,6 @@ function SightReadingGame() {
     },
     onPitchDetected: (note, freq) => {
       if (note === expectedNote) {
-        console.log("Correct note played!");
         // Move to next note...
       }
     },
@@ -260,7 +258,6 @@ function NotesRecognitionGame() {
     isActive: true, // Auto-start
     onPitchDetected: (note) => {
       if (note === currentQuestion) {
-        console.log("Correct!");
         // Next question...
       }
     },
@@ -282,7 +279,6 @@ function AudioLevelMeter() {
   const { audioLevel, isListening, startListening, stopListening } =
     usePitchDetection({
       onLevelChange: (level) => {
-        console.log(`Audio level: ${(level * 100).toFixed(1)}%`);
       },
     });
 

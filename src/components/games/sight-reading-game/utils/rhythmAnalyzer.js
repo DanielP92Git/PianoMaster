@@ -167,11 +167,6 @@ function splitDuration(sixteenthUnits, allowedDurations) {
  * @returns {Array<Object>} Array of notation objects with type, duration, timing info
  */
 export function analyzeRhythmPattern(pattern, difficulty, timeSignature, measuresPerPattern = 1) {
-  console.log('=== analyzeRhythmPattern Debug ===');
-  console.log('Pattern length:', pattern.length);
-  console.log('Time signature subdivision:', timeSignature.subdivision);
-  console.log('Time signature:', timeSignature);
-  console.log('Pattern:', pattern);
   
   const groups = groupPattern(pattern);
   const allowedDurations = QUANTIZATION_RULES[difficulty];

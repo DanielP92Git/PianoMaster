@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import BackButton from "../../ui/BackButton";
 import trebleClefImage from "../../../assets/noteImages/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass-clef.svg";
+import VictoryScreen from "../VictoryScreen";
 
 const DEFAULT_TIMER_OPTIONS = Object.freeze([60, 45, 30]);
 
@@ -102,15 +103,15 @@ export function UnifiedGameSettings({
   };
 
   const minNotesModal = showMinNotesModal ? (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center space-y-4">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-sm space-y-4 rounded-2xl bg-white p-6 text-center shadow-2xl">
         <h3 className="text-xl font-bold text-gray-900">
           {t("gameSettings.noteSelection.minNotesTitle", {
             defaultValue: "Pick at least {{count}} notes",
             count: minNotesRequirement,
           })}
         </h3>
-        <p className="text-gray-600 text-sm">
+        <p className="text-sm text-gray-600">
           {t("gameSettings.noteSelection.minNotesDescription", {
             defaultValue:
               "Select {{count}} or more notes to practice before continuing.",
@@ -119,7 +120,7 @@ export function UnifiedGameSettings({
         </p>
         <button
           onClick={() => setShowMinNotesModal(false)}
-          className="px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 transition-colors w-full"
+          className="w-full rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-indigo-700"
         >
           {t("gameSettings.buttons.gotIt", { defaultValue: "Got it" })}
         </button>
@@ -258,32 +259,32 @@ export function UnifiedGameSettings({
   if (isModal) {
     return (
       <>
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
-            <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
-              <div className="flex flex-row gap-3 w-full items-stretch h-full">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 shadow-2xl">
+            <div className="flex flex-1 items-center justify-center overflow-hidden p-4">
+              <div className="flex h-full w-full flex-row items-stretch gap-3">
                 {/* Settings Container */}
-                <div className="flex-1 flex items-center overflow-hidden">
-                  <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col p-2.5 sm:p-3 w-full">
-                    <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+                <div className="flex flex-1 items-center overflow-hidden">
+                  <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md sm:p-3">
+                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg">
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
                         total: steps.length,
                         title: translatedStepTitle,
                       })}
                     </h2>
-                    <div className="flex-1 flex flex-col justify-center overflow-hidden">
+                    <div className="flex flex-1 flex-col justify-center overflow-hidden">
                       {renderStepComponent()}
                     </div>
                   </div>
                 </div>
 
                 {/* Navigation Buttons */}
-                <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+                <div className="flex min-w-[160px] flex-col justify-center gap-3 sm:min-w-[180px]">
                   {onCancel && (
                     <button
                       onClick={onCancel}
-                      className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+                      className="w-full rounded-xl bg-gray-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-gray-700 sm:px-6 sm:py-3 sm:text-lg"
                     >
                       {t("gameSettings.buttons.cancel")}
                     </button>
@@ -291,7 +292,7 @@ export function UnifiedGameSettings({
                   {currentStep > 1 && (
                     <button
                       onClick={handlePrevStep}
-                      className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+                      className="w-full rounded-xl bg-gray-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-gray-700 sm:px-6 sm:py-3 sm:text-lg"
                     >
                       {t("gameSettings.buttons.back")}
                     </button>
@@ -299,10 +300,10 @@ export function UnifiedGameSettings({
                   {currentStep < steps.length ? (
                     <button
                       onClick={handleNextStep}
-                      className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg ${
+                      className={`w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-indigo-700 sm:px-6 sm:py-3 sm:text-lg ${
                         currentStepConfig?.component !== "NoteSelection" &&
                         !isStepValid()
-                          ? "opacity-50 cursor-not-allowed"
+                          ? "cursor-not-allowed opacity-50"
                           : ""
                       }`}
                       disabled={
@@ -315,10 +316,10 @@ export function UnifiedGameSettings({
                   ) : (
                     <button
                       onClick={handleStart}
-                      className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold shadow-lg ${
+                      className={`w-full rounded-xl bg-green-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-green-700 sm:px-6 sm:py-3 sm:text-lg ${
                         currentStepConfig?.component !== "NoteSelection" &&
                         !isStepValid()
-                          ? "opacity-50 cursor-not-allowed"
+                          ? "cursor-not-allowed opacity-50"
                           : ""
                       }`}
                       disabled={
@@ -342,8 +343,8 @@ export function UnifiedGameSettings({
   // Regular full-screen mode
   return (
     <>
-      <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white">
-        <div className="p-2 flex-shrink-0">
+      <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white">
+        <div className="flex-shrink-0 p-2">
           <BackButton
             to={backRoute}
             name={
@@ -356,33 +357,33 @@ export function UnifiedGameSettings({
             styling="text-white/80 hover:text-white text-sm"
           />
         </div>
-        <div className="flex-1 flex items-center justify-center overflow-hidden px-2 py-1">
+        <div className="flex flex-1 items-center justify-center overflow-hidden px-2 py-1">
           <div
-            className="flex flex-row gap-3 w-full max-w-5xl items-stretch"
+            className="flex w-full max-w-5xl flex-row items-stretch gap-3"
             style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
           >
             {/* Settings Container */}
-            <div className="flex-1 flex items-center overflow-hidden">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 h-full flex flex-col p-2.5 sm:p-3 w-full">
-                <h2 className="text-base sm:text-lg font-bold text-white mb-1.5 text-center flex-shrink-0">
+            <div className="flex flex-1 items-center overflow-hidden">
+              <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md sm:p-3">
+                <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg">
                   {t("gameSettings.steps.progress", {
                     current: currentStep,
                     total: steps.length,
                     title: translatedStepTitle,
                   })}
                 </h2>
-                <div className="flex-1 flex flex-col justify-center overflow-hidden">
+                <div className="flex flex-1 flex-col justify-center overflow-hidden">
                   {renderStepComponent()}
                 </div>
               </div>
             </div>
 
             {/* Navigation Buttons */}
-            <div className="flex flex-col gap-3 justify-center min-w-[160px] sm:min-w-[180px]">
+            <div className="flex min-w-[160px] flex-col justify-center gap-3 sm:min-w-[180px]">
               {currentStep > 1 && (
                 <button
                   onClick={handlePrevStep}
-                  className="w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold shadow-lg"
+                  className="w-full rounded-xl bg-gray-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-gray-700 sm:px-6 sm:py-3 sm:text-lg"
                 >
                   {t("gameSettings.buttons.back")}
                 </button>
@@ -394,10 +395,10 @@ export function UnifiedGameSettings({
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
                   }
-                  className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg ${
+                  className={`w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-indigo-700 sm:px-6 sm:py-3 sm:text-lg ${
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
-                      ? "opacity-50 cursor-not-allowed"
+                      ? "cursor-not-allowed opacity-50"
                       : ""
                   }`}
                 >
@@ -410,10 +411,10 @@ export function UnifiedGameSettings({
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
                   }
-                  className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-base sm:text-lg bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors font-semibold shadow-lg ${
+                  className={`w-full rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-semibold text-white shadow-lg transition-colors hover:bg-indigo-700 sm:px-6 sm:py-3 sm:text-lg ${
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
-                      ? "opacity-50 cursor-not-allowed"
+                      ? "cursor-not-allowed opacity-50"
                       : ""
                   }`}
                 >
@@ -459,7 +460,7 @@ function ClefSelection({ settings, updateSetting }) {
           <button
             key={clef.value}
             onClick={() => handleClefChange(clef.value)}
-            className={`p-4 sm:p-6 rounded-lg transition-colors ${
+            className={`rounded-lg p-4 transition-colors sm:p-6 ${
               settings.clef === clef.value
                 ? "bg-indigo-600 text-white"
                 : "bg-white/20 text-white hover:bg-white/30"
@@ -469,7 +470,7 @@ function ClefSelection({ settings, updateSetting }) {
               <img
                 src={clef.image}
                 alt={clef.alt}
-                className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
+                className="h-16 w-16 object-contain sm:h-20 sm:w-20"
                 style={{
                   filter:
                     settings.clef === clef.value
@@ -477,7 +478,7 @@ function ClefSelection({ settings, updateSetting }) {
                       : "brightness(0) invert(0.9)",
                 }}
               />
-              <div className="font-semibold text-sm sm:text-base">
+              <div className="text-sm font-semibold sm:text-base">
                 {clef.label}
               </div>
             </div>
@@ -496,7 +497,7 @@ function NoteSelection({
   config,
   gameType,
 }) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const {
     showImages = false,
     minNotes = 2,
@@ -604,23 +605,6 @@ function NoteSelection({
         isSelected: settings.selectedNotes?.includes(id) || false,
       };
     });
-
-    // eslint-disable-next-line no-console
-    console.groupCollapsed(
-      `[NoteSelection] game=${gameType || "unknown"} clef=${
-        settings.clef || "Treble"
-      }`
-    );
-    // eslint-disable-next-line no-console
-    console.log("Config", {
-      noteIdField,
-      selectedNotes: settings.selectedNotes,
-      totalNotes: noteCards.length,
-    });
-    // eslint-disable-next-line no-console
-    console.table(rows);
-    // eslint-disable-next-line no-console
-    console.groupEnd();
   }, [gameType, settings.clef, settings.selectedNotes, noteIdField, noteCards]);
 
   const totalSelectableNotes = useMemo(
@@ -652,8 +636,9 @@ function NoteSelection({
   ]);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm text-white/80 flex-shrink-0 mb-2">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Header with instruction and buttons - always visible, never cropped */}
+      <div className="mb-2 flex flex-shrink-0 flex-wrap items-center justify-between gap-2 text-xs text-white/80 sm:text-sm">
         <p>{t("gameSettings.noteSelection.instruction")}</p>
         <div className="flex items-center gap-2">
           <button
@@ -663,10 +648,10 @@ function NoteSelection({
               totalSelectableNotes === 0 ||
               selectedCount === totalSelectableNotes
             }
-            className={`text-white/90 font-semibold px-3 py-1 rounded-full border bg-emerald-600 border-white/30 transition-opacity ${
+            className={`rounded-full border border-white/30 bg-emerald-600 px-3 py-1 font-semibold text-white/90 transition-opacity ${
               totalSelectableNotes === 0 ||
               selectedCount === totalSelectableNotes
-                ? "opacity-40 cursor-not-allowed"
+                ? "cursor-not-allowed opacity-40"
                 : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
             }`}
           >
@@ -678,9 +663,9 @@ function NoteSelection({
             type="button"
             onClick={handleDeselectAll}
             disabled={selectedCount === 0}
-            className={`text-white/90 font-semibold px-3 py-1 rounded-full border bg-indigo-600 border-white/30 transition-opacity ${
+            className={`rounded-full border border-white/30 bg-indigo-600 px-3 py-1 font-semibold text-white/90 transition-opacity ${
               selectedCount === 0
-                ? "opacity-40 cursor-not-allowed"
+                ? "cursor-not-allowed opacity-40"
                 : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
             }`}
           >
@@ -691,58 +676,65 @@ function NoteSelection({
         </div>
       </div>
 
-      <div className="w-full px-2 sm:px-3 flex-1 flex flex-col gap-3">
-        <div className="relative h-[230px] w-full">
-          <div className="absolute inset-0 bg-white/10 border border-white/20 rounded-xl backdrop-blur-sm overflow-hidden">
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-white/5 to-transparent animate-[pulse_8s_ease-in-out_infinite]" />
-
-            <div
-              ref={scrollContainerRef}
-              className="flex h-full gap-2 overflow-x-auto snap-x snap-mandatory px-4 py-4 scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent"
-            >
-              {noteCards.map((note, idx) => {
-                const noteId = getNoteId(note);
-                if (!noteId) return null;
-                return (
-                  <button
-                    key={`${noteId}-${idx}`}
-                    onClick={() => handleNoteToggle(noteId)}
-                    className={`relative flex flex-col items-center justify-between rounded-2xl min-w-[110px] max-w-[110px] h-full snap-center transition-all duration-300 ${
-                      settings.selectedNotes?.includes(noteId)
-                        ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-2xl shadow-purple-900/30 scale-[1.02]"
-                        : "bg-white/15 text-white/80 hover:bg-white/25"
-                    }`}
-                  >
-                    <div className="absolute inset-0 rounded-2xl pointer-events-none border border-white/10" />
-                    {showImages && note.ImageComponent ? (
-                      <div className="flex-1 flex items-center justify-center w-full px-3 pt-6 pb-3">
-                        <note.ImageComponent
-                          className="w-full h-full object-contain  drop-shadow-[0_5px_15px_rgba(0,0,0,0.3)]"
-                          aria-label={note.note}
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex-1 flex items-center pb-2 justify-center text-3xl font-bold">
-                        {note.englishName}
-                      </div>
-                    )}
-                    <div className="w-full text-center text-xs font-semibold tracking-wide py-2 border-t border-white/10">
-                      {note.note}
-                      {note.pitch ? (
-                        <span className="block text-[10px] text-white/70 font-normal">
-                          {note.pitch}
-                        </span>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+      {/* Scrollable note cards container */}
+      <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm">
+        <div
+          ref={scrollContainerRef}
+          className="scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent flex h-full snap-x snap-mandatory items-center gap-2 overflow-x-auto overflow-y-hidden px-3 py-2 sm:gap-3 sm:px-4 sm:py-3 lg:gap-4"
+        >
+          {noteCards.map((note, idx) => {
+            const noteId = getNoteId(note);
+            if (!noteId) return null;
+            // Display note name based on current language
+            const isHebrew = i18n.language === "he";
+            const displayName = isHebrew ? note.note : note.englishName;
+            const displayPitch = isHebrew ? null : note.pitch;
+            const isSelected = settings.selectedNotes?.includes(noteId);
+            return (
+              <button
+                key={`${noteId}-${idx}`}
+                onClick={() => handleNoteToggle(noteId)}
+                className={`note-card-responsive relative flex snap-center flex-col items-center justify-between overflow-hidden rounded-xl transition-all duration-200 lg:rounded-2xl ${
+                  isSelected
+                    ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-lg ring-2 ring-white/50"
+                    : "bg-white/10 text-white/90 hover:bg-white/20 hover:ring-1 hover:ring-white/30"
+                }`}
+              >
+                {/* Image area */}
+                {showImages && note.ImageComponent ? (
+                  <div className="flex w-full flex-1 items-center justify-center overflow-hidden p-1 sm:p-1.5 lg:p-2">
+                    <note.ImageComponent
+                      className="h-full max-h-full w-auto rounded-lg object-contain lg:rounded-xl"
+                      style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
+                      aria-label={displayName}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-1 items-center justify-center text-lg font-bold sm:text-xl lg:text-2xl">
+                    {note.englishName}
+                  </div>
+                )}
+                {/* Label area */}
+                <div
+                  className={`w-full flex-shrink-0 py-1 text-center text-[10px] font-medium sm:py-1.5 sm:text-[11px] lg:py-2 lg:text-xs ${
+                    isSelected ? "bg-black/10" : "bg-black/5"
+                  }`}
+                >
+                  {displayName}
+                  {displayPitch ? (
+                    <span className="ml-1 text-[9px] opacity-70 sm:text-[10px]">
+                      {displayPitch}
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <p className="text-xs sm:text-sm text-white/80 flex-shrink-0 mt-2">
+      {/* Footer - selected count - always visible */}
+      <p className="mt-2 flex-shrink-0 text-xs text-white/80 sm:text-sm">
         {t("gameSettings.noteSelection.selectedCount", {
           count: selectedCount,
         })}
@@ -781,13 +773,13 @@ function DifficultySelection({ settings, updateSetting, config }) {
           <button
             key={diff.value}
             onClick={() => updateSetting(targetField, diff.value)}
-            className={`p-2 sm:p-3 rounded-lg transition-colors ${
+            className={`rounded-lg p-2 transition-colors sm:p-3 ${
               currentValue === diff.value
                 ? "bg-indigo-600 text-white"
                 : "bg-white/20 text-white hover:bg-white/30"
             }`}
           >
-            <div className="font-semibold text-sm sm:text-base">
+            <div className="text-sm font-semibold sm:text-base">
               {diff.name}
             </div>
             <div className="text-xs opacity-75">{diff.description}</div>
@@ -813,7 +805,7 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
           <button
             key={timeSig.name}
             onClick={() => updateSetting("timeSignature", timeSig)}
-            className={`p-2 sm:p-3 rounded-lg transition-colors text-sm sm:text-base ${
+            className={`rounded-lg p-2 text-sm transition-colors sm:p-3 sm:text-base ${
               settings.timeSignature?.name === timeSig.name
                 ? "bg-indigo-600 text-white"
                 : "bg-white/20 text-white hover:bg-white/30"
@@ -839,23 +831,26 @@ function TempoSelection({ settings, updateSetting, config }) {
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm sm:text-base font-medium text-white mb-2 text-center">
+      <label className="mb-2 block text-center text-sm font-medium text-white sm:text-base">
         {t("gameSettings.tempo.label", { tempo: currentTempo })}
       </label>
-      <input
-        type="range"
-        min={minTempo}
-        max={maxTempo}
-        value={currentTempo}
-        onChange={(e) => updateSetting("tempo", parseInt(e.target.value, 10))}
-        className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider"
-        style={{
-          background: `linear-gradient(to right, #4F46E5 0%, #4F46E5 ${normalized}%, rgba(255,255,255,0.2) ${normalized}%, rgba(255,255,255,0.2) 100%)`,
-        }}
-      />
-      <div className="flex justify-between text-xs text-white/70 mt-2">
-        <span>{t("gameSettings.tempo.min", { value: minTempo })}</span>
-        <span>{t("gameSettings.tempo.max", { value: maxTempo })}</span>
+      {/* Force LTR for slider to prevent RTL mismatch between fill and thumb */}
+      <div dir="ltr">
+        <input
+          type="range"
+          min={minTempo}
+          max={maxTempo}
+          value={currentTempo}
+          onChange={(e) => updateSetting("tempo", parseInt(e.target.value, 10))}
+          className="slider h-2 w-full cursor-pointer appearance-none rounded-lg bg-white/20"
+          style={{
+            background: `linear-gradient(to right, #4F46E5 0%, #4F46E5 ${normalized}%, rgba(255,255,255,0.2) ${normalized}%, rgba(255,255,255,0.2) 100%)`,
+          }}
+        />
+        <div className="mt-2 flex justify-between text-xs text-white/70">
+          <span>{t("gameSettings.tempo.min", { value: minTempo })}</span>
+          <span>{t("gameSettings.tempo.max", { value: maxTempo })}</span>
+        </div>
       </div>
     </div>
   );
@@ -904,13 +899,13 @@ function TimedModeSelection({ settings, updateSetting, config }) {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => handleTimedModeChange(false)}
-          className={`p-4 rounded-lg transition-colors ${
+          className={`rounded-lg p-4 transition-colors ${
             !settings.timedMode
               ? "bg-indigo-600 text-white"
               : "bg-white/20 text-white hover:bg-white/30"
           }`}
         >
-          <div className="font-semibold text-sm sm:text-base">
+          <div className="text-sm font-semibold sm:text-base">
             {t("gameSettings.modes.untimed.label")}
           </div>
           <div className="text-xs opacity-75">
@@ -919,13 +914,13 @@ function TimedModeSelection({ settings, updateSetting, config }) {
         </button>
         <button
           onClick={() => handleTimedModeChange(true)}
-          className={`p-4 rounded-lg transition-colors ${
+          className={`rounded-lg p-4 transition-colors ${
             settings.timedMode
               ? "bg-indigo-600 text-white"
               : "bg-white/20 text-white hover:bg-white/30"
           }`}
         >
-          <div className="font-semibold text-sm sm:text-base">
+          <div className="text-sm font-semibold sm:text-base">
             {t("gameSettings.modes.timed.label")}
           </div>
           <div className="text-xs opacity-75">
@@ -936,7 +931,7 @@ function TimedModeSelection({ settings, updateSetting, config }) {
 
       {settings.timedMode && (
         <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-white/80 text-center">
+          <p className="text-center text-xs uppercase tracking-wide text-white/80">
             {t("gameSettings.modes.timed.durationLabel", {
               defaultValue: "Select timer length",
             })}
@@ -946,10 +941,10 @@ function TimedModeSelection({ settings, updateSetting, config }) {
               <button
                 key={seconds}
                 onClick={() => updateSetting("timeLimit", seconds)}
-                className={`p-3 rounded-xl border transition-all duration-150 ${
+                className={`rounded-xl border p-3 transition-all duration-150 ${
                   selectedTimeLimit === seconds
-                    ? "bg-white text-indigo-700 border-white shadow-lg scale-[1.02]"
-                    : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                    ? "scale-[1.02] border-white bg-white text-indigo-700 shadow-lg"
+                    : "border-white/20 bg-white/10 text-white hover:bg-white/20"
                 }`}
               >
                 <div className="text-lg font-bold">
@@ -983,13 +978,13 @@ function GridSizeSelection({ settings, updateSetting, config }) {
           <button
             key={grid.value}
             onClick={() => updateSetting("gridSize", grid.value)}
-            className={`p-3 rounded-lg transition-colors ${
+            className={`rounded-lg p-3 transition-colors ${
               settings.gridSize === grid.value
                 ? "bg-indigo-600 text-white"
                 : "bg-white/20 text-white hover:bg-white/30"
             }`}
           >
-            <div className="font-semibold text-base">{grid.name}</div>
+            <div className="text-base font-semibold">{grid.name}</div>
             <div className="text-xs opacity-75">
               {t("gameSettings.gridSize.pairs", { count: grid.pairs })}
             </div>

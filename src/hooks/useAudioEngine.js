@@ -242,7 +242,7 @@ export const useAudioEngine = (initialTempo = 120) => {
 
     try {
       if (METRONOME_TIMING_DEBUG) {
-        console.log("[MetronomeTiming] createMetronomeClick", {
+        console.debug("[createMetronomeClick]", {
           requestedTime: time,
           audioCurrentTime: audioContextRef.current.currentTime,
           deltaSeconds: time - audioContextRef.current.currentTime,

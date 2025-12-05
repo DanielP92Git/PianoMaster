@@ -114,8 +114,8 @@ const getAudioConfigForNote = (note, clefType) => {
 const TimerDisplay = ({ formattedTime }) => {
   const { t } = useTranslation("common");
   return (
-    <div className="bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20 flex items-center gap-1 sm:gap-2">
-      <span className="text-white/70 text-sm sm:text-base md:text-lg">
+    <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
+      <span className="text-sm text-white/70 sm:text-base md:text-lg">
         {t("games.time")}:
       </span>
       <span className="font-mono">{formattedTime || "00:00"}</span>
@@ -127,18 +127,18 @@ const TimerDisplay = ({ formattedTime }) => {
 const ProgressBar = ({ current, total }) => {
   const progressPercent = Math.min(100, (current / total) * 100);
   return (
-    <div className="w-full bg-white/20 rounded-full h-3 mb-2 overflow-hidden shadow-inner">
+    <div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-white/20 shadow-inner">
       <div
-        className="bg-indigo-500 h-3 rounded-full transition-all duration-300 ease-out flex items-center justify-end pr-2"
+        className="flex h-3 items-center justify-end rounded-full bg-indigo-500 pr-2 transition-all duration-300 ease-out"
         style={{ width: `${progressPercent}%` }}
       >
         {progressPercent > 15 && (
-          <span className="text-xs text-white font-medium">
+          <span className="text-xs font-medium text-white">
             {current}/{total}
           </span>
         )}
       </div>
-      <div className="text-xs text-white text-center mt-1 font-medium">
+      <div className="mt-1 text-center text-xs font-medium text-white">
         Question {current} of {total}
       </div>
     </div>
@@ -516,10 +516,6 @@ export function NotesRecognitionGame() {
 
   // Handle answer selection
   const handleAnswerSelect = (selectedAnswer) => {
-    console.log(
-      `📝 [ANSWER SELECT] Called with: "${selectedAnswer}" | isListening: ${isListening} | Current target: "${progress.currentNote?.note}"`
-    );
-
     if (!progress.currentNote) return;
 
     const isCorrect = handleAnswer(selectedAnswer, progress.currentNote.note);
@@ -1064,17 +1060,17 @@ export function NotesRecognitionGame() {
   // Show loading screen during navigation
   if (isNavigating) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
         <div className="text-center">
-          <Loader2 className="w-16 h-16 text-white animate-spin mx-auto mb-4" />
-          <p className="text-white text-xl">Loading...</p>
+          <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-white" />
+          <p className="text-xl text-white">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex h-screen flex-col overflow-hidden">
       {progress.showFireworks && <Firework />}
 
       {!progress.isStarted ? (
@@ -1136,7 +1132,7 @@ export function NotesRecognitionGame() {
       ) : (
         <>
           {/* Unified Header - Back button, Score/Timer, and Pause button */}
-          <div className="p-2 sm:p-3 flex justify-between items-center gap-2">
+          <div className="flex items-center justify-between gap-2 p-2 sm:p-3">
             {!progress.isFinished && (
               <BackButton
                 to="/notes-master-mode"
@@ -1146,9 +1142,9 @@ export function NotesRecognitionGame() {
             )}
 
             {/* Score and Timer Display - centered */}
-            <div className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3 md:gap-4 flex-1 justify-center">
-              <div className="bg-white/10 backdrop-blur-sm px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-white/20 flex items-center gap-1 sm:gap-2">
-                <span className="text-white/70 text-sm sm:text-base md:text-lg">
+            <div className="flex flex-1 items-center justify-center gap-2 text-lg font-bold text-white sm:gap-3 sm:text-xl md:gap-4 md:text-2xl">
+              <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
+                <span className="text-sm text-white/70 sm:text-base md:text-lg">
                   {t("games.score")}:
                 </span>
                 <span className="font-mono">{progress.score}</span>
@@ -1158,10 +1154,10 @@ export function NotesRecognitionGame() {
               {settings.timedMode ? (
                 <TimerDisplay formattedTime={formattedTime} />
               ) : (
-                <div className="bg-green-600/80 backdrop-blur-sm text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-green-400/30 text-sm sm:text-base md:text-lg flex items-center gap-1 sm:gap-2">
+                <div className="flex items-center gap-1 rounded-lg border border-green-400/30 bg-green-600/80 px-2 py-1 text-sm text-white backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5 sm:text-base md:text-lg">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0"
+                    className="h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -1182,7 +1178,7 @@ export function NotesRecognitionGame() {
             {!progress.isFinished && (
               <button
                 onClick={handlePauseGame}
-                className="px-2 py-1 sm:px-3 sm:py-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors text-xs sm:text-sm font-medium flex-shrink-0"
+                className="flex-shrink-0 rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-medium text-white backdrop-blur-md transition-colors hover:bg-white/20 sm:px-3 sm:py-1.5 sm:text-sm"
               >
                 {settings.timedMode
                   ? t("games.actions.pause")
@@ -1191,9 +1187,9 @@ export function NotesRecognitionGame() {
             )}
           </div>
 
-          <div className="flex-1 flex flex-col">
+          <div className="flex flex-1 flex-col">
             {/* Progress Bar */}
-            <div className="w-full max-w-3xl mx-auto px-6 mb-4">
+            <div className="mx-auto mb-4 w-full max-w-3xl px-6">
               <ProgressBar
                 current={progress.totalQuestions}
                 total={settings.timedMode ? 10 : 20} // Set higher goal for non-timed mode
@@ -1202,16 +1198,16 @@ export function NotesRecognitionGame() {
 
             {/* Audio Input Status */}
             {isListening && (
-              <div className="w-full max-w-3xl mx-auto px-6 mb-4">
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3">
-                  <div className="text-white/80 text-sm mb-2 text-center">
+              <div className="mx-auto mb-4 w-full max-w-3xl px-6">
+                <div className="rounded-lg border border-white/20 bg-white/10 p-3 backdrop-blur-md">
+                  <div className="mb-2 text-center text-sm text-white/80">
                     🎤 מאזין לנגינה
                   </div>
 
                   {/* Audio Level Meter */}
-                  <div className="w-full bg-gray-700 rounded-full h-2 mb-2">
+                  <div className="mb-2 h-2 w-full rounded-full bg-gray-700">
                     <div
-                      className="bg-green-500 h-2 rounded-full transition-all duration-100"
+                      className="h-2 rounded-full bg-green-500 transition-all duration-100"
                       style={{
                         width: `${Math.min(audioInputLevel * 1000, 100)}%`,
                       }}
@@ -1219,7 +1215,7 @@ export function NotesRecognitionGame() {
                   </div>
 
                   {/* Detected Note - Always visible to prevent layout shifts */}
-                  <div className="text-lg font-bold text-yellow-300 text-center">
+                  <div className="text-center text-lg font-bold text-yellow-300">
                     זיהיתי: {detectedNote || "—"}
                   </div>
                 </div>
@@ -1228,10 +1224,10 @@ export function NotesRecognitionGame() {
 
             {/* Main game area */}
             <div className="flex items-center justify-center pt-5">
-              <div className="flex flex-col w-full max-w-3xl px-4">
+              <div className="flex w-full max-w-3xl flex-col px-4">
                 <div className="flex w-full">
                   {/* Note Buttons on the left */}
-                  <div className="grid grid-cols-2 gap-2 w-1/2 mr-4">
+                  <div className="mr-4 grid w-1/2 grid-cols-2 gap-2">
                     {(() => {
                       const allNotes =
                         settings.clef === "Treble" ? trebleNotes : bassNotes;
@@ -1300,18 +1296,18 @@ export function NotesRecognitionGame() {
                   </div>
 
                   {/* Current Note on the right */}
-                  <div className="w-1/2 flex justify-center">
+                  <div className="flex w-1/2 justify-center">
                     {progress.currentNote ? (
-                      <div className="bg-white rounded-xl p-2 w-48 h-48 flex items-center justify-center">
+                      <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-white p-2">
                         {progress.currentNote.ImageComponent && (
                           <progress.currentNote.ImageComponent
-                            className="w-full h-full object-contain"
+                            className="h-full w-full object-contain"
                             aria-label={`Musical Note: ${progress.currentNote.note}`}
                           />
                         )}
                       </div>
                     ) : (
-                      <div className="bg-white rounded-xl p-2 w-48 h-48 flex items-center justify-center">
+                      <div className="flex h-48 w-48 items-center justify-center rounded-xl bg-white p-2">
                         <span className="text-red-500">Note Image</span>
                       </div>
                     )}
@@ -1323,17 +1319,18 @@ export function NotesRecognitionGame() {
             </div>
           </div>
 
-          {/* Listen Button - Bottom area for easy thumb access on mobile */}
+          {/* Listen Button - Hidden until functionality is finalized
+              TODO: Re-enable when mic input functionality is complete
           {progress.isStarted && !progress.isFinished && (
             <div
               className={`fixed bottom-6 z-50 ${isRTL ? "left-6" : "right-6"}`}
             >
               <button
                 onClick={toggleAudioInput}
-                className={`px-4 py-3 sm:px-5 sm:py-4 backdrop-blur-md border-2 border-white/30 text-white rounded-full transition-all shadow-2xl flex items-center gap-2 sm:gap-3 text-base sm:text-lg font-bold ${
+                className={`flex items-center gap-2 rounded-full border-2 border-white/30 px-4 py-3 text-base font-bold text-white shadow-2xl backdrop-blur-md transition-all sm:gap-3 sm:px-5 sm:py-4 sm:text-lg ${
                   isListening
-                    ? "bg-red-600/90 hover:bg-red-700/90 animate-pulse"
-                    : "bg-green-600/90 hover:bg-green-700/90 hover:scale-110"
+                    ? "animate-pulse bg-red-600/90 hover:bg-red-700/90"
+                    : "bg-green-600/90 hover:scale-110 hover:bg-green-700/90"
                 }`}
                 aria-label={
                   isListening
@@ -1342,9 +1339,9 @@ export function NotesRecognitionGame() {
                 }
               >
                 {isListening ? (
-                  <FaMicrophoneSlash className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                  <FaMicrophoneSlash className="h-5 w-5 flex-shrink-0 sm:h-6 sm:w-6" />
                 ) : (
-                  <FaMicrophone className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" />
+                  <FaMicrophone className="h-5 w-5 flex-shrink-0 sm:h-6 sm:w-6" />
                 )}
                 <span>
                   {isListening
@@ -1354,6 +1351,7 @@ export function NotesRecognitionGame() {
               </button>
             </div>
           )}
+          */}
         </>
       )}
 

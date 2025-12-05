@@ -153,7 +153,6 @@ class DashboardReminderService {
         .play()
         .then(() => {
           this.isAlarmPlaying = true;
-          console.log("DashboardReminderService: Alarm playing successfully");
         })
         .catch((error) => {
           console.warn(

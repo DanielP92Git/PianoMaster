@@ -210,18 +210,13 @@ const CustomWhiteKey = ({ active, note }) => {
 
   return (
     <div
-      className={`
-        relative flex flex-col items-center justify-end
-        rounded-b-lg border-2 transition-all
-        cursor-pointer hover:brightness-110
-        ${
-          active
-            ? "bg-purple-500 border-purple-600 scale-95 shadow-inner"
-            : isMiddleC
-              ? "bg-amber-100 border-amber-400 shadow-xl"
-              : "bg-white border-gray-300 shadow-lg"
-        }
-      `}
+      className={`relative flex cursor-pointer flex-col items-center justify-end rounded-b-lg border-2 transition-all hover:brightness-110 ${
+        active
+          ? "scale-95 border-purple-600 bg-purple-500 shadow-inner"
+          : isMiddleC
+            ? "border-amber-400 bg-amber-100 shadow-xl"
+            : "border-gray-300 bg-white shadow-lg"
+      } `}
       style={{
         width: "100%",
         height: "100%",
@@ -256,10 +251,7 @@ const CustomWhiteKey = ({ active, note }) => {
 const CustomBlackKey = ({ active }) => {
   return (
     <div
-      className={`
-        rounded-b-lg transition-all
-        ${active ? "bg-purple-700 scale-95" : "bg-gray-900"}
-      `}
+      className={`rounded-b-lg transition-all ${active ? "scale-95 bg-purple-700" : "bg-gray-900"} `}
       style={{
         width: "100%",
         height: "100%",
@@ -313,10 +305,11 @@ export function KlavierKeyboard({
 
   return (
     <div
-      className="w-full h-full flex flex-col bg-gray-800/50 backdrop-blur-sm rounded-lg p-2"
+      className="bg-gray-800/50 flex h-full w-full flex-col rounded-lg p-2 backdrop-blur-sm"
       style={{ minHeight: "140px" }}
+      dir="ltr" // Force LTR for piano keyboard - prevents RTL inheritance issues
     >
-      <div className="flex-1 w-full max-w-full sm:max-w-4xl mx-auto flex items-center justify-center h-full">
+      <div className="mx-auto flex h-full w-full max-w-full flex-1 items-center justify-center sm:max-w-4xl">
         <Klavier
           keyRange={keyRange}
           keymap={keymap}

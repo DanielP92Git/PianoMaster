@@ -22,7 +22,6 @@ export function PitchDetectionExample() {
     
     // Optional callbacks
     onPitchDetected: (note, freq) => {
-      console.log(`Note detected: ${note} at ${freq.toFixed(2)} Hz`);
     },
     onLevelChange: (level) => {
       // Could use this for visual feedback
@@ -114,7 +113,6 @@ export function AutoActivePitchDetection() {
   const { detectedNote, isListening } = usePitchDetection({
     isActive: active,
     onPitchDetected: (note, freq) => {
-      console.log(`Auto-detected: ${note} at ${freq.toFixed(2)} Hz`);
     }
   });
 
