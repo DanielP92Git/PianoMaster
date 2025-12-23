@@ -7,7 +7,7 @@
   "display_override": ["standalone", "fullscreen"],
   "theme_color": "#581c87",
   "background_color": "#581c87",
-  "orientation": "landscape",
+  "orientation": "any",
   "categories": ["music", "education", "entertainment"],
   "lang": "en",
   "scope": "/",

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
 import { NotesMasterMode } from "./components/games/NotesMasterMode";
@@ -41,7 +41,7 @@ import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
-import { applyRoleBasedOrientation } from "./utils/pwa";
+import { lockOrientation } from "./utils/pwa";
 import { resolveProfileAvatarSource } from "./utils/avatarAssets";
 import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
 import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
@@ -99,10 +99,21 @@ function OrientationController() {
     userRole: derivedRole,
     isStudent: derivedIsStudent,
   } = useUser();
+  const location = useLocation();
   const lastRoleRef = useRef(null);
+  const lastPathRef = useRef(null);
   const [showTip, setShowTip] = React.useState(false);
   const [dismissedKey, setDismissedKey] = React.useState(null);
   const dismissedKeyRef = useRef(null);
+
+  const LANDSCAPE_ROUTES = [
+    "/notes-master-mode/notes-recognition-game",
+    "/notes-master-mode/memory-game",
+    "/notes-master-mode/sight-reading-game",
+    "/rhythm-mode/metronome-trainer",
+  ];
+
+  const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
 
   useEffect(() => {
     if (isLoading) return;
@@ -117,9 +128,22 @@ function OrientationController() {
 
     const normalizedRole = typeof role === "string" ? role.toLowerCase() : null;
 
-    if (lastRoleRef.current !== role) {
-      applyRoleBasedOrientation(normalizedRole);
+    const isStudent = normalizedRole === "student" || Boolean(derivedIsStudent);
+
+    const shouldReapply =
+      lastRoleRef.current !== role || lastPathRef.current !== location.pathname;
+
+    if (shouldReapply) {
+      if (!normalizedRole || normalizedRole === "teacher") {
+        lockOrientation("portrait-primary");
+      } else if (isStudent && isLandscapeRoute) {
+        lockOrientation("landscape-primary");
+      } else {
+        lockOrientation("portrait-primary");
+      }
+
       lastRoleRef.current = role;
+      lastPathRef.current = location.pathname;
     }
 
     const inStandalone = isInStandaloneMode();
@@ -133,9 +157,8 @@ function OrientationController() {
     const tipDimissInfo =
       typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
 
-    const isStudent = normalizedRole === "student" || Boolean(derivedIsStudent);
     const isiOS = isIOSDevice();
-    if (!isStudent || !isiOS) {
+    if (!isStudent || !isiOS || !isLandscapeRoute) {
       setShowTip(false);
       return;
     }
@@ -155,7 +178,7 @@ function OrientationController() {
     } else {
       setShowTip(false);
     }
-  }, [isLoading, user, derivedRole, derivedIsStudent]);
+  }, [isLoading, user, derivedRole, derivedIsStudent, location.pathname, isLandscapeRoute]);
 
   const handleClose = ({ dontShowAgain } = {}) => {
     setShowTip(false);

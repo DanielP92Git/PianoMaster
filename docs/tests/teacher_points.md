@@ -41,6 +41,25 @@ If you have connected students but the RPC returns an empty array, check:
 - The teacher is authenticated in Supabase (valid JWT)
 - Migration `20251215000001_restore_teacher_points_access.sql` has been applied
 
+## Ledger (student_point_transactions) access
+
+Teachers may also need to read the **ledger** for connected students when investigating spend/refunds.
+RLS for `student_point_transactions` is enabled and should allow:
+
+- Student: read own rows
+- Teacher: read rows for connected students (`teacher_student_connections.status = 'accepted'`)
+- Admin/service_role: read/write all
+
+Quick check (Supabase SQL Editor):
+
+```sql
+select schemaname, tablename, policyname, cmd
+from pg_policies
+where schemaname = 'public'
+  and tablename = 'student_point_transactions'
+order by policyname;
+```
+
 
 
 

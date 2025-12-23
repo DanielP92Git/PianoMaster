@@ -27,3 +27,42 @@
 
 - Force a network failure (DevTools > Request blocking) during purchase to ensure the UI surfaces `toast` errors.
 - Simulate Supabase errors by providing an invalid session token and confirm mutations report failures cleanly.
+
+## 6. RLS (Row Level Security) Checks
+
+These checks validate that RLS is enabled and your app flows still work with RLS policies applied.
+
+### 6.1 Policy presence (Supabase SQL Editor)
+
+Run:
+
+```sql
+select
+  c.relname as table_name,
+  c.relrowsecurity as rls_enabled,
+  c.relforcerowsecurity as force_rls
+from pg_class c
+join pg_namespace n on n.oid = c.relnamespace
+where n.nspname = 'public'
+  and c.relname in ('accessories', 'user_accessories', 'student_point_transactions');
+
+select schemaname, tablename, policyname, permissive, roles, cmd
+from pg_policies
+where schemaname = 'public'
+  and tablename in ('accessories', 'user_accessories', 'student_point_transactions')
+order by tablename, policyname;
+```
+
+### 6.2 App smoke test (Student)
+
+- Log in as a student and open `/avatars`.
+- Verify the catalog loads (accessories query succeeds).
+- Purchase an accessory:
+  - `user_accessories` insert should succeed.
+  - `student_point_transactions` insert should succeed and must be a **negative delta**.
+- Equip/unequip and drag-position an accessory (updates on `user_accessories.custom_metadata` should succeed).
+
+### 6.3 Negative test (prevent point forgery)
+
+- In DevTools > Console, attempt to run a manual insert to `student_point_transactions` with a **positive delta** (or use a custom request).
+- Expect the insert to be rejected by RLS.

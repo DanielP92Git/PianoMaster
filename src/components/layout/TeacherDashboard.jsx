@@ -55,7 +55,6 @@ import AssignmentManagement from "../teacher/AssignmentManagement";
 import NotificationCenter from "../teacher/NotificationCenter";
 import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
 import { useUser } from "../../features/authentication/useUser";
-import { lockOrientation } from "../../utils/pwa";
 import {
   getAchievementPointsTotal,
   getStudentScores,
@@ -1435,10 +1434,6 @@ const TeacherDashboard = () => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { newRecordingsCount } = useTeacherRecordingNotifications(user?.id);
-
-  useEffect(() => {
-    lockOrientation("portrait-primary");
-  }, []);
 
   const [isMobileView, setIsMobileView] = useState(false);
 
