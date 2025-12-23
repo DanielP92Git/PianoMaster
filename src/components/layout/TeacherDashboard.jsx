@@ -825,7 +825,8 @@ const EditStudentModal = ({
                   <p>• Their practice data and progress will be preserved</p>
                   <p>• You can reactivate the account at any time</p>
                   <p>
-                    • Archived students won't appear in active student lists
+                    • Archived students won&apos;t appear in active student
+                    lists
                   </p>
                 </div>
               </div>

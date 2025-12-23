@@ -134,9 +134,8 @@ function OrientationController() {
       lastRoleRef.current !== role || lastPathRef.current !== location.pathname;
 
     if (shouldReapply) {
-      if (!normalizedRole || normalizedRole === "teacher") {
-        lockOrientation("portrait-primary");
-      } else if (isStudent && isLandscapeRoute) {
+      // Treat derived student flag as authoritative even if role metadata is missing.
+      if (isStudent && isLandscapeRoute) {
         lockOrientation("landscape-primary");
       } else {
         lockOrientation("portrait-primary");

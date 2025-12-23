@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
+import { prepareGameLandscape } from "../../../utils/pwa";
 import { useTranslation } from "react-i18next";
 import BackButton from "../../ui/BackButton";
 import trebleClefImage from "../../../assets/noteImages/treble/treble-clef.svg";
@@ -168,6 +169,9 @@ export function UnifiedGameSettings({
     if (!ensureMinNotesSelected()) {
       return;
     }
+    // Backup: attempt landscape lock from this user gesture as well.
+    // This helps on browsers that require a user interaction for fullscreen/orientation APIs.
+    prepareGameLandscape();
     onStart(settings);
   };
 

@@ -2,6 +2,63 @@
 // Based on Web.dev PWA best practices
 
 /**
+ * Attempt to enter fullscreen mode (best-effort).
+ * Note: Most browsers require this to be called from a user gesture (click/tap).
+ * @param {HTMLElement} [element]
+ * @returns {Promise<boolean>}
+ */
+export async function requestFullscreen(element) {
+  if (typeof document === "undefined") return false;
+
+  const target = element || document.documentElement;
+  if (!target) return false;
+
+  // Already fullscreen?
+  if (document.fullscreenElement) return true;
+
+  const request =
+    target.requestFullscreen ||
+    target.webkitRequestFullscreen ||
+    target.mozRequestFullScreen ||
+    target.msRequestFullscreen;
+
+  if (typeof request !== "function") {
+    return false;
+  }
+
+  try {
+    await request.call(target);
+    return Boolean(document.fullscreenElement);
+  } catch (error) {
+    // Fullscreen may be blocked (no user gesture / browser policy).
+    console.warn("[fullscreen] requestFullscreen failed:", {
+      error: error?.message || error,
+    });
+    return false;
+  }
+}
+
+/**
+ * Best-effort: ensure the app can lock landscape by attempting fullscreen first,
+ * then calling lockOrientation. This is intentionally resilient across browsers.
+ * @returns {Promise<boolean>}
+ */
+export async function prepareGameLandscape() {
+  // Many browsers only allow orientation lock in fullscreen/installed context.
+  // Installed PWAs (display-mode: standalone) typically don't need fullscreen.
+  const inStandalone =
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(display-mode: standalone)").matches;
+
+  if (!inStandalone) {
+    await requestFullscreen();
+  }
+
+  return lockOrientation("landscape-primary");
+}
+
+/**
  * Initialize fullscreen mode for PWA
  */
 export function initializeFullscreen() {

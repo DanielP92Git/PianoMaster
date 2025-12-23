@@ -1,6 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { prepareGameLandscape } from "../../utils/pwa";
 
 /**
  * Reusable game mode grid component
@@ -10,6 +11,21 @@ import { useTranslation } from "react-i18next";
  */
 export function GameModeGrid({ games }) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
+
+  const handleEnterGame = async (event, path) => {
+    event.preventDefault();
+
+    // Best-effort: try to enter fullscreen and lock landscape *from the user gesture*.
+    // Even if this fails (browser policy), navigation should still proceed.
+    try {
+      await prepareGameLandscape();
+    } catch {
+      // ignore
+    }
+
+    navigate(path);
+  };
   // Determine grid columns based on number of games
   const getGridClass = () => {
     if (games.length >= 3) {
@@ -27,6 +43,7 @@ export function GameModeGrid({ games }) {
         <Link
           key={game.id}
           to={game.path}
+          onClick={(e) => handleEnterGame(e, game.path)}
           className="relative group h-[200px] w-full"
         >
           <div className="h-full bg-gradient-to-br from-indigo-600/20 to-purple-600/20 backdrop-blur-md rounded-xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-indigo-600/30 hover:to-purple-600/30">
