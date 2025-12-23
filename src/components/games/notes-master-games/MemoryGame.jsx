@@ -24,10 +24,14 @@ import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
 const trebleNotes = TREBLE_NOTES;
 const bassNotes = BASS_NOTES;
 
-const getAllNotesForClef = (clef) =>
-  (clef === "Bass" ? bassNotes : trebleNotes)
+const getAllNotesForClef = (clef) => {
+  if (clef === "Both" || String(clef || "").toLowerCase() === "both") {
+    return [...trebleNotes, ...bassNotes].map((note) => note.pitch).filter(Boolean);
+  }
+  return (clef === "Bass" ? bassNotes : trebleNotes)
     .map((note) => note.pitch)
     .filter(Boolean);
+};
 
 const GRID_SIZES = {
   "3 X 4": 12, // 3x4 grid = 12 cards (6 pairs)
@@ -94,6 +98,8 @@ export function MemoryGame() {
   const [selectedNotes, setSelectedNotes] = useState(() =>
     getAllNotesForClef("Treble")
   );
+  const [enableSharps, setEnableSharps] = useState(false);
+  const [enableFlats, setEnableFlats] = useState(false);
   const preparedSelectedNotes = useMemo(
     () => (selectedNotes.length > 0 ? selectedNotes : getAllNotesForClef(clef)),
     [selectedNotes, clef]
@@ -103,13 +109,23 @@ export function MemoryGame() {
   const createCards = (
     currentClef = clef,
     currentGridSize = gridSize,
-    currentSelectedNotes = selectedNotes
+    currentSelectedNotes = selectedNotes,
+    currentEnableSharps = enableSharps,
+    currentEnableFlats = enableFlats
   ) => {
     const totalCards = GRID_SIZES[currentGridSize];
     const pairs = totalCards / 2;
 
     // Select the appropriate notes based on clef
-    const allNotesArray = currentClef === "Treble" ? trebleNotes : bassNotes;
+    const allNotesArray =
+      currentClef === "Both" || String(currentClef || "").toLowerCase() === "both"
+        ? [
+            ...trebleNotes.map((n) => ({ ...n, __clef: "treble" })),
+            ...bassNotes.map((n) => ({ ...n, __clef: "bass" })),
+          ]
+        : currentClef === "Treble"
+          ? trebleNotes.map((n) => ({ ...n, __clef: "treble" }))
+          : bassNotes.map((n) => ({ ...n, __clef: "bass" }));
 
     // Filter notes based on user selection, fallback to all notes if none selected
     const normalizedSelection = normalizeSelectedNotes({
@@ -118,13 +134,49 @@ export function MemoryGame() {
       trebleNotes,
       bassNotes,
       targetField: "pitch",
+      enableSharps: currentEnableSharps,
+      enableFlats: currentEnableFlats,
     });
+
+    const isAccidentalPitch = (pitch) =>
+      pitch ? String(pitch).includes("#") || String(pitch).includes("b") : false;
+    const naturalBasePitch = (pitch) => {
+      if (!pitch) return null;
+      const raw = String(pitch).trim().replace(/\s+/g, "");
+      const match = raw.match(/^([A-Ga-g])([#b]?)(\d)$/);
+      if (!match) return raw;
+      const [, letter, , octave] = match;
+      return `${letter.toUpperCase()}${octave}`;
+    };
 
     const filteredNotes =
       normalizedSelection.length > 0
-        ? allNotesArray.filter((note) =>
-            normalizedSelection.includes(note.pitch)
-          )
+        ? (() => {
+            const clefKey = String(currentClef || "").toLowerCase();
+            const selectedSet = new Set(normalizedSelection);
+            return allNotesArray.filter((note) => {
+              if (clefKey === "both") {
+                const tag = note.__clef || "treble";
+                const notePitch = note.pitch;
+                const base = naturalBasePitch(notePitch);
+                const allowAccidental =
+                  isAccidentalPitch(notePitch) &&
+                  ((String(notePitch).includes("#") && currentEnableSharps) ||
+                    (String(notePitch).includes("b") && currentEnableFlats));
+                return (
+                  selectedSet.has(`${tag}:${notePitch}`) ||
+                  (allowAccidental && selectedSet.has(`${tag}:${base}`))
+                );
+              }
+              const notePitch = note.pitch;
+              const base = naturalBasePitch(notePitch);
+              const allowAccidental =
+                isAccidentalPitch(notePitch) &&
+                ((String(notePitch).includes("#") && currentEnableSharps) ||
+                  (String(notePitch).includes("b") && currentEnableFlats));
+              return selectedSet.has(notePitch) || (allowAccidental && selectedSet.has(base));
+            });
+          })()
         : allNotesArray;
 
     // Create a copy of the filtered notes array and shuffle it to randomize selection
@@ -220,8 +272,8 @@ export function MemoryGame() {
 
   // Fix the initial cards creation to use the proper grid size
   const initialCards = useMemo(() => {
-    return createCards(clef, DIFFICULTIES["Easy"], selectedNotes);
-  }, [clef, selectedNotes]);
+    return createCards(clef, DIFFICULTIES["Easy"], selectedNotes, enableSharps, enableFlats);
+  }, [clef, selectedNotes, enableSharps, enableFlats]);
 
   const [cards, setCards] = useState(initialCards);
   const [flippedIndexes, setFlippedIndexes] = useState([]);
@@ -332,6 +384,8 @@ export function MemoryGame() {
           trebleNotes,
           bassNotes,
           targetField: "pitch",
+          enableSharps: settings.enableSharps ?? false,
+          enableFlats: settings.enableFlats ?? false,
         });
         if (!newSelectedNotes.length) {
           newSelectedNotes = fallbackNotes;
@@ -368,6 +422,9 @@ export function MemoryGame() {
         newTimeLimit = TIME_DIFFICULTY_LIMITS[newTimeDifficulty] ?? timeLimit;
       }
 
+      const newEnableSharps = settings.enableSharps ?? enableSharps;
+      const newEnableFlats = settings.enableFlats ?? enableFlats;
+
       setClef(newClef);
       setSelectedNotes(newSelectedNotes);
       setGridSize(newGridSize);
@@ -375,8 +432,10 @@ export function MemoryGame() {
       setTimeDifficulty(newTimeDifficulty);
       setTimedMode(newTimedMode);
       setTimeLimit(newTimeLimit);
+      setEnableSharps(newEnableSharps);
+      setEnableFlats(newEnableFlats);
 
-      const newCards = createCards(newClef, newGridSize, newSelectedNotes);
+      const newCards = createCards(newClef, newGridSize, newSelectedNotes, newEnableSharps, newEnableFlats);
       setCards(newCards);
       setFlippedIndexes([]);
       setMatchedIndexes([]);
@@ -409,6 +468,8 @@ export function MemoryGame() {
       timeDifficulty,
       timedMode,
       timeLimit,
+      enableSharps,
+      enableFlats,
       pauseTimer,
       resetTimer,
       setShowSettingsModal,
@@ -438,7 +499,9 @@ export function MemoryGame() {
     const newCards = createCards(
       currentClef,
       newGridSize,
-      currentSelectedNotes
+      currentSelectedNotes,
+      enableSharps,
+      enableFlats
     );
     setCards(newCards);
 
@@ -471,7 +534,7 @@ export function MemoryGame() {
 
     const resetGridSize = gridSize;
 
-    const newCards = createCards(clef, resetGridSize);
+    const newCards = createCards(clef, resetGridSize, selectedNotes, enableSharps, enableFlats);
     setCards(newCards);
 
     setFlippedIndexes([]);
@@ -507,8 +570,10 @@ export function MemoryGame() {
         });
       }
 
+      // Match ONLY when it's a note-name card + a staff-note card of the same note value.
+      // Prevents name+name or note+note from matching.
       const isMatchingPair =
-        firstCard.value === secondCard.value && newFlippedIndexes[0] !== index;
+        firstCard.value === secondCard.value && firstCard.type !== secondCard.type;
 
       if (isMatchingPair) {
         // Match found - show firework and delay disappearance
@@ -651,7 +716,7 @@ export function MemoryGame() {
     // Only run this effect if gridSize has changed and game has started
     if (prevGridSizeRef.current !== gridSize && gameStarted) {
       // Create new cards with the updated grid size
-      const newCards = createCards(clef, gridSize);
+      const newCards = createCards(clef, gridSize, selectedNotes, enableSharps, enableFlats);
 
       // Update cards state
       setCards(newCards);
@@ -664,17 +729,17 @@ export function MemoryGame() {
 
     // Update ref to current gridSize
     prevGridSizeRef.current = gridSize;
-  }, [gridSize, clef, gameStarted]);
+  }, [gridSize, clef, gameStarted, selectedNotes, enableSharps, enableFlats]);
 
   useEffect(() => {
     if (!gameStarted) return;
     const expectedCount = GRID_SIZES[gridSize];
     if (!expectedCount) return;
     if (cards.length !== expectedCount) {
-      const refreshedCards = createCards(clef, gridSize, selectedNotes);
+      const refreshedCards = createCards(clef, gridSize, selectedNotes, enableSharps, enableFlats);
       setCards(refreshedCards);
     }
-  }, [gameStarted, gridSize, cards.length, clef, selectedNotes]);
+  }, [gameStarted, gridSize, cards.length, clef, selectedNotes, enableSharps, enableFlats]);
 
   return (
     <div className="flex h-screen flex-col">

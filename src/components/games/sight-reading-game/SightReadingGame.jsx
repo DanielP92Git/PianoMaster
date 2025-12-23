@@ -1,10 +1,12 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Piano, Settings, Play, Mic } from "lucide-react";
 import MetronomeIcon from "../../../assets/icons/metronome.svg";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
-import { usePitchDetection } from "../../../hooks/usePitchDetection";
+import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
+import { MIC_INPUT_PRESETS } from "../../../hooks/micInputPresets";
 import { PreGameSetup } from "./components/PreGameSetup";
 import { VexFlowStaffDisplay } from "./components/VexFlowStaffDisplay";
 import { KlavierKeyboard } from "./components/KlavierKeyboard";
@@ -25,7 +27,7 @@ import {
   calculateRhythmAccuracy,
   calculateOverallScore,
 } from "./utils/scoreCalculator";
-import { FIRST_NOTE_EARLY_MS } from "./constants/timingConstants";
+import { FIRST_NOTE_EARLY_MS, NOTE_LATE_MS } from "./constants/timingConstants";
 import { useUser } from "../../../features/authentication/useUser";
 import { updateStudentScore } from "../../../services/apiScores";
 import toast from "react-hot-toast";
@@ -35,6 +37,18 @@ import {
   useSightReadingSession,
 } from "../../../contexts/SightReadingSessionContext";
 import VictoryScreen from "../VictoryScreen";
+
+// #region agent log (debug-mode instrumentation)
+const __SR_LOG_ENDPOINT =
+  "http://127.0.0.1:7242/ingest/636d1c48-b2ea-491c-896a-7ce448793071";
+const __srLog = (payload) => {
+  fetch(__SR_LOG_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+};
+// #endregion
 
 const GAME_PHASES = {
   SETUP: "setup",
@@ -49,6 +63,14 @@ const TIMING_STATE = {
   EARLY_WINDOW: "early_window",
   LIVE: "live",
 };
+
+// Empirically observed mic pipeline latency (pitch detection + stability + hardware).
+// Applied only in mic mode to align timing evaluation with the user's perceived beat.
+const MIC_LATENCY_COMP_MS = 300;
+// Extra grace for the *first playable note* in mic mode:
+// first note onset is the hardest to nail (human reaction + mic envelope),
+// so we reduce the perceived "late" penalty slightly.
+const MIC_FIRST_NOTE_LATE_GRACE_MS = 400;
 
 const ANTI_CHEAT_WINDOW_MS = 1000;
 const ANTI_CHEAT_THRESHOLD = 3;
@@ -70,6 +92,14 @@ const PC_KEYBOARD_KEYS = [
 const METRONOME_TIMING_DEBUG = import.meta.env?.VITE_DEBUG_METRONOME === "true";
 const FIRST_NOTE_DEBUG = import.meta.env?.VITE_DEBUG_FIRST_NOTE === "true";
 const PERFORMANCE_START_BUFFER_MS = 0;
+// Ensure there's an audible downbeat exactly when the performance phase begins (end of count-in).
+// Without this, the last count-in click is beat 4 and the start downbeat can be "silent",
+// which makes users play to a later click and get graded as late.
+const PLAY_PERFORMANCE_DOWNBEAT_CLICK = true;
+// If the user plays to the audible metronome click, WebAudio output latency can make
+// their "on-click" performance look late relative to AudioContext currentTime.
+// We'll measure outputLatency in debug logs before applying any compensation.
+const AUDIO_OUTPUT_LATENCY_COMP_DEBUG = true;
 const logMetronomeTiming = (label, payload = {}) => {
   if (!METRONOME_TIMING_DEBUG) return;
   const timestamp =
@@ -90,6 +120,7 @@ const { DEFAULT_MAX_SCORE_PER_EXERCISE: SESSION_MAX_EXERCISE_SCORE } =
 
 export function SightReadingGame() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const audioEngine = useAudioEngine(80);
   const { generatePattern } = usePatternGeneration();
   const { user, isStudent } = useUser();
@@ -126,9 +157,18 @@ export function SightReadingGame() {
     timingStateRef.current = timingState;
   }, [timingState]);
 
+  // Keep ref in sync immediately for gating logic that reads timingStateRef in the same tick.
+  const setTimingStateSync = useCallback((next) => {
+    timingStateRef.current = next;
+    setTimingState(next);
+  }, []);
+
   // Unified timing references for audio/wall-clock sync
   const audioStartTimeRef = useRef(null); // AudioContext seconds at performance start
   const wallClockStartTimeRef = useRef(null); // Date.now() ms at performance start
+  const countInEndAudioTimeRef = useRef(null); // AudioContext seconds at count-in end (scheduled)
+  const countInEndWallClockMsRef = useRef(null); // Date.now() ms at count-in end (scheduled)
+  const performanceStartAudioTimeRef = useRef(null); // AudioContext seconds at performance start (preferred timing baseline)
 
   // Input mode state: "keyboard" or "mic"
   const [inputMode, setInputMode] = useState(() => {
@@ -162,6 +202,7 @@ export function SightReadingGame() {
   }, [startSession, resetSession]);
   const countInAnimationRef = useRef(null);
   const lastCountInBeatRef = useRef(0);
+  const countInRafRef = useRef({ scoring: null, completion: null });
   const stopCountInVisualization = useCallback(() => {
     if (countInAnimationRef.current) {
       cancelAnimationFrame(countInAnimationRef.current);
@@ -178,6 +219,14 @@ export function SightReadingGame() {
     if (countInTimeoutRef.current.completion) {
       clearTimeout(countInTimeoutRef.current.completion);
       countInTimeoutRef.current.completion = null;
+    }
+    if (countInRafRef.current.scoring) {
+      cancelAnimationFrame(countInRafRef.current.scoring);
+      countInRafRef.current.scoring = null;
+    }
+    if (countInRafRef.current.completion) {
+      cancelAnimationFrame(countInRafRef.current.completion);
+      countInRafRef.current.completion = null;
     }
   }, []);
 
@@ -234,11 +283,70 @@ export function SightReadingGame() {
 
   const pcKeyboardMap = useMemo(() => {
     const selected = gameSettings.selectedNotes || [];
+    const clefKey = String(gameSettings.clef || "Treble").toLowerCase();
     const noteBank =
-      gameSettings.clef?.toLowerCase() === "bass" ? BASS_NOTES : TREBLE_NOTES;
+      clefKey === "bass"
+        ? BASS_NOTES
+        : clefKey === "both"
+          ? [
+              ...TREBLE_NOTES.map((n) => ({ ...n, __clef: "treble" })),
+              ...BASS_NOTES.map((n) => ({ ...n, __clef: "bass" })),
+            ]
+          : TREBLE_NOTES;
     const activeNotes =
       selected.length > 0
-        ? noteBank.filter((note) => selected.includes(note.pitch))
+        ? (() => {
+            const selectedSet = new Set(selected);
+            return noteBank.filter((note) => {
+              if (clefKey === "both") {
+                const tag = note.__clef || "treble";
+                const notePitch = note.pitch;
+                const isAccidental =
+                  notePitch &&
+                  (String(notePitch).includes("#") ||
+                    String(notePitch).includes("b"));
+                const baseMatch = notePitch
+                  ? String(notePitch)
+                      .trim()
+                      .replace(/\s+/g, "")
+                      .replace(/([#b])/, "")
+                  : null;
+                const allowAccidental =
+                  isAccidental &&
+                  ((String(notePitch).includes("#") &&
+                    (gameSettings.enableSharps ?? false)) ||
+                    (String(notePitch).includes("b") &&
+                      (gameSettings.enableFlats ?? false)));
+                return (
+                  selectedSet.has(`${tag}:${notePitch}`) ||
+                  (allowAccidental &&
+                    baseMatch &&
+                    selectedSet.has(`${tag}:${baseMatch}`))
+                );
+              }
+              const notePitch = note.pitch;
+              const isAccidental =
+                notePitch &&
+                (String(notePitch).includes("#") ||
+                  String(notePitch).includes("b"));
+              const baseMatch = notePitch
+                ? String(notePitch)
+                    .trim()
+                    .replace(/\s+/g, "")
+                    .replace(/([#b])/, "")
+                : null;
+              const allowAccidental =
+                isAccidental &&
+                ((String(notePitch).includes("#") &&
+                  (gameSettings.enableSharps ?? false)) ||
+                  (String(notePitch).includes("b") &&
+                    (gameSettings.enableFlats ?? false)));
+              return (
+                selectedSet.has(notePitch) ||
+                (allowAccidental && baseMatch && selectedSet.has(baseMatch))
+              );
+            });
+          })()
         : noteBank;
     const mapping = {};
     activeNotes.forEach((note, idx) => {
@@ -247,7 +355,12 @@ export function SightReadingGame() {
       }
     });
     return mapping;
-  }, [gameSettings.clef, gameSettings.selectedNotes]);
+  }, [
+    gameSettings.clef,
+    gameSettings.selectedNotes,
+    gameSettings.enableSharps,
+    gameSettings.enableFlats,
+  ]);
 
   // Use ref to avoid stale closure in setTimeout callback
   const currentPatternRef = useRef(null);
@@ -261,6 +374,10 @@ export function SightReadingGame() {
   const performanceResultsRef = useRef([]); // Ref for real-time performance results access
   const performanceLiveTimeoutRef = useRef(null);
   const lastDetectionTimesRef = useRef({}); // Per-note debouncing: key=noteIndex, value=lastDetectionMs
+  // Track wrong-pitch attempts per note so we can still allow correction within the window.
+  const wrongPitchSeenRef = useRef({}); // key=noteIndex, value=boolean
+  const lastWrongPitchRef = useRef({}); // key=noteIndex, value=lastDetectedPitch
+  const micEarlyWindowStartRequestedRef = useRef(false);
 
   // Performance tracking
   const [performanceResults, setPerformanceResults] = useState([]);
@@ -271,18 +388,31 @@ export function SightReadingGame() {
   // Persist input mode changes to localStorage
   useEffect(() => {
     localStorage.setItem("sightReadingInputMode", inputMode);
-    // Ensure keyboard is visible when keyboard mode is selected
-    if (inputMode === "keyboard") {
-      setShowKeyboard(true);
-      // Dismiss any mic permission prompts when switching to keyboard mode
+    // Keep on-screen keyboard visibility in sync with input mode.
+    // Requirement: when switching to microphone input mode, hide the on-screen keyboard.
+    setShowKeyboard(inputMode === "keyboard");
+    // Dismiss any mic permission prompts when switching away from mic mode
+    if (inputMode !== "mic") {
       setShowMicPermissionPrompt(false);
     }
   }, [inputMode]);
 
   // Helper: Get elapsed time from performance start in ms
   const getElapsedMsFromPerformanceStart = useCallback(() => {
+    // Prefer audio clock baseline (metronome is scheduled on AudioContext time).
+    if (
+      typeof performanceStartAudioTimeRef.current === "number" &&
+      performanceStartAudioTimeRef.current > 0
+    ) {
+      const audioNow = audioEngine.getCurrentTime();
+      const elapsedMs =
+        (audioNow - performanceStartAudioTimeRef.current) * 1000;
+      return Math.max(0, elapsedMs);
+    }
+
+    // Fallback: wall-clock baseline.
     if (!wallClockStartTimeRef.current) return 0;
-    return Date.now() - wallClockStartTimeRef.current;
+    return Math.max(0, Date.now() - wallClockStartTimeRef.current);
   }, []);
 
   // Cursor animation helpers
@@ -297,6 +427,24 @@ export function SightReadingGame() {
     const pattern = currentPatternRef.current;
     if (!pattern || !wallClockStartTimeRef.current) return;
 
+    // #region agent log
+    __srLog({
+      sessionId: "debug-session",
+      runId: "mic-latency-pre",
+      hypothesisId: "Hcursor",
+      location:
+        "src/components/games/sight-reading-game/SightReadingGame.jsx:startCursorAnimation",
+      message: "cursor.start",
+      data: {
+        wallClockStartMs: wallClockStartTimeRef.current,
+        audioStartTime: audioStartTimeRef.current,
+        tempo: pattern?.tempo ?? null,
+        totalDuration: pattern?.totalDuration ?? null,
+      },
+      timestamp: Date.now(),
+    });
+    // #endregion
+
     const animate = () => {
       if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
         logFirstNoteDebug("cursor animation halted (phase change)", {
@@ -309,6 +457,32 @@ export function SightReadingGame() {
       const patternDurationSec = pattern.totalDuration || 0;
       const clampedSec = Math.min(elapsedSec, patternDurationSec);
       setCursorTime(clampedSec);
+
+      // #region agent log
+      // Throttle to ~2 logs/sec to catch jank without spamming.
+      if (
+        typeof animate.__dbgLastLogAt !== "number" ||
+        elapsedMs - animate.__dbgLastLogAt >= 500
+      ) {
+        animate.__dbgLastLogAt = elapsedMs;
+        __srLog({
+          sessionId: "debug-session",
+          runId: "mic-latency-pre",
+          hypothesisId: "Hcursor",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:startCursorAnimation",
+          message: "cursor.tick",
+          data: {
+            elapsedMs: Math.round(elapsedMs),
+            cursorTimeSec: Number(clampedSec.toFixed(3)),
+            patternDurationSec: Number(patternDurationSec.toFixed(3)),
+            timingState: timingStateRef.current,
+          },
+          timestamp: Date.now(),
+        });
+      }
+      // #endregion
+
       if (elapsedSec < patternDurationSec) {
         cursorAnimationRef.current = requestAnimationFrame(animate);
       }
@@ -436,6 +610,10 @@ export function SightReadingGame() {
   const [exerciseRecorded, setExerciseRecorded] = useState(false);
   const metronomeIntervalRef = useRef(null);
   const metronomeBeatRef = useRef(0);
+  const metronomeNextClickTimeRef = useRef(null); // AudioContext seconds
+  const pendingMicLatencyMsRef = useRef(null);
+  const performanceTimelineRafRef = useRef(null);
+  const performanceTimelineIdxRef = useRef(-1);
 
   // Create note frequency mapping from current pattern
   const noteFrequencies = useMemo(() => {
@@ -452,21 +630,58 @@ export function SightReadingGame() {
     return frequencies;
   }, [currentPattern]);
 
-  const { audioLevel, isListening, startListening, stopListening } =
-    usePitchDetection({
+  const handleNoteEvent = useCallback((event) => {
+    if (!event || event.type !== "noteOn") return;
+    pendingMicLatencyMsRef.current =
+      typeof event.latencyMs === "number" ? event.latencyMs : null;
+    // #region agent log
+    __srLog({
+      sessionId: "debug-session",
+      runId: "mic-latency-pre",
+      hypothesisId: "Hmic",
+      location:
+        "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteEvent",
+      message: "mic.noteOn.received",
+      data: {
+        pitch: event.pitch,
+        frequency: event.frequency ?? null,
+        perfNow: typeof performance !== "undefined" ? performance.now() : null,
+        eventTime: event.time ?? null,
+        latencyMs: typeof event.latencyMs === "number" ? event.latencyMs : null,
+        wallNow: Date.now(),
+        audioNow: audioEngine.getCurrentTime(),
+        phase: gamePhaseRef.current,
+        timingState: timingStateRef.current,
+      },
+      timestamp: Date.now(),
+    });
+    // #endregion
+    handleNoteDetectedRef.current(event.pitch, event.frequency ?? 440);
+  }, []);
+
+  // Dev-only mic debug overlay toggle:
+  // In console: localStorage.setItem("debug-mic", "1") then refresh.
+  const showMicDebug = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage?.getItem("debug-mic") === "1";
+  }, []);
+
+  const { audioLevel, isListening, startListening, stopListening, debug } =
+    useMicNoteInput({
       isActive: false, // Manual control
       noteFrequencies,
-      rmsThreshold: 0.015, // Slightly higher for accuracy
-      tolerance: 0.03, // 3% tolerance (tighter than default)
-      onPitchDetected: (note, frequency) => {
-        handleNoteDetectedRef.current(note, frequency);
-      },
-      onLevelChange: () => {},
+      ...MIC_INPUT_PRESETS.sightReading,
+      onNoteEvent: handleNoteEvent,
     });
 
   useEffect(() => {
     stopListeningRef.current = stopListening;
   }, [stopListening]);
+
+  const micIsListeningRef = useRef(false);
+  useEffect(() => {
+    micIsListeningRef.current = Boolean(isListening);
+  }, [isListening]);
 
   useEffect(() => {
     if (!currentPattern) {
@@ -493,8 +708,13 @@ export function SightReadingGame() {
   const getNoteLabel = useCallback(
     (pitch) => {
       if (!pitch) return "";
+      const clefKey = String(gameSettings.clef || "Treble").toLowerCase();
       const noteBank =
-        gameSettings.clef?.toLowerCase() === "bass" ? BASS_NOTES : TREBLE_NOTES;
+        clefKey === "bass"
+          ? BASS_NOTES
+          : clefKey === "both"
+            ? [...TREBLE_NOTES, ...BASS_NOTES]
+            : TREBLE_NOTES;
       return noteBank.find((note) => note.pitch === pitch)?.note || pitch;
     },
     [gameSettings.clef]
@@ -514,28 +734,28 @@ export function SightReadingGame() {
       performanceLiveTimeoutRef.current = null;
     }
     if (PERFORMANCE_START_BUFFER_MS <= 0) {
-      setTimingState(TIMING_STATE.LIVE);
+      setTimingStateSync(TIMING_STATE.LIVE);
       logFirstNoteDebug("performance live window active", {
         bufferMs: PERFORMANCE_START_BUFFER_MS,
       });
       return;
     }
     performanceLiveTimeoutRef.current = setTimeout(() => {
-      setTimingState(TIMING_STATE.LIVE);
+      setTimingStateSync(TIMING_STATE.LIVE);
       performanceLiveTimeoutRef.current = null;
       logFirstNoteDebug("performance live window active", {
         bufferMs: PERFORMANCE_START_BUFFER_MS,
       });
     }, PERFORMANCE_START_BUFFER_MS);
-  }, []);
+  }, [setTimingStateSync]);
 
   const resetPerformanceLiveState = useCallback(() => {
     if (performanceLiveTimeoutRef.current) {
       clearTimeout(performanceLiveTimeoutRef.current);
       performanceLiveTimeoutRef.current = null;
     }
-    setTimingState(TIMING_STATE.OFF);
-  }, []);
+    setTimingStateSync(TIMING_STATE.OFF);
+  }, [setTimingStateSync]);
 
   /**
    * Check microphone permission status and handle accordingly
@@ -649,15 +869,47 @@ export function SightReadingGame() {
 
   // Complete performance handler
   const completePerformance = useCallback(() => {
+    // #region agent log
+    __srLog({
+      sessionId: "debug-session",
+      runId: "stuck-perf-pre",
+      hypothesisId: "Hphase",
+      location:
+        "src/components/games/sight-reading-game/SightReadingGame.jsx:completePerformance",
+      message: "performance.complete.called",
+      data: {
+        gamePhase: gamePhaseRef.current,
+        timingState: timingStateRef.current,
+        audioNow: audioEngine.getCurrentTime(),
+        elapsedMs: Math.round(getElapsedMsFromPerformanceStart()),
+      },
+      timestamp: Date.now(),
+    });
+    // #endregion
     stopCursorAnimation();
 
     // Add a small delay to ensure the last note's result is properly recorded
     // before transitioning to FEEDBACK phase (prevents race condition where
     // last note shows as "active" instead of its actual result color)
     setTimeout(() => {
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "stuck-perf-pre",
+        hypothesisId: "Hphase",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:completePerformance",
+        message: "performance.complete.setFeedback",
+        data: {
+          gamePhaseBefore: gamePhaseRef.current,
+          timingState: timingStateRef.current,
+        },
+        timestamp: Date.now(),
+      });
+      // #endregion
       setGamePhase(GAME_PHASES.FEEDBACK);
     }, 50); // 50ms delay to let state updates settle
-  }, [stopCursorAnimation]);
+  }, [stopCursorAnimation, audioEngine, getElapsedMsFromPerformanceStart]);
 
   /**
    * Show timing feedback message with color-coded styling
@@ -851,6 +1103,13 @@ export function SightReadingGame() {
           ? Math.round(summaryStats.overallScore)
           : 0;
         await updateStudentScore(studentId, normalizedScore, "sight_reading");
+
+        // Invalidate queries to update points display
+        queryClient.invalidateQueries(["student-scores", studentId]);
+        queryClient.invalidateQueries(["point-balance", studentId]);
+        queryClient.invalidateQueries(["total-points", studentId]);
+        queryClient.invalidateQueries(["gamesPlayed"]);
+
         if (!isMounted) return;
         setScoreSubmitted(true);
         setScoreSyncStatus("saved");
@@ -921,7 +1180,20 @@ export function SightReadingGame() {
         return;
       }
 
-      const elapsedTimeMs = getElapsedMsFromPerformanceStart();
+      const rawElapsedTimeMs = getElapsedMsFromPerformanceStart();
+      const dynamicMicCompMs =
+        inputMode === "mic"
+          ? typeof pendingMicLatencyMsRef.current === "number"
+            ? Math.max(0, Math.min(1200, pendingMicLatencyMsRef.current))
+            : MIC_LATENCY_COMP_MS
+          : 0;
+      if (inputMode === "mic") {
+        pendingMicLatencyMsRef.current = null;
+      }
+      const elapsedTimeMs =
+        inputMode === "mic"
+          ? Math.max(0, rawElapsedTimeMs - dynamicMicCompMs)
+          : rawElapsedTimeMs;
 
       // Use unified timing state check (after we know elapsed time for logging)
       if (!canScoreNow(phase)) {
@@ -954,13 +1226,12 @@ export function SightReadingGame() {
         });
       }
 
-      // Find which note (if any) is currently within its timing window
-      // Prioritize the earliest pending note whose window contains this detection
+      // Find which note (if any) is currently within its timing window.
+      // IMPORTANT: We must NOT skip ahead to a later note just because the detected pitch matches it,
+      // otherwise an early note can be left unscored and later marked as "missed".
       let matchingNoteIndex = -1;
       let matchingEvent = null;
       let matchingWindow = null;
-      const pitchMatches = [];
-      const fallbackMatches = [];
 
       for (let i = 0; i < timingWindows.length; i++) {
         const windowInfo = timingWindows[i];
@@ -987,7 +1258,22 @@ export function SightReadingGame() {
           continue;
         }
         if (existingResult?.timingStatus === "missed") {
-          continue;
+          // Allow mic detections to override a previously recorded miss (mic start latency / stability).
+          if (!(inputMode === "mic" && phase === GAME_PHASES.PERFORMANCE)) {
+            // #region agent log
+            __srLog({
+              sessionId: "debug-session",
+              runId: "mic-start-fix-pre",
+              hypothesisId: "Htimeout",
+              location:
+                "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteDetected",
+              message: "scoring.skipMissedExisting",
+              data: { noteIndex: i, detectedNote, phase, inputMode },
+              timestamp: Date.now(),
+            });
+            // #endregion
+            continue;
+          }
         }
 
         // Calculate timing window for this note
@@ -995,17 +1281,33 @@ export function SightReadingGame() {
 
         // Check if we're within this note's timing window
         if (elapsedTimeMs >= windowStart && elapsedTimeMs <= windowEnd) {
-          fallbackMatches.push(windowInfo);
-          if (event.pitch === detectedNote) {
-            pitchMatches.push(windowInfo);
-          }
+          // Always select the earliest pending window that contains this detection.
+          matchingNoteIndex = windowInfo.noteIndex;
+          matchingEvent = event;
+          matchingWindow = windowInfo;
+          break;
         }
       }
 
-      const selectedWindow = pitchMatches[0] || fallbackMatches[0] || null;
-
       // No valid note found in timing window
-      if (!selectedWindow) {
+      if (matchingNoteIndex === -1 || !matchingWindow || !matchingEvent) {
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "beat-shift-pre",
+          hypothesisId: "Hselect",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteDetected",
+          message: "scoring.windowSelect.none",
+          data: {
+            detectedNote,
+            elapsedMs: Math.round(elapsedTimeMs),
+            phase,
+            timingState: timingStateRef.current,
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
         if (FIRST_NOTE_DEBUG) {
           logFirstNoteDebug("no matching note", {
             elapsedTimeMs,
@@ -1020,9 +1322,31 @@ export function SightReadingGame() {
         return;
       }
 
-      matchingNoteIndex = selectedWindow.noteIndex;
-      matchingEvent = selectedWindow.event;
-      matchingWindow = selectedWindow;
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "beat-shift-pre",
+        hypothesisId: "Hselect",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteDetected",
+        message: "scoring.windowSelect.chosen",
+        data: {
+          detectedNote,
+          selectedNoteIndex: matchingNoteIndex,
+          expected: matchingEvent?.pitch ?? null,
+          windowStartMs: Math.round(matchingWindow.windowStart),
+          windowEndMs: Math.round(matchingWindow.windowEnd),
+          noteStartMs: Math.round(matchingWindow.startMs ?? 0),
+          noteEndMs: Math.round(matchingWindow.endMs ?? 0),
+          elapsedMs: Math.round(elapsedTimeMs),
+          rawElapsedMs: Math.round(rawElapsedTimeMs),
+          micLatencyCompMs: inputMode === "mic" ? dynamicMicCompMs : 0,
+          phase,
+          timingState: timingStateRef.current,
+        },
+        timestamp: Date.now(),
+      });
+      // #endregion
       if (matchingNoteIndex === 0) {
         logFirstNoteDebug("first-note window matched", {
           elapsedTimeMs,
@@ -1059,7 +1383,58 @@ export function SightReadingGame() {
         failedAttemptTrackerRef.current = [];
         keyboardSpamTrackerRef.current = [];
         // Calculate timing accuracy
-        const timing = evaluateTiming(timeDiff);
+        // Slightly widen mic grading to compensate for real-world onset + detection jitter.
+        const MIC_TIMING_SLOP_MS = inputMode === "mic" ? 110 : 0;
+        const timeDiffAfterFirstNoteGrace =
+          inputMode === "mic" && matchingNoteIndex === 0 && timeDiff > 0
+            ? Math.max(0, timeDiff - MIC_FIRST_NOTE_LATE_GRACE_MS)
+            : timeDiff;
+        const evalTimeDiffMs =
+          MIC_TIMING_SLOP_MS > 0
+            ? Math.sign(timeDiffAfterFirstNoteGrace) *
+              Math.max(
+                0,
+                Math.abs(timeDiffAfterFirstNoteGrace) - MIC_TIMING_SLOP_MS
+              )
+            : timeDiffAfterFirstNoteGrace;
+        const timing = evaluateTiming(evalTimeDiffMs);
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "mic-latency-pre",
+          hypothesisId: "Hmic",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteDetected",
+          message: "scoring.timingEval",
+          data: {
+            detectedNote,
+            expected: matchingEvent.pitch,
+            elapsedMs: Math.round(elapsedTimeMs),
+            rawElapsedMs: Math.round(rawElapsedTimeMs),
+            micLatencyCompMs: inputMode === "mic" ? dynamicMicCompMs : 0,
+            audioOutputLatencyMs:
+              typeof audioEngine.audioContextRef?.current?.outputLatency ===
+              "number"
+                ? Math.round(
+                    audioEngine.audioContextRef.current.outputLatency * 1000
+                  )
+                : null,
+            expectedStartMs: Math.round(matchedNoteStartMs),
+            timeDiffMs: Math.round(timeDiff),
+            evalTimeDiffMs: Math.round(evalTimeDiffMs),
+            micTimingSlopMs: MIC_TIMING_SLOP_MS,
+            firstNoteLateGraceMs:
+              inputMode === "mic" && matchingNoteIndex === 0
+                ? MIC_FIRST_NOTE_LATE_GRACE_MS
+                : 0,
+            timingStatus: timing?.status ?? null,
+            phase,
+            timingState: timingStateRef.current,
+            audioNow: audioEngine.getCurrentTime(),
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
 
         // Record correct result
         const result = {
@@ -1095,10 +1470,32 @@ export function SightReadingGame() {
           });
         }
         recordPerformanceResult(result);
+        // Clear wrong-pitch tracking for this note once correctly scored.
+        wrongPitchSeenRef.current[matchingNoteIndex] = false;
+        lastWrongPitchRef.current[matchingNoteIndex] = null;
 
         // Show timing feedback
         showTimingFeedback(timing);
       } else {
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "beat-shift-pre",
+          hypothesisId: "Hshift",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteDetected",
+          message: "scoring.wrongPitch",
+          data: {
+            detectedNote,
+            expected: matchingEvent?.pitch ?? null,
+            selectedNoteIndex: matchingNoteIndex,
+            elapsedMs: Math.round(elapsedTimeMs),
+            windowStartMs: Math.round(matchingWindow?.windowStart ?? 0),
+            windowEndMs: Math.round(matchingWindow?.windowEnd ?? 0),
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
         // Record wrong pitch (per PRD: show RED feedback)
         const result = {
           noteIndex: matchingNoteIndex,
@@ -1129,9 +1526,13 @@ export function SightReadingGame() {
             scoringActive: timingStateRef.current,
           });
         }
-        recordPerformanceResult(result);
+        // IMPORTANT (mic UX): don't finalize the note on a single wrong-pitch hit.
+        // Mic detection can momentarily mis-classify adjacent pitches; allow the player
+        // to still be scored correctly if the correct pitch is detected within the window.
+        wrongPitchSeenRef.current[matchingNoteIndex] = true;
+        lastWrongPitchRef.current[matchingNoteIndex] = detectedNote;
 
-        // Show wrong note feedback
+        // Show wrong note feedback (immediate red flash), but keep the note pending.
         showTimingFeedback({ status: "wrong_pitch", label: "Wrong Note!" });
         trackFailedAttemptForAntiCheat({
           type: "wrong_pitch",
@@ -1183,8 +1584,12 @@ export function SightReadingGame() {
       }
 
       if (pattern && canScoreNow(phase)) {
-        `🎹 Keyboard input: ${noteName}, phase=${phase}, timingState=${timingStateRef.current}`;
-        handleNoteDetected(noteName, 440);
+        handleNoteEvent({
+          pitch: noteName,
+          source: "keyboard",
+          type: "noteOn",
+          time: performance.now(),
+        });
       } else if (phase === GAME_PHASES.PERFORMANCE) {
         // Show soft feedback without scoring (e.g., outside timing window)
         showTimingFeedback({ status: "okay" });
@@ -1192,7 +1597,7 @@ export function SightReadingGame() {
     },
     [
       audioEngine,
-      handleNoteDetected,
+      handleNoteEvent,
       showTimingFeedback,
       canScoreNow,
       registerKeyboardSpamAttempt,
@@ -1241,131 +1646,152 @@ export function SightReadingGame() {
       return;
     }
 
-    // Clear any existing timeouts
+    // Clear any existing timeouts (legacy) + RAF (audio-driven timeline)
     performanceTimeoutsRef.current.forEach((id) => clearTimeout(id));
     performanceTimeoutsRef.current = [];
+    if (performanceTimelineRafRef.current) {
+      cancelAnimationFrame(performanceTimelineRafRef.current);
+      performanceTimelineRafRef.current = null;
+    }
+    performanceTimelineIdxRef.current = -1;
 
     const allEvents = pattern.notes; // Both notes and rests
 
-    // Performance start time should already be set by handleCountInComplete
-    if (!wallClockStartTimeRef.current) {
-      console.error("❌ Performance start time not set! This is a bug.");
-      wallClockStartTimeRef.current = Date.now(); // Fallback
-    }
-    const baseStartMs = wallClockStartTimeRef.current;
+    // IMPORTANT: Miss logic must align with scoring windows. Scoring allows late hits up to NOTE_LATE_MS,
+    // so recording a miss earlier than that can incorrectly label an on-time (late-but-allowed) hit as missed.
+    const missToleranceMs = NOTE_LATE_MS;
 
-    // Find last playable note index (not rest) for missed-note tracking
-    const playableIndices = allEvents
-      .map((event, idx) => (event.type === "note" ? idx : null))
-      .filter((idx) => idx !== null);
-
-    if (playableIndices.length === 0) {
-      console.warn("No playable notes found in pattern");
-      return;
-    }
-
-    const missToleranceMs = 200;
-
-    // Find the absolute last event (including rests) for pattern completion
-    const lastEventIndex = allEvents.length - 1;
-    const lastEvent = allEvents[lastEventIndex];
-    const patternEndTimeMs = baseStartMs + (lastEvent.endTime || 0) * 1000;
-
-    // Schedule ALL events (notes and rests) for cursor movement and highlighting
-    allEvents.forEach((event, eventIdx) => {
-      const startOffsetMs = (event.startTime || 0) * 1000;
-      const endOffsetMs = (event.endTime || event.startTime || 0) * 1000;
-
-      // Schedule cursor/highlight for this event (note or rest)
-      const fireAtMs = baseStartMs + startOffsetMs;
-      const startDelayMs = Math.max(0, fireAtMs - Date.now());
-      const startTimeoutId = setTimeout(() => {
-        if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
-          return;
-        }
-        setCurrentNoteIndex(eventIdx);
-
-        // Only set expected start time for playable notes
-        if (event.type === "note") {
-          setExpectedNoteStartTime(Date.now());
-          if (eventIdx === 0) {
-            logFirstNoteDebug("first-note start event fired", {
-              startOffsetMs,
-              startDelayMs,
-              scheduledTime: fireAtMs,
-              timestamp: Date.now(),
-            });
-          }
-        }
-      }, startDelayMs);
-      performanceTimeoutsRef.current.push(startTimeoutId);
-
-      // Only schedule missed-note checks for actual notes (not rests)
-      if (event.type === "note") {
-        if (eventIdx === 0) {
-          logFirstNoteDebug("scheduling first-note miss timeout", {
-            startOffsetMs,
-            endOffsetMs,
-            fireAtMs: endOffsetMs + missToleranceMs,
-          });
-        }
-        const missFireAtMs = baseStartMs + endOffsetMs + missToleranceMs;
-        const missDelayMs = Math.max(0, missFireAtMs - Date.now());
-        const missTimeoutId = setTimeout(() => {
-          if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
-            return;
-          }
-          setPerformanceResults((prev) => {
-            const already = prev.some((r) => r.noteIndex === eventIdx);
-            if (already) {
-              if (eventIdx === 0) {
-                logFirstNoteDebug("first-note miss timeout skipped", {
-                  reason: "already recorded",
-                  timestamp: Date.now(),
-                });
-              }
-              return prev;
-            }
-
-            const missed = {
-              noteIndex: eventIdx,
-              expected: event.pitch,
-              detected: null,
-              frequency: -1,
-              timingStatus: "missed",
-              timeDiff: 0,
-              isCorrect: false,
-              timestamp: Date.now(),
-            };
-            if (eventIdx === 0) {
-              logFirstNoteDebug("first-note missed result recorded", missed);
-            }
-            return [...prev, missed];
-          });
-        }, missDelayMs);
-        performanceTimeoutsRef.current.push(missTimeoutId);
-      }
-    });
-
-    // Schedule pattern completion at the very end (including all rests)
-    const completionDelayMs = Math.max(
-      0,
-      patternEndTimeMs + missToleranceMs - Date.now()
-    );
-    const completionTimeoutId = setTimeout(() => {
+    // Audio-clock-driven timeline: avoids wall-clock drift causing false misses.
+    const tick = () => {
       if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
+        performanceTimelineRafRef.current = null;
         return;
       }
-      completePerformance();
-    }, completionDelayMs);
-    performanceTimeoutsRef.current.push(completionTimeoutId);
-  }, [completePerformance]);
+
+      const elapsedMs = getElapsedMsFromPerformanceStart();
+
+      // Update current event index (notes + rests) based on elapsed time.
+      let activeIdx = -1;
+      for (let i = 0; i < allEvents.length; i++) {
+        const ev = allEvents[i];
+        const startMs = (ev.startTime || 0) * 1000;
+        const endMs = (ev.endTime || ev.startTime || 0) * 1000;
+        if (elapsedMs >= startMs && elapsedMs < endMs) {
+          activeIdx = i;
+          break;
+        }
+        if (elapsedMs >= startMs) {
+          activeIdx = i;
+        }
+      }
+      if (activeIdx !== -1 && activeIdx !== performanceTimelineIdxRef.current) {
+        performanceTimelineIdxRef.current = activeIdx;
+        setCurrentNoteIndex(activeIdx);
+      }
+
+      // Record misses (notes only) once elapsed is past the *scoring window end* (preferred),
+      // or note end + tolerance as a fallback.
+      for (let i = 0; i < allEvents.length; i++) {
+        const ev = allEvents[i];
+        if (ev.type !== "note") continue;
+        const endMs = (ev.endTime || ev.startTime || 0) * 1000;
+        const windowEndMs =
+          typeof timingWindowsRef.current?.[i]?.windowEnd === "number"
+            ? timingWindowsRef.current[i].windowEnd
+            : endMs + missToleranceMs;
+        if (elapsedMs < windowEndMs) continue;
+        const already = performanceResultsRef.current.some(
+          (r) => r.noteIndex === i
+        );
+        if (already) continue;
+
+        const wrongPitchSeen = Boolean(wrongPitchSeenRef.current?.[i]);
+        const timingStatusToRecord = wrongPitchSeen ? "wrong_pitch" : "missed";
+        const detectedToRecord = wrongPitchSeen
+          ? (lastWrongPitchRef.current?.[i] ?? null)
+          : null;
+
+        const missed = {
+          noteIndex: i,
+          expected: ev.pitch,
+          detected: detectedToRecord,
+          frequency: -1,
+          timingStatus: timingStatusToRecord,
+          timeDiff: 0,
+          isCorrect: false,
+          timestamp: Date.now(),
+          phase: GAME_PHASES.PERFORMANCE,
+        };
+
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "timeline-audio-pre",
+          hypothesisId: "Hwall",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:schedulePerformanceTimeline",
+          message: "timeline.recordMissed",
+          data: {
+            noteIndex: i,
+            expected: ev.pitch ?? null,
+            timingStatus: timingStatusToRecord,
+            wrongPitchSeen,
+            elapsedMs: Math.round(elapsedMs),
+            noteEndMs: Math.round(endMs),
+            windowEndMs: Math.round(windowEndMs),
+            missToleranceMs,
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
+
+        recordPerformanceResult(missed);
+        // Clear wrong-pitch tracking once this note is finalized.
+        wrongPitchSeenRef.current[i] = false;
+        lastWrongPitchRef.current[i] = null;
+      }
+
+      // Completion check: once elapsed past last event end + tolerance.
+      const last = allEvents[allEvents.length - 1];
+      const lastEndMs =
+        (last?.endTime || last?.startTime || 0) * 1000 + missToleranceMs;
+      if (elapsedMs >= lastEndMs) {
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "stuck-perf-pre",
+          hypothesisId: "Htimeline",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:schedulePerformanceTimeline",
+          message: "timeline.complete.trigger",
+          data: {
+            elapsedMs: Math.round(elapsedMs),
+            lastEndMs: Math.round(lastEndMs),
+            audioNow: audioEngine.getCurrentTime(),
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
+        completePerformance();
+        performanceTimelineRafRef.current = null;
+        return;
+      }
+
+      performanceTimelineRafRef.current = requestAnimationFrame(tick);
+    };
+
+    performanceTimelineRafRef.current = requestAnimationFrame(tick);
+  }, [
+    completePerformance,
+    getElapsedMsFromPerformanceStart,
+    recordPerformanceResult,
+  ]);
 
   const loadExercisePattern = useCallback(async () => {
     try {
       audioEngine.stopScheduler();
       rhythmPlayback.stop();
-      setShowKeyboard(true);
+      setShowKeyboard(inputMode === "keyboard");
 
       const pattern = await generatePattern(
         gameSettings.difficulty,
@@ -1382,6 +1808,8 @@ export function SightReadingGame() {
       setPerformanceResults([]);
       performanceResultsRef.current = [];
       lastDetectionTimesRef.current = {};
+      wrongPitchSeenRef.current = {};
+      lastWrongPitchRef.current = {};
       setDetectedPitches([]);
       setTimingState(TIMING_STATE.OFF);
       guessPenaltyRef.current = 0;
@@ -1402,7 +1830,7 @@ export function SightReadingGame() {
     } catch (error) {
       console.error("Error loading exercise pattern:", error);
     }
-  }, [gameSettings, generatePattern, audioEngine, rhythmPlayback]);
+  }, [gameSettings, generatePattern, audioEngine, rhythmPlayback, inputMode]);
 
   const tickMetronome = useCallback(() => {
     const beatsPerMeasure = gameSettings.timeSignature?.beats || 4;
@@ -1419,28 +1847,78 @@ export function SightReadingGame() {
       clearInterval(metronomeIntervalRef.current);
       metronomeIntervalRef.current = null;
     }
+    metronomeNextClickTimeRef.current = null;
   }, []);
 
-  const startMetronomePlayback = useCallback(() => {
-    if (metronomeIntervalRef.current) {
-      return;
-    }
-    ensureAudioContextRunning().then((resumed) => {
-      if (!resumed) {
+  const startMetronomePlayback = useCallback(
+    (startAtAudioTime = null) => {
+      if (metronomeIntervalRef.current) {
         return;
       }
-      metronomeBeatRef.current = 0;
-      tickMetronome();
-      const intervalMs = (60 / (gameSettings.tempo || 80)) * 1000;
-      metronomeIntervalRef.current = setInterval(() => {
-        tickMetronome();
-      }, intervalMs);
-    });
-  }, [ensureAudioContextRunning, gameSettings.tempo, tickMetronome]);
+      ensureAudioContextRunning().then((resumed) => {
+        if (!resumed) {
+          return;
+        }
+        metronomeBeatRef.current = 0;
+        const intervalMs = (60 / (gameSettings.tempo || 80)) * 1000;
+
+        // If we have a known target start (performance start), align the first click to it.
+        if (typeof startAtAudioTime === "number" && startAtAudioTime > 0) {
+          metronomeNextClickTimeRef.current = startAtAudioTime + 0.01;
+          // #region agent log
+          __srLog({
+            sessionId: "debug-session",
+            runId: "metronome-align-pre",
+            hypothesisId: "Hbeat",
+            location:
+              "src/components/games/sight-reading-game/SightReadingGame.jsx:startMetronomePlayback",
+            message: "metronome.startAligned",
+            data: {
+              startAtAudioTime,
+              firstClickAt: metronomeNextClickTimeRef.current,
+              audioNow: audioEngine.getCurrentTime(),
+              intervalMs,
+            },
+            timestamp: Date.now(),
+          });
+          // #endregion
+          audioEngine.createMetronomeClick(
+            metronomeNextClickTimeRef.current,
+            true
+          );
+          metronomeBeatRef.current = 1;
+        } else {
+          tickMetronome();
+        }
+
+        metronomeIntervalRef.current = setInterval(() => {
+          if (typeof metronomeNextClickTimeRef.current === "number") {
+            const beatsPerMeasure = gameSettings.timeSignature?.beats || 4;
+            const isDownbeat = metronomeBeatRef.current % beatsPerMeasure === 0;
+            metronomeBeatRef.current += 1;
+            metronomeNextClickTimeRef.current += intervalMs / 1000;
+            audioEngine.createMetronomeClick(
+              metronomeNextClickTimeRef.current,
+              isDownbeat
+            );
+          } else {
+            tickMetronome();
+          }
+        }, intervalMs);
+      });
+    },
+    [
+      ensureAudioContextRunning,
+      gameSettings.tempo,
+      gameSettings.timeSignature?.beats,
+      tickMetronome,
+      audioEngine,
+    ]
+  );
 
   useEffect(() => {
     if (metronomeEnabled && gamePhase === GAME_PHASES.PERFORMANCE) {
-      startMetronomePlayback();
+      startMetronomePlayback(performanceStartAudioTimeRef.current);
     } else {
       stopMetronomePlayback();
     }
@@ -1514,12 +1992,12 @@ export function SightReadingGame() {
     penaltyLockRef.current = false;
     setScoreSubmitted(false);
     setScoreSyncStatus("idle");
-    setShowKeyboard(true);
+    setShowKeyboard(inputMode === "keyboard");
     setExerciseRecorded(false);
 
     // Go back to display phase to show pattern before count-in
     setGamePhase(GAME_PHASES.DISPLAY);
-  }, [currentPattern, stopCountInVisualization]);
+  }, [currentPattern, stopCountInVisualization, inputMode]);
 
   const handlePenaltyTryAgain = useCallback(() => {
     setShowPenaltyModal(false);
@@ -1580,6 +2058,53 @@ export function SightReadingGame() {
 
     clearCountInTimeouts();
 
+    // Guard: if count-in completion is triggered while AudioContext time is still
+    // behind the scheduled end, wait until the audio clock reaches the target.
+    // This prevents large negative drift when the audio clock stalls/resumes.
+    const scheduledEndAudio = countInEndAudioTimeRef.current;
+    if (typeof scheduledEndAudio === "number") {
+      const audioNow = audioEngine.getCurrentTime();
+      if (audioNow + 0.005 < scheduledEndAudio) {
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "mic-latency-pre2",
+          hypothesisId: "Hsync",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+          message: "countIn.complete.guardSuggestWait",
+          data: {
+            scheduledEndAudio,
+            audioNow,
+            remainingMs: Math.round((scheduledEndAudio - audioNow) * 1000),
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
+        if (countInRafRef.current.completion) {
+          cancelAnimationFrame(countInRafRef.current.completion);
+        }
+        const waitUntilAudioCatchesUp = () => {
+          if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
+            countInRafRef.current.completion = null;
+            return;
+          }
+          if (audioEngine.getCurrentTime() >= scheduledEndAudio) {
+            countInRafRef.current.completion = null;
+            handleCountInComplete();
+            return;
+          }
+          countInRafRef.current.completion = requestAnimationFrame(
+            waitUntilAudioCatchesUp
+          );
+        };
+        countInRafRef.current.completion = requestAnimationFrame(
+          waitUntilAudioCatchesUp
+        );
+        return;
+      }
+    }
+
     // Ensure we have a scheduled performance start time established earlier
     const now = Date.now();
     let scheduledTarget = wallClockStartTimeRef.current;
@@ -1587,13 +2112,107 @@ export function SightReadingGame() {
       scheduledTarget = now;
       wallClockStartTimeRef.current = now;
     }
+    // #region agent log
+    __srLog({
+      sessionId: "debug-session",
+      runId: "mic-latency-pre2",
+      hypothesisId: "Hsync",
+      location:
+        "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+      message: "countIn.complete.callback",
+      data: {
+        scheduledWallStartMs: scheduledTarget,
+        scheduledWallStartMsRef: countInEndWallClockMsRef.current,
+        scheduledAudioEnd: countInEndAudioTimeRef.current,
+        nowWallMs: now,
+        driftWallMs:
+          typeof scheduledTarget === "number" ? now - scheduledTarget : null,
+        audioNow: audioEngine.getCurrentTime(),
+        audioDriftMs:
+          typeof countInEndAudioTimeRef.current === "number"
+            ? Math.round(
+                (audioEngine.getCurrentTime() -
+                  countInEndAudioTimeRef.current) *
+                  1000
+              )
+            : null,
+      },
+      timestamp: Date.now(),
+    });
+    // #endregion
     logMetronomeTiming("handleCountInComplete invoked", {
       scheduledStart: scheduledTarget,
       actualCallback: now,
       driftMs: now - scheduledTarget,
       audioContextTime: audioEngine.getCurrentTime(),
     });
-    wallClockStartTimeRef.current = now;
+
+    // IMPORTANT: Do NOT re-base performance start to callback wall time.
+    // Use the scheduled count-in end (wall + audio) so scoring aligns with metronome.
+    if (typeof countInEndWallClockMsRef.current === "number") {
+      wallClockStartTimeRef.current = countInEndWallClockMsRef.current;
+    } else {
+      wallClockStartTimeRef.current = scheduledTarget;
+    }
+    if (typeof countInEndAudioTimeRef.current === "number") {
+      performanceStartAudioTimeRef.current = countInEndAudioTimeRef.current;
+    } else {
+      performanceStartAudioTimeRef.current = audioEngine.getCurrentTime();
+    }
+
+    // Downbeat click exactly at performance start so beat 1 is audible.
+    if (PLAY_PERFORMANCE_DOWNBEAT_CLICK) {
+      const downbeatAt = performanceStartAudioTimeRef.current + 0.01;
+      audioEngine.createMetronomeClick(downbeatAt, true);
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "metronome-align-pre",
+        hypothesisId: "Hbeat",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+        message: "performance.downbeatClickScheduled",
+        data: {
+          downbeatAt,
+          performanceStartAudioTime: performanceStartAudioTimeRef.current,
+          audioNow: audioEngine.getCurrentTime(),
+          metronomeEnabled,
+        },
+        timestamp: Date.now(),
+      });
+      // #endregion
+
+      if (AUDIO_OUTPUT_LATENCY_COMP_DEBUG) {
+        const ctx = audioEngine.audioContextRef?.current;
+        const outputLatencyMs =
+          typeof ctx?.outputLatency === "number"
+            ? Math.round(ctx.outputLatency * 1000)
+            : null;
+        const baseLatencyMs =
+          typeof ctx?.baseLatency === "number"
+            ? Math.round(ctx.baseLatency * 1000)
+            : null;
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "audio-latency-pre",
+          hypothesisId: "Hout",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+          message: "audioContext.latency",
+          data: {
+            outputLatencyMs,
+            baseLatencyMs,
+            sampleRate:
+              typeof ctx?.sampleRate === "number" ? ctx.sampleRate : null,
+            state: typeof ctx?.state === "string" ? ctx.state : null,
+            metronomeEnabled,
+          },
+          timestamp: Date.now(),
+        });
+        // #endregion
+      }
+    }
 
     stopCountInVisualization();
     gamePhaseRef.current = GAME_PHASES.PERFORMANCE;
@@ -1601,29 +2220,80 @@ export function SightReadingGame() {
     // Note: timing state is already EARLY_WINDOW from count-in, will transition to LIVE via schedulePerformanceLiveActivation
     resetPerformanceLiveState();
 
-    // Only start microphone if mic input mode is selected
-    if (inputMode === "mic") {
-      try {
-        await startListening();
-
-        // Reset and start cursor animation
-        setCursorTime(0);
-        startCursorAnimation();
-
-        schedulePerformanceTimeline();
-        schedulePerformanceLiveActivation();
-      } catch (error) {
-        console.error("❌ Failed to start microphone:", error);
-        setShowMicPermissionPrompt(true);
-        // Fall back to display mode
-        setGamePhase(GAME_PHASES.DISPLAY);
-      }
-    } else {
-      // Keyboard-only mode: skip mic, but still start cursor animation and timeline
-      setCursorTime(0);
-      startCursorAnimation();
+    // Always start cursor/timeline immediately on performance start.
+    // In mic mode, starting the mic can take time; awaiting it here causes the cursor to
+    // "jump in late" and can also miss the first downbeat.
+    setCursorTime(0);
+    startCursorAnimation();
+    schedulePerformanceLiveActivation();
+    try {
       schedulePerformanceTimeline();
-      schedulePerformanceLiveActivation();
+    } catch (error) {
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "timeline-audio-pre",
+        hypothesisId: "Hwall",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+        message: "timeline.error",
+        data: { error: String(error?.message || error) },
+        timestamp: Date.now(),
+      });
+      // #endregion
+    }
+
+    if (metronomeEnabled) {
+      startMetronomePlayback(performanceStartAudioTimeRef.current);
+    }
+
+    // Only start microphone if mic input mode is selected (do not block performance start)
+    if (inputMode === "mic") {
+      // If we already requested mic start in the EARLY_WINDOW during COUNT_IN, don't double-request here.
+      if (micEarlyWindowStartRequestedRef.current) {
+        return;
+      }
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "mic-start-fix-pre",
+        hypothesisId: "Hstart",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+        message: "mic.startListening.requested",
+        data: {
+          nowWallMs: Date.now(),
+          audioNow: audioEngine.getCurrentTime(),
+          phase: gamePhaseRef.current,
+        },
+        timestamp: Date.now(),
+      });
+      // #endregion
+      startListening()
+        .then(() => {
+          // #region agent log
+          __srLog({
+            sessionId: "debug-session",
+            runId: "mic-start-fix-pre",
+            hypothesisId: "Hstart",
+            location:
+              "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+            message: "mic.startListening.resolved",
+            data: {
+              nowWallMs: Date.now(),
+              audioNow: audioEngine.getCurrentTime(),
+              phase: gamePhaseRef.current,
+            },
+            timestamp: Date.now(),
+          });
+          // #endregion
+        })
+        .catch((error) => {
+          console.error("❌ Failed to start microphone:", error);
+          setShowMicPermissionPrompt(true);
+          // Fall back to display mode
+          setGamePhase(GAME_PHASES.DISPLAY);
+        });
     }
   }, [
     audioEngine,
@@ -1635,6 +2305,8 @@ export function SightReadingGame() {
     clearCountInTimeouts,
     schedulePerformanceLiveActivation,
     resetPerformanceLiveState,
+    metronomeEnabled,
+    startMetronomePlayback,
   ]);
 
   /**
@@ -1699,6 +2371,31 @@ export function SightReadingGame() {
       // Set unified timing references
       audioStartTimeRef.current = countInStartTime;
       wallClockStartTimeRef.current = countInEndWallClockMs;
+      countInEndAudioTimeRef.current = countInEndAudioTime;
+      countInEndWallClockMsRef.current = countInEndWallClockMs;
+      performanceStartAudioTimeRef.current = countInEndAudioTime;
+
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "mic-latency-pre2",
+        hypothesisId: "Hsync",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:beginPerformanceWithPattern",
+        message: "countIn.scheduled",
+        data: {
+          tempo: pattern?.tempo ?? null,
+          beatsPerMeasure,
+          beatDurationMs: Math.round(beatDurationMs),
+          audioNow: audioEngine.getCurrentTime(),
+          countInStartTime,
+          countInEndAudioTime,
+          startDelayMs: Math.round(startDelayMs),
+          countInEndWallClockMs,
+        },
+        timestamp: Date.now(),
+      });
+      // #endregion
 
       logMetronomeTiming("count-in scheduled", {
         countInStartTime,
@@ -1750,45 +2447,118 @@ export function SightReadingGame() {
 
       // Enable scoring slightly before count-in completes (aligned with first-note tolerance)
       const earlyWindowMs = Math.min(FIRST_NOTE_EARLY_MS, beatDurationMs * 0.8);
-      const scoringDelay = Math.max(
-        0,
-        (countInEndAudioTime -
-          audioEngine.getCurrentTime() -
-          earlyWindowMs / 1000) *
-          1000
-      );
       clearCountInTimeouts();
-      countInTimeoutRef.current.scoring = setTimeout(() => {
+
+      // IMPORTANT: Gate transitions on AudioContext time (not wall-clock timeouts).
+      // AudioContext can stall/resume; setTimeout can't track that, causing drift.
+      const scoringTargetAudioTime = countInEndAudioTime - earlyWindowMs / 1000;
+      const tickScoringGate = () => {
         if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
+          countInRafRef.current.scoring = null;
           return;
         }
-        setTimingState(TIMING_STATE.EARLY_WINDOW);
-        logMetronomeTiming("scoring window opened", {
-          earlyWindowMs,
-          scheduledDelayMs: scoringDelay,
-          audioContextTime: audioEngine.getCurrentTime(),
-        });
-        logFirstNoteDebug("early window opened", {
-          earlyWindowMs,
-          firstNoteTolerance: FIRST_NOTE_EARLY_MS,
-          beatDurationMs,
-        });
-      }, scoringDelay);
+        const audioNowGate = audioEngine.getCurrentTime();
+        if (audioNowGate >= scoringTargetAudioTime) {
+          countInRafRef.current.scoring = null;
+          // If mic mode: start mic as soon as the EARLY_WINDOW opens (still COUNT_IN).
+          // This avoids missing the first note when the player enters slightly early/on-downbeat,
+          // since `startListening()` can take ~200-400ms to resolve on some devices.
+          if (inputMode === "mic" && !micEarlyWindowStartRequestedRef.current) {
+            micEarlyWindowStartRequestedRef.current = true;
+            // #region agent log
+            __srLog({
+              sessionId: "debug-session",
+              runId: "mic-warmup-pre",
+              hypothesisId: "Hfirst",
+              location:
+                "src/components/games/sight-reading-game/SightReadingGame.jsx:beginPerformanceWithPattern",
+              message: "mic.earlyWindow.startListening.requested",
+              data: {
+                audioNow: audioEngine.getCurrentTime(),
+                scoringTargetAudioTime,
+                phase: gamePhaseRef.current,
+                timingState: timingStateRef.current,
+              },
+              timestamp: Date.now(),
+            });
+            // #endregion
+            startListening()
+              .then(() => {
+                // #region agent log
+                __srLog({
+                  sessionId: "debug-session",
+                  runId: "mic-warmup-pre",
+                  hypothesisId: "Hfirst",
+                  location:
+                    "src/components/games/sight-reading-game/SightReadingGame.jsx:beginPerformanceWithPattern",
+                  message: "mic.earlyWindow.startListening.resolved",
+                  data: {
+                    audioNow: audioEngine.getCurrentTime(),
+                    phase: gamePhaseRef.current,
+                    timingState: timingStateRef.current,
+                  },
+                  timestamp: Date.now(),
+                });
+                // #endregion
+              })
+              .catch(() => {});
+          }
+          setTimingStateSync(TIMING_STATE.EARLY_WINDOW);
+          logMetronomeTiming("scoring window opened", {
+            earlyWindowMs,
+            audioContextTime: audioNowGate,
+            scoringTargetAudioTime,
+          });
+          logFirstNoteDebug("early window opened", {
+            earlyWindowMs,
+            firstNoteTolerance: FIRST_NOTE_EARLY_MS,
+            beatDurationMs,
+          });
+          return;
+        }
+        countInRafRef.current.scoring = requestAnimationFrame(tickScoringGate);
+      };
+      countInRafRef.current.scoring = requestAnimationFrame(tickScoringGate);
 
-      const completionDelay = Math.max(
-        0,
-        (countInEndAudioTime - audioEngine.getCurrentTime()) * 1000
-      );
-      countInTimeoutRef.current.completion = setTimeout(() => {
-        stopCountInVisualization();
-        logMetronomeTiming("count-in complete", {
-          scheduledDelayMs: completionDelay,
-          audioContextTime: audioEngine.getCurrentTime(),
-        });
-        setCurrentBeat(0); // Reset beat counter
-        clearCountInTimeouts();
-        handleCountInComplete();
-      }, completionDelay);
+      const tickCompletionGate = () => {
+        if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
+          countInRafRef.current.completion = null;
+          return;
+        }
+        const audioNowGate = audioEngine.getCurrentTime();
+        if (audioNowGate >= countInEndAudioTime) {
+          // #region agent log
+          __srLog({
+            sessionId: "debug-session",
+            runId: "mic-latency-pre2",
+            hypothesisId: "Hsync",
+            location:
+              "src/components/games/sight-reading-game/SightReadingGame.jsx:beginPerformanceWithPattern",
+            message: "countIn.gate.completionReached",
+            data: {
+              audioNow: audioNowGate,
+              countInEndAudioTime,
+              driftMs: Math.round((audioNowGate - countInEndAudioTime) * 1000),
+            },
+            timestamp: Date.now(),
+          });
+          // #endregion
+          countInRafRef.current.completion = null;
+          stopCountInVisualization();
+          logMetronomeTiming("count-in complete", {
+            audioContextTime: audioNowGate,
+            countInEndAudioTime,
+          });
+          setCurrentBeat(0); // Reset beat counter
+          clearCountInTimeouts();
+          handleCountInComplete();
+          return;
+        }
+        countInRafRef.current.completion =
+          requestAnimationFrame(tickCompletionGate);
+      };
+      countInRafRef.current.completion =
+        requestAnimationFrame(tickCompletionGate);
     } catch (error) {
       console.error("Error beginning performance:", error);
       alert(error.message || "Failed to start performance. Please try again.");
@@ -1848,6 +2618,8 @@ export function SightReadingGame() {
           setPerformanceResults([]);
           performanceResultsRef.current = [];
           lastDetectionTimesRef.current = {};
+          wrongPitchSeenRef.current = {};
+          lastWrongPitchRef.current = {};
           setDetectedPitches([]);
           setTimingState(TIMING_STATE.OFF);
           guessPenaltyRef.current = 0;
@@ -1890,8 +2662,13 @@ export function SightReadingGame() {
         break;
 
       case GAME_PHASES.COUNT_IN:
-        // Force mic off during count-in (PRD requirement)
-        if (isListening) {
+        // During COUNT_IN we generally keep mic OFF, *except* for the EARLY_WINDOW pre-roll
+        // where scoring can begin (see canScoreNow). We start mic there to avoid missing
+        // the first note due to startListening() latency.
+        if (
+          timingStateRef.current !== TIMING_STATE.EARLY_WINDOW &&
+          isListening
+        ) {
           stopListening();
         }
         break;
@@ -2035,6 +2812,42 @@ export function SightReadingGame() {
   // Show game interface
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+      {showMicDebug && (
+        <div className="pointer-events-none absolute bottom-2 right-2 z-50 w-[260px] rounded-xl border border-white/15 bg-black/40 p-3 text-xs text-white backdrop-blur">
+          <div className="mb-1 flex items-center justify-between">
+            <div className="font-semibold">Mic Debug</div>
+            <div className="text-white/70">
+              {isListening ? "listening" : "stopped"}
+            </div>
+          </div>
+          <div className="space-y-1 text-white/90">
+            <div className="flex justify-between">
+              <span className="text-white/70">audioLevel</span>
+              <span>{Number(audioLevel || 0).toFixed(4)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/70">detected</span>
+              <span>
+                {debug?.detectedNote ?? "—"}{" "}
+                {debug?.detectedFrequency > 0
+                  ? `(${debug.detectedFrequency.toFixed(1)}Hz)`
+                  : ""}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/70">current</span>
+              <span>{debug?.currentNote ?? "—"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/70">candidate</span>
+              <span>
+                {debug?.candidateNote ?? "—"}{" "}
+                {debug?.candidateFrames ? `(${debug.candidateFrames})` : ""}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Compact Header with Progress Bar */}
       <div className="flex flex-shrink-0 items-center justify-between gap-2 px-2 py-1 sm:gap-3 sm:px-3">
         {/* Back Button - Icon Only */}
@@ -2224,6 +3037,16 @@ export function SightReadingGame() {
                     Listen to the count-in
                   </p>
                 )}
+                {gamePhase === GAME_PHASES.DISPLAY && (
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => beginPerformanceWithPattern()}
+                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700"
+                    >
+                      Start Playing
+                    </button>
+                  </div>
+                )}
                 {gamePhase === GAME_PHASES.PERFORMANCE && (
                   <p className="text-xs font-semibold">
                     Play the highlighted note!
@@ -2248,7 +3071,8 @@ export function SightReadingGame() {
                           summaryStats={summaryStats}
                           onTryAgain={replayPattern}
                           onNextPattern={handleNextExercise}
-                          nextButtonLabel={`Next Exercise (${currentExerciseNumber}/${sessionTotalExercises})`}
+                          exerciseLabel={`Exercise ${currentExerciseNumber} / ${sessionTotalExercises}`}
+                          nextButtonLabel={`Next Exercise`}
                           nextButtonDisabled={isSessionComplete}
                           showNextButton={!isSessionComplete}
                         />
@@ -2330,7 +3154,6 @@ export function SightReadingGame() {
               <button
                 onClick={async () => {
                   setInputMode("keyboard");
-                  setShowKeyboard(true);
                   setShowInputModeModal(false);
                 }}
                 className={`w-full rounded-lg border-2 px-4 py-3 transition-all ${
@@ -2351,7 +3174,6 @@ export function SightReadingGame() {
               <button
                 onClick={async () => {
                   setInputMode("mic");
-                  setShowKeyboard(true); // Keep keyboard visible as visual aid
                   setShowInputModeModal(false);
 
                   // Check microphone permission when mic mode is selected

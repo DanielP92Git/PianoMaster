@@ -1,3 +1,4 @@
+import React from "react";
 import { Flame, Loader2, Star, Zap, Trophy, Target } from "lucide-react";
 import { streakService } from "../../services/streakService";
 import { useQuery } from "@tanstack/react-query";
@@ -93,12 +94,21 @@ const getNextMilestoneData = (streak) => {
   };
 };
 
+const renderLoaderIcon = (className) =>
+  React.createElement(Loader2, { className });
+
+const renderLucideIcon = (IconComponent, className) =>
+  IconComponent ? React.createElement(IconComponent, { className }) : null;
+
 export default function StreakDisplay({ variant = "default" }) {
   const { data: streak, isLoading } = useQuery({
     queryKey: ["streak"],
     queryFn: () => streakService.getStreak(),
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
   const { t } = useTranslation("common");
 
@@ -109,7 +119,7 @@ export default function StreakDisplay({ variant = "default" }) {
         <div className="card-compact p-3 relative overflow-hidden">
           <div className="relative flex flex-col items-center text-center">
             <div className="flex items-center gap-1 mb-1">
-              <Loader2 className="w-3 h-3 text-gray-600 animate-spin" />
+              {renderLoaderIcon("w-3 h-3 text-gray-600 animate-spin")}
               <h3 className="text-xs font-medium text-gray-600">
                 {t("dashboard.stats.dailyStreak")}
               </h3>
@@ -129,7 +139,7 @@ export default function StreakDisplay({ variant = "default" }) {
 
     return (
       <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-        <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
+        {renderLoaderIcon("w-4 h-4 text-gray-600 animate-spin")}
         <span className="text-sm font-medium text-gray-900">
           {t("dashboard.streak.loadingState")}
         </span>
@@ -142,8 +152,12 @@ export default function StreakDisplay({ variant = "default" }) {
   const milestoneKey = getMilestoneKey(currentStreak);
   const milestoneMessage = milestoneKey ? t(milestoneKey) : null;
   const nextMilestoneData = getNextMilestoneData(currentStreak);
-  const IconComponent = visuals.icon;
   const dayLabel = t("dashboard.streak.dayLabel", { count: currentStreak });
+  const renderIcon = (sizeClasses) =>
+    renderLucideIcon(
+      visuals.icon,
+      `${sizeClasses} ${visuals.iconColor} ${visuals.animation}`
+    );
 
   // Compact variant for smaller displays
   if (variant === "compact") {
@@ -151,9 +165,7 @@ export default function StreakDisplay({ variant = "default" }) {
       <div
         className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm`}
       >
-        <IconComponent
-          className={`w-4 h-4 ${visuals.iconColor} ${visuals.animation}`}
-        />
+        {renderIcon("w-4 h-4")}
         <span className={`text-sm font-medium ${visuals.textColor}`}>
           {currentStreak} {dayLabel}
         </span>
@@ -174,9 +186,7 @@ export default function StreakDisplay({ variant = "default" }) {
 
         <div className="relative flex flex-col items-center text-center">
           <div className="flex items-center gap-1 mb-1">
-            <IconComponent
-              className={`w-3 h-3 ${visuals.iconColor} ${visuals.animation}`}
-            />
+            {renderIcon("w-3 h-3")}
             <h3 className="text-xs font-medium text-gray-600">
               {t("dashboard.stats.dailyStreak")}
             </h3>
@@ -230,9 +240,7 @@ export default function StreakDisplay({ variant = "default" }) {
     <div
       className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm`}
     >
-      <IconComponent
-        className={`w-4 h-4 ${visuals.iconColor} ${visuals.animation}`}
-      />
+      {renderIcon("w-4 h-4")}
       <span className={`text-sm font-medium ${visuals.textColor}`}>
         {t("dashboard.streak.streakSummary", { count: currentStreak })}
       </span>

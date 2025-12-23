@@ -47,8 +47,10 @@ export function PreGameSetup({
         trebleNotes: TREBLE_NOTES,
         bassNotes: BASS_NOTES,
         targetField: "pitch",
+        enableSharps: settings.enableSharps ?? false,
+        enableFlats: settings.enableFlats ?? false,
       }),
-    [settings.selectedNotes, settings.clef]
+    [settings.selectedNotes, settings.clef, settings.enableSharps, settings.enableFlats]
   );
   const preparedInitialSettings = {
     ...settings,
@@ -105,6 +107,8 @@ export function PreGameSetup({
           trebleNotes: TREBLE_NOTES,
           bassNotes: BASS_NOTES,
           targetField: "pitch",
+          enableSharps: finalSettings.enableSharps ?? false,
+          enableFlats: finalSettings.enableFlats ?? false,
         }),
       };
 

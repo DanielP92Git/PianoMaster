@@ -16,6 +16,8 @@ export function useGameSettings(initialSettings = {}) {
   const [settings, setSettings] = useState({
     clef: initialSettings.clef || "Treble",
     selectedNotes: initialSettings.selectedNotes || [],
+    enableSharps: initialSettings.enableSharps ?? false,
+    enableFlats: initialSettings.enableFlats ?? false,
     timedMode:
       initialSettings.timedMode !== undefined
         ? initialSettings.timedMode
@@ -82,6 +84,8 @@ export function useGameSettings(initialSettings = {}) {
     setSettings({
       clef: "Treble",
       selectedNotes: [],
+      enableSharps: false,
+      enableFlats: false,
       timedMode: false,
       difficulty: "Medium",
       timeLimit: TIME_LIMITS.Medium,

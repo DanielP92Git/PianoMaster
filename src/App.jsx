@@ -42,6 +42,7 @@ import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
 import { applyRoleBasedOrientation } from "./utils/pwa";
+import { resolveProfileAvatarSource } from "./utils/avatarAssets";
 import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
 import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
 import supabase from "./services/supabase";
@@ -65,11 +66,10 @@ function AuthenticatedWrapper({ children }) {
 
   // Preload avatar image for instant display
   useEffect(() => {
-    if (profileData?.avatars?.image_url || profileData?.avatar_url) {
-      const avatarUrl =
-        profileData.avatars?.image_url || profileData.avatar_url;
+    const avatarSrc = resolveProfileAvatarSource(profileData);
+    if (avatarSrc) {
       const img = new Image();
-      img.src = avatarUrl;
+      img.src = avatarSrc;
     }
   }, [profileData]);
 
@@ -181,8 +181,8 @@ function AppRoutes() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
       </div>
     );
   }

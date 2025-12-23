@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useUser } from "../features/authentication/useUser";
-import { getStudentScores } from "../services/apiDatabase";
-import { achievementService } from "../services/achievementService";
+import {
+  getStudentScoreValues,
+  getAchievementPointsTotal,
+} from "../services/apiDatabase";
 import { calculatePointsSummary } from "../utils/points";
 
 export function useTotalPoints(options = {}) {
@@ -10,8 +12,10 @@ export function useTotalPoints(options = {}) {
   return useQuery({
     queryKey: ["total-points", user?.id],
     enabled: !!user?.id,
-    staleTime: options.staleTime ?? 3 * 60 * 1000,
+    staleTime: options.staleTime ?? 0,
     refetchInterval: options.refetchInterval ?? 5 * 60 * 1000,
+    refetchOnMount: options.refetchOnMount ?? "always",
+    keepPreviousData: options.keepPreviousData ?? true,
     queryFn: async () => {
       if (!user?.id) {
         return {
@@ -21,14 +25,14 @@ export function useTotalPoints(options = {}) {
         };
       }
 
-      const [scores, earned] = await Promise.all([
-        getStudentScores(user.id),
-        achievementService.getEarnedAchievements(user.id),
+      const [scores, achievementPoints] = await Promise.all([
+        getStudentScoreValues(user.id),
+        getAchievementPointsTotal(user.id),
       ]);
 
       return calculatePointsSummary({
         scores,
-        earned,
+        achievementPointsOverride: achievementPoints,
       });
     },
   });

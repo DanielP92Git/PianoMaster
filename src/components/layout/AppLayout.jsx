@@ -55,7 +55,15 @@ export default function AppLayout() {
           onToggle={toggleSidebar}
         />
       )}
-      <main className={`${!isGameRoute ? (direction === "rtl" ? "pt-2 lg:pr-72" : "pt-2 lg:pl-72") : ""} flex-1`}>
+      <main
+        className={`${
+          !isGameRoute
+            ? direction === "rtl"
+              ? "pt-2 lg:pr-72"
+              : "pt-2 lg:pl-72"
+            : ""
+        } flex-1 ${isGameRoute ? "min-h-0 overflow-hidden" : ""}`}
+      >
         <Outlet />
       </main>
       {!isGameRoute && location.pathname === "/" && (

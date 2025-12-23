@@ -4,8 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getStudentScores } from "../../services/apiDatabase";
 import { useUser } from "../../features/authentication/useUser";
 import { useTranslation } from "react-i18next";
-import { achievementService } from "../../services/achievementService";
-import { calculatePointsSummary } from "../../utils/points";
+import { useTotalPoints } from "../../hooks/useTotalPoints";
 
 // Animation for point changes
 const usePointsAnimation = (currentPoints, previousPoints) => {
@@ -155,17 +154,12 @@ const PointsDisplay = ({ variant = "default", className = "" }) => {
     refetchInterval: 5 * 60 * 1000, // Refresh every 5 minutes instead of 30 seconds
   });
 
-  const { data: earnedAchievementsData } = useQuery({
-    queryKey: ["earned-achievements", user?.id],
-    queryFn: () => achievementService.getEarnedAchievements(user.id),
-    enabled: !!user?.id && user?.isStudent,
-    staleTime: 5 * 60 * 1000,
+  const { data: totalPointsData } = useTotalPoints({
+    staleTime: 0,
+    refetchOnMount: "always",
+    keepPreviousData: false,
   });
-
-  const totalPoints = calculatePointsSummary({
-    scores: scoresData || [],
-    earned: earnedAchievementsData || [],
-  }).totalPoints;
+  const totalPoints = totalPointsData?.totalPoints || 0;
   const { displayPoints, isAnimating } = usePointsAnimation(
     totalPoints,
     previousPoints.current

@@ -1,4 +1,39 @@
-export const TREBLE_NOTE_DATA = [
+const withAccidentals = (naturalNotes) => {
+  // Generate accidentals for all seven note letters so the games can display
+  // a complete set of ♭ and ♯ answers whenever those toggles are enabled.
+  const flatLetters = new Set(["C", "D", "E", "F", "G", "A", "B"]);
+  const sharpLetters = new Set(["C", "D", "E", "F", "G", "A", "B"]);
+
+  const result = [...naturalNotes];
+
+  for (const note of naturalNotes) {
+    const pitch = note?.pitch;
+    const match = pitch ? String(pitch).match(/^([A-G])(\d)$/) : null;
+    if (!match) continue;
+
+    const [, letter, octave] = match;
+
+    if (flatLetters.has(letter)) {
+      result.push({
+        note: `${note.note}♭`,
+        englishName: `${letter}b${octave}`,
+        pitch: `${letter}b${octave}`,
+      });
+    }
+
+    if (sharpLetters.has(letter)) {
+      result.push({
+        note: `${note.note}♯`,
+        englishName: `${letter}#${octave}`,
+        pitch: `${letter}#${octave}`,
+      });
+    }
+  }
+
+  return result;
+};
+
+const TREBLE_NATURAL_NOTES = [
   { note: "סול", englishName: "G3", pitch: "G3" },
   { note: "לה", englishName: "A3", pitch: "A3" },
   { note: "סי", englishName: "B3", pitch: "B3" },
@@ -19,7 +54,7 @@ export const TREBLE_NOTE_DATA = [
   { note: "דו", englishName: "C6", pitch: "C6" },
 ];
 
-export const BASS_NOTE_DATA = [
+const BASS_NATURAL_NOTES = [
   { note: "סי", englishName: "B1", pitch: "B1" },
   { note: "דו", englishName: "C2", pitch: "C2" },
   { note: "רה", englishName: "D2", pitch: "D2" },
@@ -40,3 +75,6 @@ export const BASS_NOTE_DATA = [
   { note: "מי", englishName: "E4", pitch: "E4" },
   { note: "פה", englishName: "F4", pitch: "F4" },
 ];
+
+export const TREBLE_NOTE_DATA = withAccidentals(TREBLE_NATURAL_NOTES);
+export const BASS_NOTE_DATA = withAccidentals(BASS_NATURAL_NOTES);

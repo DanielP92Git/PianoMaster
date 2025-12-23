@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Routes,
@@ -43,6 +43,7 @@ import {
   ChevronDown,
   FileText,
   Bell,
+  Gamepad2,
 } from "lucide-react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
@@ -55,6 +56,11 @@ import NotificationCenter from "../teacher/NotificationCenter";
 import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
 import { useUser } from "../../features/authentication/useUser";
 import { lockOrientation } from "../../utils/pwa";
+import {
+  getAchievementPointsTotal,
+  getStudentScores,
+} from "../../services/apiDatabase";
+import { calculateGameplayPoints } from "../../utils/points";
 
 import { toast } from "react-hot-toast";
 
@@ -183,7 +189,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 First Name
               </label>
               <Input
@@ -197,7 +203,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Last Name
               </label>
               <Input
@@ -216,13 +222,13 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Level
               </label>
               <select
                 value={formData.level}
                 onChange={(e) => handleInputChange("level", e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
                 required
               >
                 <option value="">Select Level</option>
@@ -238,7 +244,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Studying Year
               </label>
               <select
@@ -246,7 +252,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
                 onChange={(e) =>
                   handleInputChange("studyingYear", e.target.value)
                 }
-                className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
                 required
               >
                 <option value="">Select Year</option>
@@ -264,7 +270,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Email
               </label>
               <Input
@@ -284,7 +290,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
         return (
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-700">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Start Date
               </label>
               <input
@@ -301,10 +307,10 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
                   handleInputChange("startDate", value);
                 }}
                 placeholder="DD/MM/YYYY"
-                className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
                 required
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="mt-1 text-xs text-gray-500">
                 When did this student start studying with you?
               </p>
             </div>
@@ -339,10 +345,10 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
       onClose={handleClose}
       variant="default"
       size="default"
-      className="bg-gray-900 border-gray-600"
+      className="border-gray-600 bg-gray-900"
     >
       <div>
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">
             Add New Student - {getStepTitle()}
           </h3>
@@ -351,7 +357,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
 
         {/* Progress indicator */}
         <div className="mb-6">
-          <div className="flex justify-between text-xs text-gray-600 mb-1">
+          <div className="mb-1 flex justify-between text-xs text-gray-600">
             <span>Name</span>
             <span>Level</span>
             <span>Year</span>
@@ -373,7 +379,7 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {renderStep()}
 
-          <div className="flex gap-3 justify-between">
+          <div className="flex justify-between gap-3">
             <div>
               {step > 1 && (
                 <Button type="button" variant="secondary" onClick={handleBack}>
@@ -518,15 +524,15 @@ const EditStudentModal = ({
       onClose={handleClose}
       variant="default"
       size="large"
-      className="bg-gray-900 border-gray-600"
+      className="border-gray-600 bg-gray-900"
     >
       <div>
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-gray-900">
             Edit Student Profile
           </h3>
           <div
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
+            className={`rounded-full px-3 py-1 text-sm font-medium ${
               formData.isActive
                 ? "bg-green-100 text-green-800"
                 : "bg-red-100 text-red-800"
@@ -537,12 +543,12 @@ const EditStudentModal = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
+        <div className="mb-6 flex space-x-1 rounded-lg bg-gray-100 p-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? "bg-white text-gray-900 shadow-sm"
                   : "text-gray-600 hover:text-gray-900"
@@ -560,7 +566,7 @@ const EditStudentModal = ({
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     First Name *
                   </label>
                   <Input
@@ -576,7 +582,7 @@ const EditStudentModal = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Last Name *
                   </label>
                   <Input
@@ -594,7 +600,7 @@ const EditStudentModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Email Address *
                 </label>
                 <Input
@@ -610,13 +616,13 @@ const EditStudentModal = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Level *
                   </label>
                   <select
                     value={formData.level}
                     onChange={(e) => handleInputChange("level", e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
                     required
                   >
                     <option value="">Select Level</option>
@@ -627,7 +633,7 @@ const EditStudentModal = ({
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Studying Year *
                   </label>
                   <select
@@ -635,7 +641,7 @@ const EditStudentModal = ({
                     onChange={(e) =>
                       handleInputChange("studyingYear", e.target.value)
                     }
-                    className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                    className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
                     required
                   >
                     <option value="">Select Year</option>
@@ -650,7 +656,7 @@ const EditStudentModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Start Date
                 </label>
                 <Input
@@ -663,7 +669,7 @@ const EditStudentModal = ({
                   className="w-full"
                   placeholder="When did this student start studying with you?"
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-gray-500">
                   When did this student start studying with you?
                 </p>
               </div>
@@ -674,7 +680,7 @@ const EditStudentModal = ({
           {activeTab === "contact" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Student Phone Number
                 </label>
                 <Input
@@ -691,7 +697,7 @@ const EditStudentModal = ({
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Parent/Guardian Email
                   </label>
                   <Input
@@ -706,7 +712,7 @@ const EditStudentModal = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Parent/Guardian Phone
                   </label>
                   <Input
@@ -728,7 +734,7 @@ const EditStudentModal = ({
           {activeTab === "learning" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Primary Instrument
                 </label>
                 <select
@@ -736,7 +742,7 @@ const EditStudentModal = ({
                   onChange={(e) =>
                     handleInputChange("instrument", e.target.value)
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900"
+                  className="w-full rounded-lg border border-gray-300 bg-white p-3 text-gray-900"
                 >
                   <option value="">Select Instrument</option>
                   <option value="Piano">Piano</option>
@@ -749,27 +755,27 @@ const EditStudentModal = ({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Learning Goals
                 </label>
                 <textarea
                   value={formData.goals}
                   onChange={(e) => handleInputChange("goals", e.target.value)}
                   placeholder="What does this student want to achieve?"
-                  className="w-full p-3 border border-gray-300 rounded-lg resize-none bg-white text-gray-900 placeholder:text-gray-500"
+                  className="w-full resize-none rounded-lg border border-gray-300 bg-white p-3 text-gray-900 placeholder:text-gray-500"
                   rows={3}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Teacher Notes
                 </label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => handleInputChange("notes", e.target.value)}
                   placeholder="Private notes about this student's progress, challenges, preferences..."
-                  className="w-full p-3 border border-gray-300 rounded-lg resize-none bg-white text-gray-900 placeholder:text-gray-500"
+                  className="w-full resize-none rounded-lg border border-gray-300 bg-white p-3 text-gray-900 placeholder:text-gray-500"
                   rows={4}
                 />
               </div>
@@ -780,7 +786,7 @@ const EditStudentModal = ({
           {activeTab === "account" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Account Status
                 </label>
                 <div className="space-y-2">
@@ -811,8 +817,8 @@ const EditStudentModal = ({
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h4 className="font-medium text-blue-900 mb-2">
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <h4 className="mb-2 font-medium text-blue-900">
                   Account Actions
                 </h4>
                 <div className="space-y-2 text-sm text-blue-800">
@@ -827,7 +833,7 @@ const EditStudentModal = ({
             </div>
           )}
 
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
             <Button variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
@@ -858,41 +864,41 @@ const DeleteConfirmationModal = ({
       onClose={onClose}
       variant="default"
       size="default"
-      className="bg-gray-900 border-gray-600"
+      className="border-gray-600 bg-gray-900"
     >
       <div>
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-            <Trash2 className="w-6 h-6 text-red-600" />
+        <div className="mb-6 flex items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+            <Trash2 className="h-6 w-6 text-red-600" />
           </div>
           <div>
             <h3 className="text-xl font-semibold text-gray-900">
               {isMultiple ? "Delete Students" : "Delete Student"}
             </h3>
-            <p className="text-sm text-gray-600 font-medium">
+            <p className="text-sm font-medium text-gray-600">
               This action cannot be undone
             </p>
           </div>
         </div>
 
         <div className="mb-6">
-          <p className="text-gray-100 text-base leading-relaxed">
+          <p className="text-base leading-relaxed text-gray-100">
             {isMultiple
               ? `Are you sure you want to remove ${studentsToDelete.length} students from your class?`
               : `Are you sure you want to remove ${studentNames} from your class?`}
           </p>
           {isMultiple && (
-            <div className="mt-4 max-h-32 overflow-y-auto custom-scrollbar">
-              <p className="text-sm text-gray-200 mb-2 font-medium">
+            <div className="custom-scrollbar mt-4 max-h-32 overflow-y-auto">
+              <p className="mb-2 text-sm font-medium text-gray-200">
                 Students to be removed:
               </p>
-              <ul className="text-sm text-gray-100 space-y-1">
+              <ul className="space-y-1 text-sm text-gray-100">
                 {studentsToDelete.map((student) => (
                   <li
                     key={student.student_id}
                     className="flex items-center gap-2"
                   >
-                    <div className="w-2 h-2 bg-red-400 rounded-full"></div>
+                    <div className="h-2 w-2 rounded-full bg-red-400"></div>
                     {student.student_name}
                   </li>
                 ))}
@@ -901,7 +907,7 @@ const DeleteConfirmationModal = ({
           )}
         </div>
 
-        <div className="flex gap-3 justify-end">
+        <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
@@ -948,27 +954,27 @@ const SendMessageModal = ({
       onClose={handleClose}
       variant="default"
       size="default"
-      className="bg-gray-900 border-gray-600"
+      className="border-gray-600 bg-gray-900"
     >
       <div>
-        <h3 className="text-lg font-semibold mb-4 text-gray-900">
+        <h3 className="mb-4 text-lg font-semibold text-gray-900">
           Send Message to {student?.student_name}
         </h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Message
             </label>
             <textarea
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Great job on your practice today!"
-              className="w-full p-3 border border-gray-300 rounded-lg resize-none bg-white text-gray-900 placeholder:text-gray-500"
+              className="w-full resize-none rounded-lg border border-gray-300 bg-white p-3 text-gray-900 placeholder:text-gray-500"
               rows={4}
               required
             />
           </div>
-          <div className="flex gap-3 justify-end">
+          <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={handleClose}>
               Cancel
             </Button>
@@ -990,7 +996,128 @@ const StudentDetailModal = ({
   getRecentActivitySummary,
   getPerformanceLevel,
 }) => {
-  if (!student) return null;
+  const studentId = student?.student_id ?? null;
+
+  // Game history source of truth: students_score (grouped by game_type).
+  // Note: teacher visibility depends on Supabase RLS policies allowing teachers to read connected students’ rows.
+  const {
+    data: studentScores = [],
+    isLoading: isStudentScoresLoading,
+    error: studentScoresError,
+  } = useQuery({
+    queryKey: ["teacher-student-scores", studentId ?? "none"],
+    queryFn: () => getStudentScores(studentId),
+    enabled: Boolean(isOpen && studentId),
+    staleTime: 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+  });
+
+  const gameplayPoints = useMemo(() => {
+    return calculateGameplayPoints(studentScores);
+  }, [studentScores]);
+
+  const {
+    data: studentAchievementPoints = 0,
+    isLoading: isStudentAchievementPointsLoading,
+    error: studentAchievementPointsError,
+  } = useQuery({
+    queryKey: ["teacher-student-achievement-points", studentId ?? "none"],
+    queryFn: () => getAchievementPointsTotal(studentId),
+    enabled: Boolean(isOpen && studentId),
+    staleTime: 60 * 1000,
+    refetchInterval: 2 * 60 * 1000,
+  });
+
+  const achievementPoints =
+    studentAchievementPointsError && typeof student?.total_points === "number"
+      ? Math.max((student.total_points || 0) - gameplayPoints, 0)
+      : studentAchievementPoints || 0;
+
+  const normalizeGameTypeKey = useCallback((value) => {
+    const raw = String(value || "").trim();
+    if (!raw) return "unknown";
+    return raw.toLowerCase().replace(/[-\s]+/g, "_");
+  }, []);
+
+  const prettyGameType = useMemo(() => {
+    return (value) => {
+      const raw = String(value || "").trim();
+      if (!raw) return "Unknown";
+      const normalized = normalizeGameTypeKey(raw);
+      const special = {
+        note_recognition: "Note Recognition",
+        notes_recognition: "Note Recognition",
+        sight_reading: "Sight Reading",
+        notes_master: "Notes Master",
+        notes_reading: "Notes Master",
+        rhythm_master: "Rhythm Master",
+        rhythm_games: "Rhythm Games",
+      };
+      if (special[normalized]) return special[normalized];
+      return normalized
+        .split("_")
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(" ");
+    };
+  }, [normalizeGameTypeKey]);
+
+  const scoresByGameType = useMemo(() => {
+    const grouped = {};
+    (studentScores || []).forEach((row) => {
+      const rawType = row?.game_type || row?.game?.type || row?.game?.name;
+      const gameTypeKey = normalizeGameTypeKey(rawType);
+      if (!grouped[gameTypeKey]) {
+        grouped[gameTypeKey] = {
+          gameType: gameTypeKey,
+          label: prettyGameType(rawType),
+          entries: [],
+        };
+      }
+      grouped[gameTypeKey].entries.push(row);
+      // Prefer a specific game name if present (joined `game:games(*)`)
+      const name = row?.game?.name;
+      if (typeof name === "string" && name.trim()) {
+        grouped[gameTypeKey].label = name.trim();
+      }
+    });
+
+    // Ensure entries are sorted newest-first
+    Object.values(grouped).forEach((group) => {
+      group.entries.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      );
+    });
+
+    return grouped;
+  }, [studentScores, prettyGameType, normalizeGameTypeKey]);
+
+  const gameTypeGroups = useMemo(() => {
+    const groups = Object.values(scoresByGameType);
+    groups.sort((a, b) => (b.entries?.length || 0) - (a.entries?.length || 0));
+    return groups;
+  }, [scoresByGameType]);
+
+  // Extract first gameType for stable dependency
+  const firstGameType = useMemo(() => {
+    return gameTypeGroups.length > 0 ? gameTypeGroups[0]?.gameType : null;
+  }, [gameTypeGroups]);
+
+  const [openGameType, setOpenGameType] = useState(null);
+
+  // Reset openGameType when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setOpenGameType(null);
+    }
+  }, [isOpen]);
+
+  // Set default game type when modal opens and data is available
+  useEffect(() => {
+    if (!isOpen || openGameType || !firstGameType) return;
+    // When modal opens or data loads, default to the first available game type.
+    setOpenGameType(firstGameType);
+  }, [isOpen, openGameType, firstGameType]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -1006,6 +1133,9 @@ const StudentDetailModal = ({
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
   };
 
+  // Keep hook call order stable; only gate rendering after hooks.
+  if (!student) return null;
+
   return (
     <Modal
       isOpen={isOpen}
@@ -1013,10 +1143,10 @@ const StudentDetailModal = ({
       title={`${student.student_name} - Detailed View`}
       size="large"
     >
-      <div className="max-h-[80vh] overflow-y-auto custom-scrollbar space-y-6">
+      <div className="custom-scrollbar max-h-[80vh] space-y-6 overflow-y-auto">
         {/* Header Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-blue-50 p-4 rounded-lg">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="rounded-lg bg-blue-50 p-4">
             <div className="flex items-center gap-2">
               <Star className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">
@@ -1024,11 +1154,18 @@ const StudentDetailModal = ({
               </span>
             </div>
             <p className="text-2xl font-bold text-blue-900">
-              {student.total_points || 0}
+              {(student.total_points || 0).toLocaleString()}
+            </p>
+            <p className="text-xs text-blue-800/80">
+              (
+              {isStudentAchievementPointsLoading
+                ? "…"
+                : achievementPoints.toLocaleString()}{" "}
+              achievements / {gameplayPoints.toLocaleString()} games)
             </p>
           </div>
 
-          <div className="bg-orange-50 p-4 rounded-lg">
+          <div className="rounded-lg bg-orange-50 p-4">
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-orange-600" />
               <span className="text-sm font-medium text-orange-900">
@@ -1040,7 +1177,7 @@ const StudentDetailModal = ({
             </p>
           </div>
 
-          <div className="bg-green-50 p-4 rounded-lg">
+          <div className="rounded-lg bg-green-50 p-4">
             <div className="flex items-center gap-2">
               <Target className="h-5 w-5 text-green-600" />
               <span className="text-sm font-medium text-green-900">
@@ -1052,7 +1189,7 @@ const StudentDetailModal = ({
             </p>
           </div>
 
-          <div className="bg-purple-50 p-4 rounded-lg">
+          <div className="rounded-lg bg-purple-50 p-4">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-purple-600" />
               <span className="text-sm font-medium text-purple-900">
@@ -1067,7 +1204,7 @@ const StudentDetailModal = ({
 
         {/* Student Information */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
             Student Information
           </h3>
           <div className="grid grid-cols-2 gap-4">
@@ -1096,7 +1233,7 @@ const StudentDetailModal = ({
 
         {/* Performance Overview */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
             Performance Overview
           </h3>
 
@@ -1107,7 +1244,7 @@ const StudentDetailModal = ({
                 Performance Level
               </span>
               <div
-                className={`px-3 py-1 rounded-full text-sm font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
+                className={`rounded-full px-3 py-1 text-sm font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
               >
                 {getPerformanceLevel(student).level}
               </div>
@@ -1115,7 +1252,7 @@ const StudentDetailModal = ({
 
             {/* Attendance Rate */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-600">
                   Attendance Rate (30 days)
                 </span>
@@ -1123,7 +1260,7 @@ const StudentDetailModal = ({
                   {calculateAttendanceRate(student)}%
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="h-3 w-full rounded-full bg-gray-200">
                 <div
                   className={`h-3 rounded-full transition-all duration-500 ${
                     calculateAttendanceRate(student) >= 80
@@ -1153,21 +1290,109 @@ const StudentDetailModal = ({
           </div>
         </Card>
 
-        {/* Practice History */}
+        {/* Games Played */}
         <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Recent Practice Sessions
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Games Played
           </h3>
 
-          {student.recent_practices && student.recent_practices.length > 0 ? (
+          {isStudentScoresLoading ? (
+            <div className="py-6 text-center text-gray-500">
+              Loading scores…
+            </div>
+          ) : studentScoresError ? (
+            <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              Couldn&apos;t load game history for this student.
+            </div>
+          ) : gameTypeGroups.length === 0 ? (
+            <div className="py-8 text-center">
+              <Gamepad2 className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+              <p className="text-gray-600">No game scores recorded yet</p>
+            </div>
+          ) : (
+            <>
+              {/* Game type toggles */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {gameTypeGroups.map((group) => {
+                  const isActive = openGameType === group.gameType;
+                  return (
+                    <button
+                      key={group.gameType}
+                      type="button"
+                      onClick={() =>
+                        setOpenGameType((prev) =>
+                          prev === group.gameType ? null : group.gameType
+                        )
+                      }
+                      className={`rounded-full border px-3 py-1 text-sm font-medium transition-colors ${
+                        isActive
+                          ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                          : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      }`}
+                      title={group.label}
+                    >
+                      {group.label}{" "}
+                      <span className="text-gray-500">
+                        ({group.entries?.length || 0})
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active game type history */}
+              {openGameType ? (
+                <div className="custom-scrollbar max-h-64 space-y-2 overflow-y-auto rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  {(scoresByGameType[openGameType]?.entries || []).map(
+                    (row) => (
+                      <div
+                        key={row.id}
+                        className="flex items-center justify-between rounded-lg bg-white px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-gray-900">
+                            {formatDate(row.created_at)}
+                          </p>
+                          <p className="truncate text-xs text-gray-500">
+                            {row?.game?.name?.trim?.()
+                              ? row.game.name.trim()
+                              : prettyGameType(row.game_type)}
+                          </p>
+                        </div>
+                        <div className="ml-3 flex flex-shrink-0 items-baseline gap-1">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {Math.round(row.score || 0)}
+                          </span>
+                          <span className="text-xs text-gray-500">pts</span>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                  Select a game type to view the student&apos;s plays.
+                </div>
+              )}
+            </>
+          )}
+        </Card>
+
+        {/* Recording History (teacher review timeline) */}
+        <Card className="p-6">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            Recent Recordings (for review)
+          </h3>
+
+          {student.recent_recordings && student.recent_recordings.length > 0 ? (
             <div className="space-y-3">
-              {student.recent_practices.map((practice, index) => (
+              {student.recent_recordings.map((practice, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                  className="flex items-center justify-between rounded-lg bg-gray-50 p-3"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <div className="h-2 w-2 rounded-full bg-blue-500"></div>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {formatDate(practice.submitted_at)}
@@ -1177,18 +1402,13 @@ const StudentDetailModal = ({
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-gray-900">
-                      {Math.round(practice.analysis_score || 0)}% accuracy
-                    </p>
-                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Clock className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-gray-600">No practice sessions recorded yet</p>
+            <div className="py-8 text-center">
+              <Clock className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+              <p className="text-gray-600">No recordings submitted yet</p>
             </div>
           )}
         </Card>
@@ -1741,10 +1961,10 @@ const TeacherDashboard = () => {
     return (
       <div className="p-6">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="h-8 w-1/3 rounded bg-gray-200"></div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-32 bg-gray-200 rounded"></div>
+              <div key={i} className="h-32 rounded bg-gray-200"></div>
             ))}
           </div>
         </div>
@@ -1776,7 +1996,7 @@ const TeacherDashboard = () => {
   ];
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-3">
@@ -1809,22 +2029,22 @@ const TeacherDashboard = () => {
       </div>
 
       {/* Tab Navigation */}
-      <div className="border-b border-gray-700 overflow-x-auto">
+      <div className="overflow-x-auto border-b border-gray-700">
         <nav className="flex min-w-max gap-6 py-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => navigate(`/teacher/${tab.id}`)}
-              className={`flex items-center gap-2 pb-3 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-all duration-300 ease-in-out relative ${
+              className={`relative flex items-center gap-2 whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition-all duration-300 ease-in-out ${
                 activeTab === tab.id
                   ? "border-blue-500 text-blue-400"
-                  : "border-transparent text-gray-200 hover:text-white hover:border-gray-600"
+                  : "border-transparent text-gray-200 hover:border-gray-600 hover:text-white"
               }`}
             >
-              <tab.icon className="w-4 h-4" />
+              <tab.icon className="h-4 w-4" />
               {tab.label}
               {tab.id === "recordings" && newRecordingsCount > 0 && (
-                <span className="flex items-center justify-center min-w-[18px] h-[18px] text-xs font-bold text-white bg-red-500 rounded-full px-1.5">
+                <span className="flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
                   {newRecordingsCount}
                 </span>
               )}
@@ -1840,7 +2060,7 @@ const TeacherDashboard = () => {
           path="/students"
           element={
             <div>
-              <p className="text-white text-xl">Students Tab Content</p>
+              <p className="text-xl text-white">Students Tab Content</p>
               <p className="text-gray-300">
                 This is the students route working! The students content will be
                 moved here.
@@ -1866,7 +2086,7 @@ const TeacherDashboard = () => {
       {activeTab === "students" && (
         <>
           {/* Summary Statistics */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-4">
             <Card className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -1877,7 +2097,7 @@ const TeacherDashboard = () => {
                     {totalStudents}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-100">
                   <UserPlus className="h-6 w-6 text-blue-600" />
                 </div>
               </div>
@@ -1893,7 +2113,7 @@ const TeacherDashboard = () => {
                     {activeStudents}
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-green-100">
                   <TrendingUp className="h-6 w-6 text-green-600" />
                 </div>
               </div>
@@ -1909,7 +2129,7 @@ const TeacherDashboard = () => {
                     {averageAccuracy}%
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-purple-100">
                   <TrendingUp className="h-6 w-6 text-purple-600" />
                 </div>
               </div>
@@ -1925,7 +2145,7 @@ const TeacherDashboard = () => {
                     {Math.round(totalPracticeMins)}m
                   </p>
                 </div>
-                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-orange-100">
                   <TrendingUp className="h-6 w-6 text-orange-600" />
                 </div>
               </div>
@@ -1934,7 +2154,7 @@ const TeacherDashboard = () => {
 
           {/* Students Section */}
           <Card className="p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between mb-6">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
                 <h2 className="text-xl font-semibold text-white">
                   My Students
@@ -1943,14 +2163,14 @@ const TeacherDashboard = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleSelectAll(!isAllSelected)}
-                      className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+                      className="flex items-center gap-2 text-sm text-gray-300 transition-colors hover:text-white"
                     >
                       {isAllSelected ? (
-                        <CheckSquare className="w-4 h-4 text-blue-500" />
+                        <CheckSquare className="h-4 w-4 text-blue-500" />
                       ) : isPartiallySelected ? (
-                        <CheckSquare className="w-4 h-4 text-blue-500 opacity-50" />
+                        <CheckSquare className="h-4 w-4 text-blue-500 opacity-50" />
                       ) : (
-                        <Square className="w-4 h-4" />
+                        <Square className="h-4 w-4" />
                       )}
                       Select All
                     </button>
@@ -1960,13 +2180,13 @@ const TeacherDashboard = () => {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
                 {/* Search */}
                 <div className="relative w-full sm:w-auto">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                   <Input
                     type="text"
                     placeholder="Search students..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 w-full sm:w-64"
+                    className="w-full pl-10 sm:w-64"
                   />
                 </div>
 
@@ -1980,7 +2200,7 @@ const TeacherDashboard = () => {
                       setSortBy(newSortBy);
                       setSortOrder(newSortOrder);
                     }}
-                    className="bg-gray-800 text-white border border-gray-600 rounded-lg px-3 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 pr-8 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="name-asc">Name A-Z</option>
                     <option value="name-desc">Name Z-A</option>
@@ -1993,13 +2213,13 @@ const TeacherDashboard = () => {
                     <option value="lastPractice-desc">Recent Practice</option>
                     <option value="accuracy-desc">Accuracy High-Low</option>
                   </select>
-                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                 </div>
 
                 {/* Filter Toggle */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors w-full sm:w-auto justify-center ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 transition-colors sm:w-auto ${
                     showFilters || hasActiveFilters
                       ? "bg-blue-600 text-white"
                       : "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -2008,7 +2228,7 @@ const TeacherDashboard = () => {
                   <Filter className="h-4 w-4" />
                   Filter
                   {hasActiveFilters && (
-                    <span className="bg-blue-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                    <span className="rounded-full bg-blue-500 px-1.5 py-0.5 text-xs text-white">
                       {Object.values(filters).filter((v) => v !== "all")
                         .length + (searchTerm ? 1 : 0)}
                     </span>
@@ -2019,13 +2239,13 @@ const TeacherDashboard = () => {
 
             {/* Filters Panel */}
             {showFilters && (
-              <div className="mb-6 p-4 bg-gray-800 rounded-lg space-y-4">
+              <div className="mb-6 space-y-4 rounded-lg bg-gray-800 p-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-medium text-white">Filters</h3>
                   {hasActiveFilters && (
                     <button
                       onClick={clearAllFilters}
-                      className="flex items-center gap-1 text-sm text-gray-400 hover:text-white transition-colors"
+                      className="flex items-center gap-1 text-sm text-gray-400 transition-colors hover:text-white"
                     >
                       <X className="h-3 w-3" />
                       Clear All
@@ -2033,10 +2253,10 @@ const TeacherDashboard = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-6">
                   {/* Performance Level */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
                       Performance
                     </label>
                     <select
@@ -2044,7 +2264,7 @@ const TeacherDashboard = () => {
                       onChange={(e) =>
                         handleFilterChange("performanceLevel", e.target.value)
                       }
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="all">All Levels</option>
                       <option value="excellent">Excellent</option>
@@ -2056,7 +2276,7 @@ const TeacherDashboard = () => {
 
                   {/* Activity Status */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
                       Activity
                     </label>
                     <select
@@ -2064,7 +2284,7 @@ const TeacherDashboard = () => {
                       onChange={(e) =>
                         handleFilterChange("activityStatus", e.target.value)
                       }
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="all">All Students</option>
                       <option value="today">Active Today</option>
@@ -2075,7 +2295,7 @@ const TeacherDashboard = () => {
 
                   {/* Attendance Range */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
                       Attendance
                     </label>
                     <select
@@ -2083,7 +2303,7 @@ const TeacherDashboard = () => {
                       onChange={(e) =>
                         handleFilterChange("attendanceRange", e.target.value)
                       }
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="all">All Ranges</option>
                       <option value="high">High (80%+)</option>
@@ -2094,7 +2314,7 @@ const TeacherDashboard = () => {
 
                   {/* Streak Range */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
                       Streak
                     </label>
                     <select
@@ -2102,7 +2322,7 @@ const TeacherDashboard = () => {
                       onChange={(e) =>
                         handleFilterChange("streakRange", e.target.value)
                       }
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="all">All Streaks</option>
                       <option value="high">High (10+ days)</option>
@@ -2113,7 +2333,7 @@ const TeacherDashboard = () => {
 
                   {/* Points Range */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
                       Points
                     </label>
                     <select
@@ -2121,7 +2341,7 @@ const TeacherDashboard = () => {
                       onChange={(e) =>
                         handleFilterChange("pointsRange", e.target.value)
                       }
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="all">All Points</option>
                       <option value="high">High (1000+)</option>
@@ -2132,7 +2352,7 @@ const TeacherDashboard = () => {
 
                   {/* Level */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-300">
                       Level
                     </label>
                     <select
@@ -2140,7 +2360,7 @@ const TeacherDashboard = () => {
                       onChange={(e) =>
                         handleFilterChange("level", e.target.value)
                       }
-                      className="w-full bg-gray-700 text-white border border-gray-600 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="all">All Levels</option>
                       <option value="beginner">Beginner</option>
@@ -2153,14 +2373,14 @@ const TeacherDashboard = () => {
             )}
 
             {filteredStudents.length === 0 ? (
-              <div className="text-center py-12">
-                <UserPlus className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
+              <div className="py-12 text-center">
+                <UserPlus className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <h3 className="mb-2 text-lg font-medium text-white">
                   {students.length === 0
                     ? "No students yet"
                     : "No students found"}
                 </h3>
-                <p className="text-gray-300 mb-4">
+                <p className="mb-4 text-gray-300">
                   {students.length === 0
                     ? "Add your first student to start tracking their progress"
                     : "Try adjusting your search terms"}
@@ -2172,14 +2392,14 @@ const TeacherDashboard = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredStudents.map((student) => {
                   const isSelected = isStudentSelected(student);
                   return (
                     <Card
                       key={student.student_id}
-                      className={`p-4 hover:shadow-md transition-all ${
-                        isSelected ? "ring-2 ring-blue-500 bg-blue-500/10" : ""
+                      className={`p-4 transition-all hover:shadow-md ${
+                        isSelected ? "bg-blue-500/10 ring-2 ring-blue-500" : ""
                       } ${isMobileView ? "cursor-pointer" : ""}`}
                       onClick={() => {
                         if (isMobileView) {
@@ -2189,33 +2409,33 @@ const TeacherDashboard = () => {
                       role={isMobileView ? "button" : undefined}
                       tabIndex={isMobileView ? 0 : undefined}
                     >
-                      <div className="flex items-start gap-3 mb-3">
+                      <div className="mb-3 flex items-start gap-3">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStudentSelect(student, !isSelected);
                           }}
-                          className="mt-1 text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0"
+                          className="mt-1 flex-shrink-0 text-gray-400 transition-colors hover:text-blue-400"
                         >
                           {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-blue-500" />
+                            <CheckSquare className="h-4 w-4 text-blue-500" />
                           ) : (
-                            <Square className="w-4 h-4" />
+                            <Square className="h-4 w-4" />
                           )}
                         </button>
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="flex flex-col gap-2">
                             <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-semibold text-white break-words">
+                              <div className="min-w-0 flex-1">
+                                <h3 className="break-words font-semibold text-white">
                                   {student.student_name}
                                 </h3>
-                                <p className="text-sm text-gray-300 break-words">
+                                <p className="break-words text-sm text-gray-300">
                                   {student.email}
                                 </p>
                               </div>
                               <div
-                                className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
+                                className={`ml-2 flex-shrink-0 rounded-full px-2 py-1 text-xs font-medium ${
                                   student.is_active !== false
                                     ? "bg-green-500/20 text-green-300"
                                     : "bg-red-500/20 text-red-300"
@@ -2233,7 +2453,7 @@ const TeacherDashboard = () => {
                                     e.stopPropagation();
                                     handleViewStudent(student);
                                   }}
-                                  className="p-1.5 min-w-0 text-purple-400 hover:text-purple-300 hover:bg-purple-500/20 rounded-lg transition-colors"
+                                  className="min-w-0 rounded-lg p-1.5 text-purple-400 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
                                   title="View Details"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
@@ -2243,7 +2463,7 @@ const TeacherDashboard = () => {
                                     e.stopPropagation();
                                     handleSendMessage(student);
                                   }}
-                                  className="p-1.5 min-w-0 text-green-400 hover:text-green-300 hover:bg-green-500/20 rounded-lg transition-colors"
+                                  className="min-w-0 rounded-lg p-1.5 text-green-400 transition-colors hover:bg-green-500/20 hover:text-green-300"
                                   title="Send Message"
                                 >
                                   <MessageCircle className="h-3.5 w-3.5" />
@@ -2253,7 +2473,7 @@ const TeacherDashboard = () => {
                                     e.stopPropagation();
                                     handleEditStudent(student);
                                   }}
-                                  className="p-1.5 min-w-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded-lg transition-colors"
+                                  className="min-w-0 rounded-lg p-1.5 text-blue-400 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
                                   title="Edit Student"
                                 >
                                   <Edit3 className="h-3.5 w-3.5" />
@@ -2264,7 +2484,7 @@ const TeacherDashboard = () => {
                                   e.stopPropagation();
                                   handleDeleteStudent(student);
                                 }}
-                                className="p-1.5 min-w-0 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
+                                className="min-w-0 rounded-lg p-1.5 text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
                                 title="Delete Student"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
@@ -2282,7 +2502,7 @@ const TeacherDashboard = () => {
                         {/* Top Performance Indicator */}
                         <div className="flex items-center justify-between">
                           <div
-                            className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
+                            className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
                           >
                             <Target className="h-3 w-3" />
                             {getPerformanceLevel(student).level}
@@ -2325,7 +2545,7 @@ const TeacherDashboard = () => {
                           <div className="space-y-1">
                             <div className="flex justify-between">
                               <span className="text-gray-300">Streak:</span>
-                              <span className="font-medium text-white flex items-center gap-1">
+                              <span className="flex items-center gap-1 font-medium text-white">
                                 <Zap className="h-3 w-3 text-orange-400" />
                                 {student.current_streak || 0} days
                               </span>
@@ -2338,7 +2558,7 @@ const TeacherDashboard = () => {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-300">Started:</span>
-                              <span className="font-medium text-white text-xs">
+                              <span className="text-xs font-medium text-white">
                                 {student.member_since || "N/A"}
                               </span>
                             </div>
@@ -2356,7 +2576,7 @@ const TeacherDashboard = () => {
                               {calculateAttendanceRate(student)}%
                             </span>
                           </div>
-                          <div className="w-full bg-gray-700 rounded-full h-2">
+                          <div className="h-2 w-full rounded-full bg-gray-700">
                             <div
                               className={`h-2 rounded-full transition-all duration-500 ${
                                 calculateAttendanceRate(student) >= 80

@@ -32,6 +32,59 @@ CREATE TABLE avatars (
 );
 ```
 
+#### 2a. accessories (NEW)
+
+```sql
+CREATE TABLE accessories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT GENERATED ALWAYS AS (
+    regexp_replace(lower(name), '[^a-z0-9]+', '_', 'g')
+  ) STORED,
+  category TEXT NOT NULL CHECK (category IN ('hat', 'headgear', 'eyes', 'face', 'body', 'background', 'other')),
+  image_url TEXT NOT NULL,
+  price_points INTEGER NOT NULL CHECK (price_points >= 0),
+  unlock_level INTEGER CHECK (unlock_level >= 0),
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+#### 2b. user_accessories (NEW)
+
+```sql
+CREATE TABLE user_accessories (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  accessory_id UUID NOT NULL REFERENCES accessories(id) ON DELETE CASCADE,
+  slot TEXT NOT NULL DEFAULT 'auto',
+  is_equipped BOOLEAN NOT NULL DEFAULT FALSE,
+  purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  equipped_at TIMESTAMP WITH TIME ZONE,
+  CONSTRAINT user_accessories_user_accessory_key UNIQUE (user_id, accessory_id)
+);
+```
+
+#### Students equipped accessories cache (NEW COLUMN)
+
+```sql
+ALTER TABLE students
+  ADD COLUMN equipped_accessories JSONB NOT NULL DEFAULT '[]'::jsonb;
+```
+
+#### Student point transactions (NEW TABLE)
+
+```sql
+CREATE TABLE student_point_transactions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id TEXT NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  delta INTEGER NOT NULL,
+  reason TEXT,
+  metadata JSONB DEFAULT '{}'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
 #### 3. practice_sessions
 
 ```sql

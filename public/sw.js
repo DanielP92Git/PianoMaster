@@ -2,6 +2,8 @@
 // Based on Web.dev PWA best practices
 
 const CACHE_NAME = "pianomaster-v1";
+const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v1";
+const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
 
 // Assets to cache on install
@@ -23,6 +25,36 @@ const RUNTIME_CACHE_PATTERNS = [
   // Cache your API endpoints (adjust as needed)
   /^https:\/\/.*\.supabase\.co/,
 ];
+
+async function cacheFirst(request, cacheName = CACHE_NAME) {
+  const cache = await caches.open(cacheName);
+  const cachedResponse = await cache.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  try {
+    const networkResponse = await fetch(request);
+    const shouldCache =
+      networkResponse &&
+      (networkResponse.ok || networkResponse.type === "opaque");
+
+    if (shouldCache) {
+      // Ensure the cache write completes before returning the response to avoid
+      // race conditions on immediate subsequent requests.
+      await cache.put(request, networkResponse.clone());
+      return networkResponse;
+    }
+
+    const fallbackCached = await cache.match(request);
+    if (fallbackCached) return fallbackCached;
+    return networkResponse;
+  } catch (error) {
+    const fallbackCached = await cache.match(request);
+    if (fallbackCached) return fallbackCached;
+    return new Response("", { status: 504, statusText: "Gateway Timeout" });
+  }
+}
 
 // Install event - cache static assets
 self.addEventListener("install", (event) => {
@@ -59,10 +91,11 @@ self.addEventListener("activate", (event) => {
       const cacheNames = await caches.keys();
       await Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (!CACHE_WHITELIST.includes(cacheName)) {
             console.log("Deleting old cache:", cacheName);
-            return caches.delete(cacheName);
+            return caches.delete(cacheName).catch(() => {});
           }
+          return Promise.resolve();
         })
       );
 
@@ -70,11 +103,11 @@ self.addEventListener("activate", (event) => {
       if ("navigationPreload" in self.registration) {
         await self.registration.navigationPreload.enable();
       }
+
+      // Take control of all clients
+      await self.clients.claim();
     })()
   );
-
-  // Take control of all clients
-  self.clients.claim();
 });
 
 // Fetch event - implement caching strategies
@@ -104,6 +137,34 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  const isAccessoryAsset =
+    url.origin.includes(".supabase.co") &&
+    url.pathname.includes("/storage/v1/object/public/accessories");
+
+  if (isAccessoryAsset) {
+    event.respondWith(cacheFirst(event.request, ACCESSORY_CACHE_NAME));
+    return;
+  }
+
+  const isSameOrigin = url.origin === self.location.origin;
+  const isAsset = isSameOrigin && url.pathname.startsWith("/assets/");
+  const isNavigate = event.request.mode === "navigate";
+
+  // Offline reload support (preview/prod): serve app shell + hashed assets cache-first
+  if (isSameOrigin && (isNavigate || isAsset)) {
+    event.respondWith(
+      (async () => {
+        const response = await cacheFirst(event.request, CACHE_NAME);
+        if (isNavigate && response && response.status === 504) {
+          const offline = await caches.match(OFFLINE_URL);
+          return offline || response;
+        }
+        return response;
+      })()
+    );
+    return;
+  }
+
   event.respondWith(
     (async () => {
       try {
@@ -118,7 +179,14 @@ self.addEventListener("fetch", (event) => {
 
           if (shouldCache) {
             const cache = await caches.open(CACHE_NAME);
-            cache.put(event.request, networkResponse.clone());
+            // Ensure the cache write completes before returning the response to avoid
+            // race conditions on immediate subsequent requests.
+            try {
+              await cache.put(event.request, networkResponse.clone());
+            } catch (cacheError) {
+              // Never fail the fetch just because caching failed.
+              console.warn("Service Worker: cache.put failed:", cacheError);
+            }
           }
         }
 
@@ -396,3 +464,4 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
+// (no duplicate activate handler)

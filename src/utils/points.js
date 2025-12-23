@@ -11,9 +11,16 @@ export const calculateAchievementPoints = (earnedAchievements = []) => {
   );
 };
 
-export const calculatePointsSummary = ({ scores = [], earned = [] } = {}) => {
+export const calculatePointsSummary = ({
+  scores = [],
+  earned = [],
+  achievementPointsOverride,
+} = {}) => {
   const gameplayPoints = calculateGameplayPoints(scores);
-  const achievementPoints = calculateAchievementPoints(earned);
+  const achievementPoints =
+    typeof achievementPointsOverride === "number"
+      ? achievementPointsOverride
+      : calculateAchievementPoints(earned);
 
   return {
     gameplayPoints,

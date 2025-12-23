@@ -18,6 +18,7 @@ export function FeedbackSummary({
   summaryStats,
   onTryAgain,
   onNextPattern,
+  exerciseLabel = null,
   nextButtonLabel = "Next Pattern",
   nextButtonDisabled = false,
   showNextButton = true,
@@ -82,6 +83,12 @@ export function FeedbackSummary({
           <p className="text-sm sm:text-base text-gray-600 max-w-md px-2">
             {encouragingMessage}
           </p>
+
+          {exerciseLabel ? (
+            <p className="text-xs font-semibold text-gray-700">
+              {exerciseLabel}
+            </p>
+          ) : null}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row w-full max-w-md gap-2.5 mt-2">

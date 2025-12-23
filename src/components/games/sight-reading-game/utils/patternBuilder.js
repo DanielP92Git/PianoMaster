@@ -3,7 +3,6 @@ import {
   BASS_NOTE_DATA,
 } from "../constants/noteDefinitions.js";
 import {
-  STAFF_POSITIONS,
   NOTE_FREQUENCIES,
   getStaffPosition,
 } from "../constants/staffPositions.js";
@@ -20,7 +19,16 @@ const isDebugEnabled =
 
 const debugLog = (...args) => {
   if (isDebugEnabled) {
+    console.debug("[PatternBuilder]", ...args);
   }
+};
+
+const inferClefForPitch = (pitch) => {
+  if (!pitch) return "treble";
+  const match = String(pitch).match(/^([A-G])(\d+)$/i);
+  if (!match) return "treble";
+  const octave = Number(match[2]);
+  return octave >= 4 ? "treble" : "bass";
 };
 
 const toVexFlowNote = (obj) => {
@@ -76,6 +84,7 @@ export async function generatePatternData({
   clef = "Treble",
   measuresPerPattern = 1,
 }) {
+  const clefKey = String(clef || "Treble").toLowerCase();
   const resolvedSignature = resolveTimeSignature(timeSignature);
   const beatsPerMeasure = resolvedSignature.beats;
   const totalBeats = beatsPerMeasure * (measuresPerPattern ?? 1);
@@ -106,7 +115,11 @@ export async function generatePatternData({
   }
 
   const allNotes =
-    clef.toLowerCase() === "treble" ? TREBLE_NOTE_DATA : BASS_NOTE_DATA;
+    clefKey === "bass"
+      ? BASS_NOTE_DATA
+      : clefKey === "both"
+        ? [...TREBLE_NOTE_DATA, ...BASS_NOTE_DATA]
+        : TREBLE_NOTE_DATA;
 
   debugLog("=== Note Selection Debug ===");
   debugLog("Clef:", clef);
@@ -231,12 +244,15 @@ export async function generatePatternData({
       }
 
       previousNote = selectedNote;
+      const eventClef =
+        clefKey === "both" ? inferClefForPitch(selectedNote) : clefKey;
 
       const enrichedNote = {
         ...obj,
         pitch: selectedNote,
         frequency: NOTE_FREQUENCIES[selectedNote],
-        position: getStaffPosition(selectedNote, clef),
+        clef: eventClef,
+        position: getStaffPosition(selectedNote, eventClef),
         index: noteIndex++,
       };
 
@@ -249,6 +265,7 @@ export async function generatePatternData({
 
     return {
       ...obj,
+      clef: clefKey === "both" ? "treble" : clefKey,
       index: noteIndex++,
     };
   });

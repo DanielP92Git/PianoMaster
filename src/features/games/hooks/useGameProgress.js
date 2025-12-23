@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useScores } from "../../../features/userData/useScores";
 import { createPracticeSession } from "../../../services/apiDatabase";
 import { useUser } from "../../authentication/useUser";
@@ -17,7 +18,14 @@ export function useGameProgress() {
     feedbackMessage: null,
   });
 
-  const { updateScore: updateUserScore } = useScores();
+  // Use ref to always have access to latest progress without causing callback recreation
+  const progressRef = useRef(progress);
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
+
+  const queryClient = useQueryClient();
+  const { updateScoreAsync: updateUserScoreAsync } = useScores();
   const { user } = useUser();
 
   const updateProgress = useCallback((updates) => {
@@ -51,39 +59,50 @@ export function useGameProgress() {
 
   const finishGame = useCallback(
     async (isLost = false, timeRanOut = false) => {
-      let finalScore = 0;
-      let accuracy = 0;
-      let totalQuestions = 0;
+      // Use ref to get current state values to avoid closure/stale state issues
+      const currentScore = progressRef.current.score;
+      const currentCorrectAnswers = progressRef.current.correctAnswers;
+      const currentTotalQuestions = progressRef.current.totalQuestions;
 
-      setProgress((prev) => {
-        // Calculate final score and session data
-        finalScore = prev.score;
-        totalQuestions = prev.totalQuestions;
-        accuracy =
-          prev.totalQuestions > 0
-            ? (prev.correctAnswers / prev.totalQuestions) * 100
-            : 0;
+      // Calculate final score and session data from captured values
+      const finalScore = currentScore;
+      const totalQuestions = currentTotalQuestions;
+      const accuracy =
+        currentTotalQuestions > 0
+          ? (currentCorrectAnswers / currentTotalQuestions) * 100
+          : 0;
 
-        // Update user's score in the database
-        updateUserScore({
+      // Capture pre-game total points from React Query cache
+      let preGameTotal = null;
+      if (user?.id) {
+        const cachedTotal = queryClient.getQueryData(["total-points", user.id]);
+        if (cachedTotal?.totalPoints !== undefined) {
+          preGameTotal = cachedTotal.totalPoints;
+          queryClient.setQueryData(["pre-total-points", user.id], preGameTotal);
+        }
+      }
+
+      // Only award points for successful runs (no loss, no timeout)
+      const shouldAwardScore = !isLost && !timeRanOut && finalScore > 0;
+
+      if (shouldAwardScore) {
+        // Update user's score in the database and wait for cache invalidation
+        await updateUserScoreAsync({
           score: finalScore,
           gameType: "note-recognition",
         });
 
-        // Don't call showPointsGain here - will be called after state update
-
-        return {
-          ...prev,
-          isFinished: true,
-          isLost,
-          timeRanOut,
-        };
-      });
-
-      // Show points gain notification after state update
-      if (finalScore > 0) {
+        // Show points gain notification
         showPointsGain(finalScore, "note-recognition");
       }
+
+      // Update state to mark game as finished AFTER score is saved
+      setProgress((prev) => ({
+        ...prev,
+        isFinished: true,
+        isLost,
+        timeRanOut,
+      }));
 
       // Create practice session record after state update
       if (user?.id) {
@@ -114,7 +133,7 @@ export function useGameProgress() {
         });
       }
     },
-    [updateUserScore, user]
+    [queryClient, updateUserScoreAsync, user]
   );
 
   const resetProgress = useCallback(() => {

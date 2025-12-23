@@ -135,24 +135,6 @@ export function useRealTimeSubscriptions() {
             }, 50);
           }
         )
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "students_total_score",
-            filter: `student_id=eq.${userId}`,
-          },
-          (payload) => {
-            
-            setTimeout(() => {
-              queryClient.invalidateQueries({ queryKey: ["scores"] });
-              queryClient.invalidateQueries({
-                queryKey: ["user-scores", userId],
-              });
-            }, 50);
-          }
-        )
         .subscribe((status) => {
           
           globalSubscriptionState.isSettingUp = false;

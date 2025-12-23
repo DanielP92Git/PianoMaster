@@ -10,7 +10,14 @@ import {
   initializeVexFlow,
   calculateOptimalWidth,
 } from "../utils/vexflowHelpers";
-import { Formatter, Stave, Voice, StaveNote, Dot, GhostNote } from "vexflow";
+import {
+  Formatter,
+  Stave,
+  Voice,
+  StaveNote,
+  Dot,
+  StaveConnector,
+} from "vexflow";
 
 const NOTE_TO_SEMITONE = {
   C: 0,
@@ -29,11 +36,26 @@ const NOTE_TO_SEMITONE = {
 
 const noteNameToMidi = (pitch) => {
   if (!pitch) return null;
-  const match = pitch.match(/^([A-Ga-g])(#?)(\d)$/);
+  const match = pitch.match(/^([A-Ga-g])([#b]?)(\d)$/);
   if (!match) return null;
 
   const [, letter, accidental, octaveStr] = match;
-  const noteKey = `${letter.toUpperCase()}${accidental ? "#" : ""}`;
+  const baseLetter = letter.toUpperCase();
+  const noteKey =
+    accidental === "b"
+      ? (() => {
+          const flatMap = {
+            CB: "B",
+            DB: "C#",
+            EB: "D#",
+            FB: "E",
+            GB: "F#",
+            AB: "G#",
+            BB: "A#",
+          };
+          return flatMap[`${baseLetter}B`] || baseLetter;
+        })()
+      : `${baseLetter}${accidental === "#" ? "#" : ""}`;
   const semitone = NOTE_TO_SEMITONE[noteKey];
   if (semitone === undefined) return null;
 
@@ -165,21 +187,39 @@ export function VexFlowStaffDisplay({
     if (!vexContainerRef.current || !pattern?.notes) return [];
 
     try {
-      // VexFlow renders notes with class 'vf-stavenote' or 'vf-note'
-      // When we have a wrongVoice, VexFlow renders both voices' notes
-      // We only want the first pattern.notes.length elements (expected notes)
+      const clefKey = String(clef || "treble").toLowerCase();
       const allNoteElements =
         vexContainerRef.current.querySelectorAll(".vf-stavenote");
       const noteElementsArray = Array.from(allNoteElements);
+      const eventCount = pattern.notes.length;
 
-      // Only take the first pattern.notes.length elements
-      // These correspond to the expected notes from the main voice
-      return noteElementsArray.slice(0, pattern.notes.length);
+      // Grand staff mode: we render two expected voices (treble first, bass second),
+      // each with one tickable per event. Map each event to its staff element.
+      if (clefKey === "both") {
+        const trebleExpected = noteElementsArray.slice(0, eventCount);
+        const bassExpected = noteElementsArray.slice(eventCount, eventCount * 2);
+
+        // If we can't reliably split, fallback to the first eventCount.
+        if (trebleExpected.length !== eventCount || bassExpected.length !== eventCount) {
+          return noteElementsArray.slice(0, eventCount);
+        }
+
+        return pattern.notes.map((event, idx) => {
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          if (eventClef === "bass") {
+            return bassExpected[idx] || trebleExpected[idx] || null;
+          }
+          return trebleExpected[idx] || bassExpected[idx] || null;
+        });
+      }
+
+      // Single staff mode: the expected notes are the first pattern.notes.length elements.
+      return noteElementsArray.slice(0, eventCount);
     } catch (err) {
       console.warn("Failed to extract note elements:", err);
       return [];
     }
-  }, [pattern?.notes]);
+  }, [pattern?.notes, clef]);
 
   /**
    * Build event geometry for time-based cursor interpolation
@@ -308,240 +348,369 @@ export function VexFlowStaffDisplay({
       // Get the renderer context
       const context = vf.getContext();
 
-      // Center the staff vertically in the canvas
-      // Staff lines span about 40px, position so staff center is at canvas center
-      // This leaves equal room for ledger lines above and below
-      const staffHeight = 40; // Approximate height of 5 staff lines
-      const yPosition = Math.max(20, (canvasHeight - staffHeight) / 2);
+      const formatterWidth = Math.max(canvasWidth - 200, 200);
 
-      const stave = new Stave(50, yPosition, Math.max(canvasWidth - 100, 240));
-      stave.addClef(clef);
-      stave.addTimeSignature(pattern.timeSignature);
-      stave.setEndBarType(2); // Double barline
-      stave.setContext(context).draw();
-      makeSvgResponsive(canvasWidth, canvasHeight);
+      const clefKey = String(clef || "treble").toLowerCase();
 
-      // Parse EasyScore string manually to create StaveNotes
-      const staveNotes = easyscoreString.split(",").map((noteStr) => {
-        noteStr = noteStr.trim();
+      const parsePitchForVexflow = (pitchStr) => {
+        if (!pitchStr) return { key: "c/4", accidental: null };
+        const raw = String(pitchStr).trim().replace(/\s+/g, "");
+        const match = raw.match(/^([A-Ga-g])([#b]?)(\d)$/);
+        if (!match) return { key: "c/4", accidental: null };
+        const [, letterRaw, accidentalRaw, octaveRaw] = match;
+        const key = `${letterRaw.toLowerCase()}/${octaveRaw}`;
+        const accidental =
+          accidentalRaw === "#" ? "#" : accidentalRaw === "b" ? "b" : null;
+        return { key, accidental };
+      };
 
-        // Parse format: "C4/q" or "B4/q/r" or "C4/q."
-        const isRest = noteStr.includes("/r");
-        const parts = noteStr.split("/");
-        const pitchStr = parts[0]; // e.g., "C4" or "B4"
-        let duration = parts[1]; // e.g., "q", "h", "8", "q.", "h."
+      const toVexKey = (pitchStr) => parsePitchForVexflow(pitchStr).key;
 
-        // Check for dotted notes (e.g., "q.", "h.", "8.")
-        const isDotted = duration && duration.endsWith(".");
-        if (isDotted) {
-          duration = duration.slice(0, -1); // Remove the dot: "q." -> "q"
-        }
+      const buildStaveNote = ({ pitchStr, duration, targetClef }) => {
+        const isRest = String(duration || "").endsWith("r");
+        const cleanDuration = String(duration || "q").replace(/r$/, "");
+        const parsedPitch = isRest ? null : parsePitchForVexflow(pitchStr);
+        const vexflowKey = isRest
+          ? targetClef === "bass"
+            ? "d/3"
+            : "b/4"
+          : parsedPitch.key;
 
-        // For rests, use the correct rest position key based on clef
-        // Treble: b/4, Bass: d/3
-        let vexflowKey;
-        if (isRest) {
-          vexflowKey = clef === "bass" ? "d/3" : "b/4";
-        } else {
-          // Convert pitch from "C4" format to "c/4" format (VexFlow expects slash)
-          const note = pitchStr.slice(0, -1).toLowerCase(); // "C" -> "c"
-          const octave = pitchStr.slice(-1); // "4"
-          vexflowKey = `${note}/${octave}`; // "c/4"
-        }
-
-        // Build StaveNote config
         const noteConfig = {
           keys: [vexflowKey],
-          duration: isRest ? `${duration}r` : duration,
-          clef: clef,
+          duration: isRest ? `${cleanDuration}r` : cleanDuration,
+          clef: targetClef,
         };
 
-        // Create the StaveNote
-        const staveNote = new StaveNote(noteConfig);
+        const note = new StaveNote(noteConfig);
+        if (!isRest && parsedPitch?.accidental) {
+          // Add accidental glyph (e.g., b or #) when present in pitch string.
+          note.addModifier(new Accidental(parsedPitch.accidental), 0);
+        }
+        if (!isRest && pitchStr) {
+          note.setStemDirection(getStemDirectionForPitch(pitchStr, targetClef));
+        }
+        return note;
+      };
 
-        if (!isRest) {
-          const stemDirection = getStemDirectionForPitch(pitchStr, clef);
-          staveNote.setStemDirection(stemDirection);
+      const buildSpacerRest = (duration, targetClef) => {
+        const cleanDuration = String(duration || "q").replace(/r$/, "");
+        const restKey = targetClef === "bass" ? "d/3" : "b/4";
+        const spacer = new StaveNote({
+          keys: [restKey],
+          duration: `${cleanDuration}r`,
+          clef: targetClef,
+        });
+        spacer.setStyle({ fillStyle: "transparent", strokeStyle: "transparent" });
+        return spacer;
+      };
+
+      if (clefKey === "both") {
+        // Grand staff rendering: treble + bass staves
+        const staffGap = Math.max(70, Math.min(110, canvasHeight * 0.28));
+        const staffHeight = 40;
+        const yTreble = Math.max(10, (canvasHeight - (staffGap + staffHeight)) / 2);
+        const yBass = yTreble + staffGap;
+
+        const trebleStave = new Stave(
+          50,
+          yTreble,
+          Math.max(canvasWidth - 100, 240)
+        );
+        trebleStave.addClef("treble");
+        trebleStave.addTimeSignature(pattern.timeSignature);
+        trebleStave.setContext(context).draw();
+
+        const bassStave = new Stave(
+          50,
+          yBass,
+          Math.max(canvasWidth - 100, 240)
+        );
+        bassStave.addClef("bass");
+        bassStave.addTimeSignature(pattern.timeSignature);
+        bassStave.setEndBarType(2);
+        bassStave.setContext(context).draw();
+
+        // Connectors for grand staff
+        try {
+          new StaveConnector(trebleStave, bassStave)
+            .setType(StaveConnector.type.BRACE)
+            .setContext(context)
+            .draw();
+          new StaveConnector(trebleStave, bassStave)
+            .setType(StaveConnector.type.SINGLE_LEFT)
+            .setContext(context)
+            .draw();
+          new StaveConnector(trebleStave, bassStave)
+            .setType(StaveConnector.type.SINGLE_RIGHT)
+            .setContext(context)
+            .draw();
+        } catch (err) {
+          console.warn("Failed to draw stave connectors:", err);
         }
 
-        // Add dot modifier for dotted notes
-        if (isDotted) {
-          // For each key in the note, add a dot
-          for (let i = 0; i < noteConfig.keys.length; i++) {
-            staveNote.addModifier(new Dot(), i);
+        makeSvgResponsive(canvasWidth, canvasHeight);
+
+        const events = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const durations =
+          Array.isArray(pattern.vexflowNotes) && pattern.vexflowNotes.length === events.length
+            ? pattern.vexflowNotes.map((n) => n?.duration || "q")
+            : events.map(() => "q");
+
+        const trebleTickables = events.map((event, idx) => {
+          const duration = durations[idx] || "q";
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          if (event.type === "rest") {
+            return buildStaveNote({ pitchStr: null, duration: `${duration.replace(/r$/, "")}r`, targetClef: "treble" });
+          }
+          if (eventClef === "treble") {
+            return buildStaveNote({ pitchStr: event.pitch, duration, targetClef: "treble" });
+          }
+          return buildSpacerRest(duration, "treble");
+        });
+
+        const bassTickables = events.map((event, idx) => {
+          const duration = durations[idx] || "q";
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          if (event.type === "rest") {
+            return buildSpacerRest(duration, "bass");
+          }
+          if (eventClef === "bass") {
+            return buildStaveNote({ pitchStr: event.pitch, duration, targetClef: "bass" });
+          }
+          return buildSpacerRest(duration, "bass");
+        });
+
+        const trebleVoice = new Voice({
+          num_beats: pattern.totalDuration,
+          beat_value: 4,
+        }).setMode(Voice.Mode.SOFT);
+        trebleVoice.addTickables(trebleTickables);
+
+        const bassVoice = new Voice({
+          num_beats: pattern.totalDuration,
+          beat_value: 4,
+        }).setMode(Voice.Mode.SOFT);
+        bassVoice.addTickables(bassTickables);
+
+        const isFeedback = gamePhase === "feedback" && performanceResults.length > 0;
+        const wrongPitchResults = isFeedback
+          ? performanceResults.filter((r) => r.timingStatus === "wrong_pitch" && r.detected)
+          : [];
+
+        const hasWrong = wrongPitchResults.length > 0;
+
+        let wrongTrebleVoice = null;
+        let wrongBassVoice = null;
+
+        if (hasWrong) {
+          const wrongTrebleTickables = events.map((event, idx) => {
+            const duration = durations[idx] || "q";
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            const result = wrongPitchResults.find((r) => r.noteIndex === idx);
+            if (!result || event.type === "rest" || eventClef !== "treble") {
+              return buildSpacerRest(duration, "treble");
+            }
+            const wrong = buildStaveNote({
+              pitchStr: result.detected,
+              duration,
+              targetClef: "treble",
+            });
+            wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+            return wrong;
+          });
+
+          const wrongBassTickables = events.map((event, idx) => {
+            const duration = durations[idx] || "q";
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            const result = wrongPitchResults.find((r) => r.noteIndex === idx);
+            if (!result || event.type === "rest" || eventClef !== "bass") {
+              return buildSpacerRest(duration, "bass");
+            }
+            const wrong = buildStaveNote({
+              pitchStr: result.detected,
+              duration,
+              targetClef: "bass",
+            });
+            wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+            return wrong;
+          });
+
+          wrongTrebleVoice = new Voice({
+            num_beats: pattern.totalDuration,
+            beat_value: 4,
+          }).setMode(Voice.Mode.SOFT);
+          wrongTrebleVoice.addTickables(wrongTrebleTickables);
+
+          wrongBassVoice = new Voice({
+            num_beats: pattern.totalDuration,
+            beat_value: 4,
+          }).setMode(Voice.Mode.SOFT);
+          wrongBassVoice.addTickables(wrongBassTickables);
+        }
+
+        // Format voices (expected + wrong per staff) to keep alignment
+        if (wrongTrebleVoice) {
+          const voices = [trebleVoice, wrongTrebleVoice];
+          new Formatter().joinVoices(voices).format(voices, formatterWidth);
+        } else {
+          new Formatter().joinVoices([trebleVoice]).format([trebleVoice], formatterWidth);
+        }
+        if (wrongBassVoice) {
+          const voices = [bassVoice, wrongBassVoice];
+          new Formatter().joinVoices(voices).format(voices, formatterWidth);
+        } else {
+          new Formatter().joinVoices([bassVoice]).format([bassVoice], formatterWidth);
+        }
+
+        // Draw expected voices first
+        trebleVoice.draw(context, trebleStave);
+        bassVoice.draw(context, bassStave);
+
+        // Draw wrong voices on top (if any)
+        if (wrongTrebleVoice) {
+          wrongTrebleVoice.draw(context, trebleStave);
+        }
+        if (wrongBassVoice) {
+          wrongBassVoice.draw(context, bassStave);
+        }
+      } else {
+        // Single staff rendering (existing behavior)
+        const staffHeight = 40; // Approximate height of 5 staff lines
+        const yPosition = Math.max(20, (canvasHeight - staffHeight) / 2);
+
+        const stave = new Stave(50, yPosition, Math.max(canvasWidth - 100, 240));
+        stave.addClef(clef);
+        stave.addTimeSignature(pattern.timeSignature);
+        stave.setEndBarType(2); // Double barline
+        stave.setContext(context).draw();
+        makeSvgResponsive(canvasWidth, canvasHeight);
+
+        // Parse EasyScore string manually to create StaveNotes
+        const staveNotes = easyscoreString.split(",").map((noteStr) => {
+          noteStr = noteStr.trim();
+
+          // Parse format: "C4/q" or "B4/q/r" or "C4/q."
+          const isRest = noteStr.includes("/r");
+          const parts = noteStr.split("/");
+          const pitchStr = parts[0]; // e.g., "C4" or "B4"
+          let duration = parts[1]; // e.g., "q", "h", "8", "q.", "h."
+
+          // Check for dotted notes (e.g., "q.", "h.", "8.")
+          const isDotted = duration && duration.endsWith(".");
+          if (isDotted) {
+            duration = duration.slice(0, -1); // Remove the dot: "q." -> "q"
+          }
+
+          // For rests, use the correct rest position key based on clef
+          let vexflowKey;
+          const parsedPitch = isRest ? null : parsePitchForVexflow(pitchStr);
+          if (isRest) {
+            vexflowKey = clef === "bass" ? "d/3" : "b/4";
+          } else {
+            vexflowKey = parsedPitch.key;
+          }
+
+          const noteConfig = {
+            keys: [vexflowKey],
+            duration: isRest ? `${duration}r` : duration,
+            clef: clef,
+          };
+
+          const staveNote = new StaveNote(noteConfig);
+          if (!isRest && parsedPitch?.accidental) {
+            staveNote.addModifier(new Accidental(parsedPitch.accidental), 0);
+          }
+
+          if (!isRest) {
+            const stemDirection = getStemDirectionForPitch(pitchStr, clef);
+            staveNote.setStemDirection(stemDirection);
+          }
+
+          if (isDotted) {
+            for (let i = 0; i < noteConfig.keys.length; i++) {
+              staveNote.addModifier(new Dot(), i);
+            }
+          }
+
+          return staveNote;
+        });
+
+        const voice = new Voice({
+          num_beats: pattern.totalDuration,
+          beat_value: 4,
+        });
+        voice.setMode(Voice.Mode.SOFT);
+        voice.addTickables(staveNotes);
+
+        let wrongVoice = null;
+        if (gamePhase === "feedback" && performanceResults.length > 0) {
+          const wrongPitchResults = performanceResults.filter(
+            (r) => r.timingStatus === "wrong_pitch" && r.detected
+          );
+
+          if (wrongPitchResults.length > 0) {
+            const wrongStaveNotes = staveNotes.map((expectedNote, idx) => {
+              const result = performanceResults.find(
+                (r) =>
+                  r.noteIndex === idx &&
+                  r.timingStatus === "wrong_pitch" &&
+                  r.detected
+              );
+
+              if (result) {
+                const playedNote = result.detected;
+                const parsedPlayed = parsePitchForVexflow(playedNote);
+                const vexKey = parsedPlayed.key;
+                const duration = expectedNote.duration;
+                const cleanDuration = duration.replace(/r$/, "");
+
+                const wrongNote = new StaveNote({
+                  keys: [vexKey],
+                  duration: cleanDuration,
+                  clef: clef,
+                });
+                if (parsedPlayed?.accidental) {
+                  wrongNote.addModifier(new Accidental(parsedPlayed.accidental), 0);
+                }
+
+                const wrongStemDirection = getStemDirectionForPitch(
+                  playedNote,
+                  clef
+                );
+                wrongNote.setStemDirection(wrongStemDirection);
+
+                wrongNote.setStyle({
+                  fillStyle: "#EF4444",
+                  strokeStyle: "#EF4444",
+                });
+
+                return wrongNote;
+              }
+
+              const duration = expectedNote.duration;
+              const cleanDuration = duration.replace(/r$/, "");
+              return buildSpacerRest(cleanDuration, clef);
+            });
+
+            wrongVoice = new Voice({
+              num_beats: pattern.totalDuration,
+              beat_value: 4,
+            });
+            wrongVoice.setMode(Voice.Mode.SOFT);
+            wrongVoice.addTickables(wrongStaveNotes);
           }
         }
 
-        return staveNote;
-      });
-
-      // Create voice with SOFT mode
-      const voice = new Voice({
-        num_beats: pattern.totalDuration,
-        beat_value: 4,
-      });
-      voice.setMode(Voice.Mode.SOFT); // Use SOFT mode constant
-      voice.addTickables(staveNotes);
-
-      const formatterWidth = Math.max(canvasWidth - 200, 200);
-
-      // Build wrong notes voice (only during FEEDBACK phase and only if there are wrong pitches)
-      let wrongVoice = null;
-      if (gamePhase === "feedback" && performanceResults.length > 0) {
-        // First, check if there are ANY wrong pitch results
-        const wrongPitchResults = performanceResults.filter(
-          (r) => r.timingStatus === "wrong_pitch" && r.detected
-        );
-
-        if (wrongPitchResults.length > 0) {
-          // Build a parallel array of wrong notes (same length as staveNotes)
-          const wrongStaveNotes = staveNotes.map((expectedNote, idx) => {
-            // Find if this note has a wrong pitch result
-            const result = performanceResults.find(
-              (r) =>
-                r.noteIndex === idx &&
-                r.timingStatus === "wrong_pitch" &&
-                r.detected
-            );
-
-            if (result) {
-              console.debug("[VexFlowStaffDisplay]", {
-                idx,
-                expected: result.expected,
-                played: result.detected,
-              });
-
-              // Create a VexFlow note for the wrong pitch played
-              const playedNote = result.detected; // e.g., "E4"
-              const note = playedNote.slice(0, -1).toLowerCase();
-              const octave = playedNote.slice(-1);
-              const vexKey = `${note}/${octave}`;
-
-              // Get the duration from the expected note, remove "r" if present
-              const duration = expectedNote.duration;
-              const cleanDuration = duration.replace(/r$/, "");
-
-              const wrongNote = new StaveNote({
-                keys: [vexKey],
-                duration: cleanDuration,
-                clef: clef,
-              });
-
-              const wrongStemDirection = getStemDirectionForPitch(
-                playedNote,
-                clef
-              );
-              wrongNote.setStemDirection(wrongStemDirection);
-
-              // Style the wrong note red BEFORE adding to voice
-              wrongNote.setStyle({
-                fillStyle: "#EF4444",
-                strokeStyle: "#EF4444",
-              });
-
-              console.debug("[VexFlowStaffDisplay]", {
-                vexKey,
-                cleanDuration,
-              });
-
-              return wrongNote;
-            } else {
-              // No wrong note here - use an INVISIBLE rest with the same duration
-              const duration = expectedNote.duration;
-              const cleanDuration = duration.replace(/r$/, ""); // Remove "r" if present
-
-              const ghost = new GhostNote(cleanDuration);
-
-              // VexFlow GhostNotes have no visible glyph, but we still ensure styles stay transparent
-              ghost.setStyle({
-                fillStyle: "transparent",
-                strokeStyle: "transparent",
-              });
-
-              return ghost;
-            }
-          });
-
-          // Create wrong notes voice
-          wrongVoice = new Voice({
-            num_beats: pattern.totalDuration,
-            beat_value: 4,
-          });
-          wrongVoice.setMode(Voice.Mode.SOFT);
-          wrongVoice.addTickables(wrongStaveNotes);
+        if (wrongVoice) {
+          const voices = [voice, wrongVoice];
+          new Formatter().joinVoices(voices).format(voices, formatterWidth);
+          voice.draw(context, stave);
+          wrongVoice.draw(context, stave);
         } else {
-          console.debug("[VexFlowStaffDisplay]", {
-            wrongVoice: wrongVoice,
-          });
+          new Formatter().joinVoices([voice]).format([voice], formatterWidth);
+          voice.draw(context, stave);
         }
-      }
-
-      // Format and draw voices
-      if (wrongVoice) {
-        // Format both voices together so they align
-        const voices = [voice, wrongVoice];
-        new Formatter().joinVoices(voices).format(voices, formatterWidth);
-
-        // Draw both voices
-        voice.draw(context, stave);
-        wrongVoice.draw(context, stave);
-
-        // Debug: Check what was actually rendered
-        const allNotesInDOM =
-          vexContainerRef.current?.querySelectorAll(".vf-stavenote");
-        console.debug("[VexFlowStaffDisplay]", {
-          allNotesInDOM: allNotesInDOM?.length || 0,
-        });
-        console.debug("[VexFlowStaffDisplay]", {
-          wrongVoiceNotes: wrongVoice.getTickables().length,
-        });
-
-        // Mark wrong notes in the DOM so they don't get recolored
-        // We need to find which DOM indices correspond to actual wrong notes
-        if (allNotesInDOM && allNotesInDOM.length > pattern.notes.length) {
-          // Get the pattern indices that have wrong notes
-          const wrongNoteIndices = performanceResults
-            .filter((r) => r.timingStatus === "wrong_pitch" && r.detected)
-            .map((r) => r.noteIndex);
-
-          console.debug("[VexFlowStaffDisplay]", {
-            wrongNoteIndices: wrongNoteIndices.join(", "),
-          });
-
-          // The wrong voice starts at pattern.notes.length in the DOM
-          // We need to map pattern indices to DOM indices for the wrong voice
-          wrongNoteIndices.forEach((patternIdx) => {
-            const domIdx = pattern.notes.length + patternIdx;
-
-            if (domIdx < allNotesInDOM.length) {
-              const wrongNoteElement = allNotesInDOM[domIdx];
-
-              wrongNoteElement.setAttribute("data-wrong-note", "true");
-              // Ensure red color is applied to all child elements
-              wrongNoteElement.setAttribute("fill", "#EF4444");
-              wrongNoteElement.setAttribute("stroke", "#EF4444");
-
-              // Also apply to all child path elements (note heads, stems, etc.)
-              const paths = wrongNoteElement.querySelectorAll("path");
-              paths.forEach((path) => {
-                path.setAttribute("fill", "#EF4444");
-                path.setAttribute("stroke", "#EF4444");
-              });
-
-              console.debug("[VexFlowStaffDisplay]", {
-                patternIdx,
-                domIdx,
-              });
-            }
-          });
-        }
-      } else {
-        // Format and draw only the main voice (no wrong notes)
-        gamePhase === "feedback"
-          ? "⚠️ No wrong voice (no wrong pitches in results)"
-          : "📝 Drawing main voice only (not in feedback phase)";
-        new Formatter().joinVoices([voice]).format([voice], formatterWidth);
-        voice.draw(context, stave);
       }
 
       // Extract note elements for highlighting
@@ -895,9 +1064,12 @@ export function VexFlowStaffDisplay({
                 className="pointer-events-none absolute border-l-2 border-violet-500"
                 style={{
                   left: cursorX,
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  height: "85%",
+                  top: String(clef || "").toLowerCase() === "both" ? "5%" : "50%",
+                  transform:
+                    String(clef || "").toLowerCase() === "both"
+                      ? "none"
+                      : "translateY(-50%)",
+                  height: String(clef || "").toLowerCase() === "both" ? "90%" : "85%",
                 }}
               />
             )}

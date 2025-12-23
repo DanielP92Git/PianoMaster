@@ -70,6 +70,9 @@ export function applyRoleBasedOrientation(role) {
 /**
  * Register the service worker
  */
+// Store reference to the waiting service worker
+let waitingWorker = null;
+
 export async function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     try {
@@ -87,12 +90,19 @@ export async function registerServiceWorker() {
               newWorker.state === "installed" &&
               navigator.serviceWorker.controller
             ) {
+              // Store reference to the waiting worker
+              waitingWorker = newWorker;
               // New service worker is available
               showUpdateAvailableNotification();
             }
           });
         }
       });
+
+      // Check if there's already a waiting worker
+      if (registration.waiting) {
+        waitingWorker = registration.waiting;
+      }
 
       return registration;
     } catch (error) {
@@ -122,12 +132,37 @@ function showUpdateAvailableNotification() {
  * Skip waiting and activate new service worker
  */
 export function skipWaitingAndReload() {
-  if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: "SKIP_WAITING" });
+  if ("serviceWorker" in navigator) {
+    // Add controllerchange listener BEFORE sending the message
+    let controllerChanged = false;
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const handleControllerChange = () => {
+      if (!controllerChanged) {
+        controllerChanged = true;
+        window.location.reload();
+      }
+    };
+
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      handleControllerChange,
+      { once: true }
+    );
+
+    // Send message to the waiting worker if available
+    if (waitingWorker) {
+      waitingWorker.postMessage({ type: "SKIP_WAITING" });
+    } else if (navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({ type: "SKIP_WAITING" });
+    }
+
+    // Fallback: reload after 3 seconds if controllerchange doesn't fire
+    setTimeout(() => {
+      if (!controllerChanged) {
+        console.log("Fallback reload triggered");
       window.location.reload();
-    });
+      }
+    }, 3000);
   }
 }
 

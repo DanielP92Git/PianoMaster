@@ -1,5 +1,15 @@
 import supabase from "./supabase";
 
+const FETCH_COOLDOWN_MS = 60 * 1000; // 1 minute backoff after network failure
+let lastPracticeFetchInFlight = null;
+let lastPracticeFetchFailed = false;
+let lastPracticeFailureTS = 0;
+
+const STREAK_FETCH_COOLDOWN_MS = 60 * 1000;
+let streakFetchInFlight = null;
+let streakFetchFailed = false;
+let streakFailureTS = 0;
+
 export const streakService = {
   // Get current streak from Supabase
   async getStreak() {
@@ -8,18 +18,44 @@ export const streakService = {
     } = await supabase.auth.getSession();
     if (!session) return 0;
 
-    const { data, error } = await supabase
-      .from("current_streak")
-      .select("streak_count")
-      .eq("student_id", session.user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error("Error fetching streak:", error);
+    const now = Date.now();
+    if (streakFetchFailed && now - streakFailureTS < STREAK_FETCH_COOLDOWN_MS) {
       return 0;
     }
 
-    return data?.streak_count || 0;
+    if (streakFetchInFlight) {
+      return streakFetchInFlight;
+    }
+
+    streakFetchInFlight = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("current_streak")
+          .select("streak_count")
+          .eq("student_id", session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching streak:", error);
+          streakFetchFailed = true;
+          streakFailureTS = Date.now();
+          return 0;
+        }
+
+        streakFetchFailed = false;
+        streakFailureTS = 0;
+        return data?.streak_count || 0;
+      } catch (err) {
+        console.error("Error fetching streak:", err);
+        streakFetchFailed = true;
+        streakFailureTS = Date.now();
+        return 0;
+      } finally {
+        streakFetchInFlight = null;
+      }
+    })();
+
+    return streakFetchInFlight;
   },
 
   // Get last practice date
@@ -29,14 +65,54 @@ export const streakService = {
     } = await supabase.auth.getSession();
     if (!session) return null;
 
-    const { data, error } = await supabase
-      .from("last_practiced_date")
-      .select("practiced_at")
-      .eq("student_id", session.user.id)
-      .single();
+    const now = Date.now();
+    if (
+      lastPracticeFetchFailed &&
+      now - lastPracticeFailureTS < FETCH_COOLDOWN_MS
+    ) {
+      return null;
+    }
 
-    if (error || !data?.practiced_at) return null;
-    return new Date(data.practiced_at);
+    if (lastPracticeFetchInFlight) {
+      return lastPracticeFetchInFlight;
+    }
+
+    lastPracticeFetchInFlight = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("last_practiced_date")
+          .select("practiced_at")
+          .eq("student_id", session.user.id)
+          .maybeSingle();
+
+        if (error) {
+          console.warn(
+            "last_practiced_date table query failed:",
+            error.message
+          );
+          lastPracticeFetchFailed = true;
+          lastPracticeFailureTS = Date.now();
+          return null;
+        }
+
+        lastPracticeFetchFailed = false;
+        lastPracticeFailureTS = 0;
+        if (!data?.practiced_at) return null;
+        return new Date(data.practiced_at);
+      } catch (err) {
+        console.warn(
+          "last_practiced_date table query failed:",
+          err?.message || err
+        );
+        lastPracticeFetchFailed = true;
+        lastPracticeFailureTS = Date.now();
+        return null;
+      } finally {
+        lastPracticeFetchInFlight = null;
+      }
+    })();
+
+    return lastPracticeFetchInFlight;
   },
 
   // Update streak when user practices
@@ -49,6 +125,18 @@ export const streakService = {
     const today = new Date();
     const lastPractice = await this.getLastPracticeDate();
     let currentStreak = await this.getStreak();
+
+    if (lastPracticeFetchFailed) {
+      console.warn(
+        "Skipping streak update because last_practiced_date lookup is failing"
+      );
+      return currentStreak;
+    }
+
+    if (streakFetchFailed) {
+      console.warn("Skipping streak update because streak lookup is failing");
+      return currentStreak;
+    }
 
     if (!lastPractice) {
       // First time practicing

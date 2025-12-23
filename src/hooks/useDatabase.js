@@ -42,11 +42,6 @@ import {
   getStudentScoresByGameType,
   getHighScores,
 
-  // Student total score operations
-  getStudentTotalScore,
-  updateStudentTotalScore,
-  getTopStudentsByTotalScore,
-
   // Streak operations
   getCurrentStreak,
   updateCurrentStreak,
@@ -370,9 +365,12 @@ export function useCreateStudentScore() {
     onSuccess: (data) => {
       queryClient.invalidateQueries(["student-scores", data.student_id]);
       queryClient.invalidateQueries(["high-scores", data.game_id]);
-      queryClient.invalidateQueries(["student-total-score", data.student_id]);
       queryClient.invalidateQueries(["top-students"]);
       queryClient.invalidateQueries(["stats", "student", data.student_id]);
+      // Invalidate points-related queries to keep avatars shop in sync
+      queryClient.invalidateQueries(["point-balance", data.student_id]);
+      queryClient.invalidateQueries(["total-points", data.student_id]);
+      queryClient.invalidateQueries(["gamesPlayed"]); // For unlock requirements
     },
   });
 }
@@ -380,34 +378,6 @@ export function useCreateStudentScore() {
 // ============================================
 // STUDENT TOTAL SCORE HOOKS
 // ============================================
-
-export function useStudentTotalScore(studentId) {
-  return useQuery({
-    queryKey: ["student-total-score", studentId],
-    queryFn: () => getStudentTotalScore(studentId),
-    enabled: !!studentId,
-  });
-}
-
-export function useTopStudentsByTotalScore(limit = 10) {
-  return useQuery({
-    queryKey: ["top-students", limit],
-    queryFn: () => getTopStudentsByTotalScore(limit),
-  });
-}
-
-export function useUpdateStudentTotalScore() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ studentId, totalScore }) =>
-      updateStudentTotalScore(studentId, totalScore),
-    onSuccess: (data) => {
-      queryClient.setQueryData(["student-total-score", data.student_id], data);
-      queryClient.invalidateQueries(["top-students"]);
-    },
-  });
-}
 
 // ============================================
 // STREAK HOOKS
@@ -434,6 +404,9 @@ export function useLastPracticedDate(studentId) {
     queryKey: ["last-practiced", studentId],
     queryFn: () => getLastPracticedDate(studentId),
     enabled: !!studentId,
+    retry: 1, // Only retry once to prevent spamming failed requests
+    retryDelay: 5000, // Wait 5 seconds before retry
+    staleTime: 10 * 60 * 1000, // 10 minutes
   });
 }
 

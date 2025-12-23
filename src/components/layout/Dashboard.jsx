@@ -462,7 +462,7 @@ function Dashboard() {
           className={`text-center ${isRTL ? "lg:text-right" : "lg:text-left"}`}
         >
           <h1 className="mb-2 text-3xl font-bold text-white lg:text-4xl">
-            {t("dashboard.header.welcomeBack")}, 
+            {t("dashboard.header.welcomeBack")},
             {profile?.first_name ? (
               <span className="ml-2"> {profile.first_name}!</span>
             ) : user?.user_metadata?.full_name ? (
@@ -489,13 +489,13 @@ function Dashboard() {
 
             {/* Practice Time */}
             <div className="card-compact p-3">
-              <div className="flex flex-col items-center text-center">
+              <div className="flex flex-col items-center gap-2 text-center">
                 <h3 className="text-xs font-medium text-gray-600">
                   {t("dashboard.stats.practiceTime")}
                 </h3>
-                <p className="mt-1 text-lg font-bold text-gray-900">
+                <p className="mt-1 flex items-center justify-center gap-2 text-lg font-bold text-gray-900">
                   {scores?.practice_time || 0}
-                  <span className="ml-1 text-xs">
+                  <span className="ml-1 text-s">
                     {t("dashboard.stats.hoursAbbrev")}
                   </span>
                 </p>
