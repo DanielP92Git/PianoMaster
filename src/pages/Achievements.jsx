@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import { achievementService } from "../services/achievementService";
 import { useUser } from "../features/authentication/useUser";
-import BackButtonComponent from "../components/ui/BackButton"; // eslint-disable-line no-unused-vars
 import { useTranslation } from "react-i18next";
 import { getStudentScores } from "../services/apiDatabase";
 import { calculatePointsSummary } from "../utils/points";
@@ -124,16 +123,8 @@ export default function Achievements() {
   if (isLoading) {
     return (
       <div className="p-6">
-        <BackButtonComponent
-          to="/practice-modes"
-          name={t("navigation.links.studentDashboard")}
-          styling="text-white/80 hover:text-white text-sm"
-        />
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">
-              {t("pages.achievements.title")}
-            </h1>
             <p className="text-white/80">{t("pages.achievements.loading")}</p>
           </div>
           <div className="space-y-6">
@@ -158,17 +149,9 @@ export default function Achievements() {
 
   return (
     <div className="p-6">
-      <BackButtonComponent
-        to="/practice-modes"
-        name={t("navigation.links.studentDashboard")}
-        styling="text-white/80 hover:text-white text-sm"
-      />
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white mb-2">
-            {t("pages.achievements.title")}
-          </h1>
           <p className="text-white/80">{t("pages.achievements.description")}</p>
         </div>
 

@@ -12,7 +12,6 @@ import {
   Share,
   Plus,
 } from "lucide-react";
-import BackButton from "../components/ui/BackButton";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import useGlobalAudioSettings from "../hooks/useGlobalAudioSettings";
@@ -32,6 +31,7 @@ import {
   isInStandaloneMode,
 } from "../utils/pwaDetection";
 import { useTranslation } from "react-i18next";
+import AuthButton from "../components/auth/AuthButton";
 
 function AppSettings() {
   const { t, i18n } = useTranslation("common");
@@ -140,16 +140,7 @@ function AppSettings() {
 
   return (
     <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
-      <BackButton to="/" name={t("navigation.links.studentDashboard")} />
-
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {t("pages.settings.title")}
-          </h1>
-        </div>
-
+      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 flex flex-col min-h-[calc(100vh-200px)]">
         <LanguageSelector />
 
         {/* Avatar Selection Link */}
@@ -584,6 +575,13 @@ function AppSettings() {
             </div>
           </div>
         </SettingsSection>
+
+        {/* Logout Button */}
+        <div className="mt-auto pt-12 pb-8 border-t border-white/20">
+          <div className="max-w-xs mx-auto">
+            <AuthButton />
+          </div>
+        </div>
       </div>
     </div>
   );

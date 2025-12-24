@@ -5,7 +5,7 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
 import { getAvatarImageSource } from "../../utils/avatarAssets";
 
-export default function Header({ onMenuClick, pageTitle }) {
+export default function Header({ onMenuClick, pageTitle, showMenuButton = true }) {
   const { data: profileData, isLoading } = useUserProfile();
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
@@ -19,7 +19,7 @@ export default function Header({ onMenuClick, pageTitle }) {
     : [];
 
   return (
-    <nav className={`shadow-lg ${isRTL ? "lg:mr-72" : "lg:ml-72"}`}>
+    <nav className={`shadow-lg ${isRTL ? "xl:mr-72" : "xl:ml-72"}`}>
       <div className="mx-auto max-w-7xl px-4">
         <div
           className={`relative flex h-16 items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}
@@ -81,13 +81,15 @@ export default function Header({ onMenuClick, pageTitle }) {
           <div
             className={`flex items-center gap-4 ${isRTL ? "flex-row-reverse" : ""}`}
           >
-            <button
-              className="rounded-lg p-2 transition-colors hover:bg-white/10 lg:hidden"
-              onClick={onMenuClick}
-              aria-label={t("navigation.menuTitle")}
-            >
-              <Menu className="h-6 w-6 text-white hover:text-gray-200" />
-            </button>
+            {showMenuButton && onMenuClick && (
+              <button
+                className="rounded-lg p-2 transition-colors hover:bg-white/10 lg:hidden"
+                onClick={onMenuClick}
+                aria-label={t("navigation.menuTitle")}
+              >
+                <Menu className="h-6 w-6 text-white hover:text-gray-200" />
+              </button>
+            )}
           </div>
         </div>
       </div>

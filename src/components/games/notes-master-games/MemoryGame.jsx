@@ -61,35 +61,6 @@ const NOTE_LABEL_FONT_STACK =
 export function MemoryGame() {
   const navigate = useNavigate();
   const { t } = useTranslation("common");
-  // CSS for card flipping
-  const styles = {
-    cardContainer: {
-      perspective: "1000px",
-      position: "relative",
-    },
-    cardInner: {
-      position: "relative",
-      width: "100%",
-      height: "100%",
-      transition: "transform 0.6s",
-      transformStyle: "preserve-3d",
-    },
-    cardInnerFlipped: {
-      transform: "rotateY(180deg)",
-    },
-    cardFace: {
-      position: "absolute",
-      width: "100%",
-      height: "100%",
-      backfaceVisibility: "hidden",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    cardBack: {
-      transform: "rotateY(180deg)",
-    },
-  };
 
   const [difficulty, setDifficulty] = useState("Easy");
   const [gridSize, setGridSize] = useState(DIFFICULTIES["Easy"]);
@@ -612,13 +583,15 @@ export function MemoryGame() {
   const getGridClassName = () => {
     switch (gridSize) {
       case "3 X 4":
-        return "grid grid-cols-4 gap-3 md:gap-4 max-w-2xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mx-auto place-items-stretch";
       case "3 X 6":
-        return "grid grid-cols-6 gap-2 md:gap-3 max-w-4xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-3 w-full max-w-5xl mx-auto place-items-stretch";
       case "3 X 8":
-        return "grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-1.5 sm:gap-2 md:gap-2.5 max-w-6xl place-items-center justify-items-center mx-auto";
+        // Keep cards larger on tablets (incl. large iPad landscape) by staying at 6 columns up to 2xl.
+        // Switch to 8 columns only on very large screens.
+        return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 2xl:grid-cols-8 gap-2 md:gap-3 w-full max-w-7xl mx-auto place-items-stretch";
       default:
-        return "grid grid-cols-4 gap-3 md:gap-4 max-w-2xl place-items-center justify-items-center mx-auto";
+        return "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mx-auto place-items-stretch";
     }
   };
 
@@ -863,10 +836,10 @@ export function MemoryGame() {
           />
         )
       ) : (
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col min-h-0">
           {/* Game grid - fits in viewport */}
-          <div className="flex flex-1 items-center justify-center overflow-hidden px-2 py-2 sm:px-4 sm:py-4">
-            <div className={`${getGridClassName()} w-full px-2 sm:px-4`}>
+          <div className="flex flex-1 items-start justify-center overflow-y-auto overflow-x-hidden px-2 py-2 sm:px-4 sm:py-4 md:items-center">
+            <div className={`${getGridClassName()} px-2 sm:px-4`}>
               {(() => {
                 const expectedCardCount = GRID_SIZES[gridSize] || cards.length;
                 return cards.slice(0, expectedCardCount);
@@ -875,20 +848,7 @@ export function MemoryGame() {
                   flippedIndexes.includes(index) ||
                   matchedIndexes.includes(index);
 
-                // Responsive card heights - smaller on mobile for 24-card grid
-                const cardHeight =
-                  gridDifficulty === "Hard"
-                    ? "min(90px, 12vh)"
-                    : gridDifficulty === "Medium"
-                      ? "min(120px, 15vh)"
-                      : "min(140px, 17vh)";
-
-                const minCardHeight =
-                  gridDifficulty === "Hard"
-                    ? "60px"
-                    : gridDifficulty === "Medium"
-                      ? "70px"
-                      : "80px";
+                const isMatched = matchedIndexes.includes(index);
 
                 return (
                   <div
@@ -896,21 +856,15 @@ export function MemoryGame() {
                     id={`card-${index}`}
                     style={{
                       perspective: "1000px",
-                      aspectRatio: "4/3",
-                      cursor: "pointer",
-                      transition:
-                        "transform 0.3s ease-in-out, box-shadow 0.3s, opacity 0.5s, scale 0.5s",
-                      opacity: matchedIndexes.includes(index) ? 0 : 1,
-                      scale: matchedIndexes.includes(index) ? 0.8 : 1,
-                      pointerEvents: matchedIndexes.includes(index)
-                        ? "none"
-                        : "auto",
-                      height: cardHeight,
-                      maxHeight: cardHeight,
-                      minHeight: minCardHeight,
-                      margin: "0",
+                      WebkitPerspective: "1000px",
                     }}
-                    className="transition-all hover:scale-110 hover:shadow-2xl active:scale-95"
+                    className={[
+                      "relative w-full aspect-[4/3] select-none",
+                      "cursor-pointer",
+                      "transition-[transform,opacity,box-shadow] duration-200 ease-out",
+                      "hover:shadow-2xl active:scale-95",
+                      isMatched ? "opacity-0 scale-90 pointer-events-none" : "",
+                    ].join(" ")}
                     onClick={() => handleCardClick(index)}
                   >
                     <div
@@ -920,7 +874,12 @@ export function MemoryGame() {
                         height: "100%",
                         transition: "transform 0.6s",
                         transformStyle: "preserve-3d",
-                        transform: isFlipped ? "rotateY(180deg)" : "",
+                        WebkitTransformStyle: "preserve-3d",
+                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                        WebkitTransform: isFlipped
+                          ? "rotateY(180deg)"
+                          : "rotateY(0deg)",
+                        willChange: "transform",
                       }}
                     >
                       {/* Front face */}
@@ -930,9 +889,12 @@ export function MemoryGame() {
                           width: "100%",
                           height: "100%",
                           backfaceVisibility: "hidden",
+                          WebkitBackfaceVisibility: "hidden",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          transform: "rotateY(0deg) translateZ(0px)",
+                          WebkitTransform: "rotateY(0deg) translateZ(0px)",
                           background:
                             "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)",
                           borderRadius: "1rem",
@@ -966,6 +928,7 @@ export function MemoryGame() {
                           width: "100%",
                           height: "100%",
                           backfaceVisibility: "hidden",
+                          WebkitBackfaceVisibility: "hidden",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -975,6 +938,7 @@ export function MemoryGame() {
                           boxShadow:
                             "0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1)",
                           transform: "rotateY(180deg)",
+                          WebkitTransform: "rotateY(180deg)",
                           overflow: "hidden",
                           border: "3px solid rgba(99, 102, 241, 0.2)",
                         }}

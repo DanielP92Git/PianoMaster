@@ -256,14 +256,22 @@ NavigationItem.displayName = "NavigationItem";
 
 // Bottom Navigation for Mobile
 const BottomNavigation = React.forwardRef(
-  ({ items = [], highContrast = false, className = "", ...props }, ref) => {
-    const location = useLocation();
-
+  (
+    {
+      items = [],
+      highContrast = false,
+      className = "",
+      showLabels = true,
+      hideAbove = "md:hidden",
+      ...props
+    },
+    ref
+  ) => {
     return (
       <nav
         ref={ref}
         className={`
-        fixed bottom-0 left-0 right-0 z-50 md:hidden
+        fixed bottom-0 left-0 right-0 z-50 ${hideAbove} safe-area-padding-bottom
         ${
           highContrast
             ? "bg-highContrast-bg border-t-2 border-highContrast-text"
@@ -275,34 +283,40 @@ const BottomNavigation = React.forwardRef(
       >
         <div className="flex justify-around items-center h-16 px-2">
           {items.map((item, index) => {
-            const isActive = item.to && location.pathname === item.to;
+            const badgePositionClass =
+              item.badgePosition === "top-left" ? "-top-1 -left-1" : "-top-1 -right-1";
 
             return (
               <NavLink
                 key={index}
                 to={item.to}
-                className={`
-                flex flex-col items-center justify-center p-2 rounded-kids
-                min-w-[60px] transition-colors font-rounded
-                ${
-                  isActive
-                    ? highContrast
-                      ? "text-highContrast-primary"
-                      : "text-kidsPrimary-500"
-                    : highContrast
-                      ? "text-highContrast-text"
-                      : "text-gray-500"
-                }
-              `}
+                aria-label={item.ariaLabel || item.label}
+                className={({ isActive }) => `
+                  relative flex flex-col items-center justify-center p-2 rounded-kids
+                  min-w-[60px] transition-colors font-rounded
+                  ${
+                    isActive
+                      ? highContrast
+                        ? "text-highContrast-primary"
+                        : "text-kidsPrimary-500"
+                      : highContrast
+                        ? "text-highContrast-text"
+                        : "text-gray-500"
+                  }
+                `}
               >
                 {item.icon &&
                   React.cloneElement(item.icon, {
-                    className: `w-5 h-5 mb-1 ${isActive ? "scale-110" : ""}`,
+                    className: `w-6 h-6 ${showLabels ? "mb-1" : ""}`,
                     "aria-hidden": "true",
                   })}
-                <span className="text-xs font-medium">{item.label}</span>
+                {showLabels ? (
+                  <span className="text-xs font-medium">{item.label}</span>
+                ) : (
+                  <span className="sr-only">{item.label}</span>
+                )}
                 {item.badge && (
-                  <div className="absolute -top-1 -right-1">
+                  <div className={`absolute ${badgePositionClass}`}>
                     <Badge {...item.badge} size="small" />
                   </div>
                 )}

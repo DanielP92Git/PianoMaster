@@ -1,18 +1,10 @@
 import React, { useEffect, useRef } from "react"; // eslint-disable-line
 import { NavLink, useLocation } from "react-router-dom"; // eslint-disable-line
-import {
-  Home, // eslint-disable-line
-  Music2, // eslint-disable-line
-  Settings, // eslint-disable-line
-  Trophy, // eslint-disable-line
-  Mic, // eslint-disable-line
-  GraduationCap, // eslint-disable-line
-  X, // eslint-disable-line
-} from "lucide-react";
+import { X } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import AuthButton from "../auth/AuthButton"; // eslint-disable-line
 import { useUser } from "../../features/authentication/useUser";
 import { useStudentFeedbackNotifications } from "../../hooks/useStudentFeedbackNotifications";
+import { getSidebarNavItems } from "./appNavigationConfig";
 
 export default function Sidebar({ isOpen, onClose, isGameRoute }) {
   const { user, isTeacher, isStudent } = useUser();
@@ -24,6 +16,25 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
   const sidebarRef = useRef(null);
   const location = useLocation();
   const prevPathname = useRef(location.pathname);
+
+  const navItems = getSidebarNavItems({ isStudent, isTeacher, newFeedbackCount });
+
+  const getNavLinkClasses = (theme) => {
+    const activeClasses =
+      theme === "purple"
+        ? "bg-purple-500 text-white shadow-lg"
+        : "bg-indigo-500 text-white shadow-lg";
+
+    const inactiveClasses =
+      theme === "purple"
+        ? "text-gray-700 hover:bg-purple-50 hover:text-purple-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
+        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white";
+
+    return ({ isActive }) =>
+      `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+        isRTL ? "direction-rtl text-right" : ""
+      } ${isActive ? activeClasses : inactiveClasses}`;
+  };
 
   // Close sidebar on route change (mobile)
   useEffect(() => {
@@ -88,7 +99,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           fixed top-0 h-screen w-80 max-w-[85vw] safe-area-padding-top
           bg-white/95 backdrop-blur-xl shadow-2xl border-white/20 
           transition-transform duration-300 ease-in-out z-50 flex flex-col
-          lg:fixed lg:top-[5vh] lg:h-[90vh] lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
+          lg:fixed lg:top-[5vh] lg:h-auto lg:max-h-[90vh] lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
           lg:rounded-2xl lg:shadow-xl lg:border lg:border-white/20
           ${
             isRTL
@@ -115,139 +126,42 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </button>
         </div>
 
-        <nav className="flex-1 flex flex-col p-4 lg:p-6 min-h-0 overflow-hidden">
+        <nav className="flex flex-col p-4 lg:p-6">
           <div
-            className="space-y-2 lg:space-y-1 overflow-y-auto flex-shrink min-h-0 pb-4"
+            className="space-y-2 lg:space-y-1 pb-4"
             style={{
               scrollbarWidth: "thin",
               scrollbarColor: "rgba(156, 163, 175, 0.5) transparent",
             }}
           >
-            {/* Student Dashboard - Only show for students */}
-            {isStudent && (
-              <NavLink
-                to="/"
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    isRTL ? "direction-rtl text-right" : ""
-                  } ${
-                    isActive
-                      ? "bg-indigo-500 text-white shadow-lg"
-                      : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                  }`
-                }
-              >
-                <Home className="h-5 w-5 flex-shrink-0" />
-                <span>{t("navigation.links.studentDashboard")}</span>
-              </NavLink>
-            )}
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const hasBadge = item.badgeCount > 0;
 
-            {/* Teacher Dashboard - Only show for teachers */}
-            {isTeacher && (
-              <NavLink
-                to="/teacher"
-                onClick={onClose}
-                className={({ isActive }) =>
-                  `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    isRTL ? "direction-rtl text-right" : ""
-                  } ${
-                    isActive
-                      ? "bg-purple-500 text-white shadow-lg"
-                      : "text-gray-700 hover:bg-purple-50 hover:text-purple-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                  }`
-                }
-              >
-                <GraduationCap className="h-5 w-5 flex-shrink-0" />
-                <span>{t("navigation.links.teacherDashboard")}</span>
-              </NavLink>
-            )}
-
-            {/* Student-specific features */}
-            {isStudent && (
-              <>
+              return (
                 <NavLink
-                  to="/practice-modes"
+                  key={item.id}
+                  to={item.to}
                   onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      isRTL ? "direction-rtl text-right" : ""
-                    } ${
-                      isActive
-                        ? "bg-indigo-500 text-white shadow-lg"
-                        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                    }`
-                  }
+                  className={({ isActive }) => {
+                    const base = getNavLinkClasses(item.theme)({ isActive });
+                    return item.id === "recordings" ? `${base} relative` : base;
+                  }}
                 >
-                  <Music2 className="h-5 w-5 flex-shrink-0" />
-                  <span>{t("navigation.links.practiceGames")}</span>
-                </NavLink>
-
-                <NavLink
-                  to="/practice-sessions"
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
-                      isRTL ? "direction-rtl text-right" : ""
-                    } ${
-                      isActive
-                        ? "bg-indigo-500 text-white shadow-lg"
-                        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                    }`
-                  }
-                >
-                  <Mic className="h-5 w-5 flex-shrink-0" />
-                  <span>{t("navigation.links.recordings")}</span>
-                  {newFeedbackCount > 0 && (
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span>{t(item.labelKey)}</span>
+                  {item.id === "recordings" && hasBadge && (
                     <span
-                      className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-bold text-white bg-red-500 rounded-full px-1.5 shadow-sm ${isRTL ? "left-3" : "right-3"}`}
+                      className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-bold text-white bg-red-500 rounded-full px-1.5 shadow-sm ${
+                        isRTL ? "left-3" : "right-3"
+                      }`}
                     >
-                      {newFeedbackCount}
+                      {item.badgeCount}
                     </span>
                   )}
                 </NavLink>
-
-                <NavLink
-                  to="/achievements"
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                      isRTL ? "direction-rtl text-right" : ""
-                    } ${
-                      isActive
-                        ? "bg-indigo-500 text-white shadow-lg"
-                        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                    }`
-                  }
-                >
-                  <Trophy className="h-5 w-5 flex-shrink-0" />
-                  <span>{t("navigation.links.achievements")}</span>
-                </NavLink>
-              </>
-            )}
-
-            {/* Common features for all users */}
-            <NavLink
-              to="/settings"
-              onClick={onClose}
-              className={({ isActive }) =>
-                `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                  isRTL ? "direction-rtl text-right" : ""
-                } ${
-                  isActive
-                    ? "bg-indigo-500 text-white shadow-lg"
-                    : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-                }`
-              }
-            >
-              <Settings className="h-5 w-5 flex-shrink-0" />
-              <span>{t("navigation.links.settings")}</span>
-            </NavLink>
-          </div>
-
-          {/* Auth Button - Always at bottom */}
-          <div className="mt-auto pt-4 border-t border-gray-200 lg:border-white/10 flex-shrink-0">
-            <AuthButton />
+              );
+            })}
           </div>
         </nav>
       </aside>

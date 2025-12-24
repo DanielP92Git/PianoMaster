@@ -92,6 +92,26 @@ const PC_KEYBOARD_KEYS = [
 const METRONOME_TIMING_DEBUG = import.meta.env?.VITE_DEBUG_METRONOME === "true";
 const FIRST_NOTE_DEBUG = import.meta.env?.VITE_DEBUG_FIRST_NOTE === "true";
 const PERFORMANCE_START_BUFFER_MS = 0;
+// iOS Safari can have noticeably different output latency + main-thread scheduling.
+// We apply an optional, cursor-only adjustment so visuals align better to what users hear.
+const IOS_CURSOR_LATENCY_COMP_ENABLED =
+  import.meta.env?.VITE_IOS_CURSOR_LATENCY_COMP !== "false";
+const IOS_CURSOR_LATENCY_COMP_MAX_MS = 250;
+const COUNT_IN_AUDIO_GUARD_EARLY_MS = 30;
+const isIOSSafari =
+  typeof navigator !== "undefined" &&
+  (() => {
+    const ua = navigator.userAgent || "";
+    const isIOSDevice =
+      /iPad|iPhone|iPod/i.test(ua) ||
+      // iPadOS sometimes reports as Macintosh
+      (ua.includes("Macintosh") &&
+        typeof document !== "undefined" &&
+        "ontouchend" in document);
+    const isSafari =
+      /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
+    return isIOSDevice && isSafari;
+  })();
 // Ensure there's an audible downbeat exactly when the performance phase begins (end of count-in).
 // Without this, the last count-in click is beat 4 and the start downbeat can be "silent",
 // which makes users play to a later click and get graded as late.
@@ -169,6 +189,8 @@ export function SightReadingGame() {
   const countInEndAudioTimeRef = useRef(null); // AudioContext seconds at count-in end (scheduled)
   const countInEndWallClockMsRef = useRef(null); // Date.now() ms at count-in end (scheduled)
   const performanceStartAudioTimeRef = useRef(null); // AudioContext seconds at performance start (preferred timing baseline)
+  // Cursor-only baseline (may differ from scoring baseline on iOS Safari).
+  const cursorStartAudioTimeRef = useRef(null); // AudioContext seconds
 
   // Input mode state: "keyboard" or "mic"
   const [inputMode, setInputMode] = useState(() => {
@@ -423,6 +445,21 @@ export function SightReadingGame() {
     return Math.max(0, Date.now() - wallClockStartTimeRef.current);
   }, []);
 
+  // Cursor-only elapsed time (may be compensated on iOS Safari for output latency).
+  const getElapsedMsForCursor = useCallback(() => {
+    const baseAudioTime =
+      typeof cursorStartAudioTimeRef.current === "number"
+        ? cursorStartAudioTimeRef.current
+        : performanceStartAudioTimeRef.current;
+    if (typeof baseAudioTime === "number" && baseAudioTime > 0) {
+      const audioNow = audioEngine.getCurrentTime();
+      const elapsedMs = (audioNow - baseAudioTime) * 1000;
+      return Math.max(0, elapsedMs);
+    }
+    if (!wallClockStartTimeRef.current) return 0;
+    return Math.max(0, Date.now() - wallClockStartTimeRef.current);
+  }, []);
+
   // Cursor animation helpers
   const startCursorAnimation = useCallback(() => {
     if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
@@ -460,7 +497,7 @@ export function SightReadingGame() {
         });
         return;
       }
-      const elapsedMs = getElapsedMsFromPerformanceStart();
+      const elapsedMs = getElapsedMsForCursor();
       const elapsedSec = elapsedMs / 1000;
       const patternDurationSec = pattern.totalDuration || 0;
       const clampedSec = Math.min(elapsedSec, patternDurationSec);
@@ -497,7 +534,7 @@ export function SightReadingGame() {
     };
 
     cursorAnimationRef.current = requestAnimationFrame(animate);
-  }, [getElapsedMsFromPerformanceStart]);
+  }, [getElapsedMsForCursor]);
 
   const stopCursorAnimation = useCallback(() => {
     if (cursorAnimationRef.current) {
@@ -2075,7 +2112,7 @@ export function SightReadingGame() {
     const scheduledEndAudio = countInEndAudioTimeRef.current;
     if (typeof scheduledEndAudio === "number") {
       const audioNow = audioEngine.getCurrentTime();
-      if (audioNow + 0.005 < scheduledEndAudio) {
+      if (audioNow + COUNT_IN_AUDIO_GUARD_EARLY_MS / 1000 < scheduledEndAudio) {
         // #region agent log
         __srLog({
           sessionId: "debug-session",
@@ -2171,6 +2208,27 @@ export function SightReadingGame() {
       performanceStartAudioTimeRef.current = audioEngine.getCurrentTime();
     }
 
+    // Cursor-only baseline compensation for iOS Safari (output latency).
+    // Scoring remains anchored to performanceStartAudioTimeRef.
+    cursorStartAudioTimeRef.current = null;
+    if (isIOSSafari && IOS_CURSOR_LATENCY_COMP_ENABLED) {
+      const ctx = audioEngine.audioContextRef?.current;
+      const outputLatencySec =
+        typeof ctx?.outputLatency === "number" ? ctx.outputLatency : null;
+      const outputLatencyMs =
+        typeof outputLatencySec === "number" && outputLatencySec > 0
+          ? Math.round(outputLatencySec * 1000)
+          : 0;
+      const compMs = Math.min(IOS_CURSOR_LATENCY_COMP_MAX_MS, outputLatencyMs);
+      if (
+        compMs > 0 &&
+        typeof performanceStartAudioTimeRef.current === "number"
+      ) {
+        cursorStartAudioTimeRef.current =
+          performanceStartAudioTimeRef.current - compMs / 1000;
+      }
+    }
+
     // Downbeat click exactly at performance start so beat 1 is audible.
     if (PLAY_PERFORMANCE_DOWNBEAT_CLICK) {
       const downbeatAt = performanceStartAudioTimeRef.current + 0.01;
@@ -2227,32 +2285,38 @@ export function SightReadingGame() {
 
     stopCountInVisualization();
     gamePhaseRef.current = GAME_PHASES.PERFORMANCE;
-    setGamePhase(GAME_PHASES.PERFORMANCE);
+    flushSync(() => {
+      setGamePhase(GAME_PHASES.PERFORMANCE);
+      setCursorTime(0);
+    });
     // Note: timing state is already EARLY_WINDOW from count-in, will transition to LIVE via schedulePerformanceLiveActivation
     resetPerformanceLiveState();
 
     // Always start cursor/timeline immediately on performance start.
     // In mic mode, starting the mic can take time; awaiting it here causes the cursor to
     // "jump in late" and can also miss the first downbeat.
-    setCursorTime(0);
     startCursorAnimation();
     schedulePerformanceLiveActivation();
-    try {
-      schedulePerformanceTimeline();
-    } catch (error) {
-      // #region agent log
-      __srLog({
-        sessionId: "debug-session",
-        runId: "timeline-audio-pre",
-        hypothesisId: "Hwall",
-        location:
-          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-        message: "timeline.error",
-        data: { error: String(error?.message || error) },
-        timestamp: Date.now(),
-      });
-      // #endregion
-    }
+    // Defer timeline scheduling to the next frame so Safari can paint the phase flip/cursor first.
+    requestAnimationFrame(() => {
+      if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) return;
+      try {
+        schedulePerformanceTimeline();
+      } catch (error) {
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "timeline-audio-pre",
+          hypothesisId: "Hwall",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+          message: "timeline.error",
+          data: { error: String(error?.message || error) },
+          timestamp: Date.now(),
+        });
+        // #endregion
+      }
+    });
 
     if (metronomeEnabled) {
       startMetronomePlayback(performanceStartAudioTimeRef.current);

@@ -3,6 +3,7 @@ import { Outlet, useLocation, Link } from "react-router-dom"; // eslint-disable-
 import { useTranslation } from "react-i18next";
 import Sidebar from "./Sidebar"; // eslint-disable-line
 import Header from "./Header"; // eslint-disable-line
+import MobileTabsNav from "./MobileTabsNav";
 
 export default function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -27,6 +28,9 @@ export default function AppLayout() {
     if (location.pathname === "/notes-master-mode") return "pages.notesMaster";
     if (location.pathname === "/rhythm-mode") return "pages.rhythmMaster";
     if (location.pathname === "/practice-modes") return "pages.gameModes";
+    if (location.pathname === "/practice-sessions") return "pages.practiceSessions.title";
+    if (location.pathname === "/achievements") return "pages.achievements.title";
+    if (location.pathname === "/settings") return "pages.settings.title";
     // Add other routes as needed
     return null; // Default: show PianoMaster logo
   };
@@ -45,30 +49,39 @@ export default function AppLayout() {
       lang={language}
     >
       {!isGameRoute && (
-        <Header onMenuClick={toggleSidebar} pageTitle={pageTitle} />
+        <Header
+          onMenuClick={toggleSidebar}
+          pageTitle={pageTitle}
+          showMenuButton={false}
+        />
       )}
       {!isGameRoute && (
-        <Sidebar
-          isOpen={isSidebarOpen}
-          isGameRoute={isGameRoute}
-          onClose={() => setIsSidebarOpen(false)}
-          onToggle={toggleSidebar}
-        />
+        <div className="hidden xl:block">
+          <Sidebar
+            isOpen={isSidebarOpen}
+            isGameRoute={isGameRoute}
+            onClose={() => setIsSidebarOpen(false)}
+            onToggle={toggleSidebar}
+          />
+        </div>
       )}
       <main
         className={`${
           !isGameRoute
             ? direction === "rtl"
-              ? "pt-2 lg:pr-72"
-              : "pt-2 lg:pl-72"
+              ? "pt-2 xl:pr-72"
+              : "pt-2 xl:pl-72"
             : ""
-        } flex-1 ${isGameRoute ? "min-h-0 overflow-hidden" : ""}`}
+        } flex-1 ${
+          !isGameRoute ? "pb-20 xl:pb-0" : ""
+        } ${isGameRoute ? "min-h-0 overflow-hidden" : ""}`}
       >
         <Outlet />
       </main>
+      {!isGameRoute && <MobileTabsNav />}
       {!isGameRoute && location.pathname === "/" && (
         <footer
-          className={`${!isGameRoute ? (direction === "rtl" ? "lg:pr-72" : "lg:pl-72") : ""} py-4 text-center border-t border-white/10`}
+          className={`${!isGameRoute ? (direction === "rtl" ? "xl:pr-72" : "xl:pl-72") : ""} py-4 pb-24 xl:pb-4 text-center border-t border-white/10`}
         >
           <Link
             to="/legal"
