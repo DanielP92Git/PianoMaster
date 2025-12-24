@@ -166,6 +166,7 @@
       "installTitle": "התקנת PianoMaster",
       "installDescription": "הוסיפו את האפליקציה למסך הבית לחויית אימון מהנה יותר!",
       "installDescriptionNoInstall": "בקרו באפליקציה דרך דפדפן ספארי (iOS) או כרום (Android) כדי לראות אפשרויות התקנה.",
+      "installDescriptionAndroid": "אם הכפתור לא מופיע, פתחו תפריט כרום (⋮) ובחרו ",
       "profile": {
         "profileSettingsTitle": "הגדרות פרופיל",
         "profileSettingsDescription": "ניהול פרטי הפרופיל שלכם",
@@ -270,7 +271,9 @@
   "install": {
     "chrome": {
       "installDescription": "אתם יכולים להתקין את PianoMaster ישירות מכרום.",
-      "installButton": "התקן מגוגל כרום"
+      "installButton": "התקן מגוגל כרום",
+      "installDesctiprion": "אתם יכולים להתקין את PianoMaster ישירות מכרום.",
+      "installButoon": "התקן מגוגל כרום"
     },
     "android": {
       "installDescription": "אם הכפתור לא מופיע, פתחו תפריט כרום (⋮) ובחרו",
@@ -372,7 +375,8 @@
       "newAccessoryUnlocked": "!אביזר חדש נפתח",
       "unlockedMessage": "!פתחתם את {{name}}",
       "equipNow": "לקנות עכשיו",
-      "viewLater": "לצפות מאוחר יותר"
+      "viewLater": "לצפות מאוחר יותר",
+      "equipFailed": "לא הצלחנו להלביש את האביזר. נסו שוב."
     },
     "funFact": "עובדה משעשעת",
     "beethoven": {

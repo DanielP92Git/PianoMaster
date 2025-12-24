@@ -21,7 +21,7 @@ describe("usePitchDetection", () => {
   });
 
   test("hook accepts custom configuration", () => {
-    const mockCallback = jest.fn();
+    const mockCallback = vi.fn();
     const customFrequencies = { C4: 261.63 };
 
     const { result } = renderHook(() =>
@@ -49,7 +49,14 @@ describe("usePitchDetection", () => {
   });
 
   test("frequencyToNote function is available", () => {
-    const { result } = renderHook(() => usePitchDetection());
+    // Use an explicit mapping so this test is not sensitive to the default
+    // Hebrew+English note table ordering.
+    const { result } = renderHook(() =>
+      usePitchDetection({
+        noteFrequencies: { C4: 261.63 },
+        tolerance: 0.03,
+      })
+    );
 
     expect(typeof result.current.frequencyToNote).toBe("function");
 

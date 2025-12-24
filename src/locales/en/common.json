@@ -165,6 +165,7 @@
       "installTitle": "Install PianoMaster",
       "installDescription": "Add the app to your home screen for the best experience",
       "installDescriptionNoInstall": "Visit PianoMaster on your mobile device using Safari (iOS) or Chrome (Android) to see install options.",
+      "installDescriptionAndroid": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose ",
       "profile": {
         "profileSettingsTitle": "Profile Settings",
         "profileSettingsDescription": "Manage your personal information",
@@ -242,13 +243,22 @@
         "remindersDescription": "You will receive notifications for the reminders you set",
         "system": "System",
         "systemDescription": "You will receive notifications for the system events",
+        "notificationsNotSupported": "Notifications Not Supported",
+        "notificationsNotSupportedDescription": "Your browser doesn’t support notifications. You can still use in-app reminders.",
         "notificationsEnabled": "Notifications Enabled",
-        "notificationsEnabledDescription": "You will receive notifications for the settings you enable",
+        "notificationsEnabledDescription": "You will receive notifications via browser push notifications",
+        "notificationsBlocked": "Notifications Blocked",
+        "notificationsBlockedDescription": "Notifications are blocked in your browser. To enable them, update your browser settings.",
+        "notificationsBlockedDescription2": "Look for the lock icon in the address bar and allow notifications.",
         "startTime": "Start Time",
         "endTime": "End Time",
         "dailyPracticeReminder": "Daily Practice Reminder",
         "dailyPracticeReminderDescription": "Turn on a daily practice reminder to stay consistent with your practice",
-        "reminderTime": "Reminder Time"
+        "reminderTime": "Reminder Time",
+        "enablePushNotifications": "Enable browser notifications",
+        "enablePushNotificationsDescription": "Receive notifications via browser push notifications",
+        "requesting": "Requesting...",
+        "enableNotifications": "Enable Notifications"
       },
       "audio": {
         "audioSettingsTitle": "Audio Settings",
@@ -263,7 +273,9 @@
     "install": {
       "chrome": {
         "installDescription": "You can install PianoMaster directly from Chrome.",
-        "installButton": "Install via Chrome"
+        "installButton": "Install via Chrome",
+        "installDesctiprion": "You can install PianoMaster directly from Chrome.",
+        "installButoon": "Install via Chrome"
       },
       "android": {
         "installDescription": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose",
@@ -367,7 +379,8 @@
       "newAccessoryUnlocked": "NEW ACCESSORY UNLOCKED!",
       "unlockedMessage": "You've unlocked {{name}}!",
       "equipNow": "Equip Now",
-      "viewLater": "View Later"
+      "viewLater": "View Later",
+      "equipFailed": "Couldn’t equip this accessory. Please try again."
     },
     "beethoven": {
       "name": "Ludwig van Beethoven",

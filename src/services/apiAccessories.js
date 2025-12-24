@@ -5,6 +5,28 @@ import {
   getAchievementPointsTotal,
 } from "./apiDatabase";
 
+function withTimeout(promise, ms, label) {
+  let timeoutId;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => {
+      reject(new Error(`${label} timed out after ${ms}ms`));
+    }, ms);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
+async function syncEquippedAccessoriesCacheBestEffort(userId) {
+  try {
+    // Cache sync is helpful but should never block UI flows (equip/unlock modals).
+    await withTimeout(syncEquippedAccessoriesCache(userId), 4000, "Accessory cache sync");
+  } catch (error) {
+    console.warn("[accessories] equipped cache sync skipped:", error?.message || error);
+  }
+}
+
 const USER_ACCESSORY_SELECT = `
   *,
   accessory:accessories(*),
@@ -236,7 +258,7 @@ export async function equipAccessory({ userId, accessoryId, slot }) {
     slot || record.slot || record.accessory?.category || "auto";
 
   // Unequip other accessories in the same slot
-  await supabase
+  const { error: unequipError } = await supabase
     .from("user_accessories")
     .update({
       is_equipped: false,
@@ -244,6 +266,10 @@ export async function equipAccessory({ userId, accessoryId, slot }) {
     })
     .eq("user_id", userId)
     .eq("slot", targetSlot);
+
+  if (unequipError) {
+    throw new Error(unequipError.message || "Failed to unequip existing accessory");
+  }
 
   const { data, error } = await supabase
     .from("user_accessories")
@@ -260,7 +286,8 @@ export async function equipAccessory({ userId, accessoryId, slot }) {
     throw new Error(error?.message || "Failed to equip accessory");
   }
 
-  await syncEquippedAccessoriesCache(userId);
+  // Best-effort cache sync; don't block UI if it stalls.
+  void syncEquippedAccessoriesCacheBestEffort(userId);
   return data;
 }
 
@@ -284,7 +311,8 @@ export async function unequipAccessory({ userId, accessoryId }) {
     throw new Error(error.message || "Failed to unequip accessory");
   }
 
-  await syncEquippedAccessoriesCache(userId);
+  // Best-effort cache sync; don't block UI if it stalls.
+  void syncEquippedAccessoriesCacheBestEffort(userId);
   return data;
 }
 
@@ -324,5 +352,5 @@ export async function updateAccessoryCustomMetadata({
   }
 
   // Re-sync equipped accessories cache
-  await syncEquippedAccessoriesCache(userId);
+  void syncEquippedAccessoriesCacheBestEffort(userId);
 }

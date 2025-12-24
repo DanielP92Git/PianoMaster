@@ -391,6 +391,14 @@ export function SightReadingGame() {
     // Keep on-screen keyboard visibility in sync with input mode.
     // Requirement: when switching to microphone input mode, hide the on-screen keyboard.
     setShowKeyboard(inputMode === "keyboard");
+    // IMPORTANT (mic lifecycle): This ref is used to prevent duplicate mic start
+    // requests within a single performance (EARLY_WINDOW warm-up vs. performance start).
+    // It MUST be reset whenever the user switches into mic mode, otherwise subsequent
+    // exercises can skip calling startListening() and the mic will appear "dead".
+    if (inputMode === "mic") {
+      micEarlyWindowStartRequestedRef.current = false;
+      pendingMicLatencyMsRef.current = null;
+    }
     // Dismiss any mic permission prompts when switching away from mic mode
     if (inputMode !== "mic") {
       setShowMicPermissionPrompt(false);
@@ -537,6 +545,9 @@ export function SightReadingGame() {
     if (inputMode === "mic") {
       stopListeningRef.current();
     }
+    // Ensure the next performance can start the mic again if needed.
+    micEarlyWindowStartRequestedRef.current = false;
+    pendingMicLatencyMsRef.current = null;
     setTimingState(TIMING_STATE.OFF);
   }, [audioEngine, inputMode, rhythmPlayback, stopCursorAnimation]);
 
@@ -2322,6 +2333,11 @@ export function SightReadingGame() {
     }
 
     try {
+      // Reset mic warm-up flag for THIS performance.
+      // Without this, the second exercise / Try Again path can skip calling startListening()
+      // (because the EARLY_WINDOW start in the previous run set the flag to true).
+      micEarlyWindowStartRequestedRef.current = false;
+      pendingMicLatencyMsRef.current = null;
       // Resume audio context (required after user interaction)
       const resumed = await audioEngine.resumeAudioContext();
 

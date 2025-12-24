@@ -200,7 +200,8 @@ const VictoryScreen = ({
           parsed.version === SHOWN_UNLOCKS_VERSION &&
           Array.isArray(parsed.ids)
         ) {
-          shownUnlocksRef.current = new Set(parsed.ids);
+          // Normalize IDs to strings to avoid type mismatch (number vs string) across sessions/builds.
+          shownUnlocksRef.current = new Set(parsed.ids.map((id) => String(id)));
         } else {
           window.localStorage.removeItem(storageKey);
         }
@@ -277,7 +278,7 @@ const VictoryScreen = ({
 
     const unseenUnlocks = newlyUnlocked.filter((accessory) => {
       if (!accessory?.id) return false;
-      return !shownUnlocksRef.current.has(accessory.id);
+      return !shownUnlocksRef.current.has(String(accessory.id));
     });
 
     if (unseenUnlocks.length === 0) {
@@ -290,7 +291,7 @@ const VictoryScreen = ({
       setBaselineProgress(currentProgress);
 
       unseenUnlocks.forEach((accessory) => {
-        shownUnlocksRef.current.add(accessory.id);
+        shownUnlocksRef.current.add(String(accessory.id));
       });
 
       if (storageKey && typeof window !== "undefined") {
