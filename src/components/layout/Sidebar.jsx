@@ -85,7 +85,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
       <aside
         ref={sidebarRef}
         className={`
-          fixed top-0 h-screen w-80 max-w-[85vw] 
+          fixed top-0 h-screen w-80 max-w-[85vw] safe-area-padding-top
           bg-white/95 backdrop-blur-xl shadow-2xl border-white/20 
           transition-transform duration-300 ease-in-out z-50 flex flex-col
           lg:fixed lg:top-[5vh] lg:h-[90vh] lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
