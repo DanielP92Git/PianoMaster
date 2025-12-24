@@ -46,6 +46,7 @@ import { resolveProfileAvatarSource } from "./utils/avatarAssets";
 import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
 import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
 import supabase from "./services/supabase";
+import { useGlobalFullscreenOnFirstTap } from "./hooks/useGlobalFullscreenOnFirstTap";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -257,6 +258,8 @@ function AppRoutes() {
 }
 
 function App() {
+  useGlobalFullscreenOnFirstTap();
+
   useEffect(() => {
     const {
       data: { subscription },

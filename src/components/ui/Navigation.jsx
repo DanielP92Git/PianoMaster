@@ -40,12 +40,15 @@ const NavigationBar = React.forwardRef(
       sticky: "sticky top-0 z-50",
     };
 
+    const safeAreaClass = position === "fixed" || position === "sticky" ? "safe-area-padding-top" : "";
+
     return (
       <nav
         ref={ref}
         className={`
         ${positions[position]}
         ${variants[variant]}
+        ${safeAreaClass}
         ${className}
       `}
         {...props}
