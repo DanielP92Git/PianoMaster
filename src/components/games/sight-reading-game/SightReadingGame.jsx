@@ -3110,14 +3110,14 @@ export function SightReadingGame() {
                 )}
               </div>
 
-              {/* Mobile: minimal text only (no big button in flow) */}
+              {/* Mobile: minimal text only (no big button in flow when keyboard is visible) */}
               <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
                 {gamePhase === GAME_PHASES.COUNT_IN && (
                   <p className="text-xs font-semibold">
                     Listen to the count-in
                   </p>
                 )}
-                {gamePhase === GAME_PHASES.DISPLAY && (
+                {gamePhase === GAME_PHASES.DISPLAY && !shouldShowKeyboard && (
                   <div className="flex flex-col items-center gap-2">
                     <button
                       onClick={() => beginPerformanceWithPattern()}
