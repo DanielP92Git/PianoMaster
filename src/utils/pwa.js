@@ -1,6 +1,12 @@
 // PWA utilities for PianoMaster
 // Based on Web.dev PWA best practices
 
+import { isAndroidDevice, isInStandaloneMode } from "./pwaDetection";
+
+const DEBUG_ORIENTATION = Boolean(
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_DEBUG_ORIENTATION
+);
+
 /**
  * Attempt to enter fullscreen mode (best-effort).
  * Note: Most browsers require this to be called from a user gesture (click/tap).
@@ -31,9 +37,11 @@ export async function requestFullscreen(element) {
     return Boolean(document.fullscreenElement);
   } catch (error) {
     // Fullscreen may be blocked (no user gesture / browser policy).
-    console.warn("[fullscreen] requestFullscreen failed:", {
-      error: error?.message || error,
-    });
+    if (DEBUG_ORIENTATION) {
+      console.warn("[fullscreen] requestFullscreen failed:", {
+        error: error?.message || error,
+      });
+    }
     return false;
   }
 }
@@ -44,14 +52,13 @@ export async function requestFullscreen(element) {
  * @returns {Promise<boolean>}
  */
 export async function prepareGameLandscape() {
-  // Many browsers only allow orientation lock in fullscreen/installed context.
-  // Installed PWAs (display-mode: standalone) typically don't need fullscreen.
-  const inStandalone =
-    typeof window !== "undefined" &&
-    window.matchMedia &&
-    window.matchMedia("(display-mode: standalone)").matches;
+  // Many browsers only allow orientation lock in fullscreen context.
+  // On Android, this is often true even for installed PWAs, especially on production origins.
+  // So: always attempt fullscreen on Android; otherwise only attempt fullscreen when not standalone.
+  const inStandalone = isInStandaloneMode();
+  const isAndroid = isAndroidDevice();
 
-  if (!inStandalone) {
+  if (isAndroid || !inStandalone) {
     await requestFullscreen();
   }
 
@@ -96,9 +103,22 @@ export async function lockOrientation(mode = "portrait-primary") {
     await screen.orientation.lock(mode);
     return true;
   } catch (error) {
-    console.error("[orientation] lockOrientation failed:", {
-      error: error?.message || error,
-    });
+    // Keep logs low-noise in production; enable richer context via VITE_DEBUG_ORIENTATION.
+    console.warn(
+      "[orientation] lockOrientation failed:",
+      error?.message || error
+    );
+    if (DEBUG_ORIENTATION) {
+      console.warn("[orientation] context:", {
+        mode,
+        isFullscreen: Boolean(
+          typeof document !== "undefined" && document.fullscreenElement
+        ),
+        isStandalone: isInStandaloneMode(),
+        orientationType: screen?.orientation?.type,
+        orientationAngle: screen?.orientation?.angle,
+      });
+    }
     return false;
   }
 }
