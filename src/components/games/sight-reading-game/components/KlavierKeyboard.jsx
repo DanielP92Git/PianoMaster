@@ -1,7 +1,7 @@
 import React from "react";
 import { Klavier } from "klavier";
 
-const { useMemo, useCallback } = React;
+const { useMemo, useCallback, useEffect, useRef } = React;
 Klavier.displayName = Klavier.displayName || "Klavier";
 
 const NOTE_NAMES = [
@@ -277,6 +277,8 @@ export function KlavierKeyboard({
   onNotePlayed,
   selectedNotes = [],
 }) {
+  const containerRef = useRef(null);
+
   const keyRange = useMemo(
     () => calculateKeyboardRange(selectedNotes),
     [selectedNotes]
@@ -301,12 +303,42 @@ export function KlavierKeyboard({
     [onNotePlayed]
   );
 
+  // Apply CSS touch-action optimization for better scroll performance.
+  // Note: The klavier library (v2.0.1) internally adds non-passive touchstart listeners,
+  // which triggers a browser warning. This is a limitation of the third-party library.
+  // The CSS touch-action property helps the browser optimize touch handling.
+  // To fully resolve the warning, the klavier library would need to be updated to use
+  // passive listeners, or we would need to fork and patch the library.
+  useEffect(() => {
+    if (!visible || !containerRef.current) return;
+
+    const container = containerRef.current;
+    
+    const applyTouchAction = () => {
+      const allElements = container.querySelectorAll("*");
+      allElements.forEach((el) => {
+        if (el instanceof HTMLElement && !el.style.touchAction) {
+          el.style.touchAction = "manipulation";
+        }
+      });
+    };
+
+    // Apply immediately and after klavier renders
+    applyTouchAction();
+    const timeoutId = setTimeout(applyTouchAction, 150);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [visible, keyRange]);
+
   if (!visible) return null;
 
   return (
     <div
+      ref={containerRef}
       className="bg-gray-800/50 flex h-full w-full flex-col rounded-lg p-2 backdrop-blur-sm"
-      style={{ minHeight: "140px" }}
+      style={{ minHeight: "140px", touchAction: "manipulation" }}
       dir="ltr" // Force LTR for piano keyboard - prevents RTL inheritance issues
     >
       <div className="mx-auto flex h-full w-full max-w-full flex-1 items-center justify-center sm:max-w-4xl">
