@@ -10,6 +10,7 @@ import { useMotionTokens } from "../../../utils/useMotionTokens";
 import { prepareGameLandscape } from "../../../utils/pwa";
 import { useTranslation } from "react-i18next";
 import BackButton from "../../ui/BackButton";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 import trebleClefImage from "../../../assets/noteImages/treble/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass/bass-clef.svg";
 import VictoryScreen from "../VictoryScreen";
@@ -73,7 +74,8 @@ export function UnifiedGameSettings({
   );
 
   const [settings, setSettings] = useState(mergedInitialSettings);
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const isMobile = useIsMobile(768);
   const noteSelectionStepConfig = useMemo(
     () => steps.find((step) => step.component === "NoteSelection"),
     [steps]
@@ -95,6 +97,62 @@ export function UnifiedGameSettings({
       return hasChanged ? mergedInitialSettings : prev;
     });
   }, [mergedInitialSettings]);
+
+  const effectiveSteps = useMemo(() => {
+    const originalSteps = Array.isArray(steps) ? steps : [];
+    if (!isMobile) return originalSteps;
+
+    const noteIdx = originalSteps.findIndex(
+      (s) => s?.component === "NoteSelection"
+    );
+    if (noteIdx === -1) return originalSteps;
+
+    const noteStep = originalSteps[noteIdx];
+    const baseConfig = noteStep?.config || {};
+    const clefKey = String(settings.clef || "Treble").toLowerCase();
+
+    const isHebrew = i18n.language === "he";
+    const trebleLabel = isHebrew ? "מפתח סול" : "Treble";
+    const bassLabel = isHebrew ? "מפתח פה" : "Bass";
+
+    const baseTitle = noteStep?.title
+      ? t(noteStep.title, { defaultValue: noteStep.title })
+      : "";
+
+    const withFilter = (step, clefFilter, suffix) => ({
+      ...step,
+      id: `${step.id || "notes"}-${clefFilter}`,
+      title: step.title,
+      titleOverride: baseTitle ? `${baseTitle} • ${suffix}` : suffix,
+      config: { ...baseConfig, clefFilter },
+    });
+
+    // If clef isn't both, keep a single NoteSelection step but filter it.
+    if (clefKey !== "both") {
+      const filter = clefKey === "bass" ? "bass" : "treble";
+      const suffix = filter === "bass" ? bassLabel : trebleLabel;
+      const next = [...originalSteps];
+      next[noteIdx] = withFilter(noteStep, filter, suffix);
+      return next;
+    }
+
+    // Both clefs on mobile => split into two steps.
+    const trebleStep = withFilter(noteStep, "treble", trebleLabel);
+    const bassStep = withFilter(noteStep, "bass", bassLabel);
+
+    return [
+      ...originalSteps.slice(0, noteIdx),
+      trebleStep,
+      bassStep,
+      ...originalSteps.slice(noteIdx + 1),
+    ];
+  }, [i18n.language, isMobile, settings.clef, steps, t]);
+
+  useEffect(() => {
+    setCurrentStep((prev) =>
+      Math.min(Math.max(prev, 1), Math.max(effectiveSteps.length, 1))
+    );
+  }, [effectiveSteps.length]);
 
   const ensureMinNotesSelected = () => {
     if (!noteSelectionStepConfig) return true;
@@ -158,7 +216,7 @@ export function UnifiedGameSettings({
     if (currentStepConfig?.component !== "NoteSelection" && !isStepValid()) {
       return;
     }
-    setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+    setCurrentStep((prev) => Math.min(prev + 1, effectiveSteps.length));
   };
 
   const handlePrevStep = () => {
@@ -180,12 +238,12 @@ export function UnifiedGameSettings({
   }, []);
 
   // Get current step configuration
-  const currentStepConfig = steps[currentStep - 1];
-  const translatedStepTitle = currentStepConfig?.title
-    ? t(currentStepConfig.title, {
-        defaultValue: currentStepConfig.title,
-      })
-    : "";
+  const currentStepConfig = effectiveSteps[currentStep - 1];
+  const translatedStepTitle = currentStepConfig?.titleOverride
+    ? currentStepConfig.titleOverride
+    : currentStepConfig?.title
+      ? t(currentStepConfig.title, { defaultValue: currentStepConfig.title })
+      : "";
 
   // Render the appropriate step component based on configuration
   const renderStepComponent = () => {
@@ -207,6 +265,7 @@ export function UnifiedGameSettings({
             noteData={actualNoteData}
             config={config}
             gameType={gameType}
+            hideHeader={true}
           />
         );
 
@@ -297,25 +356,80 @@ export function UnifiedGameSettings({
             transition={soft}
           >
             <div className="flex flex-1 items-center justify-center overflow-hidden p-4">
-              <div className="flex h-full w-full flex-row items-stretch gap-3">
+              <div className="flex h-full w-full flex-col items-stretch gap-3 sm:flex-row">
                 {/* Settings Container */}
                 <div className="flex flex-1 items-center overflow-hidden">
                   <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md sm:p-3">
                     <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg">
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
-                        total: steps.length,
+                        total: effectiveSteps.length,
                         title: translatedStepTitle,
                       })}
                     </h2>
-                    <div className="flex flex-1 flex-col justify-center overflow-hidden">
+                    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                       {renderStepComponent()}
+                    </div>
+
+                    {/* Mobile Navigation Buttons (inside the main card) */}
+                    <div className="mt-3 flex flex-shrink-0 flex-wrap items-center gap-2 sm:hidden">
+                      {onCancel ? (
+                        <button
+                          onClick={onCancel}
+                          className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-white/15"
+                        >
+                          {t("gameSettings.buttons.cancel")}
+                        </button>
+                      ) : null}
+
+                      {currentStep > 1 ? (
+                        <button
+                          onClick={handlePrevStep}
+                          className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-white/15"
+                        >
+                          {t("gameSettings.buttons.back")}
+                        </button>
+                      ) : null}
+
+                      {currentStep < steps.length ? (
+                        <button
+                          onClick={handleNextStep}
+                          className={`min-w-[140px] flex-[2] touch-manipulation rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 ${
+                            currentStepConfig?.component !== "NoteSelection" &&
+                            !isStepValid()
+                              ? "cursor-not-allowed opacity-50"
+                              : ""
+                          }`}
+                          disabled={
+                            currentStepConfig?.component !== "NoteSelection" &&
+                            !isStepValid()
+                          }
+                        >
+                          {t("gameSettings.buttons.next")}
+                        </button>
+                      ) : (
+                        <button
+                          onClick={handleStart}
+                          className={`min-w-[140px] flex-[2] touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 ${
+                            currentStepConfig?.component !== "NoteSelection" &&
+                            !isStepValid()
+                              ? "cursor-not-allowed opacity-50"
+                              : ""
+                          }`}
+                          disabled={
+                            currentStepConfig?.component !== "NoteSelection" &&
+                            !isStepValid()
+                          }
+                        >
+                          {t("gameSettings.buttons.startGame")}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Navigation Buttons */}
-                <div className="flex min-w-[160px] flex-col justify-center gap-3 sm:min-w-[180px]">
+                <div className="hidden min-w-[160px] flex-col justify-center gap-3 sm:flex sm:min-w-[180px]">
                   {onCancel && (
                     <button
                       onClick={onCancel}
@@ -378,47 +492,133 @@ export function UnifiedGameSettings({
   // Regular full-screen mode
   return (
     <>
-      <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white">
-        <div className="flex-shrink-0 p-2">
-          <BackButton
-            to={backRoute}
-            name={
-              backRoute.includes("notes-master")
-                ? t("pages.notesMaster")
-                : backRoute.includes("rhythm")
-                  ? t("pages.rhythmMaster")
-                  : t("pages.gameModes")
-            }
-            styling="text-white/80 hover:text-white text-sm"
-          />
-        </div>
-        <div className="flex flex-1 items-center justify-center overflow-hidden px-2 py-1">
-          <div
-            className="flex w-full max-w-5xl flex-row items-stretch gap-3"
-            style={{ height: "calc(100vh - 80px)", maxHeight: "650px" }}
-          >
-            {/* Settings Container */}
-            <div className="flex flex-1 items-center overflow-hidden">
+      <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white supports-[height:100svh]:h-[100svh]">
+        <div className="flex flex-1 items-center justify-center overflow-hidden p-2 sm:p-4">
+          <div className="flex h-full w-full max-w-5xl min-h-0 flex-col items-stretch gap-3 sm:flex-row">
+            {/* Settings Container - Full width on mobile */}
+            <div className="flex min-h-0 flex-1 items-center overflow-hidden">
               <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md sm:p-3">
-                <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg">
-                  {t("gameSettings.steps.progress", {
-                    current: currentStep,
-                    total: steps.length,
-                    title: translatedStepTitle,
-                  })}
-                </h2>
-                <div className="flex flex-1 flex-col justify-center overflow-hidden">
+                {/* Back button inside card - mobile only */}
+                <div className="mb-2 flex-shrink-0 sm:hidden">
+                  <BackButton
+                    to={backRoute}
+                    name={
+                      backRoute.includes("notes-master")
+                        ? t("pages.notesMaster")
+                        : backRoute.includes("rhythm")
+                          ? t("pages.rhythmMaster")
+                          : t("pages.gameModes")
+                    }
+                    styling="text-white/80 hover:text-white text-xs"
+                  />
+                </div>
+
+                {/* Desktop: Back button, title, and NoteSelection controls in one line */}
+                {currentStepConfig?.component === "NoteSelection" ? (
+                  <NoteSelectionHeader
+                    settings={settings}
+                    updateSetting={updateSetting}
+                    noteData={actualNoteData}
+                    config={currentStepConfig.config}
+                    gameType={gameType}
+                    backRoute={backRoute}
+                    title={t("gameSettings.steps.progress", {
+                      current: currentStep,
+                      total: effectiveSteps.length,
+                      title: translatedStepTitle,
+                    })}
+                    t={t}
+                  />
+                ) : (
+                  <>
+                    <div className="mb-1.5 hidden flex-shrink-0 items-center justify-between gap-2 sm:flex">
+                      <BackButton
+                        to={backRoute}
+                        name={
+                          backRoute.includes("notes-master")
+                            ? t("pages.notesMaster")
+                            : backRoute.includes("rhythm")
+                              ? t("pages.rhythmMaster")
+                              : t("pages.gameModes")
+                        }
+                        styling="text-white/80 hover:text-white text-sm flex-shrink-0"
+                      />
+                      <h2 className="flex-1 text-center text-base font-bold text-white sm:text-lg">
+                        {t("gameSettings.steps.progress", {
+                          current: currentStep,
+                          total: effectiveSteps.length,
+                          title: translatedStepTitle,
+                        })}
+                      </h2>
+                      <div className="w-[147px] flex-shrink-0" />
+                    </div>
+                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg sm:hidden">
+                      {t("gameSettings.steps.progress", {
+                        current: currentStep,
+                        total: effectiveSteps.length,
+                        title: translatedStepTitle,
+                      })}
+                    </h2>
+                  </>
+                )}
+                <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
                   {renderStepComponent()}
+                </div>
+
+                {/* Mobile Navigation Buttons (inside the main card) */}
+                <div className="mt-3 flex flex-shrink-0 items-center gap-2 sm:hidden">
+                  {currentStep > 1 ? (
+                    <button
+                      onClick={handlePrevStep}
+                      className="flex-1 rounded-xl bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-white/15"
+                    >
+                      {t("gameSettings.buttons.back")}
+                    </button>
+                  ) : null}
+
+                  {currentStep < steps.length ? (
+                    <button
+                      onClick={handleNextStep}
+                      disabled={
+                        currentStepConfig?.component !== "NoteSelection" &&
+                        !isStepValid()
+                      }
+                      className={`touch-manipulation rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 ${
+                        currentStepConfig?.component !== "NoteSelection" &&
+                        !isStepValid()
+                          ? "cursor-not-allowed opacity-50"
+                          : ""
+                      } ${currentStep > 1 ? "flex-1" : "w-full"}`}
+                    >
+                      {t("gameSettings.buttons.next")}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleStart}
+                      disabled={
+                        currentStepConfig?.component !== "NoteSelection" &&
+                        !isStepValid()
+                      }
+                      className={`touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 ${
+                        currentStepConfig?.component !== "NoteSelection" &&
+                        !isStepValid()
+                          ? "cursor-not-allowed opacity-50"
+                          : ""
+                      } ${currentStep > 1 ? "flex-1" : "w-full"}`}
+                    >
+                      {t("gameSettings.buttons.startGame")}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Navigation Buttons */}
-            <div className="flex min-w-[160px] flex-col justify-center gap-3 sm:min-w-[180px]">
+            {/* Desktop Navigation Buttons - Much smaller */}
+            <div className="hidden min-w-[100px] flex-col justify-center gap-2 sm:flex lg:min-w-[120px]">
               {currentStep > 1 && (
                 <button
                   onClick={handlePrevStep}
-                  className="w-full rounded-xl bg-gray-600 px-4 py-2.5 text-base font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-gray-700 sm:px-6 sm:py-3 sm:text-lg"
+                  className="w-full rounded-lg bg-gray-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-colors hover:bg-gray-700 sm:px-3 sm:py-2 sm:text-sm"
                 >
                   {t("gameSettings.buttons.back")}
                 </button>
@@ -430,7 +630,7 @@ export function UnifiedGameSettings({
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
                   }
-                  className={`w-full touch-manipulation rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 sm:px-6 sm:py-3 sm:text-lg ${
+                  className={`w-full touch-manipulation rounded-lg bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 sm:px-3 sm:py-2 sm:text-sm ${
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
                       ? "cursor-not-allowed opacity-50"
@@ -446,7 +646,7 @@ export function UnifiedGameSettings({
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
                   }
-                  className={`w-full touch-manipulation rounded-xl bg-indigo-600 px-4 py-2.5 text-base font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 sm:px-6 sm:py-3 sm:text-lg ${
+                  className={`w-full touch-manipulation rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 sm:px-3 sm:py-2 sm:text-sm ${
                     currentStepConfig?.component !== "NoteSelection" &&
                     !isStepValid()
                       ? "cursor-not-allowed opacity-50"
@@ -461,6 +661,289 @@ export function UnifiedGameSettings({
         </div>
       </div>
       {minNotesModal}
+    </>
+  );
+}
+
+// NoteSelection Header Component (for inline rendering in title row)
+function NoteSelectionHeader({
+  settings,
+  updateSetting,
+  noteData,
+  config,
+  gameType,
+  backRoute,
+  title,
+  t,
+}) {
+  const { i18n } = useTranslation("common");
+  const {
+    noteIdField = "pitch",
+    clefFilter,
+  } = config || {};
+  const clefKey = String(settings.clef || "Treble").toLowerCase();
+  const isBothClefs = clefKey === "both";
+  const enableSharps = !!settings.enableSharps;
+  const enableFlats = !!settings.enableFlats;
+
+  const shouldIncludePitch = useCallback((pitch) => {
+    if (!pitch) return false;
+    const p = String(pitch);
+    return !p.includes("#") && !p.includes("b");
+  }, []);
+
+  const dedupeByPitch = useCallback((items = []) => {
+    const byPitch = new Map();
+    items.forEach((note) => {
+      const pitch = note?.pitch || note?.note;
+      if (!pitch) return;
+      if (!byPitch.has(pitch)) {
+        byPitch.set(pitch, note);
+      }
+    });
+    return Array.from(byPitch.values());
+  }, []);
+
+  const trebleNotesList = useMemo(() => {
+    const filtered = (
+      Array.isArray(noteData.trebleNotes) ? noteData.trebleNotes : []
+    ).filter((n) => shouldIncludePitch(n?.pitch || n?.note));
+    return dedupeByPitch(filtered);
+  }, [dedupeByPitch, noteData.trebleNotes, shouldIncludePitch]);
+
+  const bassNotesList = useMemo(() => {
+    const filtered = (
+      Array.isArray(noteData.bassNotes) ? noteData.bassNotes : []
+    ).filter((n) => shouldIncludePitch(n?.pitch || n?.note));
+    return dedupeByPitch(filtered);
+  }, [dedupeByPitch, noteData.bassNotes, shouldIncludePitch]);
+
+  const notes = useMemo(() => {
+    if (clefKey === "bass") return bassNotesList;
+    if (isBothClefs) return [...trebleNotesList, ...bassNotesList];
+    return trebleNotesList;
+  }, [bassNotesList, clefKey, isBothClefs, trebleNotesList]);
+
+  const selectedCount = settings.selectedNotes?.length || 0;
+  const getNoteId = (note) =>
+    noteIdField === "note" ? note.note || note.pitch : note.pitch || note.note;
+
+  const getAllNoteIds = useCallback(() => {
+    if (clefFilter === "treble") {
+      return isBothClefs
+        ? trebleNotesList.map((n) => `treble:${getNoteId(n)}`)
+        : trebleNotesList.map((n) => getNoteId(n));
+    }
+    if (clefFilter === "bass") {
+      return isBothClefs
+        ? bassNotesList.map((n) => `bass:${getNoteId(n)}`)
+        : bassNotesList.map((n) => getNoteId(n));
+    }
+    if (isBothClefs) {
+      const trebleIds = trebleNotesList.map((n) => `treble:${getNoteId(n)}`);
+      const bassIds = bassNotesList.map((n) => `bass:${getNoteId(n)}`);
+      return [...trebleIds, ...bassIds];
+    }
+    return notes.map((n) => getNoteId(n));
+  }, [
+    clefFilter,
+    isBothClefs,
+    trebleNotesList,
+    bassNotesList,
+    notes,
+    getNoteId,
+  ]);
+
+  const totalSelectableNotes = getAllNoteIds().length;
+
+  const pruneSelectionForAccidentals = useCallback(
+    (selected) => {
+      return selected.filter((id) => {
+        const baseId = String(id).split(":")[1] || String(id);
+        return !baseId.includes("#") && !baseId.includes("b");
+      });
+    },
+    []
+  );
+
+  const toggleSharps = () => {
+    const next = !enableSharps;
+    updateSetting("enableSharps", next);
+    if (!next) {
+      updateSetting(
+        "selectedNotes",
+        pruneSelectionForAccidentals(settings.selectedNotes || [])
+      );
+    }
+  };
+
+  const toggleFlats = () => {
+    const next = !enableFlats;
+    updateSetting("enableFlats", next);
+    if (!next) {
+      updateSetting(
+        "selectedNotes",
+        pruneSelectionForAccidentals(settings.selectedNotes || [])
+      );
+    }
+  };
+
+  const handleSelectAll = () => {
+    const allIds = getAllNoteIds();
+    updateSetting("selectedNotes", allIds);
+  };
+
+  const handleDeselectAll = () => {
+    updateSetting("selectedNotes", []);
+  };
+
+  return (
+    <>
+      {/* "Desktop-like" (>=sm): wrap-aware header so narrow landscape screens don't get cramped */}
+      <div className="mb-1.5 hidden flex-shrink-0 flex-wrap items-center gap-2 sm:flex">
+        {/* Keep Back link in the top row */}
+        <div className="flex flex-shrink-0 max-[720px]:basis-full max-[720px]:justify-end">
+          <BackButton
+            to={backRoute}
+            name={
+              backRoute.includes("notes-master")
+                ? t("pages.notesMaster")
+                : backRoute.includes("rhythm")
+                  ? t("pages.rhythmMaster")
+                  : t("pages.gameModes")
+            }
+            styling="text-white/80 hover:text-white text-xs"
+          />
+        </div>
+
+        {/* Title: centered; on narrow widths it becomes its own line */}
+        <h2 className="min-w-0 flex-1 text-center text-sm font-bold text-white sm:text-base max-[720px]:basis-full max-[720px]:order-2">
+          {title}
+        </h2>
+
+        {/* Controls: on narrow widths, move under the title and center them */}
+        <div className="flex flex-shrink-0 items-center gap-1.5 max-[720px]:basis-full max-[720px]:order-3 max-[720px]:justify-center">
+          {/* Accidentals - symbols only */}
+          <button
+            type="button"
+            onClick={toggleSharps}
+            aria-pressed={enableSharps}
+            className={`rounded-full border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+              enableSharps
+                ? "bg-purple-600 text-white"
+                : "bg-white/10 text-white/80 hover:bg-white/15"
+            }`}
+            title={t("gameSettings.noteSelection.sharps", { defaultValue: "Sharps" })}
+          >
+            ♯
+          </button>
+          <button
+            type="button"
+            onClick={toggleFlats}
+            aria-pressed={enableFlats}
+            className={`rounded-full border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+              enableFlats
+                ? "bg-purple-600 text-white"
+                : "bg-white/10 text-white/80 hover:bg-white/15"
+            }`}
+            title={t("gameSettings.noteSelection.flats", { defaultValue: "Flats" })}
+          >
+            ♭
+          </button>
+          {/* Selection actions */}
+          <button
+            type="button"
+            onClick={handleSelectAll}
+            disabled={
+              totalSelectableNotes === 0 ||
+              selectedCount === totalSelectableNotes
+            }
+            className={`rounded-full border border-white/30 bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 transition-opacity ${
+              totalSelectableNotes === 0 ||
+              selectedCount === totalSelectableNotes
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
+            }`}
+            title={t("gameSettings.noteSelection.selectAll", { defaultValue: "Select all" })}
+          >
+            {t("gameSettings.noteSelection.selectAllShort", { defaultValue: "All" })}
+          </button>
+          <button
+            type="button"
+            onClick={handleDeselectAll}
+            disabled={selectedCount === 0}
+            className={`rounded-full border border-white/30 bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 transition-opacity ${
+              selectedCount === 0
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
+            }`}
+            title={t("gameSettings.noteSelection.deselectAll", { defaultValue: "Deselect all" })}
+          >
+            {t("gameSettings.noteSelection.deselectAllShort", { defaultValue: "Clear" })}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile: Title and Controls */}
+      <div className="mb-1.5 flex flex-shrink-0 flex-col gap-1 sm:hidden">
+        <h2 className="text-center text-sm font-bold text-white sm:text-base">
+          {title}
+        </h2>
+        <div className="flex flex-wrap items-center justify-center gap-1">
+          <button
+            type="button"
+            onClick={toggleSharps}
+            aria-pressed={enableSharps}
+            className={`rounded-full border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+              enableSharps
+                ? "bg-purple-600 text-white"
+                : "bg-white/10 text-white/80 hover:bg-white/15"
+            }`}
+          >
+            ♯
+          </button>
+          <button
+            type="button"
+            onClick={toggleFlats}
+            aria-pressed={enableFlats}
+            className={`rounded-full border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
+              enableFlats
+                ? "bg-purple-600 text-white"
+                : "bg-white/10 text-white/80 hover:bg-white/15"
+            }`}
+          >
+            ♭
+          </button>
+          <button
+            type="button"
+            onClick={handleSelectAll}
+            disabled={
+              totalSelectableNotes === 0 ||
+              selectedCount === totalSelectableNotes
+            }
+            className={`rounded-full border border-white/30 bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 transition-opacity ${
+              totalSelectableNotes === 0 ||
+              selectedCount === totalSelectableNotes
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-white/15"
+            }`}
+          >
+            {t("gameSettings.noteSelection.selectAllShort", { defaultValue: "All" })}
+          </button>
+          <button
+            type="button"
+            onClick={handleDeselectAll}
+            disabled={selectedCount === 0}
+            className={`rounded-full border border-white/30 bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 transition-opacity ${
+              selectedCount === 0
+                ? "cursor-not-allowed opacity-40"
+                : "hover:bg-white/15"
+            }`}
+          >
+            {t("gameSettings.noteSelection.deselectAllShort", { defaultValue: "Clear" })}
+          </button>
+        </div>
+      </div>
     </>
   );
 }
@@ -544,6 +1027,7 @@ function NoteSelection({
   noteData,
   config,
   gameType,
+  hideHeader = false,
 }) {
   const { t, i18n } = useTranslation("common");
   const {
@@ -551,17 +1035,20 @@ function NoteSelection({
     minNotes = 2,
     noteIdField = "pitch",
     selectAllByDefault = false,
+    clefFilter,
   } = config;
   const clefKey = String(settings.clef || "Treble").toLowerCase();
-  const isBothClefs = clefKey === "both";
+  const isBothClefsSelection = clefKey === "both";
+  const isSplitClef = clefFilter === "treble" || clefFilter === "bass";
+  const isBothClefsLayout = isBothClefsSelection && !isSplitClef;
   const enableSharps = !!settings.enableSharps;
   const enableFlats = !!settings.enableFlats;
   const makeClefQualifiedId = useCallback(
     (rowKey, baseId) => {
       if (!baseId) return null;
-      return isBothClefs ? `${rowKey}:${baseId}` : baseId;
+      return isBothClefsSelection ? `${rowKey}:${baseId}` : baseId;
     },
-    [isBothClefs]
+    [isBothClefsSelection]
   );
   // Note-selection UI should always show *natural notes only*.
   // Sharps/flats toggles affect gameplay only (not which cards are shown here).
@@ -597,10 +1084,18 @@ function NoteSelection({
   }, [dedupeByPitch, noteData.bassNotes, shouldIncludePitch]);
 
   const notes = useMemo(() => {
+    if (clefFilter === "treble") return trebleNotesList;
+    if (clefFilter === "bass") return bassNotesList;
     if (clefKey === "bass") return bassNotesList;
-    if (isBothClefs) return [...trebleNotesList, ...bassNotesList];
+    if (isBothClefsSelection) return [...trebleNotesList, ...bassNotesList];
     return trebleNotesList;
-  }, [bassNotesList, clefKey, isBothClefs, trebleNotesList]);
+  }, [
+    bassNotesList,
+    clefFilter,
+    clefKey,
+    isBothClefsSelection,
+    trebleNotesList,
+  ]);
 
   const scrollContainerRef = useRef(null);
   const trebleScrollContainerRef = useRef(null);
@@ -613,16 +1108,29 @@ function NoteSelection({
 
   // Scroll to C4 when bass clef is selected (also applies for "both" => bass row)
   useEffect(() => {
+    const shouldScrollBass =
+      clefFilter === "bass" ||
+      clefKey === "bass" ||
+      (clefKey === "both" && !clefFilter);
+
     if (
-      (clefKey === "bass" || clefKey === "both") &&
-      (clefKey === "bass"
+      shouldScrollBass &&
+      (clefFilter
         ? scrollContainerRef.current
-        : bassScrollContainerRef.current) &&
+        : clefKey === "bass"
+          ? scrollContainerRef.current
+          : bassScrollContainerRef.current) &&
       !hasScrolledToC4Ref.current
     ) {
-      const listToScroll = clefKey === "bass" ? noteCards : bassNotesList;
-      const targetContainer =
-        clefKey === "bass"
+      const listToScroll =
+        clefFilter === "bass"
+          ? noteCards
+          : clefKey === "bass"
+            ? noteCards
+            : bassNotesList;
+      const targetContainer = clefFilter
+        ? scrollContainerRef.current
+        : clefKey === "bass"
           ? scrollContainerRef.current
           : bassScrollContainerRef.current;
 
@@ -650,10 +1158,10 @@ function NoteSelection({
       }
     }
     // Reset scroll flag when clef changes
-    if (clefKey !== "bass") {
+    if (!shouldScrollBass) {
       hasScrolledToC4Ref.current = false;
     }
-  }, [bassNotesList, clefKey, noteCards]);
+  }, [bassNotesList, clefFilter, clefKey, noteCards]);
 
   const handleNoteToggle = (pitch) => {
     const currentNotes = Array.isArray(settings.selectedNotes)
@@ -676,7 +1184,14 @@ function NoteSelection({
   };
 
   const allCardsForSelection = useMemo(() => {
-    if (!isBothClefs) return noteCards;
+    if (!isBothClefsSelection) return noteCards;
+    if (clefFilter === "treble" || clefFilter === "bass") {
+      // Split-step mode: still use clef-qualified IDs when the global clef is "both".
+      return noteCards.map((note) => ({
+        ...note,
+        __selectionRowKey: clefFilter,
+      }));
+    }
     // For both clefs, treat treble and bass rows as independent selections.
     return [
       ...trebleNotesList.map((note) => ({
@@ -688,7 +1203,7 @@ function NoteSelection({
         __selectionRowKey: "bass",
       })),
     ];
-  }, [bassNotesList, isBothClefs, noteCards, trebleNotesList]);
+  }, [bassNotesList, clefFilter, isBothClefsSelection, noteCards, trebleNotesList]);
 
   const getAllNoteIds = useCallback(() => {
     return allCardsForSelection
@@ -796,69 +1311,111 @@ function NoteSelection({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      {/* Header with filter buttons - always visible, never cropped */}
-      <div className="mb-2 flex flex-shrink-0 flex-wrap items-center justify-end gap-2 text-xs text-white/80 sm:text-sm">
-        <div className="flex items-center gap-2">
-          {/* Accidentals toggles (do not show accidental cards unless enabled) */}
-          <button
-            type="button"
-            onClick={toggleSharps}
-            aria-pressed={enableSharps}
-            className={`rounded-full border border-white/30 px-3 py-1 font-semibold transition-colors ${
-              enableSharps
-                ? "bg-purple-600 text-white"
-                : "bg-white/10 text-white/80 hover:bg-white/15"
-            }`}
-          >
-            ♯{" "}
-            {t("gameSettings.noteSelection.sharps", { defaultValue: "Sharps" })}
-          </button>
-          <button
-            type="button"
-            onClick={toggleFlats}
-            aria-pressed={enableFlats}
-            className={`rounded-full border border-white/30 px-3 py-1 font-semibold transition-colors ${
-              enableFlats
-                ? "bg-purple-600 text-white"
-                : "bg-white/10 text-white/80 hover:bg-white/15"
-            }`}
-          >
-            ♭ {t("gameSettings.noteSelection.flats", { defaultValue: "Flats" })}
-          </button>
-          <button
-            type="button"
-            onClick={handleSelectAll}
-            disabled={
-              totalSelectableNotes === 0 ||
-              selectedCount === totalSelectableNotes
-            }
-            className={`rounded-full border border-white/30 bg-emerald-600 px-3 py-1 font-semibold text-white/90 transition-opacity ${
-              totalSelectableNotes === 0 ||
-              selectedCount === totalSelectableNotes
-                ? "cursor-not-allowed opacity-40"
-                : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
-            }`}
-          >
-            {t("gameSettings.noteSelection.selectAll", {
-              defaultValue: "Select all",
-            })}
-          </button>
-          <button
-            type="button"
-            onClick={handleDeselectAll}
-            disabled={selectedCount === 0}
-            className={`rounded-full border border-white/30 bg-indigo-600 px-3 py-1 font-semibold text-white/90 transition-opacity ${
-              selectedCount === 0
-                ? "cursor-not-allowed opacity-40"
-                : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
-            }`}
-          >
-            {t("gameSettings.noteSelection.deselectAll", {
-              defaultValue: "Deselect all",
-            })}
-          </button>
+      {/* Header (ultra-compact for mobile to maximize note card space) - hidden when controls are in title */}
+      {!hideHeader && (
+        <div className="mb-1.5 flex flex-shrink-0 flex-col gap-1">
+        {/* Single row: Selected count + Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] text-white/80 sm:text-xs">
+          {/* Selected count on left */}
+          <p className="flex-shrink-0 text-[10px] font-medium text-white/80 sm:text-xs">
+            {t("gameSettings.noteSelection.selectedCount", { count: selectedCount })}
+          </p>
+
+          {/* Controls on right - compact buttons */}
+          <div className="flex flex-wrap items-center gap-1">
+            {/* Accidentals toggles */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={toggleSharps}
+                aria-pressed={enableSharps}
+                className={`rounded-full border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold transition-colors sm:px-2 sm:py-1 sm:text-xs ${
+                  enableSharps
+                    ? "bg-purple-600 text-white"
+                    : "bg-white/10 text-white/80 hover:bg-white/15"
+                }`}
+              >
+                <span className="sm:hidden">♯</span>
+                <span className="hidden sm:inline">
+                  ♯{" "}
+                  {t("gameSettings.noteSelection.sharps", {
+                    defaultValue: "Sharps",
+                  })}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={toggleFlats}
+                aria-pressed={enableFlats}
+                className={`rounded-full border border-white/30 px-1.5 py-0.5 text-[10px] font-semibold transition-colors sm:px-2 sm:py-1 sm:text-xs ${
+                  enableFlats
+                    ? "bg-purple-600 text-white"
+                    : "bg-white/10 text-white/80 hover:bg-white/15"
+                }`}
+              >
+                <span className="sm:hidden">♭</span>
+                <span className="hidden sm:inline">
+                  ♭{" "}
+                  {t("gameSettings.noteSelection.flats", {
+                    defaultValue: "Flats",
+                  })}
+                </span>
+              </button>
+            </div>
+
+            {/* Selection actions */}
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleSelectAll}
+                disabled={
+                  totalSelectableNotes === 0 ||
+                  selectedCount === totalSelectableNotes
+                }
+                className={`rounded-full border border-white/30 bg-emerald-600 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 transition-opacity sm:px-2 sm:py-1 sm:text-xs ${
+                  totalSelectableNotes === 0 ||
+                  selectedCount === totalSelectableNotes
+                    ? "cursor-not-allowed opacity-40"
+                    : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
+                }`}
+              >
+                <span className="sm:hidden">
+                  {t("gameSettings.noteSelection.selectAllShort", {
+                    defaultValue: "All",
+                  })}
+                </span>
+                <span className="hidden sm:inline">
+                  {t("gameSettings.noteSelection.selectAll", {
+                    defaultValue: "Select all",
+                  })}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDeselectAll}
+                disabled={selectedCount === 0}
+                className={`rounded-full border border-white/30 bg-indigo-600 px-1.5 py-0.5 text-[10px] font-semibold text-white/90 transition-opacity sm:px-2 sm:py-1 sm:text-xs ${
+                  selectedCount === 0
+                    ? "cursor-not-allowed opacity-40"
+                    : "hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/60"
+                }`}
+              >
+                <span className="sm:hidden">
+                  {t("gameSettings.noteSelection.deselectAllShort", {
+                    defaultValue: "Clear",
+                  })}
+                </span>
+                <span className="hidden sm:inline">
+                  {t("gameSettings.noteSelection.deselectAll", {
+                    defaultValue: "Deselect all",
+                  })}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
+      )}
 
       {/* Scrollable note cards container */}
       <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm">
@@ -866,13 +1423,19 @@ function NoteSelection({
           const isHebrew = i18n.language === "he";
 
           const renderRow = (rowNotes, { rowKey, rowRef }) => (
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div
+              className={`min-h-0 flex-1 overflow-hidden ${
+                clefFilter ? "note-selection-split-row" : ""
+              }`}
+            >
               <div
                 ref={rowRef}
-                className={`scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent flex h-full snap-x snap-mandatory items-center overflow-x-auto overflow-y-hidden ${
-                  isBothClefs
-                    ? "gap-1.5 px-2 py-1.5 sm:gap-2 sm:px-3 sm:py-2 lg:gap-3"
-                    : "gap-2 px-3 py-2 sm:gap-3 sm:px-4 sm:py-3 lg:gap-4"
+                className={`scrollbar-thin scrollbar-thumb-white/30 scrollbar-track-transparent flex h-full snap-x snap-mandatory overflow-x-auto overflow-y-hidden ${
+                  clefFilter ? "items-stretch" : "items-center"
+                } ${
+                  isBothClefsLayout
+                    ? "gap-1.5 px-2 py-1 sm:gap-2 sm:px-3 sm:py-2 lg:gap-3"
+                    : "gap-2 px-2.5 py-1.5 sm:gap-3 sm:px-4 sm:py-3 lg:gap-4"
                 }`}
               >
                 {rowNotes.map((note, idx) => {
@@ -899,7 +1462,7 @@ function NoteSelection({
                     <button
                       key={`${rowKey}-${noteId}-${idx}`}
                       onClick={() => handleNoteToggle(noteId)}
-                      className={`${isBothClefs ? "note-card-two-row" : "note-card-responsive"} relative flex snap-center flex-col items-center justify-between overflow-hidden rounded-xl transition-all duration-200 lg:rounded-2xl ${
+                      className={`${isBothClefsLayout ? "note-card-two-row" : "note-card-responsive"} relative flex snap-center flex-col items-center justify-between overflow-hidden rounded-xl transition-all duration-200 lg:rounded-2xl ${
                         isSelected
                           ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] ring-2 ring-white/50"
                           : "bg-white/10 text-white/90 hover:bg-white/20 hover:ring-1 hover:ring-white/30"
@@ -909,7 +1472,7 @@ function NoteSelection({
                       {showImages && note.ImageComponent ? (
                         <div
                           className={`flex w-full flex-1 items-center justify-center overflow-hidden ${
-                            isBothClefs
+                            isBothClefsLayout
                               ? "p-0.5 sm:p-1 lg:p-1.5"
                               : "p-1 sm:p-1.5 lg:p-2"
                           }`}
@@ -925,7 +1488,7 @@ function NoteSelection({
                       ) : (
                         <div
                           className={`flex flex-1 items-center justify-center font-bold ${
-                            isBothClefs
+                            isBothClefsLayout
                               ? "text-sm sm:text-base lg:text-lg"
                               : "text-lg sm:text-xl lg:text-2xl"
                           }`}
@@ -936,7 +1499,7 @@ function NoteSelection({
                       {/* Label area */}
                       <div
                         className={`w-full flex-shrink-0 text-center font-medium ${
-                          isBothClefs
+                          isBothClefsLayout
                             ? "py-0.5 text-[9px] sm:py-1 sm:text-[10px] lg:py-1 lg:text-[11px]"
                             : "py-1 text-[10px] sm:py-1.5 sm:text-[11px] lg:py-2 lg:text-xs"
                         } ${isSelected ? "bg-black/10" : "bg-black/5"}`}
@@ -945,7 +1508,7 @@ function NoteSelection({
                         {displayPitch ? (
                           <span
                             className={`ml-1 opacity-70 ${
-                              isBothClefs
+                              isBothClefsLayout
                                 ? "text-[8px] sm:text-[9px]"
                                 : "text-[9px] sm:text-[10px]"
                             }`}
@@ -961,9 +1524,9 @@ function NoteSelection({
             </div>
           );
 
-          if (!isBothClefs) {
+          if (!isBothClefsLayout) {
             return renderRow(noteCards, {
-              rowKey: "single",
+              rowKey: clefFilter || "single",
               rowRef: scrollContainerRef,
             });
           }
@@ -983,13 +1546,6 @@ function NoteSelection({
           );
         })()}
       </div>
-
-      {/* Footer - selected count - always visible */}
-      <p className="mt-2 flex-shrink-0 text-xs text-white/80 sm:text-sm">
-        {t("gameSettings.noteSelection.selectedCount", {
-          count: selectedCount,
-        })}
-      </p>
     </div>
   );
 }

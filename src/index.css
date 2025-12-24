@@ -1311,62 +1311,93 @@ body {
    NOTE CARD RESPONSIVE SIZING
    ======================================== */
 
-/* Mobile: compact cards */
+/* Mobile: larger cards for easier tapping */
 .note-card-responsive {
-  width: clamp(70px, 20vw, 90px);
-  height: clamp(90px, 22vh, 130px);
+  width: clamp(110px, 28vw, 140px);
+  height: clamp(140px, 32vh, 180px);
   flex-shrink: 0;
 }
 
 /* Tablet: medium cards */
 @media (min-width: 640px) {
   .note-card-responsive {
-    width: clamp(85px, 15vw, 110px);
-    height: clamp(110px, 20vh, 150px);
+    width: clamp(120px, 20vw, 150px);
+    height: clamp(150px, 28vh, 190px);
   }
 }
 
 /* Desktop: larger cards */
 @media (min-width: 1024px) {
   .note-card-responsive {
-    width: clamp(100px, 10vw, 140px);
-    height: clamp(130px, 22vh, 200px);
+    width: clamp(130px, 12vw, 170px);
+    height: clamp(160px, 28vh, 230px);
   }
 }
 
 /* Large desktop: even larger cards */
 @media (min-width: 1280px) {
   .note-card-responsive {
-    width: clamp(110px, 9vw, 150px);
-    height: clamp(150px, 24vh, 220px);
+    width: clamp(140px, 10vw, 180px);
+    height: clamp(180px, 30vh, 250px);
   }
 }
 
-/* Two-row mode (for "Both" clefs): smaller cards to fit both rows */
+/* Two-row mode (for "Both" clefs): larger cards to fit both rows while still being tappable */
 .note-card-two-row {
-  width: clamp(65px, 18vw, 85px);
-  height: clamp(75px, 18vh, 105px);
+  width: clamp(100px, 26vw, 130px);
+  height: clamp(120px, 28vh, 160px);
   flex-shrink: 0;
 }
 
 @media (min-width: 640px) {
   .note-card-two-row {
-    width: clamp(75px, 14vw, 95px);
-    height: clamp(85px, 16vh, 115px);
+    width: clamp(110px, 20vw, 140px);
+    height: clamp(130px, 24vh, 170px);
   }
 }
 
 @media (min-width: 1024px) {
   .note-card-two-row {
-    width: clamp(85px, 9vw, 115px);
-    height: clamp(100px, 18vh, 140px);
+    width: clamp(120px, 12vw, 160px);
+    height: clamp(150px, 26vh, 200px);
   }
 }
 
 @media (min-width: 1280px) {
   .note-card-two-row {
-    width: clamp(95px, 8vw, 125px);
-    height: clamp(115px, 20vh, 160px);
+    width: clamp(130px, 10vw, 170px);
+    height: clamp(170px, 28vh, 220px);
+  }
+}
+
+/* Short viewports (landscape phones): let the cards grow taller to fill available space */
+@media (max-height: 500px) {
+  .note-card-responsive {
+    width: clamp(120px, 22vw, 170px);
+    height: clamp(160px, 62vh, 300px);
+  }
+
+  .note-card-two-row {
+    width: clamp(110px, 20vw, 160px);
+    height: clamp(140px, 56vh, 240px);
+  }
+}
+
+/* Very short landscape: reduce height further so labels never clip */
+@media (max-height: 400px) {
+  .note-card-responsive {
+    height: clamp(150px, 56vh, 260px);
+  }
+}
+
+/* Split-step row padding (keeps scrollbar visible without stealing too much height) */
+.note-selection-split-row {
+  padding-bottom: 1rem; /* 16px */
+}
+
+@media (max-height: 420px) {
+  .note-selection-split-row {
+    padding-bottom: 0.5rem; /* 8px */
   }
 }
 

@@ -5,25 +5,25 @@ import { prepareGameLandscape } from "../../utils/pwa";
 
 /**
  * Reusable game mode grid component
- * - Shows max 3 cards per row on mobile
+ * - Shows max 3 cards per row on mobile (default)
  * - If less than 3 cards, they span the full width evenly
  * - Maintains consistent layout across all game mode screens
+ * - Supports column layout for portrait mode via `layout="column"` prop
  */
-export function GameModeGrid({ games }) {
+export function GameModeGrid({ games, layout = "grid" }) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
 
-  const handleEnterGame = async (event, path) => {
+  const handleEnterGame = (event, path) => {
     event.preventDefault();
 
     // Best-effort: try to enter fullscreen and lock landscape *from the user gesture*.
-    // Even if this fails (browser policy), navigation should still proceed.
-    try {
-      await prepareGameLandscape();
-    } catch {
-      // ignore
-    }
+    // Fire-and-forget: don't block navigation if this fails or takes time.
+    prepareGameLandscape().catch(() => {
+      // Silently ignore failures - navigation should proceed regardless
+    });
 
+    // Navigate immediately, don't wait for fullscreen
     navigate(path);
   };
   // Determine grid columns based on number of games
@@ -37,19 +37,25 @@ export function GameModeGrid({ games }) {
     }
   };
 
+  // Use column layout if specified
+  const containerClass =
+    layout === "column"
+      ? "flex flex-col gap-3"
+      : `grid ${getGridClass()} gap-3`;
+
   return (
-    <div className={`grid ${getGridClass()} gap-3`}>
+    <div className={containerClass}>
       {games.map((game) => (
         <Link
           key={game.id}
           to={game.path}
           onClick={(e) => handleEnterGame(e, game.path)}
-          className="relative group h-[200px] w-full"
+          className="group relative block h-[200px] w-full cursor-pointer"
         >
-          <div className="h-full bg-gradient-to-br from-indigo-600/20 to-purple-600/20 backdrop-blur-md rounded-xl border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02] hover:from-indigo-600/30 hover:to-purple-600/30">
-            <div className="h-full flex flex-col p-3">
+          <div className="h-full transform rounded-xl border border-white/20 bg-gradient-to-br from-indigo-600/20 to-purple-600/20 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-[1.02] hover:from-indigo-600/30 hover:to-purple-600/30 hover:shadow-2xl">
+            <div className="flex h-full flex-col p-3">
               <div className="flex items-start justify-between">
-                <div className="bg-white/5 rounded-lg p-1.5">{game.icon}</div>
+                <div className="rounded-lg bg-white/5 p-1.5">{game.icon}</div>
                 <span className="inline-flex items-center rounded-full bg-white/5 px-2 py-0.5 text-xs font-medium text-white/80 ring-1 ring-inset ring-white/20">
                   {game.displayDifficulty ||
                     (game.difficultyKey
@@ -58,7 +64,7 @@ export function GameModeGrid({ games }) {
                 </span>
               </div>
               <div className="mt-2 flex-1">
-                <h2 className="text-base font-semibold text-white group-hover:text-blue-200 transition-colors">
+                <h2 className="text-base font-semibold text-white transition-colors group-hover:text-blue-200">
                   {game.displayName ||
                     (game.nameKey ? t(game.nameKey) : game.name)}
                 </h2>
@@ -70,9 +76,12 @@ export function GameModeGrid({ games }) {
                 </p>
               </div>
               <div className="mt-2 flex justify-end">
-                <button className="inline-flex items-center justify-center px-2 py-1 text-xs bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors">
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs text-white backdrop-blur-md transition-colors"
+                >
                   {t("games.actions.start")}
-                </button>
+                </span>
               </div>
             </div>
           </div>

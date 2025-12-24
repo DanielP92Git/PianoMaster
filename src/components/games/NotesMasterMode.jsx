@@ -43,7 +43,7 @@ export function NotesMasterMode() {
         />
       </div>
 
-      <GameModeGrid games={games} />
+      <GameModeGrid games={games} layout="column" />
     </div>
   );
 }
