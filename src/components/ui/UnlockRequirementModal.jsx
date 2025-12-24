@@ -225,7 +225,7 @@ const UnlockRequirementModal = ({
         {/* Body: stack on portrait, 2-col on landscape (better for forced-landscape phones) */}
         <div className="space-y-3 landscape:grid landscape:grid-cols-[220px_1fr] landscape:items-start landscape:gap-4 landscape:space-y-0">
           {/* Accessory preview */}
-          <div className="overflow-hidden rounded-lg border border-white/10 bg-black/20 sm:rounded-xl landscape:self-start landscape:h-[min(240px,60svh)]">
+          <div className="overflow-hidden rounded-lg border border-white/10 bg-black/20 sm:rounded-xl landscape:h-[min(240px,60svh)] landscape:self-start">
             <img
               src={accessory.image_url}
               alt={accessory.name}

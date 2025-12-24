@@ -1985,7 +1985,7 @@ export function NotesRecognitionGame() {
               >
                 <StageCard className="p-3 sm:p-5">
                   <div
-                    className={`rounded-3xl bg-white/95 p-4 shadow-[inset_0_2px_0_rgba(255,255,255,0.75)] ring-1 ring-black/5 transition-all duration-200 motion-reduce:transition-none ${
+                    className={`rounded-3xl bg-white p-4 shadow-[inset_0_2px_0_rgba(255,255,255,0.75)] ring-1 ring-black/5 transition-all duration-200 motion-reduce:transition-none ${
                       noteFlash
                         ? "ring-4 ring-emerald-300/60"
                         : "ring-2 ring-white/20"
