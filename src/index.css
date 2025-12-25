@@ -207,10 +207,14 @@ html {
   background-color: var(--color-background);
   /* Prevent overscroll bounce */
   overscroll-behavior: none;
-  /* Support for notch/safe areas */
+  /* Support for notch/safe areas and fullscreen PWA */
   height: 100%;
+  height: -webkit-fill-available;
   width: 100%;
   margin: 0;
+  padding: 0;
+  /* Fullscreen PWA - hide scrollbars on html level */
+  overflow: hidden;
 }
 
 body {
