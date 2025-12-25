@@ -11,6 +11,7 @@ export default function AppLayout() {
   const { t, i18n } = useTranslation("common");
   const direction = i18n.dir();
   const language = i18n.language || i18n.resolvedLanguage || "en";
+  const isDashboard = location.pathname === "/";
 
   // Updated game routes to match actual URL structure
   const gameRoutes = [
@@ -48,11 +49,12 @@ export default function AppLayout() {
       dir={direction}
       lang={language}
     >
-      {!isGameRoute && (
+      {!isGameRoute && !isDashboard && (
         <Header
           onMenuClick={toggleSidebar}
           pageTitle={pageTitle}
           showMenuButton={false}
+          overlay={isDashboard}
         />
       )}
       {!isGameRoute && (
@@ -69,8 +71,12 @@ export default function AppLayout() {
         className={`${
           !isGameRoute
             ? direction === "rtl"
-              ? "pt-2 xl:pr-72"
-              : "pt-2 xl:pl-72"
+              ? isDashboard
+                ? "pt-0 xl:pr-[19rem]"
+                : "pt-2 xl:pr-[19rem]"
+              : isDashboard
+                ? "pt-0 xl:pl-[19rem]"
+              : "pt-2 xl:pl-[19rem]"
             : ""
         } flex-1 ${
           !isGameRoute ? "pb-20 xl:pb-0" : ""
@@ -81,7 +87,7 @@ export default function AppLayout() {
       {!isGameRoute && <MobileTabsNav />}
       {!isGameRoute && location.pathname === "/" && (
         <footer
-          className={`${!isGameRoute ? (direction === "rtl" ? "xl:pr-72" : "xl:pl-72") : ""} py-4 pb-24 xl:pb-4 text-center border-t border-white/10`}
+          className={`${!isGameRoute ? (direction === "rtl" ? "xl:pr-[19rem]" : "xl:pl-[19rem]") : ""} py-4 pb-24 xl:pb-4 text-center border-t border-white/10`}
         >
           <Link
             to="/legal"

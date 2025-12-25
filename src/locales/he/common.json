@@ -271,13 +271,12 @@
   "install": {
     "chrome": {
       "installDescription": "אתם יכולים להתקין את PianoMaster ישירות מכרום.",
-      "installButton": "התקן מגוגל כרום",
-      "installDesctiprion": "אתם יכולים להתקין את PianoMaster ישירות מכרום.",
-      "installButoon": "התקן מגוגל כרום"
+      "installButton": "התקן מגוגל כרום"
     },
     "android": {
       "installDescription": "אם הכפתור לא מופיע, פתחו תפריט כרום (⋮) ובחרו",
-      "installStep": "הוסף למסך הבית"
+      "installStep": "הוסף למסך הבית",
+      "unavailableInsecure": "אי אפשר לפתוח חלון התקנה מהכתובת הזו. באנדרואיד: פתחו את תפריט כרום (⋮) ובחרו {{step}}."
     },
     "ios": {
       "installDescription": "על iPhone או iPad, התקינו את PianoMaster באופן ידני:",
@@ -288,7 +287,8 @@
       "installStep1": "לחץו על הכפתור השיתוף",
       "installStep2": "בחרו \"הוסף למסך הבית\"",
       "installStep3": "לחץו על \"הוסף\" כדי לאשר"
-    }
+    },
+    "unavailableToast": "אפשרות ההתקנה לא זמינה כרגע. באנדרואיד: פתחו את תפריט כרום (⋮) ובחרו \"הוסף למסך הבית\", ואז רעננו."
   },
   "avatars": {
     "title": "בחרו את הדמות שלכם",

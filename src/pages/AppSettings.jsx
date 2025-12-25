@@ -69,19 +69,23 @@ function AppSettings() {
     if (typeof window === "undefined") return;
 
     const handleUnavailable = () => {
-      toast.error(
-        "Install button isn't available right now. Visit in Chrome on Android or Safari on iOS and reload."
-      );
+      toast.error(t("install.unavailableToast"));
     };
 
     window.addEventListener("pwa-install-unavailable", handleUnavailable);
     return () => {
       window.removeEventListener("pwa-install-unavailable", handleUnavailable);
     };
-  }, []);
+  }, [t]);
 
   const handleAndroidInstallRequest = () => {
     if (typeof window === "undefined") return;
+    // The native install prompt only works in a secure context (HTTPS / localhost).
+    // On LAN HTTP, show manual Add-to-Home-Screen guidance instead.
+    if (!window.isSecureContext) {
+      toast(t("install.android.unavailableInsecure", { step: t("install.android.installStep") }));
+      return;
+    }
     window.dispatchEvent(new Event("request-pwa-install"));
   };
 

@@ -1,14 +1,21 @@
 import { Menu, Music2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
 import { getAvatarImageSource } from "../../utils/avatarAssets";
 
-export default function Header({ onMenuClick, pageTitle, showMenuButton = true }) {
+export default function Header({
+  onMenuClick,
+  pageTitle,
+  showMenuButton = true,
+  overlay = false,
+}) {
   const { data: profileData, isLoading } = useUserProfile();
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
+  const location = useLocation();
+  const isDashboard = location.pathname === "/";
 
   const avatarUrl = getAvatarImageSource(
     profileData?.avatars || profileData?.avatar_url,
@@ -19,7 +26,15 @@ export default function Header({ onMenuClick, pageTitle, showMenuButton = true }
     : [];
 
   return (
-    <nav className={`shadow-lg ${isRTL ? "xl:mr-72" : "xl:ml-72"}`}>
+    <nav
+      className={`${
+        overlay && isDashboard ? "fixed top-0 z-50" : ""
+      } left-0 right-0 ${
+        isDashboard
+          ? "bg-gradient-to-b from-black/40 to-transparent  shadow-none"
+          : "shadow-lg"
+      } ${isRTL ? "xl:mr-72" : "xl:ml-72"}`}
+    >
       <div className="mx-auto max-w-7xl px-4">
         <div
           className={`relative flex h-16 items-center justify-between ${isRTL ? "flex-row-reverse" : ""}`}

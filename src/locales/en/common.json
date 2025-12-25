@@ -273,9 +273,7 @@
     "install": {
       "chrome": {
         "installDescription": "You can install PianoMaster directly from Chrome.",
-        "installButton": "Install via Chrome",
-        "installDesctiprion": "You can install PianoMaster directly from Chrome.",
-        "installButoon": "Install via Chrome"
+        "installButton": "Install via Chrome"
       },
       "android": {
         "installDescription": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose",
@@ -292,6 +290,21 @@
         "installStep3": "Tap \"Add\" to confirm"
       }
     }
+  },
+  "install": {
+    "chrome": {
+      "installDescription": "You can install PianoMaster directly from Chrome.",
+      "installButton": "Install via Chrome"
+    },
+    "android": {
+      "installDescription": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose",
+      "installStep": "Add to Home screen",
+      "unavailableInsecure": "Install isn’t available from this address. On Android, open Chrome’s menu (⋮) and choose {{step}}."
+    },
+    "ios": {
+      "installDescription": "On iPhone or iPad, install PianoMaster manually:"
+    },
+    "unavailableToast": "Install isn’t available right now. If you’re on Android, open Chrome’s menu (⋮) and choose Add to Home screen, then reload."
   },
   "avatars": {
     "title": "Choose Your Avatar",

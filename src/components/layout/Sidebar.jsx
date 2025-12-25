@@ -18,20 +18,22 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
   const prevPathname = useRef(location.pathname);
 
   const navItems = getSidebarNavItems({ isStudent, isTeacher, newFeedbackCount });
+  const mainNavItems = navItems.filter((item) => item.id !== "settings");
+  const bottomNavItems = navItems.filter((item) => item.id === "settings");
 
   const getNavLinkClasses = (theme) => {
     const activeClasses =
       theme === "purple"
-        ? "bg-purple-500 text-white shadow-lg"
-        : "bg-indigo-500 text-white shadow-lg";
+        ? "bg-purple-500 text-white shadow-lg shadow-purple-500/30"
+        : "bg-indigo-500 text-white shadow-lg shadow-indigo-500/30";
 
     const inactiveClasses =
       theme === "purple"
-        ? "text-gray-700 hover:bg-purple-50 hover:text-purple-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white"
-        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-gray-300 lg:hover:bg-white/10 lg:hover:text-white";
+        ? "text-gray-700 hover:bg-purple-50 hover:text-purple-700 lg:text-white/80 lg:hover:bg-white/10 lg:hover:text-white"
+        : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-white/80 lg:hover:bg-white/10 lg:hover:text-white";
 
     return ({ isActive }) =>
-      `flex font-semibold items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+      `flex font-semibold items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 text-lg ${
         isRTL ? "direction-rtl text-right" : ""
       } ${isActive ? activeClasses : inactiveClasses}`;
   };
@@ -99,12 +101,12 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           fixed top-0 h-screen w-80 max-w-[85vw] safe-area-padding-top
           bg-white/95 backdrop-blur-xl shadow-2xl border-white/20 
           transition-transform duration-300 ease-in-out z-50 flex flex-col
-          lg:fixed lg:top-[5vh] lg:h-auto lg:max-h-[90vh] lg:w-64 lg:bg-white/10 lg:backdrop-blur-md 
-          lg:rounded-2xl lg:shadow-xl lg:border lg:border-white/20
+          xl:fixed xl:top-6 xl:bottom-6 xl:h-auto xl:max-h-none xl:w-64 xl:bg-white/10 xl:backdrop-blur-md
+          xl:rounded-[2rem] xl:shadow-xl xl:border xl:border-white/20
           ${
             isRTL
-              ? `right-0 border-l lg:right-4 ${isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}`
-              : `left-0 border-r lg:left-4 ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`
+              ? `right-0 border-l xl:right-6 ${isOpen ? "translate-x-0" : "translate-x-full xl:translate-x-0"}`
+              : `left-0 border-r xl:left-6 ${isOpen ? "translate-x-0" : "-translate-x-full xl:translate-x-0"}`
           }
         `}
         aria-label={t("navigation.menuTitle")}
@@ -126,42 +128,61 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </button>
         </div>
 
-        <nav className="flex flex-col p-4 lg:p-6">
-          <div
-            className="space-y-2 lg:space-y-1 pb-4"
-            style={{
-              scrollbarWidth: "thin",
-              scrollbarColor: "rgba(156, 163, 175, 0.5) transparent",
-            }}
-          >
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const hasBadge = item.badgeCount > 0;
+        <nav className="flex flex-1 flex-col p-4 xl:p-6">
+          <div className="flex flex-1 flex-col justify-between gap-8">
+            <div
+              className="space-y-2"
+              style={{
+                scrollbarWidth: "thin",
+                scrollbarColor: "rgba(156, 163, 175, 0.5) transparent",
+              }}
+            >
+              {mainNavItems.map((item) => {
+                const Icon = item.icon;
+                const hasBadge = item.badgeCount > 0;
 
-              return (
-                <NavLink
-                  key={item.id}
-                  to={item.to}
-                  onClick={onClose}
-                  className={({ isActive }) => {
-                    const base = getNavLinkClasses(item.theme)({ isActive });
-                    return item.id === "recordings" ? `${base} relative` : base;
-                  }}
-                >
-                  <Icon className="h-5 w-5 flex-shrink-0" />
-                  <span>{t(item.labelKey)}</span>
-                  {item.id === "recordings" && hasBadge && (
-                    <span
-                      className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-bold text-white bg-red-500 rounded-full px-1.5 shadow-sm ${
-                        isRTL ? "left-3" : "right-3"
-                      }`}
-                    >
-                      {item.badgeCount}
-                    </span>
-                  )}
-                </NavLink>
-              );
-            })}
+                return (
+                  <NavLink
+                    key={item.id}
+                    to={item.to}
+                    onClick={onClose}
+                    className={({ isActive }) => {
+                      const base = getNavLinkClasses(item.theme)({ isActive });
+                      return item.id === "recordings" ? `${base} relative` : base;
+                    }}
+                  >
+                    <Icon className="h-6 w-6 flex-shrink-0" />
+                    <span>{t(item.labelKey)}</span>
+                    {item.id === "recordings" && hasBadge && (
+                      <span
+                        className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center min-w-[20px] h-5 text-xs font-bold text-white bg-red-500 rounded-full px-1.5 shadow-sm ${
+                          isRTL ? "left-4" : "right-4"
+                        }`}
+                      >
+                        {item.badgeCount}
+                      </span>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2">
+              {bottomNavItems.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <NavLink
+                    key={item.id}
+                    to={item.to}
+                    onClick={onClose}
+                    className={getNavLinkClasses(item.theme)}
+                  >
+                    <Icon className="h-6 w-6 flex-shrink-0" />
+                    <span>{t(item.labelKey)}</span>
+                  </NavLink>
+                );
+              })}
+            </div>
           </div>
         </nav>
       </aside>

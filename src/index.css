@@ -985,6 +985,92 @@ body {
 }
 
 /* ========================================
+   DASHBOARD HERO SECTION STYLES
+   ======================================== */
+
+/* Hero section animations and transitions */
+.dashboard-hero-enter {
+  animation: heroFadeIn 0.8s ease-out;
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stats cards with glass morphism and elevation */
+.stats-card-elevated {
+  @apply rounded-2xl border border-white/10 bg-white/95 shadow-2xl backdrop-blur-sm;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-card-elevated:hover {
+  @apply shadow-xl;
+  transform: translateY(-2px);
+}
+
+/* Smooth parallax effect for hero background */
+.hero-parallax {
+  transition: transform 0.3s ease-out;
+}
+
+/* Elegant fade transition from hero to content */
+.hero-to-content-fade {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(49, 46, 129, 0.4) 50%,
+    rgba(49, 46, 129, 0.8) 100%
+  );
+}
+
+/* Enhanced text shadow for hero title */
+.hero-title-shadow {
+  text-shadow: 
+    0 2px 10px rgba(0, 0, 0, 0.3),
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 8px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth scroll animation for stats appearing */
+@keyframes statsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stats-animate-in {
+  animation: statsSlideIn 0.6s ease-out forwards;
+}
+
+.stats-animate-in:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stats-animate-in:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stats-animate-in:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stats-animate-in:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* ========================================
    ACCESSIBILITY STYLES
    ======================================== */
 

@@ -11,22 +11,43 @@ import StreakDisplay from "../streak/StreakDisplay";
 import PointsDisplay from "../ui/PointsDisplay";
 import LevelDisplay from "../ui/LevelDisplay";
 import { useModal } from "../../contexts/ModalContext";
-import { Bell, X, BellOff } from "lucide-react";
+import {
+  Bell,
+  X,
+  BellOff,
+  Flame,
+  Trophy,
+  Award,
+  TrendingUp,
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 import { practiceService } from "../../services/practiceService";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
-import { Send, Loader2, Mic } from "lucide-react";
+import { Send, Loader2, Mic, Music2 } from "lucide-react";
+import { useTotalPoints } from "../../hooks/useTotalPoints";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 import {
   dashboardReminderService,
   formatTimeRemaining,
 } from "../../services/dashboardReminderService";
+import { useUserProfile } from "../../hooks/useUserProfile";
+import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
+import { getAvatarImageSource } from "../../utils/avatarAssets";
+import { getStudentScores } from "../../services/apiDatabase";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, userRole, profile } = useUser();
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
+  const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
+  const avatarUrl = getAvatarImageSource(
+    profileData?.avatars || profileData?.avatar_url,
+    profileData?.avatar_url
+  );
+  const layeredAccessories = Array.isArray(profileData?.equipped_accessories)
+    ? profileData.equipped_accessories.filter((item) => item?.image_url)
+    : [];
 
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
@@ -62,6 +83,103 @@ function Dashboard() {
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
   });
+
+  // Fetch total points and calculate trend
+  const { data: totalPointsData } = useTotalPoints({
+    staleTime: 0,
+    refetchOnMount: "always",
+    keepPreviousData: false,
+  });
+  const totalPoints = totalPointsData?.totalPoints || 0;
+
+  // Calculate points trend (simplified - using recent scores if available)
+  const calculateRecentTrend = (scores) => {
+    if (!scores || !Array.isArray(scores) || scores.length === 0) return 0;
+    const recent = scores.slice(0, 7);
+    const older = scores.slice(7, 14);
+    const recentAvg =
+      recent.reduce((sum, score) => sum + (score.score || 0), 0) /
+      recent.length;
+    const olderAvg =
+      older.length > 0
+        ? older.reduce((sum, score) => sum + (score.score || 0), 0) /
+          older.length
+        : recentAvg;
+    if (olderAvg === 0) return 0;
+    return ((recentAvg - olderAvg) / olderAvg) * 100;
+  };
+
+  const { data: scoresData } = useQuery({
+    queryKey: ["student-scores", user?.id],
+    queryFn: () => {
+      if (!user?.id || !isStudent) return [];
+      return getStudentScores(user.id);
+    },
+    enabled: !!user?.id && isStudent,
+    staleTime: 3 * 60 * 1000,
+  });
+
+  const pointsTrend = calculateRecentTrend(scoresData || []);
+
+  // Get level info
+  const getLevelInfo = (points) => {
+    if (points === 0) {
+      return {
+        name: t("dashboard.levels.beginner.name"),
+        description: t("dashboard.levels.beginner.description"),
+      };
+    } else if (points < 100) {
+      return {
+        name: t("dashboard.levels.student.name"),
+        description: t("dashboard.levels.student.description"),
+      };
+    } else if (points < 500) {
+      return {
+        name: t("dashboard.levels.practitioner.name"),
+        description: t("dashboard.levels.practitioner.description"),
+      };
+    } else if (points < 1000) {
+      return {
+        name: t("dashboard.levels.expert.name"),
+        description: t("dashboard.levels.expert.description"),
+      };
+    } else if (points < 2500) {
+      return {
+        name: t("dashboard.levels.master.name"),
+        description: t("dashboard.levels.master.description"),
+      };
+    } else {
+      return {
+        name: t("dashboard.levels.legend.name"),
+        description: t("dashboard.levels.legend.description"),
+      };
+    }
+  };
+
+  const levelInfo = getLevelInfo(totalPoints);
+  const levelName = levelInfo.name;
+  const levelDescription = levelInfo.description;
+
+  // Helper functions for streak progress
+  const getStreakProgress = (currentStreak) => {
+    const milestones = [1, 3, 7, 14, 30, 50, 100];
+    const nextMilestone = milestones.find((m) => m > currentStreak);
+    if (!nextMilestone) return 100;
+    const prevMilestone =
+      milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+    const progress =
+      ((currentStreak - prevMilestone) / (nextMilestone - prevMilestone)) * 100;
+    return Math.min(100, Math.max(0, progress));
+  };
+
+  const getNextStreakMilestone = (currentStreak) => {
+    const milestones = [1, 3, 7, 14, 30, 50, 100];
+    const nextMilestone = milestones.find((m) => m > currentStreak);
+    if (!nextMilestone) return t("dashboard.streak.maxReached");
+    const prevMilestone =
+      milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+    return `${prevMilestone} to ${nextMilestone} ${t("dashboard.streak.dayLabel", { count: nextMilestone })}`;
+  };
 
   // Check if connected to real-time updates
   const isConnected = true; // Placeholder for real-time connection status
@@ -434,8 +552,8 @@ function Dashboard() {
 
   if (isLoading || streakLoading) {
     return (
-      <div className="min-h-screen p-6">
-        <div className="mx-auto max-w-6xl">
+      <div className="min-h-screen">
+        <div className="mx-auto max-w-7xl px-6 py-6 md:px-8 md:py-8">
           <div className="animate-pulse space-y-6">
             <div className="h-8 w-1/3 rounded bg-white/20"></div>
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -450,132 +568,271 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="mx-auto max-w-6xl space-y-8">
-        {/* Header Section */}
-        <div
-          className={`text-center ${isRTL ? "lg:text-right" : "lg:text-left"}`}
-        >
-          <h1 className="mb-2 text-3xl font-bold text-white lg:text-4xl">
-            {t("dashboard.header.welcomeBack")},
-            {profile?.first_name ? (
-              <span className="ml-2"> {profile.first_name}!</span>
-            ) : user?.user_metadata?.full_name ? (
-              <span className="mt-1 block">
-                {user.user_metadata.full_name}!
+    <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Hero (full-width on mobile, contained on desktop) */}
+      <header className="group relative h-[320px] overflow-hidden rounded-none shadow-2xl md:mx-auto md:h-[400px] md:max-w-7xl md:rounded-[2.5rem] md:px-6 md:py-6 lg:px-8 lg:py-8">
+        <picture className="absolute inset-0">
+          <source
+            media="(min-width: 1024px)"
+            srcSet="/images/desktop-dashboard-hero.png"
+          />
+          <img
+            src="/images/dashboard-hero.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            aria-hidden="true"
+            loading="eager"
+          />
+        </picture>
+
+        {/* Dark gradient overlay like the reference */}
+        <div className="absolute inset-0 bg-gradient-to-t from-violet-950 via-violet-950/40 to-transparent opacity-90" />
+
+        <div className="relative flex h-full flex-col justify-between p-4 md:p-8 lg:p-10">
+          {/* Hero top row: avatar + app icon/name (matches reference screenshots) */}
+          <div
+            className={`flex items-center gap-4 ${
+              isRTL ? "flex-row-reverse justify-end" : "justify-start"
+            }`}
+          >
+            {isProfileLoading ? (
+              <div className="h-12 w-12 animate-pulse rounded-full bg-white/10" />
+            ) : avatarUrl ? (
+              <Link to="/avatars">
+                <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full border-2 border-indigo-500/60 bg-white/10">
+                  <img
+                    className="h-full w-full object-cover"
+                    src={avatarUrl}
+                    alt={t("avatars.title", { defaultValue: "User avatar" })}
+                    loading="eager"
+                  />
+                  {layeredAccessories.map((item) => {
+                    const slot = item.slot || item.category || "accessory";
+                    const slotClass =
+                      ACCESSORY_SLOT_STYLES[slot] ||
+                      ACCESSORY_SLOT_STYLES.accessory;
+                    return (
+                      <img
+                        key={`${item.accessory_id || item.image_url}-${slot}`}
+                        src={item.image_url}
+                        alt=""
+                        aria-hidden="true"
+                        className={`${slotClass} pointer-events-none object-contain`}
+                      />
+                    );
+                  })}
+                </div>
+              </Link>
+            ) : null}
+
+            <div
+              className={`flex items-center gap-2 text-white/90 ${
+                isRTL ? "flex-row-reverse" : ""
+              }`}
+            >
+              <Music2 className="h-6 w-6 text-indigo-300" />
+              <span className="text-xl font-extrabold tracking-wide">
+                {t("app.title")}
               </span>
-            ) : (
-              <span className="mt-1 block">
-                {t("dashboard.header.defaultName")}!
-              </span>
-            )}
-          </h1>
-        </div>
-
-        {/* Stats Section */}
-        <div className="space-y-8">
-          {/* Stats Grid - 4 columns on large, 2 on medium, 1 on small */}
-          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-4">
-            {/* Daily Streak */}
-            <StreakDisplay variant="card" />
-
-            {/* Total Points */}
-            <PointsDisplay variant="card" />
-
-            {/* Practice Time */}
-            <div className="card-compact p-3">
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h3 className="text-xs font-medium text-gray-600">
-                  {t("dashboard.stats.practiceTime")}
-                </h3>
-                <p className="mt-1 flex items-center justify-center gap-2 text-lg font-bold text-gray-900">
-                  {scores?.practice_time || 0}
-                  <span className="ml-1 text-s">
-                    {t("dashboard.stats.hoursAbbrev")}
-                  </span>
-                </p>
-              </div>
             </div>
-
-            {/* Level */}
-            <LevelDisplay variant="card" />
           </div>
 
-          {/* Quick Access Panel for Teachers */}
-          {isTeacher && (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Students Overview */}
-              <Link
-                to="/teacher/students"
-                className="card-hover group block p-6"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 transition-transform group-hover:scale-110">
-                    <span className="text-2xl">👥</span>
-                  </div>
-                  <div className="mb-2 font-medium text-gray-900">
-                    {t("dashboard.teacherPanel.students.title")}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {t("dashboard.teacherPanel.students.description")}
-                  </div>
-                </div>
-              </Link>
-
-              {/* Assignments */}
-              <Link
-                to="/teacher/assignments"
-                className="card-hover group block p-6"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 transition-transform group-hover:scale-110">
-                    <span className="text-2xl">📋</span>
-                  </div>
-                  <div className="font-medium text-gray-900">
-                    {t("dashboard.teacherPanel.assignments.title")}
-                  </div>
-                  <div className="text-sm text-gray-600">
-                    {t("dashboard.teacherPanel.assignments.description")}
-                  </div>
-                </div>
-              </Link>
+          {/* Hero center: welcome text */}
+          <div className="flex flex-1 items-center justify-center">
+            <div className="space-y-3 text-center md:space-y-4">
+              <h1 className="text-4xl font-black tracking-tight text-white drop-shadow-lg md:text-6xl">
+                {t("dashboard.header.welcomeBack")},{" "}
+                <span className="bg-gradient-to-r from-purple-300 to-indigo-300 bg-clip-text text-transparent">
+                  {profile?.first_name
+                    ? `${profile.first_name}!`
+                    : user?.user_metadata?.full_name
+                      ? `${user.user_metadata.full_name}!`
+                      : `${t("dashboard.header.defaultName")}!`}
+                </span>
+              </h1>
+              <p className="text-base font-medium text-white/80 md:text-lg">
+                {t("dashboard.header.subtitle", {
+                  defaultValue: "Your musical journey continues",
+                })}
+              </p>
             </div>
-          )}
+          </div>
         </div>
+      </header>
 
-        {/* Bottom Section - Three Equal Width Containers */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="relative mx-auto max-w-7xl space-y-8 px-6 py-6 md:px-8 md:py-8">
+        {/* Stats grid (exact match from screenshot) */}
+        <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Daily Streak Card */}
+          <div className="flex min-h-[180px] transform flex-col items-center justify-between rounded-3xl bg-white p-6 shadow-xl transition-transform duration-300 hover:-translate-y-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+              <Flame className="h-5 w-5 text-orange-500" />
+              {t("dashboard.stats.dailyStreak")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-4xl font-black text-gray-900"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {streak?.current_streak || 0}{" "}
+                <span className="text-lg font-bold text-gray-500">
+                  {t("dashboard.streak.dayLabel", {
+                    count: streak?.current_streak || 0,
+                  })}
+                </span>
+              </div>
+              <div className="mt-1 text-sm font-bold text-red-500">
+                {streak?.current_streak >= 3 && streak?.current_streak < 7
+                  ? t("dashboard.streak.messages.gettingHot")
+                  : streak?.current_streak >= 7
+                    ? t("dashboard.streak.messages.onFire")
+                    : t("dashboard.streak.messages.buildingMomentum")}
+              </div>
+            </div>
+            <div className="mt-2 w-full">
+              <div className="h-2 w-full rounded-full bg-gray-200">
+                <div
+                  className="h-2 rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-500"
+                  style={{
+                    width: `${getStreakProgress(streak?.current_streak || 0)}%`,
+                  }}
+                />
+              </div>
+              <div className="mt-2 text-center text-xs font-medium text-gray-400">
+                {getNextStreakMilestone(streak?.current_streak || 0)}
+              </div>
+            </div>
+          </div>
+
+          {/* Total Points Card */}
+          <div className="flex min-h-[180px] transform flex-col items-center justify-between rounded-3xl bg-white p-6 shadow-xl transition-transform duration-300 hover:-translate-y-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+              <Trophy className="h-5 w-5 text-yellow-500" />
+              {t("dashboard.stats.totalPoints")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-4xl font-black text-gray-900"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {totalPoints.toLocaleString()}
+              </div>
+              {pointsTrend > 0 && (
+                <div className="mt-1 flex items-center justify-center gap-1 text-sm font-bold text-green-500">
+                  <TrendingUp className="h-4 w-4" />
+                  {Math.round(pointsTrend)}%
+                </div>
+              )}
+            </div>
+            <div className="h-4" />
+          </div>
+
+          {/* Practice Time Card */}
+          <div className="flex min-h-[180px] transform flex-col items-center justify-between rounded-3xl bg-white p-6 shadow-xl transition-transform duration-300 hover:-translate-y-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+              {t("dashboard.stats.practiceTime")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-4xl font-black text-gray-900"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {scores?.practice_time || 0}{" "}
+                <span className="text-xl font-bold text-gray-500">
+                  {t("dashboard.stats.hoursAbbrev")}
+                </span>
+              </div>
+            </div>
+            <div className="h-4" />
+          </div>
+
+          {/* Level Card */}
+          <div className="flex min-h-[180px] transform flex-col items-center justify-between rounded-3xl bg-white p-6 shadow-xl transition-transform duration-300 hover:-translate-y-1">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-500">
+              <Award className="h-5 w-5 text-yellow-600" />
+              {t("dashboard.stats.level")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-3xl font-black text-yellow-600"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {levelName}
+              </div>
+              <div className="mt-1 text-xs text-gray-400">
+                {levelDescription}
+              </div>
+            </div>
+            <div className="mt-2">
+              <span className="rounded-full border border-yellow-200 bg-yellow-100 px-3 py-1 text-xs font-bold text-yellow-700">
+                {levelName}
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Quick Access Panel for Teachers */}
+        {isTeacher && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Students Overview */}
+            <Link to="/teacher/students" className="card-hover group block p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 transition-transform group-hover:scale-110">
+                  <span className="text-2xl">👥</span>
+                </div>
+                <div className="mb-2 font-medium text-gray-900">
+                  {t("dashboard.teacherPanel.students.title")}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("dashboard.teacherPanel.students.description")}
+                </div>
+              </div>
+            </Link>
+
+            {/* Assignments */}
+            <Link
+              to="/teacher/assignments"
+              className="card-hover group block p-6"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 transition-transform group-hover:scale-110">
+                  <span className="text-2xl">📋</span>
+                </div>
+                <div className="font-medium text-gray-900">
+                  {t("dashboard.teacherPanel.assignments.title")}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("dashboard.teacherPanel.assignments.description")}
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Bottom Section - Three Equal Width Containers (exact match from screenshot) */}
+        <section className="grid grid-cols-1 gap-6 pb-8 lg:grid-cols-3">
           {/* Next Steps Section */}
-          <div className="card p-6">
-            <h3 className="mb-6 text-lg font-medium text-gray-900">
+          <div className="rounded-3xl border border-white/50 bg-white/10 p-6 shadow-lg backdrop-blur-sm">
+            <h3 className="mb-6 text-lg font-bold text-white">
               {t("dashboard.nextSteps.title")}
             </h3>
 
             <div className="space-y-4">
               {availableNextSteps.length > 0 ? (
-                availableNextSteps.map((step) => (
+                availableNextSteps.slice(0, 1).map((step) => (
                   <div
                     key={step.id}
-                    className={`flex items-start gap-3 bg-gradient-to-r p-4 ${step.colors.bg} rounded-xl border ${step.colors.border}`}
+                    className="flex cursor-pointer items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                   >
-                    <div
-                      className={`h-10 w-10 bg-gradient-to-br ${step.colors.icon} flex flex-shrink-0 items-center justify-center rounded-full`}
-                    >
-                      <span className="text-lg text-white">{step.icon}</span>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-orange-100">
+                      <Flame className="h-6 w-6 text-orange-500" />
                     </div>
-                    <div className="flex-1">
-                      <div className="mb-1 font-medium text-gray-900">
+                    <div>
+                      <div className="text-sm font-bold text-gray-900">
                         {step.title}
                       </div>
-                      <div className="mb-2 text-sm text-gray-600">
+                      <div className="mt-1 text-xs text-gray-500">
                         {step.description}
-                      </div>
-                      <div
-                        className={`text-xs ${step.colors.text} font-medium`}
-                      >
-                        {t("dashboard.nextSteps.points", {
-                          points: step.points,
-                        })}
                       </div>
                     </div>
                   </div>
@@ -583,10 +840,10 @@ function Dashboard() {
               ) : (
                 <div className="py-8 text-center">
                   <div className="mb-4 text-4xl">🎉</div>
-                  <div className="mb-2 font-medium text-gray-900">
+                  <div className="mb-2 font-medium text-white">
                     {t("dashboard.nextSteps.emptyTitle")}
                   </div>
-                  <div className="mb-4 text-sm text-gray-600">
+                  <div className="mb-4 text-sm text-white/80">
                     {t("dashboard.nextSteps.emptyDescription")}
                   </div>
                   <Link
@@ -598,100 +855,81 @@ function Dashboard() {
                 </div>
               )}
             </div>
-
-            <div className="mt-6 border-t border-gray-100 pt-4">
-              <div className="text-center">
-                <Link
-                  to="/achievements"
-                  className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700"
-                >
-                  {t("dashboard.nextSteps.cta")}
-                </Link>
-              </div>
-            </div>
           </div>
 
           {/* Assignments Section */}
-          <div>
-            <AssignmentsList />
+          <div className="rounded-3xl border border-white/50 bg-white/10 p-6 shadow-lg backdrop-blur-sm">
+            <h3 className="mb-6 text-lg font-bold text-white">
+              {t("dashboard.assignments.title")}
+            </h3>
+            <div className="flex flex-wrap gap-3">
+              <span className="rounded-lg bg-blue-200 px-3 py-1.5 text-sm font-bold text-blue-800 shadow-sm">
+                {t("dashboard.assignments.noPending", {
+                  defaultValue: "No pending",
+                })}
+              </span>
+              <span className="rounded-lg bg-green-200 px-3 py-1.5 text-sm font-bold text-green-800 shadow-sm">
+                {t("dashboard.assignments.completed", {
+                  count: 0,
+                  defaultValue: "0 completed",
+                })}
+              </span>
+            </div>
+            <div className="mt-6 text-center text-sm italic text-white/70">
+              {t("dashboard.assignments.allCaughtUp", {
+                defaultValue: "You're all caught up!",
+              })}
+            </div>
           </div>
 
           {/* Practice Tools Section */}
-          <div className="card p-6">
-            <h3 className="mb-6 text-lg font-medium text-gray-900">
+          <div className="relative overflow-hidden rounded-3xl border border-white/50 bg-white/10 p-6 shadow-lg backdrop-blur-sm">
+            <h3 className="mb-6 text-lg font-bold text-white">
               {t("dashboard.practiceTools.title")}
             </h3>
             <div className="grid grid-cols-1 gap-4">
-              {/* Active Reminder Indicator */}
-              {activeReminder && (
-                <div className="rounded-xl border-2 border-blue-500/40 bg-gradient-to-r from-blue-500/20 to-purple-500/20 p-4">
-                  <div className="flex flex-col gap-3">
-                    <div
-                      className={`flex items-center gap-3 ${
-                        isRTL ? "flex-row-reverse text-right" : ""
-                      }`}
-                    >
-                      <div className="flex h-10 w-10 flex-shrink-0 animate-pulse items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-500">
-                        🔔
-                      </div>
-                      <div className={`flex-1 ${isRTL ? "text-right" : ""}`}>
-                        <div className="mb-1 font-medium text-gray-900">
-                          ⏰ {t("dashboard.practiceTools.activeReminder.title")}{" "}
-                          {formatTimeRemaining(activeReminder.timeLeft)}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {t("dashboard.practiceTools.activeReminder.setFor", {
-                            time: new Date(
-                              activeReminder.dateTime
-                            ).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }),
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleCancelReminder}
-                      className={`flex w-full items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-600 ${
-                        isRTL ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      <BellOff className="h-4 w-4" />
-                      {t("common.actions.cancel")}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Practice Reminder Button */}
+              {/* Practice Reminder Button - matches screenshot */}
               {!activeReminder && (
                 <button
                   onClick={openReminderModal}
-                  className={`block rounded-xl border border-gray-200 bg-gray-100 p-4 hover:bg-gray-200 ${
-                    isRTL ? "text-right" : "text-left"
-                  } w-full transition-colors`}
+                  className="relative z-10 flex cursor-pointer items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div
-                    className={`flex items-start gap-3 ${
-                      isRTL ? "flex-row-reverse text-right" : ""
-                    }`}
-                  >
-                    <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500">
-                      🔔
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                    <Bell className="h-6 w-6 text-purple-500" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">
+                      {t("dashboard.practiceTools.cards.reminder.title")}
                     </div>
-                    <div className="flex-1">
-                      <div className="mb-1 font-medium text-gray-900">
-                        {t("dashboard.practiceTools.cards.reminder.title")}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {t(
-                          "dashboard.practiceTools.cards.reminder.description"
-                        )}
-                      </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {t("dashboard.practiceTools.cards.reminder.description")}
                     </div>
                   </div>
                 </button>
+              )}
+              {/* Active Reminder Indicator */}
+              {activeReminder && (
+                <div className="relative z-10 flex cursor-pointer items-center gap-4 rounded-2xl bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                    <Bell className="h-6 w-6 animate-pulse text-purple-500" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">
+                      {t("dashboard.practiceTools.activeReminder.title")}{" "}
+                      {formatTimeRemaining(activeReminder.timeLeft)}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {t("dashboard.practiceTools.activeReminder.setFor", {
+                        time: new Date(
+                          activeReminder.dateTime
+                        ).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }),
+                      })}
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Record Practice Session */}
@@ -747,7 +985,7 @@ function Dashboard() {
               </Link>
             </div>
           </div>
-        </div>
+        </section>
       </div>
     </div>
   );

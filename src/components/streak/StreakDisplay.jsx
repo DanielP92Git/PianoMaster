@@ -100,7 +100,7 @@ const renderLoaderIcon = (className) =>
 const renderLucideIcon = (IconComponent, className) =>
   IconComponent ? React.createElement(IconComponent, { className }) : null;
 
-export default function StreakDisplay({ variant = "default" }) {
+export default function StreakDisplay({ variant = "default", className = "" }) {
   const { data: streak, isLoading } = useQuery({
     queryKey: ["streak"],
     queryFn: () => streakService.getStreak(),
@@ -116,7 +116,7 @@ export default function StreakDisplay({ variant = "default" }) {
     // Match the card variant styling for consistent appearance
     if (variant === "card") {
       return (
-        <div className="card-compact p-3 relative overflow-hidden">
+        <div className={`card-compact p-3 relative overflow-hidden ${className}`}>
           <div className="relative flex flex-col items-center text-center">
             <div className="flex items-center gap-1 mb-1">
               {renderLoaderIcon("w-3 h-3 text-gray-600 animate-spin")}
@@ -176,7 +176,7 @@ export default function StreakDisplay({ variant = "default" }) {
   // Enhanced card variant for dashboard
   if (variant === "card") {
     return (
-      <div className="card-compact p-3 relative overflow-hidden">
+      <div className={`card-compact p-3 relative overflow-hidden ${className}`}>
         {/* Background glow effect for high streaks */}
         {currentStreak >= 7 && (
           <div

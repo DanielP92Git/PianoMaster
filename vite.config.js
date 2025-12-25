@@ -25,5 +25,6 @@ export default defineConfig({
     port: 5174,
     host: "0.0.0.0",
     strictPort: true, // This will fail if port 5174 is not available
+    https: false, // Enable HTTPS for PWA install prompts on mobile devices
   },
 });
