@@ -72,9 +72,9 @@ export default function Fireflies({ count = 5, positions, className = "" }) {
         },
         sizeClass:
           i % 3 === 0
-            ? "w-1.5 h-1.5 sm:w-2 sm:h-2"
-            : "w-1 h-1 sm:w-1.5 sm:h-1.5",
-        opacityClass: i % 4 === 0 ? "opacity-90" : "opacity-75",
+            ? "w-3 h-3 sm:w-4 sm:h-4"
+            : "w-2 h-2 sm:w-3 sm:h-3",
+        opacityClass: i % 4 === 0 ? "opacity-100" : "opacity-90",
       };
     });
   }, [count, positions, prefersReducedMotion]);
@@ -91,12 +91,27 @@ export default function Fireflies({ count = 5, positions, className = "" }) {
             "absolute rounded-full",
             f.sizeClass,
             f.opacityClass,
-            // Color + blend
-            "bg-purple-200/90 mix-blend-screen",
-            // Glow
-            "drop-shadow-[0_0_10px_rgba(255,255,170,0.9)]",
+            // Base color - bright white/yellow center
+            "bg-white",
+            // Mix blend for glowing effect
+            "mix-blend-screen",
           ].join(" ")}
-          style={{ top: f.pos.top, left: f.pos.left }}
+          style={{
+            top: f.pos.top,
+            left: f.pos.left,
+            // Radial gradient using background image
+            background: `radial-gradient(circle, rgba(255, 255, 200, 1) 0%, rgba(255, 255, 180, 0.8) 30%, rgba(255, 255, 160, 0.4) 60%, transparent 100%)`,
+            // Multi-layered glow effect with box-shadow
+            boxShadow: `
+              0 0 10px rgba(255, 255, 200, 1),
+              0 0 20px rgba(255, 255, 180, 0.8),
+              0 0 30px rgba(255, 255, 160, 0.6),
+              0 0 40px rgba(255, 255, 140, 0.4),
+              inset 0 0 10px rgba(255, 255, 255, 0.6)
+            `,
+            // Blur filter for soft, diffused edges
+            filter: "blur(1.5px)",
+          }}
           variants={fireflyVariants}
           animate="animate"
           custom={f.motion}

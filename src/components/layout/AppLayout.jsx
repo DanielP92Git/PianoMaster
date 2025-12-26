@@ -11,6 +11,7 @@ export default function AppLayout() {
   const { t, i18n } = useTranslation("common");
   const direction = i18n.dir();
   const language = i18n.language || i18n.resolvedLanguage || "en";
+  const isHebrew = language.startsWith("he");
   const isDashboard = location.pathname === "/";
 
   // Updated game routes to match actual URL structure
@@ -45,7 +46,9 @@ export default function AppLayout() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col"
+      className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col ${
+        isHebrew ? "font-hebrew" : ""
+      }`}
       dir={direction}
       lang={language}
     >

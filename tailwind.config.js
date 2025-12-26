@@ -18,6 +18,14 @@ module.exports = {
         rounded: ["Nunito", "sans-serif"],
         playful: ["Fredoka One", "cursive"],
         signature: ["Dancing Script", "cursive"],
+        hebrew: [
+          "Heebo",
+          "Assistant",
+          "Noto Sans Hebrew",
+          "Open Sans",
+          "Arial",
+          "sans-serif",
+        ],
       },
       fontSize: {
         xs: ["0.75rem", { lineHeight: "1.5" }],

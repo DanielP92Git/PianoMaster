@@ -52,7 +52,7 @@ export default function MobileTabsNav() {
       items={items}
       showLabels={false}
       hideAbove="xl:hidden"
-      className="shadow-2xl"
+      className="shadow-none"
     />
   );
 }

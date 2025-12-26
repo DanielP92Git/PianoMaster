@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
+import { useTranslation } from "react-i18next";
 import { NotesMasterMode } from "./components/games/NotesMasterMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import Achievements from "./pages/Achievements";
@@ -258,7 +259,14 @@ function AppRoutes() {
 }
 
 function App() {
+  const { i18n } = useTranslation("common");
   useGlobalFullscreenOnFirstTap();
+
+  // Ensure <html> lang/dir are set so global RTL font rules apply consistently
+  useEffect(() => {
+    document.documentElement.lang = i18n.language || "en";
+    document.documentElement.dir = i18n.dir();
+  }, [i18n.language, i18n]);
 
   useEffect(() => {
     const {

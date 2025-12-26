@@ -272,19 +272,19 @@ const BottomNavigation = React.forwardRef(
         ref={ref}
         className={`
         fixed bottom-0 left-0 right-0 z-50 ${hideAbove} safe-area-padding-bottom
-        ${
-          highContrast
-            ? "bg-highContrast-bg border-t-2 border-highContrast-text"
-            : "bg-white/95 backdrop-blur-md border-t border-gray-200"
-        }
+        ${highContrast ? "bg-highContrast-bg border-t-2 border-highContrast-text" : ""}
+        ${!highContrast ? "border-t border-white/10 bg-gradient-to-t from-indigo-950/85 via-purple-950/70 to-violet-950/40 backdrop-blur-xl" : ""}
+        ${!highContrast ? "shadow-[0_-12px_40px_rgba(0,0,0,0.45)]" : ""}
         ${className}
       `}
         {...props}
       >
-        <div className="flex justify-around items-center h-16 px-2">
+        <div className="mx-auto flex h-16 max-w-md items-center justify-between px-3">
           {items.map((item, index) => {
             const badgePositionClass =
-              item.badgePosition === "top-left" ? "-top-1 -left-1" : "-top-1 -right-1";
+              item.badgePosition === "top-left"
+                ? "-top-1 -left-1"
+                : "-top-1 -right-1";
 
             return (
               <NavLink
@@ -292,26 +292,30 @@ const BottomNavigation = React.forwardRef(
                 to={item.to}
                 aria-label={item.ariaLabel || item.label}
                 className={({ isActive }) => `
-                  relative flex flex-col items-center justify-center p-2 rounded-kids
-                  min-w-[60px] transition-colors font-rounded
+                  group relative flex min-w-[60px] flex-col items-center justify-center gap-0.5 rounded-2xl px-3 py-2
+                  font-rounded transition-all duration-200
                   ${
                     isActive
                       ? highContrast
                         ? "text-highContrast-primary"
-                        : "text-kidsPrimary-500"
+                        : "bg-white/10 text-white shadow-inner ring-1 ring-white/10"
                       : highContrast
                         ? "text-highContrast-text"
-                        : "text-gray-500"
+                        : "text-white/70 hover:bg-white/5 hover:text-white"
                   }
                 `}
               >
                 {item.icon &&
                   React.cloneElement(item.icon, {
-                    className: `w-6 h-6 ${showLabels ? "mb-1" : ""}`,
+                    className: `h-6 w-6 transition-transform duration-200 group-hover:scale-[1.06] ${
+                      showLabels ? "mb-0.5" : ""
+                    }`,
                     "aria-hidden": "true",
                   })}
                 {showLabels ? (
-                  <span className="text-xs font-medium">{item.label}</span>
+                  <span className="text-[11px] font-semibold leading-none">
+                    {item.label}
+                  </span>
                 ) : (
                   <span className="sr-only">{item.label}</span>
                 )}
