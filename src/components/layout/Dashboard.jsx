@@ -491,7 +491,7 @@ function Dashboard() {
         <div className="relative z-20 flex h-full flex-col justify-between p-4 md:p-8 lg:p-10">
           {/* Hero top row: avatar + app icon/name (matches reference screenshots) */}
           <div
-            className={`absolute left-4 top-4 z-30 flex items-center gap-4 md:left-6 md:top-6 lg:left-0 lg:top-0 ${
+            className={`absolute left-4 top-[calc(var(--safe-area-top)+1rem)] z-30 flex items-center gap-4 md:left-6 md:top-[calc(var(--safe-area-top)+1.5rem)] lg:left-0 lg:top-0 ${
               isRTL
                 ? "left-auto right-4 flex-row-reverse md:left-auto md:right-6 lg:left-auto lg:right-8"
                 : ""

@@ -315,7 +315,7 @@ function App() {
           <ModalProvider>
             <RhythmProvider>
               <SightReadingSessionProvider>
-                <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 safe-area-padding">
+                <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 safe-area-app">
                   <AccessibleToaster />
                   <AppRoutes />
 
