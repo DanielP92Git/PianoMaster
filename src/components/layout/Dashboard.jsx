@@ -567,18 +567,20 @@ function Dashboard() {
         <section className="relative z-30 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Daily Streak Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="stats-icon-glow stats-icon-glow-orange pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
-              <img
-                src={iconFlame}
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full select-none object-contain"
-                style={{
-                  filter:
-                    "drop-shadow(0 0 20px rgba(255, 140, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 69, 0, 0.4)) drop-shadow(0 0 60px rgba(255, 140, 0, 0.2))",
-                }}
-                draggable="false"
-              />
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-orange flex h-full w-full items-center justify-center">
+                <img
+                  src={iconFlame}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(255, 140, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 69, 0, 0.4)) drop-shadow(0 0 60px rgba(255, 140, 0, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
               {t("dashboard.stats.dailyStreak")}
@@ -620,18 +622,20 @@ function Dashboard() {
 
           {/* Total Points Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="stats-icon-glow stats-icon-glow-gold pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
-              <img
-                src={iconStar}
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full select-none object-contain"
-                style={{
-                  filter:
-                    "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 223, 0, 0.4)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.2))",
-                }}
-                draggable="false"
-              />
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-gold flex h-full w-full items-center justify-center">
+                <img
+                  src={iconStar}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 223, 0, 0.4)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
               {t("dashboard.stats.totalPoints")}
@@ -655,18 +659,20 @@ function Dashboard() {
 
           {/* Practice Time Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="stats-icon-glow stats-icon-glow-blue pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
-              <img
-                src={iconClock}
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full select-none object-contain"
-                style={{
-                  filter:
-                    "drop-shadow(0 0 20px rgba(100, 181, 246, 0.6)) drop-shadow(0 0 40px rgba(66, 165, 245, 0.4)) drop-shadow(0 0 60px rgba(100, 181, 246, 0.2))",
-                }}
-                draggable="false"
-              />
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-blue flex h-full w-full items-center justify-center">
+                <img
+                  src={iconClock}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(100, 181, 246, 0.6)) drop-shadow(0 0 40px rgba(66, 165, 245, 0.4)) drop-shadow(0 0 60px rgba(100, 181, 246, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
               {t("dashboard.stats.practiceTime")}
@@ -687,18 +693,20 @@ function Dashboard() {
 
           {/* Level Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="stats-icon-glow stats-icon-glow-amber pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
-              <img
-                src={iconCrown}
-                alt=""
-                aria-hidden="true"
-                className="h-full w-full select-none object-contain"
-                style={{
-                  filter:
-                    "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 193, 7, 0.4)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.2))",
-                }}
-                draggable="false"
-              />
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-amber flex h-full w-full items-center justify-center">
+                <img
+                  src={iconCrown}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 193, 7, 0.4)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
               {t("dashboard.stats.level")}
