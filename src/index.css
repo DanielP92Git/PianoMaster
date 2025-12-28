@@ -1167,9 +1167,10 @@ progress,
 }
 
 /* Persistent glow halos for dashboard stat icons (more reliable on iOS).
-   Scope to iOS standalone so desktop/web keep original positioning/appearance. */
+   Scope to iOS standalone so desktop/web keep original positioning/appearance.
+   NOTE: Do NOT override the element's positioning here, since the stat icon
+   wrapper uses Tailwind's `absolute` positioning for centering above cards. */
 body.ios-standalone .stats-icon-glow {
-  position: relative;
 }
 
 body.ios-standalone .stats-icon-glow::before {
