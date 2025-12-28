@@ -46,8 +46,30 @@ export async function login({ email, password }) {
 
 export async function getCurrentUser() {
   try {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) return null;
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+
+    // If the stored refresh token is invalid/revoked, Supabase may throw an
+    // AuthApiError and log a 400 in the console during refresh.
+    // Clear the local session so the app doesn't keep retrying/logging.
+    if (sessionError) {
+      const msg = String(sessionError.message || "");
+      const isInvalidRefresh =
+        /invalid refresh token/i.test(msg) || /refresh token not found/i.test(msg);
+
+      if (isInvalidRefresh) {
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.warn("Failed to sign out after refresh token error:", signOutError);
+        }
+        return null;
+      }
+
+      throw new Error(sessionError.message);
+    }
+
+    if (!sessionData?.session) return null;
 
     const { data, error } = await supabase.auth.getUser();
 

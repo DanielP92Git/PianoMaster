@@ -43,8 +43,21 @@ function SignupForm({ onBackToLogin }) {
   return (
     <div className="p-6 md:p-8">
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
-        {/* Left side - Branding */}
-        <div className="flex-shrink-0 text-center lg:text-left lg:w-1/3">
+        {/* Left side - Hero Image with Branding */}
+        <div className="flex-shrink-0 text-center lg:text-left lg:w-1/3 relative">
+          {/* Hero Image */}
+          <div className="relative mb-4 rounded-xl overflow-hidden">
+            <img
+              src="/images/dashboard-hero.png"
+              alt="PianoMaster"
+              className="w-full h-auto object-cover rounded-xl shadow-lg"
+              style={{ maxHeight: "400px" }}
+            />
+            {/* Overlay gradient for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-t from-indigo-900/60 via-transparent to-transparent rounded-xl pointer-events-none" />
+          </div>
+          
+          {/* Branding Text */}
           <div className="flex justify-center lg:justify-start items-center gap-2 relative mb-3">
             <Piano
               className="w-10 h-10 text-indigo-400 animate-bounce"

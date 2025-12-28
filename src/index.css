@@ -1166,6 +1166,55 @@ progress,
   animation-delay: 0.4s;
 }
 
+/* Persistent glow halos for dashboard stat icons (more reliable on iOS) */
+.stats-icon-glow {
+  position: relative;
+}
+
+.stats-icon-glow::before {
+  content: "";
+  position: absolute;
+  inset: 18%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 30%,
+    var(--glow-color, rgba(255, 255, 255, 0.9)) 0%,
+    rgba(255, 255, 255, 0.1) 35%,
+    transparent 70%
+  );
+  filter: blur(12px);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.stats-icon-glow img {
+  position: relative;
+  z-index: 1;
+}
+
+.stats-icon-glow-orange {
+  --glow-color: rgba(255, 165, 80, 1);
+}
+
+.stats-icon-glow-gold {
+  --glow-color: rgba(255, 230, 120, 1);
+}
+
+.stats-icon-glow-blue {
+  --glow-color: rgba(130, 200, 255, 1);
+}
+
+.stats-icon-glow-amber {
+  --glow-color: rgba(255, 195, 110, 1);
+}
+
+/* On iOS standalone, let the bottom navigation own the safe-area padding so
+   we don't show extra gradient below the app menu buttons. */
+body.ios-standalone .safe-area-app {
+  padding-bottom: 0;
+}
+
 /* ========================================
    ACCESSIBILITY STYLES
    ======================================== */

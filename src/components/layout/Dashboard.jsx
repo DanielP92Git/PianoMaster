@@ -567,7 +567,7 @@ function Dashboard() {
         <section className="relative z-30 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Daily Streak Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+            <div className="stats-icon-glow stats-icon-glow-orange pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
               <img
                 src={iconFlame}
                 alt=""
@@ -620,7 +620,7 @@ function Dashboard() {
 
           {/* Total Points Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+            <div className="stats-icon-glow stats-icon-glow-gold pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
               <img
                 src={iconStar}
                 alt=""
@@ -655,7 +655,7 @@ function Dashboard() {
 
           {/* Practice Time Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+            <div className="stats-icon-glow stats-icon-glow-blue pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
               <img
                 src={iconClock}
                 alt=""
@@ -687,7 +687,7 @@ function Dashboard() {
 
           {/* Level Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
-            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+            <div className="stats-icon-glow stats-icon-glow-amber pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
               <img
                 src={iconCrown}
                 alt=""

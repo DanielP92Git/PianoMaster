@@ -286,7 +286,16 @@ function App() {
   useEffect(() => {
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(() => {
+    } = supabase.auth.onAuthStateChange(async (event) => {
+      // If token refresh fails (common after deployments when a stored refresh token
+      // is revoked/expired), clear the local session to prevent repeated 400s/log spam.
+      if (event === "TOKEN_REFRESH_FAILED") {
+        try {
+          await supabase.auth.signOut();
+        } catch (e) {
+          console.warn("Failed to sign out after TOKEN_REFRESH_FAILED:", e);
+        }
+      }
       queryClient.invalidateQueries({ queryKey: ["user"] });
     });
 
