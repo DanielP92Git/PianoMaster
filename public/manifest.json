@@ -4,7 +4,7 @@
   "description": "Learn piano with interactive lessons, practice games, and track your progress. Offline support included!",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["fullscreen", "standalone"],
+  "display_override": ["standalone"],
   "theme_color": "#581c87",
   "background_color": "#581c87",
   "orientation": "any",

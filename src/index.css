@@ -304,6 +304,66 @@ html[dir="rtl"] {
 }
 
 /* ========================================
+   PWA BEST PRACTICES
+   ======================================== */
+
+/* User selection prevention on UI elements (buttons, nav items, menus) */
+button,
+a,
+[role="button"],
+nav a,
+nav button,
+.nav-item,
+.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Accent color for form controls to match brand */
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+progress,
+[type="checkbox"],
+[type="radio"] {
+  accent-color: #581c87;
+}
+
+/* System font stack for dialogs, modals, and system-like messages */
+.system-font {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Display mode media queries */
+/* Hide installation prompts when app is installed */
+@media (display-mode: standalone) {
+  .install-prompt,
+  .pwa-install-prompt {
+    display: none !important;
+  }
+}
+
+/* Show app-specific elements only when installed */
+@media (display-mode: browser) {
+  .app-only {
+    display: none !important;
+  }
+}
+
+/* Show elements only in installed app modes */
+@media (display-mode: standalone),
+  (display-mode: fullscreen),
+  (display-mode: minimal-ui) {
+  .browser-only {
+    display: none !important;
+  }
+}
+
+/* ========================================
    REUSABLE COMPONENT CLASSES
    ======================================== */
 

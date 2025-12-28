@@ -127,7 +127,7 @@ const PWAInstallPrompt = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm">
+    <div className="install-prompt fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm">
       <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-slide-up">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 text-white">

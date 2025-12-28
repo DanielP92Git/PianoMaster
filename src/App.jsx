@@ -48,6 +48,7 @@ import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
 import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
 import supabase from "./services/supabase";
 import { useGlobalFullscreenOnFirstTap } from "./hooks/useGlobalFullscreenOnFirstTap";
+import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -211,6 +212,9 @@ function AppRoutes() {
     );
   }
 
+  // Update document title based on current route
+  useDocumentTitle();
+
   return (
     <AuthenticatedWrapper>
       <OrientationController />
@@ -261,12 +265,23 @@ function AppRoutes() {
 function App() {
   const { i18n } = useTranslation("common");
   useGlobalFullscreenOnFirstTap();
+  const location = useLocation();
 
   // Ensure <html> lang/dir are set so global RTL font rules apply consistently
   useEffect(() => {
     document.documentElement.lang = i18n.language || "en";
     document.documentElement.dir = i18n.dir();
   }, [i18n.language, i18n]);
+
+  // Keep the Android PWA status bar color aligned with the app's top background.
+  // Note: On Android PWAs we can't draw the *image* into the system status bar area,
+  // but we can match the color so it feels native (no black bar).
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) return;
+    meta.setAttribute("content", "#581c87");
+  }, [location.pathname]);
 
   useEffect(() => {
     const {
