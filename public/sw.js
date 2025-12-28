@@ -99,9 +99,16 @@ self.addEventListener("activate", (event) => {
         })
       );
 
-      // Enable navigation preload if supported
+      // Disable navigation preload to avoid preload cancellation errors
+      // Navigation preload can cause issues if not properly handled with waitUntil()
+      // We'll use standard fetch handling instead
       if ("navigationPreload" in self.registration) {
-        await self.registration.navigationPreload.enable();
+        try {
+          await self.registration.navigationPreload.disable();
+        } catch (error) {
+          // Ignore if already disabled or not supported
+          console.log("Navigation preload disable:", error);
+        }
       }
 
       // Take control of all clients
@@ -123,6 +130,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Skip Vite dev server HMR and module requests
+  // Also skip all JavaScript module requests to prevent MIME type errors
   const url = new URL(event.request.url);
   if (
     url.pathname.includes("@vite") ||
@@ -132,9 +140,12 @@ self.addEventListener("fetch", (event) => {
     url.searchParams.has("t") || // Vite timestamp query param
     url.pathname.endsWith(".jsx") ||
     url.pathname.endsWith(".tsx") ||
-    url.pathname.endsWith(".ts")
+    url.pathname.endsWith(".ts") ||
+    url.pathname.endsWith(".js") || // Skip all JS files - let browser handle them
+    event.request.destination === "script" || // Skip script requests
+    event.request.destination === "module" // Skip module requests
   ) {
-    return;
+    return; // Let browser handle these requests directly
   }
 
   const isAccessoryAsset =
@@ -149,8 +160,20 @@ self.addEventListener("fetch", (event) => {
   const isSameOrigin = url.origin === self.location.origin;
   const isAsset = isSameOrigin && url.pathname.startsWith("/assets/");
   const isNavigate = event.request.mode === "navigate";
+  
+  // Never intercept JavaScript or module requests - they must come from network
+  // This prevents MIME type errors where HTML is served instead of JS
+  if (
+    event.request.destination === "script" ||
+    event.request.destination === "module" ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".mjs")
+  ) {
+    return; // Let browser handle directly
+  }
 
   // Offline reload support (preview/prod): serve app shell + hashed assets cache-first
+  // Only handle navigation requests and static assets (images, CSS, etc.)
   if (isSameOrigin && (isNavigate || isAsset)) {
     event.respondWith(
       (async () => {

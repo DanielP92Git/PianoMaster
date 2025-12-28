@@ -151,6 +151,23 @@ export function applyRoleBasedOrientation(role) {
 let waitingWorker = null;
 
 export async function registerServiceWorker() {
+  // In Vite dev, a service worker commonly breaks module loading/HMR and can
+  // cause "Expected a JavaScript module script but the server responded with
+  // a MIME type of text/html" (SW served index.html for a JS module request).
+  // Only register the SW in production builds.
+  if (import.meta?.env?.DEV) {
+    try {
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+    } catch (e) {
+      // Best-effort cleanup; ignore failures in dev.
+      console.warn("Dev SW cleanup failed:", e);
+    }
+    return null;
+  }
+
   if ("serviceWorker" in navigator) {
     try {
       const registration = await navigator.serviceWorker.register("/sw.js", {

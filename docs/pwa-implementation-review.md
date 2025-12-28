@@ -48,7 +48,7 @@
 ### ⚠️ Areas for Improvement
 
 1. **iOS Status Bar Style** ⚠️
-   - Currently: `content="black"` 
+   - Currently: `content="black"`
    - **Issue:** Should match theme color or use `"black-translucent"` for better integration
    - Location: `index.html` line 31
    - **Recommendation:** Change to `"black-translucent"` or remove if using theme-color
@@ -138,12 +138,47 @@
 - [x] Pull-to-refresh prevention
 - [x] Maskable icons
 - [x] Display mode detection
-- [ ] iOS status bar style (needs update)
-- [ ] User selection prevention on UI
-- [ ] Accent color for forms
-- [ ] System fonts for dialogs
-- [ ] Display mode media queries
-- [ ] Dynamic title updates
-- [ ] Dark mode support
-- [ ] Reduced motion support
+- [x] iOS status bar style (updated to black-translucent)
+- [x] User selection prevention on UI (with -webkit-user-select and -webkit-touch-callout)
+- [x] Accent color for forms
+- [x] System fonts for dialogs
+- [x] Display mode media queries
+- [x] Dynamic title updates
+- [ ] Dark mode support (low priority)
+- [ ] Reduced motion support (low priority)
 
+## iOS-Specific Implementation Status
+
+### ✅ Fully Implemented
+
+1. **iOS Status Bar** ✅
+   - `apple-mobile-web-app-status-bar-style: black-translucent`
+   - Location: `index.html` line 31
+
+2. **iOS Safe Areas** ✅
+   - `viewport-fit=cover` in viewport meta tag
+   - CSS variables: `env(safe-area-inset-*)`
+   - Utility classes for safe area padding
+   - `-webkit-fill-available` for iOS height handling
+   - Location: `index.html` line 8, `src/index.css` lines 196-199, 253-269
+
+3. **iOS Standalone Detection** ✅
+   - `window.navigator.standalone` detection
+   - `.ios-standalone` class added to body
+   - Location: `src/utils/pwa.js` line 73-75, `src/utils/pwaDetection.js`
+
+4. **iOS Text Selection Prevention** ✅
+   - `user-select: none` and `-webkit-user-select: none` on UI elements
+   - `-webkit-touch-callout: none` to prevent iOS long-press menu
+   - Location: `src/index.css` lines 310-333
+
+5. **iOS Meta Tags** ✅
+   - `apple-mobile-web-app-capable`
+   - `apple-mobile-web-app-title`
+   - `apple-touch-icon` configured
+   - Location: `index.html` lines 26-41
+
+6. **iOS Splash Screen** ✅
+   - Basic splash screen configured
+   - Location: `index.html` line 41
+   - Note: Could be enhanced with device-specific sizes (optional)

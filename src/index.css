@@ -247,6 +247,11 @@ html[dir="rtl"] {
 /* iOS Standalone PWA Support */
 .ios-standalone {
   /* Additional iOS-specific styles if needed */
+  /* iOS-specific optimizations are handled via:
+     - Safe area insets (env(safe-area-inset-*))
+     - -webkit-fill-available for height
+     - -webkit-touch-callout: none for UI elements
+     - viewport-fit=cover in meta tag */
 }
 
 /* Utility helpers for safe-area spacing when needed */
@@ -320,6 +325,15 @@ input[type="submit"],
 input[type="reset"] {
   user-select: none;
   -webkit-user-select: none;
+  /* iOS: Prevent long-press menu on interactive elements */
+  -webkit-touch-callout: none;
+}
+
+/* iOS: Prevent long-press menu on images and other touchable elements */
+img,
+[role="img"],
+.interactive-image {
+  -webkit-touch-callout: none;
 }
 
 /* Accent color for form controls to match brand */

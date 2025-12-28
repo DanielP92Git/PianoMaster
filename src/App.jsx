@@ -200,6 +200,9 @@ function AppRoutes() {
   const { isLoading } = useUser();
   const practiceModesSectionRef = useRef(null);
 
+  // Must be called on every render (even while loading) to preserve hook order.
+  useDocumentTitle();
+
   const scrollToPracticeModes = () => {
     practiceModesSectionRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -211,9 +214,6 @@ function AppRoutes() {
       </div>
     );
   }
-
-  // Update document title based on current route
-  useDocumentTitle();
 
   return (
     <AuthenticatedWrapper>
