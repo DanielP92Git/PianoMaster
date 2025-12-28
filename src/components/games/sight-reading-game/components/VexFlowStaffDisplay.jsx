@@ -1028,9 +1028,9 @@ export function VexFlowStaffDisplay({
     return null;
   }
 
-  return (
+  return (  
     <div
-      className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-center"
+      className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-center sm:mt-1"
       dir="ltr" // Force LTR for music notation - prevents RTL inheritance issues
     >
       {error ? (

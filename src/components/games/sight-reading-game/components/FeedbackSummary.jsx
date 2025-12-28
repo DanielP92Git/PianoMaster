@@ -53,14 +53,14 @@ export function FeedbackSummary({
   );
 
   return (
-    <div className="w-full ">
-      <div className="relative rounded-2xl bg-white/95 w-full p-5 sm:p-1">
+    <div className="w-full">
+      <div className="relative w-full rounded-2xl bg-white/95 p-4 sm:p-2">
         {/* Centered content: Trophy, Stars, Rating, Message, Actions */}
-        <div className="flex flex-col items-center text-center space-y-3">
+        <div className="flex flex-col items-center space-y-2.5 text-center sm:space-y-1">
           {/* Trophy Icon */}
 
           {/* Rating Title */}
-          <h2 className="text-xl sm:text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500">
+          <h2 className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 bg-clip-text text-lg font-bold text-transparent sm:text-xl">
             {rating.label}
           </h2>
 
@@ -69,7 +69,7 @@ export function FeedbackSummary({
             {[...Array(3)].map((_, index) => (
               <Star
                 key={index}
-                className={`w-5 h-5 sm:w-4 sm:h-4 ${
+                className={`h-4 w-4 sm:h-5 sm:w-5 ${
                   index < rating.stars
                     ? "fill-yellow-400 text-yellow-500"
                     : "text-gray-300"
@@ -80,21 +80,21 @@ export function FeedbackSummary({
           </div>
 
           {/* Encouraging Message */}
-          <p className="text-sm sm:text-base text-gray-600 max-w-md px-2">
+          <p className="max-w-md px-2 text-xs text-gray-600 sm:text-sm">
             {encouragingMessage}
           </p>
 
           {exerciseLabel ? (
-            <p className="text-xs font-semibold text-gray-700">
+            <p className="text-[11px] font-semibold text-gray-700 sm:text-xs">
               {exerciseLabel}
             </p>
           ) : null}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row w-full max-w-md gap-2.5 mt-2">
+          <div className="mt-1 flex w-full max-w-md flex-col gap-2 sm:mt-2 sm:flex-row sm:gap-2.5">
             <button
               onClick={onTryAgain}
-              className="flex-1 py-2.5 px-5 text-sm font-semibold text-white rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
+              className="flex-1 rounded-xl bg-gradient-to-br from-green-600 to-emerald-600 px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:px-5 sm:py-2.5 sm:text-sm"
             >
               Try Again
             </button>
@@ -102,8 +102,8 @@ export function FeedbackSummary({
               <button
                 onClick={onNextPattern}
                 disabled={nextButtonDisabled}
-                className={`flex-1 py-2.5 px-5 text-sm font-semibold text-white rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 transition-all duration-200 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none ${
-                  nextButtonDisabled ? "opacity-60 cursor-not-allowed" : ""
+                className={`flex-1 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-4 py-2 text-xs font-semibold text-white transition-all duration-200 hover:from-indigo-700 hover:to-violet-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:px-5 sm:py-2.5 sm:text-sm ${
+                  nextButtonDisabled ? "cursor-not-allowed opacity-60" : ""
                 }`}
               >
                 {nextButtonLabel}

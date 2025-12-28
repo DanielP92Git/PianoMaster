@@ -1588,7 +1588,7 @@ body.ios-standalone .safe-area-app {
   .sightreading-staff-wrapper {
     min-height: 130px !important;
     height: clamp(130px, 24vh, 220px) !important;
-    padding-bottom: 8px;
+    padding-bottom: 0px;
   }
 
   .sightreading-keyboard-wrapper:not(.feedback-mode) {

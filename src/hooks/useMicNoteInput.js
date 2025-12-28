@@ -2,9 +2,17 @@ import { useCallback, useMemo, useRef } from "react";
 import { usePitchDetection } from "./usePitchDetection";
 
 // #region agent log (debug-mode instrumentation)
+// Network logging is disabled by default. Enable by setting
+// VITE_DEBUG_MIC_LOGS="true" in your Vite env and running the local
+// collector on 127.0.0.1:7242.
 const __MIC_LOG_ENDPOINT =
   "http://127.0.0.1:7242/ingest/636d1c48-b2ea-491c-896a-7ce448793071";
+const __MIC_LOG_ENABLED =
+  typeof import.meta !== "undefined" &&
+  import.meta.env &&
+  import.meta.env.VITE_DEBUG_MIC_LOGS === "true";
 const __micLog = (payload) => {
+  if (!__MIC_LOG_ENABLED) return;
   fetch(__MIC_LOG_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

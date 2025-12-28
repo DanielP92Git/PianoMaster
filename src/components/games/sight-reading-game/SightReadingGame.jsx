@@ -39,9 +39,17 @@ import {
 import VictoryScreen from "../VictoryScreen";
 
 // #region agent log (debug-mode instrumentation)
+// Network logging is disabled by default. Enable by setting
+// VITE_DEBUG_SR_LOGS=\"true\" in your Vite env and running the local
+// collector on 127.0.0.1:7242.
 const __SR_LOG_ENDPOINT =
   "http://127.0.0.1:7242/ingest/636d1c48-b2ea-491c-896a-7ce448793071";
+const __SR_LOG_ENABLED =
+  typeof import.meta !== "undefined" &&
+  import.meta.env &&
+  import.meta.env.VITE_DEBUG_SR_LOGS === "true";
 const __srLog = (payload) => {
+  if (!__SR_LOG_ENABLED) return;
   fetch(__SR_LOG_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -216,6 +224,24 @@ export function SightReadingGame() {
   useEffect(() => {
     gamePhaseRef.current = gamePhase;
   }, [gamePhase]);
+  // Compact landscape detection (for very short, wide screens like mobile landscape).
+  // Used to tighten vertical spacing so feedback + buttons fit without scrolling.
+  const [isCompactLandscape, setIsCompactLandscape] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const checkLayout = () => {
+      const { innerWidth, innerHeight } = window;
+      const compact = innerWidth > innerHeight && innerHeight <= 430; // ~iPhone 12/13 landscape height
+      setIsCompactLandscape(compact);
+    };
+    checkLayout();
+    window.addEventListener("resize", checkLayout);
+    window.addEventListener("orientationchange", checkLayout);
+    return () => {
+      window.removeEventListener("resize", checkLayout);
+      window.removeEventListener("orientationchange", checkLayout);
+    };
+  }, []);
   useEffect(() => {
     startSession();
     return () => {
@@ -2837,8 +2863,8 @@ export function SightReadingGame() {
                 Keep Going!
               </h2>
               <p className="text-base text-gray-600 sm:text-lg">
-                You finished all 10 exercises. You're only a few points away
-                from unlocking the victory celebration.
+                You finished all 10 exercises. You&apos;re only a few points
+                away from unlocking the victory celebration.
               </p>
             </div>
 
@@ -3050,31 +3076,49 @@ export function SightReadingGame() {
 
       {/* Main Content */}
       <div
-        className={`flex flex-col items-center gap-2 px-2 pb-4 sm:gap-3 sm:px-4 ${
-          isFeedbackPhase ? "flex-1 overflow-y-auto" : "min-h-0 flex-1"
+        className={`flex flex-col items-center px-2 sm:px-4 ${
+          isFeedbackPhase
+            ? isCompactLandscape
+              ? "gap-1 pb-3 sm:gap-1.5 sm:pb-4"
+              : "gap-2 pb-6 sm:gap-3 sm:pb-8"
+            : "gap-2 pb-4 sm:gap-3"
+        } ${
+          isFeedbackPhase && !isCompactLandscape
+            ? "flex-1 overflow-y-auto"
+            : "min-h-0 flex-1"
         }`}
       >
         <div
-          className={`flex w-full max-w-5xl flex-col gap-2.5 sm:gap-3 ${
-            isFeedbackPhase ? "py-0" : "min-h-0 flex-1"
+          className={`flex w-full max-w-5xl flex-col ${
+            isFeedbackPhase
+              ? isCompactLandscape
+                ? "gap-1 py-0 sm:gap-1.5"
+                : "gap-1.5 py-0 sm:gap-2"
+              : "min-h-0 flex-1 gap-2.5 sm:gap-3"
           }`}
         >
           {currentPattern && (
             <div
-              className={`flex flex-col gap-2.5 sm:gap-3 ${
-                isFeedbackPhase ? "" : "min-h-0 flex-1"
+              className={`flex flex-col ${
+                isFeedbackPhase
+                  ? isCompactLandscape
+                    ? "gap-1 sm:gap-0"
+                    : "gap-1.5 sm:gap-2"
+                  : "min-h-0 flex-1 gap-2.5 sm:gap-3"
               }`}
             >
               <div
-                className={`sightreading-staff-wrapper relative w-full flex-shrink-0 ${
+                className={`sightreading-staff-wrapper  relative w-full flex-shrink-0 ${
                   gamePhase === GAME_PHASES.COUNT_IN ? "opacity-90" : ""
                 }`}
                 style={{
-                  minHeight: "160px",
-                  height: "min(34vh, 280px)",
+                  minHeight: isFeedbackPhase ? "120px" : "160px",
+                  height: isFeedbackPhase
+                    ? "min(28vh, 220px)"
+                    : "min(34vh, 280px)",
                 }}
               >
-                <div className="flex h-full items-center justify-center overflow-visible rounded-lg bg-white/95 shadow-2xl backdrop-blur-sm">
+                <div className="flex h-full items-center justify-center overflow-visible rounded-lg bg-white/95 shadow-2xl backdrop-blur-sm sm:mt-2">
                   <VexFlowStaffDisplay
                     pattern={currentPattern}
                     currentNoteIndex={currentNoteIndex}
@@ -3143,7 +3187,7 @@ export function SightReadingGame() {
                     style={keyboardWrapperStyle}
                   >
                     {isFeedbackPhase ? (
-                      <div className="mx-auto w-full max-w-3xl">
+                      <div className="mx-auto mt-2 w-full max-w-3xl sm:mt-0">
                         <FeedbackSummary
                           performanceResults={performanceResults}
                           currentPattern={currentPattern}
@@ -3363,7 +3407,8 @@ export function SightReadingGame() {
               Try Again
             </button>
             <p className="flex-shrink-0 text-xs text-gray-400">
-              Tap "Start Playing" after resetting to begin the count-in again.
+              Tap &quot;Start Playing&quot; after resetting to begin the
+              count-in again.
             </p>
           </div>
         </div>
