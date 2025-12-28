@@ -324,7 +324,7 @@ const VictoryScreen = ({
   ]);
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-hidden p-2 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-2 sm:p-4">
       {/* Main content container - fits within viewport */}
       <div className="flex w-full max-w-md flex-col items-center">
         {/* Video avatar */}

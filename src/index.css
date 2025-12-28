@@ -1171,44 +1171,100 @@ progress,
    NOTE: Do NOT override the element's positioning here, since the stat icon
    wrapper uses Tailwind's `absolute` positioning for centering above cards. */
 body.ios-standalone .stats-icon-glow {
+  /* Anchor pseudo-element for the glow to this inner wrapper.
+     This wrapper is the inner element inside an absolute-positioned outer
+     container (see Dashboard.jsx). Making it `position: relative` here is
+     safe and required so the ::before radial-gradient is positioned and
+     clipped correctly on iOS/Safari. */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure the wrapper is circular so the pseudo-element masks correctly */
+  border-radius: 9999px;
+  overflow: visible;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 body.ios-standalone .stats-icon-glow::before {
   content: "";
   position: absolute;
-  inset: 18%;
+  /* Make the pseudo-element slightly larger than the icon so the blur renders
+     smoothly and any rasterization artifacts are outside the visible area.
+     Use a strong blur + box-shadow to create a soft halo rather than crisp
+     colored geometry which some WebKit versions can render as squares. */
+  inset: -10%;
   border-radius: 9999px;
   background: radial-gradient(
-    circle at 50% 30%,
-    var(--glow-color, rgba(255, 255, 255, 0.9)) 0%,
-    rgba(255, 255, 255, 0.1) 35%,
-    transparent 70%
+    circle at 50% 40%,
+    rgba(var(--glow-rgb, 255,255,255), 0.95) 0%,
+    rgba(var(--glow-rgb, 255,255,255), 0.12) 28%,
+    rgba(var(--glow-rgb, 255,255,255), 0.02) 45%,
+    transparent 75%
   );
-  filter: blur(12px);
+  filter: blur(22px);
+  /* Add an extra blurred shadow using the glow color to smooth edges on iOS */
+  box-shadow: 0 0 36px rgba(var(--glow-rgb, 255,255,255), 0.6), 0 0 18px rgba(0,0,0,0.06) inset;
   opacity: 0.9;
   pointer-events: none;
-  z-index: -1;
+  z-index: 0;
+  transform: translateZ(0);
+  will-change: opacity, filter, transform;
+  /* Ensure the glow stays circular on iOS rendering; mask reduces artifacts */
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 62%, transparent 100%);
+  mask-image: radial-gradient(circle at 50% 50%, black 62%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 body.ios-standalone .stats-icon-glow img {
   position: relative;
-  z-index: 1;
+  z-index: 2;
+  /* Hint to GPU to avoid rendering artifacts */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Ensure the icon stays rounded and doesn't expose square background when
+     compositing occurs on older WebKit renderers. */
+  border-radius: inherit;
 }
 
 body.ios-standalone .stats-icon-glow-orange {
   --glow-color: rgba(255, 165, 80, 1);
+  --glow-rgb: 255,165,80;
 }
 
 body.ios-standalone .stats-icon-glow-gold {
   --glow-color: rgba(255, 230, 120, 1);
+  --glow-rgb: 255,230,120;
 }
 
 body.ios-standalone .stats-icon-glow-blue {
   --glow-color: rgba(130, 200, 255, 1);
+  --glow-rgb: 130,200,255;
 }
 
 body.ios-standalone .stats-icon-glow-amber {
   --glow-color: rgba(255, 195, 110, 1);
+  --glow-rgb: 255,195,110;
+}
+
+/* Force a tiny composite/repaint pass on initial load to avoid early rasterization
+   artifacts on some iOS Safari versions. The animation is effectively instantaneous. */
+@keyframes _stats_force_paint {
+  from {
+    opacity: 0.999;
+  }
+  to {
+    opacity: 1;
+  }
+}
+body.ios-standalone .stats-icon-glow {
+  animation: _stats_force_paint 0.001s linear both;
 }
 
 /* On iOS standalone, let the bottom navigation own the safe-area padding so

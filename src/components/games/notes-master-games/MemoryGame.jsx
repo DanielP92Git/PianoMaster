@@ -726,7 +726,7 @@ export function MemoryGame() {
         )}
 
         {/* Timer and Score Display - only show when game is started */}
-        {gameStarted && (
+        {gameStarted && !gameFinished && (
           <div className="flex flex-1 items-center justify-center gap-2 text-lg font-bold text-white sm:gap-3 sm:text-xl md:gap-4 md:text-2xl">
             {timedMode && (
               <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
