@@ -348,7 +348,8 @@ progress,
 
 /* System font stack for dialogs, modals, and system-like messages */
 .system-font {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
     Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
@@ -1201,21 +1202,27 @@ body.ios-standalone .stats-icon-glow::before {
   border-radius: 9999px;
   background: radial-gradient(
     circle at 50% 40%,
-    rgba(var(--glow-rgb, 255,255,255), 0.95) 0%,
-    rgba(var(--glow-rgb, 255,255,255), 0.12) 28%,
-    rgba(var(--glow-rgb, 255,255,255), 0.02) 45%,
+    rgba(var(--glow-rgb, 255, 255, 255), 0.95) 0%,
+    rgba(var(--glow-rgb, 255, 255, 255), 0.12) 28%,
+    rgba(var(--glow-rgb, 255, 255, 255), 0.02) 45%,
     transparent 75%
   );
   filter: blur(22px);
   /* Add an extra blurred shadow using the glow color to smooth edges on iOS */
-  box-shadow: 0 0 36px rgba(var(--glow-rgb, 255,255,255), 0.6), 0 0 18px rgba(0,0,0,0.06) inset;
+  box-shadow:
+    0 0 36px rgba(var(--glow-rgb, 255, 255, 255), 0.6),
+    0 0 18px rgba(0, 0, 0, 0.06) inset;
   opacity: 0.9;
   pointer-events: none;
   z-index: 0;
   transform: translateZ(0);
   will-change: opacity, filter, transform;
   /* Ensure the glow stays circular on iOS rendering; mask reduces artifacts */
-  -webkit-mask-image: radial-gradient(circle at 50% 50%, black 62%, transparent 100%);
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    black 62%,
+    transparent 100%
+  );
   mask-image: radial-gradient(circle at 50% 50%, black 62%, transparent 100%);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -1235,22 +1242,22 @@ body.ios-standalone .stats-icon-glow img {
 
 body.ios-standalone .stats-icon-glow-orange {
   --glow-color: rgba(255, 165, 80, 1);
-  --glow-rgb: 255,165,80;
+  --glow-rgb: 255, 165, 80;
 }
 
 body.ios-standalone .stats-icon-glow-gold {
   --glow-color: rgba(255, 230, 120, 1);
-  --glow-rgb: 255,230,120;
+  --glow-rgb: 255, 230, 120;
 }
 
 body.ios-standalone .stats-icon-glow-blue {
   --glow-color: rgba(130, 200, 255, 1);
-  --glow-rgb: 130,200,255;
+  --glow-rgb: 130, 200, 255;
 }
 
 body.ios-standalone .stats-icon-glow-amber {
   --glow-color: rgba(255, 195, 110, 1);
-  --glow-rgb: 255,195,110;
+  --glow-rgb: 255, 195, 110;
 }
 
 /* Force a tiny composite/repaint pass on initial load to avoid early rasterization
@@ -1526,6 +1533,7 @@ body.ios-standalone .safe-area-app {
 
 /* VexFlow container with horizontal scroll support */
 .vexflow-container {
+  display: flex;
   overflow-x: auto;
   overflow-y: visible;
   scroll-behavior: smooth;
@@ -1546,13 +1554,12 @@ body.ios-standalone .safe-area-app {
 /* Ensure VexFlow SVG elements are properly displayed */
 .vexflow-container svg {
   display: flex;
+
   margin: 0 auto;
 }
 
 .sightreading-staff-wrapper {
   overflow: visible;
-  /* Add padding to prevent ledger lines from being clipped */
-  padding-bottom: 8px;
 }
 
 /* Ensure the white card inside staff wrapper allows overflow for ledger lines */
@@ -1587,7 +1594,6 @@ body.ios-standalone .safe-area-app {
 @media (max-width: 900px) and (orientation: landscape) {
   .sightreading-staff-wrapper {
     min-height: 130px !important;
-    height: clamp(130px, 24vh, 220px) !important;
     padding-bottom: 0px;
   }
 

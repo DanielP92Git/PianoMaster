@@ -174,9 +174,11 @@ export function VexFlowStaffDisplay({
   }, [containerSize.width, staffWidth]);
 
   const responsiveHeight = useMemo(() => {
-    if (!containerSize.height) return 240;
-    // Add extra space for ledger lines below the staff (at least 60px buffer)
-    return Math.max(containerSize.height, 200);
+    const MIN_STAFF_HEIGHT = 180; // Minimum height for ledger lines
+    if (!containerSize.height) return MIN_STAFF_HEIGHT;
+    // Use container height directly but enforce minimum for ledger lines
+    // Parent container handles overflow
+    return Math.max(containerSize.height, MIN_STAFF_HEIGHT);
   }, [containerSize.height]);
 
   /**
@@ -197,10 +199,16 @@ export function VexFlowStaffDisplay({
       // each with one tickable per event. Map each event to its staff element.
       if (clefKey === "both") {
         const trebleExpected = noteElementsArray.slice(0, eventCount);
-        const bassExpected = noteElementsArray.slice(eventCount, eventCount * 2);
+        const bassExpected = noteElementsArray.slice(
+          eventCount,
+          eventCount * 2
+        );
 
         // If we can't reliably split, fallback to the first eventCount.
-        if (trebleExpected.length !== eventCount || bassExpected.length !== eventCount) {
+        if (
+          trebleExpected.length !== eventCount ||
+          bassExpected.length !== eventCount
+        ) {
           return noteElementsArray.slice(0, eventCount);
         }
 
@@ -266,13 +274,15 @@ export function VexFlowStaffDisplay({
     if (!vexContainerRef.current) return;
     const svg = vexContainerRef.current.querySelector("svg");
     if (!svg) return;
-    // ViewBox matches canvas size; overflow:visible allows ledger lines to extend beyond
-    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight + 80}`);
+    // ViewBox matches canvas size; use container height to prevent overflow
+    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
     svg.style.width = "100%";
     svg.style.height = "100%";
     svg.style.display = "block";
-    svg.style.overflow = "visible";
+    svg.style.overflow = "visible"; // Allow overflow for ledger lines
+    svg.style.paddingTop = "5px";
+    svg.style.paddingBottom = "5px";
   }, []);
 
   /**
@@ -338,17 +348,43 @@ export function VexFlowStaffDisplay({
       }
 
       // Determine responsive canvas dimensions
-      const canvasHeight = responsiveHeight || 200;
+      // Add extra height to account for ledger lines (especially bottom space for bass notes)
+      const ledgerLineBuffer = 80; // Extra space for bottom ledger lines
+
+      // Scale factor to enlarge staff and notes
+      const STAFF_SCALE = 5.5;
+
+      // Keep canvas dimensions in original coordinates (context scaling will handle rendering size)
+      const canvasHeight = (responsiveHeight || 200) + ledgerLineBuffer;
       const canvasWidth = responsiveWidth || staffWidth;
 
-      // Initialize VexFlow with responsive dimensions
-      const vf = initializeVexFlow(containerId, canvasWidth, canvasHeight);
+      // Add padding to renderer size to prevent clipping (MOST IMPORTANT FIX)
+      const PADDING_X = 60;
+      const PADDING_Y = 80;
+
+      // Initialize VexFlow with scaled dimensions + padding
+      const vf = initializeVexFlow(
+        containerId,
+        canvasWidth + PADDING_X,
+        canvasHeight + PADDING_Y
+      );
       vfRef.current = vf;
+
+      // Force SVG overflow visible immediately after renderer creation (CRITICAL FIX)
+      const svg = vexContainerRef.current?.querySelector("svg");
+      if (svg) {
+        svg.style.overflow = "visible";
+      }
 
       // Get the renderer context
       const context = vf.getContext();
 
-      const formatterWidth = Math.max(canvasWidth - 200, 200);
+      // Apply scale to context for larger rendering
+      context.scale(STAFF_SCALE, STAFF_SCALE);
+
+      // Calculate formatter width based on stave width (accounts for new padding)
+      const STAVE_WIDTH_BASE = Math.max(canvasWidth - 60, 240);
+      const formatterWidth = Math.max(STAVE_WIDTH_BASE - 140, 200);
 
       const clefKey = String(clef || "treble").toLowerCase();
 
@@ -401,31 +437,42 @@ export function VexFlowStaffDisplay({
           duration: `${cleanDuration}r`,
           clef: targetClef,
         });
-        spacer.setStyle({ fillStyle: "transparent", strokeStyle: "transparent" });
+        spacer.setStyle({
+          fillStyle: "transparent",
+          strokeStyle: "transparent",
+        });
         return spacer;
       };
 
       if (clefKey === "both") {
         // Grand staff rendering: treble + bass staves
+        // Add extra space for ledger lines above treble and below bass
+        const ledgerLineSpaceTop = 30; // Reduced top space for ledger lines
+        const ledgerLineSpaceBottom = 80; // Increased space below for bass ledger lines to prevent cropping
         const staffGap = Math.max(70, Math.min(110, canvasHeight * 0.28));
-        const staffHeight = 40;
-        const yTreble = Math.max(10, (canvasHeight - (staffGap + staffHeight)) / 2);
+        const staffHeight = 50; // Increased from 40 to 50 for larger staff
+        // Position the grand staff with reduced top space but ensuring bottom space
+        // Calculate total height needed
+        const totalStaffHeight = staffGap + staffHeight;
+        const totalNeededHeight =
+          totalStaffHeight + ledgerLineSpaceTop + ledgerLineSpaceBottom;
+        // Center the staff vertically in the available canvas space
+        // Stave positioning constants - move inward from edges to prevent clipping
+        const STAVE_X = 30;
+        const STAVE_WIDTH = Math.max(canvasWidth - 60, 240); // Leave 30px on each side
+
+        // Center vertically: calculate available space and center the staff
+        const verticalCenter =
+          (canvasHeight - totalNeededHeight) / 2 + ledgerLineSpaceTop;
+        const yTreble = Math.max(ledgerLineSpaceTop, verticalCenter);
         const yBass = yTreble + staffGap;
 
-        const trebleStave = new Stave(
-          50,
-          yTreble,
-          Math.max(canvasWidth - 100, 240)
-        );
+        const trebleStave = new Stave(STAVE_X, yTreble, STAVE_WIDTH);
         trebleStave.addClef("treble");
         trebleStave.addTimeSignature(pattern.timeSignature);
         trebleStave.setContext(context).draw();
 
-        const bassStave = new Stave(
-          50,
-          yBass,
-          Math.max(canvasWidth - 100, 240)
-        );
+        const bassStave = new Stave(STAVE_X, yBass, STAVE_WIDTH);
         bassStave.addClef("bass");
         bassStave.addTimeSignature(pattern.timeSignature);
         bassStave.setEndBarType(2);
@@ -449,11 +496,12 @@ export function VexFlowStaffDisplay({
           console.warn("Failed to draw stave connectors:", err);
         }
 
-        makeSvgResponsive(canvasWidth, canvasHeight);
+        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         const events = Array.isArray(pattern.notes) ? pattern.notes : [];
         const durations =
-          Array.isArray(pattern.vexflowNotes) && pattern.vexflowNotes.length === events.length
+          Array.isArray(pattern.vexflowNotes) &&
+          pattern.vexflowNotes.length === events.length
             ? pattern.vexflowNotes.map((n) => n?.duration || "q")
             : events.map(() => "q");
 
@@ -461,10 +509,18 @@ export function VexFlowStaffDisplay({
           const duration = durations[idx] || "q";
           const eventClef = String(event?.clef || "treble").toLowerCase();
           if (event.type === "rest") {
-            return buildStaveNote({ pitchStr: null, duration: `${duration.replace(/r$/, "")}r`, targetClef: "treble" });
+            return buildStaveNote({
+              pitchStr: null,
+              duration: `${duration.replace(/r$/, "")}r`,
+              targetClef: "treble",
+            });
           }
           if (eventClef === "treble") {
-            return buildStaveNote({ pitchStr: event.pitch, duration, targetClef: "treble" });
+            return buildStaveNote({
+              pitchStr: event.pitch,
+              duration,
+              targetClef: "treble",
+            });
           }
           return buildSpacerRest(duration, "treble");
         });
@@ -476,7 +532,11 @@ export function VexFlowStaffDisplay({
             return buildSpacerRest(duration, "bass");
           }
           if (eventClef === "bass") {
-            return buildStaveNote({ pitchStr: event.pitch, duration, targetClef: "bass" });
+            return buildStaveNote({
+              pitchStr: event.pitch,
+              duration,
+              targetClef: "bass",
+            });
           }
           return buildSpacerRest(duration, "bass");
         });
@@ -493,9 +553,12 @@ export function VexFlowStaffDisplay({
         }).setMode(Voice.Mode.SOFT);
         bassVoice.addTickables(bassTickables);
 
-        const isFeedback = gamePhase === "feedback" && performanceResults.length > 0;
+        const isFeedback =
+          gamePhase === "feedback" && performanceResults.length > 0;
         const wrongPitchResults = isFeedback
-          ? performanceResults.filter((r) => r.timingStatus === "wrong_pitch" && r.detected)
+          ? performanceResults.filter(
+              (r) => r.timingStatus === "wrong_pitch" && r.detected
+            )
           : [];
 
         const hasWrong = wrongPitchResults.length > 0;
@@ -554,13 +617,17 @@ export function VexFlowStaffDisplay({
           const voices = [trebleVoice, wrongTrebleVoice];
           new Formatter().joinVoices(voices).format(voices, formatterWidth);
         } else {
-          new Formatter().joinVoices([trebleVoice]).format([trebleVoice], formatterWidth);
+          new Formatter()
+            .joinVoices([trebleVoice])
+            .format([trebleVoice], formatterWidth);
         }
         if (wrongBassVoice) {
           const voices = [bassVoice, wrongBassVoice];
           new Formatter().joinVoices(voices).format(voices, formatterWidth);
         } else {
-          new Formatter().joinVoices([bassVoice]).format([bassVoice], formatterWidth);
+          new Formatter()
+            .joinVoices([bassVoice])
+            .format([bassVoice], formatterWidth);
         }
 
         // Draw expected voices first
@@ -576,15 +643,29 @@ export function VexFlowStaffDisplay({
         }
       } else {
         // Single staff rendering (existing behavior)
-        const staffHeight = 40; // Approximate height of 5 staff lines
-        const yPosition = Math.max(20, (canvasHeight - staffHeight) / 2);
+        // Add extra space for ledger lines above and below
+        const ledgerLineSpaceTop = 30; // Reduced top space for ledger lines
+        const ledgerLineSpaceBottom = 80; // Increased space below for bass ledger lines to prevent cropping
+        const staffHeight = 50; // Increased from 40 to 50 for larger staff
+        // Position the staff with reduced top space but ensuring bottom space
+        const totalNeededHeight =
+          staffHeight + ledgerLineSpaceTop + ledgerLineSpaceBottom;
+        // Center the staff vertically in the available canvas space
+        // Stave positioning constants - move inward from edges to prevent clipping
+        const STAVE_X = 30;
+        const STAVE_WIDTH = Math.max(canvasWidth - 60, 240); // Leave 30px on each side
 
-        const stave = new Stave(50, yPosition, Math.max(canvasWidth - 100, 240));
+        // Center vertically: calculate available space and center the staff
+        const verticalCenter =
+          (canvasHeight - totalNeededHeight) / 2 + ledgerLineSpaceTop;
+        const yPosition = Math.max(ledgerLineSpaceTop, verticalCenter);
+
+        const stave = new Stave(STAVE_X, yPosition, STAVE_WIDTH);
         stave.addClef(clef);
         stave.addTimeSignature(pattern.timeSignature);
         stave.setEndBarType(2); // Double barline
         stave.setContext(context).draw();
-        makeSvgResponsive(canvasWidth, canvasHeight);
+        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         // Parse EasyScore string manually to create StaveNotes
         const staveNotes = easyscoreString.split(",").map((noteStr) => {
@@ -671,7 +752,10 @@ export function VexFlowStaffDisplay({
                   clef: clef,
                 });
                 if (parsedPlayed?.accidental) {
-                  wrongNote.addModifier(new Accidental(parsedPlayed.accidental), 0);
+                  wrongNote.addModifier(
+                    new Accidental(parsedPlayed.accidental),
+                    0
+                  );
                 }
 
                 const wrongStemDirection = getStemDirectionForPitch(
@@ -959,6 +1043,30 @@ export function VexFlowStaffDisplay({
 
     const events = eventGeometryRef.current;
 
+    // If cursorTime is 0 or before the first event, position cursor at the beginning of the staff
+    if (
+      events.length === 0 ||
+      cursorTime <= 0 ||
+      (events[0] && cursorTime < events[0].startTime)
+    ) {
+      // Position cursor at the beginning of the staff (after clef and time signature)
+      // Calculate position relative to container, accounting for typical clef + time signature width
+      if (containerRef.current && events.length > 0) {
+        // Use the first event's position as reference, but position before it
+        const firstEvent = events[0];
+        if (firstEvent && firstEvent.centerX) {
+          // Position cursor before the first note, accounting for clef + time signature space
+          // Typically clef + time signature takes ~120-150px, so position at first note - 100px
+          const STAFF_START_X = Math.max(50, firstEvent.centerX - 100);
+          setCursorX(STAFF_START_X);
+          return;
+        }
+      }
+      // Fallback: use fixed position if we can't calculate from events
+      setCursorX(150);
+      return;
+    }
+
     // Find the active event based on cursorTime - more robust logic
     let activeEventIdx = events.length - 1; // Default to last event
 
@@ -1028,10 +1136,11 @@ export function VexFlowStaffDisplay({
     return null;
   }
 
-  return (  
+  return (
     <div
-      className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-center sm:mt-1"
+      className="relative mx-auto flex w-full max-w-6xl items-center justify-center"
       dir="ltr" // Force LTR for music notation - prevents RTL inheritance issues
+      style={{ height: "100%" }}
     >
       {error ? (
         <div className="relative w-full rounded-lg border border-red-200 bg-red-50 p-4 text-center">
@@ -1044,6 +1153,7 @@ export function VexFlowStaffDisplay({
         <div
           ref={containerRef}
           className="vexflow-container relative flex h-full w-full items-center justify-center bg-transparent"
+          style={{ height: "100%", overflowX: "hidden", overflowY: "visible" }}
           role="img"
           aria-label={`Musical notation: ${pattern.timeSignature} time signature with ${pattern.notes.length} notes`}
         >
@@ -1052,7 +1162,15 @@ export function VexFlowStaffDisplay({
             id={containerId}
             ref={vexContainerRef}
             className="h-full w-full"
-            style={{ minHeight: "250px", overflow: "visible" }}
+            style={{
+              height: "100%",
+              width: "100%",
+              paddingTop: "5px",
+              paddingBottom: "5px",
+              overflowX: "hidden",
+              overflowY: "visible",
+              position: "relative",
+            }}
           />
 
           {/* Cursor overlay - React-managed, centered on staff */}
@@ -1064,12 +1182,14 @@ export function VexFlowStaffDisplay({
                 className="pointer-events-none absolute border-l-2 border-violet-500"
                 style={{
                   left: cursorX,
-                  top: String(clef || "").toLowerCase() === "both" ? "5%" : "50%",
+                  top:
+                    String(clef || "").toLowerCase() === "both" ? "5%" : "50%",
                   transform:
                     String(clef || "").toLowerCase() === "both"
                       ? "none"
                       : "translateY(-50%)",
-                  height: String(clef || "").toLowerCase() === "both" ? "90%" : "85%",
+                  height:
+                    String(clef || "").toLowerCase() === "both" ? "90%" : "85%",
                 }}
               />
             )}

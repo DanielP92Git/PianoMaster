@@ -40,70 +40,120 @@ const midiToNoteName = (midi) => {
 const DEFAULT_KEYBOARD_RANGE = [noteNameToMidi("C3"), noteNameToMidi("D5")];
 
 /**
+ * Parse a clef-qualified ID (e.g., "treble:F5" or "bass:A2")
+ * @param {string} raw - The raw selected note value
+ * @returns {{ clef: string | null, pitch: string }} - Parsed clef and pitch, or null clef if not qualified
+ */
+const parseClefQualifiedId = (raw) => {
+  if (typeof raw !== "string") return { clef: null, pitch: raw };
+  if (raw.startsWith("treble:")) return { clef: "treble", pitch: raw.slice(7) };
+  if (raw.startsWith("bass:")) return { clef: "bass", pitch: raw.slice(5) };
+  return { clef: null, pitch: raw };
+};
+
+/**
+ * Get the C that starts the octave containing a given MIDI note
+ * @param {number} midi - MIDI note number
+ * @returns {number} - MIDI number of the C that starts the octave
+ */
+const getOctaveStartC = (midi) => {
+  return midi - (midi % 12);
+};
+
+/**
+ * Get the C that ends the octave containing a given MIDI note (the next C)
+ * @param {number} midi - MIDI note number
+ * @returns {number} - MIDI number of the C that ends the octave (next C)
+ */
+const getOctaveEndC = (midi) => {
+  return getOctaveStartC(midi) + 12;
+};
+
+/**
  * Calculate keyboard range from selected notes
- * Returns [minMidi, maxMidi] covering all selected notes
- * Always includes C4 (middle C) if possible for orientation
+ * Returns [minMidi, maxMidi] covering complete C-to-C octaves containing selected notes
+ * Always includes reference octaves: C3-C4 for treble, C2-C3 for bass
  */
 const calculateKeyboardRange = (selectedNotes = []) => {
   if (!selectedNotes || selectedNotes.length === 0) {
     return DEFAULT_KEYBOARD_RANGE;
   }
 
-  // Convert selected notes to MIDI numbers
-  const midiNumbers = selectedNotes
+  // Parse notes and extract pitches and clef information
+  const parsedNotes = selectedNotes
     .map((note) => {
-      // Handle pitch format (e.g., "C3", "D4")
-      const match = note.match(/^([A-G])(#?)(\d+)$/i);
+      const parsed = parseClefQualifiedId(note);
+      const pitch = parsed.pitch;
+
+      // Try to convert pitch to MIDI
+      const match = pitch.match(/^([A-G])(#?)(\d+)$/i);
       if (match) {
-        return noteNameToMidi(note);
+        const midi = noteNameToMidi(pitch);
+        if (midi !== null) {
+          return {
+            pitch,
+            midi,
+            clef: parsed.clef,
+          };
+        }
       }
       return null;
     })
-    .filter((midi) => midi !== null);
+    .filter((note) => note !== null);
 
-  if (midiNumbers.length === 0) {
+  if (parsedNotes.length === 0) {
     return DEFAULT_KEYBOARD_RANGE;
   }
 
-  const minMidi = Math.min(...midiNumbers);
-  const maxMidi = Math.max(...midiNumbers);
+  // Determine which clefs are involved
+  const hasTreble = parsedNotes.some(
+    (note) => note.clef === "treble" || note.clef === null
+  );
+  const hasBass = parsedNotes.some((note) => note.clef === "bass");
 
-  // Always include C4 (middle C) for orientation if it's within reasonable range
+  // Calculate octave boundaries for selected notes
+  // Each note belongs to a C-to-C octave (e.g., F5 belongs to C5-C6)
+  const octaveStarts = parsedNotes.map((note) => getOctaveStartC(note.midi));
+  const octaveEnds = parsedNotes.map((note) => getOctaveEndC(note.midi));
+
+  // Find the lowest and highest octave boundaries needed
+  let minOctaveStart = Math.min(...octaveStarts);
+  let maxOctaveEnd = Math.max(...octaveEnds);
+
+  // Always include reference octaves based on clef context
+  const c3Midi = noteNameToMidi("C3");
   const c4Midi = noteNameToMidi("C4");
-  const shouldIncludeC4 = c4Midi >= minMidi - 12 && c4Midi <= maxMidi + 12;
+  const c2Midi = noteNameToMidi("C2");
 
-  // Find the lowest C in the range (round down to nearest C)
-  // MIDI note % 12 gives the semitone within the octave (0=C, 2=D, 4=E, etc.)
-  const minMidiNoteInOctave = minMidi % 12;
-  const rangeStartMidi = minMidi - minMidiNoteInOctave; // Round down to C
-
-  // Find the highest note and extend to next D for padding
-  const maxMidiNoteInOctave = maxMidi % 12;
-  const maxMidiOctaveStart = maxMidi - maxMidiNoteInOctave;
-  const rangeEndMidi = maxMidiOctaveStart + 12 + 2; // Next octave's D
-
-  // Adjust to include C4 if needed and within reasonable range
-  let finalStart = rangeStartMidi;
-  let finalEnd = rangeEndMidi;
-
-  if (shouldIncludeC4) {
-    // Ensure C4 is visible - extend range if needed
-    const c4OctaveStart = c4Midi - (c4Midi % 12); // C of C4's octave
-
-    if (c4OctaveStart < finalStart) {
-      finalStart = c4OctaveStart;
+  // If treble notes exist, include C3-C4 octave for reference
+  // This means showing from C3 to C4 (inclusive), which covers the C3-C4 octave
+  if (hasTreble) {
+    if (c3Midi < minOctaveStart) {
+      minOctaveStart = c3Midi;
     }
-    if (c4Midi + 2 > finalEnd) {
-      finalEnd = c4Midi + 2; // At least to D4
+    // Ensure we show at least up to C4 for the C3-C4 reference octave
+    // If selected notes go higher, we'll already have a higher maxOctaveEnd
+    if (c4Midi > maxOctaveEnd) {
+      maxOctaveEnd = c4Midi;
     }
   }
 
-  // Ensure minimum range of at least 1 octave
-  if (finalEnd - finalStart < 12) {
-    finalEnd = finalStart + 12 + 2; // At least 1 octave + 2 semitones
+  // If bass notes exist, include C2-C3 octave for reference
+  // This means showing from C2 to C3 (inclusive), which covers the C2-C3 octave
+  if (hasBass) {
+    if (c2Midi < minOctaveStart) {
+      minOctaveStart = c2Midi;
+    }
+    // Ensure we show at least up to C3 for the C2-C3 reference octave
+    // If selected notes go higher, we'll already have a higher maxOctaveEnd
+    if (c3Midi > maxOctaveEnd) {
+      maxOctaveEnd = c3Midi;
+    }
   }
 
-  return [finalStart, finalEnd];
+  // Ensure we show complete octaves (C-to-C)
+  // The range should start at a C and end at a C
+  return [minOctaveStart, maxOctaveEnd];
 };
 
 const PC_SHORTCUT_KEYS = ["a", "s", "d", "f", "g", "h", "j", "k", "l", ";"];
@@ -313,7 +363,7 @@ export function KlavierKeyboard({
     if (!visible || !containerRef.current) return;
 
     const container = containerRef.current;
-    
+
     const applyTouchAction = () => {
       const allElements = container.querySelectorAll("*");
       allElements.forEach((el) => {

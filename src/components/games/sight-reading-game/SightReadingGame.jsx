@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Piano, Settings, Play, Mic } from "lucide-react";
+import { Piano, Settings, Mic } from "lucide-react";
 import MetronomeIcon from "../../../assets/icons/metronome.svg";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
@@ -210,15 +210,9 @@ export function SightReadingGame() {
   const [showKeyboard, setShowKeyboard] = useState(true); // Toggle for on-screen keyboard - default to true for better UX
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
-  const shouldShowKeyboard = !isFeedbackPhase && showKeyboard;
-  const keyboardWrapperStyle = useMemo(() => {
-    if (isFeedbackPhase) {
-      return {};
-    }
-    return {
-      height: "clamp(140px, 28vh, 240px)",
-    };
-  }, [isFeedbackPhase]);
+  // TEMPORARY: Hide keyboard when both clefs are selected
+  const isBothClefs = String(gameSettings.clef || "").toLowerCase() === "both";
+  const shouldShowKeyboard = !isFeedbackPhase && showKeyboard && !isBothClefs;
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const gamePhaseRef = useRef(gamePhase);
   useEffect(() => {
@@ -908,6 +902,38 @@ export function SightReadingGame() {
       });
       const resumed = await audioEngine.resumeAudioContext();
       logMetronomeTiming("audio clock resume attempt complete", {
+        resumed,
+        newState: audioEngine.audioContextRef?.current?.state,
+        audioNow: audioEngine.getCurrentTime(),
+      });
+      return { delta: audioEngine.getCurrentTime() - before, resumed: true };
+    }
+
+    return { delta, resumed: false };
+  }, [audioEngine, wait]);
+
+  // iOS Safari can feel "frozen" if we block on multiple 200ms stability checks
+  // right after a user gesture. For iOS, prefer a lightweight one-frame check so we
+  // can schedule the count-in/cursor immediately, while still nudging the context
+  // to resume if the clock isn't advancing.
+  const verifyAudioClockProgressFast = useCallback(async () => {
+    const before = audioEngine.getCurrentTime();
+    await wait(16); // ~1 frame
+    const after = audioEngine.getCurrentTime();
+    const delta = after - before;
+    logMetronomeTiming("audio clock fast progress sample", {
+      before,
+      after,
+      delta,
+    });
+
+    if (delta < 0.001) {
+      logMetronomeTiming("audio clock fast sample stalled, forcing resume", {
+        delta,
+        beforeState: audioEngine.audioContextRef?.current?.state,
+      });
+      const resumed = await audioEngine.resumeAudioContext();
+      logMetronomeTiming("audio clock fast resume attempt complete", {
         resumed,
         newState: audioEngine.audioContextRef?.current?.state,
         audioNow: audioEngine.getCurrentTime(),
@@ -2453,7 +2479,12 @@ export function SightReadingGame() {
 
       // Ensure audio context is running before scheduling
       await ensureAudioContextRunning();
-      const clockReady = await waitForStableAudioClock();
+      // On iOS Safari, avoid blocking up to ~1s on stability checks right after tap,
+      // since it creates a visible "cursor delay" before anything is scheduled.
+      // Still do a quick nudge to resume if the audio clock isn't advancing.
+      const clockReady = isIOSSafari
+        ? (await verifyAudioClockProgressFast()).delta >= 0.001
+        : await waitForStableAudioClock();
       logMetronomeTiming("audio clock ready for scheduling", {
         clockReady,
       });
@@ -2965,46 +2996,40 @@ export function SightReadingGame() {
         />
 
         {/* Progress Bar - Center */}
-        {gamePhase !== GAME_PHASES.FEEDBACK && (
-          <div className="min-w-0 flex-1">
-            <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
-              <div className="mb-1 flex items-center justify-between text-xs font-semibold">
-                <span className="truncate">
-                  Exercise{" "}
-                  {Math.min(currentExerciseNumber, sessionTotalExercises)} /{" "}
-                  {sessionTotalExercises}
-                </span>
-                <span
-                  className={`ml-2 text-[10px] sm:text-xs ${
-                    isSessionComplete
-                      ? isVictory
-                        ? "text-emerald-300"
-                        : "text-amber-300"
-                      : "text-white/70"
-                  }`}
-                >
-                  {isSessionComplete
+        <div className="min-w-0 flex-1">
+          <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
+            <div className="mb-1 flex items-center justify-between text-xs font-semibold">
+              <span className="truncate">
+                Exercise{" "}
+                {Math.min(currentExerciseNumber, sessionTotalExercises)} /{" "}
+                {sessionTotalExercises}
+              </span>
+              <span
+                className={`ml-2 text-[10px] sm:text-xs ${
+                  isSessionComplete
                     ? isVictory
-                      ? "Victory"
-                      : "Complete"
-                    : ``}
-                </span>
-              </div>
-              <div className="h-1 overflow-hidden rounded-full bg-white/20">
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    isSessionComplete
-                      ? isVictory
-                        ? "bg-emerald-400"
-                        : "bg-rose-400"
-                      : "bg-indigo-300"
-                  }`}
-                  style={{ width: `${progressPercentage}%` }}
-                />
-              </div>
+                      ? "text-emerald-300"
+                      : "text-amber-300"
+                    : "text-white/70"
+                }`}
+              >
+                {isSessionComplete ? (isVictory ? "Victory" : "Complete") : ``}
+              </span>
+            </div>
+            <div className="h-1 overflow-hidden rounded-full bg-white/20">
+              <div
+                className={`h-full transition-all duration-300 ${
+                  isSessionComplete
+                    ? isVictory
+                      ? "bg-emerald-400"
+                      : "bg-rose-400"
+                    : "bg-indigo-300"
+                }`}
+                style={{ width: `${progressPercentage}%` }}
+              />
             </div>
           </div>
-        )}
+        </div>
 
         {/* Right Controls: BPM + Icons */}
         <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
@@ -3076,24 +3101,20 @@ export function SightReadingGame() {
 
       {/* Main Content */}
       <div
-        className={`flex flex-col items-center px-2 sm:px-4 ${
+        className={`flex flex-col items-center px-2 sm:px-0 ${
           isFeedbackPhase
             ? isCompactLandscape
-              ? "gap-1 pb-3 sm:gap-1.5 sm:pb-4"
-              : "gap-2 pb-6 sm:gap-3 sm:pb-8"
-            : "gap-2 pb-4 sm:gap-3"
-        } ${
-          isFeedbackPhase && !isCompactLandscape
-            ? "flex-1 overflow-y-auto"
-            : "min-h-0 flex-1"
-        }`}
+              ? "gap-3 pb-1 sm:gap-4 sm:pb-4"
+              : "gap-4 pb-8 sm:gap-5 sm:pb-12"
+            : "gap-2 pb-0 sm:gap-3"
+        } ${isFeedbackPhase ? "min-h-0 flex-1" : "min-h-0 flex-1"}`}
       >
         <div
           className={`flex w-full max-w-5xl flex-col ${
             isFeedbackPhase
               ? isCompactLandscape
-                ? "gap-1 py-0 sm:gap-1.5"
-                : "gap-1.5 py-0 sm:gap-2"
+                ? "gap-3 py-0 sm:gap-4"
+                : "gap-4 py-0 sm:gap-5"
               : "min-h-0 flex-1 gap-2.5 sm:gap-3"
           }`}
         >
@@ -3102,92 +3123,59 @@ export function SightReadingGame() {
               className={`flex flex-col ${
                 isFeedbackPhase
                   ? isCompactLandscape
-                    ? "gap-1 sm:gap-0"
-                    : "gap-1.5 sm:gap-2"
+                    ? "gap-2 sm:gap-1.5"
+                    : "gap-2.5 sm:gap-3"
                   : "min-h-0 flex-1 gap-2.5 sm:gap-3"
               }`}
             >
               <div
-                className={`sightreading-staff-wrapper  relative w-full flex-shrink-0 ${
+                className={`sightreading-staff-wrapper relative h-full w-full flex-shrink-0 ${
                   gamePhase === GAME_PHASES.COUNT_IN ? "opacity-90" : ""
                 }`}
                 style={{
-                  minHeight: isFeedbackPhase ? "120px" : "160px",
-                  height: isFeedbackPhase
-                    ? "min(28vh, 220px)"
-                    : "min(34vh, 280px)",
+                  overflow: "visible",
                 }}
               >
-                <div className="flex h-full items-center justify-center overflow-visible rounded-lg bg-white/95 shadow-2xl backdrop-blur-sm sm:mt-2">
-                  <VexFlowStaffDisplay
-                    pattern={currentPattern}
-                    currentNoteIndex={currentNoteIndex}
-                    clef={gameSettings.clef.toLowerCase()}
-                    performanceResults={performanceResults}
-                    gamePhase={gamePhase}
-                    cursorTime={cursorTime}
-                  />
-                </div>
-              </div>
-
-              {/* Desktop/tablet: centered guidance text */}
-              <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
-                {gamePhase === GAME_PHASES.COUNT_IN && (
-                  <p className="text-xs font-semibold sm:text-sm">
-                    Listen to the count-in
-                  </p>
-                )}
-                {gamePhase === GAME_PHASES.DISPLAY && (
-                  <div className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={() => beginPerformanceWithPattern()}
-                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700 sm:px-6"
-                    >
-                      Start Playing
-                    </button>
-                  </div>
-                )}
-                {gamePhase === GAME_PHASES.PERFORMANCE && (
-                  <p className="text-xs font-semibold sm:text-sm">
-                    Play the highlighted note!
-                  </p>
-                )}
-              </div>
-
-              {/* Mobile: minimal text only (no big button in flow when keyboard is visible) */}
-              <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
-                {gamePhase === GAME_PHASES.COUNT_IN && (
-                  <p className="text-xs font-semibold">
-                    Listen to the count-in
-                  </p>
-                )}
-                {gamePhase === GAME_PHASES.DISPLAY && !shouldShowKeyboard && (
-                  <div className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={() => beginPerformanceWithPattern()}
-                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700"
-                    >
-                      Start Playing
-                    </button>
-                  </div>
-                )}
-                {gamePhase === GAME_PHASES.PERFORMANCE && (
-                  <p className="text-xs font-semibold">
-                    Play the highlighted note!
-                  </p>
-                )}
-              </div>
-
-              {gamePhase !== GAME_PHASES.SETUP &&
-                (shouldShowKeyboard || isFeedbackPhase) && (
+                <div
+                  className="flex h-full flex-col items-center justify-center overflow-visible rounded-lg bg-white shadow-2xl backdrop-blur-sm"
+                  style={{ height: "100%" }}
+                >
                   <div
-                    className={`sightreading-keyboard-wrapper relative w-full ${
-                      isFeedbackPhase ? "feedback-mode" : "flex-shrink-0"
-                    }`}
-                    style={keyboardWrapperStyle}
+                    className="flex min-h-0 w-full flex-1 flex-wrap items-center justify-center pb-10 pt-0"
+                    style={{ height: "100%", width: "100%" }}
                   >
-                    {isFeedbackPhase ? (
-                      <div className="mx-auto mt-2 w-full max-w-3xl sm:mt-0">
+                    <VexFlowStaffDisplay
+                      pattern={currentPattern}
+                      currentNoteIndex={currentNoteIndex}
+                      clef={gameSettings.clef.toLowerCase()}
+                      performanceResults={performanceResults}
+                      gamePhase={gamePhase}
+                      cursorTime={cursorTime}
+                    />
+                  </div>
+                  {(gamePhase === GAME_PHASES.DISPLAY ||
+                    gamePhase === GAME_PHASES.COUNT_IN ||
+                    gamePhase === GAME_PHASES.PERFORMANCE) &&
+                    shouldShowKeyboard && (
+                      <div
+                        className="sightreading-keyboard-wrapper performance-mode relative mt-2 w-full flex-shrink-0"
+                        style={{
+                          height: "clamp(140px, 25vh, 220px)",
+                          minHeight: "140px",
+                        }}
+                      >
+                        <div className="h-full w-full px-2 py-2 sm:px-0 sm:pb-0 sm:pt-3">
+                          <KlavierKeyboard
+                            visible={showKeyboard}
+                            onNotePlayed={handleKeyboardNoteInput}
+                            selectedNotes={gameSettings.selectedNotes || []}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  {isFeedbackPhase && (
+                    <div className="sightreading-keyboard-wrapper feedback-mode relative w-full">
+                      <div className="mx-auto mt-2 w-full max-w-3xl pb-2 sm:mt-3 sm:pb-3">
                         <FeedbackSummary
                           performanceResults={performanceResults}
                           currentPattern={currentPattern}
@@ -3195,7 +3183,6 @@ export function SightReadingGame() {
                           summaryStats={summaryStats}
                           onTryAgain={replayPattern}
                           onNextPattern={handleNextExercise}
-                          exerciseLabel={`Exercise ${currentExerciseNumber} / ${sessionTotalExercises}`}
                           nextButtonLabel={`Next Exercise`}
                           nextButtonDisabled={isSessionComplete}
                           showNextButton={!isSessionComplete}
@@ -3236,31 +3223,66 @@ export function SightReadingGame() {
                           </div>
                         )}
                       </div>
-                    ) : (
-                      shouldShowKeyboard && (
-                        <>
-                          {/* Floating CTA for mobile (overlays keyboard top) */}
-                          {gamePhase === GAME_PHASES.DISPLAY && (
-                            <div className="absolute left-0 right-0 top-0 z-20 flex -translate-y-12 justify-center lg:hidden">
-                              <button
-                                onClick={() => beginPerformanceWithPattern()}
-                                className="flex transform items-center gap-2 rounded-full bg-green-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:scale-105 hover:bg-green-700"
-                              >
-                                <Play className="h-4 w-4" fill="currentColor" />
-                                <span>Start Playing</span>
-                              </button>
-                            </div>
-                          )}
-                          <KlavierKeyboard
-                            visible={showKeyboard}
-                            onNotePlayed={handleKeyboardNoteInput}
-                            selectedNotes={gameSettings.selectedNotes || []}
-                          />
-                        </>
-                      )
-                    )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Desktop/tablet: centered guidance text */}
+              {gamePhase === GAME_PHASES.DISPLAY && (
+                <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => beginPerformanceWithPattern()}
+                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700 sm:px-6"
+                    >
+                      Start Playing
+                    </button>
                   </div>
-                )}
+                </div>
+              )}
+              {gamePhase === GAME_PHASES.COUNT_IN && (
+                <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
+                  <p className="text-xs font-semibold sm:text-sm">
+                    Listen to the count-in
+                  </p>
+                </div>
+              )}
+              {gamePhase === GAME_PHASES.PERFORMANCE && (
+                <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
+                  <p className="text-xs font-semibold sm:text-sm">
+                    Play the highlighted note!
+                  </p>
+                </div>
+              )}
+
+              {/* Mobile: minimal text only (no big button in flow when keyboard is visible) */}
+              {gamePhase === GAME_PHASES.DISPLAY && (
+                <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
+                  <div className="flex flex-col items-center gap-2">
+                    <button
+                      onClick={() => beginPerformanceWithPattern()}
+                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700"
+                    >
+                      Start Playing
+                    </button>
+                  </div>
+                </div>
+              )}
+              {gamePhase === GAME_PHASES.COUNT_IN && (
+                <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
+                  <p className="text-xs font-semibold">
+                    Listen to the count-in
+                  </p>
+                </div>
+              )}
+              {gamePhase === GAME_PHASES.PERFORMANCE && (
+                <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
+                  <p className="text-xs font-semibold">
+                    Play the highlighted note!
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -3277,14 +3299,22 @@ export function SightReadingGame() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={async () => {
+                  if (isBothClefs) {
+                    toast.info(
+                      "For two clefs practice: Turn on mic and play your piano, or practice the patterns on your piano without mic.",
+                      { duration: 5000 }
+                    );
+                    return;
+                  }
                   setInputMode("keyboard");
                   setShowInputModeModal(false);
                 }}
+                disabled={isBothClefs}
                 className={`w-full rounded-lg border-2 px-4 py-3 transition-all ${
                   inputMode === "keyboard"
                     ? "border-purple-600 bg-purple-50 font-semibold text-purple-700"
                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50"
-                }`}
+                } ${isBothClefs ? "cursor-not-allowed opacity-50" : ""}`}
               >
                 <div className="text-left">
                   <div className="mb-1 font-semibold">
@@ -3293,6 +3323,11 @@ export function SightReadingGame() {
                   <div className="text-sm text-gray-600">
                     Play using the on-screen piano keyboard
                   </div>
+                  {isBothClefs && (
+                    <div className="mt-2 text-xs text-red-500">
+                      Not available for both clefs practice
+                    </div>
+                  )}
                 </div>
               </button>
               <button

@@ -31,6 +31,18 @@ const inferClefForPitch = (pitch) => {
   return octave >= 4 ? "treble" : "bass";
 };
 
+/**
+ * Parse a clef-qualified ID (e.g., "treble:C4" or "bass:C4")
+ * @param {string} raw - The raw selected note value
+ * @returns {{ clef: string | null, pitch: string }} - Parsed clef and pitch, or null clef if not qualified
+ */
+const parseClefQualifiedId = (raw) => {
+  if (typeof raw !== "string") return { clef: null, pitch: raw };
+  if (raw.startsWith("treble:")) return { clef: "treble", pitch: raw.slice(7) };
+  if (raw.startsWith("bass:")) return { clef: "bass", pitch: raw.slice(5) };
+  return { clef: null, pitch: raw };
+};
+
 const toVexFlowNote = (obj) => {
   const durationInfo = getDurationDefinition(obj.notation);
   const vexDuration = durationInfo.vexflowCode;
@@ -133,30 +145,56 @@ export async function generatePatternData({
   const validPitches = new Set(allNotes.map((n) => n.pitch));
   debugLog("Valid pitches for clef:", Array.from(validPitches).sort());
 
-  // Check if selectedNotes contains pitches (new format) or Hebrew names (old format)
+  // Check if selectedNotes contains clef-qualified IDs (e.g., "treble:C4", "bass:C4")
+  const hasClefQualifiedFormat =
+    clefKey === "both" &&
+    selectedNotes.some(
+      (n) =>
+        typeof n === "string" &&
+        (n.startsWith("treble:") || n.startsWith("bass:"))
+    );
+
+  // Check if selectedNotes contains direct pitches (new format) or Hebrew names (old format)
   const hasPitchFormat = selectedNotes.some((n) => validPitches.has(n));
 
   // Process selectedNotes: convert to pitches and validate
   const availableNotes = selectedNotes
     .map((selectedNote) => {
-      // If we have pitch format, only accept pitches (strict mode)
-      if (hasPitchFormat) {
-        if (validPitches.has(selectedNote)) {
-          debugLog(`✓ Using pitch directly: ${selectedNote}`);
-          return selectedNote;
-        } else {
-          debugLog(
-            `✗ Ignoring non-pitch in pitch-format selection: ${selectedNote}`
-          );
-          return null;
+      // Handle clef-qualified format when clef is "both"
+      if (clefKey === "both" && typeof selectedNote === "string") {
+        const parsed = parseClefQualifiedId(selectedNote);
+        if (parsed.clef && parsed.pitch) {
+          // Validate the extracted pitch exists in validPitches
+          if (validPitches.has(parsed.pitch)) {
+            debugLog(
+              `✓ Extracted pitch from clef-qualified ID "${selectedNote}": ${parsed.pitch}`
+            );
+            return parsed.pitch;
+          } else {
+            debugLog(
+              `✗ Invalid pitch in clef-qualified ID "${selectedNote}": ${parsed.pitch}`
+            );
+            return null;
+          }
         }
+        // If it doesn't match clef-qualified format, fall through to other checks
       }
 
-      // Otherwise, treat as Hebrew name (backward compatibility)
+      // Check if it's a direct pitch (works for both single clef and "both" clef with direct pitches)
       if (validPitches.has(selectedNote)) {
         debugLog(`✓ Using pitch directly: ${selectedNote}`);
         return selectedNote;
       }
+
+      // If we detected pitch format but this note isn't a pitch, skip it (strict mode)
+      if (hasPitchFormat) {
+        debugLog(
+          `✗ Ignoring non-pitch in pitch-format selection: ${selectedNote}`
+        );
+        return null;
+      }
+
+      // Otherwise, treat as Hebrew name (backward compatibility)
       const noteObj = allNotes.find((n) => n.note === selectedNote);
       if (noteObj) {
         debugLog(

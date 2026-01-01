@@ -55,13 +55,17 @@ export async function getCurrentUser() {
     if (sessionError) {
       const msg = String(sessionError.message || "");
       const isInvalidRefresh =
-        /invalid refresh token/i.test(msg) || /refresh token not found/i.test(msg);
+        /invalid refresh token/i.test(msg) ||
+        /refresh token not found/i.test(msg);
 
       if (isInvalidRefresh) {
         try {
           await supabase.auth.signOut();
         } catch (signOutError) {
-          console.warn("Failed to sign out after refresh token error:", signOutError);
+          console.warn(
+            "Failed to sign out after refresh token error:",
+            signOutError
+          );
         }
         return null;
       }
