@@ -20,6 +20,7 @@ import ProtectedRoute from "./ui/ProtectedRoute";
 import { MemoryGame } from "./components/games/notes-master-games/MemoryGame";
 import { NotesRecognitionGame } from "./components/games/notes-master-games/NotesRecognitionGame";
 import { SightReadingGame } from "./components/games/sight-reading-game/SightReadingGame";
+import { SightReadingLayoutHarness } from "./components/games/sight-reading-game/components/SightReadingLayoutHarness";
 import MetronomeTrainer from "./components/games/rhythm-games/MetronomeTrainer";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
@@ -219,6 +220,12 @@ function AppRoutes() {
     <AuthenticatedWrapper>
       <OrientationController />
       <Routes>
+        {import.meta.env.DEV && (
+          <Route
+            path="/debug/sight-reading-layout"
+            element={<SightReadingLayoutHarness />}
+          />
+        )}
         <Route
           path="/"
           element={

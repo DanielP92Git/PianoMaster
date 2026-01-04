@@ -15,6 +15,7 @@ import {
   Stave,
   Voice,
   StaveNote,
+  Accidental,
   Dot,
   StaveConnector,
 } from "vexflow";
@@ -92,7 +93,6 @@ export function VexFlowStaffDisplay({
   clef = "treble",
   performanceResults = [],
   gamePhase,
-  cursorTime = 0, // Elapsed time in seconds for smooth cursor movement
 }) {
   // Generate unique ID for this component instance
   const uniqueId = useId();
@@ -103,11 +103,9 @@ export function VexFlowStaffDisplay({
   const vexContainerRef = useRef(null); // Inner VexFlow-only container
   const vfRef = useRef(null);
   const notesRef = useRef([]);
-  const eventGeometryRef = useRef([]); // Store {startTime, endTime, centerX} for each event
   const prevPatternRef = useRef(null);
   const prevClefRef = useRef(null);
   const prevGamePhaseRef = useRef(null);
-  const [cursorX, setCursorX] = useState(null);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
 
   // Error state
@@ -175,10 +173,12 @@ export function VexFlowStaffDisplay({
 
   const responsiveHeight = useMemo(() => {
     const MIN_STAFF_HEIGHT = 180; // Minimum height for ledger lines
+    const MAX_STAFF_HEIGHT = 320; // Prevent runaway heights; SVG will scale to slot
     if (!containerSize.height) return MIN_STAFF_HEIGHT;
-    // Use container height directly but enforce minimum for ledger lines
-    // Parent container handles overflow
-    return Math.max(containerSize.height, MIN_STAFF_HEIGHT);
+    return Math.max(
+      MIN_STAFF_HEIGHT,
+      Math.min(containerSize.height, MAX_STAFF_HEIGHT)
+    );
   }, [containerSize.height]);
 
   /**
@@ -229,60 +229,51 @@ export function VexFlowStaffDisplay({
     }
   }, [pattern?.notes, clef]);
 
-  /**
-   * Build event geometry for time-based cursor interpolation
-   */
-  const buildEventGeometry = useCallback(() => {
-    if (
-      !pattern ||
-      !pattern.notes ||
-      !notesRef.current ||
-      !containerRef.current
-    ) {
-      eventGeometryRef.current = [];
-      return;
-    }
-
-    try {
-      const containerRect = containerRef.current.getBoundingClientRect();
-      eventGeometryRef.current = pattern.notes.map((event, idx) => {
-        const noteElement = notesRef.current[idx];
-        if (!noteElement || !noteElement.getBoundingClientRect) {
-          return {
-            startTime: event.startTime || 0,
-            endTime: event.endTime || 0,
-            centerX: 0,
-          };
-        }
-
-        const noteRect = noteElement.getBoundingClientRect();
-        const centerX = noteRect.left - containerRect.left + noteRect.width / 2;
-
-        return {
-          startTime: event.startTime || 0,
-          endTime: event.endTime || 0,
-          centerX,
-        };
-      });
-    } catch (err) {
-      console.warn("Failed to build event geometry:", err);
-      eventGeometryRef.current = [];
-    }
-  }, [pattern]);
-
   const makeSvgResponsive = useCallback((svgWidth, svgHeight) => {
     if (!vexContainerRef.current) return;
     const svg = vexContainerRef.current.querySelector("svg");
     if (!svg) return;
-    // ViewBox matches canvas size; use container height to prevent overflow
+    // ViewBox should match the renderer dimensions we initialized VexFlow with.
+    // We already apply visual enlargement via `context.scale(STAFF_SCALE, STAFF_SCALE)`;
+    // scaling the viewBox again would double-apply the scale and shrink the staff.
     svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
     svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
+    // The SVG should scale to fit its container width while maintaining aspect ratio.
+    // The parent flexbox will handle vertical centering.
     svg.style.width = "100%";
-    svg.style.height = "100%";
+    svg.style.maxWidth = "100%";
+    svg.style.height = "auto"; // Let height follow aspect ratio
     svg.style.display = "block";
-    svg.style.overflow = "visible"; // Allow overflow for ledger lines
-    svg.style.paddingTop = "5px";
-    svg.style.paddingBottom = "5px";
+    // Let the layout/card decide clipping; the SVG should render naturally.
+    svg.style.overflow = "visible";
+  }, []);
+
+  /**
+   * Fit the SVG viewBox to the rendered notation bounds (prevents internal SVG cropping).
+   * This keeps all staff elements (clefs, braces, ledger lines, barlines) visible even
+   * when the available slot is short; the SVG will scale down uniformly to fit.
+   */
+  const fitSvgViewBoxToContent = useCallback(() => {
+    if (!vexContainerRef.current) return;
+    const svg = vexContainerRef.current.querySelector("svg");
+    if (!svg) return;
+    try {
+      const bbox = svg.getBBox?.();
+      if (!bbox || bbox.width <= 0 || bbox.height <= 0) return;
+
+      const padX = 40;
+      // Increase vertical padding to ensure low bass notes with ledger lines are visible
+      const padY = 60;
+      const x = Math.floor(bbox.x - padX);
+      const y = Math.floor(bbox.y - padY);
+      const w = Math.ceil(bbox.width + padX * 2);
+      const h = Math.ceil(bbox.height + padY * 2);
+
+      svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
+    } catch (err) {
+      // Some browsers may throw if the SVG isn't fully laid out yet.
+      console.warn("Failed to fit SVG viewBox to content:", err);
+    }
   }, []);
 
   /**
@@ -347,20 +338,40 @@ export function VexFlowStaffDisplay({
         });
       }
 
-      // Determine responsive canvas dimensions
-      // Add extra height to account for ledger lines (especially bottom space for bass notes)
-      const ledgerLineBuffer = 80; // Extra space for bottom ledger lines
+      const clefKey = String(clef || "treble").toLowerCase();
 
-      // Scale factor to enlarge staff and notes
-      const STAFF_SCALE = 5.5;
+      // Determine responsive canvas dimensions.
+      // Add extra height to account for ledger lines (especially bottom space for bass notes).
+      // When the available slot is tight, reduce buffers so the notation can scale down cleanly.
+      const isTightHeight =
+        (responsiveHeight || 0) > 0 && responsiveHeight < 220;
+      const ledgerLineBuffer =
+        clefKey === "both"
+          ? isTightHeight
+            ? 130 // Increased for low bass notes visibility in tight layouts
+            : 160
+          : isTightHeight
+            ? 70
+            : 90;
+
+      // Scale factor: keep subtle. We will fit the SVG viewBox to the actual rendered bounds,
+      // so the final SVG scales down to the available slot without cropping.
+      const STAFF_SCALE =
+        clefKey === "both"
+          ? isTightHeight
+            ? 1.0
+            : 1.1
+          : isTightHeight
+            ? 1.0
+            : 1.15;
 
       // Keep canvas dimensions in original coordinates (context scaling will handle rendering size)
       const canvasHeight = (responsiveHeight || 200) + ledgerLineBuffer;
       const canvasWidth = responsiveWidth || staffWidth;
 
       // Add padding to renderer size to prevent clipping (MOST IMPORTANT FIX)
-      const PADDING_X = 60;
-      const PADDING_Y = 80;
+      const PADDING_X = 100;
+      const PADDING_Y = 100;
 
       // Initialize VexFlow with scaled dimensions + padding
       const vf = initializeVexFlow(
@@ -370,23 +381,15 @@ export function VexFlowStaffDisplay({
       );
       vfRef.current = vf;
 
-      // Force SVG overflow visible immediately after renderer creation (CRITICAL FIX)
-      const svg = vexContainerRef.current?.querySelector("svg");
-      if (svg) {
-        svg.style.overflow = "visible";
-      }
-
       // Get the renderer context
       const context = vf.getContext();
 
-      // Apply scale to context for larger rendering
+      // Apply mild scale; viewBox fitting (below) ensures no cropping.
       context.scale(STAFF_SCALE, STAFF_SCALE);
 
       // Calculate formatter width based on stave width (accounts for new padding)
-      const STAVE_WIDTH_BASE = Math.max(canvasWidth - 60, 240);
+      const STAVE_WIDTH_BASE = Math.max(canvasWidth - 100, 240);
       const formatterWidth = Math.max(STAVE_WIDTH_BASE - 140, 200);
-
-      const clefKey = String(clef || "treble").toLowerCase();
 
       const parsePitchForVexflow = (pitchStr) => {
         if (!pitchStr) return { key: "c/4", accidental: null };
@@ -399,8 +402,6 @@ export function VexFlowStaffDisplay({
           accidentalRaw === "#" ? "#" : accidentalRaw === "b" ? "b" : null;
         return { key, accidental };
       };
-
-      const toVexKey = (pitchStr) => parsePitchForVexflow(pitchStr).key;
 
       const buildStaveNote = ({ pitchStr, duration, targetClef }) => {
         const isRest = String(duration || "").endsWith("r");
@@ -448,7 +449,7 @@ export function VexFlowStaffDisplay({
         // Grand staff rendering: treble + bass staves
         // Add extra space for ledger lines above treble and below bass
         const ledgerLineSpaceTop = 30; // Reduced top space for ledger lines
-        const ledgerLineSpaceBottom = 80; // Increased space below for bass ledger lines to prevent cropping
+        const ledgerLineSpaceBottom = 100; // Extra space below for bass ledger lines to prevent cropping
         const staffGap = Math.max(70, Math.min(110, canvasHeight * 0.28));
         const staffHeight = 50; // Increased from 40 to 50 for larger staff
         // Position the grand staff with reduced top space but ensuring bottom space
@@ -458,8 +459,8 @@ export function VexFlowStaffDisplay({
           totalStaffHeight + ledgerLineSpaceTop + ledgerLineSpaceBottom;
         // Center the staff vertically in the available canvas space
         // Stave positioning constants - move inward from edges to prevent clipping
-        const STAVE_X = 30;
-        const STAVE_WIDTH = Math.max(canvasWidth - 60, 240); // Leave 30px on each side
+        const STAVE_X = 50;
+        const STAVE_WIDTH = Math.max(canvasWidth - 100, 240); // Leave 50px on each side
 
         // Center vertically: calculate available space and center the staff
         const verticalCenter =
@@ -475,7 +476,6 @@ export function VexFlowStaffDisplay({
         const bassStave = new Stave(STAVE_X, yBass, STAVE_WIDTH);
         bassStave.addClef("bass");
         bassStave.addTimeSignature(pattern.timeSignature);
-        bassStave.setEndBarType(2);
         bassStave.setContext(context).draw();
 
         // Connectors for grand staff
@@ -488,14 +488,16 @@ export function VexFlowStaffDisplay({
             .setType(StaveConnector.type.SINGLE_LEFT)
             .setContext(context)
             .draw();
+          // Continuous double bar line spanning both staves
           new StaveConnector(trebleStave, bassStave)
-            .setType(StaveConnector.type.SINGLE_RIGHT)
+            .setType(StaveConnector.type.BOLD_DOUBLE_RIGHT)
             .setContext(context)
             .draw();
         } catch (err) {
           console.warn("Failed to draw stave connectors:", err);
         }
 
+        // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
         makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         const events = Array.isArray(pattern.notes) ? pattern.notes : [];
@@ -652,8 +654,8 @@ export function VexFlowStaffDisplay({
           staffHeight + ledgerLineSpaceTop + ledgerLineSpaceBottom;
         // Center the staff vertically in the available canvas space
         // Stave positioning constants - move inward from edges to prevent clipping
-        const STAVE_X = 30;
-        const STAVE_WIDTH = Math.max(canvasWidth - 60, 240); // Leave 30px on each side
+        const STAVE_X = 50;
+        const STAVE_WIDTH = Math.max(canvasWidth - 100, 240); // Leave 50px on each side
 
         // Center vertically: calculate available space and center the staff
         const verticalCenter =
@@ -665,6 +667,7 @@ export function VexFlowStaffDisplay({
         stave.addTimeSignature(pattern.timeSignature);
         stave.setEndBarType(2); // Double barline
         stave.setContext(context).draw();
+        // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
         makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         // Parse EasyScore string manually to create StaveNotes
@@ -803,8 +806,10 @@ export function VexFlowStaffDisplay({
         notesRef: notesRef.current.length,
       });
 
-      // Build event geometry for time-based cursor movement
-      buildEventGeometry();
+      // Fit the viewBox to content after rendering
+      requestAnimationFrame(() => {
+        fitSvgViewBoxToContent();
+      });
 
       // Clear any previous error
       setError(null);
@@ -817,16 +822,13 @@ export function VexFlowStaffDisplay({
     staffWidth,
     responsiveWidth,
     responsiveHeight,
-    pattern?.easyscoreString,
-    pattern?.timeSignature,
-    pattern?.totalDuration,
-    pattern?.notes,
+    pattern,
     clef,
     extractNoteElements,
-    buildEventGeometry,
     gamePhase,
     performanceResults,
     makeSvgResponsive,
+    fitSvgViewBoxToContent,
   ]);
 
   /**
@@ -911,15 +913,14 @@ export function VexFlowStaffDisplay({
   );
 
   /**
-   * Highlight and color notes based on performance
-   * Optimized to only update when index or results change
-   * Guards against stale refs during pattern changes
+   * Highlight and color notes based on performance.
+   * Colors the notehead and stem (via fill/stroke on the .vf-stavenote group).
+   * During performance phase, the current note is colored purple; all others are black.
+   * During feedback phase, notes are colored based on performance results.
    */
   const highlightNote = useCallback(
     (noteIndex) => {
       if (!notesRef.current || notesRef.current.length === 0) {
-        // No notes available yet, reset cursor
-        setCursorX(null);
         return;
       }
 
@@ -930,44 +931,14 @@ export function VexFlowStaffDisplay({
             const colorInfo = getNoteColor(idx);
             const { fill, stroke, class: className } = colorInfo;
 
+            // Setting fill/stroke on the .vf-stavenote group colors both notehead and stem
             noteElement.setAttribute("class", `vf-stavenote ${className}`);
             noteElement.setAttribute("fill", fill);
-
-            // Set stroke for stems (especially important for semi-transparent colors)
-            if (stroke) {
-              noteElement.setAttribute("stroke", stroke);
-            } else {
-              noteElement.setAttribute("stroke", fill);
-            }
-
-            // Remove any animation (pulsing effect removed as per user request)
-            if (noteElement.style) {
-              noteElement.style.animation = "";
-            }
+            noteElement.setAttribute("stroke", stroke || fill);
           }
         });
-
-        // Update cursor position for the active note
-        if (
-          noteIndex >= 0 &&
-          noteIndex < notesRef.current.length &&
-          containerRef.current
-        ) {
-          const activeNote = notesRef.current[noteIndex];
-          if (activeNote && activeNote.getBoundingClientRect) {
-            const containerRect = containerRef.current.getBoundingClientRect();
-            const noteRect = activeNote.getBoundingClientRect();
-            // Position cursor slightly before the note (12px offset)
-            const x = noteRect.left - containerRect.left - 12;
-            setCursorX(x);
-          }
-        } else {
-          // Index out of bounds or no container, reset cursor
-          setCursorX(null);
-        }
       } catch (err) {
         console.warn("Failed to highlight note:", err);
-        setCursorX(null);
       }
     },
     [getNoteColor]
@@ -1030,93 +1001,6 @@ export function VexFlowStaffDisplay({
     highlightNote(currentNoteIndex);
   }, [currentNoteIndex, performanceResults, highlightNote]);
 
-  // Effect: Update cursor position based on musical time (smooth movement through rests)
-  useEffect(() => {
-    if (
-      !eventGeometryRef.current ||
-      eventGeometryRef.current.length === 0 ||
-      !pattern ||
-      !containerRef.current
-    ) {
-      return;
-    }
-
-    const events = eventGeometryRef.current;
-
-    // If cursorTime is 0 or before the first event, position cursor at the beginning of the staff
-    if (
-      events.length === 0 ||
-      cursorTime <= 0 ||
-      (events[0] && cursorTime < events[0].startTime)
-    ) {
-      // Position cursor at the beginning of the staff (after clef and time signature)
-      // Calculate position relative to container, accounting for typical clef + time signature width
-      if (containerRef.current && events.length > 0) {
-        // Use the first event's position as reference, but position before it
-        const firstEvent = events[0];
-        if (firstEvent && firstEvent.centerX) {
-          // Position cursor before the first note, accounting for clef + time signature space
-          // Typically clef + time signature takes ~120-150px, so position at first note - 100px
-          const STAFF_START_X = Math.max(50, firstEvent.centerX - 100);
-          setCursorX(STAFF_START_X);
-          return;
-        }
-      }
-      // Fallback: use fixed position if we can't calculate from events
-      setCursorX(150);
-      return;
-    }
-
-    // Find the active event based on cursorTime - more robust logic
-    let activeEventIdx = events.length - 1; // Default to last event
-
-    for (let i = 0; i < events.length; i++) {
-      const geom = events[i];
-      // Check if cursorTime is within this event's time window
-      if (cursorTime >= geom.startTime && cursorTime <= geom.endTime) {
-        activeEventIdx = i;
-        break;
-      }
-      // If cursorTime is before this event starts, use previous event (or stay at 0)
-      if (cursorTime < geom.startTime) {
-        activeEventIdx = Math.max(0, i - 1);
-        break;
-      }
-    }
-
-    const activeGeom = events[activeEventIdx];
-    if (!activeGeom) return;
-
-    // Determine target X position
-    let targetX;
-    if (activeEventIdx < events.length - 1) {
-      // Not the last event: interpolate to 12px before next event's center
-      targetX = events[activeEventIdx + 1].centerX - 12;
-    } else {
-      // Last event: move to the right edge of the staff container
-      const containerRect = containerRef.current.getBoundingClientRect();
-      targetX = containerRect.width - 50; // Leave 50px margin from edge
-    }
-
-    // Calculate progress within the current event
-    const eventDuration = Math.max(
-      activeGeom.endTime - activeGeom.startTime,
-      0.001
-    );
-    const timeIntoEvent = cursorTime - activeGeom.startTime;
-    const progressInEvent = Math.max(
-      0,
-      Math.min(1, timeIntoEvent / eventDuration)
-    );
-
-    // Linear interpolation from current event center to target
-    // Start 12px before the note center for better visual clarity
-    const startX = activeGeom.centerX - 12;
-    const interpolatedX = startX + progressInEvent * (targetX - startX);
-
-    setCursorX(interpolatedX);
-  }, [cursorTime, pattern]);
-
   // Effect: Cleanup VexFlow content on unmount or pattern change
   useEffect(() => {
     const currentContainer = vexContainerRef.current;
@@ -1127,7 +1011,6 @@ export function VexFlowStaffDisplay({
       }
       // Reset refs
       notesRef.current = [];
-      setCursorX(null);
     };
   }, [pattern?.easyscoreString]); // Re-run cleanup when pattern changes
 
@@ -1138,7 +1021,7 @@ export function VexFlowStaffDisplay({
 
   return (
     <div
-      className="relative mx-auto flex w-full max-w-6xl items-center justify-center"
+      className="relative mx-auto flex w-full max-w-6xl items-center justify-center px-4"
       dir="ltr" // Force LTR for music notation - prevents RTL inheritance issues
       style={{ height: "100%" }}
     >
@@ -1152,8 +1035,11 @@ export function VexFlowStaffDisplay({
       ) : (
         <div
           ref={containerRef}
-          className="vexflow-container relative flex h-full w-full items-center justify-center bg-transparent"
-          style={{ height: "100%", overflowX: "hidden", overflowY: "visible" }}
+          className="vexflow-container relative flex w-full items-center justify-center bg-transparent"
+          style={{
+            maxHeight: "100%",
+            overflow: "visible",
+          }}
           role="img"
           aria-label={`Musical notation: ${pattern.timeSignature} time signature with ${pattern.notes.length} notes`}
         >
@@ -1161,38 +1047,13 @@ export function VexFlowStaffDisplay({
           <div
             id={containerId}
             ref={vexContainerRef}
-            className="h-full w-full"
+            className="w-full"
             style={{
-              height: "100%",
               width: "100%",
-              paddingTop: "5px",
-              paddingBottom: "5px",
-              overflowX: "hidden",
-              overflowY: "visible",
+              overflow: "visible",
               position: "relative",
             }}
           />
-
-          {/* Cursor overlay - React-managed, centered on staff */}
-          {cursorX !== null &&
-            (gamePhase === "display" ||
-              gamePhase === "count-in" ||
-              gamePhase === "performance") && (
-              <div
-                className="pointer-events-none absolute border-l-2 border-violet-500"
-                style={{
-                  left: cursorX,
-                  top:
-                    String(clef || "").toLowerCase() === "both" ? "5%" : "50%",
-                  transform:
-                    String(clef || "").toLowerCase() === "both"
-                      ? "none"
-                      : "translateY(-50%)",
-                  height:
-                    String(clef || "").toLowerCase() === "both" ? "90%" : "85%",
-                }}
-              />
-            )}
         </div>
       )}
     </div>

@@ -387,11 +387,11 @@ export function KlavierKeyboard({
   return (
     <div
       ref={containerRef}
-      className="bg-gray-800/50 flex h-full w-full flex-col rounded-lg p-2 backdrop-blur-sm"
-      style={{ minHeight: "140px", touchAction: "manipulation" }}
+      className="flex h-full w-full flex-col rounded-lg bg-transparent p-2 md:bg-gray-800/50 md:backdrop-blur-sm"
+      style={{ touchAction: "manipulation" }}
       dir="ltr" // Force LTR for piano keyboard - prevents RTL inheritance issues
     >
-      <div className="mx-auto flex h-full w-full max-w-full flex-1 items-center justify-center sm:max-w-4xl">
+      <div className="flex h-full w-full flex-1 items-center justify-center">
         <Klavier
           keyRange={keyRange}
           keymap={keymap}

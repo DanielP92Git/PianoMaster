@@ -11,6 +11,7 @@ import { PreGameSetup } from "./components/PreGameSetup";
 import { VexFlowStaffDisplay } from "./components/VexFlowStaffDisplay";
 import { KlavierKeyboard } from "./components/KlavierKeyboard";
 import { FeedbackSummary } from "./components/FeedbackSummary";
+import { SightReadingLayout } from "./components/SightReadingLayout";
 import { MetronomeDisplay } from "../rhythm-games/components/MetronomeDisplay";
 import { usePatternGeneration } from "./hooks/usePatternGeneration";
 import { useRhythmPlayback } from "./hooks/useRhythmPlayback";
@@ -100,11 +101,6 @@ const PC_KEYBOARD_KEYS = [
 const METRONOME_TIMING_DEBUG = import.meta.env?.VITE_DEBUG_METRONOME === "true";
 const FIRST_NOTE_DEBUG = import.meta.env?.VITE_DEBUG_FIRST_NOTE === "true";
 const PERFORMANCE_START_BUFFER_MS = 0;
-// iOS Safari can have noticeably different output latency + main-thread scheduling.
-// We apply an optional, cursor-only adjustment so visuals align better to what users hear.
-const IOS_CURSOR_LATENCY_COMP_ENABLED =
-  import.meta.env?.VITE_IOS_CURSOR_LATENCY_COMP !== "false";
-const IOS_CURSOR_LATENCY_COMP_MAX_MS = 250;
 const COUNT_IN_AUDIO_GUARD_EARLY_MS = 30;
 const isIOSSafari =
   typeof navigator !== "undefined" &&
@@ -176,7 +172,6 @@ export function SightReadingGame() {
   const [currentPattern, setCurrentPattern] = useState(null);
   const [currentBeat, setCurrentBeat] = useState(0);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
-  const [cursorTime, setCursorTime] = useState(0); // Elapsed time in seconds for cursor animation
 
   // Unified timing state: replaces scoringActive + isPerformanceLive
   const [timingState, setTimingState] = useState(TIMING_STATE.OFF);
@@ -197,8 +192,6 @@ export function SightReadingGame() {
   const countInEndAudioTimeRef = useRef(null); // AudioContext seconds at count-in end (scheduled)
   const countInEndWallClockMsRef = useRef(null); // Date.now() ms at count-in end (scheduled)
   const performanceStartAudioTimeRef = useRef(null); // AudioContext seconds at performance start (preferred timing baseline)
-  // Cursor-only baseline (may differ from scoring baseline on iOS Safari).
-  const cursorStartAudioTimeRef = useRef(null); // AudioContext seconds
 
   // Input mode state: "keyboard" or "mic"
   const [inputMode, setInputMode] = useState(() => {
@@ -210,9 +203,8 @@ export function SightReadingGame() {
   const [showKeyboard, setShowKeyboard] = useState(true); // Toggle for on-screen keyboard - default to true for better UX
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
-  // TEMPORARY: Hide keyboard when both clefs are selected
   const isBothClefs = String(gameSettings.clef || "").toLowerCase() === "both";
-  const shouldShowKeyboard = !isFeedbackPhase && showKeyboard && !isBothClefs;
+  const shouldShowKeyboard = !isFeedbackPhase && showKeyboard;
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const gamePhaseRef = useRef(gamePhase);
   useEffect(() => {
@@ -411,7 +403,6 @@ export function SightReadingGame() {
     scoring: null,
     completion: null,
   });
-  const cursorAnimationRef = useRef(null); // RAF handle for cursor animation
   const timingWindowsRef = useRef([]);
   const performanceResultsRef = useRef([]); // Ref for real-time performance results access
   const performanceLiveTimeoutRef = useRef(null);
@@ -465,104 +456,6 @@ export function SightReadingGame() {
     return Math.max(0, Date.now() - wallClockStartTimeRef.current);
   }, []);
 
-  // Cursor-only elapsed time (may be compensated on iOS Safari for output latency).
-  const getElapsedMsForCursor = useCallback(() => {
-    const baseAudioTime =
-      typeof cursorStartAudioTimeRef.current === "number"
-        ? cursorStartAudioTimeRef.current
-        : performanceStartAudioTimeRef.current;
-    if (typeof baseAudioTime === "number" && baseAudioTime > 0) {
-      const audioNow = audioEngine.getCurrentTime();
-      const elapsedMs = (audioNow - baseAudioTime) * 1000;
-      return Math.max(0, elapsedMs);
-    }
-    if (!wallClockStartTimeRef.current) return 0;
-    return Math.max(0, Date.now() - wallClockStartTimeRef.current);
-  }, []);
-
-  // Cursor animation helpers
-  const startCursorAnimation = useCallback(() => {
-    if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
-      logFirstNoteDebug("cursor animation blocked", {
-        phase: gamePhaseRef.current,
-        timingState: timingStateRef.current,
-      });
-      return;
-    }
-    const pattern = currentPatternRef.current;
-    if (!pattern || !wallClockStartTimeRef.current) return;
-
-    // #region agent log
-    __srLog({
-      sessionId: "debug-session",
-      runId: "mic-latency-pre",
-      hypothesisId: "Hcursor",
-      location:
-        "src/components/games/sight-reading-game/SightReadingGame.jsx:startCursorAnimation",
-      message: "cursor.start",
-      data: {
-        wallClockStartMs: wallClockStartTimeRef.current,
-        audioStartTime: audioStartTimeRef.current,
-        tempo: pattern?.tempo ?? null,
-        totalDuration: pattern?.totalDuration ?? null,
-      },
-      timestamp: Date.now(),
-    });
-    // #endregion
-
-    const animate = () => {
-      if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) {
-        logFirstNoteDebug("cursor animation halted (phase change)", {
-          phase: gamePhaseRef.current,
-        });
-        return;
-      }
-      const elapsedMs = getElapsedMsForCursor();
-      const elapsedSec = elapsedMs / 1000;
-      const patternDurationSec = pattern.totalDuration || 0;
-      const clampedSec = Math.min(elapsedSec, patternDurationSec);
-      setCursorTime(clampedSec);
-
-      // #region agent log
-      // Throttle to ~2 logs/sec to catch jank without spamming.
-      if (
-        typeof animate.__dbgLastLogAt !== "number" ||
-        elapsedMs - animate.__dbgLastLogAt >= 500
-      ) {
-        animate.__dbgLastLogAt = elapsedMs;
-        __srLog({
-          sessionId: "debug-session",
-          runId: "mic-latency-pre",
-          hypothesisId: "Hcursor",
-          location:
-            "src/components/games/sight-reading-game/SightReadingGame.jsx:startCursorAnimation",
-          message: "cursor.tick",
-          data: {
-            elapsedMs: Math.round(elapsedMs),
-            cursorTimeSec: Number(clampedSec.toFixed(3)),
-            patternDurationSec: Number(patternDurationSec.toFixed(3)),
-            timingState: timingStateRef.current,
-          },
-          timestamp: Date.now(),
-        });
-      }
-      // #endregion
-
-      if (elapsedSec < patternDurationSec) {
-        cursorAnimationRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    cursorAnimationRef.current = requestAnimationFrame(animate);
-  }, [getElapsedMsForCursor]);
-
-  const stopCursorAnimation = useCallback(() => {
-    if (cursorAnimationRef.current) {
-      cancelAnimationFrame(cursorAnimationRef.current);
-      cursorAnimationRef.current = null;
-    }
-    setCursorTime(0);
-  }, []);
   const [, setTimingFeedback] = useState(null); // { message, color, timestamp }
   const [summaryStats, setSummaryStats] = useState(null);
   const guessPenaltyRef = useRef(0);
@@ -570,6 +463,27 @@ export function SightReadingGame() {
   const keyboardSpamTrackerRef = useRef([]);
   const [showPenaltyModal, setShowPenaltyModal] = useState(false);
   const penaltyLockRef = useRef(false);
+
+  // Metronome state/refs live early so helpers can be safely referenced elsewhere.
+  const metronomeIntervalRef = useRef(null);
+  const metronomeBeatRef = useRef(0);
+  const metronomeNextClickTimeRef = useRef(null); // AudioContext seconds
+  const metronomeStartTokenRef = useRef(0); // Guards async start against phase changes
+  const metronomeEnabledRef = useRef(false);
+  useEffect(() => {
+    metronomeEnabledRef.current = metronomeEnabled;
+  }, [metronomeEnabled]);
+
+  // Central metronome stop helper (stable; no dependencies).
+  const stopMetronomePlayback = useCallback(() => {
+    // Invalidate any pending async start.
+    metronomeStartTokenRef.current += 1;
+    if (metronomeIntervalRef.current) {
+      clearInterval(metronomeIntervalRef.current);
+      metronomeIntervalRef.current = null;
+    }
+    metronomeNextClickTimeRef.current = null;
+  }, []);
 
   // Prevent body scroll when penalty modal is open
   useEffect(() => {
@@ -594,7 +508,7 @@ export function SightReadingGame() {
   const abortPerformanceForPenalty = useCallback(() => {
     if (penaltyLockRef.current) return;
     penaltyLockRef.current = true;
-    stopCursorAnimation();
+    stopMetronomePlayback();
     performanceTimeoutsRef.current.forEach((id) => clearTimeout(id));
     performanceTimeoutsRef.current = [];
     rhythmPlayback.stop();
@@ -606,7 +520,7 @@ export function SightReadingGame() {
     micEarlyWindowStartRequestedRef.current = false;
     pendingMicLatencyMsRef.current = null;
     setTimingState(TIMING_STATE.OFF);
-  }, [audioEngine, inputMode, rhythmPlayback, stopCursorAnimation]);
+  }, [audioEngine, inputMode, rhythmPlayback, stopMetronomePlayback]);
 
   const registerGuessPenalty = useCallback(
     (context) => {
@@ -676,9 +590,6 @@ export function SightReadingGame() {
   const showVictoryScreen = isSessionComplete && isVictory;
   const showEncouragementScreen = isSessionComplete && !isVictory;
   const [exerciseRecorded, setExerciseRecorded] = useState(false);
-  const metronomeIntervalRef = useRef(null);
-  const metronomeBeatRef = useRef(0);
-  const metronomeNextClickTimeRef = useRef(null); // AudioContext seconds
   const pendingMicLatencyMsRef = useRef(null);
   const performanceTimelineRafRef = useRef(null);
   const performanceTimelineIdxRef = useRef(-1);
@@ -914,7 +825,7 @@ export function SightReadingGame() {
 
   // iOS Safari can feel "frozen" if we block on multiple 200ms stability checks
   // right after a user gesture. For iOS, prefer a lightweight one-frame check so we
-  // can schedule the count-in/cursor immediately, while still nudging the context
+  // can schedule the count-in immediately, while still nudging the context
   // to resume if the clock isn't advancing.
   const verifyAudioClockProgressFast = useCallback(async () => {
     const before = audioEngine.getCurrentTime();
@@ -986,7 +897,7 @@ export function SightReadingGame() {
       timestamp: Date.now(),
     });
     // #endregion
-    stopCursorAnimation();
+    stopMetronomePlayback();
 
     // Add a small delay to ensure the last note's result is properly recorded
     // before transitioning to FEEDBACK phase (prevents race condition where
@@ -1009,7 +920,7 @@ export function SightReadingGame() {
       // #endregion
       setGamePhase(GAME_PHASES.FEEDBACK);
     }, 50); // 50ms delay to let state updates settle
-  }, [stopCursorAnimation, audioEngine, getElapsedMsFromPerformanceStart]);
+  }, [stopMetronomePlayback, audioEngine, getElapsedMsFromPerformanceStart]);
 
   /**
    * Show timing feedback message with color-coded styling
@@ -1887,50 +1798,56 @@ export function SightReadingGame() {
     recordPerformanceResult,
   ]);
 
-  const loadExercisePattern = useCallback(async () => {
-    try {
-      audioEngine.stopScheduler();
-      rhythmPlayback.stop();
-      setShowKeyboard(inputMode === "keyboard");
+  const loadExercisePattern = useCallback(
+    async () => {
+      try {
+        audioEngine.stopScheduler();
+        rhythmPlayback.stop();
+        stopMetronomePlayback();
+        setShowKeyboard(inputMode === "keyboard");
 
-      const pattern = await generatePattern(
-        gameSettings.difficulty,
-        gameSettings.timeSignature,
-        gameSettings.tempo,
-        gameSettings.selectedNotes,
-        gameSettings.clef,
-        gameSettings.measuresPerPattern || 1
-      );
+        const pattern = await generatePattern(
+          gameSettings.difficulty,
+          gameSettings.timeSignature,
+          gameSettings.tempo,
+          gameSettings.selectedNotes,
+          gameSettings.clef,
+          gameSettings.measuresPerPattern || 1
+        );
 
-      setCurrentPattern(pattern);
-      currentPatternRef.current = pattern;
-      setCurrentNoteIndex(0);
-      setPerformanceResults([]);
-      performanceResultsRef.current = [];
-      lastDetectionTimesRef.current = {};
-      wrongPitchSeenRef.current = {};
-      lastWrongPitchRef.current = {};
-      setDetectedPitches([]);
-      setTimingState(TIMING_STATE.OFF);
-      guessPenaltyRef.current = 0;
-      setSummaryStats(null);
-      setShowPenaltyModal(false);
-      penaltyLockRef.current = false;
-      setScoreSubmitted(false);
-      setScoreSyncStatus("idle");
-      setExerciseRecorded(false);
+        setCurrentPattern(pattern);
+        currentPatternRef.current = pattern;
+        setCurrentNoteIndex(0);
+        setPerformanceResults([]);
+        performanceResultsRef.current = [];
+        lastDetectionTimesRef.current = {};
+        wrongPitchSeenRef.current = {};
+        lastWrongPitchRef.current = {};
+        setDetectedPitches([]);
+        setTimingState(TIMING_STATE.OFF);
+        guessPenaltyRef.current = 0;
+        setSummaryStats(null);
+        setShowPenaltyModal(false);
+        penaltyLockRef.current = false;
+        setScoreSubmitted(false);
+        setScoreSyncStatus("idle");
+        setExerciseRecorded(false);
 
-      setGamePhase(GAME_PHASES.DISPLAY);
+        setGamePhase(GAME_PHASES.DISPLAY);
 
-      setTimeout(() => {
-        rhythmPlayback.play(pattern.notes, (index) => {
-          setCurrentNoteIndex(index);
-        });
-      }, 500);
-    } catch (error) {
-      console.error("Error loading exercise pattern:", error);
-    }
-  }, [gameSettings, generatePattern, audioEngine, rhythmPlayback, inputMode]);
+        setTimeout(() => {
+          rhythmPlayback.play(pattern.notes, (index) => {
+            setCurrentNoteIndex(index);
+          });
+        }, 500);
+      } catch (error) {
+        console.error("Error loading exercise pattern:", error);
+      }
+    },
+    // Deliberately omit stopMetronomePlayback: it's a stable callback (empty deps).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gameSettings, generatePattern, audioEngine, rhythmPlayback, inputMode]
+  );
 
   const tickMetronome = useCallback(() => {
     const beatsPerMeasure = gameSettings.timeSignature?.beats || 4;
@@ -1942,21 +1859,22 @@ export function SightReadingGame() {
     );
   }, [audioEngine, gameSettings.timeSignature?.beats]);
 
-  const stopMetronomePlayback = useCallback(() => {
-    if (metronomeIntervalRef.current) {
-      clearInterval(metronomeIntervalRef.current);
-      metronomeIntervalRef.current = null;
-    }
-    metronomeNextClickTimeRef.current = null;
-  }, []);
-
   const startMetronomePlayback = useCallback(
     (startAtAudioTime = null) => {
       if (metronomeIntervalRef.current) {
         return;
       }
+      const startToken = (metronomeStartTokenRef.current += 1);
       ensureAudioContextRunning().then((resumed) => {
         if (!resumed) {
+          return;
+        }
+        // If phase/toggle changed while awaiting audio context resume, bail.
+        if (
+          startToken !== metronomeStartTokenRef.current ||
+          !metronomeEnabledRef.current ||
+          gamePhaseRef.current !== GAME_PHASES.PERFORMANCE
+        ) {
           return;
         }
         metronomeBeatRef.current = 0;
@@ -1992,6 +1910,14 @@ export function SightReadingGame() {
         }
 
         metronomeIntervalRef.current = setInterval(() => {
+          // Stop scheduling immediately if we leave performance or toggle off.
+          if (
+            !metronomeEnabledRef.current ||
+            gamePhaseRef.current !== GAME_PHASES.PERFORMANCE
+          ) {
+            stopMetronomePlayback();
+            return;
+          }
           if (typeof metronomeNextClickTimeRef.current === "number") {
             const beatsPerMeasure = gameSettings.timeSignature?.beats || 4;
             const isDownbeat = metronomeBeatRef.current % beatsPerMeasure === 0;
@@ -2012,9 +1938,17 @@ export function SightReadingGame() {
       gameSettings.tempo,
       gameSettings.timeSignature?.beats,
       tickMetronome,
+      stopMetronomePlayback,
       audioEngine,
     ]
   );
+
+  // Safety cleanup: never leave an interval running after unmount.
+  useEffect(() => {
+    return () => {
+      stopMetronomePlayback();
+    };
+  }, [stopMetronomePlayback]);
 
   useEffect(() => {
     if (metronomeEnabled && gamePhase === GAME_PHASES.PERFORMANCE) {
@@ -2047,6 +1981,7 @@ export function SightReadingGame() {
     if (isSessionComplete) {
       return;
     }
+    stopMetronomePlayback();
     // Record the exercise result when moving to next (not on Try Again)
     if (summaryStats && !exerciseRecorded) {
       recordSessionExercise(
@@ -2064,13 +1999,15 @@ export function SightReadingGame() {
     summaryStats,
     exerciseRecorded,
     recordSessionExercise,
+    stopMetronomePlayback,
   ]);
 
   const handleStartNewSession = useCallback(() => {
+    stopMetronomePlayback();
     resetSession();
     startSession();
     loadExercisePattern();
-  }, [loadExercisePattern, resetSession, startSession]);
+  }, [loadExercisePattern, resetSession, startSession, stopMetronomePlayback]);
 
   /**
    * Replay the same pattern (Try Again)
@@ -2079,12 +2016,12 @@ export function SightReadingGame() {
     if (!currentPattern) return;
 
     stopCountInVisualization();
+    stopMetronomePlayback();
     // Reset states
     setCurrentNoteIndex(0);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
-    setCursorTime(0);
     setTimingState(TIMING_STATE.OFF);
     guessPenaltyRef.current = 0;
     setSummaryStats(null);
@@ -2097,7 +2034,12 @@ export function SightReadingGame() {
 
     // Go back to display phase to show pattern before count-in
     setGamePhase(GAME_PHASES.DISPLAY);
-  }, [currentPattern, stopCountInVisualization, inputMode]);
+  }, [
+    currentPattern,
+    stopCountInVisualization,
+    inputMode,
+    stopMetronomePlayback,
+  ]);
 
   const handlePenaltyTryAgain = useCallback(() => {
     setShowPenaltyModal(false);
@@ -2112,7 +2054,6 @@ export function SightReadingGame() {
     // Stop any audio
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
-    stopCursorAnimation();
     stopCountInVisualization();
 
     // Reset states
@@ -2122,7 +2063,6 @@ export function SightReadingGame() {
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
-    setCursorTime(0);
     setTimingState(TIMING_STATE.OFF);
     guessPenaltyRef.current = 0;
     setSummaryStats(null);
@@ -2140,7 +2080,6 @@ export function SightReadingGame() {
   }, [
     audioEngine,
     rhythmPlayback,
-    stopCursorAnimation,
     stopCountInVisualization,
     resetSession,
     startSession,
@@ -2260,29 +2199,9 @@ export function SightReadingGame() {
       performanceStartAudioTimeRef.current = audioEngine.getCurrentTime();
     }
 
-    // Cursor-only baseline compensation for iOS Safari (output latency).
-    // Scoring remains anchored to performanceStartAudioTimeRef.
-    cursorStartAudioTimeRef.current = null;
-    if (isIOSSafari && IOS_CURSOR_LATENCY_COMP_ENABLED) {
-      const ctx = audioEngine.audioContextRef?.current;
-      const outputLatencySec =
-        typeof ctx?.outputLatency === "number" ? ctx.outputLatency : null;
-      const outputLatencyMs =
-        typeof outputLatencySec === "number" && outputLatencySec > 0
-          ? Math.round(outputLatencySec * 1000)
-          : 0;
-      const compMs = Math.min(IOS_CURSOR_LATENCY_COMP_MAX_MS, outputLatencyMs);
-      if (
-        compMs > 0 &&
-        typeof performanceStartAudioTimeRef.current === "number"
-      ) {
-        cursorStartAudioTimeRef.current =
-          performanceStartAudioTimeRef.current - compMs / 1000;
-      }
-    }
-
     // Downbeat click exactly at performance start so beat 1 is audible.
-    if (PLAY_PERFORMANCE_DOWNBEAT_CLICK) {
+    // If the guide metronome is enabled, it will schedule this downbeat itself.
+    if (PLAY_PERFORMANCE_DOWNBEAT_CLICK && !metronomeEnabled) {
       const downbeatAt = performanceStartAudioTimeRef.current + 0.01;
       audioEngine.createMetronomeClick(downbeatAt, true);
       // #region agent log
@@ -2339,17 +2258,12 @@ export function SightReadingGame() {
     gamePhaseRef.current = GAME_PHASES.PERFORMANCE;
     flushSync(() => {
       setGamePhase(GAME_PHASES.PERFORMANCE);
-      setCursorTime(0);
     });
     // Note: timing state is already EARLY_WINDOW from count-in, will transition to LIVE via schedulePerformanceLiveActivation
     resetPerformanceLiveState();
 
-    // Always start cursor/timeline immediately on performance start.
-    // In mic mode, starting the mic can take time; awaiting it here causes the cursor to
-    // "jump in late" and can also miss the first downbeat.
-    startCursorAnimation();
     schedulePerformanceLiveActivation();
-    // Defer timeline scheduling to the next frame so Safari can paint the phase flip/cursor first.
+    // Defer timeline scheduling to the next frame so Safari can paint the phase flip first.
     requestAnimationFrame(() => {
       if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) return;
       try {
@@ -2427,7 +2341,6 @@ export function SightReadingGame() {
     inputMode,
     startListening,
     schedulePerformanceTimeline,
-    startCursorAnimation,
     stopCountInVisualization,
     clearCountInTimeouts,
     schedulePerformanceLiveActivation,
@@ -2464,14 +2377,12 @@ export function SightReadingGame() {
       }
 
       // Reset state for new performance
-      stopCursorAnimation();
       setCurrentBeat(0);
       setCurrentNoteIndex(0);
       setPerformanceResults([]);
       performanceResultsRef.current = [];
       lastDetectionTimesRef.current = {};
       setDetectedPitches([]);
-      setCursorTime(0);
 
       // Start count-in phase
       resetPerformanceLiveState();
@@ -2480,7 +2391,7 @@ export function SightReadingGame() {
       // Ensure audio context is running before scheduling
       await ensureAudioContextRunning();
       // On iOS Safari, avoid blocking up to ~1s on stability checks right after tap,
-      // since it creates a visible "cursor delay" before anything is scheduled.
+      // since it creates a visible delay before anything is scheduled.
       // Still do a quick nudge to resume if the audio clock isn't advancing.
       const clockReady = isIOSSafari
         ? (await verifyAudioClockProgressFast()).delta >= 0.001
@@ -2707,12 +2618,12 @@ export function SightReadingGame() {
     ensureAudioContextRunning,
     handleCountInComplete,
     waitForStableAudioClock,
+    verifyAudioClockProgressFast,
     startCountInVisualization,
     stopCountInVisualization,
     clearCountInTimeouts,
     gameSettings.timeSignature?.beats,
     resetPerformanceLiveState,
-    stopCursorAnimation,
   ]);
 
   /**
@@ -2834,7 +2745,6 @@ export function SightReadingGame() {
   useEffect(() => {
     return () => {
       stopListening();
-      stopCursorAnimation();
       performanceTimeoutsRef.current.forEach((id) => clearTimeout(id));
       performanceTimeoutsRef.current = [];
       audioEngine.stopScheduler();
@@ -2946,346 +2856,308 @@ export function SightReadingGame() {
     );
   }
 
-  // Show game interface
-  return (
-    <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-      {showMicDebug && (
-        <div className="pointer-events-none absolute bottom-2 right-2 z-50 w-[260px] rounded-xl border border-white/15 bg-black/40 p-3 text-xs text-white backdrop-blur">
-          <div className="mb-1 flex items-center justify-between">
-            <div className="font-semibold">Mic Debug</div>
-            <div className="text-white/70">
-              {isListening ? "listening" : "stopped"}
-            </div>
-          </div>
-          <div className="space-y-1 text-white/90">
-            <div className="flex justify-between">
-              <span className="text-white/70">audioLevel</span>
-              <span>{Number(audioLevel || 0).toFixed(4)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">detected</span>
-              <span>
-                {debug?.detectedNote ?? "—"}{" "}
-                {debug?.detectedFrequency > 0
-                  ? `(${debug.detectedFrequency.toFixed(1)}Hz)`
-                  : ""}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">current</span>
-              <span>{debug?.currentNote ?? "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">candidate</span>
-              <span>
-                {debug?.candidateNote ?? "—"}{" "}
-                {debug?.candidateFrames ? `(${debug.candidateFrames})` : ""}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Compact Header with Progress Bar */}
-      <div className="flex flex-shrink-0 items-center justify-between gap-2 px-2 py-1 sm:gap-3 sm:px-3">
-        {/* Back Button - Icon Only */}
-        <BackButton
-          to="/notes-master-mode"
-          name="Notes Master"
-          iconOnly={true}
-          styling="text-white/80 hover:text-white p-2"
-        />
+  // #region SightReading UI layout fragments (Phase 1 extraction)
+  // This block deliberately keeps *all* game logic inside SightReadingGame.
+  // We only extract JSX subtrees into named "regions" so a future `SightReadingLayout`
+  // component can own layout/overflow decisions (Phase 2+), while this file remains
+  // the single source of truth for state, handlers, and phase transitions.
+  //
+  // Scroll contract (Phase 0 principle):
+  // - Desktop (>= md): route should behave like a fixed `h-screen` view (no page scroll).
+  // - Mobile (< md): allow at most ONE vertical scrollbar (root/page), no nested scrollers.
+  //   Today this component uses `overflow-y-auto md:overflow-hidden` at the root and keeps
+  //   staff/keyboard wrappers `overflow: visible` to avoid hidden controls.
+  // These are the exact props we will later pass into `SightReadingLayout`.
+  // They are intentionally derived here (logic layer), not inside the layout component.
 
-        {/* Progress Bar - Center */}
-        <div className="min-w-0 flex-1">
-          <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
-            <div className="mb-1 flex items-center justify-between text-xs font-semibold">
-              <span className="truncate">
-                Exercise{" "}
-                {Math.min(currentExerciseNumber, sessionTotalExercises)} /{" "}
-                {sessionTotalExercises}
-              </span>
-              <span
-                className={`ml-2 text-[10px] sm:text-xs ${
-                  isSessionComplete
-                    ? isVictory
-                      ? "text-emerald-300"
-                      : "text-amber-300"
-                    : "text-white/70"
-                }`}
-              >
-                {isSessionComplete ? (isVictory ? "Victory" : "Complete") : ``}
-              </span>
-            </div>
-            <div className="h-1 overflow-hidden rounded-full bg-white/20">
-              <div
-                className={`h-full transition-all duration-300 ${
-                  isSessionComplete
-                    ? isVictory
-                      ? "bg-emerald-400"
-                      : "bg-rose-400"
-                    : "bg-indigo-300"
-                }`}
-                style={{ width: `${progressPercentage}%` }}
-              />
-            </div>
-          </div>
-        </div>
+  // Layout hints for SightReadingLayout (layout-only, no game rules):
+  // - isTallStaffLayout: signals that staff will need more vertical space (e.g., both clefs)
+  const isTallStaffLayout = isBothClefs;
 
-        {/* Right Controls: BPM + Icons */}
-        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
-          {/* BPM Pill */}
-          <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
-            {gameSettings.tempo} BPM
-          </div>
+  const srLayoutProps = {
+    phase: gamePhase,
+    hasKeyboard: shouldShowKeyboard,
+    isFeedbackPhase,
+    isCompactLandscape,
+    isTallStaffLayout,
+  };
 
-          {/* Input Mode Selector Button - shows icon of mode you can switch TO */}
-          {currentPattern && gamePhase !== GAME_PHASES.SETUP && (
-            <button
-              onClick={() => setShowInputModeModal(true)}
-              disabled={isFeedbackPhase}
-              className={`rounded-lg p-1.5 transition-colors sm:p-2 ${
-                inputMode === "mic"
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : "bg-white/10 hover:bg-white/20"
-              } ${isFeedbackPhase ? "cursor-not-allowed opacity-60" : ""}`}
-              title={
-                inputMode === "keyboard"
-                  ? "Switch to microphone"
-                  : "Switch to keyboard"
-              }
+  const headerRegion = (
+    <div className="flex flex-shrink-0 items-center justify-between gap-2 px-2 py-1 sm:gap-3 sm:px-3">
+      {/* Back Button - Icon Only */}
+      <BackButton
+        to="/notes-master-mode"
+        name="Notes Master"
+        iconOnly={true}
+        styling="text-white/80 hover:text-white p-2"
+      />
+
+      {/* Progress Bar - Center */}
+      <div className="min-w-0 flex-1">
+        <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
+          <div className="mb-1 flex items-center justify-between text-xs font-semibold">
+            <span className="truncate">
+              Exercise {Math.min(currentExerciseNumber, sessionTotalExercises)}{" "}
+              / {sessionTotalExercises}
+            </span>
+            <span
+              className={`ml-2 text-[10px] sm:text-xs ${
+                isSessionComplete
+                  ? isVictory
+                    ? "text-emerald-300"
+                    : "text-amber-300"
+                  : "text-white/70"
+              }`}
             >
-              {inputMode === "keyboard" ? (
-                <Mic className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-              ) : (
-                <Piano className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-              )}
-            </button>
-          )}
-          <button
-            onClick={() => setMetronomeEnabled((prev) => !prev)}
-            className={`rounded-lg p-1.5 transition-colors sm:p-2 ${
-              metronomeEnabled
-                ? "bg-fuchsia-500 hover:bg-fuchsia-600"
-                : "bg-white/10 hover:bg-white/20"
-            }`}
-            title="Toggle metronome"
-            disabled={gamePhase === GAME_PHASES.COUNT_IN}
-          >
-            <img
-              src={MetronomeIcon}
-              alt="Metronome"
-              className="h-4 w-4 sm:h-5 sm:w-5"
+              {isSessionComplete ? (isVictory ? "Victory" : "Complete") : ``}
+            </span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-white/20">
+            <div
+              className={`h-full transition-all duration-300 ${
+                isSessionComplete
+                  ? isVictory
+                    ? "bg-emerald-400"
+                    : "bg-rose-400"
+                  : "bg-indigo-300"
+              }`}
+              style={{ width: `${progressPercentage}%` }}
             />
-          </button>
-          <button
-            onClick={returnToSetup}
-            className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20 sm:p-2"
-            title="Change settings"
-          >
-            <Settings className="h-4 w-4 text-white sm:h-5 sm:w-5" />
-          </button>
+          </div>
         </div>
       </div>
 
-      {/* Count-in Display - Fixed position at top (doesn't push content) */}
-      {gamePhase === GAME_PHASES.COUNT_IN && (
-        <div className="absolute left-1/2 top-12 z-10 -translate-x-1/2 transform sm:top-16">
-          <MetronomeDisplay
-            currentBeat={currentBeat}
-            timeSignature={gameSettings.timeSignature}
-            isActive={true}
-            isCountIn={true}
+      {/* Right Controls: BPM + Icons */}
+      <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        {/* BPM Pill */}
+        <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
+          {gameSettings.tempo} BPM
+        </div>
+
+        {/* Input Mode Selector Button - shows icon of mode you can switch TO */}
+        {currentPattern && gamePhase !== GAME_PHASES.SETUP && (
+          <button
+            onClick={() => setShowInputModeModal(true)}
+            disabled={isFeedbackPhase}
+            className={`rounded-lg p-1.5 transition-colors sm:p-2 ${
+              inputMode === "mic"
+                ? "bg-purple-600 hover:bg-purple-700"
+                : "bg-white/10 hover:bg-white/20"
+            } ${isFeedbackPhase ? "cursor-not-allowed opacity-60" : ""}`}
+            title={
+              inputMode === "keyboard"
+                ? "Switch to microphone"
+                : "Switch to keyboard"
+            }
+          >
+            {inputMode === "keyboard" ? (
+              <Mic className="h-4 w-4 text-white sm:h-5 sm:w-5" />
+            ) : (
+              <Piano className="h-4 w-4 text-white sm:h-5 sm:w-5" />
+            )}
+          </button>
+        )}
+        <button
+          onClick={() => setMetronomeEnabled((prev) => !prev)}
+          className={`rounded-lg p-1.5 transition-colors sm:p-2 ${
+            metronomeEnabled
+              ? "bg-fuchsia-500 hover:bg-fuchsia-600"
+              : "bg-white/10 hover:bg-white/20"
+          }`}
+          title="Toggle metronome"
+          disabled={gamePhase === GAME_PHASES.COUNT_IN}
+        >
+          <img
+            src={MetronomeIcon}
+            alt="Metronome"
+            className="h-4 w-4 sm:h-5 sm:w-5"
           />
+        </button>
+        <button
+          onClick={returnToSetup}
+          className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20 sm:p-2"
+          title="Change settings"
+        >
+          <Settings className="h-4 w-4 text-white sm:h-5 sm:w-5" />
+        </button>
+      </div>
+    </div>
+  );
+
+  const countInOverlay =
+    gamePhase === GAME_PHASES.COUNT_IN ? (
+      <div className="absolute left-1/2 top-12 z-10 -translate-x-1/2 transform sm:top-16">
+        <MetronomeDisplay
+          currentBeat={currentBeat}
+          timeSignature={gameSettings.timeSignature}
+          isActive={true}
+          isCountIn={true}
+        />
+      </div>
+    ) : null;
+
+  const guidanceRegion =
+    gamePhase === GAME_PHASES.DISPLAY ? (
+      <div className="my-2 flex-shrink-0 text-center">
+        <button
+          onClick={() => beginPerformanceWithPattern()}
+          disabled={!currentPattern}
+          className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
+        >
+          Start Playing
+        </button>
+      </div>
+    ) : gamePhase === GAME_PHASES.COUNT_IN ? (
+      <div className="my-2 flex-shrink-0 text-center">
+        <p className="text-sm font-semibold text-gray-700 sm:text-base">
+          Listen to the count-in
+        </p>
+      </div>
+    ) : gamePhase === GAME_PHASES.PERFORMANCE ? (
+      <div className="my-2 flex-shrink-0 text-center">
+        <p className="text-sm font-semibold text-gray-700 sm:text-base">
+          Play the highlighted note!
+        </p>
+      </div>
+    ) : null;
+
+  const showPlayableKeyboardBand =
+    (gamePhase === GAME_PHASES.DISPLAY ||
+      gamePhase === GAME_PHASES.COUNT_IN ||
+      gamePhase === GAME_PHASES.PERFORMANCE) &&
+    shouldShowKeyboard;
+
+  const keyboardRegion = showPlayableKeyboardBand ? (
+    <div className="sightreading-keyboard-wrapper performance-mode h-full w-full">
+      <KlavierKeyboard
+        visible={showKeyboard}
+        onNotePlayed={handleKeyboardNoteInput}
+        selectedNotes={gameSettings.selectedNotes || []}
+      />
+    </div>
+  ) : null;
+
+  const staffRegion = currentPattern ? (
+    <div
+      className={`sightreading-staff-wrapper w-full ${
+        gamePhase === GAME_PHASES.COUNT_IN ? "opacity-90" : ""
+      }`}
+    >
+      <VexFlowStaffDisplay
+        pattern={currentPattern}
+        currentNoteIndex={currentNoteIndex}
+        clef={gameSettings.clef.toLowerCase()}
+        performanceResults={performanceResults}
+        gamePhase={gamePhase}
+      />
+    </div>
+  ) : null;
+
+  const feedbackPanel = isFeedbackPhase ? (
+    <>
+      <FeedbackSummary
+        performanceResults={performanceResults}
+        currentPattern={currentPattern}
+        gameSettings={gameSettings}
+        summaryStats={summaryStats}
+        onTryAgain={replayPattern}
+        onNextPattern={handleNextExercise}
+        nextButtonLabel={`Next Exercise`}
+        nextButtonDisabled={isSessionComplete}
+        showNextButton={!isSessionComplete}
+      />
+
+      {isSessionComplete && (
+        <div className="mt-4 space-y-3 text-center">
+          <div
+            className={`rounded-2xl border px-4 py-3 ${
+              isVictory
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-rose-200 bg-rose-50 text-rose-700"
+            }`}
+          >
+            <p className="text-lg font-bold">
+              {isVictory ? "Session Victory!" : "Session Complete"}
+            </p>
+            <p className="text-sm">
+              Final score: {sessionPercentageDisplay}% ({sessionScoreSummary})
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              {isVictory
+                ? "Amazing consistency across all 10 exercises."
+                : "Keep going! Aim for at least 70% on your next run."}
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            <button
+              onClick={handleStartNewSession}
+              className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+            >
+              Start New Session
+            </button>
+          </div>
         </div>
       )}
+    </>
+  ) : null;
+  // #endregion
 
-      {/* Main Content */}
-      <div
-        className={`flex flex-col items-center px-2 sm:px-0 ${
-          isFeedbackPhase
-            ? isCompactLandscape
-              ? "gap-3 pb-1 sm:gap-4 sm:pb-4"
-              : "gap-4 pb-8 sm:gap-5 sm:pb-12"
-            : "gap-2 pb-0 sm:gap-3"
-        } ${isFeedbackPhase ? "min-h-0 flex-1" : "min-h-0 flex-1"}`}
-      >
-        <div
-          className={`flex w-full max-w-5xl flex-col ${
-            isFeedbackPhase
-              ? isCompactLandscape
-                ? "gap-3 py-0 sm:gap-4"
-                : "gap-4 py-0 sm:gap-5"
-              : "min-h-0 flex-1 gap-2.5 sm:gap-3"
-          }`}
-        >
-          {currentPattern && (
-            <div
-              className={`flex flex-col ${
-                isFeedbackPhase
-                  ? isCompactLandscape
-                    ? "gap-2 sm:gap-1.5"
-                    : "gap-2.5 sm:gap-3"
-                  : "min-h-0 flex-1 gap-2.5 sm:gap-3"
-              }`}
-            >
-              <div
-                className={`sightreading-staff-wrapper relative h-full w-full flex-shrink-0 ${
-                  gamePhase === GAME_PHASES.COUNT_IN ? "opacity-90" : ""
-                }`}
-                style={{
-                  overflow: "visible",
-                }}
-              >
-                <div
-                  className="flex h-full flex-col items-center justify-center overflow-visible rounded-lg bg-white shadow-2xl backdrop-blur-sm"
-                  style={{ height: "100%" }}
-                >
-                  <div
-                    className="flex min-h-0 w-full flex-1 flex-wrap items-center justify-center pb-10 pt-0"
-                    style={{ height: "100%", width: "100%" }}
-                  >
-                    <VexFlowStaffDisplay
-                      pattern={currentPattern}
-                      currentNoteIndex={currentNoteIndex}
-                      clef={gameSettings.clef.toLowerCase()}
-                      performanceResults={performanceResults}
-                      gamePhase={gamePhase}
-                      cursorTime={cursorTime}
-                    />
-                  </div>
-                  {(gamePhase === GAME_PHASES.DISPLAY ||
-                    gamePhase === GAME_PHASES.COUNT_IN ||
-                    gamePhase === GAME_PHASES.PERFORMANCE) &&
-                    shouldShowKeyboard && (
-                      <div
-                        className="sightreading-keyboard-wrapper performance-mode relative mt-2 w-full flex-shrink-0"
-                        style={{
-                          height: "clamp(140px, 25vh, 220px)",
-                          minHeight: "140px",
-                        }}
-                      >
-                        <div className="h-full w-full px-2 py-2 sm:px-0 sm:pb-0 sm:pt-3">
-                          <KlavierKeyboard
-                            visible={showKeyboard}
-                            onNotePlayed={handleKeyboardNoteInput}
-                            selectedNotes={gameSettings.selectedNotes || []}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  {isFeedbackPhase && (
-                    <div className="sightreading-keyboard-wrapper feedback-mode relative w-full">
-                      <div className="mx-auto mt-2 w-full max-w-3xl pb-2 sm:mt-3 sm:pb-3">
-                        <FeedbackSummary
-                          performanceResults={performanceResults}
-                          currentPattern={currentPattern}
-                          gameSettings={gameSettings}
-                          summaryStats={summaryStats}
-                          onTryAgain={replayPattern}
-                          onNextPattern={handleNextExercise}
-                          nextButtonLabel={`Next Exercise`}
-                          nextButtonDisabled={isSessionComplete}
-                          showNextButton={!isSessionComplete}
-                        />
-
-                        {isSessionComplete && (
-                          <div className="mt-4 space-y-3 text-center">
-                            <div
-                              className={`rounded-2xl border px-4 py-3 ${
-                                isVictory
-                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                  : "border-rose-200 bg-rose-50 text-rose-700"
-                              }`}
-                            >
-                              <p className="text-lg font-bold">
-                                {isVictory
-                                  ? "Session Victory!"
-                                  : "Session Complete"}
-                              </p>
-                              <p className="text-sm">
-                                Final score: {sessionPercentageDisplay}% (
-                                {sessionScoreSummary})
-                              </p>
-                              <p className="mt-1 text-sm text-slate-600">
-                                {isVictory
-                                  ? "Amazing consistency across all 10 exercises."
-                                  : "Keep going! Aim for at least 70% on your next run."}
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap justify-center gap-2">
-                              <button
-                                onClick={handleStartNewSession}
-                                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-                              >
-                                Start New Session
-                              </button>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
+  // Show game interface
+  return (
+    <>
+      <div className="relative">
+        {showMicDebug && (
+          <div className="pointer-events-none absolute bottom-2 right-2 z-50 w-[260px] rounded-xl border border-white/15 bg-black/40 p-3 text-xs text-white backdrop-blur">
+            <div className="mb-1 flex items-center justify-between">
+              <div className="font-semibold">Mic Debug</div>
+              <div className="text-white/70">
+                {isListening ? "listening" : "stopped"}
               </div>
-
-              {/* Desktop/tablet: centered guidance text */}
-              {gamePhase === GAME_PHASES.DISPLAY && (
-                <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
-                  <div className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={() => beginPerformanceWithPattern()}
-                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700 sm:px-6"
-                    >
-                      Start Playing
-                    </button>
-                  </div>
-                </div>
-              )}
-              {gamePhase === GAME_PHASES.COUNT_IN && (
-                <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
-                  <p className="text-xs font-semibold sm:text-sm">
-                    Listen to the count-in
-                  </p>
-                </div>
-              )}
-              {gamePhase === GAME_PHASES.PERFORMANCE && (
-                <div className="mb-1 hidden flex-shrink-0 space-y-1 text-center text-white lg:block">
-                  <p className="text-xs font-semibold sm:text-sm">
-                    Play the highlighted note!
-                  </p>
-                </div>
-              )}
-
-              {/* Mobile: minimal text only (no big button in flow when keyboard is visible) */}
-              {gamePhase === GAME_PHASES.DISPLAY && (
-                <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
-                  <div className="flex flex-col items-center gap-2">
-                    <button
-                      onClick={() => beginPerformanceWithPattern()}
-                      className="rounded-lg bg-green-600 px-5 py-2 text-sm font-semibold transition-colors hover:bg-green-700"
-                    >
-                      Start Playing
-                    </button>
-                  </div>
-                </div>
-              )}
-              {gamePhase === GAME_PHASES.COUNT_IN && (
-                <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
-                  <p className="text-xs font-semibold">
-                    Listen to the count-in
-                  </p>
-                </div>
-              )}
-              {gamePhase === GAME_PHASES.PERFORMANCE && (
-                <div className="mb-1 flex-shrink-0 text-center text-white lg:hidden">
-                  <p className="text-xs font-semibold">
-                    Play the highlighted note!
-                  </p>
-                </div>
-              )}
             </div>
-          )}
-        </div>
+            <div className="space-y-1 text-white/90">
+              <div className="flex justify-between">
+                <span className="text-white/70">audioLevel</span>
+                <span>{Number(audioLevel || 0).toFixed(4)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70">detected</span>
+                <span>
+                  {debug?.detectedNote ?? "—"}{" "}
+                  {debug?.detectedFrequency > 0
+                    ? `(${debug.detectedFrequency.toFixed(1)}Hz)`
+                    : ""}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70">current</span>
+                <span>{debug?.currentNote ?? "—"}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-white/70">candidate</span>
+                <span>
+                  {debug?.candidateNote ?? "—"}{" "}
+                  {debug?.candidateFrames ? `(${debug.candidateFrames})` : ""}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Overlays that must not affect layout flow */}
+        {countInOverlay}
+
+        <SightReadingLayout
+          phase={srLayoutProps.phase}
+          hasKeyboard={srLayoutProps.hasKeyboard}
+          isFeedbackPhase={srLayoutProps.isFeedbackPhase}
+          isCompactLandscape={srLayoutProps.isCompactLandscape}
+          isTallStaffLayout={srLayoutProps.isTallStaffLayout}
+          headerControls={headerRegion}
+          staff={staffRegion}
+          guidance={guidanceRegion}
+          keyboard={keyboardRegion}
+          feedbackPanel={feedbackPanel}
+        />
       </div>
 
       {/* Input Mode Selection Modal */}
@@ -3299,22 +3171,14 @@ export function SightReadingGame() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={async () => {
-                  if (isBothClefs) {
-                    toast.info(
-                      "For two clefs practice: Turn on mic and play your piano, or practice the patterns on your piano without mic.",
-                      { duration: 5000 }
-                    );
-                    return;
-                  }
                   setInputMode("keyboard");
                   setShowInputModeModal(false);
                 }}
-                disabled={isBothClefs}
                 className={`w-full rounded-lg border-2 px-4 py-3 transition-all ${
                   inputMode === "keyboard"
                     ? "border-purple-600 bg-purple-50 font-semibold text-purple-700"
                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50"
-                } ${isBothClefs ? "cursor-not-allowed opacity-50" : ""}`}
+                }`}
               >
                 <div className="text-left">
                   <div className="mb-1 font-semibold">
@@ -3323,11 +3187,6 @@ export function SightReadingGame() {
                   <div className="text-sm text-gray-600">
                     Play using the on-screen piano keyboard
                   </div>
-                  {isBothClefs && (
-                    <div className="mt-2 text-xs text-red-500">
-                      Not available for both clefs practice
-                    </div>
-                  )}
                 </div>
               </button>
               <button
@@ -3448,6 +3307,6 @@ export function SightReadingGame() {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

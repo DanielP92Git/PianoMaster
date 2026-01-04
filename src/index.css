@@ -1553,53 +1553,39 @@ body.ios-standalone .safe-area-app {
 
 /* Ensure VexFlow SVG elements are properly displayed */
 .vexflow-container svg {
-  display: flex;
+  display: block;
 
   margin: 0 auto;
 }
 
 .sightreading-staff-wrapper {
   overflow: visible;
-}
-
-/* Ensure the white card inside staff wrapper allows overflow for ledger lines */
-.sightreading-staff-wrapper > div {
-  overflow: visible !important;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .sightreading-keyboard-wrapper {
   overflow: visible;
-  transition: height 0.3s ease;
 }
 
-.sightreading-keyboard-wrapper.feedback-mode {
-  height: auto !important;
+/* Ensure the staff renderer fills its allocated band (grid row 1) */
+.sightreading-staff-wrapper > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Desktop only: keep a reasonable minimum staff height */
+@media (min-width: 768px) {
+  .sightreading-staff-wrapper {
+    min-height: 140px;
+  }
 }
 
 .feedback-summary-card {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-}
-
-/* Portrait mobile optimizations for Sight Reading Game */
-@media (max-width: 640px) and (orientation: portrait) {
-  .sightreading-staff-wrapper {
-    min-height: 150px !important;
-    padding-bottom: 12px;
-  }
-}
-
-/* Landscape mobile optimizations for Sight Reading Game */
-@media (max-width: 900px) and (orientation: landscape) {
-  .sightreading-staff-wrapper {
-    min-height: 130px !important;
-    padding-bottom: 0px;
-  }
-
-  .sightreading-keyboard-wrapper:not(.feedback-mode) {
-    height: clamp(140px, 30vh, 200px) !important;
-  }
 }
 
 /* ========================================
