@@ -1763,9 +1763,16 @@ export function SightReadingGame() {
       }
 
       // Completion check: once elapsed past last event end + tolerance.
+      // In mic mode, extend the completion threshold by MIC_LATENCY_COMP_MS to allow
+      // late mic detections (delayed by mic pipeline latency) to arrive and override
+      // any recorded misses before performance completes and transitions to FEEDBACK.
       const last = allEvents[allEvents.length - 1];
+      const micCompletionExtensionMs =
+        inputMode === "mic" ? MIC_LATENCY_COMP_MS : 0;
       const lastEndMs =
-        (last?.endTime || last?.startTime || 0) * 1000 + missToleranceMs;
+        (last?.endTime || last?.startTime || 0) * 1000 +
+        missToleranceMs +
+        micCompletionExtensionMs;
       if (elapsedMs >= lastEndMs) {
         // #region agent log
         __srLog({
@@ -1778,6 +1785,8 @@ export function SightReadingGame() {
           data: {
             elapsedMs: Math.round(elapsedMs),
             lastEndMs: Math.round(lastEndMs),
+            micCompletionExtensionMs,
+            inputMode,
             audioNow: audioEngine.getCurrentTime(),
           },
           timestamp: Date.now(),
@@ -1795,6 +1804,7 @@ export function SightReadingGame() {
   }, [
     completePerformance,
     getElapsedMsFromPerformanceStart,
+    inputMode,
     recordPerformanceResult,
   ]);
 
@@ -1812,7 +1822,9 @@ export function SightReadingGame() {
           gameSettings.tempo,
           gameSettings.selectedNotes,
           gameSettings.clef,
-          gameSettings.measuresPerPattern || 1
+          gameSettings.measuresPerPattern || 1,
+          gameSettings.rhythmSettings,
+          gameSettings.rhythmComplexity
         );
 
         setCurrentPattern(pattern);
@@ -1855,7 +1867,8 @@ export function SightReadingGame() {
     metronomeBeatRef.current += 1;
     audioEngine.createMetronomeClick(
       audioEngine.getCurrentTime() + 0.01,
-      isDownbeat
+      isDownbeat,
+      2
     );
   }, [audioEngine, gameSettings.timeSignature?.beats]);
 
@@ -1902,7 +1915,8 @@ export function SightReadingGame() {
           // #endregion
           audioEngine.createMetronomeClick(
             metronomeNextClickTimeRef.current,
-            true
+            true,
+            2
           );
           metronomeBeatRef.current = 1;
         } else {
@@ -1925,7 +1939,8 @@ export function SightReadingGame() {
             metronomeNextClickTimeRef.current += intervalMs / 1000;
             audioEngine.createMetronomeClick(
               metronomeNextClickTimeRef.current,
-              isDownbeat
+              isDownbeat,
+              2
             );
           } else {
             tickMetronome();
@@ -2203,7 +2218,7 @@ export function SightReadingGame() {
     // If the guide metronome is enabled, it will schedule this downbeat itself.
     if (PLAY_PERFORMANCE_DOWNBEAT_CLICK && !metronomeEnabled) {
       const downbeatAt = performanceStartAudioTimeRef.current + 0.01;
-      audioEngine.createMetronomeClick(downbeatAt, true);
+      audioEngine.createMetronomeClick(downbeatAt, true, 2);
       // #region agent log
       __srLog({
         sessionId: "debug-session",
@@ -2481,7 +2496,7 @@ export function SightReadingGame() {
           };
           logMetronomeTiming("scheduling metronome beat", debugPayload);
         }
-        audioEngine.createMetronomeClick(beatTime, isDownbeat);
+        audioEngine.createMetronomeClick(beatTime, isDownbeat, 2);
       }
 
       // Transition to performance phase after count-in
@@ -2654,7 +2669,9 @@ export function SightReadingGame() {
           currentSettings.tempo,
           currentSettings.selectedNotes,
           currentSettings.clef,
-          currentSettings.measuresPerPattern || 1
+          currentSettings.measuresPerPattern || 1,
+          currentSettings.rhythmSettings,
+          currentSettings.rhythmComplexity
         );
 
         // Use flushSync to ensure pattern state updates complete BEFORE phase transition
@@ -3011,12 +3028,6 @@ export function SightReadingGame() {
       <div className="my-2 flex-shrink-0 text-center">
         <p className="text-sm font-semibold text-gray-700 sm:text-base">
           Listen to the count-in
-        </p>
-      </div>
-    ) : gamePhase === GAME_PHASES.PERFORMANCE ? (
-      <div className="my-2 flex-shrink-0 text-center">
-        <p className="text-sm font-semibold text-gray-700 sm:text-base">
-          Play the highlighted note!
         </p>
       </div>
     ) : null;

@@ -204,6 +204,69 @@ beams.forEach((b) => b.setContext(context).draw());
 
 ---
 
+### 5a. Beaming with Configuration Options
+
+```javascript
+const { Stave, StaveNote, Beam, Formatter, Stem, Fraction } = Vex.Flow;
+
+const stave = new Stave(10, 40, 400);
+stave.addClef("treble").addTimeSignature("3/8");
+stave.setContext(context).draw();
+
+const notes = [
+  new StaveNote({ keys: ["c/4"], duration: "8" }),
+  new StaveNote({ keys: ["d/4"], duration: "8" }),
+  new StaveNote({ keys: ["e/4"], duration: "8" }),
+];
+
+// Generate beams with custom configuration
+// Force all stems up, use 3/8 grouping
+const beams = Beam.generateBeams(notes, {
+  groups: [new Fraction(3, 8)],
+  stem_direction: Stem.UP,
+  maintain_stem_directions: false
+});
+
+Formatter.FormatAndDraw(context, stave, notes);
+beams.forEach((b) => b.setContext(context).draw());
+```
+
+**What this shows:** using configuration options with `Beam.generateBeams()` to control beam groupings and stem directions.
+
+---
+
+### 5b. Preserving Manual Stem Directions
+
+```javascript
+const { Stave, StaveNote, Beam, Formatter, Stem } = Vex.Flow;
+
+const stave = new Stave(10, 40, 400);
+stave.addClef("treble").addTimeSignature("4/4");
+stave.setContext(context).draw();
+
+const notes = [
+  new StaveNote({ keys: ["c/4"], duration: "8" }),
+  new StaveNote({ keys: ["d/4"], duration: "8" }),
+  new StaveNote({ keys: ["e/4"], duration: "8" }),
+  new StaveNote({ keys: ["f/4"], duration: "8" }),
+];
+
+// Set stem directions manually first
+notes.forEach(note => note.setStemDirection(Stem.UP));
+
+// Generate beams while preserving existing stem directions
+const beams = Beam.generateBeams(notes, {
+  maintain_stem_directions: true
+});
+
+Formatter.FormatAndDraw(context, stave, notes);
+beams.forEach((b) => b.setContext(context).draw());
+```
+
+**What this shows:** using `maintain_stem_directions: true` to preserve manually set stem directions when generating beams.
+
+---
+
 ### 6. Ties Between Notes
 
 ```javascript

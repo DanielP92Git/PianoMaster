@@ -55,6 +55,11 @@ export function SightReadingLayout({
   const showGuidanceOverlay =
     guidance && !isFeedbackPhase && phase !== "display";
 
+  // In DISPLAY phase without a bottom dock (e.g., mic mode with keyboard hidden),
+  // render Start Playing as a floating overlay so it's still accessible.
+  const showDisplayGuidanceOverlay =
+    phase === "display" && guidance && !isFeedbackPhase && !hasDockedBottom;
+
   // Feedback phase should not waste vertical space: the staff card can size to
   // content so the feedback panel is reachable within the viewport.
   const mainGap = isFeedbackPhase
@@ -171,6 +176,19 @@ export function SightReadingLayout({
           >
             <div className="h-full w-full">{bottomDockContent}</div>
           </div>
+        </div>
+      ) : null}
+
+      {/* Start Playing button overlay (DISPLAY phase, no keyboard dock) */}
+      {showDisplayGuidanceOverlay ? (
+        <div
+          className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex justify-center px-3"
+          data-sr-region="guidance-float"
+          style={{
+            paddingBottom: "calc(env(safe-area-inset-bottom) + 1rem)",
+          }}
+        >
+          <div className="pointer-events-auto">{guidance}</div>
         </div>
       ) : null}
 

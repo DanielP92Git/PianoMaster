@@ -809,6 +809,7 @@
       "labels": {
         "difficulty": "Choose Difficulty",
         "timeSignature": "Choose Time Signature",
+        "rhythmSettings": "Rhythm Settings",
         "tempo": "Set Tempo",
         "clef": "Choose Clef",
         "notes": "Select Notes",
@@ -853,6 +854,19 @@
       "selectedCount_other": "Selected: {{count}} notes",
       "minNotesTitle": "Select at least {{count}} notes",
       "minNotesDescription": "Select {{count}} or more notes to practice before continuing."
+    },
+    "rhythmSettings": {
+      "title": "Rhythm Settings",
+      "noteValuesLabel": "Allowed note values",
+      "allowRestsLabel": "Allow rests",
+      "restValuesLabel": "Allowed rest values",
+      "noteValuesRequired": "Select at least one note value to continue.",
+      "restValuesRequired": "Select at least one rest value (or disable rests) to continue.",
+      "complexityLabel": "Rhythm complexity",
+      "simpleLabel": "Simple rhythm",
+      "complexLabel": "Complex rhythm",
+      "simpleHint": "Pairs eighth notes together (no syncopation).",
+      "complexHint": "Allows syncopated groupings (e.g. 1/8–1/4–1/8)."
     },
     "tempo": {
       "label": "Tempo: {{tempo}} BPM",

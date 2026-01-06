@@ -68,11 +68,11 @@ function Dashboard() {
 
   // Fetch user streak (only for students)
   const {
-    data: streak = { current_streak: 0, longest_streak: 0 },
+    data: currentStreak = 0,
     isLoading: streakLoading,
   } = useQuery({
     queryKey: ["streak", user?.id],
-    queryFn: () => streakService.getUserStreak(user.id),
+    queryFn: () => streakService.getStreak(),
     enabled: !!user?.id && isStudent, // Only fetch for students
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
@@ -590,17 +590,17 @@ function Dashboard() {
                 className="text-3xl font-black text-white"
                 style={{ fontFamily: "'Nunito', sans-serif" }}
               >
-                {streak?.current_streak || 0}{" "}
+                {currentStreak || 0}{" "}
                 <span className="text-base font-bold text-white/70">
                   {t("dashboard.streak.dayLabel", {
-                    count: streak?.current_streak || 0,
+                    count: currentStreak || 0,
                   })}
                 </span>
               </div>
               <div className="mt-1 text-sm font-bold text-orange-200">
-                {streak?.current_streak >= 3 && streak?.current_streak < 7
+                {currentStreak >= 3 && currentStreak < 7
                   ? t("dashboard.streak.messages.gettingHot")
-                  : streak?.current_streak >= 7
+                  : currentStreak >= 7
                     ? t("dashboard.streak.messages.onFire")
                     : t("dashboard.streak.messages.buildingMomentum")}
               </div>
@@ -610,12 +610,12 @@ function Dashboard() {
                 <div
                   className="h-2 rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-500"
                   style={{
-                    width: `${getStreakProgress(streak?.current_streak || 0)}%`,
+                    width: `${getStreakProgress(currentStreak || 0)}%`,
                   }}
                 />
               </div>
               <div className="mt-2 text-center text-xs font-medium text-white/60">
-                {getNextStreakMilestone(streak?.current_streak || 0)}
+                {getNextStreakMilestone(currentStreak || 0)}
               </div>
             </div>
           </div>

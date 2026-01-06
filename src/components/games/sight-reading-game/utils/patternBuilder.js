@@ -10,6 +10,7 @@ import {
   getDurationDefinition,
   resolveTimeSignature,
 } from "../constants/durationConstants.js";
+import { generateRhythmEvents } from "./rhythmGenerator.js";
 
 const isDebugEnabled =
   (typeof import.meta !== "undefined" &&
@@ -95,35 +96,85 @@ export async function generatePatternData({
   selectedNotes = [],
   clef = "Treble",
   measuresPerPattern = 1,
+  rhythmSettings,
+  rhythmComplexity = "simple",
 }) {
   const clefKey = String(clef || "Treble").toLowerCase();
   const resolvedSignature = resolveTimeSignature(timeSignature);
   const beatsPerMeasure = resolvedSignature.beats;
   const totalBeats = beatsPerMeasure * (measuresPerPattern ?? 1);
+  const unitsPerBeat = resolvedSignature.unitsPerBeat || 4;
   const beatDurationSeconds = 60 / Math.max(tempo, 1);
-  const unitsPerBeat = resolvedSignature.unitsPerBeat;
-  const quarterInfo = getDurationDefinition("quarter");
+  const secondsPerSixteenth = beatDurationSeconds / 4;
 
-  const includeRest = Math.random() < 0.5;
-  const restBeatIndex = includeRest
-    ? Math.floor(Math.random() * totalBeats)
-    : null;
+  const activeRhythmSettings = rhythmSettings || {};
+  const allowedNoteDurations = Array.isArray(
+    activeRhythmSettings.allowedNoteDurations
+  )
+    ? activeRhythmSettings.allowedNoteDurations
+    : ["q", "8"];
+  const allowRests = !!activeRhythmSettings.allowRests;
+  const allowedRestDurations = Array.isArray(
+    activeRhythmSettings.allowedRestDurations
+  )
+    ? activeRhythmSettings.allowedRestDurations
+    : ["q", "8"];
+  // For complex mode, only allow patterns that are enabled (default: all)
+  const enabledComplexPatterns = Array.isArray(
+    activeRhythmSettings.enabledComplexPatterns
+  )
+    ? activeRhythmSettings.enabledComplexPatterns
+    : null; // null means "use all" in rhythmGenerator
 
+  const rhythmEvents = generateRhythmEvents({
+    timeSignature: resolvedSignature,
+    measuresPerPattern,
+    allowedNoteDurations,
+    allowRests,
+    allowedRestDurations,
+    rhythmComplexity,
+    enabledComplexPatterns,
+  });
+
+  // Convert rhythm events into the notationObjects format used by the rest of the game.
   const notationObjects = [];
-  for (let beatIndex = 0; beatIndex < totalBeats; beatIndex++) {
-    const isRest = restBeatIndex === beatIndex;
-    const startTime = beatIndex * beatDurationSeconds;
-    const endTime = startTime + beatDurationSeconds;
+  let currentSixteenth = 0;
+  for (const evt of rhythmEvents) {
+    const durationInfo = getDurationDefinition(evt.notation);
+    // Use the generator's sixteenthUnits as the source of truth, with fallback to durationInfo
+    // This ensures consistency even if notation lookup has edge cases
+    const eventUnits = evt.sixteenthUnits ?? durationInfo.sixteenthUnits;
+    const startTime = currentSixteenth * secondsPerSixteenth;
+    const endTime = (currentSixteenth + eventUnits) * secondsPerSixteenth;
 
     notationObjects.push({
-      type: isRest ? "rest" : "note",
-      notation: quarterInfo.id,
-      duration: beatDurationSeconds,
-      sixteenthUnits: quarterInfo.sixteenthUnits,
-      startPosition: beatIndex * unitsPerBeat,
+      type: evt.type,
+      notation: durationInfo.id,
+      duration: endTime - startTime,
+      sixteenthUnits: eventUnits,
+      startPosition: currentSixteenth,
       startTime,
       endTime,
+      patternId: evt.patternId, // Preserve patternId from rhythm generator
+      beatIndex: evt.beatIndex, // Beat where this pattern starts
+      beatSpan: evt.beatSpan, // Number of beats this pattern spans
+      isDotted: evt.isDotted, // Whether this is a dotted duration
     });
+
+    currentSixteenth += eventUnits;
+  }
+  
+  // Sanity check: verify no events overlap (development-time assertion)
+  if (isDebugEnabled) {
+    const occupiedSlots = new Set();
+    for (const obj of notationObjects) {
+      for (let slot = obj.startPosition; slot < obj.startPosition + obj.sixteenthUnits; slot++) {
+        if (occupiedSlots.has(slot)) {
+          console.error("[PatternBuilder] OVERLAP DETECTED at slot", slot, "in", obj);
+        }
+        occupiedSlots.add(slot);
+      }
+    }
   }
 
   const allNotes =
@@ -247,18 +298,95 @@ export async function generatePatternData({
 
   debugLog("============================");
 
+  // Group events by patternId for grand staff mode
+  // All events with the same patternId belong to the same rhythmic group and should share a staff
+  const eventsByPattern = new Map();
+  notationObjects.forEach((obj, idx) => {
+    const patternId = obj.patternId ?? idx; // fallback to index if no patternId
+    if (!eventsByPattern.has(patternId)) {
+      eventsByPattern.set(patternId, []);
+    }
+    eventsByPattern.get(patternId).push(idx);
+  });
+
+  // Beaming hint: dotted-quarter + eighth (6 + 2) should NOT beam the eighth to anything else.
+  // We mark the trailing eighth as noBeam so the renderer can force it to be flagged.
+  // This avoids cases where Beam.generateBeams() incorrectly connects it to a later sixteenth
+  // (because we generate beams from a notes-only array that may skip rests/spacers).
+  for (const [, eventIndices] of eventsByPattern) {
+    if (eventIndices.length !== 2) continue;
+    const first = notationObjects[eventIndices[0]];
+    const second = notationObjects[eventIndices[1]];
+
+    if (
+      first?.notation === "dotted-quarter" &&
+      first?.sixteenthUnits === 6 &&
+      second?.notation === "eighth" &&
+      second?.sixteenthUnits === 2
+    ) {
+      // Mutate in place; `enrichedNotation` spreads `obj` so this propagates.
+      second.noBeam = true;
+    }
+  }
+
+  // Determine staff for each beat (only used in grand staff mode)
+  // Staff is chosen per beat boundary; all patterns starting on the same beat get the same staff
+  const staffPerBeat = new Map();
+  if (clefKey === "both") {
+    for (let beat = 0; beat < totalBeats; beat++) {
+      staffPerBeat.set(beat, Math.random() < 0.5 ? "treble" : "bass");
+    }
+  }
+
+  // Pre-compute staff for each pattern based on its beatIndex
+  // This ensures all events in a pattern share the same staff
+  const staffPerPattern = new Map();
+  if (clefKey === "both") {
+    for (const [patternId, eventIndices] of eventsByPattern) {
+      // Use the beatIndex from the first event in the pattern
+      const firstEvent = notationObjects[eventIndices[0]];
+      const beatIndex = firstEvent.beatIndex ?? Math.floor(firstEvent.startPosition / unitsPerBeat);
+      const targetStaff = staffPerBeat.get(beatIndex) || "treble";
+      staffPerPattern.set(patternId, targetStaff);
+    }
+  }
+
   let previousNote = null;
   let noteIndex = 0;
+  // Track previous note per pattern for better beginner mode behavior
+  const previousNotePerPattern = new Map();
 
-  const enrichedNotation = notationObjects.map((obj) => {
+  const enrichedNotation = notationObjects.map((obj, idx) => {
+    const patternId = obj.patternId ?? idx;
+
     if (obj.type === "note") {
       let selectedNote;
-      if (difficulty === "beginner" && previousNote) {
-        const prevIndex = availableNotes.indexOf(previousNote);
+      let notePool = availableNotes;
+
+      // In grand staff mode, filter notes by target staff based on pattern
+      // All events in the same pattern share the same staff (determined by beatIndex)
+      if (clefKey === "both") {
+        const targetStaff = staffPerPattern.get(patternId) || "treble";
+
+        // Filter available notes to target clef
+        const clefNotes = availableNotes.filter((pitch) => {
+          const inferredClef = inferClefForPitch(pitch);
+          return inferredClef === targetStaff;
+        });
+
+        // Use clefNotes if available, fallback to all notes
+        notePool = clefNotes.length > 0 ? clefNotes : availableNotes;
+      }
+
+      // For beginner mode, use previous note from the same pattern if available
+      const patternPreviousNote = previousNotePerPattern.get(patternId) || previousNote;
+      
+      if (difficulty === "beginner" && patternPreviousNote && notePool.includes(patternPreviousNote)) {
+        const prevIndex = notePool.indexOf(patternPreviousNote);
         const candidates = [
-          availableNotes[prevIndex - 1],
-          availableNotes[prevIndex],
-          availableNotes[prevIndex + 1],
+          notePool[prevIndex - 1],
+          notePool[prevIndex],
+          notePool[prevIndex + 1],
         ].filter(Boolean);
 
         if (candidates.length > 0) {
@@ -266,11 +394,11 @@ export async function generatePatternData({
             candidates[Math.floor(Math.random() * candidates.length)];
         } else {
           selectedNote =
-            availableNotes[Math.floor(Math.random() * availableNotes.length)];
+            notePool[Math.floor(Math.random() * notePool.length)];
         }
       } else {
         selectedNote =
-          availableNotes[Math.floor(Math.random() * availableNotes.length)];
+          notePool[Math.floor(Math.random() * notePool.length)];
       }
 
       // Validate that the selected note is in availableNotes
@@ -282,6 +410,7 @@ export async function generatePatternData({
       }
 
       previousNote = selectedNote;
+      previousNotePerPattern.set(patternId, selectedNote);
       const eventClef =
         clefKey === "both" ? inferClefForPitch(selectedNote) : clefKey;
 
@@ -301,6 +430,18 @@ export async function generatePatternData({
       return enrichedNote;
     }
 
+    // Handle rests - assign to staff based on pattern in grand staff mode
+    // All events in the same pattern share the same staff
+    if (clefKey === "both" && obj.type === "rest") {
+      const targetStaff = staffPerPattern.get(patternId) || "treble";
+
+      return {
+        ...obj,
+        clef: targetStaff,
+        index: noteIndex++,
+      };
+    }
+
     return {
       ...obj,
       clef: clefKey === "both" ? "treble" : clefKey,
@@ -315,7 +456,7 @@ export async function generatePatternData({
   return {
     notes: enrichedNotation,
     rhythmPattern: notationObjects
-      .map((obj) => Array(unitsPerBeat).fill(obj.type === "note" ? 1 : 0))
+      .map((obj) => Array(obj.sixteenthUnits).fill(obj.type === "note" ? 1 : 0))
       .flat(),
     totalDuration,
     timeSignature: resolvedSignature.name,

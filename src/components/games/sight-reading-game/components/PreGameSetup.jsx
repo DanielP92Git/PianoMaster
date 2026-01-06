@@ -4,6 +4,7 @@ import { UnifiedGameSettings } from "../../shared/UnifiedGameSettings";
 import { TREBLE_NOTES, BASS_NOTES } from "../constants/gameSettings";
 import { TIME_SIGNATURES } from "../../rhythm-games/RhythmPatternGenerator";
 import { normalizeSelectedNotes } from "../../shared/noteSelectionUtils";
+import { getAllComplexPatternIds } from "../utils/rhythmPatterns";
 
 //
 export function PreGameSetup({
@@ -50,11 +51,28 @@ export function PreGameSetup({
         enableSharps: settings.enableSharps ?? false,
         enableFlats: settings.enableFlats ?? false,
       }),
-    [settings.selectedNotes, settings.clef, settings.enableSharps, settings.enableFlats]
+    [
+      settings.selectedNotes,
+      settings.clef,
+      settings.enableSharps,
+      settings.enableFlats,
+    ]
   );
+
+  // Rhythm defaults (v1): straight values only (w/h/q/8/16), no rests by default.
+  // All complex patterns are enabled by default for complex rhythm mode.
+  const defaultRhythmSettings = {
+    allowedNoteDurations: ["q", "8"],
+    allowRests: false,
+    allowedRestDurations: ["q", "8"],
+    enabledComplexPatterns: getAllComplexPatternIds(),
+  };
+
   const preparedInitialSettings = {
     ...settings,
     selectedNotes: normalizedSelectedNotes,
+    rhythmSettings: settings.rhythmSettings ?? defaultRhythmSettings,
+    rhythmComplexity: settings.rhythmComplexity ?? "simple",
   };
   const config = {
     gameType: "sight-reading",
@@ -72,7 +90,7 @@ export function PreGameSetup({
       },
       {
         id: "timeSignature",
-        title: "gameSettings.steps.labels.timeSignature",
+        title: "gameSettings.steps.labels.rhythmSettings",
         component: "TimeSignatureSelection",
         config: {
           timeSignatures: [
@@ -80,6 +98,7 @@ export function PreGameSetup({
             TIME_SIGNATURES.THREE_FOUR,
             TIME_SIGNATURES.TWO_FOUR,
           ],
+          showRhythmOptions: true,
         },
       },
       {
@@ -110,6 +129,8 @@ export function PreGameSetup({
           enableSharps: finalSettings.enableSharps ?? false,
           enableFlats: finalSettings.enableFlats ?? false,
         }),
+        rhythmSettings: finalSettings.rhythmSettings ?? defaultRhythmSettings,
+        rhythmComplexity: finalSettings.rhythmComplexity ?? "simple",
       };
 
       onUpdateSettings(preparedSettings);

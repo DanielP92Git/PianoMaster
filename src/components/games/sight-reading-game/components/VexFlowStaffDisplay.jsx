@@ -14,11 +14,14 @@ import {
   Formatter,
   Stave,
   Voice,
+  Beam,
   StaveNote,
   Accidental,
   Dot,
   StaveConnector,
+  Stem,
 } from "vexflow";
+import { resolveTimeSignature } from "../constants/durationConstants";
 
 const NOTE_TO_SEMITONE = {
   C: 0,
@@ -73,9 +76,9 @@ const STEM_REFERENCE_MIDI = {
 
 const getStemDirectionForPitch = (pitch, clef) => {
   const midi = noteNameToMidi(pitch);
-  if (midi === null) return 1;
+  if (midi === null) return Stem.UP;
   const reference = STEM_REFERENCE_MIDI[clef] ?? STEM_REFERENCE_MIDI["treble"];
-  return midi > reference ? -1 : 1;
+  return midi > reference ? Stem.DOWN : Stem.UP;
 };
 
 /**
@@ -283,6 +286,26 @@ export function VexFlowStaffDisplay({
     if (!vexContainerRef.current || !pattern?.easyscoreString) return;
 
     try {
+      // Development assertion: check for overlapping events in pattern.notes
+      if (process.env.NODE_ENV === "development" && pattern?.notes) {
+        const occupiedSlots = new Set();
+        for (const note of pattern.notes) {
+          const start = note.startPosition ?? 0;
+          const units = note.sixteenthUnits ?? 4;
+          for (let slot = start; slot < start + units; slot++) {
+            if (occupiedSlots.has(slot)) {
+              console.warn(
+                "[VexFlowStaffDisplay] OVERLAP DETECTED: slot",
+                slot,
+                "already occupied. Event:",
+                note
+              );
+            }
+            occupiedSlots.add(slot);
+          }
+        }
+      }
+
       // Clear previous VexFlow rendering (only touches VexFlow container, not React children)
       vexContainerRef.current.innerHTML = "";
 
@@ -405,7 +428,14 @@ export function VexFlowStaffDisplay({
 
       const buildStaveNote = ({ pitchStr, duration, targetClef }) => {
         const isRest = String(duration || "").endsWith("r");
-        const cleanDuration = String(duration || "q").replace(/r$/, "");
+        let cleanDuration = String(duration || "q").replace(/r$/, "");
+        
+        // Check for dotted notes (e.g., "q.", "h.", "8.")
+        const isDotted = cleanDuration && cleanDuration.endsWith(".");
+        if (isDotted) {
+          cleanDuration = cleanDuration.slice(0, -1); // Remove the dot: "q." -> "q"
+        }
+        
         const parsedPitch = isRest ? null : parsePitchForVexflow(pitchStr);
         const vexflowKey = isRest
           ? targetClef === "bass"
@@ -424,20 +454,47 @@ export function VexFlowStaffDisplay({
           // Add accidental glyph (e.g., b or #) when present in pitch string.
           note.addModifier(new Accidental(parsedPitch.accidental), 0);
         }
-        if (!isRest && pitchStr) {
-          note.setStemDirection(getStemDirectionForPitch(pitchStr, targetClef));
+        
+        // Add dot modifier if this is a dotted note
+        if (isDotted) {
+          for (let i = 0; i < noteConfig.keys.length; i++) {
+            note.addModifier(new Dot(), i);
+          }
         }
+        
+        // Note: Stem direction and length are set AFTER beaming via Beam.generateBeams()
+        // for beamed notes. For non-beamed notes, stem direction is set below.
         return note;
       };
 
       const buildSpacerRest = (duration, targetClef) => {
-        const cleanDuration = String(duration || "q").replace(/r$/, "");
+        let cleanDuration = String(duration || "q").replace(/r$/, "");
+        
+        // Check for dotted durations (e.g., "q.", "h.", "8.")
+        const isDotted = cleanDuration && cleanDuration.endsWith(".");
+        if (isDotted) {
+          cleanDuration = cleanDuration.slice(0, -1); // Remove the dot: "q." -> "q"
+        }
+        
+        // Ensure we have a valid duration (fallback to "q" if empty)
+        if (!cleanDuration || cleanDuration === "") {
+          cleanDuration = "q";
+        }
+        
         const restKey = targetClef === "bass" ? "d/3" : "b/4";
         const spacer = new StaveNote({
           keys: [restKey],
           duration: `${cleanDuration}r`,
           clef: targetClef,
         });
+        
+        // Add dot modifier if this was a dotted duration
+        if (isDotted) {
+          for (let i = 0; i < spacer.getKeys().length; i++) {
+            spacer.addModifier(new Dot(), i);
+          }
+        }
+        
         spacer.setStyle({
           fillStyle: "transparent",
           strokeStyle: "transparent",
@@ -501,27 +558,43 @@ export function VexFlowStaffDisplay({
         makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         const events = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const noBeamIndices = new Set(
+          events
+            .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
+            .filter((i) => i !== null)
+        );
         const durations =
           Array.isArray(pattern.vexflowNotes) &&
           pattern.vexflowNotes.length === events.length
             ? pattern.vexflowNotes.map((n) => n?.duration || "q")
             : events.map(() => "q");
 
+        const unitsPerBeat = resolveTimeSignature(
+          pattern.timeSignature
+        ).unitsPerBeat;
+
         const trebleTickables = events.map((event, idx) => {
           const duration = durations[idx] || "q";
           const eventClef = String(event?.clef || "treble").toLowerCase();
           if (event.type === "rest") {
-            return buildStaveNote({
-              pitchStr: null,
-              duration: `${duration.replace(/r$/, "")}r`,
-              targetClef: "treble",
-            });
+            // Only render a visible rest on the staff the event belongs to.
+            // The other staff should get an invisible spacer rest (no “fake” rests).
+            if (eventClef === "treble") {
+              return buildStaveNote({
+                pitchStr: null,
+                duration: `${duration.replace(/r$/, "")}r`,
+                targetClef: "treble",
+                isDotted: !!event?.isDotted,
+              });
+            }
+            return buildSpacerRest(duration, "treble");
           }
           if (eventClef === "treble") {
             return buildStaveNote({
               pitchStr: event.pitch,
               duration,
               targetClef: "treble",
+              isDotted: !!event?.isDotted,
             });
           }
           return buildSpacerRest(duration, "treble");
@@ -531,6 +604,16 @@ export function VexFlowStaffDisplay({
           const duration = durations[idx] || "q";
           const eventClef = String(event?.clef || "treble").toLowerCase();
           if (event.type === "rest") {
+            // Only render a visible rest on the staff the event belongs to.
+            // The other staff should get an invisible spacer rest (no “fake” rests).
+            if (eventClef === "bass") {
+              return buildStaveNote({
+                pitchStr: null,
+                duration: `${duration.replace(/r$/, "")}r`,
+                targetClef: "bass",
+                isDotted: !!event?.isDotted,
+              });
+            }
             return buildSpacerRest(duration, "bass");
           }
           if (eventClef === "bass") {
@@ -538,9 +621,116 @@ export function VexFlowStaffDisplay({
               pitchStr: event.pitch,
               duration,
               targetClef: "bass",
+              isDotted: !!event?.isDotted,
             });
           }
           return buildSpacerRest(duration, "bass");
+        });
+
+        // Manual beaming for kid-friendly patterns:
+        // Ensure | 1/8 1/16 1/16 | (2,1,1) and | 1/16 1/16 1/8 | (1,1,2)
+        // are connected as a single beam group within the pattern.
+        const patternIndices = new Map();
+        events.forEach((e, i) => {
+          const pid = e?.patternId ?? i;
+          if (!patternIndices.has(pid)) patternIndices.set(pid, []);
+          patternIndices.get(pid).push(i);
+        });
+
+        const manualBeamIndices = new Set();
+        const manualTrebleBeams = [];
+        const manualBassBeams = [];
+
+        for (const [, idxs] of patternIndices) {
+          if (idxs.length !== 3) continue;
+          const seq = idxs.map((i) => events[i]);
+          if (seq.some((e) => e?.type !== "note")) continue;
+
+          const units = seq.map((e) => e?.sixteenthUnits);
+          const isTargetPattern =
+            (units[0] === 2 && units[1] === 1 && units[2] === 1) ||
+            (units[0] === 1 && units[1] === 1 && units[2] === 2);
+          if (!isTargetPattern) continue;
+
+          const clefs = seq.map((e) => String(e?.clef || "treble").toLowerCase());
+          const staff = clefs[0];
+          if (!clefs.every((c) => c === staff)) continue;
+
+          if (staff === "treble") {
+            const notes = idxs.map((i) => trebleTickables[i]).filter(Boolean);
+            if (notes.length === 3) {
+              manualTrebleBeams.push(new Beam(notes));
+              idxs.forEach((i) => manualBeamIndices.add(i));
+            }
+          } else if (staff === "bass") {
+            const notes = idxs.map((i) => bassTickables[i]).filter(Boolean);
+            if (notes.length === 3) {
+              manualBassBeams.push(new Beam(notes));
+              idxs.forEach((i) => manualBeamIndices.add(i));
+            }
+          }
+        }
+
+        // Use Beam.generateBeams for automatic beaming, stem direction, and stem length
+        // per VexFlow guidelines (see docs/vexflow-notation/vexflow-guidelines.md)
+        // Filter to only actual notes (not spacer rests) for each staff
+        const trebleNotesOnly = trebleTickables.filter((tick, idx) => {
+          const event = events[idx];
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          return (
+            event?.type === "note" &&
+            eventClef === "treble" &&
+            !noBeamIndices.has(idx) &&
+            !manualBeamIndices.has(idx)
+          );
+        });
+        const bassNotesOnly = bassTickables.filter((tick, idx) => {
+          const event = events[idx];
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          return (
+            event?.type === "note" &&
+            eventClef === "bass" &&
+            !noBeamIndices.has(idx) &&
+            !manualBeamIndices.has(idx)
+          );
+        });
+
+        // Generate beams automatically - VexFlow handles stem direction and length for beamed notes
+        const trebleAutoBeams = Beam.generateBeams(trebleNotesOnly);
+        const bassAutoBeams = Beam.generateBeams(bassNotesOnly);
+        const trebleBeams = [...trebleAutoBeams, ...manualTrebleBeams];
+        const bassBeams = [...bassAutoBeams, ...manualBassBeams];
+
+        // Set stem direction for non-beamed notes (those not included in any beam)
+        const beamedTrebleNotes = new Set(
+          trebleBeams.flatMap((b) => b.getNotes())
+        );
+        const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
+
+        trebleTickables.forEach((tick, idx) => {
+          const event = events[idx];
+          if (event?.type !== "note") return;
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          if (eventClef !== "treble") return;
+          if (!beamedTrebleNotes.has(tick)) {
+            // Non-beamed note: set stem direction based on pitch
+            tick.setStemDirection(
+              getStemDirectionForPitch(event.pitch, "treble")
+            );
+          }
+        });
+
+        bassTickables.forEach((tick, idx) => {
+          const event = events[idx];
+          if (event?.type !== "note") return;
+          const eventClef = String(event?.clef || "treble").toLowerCase();
+          if (eventClef !== "bass") return;
+          if (!beamedBassNotes.has(tick)) {
+            // Non-beamed note: set stem direction based on pitch
+            tick.setStemDirection(
+              getStemDirectionForPitch(event.pitch, "bass")
+            );
+          }
         });
 
         const trebleVoice = new Voice({
@@ -582,6 +772,12 @@ export function VexFlowStaffDisplay({
               targetClef: "treble",
             });
             wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+            // Set stem direction for wrong notes (not beamed, so we set manually)
+            if (!duration.includes("r")) {
+              wrong.setStemDirection(
+                getStemDirectionForPitch(result.detected, "treble")
+              );
+            }
             return wrong;
           });
 
@@ -598,6 +794,12 @@ export function VexFlowStaffDisplay({
               targetClef: "bass",
             });
             wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+            // Set stem direction for wrong notes (not beamed, so we set manually)
+            if (!duration.includes("r")) {
+              wrong.setStemDirection(
+                getStemDirectionForPitch(result.detected, "bass")
+              );
+            }
             return wrong;
           });
 
@@ -636,6 +838,10 @@ export function VexFlowStaffDisplay({
         trebleVoice.draw(context, trebleStave);
         bassVoice.draw(context, bassStave);
 
+        // Draw beams (expected only) after notes are positioned
+        trebleBeams.forEach((beam) => beam.setContext(context).draw());
+        bassBeams.forEach((beam) => beam.setContext(context).draw());
+
         // Draw wrong voices on top (if any)
         if (wrongTrebleVoice) {
           wrongTrebleVoice.draw(context, trebleStave);
@@ -671,6 +877,24 @@ export function VexFlowStaffDisplay({
         makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         // Parse EasyScore string manually to create StaveNotes
+        const events = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const durations =
+          Array.isArray(pattern.vexflowNotes) &&
+          pattern.vexflowNotes.length === events.length
+            ? pattern.vexflowNotes.map((n) => n?.duration || "q")
+            : events.map(() => "q");
+        const noBeamIndices = new Set(
+          events
+            .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
+            .filter((i) => i !== null)
+        );
+        const unitsPerBeat = resolveTimeSignature(
+          pattern.timeSignature
+        ).unitsPerBeat;
+
+        // Store pitch strings for stem direction calculation later
+        const pitchStrings = [];
+
         const staveNotes = easyscoreString.split(",").map((noteStr) => {
           noteStr = noteStr.trim();
 
@@ -679,6 +903,9 @@ export function VexFlowStaffDisplay({
           const parts = noteStr.split("/");
           const pitchStr = parts[0]; // e.g., "C4" or "B4"
           let duration = parts[1]; // e.g., "q", "h", "8", "q.", "h."
+
+          // Store pitch for later stem direction calculation
+          pitchStrings.push(isRest ? null : pitchStr);
 
           // Check for dotted notes (e.g., "q.", "h.", "8.")
           const isDotted = duration && duration.endsWith(".");
@@ -706,10 +933,8 @@ export function VexFlowStaffDisplay({
             staveNote.addModifier(new Accidental(parsedPitch.accidental), 0);
           }
 
-          if (!isRest) {
-            const stemDirection = getStemDirectionForPitch(pitchStr, clef);
-            staveNote.setStemDirection(stemDirection);
-          }
+          // Note: Stem direction is set AFTER beaming via Beam.generateBeams()
+          // for beamed notes. For non-beamed notes, stem direction is set below.
 
           if (isDotted) {
             for (let i = 0; i < noteConfig.keys.length; i++) {
@@ -718,6 +943,55 @@ export function VexFlowStaffDisplay({
           }
 
           return staveNote;
+        });
+
+        // Use Beam.generateBeams for automatic beaming, stem direction, and stem length
+        // per VexFlow guidelines (see docs/vexflow-notation/vexflow-guidelines.md)
+        // Manual beaming for kid-friendly patterns:
+        // Ensure | 1/8 1/16 1/16 | (2,1,1) and | 1/16 1/16 1/8 | (1,1,2)
+        // are connected as a single beam group within the pattern.
+        const patternIndices = new Map();
+        events.forEach((e, i) => {
+          const pid = e?.patternId ?? i;
+          if (!patternIndices.has(pid)) patternIndices.set(pid, []);
+          patternIndices.get(pid).push(i);
+        });
+
+        const manualBeamIndices = new Set();
+        const manualBeams = [];
+        for (const [, idxs] of patternIndices) {
+          if (idxs.length !== 3) continue;
+          const seq = idxs.map((i) => events[i]);
+          if (seq.some((e) => e?.type !== "note")) continue;
+
+          const units = seq.map((e) => e?.sixteenthUnits);
+          const isTargetPattern =
+            (units[0] === 2 && units[1] === 1 && units[2] === 1) ||
+            (units[0] === 1 && units[1] === 1 && units[2] === 2);
+          if (!isTargetPattern) continue;
+
+          const notes = idxs.map((i) => staveNotes[i]).filter(Boolean);
+          if (notes.length === 3) {
+            manualBeams.push(new Beam(notes));
+            idxs.forEach((i) => manualBeamIndices.add(i));
+          }
+        }
+
+        const autoBeamNotes = staveNotes.filter(
+          (note, idx) => !noBeamIndices.has(idx) && !manualBeamIndices.has(idx)
+        );
+        const autoBeams = Beam.generateBeams(autoBeamNotes);
+        const beams = [...autoBeams, ...manualBeams];
+
+        // Set stem direction for non-beamed notes (those not included in any beam)
+        const beamedNotes = new Set(beams.flatMap((b) => b.getNotes()));
+        staveNotes.forEach((note, idx) => {
+          const pitchStr = pitchStrings[idx];
+          if (!pitchStr) return; // Skip rests
+          if (!beamedNotes.has(note)) {
+            // Non-beamed note: set stem direction based on pitch
+            note.setStemDirection(getStemDirectionForPitch(pitchStr, clef));
+          }
         });
 
         const voice = new Voice({
@@ -761,11 +1035,10 @@ export function VexFlowStaffDisplay({
                   );
                 }
 
-                const wrongStemDirection = getStemDirectionForPitch(
-                  playedNote,
-                  clef
+                // Set stem direction for wrong notes (not beamed, so set manually)
+                wrongNote.setStemDirection(
+                  getStemDirectionForPitch(playedNote, clef)
                 );
-                wrongNote.setStemDirection(wrongStemDirection);
 
                 wrongNote.setStyle({
                   fillStyle: "#EF4444",
@@ -793,10 +1066,12 @@ export function VexFlowStaffDisplay({
           const voices = [voice, wrongVoice];
           new Formatter().joinVoices(voices).format(voices, formatterWidth);
           voice.draw(context, stave);
+          beams.forEach((beam) => beam.setContext(context).draw());
           wrongVoice.draw(context, stave);
         } else {
           new Formatter().joinVoices([voice]).format([voice], formatterWidth);
           voice.draw(context, stave);
+          beams.forEach((beam) => beam.setContext(context).draw());
         }
       }
 
@@ -842,23 +1117,19 @@ export function VexFlowStaffDisplay({
    */
   const getNoteColor = useCallback(
     (noteIndex) => {
+      // IMPORTANT: No highlighting during performance (kids mode UX).
+      // Only apply feedback coloring once the exercise is finished (feedback phase).
+      if (gamePhase !== "feedback") {
+        return {
+          fill: "#000000",
+          stroke: "#000000",
+          class: "",
+          animate: false,
+        };
+      }
+
       // Find the performance result for this specific note by matching noteIndex
       const result = performanceResults.find((r) => r.noteIndex === noteIndex);
-
-      // If this is the current note being played and no result yet, show purple highlight
-      // BUT only during PERFORMANCE phase (not in FEEDBACK/DISPLAY)
-      if (
-        noteIndex === currentNoteIndex &&
-        !result &&
-        gamePhase === "performance"
-      ) {
-        return {
-          fill: "#8B5CF6",
-          stroke: "#8B5CF6",
-          class: "vf-note-active",
-          animate: false,
-        }; // Purple (no pulse)
-      }
 
       // No result yet - black (default music notation color)
       if (!result) {

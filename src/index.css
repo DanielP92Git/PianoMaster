@@ -709,6 +709,55 @@ progress,
   scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
 }
 
+/* Always-visible scrollbar for settings containers */
+.settings-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.8) rgba(255, 255, 255, 0.05);
+}
+
+.settings-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.settings-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.9) 0%,
+    rgba(168, 85, 247, 1) 50%,
+    rgba(192, 132, 252, 0.9) 100%
+  );
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 2px 8px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  opacity: 1;
+}
+
+.settings-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 1) 0%,
+    rgba(147, 51, 234, 1) 50%,
+    rgba(168, 85, 247, 1) 100%
+  );
+  box-shadow:
+    0 4px 12px rgba(124, 58, 237, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.settings-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 12px;
   height: 12px;
@@ -1655,19 +1704,23 @@ body.ios-standalone .safe-area-app {
 @media (max-height: 500px) {
   .note-card-responsive {
     width: clamp(120px, 22vw, 170px);
-    height: clamp(160px, 62vh, 300px);
+    height: clamp(140px, 58vh, 300px);
   }
 
   .note-card-two-row {
     width: clamp(110px, 20vw, 160px);
-    height: clamp(140px, 56vh, 240px);
+    height: clamp(120px, 52vh, 240px);
   }
 }
 
 /* Very short landscape: reduce height further so labels never clip */
 @media (max-height: 400px) {
   .note-card-responsive {
-    height: clamp(150px, 56vh, 260px);
+    height: clamp(130px, 52vh, 260px);
+  }
+
+  .note-card-two-row {
+    height: clamp(110px, 48vh, 220px);
   }
 }
 
@@ -1733,4 +1786,20 @@ input[type="range"]::-moz-range-thumb:hover {
 .scrollbar-thumb-white\/20:hover::-webkit-scrollbar-thumb,
 .hover\:scrollbar-thumb-white\/30:hover::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.3);
+}
+
+/* Rhythm Pattern Preview - Styles for mini VexFlow notation previews */
+.rhythm-pattern-preview {
+  pointer-events: none; /* Let clicks pass through to parent button */
+  /* border: 1px solid red; */
+  /* z-index: 1000; */
+}
+
+.rhythm-pattern-preview svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* border: 1px solid blue; */
+  z-index: 1000;
+  overflow: visible;
 }

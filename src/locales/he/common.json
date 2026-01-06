@@ -795,6 +795,7 @@
       "labels": {
         "difficulty": "בחרו רמת קושי",
         "timeSignature": "בחרו משקל",
+        "rhythmSettings": "הגדרות קצב",
         "tempo": "בחרו מהירות",
         "clef": "בחרו מפתח",
         "notes": "בחרו תווים",
@@ -848,6 +849,19 @@
       "selectedCount_other": "נבחרו {{count}} תווים",
       "minNotesTitle": "בחרו לפחות {{count}} תווים",
       "minNotesDescription": "עליכם לבחור לפחות {{count}} תווים או יותר כדי לתרגל"
+    },
+    "rhythmSettings": {
+      "title": "הגדרות קצב",
+      "noteValuesLabel": "ערכי תווים מותרים",
+      "allowRestsLabel": "לאפשר הפסקות",
+      "restValuesLabel": "ערכי הפסקות מותרים",
+      "noteValuesRequired": "בחרו לפחות ערך תו אחד כדי להמשיך.",
+      "restValuesRequired": "בחרו לפחות ערך הפסקה אחד (או בטלו הפסקות) כדי להמשיך.",
+      "complexityLabel": "מורכבות קצב",
+      "simpleLabel": "קצב פשוט",
+      "complexLabel": "קצב מורכב",
+      "simpleHint": "מקבץ שמיניות בזוגות (ללא סינקופות).",
+      "complexHint": "מאפשר תבניות סינקופיות (למשל 1/8–1/4–1/8)."
     },
     "tempo": {
       "label": "טמפו: {{tempo}} BPM",

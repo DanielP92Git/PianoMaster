@@ -92,18 +92,85 @@ They summarize best practices from `https://www.vexflow.com/`, the [VexFlow Tuto
 
 ### Beaming Strategy
 
+Source: [VexFlow Beam API](https://www.vexflow.com/build/docs/beam.html)
+
 - **Preferred: automatic beaming**
-  - Use `Beam.generateBeams(notes)` whenever possible:
+  - Use `Beam.generateBeams(notes, config?)` whenever possible:
     - It groups adjacent notes and calculates stem directions for you.
+    - Supports configuration for custom beam groupings, stem directions, and rest handling.
     - Draw them after formatting: `beams.forEach(beam => beam.setContext(context).draw());`
 - **Manual beams (when needed)**
   - Only construct `new Beam(noteGroup)` manually when you specifically need custom groupings that differ from the default.
 - **Ordering**
   - Pattern to follow per measure:
     1. Create notes.
-    2. Generate beams `const beams = Beam.generateBeams(notes)` (or create manual beams).
+    2. Generate beams `const beams = Beam.generateBeams(notes, config?)` (or create manual beams).
     3. Use `Formatter` to layout notes.
-    4. Draw beams.
+    4. Draw beams: `beams.forEach(beam => beam.setContext(context).draw())`.
+
+- **Configuration Options for `Beam.generateBeams()`**
+  - **`groups`**: Array of `Fraction` objects for beat structure.
+    - Example: `[new Fraction(2, 8)]` for beaming in groups of 2 eighth notes.
+    - Use `Beam.getDefaultBeamGroups(time_sig)` to get defaults for a time signature.
+    - Defaults to `[new Fraction(2, 8)]` if not provided.
+  - **`stem_direction`**: Force all beamed notes to use `Stem.UP` or `Stem.DOWN`.
+    - Useful when you need uniform stem direction regardless of note positions.
+  - **`maintain_stem_directions`**: Set to `true` to preserve existing stem directions.
+    - Prevents `generateBeams()` from overriding manually set stem directions.
+    - Use this when you've already set stem directions and want to preserve them.
+  - **`beam_rests`**: Set to `true` to include rests in beams (creates stemlets).
+  - **`beam_middle_only`**: Set to `true` to only beam rests in the middle of beats.
+  - **`show_stemlets`**: Set to `true` to draw stemlets for rests in beams.
+
+- **Forcing Stem Direction with Beams**
+  - To force all stems up while preserving beams:
+    ```javascript
+    const beams = Beam.generateBeams(notes, {
+      stem_direction: Stem.UP,
+      maintain_stem_directions: false,
+    });
+    ```
+  - To preserve manually set stem directions:
+    ```javascript
+    // Set stem directions first
+    notes.forEach((note) => note.setStemDirection(Stem.UP));
+    // Then generate beams without overriding
+    const beams = Beam.generateBeams(notes, {
+      maintain_stem_directions: true,
+    });
+    ```
+
+- **Time Signature Beam Groups**
+  - Use `Beam.getDefaultBeamGroups(time_sig)` to get appropriate groupings:
+    - `'4/4'`, `'3/4'`, `'2/4'` → `['1/4']` (beam by quarter note)
+    - `'3/8'` → `['3/8']` (beam entire measure)
+    - `'2/8'`, `'4/8'` → `['2/8']` (beam in groups of 2 eighth notes)
+  - Custom groupings can be specified when default behavior isn't desired.
+
+### Stem Direction Control
+
+- **Setting stem direction**
+  - Use `Stem.UP` (value: `1`) or `Stem.DOWN` (value: `-1`) constants.
+  - Set on `StaveNote` via `note.setStemDirection(Stem.UP)`.
+- **Forcing uniform stem direction**
+  - When you need all notes to point in the same direction (e.g., rhythm patterns):
+    1. Set stem direction on all notes before generating beams: `notes.forEach(note => note.setStemDirection(Stem.UP))`.
+    2. Generate beams: `const beams = Beam.generateBeams(notes)`.
+    3. **Important**: After beaming, set stem direction again to ensure it's preserved:
+       ```javascript
+       notes.forEach((note, idx) => {
+         if (
+           event?.type !== "rest" &&
+           typeof note?.setStemDirection === "function"
+         ) {
+           note.setStemDirection(Stem.UP);
+         }
+       });
+       ```
+  - `Beam.generateBeams()` may override stem directions, so re-applying after beaming ensures consistency.
+- **Best practices**
+  - For rhythm-only displays (no pitch context), always use `Stem.UP` for consistency.
+  - For pitch-based notation, let `Beam.generateBeams()` calculate directions automatically, or set based on pitch position (stems up for notes below middle line, down for notes above).
 
 ---
 

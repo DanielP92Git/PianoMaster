@@ -236,8 +236,10 @@ export const useAudioEngine = (initialTempo = 120) => {
    * Create a metronome click sound
    * @param {number} time - When to play the sound (in audio context time)
    * @param {boolean} isDownbeat - Whether this is a downbeat (first beat of measure)
+   * @param {number} gainMultiplier - Optional multiplier for click loudness (default 1.0)
    */
-  const createMetronomeClick = useCallback((time, isDownbeat = false) => {
+  const createMetronomeClick = useCallback(
+    (time, isDownbeat = false, gainMultiplier = 1) => {
     if (!audioContextRef.current || !gainNodeRef.current) return;
 
     try {
@@ -247,6 +249,7 @@ export const useAudioEngine = (initialTempo = 120) => {
           audioCurrentTime: audioContextRef.current.currentTime,
           deltaSeconds: time - audioContextRef.current.currentTime,
           isDownbeat,
+          gainMultiplier,
         });
       }
       // Create oscillator for the click sound
@@ -258,8 +261,9 @@ export const useAudioEngine = (initialTempo = 120) => {
       oscillator.type = "sine";
 
       // Configure amplitude envelope to avoid clicks/pops
+      const peakGain = Math.min(0.3 * (gainMultiplier || 1), 1);
       clickGain.gain.setValueAtTime(0, time);
-      clickGain.gain.linearRampToValueAtTime(0.3, time + 0.001); // Quick attack
+      clickGain.gain.linearRampToValueAtTime(peakGain, time + 0.001); // Quick attack
       clickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05); // Decay
 
       // Connect nodes
@@ -275,18 +279,27 @@ export const useAudioEngine = (initialTempo = 120) => {
       console.error("Error creating metronome click:", err);
       return null;
     }
-  }, []);
+  },
+    []
+  );
 
   /**
    * Play a metronome click immediately
    * @param {boolean} isDownbeat - Whether this is a downbeat
+   * @param {number} gainMultiplier - Optional multiplier for click loudness
    */
   const playMetronomeClick = useCallback(
-    (isDownbeat = false) => {
+    (isDownbeat = false, gainMultiplier = 1) => {
       if (!isReady()) return false;
 
       const currentTime = audioContextRef.current.currentTime;
-      return createMetronomeClick(currentTime + 0.01, isDownbeat) !== null;
+      return (
+        createMetronomeClick(
+          currentTime + 0.01,
+          isDownbeat,
+          gainMultiplier
+        ) !== null
+      );
     },
     [createMetronomeClick, isReady]
   );

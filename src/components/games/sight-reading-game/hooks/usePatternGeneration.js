@@ -9,7 +9,9 @@ export function usePatternGeneration() {
       tempo = 80,
       selectedNotes = [],
       clef = "Treble",
-      measuresPerPattern = 1
+      measuresPerPattern = 1,
+      rhythmSettings,
+      rhythmComplexity = "simple"
     ) =>
       generatePatternData({
         difficulty,
@@ -18,6 +20,8 @@ export function usePatternGeneration() {
         selectedNotes,
         clef,
         measuresPerPattern,
+        rhythmSettings,
+        rhythmComplexity,
       }),
     []
   );

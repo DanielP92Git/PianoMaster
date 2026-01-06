@@ -122,6 +122,13 @@ This document distills the parts of the tutorial that are most relevant when imp
 
 ### Beaming (`Beam`)
 
+Source: [VexFlow Beam API](https://www.vexflow.com/build/docs/beam.html)
+
+- **Overview**
+  - Beams span over a set of `StemmableNotes` (e.g., `StaveNote`).
+  - Beams automatically group notes and calculate stem directions based on note positions.
+  - Beams are drawn after formatting notes with `Formatter`.
+
 - **Manual Beams**
   - Create `Beam` objects from contiguous groups of notes in the same voice:
 
@@ -133,19 +140,106 @@ This document distills the parts of the tutorial that are most relevant when imp
 
   - Manual beams are useful when you control grouping explicitly.
 
-- **Automatic Beaming**
-  - Use `Beam.generateBeams(notes, config?)` for automatic grouping and stem direction:
+- **Automatic Beaming with `Beam.generateBeams()`**
+  - Primary method for automatic beaming with configuration options:
 
     ```javascript
-    const beams = Beam.generateBeams(notes);
+    const beams = Beam.generateBeams(notes, config);
     Formatter.FormatAndDraw(context, stave, notes);
     beams.forEach((beam) => beam.setContext(context).draw());
     ```
 
-  - `generateBeams`:
-    - Analyzes durations and positions,
-    - Decides stem directions for the whole beam group,
-    - Groups notes appropriately based on time signature and config.
+  - **Configuration Object** (`config`):
+    - `groups`: Array of `Fraction` objects representing beat structure (e.g., `[new Fraction(2, 8)]` for beaming in groups of 2 eighth notes). Defaults to `[new Fraction(2, 8)]` if not provided.
+    - `stem_direction`: Set to `Stem.UP` or `Stem.DOWN` to apply the same direction to all notes in beams.
+    - `beam_rests`: Set to `true` to include rests in the beams.
+    - `beam_middle_only`: Set to `true` to only beam rests in the middle of the beat.
+    - `show_stemlets`: Set to `true` to draw stemlets for rests.
+    - `maintain_stem_directions`: Set to `true` to preserve existing stem directions without applying new ones.
+
+  - **How `generateBeams` works**:
+    - Analyzes note durations and positions.
+    - Groups notes based on time signature and `groups` configuration.
+    - Calculates stem directions for the whole beam group (unless `maintain_stem_directions` is true).
+    - Returns an array of `Beam` objects.
+
+- **Helper Methods**
+  - `Beam.getDefaultBeamGroups(time_sig)`: Returns default beam groupings for a time signature.
+    - Examples: `'4/4'` → `['1/4']`, `'3/8'` → `['3/8']`, `'2/8'` → `['2/8']`.
+    - Falls back to naive calculation if time signature not found in table.
+  - `Beam.applyAndGetBeams(voice, stem_direction, groups)`: Helper to automatically build beams for a voice with specified stem direction and groups.
+
+- **Stem Direction Calculation**
+  - By default, beams calculate stem direction based on note positions:
+    - Sums the line positions of all noteheads in the beam group.
+    - If sum ≥ 0 (notes on or above middle line), uses `Stem.DOWN`.
+    - If sum < 0 (notes below middle line), uses `Stem.UP`.
+  - This automatic calculation can be overridden with `stem_direction` in config or `maintain_stem_directions: true`.
+
+- **Beam Rendering Lifecycle**
+  - **Pre-format**: `beam.preFormat()` - Called before note formatting.
+  - **Post-format**: `beam.postFormat()` - Called after notes are formatted and have x/y positions. Calculates beam slope and applies stem extensions.
+  - **Draw**: `beam.draw()` - Renders stems and beam lines. Must be called after formatting.
+
+- **Beam Properties**
+  - Beams automatically calculate slope based on first and last note positions.
+  - Beams can be forced flat with `render_options.flat_beams`.
+  - Beam width and spacing are configurable via `render_options`.
+
+---
+
+### Stems (`Stem`)
+
+Source: [VexFlow Stem API](https://www.vexflow.com/build/docs/stem.html)
+
+- **Overview**
+  - The `Stem` object is generally handled by its parent `StemmableNote` (e.g., `StaveNote`).
+  - Stems are automatically created for notes, but you can control their direction and properties.
+
+- **Stem Directions**
+  - Use constants to specify stem direction:
+    - `Stem.UP` (value: `1`) - Stem points upward
+    - `Stem.DOWN` (value: `-1`) - Stem points downward
+  - Set stem direction on a `StaveNote`:
+    ```javascript
+    const note = new StaveNote({ keys: ["c/4"], duration: "q" });
+    note.setStemDirection(Stem.UP);
+    ```
+
+- **Stem Properties**
+  - **Position**: Up stems are rendered to the right of the notehead; down stems to the left.
+  - **Height**: Stems automatically extend based on note position and any flags/beams.
+  - **Extension**: Stems can have extensions for flags or beams via `setExtension(ext)`.
+
+- **Working with Beams**
+  - When using `Beam.generateBeams()`, stem directions are automatically calculated for beamed note groups.
+  - To force a specific stem direction for all notes (including beamed ones):
+    1. Set stem direction on notes before generating beams.
+    2. Generate beams: `const beams = Beam.generateBeams(notes)`.
+    3. After beaming, explicitly set stem direction again to ensure it's preserved:
+       ```javascript
+       const beams = Beam.generateBeams(notes);
+       notes.forEach((note) => {
+         if (!note.isRest()) {
+           note.setStemDirection(Stem.UP);
+         }
+       });
+       ```
+
+- **Stem Methods**
+  - `setDirection(direction)` - Set the stem direction (`Stem.UP` or `Stem.DOWN`).
+  - `setExtension(ext)` - Set extension length for flags or beams.
+  - `setYBounds(y_top, y_bottom)` - Set Y bounds for top and bottom noteheads (for chords).
+  - `setNoteHeadXBounds(x_begin, x_end)` - Set X bounds for the notehead.
+  - `getExtents()` - Returns `{ topY, baseY }` coordinates for the stem's full extent.
+  - `setVisibility(isVisible)` - Show or hide the stem.
+  - `setStyle(style)` - Apply custom drawing style (stroke, shadow, etc.).
+
+- **Important Notes**
+  - Stems are automatically created for notes with durations shorter than whole notes.
+  - Rests do not have stems.
+  - For chords, the stem direction affects all noteheads in the chord.
+  - When manually setting stem direction, ensure consistency across beamed note groups.
 
 ---
 
