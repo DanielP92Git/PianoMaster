@@ -158,6 +158,8 @@ export async function generatePatternData({
       patternId: evt.patternId, // Preserve patternId from rhythm generator
       beatIndex: evt.beatIndex, // Beat where this pattern starts
       beatSpan: evt.beatSpan, // Number of beats this pattern spans
+      barIndex: evt.barIndex, // Which bar this event belongs to
+      beatIndexWithinBar: evt.beatIndexWithinBar, // Beat index within its bar
       isDotted: evt.isDotted, // Whether this is a dotted duration
     });
 
@@ -459,6 +461,7 @@ export async function generatePatternData({
       .map((obj) => Array(obj.sixteenthUnits).fill(obj.type === "note" ? 1 : 0))
       .flat(),
     totalDuration,
+    measuresPerPattern,
     timeSignature: resolvedSignature.name,
     tempo,
     easyscoreString,

@@ -102,6 +102,15 @@ export function PreGameSetup({
         },
       },
       {
+        id: "barsPerExercise",
+        title: "gameSettings.steps.labels.barsPerExercise",
+        component: "BarsPerExerciseSelection",
+        config: {
+          options: [1, 2, 4, 8],
+          enabledOptions: [1, 2], // Phase 1: only 1–2 bars
+        },
+      },
+      {
         id: "tempo",
         title: "gameSettings.steps.labels.tempo",
         component: "TempoSelection",

@@ -138,6 +138,8 @@ export function generateRhythmEvents({
    */
   const pushComplexPattern = (pattern, beatIndex) => {
     const patternId = patternCounter++;
+    const barIndex = Math.floor(beatIndex / beatsPerMeasure);
+    const beatIndexWithinBar = beatIndex % beatsPerMeasure;
     const computedEvents = pattern.events.map((evt) => {
       const notation = toNotationId(evt.duration);
       const dottedNotation = evt.dotted ? `dotted-${notation}` : notation;
@@ -159,6 +161,8 @@ export function generateRhythmEvents({
         patternId,
         beatIndex,
         beatSpan: pattern.beatsSpan,
+        barIndex,
+        beatIndexWithinBar,
       });
     }
     isFirst = false;
@@ -171,6 +175,8 @@ export function generateRhythmEvents({
   const pushSingleEvent = (type, vexCode, beatIndex, beatSpan = 1) => {
     const notation = toNotationId(vexCode);
     const units = toSixteenthUnits(vexCode);
+    const barIndex = Math.floor(beatIndex / beatsPerMeasure);
+    const beatIndexWithinBar = beatIndex % beatsPerMeasure;
     events.push({
       type,
       notation,
@@ -178,6 +184,8 @@ export function generateRhythmEvents({
       patternId: patternCounter++,
       beatIndex,
       beatSpan,
+      barIndex,
+      beatIndexWithinBar,
     });
     isFirst = false;
     return units;
@@ -227,6 +235,8 @@ export function generateRhythmEvents({
         // Push two eighths as a pair with same patternId
         const pairPatternId = patternCounter++;
         const pairBeatSpan = 1;
+        const barIndex = Math.floor(beatIndex / beatsPerMeasure);
+        const beatIndexWithinBar = beatIndex % beatsPerMeasure;
 
         // Decide mix: note-note, note-rest, rest-note, rest-rest
         const combinations = [];
@@ -247,6 +257,8 @@ export function generateRhythmEvents({
             patternId: pairPatternId,
             beatIndex,
             beatSpan: pairBeatSpan,
+            barIndex,
+            beatIndexWithinBar,
           });
           events.push({
             type: second,
@@ -255,6 +267,8 @@ export function generateRhythmEvents({
             patternId: pairPatternId,
             beatIndex,
             beatSpan: pairBeatSpan,
+            barIndex,
+            beatIndexWithinBar,
           });
           isFirst = false;
           filled += eighthUnits * 2;
@@ -272,6 +286,8 @@ export function generateRhythmEvents({
       // If only eighths available and we can pair them
       if (canPairEighths && hasEighth) {
         const pairPatternId = patternCounter++;
+        const barIndex = Math.floor(beatIndex / beatsPerMeasure);
+        const beatIndexWithinBar = beatIndex % beatsPerMeasure;
         events.push({
           type: nextType,
           notation: "eighth",
@@ -279,6 +295,8 @@ export function generateRhythmEvents({
           patternId: pairPatternId,
           beatIndex,
           beatSpan: 1,
+          barIndex,
+          beatIndexWithinBar,
         });
         events.push({
           type: nextType,
@@ -287,6 +305,8 @@ export function generateRhythmEvents({
           patternId: pairPatternId,
           beatIndex,
           beatSpan: 1,
+          barIndex,
+          beatIndexWithinBar,
         });
         isFirst = false;
         filled += eighthUnits * 2;
@@ -346,6 +366,7 @@ export function generateRhythmEvents({
   let beat = 0;
   while (beat < totalBeats) {
     const beatsRemaining = totalBeats - beat;
+    const beatsRemainingInBar = beatsPerMeasure - (beat % beatsPerMeasure);
 
     // In complex mode, try multi-beat patterns at beat boundaries
     if (
@@ -356,7 +377,7 @@ export function generateRhythmEvents({
     ) {
       // Filter to patterns that fit within remaining beats
       const fittingMultiBeat = multiBeatComplexPatterns.filter(
-        (p) => p.beatsSpan <= beatsRemaining
+        (p) => p.beatsSpan <= beatsRemaining && p.beatsSpan <= beatsRemainingInBar
       );
       if (fittingMultiBeat.length > 0) {
         const picked = pickRandom(fittingMultiBeat);
@@ -391,6 +412,8 @@ export function generateRhythmEvents({
       let pad = deficit;
       let padBeat = Math.floor(actualTotal / unitsPerBeat);
       while (pad >= fillUnits && noteHasQuarter) {
+        const barIndex = Math.floor(padBeat / beatsPerMeasure);
+        const beatIndexWithinBar = padBeat % beatsPerMeasure;
         events.push({
           type: "rest",
           notation: "quarter",
@@ -398,12 +421,16 @@ export function generateRhythmEvents({
           patternId: patternCounter++,
           beatIndex: padBeat,
           beatSpan: 1,
+          barIndex,
+          beatIndexWithinBar,
         });
         pad -= fillUnits;
         padBeat += 1;
       }
       // Fill remaining with sixteenths if needed
       while (pad >= 1 && noteHasSixteenth) {
+        const barIndex = Math.floor(padBeat / beatsPerMeasure);
+        const beatIndexWithinBar = padBeat % beatsPerMeasure;
         events.push({
           type: "note",
           notation: "sixteenth",
@@ -411,6 +438,8 @@ export function generateRhythmEvents({
           patternId: patternCounter++,
           beatIndex: padBeat,
           beatSpan: 1,
+          barIndex,
+          beatIndexWithinBar,
         });
         pad -= 1;
       }

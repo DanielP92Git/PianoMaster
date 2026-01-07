@@ -311,13 +311,31 @@ export function VexFlowStaffDisplay({
 
       // Calculate expected beats based on time signature
       const [beatsPerMeasure] = pattern.timeSignature.split("/").map(Number);
-      const expectedDuration = beatsPerMeasure;
+      const totalBars = Math.max(1, Number(pattern.measuresPerPattern || 1));
+
+      // Phase 1 multi-bar rendering:
+      // - During DISPLAY/COUNT_IN/PERFORMANCE, show ONE bar at a time.
+      // - During FEEDBACK, keep full pattern visible (so noteIndex mapping to performanceResults stays intact).
+      const shouldRenderSingleBar =
+        totalBars > 1 && gamePhase !== "feedback";
+      const currentBarIndex = shouldRenderSingleBar
+        ? gamePhase === "performance"
+          ? Number(pattern?.notes?.[currentNoteIndex]?.barIndex ?? 0)
+          : 0
+        : 0;
+
+      const expectedDuration = beatsPerMeasure * (shouldRenderSingleBar ? 1 : totalBars);
 
       // DEBUG: Log pattern details
 
       // Check if pattern needs padding
-      let easyscoreString = pattern.easyscoreString;
-      const durationDiff = expectedDuration - pattern.totalDuration;
+      const allNotesForScore = Array.isArray(pattern.notes) ? pattern.notes : [];
+      const renderNotesForScore = shouldRenderSingleBar
+        ? allNotesForScore.filter((n) => Number(n?.barIndex ?? 0) === currentBarIndex)
+        : allNotesForScore;
+
+      let easyscoreString = buildCompleteEasyScore(renderNotesForScore);
+      const durationDiff = expectedDuration - (shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration);
 
       // More lenient epsilon for floating point comparison
       if (Math.abs(durationDiff) > 0.001) {
@@ -345,7 +363,7 @@ export function VexFlowStaffDisplay({
             restNotation = "16"; // sixteenth rest
           }
 
-          easyscoreString = `${pattern.easyscoreString}, B4/${restNotation}/r`;
+          easyscoreString = `${easyscoreString}, B4/${restNotation}/r`;
           console.debug("[VexFlowStaffDisplay]", {
             easyscoreString,
             restNotation,
@@ -557,7 +575,10 @@ export function VexFlowStaffDisplay({
         // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
         makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
-        const events = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const allEvents = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const events = shouldRenderSingleBar
+          ? allEvents.filter((e) => Number(e?.barIndex ?? 0) === currentBarIndex)
+          : allEvents;
         const noBeamIndices = new Set(
           events
             .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
@@ -565,8 +586,12 @@ export function VexFlowStaffDisplay({
         );
         const durations =
           Array.isArray(pattern.vexflowNotes) &&
-          pattern.vexflowNotes.length === events.length
-            ? pattern.vexflowNotes.map((n) => n?.duration || "q")
+          pattern.vexflowNotes.length === allEvents.length
+            ? (shouldRenderSingleBar
+                ? pattern.vexflowNotes
+                    .filter((_, i) => Number(allEvents?.[i]?.barIndex ?? 0) === currentBarIndex)
+                    .map((n) => n?.duration || "q")
+                : pattern.vexflowNotes.map((n) => n?.duration || "q"))
             : events.map(() => "q");
 
         const unitsPerBeat = resolveTimeSignature(
@@ -734,13 +759,13 @@ export function VexFlowStaffDisplay({
         });
 
         const trebleVoice = new Voice({
-          num_beats: pattern.totalDuration,
+          num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
           beat_value: 4,
         }).setMode(Voice.Mode.SOFT);
         trebleVoice.addTickables(trebleTickables);
 
         const bassVoice = new Voice({
-          num_beats: pattern.totalDuration,
+          num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
           beat_value: 4,
         }).setMode(Voice.Mode.SOFT);
         bassVoice.addTickables(bassTickables);
@@ -804,13 +829,13 @@ export function VexFlowStaffDisplay({
           });
 
           wrongTrebleVoice = new Voice({
-            num_beats: pattern.totalDuration,
+            num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
             beat_value: 4,
           }).setMode(Voice.Mode.SOFT);
           wrongTrebleVoice.addTickables(wrongTrebleTickables);
 
           wrongBassVoice = new Voice({
-            num_beats: pattern.totalDuration,
+            num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
             beat_value: 4,
           }).setMode(Voice.Mode.SOFT);
           wrongBassVoice.addTickables(wrongBassTickables);
@@ -877,11 +902,18 @@ export function VexFlowStaffDisplay({
         makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
 
         // Parse EasyScore string manually to create StaveNotes
-        const events = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const allEvents = Array.isArray(pattern.notes) ? pattern.notes : [];
+        const events = shouldRenderSingleBar
+          ? allEvents.filter((e) => Number(e?.barIndex ?? 0) === currentBarIndex)
+          : allEvents;
         const durations =
           Array.isArray(pattern.vexflowNotes) &&
-          pattern.vexflowNotes.length === events.length
-            ? pattern.vexflowNotes.map((n) => n?.duration || "q")
+          pattern.vexflowNotes.length === allEvents.length
+            ? (shouldRenderSingleBar
+                ? pattern.vexflowNotes
+                    .filter((_, i) => Number(allEvents?.[i]?.barIndex ?? 0) === currentBarIndex)
+                    .map((n) => n?.duration || "q")
+                : pattern.vexflowNotes.map((n) => n?.duration || "q"))
             : events.map(() => "q");
         const noBeamIndices = new Set(
           events
@@ -995,7 +1027,7 @@ export function VexFlowStaffDisplay({
         });
 
         const voice = new Voice({
-          num_beats: pattern.totalDuration,
+          num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
           beat_value: 4,
         });
         voice.setMode(Voice.Mode.SOFT);
@@ -1054,7 +1086,7 @@ export function VexFlowStaffDisplay({
             });
 
             wrongVoice = new Voice({
-              num_beats: pattern.totalDuration,
+              num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
               beat_value: 4,
             });
             wrongVoice.setMode(Voice.Mode.SOFT);

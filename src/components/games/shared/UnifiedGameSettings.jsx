@@ -301,6 +301,15 @@ export function UnifiedGameSettings({
           />
         );
 
+      case "BarsPerExerciseSelection":
+        return (
+          <BarsPerExerciseSelection
+            settings={settings}
+            updateSetting={updateSetting}
+            config={config}
+          />
+        );
+
       case "TempoSelection":
         return (
           <TempoSelection
@@ -2015,6 +2024,68 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+// Step Component: Bars Per Exercise Selection (Phase 1: 1–2 bars only)
+function BarsPerExerciseSelection({ settings, updateSetting, config }) {
+  const { t } = useTranslation("common");
+  const options = Array.isArray(config?.options) ? config.options : [1, 2, 4, 8];
+  const enabled = Array.isArray(config?.enabledOptions)
+    ? new Set(config.enabledOptions)
+    : new Set([1, 2]);
+
+  const currentValue = Number(settings.measuresPerPattern || 1);
+
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <div className="text-sm font-semibold text-white">
+          {t("gameSettings.barsPerExercise.title", {
+            defaultValue: "How many bars?",
+          })}
+        </div>
+        <div className="text-xs text-white/70">
+          {t("gameSettings.barsPerExercise.subtitle", {
+            defaultValue: "Choose 1 or 2 for now. More bars coming soon.",
+          })}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {options.map((value) => {
+          const isEnabled = enabled.has(value);
+          const isSelected = currentValue === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              disabled={!isEnabled}
+              onClick={() => {
+                if (!isEnabled) return;
+                updateSetting("measuresPerPattern", value);
+              }}
+              className={`rounded-lg px-3 py-3 text-center text-sm font-semibold transition-colors ${
+                !isEnabled
+                  ? "cursor-not-allowed bg-white/10 text-white/40"
+                  : isSelected
+                    ? "bg-indigo-600 text-white"
+                    : "bg-white/20 text-white hover:bg-white/30"
+              }`}
+            >
+              <div>{value}</div>
+              {!isEnabled ? (
+                <div className="mt-1 text-[10px] font-normal text-white/40">
+                  {t("gameSettings.barsPerExercise.comingSoon", {
+                    defaultValue: "Coming soon",
+                  })}
+                </div>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

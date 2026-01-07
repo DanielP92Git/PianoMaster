@@ -38,3 +38,36 @@ describe("patternBuilder (noBeam tagging)", () => {
   });
 });
 
+describe("patternBuilder (multi-bar metadata)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("preserves barIndex on notes when measuresPerPattern=2", async () => {
+    // deterministic-ish
+    vi.spyOn(Math, "random").mockReturnValue(0.2);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4", "F4"],
+      clef: "Treble",
+      measuresPerPattern: 2,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q", "8", "16"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    expect(result.measuresPerPattern).toBe(2);
+    const barIndices = (result.notes || [])
+      .filter((n) => n?.type === "note")
+      .map((n) => n?.barIndex);
+
+    expect(barIndices.some((b) => b === 0)).toBe(true);
+    expect(barIndices.some((b) => b === 1)).toBe(true);
+  });
+});
