@@ -538,6 +538,15 @@ function Dashboard() {
         <picture className="absolute inset-0">
           <source
             media="(min-width: 1024px)"
+            type="image/webp"
+            srcSet="/images/desktop-dashboard-hero.webp"
+          />
+          <source
+            type="image/webp"
+            srcSet="/images/dashboard-hero.webp"
+          />
+          <source
+            media="(min-width: 1024px)"
             srcSet="/images/desktop-dashboard-hero.png"
           />
           <img
@@ -546,6 +555,7 @@ function Dashboard() {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             aria-hidden="true"
             loading="eager"
+            fetchpriority="high"
           />
         </picture>
 

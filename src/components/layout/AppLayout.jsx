@@ -89,7 +89,7 @@ export default function AppLayout() {
             : ""
         } flex-1 ${
           !isGameRoute && !isTrailPage ? "pb-20 xl:pb-0" : ""
-        } ${isGameRoute ? "min-h-0 overflow-hidden" : ""}`}
+        } ${isGameRoute || isTrailPage ? "min-h-0 overflow-hidden" : ""} ${isTrailPage ? "w-full" : ""}`}
       >
         <Outlet />
       </main>

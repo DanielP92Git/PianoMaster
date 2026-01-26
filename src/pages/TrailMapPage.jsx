@@ -9,7 +9,7 @@ import TrailMap from '../components/trail/TrailMap';
 
 const TrailMapPage = () => {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
+    <div className="fixed inset-0 overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
       {/* Subtle accent stars */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {[...Array(8)].map((_, i) => (
