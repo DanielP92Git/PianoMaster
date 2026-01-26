@@ -1,6 +1,44 @@
 import supabase from "./supabase";
 
 // ============================================
+// AUTHORIZATION HELPER
+// ============================================
+
+/**
+ * Verify the current user has access to the specified student's data.
+ * - Students can only access their own data
+ * - Teachers can access data of connected students
+ * @param {string} studentId - The student ID to verify access for
+ * @throws {Error} If not authenticated or unauthorized
+ */
+async function verifyStudentDataAccess(studentId) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Students can access their own data
+  if (user.id === studentId) {
+    return true;
+  }
+
+  // Check if user is a teacher connected to this student
+  const { data: connection, error } = await supabase
+    .from("teacher_student_connections")
+    .select("id")
+    .eq("teacher_id", user.id)
+    .eq("student_id", studentId)
+    .eq("status", "accepted")
+    .single();
+
+  if (error || !connection) {
+    throw new Error("Unauthorized: No access to this student's data");
+  }
+
+  return true;
+}
+
+// ============================================
 // STUDENTS TABLE OPERATIONS
 // ============================================
 
@@ -16,6 +54,8 @@ export async function createStudent(studentData) {
 }
 
 export async function getStudentById(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("students")
     .select(
@@ -137,6 +177,8 @@ export async function createPracticeSession(sessionData) {
 }
 
 export async function getPracticeSessionsByStudentId(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("practice_sessions")
     .select(
@@ -343,6 +385,8 @@ export async function createStudentScore(scoreData) {
 }
 
 export async function getStudentScores(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("students_score")
     .select(
@@ -360,6 +404,8 @@ export async function getStudentScores(studentId) {
 }
 
 export async function getStudentScoreStats(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("students_score")
     .select("score, created_at, game_type")
@@ -371,6 +417,8 @@ export async function getStudentScoreStats(studentId) {
 }
 
 export async function getPracticeSessionStats(studentId, limit = 200) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("practice_sessions")
     .select(
@@ -591,6 +639,8 @@ export async function updateLastPracticedDate(studentId) {
 // ============================================
 
 export async function getStudentStats(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   // Get student's practice sessions
   const { data: sessions, error: sessionsError } = await supabase
     .from("practice_sessions")

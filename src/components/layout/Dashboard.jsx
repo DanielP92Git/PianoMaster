@@ -48,6 +48,36 @@ function Dashboard() {
     ? profileData.equipped_accessories.filter((item) => item?.image_url)
     : [];
 
+  // Preload dashboard hero images only when this component mounts
+  useEffect(() => {
+    const preloadLinks = [
+      { href: '/images/dashboard-hero.webp', type: 'image/webp', media: '(max-width: 1023px)' },
+      { href: '/images/desktop-dashboard-hero.webp', type: 'image/webp', media: '(min-width: 1024px)' },
+      { href: '/images/dashboard-hero.png', type: 'image/png', media: '(max-width: 1023px)' },
+      { href: '/images/desktop-dashboard-hero.png', type: 'image/png', media: '(min-width: 1024px)' },
+    ];
+
+    const linkElements = preloadLinks.map((linkData) => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = linkData.href;
+      link.type = linkData.type;
+      link.media = linkData.media;
+      document.head.appendChild(link);
+      return link;
+    });
+
+    // Cleanup: remove preload links when component unmounts
+    return () => {
+      linkElements.forEach((link) => {
+        if (link.parentNode) {
+          link.parentNode.removeChild(link);
+        }
+      });
+    };
+  }, []);
+
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();

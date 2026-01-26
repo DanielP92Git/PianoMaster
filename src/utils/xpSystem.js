@@ -240,11 +240,16 @@ export const calculateSessionXP = (session) => {
 
 /**
  * Get XP leaderboard (top students)
+ * Anonymizes usernames for COPPA compliance - only the current user sees their own username
  * @param {number} limit - Number of students to return
- * @returns {Promise<Array>} Array of top students
+ * @returns {Promise<Array>} Array of top students with anonymized data
  */
 export const getXPLeaderboard = async (limit = 10) => {
   try {
+    // Get current user to know which entry to show full details for
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+
     const { data, error } = await supabase
       .from('students')
       .select('id, username, avatar_url, total_xp, current_level')
@@ -253,10 +258,19 @@ export const getXPLeaderboard = async (limit = 10) => {
 
     if (error) throw error;
 
+    // Anonymize other users' data - only show full details for current user
+    // This is required for COPPA compliance in a children's app
     return data.map((student, index) => ({
-      ...student,
+      id: student.id,
       rank: index + 1,
-      levelData: calculateLevel(student.total_xp)
+      // Only show real username for the current user
+      username: student.id === currentUserId ? student.username : `Player ${index + 1}`,
+      // Only show avatar for current user, use null for others
+      avatar_url: student.id === currentUserId ? student.avatar_url : null,
+      total_xp: student.total_xp,
+      current_level: student.current_level,
+      levelData: calculateLevel(student.total_xp),
+      isCurrentUser: student.id === currentUserId
     }));
   } catch (error) {
     console.error('Error fetching leaderboard:', error);

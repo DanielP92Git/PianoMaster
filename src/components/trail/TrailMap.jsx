@@ -6,7 +6,10 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { Drum, Crown } from 'lucide-react';
 import { useUser } from '../../features/authentication/useUser';
+import trebleClefIcon from '../../assets/noteImages/treble/treble-clef.svg';
+import bassClefIcon from '../../assets/noteImages/bass/bass-clef.svg';
 import {
   getNodesByCategory,
   getBossNodes,
@@ -140,7 +143,7 @@ const TrailSection = ({
     <div ref={containerRef} className="relative rounded-3xl bg-white/5 p-6 backdrop-blur-sm">
       {/* Section Header */}
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-xl shadow-lg sm:h-12 sm:w-12 sm:text-2xl">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg sm:h-12 sm:w-12">
           {icon}
         </div>
         <div>
@@ -332,7 +335,7 @@ const TrailMap = () => {
       <TrailSection
         title="Treble Clef Path"
         subtitle="Learn to read notes in the treble clef"
-        icon="&#119070;"
+        icon={<img src={trebleClefIcon} alt="" className="h-8 w-8 sm:h-12 sm:w-12 brightness-0 invert" />}
         nodes={trebleNodes}
         completedNodeIds={completedNodeIds}
         unlockedNodes={unlockedNodes}
@@ -345,7 +348,7 @@ const TrailMap = () => {
       <TrailSection
         title="Bass Clef Path"
         subtitle="Master the bass clef notes"
-        icon="&#119074;"
+        icon={<img src={bassClefIcon} alt="" className="h-8 w-8 sm:h-12 sm:w-12 brightness-0 invert" />}
         nodes={bassNodes}
         completedNodeIds={completedNodeIds}
         unlockedNodes={unlockedNodes}
@@ -358,7 +361,7 @@ const TrailMap = () => {
       <TrailSection
         title="Rhythm Path"
         subtitle="Keep the beat and learn rhythm patterns"
-        icon="&#127928;"
+        icon={<Drum className="h-5 w-5 sm:h-6 sm:w-6" />}
         nodes={rhythmNodes}
         completedNodeIds={completedNodeIds}
         unlockedNodes={unlockedNodes}
@@ -372,7 +375,7 @@ const TrailMap = () => {
         <TrailSection
           title="Boss Challenges"
           subtitle="Test your mastery with special challenges"
-          icon="&#128081;"
+          icon={<Crown className="h-5 w-5 sm:h-6 sm:w-6" />}
           nodes={bossNodes}
           completedNodeIds={completedNodeIds}
           unlockedNodes={unlockedNodes}

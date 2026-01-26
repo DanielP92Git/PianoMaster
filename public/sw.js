@@ -22,9 +22,41 @@ const RUNTIME_CACHE_PATTERNS = [
   // Cache Google Fonts
   /^https:\/\/fonts\.googleapis\.com/,
   /^https:\/\/fonts\.gstatic\.com/,
-  // Cache your API endpoints (adjust as needed)
+  // Cache Supabase API endpoints (excluding auth - see AUTH_EXCLUDED_PATTERNS)
   /^https:\/\/.*\.supabase\.co/,
 ];
+
+// SECURITY: Auth endpoints must NEVER be cached to prevent:
+// - Persisting auth tokens in cache after logout
+// - Session persistence issues on shared devices
+// - Sensitive data leakage to other users on shared devices
+const AUTH_EXCLUDED_PATTERNS = [
+  /\/auth\//,           // All auth-related paths
+  /\/token/,            // Token endpoints
+  /\/session/,          // Session endpoints
+  /\/logout/,           // Logout endpoints
+  /\/signup/,           // Signup endpoints
+  /\/recover/,          // Password recovery
+  /\/verify/,           // Email/phone verification
+  /\/user/,             // User info endpoints
+];
+
+/**
+ * Check if a URL is an authentication-related endpoint that should not be cached.
+ * @param {URL} url - The URL object to check
+ * @returns {boolean} - True if the URL is an auth endpoint
+ */
+function isAuthEndpoint(url) {
+  // Only check Supabase URLs
+  if (!url.hostname.includes('supabase.co')) {
+    return false;
+  }
+
+  const pathname = url.pathname;
+
+  // Check against all auth-excluded patterns
+  return AUTH_EXCLUDED_PATTERNS.some((pattern) => pattern.test(pathname));
+}
 
 async function cacheFirst(request, cacheName = CACHE_NAME) {
   const cache = await caches.open(cacheName);
@@ -196,9 +228,15 @@ self.addEventListener("fetch", (event) => {
 
         // If successful, cache the response for runtime patterns
         if (networkResponse.ok) {
-          const shouldCache = RUNTIME_CACHE_PATTERNS.some((pattern) =>
+          const matchesPattern = RUNTIME_CACHE_PATTERNS.some((pattern) =>
             pattern.test(event.request.url)
           );
+
+          // SECURITY: Never cache auth-related endpoints
+          const isAuth = isAuthEndpoint(url);
+
+          // Only cache if matches pattern AND is not an auth endpoint
+          const shouldCache = matchesPattern && !isAuth;
 
           if (shouldCache) {
             const cache = await caches.open(CACHE_NAME);
@@ -217,7 +255,22 @@ self.addEventListener("fetch", (event) => {
       } catch (error) {
         console.log("Network request failed, trying cache...", error);
 
-        // Network failed, try cache
+        // SECURITY: Never serve auth endpoints from cache
+        if (isAuthEndpoint(url)) {
+          return new Response(
+            JSON.stringify({
+              error: "Offline",
+              message: "Authentication requires an active network connection",
+            }),
+            {
+              status: 503,
+              statusText: "Service Unavailable",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        // Network failed, try cache for non-auth requests
         const cachedResponse = await caches.match(event.request);
 
         if (cachedResponse) {

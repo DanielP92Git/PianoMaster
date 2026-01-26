@@ -1,5 +1,53 @@
 import supabase from "./supabase";
 
+// ============================================
+// Security Helper Functions
+// ============================================
+
+/**
+ * Verifies that a teacher has an accepted connection to a specific student.
+ * This MUST be called before any operation that modifies student data.
+ * @param {string} teacherId - The teacher's user ID
+ * @param {string} studentId - The student's user ID
+ * @throws {Error} If no valid connection exists
+ * @returns {Promise<boolean>} True if connection exists
+ */
+async function verifyTeacherStudentConnection(teacherId, studentId) {
+  const { data, error } = await supabase
+    .from("teacher_student_connections")
+    .select("id")
+    .eq("teacher_id", teacherId)
+    .eq("student_id", studentId)
+    .eq("status", "accepted")
+    .single();
+
+  if (error || !data) {
+    throw new Error("Unauthorized: No connection to this student");
+  }
+  return true;
+}
+
+/**
+ * Verifies that a teacher owns a specific assignment.
+ * @param {string} teacherId - The teacher's user ID
+ * @param {string} assignmentId - The assignment ID
+ * @throws {Error} If the teacher does not own the assignment
+ * @returns {Promise<Object>} The assignment data if owned
+ */
+async function verifyTeacherOwnsAssignment(teacherId, assignmentId) {
+  const { data, error } = await supabase
+    .from("assignments")
+    .select("id, teacher_id")
+    .eq("id", assignmentId)
+    .eq("teacher_id", teacherId)
+    .single();
+
+  if (error || !data) {
+    throw new Error("Unauthorized: You do not own this assignment");
+  }
+  return data;
+}
+
 // Get teacher's students (simplified approach - direct teacher-student connections)
 export const getTeacherStudents = async () => {
   try {
@@ -443,6 +491,9 @@ export const sendStudentMessage = async (studentId, messageText) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // SECURITY: Verify teacher has connection to this student
+    await verifyTeacherStudentConnection(user.id, studentId);
+
     // Create a notification for the student as a message
     const { data: notification, error } = await supabase
       .from("notifications")
@@ -853,7 +904,27 @@ export const deletePracticeSessions = async (sessionIds) => {
       throw new Error("Only teachers can delete recordings");
     }
 
-    // Delete the practice sessions
+    // SECURITY: First, fetch the sessions to verify teacher has connection to each student
+    const { data: sessions, error: fetchError } = await supabase
+      .from("practice_sessions")
+      .select("id, student_id")
+      .in("id", sessionIds);
+
+    if (fetchError) throw fetchError;
+
+    if (!sessions || sessions.length === 0) {
+      throw new Error("No practice sessions found with the provided IDs");
+    }
+
+    // Get unique student IDs from the sessions
+    const uniqueStudentIds = [...new Set(sessions.map((s) => s.student_id))];
+
+    // Verify teacher has connection to ALL students whose sessions are being deleted
+    for (const studentId of uniqueStudentIds) {
+      await verifyTeacherStudentConnection(user.id, studentId);
+    }
+
+    // Delete the practice sessions (now that authorization is verified)
     const { error } = await supabase
       .from("practice_sessions")
       .delete()
@@ -1110,6 +1181,21 @@ export const updateSubmissionGrade = async (submissionId, score, feedback) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // SECURITY: First, fetch the submission to get the assignment_id
+    const { data: existingSubmission, error: fetchError } = await supabase
+      .from("assignment_submissions")
+      .select("id, assignment_id")
+      .eq("id", submissionId)
+      .single();
+
+    if (fetchError || !existingSubmission) {
+      throw new Error("Submission not found");
+    }
+
+    // Verify the teacher owns the assignment this submission belongs to
+    await verifyTeacherOwnsAssignment(user.id, existingSubmission.assignment_id);
+
+    // Now proceed with the update (authorization verified)
     const { data: submission, error } = await supabase
       .from("assignment_submissions")
       .update({
@@ -1261,6 +1347,9 @@ export const sendNotificationToStudent = async (notificationData) => {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
+
+    // SECURITY: Verify teacher has connection to the recipient student
+    await verifyTeacherStudentConnection(user.id, notificationData.recipientId);
 
     const { data: notification, error } = await supabase
       .from("notifications")

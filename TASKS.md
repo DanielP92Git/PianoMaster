@@ -8,8 +8,8 @@
 - [ ] Add microphone input detection for Note Recognition Game
 
 ## ⏱ ASAP (Next 1–3 sessions)
-- [ ] Refactor app menu to drawer instead of side
-- [ ] Improve glassmorphism contrast for kids
+- [X] Refactor app menu to drawer instead of side
+- [X] Improve glassmorphism contrast for kids
 - [ ] Add loading skeletons to practice cards
 - [ ] Create app admin panel to track user subscriptions and app interactions
 
