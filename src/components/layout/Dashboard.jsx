@@ -62,8 +62,6 @@ function Dashboard() {
         const results = await runMigrationIfNeeded(user.id);
 
         if (results && !results.skipped) {
-          console.log('Migration completed:', results);
-
           // Show success toast if nodes were migrated
           if (results.nodesCreated > 0) {
             toast.success(
@@ -168,13 +166,9 @@ function Dashboard() {
     queryKey: ["daily-goals", user?.id, new Date().toISOString().split('T')[0]],
     queryFn: async () => {
       if (!user?.id || !isStudent) {
-        console.log('Daily goals query skipped - no user or not a student');
         return [];
       }
-      console.log('Fetching daily goals for user:', user.id);
-      const result = await getDailyGoalsWithProgress(user.id);
-      console.log('Daily goals query result:', result);
-      return result;
+      return await getDailyGoalsWithProgress(user.id);
     },
     enabled: !!user?.id && isStudent,
     staleTime: 30 * 1000, // 30 seconds - goals update frequently during practice

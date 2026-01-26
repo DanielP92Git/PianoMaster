@@ -1,8 +1,8 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v1";
-const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v1";
+const CACHE_NAME = "pianomaster-v2";
+const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
 

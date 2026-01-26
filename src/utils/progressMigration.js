@@ -49,7 +49,6 @@ const markMigrationComplete = async (studentId) => {
     if (typeof window !== 'undefined') {
       const migrationKey = `migration_completed_${studentId}`;
       localStorage.setItem(migrationKey, 'true');
-      console.log('Migration marked complete in localStorage');
     }
   } catch (error) {
     console.error('Error marking migration complete:', error);
@@ -93,12 +92,9 @@ const analyzeNodePerformance = (scores, gameType) => {
  */
 export const migrateStudentProgress = async (studentId) => {
   try {
-    console.log(`Starting migration for student ${studentId}...`);
-
     // Check if already migrated
     const alreadyMigrated = await checkMigrationStatus(studentId);
     if (alreadyMigrated) {
-      console.log('Student already migrated - skipping');
       return { skipped: true, reason: 'Already migrated' };
     }
 
@@ -118,13 +114,11 @@ export const migrateStudentProgress = async (studentId) => {
     await markMigrationComplete(studentId);
 
     if (!scores || scores.length === 0) {
-      console.log('No historical scores found - migration complete');
       return { nodesCreated: 0, totalXPAwarded: 0, scoresAnalyzed: 0 };
     }
 
     // Analyze score performance
     const performance = analyzeNodePerformance(scores, null);
-    console.log(`Found ${scores.length} historical scores, best: ${performance.bestScore}`);
 
     let nodesCreated = 0;
     let totalXPAwarded = 0;
@@ -137,13 +131,10 @@ export const migrateStudentProgress = async (studentId) => {
       try {
         await awardXP(studentId, historyXP);
         totalXPAwarded = historyXP;
-        console.log(`Awarded ${historyXP} XP for historical activity`);
       } catch (e) {
-        console.warn('Could not award historical XP:', e);
+        // Silent fail - XP award is not critical
       }
     }
-
-    console.log(`Migration complete: ${nodesCreated} nodes created, ${totalXPAwarded} XP awarded`);
 
     return {
       nodesCreated,
@@ -170,7 +161,6 @@ export const runMigrationIfNeeded = async (studentId) => {
       return null;
     }
 
-    console.log('Migration needed - starting...');
     const results = await migrateStudentProgress(studentId);
 
     return results;

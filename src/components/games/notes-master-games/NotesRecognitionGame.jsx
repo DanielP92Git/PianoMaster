@@ -509,22 +509,14 @@ export function NotesRecognitionGame() {
 
   // Handle navigation to next exercise in the trail node
   const handleNextExercise = useCallback(() => {
-    console.log('[handleNextExercise] Called with:', { nodeId, trailExerciseIndex, trailTotalExercises });
-
     if (nodeId && trailExerciseIndex !== null && trailTotalExercises !== null) {
       const nextIndex = trailExerciseIndex + 1;
-      console.log('[handleNextExercise] nextIndex:', nextIndex);
 
       if (nextIndex < trailTotalExercises) {
-        // Get the node to find next exercise config
         const node = getNodeById(nodeId);
-        console.log('[handleNextExercise] node:', node);
-        console.log('[handleNextExercise] node.exercises:', node?.exercises);
-        console.log('[handleNextExercise] nextExercise:', node?.exercises?.[nextIndex]);
 
         if (node && node.exercises && node.exercises[nextIndex]) {
           const nextExercise = node.exercises[nextIndex];
-          console.log('[handleNextExercise] nextExercise.type:', nextExercise.type, 'typeof:', typeof nextExercise.type);
 
           const navState = {
             nodeId,
@@ -537,34 +529,23 @@ export function NotesRecognitionGame() {
           // Navigate based on exercise type
           switch (nextExercise.type) {
             case 'note_recognition':
-              console.log('[handleNextExercise] Navigating to note_recognition');
               navigate('/notes-master-mode/notes-recognition-game', { state: navState, replace: true });
-              window.location.reload(); // Force reload for same route
+              window.location.reload();
               break;
             case 'sight_reading':
-              console.log('[handleNextExercise] Navigating to sight_reading');
               navigate('/notes-master-mode/sight-reading-game', { state: navState });
               break;
             case 'rhythm':
-              console.log('[handleNextExercise] Navigating to rhythm');
               navigate('/rhythm-mode/metronome-trainer', { state: navState });
               break;
             case 'boss_challenge':
-              console.log('[handleNextExercise] Navigating to boss_challenge');
               navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true } });
               break;
             default:
-              console.log('[handleNextExercise] DEFAULT case - navigating to /trail');
               navigate('/trail');
           }
-        } else {
-          console.log('[handleNextExercise] Node or exercise not found, not navigating');
         }
-      } else {
-        console.log('[handleNextExercise] nextIndex >= trailTotalExercises, not navigating');
       }
-    } else {
-      console.log('[handleNextExercise] Missing required params, not navigating');
     }
   }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
 
@@ -1333,9 +1314,6 @@ export function NotesRecognitionGame() {
 
       // Don't play audio during pitch detection to avoid conflicts
       if (isListeningRef.current) {
-        console.log(
-          `🔇 [AUDIO MUTED] Skipping playback during Listen mode (note: ${noteLabel})`
-        );
         return;
       }
 
@@ -1411,9 +1389,6 @@ export function NotesRecognitionGame() {
           const nextNote = getRandomNote();
           setPendingNextNote(nextNote);
           setWaitingForRelease(true);
-          console.log(
-            `🎵 [WAITING FOR RELEASE] Next note ready: "${nextNote.note}" - waiting for audio level to drop below ${RELEASE_THRESHOLD}%`
-          );
         }
       } else {
         // Normal mode: if this was the last question, do NOT advance to another note.
@@ -1688,7 +1663,6 @@ export function NotesRecognitionGame() {
   // Start audio input
   const startAudioInput = useCallback(async () => {
     try {
-      console.log("🎤 [PITCH DETECTION] Starting audio input...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const context = new (window.AudioContext || window.webkitAudioContext)();
       const source = context.createMediaStreamSource(stream);
@@ -1699,23 +1673,14 @@ export function NotesRecognitionGame() {
 
       source.connect(analyserNode);
 
-      console.log(
-        `🎤 [PITCH DETECTION] Audio context created with sample rate: ${context.sampleRate} Hz`
-      );
-      console.log(
-        `🎤 [PITCH DETECTION] Analyser FFT size: ${analyserNode.fftSize}`
-      );
-
       setAudioContext(context);
       setAnalyser(analyserNode);
       setMicrophone(stream);
-      // Note: setIsListening(true) is now called in toggleAudioInput BEFORE this function
 
       // Start pitch detection loop
       const bufferLength = analyserNode.frequencyBinCount;
       const dataArray = new Float32Array(bufferLength);
       const sampleRate = context.sampleRate;
-      let frameCount = 0;
 
       const detectLoop = () => {
         analyserNode.getFloatTimeDomainData(dataArray);
@@ -1732,9 +1697,6 @@ export function NotesRecognitionGame() {
         // Check if we're waiting for note release
         if (waitingForRelease) {
           if (levelPercent < RELEASE_THRESHOLD) {
-            console.log(
-              `🎹 [NOTE RELEASED] Audio level dropped to ${levelPercent.toFixed(2)}% - Moving to next question`
-            );
             setWaitingForRelease(false);
             setAnswerFeedback({
               selectedNote: null,
@@ -1744,7 +1706,6 @@ export function NotesRecognitionGame() {
             updateProgress({ currentNote: pendingNextNote });
             setPendingNextNote(null);
           }
-          // Skip normal match detection while waiting for release
           animationFrameRef.current = requestAnimationFrame(detectLoop);
           return;
         }
@@ -1753,14 +1714,6 @@ export function NotesRecognitionGame() {
         const pitch = detectPitch(dataArray, sampleRate);
         const note = frequencyToNote(pitch);
         setDetectedNote(note);
-
-        // Log every 30 frames (~0.5 seconds at 60fps)
-        frameCount++;
-        if (frameCount % 30 === 0) {
-          console.log(
-            `🎵 [PITCH DETECTION] Level: ${levelPercent.toFixed(2)}% | Pitch: ${pitch > 0 ? pitch.toFixed(2) + " Hz" : "N/A"} | Note: ${note || "None"} | Target: ${progress.currentNote?.note || "N/A"}`
-          );
-        }
 
         // Check if detected note matches current note
         if (
@@ -1774,32 +1727,19 @@ export function NotesRecognitionGame() {
               ? 1000
               : now - lastMatchTimeRef.current;
 
-          console.log(
-            `🎯 [MATCH CHECK] Detected: "${note}" | Target: "${progress.currentNote.note}" | Time since last: ${timeSinceLastMatch}ms | isListening: ${isListeningRef.current}`
-          );
-
           // Debounce: only process match if 1000ms has passed since last match
           if (timeSinceLastMatch >= 1000) {
-            console.log(
-              `✅ [MATCH PROCESSED] Calling handleAnswerSelect for "${note}"`
-            );
-            lastMatchTimeRef.current = now; // Update ref immediately
+            lastMatchTimeRef.current = now;
             handleAnswerSelect(note);
-          } else {
-            console.log(
-              `⏸️ [MATCH BLOCKED] Cooldown active (${timeSinceLastMatch}ms < 1000ms)`
-            );
           }
         }
 
-        // Store animation frame ID so it can be cancelled
         animationFrameRef.current = requestAnimationFrame(detectLoop);
       };
 
-      console.log("🎤 [PITCH DETECTION] Starting detection loop...");
       detectLoop();
     } catch (error) {
-      console.error("❌ [PITCH DETECTION] Error accessing microphone:", error);
+      console.error("Error accessing microphone:", error);
       setIsListening(false);
     }
   }, [
@@ -1814,27 +1754,20 @@ export function NotesRecognitionGame() {
 
   // Stop audio input
   const stopAudioInput = useCallback(() => {
-    console.log("🛑 [PITCH DETECTION] Stopping audio input...");
-    lastMatchTimeRef.current = 0; // Reset cooldown when stopping
-    isListeningRef.current = false; // Reset ref
-    setWaitingForRelease(false); // Reset note release state
-    setPendingNextNote(null); // Clear pending note
-    // Cancel the animation frame loop
+    lastMatchTimeRef.current = 0;
+    isListeningRef.current = false;
+    setWaitingForRelease(false);
+    setPendingNextNote(null);
+
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
-      console.log("🛑 [PITCH DETECTION] Animation frame cancelled");
     }
     if (microphone) {
       microphone.getTracks().forEach((track) => track.stop());
-      console.log("🛑 [PITCH DETECTION] Microphone tracks stopped");
     }
     if (audioContext) {
-      // Close audio context asynchronously to avoid blocking navigation
-      audioContext.close().catch((err) => {
-        console.warn("⚠️ [PITCH DETECTION] Error closing audio context:", err);
-      });
-      console.log("🛑 [PITCH DETECTION] Audio context closed");
+      audioContext.close().catch(() => {});
     }
     setIsListening(false);
     setAudioContext(null);
@@ -1842,7 +1775,6 @@ export function NotesRecognitionGame() {
     setMicrophone(null);
     setDetectedNote(null);
     setAudioInputLevel(0);
-    console.log("🛑 [PITCH DETECTION] Audio input stopped successfully");
   }, [microphone, audioContext]);
 
   // Store the stopAudioInput function in a ref for cleanup useEffects
@@ -1894,9 +1826,6 @@ export function NotesRecognitionGame() {
   useEffect(() => {
     if (waitingForRelease && pendingNextNote) {
       const fallbackTimer = setTimeout(() => {
-        console.log(
-          "⏰ [FALLBACK] Release not detected after 5s - forcing next question"
-        );
         setWaitingForRelease(false);
         setAnswerFeedback({
           selectedNote: null,

@@ -319,21 +319,6 @@ export function MemoryGame() {
     (settings = {}, options = {}) => {
       const { closeModal = false } = options;
 
-      console.groupCollapsed(
-        "[MemoryGame] applySettingsAndRestart",
-        options.initial ? "initial-start" : "in-game"
-      );
-      console.log("incoming settings:", settings);
-      console.log("previous state snapshot:", {
-        clef,
-        selectedNotes,
-        gridSize,
-        difficulty,
-        timeDifficulty,
-        timedMode,
-        timeLimit,
-      });
-
       if (closeModal) {
         setShowSettingsModal(false);
       }
@@ -420,16 +405,6 @@ export function MemoryGame() {
       pauseTimer();
       resetTimer(newTimeLimit);
 
-      console.log("applied state:", {
-        clef: newClef,
-        gridSize: newGridSize,
-        difficulty: derivedDifficulty,
-        timedMode: newTimedMode,
-        timeLimit: newTimeLimit,
-        selectedNotes: newSelectedNotes.length,
-        cardCount: newCards.length,
-      });
-      console.groupEnd();
     },
     [
       clef,

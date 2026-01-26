@@ -122,7 +122,6 @@ export const getTodaysGoals = async (studentId) => {
 
     // Generate new goals for today
     const newGoals = generateDailyGoals();
-    console.log('Generated new daily goals:', newGoals);
 
     const { data: createdGoals, error: createError } = await supabase
       .from('student_daily_goals')
@@ -139,8 +138,6 @@ export const getTodaysGoals = async (studentId) => {
       console.error('Error creating daily goals:', createError);
       throw createError;
     }
-
-    console.log('Created daily goals in database:', createdGoals);
 
     return {
       goals: createdGoals.goals,
@@ -312,21 +309,16 @@ export const calculateDailyProgress = async (studentId) => {
  */
 export const getDailyGoalsWithProgress = async (studentId) => {
   try {
-    console.log('getDailyGoalsWithProgress called for student:', studentId);
-
     // Get today's goals
     const goalsData = await getTodaysGoals(studentId);
-    console.log('Goals data received:', goalsData);
 
     // If no goals, return empty array
     if (!goalsData?.goals || goalsData.goals.length === 0) {
-      console.log('No goals found, returning empty array');
       return [];
     }
 
     // Calculate current progress (won't throw, returns defaults on error)
     const progress = await calculateDailyProgress(studentId);
-    console.log('Daily progress calculated:', progress);
 
     // Update progress in goals
     const goalsWithProgress = goalsData.goals.map(goal => {
@@ -343,7 +335,6 @@ export const getDailyGoalsWithProgress = async (studentId) => {
       };
     });
 
-    console.log('Returning goals with progress:', goalsWithProgress);
     return goalsWithProgress;
   } catch (error) {
     console.error('Error fetching goals with progress:', error);

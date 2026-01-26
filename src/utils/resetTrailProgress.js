@@ -21,7 +21,7 @@ export async function resetTrailProgress() {
       return { success: false, error: 'Not logged in' };
     }
 
-    console.log(`Resetting trail progress for user: ${user.email} (${user.id})`);
+    // User identified - proceeding with reset
 
     // Delete all skill progress records
     const { error: progressError } = await supabase
@@ -57,10 +57,7 @@ export async function resetTrailProgress() {
       console.warn('Could not delete daily goals:', goalsError);
     }
 
-    console.log('Trail progress reset successfully!');
-    console.log('Refresh the page to see the changes.');
-
-    return { success: true };
+    return { success: true, message: 'Trail progress reset. Refresh the page.' };
   } catch (error) {
     console.error('Unexpected error:', error);
     return { success: false, error };
