@@ -45,9 +45,14 @@ export default function AppLayout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
+  // Trail page has its own full-screen background, so use neutral base
+  const backgroundClass = isTrailPage
+    ? "bg-slate-900"
+    : "bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900";
+
   return (
     <div
-      className={`min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col ${
+      className={`min-h-screen ${backgroundClass} flex flex-col ${
         isHebrew ? "font-hebrew" : ""
       }`}
       dir={direction}
