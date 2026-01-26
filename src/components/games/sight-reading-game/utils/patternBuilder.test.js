@@ -70,4 +70,37 @@ describe("patternBuilder (multi-bar metadata)", () => {
     expect(barIndices.some((b) => b === 0)).toBe(true);
     expect(barIndices.some((b) => b === 1)).toBe(true);
   });
+
+  it.each([4, 8])(
+    "preserves barIndex on notes when measuresPerPattern=%s",
+    async (bars) => {
+      vi.spyOn(Math, "random").mockReturnValue(0.2);
+
+      const result = await generatePatternData({
+        difficulty: "beginner",
+        timeSignature: "4/4",
+        tempo: 80,
+        selectedNotes: ["C4", "D4", "E4", "F4"],
+        clef: "Treble",
+        measuresPerPattern: bars,
+        rhythmSettings: {
+          allowRests: false,
+          allowedNoteDurations: ["q", "8", "16"],
+          allowedRestDurations: [],
+        },
+        rhythmComplexity: "simple",
+      });
+
+      expect(result.measuresPerPattern).toBe(bars);
+
+      const barIndices = (result.notes || [])
+        .filter((n) => n?.type === "note")
+        .map((n) => n?.barIndex)
+        .filter((v) => typeof v === "number");
+
+      expect(barIndices.length).toBeGreaterThan(0);
+      expect(Math.min(...barIndices)).toBe(0);
+      expect(Math.max(...barIndices)).toBe(bars - 1);
+    }
+  );
 });

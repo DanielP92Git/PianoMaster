@@ -9,7 +9,10 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { usePointBalance } from "../../hooks/useAccessories";
 import { useAccessoryUnlockDetection } from "../../hooks/useAccessoryUnlockDetection";
 import { useUser } from "../../features/authentication/useUser";
-// eslint-disable-next-line no-unused-vars
+import { updateNodeProgress, getNodeProgress, updateExerciseProgress } from "../../services/skillProgressService";
+import { awardXP, calculateSessionXP } from "../../utils/xpSystem";
+import { getNodeById } from "../../data/skillTrail";
+
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import { useTranslation } from "react-i18next";
 const SHOWN_UNLOCKS_VERSION = 2;
@@ -50,6 +53,18 @@ const useCountUp = (start, end, duration = 1400, shouldAnimate = true) => {
   return value;
 };
 
+/**
+ * Calculate stars based on score percentage
+ * @param {number} percentage - Score percentage (0-100)
+ * @returns {number} Stars earned (0-3)
+ */
+const calculateStars = (percentage) => {
+  if (percentage >= 95) return 3;
+  if (percentage >= 80) return 2;
+  if (percentage >= 60) return 1;
+  return 0;
+};
+
 const VictoryScreen = ({
   score,
   totalPossibleScore,
@@ -58,6 +73,11 @@ const VictoryScreen = ({
   timeRemaining,
   initialTime,
   onExit,
+  nodeId = null, // Optional: node ID if playing from trail
+  exerciseIndex = null, // Optional: current exercise index (0-based)
+  totalExercises = null, // Optional: total number of exercises in node
+  exerciseType = null, // Optional: type of exercise (e.g., 'note_recognition')
+  onNextExercise = null, // Optional: callback to navigate to next exercise
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -167,6 +187,16 @@ const VictoryScreen = ({
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockedAccessories, setUnlockedAccessories] = useState([]);
 
+  // Trail/XP system state
+  const [stars, setStars] = useState(0);
+  const [xpData, setXpData] = useState(null);
+  const [nodeData, setNodeData] = useState(null);
+  const [isFirstComplete, setIsFirstComplete] = useState(false);
+  const [exercisesRemaining, setExercisesRemaining] = useState(0);
+  const [nodeComplete, setNodeComplete] = useState(false);
+  const hasProcessedTrail = useRef(false);
+  const hasCalledStreakUpdate = useRef(false);
+
   // Capture initial progress state (before game completion)
   const initialProgressRef = useRef(null);
   const lastScoreRef = useRef(score);
@@ -255,7 +285,8 @@ const VictoryScreen = ({
   // Note: Query invalidation is handled by useScores mutation
 
   useEffect(() => {
-    if (scorePercentage >= 80) {
+    if (scorePercentage >= 80 && !hasCalledStreakUpdate.current) {
+      hasCalledStreakUpdate.current = true;
       updateStreakWithAchievements.mutate(undefined, {
         onSuccess: ({ newAchievements }) => {
           const bonus = newAchievements?.reduce(
@@ -269,6 +300,101 @@ const VictoryScreen = ({
       });
     }
   }, [scorePercentage, updateStreakWithAchievements]);
+
+  // Trail system: Calculate stars, update progress, and award XP
+  useEffect(() => {
+    const processTrailCompletion = async () => {
+      // Prevent multiple executions
+      if (hasProcessedTrail.current) return;
+      if (!user?.id) return;
+
+      // Calculate stars
+      const earnedStars = calculateStars(scorePercentage);
+      setStars(earnedStars);
+
+      // If this is a trail node, update progress and award XP
+      if (nodeId) {
+        hasProcessedTrail.current = true; // Mark as processed
+
+        try {
+          // Get node data
+          const node = getNodeById(nodeId);
+
+          if (node) {
+            setNodeData(node);
+            const nodeExerciseCount = node.exercises?.length || 1;
+
+            // If exerciseIndex is provided, use exercise-level progress tracking
+            if (exerciseIndex !== null && totalExercises !== null) {
+              // Update exercise-level progress
+              const result = await updateExerciseProgress(
+                user.id,
+                nodeId,
+                exerciseIndex,
+                exerciseType || node.exercises?.[exerciseIndex]?.type || 'unknown',
+                earnedStars,
+                Math.round(Math.min(scorePercentage, 100)),
+                totalExercises
+              );
+
+              setExercisesRemaining(result.exercisesRemaining);
+              setNodeComplete(result.nodeComplete);
+
+              // Check if this was first completion of this exercise
+              const isFirst = true; // For exercise-level, always treat as first for XP
+              setIsFirstComplete(isFirst);
+
+              // Only award XP when the entire node is complete
+              if (result.nodeComplete) {
+                const sessionData = {
+                  score,
+                  maxScore: totalPossibleScore,
+                  nodeId,
+                  isFirstComplete: true
+                };
+                const xpBreakdown = calculateSessionXP(sessionData);
+
+                if (xpBreakdown.totalXP > 0) {
+                  const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
+                  setXpData({ ...xpBreakdown, ...xpResult });
+                  queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+                }
+              }
+            } else {
+              // Legacy path: single exercise nodes or old behavior
+              const existingProgress = await getNodeProgress(user.id, nodeId);
+              const isFirst = !existingProgress || existingProgress.stars === 0;
+              setIsFirstComplete(isFirst);
+              setNodeComplete(true);
+              setExercisesRemaining(0);
+
+              // Update node progress (pass percentage, not raw score)
+              await updateNodeProgress(user.id, nodeId, earnedStars, Math.round(Math.min(scorePercentage, 100)));
+
+              // Calculate and award XP
+              const sessionData = {
+                score,
+                maxScore: totalPossibleScore,
+                nodeId,
+                isFirstComplete: isFirst
+              };
+              const xpBreakdown = calculateSessionXP(sessionData);
+
+              if (xpBreakdown.totalXP > 0) {
+                const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
+                setXpData({ ...xpBreakdown, ...xpResult });
+                queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error processing trail completion:", error);
+        }
+      }
+    };
+
+    processTrailCompletion();
+  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType]); // Removed queryClient
 
   // Check for newly unlocked accessories after stats update
   useEffect(() => {
@@ -352,13 +478,74 @@ const VictoryScreen = ({
         <div className="w-full space-y-1.5 px-2 pt-4 text-center sm:space-y-2 sm:px-4 sm:pt-2">
           {/* Victory title */}
           <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-            Victory!
+            {nodeId && totalExercises > 1
+              ? (nodeComplete ? 'Node Complete!' : 'Exercise Complete!')
+              : 'Victory!'}
           </h2>
+
+          {/* Exercise indicator (if multi-exercise node) */}
+          {nodeId && totalExercises > 1 && exerciseIndex !== null && (
+            <p className="text-xs text-white/70">
+              Exercise {exerciseIndex + 1} of {totalExercises}
+              {!nodeComplete && exercisesRemaining > 0 && (
+                <span className="ml-1">({exercisesRemaining} remaining)</span>
+              )}
+            </p>
+          )}
 
           {/* Score display */}
           <p className="text-sm text-white/90 sm:text-base">
             Final Score: {score}/{totalPossibleScore}
           </p>
+
+          {/* Star rating display (if trail node) */}
+          {nodeId && stars > 0 && (
+            <div className="flex items-center justify-center gap-1 py-1">
+              {[1, 2, 3].map((starNum) => (
+                <span
+                  key={starNum}
+                  className={`text-3xl transition-all duration-300 ${
+                    starNum <= stars
+                      ? 'animate-bounce text-yellow-400 drop-shadow-lg'
+                      : 'text-gray-400/30'
+                  }`}
+                  style={{
+                    animationDelay: `${starNum * 100}ms`,
+                    animationDuration: '600ms'
+                  }}
+                >
+                  ⭐
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* XP gained display (if trail node) */}
+          {xpData && xpData.totalXP > 0 && (
+            <div className="relative mt-1 sm:mt-2">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-200/40 via-purple-200/30 to-pink-200/40 opacity-70 blur-lg" />
+              <div className="relative flex items-center justify-between gap-2 rounded-xl border-white/60 bg-white/90 px-3 py-2 shadow-lg sm:px-4 sm:py-2.5">
+                <div className="text-left">
+                  <p className="text-[10px] text-gray-500 sm:text-xs">
+                    XP Earned
+                  </p>
+                  <p className="text-sm font-bold text-blue-600 sm:text-base">
+                    +{xpData.totalXP}
+                    {xpData.bonusXP > 0 && (
+                      <span className="ml-1 text-xs text-purple-500">
+                        (+{xpData.bonusXP} bonus)
+                      </span>
+                    )}
+                  </p>
+                </div>
+                {xpData.leveledUp && (
+                  <div className="animate-bounce rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 text-xs font-bold text-white shadow-lg">
+                    Level {xpData.newLevel}! 🎉
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Timed mode info */}
           {timedMode && timeUsed !== null && (
@@ -394,25 +581,64 @@ const VictoryScreen = ({
           )}
 
           {/* Action buttons */}
-          <div className="flex gap-2 pt-1 sm:gap-3 sm:pt-2">
-            <button
-              onClick={handleExit}
-              className="flex-1 transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:py-2.5 sm:text-base"
-            >
-              {t("common.toGamesMode")}
-            </button>
-            <button
-              onClick={handleGoToDashboard}
-              className="flex-1 transform rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-amber-600 hover:to-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 sm:py-2.5 sm:text-base"
-            >
-              {t("common.dashboard")}
-            </button>
-            <button
-              onClick={handlePlayAgain}
-              className="flex-1 transform rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-indigo-700 hover:to-violet-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:py-2.5 sm:text-base"
-            >
-              {t("common.playAgain")}
-            </button>
+          <div className="flex flex-col gap-2 pt-1 sm:pt-2">
+            {/* If trail node: Show exercise-aware buttons */}
+            {nodeId ? (
+              <>
+                {/* Primary action: Next Exercise or Continue Learning */}
+                {exercisesRemaining > 0 && onNextExercise ? (
+                  <button
+                    onClick={onNextExercise}
+                    className="w-full transform rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                  >
+                    Next Exercise ({exercisesRemaining} left)
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/trail')}
+                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                  >
+                    {nodeComplete ? 'Back to Trail' : 'Continue Learning'}
+                  </button>
+                )}
+                <div className="flex gap-2">
+                  <button
+                    onClick={handlePlayAgain}
+                    className="flex-1 transform rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-indigo-700 hover:to-violet-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:py-2.5"
+                  >
+                    {t("common.playAgain")}
+                  </button>
+                  <button
+                    onClick={handleGoToDashboard}
+                    className="flex-1 transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:py-2.5"
+                  >
+                    {t("common.dashboard")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* Free play mode: Show original buttons */
+              <div className="flex gap-2">
+                <button
+                  onClick={handleExit}
+                  className="flex-1 transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:py-2.5 sm:text-base"
+                >
+                  {t("common.toGamesMode")}
+                </button>
+                <button
+                  onClick={handleGoToDashboard}
+                  className="flex-1 transform rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-amber-600 hover:to-orange-600 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 sm:py-2.5 sm:text-base"
+                >
+                  {t("common.dashboard")}
+                </button>
+                <button
+                  onClick={handlePlayAgain}
+                  className="flex-1 transform rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:scale-[1.02] hover:from-indigo-700 hover:to-violet-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:py-2.5 sm:text-base"
+                >
+                  {t("common.playAgain")}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

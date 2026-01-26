@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Coins, Clock3, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import BackButton from "../../ui/BackButton";
@@ -19,6 +19,7 @@ import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
 import { useTranslation } from "react-i18next";
 import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
+import { getNodeById } from "../../../data/skillTrail";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -422,7 +423,15 @@ const ProgressBar = ({ current, total }) => {
 export function NotesRecognitionGame() {
   const { soft, snappy, fade, reduce } = useMotionTokens();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t, i18n } = useTranslation("common");
+
+  // Get nodeId from trail navigation (if coming from trail)
+  const nodeId = location.state?.nodeId || null;
+  const nodeConfig = location.state?.nodeConfig || null;
+  const trailExerciseIndex = location.state?.exerciseIndex ?? null;
+  const trailTotalExercises = location.state?.totalExercises ?? null;
+  const trailExerciseType = location.state?.exerciseType ?? null;
   const isRTL = i18n.language === "he";
   const useHebrewNoteLabels = i18n.language === "he";
   const SHOW_LISTEN_BUTTON = false;
@@ -468,6 +477,96 @@ export function NotesRecognitionGame() {
     playVictorySound,
     playGameOverSound,
   } = useSounds();
+
+  // Track if we should auto-start from trail
+  const hasAutoStartedRef = useRef(false);
+
+  // Auto-configure and auto-start from trail node
+  useEffect(() => {
+    if (nodeConfig && !hasAutoStartedRef.current) {
+      hasAutoStartedRef.current = true;
+
+      // Build settings from node configuration
+      const trailSettings = {
+        clef: nodeConfig.clef || 'treble',
+        selectedNotes: nodeConfig.notePool || [],
+        timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
+        timeLimit: nodeConfig.timeLimit || 45,
+        enableSharps: false,
+        enableFlats: false
+      };
+
+      // Update settings and hide settings modal
+      updateSettings(trailSettings);
+      updateProgress({ showSettingsModal: false });
+
+      // Auto-start the game after a brief delay to ensure settings are applied
+      setTimeout(() => {
+        startGame(trailSettings);
+      }, 50);
+    }
+  }, [nodeConfig]); // Only run when nodeConfig changes (on mount if from trail)
+
+  // Handle navigation to next exercise in the trail node
+  const handleNextExercise = useCallback(() => {
+    console.log('[handleNextExercise] Called with:', { nodeId, trailExerciseIndex, trailTotalExercises });
+
+    if (nodeId && trailExerciseIndex !== null && trailTotalExercises !== null) {
+      const nextIndex = trailExerciseIndex + 1;
+      console.log('[handleNextExercise] nextIndex:', nextIndex);
+
+      if (nextIndex < trailTotalExercises) {
+        // Get the node to find next exercise config
+        const node = getNodeById(nodeId);
+        console.log('[handleNextExercise] node:', node);
+        console.log('[handleNextExercise] node.exercises:', node?.exercises);
+        console.log('[handleNextExercise] nextExercise:', node?.exercises?.[nextIndex]);
+
+        if (node && node.exercises && node.exercises[nextIndex]) {
+          const nextExercise = node.exercises[nextIndex];
+          console.log('[handleNextExercise] nextExercise.type:', nextExercise.type, 'typeof:', typeof nextExercise.type);
+
+          const navState = {
+            nodeId,
+            nodeConfig: nextExercise.config,
+            exerciseIndex: nextIndex,
+            totalExercises: trailTotalExercises,
+            exerciseType: nextExercise.type
+          };
+
+          // Navigate based on exercise type
+          switch (nextExercise.type) {
+            case 'note_recognition':
+              console.log('[handleNextExercise] Navigating to note_recognition');
+              navigate('/notes-master-mode/notes-recognition-game', { state: navState, replace: true });
+              window.location.reload(); // Force reload for same route
+              break;
+            case 'sight_reading':
+              console.log('[handleNextExercise] Navigating to sight_reading');
+              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              break;
+            case 'rhythm':
+              console.log('[handleNextExercise] Navigating to rhythm');
+              navigate('/rhythm-mode/metronome-trainer', { state: navState });
+              break;
+            case 'boss_challenge':
+              console.log('[handleNextExercise] Navigating to boss_challenge');
+              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true } });
+              break;
+            default:
+              console.log('[handleNextExercise] DEFAULT case - navigating to /trail');
+              navigate('/trail');
+          }
+        } else {
+          console.log('[handleNextExercise] Node or exercise not found, not navigating');
+        }
+      } else {
+        console.log('[handleNextExercise] nextIndex >= trailTotalExercises, not navigating');
+      }
+    } else {
+      console.log('[handleNextExercise] Missing required params, not navigating');
+    }
+  }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
 
   // Game state
   const [gameOver, setGameOver] = useState(false);
@@ -1824,6 +1923,7 @@ export function NotesRecognitionGame() {
     );
   }
 
+
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 supports-[height:100svh]:h-[100svh]">
       {/* Stage background accents */}
@@ -1835,7 +1935,15 @@ export function NotesRecognitionGame() {
       </div>
       {progress.showFireworks && <Firework />}
 
-      {!progress.isStarted ? (
+      {/* Show loading screen when coming from trail and waiting for auto-start */}
+      {!progress.isStarted && nodeConfig ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+            <p className="text-lg font-medium text-white/80">Loading...</p>
+          </div>
+        </div>
+      ) : !progress.isStarted ? (
         <UnifiedGameSettings
           gameType="note-recognition"
           steps={[
@@ -1892,6 +2000,11 @@ export function NotesRecognitionGame() {
               resetSettings();
             }}
             onExit={() => navigate("/notes-master-mode")}
+            nodeId={nodeId}
+            exerciseIndex={trailExerciseIndex}
+            totalExercises={trailTotalExercises}
+            exerciseType={trailExerciseType}
+            onNextExercise={handleNextExercise}
           />
         )
       ) : (
@@ -2011,20 +2124,20 @@ export function NotesRecognitionGame() {
                   ref={baseNotesRegionRef}
                   className="relative grid min-h-0 flex-1 grid-cols-2 gap-1 overflow-y-auto overflow-x-visible pr-1 lg:hidden landscape:grid-cols-3 landscape:gap-1.5"
                 >
-                  {groupedMobileNotes.map(renderMobileNoteGroup)}
+                  {groupedMobileNotes.map((group) => renderMobileNoteGroup(group))}
                 </div>
 
                 {/* Desktop: split into naturals and accidentals */}
                 <div className="hidden h-full gap-6 lg:flex" dir="ltr">
                   <div className="flex-1">
                     <div className="grid grid-cols-2 gap-3">
-                      {orderedNaturals.map(renderNoteButton)}
+                      {orderedNaturals.map((note) => renderNoteButton(note))}
                     </div>
                   </div>
                   {orderedAccidentals.length > 0 && (
                     <div className="flex-1 border-l border-white/10 pl-4">
                       <div className="grid grid-cols-2 gap-3">
-                        {orderedAccidentals.map(renderNoteButton)}
+                        {orderedAccidentals.map((note) => renderNoteButton(note))}
                       </div>
                     </div>
                   )}
@@ -2199,7 +2312,7 @@ export function NotesRecognitionGame() {
 
                       return (
                         <motion.button
-                          key={opt.note}
+                          key={opt.note || `variant-${idx}`}
                           type="button"
                           className="bg-white/12 h-14 w-14 rounded-full border border-white/20 text-white shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur-md"
                           variants={{
@@ -2243,7 +2356,7 @@ export function NotesRecognitionGame() {
         ) : null}
       </AnimatePresence>
 
-      {/* Settings Modal */}
+      {/* Settings Modal (for free play mode) */}
       <AnimatePresence>
         {progress.showSettingsModal ? (
           <UnifiedGameSettings

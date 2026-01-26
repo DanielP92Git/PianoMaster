@@ -100,6 +100,20 @@ export default function PracticeModes({ practiceModesSectionRef }) {
 
   return (
     <div ref={practiceModesSectionRef} className="p-4 lg:p-6 md:max-w-4xl lg:max-w-5xl xl:max-w-7xl mx-auto">
+      {/* Trail navigation link */}
+      <div className="mb-4">
+        <Link
+          to="/trail"
+          className="inline-flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 transition-colors"
+        >
+          <span>←</span>
+          <span className="font-medium">Back to Learning Trail</span>
+        </Link>
+        <p className="mt-2 text-sm text-gray-600">
+          Or choose any game to practice freely:
+        </p>
+      </div>
+
       <div className="flex items-center justify-end mb-4">
         <StreakDisplay />
       </div>

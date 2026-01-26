@@ -107,7 +107,7 @@ export function PreGameSetup({
         component: "BarsPerExerciseSelection",
         config: {
           options: [1, 2, 4, 8],
-          enabledOptions: [1, 2], // Phase 1: only 1–2 bars
+          enabledOptions: [1, 2, 4, 8], // Phase 2: enable 1/2/4/8 bars
         },
       },
       {

@@ -7,6 +7,7 @@ import { NotesMasterMode } from "./components/games/NotesMasterMode";
 import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
 import Achievements from "./pages/Achievements";
 import PracticeModes from "./pages/PracticeModes";
+import TrailMapPage from "./pages/TrailMapPage";
 import PracticeSessions from "./pages/PracticeSessions";
 import StudentAssignments from "./pages/StudentAssignments";
 import AppSettings from "./pages/AppSettings";
@@ -235,6 +236,7 @@ function AppRoutes() {
           }
         >
           <Route index element={<TeacherRedirect />} />
+          <Route path="/trail" element={<TrailMapPage />} />
           <Route path="/practice-modes" element={<PracticeModes />} />
           <Route path="practice-sessions" element={<PracticeSessions />} />
           <Route path="/assignments" element={<StudentAssignments />} />

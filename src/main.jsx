@@ -1,9 +1,13 @@
-import { StrictMode } from "react"; // eslint-disable-line
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom"; // eslint-disable-line
-import { Provider } from "react-redux"; // eslint-disable-line
-import App from "./App.jsx"; // eslint-disable-line
+import { BrowserRouter } from "react-router-dom";
+import { Provider } from "react-redux";
+import App from "./App.jsx";
 import store from "./store";
+import supabase from "./services/supabase";
+
+// Expose supabase for debugging (remove in production)
+window.supabase = supabase;
 import {
   registerServiceWorker,
   initializeFullscreen,

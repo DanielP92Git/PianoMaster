@@ -3,8 +3,9 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streakService } from "../../services/streakService";
+import { getNextRecommendedNode } from "../../services/skillProgressService";
 import { useModal } from "../../contexts/ModalContext";
 import { Bell, X, TrendingUp } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -29,11 +30,15 @@ import Fireflies from "../ui/Fireflies";
 import mysticForestBg from "../../assets/images/mystic-forest-background.png";
 import mysticForestBgRight from "../../assets/images/mystic-forest-background-right.png";
 import iconFlameSimple from "../../assets/icons/flame-simple.png";
+import DailyGoalsCard from "../dashboard/DailyGoalsCard";
+import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
+import { runMigrationIfNeeded } from "../../utils/progressMigration";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, profile } = useUser();
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
+  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
   const avatarUrl = getAvatarImageSource(
     profileData?.avatars || profileData?.avatar_url,
@@ -47,6 +52,38 @@ function Dashboard() {
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();
   const [activeReminder, setActiveReminder] = useState(null);
+
+  // Run progress migration on first login (only for students)
+  useEffect(() => {
+    const runMigration = async () => {
+      if (!user?.id || !isStudent) return;
+
+      try {
+        const results = await runMigrationIfNeeded(user.id);
+
+        if (results && !results.skipped) {
+          console.log('Migration completed:', results);
+
+          // Show success toast if nodes were migrated
+          if (results.nodesCreated > 0) {
+            toast.success(
+              `Welcome to the new trail system! ${results.nodesCreated} nodes and ${results.totalXPAwarded} XP migrated from your previous progress.`,
+              { duration: 6000 }
+            );
+
+            // Invalidate queries to refresh UI
+            queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+            queryClient.invalidateQueries({ queryKey: ["next-recommended-node", user.id] });
+          }
+        }
+      } catch (error) {
+        console.error('Migration failed:', error);
+        // Don't show error toast - fail silently to not confuse users
+      }
+    };
+
+    runMigration();
+  }, [user?.id, isStudent, queryClient]);
 
   // Poll for active reminder status (only for students)
   useEffect(() => {
@@ -114,6 +151,42 @@ function Dashboard() {
   });
 
   const pointsTrend = calculateRecentTrend(scoresData || []);
+
+  // Fetch next recommended trail node (only for students)
+  const { data: nextNode } = useQuery({
+    queryKey: ["next-recommended-node", user?.id],
+    queryFn: () => {
+      if (!user?.id || !isStudent) return null;
+      return getNextRecommendedNode(user.id);
+    },
+    enabled: !!user?.id && isStudent,
+    staleTime: 1 * 60 * 1000, // 1 minute - node availability changes when exercises complete
+  });
+
+  // Fetch daily goals with progress (only for students)
+  const { data: dailyGoals = [], isLoading: goalsLoading, error: goalsError } = useQuery({
+    queryKey: ["daily-goals", user?.id, new Date().toISOString().split('T')[0]],
+    queryFn: async () => {
+      if (!user?.id || !isStudent) {
+        console.log('Daily goals query skipped - no user or not a student');
+        return [];
+      }
+      console.log('Fetching daily goals for user:', user.id);
+      const result = await getDailyGoalsWithProgress(user.id);
+      console.log('Daily goals query result:', result);
+      return result;
+    },
+    enabled: !!user?.id && isStudent,
+    staleTime: 30 * 1000, // 30 seconds - goals update frequently during practice
+    refetchInterval: 60 * 1000, // Refetch every minute to keep progress fresh
+  });
+
+  // Log goals error if any
+  useEffect(() => {
+    if (goalsError) {
+      console.error('Daily goals query error:', goalsError);
+    }
+  }, [goalsError]);
 
   // Get level info
   const getLevelInfo = (points) => {
@@ -563,6 +636,45 @@ function Dashboard() {
       </header>
 
       <div className="relative z-30 mx-auto max-w-7xl space-y-8 px-6 py-6 md:px-8 md:py-8">
+        {/* Continue Learning Section (only for students with trail access) */}
+        {isStudent && nextNode && (
+          <section className="space-y-3">
+            <Link
+              to="/trail"
+              state={{ highlightNodeId: nextNode.id }}
+              className="group relative block overflow-hidden rounded-3xl border-2 border-blue-400/60 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-6 shadow-[0_0_0_1px_rgba(59,130,246,0.4),0_0_20px_rgba(99,102,241,0.5),0_0_40px_rgba(139,92,246,0.4)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_0_2px_rgba(59,130,246,0.5),0_0_30px_rgba(99,102,241,0.6),0_0_60px_rgba(139,92,246,0.5)]"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative z-10">
+                <div className={isRTL ? "text-right" : ""}>
+                  <div className="text-xl font-bold text-white drop-shadow">
+                    {t("dashboard.continueButton.title", { defaultValue: "Continue Learning" })}
+                  </div>
+                  <div className="mt-1 text-sm text-white/80">
+                    {nextNode.name} {nextNode.progress?.stars > 0 && `(${nextNode.progress.stars}★)`}
+                  </div>
+                </div>
+              </div>
+            </Link>
+
+            <div className="text-center">
+              <Link
+                to="/practice-modes"
+                className="text-sm font-medium text-white/70 transition-colors hover:text-white/90 hover:underline"
+              >
+                {t("dashboard.continueButton.freePractice", { defaultValue: "Free Practice Mode" })} →
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Daily Goals Section (only for students) */}
+        {isStudent && (
+          <section>
+            <DailyGoalsCard goals={dailyGoals} isLoading={goalsLoading} />
+          </section>
+        )}
+
         {/* Stats grid (glass style like reference image) */}
         <section className="relative z-30 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Daily Streak Card */}

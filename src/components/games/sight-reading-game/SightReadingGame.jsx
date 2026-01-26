@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import { flushSync } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Piano, Settings, Mic } from "lucide-react";
 import MetronomeIcon from "../../../assets/icons/metronome.svg";
@@ -38,6 +38,7 @@ import {
   useSightReadingSession,
 } from "../../../contexts/SightReadingSessionContext";
 import VictoryScreen from "../VictoryScreen";
+import { getNodeById } from "../../../data/skillTrail";
 
 // #region agent log (debug-mode instrumentation)
 // Network logging is disabled by default. Enable by setting
@@ -144,7 +145,15 @@ const { DEFAULT_MAX_SCORE_PER_EXERCISE: SESSION_MAX_EXERCISE_SCORE } =
 
 export function SightReadingGame() {
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
+
+  // Get nodeId from trail navigation (if coming from trail)
+  const nodeId = location.state?.nodeId || null;
+  const nodeConfig = location.state?.nodeConfig || null;
+  const trailExerciseIndex = location.state?.exerciseIndex ?? null;
+  const trailTotalExercises = location.state?.totalExercises ?? null;
+  const trailExerciseType = location.state?.exerciseType ?? null;
   const audioEngine = useAudioEngine(80);
   const { generatePattern } = usePatternGeneration();
   const { user, isStudent } = useUser();
@@ -171,7 +180,13 @@ export function SightReadingGame() {
   const [gameSettings, setGameSettings] = useState(DEFAULT_SETTINGS);
   const [currentPattern, setCurrentPattern] = useState(null);
   const [currentBeat, setCurrentBeat] = useState(0);
+  const hasAutoConfigured = useRef(false);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
+
+  // Continuous horizontal staff scroll progress (0–1) during performance phase.
+  const measuresPerPattern = Math.max(1, Number(gameSettings.measuresPerPattern || 1));
+  const [staffScrollProgress, setStaffScrollProgress] = useState(0);
+  const staffScrollRafRef = useRef(null);
 
   // Unified timing state: replaces scoringActive + isPerformanceLive
   const [timingState, setTimingState] = useState(TIMING_STATE.OFF);
@@ -201,6 +216,30 @@ export function SightReadingGame() {
 
   // Sync keyboard visibility with input mode
   const [showKeyboard, setShowKeyboard] = useState(true); // Toggle for on-screen keyboard - default to true for better UX
+
+
+  // Auto-configure and auto-start from trail node
+  useEffect(() => {
+    if (nodeConfig && !hasAutoConfigured.current) {
+      hasAutoConfigured.current = true;
+
+      // Build settings from node configuration
+      const trailSettings = {
+        ...DEFAULT_SETTINGS,
+        clef: nodeConfig.clef || 'treble',
+        selectedNotes: nodeConfig.notePool || [],
+        measuresPerPattern: nodeConfig.measuresPerPattern || 1,
+        timeSignature: nodeConfig.timeSignature || '4/4'
+      };
+
+      setGameSettings(trailSettings);
+
+      // Auto-start the game after a brief delay to ensure settings are applied
+      setTimeout(() => {
+        startGame(trailSettings);
+      }, 100);
+    }
+  }, [nodeConfig]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
   const isBothClefs = String(gameSettings.clef || "").toLowerCase() === "both";
@@ -210,6 +249,53 @@ export function SightReadingGame() {
   useEffect(() => {
     gamePhaseRef.current = gamePhase;
   }, [gamePhase]);
+
+  // Reset staff scroll progress when pattern or phase changes.
+  useEffect(() => {
+    setStaffScrollProgress(0);
+  }, [currentPattern?.easyscoreString, gamePhase]);
+
+  // Continuous staff scroll animation during performance phase (time-based RAF for smooth motion).
+  useEffect(() => {
+    if (gamePhase !== GAME_PHASES.PERFORMANCE) return;
+    if (!currentPattern?.notes?.length) return;
+    // Only scroll for multi-bar patterns.
+    if (measuresPerPattern <= 1) return;
+
+    const totalBeats = currentPattern.totalDuration;
+    const secondsPerBeat = 60 / gameSettings.tempo;
+    const totalSeconds = totalBeats * secondsPerBeat;
+
+    const animate = () => {
+      // Wait until performance actually started (audioContext time recorded).
+      if (
+        typeof performanceStartAudioTimeRef.current !== "number" ||
+        performanceStartAudioTimeRef.current <= 0
+      ) {
+        staffScrollRafRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      const audioNow = audioEngine.getCurrentTime();
+      const elapsed = audioNow - performanceStartAudioTimeRef.current;
+      const progress = Math.min(1, Math.max(0, elapsed / totalSeconds));
+      setStaffScrollProgress(progress);
+
+      if (progress < 1 && gamePhaseRef.current === GAME_PHASES.PERFORMANCE) {
+        staffScrollRafRef.current = requestAnimationFrame(animate);
+      }
+    };
+
+    staffScrollRafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      if (staffScrollRafRef.current) {
+        cancelAnimationFrame(staffScrollRafRef.current);
+        staffScrollRafRef.current = null;
+      }
+    };
+  }, [gamePhase, currentPattern, measuresPerPattern, gameSettings.tempo, audioEngine]);
+
   // Compact landscape detection (for very short, wide screens like mobile landscape).
   // Used to tighten vertical spacing so feedback + buttons fit without scrolling.
   const [isCompactLandscape, setIsCompactLandscape] = useState(false);
@@ -589,6 +675,47 @@ export function SightReadingGame() {
       : sessionTotalExercises * SESSION_MAX_EXERCISE_SCORE;
   const showVictoryScreen = isSessionComplete && isVictory;
   const showEncouragementScreen = isSessionComplete && !isVictory;
+
+  // Handle navigation to next exercise in the trail node (different from handleNextExercise which advances within session)
+  const handleNextTrailExercise = useCallback(() => {
+    if (nodeId && trailExerciseIndex !== null && trailTotalExercises !== null) {
+      const nextIndex = trailExerciseIndex + 1;
+      if (nextIndex < trailTotalExercises) {
+        // Get the node to find next exercise config
+        const node = getNodeById(nodeId);
+        if (node && node.exercises && node.exercises[nextIndex]) {
+          const nextExercise = node.exercises[nextIndex];
+          const navState = {
+            nodeId,
+            nodeConfig: nextExercise.config,
+            exerciseIndex: nextIndex,
+            totalExercises: trailTotalExercises,
+            exerciseType: nextExercise.type
+          };
+
+          // Navigate based on exercise type
+          switch (nextExercise.type) {
+            case 'note_recognition':
+              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+              break;
+            case 'sight_reading':
+              navigate('/notes-master-mode/sight-reading-game', { state: navState, replace: true });
+              window.location.reload(); // Force reload for same route
+              break;
+            case 'rhythm':
+              navigate('/rhythm-mode/metronome-trainer', { state: navState });
+              break;
+            case 'boss_challenge':
+              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true }, replace: true });
+              window.location.reload();
+              break;
+            default:
+              navigate('/trail');
+          }
+        }
+      }
+    }
+  }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
   const [exerciseRecorded, setExerciseRecorded] = useState(false);
   const pendingMicLatencyMsRef = useRef(null);
   const performanceTimelineRafRef = useRef(null);
@@ -903,6 +1030,8 @@ export function SightReadingGame() {
     // before transitioning to FEEDBACK phase (prevents race condition where
     // last note shows as "active" instead of its actual result color)
     setTimeout(() => {
+      // Ensure the multi-bar scroll reaches the final double barline before feedback shows.
+      setStaffScrollProgress(1);
       // #region agent log
       __srLog({
         sessionId: "debug-session",
@@ -918,8 +1047,11 @@ export function SightReadingGame() {
         timestamp: Date.now(),
       });
       // #endregion
-      setGamePhase(GAME_PHASES.FEEDBACK);
-    }, 50); // 50ms delay to let state updates settle
+      // Allow the CSS translateX to settle before switching phases.
+      setTimeout(() => {
+        setGamePhase(GAME_PHASES.FEEDBACK);
+      }, 120);
+    }, 50); // allow last note state updates to settle
   }, [stopMetronomePlayback, audioEngine, getElapsedMsFromPerformanceStart]);
 
   /**
@@ -2775,8 +2907,20 @@ export function SightReadingGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopMetronomePlayback]);
 
-  // Show setup screen
+  // Show setup screen (for free play mode only)
   if (gamePhase === GAME_PHASES.SETUP) {
+    // Show loading screen when coming from trail and waiting for auto-start
+    if (nodeConfig) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+            <p className="text-lg font-medium text-white/80">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <PreGameSetup
         settings={gameSettings}
@@ -2803,6 +2947,11 @@ export function SightReadingGame() {
           timeRemaining={0}
           initialTime={0}
           onExit={() => navigate("/practice-modes")}
+          nodeId={nodeId}
+          exerciseIndex={trailExerciseIndex}
+          totalExercises={trailTotalExercises}
+          exerciseType={trailExerciseType}
+          onNextExercise={handleNextTrailExercise}
         />
       </div>
     );
@@ -2897,6 +3046,7 @@ export function SightReadingGame() {
     isFeedbackPhase,
     isCompactLandscape,
     isTallStaffLayout,
+    isMultiBar: measuresPerPattern > 1,
   };
 
   const headerRegion = (
@@ -3060,6 +3210,7 @@ export function SightReadingGame() {
         clef={gameSettings.clef.toLowerCase()}
         performanceResults={performanceResults}
         gamePhase={gamePhase}
+        scrollProgress={gamePhase === GAME_PHASES.PERFORMANCE ? staffScrollProgress : 0}
       />
     </div>
   ) : null;
@@ -3163,6 +3314,7 @@ export function SightReadingGame() {
           isFeedbackPhase={srLayoutProps.isFeedbackPhase}
           isCompactLandscape={srLayoutProps.isCompactLandscape}
           isTallStaffLayout={srLayoutProps.isTallStaffLayout}
+          isMultiBar={srLayoutProps.isMultiBar}
           headerControls={headerRegion}
           staff={staffRegion}
           guidance={guidanceRegion}

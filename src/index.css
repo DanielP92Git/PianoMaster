@@ -1585,7 +1585,8 @@ body.ios-standalone .safe-area-app {
   display: flex;
   overflow-x: auto;
   overflow-y: visible;
-  scroll-behavior: smooth;
+  /* Note: scroll-behavior: smooth removed - conflicts with JS RAF-based scrolling */
+  /* Smooth scrolling is handled programmatically via linear interpolation */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
 }
@@ -1802,4 +1803,54 @@ input[type="range"]::-moz-range-thumb:hover {
   /* border: 1px solid blue; */
   z-index: 1000;
   overflow: visible;
+}
+
+/* ========================================
+   MODAL SCROLLBAR STYLES
+   ======================================== */
+
+/* Modern modal scrollbar - subtle and polished */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.4) 0%,
+    rgba(139, 92, 246, 0.5) 50%,
+    rgba(124, 58, 237, 0.4) 100%
+  );
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.6) 0%,
+    rgba(139, 92, 246, 0.7) 50%,
+    rgba(124, 58, 237, 0.6) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.8) 0%,
+    rgba(139, 92, 246, 0.9) 50%,
+    rgba(124, 58, 237, 0.8) 100%
+  );
 }

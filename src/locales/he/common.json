@@ -537,7 +537,17 @@
   "dashboard": {
     "header": {
       "welcomeBack": "ברוכ/ה השב/ה",
-      "defaultName": "מוזיקאי/ת"
+      "defaultName": "מוזיקאי/ת",
+      "subtitle": "המסע המוזיקלי שלך נמשך"
+    },
+    "continueButton": {
+      "title": "המשך ללמוד",
+      "freePractice": "תרגול חופשי"
+    },
+    "dailyGoals": {
+      "title": "יעדים יומיים",
+      "allComplete": "כל היעדים הושלמו היום!",
+      "noGoals": "אין יעדים זמינים"
     },
     "assignments": {
       "title": "משימות",

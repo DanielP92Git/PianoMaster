@@ -553,7 +553,17 @@
   "dashboard": {
     "header": {
       "welcomeBack": "Welcome back",
-      "defaultName": "Musician"
+      "defaultName": "Musician",
+      "subtitle": "Your musical journey continues"
+    },
+    "continueButton": {
+      "title": "Continue Learning",
+      "freePractice": "Free Practice Mode"
+    },
+    "dailyGoals": {
+      "title": "Daily Goals",
+      "allComplete": "All goals completed today!",
+      "noGoals": "No goals available"
     },
     "assignments": {
       "title": "Assignments",

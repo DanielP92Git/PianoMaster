@@ -2028,13 +2028,13 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
   );
 }
 
-// Step Component: Bars Per Exercise Selection (Phase 1: 1–2 bars only)
+// Step Component: Bars Per Exercise Selection (Phase 2: 1/2/4/8 bars)
 function BarsPerExerciseSelection({ settings, updateSetting, config }) {
   const { t } = useTranslation("common");
   const options = Array.isArray(config?.options) ? config.options : [1, 2, 4, 8];
   const enabled = Array.isArray(config?.enabledOptions)
     ? new Set(config.enabledOptions)
-    : new Set([1, 2]);
+    : new Set([1, 2, 4, 8]);
 
   const currentValue = Number(settings.measuresPerPattern || 1);
 
@@ -2048,7 +2048,7 @@ function BarsPerExerciseSelection({ settings, updateSetting, config }) {
         </div>
         <div className="text-xs text-white/70">
           {t("gameSettings.barsPerExercise.subtitle", {
-            defaultValue: "Choose 1 or 2 for now. More bars coming soon.",
+            defaultValue: "Choose how many bars to play in each exercise.",
           })}
         </div>
       </div>

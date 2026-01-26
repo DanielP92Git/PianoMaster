@@ -112,7 +112,7 @@ export function SightReadingLayoutHarness() {
           <div className="mt-2 grid grid-cols-12 gap-1">
             {Array.from({ length: 24 }).map((_, idx) => (
               <div
-                // eslint-disable-next-line react/no-array-index-key
+                 
                 key={idx}
                 className="h-10 rounded bg-slate-200"
               />

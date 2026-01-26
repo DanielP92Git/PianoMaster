@@ -405,7 +405,8 @@ export function generateRhythmEvents({
       events
     );
 
-    // Pad with quarter rests for any missing whole beats
+    // Pad with quarter rests/notes for any missing whole beats
+    // IMPORTANT: Respect allowRests setting - use notes when rests are disabled
     if (actualTotal < expectedTotal) {
       const deficit = expectedTotal - actualTotal;
       const fillUnits = unitsPerBeat; // One beat at a time
@@ -415,7 +416,7 @@ export function generateRhythmEvents({
         const barIndex = Math.floor(padBeat / beatsPerMeasure);
         const beatIndexWithinBar = padBeat % beatsPerMeasure;
         events.push({
-          type: "rest",
+          type: allowRests ? "rest" : "note", // Use notes when rests are disabled
           notation: "quarter",
           sixteenthUnits: fillUnits,
           patternId: patternCounter++,

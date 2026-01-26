@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Outlet, useLocation, Link } from "react-router-dom"; // eslint-disable-line
+import { Outlet, useLocation, Link } from "react-router-dom";  
 import { useTranslation } from "react-i18next";
-import Sidebar from "./Sidebar"; // eslint-disable-line
-import Header from "./Header"; // eslint-disable-line
+import Sidebar from "./Sidebar";  
+import Header from "./Header";  
 import MobileTabsNav from "./MobileTabsNav";
 
 export default function AppLayout() {
@@ -22,8 +22,9 @@ export default function AppLayout() {
     "/rhythm-mode/metronome-trainer",
   ];
 
-  // Exact route matching
+  // Routes that should hide the header (games + trail page)
   const isGameRoute = gameRoutes.includes(location.pathname);
+  const isTrailPage = location.pathname === "/trail";
 
   // Map routes to page titles
   const getPageTitleKey = () => {
@@ -52,7 +53,7 @@ export default function AppLayout() {
       dir={direction}
       lang={language}
     >
-      {!isGameRoute && !isDashboard && (
+      {!isGameRoute && !isDashboard && !isTrailPage && (
         <Header
           onMenuClick={toggleSidebar}
           pageTitle={pageTitle}
@@ -60,7 +61,7 @@ export default function AppLayout() {
           overlay={isDashboard}
         />
       )}
-      {!isGameRoute && (
+      {!isGameRoute && !isTrailPage && (
         <div className="hidden xl:block">
           <Sidebar
             isOpen={isSidebarOpen}
@@ -72,7 +73,7 @@ export default function AppLayout() {
       )}
       <main
         className={`${
-          !isGameRoute
+          !isGameRoute && !isTrailPage
             ? direction === "rtl"
               ? isDashboard
                 ? "pt-0 xl:pr-[19rem]"
@@ -82,13 +83,13 @@ export default function AppLayout() {
               : "pt-2 xl:pl-[19rem]"
             : ""
         } flex-1 ${
-          !isGameRoute ? "pb-20 xl:pb-0" : ""
+          !isGameRoute && !isTrailPage ? "pb-20 xl:pb-0" : ""
         } ${isGameRoute ? "min-h-0 overflow-hidden" : ""}`}
       >
         <Outlet />
       </main>
-      {!isGameRoute && <MobileTabsNav />}
-      {!isGameRoute && location.pathname === "/" && (
+      {!isGameRoute && !isTrailPage && <MobileTabsNav />}
+      {!isGameRoute && !isTrailPage && location.pathname === "/" && (
         <footer
           className={`${!isGameRoute ? (direction === "rtl" ? "xl:pr-[19rem]" : "xl:pl-[19rem]") : ""} py-4 pb-24 xl:pb-4 text-center border-t border-white/10`}
         >

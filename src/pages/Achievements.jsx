@@ -6,7 +6,7 @@ import {
   Target,
   Zap,
   Award,
-  Lock as LockIcon, // eslint-disable-line no-unused-vars
+  Lock as LockIcon,  
 } from "lucide-react";
 import { achievementService } from "../services/achievementService";
 import { useUser } from "../features/authentication/useUser";
@@ -205,7 +205,7 @@ export default function Achievements() {
                 );
                 if (!achievement) return null;
 
-                // eslint-disable-next-line no-unused-vars
+                 
                 const CategoryIcon =
                   categoryIcons[achievement.category] || Trophy;
                 const colorClass =
@@ -255,7 +255,7 @@ export default function Achievements() {
         <div className="space-y-8">
           {Object.entries(groupedAchievements).map(
             ([category, achievements]) => {
-              // eslint-disable-next-line no-unused-vars
+               
               const CategoryIcon = categoryIcons[category] || Trophy;
               const colorClass =
                 categoryColors[category] || categoryColors.milestone;

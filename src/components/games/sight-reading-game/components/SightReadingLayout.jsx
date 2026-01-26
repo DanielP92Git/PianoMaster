@@ -15,7 +15,8 @@
  * - hasKeyboard: boolean (whether the keyboard region should be rendered/reserved)
  * - isFeedbackPhase: boolean (convenience; may influence stacking/spacing)
  * - isCompactLandscape?: boolean (layout hint computed by parent)
- * - isTallStaffLayout?: boolean (NEW: signals staff will be taller, e.g., both clefs)
+ * - isTallStaffLayout?: boolean (signals staff will be taller, e.g., both clefs)
+ * - isMultiBar?: boolean (signals multi-bar pattern; enables horizontal scroll in feedback)
  * - headerControls: JSX (Back button, progress, toggles)
  * - staff: JSX (VexFlow staff region only; no keyboard/guidance logic)
  * - guidance: JSX (Start Playing button or small phase text)
@@ -37,6 +38,7 @@ export function SightReadingLayout({
   isFeedbackPhase,
   isCompactLandscape,
   isTallStaffLayout,
+  isMultiBar = false,
   headerControls,
   staff,
   guidance,
@@ -102,9 +104,10 @@ export function SightReadingLayout({
         /** @type {import("react").CSSProperties} */ ({
           // Bottom dock height: responsive to viewport height
           // Used for keyboard in play phases and feedback panel in feedback phase
-          // 38vh scales nicely; min 130px for very short screens, max 280px for tall screens
+          // Reduced from 38vh to 32vh to give more space to staff notation on compact viewports
+          // Min 110px (reduced from 130px) for very short screens like iPhone SE landscape
           "--sr-kb-height": hasDockedBottom
-            ? "clamp(130px, 38vh, 280px)"
+            ? "clamp(110px, 32vh, 260px)"
             : "0px",
         })
       }
@@ -129,14 +132,24 @@ export function SightReadingLayout({
               <div
                 className={`relative flex-1 rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm ${cardMaxHeightClass}`}
                 data-sr-region="card"
-                style={{ overflow: "visible" }}
+                // Clip vertical overflow to prevent staff notation from escaping the card boundaries.
+                // Horizontal overflow is controlled by the VexFlowStaffDisplay component based on phase.
+                // This wrapper must allow overflow to pass through via 'visible' so the inner
+                // component's overflow settings take effect properly.
+                style={{
+                  overflowX: "hidden", // Prevent card from showing horizontal scrollbar
+                  overflowY: "hidden",
+                }}
               >
                 <div className={`h-full ${cardInteriorClass}`}>
                   {/* Staff band - full height, guidance shown as overlay */}
                   <div
                     className="relative z-0 flex min-h-[120px] w-full flex-1 items-center justify-center px-2 py-1 sm:px-3 sm:py-2"
                     data-sr-region="staff"
-                    style={{ overflow: "visible" }}
+                    style={{
+                      overflowX: "hidden", // Prevent staff region from showing horizontal scrollbar
+                      overflowY: "hidden",
+                    }}
                   >
                     {staff}
                   </div>

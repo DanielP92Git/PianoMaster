@@ -815,4 +815,58 @@ describe("generateRhythmEvents (multi-bar metadata + boundaries)", () => {
       }
     }
   });
+
+  it.each([4, 8])(
+    "%s bars in 4/4: total units == bars*16 and barIndex ranges without cross-bar multi-beat patterns",
+    (bars) => {
+      // Deterministic randomness
+      let callCount = 0;
+      vi.spyOn(Math, "random").mockImplementation(() => {
+        callCount++;
+        return (callCount % 10) / 10;
+      });
+
+      const events = generateRhythmEvents({
+        timeSignature: "4/4",
+        measuresPerPattern: bars,
+        allowedNoteDurations: ["q", "8", "16"],
+        allowRests: true,
+        allowedRestDurations: ["q", "8"],
+        rhythmComplexity: "complex",
+        enabledComplexPatterns: [
+          "twoSixteenthsThenEighth",
+          "eighthThenTwoSixteenths",
+          "eighthQuarterEighth",
+          "dottedQuarterEighth",
+          "dottedEighthSixteenth",
+        ],
+      });
+
+      const totalUnits = events.reduce((sum, e) => sum + e.sixteenthUnits, 0);
+      expect(totalUnits).toBe(bars * 16);
+
+      // Ensure barIndex exists and is within range
+      events.forEach((e) => {
+        expect(typeof e.barIndex).toBe("number");
+        expect(e.barIndex).toBeGreaterThanOrEqual(0);
+        expect(e.barIndex).toBeLessThan(bars);
+        expect(typeof e.beatIndexWithinBar).toBe("number");
+        expect(e.beatIndexWithinBar).toBeGreaterThanOrEqual(0);
+        expect(e.beatIndexWithinBar).toBeLessThan(4);
+      });
+
+      // Ensure multi-beat patterns do not cross a bar boundary
+      const byPattern = new Map();
+      for (const e of events) {
+        if (!byPattern.has(e.patternId)) byPattern.set(e.patternId, []);
+        byPattern.get(e.patternId).push(e);
+      }
+      for (const [, group] of byPattern) {
+        const first = group[0];
+        if (first.beatSpan > 1) {
+          expect(first.beatIndexWithinBar + first.beatSpan).toBeLessThanOrEqual(4);
+        }
+      }
+    }
+  );
 });

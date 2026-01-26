@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useRef,
@@ -16,12 +17,35 @@ import {
   Voice,
   Beam,
   StaveNote,
+  GhostNote,
   Accidental,
   Dot,
   StaveConnector,
+  Barline,
   Stem,
 } from "vexflow";
-import { resolveTimeSignature } from "../constants/durationConstants";
+import {
+  getDurationDefinition,
+  resolveTimeSignature,
+} from "../constants/durationConstants";
+
+// Local helper: convert enriched notation objects into an EasyScore string.
+// (We build tickables manually in many paths, but this is still used for padding + legacy parsing.)
+const buildCompleteEasyScore = (enrichedNotation) =>
+  (Array.isArray(enrichedNotation) ? enrichedNotation : [])
+    .map((obj) => {
+      const durationInfo = getDurationDefinition(obj?.notation);
+      const duration = durationInfo?.vexflowCode || "q";
+
+      if (obj?.type === "rest") {
+        return `B4/${duration}/r`;
+      }
+      if (obj?.pitch) {
+        return `${obj.pitch}/${duration}`;
+      }
+      return `C4/${duration}`;
+    })
+    .join(", ");
 
 const NOTE_TO_SEMITONE = {
   C: 0,
@@ -109,7 +133,20 @@ export function VexFlowStaffDisplay({
   const prevPatternRef = useRef(null);
   const prevClefRef = useRef(null);
   const prevGamePhaseRef = useRef(null);
-  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const maxScrollRef = useRef(0); // Track maximum scroll position to prevent backward scrolling
+  const scrollAnimationRef = useRef(null); // Track ongoing scroll animation frame
+  const targetScrollRef = useRef(0); // Target scroll position for smooth interpolation
+  const isScrollingRef = useRef(false); // Track if continuous scroll animation is active
+  const [containerSize, setContainerSize] = useState(() => {
+    // Initial estimate based on viewport to reduce layout shift on first render
+    if (typeof window === "undefined") return { width: 0, height: 0 };
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    // Estimate based on typical layout - container is ~80-90% of viewport width
+    const estimatedWidth = Math.min(vw * 0.9, 1200);
+    const estimatedHeight = Math.min(vh * 0.4, 320);
+    return { width: estimatedWidth, height: estimatedHeight };
+  });
 
   // Error state
   const [error, setError] = useState(null);
@@ -170,9 +207,16 @@ export function VexFlowStaffDisplay({
     if (!containerSize.width) return staffWidth;
     const padding = 16; // allow for minimal card inner padding
     const availableWidth = Math.max(containerSize.width - padding, 320);
-    const maxWidth = 1400;
-    return Math.min(availableWidth, maxWidth);
-  }, [containerSize.width, staffWidth]);
+    // Don't constrain to container width - allow horizontal scroll for multi-bar patterns
+    // Only use container width for single bar patterns
+    const totalBars = Math.max(1, Number(pattern?.measuresPerPattern || 1));
+    if (totalBars === 1) {
+      const maxWidth = 1400;
+      return Math.min(availableWidth, maxWidth);
+    }
+    // For multi-bar patterns, use fixed width per bar to ensure consistent notation size
+    return availableWidth; // Return available width but we'll override in canvasWidth calculation
+  }, [containerSize.width, staffWidth, pattern?.measuresPerPattern]);
 
   const responsiveHeight = useMemo(() => {
     const MIN_STAFF_HEIGHT = 180; // Minimum height for ledger lines
@@ -232,7 +276,7 @@ export function VexFlowStaffDisplay({
     }
   }, [pattern?.notes, clef]);
 
-  const makeSvgResponsive = useCallback((svgWidth, svgHeight) => {
+  const makeSvgResponsive = useCallback((svgWidth, svgHeight, totalBars = 1) => {
     if (!vexContainerRef.current) return;
     const svg = vexContainerRef.current.querySelector("svg");
     if (!svg) return;
@@ -240,15 +284,25 @@ export function VexFlowStaffDisplay({
     // We already apply visual enlargement via `context.scale(STAFF_SCALE, STAFF_SCALE)`;
     // scaling the viewBox again would double-apply the scale and shrink the staff.
     svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
-    // The SVG should scale to fit its container width while maintaining aspect ratio.
-    // The parent flexbox will handle vertical centering.
-    svg.style.width = "100%";
-    svg.style.maxWidth = "100%";
-    svg.style.height = "auto"; // Let height follow aspect ratio
-    svg.style.display = "block";
-    // Let the layout/card decide clipping; the SVG should render naturally.
-    svg.style.overflow = "visible";
+
+    // CRITICAL FIX: For multi-bar patterns, use actual pixel width instead of percentage
+    // to prevent SVG scaling/squeezing. Container will scroll horizontally instead.
+    if (totalBars > 1) {
+      svg.setAttribute("preserveAspectRatio", "xMinYMid meet"); // Left-align, center vertically
+      svg.style.width = `${svgWidth}px`; // Use actual pixel width - no scaling
+      svg.style.maxWidth = "none"; // Remove max-width constraint
+      svg.style.height = "auto"; // Let height follow aspect ratio
+      svg.style.display = "block";
+      svg.style.overflow = "visible";
+    } else {
+      // Single bar: fit to container (original responsive behavior)
+      svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
+      svg.style.width = "100%";
+      svg.style.maxWidth = "100%";
+      svg.style.height = "auto"; // Let height follow aspect ratio
+      svg.style.display = "block";
+      svg.style.overflow = "visible";
+    }
   }, []);
 
   /**
@@ -313,22 +367,16 @@ export function VexFlowStaffDisplay({
       const [beatsPerMeasure] = pattern.timeSignature.split("/").map(Number);
       const totalBars = Math.max(1, Number(pattern.measuresPerPattern || 1));
 
-      // Phase 1 multi-bar rendering:
-      // - During DISPLAY/COUNT_IN/PERFORMANCE, show ONE bar at a time.
-      // - During FEEDBACK, keep full pattern visible (so noteIndex mapping to performanceResults stays intact).
-      const shouldRenderSingleBar =
-        totalBars > 1 && gamePhase !== "feedback";
-      const currentBarIndex = shouldRenderSingleBar
-        ? gamePhase === "performance"
-          ? Number(pattern?.notes?.[currentNoteIndex]?.barIndex ?? 0)
-          : 0
-        : 0;
+      // Render the FULL pattern for performance/display/count-in so bar 2+ exists.
+      // The viewport reveal is handled by translateX in the wrapper (continuous scroll).
+      const shouldRenderSingleBar = false;
+      const currentBarIndex = 0;
 
       const expectedDuration = beatsPerMeasure * (shouldRenderSingleBar ? 1 : totalBars);
 
       // DEBUG: Log pattern details
 
-      // Check if pattern needs padding
+      // Check if pattern needs padding (should rarely happen now that generator fills measures)
       const allNotesForScore = Array.isArray(pattern.notes) ? pattern.notes : [];
       const renderNotesForScore = shouldRenderSingleBar
         ? allNotesForScore.filter((n) => Number(n?.barIndex ?? 0) === currentBarIndex)
@@ -340,34 +388,14 @@ export function VexFlowStaffDisplay({
       // More lenient epsilon for floating point comparison
       if (Math.abs(durationDiff) > 0.001) {
         if (durationDiff > 0) {
-          // Pad with rest to complete the measure
-          const remainingDuration = durationDiff;
-
-          // More precise rest selection
-          let restNotation;
-          if (remainingDuration >= 3.5) {
-            restNotation = "w"; // whole rest
-          } else if (remainingDuration >= 2.5) {
-            restNotation = "h."; // dotted half
-          } else if (remainingDuration >= 1.5) {
-            restNotation = "h"; // half rest
-          } else if (remainingDuration >= 1.25) {
-            restNotation = "q."; // dotted quarter
-          } else if (remainingDuration >= 0.75) {
-            restNotation = "q"; // quarter rest
-          } else if (remainingDuration >= 0.625) {
-            restNotation = "8."; // dotted eighth
-          } else if (remainingDuration >= 0.375) {
-            restNotation = "8"; // eighth rest
-          } else {
-            restNotation = "16"; // sixteenth rest
-          }
-
-          easyscoreString = `${easyscoreString}, B4/${restNotation}/r`;
-          console.debug("[VexFlowStaffDisplay]", {
-            easyscoreString,
-            restNotation,
-            remainingDuration,
+          // Pattern is shorter than expected - this should not happen anymore since
+          // the rhythm generator now fills measures completely. If it does happen,
+          // Voice.Mode.SOFT will handle the incomplete measure gracefully without
+          // throwing errors. We DO NOT add visual padding rests here.
+          console.debug("[VexFlowStaffDisplay] Pattern shorter than expected - relying on SOFT mode", {
+            expectedDuration,
+            actualDuration: pattern.totalDuration,
+            deficit: durationDiff,
           });
         } else {
           console.warn(`Pattern is ${Math.abs(durationDiff)} beats too long!`);
@@ -408,7 +436,24 @@ export function VexFlowStaffDisplay({
 
       // Keep canvas dimensions in original coordinates (context scaling will handle rendering size)
       const canvasHeight = (responsiveHeight || 200) + ledgerLineBuffer;
-      const canvasWidth = responsiveWidth || staffWidth;
+
+      // Dynamic width calculation for multi-bar support with horizontal scroll
+      // Set fixed width per bar to ensure consistent notation size regardless of number of bars
+      const FIXED_STAVE_WIDTH_PER_BAR = 240; // Fixed width per bar for consistent notation
+      const STAVE_X = 50;
+
+      // For single bar, use responsive width; for multi-bar, use fixed width per bar
+      const BASE_STAVE_WIDTH = totalBars === 1
+        ? Math.max(responsiveWidth - 100, 240)
+        : FIXED_STAVE_WIDTH_PER_BAR * totalBars;
+
+      const requiredStaveWidth = BASE_STAVE_WIDTH;
+
+      // Canvas width should accommodate the full notation width for multi-bar patterns
+      // This enables horizontal scroll when patterns are wider than container
+      const canvasWidth = totalBars === 1
+        ? Math.max(requiredStaveWidth + 100, responsiveWidth || staffWidth)
+        : requiredStaveWidth + 100; // For multi-bar, always use calculated width
 
       // Add padding to renderer size to prevent clipping (MOST IMPORTANT FIX)
       const PADDING_X = 100;
@@ -487,103 +532,52 @@ export function VexFlowStaffDisplay({
 
       const buildSpacerRest = (duration, targetClef) => {
         let cleanDuration = String(duration || "q").replace(/r$/, "");
-        
+
         // Check for dotted durations (e.g., "q.", "h.", "8.")
         const isDotted = cleanDuration && cleanDuration.endsWith(".");
         if (isDotted) {
           cleanDuration = cleanDuration.slice(0, -1); // Remove the dot: "q." -> "q"
         }
-        
+
         // Ensure we have a valid duration (fallback to "q" if empty)
         if (!cleanDuration || cleanDuration === "") {
           cleanDuration = "q";
         }
-        
-        const restKey = targetClef === "bass" ? "d/3" : "b/4";
-        const spacer = new StaveNote({
-          keys: [restKey],
-          duration: `${cleanDuration}r`,
-          clef: targetClef,
-        });
-        
-        // Add dot modifier if this was a dotted duration
-        if (isDotted) {
-          for (let i = 0; i < spacer.getKeys().length; i++) {
-            spacer.addModifier(new Dot(), i);
-          }
-        }
-        
-        spacer.setStyle({
-          fillStyle: "transparent",
-          strokeStyle: "transparent",
-        });
+
+        // Use VexFlow's GhostNote - an invisible note that takes up rhythmic space
+        // but renders nothing. Perfect for grand staff alignment where we need
+        // timing placeholders without visible rests.
+        // For dotted notes, append 'd' to the duration (VexFlow convention)
+        const ghostDuration = isDotted ? `${cleanDuration}d` : cleanDuration;
+        const spacer = new GhostNote({ duration: ghostDuration });
+
         return spacer;
       };
 
       if (clefKey === "both") {
         // Grand staff rendering: treble + bass staves
-        // Add extra space for ledger lines above treble and below bass
-        const ledgerLineSpaceTop = 30; // Reduced top space for ledger lines
-        const ledgerLineSpaceBottom = 100; // Extra space below for bass ledger lines to prevent cropping
+        const ledgerLineSpaceTop = 30;
+        const ledgerLineSpaceBottom = 100;
         const staffGap = Math.max(70, Math.min(110, canvasHeight * 0.28));
-        const staffHeight = 50; // Increased from 40 to 50 for larger staff
-        // Position the grand staff with reduced top space but ensuring bottom space
-        // Calculate total height needed
+        const staffHeight = 50;
         const totalStaffHeight = staffGap + staffHeight;
         const totalNeededHeight =
           totalStaffHeight + ledgerLineSpaceTop + ledgerLineSpaceBottom;
-        // Center the staff vertically in the available canvas space
-        // Stave positioning constants - move inward from edges to prevent clipping
-        const STAVE_X = 50;
-        const STAVE_WIDTH = Math.max(canvasWidth - 100, 240); // Leave 50px on each side
 
-        // Center vertically: calculate available space and center the staff
+        const TOTAL_STAVE_WIDTH = requiredStaveWidth;
+
         const verticalCenter =
           (canvasHeight - totalNeededHeight) / 2 + ledgerLineSpaceTop;
         const yTreble = Math.max(ledgerLineSpaceTop, verticalCenter);
         const yBass = yTreble + staffGap;
 
-        const trebleStave = new Stave(STAVE_X, yTreble, STAVE_WIDTH);
-        trebleStave.addClef("treble");
-        trebleStave.addTimeSignature(pattern.timeSignature);
-        trebleStave.setContext(context).draw();
-
-        const bassStave = new Stave(STAVE_X, yBass, STAVE_WIDTH);
-        bassStave.addClef("bass");
-        bassStave.addTimeSignature(pattern.timeSignature);
-        bassStave.setContext(context).draw();
-
-        // Connectors for grand staff
-        try {
-          new StaveConnector(trebleStave, bassStave)
-            .setType(StaveConnector.type.BRACE)
-            .setContext(context)
-            .draw();
-          new StaveConnector(trebleStave, bassStave)
-            .setType(StaveConnector.type.SINGLE_LEFT)
-            .setContext(context)
-            .draw();
-          // Continuous double bar line spanning both staves
-          new StaveConnector(trebleStave, bassStave)
-            .setType(StaveConnector.type.BOLD_DOUBLE_RIGHT)
-            .setContext(context)
-            .draw();
-        } catch (err) {
-          console.warn("Failed to draw stave connectors:", err);
-        }
-
         // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
-        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
+        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y, totalBars);
 
         const allEvents = Array.isArray(pattern.notes) ? pattern.notes : [];
         const events = shouldRenderSingleBar
           ? allEvents.filter((e) => Number(e?.barIndex ?? 0) === currentBarIndex)
           : allEvents;
-        const noBeamIndices = new Set(
-          events
-            .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
-            .filter((i) => i !== null)
-        );
         const durations =
           Array.isArray(pattern.vexflowNotes) &&
           pattern.vexflowNotes.length === allEvents.length
@@ -594,314 +588,508 @@ export function VexFlowStaffDisplay({
                 : pattern.vexflowNotes.map((n) => n?.duration || "q"))
             : events.map(() => "q");
 
-        const unitsPerBeat = resolveTimeSignature(
-          pattern.timeSignature
-        ).unitsPerBeat;
+        // Grand staff rendering (multiple staves for multi-bar with proper barline config)
+        if (totalBars > 1) {
+          // Use fixed width per bar for consistent notation size
+          const staveWidthPerBar = FIXED_STAVE_WIDTH_PER_BAR;
 
-        const trebleTickables = events.map((event, idx) => {
-          const duration = durations[idx] || "q";
-          const eventClef = String(event?.clef || "treble").toLowerCase();
-          if (event.type === "rest") {
-            // Only render a visible rest on the staff the event belongs to.
-            // The other staff should get an invisible spacer rest (no “fake” rests).
+          // Create all stave pairs first
+          for (let barIdx = 0; barIdx < totalBars; barIdx++) {
+            const xPos = STAVE_X + (barIdx * staveWidthPerBar);
+
+            const trebleStave = new Stave(xPos, yTreble, staveWidthPerBar);
+            const bassStave = new Stave(xPos, yBass, staveWidthPerBar);
+
+            // Only first bar gets clef and time signature
+            if (barIdx === 0) {
+              trebleStave.addClef("treble");
+              trebleStave.addTimeSignature(pattern.timeSignature);
+              bassStave.addClef("bass");
+              bassStave.addTimeSignature(pattern.timeSignature);
+            } else {
+              // Disable beginning barline for subsequent bars (already drawn by previous bar's end)
+              trebleStave.setBegBarType(Barline.type.NONE);
+              bassStave.setBegBarType(Barline.type.NONE);
+            }
+
+            // Set end barline type
+            if (barIdx === totalBars - 1) {
+              trebleStave.setEndBarType(Barline.type.DOUBLE);
+              bassStave.setEndBarType(Barline.type.DOUBLE);
+            } else {
+              trebleStave.setEndBarType(Barline.type.SINGLE);
+              bassStave.setEndBarType(Barline.type.SINGLE);
+            }
+
+            trebleStave.setContext(context).draw();
+            bassStave.setContext(context).draw();
+
+            // Connectors for grand staff
+            try {
+              if (barIdx === 0) {
+                // Brace and left line only for first bar
+                new StaveConnector(trebleStave, bassStave)
+                  .setType(StaveConnector.type.BRACE)
+                  .setContext(context)
+                  .draw();
+                new StaveConnector(trebleStave, bassStave)
+                  .setType(StaveConnector.type.SINGLE_LEFT)
+                  .setContext(context)
+                  .draw();
+              }
+
+              // Connect barlines between staves at end of each bar
+              if (barIdx === totalBars - 1) {
+                new StaveConnector(trebleStave, bassStave)
+                  .setType(StaveConnector.type.BOLD_DOUBLE_RIGHT)
+                  .setContext(context)
+                  .draw();
+              } else {
+                new StaveConnector(trebleStave, bassStave)
+                  .setType(StaveConnector.type.SINGLE_RIGHT)
+                  .setContext(context)
+                  .draw();
+              }
+            } catch (err) {
+              console.warn("Failed to draw stave connectors:", err);
+            }
+
+            // Get events for this bar
+            const barEvents = events.filter(
+              (e) => Number(e?.barIndex ?? 0) === barIdx
+            );
+            const barEventIndices = events
+              .map((e, i) => ({ event: e, globalIdx: i }))
+              .filter(({ event }) => Number(event?.barIndex ?? 0) === barIdx)
+              .map(({ globalIdx }) => globalIdx);
+
+            // Build tickables for this bar
+            const trebleTickables = [];
+            const bassTickables = [];
+
+            barEvents.forEach((event, localIdx) => {
+              const globalIdx = barEventIndices[localIdx];
+              const duration = durations[globalIdx] || "q";
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+
+              if (event.type === "rest") {
+                if (eventClef === "treble") {
+                  trebleTickables.push(buildStaveNote({
+                    pitchStr: null,
+                    duration: `${duration.replace(/r$/, "")}r`,
+                    targetClef: "treble",
+                  }));
+                  bassTickables.push(buildSpacerRest(duration, "bass"));
+                } else {
+                  trebleTickables.push(buildSpacerRest(duration, "treble"));
+                  bassTickables.push(buildStaveNote({
+                    pitchStr: null,
+                    duration: `${duration.replace(/r$/, "")}r`,
+                    targetClef: "bass",
+                  }));
+                }
+              } else if (eventClef === "treble") {
+                trebleTickables.push(buildStaveNote({
+                  pitchStr: event.pitch,
+                  duration,
+                  targetClef: "treble",
+                }));
+                bassTickables.push(buildSpacerRest(duration, "bass"));
+              } else {
+                trebleTickables.push(buildSpacerRest(duration, "treble"));
+                bassTickables.push(buildStaveNote({
+                  pitchStr: event.pitch,
+                  duration,
+                  targetClef: "bass",
+                }));
+              }
+            });
+
+            // Generate beams for this bar
+            const noBeamIndicesForBar = new Set(
+              barEvents
+                .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
+                .filter((i) => i !== null)
+            );
+
+            const trebleNotesOnly = trebleTickables.filter((tick, idx) => {
+              const event = barEvents[idx];
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+              return event?.type === "note" && eventClef === "treble" && !noBeamIndicesForBar.has(idx);
+            });
+            const bassNotesOnly = bassTickables.filter((tick, idx) => {
+              const event = barEvents[idx];
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+              return event?.type === "note" && eventClef === "bass" && !noBeamIndicesForBar.has(idx);
+            });
+
+            const trebleBeams = Beam.generateBeams(trebleNotesOnly);
+            const bassBeams = Beam.generateBeams(bassNotesOnly);
+
+            // Set stem direction for non-beamed notes
+            const beamedTrebleNotes = new Set(trebleBeams.flatMap((b) => b.getNotes()));
+            const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
+
+            trebleTickables.forEach((tick, idx) => {
+              const event = barEvents[idx];
+              if (event?.type !== "note") return;
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+              if (eventClef !== "treble") return;
+              if (!beamedTrebleNotes.has(tick)) {
+                tick.setStemDirection(getStemDirectionForPitch(event.pitch, "treble"));
+              }
+            });
+
+            bassTickables.forEach((tick, idx) => {
+              const event = barEvents[idx];
+              if (event?.type !== "note") return;
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+              if (eventClef !== "bass") return;
+              if (!beamedBassNotes.has(tick)) {
+                tick.setStemDirection(getStemDirectionForPitch(event.pitch, "bass"));
+              }
+            });
+
+            // Create voices for this bar
+            const trebleVoice = new Voice({
+              num_beats: beatsPerMeasure,
+              beat_value: 4,
+            }).setMode(Voice.Mode.SOFT);
+            trebleVoice.addTickables(trebleTickables);
+
+            const bassVoice = new Voice({
+              num_beats: beatsPerMeasure,
+              beat_value: 4,
+            }).setMode(Voice.Mode.SOFT);
+            bassVoice.addTickables(bassTickables);
+
+            // Calculate formatter width for this bar
+            const barFormatterWidth = barIdx === 0
+              ? Math.max(staveWidthPerBar - 100, 100)
+              : Math.max(staveWidthPerBar - 20, 100);
+
+            // Handle wrong pitch overlay
+            let wrongTrebleVoice = null;
+            let wrongBassVoice = null;
+
+            if (gamePhase === "feedback" && performanceResults.length > 0) {
+              const wrongPitchResults = performanceResults.filter(
+                (r) => r.timingStatus === "wrong_pitch" && r.detected
+              );
+
+              if (wrongPitchResults.length > 0) {
+                const wrongTrebleTickables = barEvents.map((event, localIdx) => {
+                  const globalIdx = barEventIndices[localIdx];
+                  const duration = durations[globalIdx] || "q";
+                  const eventClef = String(event?.clef || "treble").toLowerCase();
+                  const result = wrongPitchResults.find((r) => r.noteIndex === globalIdx);
+
+                  if (result && event.type !== "rest" && eventClef === "treble") {
+                    const wrong = buildStaveNote({
+                      pitchStr: result.detected,
+                      duration,
+                      targetClef: "treble",
+                    });
+                    wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                    wrong.setStemDirection(getStemDirectionForPitch(result.detected, "treble"));
+                    return wrong;
+                  }
+                  return buildSpacerRest(duration, "treble");
+                });
+
+                const wrongBassTickables = barEvents.map((event, localIdx) => {
+                  const globalIdx = barEventIndices[localIdx];
+                  const duration = durations[globalIdx] || "q";
+                  const eventClef = String(event?.clef || "treble").toLowerCase();
+                  const result = wrongPitchResults.find((r) => r.noteIndex === globalIdx);
+
+                  if (result && event.type !== "rest" && eventClef === "bass") {
+                    const wrong = buildStaveNote({
+                      pitchStr: result.detected,
+                      duration,
+                      targetClef: "bass",
+                    });
+                    wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                    wrong.setStemDirection(getStemDirectionForPitch(result.detected, "bass"));
+                    return wrong;
+                  }
+                  return buildSpacerRest(duration, "bass");
+                });
+
+                wrongTrebleVoice = new Voice({
+                  num_beats: beatsPerMeasure,
+                  beat_value: 4,
+                }).setMode(Voice.Mode.SOFT);
+                wrongTrebleVoice.addTickables(wrongTrebleTickables);
+
+                wrongBassVoice = new Voice({
+                  num_beats: beatsPerMeasure,
+                  beat_value: 4,
+                }).setMode(Voice.Mode.SOFT);
+                wrongBassVoice.addTickables(wrongBassTickables);
+              }
+            }
+
+            // Format and draw
+            if (wrongTrebleVoice) {
+              new Formatter().joinVoices([trebleVoice, wrongTrebleVoice]).format([trebleVoice, wrongTrebleVoice], barFormatterWidth);
+            } else {
+              new Formatter().joinVoices([trebleVoice]).format([trebleVoice], barFormatterWidth);
+            }
+            if (wrongBassVoice) {
+              new Formatter().joinVoices([bassVoice, wrongBassVoice]).format([bassVoice, wrongBassVoice], barFormatterWidth);
+            } else {
+              new Formatter().joinVoices([bassVoice]).format([bassVoice], barFormatterWidth);
+            }
+
+            trebleVoice.draw(context, trebleStave);
+            bassVoice.draw(context, bassStave);
+
+            trebleBeams.forEach((beam) => beam.setContext(context).draw());
+            bassBeams.forEach((beam) => beam.setContext(context).draw());
+
+            if (wrongTrebleVoice) {
+              wrongTrebleVoice.draw(context, trebleStave);
+            }
+            if (wrongBassVoice) {
+              wrongBassVoice.draw(context, bassStave);
+            }
+          }
+        } else {
+          // Single bar grand staff
+          const trebleStave = new Stave(STAVE_X, yTreble, TOTAL_STAVE_WIDTH);
+          trebleStave.addClef("treble");
+          trebleStave.addTimeSignature(pattern.timeSignature);
+          trebleStave.setEndBarType(Barline.type.DOUBLE);
+          trebleStave.setContext(context).draw();
+
+          const bassStave = new Stave(STAVE_X, yBass, TOTAL_STAVE_WIDTH);
+          bassStave.addClef("bass");
+          bassStave.addTimeSignature(pattern.timeSignature);
+          bassStave.setEndBarType(Barline.type.DOUBLE);
+          bassStave.setContext(context).draw();
+
+          // Connectors for grand staff
+          try {
+            new StaveConnector(trebleStave, bassStave)
+              .setType(StaveConnector.type.BRACE)
+              .setContext(context)
+              .draw();
+            new StaveConnector(trebleStave, bassStave)
+              .setType(StaveConnector.type.SINGLE_LEFT)
+              .setContext(context)
+              .draw();
+            new StaveConnector(trebleStave, bassStave)
+              .setType(StaveConnector.type.BOLD_DOUBLE_RIGHT)
+              .setContext(context)
+              .draw();
+          } catch (err) {
+            console.warn("Failed to draw stave connectors:", err);
+          }
+
+          const noBeamIndices = new Set(
+            events
+              .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
+              .filter((i) => i !== null)
+          );
+
+          const trebleTickables = events.map((event, idx) => {
+            const duration = durations[idx] || "q";
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            if (event.type === "rest") {
+              if (eventClef === "treble") {
+                return buildStaveNote({
+                  pitchStr: null,
+                  duration: `${duration.replace(/r$/, "")}r`,
+                  targetClef: "treble",
+                  isDotted: !!event?.isDotted,
+                });
+              }
+              return buildSpacerRest(duration, "treble");
+            }
             if (eventClef === "treble") {
               return buildStaveNote({
-                pitchStr: null,
-                duration: `${duration.replace(/r$/, "")}r`,
+                pitchStr: event.pitch,
+                duration,
                 targetClef: "treble",
                 isDotted: !!event?.isDotted,
               });
             }
             return buildSpacerRest(duration, "treble");
-          }
-          if (eventClef === "treble") {
-            return buildStaveNote({
-              pitchStr: event.pitch,
-              duration,
-              targetClef: "treble",
-              isDotted: !!event?.isDotted,
-            });
-          }
-          return buildSpacerRest(duration, "treble");
-        });
+          });
 
-        const bassTickables = events.map((event, idx) => {
-          const duration = durations[idx] || "q";
-          const eventClef = String(event?.clef || "treble").toLowerCase();
-          if (event.type === "rest") {
-            // Only render a visible rest on the staff the event belongs to.
-            // The other staff should get an invisible spacer rest (no “fake” rests).
+          const bassTickables = events.map((event, idx) => {
+            const duration = durations[idx] || "q";
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            if (event.type === "rest") {
+              if (eventClef === "bass") {
+                return buildStaveNote({
+                  pitchStr: null,
+                  duration: `${duration.replace(/r$/, "")}r`,
+                  targetClef: "bass",
+                  isDotted: !!event?.isDotted,
+                });
+              }
+              return buildSpacerRest(duration, "bass");
+            }
             if (eventClef === "bass") {
               return buildStaveNote({
-                pitchStr: null,
-                duration: `${duration.replace(/r$/, "")}r`,
+                pitchStr: event.pitch,
+                duration,
                 targetClef: "bass",
                 isDotted: !!event?.isDotted,
               });
             }
             return buildSpacerRest(duration, "bass");
-          }
-          if (eventClef === "bass") {
-            return buildStaveNote({
-              pitchStr: event.pitch,
-              duration,
-              targetClef: "bass",
-              isDotted: !!event?.isDotted,
-            });
-          }
-          return buildSpacerRest(duration, "bass");
-        });
+          });
 
-        // Manual beaming for kid-friendly patterns:
-        // Ensure | 1/8 1/16 1/16 | (2,1,1) and | 1/16 1/16 1/8 | (1,1,2)
-        // are connected as a single beam group within the pattern.
-        const patternIndices = new Map();
-        events.forEach((e, i) => {
-          const pid = e?.patternId ?? i;
-          if (!patternIndices.has(pid)) patternIndices.set(pid, []);
-          patternIndices.get(pid).push(i);
-        });
-
-        const manualBeamIndices = new Set();
-        const manualTrebleBeams = [];
-        const manualBassBeams = [];
-
-        for (const [, idxs] of patternIndices) {
-          if (idxs.length !== 3) continue;
-          const seq = idxs.map((i) => events[i]);
-          if (seq.some((e) => e?.type !== "note")) continue;
-
-          const units = seq.map((e) => e?.sixteenthUnits);
-          const isTargetPattern =
-            (units[0] === 2 && units[1] === 1 && units[2] === 1) ||
-            (units[0] === 1 && units[1] === 1 && units[2] === 2);
-          if (!isTargetPattern) continue;
-
-          const clefs = seq.map((e) => String(e?.clef || "treble").toLowerCase());
-          const staff = clefs[0];
-          if (!clefs.every((c) => c === staff)) continue;
-
-          if (staff === "treble") {
-            const notes = idxs.map((i) => trebleTickables[i]).filter(Boolean);
-            if (notes.length === 3) {
-              manualTrebleBeams.push(new Beam(notes));
-              idxs.forEach((i) => manualBeamIndices.add(i));
-            }
-          } else if (staff === "bass") {
-            const notes = idxs.map((i) => bassTickables[i]).filter(Boolean);
-            if (notes.length === 3) {
-              manualBassBeams.push(new Beam(notes));
-              idxs.forEach((i) => manualBeamIndices.add(i));
-            }
-          }
-        }
-
-        // Use Beam.generateBeams for automatic beaming, stem direction, and stem length
-        // per VexFlow guidelines (see docs/vexflow-notation/vexflow-guidelines.md)
-        // Filter to only actual notes (not spacer rests) for each staff
-        const trebleNotesOnly = trebleTickables.filter((tick, idx) => {
-          const event = events[idx];
-          const eventClef = String(event?.clef || "treble").toLowerCase();
-          return (
-            event?.type === "note" &&
-            eventClef === "treble" &&
-            !noBeamIndices.has(idx) &&
-            !manualBeamIndices.has(idx)
-          );
-        });
-        const bassNotesOnly = bassTickables.filter((tick, idx) => {
-          const event = events[idx];
-          const eventClef = String(event?.clef || "treble").toLowerCase();
-          return (
-            event?.type === "note" &&
-            eventClef === "bass" &&
-            !noBeamIndices.has(idx) &&
-            !manualBeamIndices.has(idx)
-          );
-        });
-
-        // Generate beams automatically - VexFlow handles stem direction and length for beamed notes
-        const trebleAutoBeams = Beam.generateBeams(trebleNotesOnly);
-        const bassAutoBeams = Beam.generateBeams(bassNotesOnly);
-        const trebleBeams = [...trebleAutoBeams, ...manualTrebleBeams];
-        const bassBeams = [...bassAutoBeams, ...manualBassBeams];
-
-        // Set stem direction for non-beamed notes (those not included in any beam)
-        const beamedTrebleNotes = new Set(
-          trebleBeams.flatMap((b) => b.getNotes())
-        );
-        const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
-
-        trebleTickables.forEach((tick, idx) => {
-          const event = events[idx];
-          if (event?.type !== "note") return;
-          const eventClef = String(event?.clef || "treble").toLowerCase();
-          if (eventClef !== "treble") return;
-          if (!beamedTrebleNotes.has(tick)) {
-            // Non-beamed note: set stem direction based on pitch
-            tick.setStemDirection(
-              getStemDirectionForPitch(event.pitch, "treble")
-            );
-          }
-        });
-
-        bassTickables.forEach((tick, idx) => {
-          const event = events[idx];
-          if (event?.type !== "note") return;
-          const eventClef = String(event?.clef || "treble").toLowerCase();
-          if (eventClef !== "bass") return;
-          if (!beamedBassNotes.has(tick)) {
-            // Non-beamed note: set stem direction based on pitch
-            tick.setStemDirection(
-              getStemDirectionForPitch(event.pitch, "bass")
-            );
-          }
-        });
-
-        const trebleVoice = new Voice({
-          num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
-          beat_value: 4,
-        }).setMode(Voice.Mode.SOFT);
-        trebleVoice.addTickables(trebleTickables);
-
-        const bassVoice = new Voice({
-          num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
-          beat_value: 4,
-        }).setMode(Voice.Mode.SOFT);
-        bassVoice.addTickables(bassTickables);
-
-        const isFeedback =
-          gamePhase === "feedback" && performanceResults.length > 0;
-        const wrongPitchResults = isFeedback
-          ? performanceResults.filter(
-              (r) => r.timingStatus === "wrong_pitch" && r.detected
-            )
-          : [];
-
-        const hasWrong = wrongPitchResults.length > 0;
-
-        let wrongTrebleVoice = null;
-        let wrongBassVoice = null;
-
-        if (hasWrong) {
-          const wrongTrebleTickables = events.map((event, idx) => {
-            const duration = durations[idx] || "q";
+          const trebleNotesOnly = trebleTickables.filter((tick, idx) => {
+            const event = events[idx];
             const eventClef = String(event?.clef || "treble").toLowerCase();
-            const result = wrongPitchResults.find((r) => r.noteIndex === idx);
-            if (!result || event.type === "rest" || eventClef !== "treble") {
+            return event?.type === "note" && eventClef === "treble" && !noBeamIndices.has(idx);
+          });
+          const bassNotesOnly = bassTickables.filter((tick, idx) => {
+            const event = events[idx];
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            return event?.type === "note" && eventClef === "bass" && !noBeamIndices.has(idx);
+          });
+
+          const trebleBeams = Beam.generateBeams(trebleNotesOnly);
+          const bassBeams = Beam.generateBeams(bassNotesOnly);
+
+          const beamedTrebleNotes = new Set(trebleBeams.flatMap((b) => b.getNotes()));
+          const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
+
+          trebleTickables.forEach((tick, idx) => {
+            const event = events[idx];
+            if (event?.type !== "note") return;
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            if (eventClef !== "treble") return;
+            if (!beamedTrebleNotes.has(tick)) {
+              tick.setStemDirection(getStemDirectionForPitch(event.pitch, "treble"));
+            }
+          });
+
+          bassTickables.forEach((tick, idx) => {
+            const event = events[idx];
+            if (event?.type !== "note") return;
+            const eventClef = String(event?.clef || "treble").toLowerCase();
+            if (eventClef !== "bass") return;
+            if (!beamedBassNotes.has(tick)) {
+              tick.setStemDirection(getStemDirectionForPitch(event.pitch, "bass"));
+            }
+          });
+
+          const trebleVoice = new Voice({
+            num_beats: pattern.totalDuration,
+            beat_value: 4,
+          }).setMode(Voice.Mode.SOFT);
+          trebleVoice.addTickables(trebleTickables);
+
+          const bassVoice = new Voice({
+            num_beats: pattern.totalDuration,
+            beat_value: 4,
+          }).setMode(Voice.Mode.SOFT);
+          bassVoice.addTickables(bassTickables);
+
+          const isFeedback = gamePhase === "feedback" && performanceResults.length > 0;
+          const wrongPitchResults = isFeedback
+            ? performanceResults.filter((r) => r.timingStatus === "wrong_pitch" && r.detected)
+            : [];
+
+          let wrongTrebleVoice = null;
+          let wrongBassVoice = null;
+
+          if (wrongPitchResults.length > 0) {
+            const wrongTrebleTickables = events.map((event, idx) => {
+              const duration = durations[idx] || "q";
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+              const result = wrongPitchResults.find((r) => r.noteIndex === idx);
+              if (result && event.type !== "rest" && eventClef === "treble") {
+                const wrong = buildStaveNote({
+                  pitchStr: result.detected,
+                  duration,
+                  targetClef: "treble",
+                });
+                wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                wrong.setStemDirection(getStemDirectionForPitch(result.detected, "treble"));
+                return wrong;
+              }
               return buildSpacerRest(duration, "treble");
-            }
-            const wrong = buildStaveNote({
-              pitchStr: result.detected,
-              duration,
-              targetClef: "treble",
             });
-            wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
-            // Set stem direction for wrong notes (not beamed, so we set manually)
-            if (!duration.includes("r")) {
-              wrong.setStemDirection(
-                getStemDirectionForPitch(result.detected, "treble")
-              );
-            }
-            return wrong;
-          });
 
-          const wrongBassTickables = events.map((event, idx) => {
-            const duration = durations[idx] || "q";
-            const eventClef = String(event?.clef || "treble").toLowerCase();
-            const result = wrongPitchResults.find((r) => r.noteIndex === idx);
-            if (!result || event.type === "rest" || eventClef !== "bass") {
+            const wrongBassTickables = events.map((event, idx) => {
+              const duration = durations[idx] || "q";
+              const eventClef = String(event?.clef || "treble").toLowerCase();
+              const result = wrongPitchResults.find((r) => r.noteIndex === idx);
+              if (result && event.type !== "rest" && eventClef === "bass") {
+                const wrong = buildStaveNote({
+                  pitchStr: result.detected,
+                  duration,
+                  targetClef: "bass",
+                });
+                wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                wrong.setStemDirection(getStemDirectionForPitch(result.detected, "bass"));
+                return wrong;
+              }
               return buildSpacerRest(duration, "bass");
-            }
-            const wrong = buildStaveNote({
-              pitchStr: result.detected,
-              duration,
-              targetClef: "bass",
             });
-            wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
-            // Set stem direction for wrong notes (not beamed, so we set manually)
-            if (!duration.includes("r")) {
-              wrong.setStemDirection(
-                getStemDirectionForPitch(result.detected, "bass")
-              );
-            }
-            return wrong;
-          });
 
-          wrongTrebleVoice = new Voice({
-            num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
-            beat_value: 4,
-          }).setMode(Voice.Mode.SOFT);
-          wrongTrebleVoice.addTickables(wrongTrebleTickables);
+            wrongTrebleVoice = new Voice({
+              num_beats: pattern.totalDuration,
+              beat_value: 4,
+            }).setMode(Voice.Mode.SOFT);
+            wrongTrebleVoice.addTickables(wrongTrebleTickables);
 
-          wrongBassVoice = new Voice({
-            num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
-            beat_value: 4,
-          }).setMode(Voice.Mode.SOFT);
-          wrongBassVoice.addTickables(wrongBassTickables);
-        }
+            wrongBassVoice = new Voice({
+              num_beats: pattern.totalDuration,
+              beat_value: 4,
+            }).setMode(Voice.Mode.SOFT);
+            wrongBassVoice.addTickables(wrongBassTickables);
+          }
 
-        // Format voices (expected + wrong per staff) to keep alignment
-        if (wrongTrebleVoice) {
-          const voices = [trebleVoice, wrongTrebleVoice];
-          new Formatter().joinVoices(voices).format(voices, formatterWidth);
-        } else {
-          new Formatter()
-            .joinVoices([trebleVoice])
-            .format([trebleVoice], formatterWidth);
-        }
-        if (wrongBassVoice) {
-          const voices = [bassVoice, wrongBassVoice];
-          new Formatter().joinVoices(voices).format(voices, formatterWidth);
-        } else {
-          new Formatter()
-            .joinVoices([bassVoice])
-            .format([bassVoice], formatterWidth);
-        }
+          if (wrongTrebleVoice) {
+            new Formatter().joinVoices([trebleVoice, wrongTrebleVoice]).format([trebleVoice, wrongTrebleVoice], formatterWidth);
+          } else {
+            new Formatter().joinVoices([trebleVoice]).format([trebleVoice], formatterWidth);
+          }
+          if (wrongBassVoice) {
+            new Formatter().joinVoices([bassVoice, wrongBassVoice]).format([bassVoice, wrongBassVoice], formatterWidth);
+          } else {
+            new Formatter().joinVoices([bassVoice]).format([bassVoice], formatterWidth);
+          }
 
-        // Draw expected voices first
-        trebleVoice.draw(context, trebleStave);
-        bassVoice.draw(context, bassStave);
+          trebleVoice.draw(context, trebleStave);
+          bassVoice.draw(context, bassStave);
 
-        // Draw beams (expected only) after notes are positioned
-        trebleBeams.forEach((beam) => beam.setContext(context).draw());
-        bassBeams.forEach((beam) => beam.setContext(context).draw());
+          trebleBeams.forEach((beam) => beam.setContext(context).draw());
+          bassBeams.forEach((beam) => beam.setContext(context).draw());
 
-        // Draw wrong voices on top (if any)
-        if (wrongTrebleVoice) {
-          wrongTrebleVoice.draw(context, trebleStave);
-        }
-        if (wrongBassVoice) {
-          wrongBassVoice.draw(context, bassStave);
+          if (wrongTrebleVoice) {
+            wrongTrebleVoice.draw(context, trebleStave);
+          }
+          if (wrongBassVoice) {
+            wrongBassVoice.draw(context, bassStave);
+          }
         }
       } else {
-        // Single staff rendering (existing behavior)
-        // Add extra space for ledger lines above and below
-        const ledgerLineSpaceTop = 30; // Reduced top space for ledger lines
-        const ledgerLineSpaceBottom = 80; // Increased space below for bass ledger lines to prevent cropping
-        const staffHeight = 50; // Increased from 40 to 50 for larger staff
-        // Position the staff with reduced top space but ensuring bottom space
+        // Single staff rendering (multiple staves for multi-bar with proper barline config)
+        const ledgerLineSpaceTop = 30;
+        const ledgerLineSpaceBottom = 80;
+        const staffHeight = 50;
         const totalNeededHeight =
           staffHeight + ledgerLineSpaceTop + ledgerLineSpaceBottom;
-        // Center the staff vertically in the available canvas space
-        // Stave positioning constants - move inward from edges to prevent clipping
-        const STAVE_X = 50;
-        const STAVE_WIDTH = Math.max(canvasWidth - 100, 240); // Leave 50px on each side
 
-        // Center vertically: calculate available space and center the staff
+        const TOTAL_STAVE_WIDTH = requiredStaveWidth;
+
         const verticalCenter =
           (canvasHeight - totalNeededHeight) / 2 + ledgerLineSpaceTop;
         const yPosition = Math.max(ledgerLineSpaceTop, verticalCenter);
 
-        const stave = new Stave(STAVE_X, yPosition, STAVE_WIDTH);
-        stave.addClef(clef);
-        stave.addTimeSignature(pattern.timeSignature);
-        stave.setEndBarType(2); // Double barline
-        stave.setContext(context).draw();
         // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
-        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y);
+        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y, totalBars);
 
-        // Parse EasyScore string manually to create StaveNotes
+        // Get all events for rendering
         const allEvents = Array.isArray(pattern.notes) ? pattern.notes : [];
         const events = shouldRenderSingleBar
           ? allEvents.filter((e) => Number(e?.barIndex ?? 0) === currentBarIndex)
@@ -915,195 +1103,264 @@ export function VexFlowStaffDisplay({
                     .map((n) => n?.duration || "q")
                 : pattern.vexflowNotes.map((n) => n?.duration || "q"))
             : events.map(() => "q");
-        const noBeamIndices = new Set(
-          events
-            .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
-            .filter((i) => i !== null)
-        );
-        const unitsPerBeat = resolveTimeSignature(
-          pattern.timeSignature
-        ).unitsPerBeat;
 
-        // Store pitch strings for stem direction calculation later
-        const pitchStrings = [];
+        if (totalBars > 1) {
+          // Multi-bar: create separate staves for each bar
+          // Use fixed width per bar for consistent notation size
+          const staveWidthPerBar = FIXED_STAVE_WIDTH_PER_BAR;
 
-        const staveNotes = easyscoreString.split(",").map((noteStr) => {
-          noteStr = noteStr.trim();
+          for (let barIdx = 0; barIdx < totalBars; barIdx++) {
+            const xPos = STAVE_X + (barIdx * staveWidthPerBar);
+            const stave = new Stave(xPos, yPosition, staveWidthPerBar);
 
-          // Parse format: "C4/q" or "B4/q/r" or "C4/q."
-          const isRest = noteStr.includes("/r");
-          const parts = noteStr.split("/");
-          const pitchStr = parts[0]; // e.g., "C4" or "B4"
-          let duration = parts[1]; // e.g., "q", "h", "8", "q.", "h."
+            // Only first bar gets clef and time signature
+            if (barIdx === 0) {
+              stave.addClef(clef);
+              stave.addTimeSignature(pattern.timeSignature);
+            } else {
+              // Disable beginning barline for subsequent bars
+              stave.setBegBarType(Barline.type.NONE);
+            }
 
-          // Store pitch for later stem direction calculation
-          pitchStrings.push(isRest ? null : pitchStr);
+            // Set end barline type
+            if (barIdx === totalBars - 1) {
+              stave.setEndBarType(Barline.type.DOUBLE);
+            } else {
+              stave.setEndBarType(Barline.type.SINGLE);
+            }
 
-          // Check for dotted notes (e.g., "q.", "h.", "8.")
-          const isDotted = duration && duration.endsWith(".");
-          if (isDotted) {
-            duration = duration.slice(0, -1); // Remove the dot: "q." -> "q"
+            stave.setContext(context).draw();
+
+            // Get events for this bar
+            const barEvents = events.filter(
+              (e) => Number(e?.barIndex ?? 0) === barIdx
+            );
+            const barEventIndices = events
+              .map((e, i) => ({ event: e, globalIdx: i }))
+              .filter(({ event }) => Number(event?.barIndex ?? 0) === barIdx)
+              .map(({ globalIdx }) => globalIdx);
+
+            // Build stave notes for this bar
+            const barStaveNotes = [];
+            const barPitchStrings = [];
+
+            barEvents.forEach((event, localIdx) => {
+              const globalIdx = barEventIndices[localIdx];
+              const duration = durations[globalIdx] || "q";
+
+              if (event.type === "rest") {
+                barStaveNotes.push(buildStaveNote({
+                  pitchStr: null,
+                  duration: `${duration.replace(/r$/, "")}r`,
+                  targetClef: clef,
+                }));
+                barPitchStrings.push(null);
+              } else {
+                barStaveNotes.push(buildStaveNote({
+                  pitchStr: event.pitch,
+                  duration,
+                  targetClef: clef,
+                }));
+                barPitchStrings.push(event.pitch);
+              }
+            });
+
+            // Generate beams for this bar
+            const noBeamIndicesForBar = new Set(
+              barEvents
+                .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
+                .filter((i) => i !== null)
+            );
+
+            const autoBeamNotes = barStaveNotes.filter(
+              (note, idx) => !noBeamIndicesForBar.has(idx) && barEvents[idx]?.type === "note"
+            );
+            const barBeams = Beam.generateBeams(autoBeamNotes);
+
+            // Set stem direction for non-beamed notes
+            const beamedNotes = new Set(barBeams.flatMap((b) => b.getNotes()));
+            barStaveNotes.forEach((note, idx) => {
+              const pitchStr = barPitchStrings[idx];
+              if (!pitchStr) return;
+              if (!beamedNotes.has(note)) {
+                note.setStemDirection(getStemDirectionForPitch(pitchStr, clef));
+              }
+            });
+
+            // Create voice for this bar
+            const voice = new Voice({
+              num_beats: beatsPerMeasure,
+              beat_value: 4,
+            }).setMode(Voice.Mode.SOFT);
+            voice.addTickables(barStaveNotes);
+
+            // Calculate formatter width for this bar
+            const barFormatterWidth = barIdx === 0
+              ? Math.max(staveWidthPerBar - 100, 100)
+              : Math.max(staveWidthPerBar - 20, 100);
+
+            // Handle wrong pitch overlay
+            let wrongVoice = null;
+            if (gamePhase === "feedback" && performanceResults.length > 0) {
+              const wrongPitchResults = performanceResults.filter(
+                (r) => r.timingStatus === "wrong_pitch" && r.detected
+              );
+
+              if (wrongPitchResults.length > 0) {
+                const wrongStaveNotes = barEvents.map((event, localIdx) => {
+                  const globalIdx = barEventIndices[localIdx];
+                  const duration = durations[globalIdx] || "q";
+                  const result = wrongPitchResults.find((r) => r.noteIndex === globalIdx);
+
+                  if (result && event.type !== "rest") {
+                    const playedNote = result.detected;
+                    const parsedPlayed = parsePitchForVexflow(playedNote);
+                    const vexKey = parsedPlayed.key;
+                    const cleanDuration = duration.replace(/r$/, "");
+
+                    const wrongNote = new StaveNote({
+                      keys: [vexKey],
+                      duration: cleanDuration,
+                      clef: clef,
+                    });
+                    if (parsedPlayed?.accidental) {
+                      wrongNote.addModifier(new Accidental(parsedPlayed.accidental), 0);
+                    }
+                    wrongNote.setStemDirection(getStemDirectionForPitch(playedNote, clef));
+                    wrongNote.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                    return wrongNote;
+                  }
+                  return buildSpacerRest(duration, clef);
+                });
+
+                wrongVoice = new Voice({
+                  num_beats: beatsPerMeasure,
+                  beat_value: 4,
+                }).setMode(Voice.Mode.SOFT);
+                wrongVoice.addTickables(wrongStaveNotes);
+              }
+            }
+
+            // Format and draw
+            if (wrongVoice) {
+              new Formatter().joinVoices([voice, wrongVoice]).format([voice, wrongVoice], barFormatterWidth);
+              voice.draw(context, stave);
+              barBeams.forEach((beam) => beam.setContext(context).draw());
+              wrongVoice.draw(context, stave);
+            } else {
+              new Formatter().joinVoices([voice]).format([voice], barFormatterWidth);
+              voice.draw(context, stave);
+              barBeams.forEach((beam) => beam.setContext(context).draw());
+            }
           }
+        } else {
+          // Single bar: original behavior
+          const stave = new Stave(STAVE_X, yPosition, TOTAL_STAVE_WIDTH);
+          stave.addClef(clef);
+          stave.addTimeSignature(pattern.timeSignature);
+          stave.setEndBarType(Barline.type.DOUBLE);
+          stave.setContext(context).draw();
 
-          // For rests, use the correct rest position key based on clef
-          let vexflowKey;
-          const parsedPitch = isRest ? null : parsePitchForVexflow(pitchStr);
-          if (isRest) {
-            vexflowKey = clef === "bass" ? "d/3" : "b/4";
-          } else {
-            vexflowKey = parsedPitch.key;
-          }
+          const noBeamIndices = new Set(
+            events
+              .map((e, i) => (e?.type === "note" && e?.noBeam ? i : null))
+              .filter((i) => i !== null)
+          );
 
-          const noteConfig = {
-            keys: [vexflowKey],
-            duration: isRest ? `${duration}r` : duration,
-            clef: clef,
-          };
+          const pitchStrings = [];
+          const staveNotes = events.map((event, idx) => {
+            const duration = durations[idx] || "q";
 
-          const staveNote = new StaveNote(noteConfig);
-          if (!isRest && parsedPitch?.accidental) {
-            staveNote.addModifier(new Accidental(parsedPitch.accidental), 0);
-          }
+            if (event.type === "rest") {
+              pitchStrings.push(null);
+              return buildStaveNote({
+                pitchStr: null,
+                duration: `${duration.replace(/r$/, "")}r`,
+                targetClef: clef,
+              });
+            } else {
+              pitchStrings.push(event.pitch);
+              return buildStaveNote({
+                pitchStr: event.pitch,
+                duration,
+                targetClef: clef,
+              });
+            }
+          });
 
-          // Note: Stem direction is set AFTER beaming via Beam.generateBeams()
-          // for beamed notes. For non-beamed notes, stem direction is set below.
+          const autoBeamNotes = staveNotes.filter(
+            (note, idx) => !noBeamIndices.has(idx) && events[idx]?.type === "note"
+          );
+          const beams = Beam.generateBeams(autoBeamNotes);
 
-          if (isDotted) {
-            for (let i = 0; i < noteConfig.keys.length; i++) {
-              staveNote.addModifier(new Dot(), i);
+          // Set stem direction for non-beamed notes
+          const beamedNotes = new Set(beams.flatMap((b) => b.getNotes()));
+          staveNotes.forEach((note, idx) => {
+            const pitchStr = pitchStrings[idx];
+            if (!pitchStr) return;
+            if (!beamedNotes.has(note)) {
+              note.setStemDirection(getStemDirectionForPitch(pitchStr, clef));
+            }
+          });
+
+          const voice = new Voice({
+            num_beats: pattern.totalDuration,
+            beat_value: 4,
+          }).setMode(Voice.Mode.SOFT);
+          voice.addTickables(staveNotes);
+
+          // Handle wrong pitch overlay
+          let wrongVoice = null;
+          if (gamePhase === "feedback" && performanceResults.length > 0) {
+            const wrongPitchResults = performanceResults.filter(
+              (r) => r.timingStatus === "wrong_pitch" && r.detected
+            );
+
+            if (wrongPitchResults.length > 0) {
+              const wrongStaveNotes = events.map((event, idx) => {
+                const duration = durations[idx] || "q";
+                const result = wrongPitchResults.find((r) => r.noteIndex === idx);
+
+                if (result && event.type !== "rest") {
+                  const playedNote = result.detected;
+                  const parsedPlayed = parsePitchForVexflow(playedNote);
+                  const vexKey = parsedPlayed.key;
+                  const cleanDuration = duration.replace(/r$/, "");
+
+                  const wrongNote = new StaveNote({
+                    keys: [vexKey],
+                    duration: cleanDuration,
+                    clef: clef,
+                  });
+                  if (parsedPlayed?.accidental) {
+                    wrongNote.addModifier(new Accidental(parsedPlayed.accidental), 0);
+                  }
+                  wrongNote.setStemDirection(getStemDirectionForPitch(playedNote, clef));
+                  wrongNote.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                  return wrongNote;
+                }
+                return buildSpacerRest(duration, clef);
+              });
+
+              wrongVoice = new Voice({
+                num_beats: pattern.totalDuration,
+                beat_value: 4,
+              }).setMode(Voice.Mode.SOFT);
+              wrongVoice.addTickables(wrongStaveNotes);
             }
           }
 
-          return staveNote;
-        });
-
-        // Use Beam.generateBeams for automatic beaming, stem direction, and stem length
-        // per VexFlow guidelines (see docs/vexflow-notation/vexflow-guidelines.md)
-        // Manual beaming for kid-friendly patterns:
-        // Ensure | 1/8 1/16 1/16 | (2,1,1) and | 1/16 1/16 1/8 | (1,1,2)
-        // are connected as a single beam group within the pattern.
-        const patternIndices = new Map();
-        events.forEach((e, i) => {
-          const pid = e?.patternId ?? i;
-          if (!patternIndices.has(pid)) patternIndices.set(pid, []);
-          patternIndices.get(pid).push(i);
-        });
-
-        const manualBeamIndices = new Set();
-        const manualBeams = [];
-        for (const [, idxs] of patternIndices) {
-          if (idxs.length !== 3) continue;
-          const seq = idxs.map((i) => events[i]);
-          if (seq.some((e) => e?.type !== "note")) continue;
-
-          const units = seq.map((e) => e?.sixteenthUnits);
-          const isTargetPattern =
-            (units[0] === 2 && units[1] === 1 && units[2] === 1) ||
-            (units[0] === 1 && units[1] === 1 && units[2] === 2);
-          if (!isTargetPattern) continue;
-
-          const notes = idxs.map((i) => staveNotes[i]).filter(Boolean);
-          if (notes.length === 3) {
-            manualBeams.push(new Beam(notes));
-            idxs.forEach((i) => manualBeamIndices.add(i));
+          // Format and draw
+          if (wrongVoice) {
+            new Formatter().joinVoices([voice, wrongVoice]).format([voice, wrongVoice], formatterWidth);
+            voice.draw(context, stave);
+            beams.forEach((beam) => beam.setContext(context).draw());
+            wrongVoice.draw(context, stave);
+          } else {
+            new Formatter().joinVoices([voice]).format([voice], formatterWidth);
+            voice.draw(context, stave);
+            beams.forEach((beam) => beam.setContext(context).draw());
           }
-        }
-
-        const autoBeamNotes = staveNotes.filter(
-          (note, idx) => !noBeamIndices.has(idx) && !manualBeamIndices.has(idx)
-        );
-        const autoBeams = Beam.generateBeams(autoBeamNotes);
-        const beams = [...autoBeams, ...manualBeams];
-
-        // Set stem direction for non-beamed notes (those not included in any beam)
-        const beamedNotes = new Set(beams.flatMap((b) => b.getNotes()));
-        staveNotes.forEach((note, idx) => {
-          const pitchStr = pitchStrings[idx];
-          if (!pitchStr) return; // Skip rests
-          if (!beamedNotes.has(note)) {
-            // Non-beamed note: set stem direction based on pitch
-            note.setStemDirection(getStemDirectionForPitch(pitchStr, clef));
-          }
-        });
-
-        const voice = new Voice({
-          num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
-          beat_value: 4,
-        });
-        voice.setMode(Voice.Mode.SOFT);
-        voice.addTickables(staveNotes);
-
-        let wrongVoice = null;
-        if (gamePhase === "feedback" && performanceResults.length > 0) {
-          const wrongPitchResults = performanceResults.filter(
-            (r) => r.timingStatus === "wrong_pitch" && r.detected
-          );
-
-          if (wrongPitchResults.length > 0) {
-            const wrongStaveNotes = staveNotes.map((expectedNote, idx) => {
-              const result = performanceResults.find(
-                (r) =>
-                  r.noteIndex === idx &&
-                  r.timingStatus === "wrong_pitch" &&
-                  r.detected
-              );
-
-              if (result) {
-                const playedNote = result.detected;
-                const parsedPlayed = parsePitchForVexflow(playedNote);
-                const vexKey = parsedPlayed.key;
-                const duration = expectedNote.duration;
-                const cleanDuration = duration.replace(/r$/, "");
-
-                const wrongNote = new StaveNote({
-                  keys: [vexKey],
-                  duration: cleanDuration,
-                  clef: clef,
-                });
-                if (parsedPlayed?.accidental) {
-                  wrongNote.addModifier(
-                    new Accidental(parsedPlayed.accidental),
-                    0
-                  );
-                }
-
-                // Set stem direction for wrong notes (not beamed, so set manually)
-                wrongNote.setStemDirection(
-                  getStemDirectionForPitch(playedNote, clef)
-                );
-
-                wrongNote.setStyle({
-                  fillStyle: "#EF4444",
-                  strokeStyle: "#EF4444",
-                });
-
-                return wrongNote;
-              }
-
-              const duration = expectedNote.duration;
-              const cleanDuration = duration.replace(/r$/, "");
-              return buildSpacerRest(cleanDuration, clef);
-            });
-
-            wrongVoice = new Voice({
-              num_beats: shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration,
-              beat_value: 4,
-            });
-            wrongVoice.setMode(Voice.Mode.SOFT);
-            wrongVoice.addTickables(wrongStaveNotes);
-          }
-        }
-
-        if (wrongVoice) {
-          const voices = [voice, wrongVoice];
-          new Formatter().joinVoices(voices).format(voices, formatterWidth);
-          voice.draw(context, stave);
-          beams.forEach((beam) => beam.setContext(context).draw());
-          wrongVoice.draw(context, stave);
-        } else {
-          new Formatter().joinVoices([voice]).format([voice], formatterWidth);
-          voice.draw(context, stave);
-          beams.forEach((beam) => beam.setContext(context).draw());
         }
       }
 
@@ -1113,7 +1370,7 @@ export function VexFlowStaffDisplay({
         notesRef: notesRef.current.length,
       });
 
-      // Fit the viewBox to content after rendering
+      // Fit SVG viewBox to rendered content after VexFlow completes drawing
       requestAnimationFrame(() => {
         fitSvgViewBoxToContent();
       });
@@ -1304,6 +1561,139 @@ export function VexFlowStaffDisplay({
     highlightNote(currentNoteIndex);
   }, [currentNoteIndex, performanceResults, highlightNote]);
 
+  // Effect: Start continuous smooth scroll animation during performance phase
+  useEffect(() => {
+    // Only auto-scroll during performance phase
+    if (gamePhase !== "performance") return;
+
+    // Only auto-scroll for multi-bar patterns
+    const totalBars = Math.max(1, Number(pattern?.measuresPerPattern || 1));
+    if (totalBars <= 1) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Smooth interpolation constant - higher = snappier response
+    const LERP_FACTOR = 0.18; // Increased from 0.12 for smoother, more responsive animation
+
+    /**
+     * Continuous scroll animation loop using linear interpolation (lerp)
+     * This runs continuously during the entire performance phase, never stopping
+     * Smoothly interpolates toward the target scroll position without pauses
+     */
+    const animateScroll = () => {
+      const currentScroll = container.scrollLeft;
+      const targetScroll = targetScrollRef.current;
+      const delta = targetScroll - currentScroll;
+
+      // Linear interpolation: move a fraction of the distance toward target
+      // This creates smooth movement with natural deceleration as we approach target
+      // Animation NEVER stops - it continuously runs even when at/near target
+      const newScroll = currentScroll + delta * LERP_FACTOR;
+      container.scrollLeft = newScroll;
+
+      // Continue animation loop indefinitely during performance phase
+      scrollAnimationRef.current = requestAnimationFrame(animateScroll);
+    };
+
+    // Reset on first note (before performance starts)
+    if (currentNoteIndex === 0) {
+      maxScrollRef.current = 0;
+      targetScrollRef.current = 0;
+      container.scrollLeft = 0;
+    }
+
+    // Start the continuous animation loop (only once per performance phase)
+    if (!isScrollingRef.current) {
+      isScrollingRef.current = true;
+      scrollAnimationRef.current = requestAnimationFrame(animateScroll);
+    }
+
+    // Update target scroll position based on current note
+    if (notesRef.current && notesRef.current.length > 0) {
+      if (currentNoteIndex >= 0 && currentNoteIndex < notesRef.current.length) {
+        const currentNoteElement = notesRef.current[currentNoteIndex];
+
+        if (currentNoteElement) {
+          try {
+            // Get the bounding box of the current note relative to the container
+            const containerRect = container.getBoundingClientRect();
+            const noteRect = currentNoteElement.getBoundingClientRect();
+
+            // Calculate note position relative to container's scroll position
+            const noteLeftRelativeToContainer = noteRect.left - containerRect.left + container.scrollLeft;
+
+            // Target scroll position: position note at 30% from left edge
+            // This gives users preview of upcoming notes while keeping current note visible
+            const viewportWidth = containerRect.width;
+            let newTarget = Math.max(0, noteLeftRelativeToContainer - (viewportWidth * 0.3));
+
+            // Calculate maximum scroll position to prevent over-scrolling
+            // The last measure should have the same padding from the right edge as the first measure has from the left edge
+            const svg = vexContainerRef.current?.querySelector("svg");
+            if (svg) {
+              const svgWidth = svg.getBoundingClientRect().width;
+              const contentWidth = svgWidth;
+
+              // Get left padding from first stave (STAVE_X is used when creating staves)
+              const leftPadding = 50; // STAVE_X constant from renderStaff
+
+              // Maximum scroll = total content width - viewport width + left padding
+              // This ensures the last measure is at the same distance from right edge as first measure is from left edge
+              const maxAllowedScroll = Math.max(0, contentWidth - viewportWidth + leftPadding);
+
+              // Clamp the target scroll position to not exceed maximum
+              newTarget = Math.min(newTarget, maxAllowedScroll);
+            }
+
+            // Only scroll forward, never backward
+            // Update target only if it's greater than our max (prevents backward scrolling)
+            if (newTarget > maxScrollRef.current) {
+              maxScrollRef.current = newTarget;
+              targetScrollRef.current = newTarget;
+            }
+          } catch (err) {
+            console.warn("Failed to calculate scroll position for current note:", err);
+          }
+        }
+      }
+    }
+
+    // Cleanup function to cancel animation on unmount or phase change
+    return () => {
+      if (scrollAnimationRef.current !== null) {
+        cancelAnimationFrame(scrollAnimationRef.current);
+        scrollAnimationRef.current = null;
+      }
+      isScrollingRef.current = false;
+    };
+  }, [currentNoteIndex, gamePhase, pattern?.measuresPerPattern]);
+
+  // Effect: Reset scroll position when entering feedback phase
+  useEffect(() => {
+    if (gamePhase !== "feedback") return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Cancel any ongoing scroll animation
+    if (scrollAnimationRef.current !== null) {
+      cancelAnimationFrame(scrollAnimationRef.current);
+      scrollAnimationRef.current = null;
+    }
+    isScrollingRef.current = false;
+
+    // Reset scroll tracking refs
+    maxScrollRef.current = 0;
+    targetScrollRef.current = 0;
+
+    // Reset to start of pattern for feedback review
+    container.scrollTo({
+      left: 0,
+      behavior: 'smooth',
+    });
+  }, [gamePhase]);
+
   // Effect: Cleanup VexFlow content on unmount or pattern change
   useEffect(() => {
     const currentContainer = vexContainerRef.current;
@@ -1326,7 +1716,13 @@ export function VexFlowStaffDisplay({
     <div
       className="relative mx-auto flex w-full max-w-6xl items-center justify-center px-4"
       dir="ltr" // Force LTR for music notation - prevents RTL inheritance issues
-      style={{ height: "100%" }}
+      style={{
+        height: "100%",
+        // Prevent horizontal scrollbar during non-feedback phases
+        // The inner container handles feedback-phase scrolling
+        overflowX: gamePhase === "feedback" ? "visible" : "hidden",
+        overflowY: "hidden",
+      }}
     >
       {error ? (
         <div className="relative w-full rounded-lg border border-red-200 bg-red-50 p-4 text-center">
@@ -1341,7 +1737,11 @@ export function VexFlowStaffDisplay({
           className="vexflow-container relative flex w-full items-center justify-center bg-transparent"
           style={{
             maxHeight: "100%",
-            overflow: "visible",
+            overflowX: gamePhase === "feedback" ? "auto" : "hidden", // Scrollbar only during feedback; auto-scroll still works programmatically
+            overflowY: "hidden", // Prevent vertical scroll
+            WebkitOverflowScrolling: "touch", // iOS momentum scrolling
+            // Note: We handle smooth scrolling via JS (scrollTo with behavior: 'smooth')
+            // to have better control over scroll timing and prevent conflicts
           }}
           role="img"
           aria-label={`Musical notation: ${pattern.timeSignature} time signature with ${pattern.notes.length} notes`}
@@ -1350,9 +1750,8 @@ export function VexFlowStaffDisplay({
           <div
             id={containerId}
             ref={vexContainerRef}
-            className="w-full"
             style={{
-              width: "100%",
+              minWidth: "100%", // Allow to grow beyond container width
               overflow: "visible",
               position: "relative",
             }}
