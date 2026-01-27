@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { Drum, Crown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useUser } from '../../features/authentication/useUser';
 import trebleClefIcon from '../../assets/noteImages/treble/treble-clef.svg';
 import bassClefIcon from '../../assets/noteImages/bass/bass-clef.svg';
@@ -288,12 +289,14 @@ const TrailMap = () => {
   const rhythmNodes = getNodesByCategory(NODE_CATEGORIES.RHYTHM);
   const bossNodes = getBossNodes();
 
+  const { t } = useTranslation(['trail', 'common']);
+
   if (loading) {
     return (
       <div className="flex h-96 items-center justify-center">
         <div className="text-center">
           <div className="mb-4 text-5xl animate-bounce">&#127925;</div>
-          <p className="text-lg text-white/70">Loading your trail...</p>
+          <p className="text-lg text-white/70">{t('loading', { ns: 'trail' })}</p>
         </div>
       </div>
     );
@@ -333,8 +336,8 @@ const TrailMap = () => {
 
       {/* Treble Clef Path */}
       <TrailSection
-        title="Treble Clef Path"
-        subtitle="Learn to read notes in the treble clef"
+        title={t('sections.trebleClef.title', { ns: 'trail' })}
+        subtitle={t('sections.trebleClef.subtitle', { ns: 'trail' })}
         icon={<img src={trebleClefIcon} alt="" className="h-8 w-8 sm:h-12 sm:w-12 brightness-0 invert" />}
         nodes={trebleNodes}
         completedNodeIds={completedNodeIds}
@@ -346,8 +349,8 @@ const TrailMap = () => {
 
       {/* Bass Clef Path */}
       <TrailSection
-        title="Bass Clef Path"
-        subtitle="Master the bass clef notes"
+        title={t('sections.bassClef.title', { ns: 'trail' })}
+        subtitle={t('sections.bassClef.subtitle', { ns: 'trail' })}
         icon={<img src={bassClefIcon} alt="" className="h-8 w-8 sm:h-12 sm:w-12 brightness-0 invert" />}
         nodes={bassNodes}
         completedNodeIds={completedNodeIds}
@@ -359,8 +362,8 @@ const TrailMap = () => {
 
       {/* Rhythm Path */}
       <TrailSection
-        title="Rhythm Path"
-        subtitle="Keep the beat and learn rhythm patterns"
+        title={t('sections.rhythm.title', { ns: 'trail' })}
+        subtitle={t('sections.rhythm.subtitle', { ns: 'trail' })}
         icon={<Drum className="h-5 w-5 sm:h-6 sm:w-6" />}
         nodes={rhythmNodes}
         completedNodeIds={completedNodeIds}
@@ -373,8 +376,8 @@ const TrailMap = () => {
       {/* Boss Battles */}
       {bossNodes.length > 0 && (
         <TrailSection
-          title="Boss Challenges"
-          subtitle="Test your mastery with special challenges"
+          title={t('sections.boss.title', { ns: 'trail' })}
+          subtitle={t('sections.boss.subtitle', { ns: 'trail' })}
           icon={<Crown className="h-5 w-5 sm:h-6 sm:w-6" />}
           nodes={bossNodes}
           completedNodeIds={completedNodeIds}

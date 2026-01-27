@@ -16,43 +16,45 @@ export const GOAL_TYPES = {
 };
 
 // Goal templates with target values
+// Note: name and description are i18n keys, not actual text
+// These will be translated in the UI layer using t('dailyGoals.goals.{type}.name')
 const GOAL_TEMPLATES = [
   {
     id: GOAL_TYPES.COMPLETE_EXERCISES,
-    name: 'Complete Exercises',
-    description: 'Complete {{target}} exercises today',
+    nameKey: 'completeExercises',
+    descriptionKey: 'completeExercises',
     icon: '✓',
     target: 5,
     checkProgress: (progress) => progress.exercisesCompleted || 0
   },
   {
     id: GOAL_TYPES.EARN_THREE_STARS,
-    name: 'Perfect Performance',
-    description: 'Earn 3 stars on any node',
+    nameKey: 'earnThreeStars',
+    descriptionKey: 'earnThreeStars',
     icon: '⭐',
     target: 1,
     checkProgress: (progress) => progress.threeStarsEarned || 0
   },
   {
     id: GOAL_TYPES.PRACTICE_NEW_NODE,
-    name: 'Try Something New',
-    description: 'Practice a new trail node',
+    nameKey: 'practiceNewNode',
+    descriptionKey: 'practiceNewNode',
     icon: '🆕',
     target: 1,
     checkProgress: (progress) => progress.newNodesPracticed || 0
   },
   {
     id: GOAL_TYPES.PERFECT_SCORE,
-    name: 'Flawless Victory',
-    description: 'Get a perfect score (100%)',
+    nameKey: 'perfectScore',
+    descriptionKey: 'perfectScore',
     icon: '💯',
     target: 1,
     checkProgress: (progress) => progress.perfectScores || 0
   },
   {
     id: GOAL_TYPES.MAINTAIN_STREAK,
-    name: 'Keep the Streak',
-    description: 'Maintain your daily practice streak',
+    nameKey: 'maintainStreak',
+    descriptionKey: 'maintainStreak',
     icon: '🔥',
     target: 1,
     checkProgress: (progress) => progress.streakMaintained ? 1 : 0
@@ -60,10 +62,30 @@ const GOAL_TEMPLATES = [
 ];
 
 /**
- * Get today's date in YYYY-MM-DD format
+ * Get today's date in YYYY-MM-DD format (local timezone)
  */
 const getTodayDate = () => {
-  return new Date().toISOString().split('T')[0];
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Get ISO timestamp range for today (local midnight to midnight)
+ * Used for querying activity within the current calendar day
+ */
+const getTodayDateRange = () => {
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+
+  return {
+    start: startOfDay.toISOString(),
+    end: endOfDay.toISOString(),
+    dateString: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  };
 };
 
 /**
@@ -81,8 +103,8 @@ const generateDailyGoals = () => {
 
   return goals.map(goal => ({
     id: goal.id,
-    name: goal.name,
-    description: goal.description.replace('{{target}}', goal.target),
+    nameKey: goal.nameKey,
+    descriptionKey: goal.descriptionKey,
     icon: goal.icon,
     target: goal.target,
     progress: 0,
@@ -221,66 +243,59 @@ export const updateDailyGoalsProgress = async (studentId, progressUpdate) => {
  */
 export const calculateDailyProgress = async (studentId) => {
   try {
-    const today = getTodayDate();
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDate = tomorrow.toISOString().split('T')[0];
+    const { start, end, dateString } = getTodayDateRange();
 
-    // Get today's scores to count exercises completed (using correct table name)
-    let todaysScores = [];
-    try {
-      const { data, error } = await supabase
-        .from('students_score')
-        .select('score, game_type, created_at')
-        .eq('student_id', studentId)
-        .gte('created_at', today)
-        .lt('created_at', tomorrowDate);
+    // Query scores created today using ISO timestamp range
+    const { data: todaysScores, error: scoresError } = await supabase
+      .from('students_score')
+      .select('score, game_type, created_at')
+      .eq('student_id', studentId)
+      .gte('created_at', start)
+      .lte('created_at', end);
 
-      if (!error) {
-        todaysScores = data || [];
-      }
-    } catch (e) {
-      console.warn('Could not fetch scores:', e);
+    if (scoresError) {
+      console.warn('Could not fetch scores:', scoresError);
     }
 
-    // Get nodes that were practiced today (for 3-star and new node checks)
-    let todaysNodeProgress = [];
-    try {
-      const { data, error } = await supabase
-        .from('student_skill_progress')
-        .select('node_id, stars, exercises_completed, created_at, last_practiced')
-        .eq('student_id', studentId)
-        .gte('last_practiced', today)
-        .lt('last_practiced', tomorrowDate);
+    // Query node progress for today
+    const { data: todaysNodeProgress, error: progressError } = await supabase
+      .from('student_skill_progress')
+      .select('node_id, stars, exercises_completed, created_at, last_practiced')
+      .eq('student_id', studentId)
+      .gte('last_practiced', start)
+      .lte('last_practiced', end);
 
-      if (!error) {
-        todaysNodeProgress = data || [];
-      }
-    } catch (e) {
-      console.warn('Could not fetch node progress:', e);
+    if (progressError) {
+      console.warn('Could not fetch node progress:', progressError);
     }
+
+    // Helper to extract local date string from timestamp
+    const getLocalDateString = (timestamp) => {
+      const date = new Date(timestamp);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    };
 
     // Calculate metrics
-    const exercisesCompleted = todaysScores.length + todaysNodeProgress.length;
+    const exercisesCompleted = (todaysScores?.length || 0) + (todaysNodeProgress?.length || 0);
 
-    // Count 3-star achievements TODAY (nodes that were FIRST created today with 3 stars)
-    // This ensures we only count NEW 3-star achievements, not re-practicing already-mastered nodes
-    const threeStarsEarned = todaysNodeProgress.filter(p =>
-      p.stars === 3 &&
-      p.created_at?.split('T')[0] === today
-    ).length;
+    // Count 3-star achievements first created today
+    const threeStarsEarned = (todaysNodeProgress || []).filter(p => {
+      if (p.stars !== 3) return false;
+      return getLocalDateString(p.created_at) === dateString;
+    }).length;
 
     // New nodes practiced (created today OR first practice today)
-    const newNodesPracticed = todaysNodeProgress.filter(p =>
-      p.created_at?.split('T')[0] === today ||
-      (p.exercises_completed === 1 && p.last_practiced?.split('T')[0] === today)
-    ).length;
+    const newNodesPracticed = (todaysNodeProgress || []).filter(p => {
+      const createdToday = getLocalDateString(p.created_at) === dateString;
+      const firstPracticeToday = p.exercises_completed === 1 && getLocalDateString(p.last_practiced) === dateString;
+      return createdToday || firstPracticeToday;
+    }).length;
 
-    // Perfect scores - count actual 100% scores from today's game sessions
-    const perfectScores = todaysScores.filter(s => s.score === 100).length;
+    // Perfect scores (100%)
+    const perfectScores = (todaysScores || []).filter(s => s.score === 100).length;
 
-    // Streak maintained if they practiced today
-    const streakMaintained = exercisesCompleted > 0 || todaysNodeProgress.length > 0;
+    // Streak maintained if practiced today
+    const streakMaintained = exercisesCompleted > 0 || (todaysNodeProgress?.length || 0) > 0;
 
     return {
       exercisesCompleted,
@@ -291,7 +306,6 @@ export const calculateDailyProgress = async (studentId) => {
     };
   } catch (error) {
     console.error('Error calculating daily progress:', error);
-    // Return default values instead of throwing
     return {
       exercisesCompleted: 0,
       threeStarsEarned: 0,

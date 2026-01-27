@@ -30,7 +30,7 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
   return (
     <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_24px_rgba(99,102,241,0.22)] backdrop-blur-md">
       {/* Header */}
-      <div className={`mb-4 flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+      <div className="mb-4 flex items-center justify-between" dir={isRTL ? 'rtl' : 'ltr'}>
         <h3 className="text-lg font-bold text-white/90 drop-shadow">
           {t('dashboard.dailyGoals.title', { defaultValue: 'Daily Goals' })}
         </h3>
@@ -71,10 +71,14 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <div className={`text-sm font-semibold ${goal.completed ? 'text-green-300' : 'text-white/90'}`}>
-                        {goal.name}
+                        {goal.nameKey
+                          ? t(`dashboard.dailyGoals.goals.${goal.nameKey}.name`)
+                          : goal.name || 'Goal'}
                       </div>
                       <div className="mt-0.5 text-xs text-white/60">
-                        {goal.description}
+                        {goal.descriptionKey
+                          ? t(`dashboard.dailyGoals.goals.${goal.descriptionKey}.description`, { target: goal.target })
+                          : goal.description || 'Complete this goal'}
                       </div>
                     </div>
                     <div className="text-xs font-bold text-white/70">

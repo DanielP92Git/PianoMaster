@@ -7,23 +7,25 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { getNodeById } from '../../data/skillTrail';
 import { getExerciseProgress, getNextExerciseIndex } from '../../services/skillProgressService';
 import { useUser } from '../../features/authentication/useUser';
+import { translateNodeName } from '../../utils/translateNodeName';
 
 /**
  * Get display name for exercise type
  */
-const getExerciseTypeName = (type) => {
+const getExerciseTypeName = (type, t) => {
   switch (type) {
     case 'note_recognition':
-      return 'Note Recognition';
+      return t('trail:exerciseTypes.note_recognition');
     case 'sight_reading':
-      return 'Sight Reading';
+      return t('trail:exerciseTypes.sight_reading');
     case 'rhythm':
-      return 'Rhythm Practice';
+      return t('trail:exerciseTypes.rhythm');
     case 'boss_challenge':
-      return 'Boss Challenge';
+      return t('trail:exerciseTypes.boss_challenge');
     default:
       return type;
   }
@@ -32,6 +34,8 @@ const getExerciseTypeName = (type) => {
 const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClose }) => {
   const navigate = useNavigate();
   const { user } = useUser();
+  const { t, i18n } = useTranslation(['trail', 'common']);
+  const isRTL = i18n.dir() === 'rtl';
   const [exerciseProgress, setExerciseProgress] = useState([]);
   const [nextExerciseIndex, setNextExerciseIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -131,22 +135,22 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
   const allExercisesComplete = exercisesCompleted >= totalExercises && totalExercises > 0;
 
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-white p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto modal-scrollbar">
+      <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-white p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto modal-scrollbar ${isRTL ? 'text-right' : ''}`}>
         {/* Header */}
-        <div className="mb-3 sm:mb-4 flex items-start justify-between">
+        <div className={`mb-3 sm:mb-4 flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{node.name}</h2>
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{translateNodeName(node.name, t, i18n)}</h2>
               {node.isBoss && <span className="text-xl sm:text-2xl">&#128081;</span>}
             </div>
             <p className="mt-1 text-xs sm:text-sm text-gray-600">{node.description}</p>
           </div>
           <button
             onClick={onClose}
-            className="ml-2 rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0"
-            aria-label="Close"
+            className={`rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0 ${isRTL ? 'mr-2' : 'ml-2'}`}
+            aria-label={t('common:actions.close', { defaultValue: 'Close' })}
           >
             &#10005;
           </button>
@@ -155,7 +159,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
         {/* Progress section (if unlocked) */}
         {isUnlocked && (
           <div className="mb-3 sm:mb-4 rounded-xl bg-gray-50 p-3 sm:p-4">
-            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">Your Progress</h3>
+            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('modal.yourProgress')}</h3>
 
             {/* Node Stars (only show if all exercises complete) */}
             {allExercisesComplete && (
@@ -177,8 +181,8 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
             {totalExercises > 1 && (
               <div className="mb-2">
                 <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                  <span>Exercises</span>
-                  <span>{exercisesCompleted}/{totalExercises}</span>
+                  <span>{t('modal.exercises')}</span>
+                  <span>{t('modal.exerciseCount', { completed: exercisesCompleted, total: totalExercises })}</span>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
@@ -192,7 +196,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
             {/* Best score */}
             {bestScore > 0 && allExercisesComplete && (
               <p className="text-xs sm:text-sm text-gray-600">
-                Best Score: <span className="font-bold text-gray-900">{bestScore}%</span>
+                {t('modal.bestScore')} <span className="font-bold text-gray-900">{t('modal.bestScoreValue', { score: bestScore })}</span>
               </p>
             )}
           </div>
@@ -201,7 +205,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
         {/* Exercise List (if multiple exercises) */}
         {isUnlocked && totalExercises > 1 && (
           <div className="mb-3 sm:mb-4">
-            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">Exercises</h3>
+            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('modal.exercises')}</h3>
             <div className="space-y-1.5 sm:space-y-2">
               {node.exercises.map((exercise, index) => {
                 const epData = getExerciseData(index);
@@ -232,7 +236,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
 
                       {/* Exercise name */}
                       <span className={`text-xs sm:text-sm ${isLocked ? 'text-gray-400' : 'text-gray-700'}`}>
-                        {getExerciseTypeName(exercise.type)}
+                        {getExerciseTypeName(exercise.type, t)}
                       </span>
                     </div>
 
@@ -256,7 +260,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
                           onClick={() => navigateToExercise(index)}
                           className="rounded-md bg-blue-500 px-2 py-1 text-xs font-medium text-white hover:bg-blue-600 whitespace-nowrap"
                         >
-                          Start
+                          {t('modal.startButton')}
                         </button>
                       ) : isCompleted ? (
                         // Replay button for completed
@@ -264,7 +268,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
                           onClick={() => navigateToExercise(index)}
                           className="rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-300 whitespace-nowrap"
                         >
-                          Replay
+                          {t('modal.replayButton')}
                         </button>
                       ) : null}
                     </div>
@@ -277,7 +281,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
 
         {/* Skills covered */}
         <div className="mb-3 sm:mb-4">
-          <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">Skills You'll Learn</h3>
+          <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('modal.skillsYoullLearn')}</h3>
           <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {node.skills.map((skill, index) => (
               <span
@@ -292,9 +296,9 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
 
         {/* XP reward */}
         <div className="mb-3 sm:mb-4 flex items-center justify-between rounded-lg bg-purple-50 p-2.5 sm:p-3">
-          <span className="text-xs sm:text-sm font-medium text-purple-900">XP Reward</span>
+          <span className="text-xs sm:text-sm font-medium text-purple-900">{t('modal.xpReward')}</span>
           <span className="text-base sm:text-lg font-bold text-purple-600">
-            {node.xpReward} x &#11088; stars
+            {t('modal.xpRewardValue', { xp: node.xpReward })}
           </span>
         </div>
 
@@ -302,7 +306,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
         {node.accessoryUnlock && (
           <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-50 p-2.5 sm:p-3">
             <p className="text-xs font-medium text-yellow-900">
-              &#127873; Unlock: <span className="font-bold">{node.accessoryUnlock}</span>
+              &#127873; {t('modal.unlockLabel')} <span className="font-bold">{node.accessoryUnlock}</span>
             </p>
           </div>
         )}
@@ -311,13 +315,13 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
         {!isUnlocked && prerequisites.length > 0 && (
           <div className="mb-3 sm:mb-4 rounded-lg bg-red-50 p-2.5 sm:p-3">
             <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-900">
-              &#128274; Complete These First:
+              &#128274; {t('modal.prerequisites')}
             </h3>
             <ul className="list-inside list-disc text-xs sm:text-sm text-red-700">
               {prerequisites.map((prereqId) => {
                 const prereqNode = getNodeById(prereqId);
                 return (
-                  <li key={prereqId}>{prereqNode?.name || prereqId}</li>
+                  <li key={prereqId}>{prereqNode ? translateNodeName(prereqNode.name, t, i18n) : prereqId}</li>
                 );
               })}
             </ul>
@@ -325,12 +329,12 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
         )}
 
         {/* Action buttons */}
-        <div className="flex gap-2 sm:gap-3">
+        <div className={`flex gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <button
             onClick={onClose}
             className="flex-1 rounded-xl border-2 border-gray-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-colors hover:bg-gray-50"
           >
-            Cancel
+            {t('common:actions.cancel', { defaultValue: 'Cancel' })}
           </button>
           <button
             onClick={handleStartPractice}
@@ -345,12 +349,12 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
             `}
           >
             {!isUnlocked
-              ? 'Locked'
+              ? t('modal.button.locked')
               : allExercisesComplete
-                ? 'Practice Again'
+                ? t('modal.button.practiceAgain')
                 : nextExerciseIndex === 0
-                  ? 'Start Practice'
-                  : `Continue (${exercisesCompleted}/${totalExercises})`
+                  ? t('modal.button.startPractice')
+                  : t('modal.button.continue', { completed: exercisesCompleted, total: totalExercises })
             }
           </button>
         </div>

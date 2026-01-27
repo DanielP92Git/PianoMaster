@@ -6,8 +6,12 @@
  */
 
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { translateNodeName } from '../../utils/translateNodeName';
 
 const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirstNode, onClick }) => {
+  const { t, i18n } = useTranslation('trail');
+
   // Determine node state
   const nodeState = useMemo(() => {
     if (!isUnlocked) return 'locked';
@@ -124,7 +128,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
           ${config.pulse ? 'animate-pulse' : ''}
           ${isBoss ? 'h-14 w-14 rounded-full' : ''}
         `}
-        aria-label={`${node.name} - ${nodeState}`}
+        aria-label={`${translateNodeName(node.name, t, i18n)} - ${nodeState}`}
       >
         {/* Boss crown indicator */}
         {isBoss && (
@@ -139,7 +143,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
         {/* Current indicator label */}
         {isCurrent && (
           <div className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-cyan-500 px-1.5 py-0.5 text-[8px] font-bold text-white shadow-lg">
-            {isFirstNode && !progress ? 'Start Here!' : 'Continue'}
+            {isFirstNode && !progress ? t('node.startHere') : t('node.continue')}
           </div>
         )}
       </button>
@@ -147,7 +151,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
       {/* Node name */}
       <div className="mt-1 max-w-[70px] text-center">
         <div className={`text-[10px] font-semibold leading-tight ${isUnlocked ? 'text-white' : 'text-white/40'}`}>
-          {node.name}
+          {translateNodeName(node.name, t, i18n)}
         </div>
         {/* Best score */}
         {bestScore > 0 && (

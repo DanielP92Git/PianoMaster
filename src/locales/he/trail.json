@@ -1,0 +1,67 @@
+{
+  "pageTitle": "מסלול הלמידה",
+  "freePracticeLink": "תרגול חופשי",
+  "loading": "טוען את המסלול שלך...",
+  "sections": {
+    "trebleClef": {
+      "title": "מסלול מפתח סול",
+      "subtitle": "למדו לקרוא תווים במפתח סול"
+    },
+    "bassClef": {
+      "title": "מסלול מפתח פה",
+      "subtitle": "שלטו בתווי מפתח פה"
+    },
+    "rhythm": {
+      "title": "מסלול קצב",
+      "subtitle": "שמרו על הקצב ולמדו תבניות מקצב"
+    },
+    "boss": {
+      "title": "אתגרי בוס",
+      "subtitle": "בדקו את השליטה שלכם עם אתגרים מיוחדים"
+    }
+  },
+  "stats": {
+    "stars": "כוכבים",
+    "done": "הושלם",
+    "open": "פתוח"
+  },
+  "node": {
+    "startHere": "התחילו כאן!",
+    "continue": "המשיכו"
+  },
+  "exerciseTypes": {
+    "note_recognition": "זיהוי תווים",
+    "sight_reading": "קריאה מהירה",
+    "rhythm": "תרגול קצב",
+    "boss_challenge": "אתגר בוס"
+  },
+  "modal": {
+    "yourProgress": "ההתקדמות שלכם",
+    "exercises": "תרגילים",
+    "exerciseCount": "{{completed}}/{{total}}",
+    "bestScore": "ציון הטוב ביותר:",
+    "bestScoreValue": "{{score}}%",
+    "startButton": "התחל",
+    "replayButton": "שחק שוב",
+    "skillsYoullLearn": "מיומנויות שתלמדו",
+    "xpReward": "פרס XP",
+    "xpRewardValue": "{{xp}} x ⭐ כוכבים",
+    "unlockLabel": "פתחו:",
+    "prerequisites": "השלימו אלה קודם:",
+    "button": {
+      "locked": "נעול",
+      "practiceAgain": "תרגלו שוב",
+      "startPractice": "התחילו תרגול",
+      "continue": "המשיכו ({{completed}}/{{total}})"
+    }
+  },
+  "noteNames": {
+    "C": "דו",
+    "D": "רה",
+    "E": "מי",
+    "F": "פה",
+    "G": "סול",
+    "A": "לה",
+    "B": "סי"
+  }
+}

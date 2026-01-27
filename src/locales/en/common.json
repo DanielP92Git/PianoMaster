@@ -563,16 +563,46 @@
     "dailyGoals": {
       "title": "Daily Goals",
       "allComplete": "All goals completed today!",
-      "noGoals": "No goals available"
+      "noGoals": "No goals available",
+      "goals": {
+        "completeExercises": {
+          "name": "Complete Exercises",
+          "description": "Complete {{target}} exercises today"
+        },
+        "earnThreeStars": {
+          "name": "Perfect Performance",
+          "description": "Earn 3 stars on any node"
+        },
+        "practiceNewNode": {
+          "name": "Try Something New",
+          "description": "Practice a new trail node"
+        },
+        "perfectScore": {
+          "name": "Got Them All!",
+          "description": "Get all the answers correct"
+        },
+        "maintainStreak": {
+          "name": "Keep the Streak",
+          "description": "Maintain your daily practice streak"
+        }
+      }
+    },
+    "myProgress": {
+      "title": "My Progress"
+    },
+    "toasts": {
+      "migrationSuccess": "Welcome to the new trail system! {{nodesCreated}} nodes and {{xpAwarded}} XP migrated from your previous progress."
     },
     "assignments": {
       "title": "Assignments",
+      "noPending": "No pending",
       "pending_zero": "No pending",
       "pending_one": "{{count}} pending",
       "pending_other": "{{count}} pending",
       "completed_zero": "0 completed",
       "completed_one": "{{count}} completed",
       "completed_other": "{{count}} completed",
+      "allCaughtUp": "You're all caught up!",
       "empty": "No assignments yet",
       "viewAll": "View all {{count}} assignments",
       "status": {
@@ -691,6 +721,7 @@
       "milestoneBadge": "Milestone!",
       "nextMilestone": "{{remaining}} to {{milestone}} days",
       "maxReached": "Max level reached!",
+      "rangeSeparator": "to",
       "messages": {
         "startJourney": "Start Your Journey!",
         "buildingMomentum": "Building Momentum",

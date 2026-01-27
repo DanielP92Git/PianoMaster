@@ -138,26 +138,45 @@ export const streakService = {
       return currentStreak;
     }
 
+    // Helper function to get calendar date string in local timezone
+    const getCalendarDate = (date) => {
+      const d = new Date(date);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    const todayDate = getCalendarDate(today);
+
     if (!lastPractice) {
       // First time practicing
       currentStreak = 1;
     } else {
-      const diffTime = today.getTime() - lastPractice.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const lastPracticeDate = getCalendarDate(lastPractice);
 
-      if (diffDays === 0) {
-        // Already practiced today, don't update streak
+      if (lastPracticeDate === todayDate) {
+        // Already practiced today (same calendar day), don't update streak
         return currentStreak;
-      } else if (diffDays === 1) {
-        // Consecutive day, increase streak
+      }
+
+      // Calculate calendar day difference using midnight boundaries
+      const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const lastPracticeMidnight = new Date(
+        lastPractice.getFullYear(),
+        lastPractice.getMonth(),
+        lastPractice.getDate()
+      );
+      const diffDays = Math.floor((todayMidnight - lastPracticeMidnight) / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Consecutive calendar day, increase streak
         currentStreak += 1;
-      } else {
-        // Streak broken
+      } else if (diffDays > 1) {
+        // Streak broken (missed a day)
         currentStreak = 1;
       }
+      // If diffDays === 0, already handled above (same day)
     }
 
-    // Update streak count
+    // Update streak count in database
     const { error: streakError } = await supabase.from("current_streak").upsert(
       {
         student_id: session.user.id,

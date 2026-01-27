@@ -1,0 +1,36 @@
+/**
+ * Utility function to translate note names in trail node titles
+ *
+ * Converts English note names (C, D, E, F, G, A, B) to their localized equivalents
+ * Example: "C & D" -> "דו, רה" (in Hebrew)
+ *
+ * @param {string} nodeName - The original node name (e.g., "C, D, E")
+ * @param {Function} t - The i18next translation function
+ * @param {Object} i18n - Optional i18next instance (for accessing language/dir)
+ * @returns {string} The translated node name
+ */
+export function translateNodeName(nodeName, t, i18n = null) {
+  if (!nodeName || !t) return nodeName || "";
+
+  // Map of note letters to translation keys with fallback to original
+  const noteLetters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+  let translatedName = nodeName;
+  noteLetters.forEach(note => {
+    // Match note letter as standalone or followed by non-letter (e.g., "C,", "C ", "C&")
+    // Uses word boundary \b to match only complete note letters
+    const regex = new RegExp(`\\b${note}\\b`, 'g');
+    // Try with namespace prefix, fallback to without prefix
+    const translatedNote = t(`noteNames.${note}`, { ns: 'trail', defaultValue: note });
+    translatedName = translatedName.replace(regex, translatedNote);
+  });
+
+  // For Hebrew (and other RTL languages), replace ampersands with commas
+  // This ensures consistent separator usage: "דו & רה" becomes "דו, רה"
+  const i18nInstance = i18n || t.i18n;
+  if (i18nInstance && i18nInstance.dir() === 'rtl') {
+    translatedName = translatedName.replace(/\s*&\s*/g, ', ');
+  }
+
+  return translatedName;
+}

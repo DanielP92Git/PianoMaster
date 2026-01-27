@@ -1,0 +1,67 @@
+{
+  "pageTitle": "Learning Trail",
+  "freePracticeLink": "Free Practice",
+  "loading": "Loading your trail...",
+  "sections": {
+    "trebleClef": {
+      "title": "Treble Clef Path",
+      "subtitle": "Learn to read notes in the treble clef"
+    },
+    "bassClef": {
+      "title": "Bass Clef Path",
+      "subtitle": "Master the bass clef notes"
+    },
+    "rhythm": {
+      "title": "Rhythm Path",
+      "subtitle": "Keep the beat and learn rhythm patterns"
+    },
+    "boss": {
+      "title": "Boss Challenges",
+      "subtitle": "Test your mastery with special challenges"
+    }
+  },
+  "stats": {
+    "stars": "Stars",
+    "done": "Done",
+    "open": "Open"
+  },
+  "node": {
+    "startHere": "Start Here!",
+    "continue": "Continue"
+  },
+  "exerciseTypes": {
+    "note_recognition": "Note Recognition",
+    "sight_reading": "Sight Reading",
+    "rhythm": "Rhythm Practice",
+    "boss_challenge": "Boss Challenge"
+  },
+  "modal": {
+    "yourProgress": "Your Progress",
+    "exercises": "Exercises",
+    "exerciseCount": "{{completed}}/{{total}}",
+    "bestScore": "Best Score:",
+    "bestScoreValue": "{{score}}%",
+    "startButton": "Start",
+    "replayButton": "Replay",
+    "skillsYoullLearn": "Skills You'll Learn",
+    "xpReward": "XP Reward",
+    "xpRewardValue": "{{xp}} x ⭐ stars",
+    "unlockLabel": "Unlock:",
+    "prerequisites": "Complete These First:",
+    "button": {
+      "locked": "Locked",
+      "practiceAgain": "Practice Again",
+      "startPractice": "Start Practice",
+      "continue": "Continue ({{completed}}/{{total}})"
+    }
+  },
+  "noteNames": {
+    "C": "C",
+    "D": "D",
+    "E": "E",
+    "F": "F",
+    "G": "G",
+    "A": "A",
+    "B": "B"
+  }
+}

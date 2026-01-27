@@ -400,7 +400,7 @@ export const SKILL_NODES = [
   },
   {
     id: 'bass_master',
-    name: 'Full Bass Range',
+    name: 'C, B, A, G, F, E, D, C',
     description: 'Master the complete bass clef range',
     category: NODE_CATEGORIES.BASS_CLEF,
     order: 6,

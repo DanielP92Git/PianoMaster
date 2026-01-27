@@ -33,10 +33,11 @@ import iconFlameSimple from "../../assets/icons/flame-simple.png";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { runMigrationIfNeeded } from "../../utils/progressMigration";
+import { translateNodeName } from "../../utils/translateNodeName";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, profile } = useUser();
-  const { t, i18n } = useTranslation("common");
+  const { t, i18n } = useTranslation(["common", "trail"]);
   const isRTL = i18n.dir() === "rtl";
   const queryClient = useQueryClient();
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
@@ -48,35 +49,6 @@ function Dashboard() {
     ? profileData.equipped_accessories.filter((item) => item?.image_url)
     : [];
 
-  // Preload dashboard hero images only when this component mounts
-  useEffect(() => {
-    const preloadLinks = [
-      { href: '/images/dashboard-hero.webp', type: 'image/webp', media: '(max-width: 1023px)' },
-      { href: '/images/desktop-dashboard-hero.webp', type: 'image/webp', media: '(min-width: 1024px)' },
-      { href: '/images/dashboard-hero.png', type: 'image/png', media: '(max-width: 1023px)' },
-      { href: '/images/desktop-dashboard-hero.png', type: 'image/png', media: '(min-width: 1024px)' },
-    ];
-
-    const linkElements = preloadLinks.map((linkData) => {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = linkData.href;
-      link.type = linkData.type;
-      link.media = linkData.media;
-      document.head.appendChild(link);
-      return link;
-    });
-
-    // Cleanup: remove preload links when component unmounts
-    return () => {
-      linkElements.forEach((link) => {
-        if (link.parentNode) {
-          link.parentNode.removeChild(link);
-        }
-      });
-    };
-  }, []);
 
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
@@ -95,7 +67,10 @@ function Dashboard() {
           // Show success toast if nodes were migrated
           if (results.nodesCreated > 0) {
             toast.success(
-              `Welcome to the new trail system! ${results.nodesCreated} nodes and ${results.totalXPAwarded} XP migrated from your previous progress.`,
+              t('dashboard.toasts.migrationSuccess', {
+                nodesCreated: results.nodesCreated,
+                xpAwarded: results.totalXPAwarded
+              }),
               { duration: 6000 }
             );
 
@@ -193,7 +168,10 @@ function Dashboard() {
 
   // Fetch daily goals with progress (only for students)
   const { data: dailyGoals = [], isLoading: goalsLoading, error: goalsError } = useQuery({
-    queryKey: ["daily-goals", user?.id, new Date().toISOString().split('T')[0]],
+    queryKey: ["daily-goals", user?.id, (() => {
+      const today = new Date();
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    })()],
     queryFn: async () => {
       if (!user?.id || !isStudent) {
         return [];
@@ -268,7 +246,7 @@ function Dashboard() {
     if (!nextMilestone) return t("dashboard.streak.maxReached");
     const prevMilestone =
       milestones[milestones.indexOf(nextMilestone) - 1] || 0;
-    return `${prevMilestone} to ${nextMilestone} ${t("dashboard.streak.dayLabel", { count: nextMilestone })}`;
+    return `${prevMilestone} ${t("dashboard.streak.rangeSeparator")} ${nextMilestone} ${t("dashboard.streak.dayLabel", { count: nextMilestone })}`;
   };
 
   // Modal opening functions
@@ -685,7 +663,7 @@ function Dashboard() {
                     {t("dashboard.continueButton.title", { defaultValue: "Continue Learning" })}
                   </div>
                   <div className="mt-1 text-sm text-white/80">
-                    {nextNode.name} {nextNode.progress?.stars > 0 && `(${nextNode.progress.stars}★)`}
+                    {translateNodeName(nextNode.name, t, i18n)} {nextNode.progress?.stars > 0 && `(${nextNode.progress.stars}★)`}
                   </div>
                 </div>
               </div>
@@ -857,14 +835,12 @@ function Dashboard() {
             <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
               {t("dashboard.stats.level")}
             </div>
-            <div className="text-center md:-mt-2">
-              <div
-                className="text-2xl font-black text-yellow-200"
-                style={{ fontFamily: "'Nunito', sans-serif" }}
-              >
+            <div className="text-center">
+              <div className="text-3xl font-black text-yellow-200">
                 {String(levelName || "").toUpperCase()}
               </div>
             </div>
+            <div className="h-2" />
           </div>
         </section>
 

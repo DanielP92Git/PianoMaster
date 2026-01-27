@@ -547,16 +547,46 @@
     "dailyGoals": {
       "title": "יעדים יומיים",
       "allComplete": "כל היעדים הושלמו היום!",
-      "noGoals": "אין יעדים זמינים"
+      "noGoals": "אין יעדים זמינים",
+      "goals": {
+        "completeExercises": {
+          "name": "השלימו תרגילים",
+          "description": "השלימו {{target}} תרגילים היום"
+        },
+        "earnThreeStars": {
+          "name": "ביצוע מושלם",
+          "description": "קבלו 3 כוכבים על מסלול כלשהו"
+        },
+        "practiceNewNode": {
+          "name": "נסו משהו חדש",
+          "description": "תרגלו מסלול חדש"
+        },
+        "perfectScore": {
+          "name": "הצלחתי בכולם!",
+          "description": "לענות נכון על כל השאלות"
+        },
+        "maintainStreak": {
+          "name": "שמרו על הרצף",
+          "description": "שמרו על רצף התרגול היומי שלכם"
+        }
+      }
+    },
+    "myProgress": {
+      "title": "ההתקדמות שלי"
+    },
+    "toasts": {
+      "migrationSuccess": "ברוכים הבאים למערכת השביל החדשה! {{nodesCreated}} מסלולים ו-{{xpAwarded}} XP הועברו מההתקדמות הקודמת שלך."
     },
     "assignments": {
       "title": "משימות",
+      "noPending": "אין משימות ממתינות",
       "pending_zero": "אין משימות ממתינות",
       "pending_one": "משימה ממתינה אחת",
       "pending_other": "{{count}} משימות ממתינות",
       "completed_zero": "אין משימות שהושלמו",
       "completed_one": "משימה אחת הושלמה",
       "completed_other": "{{count}} משימות הושלמו",
+      "allCaughtUp": "אתם מעודכנים לחלוטין!",
       "empty": "אין משימות כרגע",
       "viewAll": "צפו בכל {{count}} המשימות",
       "status": {
@@ -677,6 +707,7 @@
       "milestoneBadge": "אבני דרך!",
       "nextMilestone": "עוד {{remaining}} כדי להשלים {{milestone}} ימים",
       "maxReached": "הגעתם לשיא!",
+      "rangeSeparator": "עד",
       "messages": {
         "startJourney": "יוצאים לדרך!",
         "buildingMomentum": "צוברים תנופה",
