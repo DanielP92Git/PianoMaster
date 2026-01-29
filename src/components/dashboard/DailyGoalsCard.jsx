@@ -6,10 +6,28 @@
 
 import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Circle } from 'lucide-react';
+import FlameIcon from '../../assets/icons/fire-flame-curved-solid-full.svg?react';
+import StarIcon from '../../assets/icons/star-regular-full.svg?react';
+import LightbulbIcon from '../../assets/icons/lightbulb-regular-full.svg?react';
 
 const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
   const { t, i18n } = useTranslation('common');
   const isRTL = i18n.dir() === 'rtl';
+
+  // Map goal types to icons
+  const getGoalIcon = (goalId, originalIcon) => {
+    switch (goalId) {
+      case 'maintain_streak':
+        return { type: 'svg', component: FlameIcon, color: 'text-orange-500' };
+      case 'perfect_score':
+      case 'earn_three_stars':
+        return { type: 'svg', component: StarIcon, color: 'text-yellow-400' };
+      case 'practice_new_node':
+        return { type: 'svg', component: LightbulbIcon, color: 'text-amber-400' };
+      default:
+        return { type: 'emoji', content: originalIcon };
+    }
+  };
 
   if (isLoading) {
     return (
@@ -48,6 +66,7 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
       <div className="space-y-3">
         {goals.map((goal, index) => {
           const progressPercentage = Math.min((goal.progress / goal.target) * 100, 100);
+          const iconConfig = getGoalIcon(goal.id, goal.icon);
 
           return (
             <div
@@ -58,11 +77,13 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
             >
               <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 {/* Icon */}
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/20 text-xl">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/20">
                   {goal.completed ? (
                     <CheckCircle2 className="h-5 w-5 text-green-400" />
+                  ) : iconConfig.type === 'svg' ? (
+                    <iconConfig.component className={`h-6 w-6 ${iconConfig.color}`} />
                   ) : (
-                    <span>{goal.icon}</span>
+                    <span className="text-xl">{iconConfig.content}</span>
                   )}
                 </div>
 

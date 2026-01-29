@@ -109,7 +109,7 @@ export default function PracticeModes({ practiceModesSectionRef }) {
           <span>←</span>
           <span className="font-medium">Back to Learning Trail</span>
         </Link>
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-white">
           Or choose any game to practice freely:
         </p>
       </div>

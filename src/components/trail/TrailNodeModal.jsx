@@ -241,19 +241,28 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
                     </div>
 
                     {/* Stars or action */}
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       {isCompleted && epData ? (
-                        // Show stars earned
-                        <div className="flex items-center gap-0.5">
-                          {[1, 2, 3].map((s) => (
-                            <span
-                              key={s}
-                              className={`text-xs sm:text-sm ${s <= epData.stars ? 'text-yellow-400' : 'text-gray-300'}`}
-                            >
-                              &#11088;
-                            </span>
-                          ))}
-                        </div>
+                        // Show stars earned + replay button for completed exercises
+                        <>
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3].map((s) => (
+                              <span
+                                key={s}
+                                className={`text-xs sm:text-sm ${s <= epData.stars ? 'text-yellow-400' : 'text-gray-300'}`}
+                              >
+                                &#11088;
+                              </span>
+                            ))}
+                          </div>
+                          <button
+                            onClick={() => navigateToExercise(index)}
+                            className="rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-300 whitespace-nowrap"
+                            aria-label={t('modal.replayButton')}
+                          >
+                            {t('modal.replayButton')}
+                          </button>
+                        </>
                       ) : isNext ? (
                         // Show "Start" button for next exercise
                         <button
@@ -261,14 +270,6 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
                           className="rounded-md bg-blue-500 px-2 py-1 text-xs font-medium text-white hover:bg-blue-600 whitespace-nowrap"
                         >
                           {t('modal.startButton')}
-                        </button>
-                      ) : isCompleted ? (
-                        // Replay button for completed
-                        <button
-                          onClick={() => navigateToExercise(index)}
-                          className="rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-300 whitespace-nowrap"
-                        >
-                          {t('modal.replayButton')}
                         </button>
                       ) : null}
                     </div>

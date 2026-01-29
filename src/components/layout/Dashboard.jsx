@@ -27,8 +27,6 @@ import iconCrown from "../../assets/icons/crown.png";
 import iconFlame from "../../assets/icons/flame.png";
 import iconStar from "../../assets/icons/star.png";
 import Fireflies from "../ui/Fireflies";
-import mysticForestBg from "../../assets/images/mystic-forest-background.png";
-import mysticForestBgRight from "../../assets/images/mystic-forest-background-right.png";
 import iconFlameSimple from "../../assets/icons/flame-simple.png";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
@@ -886,12 +884,7 @@ function Dashboard() {
         <section className="grid grid-cols-1 gap-6 pb-8 lg:grid-cols-3">
           {/* Left / Big Panel: My Progress */}
           <div
-            className="relative overflow-hidden rounded-[2.25rem] border-2 border-purple-400/60 shadow-[0_0_0_1px_rgba(168,85,247,0.4),0_0_0_2px_rgba(139,92,246,0.3),0_0_20px_rgba(168,85,247,0.5),0_0_40px_rgba(139,92,246,0.4),0_0_60px_rgba(168,85,247,0.3),0_0_80px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(168,85,247,0.1)] lg:col-span-2"
-            style={{
-              backgroundImage: `url(${mysticForestBg})`,
-              backgroundSize: "cover",
-              backgroundPosition: isRTL ? "right center" : "left center",
-            }}
+            className="relative overflow-hidden rounded-[2.25rem] border-2 border-purple-400/60 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-violet-900/90 shadow-[0_0_0_1px_rgba(168,85,247,0.4),0_0_0_2px_rgba(139,92,246,0.3),0_0_20px_rgba(168,85,247,0.5),0_0_40px_rgba(139,92,246,0.4),0_0_60px_rgba(168,85,247,0.3),0_0_80px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(168,85,247,0.1)] lg:col-span-2"
           >
             <div className="relative z-10 p-6 sm:p-8">
               <div
@@ -907,33 +900,20 @@ function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                {/* Build a Practice Streak (no image, just background idea) */}
+                {/* Build a Practice Streak */}
                 <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_24px_rgba(99,102,241,0.22)] backdrop-blur-md">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
                   <div className="relative">
-                    <div
-                      className={`mb-3 flex items-center gap-3 ${
-                        isRTL ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/20 shadow-[0_0_18px_rgba(251,146,60,0.25)]">
-                        <img
-                          src={iconFlameSimple}
-                          alt="Flame"
-                          className="h-10 w-10 object-contain"
-                        />
+                    <div className={isRTL ? "text-right" : ""}>
+                      <div className="text-sm font-semibold text-white/90">
+                        {t("dashboard.nextSteps.items.streak3.title", {
+                          defaultValue: "Build a Practice Streak",
+                        })}
                       </div>
-                      <div>
-                        <div className="text-sm font-semibold text-white/90">
-                          {t("dashboard.nextSteps.items.streak3.title", {
-                            defaultValue: "Build a Practice Streak",
-                          })}
-                        </div>
-                        <div className="text-xs text-white/70">
-                          {t("dashboard.nextSteps.items.streak3.description", {
-                            defaultValue: "Keep it up!",
-                          })}
-                        </div>
+                      <div className="mt-2 text-xs text-white/70">
+                        {t("dashboard.nextSteps.items.streak3.description", {
+                          defaultValue: "Keep it up!",
+                        })}
                       </div>
                     </div>
                   </div>
@@ -986,12 +966,7 @@ function Dashboard() {
 
           {/* Right Panel: Practice Tools */}
           <div
-            className="relative overflow-hidden rounded-[2.25rem] border-2 border-indigo-400/60 shadow-[0_0_0_1px_rgba(99,102,241,0.4),0_0_0_2px_rgba(79,70,229,0.3),0_0_20px_rgba(99,102,241,0.5),0_0_40px_rgba(79,70,229,0.4),0_0_60px_rgba(99,102,241,0.3),0_0_80px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(99,102,241,0.1)]"
-            style={{
-              backgroundImage: `url(${mysticForestBgRight})`,
-              backgroundSize: "cover",
-              backgroundPosition: isRTL ? "left center" : "right center",
-            }}
+            className="relative overflow-hidden rounded-[2.25rem] border-2 border-indigo-400/60 bg-gradient-to-br from-indigo-900/90 via-blue-900/90 to-cyan-900/90 shadow-[0_0_0_1px_rgba(99,102,241,0.4),0_0_0_2px_rgba(79,70,229,0.3),0_0_20px_rgba(99,102,241,0.5),0_0_40px_rgba(79,70,229,0.4),0_0_60px_rgba(99,102,241,0.3),0_0_80px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(99,102,241,0.1)]"
           >
             <div className="relative z-10 p-6 sm:p-8">
               <h3 className="mb-6 text-lg font-bold text-white/90 drop-shadow">
