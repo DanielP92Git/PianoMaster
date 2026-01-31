@@ -10,25 +10,25 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 2 of 3 (COPPA Compliance Implementation)
-Plan: 3 of 6 complete (Third-Party SDK Audit)
+Plan: 4 of 6 complete (COPPA Compliance Services)
 Status: In progress
-Last activity: 2026-01-31 - Completed 02-03-PLAN.md
+Last activity: 2026-01-31 - Completed 02-04-PLAN.md
 
-Progress: [█████░░░░░] 55% (6/11 plans: 3 phase 1 + 3 phase 2)
+Progress: [██████░░░░] 64% (7/11 plans: 3 phase 1 + 4 phase 2)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 4 minutes
-- Total execution time: 25 minutes
+- Total execution time: 28 minutes
 
 **By Phase:**
 
 | Phase | Plans | Completed | Total Time | Avg/Plan |
 |-------|-------|-----------|------------|----------|
 | 01 Critical Security | 3 | 3 | 15 min | 5 min |
-| 02 COPPA Compliance | 6 | 3 | 10 min | 3.3 min |
+| 02 COPPA Compliance | 6 | 4 | 13 min | 3.3 min |
 
 **Recent Trend:**
 - Plan 01-01: 4 minutes (database authorization audit)
@@ -37,6 +37,7 @@ Progress: [█████░░░░░] 55% (6/11 plans: 3 phase 1 + 3 phase 
 - Plan 02-01: 0 minutes (schema bundled with 02-02)
 - Plan 02-02: 3 minutes (Age Gate UI component)
 - Plan 02-03: 4 minutes (Third-party SDK audit)
+- Plan 02-04: 3 minutes (COPPA compliance services)
 - Trend: Consistent, fast execution
 
 *Updated after each plan completion*
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - **Google Fonts as only blocking issue** - Self-host via fontsource packages (02-03)
 - **Debug logging safe** - Disabled by default, localhost-only (02-03)
 - **Supabase requires DPA** - Data Processing Addendum before collecting child data (02-03)
+- **SHA-256 token hashing** - Web Crypto API for browser-native secure hashing (02-04)
+- **Parallel export queries** - Query all tables simultaneously for performance (02-04)
+- **Name confirmation for deletion** - Prevent accidental deletion of child accounts (02-04)
 
 ### Pending Todos
 
@@ -82,17 +86,18 @@ None.
 - State age verification laws (TX, UT, LA) may require Play Age Signals API integration
 - **Google Fonts must be self-hosted before collecting child data** (02-03 finding)
 - **react-router vulnerabilities should be patched** (02-03 finding)
+- **Hard delete Edge Function needed** - Scheduled job for accounts past 30-day grace period (02-04)
 
 **Phase 3 concerns:**
 - Rate limiting thresholds may need tuning based on real-world usage patterns (10 per 5 min baseline)
 
 ## Session Continuity
 
-Last session: 2026-01-31 22:45 UTC
-Stopped at: Completed 02-03-PLAN.md (Third-Party SDK Audit)
+Last session: 2026-01-31 22:53 UTC
+Stopped at: Completed 02-04-PLAN.md (COPPA Compliance Services)
 Resume file: None
-Next step: Execute next phase 2 plan
+Next step: Execute next phase 2 plan (02-05 or 02-06)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-01-31 - Completed 02-03*
+*Last updated: 2026-01-31 - Completed 02-04*
