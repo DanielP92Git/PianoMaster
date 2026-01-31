@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Mail, RefreshCw, LogOut } from 'lucide-react';
 import { resendConsentEmail } from '../../services/consentService';
-import { logout } from '../../services/authService';
+import { logout } from '../../services/apiAuth';
 import toast from 'react-hot-toast';
 
 /**
