@@ -763,6 +763,32 @@
       }
     }
   },
+  "errors": {
+    "auth": {
+      "notAuthenticated": "בבקשה התחברו כדי להמשיך.",
+      "sessionExpired": "החיבור נסגר. בבקשה התחברו שוב."
+    },
+    "authorization": {
+      "unauthorized": "אופס! אין לך גישה לזה.",
+      "noAccess": "אופס! זה לא שלך לראות.",
+      "teacherNoConnection": "צריך להתחבר לתלמיד הזה קודם.",
+      "selfOnly": "אפשר לעשות את זה רק לעצמך."
+    },
+    "rateLimited": {
+      "student": "לאט לאט! נסו שוב בעוד כמה דקות.",
+      "teacher": "יותר מדי ניסיונות. אנא המתינו {{minutes}} דקות.",
+      "generic": "אנא המתינו רגע ונסו שוב."
+    },
+    "network": {
+      "offline": "אתם לא מחוברים לאינטרנט. התחברו כדי להמשיך.",
+      "timeout": "זה לקח יותר מדי זמן. נסו שוב."
+    },
+    "generic": {
+      "somethingWrong": "אופס! משהו לא עבד.",
+      "tryAgain": "נסו שוב.",
+      "contactSupport": "אם זה ממשיך לקרות, בקשו עזרה ממבוגר."
+    }
+  },
   "gameControls": {
     "play": "נגן",
     "pause": "השהה",
