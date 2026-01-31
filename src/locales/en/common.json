@@ -777,6 +777,32 @@
       }
     }
   },
+  "errors": {
+    "auth": {
+      "notAuthenticated": "Please log in to continue.",
+      "sessionExpired": "Your session ended. Please log in again."
+    },
+    "authorization": {
+      "unauthorized": "Oops! You can't see that.",
+      "noAccess": "Oops! That's not yours to see.",
+      "teacherNoConnection": "You need to connect with this student first.",
+      "selfOnly": "You can only do this for yourself."
+    },
+    "rateLimited": {
+      "student": "Slow down! Try again in a few minutes.",
+      "teacher": "Too many attempts. Please wait {{minutes}} minutes.",
+      "generic": "Please wait a moment and try again."
+    },
+    "network": {
+      "offline": "You're offline. Connect to the internet to continue.",
+      "timeout": "That took too long. Please try again."
+    },
+    "generic": {
+      "somethingWrong": "Oops! Something didn't work.",
+      "tryAgain": "Please try again.",
+      "contactSupport": "If this keeps happening, ask a grown-up for help."
+    }
+  },
   "gameControls": {
     "play": "Play",
     "pause": "Pause",
