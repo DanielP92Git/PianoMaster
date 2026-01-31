@@ -52,15 +52,10 @@ skipped: 3
 ## Gaps
 
 - truth: "All user-specific localStorage keys are cleared on logout"
-  status: failed
+  status: fixed
   reason: "User reported: sb- is removed but trail_migration_v2[...] preserved"
   severity: major
   test: 1
   root_cause: "UUID pattern uses ^...$ anchors so only matches keys that ARE UUIDs, not keys containing UUIDs. trail_migration_v2_<uuid> has a prefix so it doesn't match."
-  artifacts:
-    - path: "src/services/apiAuth.js"
-      issue: "shouldRemove condition missing trail_migration_ prefix check"
-      line: 221
-  missing:
-    - "Add key.startsWith('trail_migration_') to shouldRemove condition"
-  debug_session: ""
+  fix: "Added key.startsWith('trail_migration_') to shouldRemove condition"
+  commit: "6519911"
