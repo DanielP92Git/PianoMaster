@@ -5,6 +5,7 @@
  */
 
 import supabase from './supabase';
+import { verifyStudentDataAccess } from './authorizationUtils';
 
 // Goal type definitions
 export const GOAL_TYPES = {
@@ -118,6 +119,7 @@ const generateDailyGoals = () => {
  * @returns {Promise<Object>} Goals object with goals array and progress
  */
 export const getTodaysGoals = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const today = getTodayDate();
 
@@ -178,6 +180,7 @@ export const getTodaysGoals = async (studentId) => {
  * @returns {Promise<Object>} Updated goals
  */
 export const updateDailyGoalsProgress = async (studentId, progressUpdate) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const today = getTodayDate();
 
@@ -242,6 +245,7 @@ export const updateDailyGoalsProgress = async (studentId, progressUpdate) => {
  * @returns {Promise<Object>} Progress metrics
  */
 export const calculateDailyProgress = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const { start, end, dateString } = getTodayDateRange();
 
@@ -322,6 +326,7 @@ export const calculateDailyProgress = async (studentId) => {
  * @returns {Promise<Array>} Goals with progress
  */
 export const getDailyGoalsWithProgress = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     // Get today's goals
     const goalsData = await getTodaysGoals(studentId);

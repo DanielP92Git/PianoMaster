@@ -5,6 +5,7 @@
  */
 
 import supabase from './supabase';
+import { verifyStudentDataAccess } from './authorizationUtils';
 import { getNodeById, isNodeUnlocked, getUnlockedNodes, EXERCISE_TYPES } from '../data/skillTrail';
 
 /**
@@ -25,6 +26,7 @@ const calculateStarsFromPercentage = (percentage) => {
  * @returns {Promise<Array>} Array of progress records
  */
 export const getStudentProgress = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const { data, error } = await supabase
       .from('student_skill_progress')
@@ -47,6 +49,7 @@ export const getStudentProgress = async (studentId) => {
  * @returns {Promise<Object|null>} Progress record or null
  */
 export const getNodeProgress = async (studentId, nodeId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const { data, error } = await supabase
       .from('student_skill_progress')
@@ -74,6 +77,7 @@ export const getNodeProgress = async (studentId, nodeId) => {
  * @returns {Promise<Object>} Updated progress record
  */
 export const updateNodeProgress = async (studentId, nodeId, stars, score) => {
+  await verifyStudentDataAccess(studentId);
   try {
     // Get existing progress
     const existingProgress = await getNodeProgress(studentId, nodeId);
@@ -127,6 +131,7 @@ export const updateNodeProgress = async (studentId, nodeId, stars, score) => {
  * @returns {Promise<Array<string>>} Array of completed node IDs
  */
 export const getCompletedNodeIds = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const progress = await getStudentProgress(studentId);
     // Consider a node completed if it has at least 1 star
@@ -145,6 +150,7 @@ export const getCompletedNodeIds = async (studentId) => {
  * @returns {Promise<Array>} Array of available node objects
  */
 export const getAvailableNodes = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const completedNodeIds = await getCompletedNodeIds(studentId);
     const unlockedNodes = getUnlockedNodes(completedNodeIds);
@@ -174,6 +180,7 @@ export const getAvailableNodes = async (studentId) => {
  * @returns {Promise<Object|null>} Next recommended node or null
  */
 export const getNextRecommendedNode = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const availableNodes = await getAvailableNodes(studentId);
 
@@ -221,6 +228,7 @@ export const getNextRecommendedNode = async (studentId) => {
  * @returns {Promise<Object>} Statistics object
  */
 export const getTrailStats = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const progress = await getStudentProgress(studentId);
 
@@ -250,6 +258,7 @@ export const getTrailStats = async (studentId) => {
  * @returns {Promise<boolean>} True if unlocked
  */
 export const checkNodeUnlocked = async (studentId, nodeId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const completedNodeIds = await getCompletedNodeIds(studentId);
     return isNodeUnlocked(nodeId, completedNodeIds);
@@ -265,6 +274,7 @@ export const checkNodeUnlocked = async (studentId, nodeId) => {
  * @returns {Promise<void>}
  */
 export const resetStudentProgress = async (studentId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const { error } = await supabase
       .from('student_skill_progress')
@@ -289,6 +299,7 @@ export const resetStudentProgress = async (studentId) => {
  * @returns {Promise<Array>} Array of exercise progress objects
  */
 export const getExerciseProgress = async (studentId, nodeId) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const nodeProgress = await getNodeProgress(studentId, nodeId);
     if (!nodeProgress || !nodeProgress.exercise_progress) {
@@ -309,6 +320,7 @@ export const getExerciseProgress = async (studentId, nodeId) => {
  * @returns {Promise<number|null>} Index of next exercise (0-based), or null if all complete
  */
 export const getNextExerciseIndex = async (studentId, nodeId, totalExercises) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const exerciseProgress = await getExerciseProgress(studentId, nodeId);
 
@@ -354,6 +366,7 @@ export const updateExerciseProgress = async (
   score,
   totalExercises
 ) => {
+  await verifyStudentDataAccess(studentId);
   try {
     // Get existing node progress
     let nodeProgress = await getNodeProgress(studentId, nodeId);
@@ -450,12 +463,180 @@ export const updateExerciseProgress = async (
  * @returns {Promise<boolean>} True if exercise is completed
  */
 export const isExerciseCompleted = async (studentId, nodeId, exerciseIndex) => {
+  await verifyStudentDataAccess(studentId);
   try {
     const exerciseProgress = await getExerciseProgress(studentId, nodeId);
     const exercise = exerciseProgress.find(ep => ep.index === exerciseIndex);
     return exercise ? exercise.stars > 0 : false;
   } catch (error) {
     console.error('Error checking exercise completion:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get progress for an entire unit
+ * @param {string} studentId - The student's ID
+ * @param {number} unitNumber - The unit number
+ * @param {string} category - The unit category (e.g., 'treble_clef')
+ * @returns {Promise<Object>} Unit progress summary
+ */
+export const getUnitProgress = async (studentId, unitNumber, category) => {
+  await verifyStudentDataAccess(studentId);
+  try {
+    const { getNodesInUnit } = await import('../data/skillTrail.js');
+    const unitNodes = getNodesInUnit(unitNumber, category);
+
+    // Get progress for all nodes in unit
+    const progress = await getStudentProgress(studentId);
+    const progressMap = new Map(progress.map(p => [p.node_id, p]));
+
+    const unitProgress = unitNodes.map(node => ({
+      nodeId: node.id,
+      nodeName: node.name,
+      stars: progressMap.get(node.id)?.stars || 0,
+      bestScore: progressMap.get(node.id)?.best_score || 0,
+      completed: (progressMap.get(node.id)?.stars || 0) > 0
+    }));
+
+    const totalStars = unitProgress.reduce((sum, n) => sum + n.stars, 0);
+    const maxStars = unitNodes.length * 3;
+    const completedNodes = unitProgress.filter(n => n.completed).length;
+
+    return {
+      unitNumber,
+      category,
+      nodes: unitProgress,
+      totalStars,
+      maxStars,
+      completedNodes,
+      totalNodes: unitNodes.length,
+      isComplete: completedNodes === unitNodes.length
+    };
+  } catch (error) {
+    console.error('Error fetching unit progress:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get the current unit for a student in a specific category
+ * Based on their progress, returns the unit they're currently working on
+ * @param {string} studentId - The student's ID
+ * @param {string} category - The category (e.g., 'treble_clef')
+ * @returns {Promise<number>} Current unit number
+ */
+export const getCurrentUnitForCategory = async (studentId, category) => {
+  await verifyStudentDataAccess(studentId);
+  try {
+    const { getCurrentUnit } = await import('../data/skillTrail.js');
+    const completedNodeIds = await getCompletedNodeIds(studentId);
+    return getCurrentUnit(completedNodeIds, category);
+  } catch (error) {
+    console.error('Error getting current unit:', error);
+    return 1; // Default to unit 1
+  }
+};
+
+/**
+ * Get next node in the learning path (for auto-progression)
+ * Priority:
+ * 1. Next node in current unit (sequential)
+ * 2. Any newly unlocked node (e.g., after boss)
+ * 3. Improvable nodes (< 3 stars)
+ * @param {string} studentId - The student's ID
+ * @param {string} currentNodeId - The node just completed
+ * @returns {Promise<Object|null>} Next recommended node or null
+ */
+export const getNextNodeInPath = async (studentId, currentNodeId) => {
+  await verifyStudentDataAccess(studentId);
+  try {
+    const { getNodeById, SKILL_NODES, isNodeUnlocked } = await import('../data/skillTrail.js');
+    const currentNode = getNodeById(currentNodeId);
+    if (!currentNode) return null;
+
+    const completedNodeIds = await getCompletedNodeIds(studentId);
+    const allProgress = await getStudentProgress(studentId);
+    const progressMap = new Map(allProgress.map(p => [p.node_id, p]));
+
+    // Priority 1: Next node in same unit (sequential orderInUnit)
+    if (currentNode.unit) {
+      const sameUnitNodes = SKILL_NODES.filter(n =>
+        n.unit === currentNode.unit &&
+        n.category === currentNode.category &&
+        n.orderInUnit === currentNode.orderInUnit + 1
+      );
+
+      if (sameUnitNodes.length > 0) {
+        const nextNode = sameUnitNodes[0];
+        if (isNodeUnlocked(nextNode.id, completedNodeIds)) {
+          return nextNode;
+        }
+      }
+    }
+
+    // Priority 2: Any newly unlocked node (likely boss or next unit start)
+    const unlockedNodes = SKILL_NODES.filter(node =>
+      !completedNodeIds.includes(node.id) &&
+      isNodeUnlocked(node.id, completedNodeIds)
+    );
+
+    if (unlockedNodes.length > 0) {
+      // Prefer nodes in same category, then lowest order
+      const sameCategoryNodes = unlockedNodes.filter(n => n.category === currentNode.category);
+      if (sameCategoryNodes.length > 0) {
+        return sameCategoryNodes.sort((a, b) => a.order - b.order)[0];
+      }
+      return unlockedNodes.sort((a, b) => a.order - b.order)[0];
+    }
+
+    // Priority 3: Improvable nodes (< 3 stars)
+    const improvableNodes = SKILL_NODES.filter(node => {
+      const progress = progressMap.get(node.id);
+      return progress && progress.stars < 3 && progress.stars > 0;
+    });
+
+    if (improvableNodes.length > 0) {
+      // Prefer nodes in same category
+      const sameCategoryNodes = improvableNodes.filter(n => n.category === currentNode.category);
+      if (sameCategoryNodes.length > 0) {
+        return sameCategoryNodes.sort((a, b) => a.order - b.order)[0];
+      }
+      return improvableNodes.sort((a, b) => a.order - b.order)[0];
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error getting next node in path:', error);
+    return null;
+  }
+};
+
+/**
+ * Get all units in a category with progress summary
+ * @param {string} studentId - The student's ID
+ * @param {string} category - The category
+ * @returns {Promise<Array>} Array of unit summaries
+ */
+export const getUnitsInCategory = async (studentId, category) => {
+  await verifyStudentDataAccess(studentId);
+  try {
+    const { getUnitsByCategory } = await import('../data/skillTrail.js');
+    const units = getUnitsByCategory(category);
+
+    const unitProgresses = await Promise.all(
+      units.map(async (unit) => {
+        const progress = await getUnitProgress(studentId, unit.order, category);
+        return {
+          ...unit,
+          progress
+        };
+      })
+    );
+
+    return unitProgresses;
+  } catch (error) {
+    console.error('Error getting units in category:', error);
     throw error;
   }
 };
@@ -474,5 +655,10 @@ export default {
   getExerciseProgress,
   getNextExerciseIndex,
   updateExerciseProgress,
-  isExerciseCompleted
+  isExerciseCompleted,
+  // Unit-level functions
+  getUnitProgress,
+  getCurrentUnitForCategory,
+  getNextNodeInPath,
+  getUnitsInCategory
 };
