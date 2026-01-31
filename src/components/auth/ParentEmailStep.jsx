@@ -51,8 +51,8 @@ export function ParentEmailStep({ onSubmit, onBack, disabled = false }) {
           <div className="text-xs text-white/90">
             <p className="font-medium mb-1">Parent or Guardian Required</p>
             <p className="text-white/70">
-              Since you're under 13, we need a parent or guardian's email to create your account.
-              They'll receive an email to approve your account.
+              Since you are under 13, we need a parent or guardian email to create your account.
+              They will receive an email to approve your account.
             </p>
           </div>
         </div>

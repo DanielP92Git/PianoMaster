@@ -1,8 +1,5 @@
 import { useState } from "react";
 import {
-  Music,
-  Piano,
-  Sparkles,
   Loader2,
   Users,
   GraduationCap,
