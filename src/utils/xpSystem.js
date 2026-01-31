@@ -9,6 +9,7 @@ import supabase from '../services/supabase';
 /**
  * XP Level definitions
  * Each level requires a certain amount of total XP
+ * Expanded to 15 levels to accommodate the 90-node trail system
  */
 export const XP_LEVELS = [
   { level: 1, xpRequired: 0, title: 'Beginner', icon: '🌱' },
@@ -20,7 +21,12 @@ export const XP_LEVELS = [
   { level: 7, xpRequired: 1400, title: 'Sound Wizard', icon: '🪄' },
   { level: 8, xpRequired: 1900, title: 'Piano Pro', icon: '🎹' },
   { level: 9, xpRequired: 2500, title: 'Music Master', icon: '👑' },
-  { level: 10, xpRequired: 3200, title: 'Legend', icon: '⭐' }
+  { level: 10, xpRequired: 3200, title: 'Symphony Star', icon: '⭐' },
+  { level: 11, xpRequired: 4000, title: 'Harmony Hero', icon: '🎼' },
+  { level: 12, xpRequired: 5000, title: 'Virtuoso', icon: '✨' },
+  { level: 13, xpRequired: 6200, title: 'Maestro', icon: '🎖️' },
+  { level: 14, xpRequired: 7500, title: 'Grand Master', icon: '🏆' },
+  { level: 15, xpRequired: 9000, title: 'Legend', icon: '💎' }
 ];
 
 /**
@@ -44,7 +50,7 @@ export const calculateLevel = (totalXp) => {
  * @returns {number} XP required for next level (or 0 if max level)
  */
 export const getNextLevelXP = (currentLevel) => {
-  if (currentLevel >= 10) return 0; // Max level
+  if (currentLevel >= 15) return 0; // Max level
   return XP_LEVELS[currentLevel].xpRequired;
 };
 
@@ -57,7 +63,7 @@ export const getLevelProgress = (totalXp) => {
   const currentLevelData = calculateLevel(totalXp);
   const currentLevel = currentLevelData.level;
 
-  if (currentLevel >= 10) {
+  if (currentLevel >= 15) {
     return {
       currentLevel: currentLevelData,
       nextLevelXP: 0,
@@ -134,6 +140,15 @@ export const calculateNodeXP = (stars, baseXP = XP_REWARDS.nodeBaseXP, bonuses =
  * @returns {Promise<Object>} Result with new total XP, level, and leveledUp flag
  */
 export const awardXP = async (studentId, xpAmount) => {
+  // SECURITY: Verify user is awarding XP to themselves only
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+  if (user.id !== studentId) {
+    throw new Error('Unauthorized: You can only award XP to yourself');
+  }
+
   try {
     const { data, error } = await supabase.rpc('award_xp', {
       p_student_id: studentId,
@@ -163,6 +178,18 @@ export const awardXP = async (studentId, xpAmount) => {
  * @returns {Promise<Object>} Student's XP and level data
  */
 export const getStudentXP = async (studentId) => {
+  // SECURITY: Verify user can access this student's data
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('Not authenticated');
+  }
+
+  // Students can only access their own XP data
+  // Teachers would use a separate endpoint with relationship verification
+  if (user.id !== studentId) {
+    throw new Error("Unauthorized: Cannot access another student's XP data");
+  }
+
   try {
     const { data, error } = await supabase
       .from('students')

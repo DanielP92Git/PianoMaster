@@ -386,6 +386,9 @@ export const getStudentProgress = async (studentId) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // SECURITY: Verify teacher has connection to this student
+    await verifyTeacherStudentConnection(user.id, studentId);
+
     // Get student details
     const { data: student, error: studentError } = await supabase
       .from("students")
