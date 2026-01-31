@@ -220,6 +220,7 @@ export async function logout() {
       // Remove user-specific keys
       const shouldRemove =
         key.startsWith("migration_completed_") || // XP migration flags
+        key.startsWith("trail_migration_") || // Trail migration flags (e.g., trail_migration_v2_<uuid>)
         key.startsWith("dashboard_reminder_") || // User-specific reminders
         key.includes("_student_") || // Student-related data
         key.includes("_user_") || // User-related data

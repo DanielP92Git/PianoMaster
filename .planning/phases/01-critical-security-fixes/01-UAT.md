@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 01-critical-security-fixes
 source: [01-01-SUMMARY.md, 01-02-SUMMARY.md, 01-03-SUMMARY.md]
 started: 2026-01-31T21:00:00Z
@@ -56,7 +56,11 @@ skipped: 3
   reason: "User reported: sb- is removed but trail_migration_v2[...] preserved"
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "UUID pattern uses ^...$ anchors so only matches keys that ARE UUIDs, not keys containing UUIDs. trail_migration_v2_<uuid> has a prefix so it doesn't match."
+  artifacts:
+    - path: "src/services/apiAuth.js"
+      issue: "shouldRemove condition missing trail_migration_ prefix check"
+      line: 221
+  missing:
+    - "Add key.startsWith('trail_migration_') to shouldRemove condition"
   debug_session: ""
