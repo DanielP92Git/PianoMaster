@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-31)
 ## Current Position
 
 Phase: 2 of 3 (COPPA Compliance Implementation)
-Plan: 2 of 6 (Age Gate UI Component)
+Plan: 2 of 6 complete (Age Gate UI Component)
 Status: In progress
-Last activity: 2026-01-31 - Completed 02-02-PLAN.md
+Last activity: 2026-02-01 - Documented 02-01-PLAN.md (schema was in 02-02 commit)
 
-Progress: [███░░░░░░░] 37% (4/11 plans: 3 phase 1 + 1 phase 2)
+Progress: [████░░░░░░] 45% (5/11 plans: 3 phase 1 + 2 phase 2)
 
 ## Performance Metrics
 
@@ -28,12 +28,13 @@ Progress: [███░░░░░░░] 37% (4/11 plans: 3 phase 1 + 1 phase 
 | Phase | Plans | Completed | Total Time | Avg/Plan |
 |-------|-------|-----------|------------|----------|
 | 01 Critical Security | 3 | 3 | 15 min | 5 min |
-| 02 COPPA Compliance | 6 | 1 | 3 min | 3 min |
+| 02 COPPA Compliance | 6 | 2 | 3 min | 1.5 min |
 
 **Recent Trend:**
 - Plan 01-01: 4 minutes (database authorization audit)
 - Plan 01-02: 8 minutes (client-side authorization)
 - Plan 01-03: 4 minutes (secure logout and i18n errors)
+- Plan 02-01: 0 minutes (schema bundled with 02-02)
 - Plan 02-02: 3 minutes (Age Gate UI component)
 - Trend: Consistent, fast execution
 
@@ -58,6 +59,9 @@ Recent decisions affecting current work:
 - Use UUID regex pattern to catch any user ID stored as localStorage key (01-03)
 - streakService already secure by design (uses session.user.id internally) (01-02)
 - XP operations restricted to self only (user.id === studentId) (01-02)
+- **Trigger-based computed column** - Used trigger instead of GENERATED ALWAYS AS for is_under_13 (02-01)
+- **Service functions for consent** - Centralizes business logic in database layer (02-01)
+- **No direct RLS on consent tokens** - Tokens only accessed through service functions (02-01)
 - **Neutral DOB collection** - COPPA requires dropdown menus not leading questions (02-02)
 - **100-year range for birth year** - Reasonable age limit for dropdown (02-02)
 
@@ -78,11 +82,11 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31 22:43 UTC
-Stopped at: Completed 02-02-PLAN.md (Age Gate UI Component)
+Last session: 2026-02-01 00:42 UTC
+Stopped at: Documented 02-01-SUMMARY.md (schema work was bundled in 02-02 commit)
 Resume file: None
 Next step: Execute 02-03-PLAN.md (Signup Flow Integration)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-01-31 - Completed 02-02*
+*Last updated: 2026-02-01 - Documented 02-01*
