@@ -9,10 +9,10 @@ Requirements for this security hardening milestone. Each maps to roadmap phases.
 
 ### Security Audits
 
-- [ ] **SEC-01**: RLS policies use database state (not user_metadata) for all authorization decisions
-- [ ] **SEC-02**: All SECURITY DEFINER functions have explicit auth.uid() checks
-- [ ] **SEC-03**: Client-side services verify user.id matches studentId before API calls
-- [ ] **SEC-04**: Logout clears all user-specific localStorage keys on shared devices
+- [x] **SEC-01**: RLS policies use database state (not user_metadata) for all authorization decisions
+- [x] **SEC-02**: All SECURITY DEFINER functions have explicit auth.uid() checks
+- [x] **SEC-03**: Client-side services verify user.id matches studentId before API calls
+- [x] **SEC-04**: Logout clears all user-specific localStorage keys on shared devices
 
 ### Session Management
 
@@ -75,10 +75,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SEC-01 | Phase 1 | Pending |
-| SEC-02 | Phase 1 | Pending |
-| SEC-03 | Phase 1 | Pending |
-| SEC-04 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
+| SEC-02 | Phase 1 | Complete |
+| SEC-03 | Phase 1 | Complete |
+| SEC-04 | Phase 1 | Complete |
 | SESS-01 | Phase 3 | Pending |
 | SESS-02 | Phase 3 | Pending |
 | SESS-03 | Phase 3 | Pending |
@@ -99,4 +99,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after roadmap creation*
+*Last updated: 2026-01-31 after Phase 1 completion*
