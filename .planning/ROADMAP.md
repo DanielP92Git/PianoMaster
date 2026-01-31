@@ -32,10 +32,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Logout clears all user-specific localStorage keys (migration flags, cached data, user-specific progress)
   5. Service worker never caches authentication endpoints (/auth/, /token/, /session/)
 
-**Plans**: TBD
+**Plans:** 3 plans
 
 Plans:
-- [ ] 01-01: TBD during planning
+- [ ] 01-01-PLAN.md - Database Security Audit: RLS policies and SECURITY DEFINER functions
+- [ ] 01-02-PLAN.md - Client-Side Authorization: Service method verification
+- [ ] 01-03-PLAN.md - Secure Logout & Error Messages: localStorage cleanup and i18n
 
 ### Phase 2: COPPA Compliance Implementation
 **Goal**: App complies with COPPA requirements for children under 13, enabling parental data access, complete deletion, and preventing PII exposure in shared features.
@@ -80,11 +82,11 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3
+Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Critical Security Fixes | 0/TBD | Not started | - |
+| 1. Critical Security Fixes | 0/3 | Ready for execution | - |
 | 2. COPPA Compliance Implementation | 0/TBD | Not started | - |
 | 3. Production Hardening | 0/TBD | Not started | - |
 
