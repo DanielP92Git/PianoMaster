@@ -182,27 +182,68 @@ export async function getCurrentUser() {
   }
 }
 
+/**
+ * Logs out the current user and clears all user-specific localStorage data.
+ *
+ * SECURITY: This function clears user-specific data to prevent data leakage
+ * on shared devices (school computers, family tablets). App-wide preferences
+ * like language and accessibility settings are preserved.
+ *
+ * UI NOTE: The calling component should show a confirmation dialog
+ * ("Are you sure you want to log out?") before invoking this function,
+ * especially on shared devices where accidental logout could be disruptive.
+ *
+ * @throws {Error} If Supabase signOut fails
+ */
 export async function logout() {
   // Clear user-specific localStorage keys before signing out
-  // This prevents exposure of student UUIDs on shared devices
+  // This prevents data leakage on shared devices (school computers, family tablets)
   if (typeof window !== "undefined") {
     const keysToRemove = [];
+
+    // Keys to preserve (app-wide preferences)
+    const keysToPreserve = ["i18nextLng", "theme", "security_update_shown"];
+    const prefixesToPreserve = ["accessibility_"];
+
+    // UUID pattern for detecting user ID keys
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      if (
-        key &&
-        (key.startsWith("migration_completed_") ||
-          key.startsWith("dashboard_reminder_") ||
-          key.includes("_student_") ||
-          key.includes("_user_"))
-      ) {
+      if (!key) continue;
+
+      // Skip preserved keys (app-wide preferences)
+      if (keysToPreserve.includes(key)) continue;
+      if (prefixesToPreserve.some((prefix) => key.startsWith(prefix))) continue;
+
+      // Remove user-specific keys
+      const shouldRemove =
+        key.startsWith("migration_completed_") || // XP migration flags
+        key.startsWith("dashboard_reminder_") || // User-specific reminders
+        key.includes("_student_") || // Student-related data
+        key.includes("_user_") || // User-related data
+        key === "xp_migration_complete" || // Legacy migration flag
+        key === "cached_user_progress" || // Cached progress data
+        key.startsWith("sb-") || // Supabase auth tokens
+        uuidPattern.test(key); // Keys that are UUIDs (user IDs)
+
+      if (shouldRemove) {
         keysToRemove.push(key);
       }
     }
+
     keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    // Log cleanup count in development only
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Logout: Cleared ${keysToRemove.length} user-specific localStorage keys`
+      );
+    }
   }
 
-  // Then sign out
+  // Then sign out from Supabase
   const { error } = await supabase.auth.signOut();
   if (error) throw new Error(error.message);
 }
