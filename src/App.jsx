@@ -18,6 +18,9 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Login from "./components/auth/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
+import ConsentVerifyPage from "./pages/ConsentVerifyPage";
+import ParentalConsentPending from "./components/auth/ParentalConsentPending";
+import { useAccountStatus } from "./hooks/useAccountStatus";
 import { MemoryGame } from "./components/games/notes-master-games/MemoryGame";
 import { NotesRecognitionGame } from "./components/games/notes-master-games/NotesRecognitionGame";
 import { SightReadingGame } from "./components/games/sight-reading-game/SightReadingGame";
@@ -64,10 +67,19 @@ const queryClient = new QueryClient({
   },
 });
 
-// Component to handle role selection for authenticated users without profiles
+// Component to handle role selection and account status for authenticated users
 function AuthenticatedWrapper({ children }) {
-  const { user, isLoading, userRole, profile } = useUser();
+  const { user, isLoading, userRole, profile, isStudent } = useUser();
   const { data: profileData } = useUserProfile();
+
+  // Check account status for students (suspended for consent/deletion)
+  const {
+    isSuspended,
+    suspensionReason,
+    parentEmail,
+    loading: statusLoading,
+    refetch: refetchStatus
+  } = useAccountStatus(user?.id);
 
   // Preload avatar image for instant display
   useEffect(() => {
@@ -81,6 +93,42 @@ function AuthenticatedWrapper({ children }) {
   // If user is authenticated but doesn't have a profile, show role selection
   if (user && !isLoading && !profile && !userRole) {
     return <RoleSelection user={user} />;
+  }
+
+  // Wait for status check to complete for students
+  if (user && isStudent && statusLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  // If student account is suspended pending parental consent, show waiting UI
+  if (user && isStudent && isSuspended && suspensionReason === 'consent') {
+    return (
+      <ParentalConsentPending
+        parentEmail={parentEmail}
+        studentId={user.id}
+        onRefresh={refetchStatus}
+      />
+    );
+  }
+
+  // If account is suspended for deletion, also show a message (could be a different component)
+  // For now, we reuse the consent pending with a different message
+  if (user && isStudent && isSuspended && suspensionReason === 'deletion') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-md p-6 md:p-8 text-center">
+          <h1 className="text-2xl font-bold text-white mb-4">Account Suspended</h1>
+          <p className="text-white/90 mb-6">
+            Your account has been scheduled for deletion. If you believe this is an error,
+            please contact support.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return children;
@@ -266,6 +314,8 @@ function AppRoutes() {
           {/* TODO: Add new rhythm game routes here */}
         </Route>
         <Route path="/login" element={<Login />} />
+        {/* Public route for parental consent verification (no auth required) */}
+        <Route path="/consent/verify" element={<ConsentVerifyPage />} />
       </Routes>
     </AuthenticatedWrapper>
   );
