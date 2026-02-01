@@ -13,6 +13,7 @@ import RhythmGameSetup from "./components/RhythmGameSetup";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import Button from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
 import { Trophy, RotateCcw, Home } from "lucide-react";
@@ -119,6 +120,35 @@ export function MetronomeTrainer() {
     adaptiveDifficulty: false,
   });
 
+  // Session timeout controls - pause timer during active gameplay
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider, timer controls are no-ops
+  }
+
+  // Pause/resume inactivity timer based on game phase
+  useEffect(() => {
+    // Active phases where user is playing
+    const activePhases = [
+      GAME_PHASES.COUNT_IN,
+      GAME_PHASES.PATTERN_PLAYBACK,
+      GAME_PHASES.GET_READY,
+      GAME_PHASES.USER_PERFORMANCE,
+    ];
+    const isGameActive = activePhases.includes(gamePhase);
+    if (isGameActive) {
+      pauseTimer();
+    } else {
+      resumeTimer();
+    }
+    return () => resumeTimer(); // Always resume on unmount
+  }, [gamePhase, pauseTimer, resumeTimer]);
+
   // Pattern and timing state
 
 
@@ -170,6 +200,9 @@ export function MetronomeTrainer() {
               break;
             case 'sight_reading':
               navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              break;
+            case 'memory_game':
+              navigate('/notes-master-mode/memory-game', { state: navState });
               break;
             case 'rhythm':
               navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });

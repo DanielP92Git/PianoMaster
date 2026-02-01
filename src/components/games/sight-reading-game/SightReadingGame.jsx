@@ -39,6 +39,7 @@ import {
 } from "../../../contexts/SightReadingSessionContext";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 
 // #region agent log (debug-mode instrumentation)
 // Network logging is disabled by default. Enable by setting
@@ -183,6 +184,49 @@ export function SightReadingGame() {
   const hasAutoConfigured = useRef(false);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
 
+  // Session timeout controls - pause timer during active gameplay
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider, timer controls are no-ops
+  }
+
+  // Pause/resume inactivity timer based on game phase
+  useEffect(() => {
+    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE
+    const activePhases = [GAME_PHASES.COUNT_IN, GAME_PHASES.DISPLAY, GAME_PHASES.PERFORMANCE];
+    const isGameActive = activePhases.includes(gamePhase);
+    if (isGameActive) {
+      pauseTimer();
+    } else {
+      resumeTimer();
+    }
+    return () => resumeTimer(); // Always resume on unmount
+  }, [gamePhase, pauseTimer, resumeTimer]);
+
+  // Reset auto-configure flag and game state when nodeId changes (navigating to a new node)
+  useEffect(() => {
+    hasAutoConfigured.current = false;
+
+    // Reset game state to prevent stuck UI from previous node
+    setGamePhase(GAME_PHASES.SETUP);
+    setCurrentPattern(null);
+    setCurrentBeat(0);
+    setCurrentNoteIndex(-1);
+    setStaffScrollProgress(0);
+    setTimingState(TIMING_STATE.OFF);
+    setPerformanceResults([]);
+    setSummaryStats(null);
+    setShowPenaltyModal(false);
+    setScoreSubmitted(false);
+    setScoreSyncStatus("idle");
+    setExerciseRecorded(false);
+  }, [nodeId]);
+
   // Continuous horizontal staff scroll progress (0–1) during performance phase.
   const measuresPerPattern = Math.max(1, Number(gameSettings.measuresPerPattern || 1));
   const [staffScrollProgress, setStaffScrollProgress] = useState(0);
@@ -239,7 +283,7 @@ export function SightReadingGame() {
         startGame(trailSettings);
       }, 100);
     }
-  }, [nodeConfig]);
+  }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
   const isBothClefs = String(gameSettings.clef || "").toLowerCase() === "both";
@@ -701,6 +745,9 @@ export function SightReadingGame() {
             case 'sight_reading':
               navigate('/notes-master-mode/sight-reading-game', { state: navState, replace: true });
               window.location.reload(); // Force reload for same route
+              break;
+            case 'memory_game':
+              navigate('/notes-master-mode/memory-game', { state: navState });
               break;
             case 'rhythm':
               navigate('/rhythm-mode/metronome-trainer', { state: navState });

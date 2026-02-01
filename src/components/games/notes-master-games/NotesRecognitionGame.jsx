@@ -20,6 +20,7 @@ import { useTranslation } from "react-i18next";
 import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
 import { getNodeById } from "../../../data/skillTrail";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -478,8 +479,53 @@ export function NotesRecognitionGame() {
     playGameOverSound,
   } = useSounds();
 
+  // Session timeout controls - pause timer during active gameplay
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider, timer controls are no-ops
+  }
+
+  // Pause/resume inactivity timer based on game state
+  useEffect(() => {
+    // Game is active when started and not finished
+    const isGameActive = progress.isStarted && !progress.isFinished;
+    if (isGameActive) {
+      pauseTimer();
+    } else {
+      resumeTimer();
+    }
+    return () => resumeTimer(); // Always resume on unmount
+  }, [progress.isStarted, progress.isFinished, pauseTimer, resumeTimer]);
+
   // Track if we should auto-start from trail
   const hasAutoStartedRef = useRef(false);
+
+  // Reset auto-start flag and game state when nodeId changes (navigating to a new node)
+  useEffect(() => {
+    hasAutoStartedRef.current = false;
+
+    // Reset game state to prevent stuck UI from previous node
+    setGameOver(false);
+    isGameEndingRef.current = false;
+    setAnswerFeedback({
+      selectedNote: null,
+      correctNote: null,
+      isCorrect: null,
+    });
+    setWaitingForRelease(false);
+    setPendingNextNote(null);
+    setVariantModal(null);
+
+    // Reset audio input state
+    setIsListening(false);
+    setDetectedNote(null);
+    setAudioInputLevel(0);
+  }, [nodeId]);
 
   // Auto-configure and auto-start from trail node
   useEffect(() => {
@@ -505,7 +551,7 @@ export function NotesRecognitionGame() {
         startGame(trailSettings);
       }, 50);
     }
-  }, [nodeConfig]); // Only run when nodeConfig changes (on mount if from trail)
+  }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
 
   // Handle navigation to next exercise in the trail node
   const handleNextExercise = useCallback(() => {
@@ -534,6 +580,9 @@ export function NotesRecognitionGame() {
               break;
             case 'sight_reading':
               navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              break;
+            case 'memory_game':
+              navigate('/notes-master-mode/memory-game', { state: navState });
               break;
             case 'rhythm':
               navigate('/rhythm-mode/metronome-trainer', { state: navState });
