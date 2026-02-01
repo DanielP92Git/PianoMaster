@@ -17,6 +17,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState(null);
   const navigate = useNavigate();
   const { login, isPending } = useLogin();
   const { t } = useTranslation("common");
@@ -24,6 +25,15 @@ function LoginForm() {
   useEffect(() => {
     lockOrientation("portrait-primary");
   }, []);
+
+  // Check if user was logged out due to inactivity
+  useEffect(() => {
+    const reason = sessionStorage.getItem('logoutReason');
+    if (reason === 'inactivity') {
+      setLogoutMessage(t('auth.login.inactivityLogout', 'You were logged out due to inactivity'));
+      sessionStorage.removeItem('logoutReason');
+    }
+  }, [t]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,6 +60,13 @@ function LoginForm() {
             <SignupForm onBackToLogin={() => setIsSignup(false)} />
           ) : (
             <div className="p-3 md:p-4 lg:p-5 relative z-10 h-full flex flex-col">
+              {/* Inactivity logout message */}
+              {logoutMessage && (
+                <div className="mb-3 p-3 bg-blue-500/20 border border-blue-400/30 rounded-lg text-blue-200 text-sm text-center backdrop-blur-sm">
+                  {logoutMessage}
+                </div>
+              )}
+
               {/* Title + Subtitle at the top (kept pinned to top) */}
               <div className="text-center mb-3 md:mb-4">
                 <h1 className="text-xl md:text-2xl lg:text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient mb-0.5">
