@@ -7,6 +7,7 @@
 import supabase from './supabase';
 import { verifyStudentDataAccess } from './authorizationUtils';
 import { getNodeById, isNodeUnlocked, getUnlockedNodes, EXERCISE_TYPES } from '../data/skillTrail';
+import { checkRateLimit } from './rateLimitService';
 
 /**
  * Calculate stars based on score percentage
@@ -74,11 +75,25 @@ export const getNodeProgress = async (studentId, nodeId) => {
  * @param {string} nodeId - The node ID
  * @param {number} stars - Number of stars earned (0-3)
  * @param {number} score - Score percentage achieved (0-100)
- * @returns {Promise<Object>} Updated progress record
+ * @param {Object} options - Optional configuration
+ * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
+ * @returns {Promise<Object>} Updated progress record, or { rateLimited: true, resetTime } if rate limited
  */
-export const updateNodeProgress = async (studentId, nodeId, stars, score) => {
+export const updateNodeProgress = async (studentId, nodeId, stars, score, options = {}) => {
   await verifyStudentDataAccess(studentId);
   try {
+    // Check rate limit before saving (teachers bypass via options.skipRateLimit)
+    // Note: Teacher check is done by the caller (VictoryScreen) before calling this function
+    if (!options.skipRateLimit) {
+      const rateLimitResult = await checkRateLimit(studentId, nodeId);
+      if (!rateLimitResult.allowed) {
+        return {
+          rateLimited: true,
+          resetTime: rateLimitResult.resetTime
+        };
+      }
+    }
+
     // Get existing progress
     const existingProgress = await getNodeProgress(studentId, nodeId);
 
@@ -355,7 +370,9 @@ export const getNextExerciseIndex = async (studentId, nodeId, totalExercises) =>
  * @param {number} stars - Stars earned for this exercise (0-3)
  * @param {number} score - Score percentage achieved (0-100)
  * @param {number} totalExercises - Total number of exercises in the node
- * @returns {Promise<Object>} Updated progress record with node completion status
+ * @param {Object} options - Optional configuration
+ * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
+ * @returns {Promise<Object>} Updated progress record with node completion status, or { rateLimited: true, resetTime } if rate limited
  */
 export const updateExerciseProgress = async (
   studentId,
@@ -364,10 +381,23 @@ export const updateExerciseProgress = async (
   exerciseType,
   stars,
   score,
-  totalExercises
+  totalExercises,
+  options = {}
 ) => {
   await verifyStudentDataAccess(studentId);
   try {
+    // Check rate limit before saving (teachers bypass via options.skipRateLimit)
+    // Note: Teacher check is done by the caller (VictoryScreen) before calling this function
+    if (!options.skipRateLimit) {
+      const rateLimitResult = await checkRateLimit(studentId, nodeId);
+      if (!rateLimitResult.allowed) {
+        return {
+          rateLimited: true,
+          resetTime: rateLimitResult.resetTime
+        };
+      }
+    }
+
     // Get existing node progress
     let nodeProgress = await getNodeProgress(studentId, nodeId);
     let exerciseProgressArray = nodeProgress?.exercise_progress || [];
