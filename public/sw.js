@@ -1,7 +1,7 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v2";
+const CACHE_NAME = "pianomaster-v3";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
@@ -19,9 +19,6 @@ const STATIC_CACHE_URLS = [
 
 // Runtime cache patterns
 const RUNTIME_CACHE_PATTERNS = [
-  // Cache Google Fonts
-  /^https:\/\/fonts\.googleapis\.com/,
-  /^https:\/\/fonts\.gstatic\.com/,
   // Cache Supabase API endpoints (excluding auth - see AUTH_EXCLUDED_PATTERNS)
   /^https:\/\/.*\.supabase\.co/,
 ];
