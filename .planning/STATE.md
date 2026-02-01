@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 3 - Production Hardening (Rate Limiting)
+**Current focus:** Phase 3 - Production Hardening (Session Timeout)
 
 ## Current Position
 
 Phase: 3 of 3 (Production Hardening)
-Plan: 1 of 3 complete (Rate Limiting Infrastructure)
+Plan: 3 of 4 complete (Session Timeout Infrastructure)
 Status: In progress
-Last activity: 2026-02-01 - Completed 03-01-PLAN.md
+Last activity: 2026-02-01 - Completed 03-03-PLAN.md
 
-Progress: [██████████] 100% (11/11 plans: 3 phase 1 + 7 phase 2 + 1 phase 3)
+Progress: [██████████] 100% (13/14 plans: 3 phase 1 + 7 phase 2 + 3 phase 3)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 4.3 minutes
-- Total execution time: 47 minutes
+- Total plans completed: 13
+- Average duration: 4.2 minutes
+- Total execution time: 55 minutes
 
 **By Phase:**
 
@@ -29,7 +29,7 @@ Progress: [██████████] 100% (11/11 plans: 3 phase 1 + 7 phas
 |-------|-------|-----------|------------|----------|
 | 01 Critical Security | 3 | 3 | 15 min | 5 min |
 | 02 COPPA Compliance | 7 | 7 | 29 min | 4.1 min |
-| 03 Production Hardening | 1 | 1 | 3 min | 3 min |
+| 03 Production Hardening | 3 | 3 | 11 min | 3.7 min |
 
 **Recent Trend:**
 - Plan 01-01: 4 minutes (database authorization audit)
@@ -43,6 +43,8 @@ Progress: [██████████] 100% (11/11 plans: 3 phase 1 + 7 phas
 - Plan 02-06: 5 minutes (Consent UX)
 - Plan 02-07: 6 minutes (COPPA UI wiring)
 - Plan 03-01: 3 minutes (Rate limiting infrastructure)
+- Plan 03-02: 4 minutes (Score submission integration)
+- Plan 03-03: 4 minutes (Session timeout infrastructure)
 - Trend: Consistent, fast execution
 
 *Updated after each plan completion*
@@ -89,6 +91,9 @@ Recent decisions affecting current work:
 - **Icon differentiation for deletion types** - Orange AlertTriangle for COPPA account deletion vs red Trash2 for teacher connection removal (02-07)
 - **Fixed window rate limiting** - Simpler than sliding window, reset after 5 min of inactivity (03-01)
 - **pg_advisory_xact_lock for race prevention** - Transaction-scoped lock on student_id + node_id (03-01)
+- **crossTab with leaderElection** - One tab coordinates timeout across all tabs (03-03)
+- **clicks and keydown only** - Mouse movement too sensitive for activity detection (03-03)
+- **sessionStorage for logout reason** - Login page shows friendly inactivity message (03-03)
 
 ### Pending Todos
 
@@ -111,10 +116,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 03-01-PLAN.md (Rate Limiting Infrastructure)
+Stopped at: Completed 03-03-PLAN.md (Session Timeout Infrastructure)
 Resume file: None
-Next step: Execute 03-02-PLAN.md (Score Submission Integration)
+Next step: Execute 03-04-PLAN.md (Session Timeout Integration)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-01 - Completed 03-01 (Rate Limiting Infrastructure)*
+*Last updated: 2026-02-01 - Completed 03-03 (Session Timeout Infrastructure)*
