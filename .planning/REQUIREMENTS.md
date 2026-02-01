@@ -16,15 +16,15 @@ Requirements for this security hardening milestone. Each maps to roadmap phases.
 
 ### Session Management
 
-- [ ] **SESS-01**: Students are automatically logged out after 30 minutes of inactivity
-- [ ] **SESS-02**: Teachers are automatically logged out after 2 hours of inactivity
-- [ ] **SESS-03**: Inactivity timer resets on user interaction (clicks, keypresses, game activity)
+- [x] **SESS-01**: Students are automatically logged out after 30 minutes of inactivity
+- [x] **SESS-02**: Teachers are automatically logged out after 2 hours of inactivity
+- [x] **SESS-03**: Inactivity timer resets on user interaction (clicks, keypresses, game activity)
 
 ### Rate Limiting
 
-- [ ] **RATE-01**: Score submissions are limited to 10 per 5 minutes per student per node
-- [ ] **RATE-02**: Rate limiting is enforced at database level (not client-side only)
-- [ ] **RATE-03**: Rate limit violations return clear error message to user
+- [x] **RATE-01**: Score submissions are limited to 10 per 5 minutes per student per node
+- [x] **RATE-02**: Rate limiting is enforced at database level (not client-side only)
+- [x] **RATE-03**: Rate limit violations return clear error message to user
 
 ### COPPA Compliance
 
@@ -79,12 +79,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SEC-02 | Phase 1 | Complete |
 | SEC-03 | Phase 1 | Complete |
 | SEC-04 | Phase 1 | Complete |
-| SESS-01 | Phase 3 | Pending |
-| SESS-02 | Phase 3 | Pending |
-| SESS-03 | Phase 3 | Pending |
-| RATE-01 | Phase 3 | Pending |
-| RATE-02 | Phase 3 | Pending |
-| RATE-03 | Phase 3 | Pending |
+| SESS-01 | Phase 3 | Complete |
+| SESS-02 | Phase 3 | Complete |
+| SESS-03 | Phase 3 | Complete |
+| RATE-01 | Phase 3 | Complete |
+| RATE-02 | Phase 3 | Complete |
+| RATE-03 | Phase 3 | Complete |
 | COPPA-01 | Phase 2 | Complete |
 | COPPA-02 | Phase 2 | Complete |
 | COPPA-03 | Phase 2 | Complete |
@@ -99,4 +99,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-02-01 after Phase 2 completion*
+*Last updated: 2026-02-01 after Phase 3 completion*
