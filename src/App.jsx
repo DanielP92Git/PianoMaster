@@ -38,6 +38,7 @@ import {
   useAccessibility,
 } from "./contexts/AccessibilityContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { SessionTimeoutProvider } from "./contexts/SessionTimeoutContext";
 import TeacherDashboard from "./components/layout/TeacherDashboard";
 import { RoleSelection } from "./components/auth/RoleSelection";
 import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
@@ -395,9 +396,10 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <AccessibilityProvider>
         <SettingsProvider>
-          <ModalProvider>
-            <RhythmProvider>
-              <SightReadingSessionProvider>
+          <SessionTimeoutProvider>
+            <ModalProvider>
+              <RhythmProvider>
+                <SightReadingSessionProvider>
                 <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 safe-area-app">
                   <AccessibleToaster />
                   <AppRoutes />
@@ -411,9 +413,10 @@ function App() {
                   {/* Alarm Modal */}
                   <AlarmModal />
                 </div>
-              </SightReadingSessionProvider>
-            </RhythmProvider>
-          </ModalProvider>
+                </SightReadingSessionProvider>
+              </RhythmProvider>
+            </ModalProvider>
+          </SessionTimeoutProvider>
         </SettingsProvider>
       </AccessibilityProvider>
       <ReactQueryDevtools />
