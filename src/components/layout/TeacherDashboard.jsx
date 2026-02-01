@@ -32,6 +32,7 @@ import {
   BarChart3,
   Target,
   Award,
+  AlertTriangle,
   Users,
   PieChart,
   Headphones,
@@ -41,6 +42,7 @@ import {
   Eye,
   X,
   ChevronDown,
+  Download,
   FileText,
   Bell,
   Gamepad2,
@@ -53,6 +55,8 @@ import AnalyticsDashboard from "../charts/AnalyticsDashboard";
 import RecordingsReview from "../teacher/RecordingsReview";
 import AssignmentManagement from "../teacher/AssignmentManagement";
 import NotificationCenter from "../teacher/NotificationCenter";
+import DataExportModal from "../teacher/DataExportModal";
+import AccountDeletionModal from "../teacher/AccountDeletionModal";
 import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
 import { useUser } from "../../features/authentication/useUser";
 import {
@@ -1430,6 +1434,10 @@ const TeacherDashboard = () => {
   const [studentsToDelete, setStudentsToDelete] = useState([]);
   const [studentToEdit, setStudentToEdit] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [showAccountDeletionModal, setShowAccountDeletionModal] = useState(false);
+  const [studentForExport, setStudentForExport] = useState(null);
+  const [studentForAccountDeletion, setStudentForAccountDeletion] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -1919,6 +1927,22 @@ const TeacherDashboard = () => {
   const handleViewStudent = (student) => {
     setStudentForDetail(student);
     setShowDetailModal(true);
+  };
+
+  const handleExportData = (student) => {
+    setStudentForExport(student);
+    setShowExportModal(true);
+  };
+
+  const handleAccountDeletion = (student) => {
+    setStudentForAccountDeletion(student);
+    setShowAccountDeletionModal(true);
+  };
+
+  const handleDeletionRequested = () => {
+    // Refresh student list after deletion initiated
+    queryClient.invalidateQueries(['teacher-students']);
+    setShowAccountDeletionModal(false);
   };
 
   const handleFilterChange = (filterType, value) => {
@@ -2474,6 +2498,26 @@ const TeacherDashboard = () => {
                                 >
                                   <Edit3 className="h-3.5 w-3.5" />
                                 </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleExportData(student);
+                                  }}
+                                  className="min-w-0 rounded-lg p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:text-cyan-300"
+                                  title="Export Data"
+                                >
+                                  <Download className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAccountDeletion(student);
+                                  }}
+                                  className="min-w-0 rounded-lg p-1.5 text-orange-400 transition-colors hover:bg-orange-500/20 hover:text-orange-300"
+                                  title="Delete Account (COPPA)"
+                                >
+                                  <AlertTriangle className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                               <button
                                 onClick={(e) => {
@@ -2678,6 +2722,19 @@ const TeacherDashboard = () => {
         calculateAttendanceRate={calculateAttendanceRate}
         getRecentActivitySummary={getRecentActivitySummary}
         getPerformanceLevel={getPerformanceLevel}
+      />
+
+      <DataExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        student={studentForExport}
+      />
+
+      <AccountDeletionModal
+        isOpen={showAccountDeletionModal}
+        onClose={() => setShowAccountDeletionModal(false)}
+        student={studentForAccountDeletion}
+        onDeletionRequested={handleDeletionRequested}
       />
     </div>
   );
