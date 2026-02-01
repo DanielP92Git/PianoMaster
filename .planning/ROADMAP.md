@@ -105,10 +105,10 @@ Plans:
   4. All existing font usages in the app continue to work correctly
   5. index.html contains no external Google Fonts links
 
-**Plans:** TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 04-01-PLAN.md — Self-host Google Fonts
+- [ ] 04-01-PLAN.md — Install fontsource packages, update imports, remove CDN links
 
 ## Progress
 
