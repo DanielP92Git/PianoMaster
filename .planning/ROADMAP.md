@@ -54,15 +54,16 @@ Plans:
   5. Parental consent flow blocks data collection until teacher/parent provides verified consent
   6. No third-party SDKs collect data from users under 13 (analytics disabled or gated)
 
-**Plans:** 6 plans in 4 waves
+**Plans:** 7 plans (6 original + 1 gap closure)
 
 Plans:
-- [ ] 02-01-PLAN.md - Database Schema for COPPA Compliance
-- [ ] 02-02-PLAN.md - Age Gate UI Component
-- [ ] 02-03-PLAN.md - Third-Party SDK Audit
-- [ ] 02-04-PLAN.md - Consent & Account Services
-- [ ] 02-05-PLAN.md - Signup & Login Flow Integration
-- [ ] 02-06-PLAN.md - Consent UX & Route Guard
+- [x] 02-01-PLAN.md - Database Schema for COPPA Compliance
+- [x] 02-02-PLAN.md - Age Gate UI Component
+- [x] 02-03-PLAN.md - Third-Party SDK Audit
+- [x] 02-04-PLAN.md - Consent & Account Services
+- [x] 02-05-PLAN.md - Signup & Login Flow Integration
+- [x] 02-06-PLAN.md - Consent UX & Route Guard
+- [ ] 02-07-PLAN.md - Gap Closure: Wire data export and deletion services to UI
 
 ### Phase 3: Production Hardening
 **Goal**: Automated safeguards prevent XP farming, protect shared device users from forgotten logouts, and provide audit trail for compliance monitoring.
@@ -92,9 +93,9 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Critical Security Fixes | 3/3 | Complete | 2026-01-31 |
-| 2. COPPA Compliance Implementation | 0/6 | Planned | - |
+| 2. COPPA Compliance Implementation | 6/7 | Gap closure needed | - |
 | 3. Production Hardening | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-02-01 - Phase 2 planned (6 plans)*
+*Last updated: 2026-02-01 - Added gap closure plan 02-07*
