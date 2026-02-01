@@ -28,12 +28,12 @@ Requirements for this security hardening milestone. Each maps to roadmap phases.
 
 ### COPPA Compliance
 
-- [ ] **COPPA-01**: Data export API returns all student data as downloadable JSON
-- [ ] **COPPA-02**: Data deletion API permanently removes all student data from database
-- [ ] **COPPA-03**: Student usernames are anonymized in any shared/public-facing features
-- [ ] **COPPA-04**: Neutral age gate collects date of birth (not "Are you 13?" checkbox)
-- [ ] **COPPA-05**: Parental consent flow blocks data collection until consent verified
-- [ ] **COPPA-06**: Third-party SDKs are audited and removed if they collect child data
+- [x] **COPPA-01**: Data export API returns all student data as downloadable JSON
+- [x] **COPPA-02**: Data deletion API permanently removes all student data from database
+- [x] **COPPA-03**: Student usernames are anonymized in any shared/public-facing features
+- [x] **COPPA-04**: Neutral age gate collects date of birth (not "Are you 13?" checkbox)
+- [x] **COPPA-05**: Parental consent flow blocks data collection until consent verified
+- [x] **COPPA-06**: Third-party SDKs are audited and removed if they collect child data
 
 ## v2 Requirements
 
@@ -85,12 +85,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RATE-01 | Phase 3 | Pending |
 | RATE-02 | Phase 3 | Pending |
 | RATE-03 | Phase 3 | Pending |
-| COPPA-01 | Phase 2 | Pending |
-| COPPA-02 | Phase 2 | Pending |
-| COPPA-03 | Phase 2 | Pending |
-| COPPA-04 | Phase 2 | Pending |
-| COPPA-05 | Phase 2 | Pending |
-| COPPA-06 | Phase 2 | Pending |
+| COPPA-01 | Phase 2 | Complete |
+| COPPA-02 | Phase 2 | Complete |
+| COPPA-03 | Phase 2 | Complete |
+| COPPA-04 | Phase 2 | Complete |
+| COPPA-05 | Phase 2 | Complete |
+| COPPA-06 | Phase 2 | Complete |
 
 **Coverage:**
 - v1 requirements: 16 total
@@ -99,4 +99,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after Phase 1 completion*
+*Last updated: 2026-02-01 after Phase 2 completion*
