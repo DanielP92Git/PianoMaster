@@ -642,8 +642,8 @@ export function NotesRecognitionGame() {
       .padStart(2, "0")}`;
   }, [timeRemaining]);
 
-  // Pause the timer
-  const pauseTimer = useCallback(() => {
+  // Pause the game timer (distinct from session timeout pauseTimer)
+  const pauseGameTimer = useCallback(() => {
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -794,7 +794,7 @@ export function NotesRecognitionGame() {
       }
     }, 400);
 
-    pauseTimer();
+    pauseGameTimer();
     setGameOver(true);
     finishGame(isLost, timeRanOut);
   }, [
@@ -803,7 +803,7 @@ export function NotesRecognitionGame() {
     progress.totalQuestions,
     timeRemaining,
     updateProgress,
-    pauseTimer,
+    pauseGameTimer,
     finishGame,
     settings.timedMode,
     playGameOverSound,
@@ -954,7 +954,7 @@ export function NotesRecognitionGame() {
     isGameEndingRef.current = false;
 
     const timeLimit = updatedSettings.timeLimit || 45;
-    pauseTimer();
+    pauseGameTimer();
     resetTimer(timeLimit);
 
     // Generate first note using the passed gameSettings instead of global settings
@@ -1541,7 +1541,7 @@ export function NotesRecognitionGame() {
 
   // Handle pause game
   const handlePauseGame = () => {
-    pauseTimer();
+    pauseGameTimer();
     updateProgress({ showSettingsModal: true });
   };
 
