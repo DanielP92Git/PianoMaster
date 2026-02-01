@@ -9,12 +9,14 @@ import { useUserProfile } from "../../hooks/useUserProfile";
 import { usePointBalance } from "../../hooks/useAccessories";
 import { useAccessoryUnlockDetection } from "../../hooks/useAccessoryUnlockDetection";
 import { useUser } from "../../features/authentication/useUser";
-import { updateNodeProgress, getNodeProgress, updateExerciseProgress } from "../../services/skillProgressService";
+import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../../services/skillProgressService";
 import { awardXP, calculateSessionXP } from "../../utils/xpSystem";
-import { getNodeById } from "../../data/skillTrail";
+import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
 
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
+import RateLimitBanner from "../ui/RateLimitBanner";
 import { useTranslation } from "react-i18next";
+import { translateNodeName } from "../../utils/translateNodeName";
 const SHOWN_UNLOCKS_VERSION = 2;
 
 const useCountUp = (start, end, duration = 1400, shouldAnimate = true) => {
@@ -79,7 +81,7 @@ const VictoryScreen = ({
   exerciseType = null, // Optional: type of exercise (e.g., 'note_recognition')
   onNextExercise = null, // Optional: callback to navigate to next exercise
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useUser();
@@ -194,8 +196,16 @@ const VictoryScreen = ({
   const [isFirstComplete, setIsFirstComplete] = useState(false);
   const [exercisesRemaining, setExercisesRemaining] = useState(0);
   const [nodeComplete, setNodeComplete] = useState(false);
+  const [nextNode, setNextNode] = useState(null);
   const hasProcessedTrail = useRef(false);
   const hasCalledStreakUpdate = useRef(false);
+
+  // Rate limiting state
+  const [rateLimited, setRateLimited] = useState(false);
+  const [rateLimitResetTime, setRateLimitResetTime] = useState(null);
+
+  // Check if current user is a teacher (teachers bypass rate limiting)
+  const isTeacher = user?.user_metadata?.role === 'teacher';
 
   // Capture initial progress state (before game completion)
   const initialProgressRef = useRef(null);
@@ -321,8 +331,10 @@ const VictoryScreen = ({
           const node = getNodeById(nodeId);
 
           if (node) {
-            setNodeData(node);
-            const nodeExerciseCount = node.exercises?.length || 1;
+            // setNodeData(node); // Unused - kept for future features
+
+            // Teachers skip rate limiting entirely
+            const progressOptions = isTeacher ? { skipRateLimit: true } : {};
 
             // If exerciseIndex is provided, use exercise-level progress tracking
             if (exerciseIndex !== null && totalExercises !== null) {
@@ -334,8 +346,19 @@ const VictoryScreen = ({
                 exerciseType || node.exercises?.[exerciseIndex]?.type || 'unknown',
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
-                totalExercises
+                totalExercises,
+                progressOptions
               );
+
+              // Check if rate limited
+              if (result.rateLimited) {
+                setRateLimited(true);
+                setRateLimitResetTime(result.resetTime);
+                // Still show stars earned but don't save progress or award XP
+                setExercisesRemaining(0);
+                setNodeComplete(false);
+                return;
+              }
 
               setExercisesRemaining(result.exercisesRemaining);
               setNodeComplete(result.nodeComplete);
@@ -365,11 +388,28 @@ const VictoryScreen = ({
               const existingProgress = await getNodeProgress(user.id, nodeId);
               const isFirst = !existingProgress || existingProgress.stars === 0;
               setIsFirstComplete(isFirst);
-              setNodeComplete(true);
-              setExercisesRemaining(0);
 
               // Update node progress (pass percentage, not raw score)
-              await updateNodeProgress(user.id, nodeId, earnedStars, Math.round(Math.min(scorePercentage, 100)));
+              const result = await updateNodeProgress(
+                user.id,
+                nodeId,
+                earnedStars,
+                Math.round(Math.min(scorePercentage, 100)),
+                progressOptions
+              );
+
+              // Check if rate limited
+              if (result.rateLimited) {
+                setRateLimited(true);
+                setRateLimitResetTime(result.resetTime);
+                // Still show stars earned but don't save progress or award XP
+                setNodeComplete(false);
+                setExercisesRemaining(0);
+                return;
+              }
+
+              setNodeComplete(true);
+              setExercisesRemaining(0);
 
               // Calculate and award XP
               const sessionData = {
@@ -394,7 +434,86 @@ const VictoryScreen = ({
     };
 
     processTrailCompletion();
-  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType]); // Removed queryClient
+  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType, queryClient, isTeacher]);
+
+  // Fetch next recommended node when current node is complete
+  useEffect(() => {
+    const fetchNextNode = async () => {
+      console.log('[VictoryScreen] fetchNextNode check:', {
+        userId: user?.id,
+        nodeId,
+        nodeComplete,
+        shouldFetch: user?.id && nodeId && nodeComplete
+      });
+
+      if (!user?.id || !nodeId || !nodeComplete) return;
+
+      try {
+        const recommendedNode = await getNextNodeInPath(user.id, nodeId);
+        console.log('[VictoryScreen] Next node fetched:', recommendedNode);
+        setNextNode(recommendedNode);
+      } catch (error) {
+        console.error("Error fetching next node:", error);
+        setNextNode(null);
+      }
+    };
+
+    fetchNextNode();
+  }, [user?.id, nodeId, nodeComplete]);
+
+  // Navigation helper for moving to next node
+  const navigateToNextNode = useCallback(() => {
+    console.log('[VictoryScreen] navigateToNextNode called:', { nextNode });
+
+    if (!nextNode) {
+      console.log('[VictoryScreen] No nextNode, navigating to /trail');
+      // Fallback to trail map if no next node
+      navigate('/trail');
+      return;
+    }
+
+    // Get first exercise of next node
+    const firstExercise = nextNode.exercises?.[0];
+    if (!firstExercise) {
+      console.warn("Next node has no exercises");
+      navigate('/trail');
+      return;
+    }
+
+    // Build navigation state for the next node
+    const navState = {
+      nodeId: nextNode.id,
+      nodeConfig: firstExercise.config,
+      exerciseIndex: 0,
+      totalExercises: nextNode.exercises.length,
+      exerciseType: firstExercise.type
+    };
+
+    console.log('[VictoryScreen] Navigating to next node with state:', navState);
+
+    // Route based on exercise type
+    switch (firstExercise.type) {
+      case EXERCISE_TYPES.NOTE_RECOGNITION:
+        navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+        break;
+      case EXERCISE_TYPES.SIGHT_READING:
+        navigate('/notes-master-mode/sight-reading-game', { state: navState });
+        break;
+      case EXERCISE_TYPES.MEMORY_GAME:
+        navigate('/notes-master-mode/memory-game', { state: navState });
+        break;
+      case EXERCISE_TYPES.RHYTHM:
+        navigate('/rhythm-mode/metronome-trainer', { state: navState });
+        break;
+      case EXERCISE_TYPES.BOSS_CHALLENGE:
+        // Boss challenges use note recognition game with special config
+        navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+        break;
+      default:
+        console.warn('Unknown exercise type:', firstExercise.type);
+        navigate('/trail');
+    }
+  }, [nextNode, navigate]);
 
   // Check for newly unlocked accessories after stats update
   useEffect(() => {
@@ -474,13 +593,28 @@ const VictoryScreen = ({
           </div>
         </div>
 
+        {/* Rate limit banner - shown at top when rate limited */}
+        {rateLimited && rateLimitResetTime && (
+          <div className="w-full px-2 mb-2">
+            <RateLimitBanner
+              resetTime={rateLimitResetTime}
+              onComplete={() => {
+                setRateLimited(false);
+                setRateLimitResetTime(null);
+              }}
+            />
+          </div>
+        )}
+
         {/* Content area */}
         <div className="w-full space-y-1.5 px-2 pt-4 text-center sm:space-y-2 sm:px-4 sm:pt-2">
           {/* Victory title */}
           <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
-            {nodeId && totalExercises > 1
-              ? (nodeComplete ? 'Node Complete!' : 'Exercise Complete!')
-              : 'Victory!'}
+            {rateLimited
+              ? 'Great Practice!'
+              : nodeId && totalExercises > 1
+                ? (nodeComplete ? 'Node Complete!' : 'Exercise Complete!')
+                : 'Victory!'}
           </h2>
 
           {/* Exercise indicator (if multi-exercise node) */}
@@ -585,13 +719,35 @@ const VictoryScreen = ({
             {/* If trail node: Show exercise-aware buttons */}
             {nodeId ? (
               <>
-                {/* Primary action: Next Exercise or Continue Learning */}
+                {/* Primary action: Next Exercise or Continue to Next Node */}
+                {(() => {
+                  console.log('[VictoryScreen] Button render logic:', {
+                    exercisesRemaining,
+                    onNextExercise: !!onNextExercise,
+                    nodeComplete,
+                    nextNode: !!nextNode,
+                    showNextExercise: exercisesRemaining > 0 && onNextExercise,
+                    showContinueToNext: nodeComplete && nextNode,
+                    showBackToTrail: !(exercisesRemaining > 0 && onNextExercise) && !(nodeComplete && nextNode)
+                  });
+                  return null;
+                })()}
                 {exercisesRemaining > 0 && onNextExercise ? (
                   <button
                     onClick={onNextExercise}
                     className="w-full transform rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
                   >
                     Next Exercise ({exercisesRemaining} left)
+                  </button>
+                ) : nodeComplete && nextNode ? (
+                  <button
+                    onClick={() => {
+                      console.log('[VictoryScreen] Continue button clicked!');
+                      navigateToNextNode();
+                    }}
+                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                  >
+                    Continue to &quot;{translateNodeName(nextNode.name, t, i18n)}&quot;
                   </button>
                 ) : (
                   <button
