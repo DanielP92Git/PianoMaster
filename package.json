@@ -46,6 +46,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
+    "@fontsource/assistant": "^5.2.9",
+    "@fontsource/comic-neue": "^5.2.7",
+    "@fontsource/dancing-script": "^5.2.8",
+    "@fontsource/fredoka-one": "^5.2.5",
+    "@fontsource/heebo": "^5.2.8",
+    "@fontsource/nunito": "^5.2.7",
+    "@fontsource/outfit": "^5.2.8",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
