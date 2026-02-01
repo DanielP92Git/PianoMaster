@@ -15,6 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Critical Security Fixes** - Secure database access control, authorization verification, and shared device safety
 - [x] **Phase 2: COPPA Compliance Implementation** - Parental consent, data deletion, child data protection
 - [x] **Phase 3: Production Hardening** - Rate limiting, session timeouts, abuse prevention
+- [ ] **Phase 4: Self-Host Google Fonts** - Remove external CDN dependencies for COPPA compliance
 
 ## Phase Details
 
@@ -88,17 +89,39 @@ Plans:
 - [x] 03-03-PLAN.md — Session timeout infrastructure (hook, modal, context)
 - [x] 03-04-PLAN.md — Session timeout integration (App.jsx, games, login message)
 
+### Phase 4: Self-Host Google Fonts
+**Goal**: Eliminate all external font CDN requests to prevent third-party data collection from under-13 users, completing COPPA-06 compliance.
+
+**Depends on**: Nothing (independent fix)
+
+**Requirements**: COPPA-06
+
+**Gap Closure**: Addresses partial COPPA-06 from v1-MILESTONE-AUDIT.md
+
+**Success Criteria** (what must be TRUE):
+  1. All fonts (Outfit, Comic Neue, Nunito, Fredoka One, Dancing Script, Heebo, Assistant, Material Icons Round) are served from `/public/fonts/`
+  2. No external requests to fonts.googleapis.com or fonts.gstatic.com in browser Network tab
+  3. `@font-face` rules properly define font families with correct weights and styles
+  4. All existing font usages in the app continue to work correctly
+  5. index.html contains no external Google Fonts links
+
+**Plans:** TBD
+
+Plans:
+- [ ] 04-01-PLAN.md — Self-host Google Fonts
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Critical Security Fixes | 3/3 | Complete | 2026-01-31 |
 | 2. COPPA Compliance Implementation | 7/7 | Complete | 2026-02-01 |
 | 3. Production Hardening | 4/4 | Complete | 2026-02-01 |
+| 4. Self-Host Google Fonts | 0/1 | Pending | — |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-02-01 - Phase 3 complete (4/4 plans)*
+*Last updated: 2026-02-01 - Added Phase 4 for gap closure (Google Fonts)*
