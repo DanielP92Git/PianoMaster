@@ -1,3 +1,13 @@
+# Requirements Archive: v1.0 Security Hardening
+
+**Archived:** 2026-02-01
+**Status:** SHIPPED
+
+This is the archived requirements specification for v1.0.
+For current requirements, see `.planning/REQUIREMENTS.md` (created for next milestone).
+
+---
+
 # Requirements: PianoApp Security Hardening
 
 **Defined:** 2026-01-31
@@ -35,43 +45,9 @@ Requirements for this security hardening milestone. Each maps to roadmap phases.
 - [x] **COPPA-05**: Parental consent flow blocks data collection until consent verified
 - [x] **COPPA-06**: Third-party SDKs are audited and removed if they collect child data
 
-## v2 Requirements
-
-Deferred to future milestone. Tracked but not in current roadmap.
-
-### Service Worker Security
-
-- **SW-01**: Service worker auth endpoint exclusion is tested with automated tests
-- **SW-02**: All auth-related URL patterns are verified to bypass cache
-
-### Enhanced Security
-
-- **ENH-01**: Audit logging for sensitive operations (data access, exports, deletions)
-- **ENH-02**: Automated security scanning in CI/CD pipeline
-- **ENH-03**: Penetration testing before app store submission
-
-### Advanced COPPA
-
-- **COPPA-07**: Parental dashboard to view child's data and progress
-- **COPPA-08**: Parent can manage consent preferences (revoke, update)
-- **COPPA-09**: Automated data retention policies (delete inactive accounts)
-
-## Out of Scope
-
-Explicitly excluded. Documented to prevent scope creep.
-
-| Feature | Reason |
-|---------|--------|
-| Performance optimizations | Not security-critical, separate project |
-| Memory Game trail integration bug | Functional bug, not security |
-| Debug code cleanup | Code quality, not security |
-| Test coverage expansion | Important but not blocking security work |
-| VexFlow rendering optimization | Performance, not security |
-| Sound file bundle reduction | Performance, not security |
-
 ## Traceability
 
-Which phases cover which requirements. Updated during roadmap creation.
+Which phases cover which requirements.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
@@ -90,7 +66,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | COPPA-03 | Phase 2 | Complete |
 | COPPA-04 | Phase 2 | Complete |
 | COPPA-05 | Phase 2 | Complete |
-| COPPA-06 | Phase 2 | Complete |
+| COPPA-06 | Phase 2 + 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 16 total
@@ -98,5 +74,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-01-31*
-*Last updated: 2026-02-01 after Phase 3 completion*
+
+## Milestone Summary
+
+**Shipped:** 16 of 16 v1 requirements
+
+**Adjusted:**
+- COPPA-06 required additional Phase 4 (Self-Host Google Fonts) after SDK audit discovered Google Fonts CDN was collecting user IPs
+
+**Dropped:** None
+
+---
+
+*Archived: 2026-02-01 as part of v1 milestone completion*

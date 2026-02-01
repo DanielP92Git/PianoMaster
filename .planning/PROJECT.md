@@ -1,84 +1,89 @@
-# PianoApp Security Hardening
+# PianoApp
 
 ## What This Is
 
-Security hardening and preventive maintenance for a piano learning PWA designed for 8-year-old learners. This project ensures child data protection, safe operation on shared devices, and compliance with app store requirements (Google Play, Apple App Store) in preparation for future deployment.
+A piano learning PWA for 8-year-old learners with gamification, skill progression trails, and multi-game modes. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows, and shared device safeguards.
 
 ## Core Value
 
-**Children's data must be protected and inaccessible to unauthorized users.** Every feature, fix, and decision should prioritize preventing unauthorized access to child data, ensuring safe logout on shared devices, and preventing abuse of the XP/progression system.
+**Children's data must be protected and inaccessible to unauthorized users.** Every feature prioritizes preventing unauthorized access to child data, ensuring safe logout on shared devices, and preventing abuse of the XP/progression system.
 
 ## Requirements
 
 ### Validated
 
-These capabilities exist and are working:
+These capabilities exist, are working, and have been shipped:
 
-- ✓ Supabase authentication (email/password) — existing
-- ✓ Student/teacher role differentiation — existing
-- ✓ Trail gamification system with XP and levels — existing
-- ✓ Daily goals generation and tracking — existing
-- ✓ Service worker with partial auth endpoint exclusion — existing (needs audit)
-- ✓ Basic RLS policies on tables — existing (needs audit)
-- ✓ Security Hardening Guidelines documented in CLAUDE.md — existing (needs verification)
+**v1.0 Security Hardening (shipped 2026-02-01):**
+- SEC-01: RLS policies use database state (not user_metadata) for authorization
+- SEC-02: All SECURITY DEFINER functions have auth.uid() checks
+- SEC-03: Client-side services verify user.id matches studentId
+- SEC-04: Logout clears all user-specific localStorage keys
+- SESS-01: Students auto-logout after 30min inactivity
+- SESS-02: Teachers auto-logout after 2hr inactivity
+- SESS-03: Inactivity timer resets on user interaction
+- RATE-01: Score submissions limited to 10 per 5min per node
+- RATE-02: Rate limiting enforced at database level
+- RATE-03: Rate limit violations return clear error message
+- COPPA-01: Data export returns all student data as JSON
+- COPPA-02: Data deletion removes all student data with 30-day grace
+- COPPA-03: Student usernames anonymized in shared features
+- COPPA-04: Neutral age gate collects DOB (not checkbox)
+- COPPA-05: Parental consent blocks data collection until verified
+- COPPA-06: No third-party data collection (self-hosted fonts)
+
+**Pre-existing:**
+- Supabase authentication (email/password)
+- Student/teacher role differentiation
+- Trail gamification system with XP and levels
+- Daily goals generation and tracking
+- Multiple game modes (sight reading, notes recognition, rhythm)
 
 ### Active
 
-Security fixes and critical features to implement:
+Requirements for next milestone (to be defined):
 
-**Security Fixes:**
-- [ ] SEC-01: Move migration tracking from localStorage to database (prevent XP duplication)
-- [ ] SEC-02: Audit and fix service worker auth endpoint caching
-- [ ] SEC-03: Audit all SECURITY DEFINER functions for auth.uid() checks
-- [ ] SEC-04: Audit RLS policies - ensure no user_metadata usage, proper data scoping
-- [ ] SEC-05: Audit client-side services for authorization verification before API calls
-- [ ] SEC-06: Implement secure logout that clears all user-specific localStorage data
-- [ ] SEC-07: Verify role checks use database tables, not JWT user_metadata
-
-**Critical Features:**
-- [ ] FEAT-01: Session timeout - logout after 1 hour inactivity for students, 2 hours for teachers
-- [ ] FEAT-02: Rate limiting on score submissions (1 per node per 60 seconds per student)
-- [ ] FEAT-03: Data export feature for COPPA/GDPR compliance (download all student data as JSON)
-
-**COPPA Compliance:**
-- [ ] COPPA-01: Ensure no PII exposed in any shared/public features
-- [ ] COPPA-02: Anonymize usernames in any leaderboard or comparison features
-- [ ] COPPA-03: Verify data minimization - only necessary data collected
+- [ ] Hard delete Edge Function for accounts past 30-day grace period
+- [ ] Production deployment to Google Play / Apple App Store
+- [ ] Beta testing with human verification checklist
 
 ### Out of Scope
 
-Explicitly excluded from this project:
+Explicitly excluded:
 
-- Performance bottlenecks (sound file bundle, VexFlow rendering, trail data fetching) — separate project, not security-critical
-- Code quality improvements (large components, debug code cleanup) — technical debt, address later
-- Test coverage gaps — important but not blocking security work
-- Known bugs (Memory Game trail integration, exercise progress race condition) — functional bugs, not security
-- New features unrelated to security — focus on hardening first
+| Feature | Reason |
+|---------|--------|
+| Performance optimizations | Not security-critical, separate project |
+| Memory Game trail integration bug | Functional bug, not security |
+| Debug code cleanup | Code quality, not security |
+| Test coverage expansion | Important but not blocking security work |
+| VexFlow rendering optimization | Performance, not security |
+| Sound file bundle reduction | Performance, not security |
 
 ## Context
 
-**Current State:**
-- App is in development/beta with a few beta testers
-- No dedicated staging environment (using production Supabase)
-- Targeting future deployment to Google Play and Apple App Store
-- Used by independent users: private teachers, piano students (with or without teachers)
-- Not currently used in schools, but must support shared device scenarios
+**Current State (after v1.0):**
+- App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
+- COPPA compliant for children under 13
+- Ready for security-focused beta testing
+- 177 files modified, 31,659 lines added in v1 milestone
 
-**Security Audit Status:**
-- January 2026 security audit documented patterns in CLAUDE.md
-- Implementation status unclear — need to verify what's already implemented vs. documented as target
-- CONCERNS.md lists specific vulnerabilities to address
+**Tech Stack:**
+- Frontend: React 18, Vite 6, React Router v7
+- State: Redux Toolkit (minimal), React Context (feature-scoped), TanStack Query v5
+- Backend: Supabase (auth, database, real-time)
+- Music: VexFlow v5 for notation, Klavier for keyboard input
+- Styling: Tailwind CSS with custom design system
 
 **User Demographics:**
 - Primary users: 8-year-old children learning piano
 - Secondary users: Teachers managing students, parents overseeing progress
 - COPPA compliance required for children under 13
 
-**Testing Approach:**
-- Use existing Supabase with careful migration rollback plans
-- Browser-based shared device simulation (incognito, multiple profiles, localStorage clearing)
-- Manual security testing checklist with beta testers
-- No separate staging environment needed for beta phase
+**Known Issues (non-blocking):**
+- Parental consent verification method needs legal review
+- Privacy policy language requires attorney review
+- State age verification laws may require Play Age Signals API
 
 ## Constraints
 
@@ -86,17 +91,22 @@ Explicitly excluded from this project:
 - **Compatibility**: Must not break existing beta user data or progress
 - **Compliance**: Must meet Google Play and Apple App Store security requirements
 - **COPPA**: Must comply with children's data protection regulations (under 13)
-- **Idempotency**: Migration fixes must handle users who already migrated (no double XP awards)
+- **COPPA Deadline**: April 22, 2026 for full compliance
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Move migration tracking to database | localStorage can be manipulated by users; server-side is authoritative | — Pending |
-| Rate limit at 1 submission per 60 seconds | Prevents XP farming while allowing normal gameplay pace | — Pending |
-| 1-hour session timeout for students | Balance security on shared devices vs. not interrupting practice | — Pending |
-| No separate staging environment | Beta phase with few users; adds maintenance burden without proportional benefit | — Pending |
-| Audit before implementing | Verify what's already done before duplicating work | — Pending |
+| is_admin() function for admin checks | user_metadata is user-modifiable via supabase.auth.updateUser() | Good |
+| Defense-in-depth in triggers | Verify auth.uid() even when RLS should prevent access | Good |
+| Trigger-based is_under_13 column | GENERATED ALWAYS AS doesn't support date functions | Good |
+| Neutral DOB collection | COPPA requires dropdown menus not leading questions | Good |
+| Fixed window rate limiting | Simpler than sliding window, reset after 5 min of inactivity | Good |
+| 30min student / 2hr teacher timeout | Balance security on shared devices vs. not interrupting practice | Good |
+| crossTab with leaderElection | One tab coordinates timeout across all tabs | Good |
+| Fontsource packages for fonts | npm versioning, Vite bundling, no manual font management | Good |
+| No separate staging environment | Beta phase with few users; adds maintenance burden | Good |
 
 ---
-*Last updated: 2026-01-31 after initialization*
+
+*Last updated: 2026-02-01 after v1.0 milestone*
