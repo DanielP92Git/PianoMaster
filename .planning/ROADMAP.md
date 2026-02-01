@@ -80,10 +80,13 @@ Plans:
   5. Rate limit violations return clear error message to user without breaking game flow
   6. Rate limiting prevents XP farming while allowing normal gameplay pace
 
-**Plans**: TBD
+**Plans:** 4 plans in 2 waves
 
 Plans:
-- [ ] 03-01: TBD during planning
+- [ ] 03-01-PLAN.md — Rate limiting database layer (table, function, RLS)
+- [ ] 03-02-PLAN.md — Rate limit UI integration (banner, service, VictoryScreen)
+- [ ] 03-03-PLAN.md — Session timeout infrastructure (hook, modal, context)
+- [ ] 03-04-PLAN.md — Session timeout integration (App.jsx, games, login message)
 
 ## Progress
 
@@ -94,8 +97,8 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Critical Security Fixes | 3/3 | Complete | 2026-01-31 |
 | 2. COPPA Compliance Implementation | 7/7 | Complete | 2026-02-01 |
-| 3. Production Hardening | 0/TBD | Not started | - |
+| 3. Production Hardening | 0/4 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-31*
-*Last updated: 2026-02-01 - Phase 2 complete (7/7 plans)*
+*Last updated: 2026-02-01 - Phase 3 planned (4 plans in 2 waves)*
