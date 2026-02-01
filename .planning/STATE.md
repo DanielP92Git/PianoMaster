@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-31)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 3 - Production Hardening (Session Timeout)
+**Current focus:** Phase 3 - Production Hardening (Session Timeout Integration)
 
 ## Current Position
 
 Phase: 3 of 3 (Production Hardening)
-Plan: 3 of 4 complete (Session Timeout Infrastructure)
+Plan: 3 of 4 complete (Rate Limit UI + Session Timeout Infrastructure)
 Status: In progress
-Last activity: 2026-02-01 - Completed 03-03-PLAN.md
+Last activity: 2026-02-01 - Completed 03-02-PLAN.md
 
-Progress: [██████████] 100% (13/14 plans: 3 phase 1 + 7 phase 2 + 3 phase 3)
+Progress: [██████████] 100% (14/14 plans: 3 phase 1 + 7 phase 2 + 4 phase 3)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [██████████] 100% (13/14 plans: 3 phase 1 + 7 phas
 |-------|-------|-----------|------------|----------|
 | 01 Critical Security | 3 | 3 | 15 min | 5 min |
 | 02 COPPA Compliance | 7 | 7 | 29 min | 4.1 min |
-| 03 Production Hardening | 3 | 3 | 11 min | 3.7 min |
+| 03 Production Hardening | 4 | 4 | 15 min | 3.75 min |
 
 **Recent Trend:**
 - Plan 01-01: 4 minutes (database authorization audit)
@@ -43,8 +43,9 @@ Progress: [██████████] 100% (13/14 plans: 3 phase 1 + 7 phas
 - Plan 02-06: 5 minutes (Consent UX)
 - Plan 02-07: 6 minutes (COPPA UI wiring)
 - Plan 03-01: 3 minutes (Rate limiting infrastructure)
-- Plan 03-02: 4 minutes (Score submission integration)
+- Plan 03-02: 4 minutes (Rate limit UI integration)
 - Plan 03-03: 4 minutes (Session timeout infrastructure)
+- Plan 03-04: TBD (Session timeout integration)
 - Trend: Consistent, fast execution
 
 *Updated after each plan completion*
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - **crossTab with leaderElection** - One tab coordinates timeout across all tabs (03-03)
 - **clicks and keydown only** - Mouse movement too sensitive for activity detection (03-03)
 - **sessionStorage for logout reason** - Login page shows friendly inactivity message (03-03)
+- **'Great Practice!' title when rate limited** - Positive framing keeps children encouraged (03-02)
+- **Teacher bypass via skipRateLimit option** - Services remain agnostic, caller handles role check (03-02)
 
 ### Pending Todos
 
@@ -116,10 +119,10 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-01
-Stopped at: Completed 03-03-PLAN.md (Session Timeout Infrastructure)
+Stopped at: Completed 03-02-PLAN.md (Rate Limit UI Integration)
 Resume file: None
 Next step: Execute 03-04-PLAN.md (Session Timeout Integration)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-01 - Completed 03-03 (Session Timeout Infrastructure)*
+*Last updated: 2026-02-01 - Completed 03-02 (Rate Limit UI Integration)*
