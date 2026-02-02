@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 ## Current Position
 
-Phase: 5 (Parental Consent Email)
-Plan: Not started
-Status: Ready to plan phase 5
-Last activity: 2026-02-02 — v1.1 milestone started
+Phase: 5 of 5 (Parental Consent Email)
+Plan: 1 of 2 in current phase
+Status: In progress
+Last activity: 2026-02-02 — Completed 05-01-PLAN.md
 
-Progress: v1.0 SHIPPED | v1.1 Phase 5 ready to plan
+Progress: v1.0 SHIPPED | v1.1 Phase 5: █░ 50%
 
 ## Milestone History
 
@@ -26,8 +26,13 @@ Progress: v1.0 SHIPPED | v1.1 Phase 5 ready to plan
 
 ### Decisions
 
-Decisions are logged in PROJECT.md Key Decisions table.
-All v1 decisions marked with outcome "Good" — no revisits needed.
+| Phase | Decision | Rationale |
+|-------|----------|-----------|
+| v1.0 | All decisions logged in PROJECT.md | See PROJECT.md Key Decisions table - all marked "Good" |
+| 05-01 | Use Resend API over SendGrid | Official Supabase recommendation, simpler DX, better integration |
+| 05-01 | Table-based email layout with inline CSS | Maximum compatibility across email clients (Outlook uses Word engine) |
+| 05-01 | 30-second timeout on Resend API calls | Prevent hanging requests, better UX on slow network |
+| 05-01 | Child-friendly purple gradient design | Match PianoMaster brand, create inviting feel for parents |
 
 ### Pending Todos
 
@@ -44,10 +49,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: v1.1 milestone initialized
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
-Next step: Run `/gsd:plan-phase 5` to plan email implementation
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-02 — v1.1 milestone started*
+*Last updated: 2026-02-02 — Completed 05-01-PLAN.md (Edge Function)*

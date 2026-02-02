@@ -17,7 +17,7 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 05-01-PLAN.md - Create Edge Function with Resend API and email template
+- [x] 05-01-PLAN.md - Create Edge Function with Resend API and email template
 - [ ] 05-02-PLAN.md - Client integration, 406 fix, and error handling
 
 **Requirements covered:**
