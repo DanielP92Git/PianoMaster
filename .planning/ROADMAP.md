@@ -13,7 +13,7 @@ This milestone commits and validates existing trail redesign work (Phases 1-2 fr
 | 6 | Trail Stabilization | Commit, test, and fix trail redesign work | TRAIL-01-04, MEM-01-05, NAV-01-04, CLEAN-01-02 |
 
 **Total requirements:** 15
-**Coverage:** 100% ✓
+**Coverage:** 100%
 
 ---
 
@@ -26,6 +26,13 @@ This milestone commits and validates existing trail redesign work (Phases 1-2 fr
 - MEM-01, MEM-02, MEM-03, MEM-04, MEM-05 (Memory Game Integration)
 - NAV-01, NAV-02, NAV-03, NAV-04 (Navigation)
 - CLEAN-01, CLEAN-02 (Cleanup)
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Commit all trail redesign files (foundation + integration + migrations)
+- [ ] 06-02-PLAN.md — Execute TEST_PLAN.md manual testing and fix discovered bugs
+- [ ] 06-03-PLAN.md — Remove temporary documentation and debug files
 
 **Success criteria:**
 1. User can navigate to any of the 26 treble clef nodes on the trail map
@@ -41,29 +48,12 @@ This milestone commits and validates existing trail redesign work (Phases 1-2 fr
 3. **Bug fixes** — Address any issues discovered during testing
 4. **Cleanup** — Remove temporary documentation files from repo root
 
-**Files to commit:**
-- `src/data/constants.js` (new)
-- `src/data/nodeTypes.js` (new)
-- `src/data/trailSections.js` (new)
-- `src/data/units/*.js` (new)
-- `src/utils/nodeGenerator.js` (modified)
-- `src/data/skillTrail.js` (modified)
-- `src/data/expandedNodes.js` (modified)
-- `src/components/games/notes-master-games/MemoryGame.jsx` (modified)
-- `src/components/trail/TrailMap.jsx` (modified)
-- `src/components/trail/TrailNodeModal.jsx` (modified)
-- `src/utils/progressMigration.js` (modified)
-- Database migrations (if any)
-
-**Files to delete after commit:**
-- `IMPLEMENTATION_STATUS.md`
-- `PHASE2_COMPLETE.md`
-- `REDESIGN_COMPLETE.md`
-- `TEST_PLAN.md`
-- `verify-redesign.mjs`
-- `unlock-nodes-test.sql`
-
-**Estimated plans:** 2-3 (Commit, Test+Fix, Cleanup)
+**Wave Structure:**
+| Wave | Plans | Notes |
+|------|-------|-------|
+| 1 | 06-01 | Commit work (autonomous) |
+| 2 | 06-02 | Test + fix (requires human verification) |
+| 3 | 06-03 | Cleanup (autonomous) |
 
 ---
 
@@ -82,4 +72,4 @@ This milestone commits and validates existing trail redesign work (Phases 1-2 fr
 ---
 
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 after initial creation*
+*Last updated: 2026-02-03 after plan-phase*
