@@ -108,6 +108,9 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
       case 'sight_reading':
         navigate('/notes-master-mode/sight-reading-game', { state: navState });
         break;
+      case 'memory_game':
+        navigate('/notes-master-mode/memory-game', { state: navState });
+        break;
       case 'rhythm':
         navigate('/rhythm-mode/metronome-trainer', { state: navState });
         break;

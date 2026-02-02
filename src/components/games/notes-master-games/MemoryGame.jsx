@@ -5,7 +5,8 @@ import React, {
   useMemo,
   useRef,
 } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getNodeById } from "../../../data/skillTrail";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import {
@@ -60,7 +61,15 @@ const NOTE_LABEL_FONT_STACK =
 
 export function MemoryGame() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation("common");
+
+  // Get nodeId from trail navigation (if coming from trail)
+  const nodeId = location.state?.nodeId || null;
+  const nodeConfig = location.state?.nodeConfig || null;
+  const trailExerciseIndex = location.state?.exerciseIndex ?? null;
+  const trailTotalExercises = location.state?.totalExercises ?? null;
+  const trailExerciseType = location.state?.exerciseType ?? null;
 
   const [difficulty, setDifficulty] = useState("Easy");
   const [gridSize, setGridSize] = useState(DIFFICULTIES["Easy"]);
@@ -262,6 +271,100 @@ export function MemoryGame() {
   const { updateScore } = useScores();
   const gridDifficulty =
     GRID_SIZE_TO_DIFFICULTY[gridSize] || difficulty || "Easy";
+
+  // Track if we should auto-start from trail
+  const hasAutoStartedRef = useRef(false);
+
+  // Reset auto-start flag and game state when nodeId changes (navigating to a new node)
+  useEffect(() => {
+    hasAutoStartedRef.current = false;
+
+    // Reset game state to prevent stuck UI from previous node
+    setFlippedIndexes([]);
+    setMatchedIndexes([]);
+    setScore(0);
+    setShowFireworks(false);
+    setShowMatchFirework(false);
+    setGameFinished(false);
+    setGameStarted(false);
+    setIsLost(false);
+  }, [nodeId]);
+
+  // Auto-configure and auto-start from trail node
+  useEffect(() => {
+    if (nodeConfig && !hasAutoStartedRef.current) {
+      hasAutoStartedRef.current = true;
+
+      // Parse grid size from nodeConfig (e.g., "3x4" or "2x4")
+      let parsedGridSize = "3 X 4"; // default
+      if (nodeConfig.gridSize) {
+        // Convert from formats like "3x4", "2x4" to "3 X 4", "3 X 6", etc.
+        const gridStr = String(nodeConfig.gridSize).toUpperCase().replace(/X/g, ' X ');
+        if (GRID_SIZES[gridStr]) {
+          parsedGridSize = gridStr;
+        }
+      }
+
+      // Build settings from node configuration
+      const trailSettings = {
+        clef: nodeConfig.clef || 'treble',
+        selectedNotes: nodeConfig.notePool || [],
+        gridSize: parsedGridSize,
+        timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
+        timeLimit: nodeConfig.timeLimit || 90,
+        enableSharps: false,
+        enableFlats: false
+      };
+
+      // Apply settings and start the game
+      applySettingsAndRestart(trailSettings, { closeModal: false });
+    }
+  }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
+
+  // Handle navigation to next exercise in the trail node
+  const handleNextExercise = useCallback(() => {
+    if (nodeId && trailExerciseIndex !== null && trailTotalExercises !== null) {
+      const nextIndex = trailExerciseIndex + 1;
+
+      // If there's another exercise, navigate to it
+      if (nextIndex < trailTotalExercises) {
+        const node = getNodeById(nodeId);
+        if (node && node.exercises && node.exercises[nextIndex]) {
+          const nextExercise = node.exercises[nextIndex];
+
+          const navState = {
+            nodeId,
+            nodeConfig: nextExercise.config,
+            exerciseIndex: nextIndex,
+            totalExercises: trailTotalExercises,
+            exerciseType: nextExercise.type
+          };
+
+          // Navigate to the appropriate game based on exercise type
+          switch (nextExercise.type) {
+            case EXERCISE_TYPES.NOTE_RECOGNITION:
+              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+              break;
+            case EXERCISE_TYPES.SIGHT_READING:
+              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              break;
+            case EXERCISE_TYPES.MEMORY_GAME:
+              navigate('/notes-master-mode/memory-game', { state: navState });
+              break;
+            case EXERCISE_TYPES.RHYTHM:
+              navigate('/rhythm-mode/metronome-trainer', { state: navState });
+              break;
+            case EXERCISE_TYPES.BOSS_CHALLENGE:
+              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              break;
+            default:
+              console.warn('Unknown exercise type:', nextExercise.type);
+              navigate('/trail');
+          }
+        }
+      }
+    }
+  }, [nodeId, trailExerciseIndex, trailTotalExercises, navigate]);
 
   useEffect(() => {
     const derived = GRID_SIZE_TO_DIFFICULTY[gridSize];
@@ -741,7 +844,15 @@ export function MemoryGame() {
         </div>
       )}
 
-      {!gameStarted ? (
+      {/* Show loading screen when coming from trail and waiting for auto-start */}
+      {!gameStarted && nodeConfig ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+            <p className="text-lg font-medium text-white/80">Loading Memory Game...</p>
+          </div>
+        </div>
+      ) : !gameStarted ? (
         <UnifiedGameSettings
           gameType="memory"
           steps={[
@@ -807,7 +918,12 @@ export function MemoryGame() {
             score={score}
             totalPossibleScore={cards.length * 10}
             onReset={handleReset}
-            onExit={() => navigate("/notes-master-mode")}
+            onExit={() => navigate(nodeId ? "/trail" : "/notes-master-mode")}
+            nodeId={nodeId}
+            exerciseIndex={trailExerciseIndex}
+            totalExercises={trailTotalExercises}
+            exerciseType={trailExerciseType}
+            onNextExercise={handleNextExercise}
           />
         )
       ) : (

@@ -1,145 +1,152 @@
 /**
- * Progress Migration Script
+ * Progress Migration Utility
  *
- * Migrates existing user scores to the new trail system
- * Awards retroactive XP and marks nodes as completed based on historical performance
+ * Migrates existing users from the legacy 18-node trail to the new 90-node unit-based system.
+ * This is a one-time migration that preserves user progress while updating to the new structure.
  */
 
-import supabase from '../services/supabase';
-import { awardXP } from '../utils/xpSystem';
+import { getStudentProgress, updateNodeProgress } from '../services/skillProgressService';
+import { awardXP } from './xpSystem';
 
 /**
- * Check if a student has already been migrated
- * @param {string} studentId - The student's ID
- * @returns {Promise<boolean>} True if already migrated
+ * Mapping from legacy node IDs to new node IDs
+ * This preserves user progress during the migration
  */
-export const checkMigrationStatus = async (studentId) => {
-  try {
-    // Check if student has any trail progress (if they do, they're migrated)
-    const { data, error } = await supabase
-      .from('student_skill_progress')
-      .select('id')
-      .eq('student_id', studentId)
-      .limit(1)
-      .maybeSingle();
+const LEGACY_TO_NEW_NODE_MAPPING = {
+  // Treble Clef mappings
+  'treble_c_d': 'treble_1_1',              // C & D → First Position - Introduction
+  'treble_c_e': 'treble_1_2',              // C, D, E → First Position - Quarters Only
+  'treble_five_finger': 'treble_2_1',      // Five Finger → Five Finger Position - Introduction
+  'treble_c_a': 'treble_2_2',              // C to A → Five Finger Position - Quarters Only
+  'treble_almost_there': 'treble_3_1',     // Almost There → Full Octave - Introduction (future)
+  'treble_full_octave': 'treble_3_2',      // Full Octave → Full Octave - Quarters Only (future)
 
-    // If they have any progress, consider them migrated
-    if (data) return true;
+  // Bass Clef mappings
+  'bass_c_b': 'bass_1_1',                  // C & B → Middle C Position - Introduction
+  'bass_c_a': 'bass_1_2',                  // C, B, A → Middle C Position - Quarters Only
+  'bass_c_g': 'bass_2_1',                  // C to G → Five Finger Low - Introduction
+  'bass_c_f': 'bass_2_2',                  // C to F → Five Finger Low - Quarters Only
+  'bass_almost_there': 'bass_3_1',         // Almost There → Full Octave Down (future)
+  'bass_master': 'bass_3_2',               // Master → Full Octave Down (future)
 
-    // Also check local storage for migration flag
-    if (typeof window !== 'undefined') {
-      const migrationKey = `migration_completed_${studentId}`;
-      return localStorage.getItem(migrationKey) === 'true';
-    }
+  // Rhythm mappings
+  'rhythm_intro': 'rhythm_1_1',            // Rhythm Basics → Steady Beat - Quarters Only
+  'rhythm_quarter_notes': 'rhythm_1_2',    // Quarter Notes → Steady Beat - Quarters + Halves
+  'rhythm_half_notes': 'rhythm_1_2',       // Half Notes → Steady Beat - Quarters + Halves (merge)
+  'rhythm_eighth_notes': 'rhythm_2_1',     // Eighth Notes → Eighth Notes - Quarters + Eighths
+  'rhythm_mixed': 'rhythm_2_2',            // Mixed Rhythms → Eighth Notes - All Rhythms
 
-    return false;
-  } catch (error) {
-    console.error('Error checking migration status:', error);
-    return false;
-  }
+  // Boss battles (map to unit bosses)
+  'boss_treble_warrior': 'boss_treble_2',  // Treble Warrior → Unit 2 Boss (most advanced completed)
+  'boss_bass_master': 'boss_bass_2',       // Bass Master → Unit 2 Boss
+  'boss_rhythm_master': 'boss_rhythm_2'    // Rhythm Master → Unit 2 Boss
 };
 
 /**
- * Mark student as migrated
- * @param {string} studentId - The student's ID
+ * Check if user has already been migrated
+ * Uses localStorage to track migration status
+ * @param {string} studentId - Student UUID
+ * @returns {boolean} True if already migrated
  */
-const markMigrationComplete = async (studentId) => {
-  try {
-    // Use localStorage as a simple flag since the DB column may not exist
-    if (typeof window !== 'undefined') {
-      const migrationKey = `migration_completed_${studentId}`;
-      localStorage.setItem(migrationKey, 'true');
-    }
-  } catch (error) {
-    console.error('Error marking migration complete:', error);
-    // Don't throw - migration itself succeeded
-  }
+export const isMigrated = (studentId) => {
+  const migrationKey = `trail_migration_v2_${studentId}`;
+  return localStorage.getItem(migrationKey) === 'complete';
 };
 
 /**
- * Analyze historical scores for a specific game type
- * @param {Array} scores - All scores for the student
- * @param {string} gameType - Game type to filter by
- * @returns {Object} Best performance metrics
+ * Mark user as migrated
+ * @param {string} studentId - Student UUID
  */
-const analyzeNodePerformance = (scores, gameType) => {
-  if (!scores || scores.length === 0) {
-    return { bestScore: 0, attemptCount: 0 };
-  }
-
-  // Filter scores by game type if specified
-  const matchingScores = gameType
-    ? scores.filter(s => s.game_type === gameType)
-    : scores;
-
-  if (matchingScores.length === 0) {
-    return { bestScore: 0, attemptCount: 0 };
-  }
-
-  // Get best score
-  const bestScore = Math.max(...matchingScores.map(s => s.score || 0));
-
-  return {
-    bestScore,
-    attemptCount: matchingScores.length
-  };
+const markMigrated = (studentId) => {
+  const migrationKey = `trail_migration_v2_${studentId}`;
+  localStorage.setItem(migrationKey, 'complete');
+  localStorage.setItem(`${migrationKey}_date`, new Date().toISOString());
 };
 
 /**
- * Migrate a single student's progress to trail system
- * @param {string} studentId - The student's ID
- * @returns {Promise<Object>} Migration results
+ * Migrate a single student's progress
+ * @param {string} studentId - Student UUID
+ * @returns {Promise<Object>} Migration result with stats
  */
 export const migrateStudentProgress = async (studentId) => {
   try {
     // Check if already migrated
-    const alreadyMigrated = await checkMigrationStatus(studentId);
-    if (alreadyMigrated) {
-      return { skipped: true, reason: 'Already migrated' };
+    if (isMigrated(studentId)) {
+      console.log('User already migrated, skipping...');
+      return {
+        success: true,
+        alreadyMigrated: true,
+        nodesMigrated: 0,
+        xpAwarded: 0
+      };
     }
 
-    // Fetch all historical scores (using correct table name)
-    const { data: scores, error: scoresError } = await supabase
-      .from('students_score')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('created_at', { ascending: false });
+    // Get existing progress
+    const existingProgress = await getStudentProgress(studentId);
 
-    if (scoresError) {
-      console.warn('Could not fetch scores for migration:', scoresError);
-      // Continue without historical scores
-    }
+    // Track migration results
+    const migrationStats = {
+      nodesMigrated: 0,
+      nodesSkipped: 0,
+      xpAwarded: 0,
+      mappings: []
+    };
 
-    // Even if no scores, mark as complete to prevent repeated attempts
-    await markMigrationComplete(studentId);
+    // Migrate each node
+    for (const progress of existingProgress) {
+      const oldNodeId = progress.node_id;
+      const newNodeId = LEGACY_TO_NEW_NODE_MAPPING[oldNodeId];
 
-    if (!scores || scores.length === 0) {
-      return { nodesCreated: 0, totalXPAwarded: 0, scoresAnalyzed: 0 };
-    }
-
-    // Analyze score performance
-    const performance = analyzeNodePerformance(scores, null);
-
-    let nodesCreated = 0;
-    let totalXPAwarded = 0;
-
-    // Award XP based on total historical activity
-    // Simple formula: 10 XP per game played, up to 500 XP bonus
-    const historyXP = Math.min(scores.length * 10, 500);
-
-    if (historyXP > 0) {
-      try {
-        await awardXP(studentId, historyXP);
-        totalXPAwarded = historyXP;
-      } catch (e) {
-        // Silent fail - XP award is not critical
+      if (!newNodeId) {
+        console.warn(`No mapping found for legacy node: ${oldNodeId}`);
+        migrationStats.nodesSkipped++;
+        continue;
       }
+
+      // Check if new node already has progress (avoid duplicates)
+      const existingNewProgress = existingProgress.find(p => p.node_id === newNodeId);
+      if (existingNewProgress) {
+        console.log(`New node ${newNodeId} already has progress, skipping...`);
+        migrationStats.nodesSkipped++;
+        continue;
+      }
+
+      // Migrate progress to new node
+      await updateNodeProgress(
+        studentId,
+        newNodeId,
+        progress.stars,
+        progress.best_score
+      );
+
+      migrationStats.nodesMigrated++;
+      migrationStats.mappings.push({
+        from: oldNodeId,
+        to: newNodeId,
+        stars: progress.stars,
+        score: progress.best_score
+      });
+
+      console.log(`Migrated: ${oldNodeId} → ${newNodeId} (${progress.stars} stars)`);
     }
+
+    // Award bonus XP for migration
+    // Give students a small XP bonus to acknowledge their existing progress
+    if (migrationStats.nodesMigrated > 0) {
+      const bonusXP = migrationStats.nodesMigrated * 25; // 25 XP per migrated node
+      await awardXP(studentId, bonusXP);
+      migrationStats.xpAwarded = bonusXP;
+    }
+
+    // Mark as migrated
+    markMigrated(studentId);
+
+    console.log('Migration complete:', migrationStats);
 
     return {
-      nodesCreated,
-      totalXPAwarded,
-      scoresAnalyzed: scores.length
+      success: true,
+      alreadyMigrated: false,
+      ...migrationStats
     };
   } catch (error) {
     console.error('Error migrating student progress:', error);
@@ -148,30 +155,86 @@ export const migrateStudentProgress = async (studentId) => {
 };
 
 /**
- * Check if migration is needed and run it
- * This should be called on Dashboard mount
- * @param {string} studentId - The student's ID
- * @returns {Promise<Object|null>} Migration results or null if not needed
+ * Reset migration status (for testing/debugging)
+ * @param {string} studentId - Student UUID
+ */
+export const resetMigration = (studentId) => {
+  const migrationKey = `trail_migration_v2_${studentId}`;
+  localStorage.removeItem(migrationKey);
+  localStorage.removeItem(`${migrationKey}_date`);
+  console.log('Migration status reset for student:', studentId);
+};
+
+/**
+ * Get migration info for a student
+ * @param {string} studentId - Student UUID
+ * @returns {Object} Migration status and date
+ */
+export const getMigrationInfo = (studentId) => {
+  const migrationKey = `trail_migration_v2_${studentId}`;
+  const migrated = localStorage.getItem(migrationKey) === 'complete';
+  const migrationDate = localStorage.getItem(`${migrationKey}_date`);
+
+  return {
+    migrated,
+    migrationDate: migrationDate ? new Date(migrationDate) : null
+  };
+};
+
+/**
+ * Run migration if needed (convenience wrapper for Dashboard)
+ * @param {string} studentId - Student UUID
+ * @returns {Promise<Object>} Migration result
  */
 export const runMigrationIfNeeded = async (studentId) => {
   try {
-    const needsMigration = !(await checkMigrationStatus(studentId));
-
-    if (!needsMigration) {
-      return null;
+    // Check if already migrated
+    if (isMigrated(studentId)) {
+      return {
+        skipped: true,
+        reason: 'Already migrated',
+        nodesCreated: 0,
+        totalXPAwarded: 0
+      };
     }
 
-    const results = await migrateStudentProgress(studentId);
+    // Run migration
+    const result = await migrateStudentProgress(studentId);
 
-    return results;
+    if (result.alreadyMigrated) {
+      return {
+        skipped: true,
+        reason: 'Already migrated',
+        nodesCreated: 0,
+        totalXPAwarded: 0
+      };
+    }
+
+    // Return dashboard-compatible format
+    return {
+      skipped: false,
+      nodesCreated: result.nodesMigrated,
+      totalXPAwarded: result.xpAwarded,
+      mappings: result.mappings
+    };
   } catch (error) {
     console.error('Migration check failed:', error);
-    return null;
+    // Return skipped on error to avoid breaking the app
+    return {
+      skipped: true,
+      reason: 'Error occurred',
+      error: error.message,
+      nodesCreated: 0,
+      totalXPAwarded: 0
+    };
   }
 };
 
 export default {
   migrateStudentProgress,
-  checkMigrationStatus,
-  runMigrationIfNeeded
+  isMigrated,
+  resetMigration,
+  getMigrationInfo,
+  runMigrationIfNeeded,
+  LEGACY_TO_NEW_NODE_MAPPING
 };
