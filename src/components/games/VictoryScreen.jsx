@@ -197,6 +197,7 @@ const VictoryScreen = ({
   const [exercisesRemaining, setExercisesRemaining] = useState(0);
   const [nodeComplete, setNodeComplete] = useState(false);
   const [nextNode, setNextNode] = useState(null);
+  const [fetchingNextNode, setFetchingNextNode] = useState(false);
   const hasProcessedTrail = useRef(false);
   const hasCalledStreakUpdate = useRef(false);
 
@@ -439,22 +440,17 @@ const VictoryScreen = ({
   // Fetch next recommended node when current node is complete
   useEffect(() => {
     const fetchNextNode = async () => {
-      console.log('[VictoryScreen] fetchNextNode check:', {
-        userId: user?.id,
-        nodeId,
-        nodeComplete,
-        shouldFetch: user?.id && nodeId && nodeComplete
-      });
-
       if (!user?.id || !nodeId || !nodeComplete) return;
 
+      setFetchingNextNode(true);
       try {
         const recommendedNode = await getNextNodeInPath(user.id, nodeId);
-        console.log('[VictoryScreen] Next node fetched:', recommendedNode);
         setNextNode(recommendedNode);
       } catch (error) {
         console.error("Error fetching next node:", error);
         setNextNode(null);
+      } finally {
+        setFetchingNextNode(false);
       }
     };
 
@@ -720,18 +716,6 @@ const VictoryScreen = ({
             {nodeId ? (
               <>
                 {/* Primary action: Next Exercise or Continue to Next Node */}
-                {(() => {
-                  console.log('[VictoryScreen] Button render logic:', {
-                    exercisesRemaining,
-                    onNextExercise: !!onNextExercise,
-                    nodeComplete,
-                    nextNode: !!nextNode,
-                    showNextExercise: exercisesRemaining > 0 && onNextExercise,
-                    showContinueToNext: nodeComplete && nextNode,
-                    showBackToTrail: !(exercisesRemaining > 0 && onNextExercise) && !(nodeComplete && nextNode)
-                  });
-                  return null;
-                })()}
                 {exercisesRemaining > 0 && onNextExercise ? (
                   <button
                     onClick={onNextExercise}
@@ -739,12 +723,16 @@ const VictoryScreen = ({
                   >
                     Next Exercise ({exercisesRemaining} left)
                   </button>
+                ) : nodeComplete && fetchingNextNode ? (
+                  <button
+                    disabled
+                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white opacity-80"
+                  >
+                    <span className="inline-block animate-pulse">Loading...</span>
+                  </button>
                 ) : nodeComplete && nextNode ? (
                   <button
-                    onClick={() => {
-                      console.log('[VictoryScreen] Continue button clicked!');
-                      navigateToNextNode();
-                    }}
+                    onClick={navigateToNextNode}
                     className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
                   >
                     Continue to &quot;{translateNodeName(nextNode.name, t, i18n)}&quot;
