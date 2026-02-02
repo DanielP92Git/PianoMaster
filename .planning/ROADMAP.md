@@ -8,7 +8,7 @@
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 5 | Parental Consent Email | Enable working parental consent emails so under-13 children can complete COPPA-required consent flow | EMAIL-01, EMAIL-02, EMAIL-03, FIX-01, FIX-02 | In Progress |
+| 5 | Parental Consent Email | Enable working parental consent emails so under-13 children can complete COPPA-required consent flow | EMAIL-01, EMAIL-02, EMAIL-03, FIX-01, FIX-02 | Complete |
 
 ## Phase 5: Parental Consent Email
 
@@ -18,7 +18,7 @@
 
 Plans:
 - [x] 05-01-PLAN.md - Create Edge Function with Resend API and email template
-- [ ] 05-02-PLAN.md - Client integration, 406 fix, and error handling
+- [x] 05-02-PLAN.md - Client integration, 406 fix, and error handling
 
 **Requirements covered:**
 - EMAIL-01: Edge Function sends consent verification email via Resend API
@@ -51,12 +51,12 @@ Plans:
 ## Milestone Success Criteria
 
 v1.1 is complete when:
-- [ ] Under-13 user can sign up and parent receives consent email
-- [ ] Parent can click email link and successfully verify consent
-- [ ] Child account becomes active and can access app
-- [ ] No 406 errors in console during normal app usage
-- [ ] Resend functionality works for parents who didn't receive initial email
+- [x] Under-13 user can sign up and parent receives consent email
+- [x] Parent can click email link and successfully verify consent
+- [x] Child account becomes active and can access app
+- [x] No 406 errors in console during normal app usage
+- [x] Resend functionality works for parents who didn't receive initial email
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02*
+*Last updated: 2026-02-02 — Milestone v1.1 Complete*
