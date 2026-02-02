@@ -224,6 +224,12 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Get sender email from environment, with fallback for development
+    // For production: set SENDER_EMAIL to your verified domain (e.g., noreply@yourdomain.com)
+    // For development: Resend allows sending from onboarding@resend.dev to your own email
+    const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'onboarding@resend.dev';
+    const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'PianoMaster';
+
     // Generate email HTML
     const html = generateConsentEmailHTML(consentUrl, childName);
 
@@ -239,7 +245,7 @@ Deno.serve(async (req) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'PianoMaster <noreply@pianomaster.app>',
+          from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
           to: [parentEmail],
           subject: 'Your Child Needs Your Permission to Use PianoMaster',
           html,
