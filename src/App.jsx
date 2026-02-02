@@ -72,6 +72,10 @@ const queryClient = new QueryClient({
 function AuthenticatedWrapper({ children }) {
   const { user, isLoading, userRole, profile, isStudent } = useUser();
   const { data: profileData } = useUserProfile();
+  const location = useLocation();
+
+  // Public routes that should bypass suspension checks
+  const isPublicRoute = location.pathname === '/consent/verify' || location.pathname === '/login';
 
   // Check account status for students (suspended for consent/deletion)
   const {
@@ -106,7 +110,8 @@ function AuthenticatedWrapper({ children }) {
   }
 
   // If student account is suspended pending parental consent, show waiting UI
-  if (user && isStudent && isSuspended && suspensionReason === 'consent') {
+  // Skip for public routes like /consent/verify so parents can complete verification
+  if (user && isStudent && isSuspended && suspensionReason === 'consent' && !isPublicRoute) {
     return (
       <ParentalConsentPending
         parentEmail={parentEmail}
@@ -118,7 +123,8 @@ function AuthenticatedWrapper({ children }) {
 
   // If account is suspended for deletion, also show a message (could be a different component)
   // For now, we reuse the consent pending with a different message
-  if (user && isStudent && isSuspended && suspensionReason === 'deletion') {
+  // Skip for public routes
+  if (user && isStudent && isSuspended && suspensionReason === 'deletion' && !isPublicRoute) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-md p-6 md:p-8 text-center">
