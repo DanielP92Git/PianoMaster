@@ -6,7 +6,7 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getNodeById } from "../../../data/skillTrail";
+import { getNodeById, EXERCISE_TYPES } from "../../../data/skillTrail";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import {
