@@ -916,7 +916,7 @@ export function MemoryGame() {
         ) : (
           <VictoryScreen
             score={score}
-            totalPossibleScore={cards.length * 10}
+            totalPossibleScore={(cards.length / 2) * 10}
             onReset={handleReset}
             onExit={() => navigate(nodeId ? "/trail" : "/notes-master-mode")}
             nodeId={nodeId}
