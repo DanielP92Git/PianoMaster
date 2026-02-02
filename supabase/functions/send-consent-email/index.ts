@@ -167,9 +167,12 @@ function generateConsentEmailHTML(consentUrl: string, childName?: string): strin
  * Main Edge Function handler
  */
 Deno.serve(async (req) => {
-  // Handle CORS preflight
+  // Handle CORS preflight - must return 200 status for browser to accept
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response(null, {
+      status: 200,
+      headers: corsHeaders
+    });
   }
 
   try {
