@@ -198,6 +198,8 @@ const VictoryScreen = ({
   const [nodeComplete, setNodeComplete] = useState(false);
   const [nextNode, setNextNode] = useState(null);
   const [fetchingNextNode, setFetchingNextNode] = useState(false);
+  // Track if we're still processing trail completion (show loading until done)
+  const [isProcessingTrail, setIsProcessingTrail] = useState(!!nodeId);
   const hasProcessedTrail = useRef(false);
   const hasCalledStreakUpdate = useRef(false);
 
@@ -358,6 +360,7 @@ const VictoryScreen = ({
                 // Still show stars earned but don't save progress or award XP
                 setExercisesRemaining(0);
                 setNodeComplete(false);
+                setIsProcessingTrail(false);
                 return;
               }
 
@@ -406,6 +409,7 @@ const VictoryScreen = ({
                 // Still show stars earned but don't save progress or award XP
                 setNodeComplete(false);
                 setExercisesRemaining(0);
+                setIsProcessingTrail(false);
                 return;
               }
 
@@ -430,7 +434,12 @@ const VictoryScreen = ({
           }
         } catch (error) {
           console.error("Error processing trail completion:", error);
+        } finally {
+          setIsProcessingTrail(false);
         }
+      } else {
+        // Not a trail node, no processing needed
+        setIsProcessingTrail(false);
       }
     };
 
@@ -723,7 +732,7 @@ const VictoryScreen = ({
                   >
                     Next Exercise ({exercisesRemaining} left)
                   </button>
-                ) : nodeComplete && fetchingNextNode ? (
+                ) : isProcessingTrail || fetchingNextNode ? (
                   <button
                     disabled
                     className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white opacity-80"
