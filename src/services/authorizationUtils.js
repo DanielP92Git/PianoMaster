@@ -36,7 +36,7 @@ export async function verifyStudentDataAccess(studentId) {
     .eq('teacher_id', user.id)
     .eq('student_id', studentId)
     .eq('status', 'accepted')
-    .single();
+    .maybeSingle();
 
   if (error || !connection) {
     throw new Error("Unauthorized: No access to this student's data");

@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import supabase from "../../services/supabase";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +24,7 @@ function calculateIsUnder13(dateOfBirth) {
 
 export function useSignup() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { mutate: signup, isPending } = useMutation({
     mutationFn: async ({ email, password, firstName, lastName, role, dateOfBirth, parentEmail }) => {
@@ -34,6 +35,14 @@ export function useSignup() {
 
         // Calculate is_under_13 on client (defense in depth - DB has computed column too)
         const isUnder13 = calculateIsUnder13(dateOfBirth);
+
+        // Sign out any existing session to ensure clean signup state
+        // This prevents issues where a previous user's session interferes
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Ignore signout errors - continue with signup
+        }
 
         // Create the auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp(
@@ -163,6 +172,9 @@ export function useSignup() {
     onSuccess: (data, variables) => {
       const { role, dateOfBirth, parentEmail } = variables;
       const isUnder13 = calculateIsUnder13(dateOfBirth);
+
+      // Invalidate user query to ensure fresh data is fetched with new session
+      queryClient.invalidateQueries({ queryKey: ["user"] });
 
       if (isUnder13 && parentEmail) {
         // Mask parent email for privacy: "jo***@example.com"
