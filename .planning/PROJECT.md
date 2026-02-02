@@ -41,7 +41,15 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-Requirements for next milestone (to be defined):
+**Current Milestone: v1.1 Parental Consent Email Service**
+
+- [ ] EMAIL-01: Edge Function sends consent verification email via Resend API
+- [ ] EMAIL-02: Email contains child-friendly branding and clear CTA for parent
+- [ ] EMAIL-03: Consent URL in email works end-to-end (verify → activate account)
+- [ ] FIX-01: Eliminate 406 console errors during role detection
+- [ ] FIX-02: Handle edge cases (resend, expired tokens, invalid links)
+
+**Future milestones:**
 
 - [ ] Hard delete Edge Function for accounts past 30-day grace period
 - [ ] Production deployment to Google Play / Apple App Store
@@ -109,4 +117,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-01 after v1.0 milestone*
+*Last updated: 2026-02-02 after v1.1 milestone started*
