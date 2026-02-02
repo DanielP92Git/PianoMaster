@@ -2,29 +2,35 @@
 
 **Milestone:** v1.1 Parental Consent Email Service
 **Created:** 2026-02-02
-**Phases:** 1 (continues from v1.0 Phase 4 → v1.1 Phase 5)
+**Phases:** 1 (continues from v1.0 Phase 4 -> v1.1 Phase 5)
 
 ## Overview
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 5 | Parental Consent Email | Implement email delivery for consent verification | EMAIL-01, EMAIL-02, EMAIL-03, FIX-01, FIX-02 | Pending |
+| 5 | Parental Consent Email | Enable working parental consent emails so under-13 children can complete COPPA-required consent flow | EMAIL-01, EMAIL-02, EMAIL-03, FIX-01, FIX-02 | In Progress |
 
 ## Phase 5: Parental Consent Email
 
 **Goal:** Enable working parental consent emails so under-13 children can complete COPPA-required consent flow.
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md - Create Edge Function with Resend API and email template
+- [ ] 05-02-PLAN.md - Client integration, 406 fix, and error handling
+
 **Requirements covered:**
 - EMAIL-01: Edge Function sends consent verification email via Resend API
 - EMAIL-02: Email contains child-friendly branding and clear CTA for parent
-- EMAIL-03: Consent URL in email works end-to-end (verify → activate account)
+- EMAIL-03: Consent URL in email works end-to-end (verify -> activate account)
 - FIX-01: Eliminate 406 console errors during role detection
 - FIX-02: Handle edge cases (resend, expired tokens, invalid links)
 
 **Success criteria:**
 1. Parent receives email within 30 seconds of child signup/resend request
 2. Email displays correctly in Gmail, Outlook, Apple Mail
-3. Clicking consent link activates child's account (status → 'active')
+3. Clicking consent link activates child's account (status -> 'active')
 4. No 406 errors appear in browser console during any auth flow
 5. Resend button works and invalidates previous tokens
 6. Expired/invalid token links show helpful error message
@@ -34,7 +40,7 @@
 2. Integrate Resend API (store API key in Supabase secrets)
 3. Update `consentService.js` to call Edge Function
 4. Fix `apiAuth.js` to use `.maybeSingle()` instead of `.single()`
-5. Test full flow: signup → email → click → verify → dashboard access
+5. Test full flow: signup -> email -> click -> verify -> dashboard access
 
 **Dependencies:**
 - Resend account and API key
