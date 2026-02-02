@@ -48,11 +48,20 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-**Next milestone: v1.2 (TBD)**
+**Current milestone: v1.2 Trail System Stabilization**
 
-- [ ] Hard delete Edge Function for accounts past 30-day grace period
-- [ ] Production deployment to Google Play / Apple App Store
-- [ ] Beta testing with human verification checklist
+- [ ] Commit uncommitted trail redesign work (26 nodes, 8 node types, Memory Game)
+- [ ] Validate Phases 1-2 through test plan execution
+- [ ] Fix bugs discovered during testing (Memory Game integration, navigation)
+- [ ] Clean up temporary documentation files (IMPLEMENTATION_STATUS.md, etc.)
+
+**Deferred to v1.3+:**
+- Hard delete Edge Function for accounts past 30-day grace period
+- Production deployment to Google Play / Apple App Store
+- Beta testing with human verification checklist
+- VictoryScreen node-type celebrations
+- Unlock Event Modal
+- Unit 4 (eighth notes)
 
 ### Out of Scope
 
@@ -124,4 +133,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-02 after v1.1 milestone*
+*Last updated: 2026-02-03 after v1.2 milestone start*
