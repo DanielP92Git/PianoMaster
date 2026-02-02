@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with gamification, skill progression trails, and multi-game modes. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows, and shared device safeguards.
+A piano learning PWA for 8-year-old learners with gamification, skill progression trails, and multi-game modes. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
 
 ## Core Value
 
@@ -13,6 +13,13 @@ A piano learning PWA for 8-year-old learners with gamification, skill progressio
 ### Validated
 
 These capabilities exist, are working, and have been shipped:
+
+**v1.1 Parental Consent Email Service (shipped 2026-02-02):**
+- EMAIL-01: Edge Function sends consent verification email via Brevo API
+- EMAIL-02: Email contains child-friendly branding and clear CTA for parent
+- EMAIL-03: Consent URL in email works end-to-end (verify → activate account)
+- FIX-01: Eliminated 406 console errors during role detection (.maybeSingle())
+- FIX-02: Handle edge cases (resend, expired tokens, invalid links)
 
 **v1.0 Security Hardening (shipped 2026-02-01):**
 - SEC-01: RLS policies use database state (not user_metadata) for authorization
@@ -41,15 +48,7 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-**Current Milestone: v1.1 Parental Consent Email Service**
-
-- [ ] EMAIL-01: Edge Function sends consent verification email via Resend API
-- [ ] EMAIL-02: Email contains child-friendly branding and clear CTA for parent
-- [ ] EMAIL-03: Consent URL in email works end-to-end (verify → activate account)
-- [ ] FIX-01: Eliminate 406 console errors during role detection
-- [ ] FIX-02: Handle edge cases (resend, expired tokens, invalid links)
-
-**Future milestones:**
+**Next milestone: v1.2 (TBD)**
 
 - [ ] Hard delete Edge Function for accounts past 30-day grace period
 - [ ] Production deployment to Google Play / Apple App Store
@@ -67,19 +66,22 @@ Explicitly excluded:
 | Test coverage expansion | Important but not blocking security work |
 | VexFlow rendering optimization | Performance, not security |
 | Sound file bundle reduction | Performance, not security |
+| Multi-language consent emails | English only for now, Hebrew later |
 
 ## Context
 
-**Current State (after v1.0):**
+**Current State (after v1.1):**
+- COPPA consent flow fully operational with Brevo email delivery
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
-- COPPA compliant for children under 13
-- Ready for security-focused beta testing
-- 177 files modified, 31,659 lines added in v1 milestone
+- End-to-end parental consent works: signup → email → verify → activate
+- Ready for production deployment and beta testing
+- v1.0: 177 files, 31,659 lines | v1.1: 15 files, 1,687 lines
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
 - State: Redux Toolkit (minimal), React Context (feature-scoped), TanStack Query v5
-- Backend: Supabase (auth, database, real-time)
+- Backend: Supabase (auth, database, real-time, Edge Functions)
+- Email: Brevo API (300/day free tier)
 - Music: VexFlow v5 for notation, Klavier for keyboard input
 - Styling: Tailwind CSS with custom design system
 
@@ -114,7 +116,12 @@ Explicitly excluded:
 | crossTab with leaderElection | One tab coordinates timeout across all tabs | Good |
 | Fontsource packages for fonts | npm versioning, Vite bundling, no manual font management | Good |
 | No separate staging environment | Beta phase with few users; adds maintenance burden | Good |
+| Switch from Resend to Brevo | Resend free tier domain limitation; Brevo offers 300/day | Good |
+| .maybeSingle() for optional queries | Prevents 406 errors when no rows found | Good |
+| SignOut before SignUp | Prevents session conflicts from previous users | Good |
+| Public route bypass for consent verify | Parents complete verification regardless of child status | Good |
+| Table-based HTML email layout | Maximum email client compatibility (Outlook uses Word engine) | Good |
 
 ---
 
-*Last updated: 2026-02-02 after v1.1 milestone started*
+*Last updated: 2026-02-02 after v1.1 milestone*

@@ -1,5 +1,33 @@
 # Project Milestones: PianoApp
 
+## v1.1 Parental Consent Email Service (Shipped: 2026-02-02)
+
+**Delivered:** Working parental consent email flow enabling under-13 children to complete COPPA-required verification via parent email confirmation.
+
+**Phases completed:** 5 (2 plans total)
+
+**Key accomplishments:**
+
+- Supabase Edge Function sends consent emails via Brevo API (300/day free tier)
+- Child-friendly HTML email template with purple gradient branding
+- End-to-end consent flow: signup → parent email → click link → account activated
+- Fixed 406 console errors with .maybeSingle() pattern for optional queries
+- Session conflict resolution for clean new user signup
+- Comprehensive error handling for expired/invalid/network errors
+
+**Stats:**
+
+- 15 files created/modified
+- 1,687 lines added, 41 lines removed
+- 1 phase, 2 plans
+- 1 day (2026-02-02)
+
+**Git range:** `dbb4708` to `44c7bdb`
+
+**What's next:** Hard delete Edge Function for expired accounts, production deployment to app stores
+
+---
+
 ## v1.0 Security Hardening (Shipped: 2026-02-01)
 
 **Delivered:** Complete security hardening and COPPA compliance for the piano learning PWA, protecting children's data and enabling safe operation on shared devices.
