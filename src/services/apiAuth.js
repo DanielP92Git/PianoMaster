@@ -102,7 +102,7 @@ export async function getCurrentUser() {
         .from("teachers")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (teacherData && !teacherError) {
         // VERIFIED: User exists in teachers table
@@ -114,7 +114,7 @@ export async function getCurrentUser() {
           .from("students")
           .select("*")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (studentData && !studentError) {
           // VERIFIED: User exists in students table
@@ -129,7 +129,7 @@ export async function getCurrentUser() {
         .from("students")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (studentData && !studentError) {
         // VERIFIED: User exists in students table
@@ -141,7 +141,7 @@ export async function getCurrentUser() {
           .from("teachers")
           .select("*")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (teacherData && !teacherError) {
           // VERIFIED: User exists in teachers table
