@@ -1,11 +1,13 @@
 /**
  * Parental Consent Email Edge Function
  *
- * Sends COPPA-compliant parental consent verification emails via Resend API.
+ * Sends COPPA-compliant parental consent verification emails via Brevo API.
  * Parents receive a secure link to verify their child's account creation.
  *
  * Environment Variables:
- * - RESEND_API_KEY: API key from resend.com (required)
+ * - BREVO_API_KEY: API key from brevo.com (required)
+ * - SENDER_EMAIL: Verified sender email (optional, defaults to noreply address)
+ * - SENDER_NAME: Sender display name (optional, defaults to PianoMaster)
  *
  * Request Body:
  * - parentEmail: string - Parent's email address
@@ -13,7 +15,7 @@
  * - childName?: string - Optional child's name for personalization
  *
  * Returns:
- * - Success: { success: true, id: string } - Resend email ID
+ * - Success: { success: true, messageId: string } - Brevo message ID
  * - Error: { success: false, error: string } - Error message
  */
 
@@ -208,10 +210,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get Resend API key from environment
-    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-    if (!RESEND_API_KEY) {
-      console.error('RESEND_API_KEY environment variable not set');
+    // Get Brevo API key from environment
+    const BREVO_API_KEY = Deno.env.get('BREVO_API_KEY');
+    if (!BREVO_API_KEY) {
+      console.error('BREVO_API_KEY environment variable not set');
       return new Response(
         JSON.stringify({
           success: false,
@@ -224,46 +226,61 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get sender email from environment, with fallback for development
-    // For production: set SENDER_EMAIL to your verified domain (e.g., noreply@yourdomain.com)
-    // For development: Resend allows sending from onboarding@resend.dev to your own email
-    const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'onboarding@resend.dev';
+    // Get sender configuration from environment
+    // For Brevo free tier, you can use any email but it must be verified in your account
+    const SENDER_EMAIL = Deno.env.get('SENDER_EMAIL') || 'noreply@pianomaster.app';
     const SENDER_NAME = Deno.env.get('SENDER_NAME') || 'PianoMaster';
 
     // Generate email HTML
-    const html = generateConsentEmailHTML(consentUrl, childName);
+    const htmlContent = generateConsentEmailHTML(consentUrl, childName);
 
-    // Call Resend API with 30-second timeout
+    // Call Brevo API with 30-second timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 seconds
 
     try {
-      const resendResponse = await fetch('https://api.resend.com/emails', {
+      const brevoResponse = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'api-key': BREVO_API_KEY,
         },
         body: JSON.stringify({
-          from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-          to: [parentEmail],
+          sender: {
+            name: SENDER_NAME,
+            email: SENDER_EMAIL,
+          },
+          to: [
+            {
+              email: parentEmail,
+            },
+          ],
           subject: 'Your Child Needs Your Permission to Use PianoMaster',
-          html,
+          htmlContent,
         }),
         signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
-      // Handle Resend API errors
-      if (!resendResponse.ok) {
-        const errorText = await resendResponse.text();
-        console.error('Resend API error:', resendResponse.status, errorText);
+      // Handle Brevo API errors
+      if (!brevoResponse.ok) {
+        const errorData = await brevoResponse.json().catch(() => ({}));
+        console.error('Brevo API error:', brevoResponse.status, JSON.stringify(errorData));
+
+        // Provide more specific error messages based on Brevo error codes
+        let errorMessage = 'Failed to send email. Please try again later.';
+        if (errorData.code === 'unauthorized') {
+          console.error('Brevo API key is invalid');
+          errorMessage = 'Email service configuration error';
+        } else if (errorData.code === 'invalid_parameter') {
+          console.error('Invalid parameter:', errorData.message);
+        }
 
         return new Response(
           JSON.stringify({
             success: false,
-            error: 'Failed to send email. Please try again later.',
+            error: errorMessage,
           }),
           {
             status: 500,
@@ -273,12 +290,12 @@ Deno.serve(async (req) => {
       }
 
       // Parse successful response
-      const resendData = await resendResponse.json();
+      const brevoData = await brevoResponse.json();
 
       return new Response(
         JSON.stringify({
           success: true,
-          id: resendData.id,
+          messageId: brevoData.messageId,
         }),
         {
           status: 200,
@@ -291,7 +308,7 @@ Deno.serve(async (req) => {
 
       // Handle timeout or network errors
       if (fetchError.name === 'AbortError') {
-        console.error('Resend API request timeout');
+        console.error('Brevo API request timeout');
         return new Response(
           JSON.stringify({
             success: false,
