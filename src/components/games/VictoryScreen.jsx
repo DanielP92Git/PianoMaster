@@ -762,10 +762,10 @@ const VictoryScreen = ({
                     {t("common.playAgain")}
                   </button>
                   <button
-                    onClick={handleGoToDashboard}
+                    onClick={() => navigate('/trail')}
                     className="flex-1 transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:py-2.5"
                   >
-                    {t("common.dashboard")}
+                    {t("trail:backToTrail", "Back to Trail")}
                   </button>
                 </div>
               </>
