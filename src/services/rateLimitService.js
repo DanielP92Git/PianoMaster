@@ -32,6 +32,12 @@ export async function checkRateLimit(studentId, nodeId) {
   });
 
   if (error) {
+    // PGRST202 = function not found in schema cache (migration not applied)
+    // In this case, allow the request to proceed and log a warning
+    if (error.code === 'PGRST202') {
+      console.warn('Rate limit function not found in database. Allowing request. Run migration 20260201000002_add_rate_limiting.sql to enable rate limiting.');
+      return { allowed: true, resetTime: null };
+    }
     console.error('Rate limit check failed:', error);
     throw error;
   }
