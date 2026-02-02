@@ -43,13 +43,16 @@ function ConsentVerifyPage() {
         console.error('Consent verification failed:', err);
         setStatus('error');
 
-        // Provide helpful error messages
-        if (err.message?.includes('expired')) {
-          setError(t('consent.verify.expired', 'This verification link has expired. Please ask your child to request a new one.'));
-        } else if (err.message?.includes('Invalid')) {
-          setError(t('consent.verify.invalid', 'This verification link is invalid or has already been used.'));
+        const errorMsg = err.message?.toLowerCase() || '';
+
+        if (errorMsg.includes('expired')) {
+          setError(t('consent.verify.expired', 'This verification link has expired. Please ask your child to send a new verification email from their PianoMaster account.'));
+        } else if (errorMsg.includes('invalid') || errorMsg.includes('not found')) {
+          setError(t('consent.verify.invalid', 'This verification link is invalid or has already been used. If you need a new link, your child can request one from their account.'));
+        } else if (errorMsg.includes('network') || errorMsg.includes('fetch')) {
+          setError(t('consent.verify.network', 'Unable to connect. Please check your internet connection and try again.'));
         } else {
-          setError(t('consent.verify.genericError', 'Something went wrong. Please try again or contact support.'));
+          setError(t('consent.verify.genericError', 'Something went wrong. Please try again or contact support if the problem continues.'));
         }
       }
     }
@@ -182,13 +185,13 @@ function ConsentVerifyPage() {
               </h2>
               <ul className="text-sm text-white/70 space-y-1.5">
                 <li>
-                  {t('consent.verify.suggestion1', '1. Ask your child to send a new verification email')}
+                  {t('consent.verify.suggestion1', '1. Have your child log in to PianoMaster and click "Resend Email"')}
                 </li>
                 <li>
-                  {t('consent.verify.suggestion2', '2. Check if you have a newer email in your inbox')}
+                  {t('consent.verify.suggestion2', '2. Check if you have a newer verification email')}
                 </li>
                 <li>
-                  {t('consent.verify.suggestion3', '3. Contact support if the problem continues')}
+                  {t('consent.verify.suggestion3', '3. Make sure you clicked the most recent email link')}
                 </li>
               </ul>
             </div>
