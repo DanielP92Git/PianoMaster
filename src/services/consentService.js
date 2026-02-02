@@ -10,6 +10,7 @@
  */
 
 import supabase from './supabase';
+import { FunctionsHttpError, FunctionsRelayError, FunctionsFetchError } from '@supabase/supabase-js';
 
 /**
  * Hash a token using Web Crypto API (SHA-256)
@@ -61,8 +62,36 @@ export async function sendParentalConsentEmail(studentId, parentEmail) {
   // Build consent URL
   const consentUrl = `${window.location.origin}/consent/verify?token=${token}&student=${studentId}`;
 
-  // TODO: Send actual email via Supabase Edge Function or email service
-  // For development, log the URL
+  // Send email via Edge Function
+  try {
+    const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-consent-email', {
+      body: {
+        parentEmail,
+        consentUrl,
+        childName: 'your child' // Generic for privacy
+      }
+    });
+
+    if (emailError) {
+      console.error('Failed to send consent email:', emailError);
+      // Don't throw - token was created successfully
+      // Email failure should be logged but not block the flow
+    }
+  } catch (error) {
+    // Handle specific Edge Function errors
+    if (error instanceof FunctionsHttpError) {
+      console.error('Edge Function HTTP error:', await error.context.json());
+    } else if (error instanceof FunctionsRelayError) {
+      console.error('Edge Function relay error:', error.message);
+    } else if (error instanceof FunctionsFetchError) {
+      console.error('Edge Function fetch error:', error.message);
+    } else {
+      console.error('Unknown email sending error:', error);
+    }
+    // Don't throw - token was created successfully
+  }
+
+  // For development, also log the URL
   if (process.env.NODE_ENV === 'development') {
     console.log('[DEV] Consent verification URL:', consentUrl);
   }
