@@ -89,9 +89,9 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           required
           aria-label="Birth month"
         >
-          <option value="">Month</option>
+          <option value="" className="text-gray-900">Month</option>
           {MONTHS.map((m, i) => (
-            <option key={m} value={i + 1}>
+            <option key={m} value={i + 1} className="text-gray-900">
               {m}
             </option>
           ))}
@@ -105,9 +105,9 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           required
           aria-label="Birth day"
         >
-          <option value="">Day</option>
+          <option value="" className="text-gray-900">Day</option>
           {days.map((d) => (
-            <option key={d} value={d}>
+            <option key={d} value={d} className="text-gray-900">
               {d}
             </option>
           ))}
@@ -121,9 +121,9 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           required
           aria-label="Birth year"
         >
-          <option value="">Year</option>
+          <option value="" className="text-gray-900">Year</option>
           {years.map((y) => (
-            <option key={y} value={y}>
+            <option key={y} value={y} className="text-gray-900">
               {y}
             </option>
           ))}
