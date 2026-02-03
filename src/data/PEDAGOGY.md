@@ -198,5 +198,53 @@ From `nodeTypes.js` (`RHYTHM_COMPLEXITY` enum):
 
 ---
 
+## Legacy Reference
+
+### Legacy Node IDs (for historical reference)
+
+These IDs existed in the original `LEGACY_NODES` array in `skillTrail.js`. Since all trail progress will be reset with v1.3, no runtime migration is needed. This section documents them for reference only.
+
+**Treble Clef (Legacy):**
+- `treble_c_d` - C & D notes
+- `treble_c_e` - C, D, E notes
+- `treble_five_finger` - C, D, E, F, G notes
+- `treble_c_a` - C through A
+- `treble_almost_there` - C through B
+- `treble_full_octave` - Full octave C4-C5
+
+**Bass Clef (Legacy):**
+- `bass_c_b` - C & B notes
+- `bass_c_a` - C, B, A notes
+- `bass_c_g` - C through G (descending)
+- `bass_c_f` - C through F
+- `bass_almost_there` - Nearly complete range
+- `bass_master` - Full bass range
+
+**Rhythm (Legacy):**
+- `rhythm_intro` - Rhythm basics
+- `rhythm_quarter_notes` - Quarter notes
+- `rhythm_half_notes` - Half notes
+- `rhythm_eighth_notes` - Eighth notes
+- `rhythm_mixed` - Mixed rhythms
+
+**Boss (Legacy):**
+- `boss_treble_warrior` - Treble boss
+- `boss_bass_master` - Bass boss
+- `boss_rhythm_master` - Rhythm boss
+
+### New Node ID Convention
+
+New nodes follow the pattern: `{path}_{unit}_{order}`
+- Example: `treble_1_1` (Treble Unit 1, Node 1)
+- Example: `bass_2_3` (Bass Unit 2, Node 3)
+- Boss nodes: `boss_{path}_{unit}` (e.g., `boss_treble_3`)
+
+This convention enables:
+- Easy identification of path and unit
+- Predictable ordering
+- Clear hierarchy
+
+---
+
 *Document created: Phase 8 - Design & Data Modeling*
 *Last updated: 2026-02-03*
