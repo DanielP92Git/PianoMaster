@@ -153,7 +153,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DATA-01 | Phase 8 | Pending |
 | DATA-02 | Phase 12 | Pending |
-| DATA-03 | Phase 8 | Pending |
+| DATA-03 | Phase 8 | Complete |
 | DATA-04 | Phase 11 | Pending |
 | BASS1-01 | Phase 9 | Pending |
 | BASS1-02 | Phase 9 | Pending |

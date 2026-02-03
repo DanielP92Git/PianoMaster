@@ -18,7 +18,7 @@ This milestone redesigns the trail data layer with consistent pedagogy across al
 - Integer phases (8, 9, 10...): Planned milestone work
 - Decimal phases (8.1, 8.2): Urgent insertions if needed
 
-- [ ] **Phase 8: Design & Data Modeling** - Validation infrastructure and pedagogy decisions
+- [x] **Phase 8: Design & Data Modeling** - Validation infrastructure and pedagogy decisions
 - [ ] **Phase 9: Bass Clef Implementation** - 26 nodes across 3 units (C4 to C3)
 - [ ] **Phase 10: Rhythm Implementation** - 35 nodes across 5 units (quarter to sixteenth)
 - [ ] **Phase 11: Integration & Cutover** - Atomic switch with progress preservation
@@ -38,8 +38,8 @@ This milestone redesigns the trail data layer with consistent pedagogy across al
 **Plans**: 2 plans (Wave 1 parallel)
 
 Plans:
-- [ ] 08-01-PLAN.md — Build-time validation script + npm integration
-- [ ] 08-02-PLAN.md — Pedagogy documentation (PEDAGOGY.md)
+- [x] 08-01-PLAN.md — Build-time validation script + npm integration
+- [x] 08-02-PLAN.md — Pedagogy documentation (PEDAGOGY.md)
 
 ### Phase 9: Bass Clef Implementation
 **Goal**: 26 bass clef nodes following treble pedagogy pattern (Discovery, Practice, Mix-Up, Speed, Boss)
@@ -108,7 +108,7 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 8. Design & Data Modeling | v1.3 | 0/2 | Planned | - |
+| 8. Design & Data Modeling | v1.3 | 2/2 | Complete | 2026-02-03 |
 | 9. Bass Clef Implementation | v1.3 | 0/TBD | Not started | - |
 | 10. Rhythm Implementation | v1.3 | 0/TBD | Not started | - |
 | 11. Integration & Cutover | v1.3 | 0/TBD | Not started | - |
@@ -116,4 +116,4 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03*
+*Last updated: 2026-02-03 — Phase 8 complete*
