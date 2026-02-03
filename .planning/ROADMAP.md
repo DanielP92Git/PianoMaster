@@ -42,7 +42,7 @@ Plans:
 - [x] 08-02-PLAN.md — Pedagogy documentation (PEDAGOGY.md)
 
 ### Phase 9: Bass Clef Implementation
-**Goal**: 26 bass clef nodes following treble pedagogy pattern (Discovery, Practice, Mix-Up, Speed, Boss)
+**Goal**: 25 bass clef nodes following treble pedagogy pattern (Discovery, Practice, Mix-Up, Speed, Boss)
 **Depends on**: Phase 8 (needs validation infrastructure)
 **Requirements**: BASS1-01 to BASS1-08, BASS2-01 to BASS2-08, BASS3-01 to BASS3-10
 **Success Criteria** (what must be TRUE):
@@ -51,10 +51,13 @@ Plans:
   3. Bass Unit 1 introduces 1 new note per Discovery node (C4, B3, A3)
   4. Bass Unit 2 completes five-finger position (G3, F3)
   5. Bass Unit 3 completes full octave (E3, D3, C3) with Boss node
-**Plans**: TBD
+**Plans**: 4 plans (Wave 1: 3 parallel, Wave 2: 1 sequential)
 
 Plans:
-- [ ] 09-01: TBD
+- [ ] 09-01-PLAN.md — Bass Unit 1: Middle C Position (7 nodes: C4, B3, A3)
+- [ ] 09-02-PLAN.md — Bass Unit 2: Five Finger Low (8 nodes: adds G3, F3)
+- [ ] 09-03-PLAN.md — Bass Unit 3: The Full Octave (10 nodes: adds E3, D3, C3)
+- [ ] 09-04-PLAN.md — Integration into expandedNodes.js + validation
 
 ### Phase 10: Rhythm Implementation
 **Goal**: 35 rhythm nodes with duration-based progression from quarter notes to sixteenths
@@ -109,11 +112,11 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 8. Design & Data Modeling | v1.3 | 2/2 | Complete | 2026-02-03 |
-| 9. Bass Clef Implementation | v1.3 | 0/TBD | Not started | - |
+| 9. Bass Clef Implementation | v1.3 | 0/4 | Planned | - |
 | 10. Rhythm Implementation | v1.3 | 0/TBD | Not started | - |
 | 11. Integration & Cutover | v1.3 | 0/TBD | Not started | - |
 | 12. Validation & Cleanup | v1.3 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 — Phase 8 complete*
+*Last updated: 2026-02-04 — Phase 9 planned (4 plans)*
