@@ -33,7 +33,8 @@
     "note_recognition": "Note Recognition",
     "sight_reading": "Sight Reading",
     "rhythm": "Rhythm Practice",
-    "boss_challenge": "Boss Challenge"
+    "boss_challenge": "Boss Challenge",
+    "memory_game": "Memory Game"
   },
   "modal": {
     "yourProgress": "Your Progress",

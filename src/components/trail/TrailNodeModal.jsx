@@ -26,6 +26,8 @@ const getExerciseTypeName = (type, t) => {
       return t('trail:exerciseTypes.rhythm');
     case 'boss_challenge':
       return t('trail:exerciseTypes.boss_challenge');
+    case 'memory_game':
+      return t('trail:exerciseTypes.memory_game');
     default:
       return type;
   }
