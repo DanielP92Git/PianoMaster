@@ -35,10 +35,11 @@ This milestone redesigns the trail data layer with consistent pedagogy across al
   2. Build-time validation script verifies all node types are valid NODE_TYPES
   3. Legacy node IDs documented with mapping to new structure (for progress preservation)
   4. XP economy audit shows parity between old and new trail totals
-**Plans**: TBD
+**Plans**: 2 plans (Wave 1 parallel)
 
 Plans:
-- [ ] 08-01: TBD
+- [ ] 08-01-PLAN.md — Build-time validation script + npm integration
+- [ ] 08-02-PLAN.md — Pedagogy documentation (PEDAGOGY.md)
 
 ### Phase 9: Bass Clef Implementation
 **Goal**: 26 bass clef nodes following treble pedagogy pattern (Discovery, Practice, Mix-Up, Speed, Boss)
@@ -107,7 +108,7 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 8. Design & Data Modeling | v1.3 | 0/TBD | Not started | - |
+| 8. Design & Data Modeling | v1.3 | 0/2 | Planned | - |
 | 9. Bass Clef Implementation | v1.3 | 0/TBD | Not started | - |
 | 10. Rhythm Implementation | v1.3 | 0/TBD | Not started | - |
 | 11. Integration & Cutover | v1.3 | 0/TBD | Not started | - |
