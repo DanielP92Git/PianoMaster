@@ -151,25 +151,82 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| BASS1-01 to BASS1-08 | TBD | Pending |
-| BASS2-01 to BASS2-08 | TBD | Pending |
-| BASS3-01 to BASS3-10 | TBD | Pending |
-| RHY1-01 to RHY1-08 | TBD | Pending |
-| RHY2-01 to RHY2-06 | TBD | Pending |
-| RHY3-01 to RHY3-07 | TBD | Pending |
-| RHY4-01 to RHY4-06 | TBD | Pending |
-| RHY5-01 to RHY5-08 | TBD | Pending |
-| INT-01 to INT-05 | TBD | Pending |
+| DATA-01 | Phase 8 | Pending |
+| DATA-02 | Phase 12 | Pending |
+| DATA-03 | Phase 8 | Pending |
+| DATA-04 | Phase 11 | Pending |
+| BASS1-01 | Phase 9 | Pending |
+| BASS1-02 | Phase 9 | Pending |
+| BASS1-03 | Phase 9 | Pending |
+| BASS1-04 | Phase 9 | Pending |
+| BASS1-05 | Phase 9 | Pending |
+| BASS1-06 | Phase 9 | Pending |
+| BASS1-07 | Phase 9 | Pending |
+| BASS1-08 | Phase 9 | Pending |
+| BASS2-01 | Phase 9 | Pending |
+| BASS2-02 | Phase 9 | Pending |
+| BASS2-03 | Phase 9 | Pending |
+| BASS2-04 | Phase 9 | Pending |
+| BASS2-05 | Phase 9 | Pending |
+| BASS2-06 | Phase 9 | Pending |
+| BASS2-07 | Phase 9 | Pending |
+| BASS2-08 | Phase 9 | Pending |
+| BASS3-01 | Phase 9 | Pending |
+| BASS3-02 | Phase 9 | Pending |
+| BASS3-03 | Phase 9 | Pending |
+| BASS3-04 | Phase 9 | Pending |
+| BASS3-05 | Phase 9 | Pending |
+| BASS3-06 | Phase 9 | Pending |
+| BASS3-07 | Phase 9 | Pending |
+| BASS3-08 | Phase 9 | Pending |
+| BASS3-09 | Phase 9 | Pending |
+| BASS3-10 | Phase 9 | Pending |
+| RHY1-01 | Phase 10 | Pending |
+| RHY1-02 | Phase 10 | Pending |
+| RHY1-03 | Phase 10 | Pending |
+| RHY1-04 | Phase 10 | Pending |
+| RHY1-05 | Phase 10 | Pending |
+| RHY1-06 | Phase 10 | Pending |
+| RHY1-07 | Phase 10 | Pending |
+| RHY1-08 | Phase 10 | Pending |
+| RHY2-01 | Phase 10 | Pending |
+| RHY2-02 | Phase 10 | Pending |
+| RHY2-03 | Phase 10 | Pending |
+| RHY2-04 | Phase 10 | Pending |
+| RHY2-05 | Phase 10 | Pending |
+| RHY2-06 | Phase 10 | Pending |
+| RHY3-01 | Phase 10 | Pending |
+| RHY3-02 | Phase 10 | Pending |
+| RHY3-03 | Phase 10 | Pending |
+| RHY3-04 | Phase 10 | Pending |
+| RHY3-05 | Phase 10 | Pending |
+| RHY3-06 | Phase 10 | Pending |
+| RHY3-07 | Phase 10 | Pending |
+| RHY4-01 | Phase 10 | Pending |
+| RHY4-02 | Phase 10 | Pending |
+| RHY4-03 | Phase 10 | Pending |
+| RHY4-04 | Phase 10 | Pending |
+| RHY4-05 | Phase 10 | Pending |
+| RHY4-06 | Phase 10 | Pending |
+| RHY5-01 | Phase 10 | Pending |
+| RHY5-02 | Phase 10 | Pending |
+| RHY5-03 | Phase 10 | Pending |
+| RHY5-04 | Phase 10 | Pending |
+| RHY5-05 | Phase 10 | Pending |
+| RHY5-06 | Phase 10 | Pending |
+| RHY5-07 | Phase 10 | Pending |
+| RHY5-08 | Phase 10 | Pending |
+| INT-01 | Phase 11 | Pending |
+| INT-02 | Phase 11 | Pending |
+| INT-03 | Phase 11 | Pending |
+| INT-04 | Phase 11 | Pending |
+| INT-05 | Phase 12 | Pending |
 
 **Coverage:**
-- v1.3 requirements: 71 total (4 data + 26 bass + 35 rhythm + 5 integration + 1 validation implied)
-- Mapped to phases: 0 (roadmap pending)
-- Unmapped: 71
+- v1.3 requirements: 70 total (4 data + 26 bass + 35 rhythm + 5 integration)
+- Mapped to phases: 70
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 after initial definition*
+*Last updated: 2026-02-03 — traceability added after roadmap creation*
