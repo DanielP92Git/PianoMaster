@@ -1,5 +1,33 @@
 # Project Milestones: PianoApp
 
+## v1.2 Trail System Stabilization (Shipped: 2026-02-03)
+
+**Delivered:** Committed and validated 26-node trail redesign with Memory Game integration, 8 node types for engagement variety, and comprehensive bug fixes for score calculation and navigation.
+
+**Phases completed:** 6-7 (4 plans total)
+
+**Key accomplishments:**
+
+- Committed 26-node trail redesign across Units 1-3 (C4 through C5 progression)
+- Integrated Memory Game with trail auto-start and correct configuration parsing
+- Fixed critical score calculation bug (pairs not cards) that caused 0 stars
+- Added VictoryScreen improvements (loading states, Back to Trail button)
+- Completed tech debt cleanup (Phase 05 docs, i18n, code deduplication)
+- Removed 7 temporary documentation/debug files from repo root
+
+**Stats:**
+
+- 31 files created/modified
+- 4,698 lines added, 349 lines removed
+- 2 phases, 4 plans
+- 1 day (2026-02-03)
+
+**Git range:** `aec1e0f` → `a5aff93`
+
+**What's next:** VictoryScreen node-type celebrations, Unit 4 (eighth notes), production deployment
+
+---
+
 ## v1.1 Parental Consent Email Service (Shipped: 2026-02-02)
 
 **Delivered:** Working parental consent email flow enabling under-13 children to complete COPPA-required verification via parent email confirmation.
@@ -56,4 +84,4 @@
 
 ---
 
-*Last updated: 2026-02-01*
+*Last updated: 2026-02-03*

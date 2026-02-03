@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with gamification, skill progression trails, and multi-game modes. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 26 nodes across 3 units, 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
 
 ## Core Value
 
@@ -13,6 +13,13 @@ A piano learning PWA for 8-year-old learners with gamification, skill progressio
 ### Validated
 
 These capabilities exist, are working, and have been shipped:
+
+**v1.2 Trail System Stabilization (shipped 2026-02-03):**
+- TRAIL-01-04: 26 treble clef nodes across Units 1-3 (C4 through C5 progression)
+- MEM-01-05: Memory Game integrated with trail auto-start, correct config parsing, progress saving
+- NAV-01-04: Cross-exercise navigation works (note_recognition, memory_game, sight_reading, rhythm)
+- CLEAN-01-02: Temporary docs and debug files removed from repo root
+- DEBT-01-04: Tech debt resolved (docs gap, i18n, code deduplication, debug removal)
 
 **v1.1 Parental Consent Email Service (shipped 2026-02-02):**
 - EMAIL-01: Edge Function sends consent verification email via Brevo API
@@ -44,24 +51,21 @@ These capabilities exist, are working, and have been shipped:
 - Student/teacher role differentiation
 - Trail gamification system with XP and levels
 - Daily goals generation and tracking
-- Multiple game modes (sight reading, notes recognition, rhythm)
+- Multiple game modes (sight reading, notes recognition, rhythm, memory)
 
 ### Active
 
-**Current milestone: v1.2 Trail System Stabilization**
+**Next milestone: v1.3+ (to be defined)**
 
-- [ ] Commit uncommitted trail redesign work (26 nodes, 8 node types, Memory Game)
-- [ ] Validate Phases 1-2 through test plan execution
-- [ ] Fix bugs discovered during testing (Memory Game integration, navigation)
-- [ ] Clean up temporary documentation files (IMPLEMENTATION_STATUS.md, etc.)
-
-**Deferred to v1.3+:**
-- Hard delete Edge Function for accounts past 30-day grace period
-- Production deployment to Google Play / Apple App Store
-- Beta testing with human verification checklist
-- VictoryScreen node-type celebrations
-- Unlock Event Modal
-- Unit 4 (eighth notes)
+Candidates for next milestone:
+- [ ] VictoryScreen node-type-specific celebrations
+- [ ] Unlock Event Modal after Unit 3 Boss completion
+- [ ] Node type icons and colors in TrailNode.jsx
+- [ ] "What's New" badges in TrailNodeModal.jsx
+- [ ] Unit 4 with eighth notes introduction
+- [ ] Hard delete Edge Function for accounts past 30-day grace period
+- [ ] Production deployment to Google Play / Apple App Store
+- [ ] Beta testing with human verification checklist
 
 ### Out of Scope
 
@@ -79,12 +83,14 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v1.1):**
+**Current State (after v1.2):**
+- 26-node trail redesign committed with 8 node types for engagement variety
+- Memory Game fully integrated with trail auto-start and progress tracking
+- 4 game modes working: note recognition, sight reading, rhythm, memory
 - COPPA consent flow fully operational with Brevo email delivery
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
-- End-to-end parental consent works: signup → email → verify → activate
 - Ready for production deployment and beta testing
-- v1.0: 177 files, 31,659 lines | v1.1: 15 files, 1,687 lines
+- v1.0: 177 files, 31,659 lines | v1.1: 15 files, 1,687 lines | v1.2: 31 files, 4,698 lines
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -130,7 +136,11 @@ Explicitly excluded:
 | SignOut before SignUp | Prevents session conflicts from previous users | Good |
 | Public route bypass for consent verify | Parents complete verification regardless of child status | Good |
 | Table-based HTML email layout | Maximum email client compatibility (Outlook uses Word engine) | Good |
+| 8 node types for engagement variety | Psychological variety improves learning retention | Good |
+| 26 nodes in Units 1-3 vs 18 original | Gradual progression appropriate for 8-year-old learners | Good |
+| Score calc uses pairs: (cards/2)*10 | Cards count double-counts; pairs is correct game mechanic | Good |
+| Use shared verifyStudentDataAccess | Robustness (.maybeSingle), code deduplication | Good |
 
 ---
 
-*Last updated: 2026-02-03 after v1.2 milestone start*
+*Last updated: 2026-02-03 after v1.2 milestone shipped*
