@@ -55,17 +55,43 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-**Next milestone: v1.3+ (to be defined)**
+**Current Milestone: v1.3 Trail System Redesign**
 
-Candidates for next milestone:
-- [ ] VictoryScreen node-type-specific celebrations
-- [ ] Unlock Event Modal after Unit 3 Boss completion
-- [ ] Node type icons and colors in TrailNode.jsx
-- [ ] "What's New" badges in TrailNodeModal.jsx
-- [ ] Unit 4 with eighth notes introduction
-- [ ] Hard delete Edge Function for accounts past 30-day grace period
-- [ ] Production deployment to Google Play / Apple App Store
-- [ ] Beta testing with human verification checklist
+**Goal:** Redesign the trail data layer with consistent pedagogy across all three paths (Treble, Bass, Rhythm), eliminating duplicates and creating a professional game-like learning progression for 8-year-olds.
+
+**Target features:**
+
+*Data Layer Cleanup:*
+- [ ] Remove all legacy duplicate nodes (LEGACY_NODES in skillTrail.js)
+- [ ] Remove nodeGenerator.js dependency for bass/rhythm units
+- [ ] Single source of truth for all trail nodes
+
+*Bass Clef Redesign (mirror treble pedagogy):*
+- [ ] Bass Unit 1: C4 → B3 → A3 (8 nodes, same node types as treble)
+- [ ] Bass Unit 2: G3 → F3 (8 nodes, five-finger bass position)
+- [ ] Bass Unit 3: E3 → D3 → C3 (10 nodes, full octave)
+
+*Rhythm Path Redesign (node types, not tier-based):*
+- [ ] Rhythm Unit 1: Whole, Half, Quarter notes
+- [ ] Rhythm Unit 2: + Dotted Half
+- [ ] Rhythm Unit 3: + Eighth Notes
+- [ ] Rhythm Unit 4: + Dotted Quarter
+- [ ] Rhythm Unit 5: + Sixteenth Notes
+
+*Structure & Pedagogy:*
+- [ ] All units follow Discovery → Practice → Mix-Up → Speed → Boss pattern
+- [ ] One new concept per Discovery node
+- [ ] Node types provide engagement variety within each unit
+- [ ] Three parallel paths available from start (Treble, Bass, Rhythm)
+
+**Deferred to v1.4+:**
+- VictoryScreen node-type-specific celebrations
+- Unlock Event Modal after Unit 3 Boss completion
+- Node type icons and colors in TrailNode.jsx
+- "What's New" badges in TrailNodeModal.jsx
+- Hard delete Edge Function for accounts past 30-day grace period
+- Production deployment to Google Play / Apple App Store
+- Beta testing with human verification checklist
 
 ### Out of Scope
 
@@ -143,4 +169,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-03 after v1.2 milestone shipped*
+*Last updated: 2026-02-03 after v1.3 milestone started*
