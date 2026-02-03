@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/validateTrail.mjs",
     "build": "vite build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -13,6 +14,7 @@
     "preview": "vite preview",
     "prepare": "husky install",
     "verify:patterns": "node scripts/patternVerifier.mjs",
+    "verify:trail": "node scripts/validateTrail.mjs",
     "test": "vitest",
     "test:run": "vitest run"
   },
