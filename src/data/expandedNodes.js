@@ -2,8 +2,10 @@
  * Expanded Trail Nodes - Redesigned System
  *
  * Educational psychology-driven trail system for 8-year-old learners.
- * Units 1-3: Learning the Keys (NO eighth notes - quarters and halves only)
- * Unit 4+: Speed & Rhythm (eighth notes unlocked after Unit 3)
+ *
+ * Treble Units 1-3: Redesigned (C4 to C5, quarters + halves only)
+ * Bass Units 1-3: Redesigned (C4 to C3, quarters + halves only)
+ * Rhythm Units 1-2: Legacy generator (to be redesigned in Phase 10)
  *
  * This file imports the redesigned units and combines them.
  */
@@ -12,51 +14,13 @@ import trebleUnit1Nodes from './units/trebleUnit1Redesigned.js';
 import trebleUnit2Nodes from './units/trebleUnit2Redesigned.js';
 import trebleUnit3Nodes from './units/trebleUnit3Redesigned.js';
 
-// Legacy generated units (kept for bass clef and rhythm until redesigned)
-import { generateUnit, generateRhythmUnit } from '../utils/nodeGenerator.js';
+// Redesigned bass clef units
+import bassUnit1Nodes from './units/bassUnit1Redesigned.js';
+import bassUnit2Nodes from './units/bassUnit2Redesigned.js';
+import bassUnit3Nodes from './units/bassUnit3Redesigned.js';
 
-// Import constants from shared file
-import { NODE_CATEGORIES } from './constants.js';
-
-// ============================================
-// BASS CLEF - Unit 1: Middle C Position (C4-A3)
-// (Using legacy generator - will be redesigned later)
-// ============================================
-const bassUnit1 = generateUnit({
-  category: NODE_CATEGORIES.BASS_CLEF,
-  unitNumber: 1,
-  unitName: 'Middle C Position',
-  theme: 'The Bass Beginning',
-  baseNotePool: ['C4', 'B3', 'A3'],
-  clef: 'bass',
-  startOrder: 50, // Start after treble units
-  rhythmTiers: [1, 2, 3, 4],
-  includeIntro: true,
-  includeBoss: true,
-  bossConfig: {
-    accessoryUnlock: 'bass_sprout_badge'
-  }
-});
-
-// ============================================
-// BASS CLEF - Unit 2: Five Finger Low (C4-F3)
-// (Using legacy generator - will be redesigned later)
-// ============================================
-const bassUnit2 = generateUnit({
-  category: NODE_CATEGORIES.BASS_CLEF,
-  unitNumber: 2,
-  unitName: 'Five Finger Low',
-  theme: 'Going Lower',
-  baseNotePool: ['C4', 'B3', 'A3', 'G3', 'F3'],
-  clef: 'bass',
-  startOrder: bassUnit1[bassUnit1.length - 1].order + 1,
-  rhythmTiers: [1, 2, 3, 4],
-  includeIntro: true,
-  includeBoss: true,
-  bossConfig: {
-    accessoryUnlock: 'bass_five_finger_badge'
-  }
-});
+// Legacy rhythm generator (rhythm will be redesigned in Phase 10)
+import { generateRhythmUnit } from '../utils/nodeGenerator.js';
 
 // ============================================
 // RHYTHM - Unit 1: Steady Beat
@@ -82,18 +46,19 @@ const rhythmUnit2 = generateRhythmUnit({
   includeBoss: true
 });
 
-// Combine all new nodes
+// Combine all nodes
 export const EXPANDED_NODES = [
   // Redesigned treble clef units (Units 1-3)
   ...trebleUnit1Nodes,
   ...trebleUnit2Nodes,
   ...trebleUnit3Nodes,
 
-  // Legacy bass clef units (to be redesigned)
-  ...bassUnit1,
-  ...bassUnit2,
+  // Redesigned bass clef units (Units 1-3)
+  ...bassUnit1Nodes,
+  ...bassUnit2Nodes,
+  ...bassUnit3Nodes,
 
-  // Legacy rhythm units (to be redesigned)
+  // Legacy rhythm units (to be redesigned in Phase 10)
   ...rhythmUnit1,
   ...rhythmUnit2
 ];
@@ -104,23 +69,20 @@ export const EXPANDED_TREBLE_NODES = [
   ...trebleUnit2Nodes,
   ...trebleUnit3Nodes
 ];
-export const EXPANDED_BASS_NODES = [...bassUnit1, ...bassUnit2];
+export const EXPANDED_BASS_NODES = [
+  ...bassUnit1Nodes,
+  ...bassUnit2Nodes,
+  ...bassUnit3Nodes
+];
 export const EXPANDED_RHYTHM_NODES = [...rhythmUnit1, ...rhythmUnit2];
 
 // Update prerequisites to link between units
+// Note: Treble and Bass unit prerequisites are already set in their redesigned files
+// Only rhythm units still need runtime linking
 export const linkUnitPrerequisites = (nodes) => {
   const updatedNodes = [...nodes];
 
-  // Treble Unit 2 prerequisites are already set in trebleUnit2Redesigned.js
-  // Treble Unit 3 prerequisites are already set in trebleUnit3Redesigned.js
-
-  // Link Bass Unit 2 to Unit 1 boss
-  const bassUnit2Start = updatedNodes.find(n => n.id === 'bass_2_1');
-  if (bassUnit2Start) {
-    bassUnit2Start.prerequisites = ['boss_bass_1'];
-  }
-
-  // Link Rhythm Unit 2 to Unit 1 boss
+  // Link Rhythm Unit 2 to Unit 1 boss (legacy rhythm units still need this)
   const rhythmUnit2Start = updatedNodes.find(n => n.id === 'rhythm_2_1');
   if (rhythmUnit2Start) {
     rhythmUnit2Start.prerequisites = ['boss_rhythm_1'];
