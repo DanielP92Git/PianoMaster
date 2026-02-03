@@ -1,302 +1,170 @@
 # Project Research Summary
 
-**Project:** Security Hardening for Piano Learning PWA
-**Domain:** Child-focused EdTech (COPPA-compliant music education app)
-**Researched:** January 31, 2026
+**Project:** PianoApp v1.3 Trail System Redesign
+**Domain:** Educational gamification - piano learning for children
+**Researched:** 2026-02-03
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This research addresses security hardening for a React 18 + Supabase piano learning Progressive Web App designed for 8-year-old children. The app currently has foundational security (RLS policies, SECURITY DEFINER functions) but requires comprehensive hardening before app store submission and public launch.
+This research covers the redesign of the PianoApp trail system to fix inconsistent pedagogy between treble clef (already well-designed), bass clef (needs redesign), and rhythm (needs redesign) paths. The existing treble clef Units 1-3 use a well-structured "explicit node definition" pattern with 8 nodes per unit, pedagogically sound note progression, and proper node type variety. The bass and rhythm paths currently use a legacy code generator that produces inconsistent nodes and lacks the pedagogical intentionality of the treble redesign.
 
-The recommended approach is a three-phase implementation focusing on (1) critical security fixes (RLS gaps, IDOR vulnerabilities), (2) COPPA compliance requirements (parental consent, data deletion, child data protection), and (3) production hardening (rate limiting, audit logging). The app faces a critical April 22, 2026 compliance deadline for the amended COPPA rule, requiring neutral age gating and separate consent for third-party data sharing.
+The recommended approach is a **parallel creation with clean cutover** strategy: create all new bass (3 units) and rhythm (5 units) unit files following the treble template, then do a single atomic switch in `expandedNodes.js`. The key constraint is **maintaining existing node IDs** to preserve user progress data in `student_skill_progress`. The database stores progress by `node_id` string, so node definitions can change as long as IDs remain stable.
 
-Key risks include exposing child data through inadequate RLS policies, enabling privilege escalation through client-side authorization gaps, and violating COPPA through third-party SDK tracking. These can be mitigated through defense-in-depth authorization (client + RLS + SECURITY DEFINER), strict PII anonymization in public features, and removal/gating of all analytics SDKs for users under 13.
+Critical risks center on data integrity and child-appropriate pedagogy. Breaking node ID changes will orphan user progress and erode trust. Introducing difficulty too quickly (more than 1-2 new notes per node, eighth notes before Unit 4, tempo jumps greater than 15 BPM) will create frustration for 8-year-olds. The existing treble redesign provides a proven template - the work is extending that pattern consistently to bass and rhythm while preserving compatibility with existing progress data.
 
 ## Key Findings
 
-### Recommended Stack
+### Recommended Stack/Patterns
 
-The current Supabase + React architecture is well-suited for secure, COPPA-compliant applications when properly configured. Research emphasizes defense-in-depth security with three layers: client-side authorization checks, Supabase Row Level Security (RLS), and privileged SECURITY DEFINER database functions.
+The research confirms the existing architecture is sound. No new technologies are needed - this is a data structure and content redesign, not a technical rewrite.
 
-**Core security technologies:**
-- **Supabase RLS with consolidated policies**: Database-enforced authorization — faster and more secure than multiple permissive policies (40% performance gain from consolidation)
-- **Custom JWT claims via Access Token Hook**: Performance optimization for RLS — allows role checks without database queries (but database tables remain source of truth)
-- **sessionStorage for shared devices**: Auto-clears on tab close — critical for school environment where localStorage persists after logout
-- **Service worker with auth exclusion patterns**: Offline PWA support — never caches /auth/, /token/, /session/ endpoints to prevent token persistence
-- **Database-level rate limiting (PostgreSQL)**: Abuse prevention — no external dependencies, 10 requests per minute on score submission
+**Core patterns to follow:**
+- **Explicit node definitions**: Each node is a complete, self-documenting object with all configuration inline (not generated). This matches the treble redesign and is how Duolingo and professional educational games structure content.
+- **String-based prerequisite IDs with build-time validation**: Simple, serializable, allows cross-file references without import complexity.
+- **Enumerated node types with metadata**: The existing `NODE_TYPES` (Discovery, Practice, Mix-Up, Speed Round, Review, Challenge, Mini-Boss, Boss) and `NODE_TYPE_METADATA` in `nodeTypes.js` should be reused verbatim.
+- **File-per-unit organization**: `src/data/units/{path}/unit{N}.js` pattern enables focused code review and clear diff history.
 
-**Critical anti-patterns to avoid:**
-- Never use `user_metadata` in RLS policies (users can modify it via `supabase.auth.updateUser()`)
-- Never create SECURITY DEFINER functions without explicit `auth.uid()` authorization checks
-- Never cache authentication endpoints in service workers (causes session leakage on shared devices)
-- Never expose child usernames in public features without anonymization (COPPA violation)
+**Technologies unchanged:**
+- React 18 + Vite 6 (frontend)
+- Supabase (database, auth)
+- VexFlow v5 (notation rendering)
+- Existing component architecture (TrailMap, TrailNodeModal, game components)
 
 ### Expected Features
 
-Research reveals COPPA compliance features are table-stakes requirements, not optional nice-to-haves. The 2025 COPPA amendments (effective June 23, 2025; compliance deadline April 22, 2026) introduce stricter requirements that affect app architecture.
+**Must have (table stakes - users expect these):**
+- 6-10 nodes per unit (current 8 nodes is optimal)
+- Progressive difficulty with stair-step pattern (each node slightly harder, recovery after challenges)
+- Mastery thresholds at 60%/80%/95% for 1/2/3 stars (research-validated)
+- Node type variety (minimum 3-4 types per unit for engagement)
+- Immediate, clear feedback (correct/incorrect shown instantly, no harsh penalties)
+- Visual progress indicators (trail map with star ratings on completed nodes)
 
-**Must have (legal/compliance):**
-- Neutral age gating (date-of-birth picker, not "Are you over 13?" checkbox)
-- Verifiable parental consent before data collection (email+confirmation for low-risk use)
-- Child-friendly privacy policy in plain language (separate parent version)
-- Parental data access dashboard (view, export JSON, one-click deletion)
-- Complete data deletion with cascading removal from all tables
-- Anonymized usernames in leaderboards/public features (show only current user's real name)
-- No third-party analytics for users under 13 (Apple Kids Category bans all third-party SDKs)
+**Should have (differentiators):**
+- Spaced repetition integration via REVIEW node type (high research backing, not currently implemented)
+- Adaptive difficulty hints after repeated mistakes
+- Song/applied practice nodes (connect learning to real music after Unit 1)
 
-**Should have (security):**
-- Client-side authorization checks in all service functions (defense-in-depth before RLS)
-- Teacher-student relationship verification before data access
-- Session timeout after 15 minutes of inactivity (school shared devices)
-- Comprehensive logout clearing all localStorage keys
-- Audit logging for teacher actions on student data
-- Rate limiting on score submissions (10/minute to prevent XP farming)
-
-**Defer (post-launch):**
-- Penetration testing and security audit (before v1.0 public launch)
-- Automated data retention policies (1-year inactivity expiration)
-- Multi-language privacy policies (Hebrew for international expansion)
-- Privacy-preserving analytics (on-device processing, no user tracking)
+**Defer to v2+:**
+- Path branching/Grand Staff integration (complex, not essential for trail consistency fix)
+- Complex recommendation algorithms
+- Comprehensive adaptive difficulty system
 
 ### Architecture Approach
 
-The defense-in-depth security architecture implements authorization at three layers: (1) Client-side checks provide fast, user-friendly feedback; (2) RLS policies enforce database-level access control that cannot be bypassed; (3) SECURITY DEFINER functions handle privileged operations with explicit authorization.
+The integration strategy is straightforward due to the existing architecture's modularity. The `skillProgressService.js` works with generic `node_id` strings, game components accept node configs via `location.state`, and the TrailMap renders whatever nodes are in `SKILL_NODES`. No component changes are required - only data layer changes.
 
-**Major components:**
+**Major components (unchanged):**
+1. **Unit definition files** (`src/data/units/*.js`) - Manual node definitions following treble template
+2. **expandedNodes.js** - Combines all unit imports into `EXPANDED_NODES` array (single point of change for cutover)
+3. **skillTrail.js** - Exports `SKILL_NODES`, helper functions, `UNITS` metadata (empty `LEGACY_NODES` after migration)
+4. **TrailMap/TrailNodeModal** - Generic rendering of node arrays (no changes needed)
+5. **skillProgressService.js** - CRUD for `student_skill_progress` table (node-agnostic)
 
-1. **Client Authorization Layer** (`src/services/*.js`) — Fast verification of user identity and relationships (teacher-student connections) before making database requests, provides immediate error feedback
-2. **RLS Policy Layer** (Supabase) — Database-enforced access control using consolidated policies (one policy per operation with OR logic), queries database tables for role verification instead of JWT metadata
-3. **SECURITY DEFINER Functions** (PostgreSQL) — Privileged operations requiring superuser access (XP calculation, teacher-student linking), all functions include explicit `auth.uid()` checks at start
-4. **Service Worker Cache Strategy** (`public/sw.js`) — PWA offline support with auth endpoint exclusion patterns, never caches /auth/, /token/, /session/ to prevent token persistence on shared devices
-5. **COPPA Compliance Layer** — Child data protection through PII anonymization in public features, parental consent workflows, comprehensive deletion capabilities, no third-party SDK tracking
-
-**Key architectural decisions:**
-- Database tables (not `user_metadata`) are source of truth for roles and permissions
-- Relationship-based access control via `teacher_student_connections` junction table
-- Session data stored in sessionStorage (not localStorage) for school environments
-- Rate limiting implemented at database level (PostgreSQL triggers/functions) to avoid external dependencies
+**Files to create:** 8 new unit files (bassUnit1-3, rhythmUnit1-5)
+**Files to modify:** 2 (expandedNodes.js for imports, skillTrail.js for LEGACY_NODES cleanup)
+**Files to keep unchanged:** All components, services, constants, nodeTypes
 
 ### Critical Pitfalls
 
-Based on audit of similar applications and documented CVE incidents:
+1. **Orphaned Progress Records** - Changing node IDs without migration mapping breaks user progress. Prevention: Use exact ID matching to legacy generator output (`bass_1_1`, `rhythm_1_1`, etc.). If IDs must change, update `LEGACY_TO_NEW_NODE_MAPPING` in `progressMigration.js` first.
 
-1. **user_metadata abuse in RLS policies (CVE-level)** — Using JWT `user_metadata` for authorization allows privilege escalation because users can modify their own metadata via `supabase.auth.updateUser()`. **Prevention:** Query database tables (`teachers`, `students`) for role verification; use custom JWT claims only as performance hints, never for authorization decisions. **Status:** Fixed in migration `20260127000001`.
+2. **Prerequisite Chain Breaking** - Adding new nodes with prerequisites existing users never completed creates permanently locked content. Prevention: Implement "grandfather" logic where users with progress past a point auto-unlock inserted prerequisites. Map progress to SKILLS, not just node IDs.
 
-2. **SECURITY DEFINER functions without authorization checks** — Functions marked SECURITY DEFINER run with superuser privileges, bypassing RLS. Without explicit `auth.uid()` checks, any authenticated user can call these functions to escalate privileges. **Prevention:** Add `IF auth.uid() != p_user_id THEN RAISE EXCEPTION` checks at start of every SECURITY DEFINER function. **Status:** Fixed in migration `20260126000001`, needs verification for all functions.
+3. **XP Economy Inflation/Deflation** - Different XP rewards cause level inconsistencies between old and new users. Prevention: Calculate total XP available in old vs. new trail during design phase. Decide policy (maintain parity vs. reset with bonus) before implementation.
 
-3. **Service worker caching authentication tokens** — Caching auth endpoints causes JWT tokens to persist after logout on shared school devices, allowing next user to access previous user's account. **Prevention:** Exclude all /auth/, /token/, /session/ endpoints from cache; clear auth cache entries on logout. **Status:** Implemented in `public/sw.js`, needs testing on shared devices.
+4. **Difficulty Cliff for Kids** - Adding too many notes too fast or complex rhythms too early causes high abandonment. Prevention: Maximum 1-2 new notes per node, NO eighth notes until Unit 4, tempo increases under 15 BPM between nodes. User test with actual 8-year-olds.
 
-4. **Exposing child usernames in public features (COPPA violation)** — Displaying real names in leaderboards or public profiles violates COPPA requirements for children under 13. Penalties: $53,088 per violation. **Prevention:** Anonymize all usernames except current user (display "Student 1", "Student 2"); use pseudonymous identifiers for public features. **Status:** Needs review of leaderboard implementation.
-
-5. **Missing rate limiting on score submissions** — No throttling allows automated XP farming via script loops submitting perfect scores, corrupting leaderboards and demotivating legitimate students. **Prevention:** Database-level rate limiting (10 submissions per 5 minutes) using `rate_limits` tracking table or Edge Functions with Redis. **Status:** Not implemented.
+5. **Database Trigger Assumptions** - The `trigger_update_unit_progress` SQL trigger parses node_id prefixes (`treble_`, `bass_`, `rhythm_`). Prevention: Maintain consistent node ID naming conventions or update trigger if conventions change.
 
 ## Implications for Roadmap
 
-Based on research, a three-phase approach is recommended to address critical security vulnerabilities before COPPA compliance deadline (April 22, 2026) and app store submission requirements.
+Based on research, suggested phase structure:
 
-### Phase 1: Critical Security Fixes (URGENT — Before Further Development)
+### Phase 1: Design and Data Modeling
+**Rationale:** Pitfalls 1, 2, and 3 (orphaned progress, prerequisite breaks, XP economy) must be addressed BEFORE any coding begins. Design decisions here are irreversible without data migration.
+**Delivers:** Complete node ID mapping, pedagogical curriculum for bass/rhythm, XP audit document
+**Addresses:** Table stakes (progressive difficulty, node variety), pedagogy constraints (1-2 notes per node, no eighth notes until Unit 4)
+**Avoids:** Pitfall 1 (document all existing node IDs), Pitfall 3 (calculate total XP), Pitfall 6 (pedagogy constraints)
 
-**Rationale:** Foundational security gaps create immediate vulnerability to privilege escalation and data breaches. Must fix before any new features to avoid building on insecure foundation.
+### Phase 2: Bass Clef Unit Implementation
+**Rationale:** Bass clef has fewer units (3 vs 5 for rhythm) and follows closer to treble pattern. Lower complexity, validates the approach before tackling rhythm.
+**Delivers:** bassUnit1Redesigned.js, bassUnit2Redesigned.js, bassUnit3Redesigned.js (26 nodes estimated)
+**Uses:** Treble unit template, explicit node definition pattern
+**Implements:** Note progression C4->B3->A3 (Unit 1), G3->F3 (Unit 2), E3->D3->C3 (Unit 3)
+**Avoids:** Pitfall 15 (Middle C position myopia - must expand downward to natural bass register)
 
-**Delivers:** Secure database access control, IDOR protection, shared device safety
+### Phase 3: Rhythm Unit Implementation
+**Rationale:** Rhythm has unique considerations (no noteConfig, different exercise types) and more units (5). Benefits from lessons learned in Phase 2.
+**Delivers:** rhythmUnit1-5Redesigned.js (32 nodes estimated)
+**Uses:** RHYTHM_COMPLEXITY enum, rhythm-specific node template
+**Implements:** Steady beat (Unit 1), half notes (Unit 2), whole notes/rests (Unit 3), eighth notes (Unit 4), mixed/advanced (Unit 5)
+**Avoids:** Pitfall 12 (rhythm before reading confidence - no eighth notes until Unit 4)
 
-**Duration:** 1-2 sprints (2-4 weeks)
+### Phase 4: Integration and Cutover
+**Rationale:** Single atomic switch minimizes risk. All files exist but unused until cutover commit.
+**Delivers:** Updated expandedNodes.js, cleaned LEGACY_NODES, working trail system
+**Implements:** Clean cutover pattern from ARCHITECTURE.md
+**Avoids:** Pitfall 5 (database trigger compatibility verified before deploy)
 
-**Addresses:**
-- RLS gaps audit using Supabase Security Advisor (check which tables missing policies)
-- Client-side authorization checks in all service functions (`verifyStudentDataAccess`, `verifyTeacherStudentConnection`)
-- Comprehensive logout flow clearing all localStorage keys (migration flags, cached data, user-specific keys)
-- Service worker auth exclusion testing on shared device simulation
-- SECURITY DEFINER function audit (verify all have `auth.uid()` checks)
-
-**Avoids:**
-- Privilege escalation through client-bypass attacks (IDOR pitfall)
-- Session hijacking on shared school devices (localStorage persistence pitfall)
-- Unauthorized data access through RLS gaps
-
-**Research flags:** None — patterns are well-documented, use existing migrations as reference
-
-### Phase 2: COPPA Compliance Implementation (DEADLINE: April 22, 2026)
-
-**Rationale:** Legal requirement for handling data from children under 13. Non-compliance blocks app store submission and risks $50k+ per-violation fines from FTC.
-
-**Delivers:** Parental consent workflow, data deletion, child data protection, compliant privacy policy
-
-**Duration:** 2-3 sprints (4-6 weeks)
-
-**Uses:**
-- Database deletion functions with cascade logic (`delete_student_data(UUID)`)
-- Supabase RLS DELETE policies for teacher-initiated deletions
-- React forms for age gate with date-of-birth picker (no "Are you over X?" checkbox)
-- Email verification for parental consent (low-risk "email plus" method)
-
-**Implements:**
-- Neutral age gate component (COPPA 2025 requirement: no age suggestions or encouragement to lie)
-- Parental consent flow (teacher-as-parent model using FERPA exception for school use)
-- Child-friendly privacy policy (separate versions for children and parents)
-- Parental dashboard (view/export/delete child data)
-- Data deletion UI for teachers (with confirmation, audit logging)
-- Username anonymization in leaderboards (show only current user's real name)
-- Third-party SDK audit and removal (no analytics for users under 13)
-
-**Avoids:**
-- COPPA violations through PII exposure in public features
-- App store rejection (Apple Kids Category bans all third-party SDKs)
-- Legal liability from missing parental consent or data deletion capabilities
-
-**Research flags:**
-- **Age verification methods:** May need legal review to determine "reasonable" verification for risk level
-- **FERPA school exception:** Validate teacher-as-parent model with education law attorney
-- **Privacy policy language:** Requires legal review for COPPA compliance, especially disclosures section
-
-### Phase 3: Production Hardening (Before Public Launch)
-
-**Rationale:** Prevent abuse, maintain competitive integrity, enable compliance monitoring. Not legally required but critical for fair gameplay and security monitoring.
-
-**Delivers:** Rate limiting, audit logging, session timeouts, security monitoring
-
-**Duration:** 2 sprints (3-4 weeks)
-
-**Uses:**
-- PostgreSQL rate limiting with `rate_limits` tracking table
-- `pg_cron` extension for automated inactive user cleanup
-- React Idle Timer for inactivity detection
-- Database triggers for audit log insertion
-
-**Implements:**
-- Rate limiting on score submissions (10 per 5 minutes using database function `check_rate_limit()`)
-- Rate limiting on XP awards (prevent farming)
-- Audit logging table (`audit_log`) with teacher action tracking
-- Session timeout after 15 minutes of inactivity (configurable per environment)
-- Automated data retention policy (delete users inactive for 2 years)
-- Security metrics dashboard (failed login attempts, rate limit violations, RLS policy failures)
-
-**Avoids:**
-- XP farming through automated score submission scripts
-- Leaderboard corruption from bot-driven perfect scores
-- Compliance gaps from missing audit trail of teacher actions
-- Account takeover on shared devices from forgotten logouts
-
-**Research flags:**
-- **Rate limiting strategy:** May need A/B testing to tune thresholds (10 per 5 min vs. other values)
-- **Audit log retention:** Determine legal requirements for how long to keep logs (GDPR vs. COPPA)
+### Phase 5: Validation and Cleanup
+**Rationale:** Testing with real user data snapshots and actual 8-year-olds catches issues before production.
+**Delivers:** Verified trail, removed legacy generator code, updated documentation
+**Avoids:** Pitfall 4 (exercise type routing), Pitfall 7 (sight reading config compatibility)
 
 ### Phase Ordering Rationale
 
-- **Phase 1 first:** Security vulnerabilities are foundation-level issues. Building new features on insecure base creates technical debt and compounds risk.
-- **Phase 2 before Phase 3:** Legal compliance has hard deadline (April 22, 2026) and blocks app store submission. Rate limiting and monitoring are important but not blocking for launch.
-- **Phased approach:** Allows incremental security improvements with testing between phases. Prevents "big bang" security refactor that could introduce regressions.
-- **COPPA compliance critical path:** Age gating and parental consent must be implemented before collecting any child data. Data deletion UI can come after initial consent flow.
-
-**Dependencies discovered:**
-- Phase 2 (data deletion) depends on Phase 1 (authorization checks) — can't allow teachers to delete students they're not connected to
-- Phase 3 (audit logging) supports Phase 2 (COPPA compliance) — track deletion requests for compliance proof
-- All phases depend on RLS policies being correct — Security Advisor audit is prerequisite
+- **Design first**: Data modeling mistakes (wrong node IDs, broken prerequisites) are expensive to fix after users have progress
+- **Bass before Rhythm**: Lower complexity validates approach; rhythm has unique considerations
+- **Single cutover**: Atomic switch avoids partial states; easy rollback if issues discovered
+- **Validation last**: Real user data testing requires complete system; can't test incrementally
 
 ### Research Flags
 
-**Phases likely needing deeper research during planning:**
+Phases likely needing deeper research during planning:
+- **Phase 3 (Rhythm):** Rhythm exercises have different game components (MetronomeTrainer) and config structure. May need research into rhythm-specific pedagogical patterns for 8-year-olds.
 
-- **Phase 2 (COPPA):**
-  - Parental consent verification methods (credit card, video call, email+confirmation) — which method appropriate for school vs. home use?
-  - FERPA exception applicability — does teacher-as-parent model work for our use case? Need education law clarification.
-  - Privacy policy legal language — COPPA-compliant disclosures require attorney review, not just developer interpretation.
-  - State-specific laws (Texas, Utah, Louisiana age verification requirements effective Jan 2026) — may need integration with Play Age Signals API / Declared Age Range API.
-
-- **Phase 3 (Rate Limiting):**
-  - Threshold tuning (how many scores per minute is legitimate?) — may need user research or A/B testing.
-  - Redis vs. database rate limiting trade-offs — performance benchmarking needed if traffic grows.
-
-**Phases with standard patterns (skip research-phase):**
-
-- **Phase 1 (Security Fixes):** RLS policies, client authorization checks, service worker patterns are well-documented. Existing migrations (`20260126000001`, `20260127000001`, `20260128000001`) provide templates. Supabase Security Advisor provides detection checklist.
-
-- **Phase 3 (Session Timeout):** React Idle Timer library has standard implementation. No custom research needed.
+Phases with standard patterns (skip research-phase):
+- **Phase 2 (Bass):** Direct extension of treble pattern - well-documented in existing trebleUnit1Redesigned.js
+- **Phase 4 (Integration):** Pure file organization change - no domain knowledge needed
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | **HIGH** | Supabase official docs, Context7 library for RLS patterns, verified with Security Advisor tool. Architecture patterns backed by CVE incident reports. |
-| Features | **HIGH** | COPPA requirements from FTC official guidance (2025 amendments published). App store policies from official Apple/Google documentation. Compliance deadlines verified. |
-| Architecture | **HIGH** | Defense-in-depth patterns from OWASP standards. Existing codebase already implements 60% of recommended architecture (RLS policies exist, SECURITY DEFINER functions audited). Gaps are well-defined. |
-| Pitfalls | **HIGH** | Based on documented CVE incidents (CVE-2025-48757 for RLS gaps), Supabase Security Advisor checks, and community incident reports. Test cases provided for verification. |
+| Stack | HIGH | Existing patterns proven in treble redesign, no new tech needed |
+| Features | HIGH | Multiple sources agree on 6-10 nodes, mastery thresholds, node variety |
+| Architecture | HIGH | Verified against existing codebase; integration points confirmed |
+| Pitfalls | HIGH | Based on internal codebase analysis + established migration patterns |
 
 **Overall confidence:** HIGH
 
-All research areas backed by primary sources (official documentation, regulatory guidance, verified incident reports). Few assumptions required. Implementation paths are clear.
-
 ### Gaps to Address
 
-**Technical gaps:**
-
-- **Rate limiting threshold tuning**: Research suggests 10 requests per 5 minutes for score submission, but this may be too strict/lenient. **Resolution:** Implement configurable threshold, monitor in staging, adjust based on false positive rate.
-
-- **localStorage vs. sessionStorage trade-off**: sessionStorage provides better security (auto-clears on tab close) but worse UX (must login per tab). **Resolution:** Use sessionStorage by default for school deployments, make configurable via environment variable for home use.
-
-- **Audit log retention period**: COPPA requires deletion "when no longer needed" but doesn't specify timeline. GDPR has stricter retention limits. **Resolution:** Consult privacy attorney during Phase 2 implementation; default to 1-year retention with automated cleanup.
-
-**Compliance gaps:**
-
-- **Parental consent verification method**: Research shows multiple acceptable methods (email+confirmation, credit card, video call) but doesn't clarify which is "reasonable" for our risk level. **Resolution:** Start with email+confirmation (lowest friction for schools), document rationale for legal review.
-
-- **Teacher-as-parent FERPA exception**: Research indicates schools can act in loco parentis under FERPA, but our specific implementation may need validation. **Resolution:** Include FERPA exception flowchart in Phase 2 plan, schedule legal review before implementation.
-
-- **State age verification laws**: Texas, Utah, Louisiana require age verification starting Jan 2026. Implementation requires Play Age Signals API (Google) or Declared Age Range API (Apple). **Resolution:** Flag for Phase 2 implementation if targeting users in these states.
-
-**Process gaps:**
-
-- **Security testing**: Research identifies vulnerabilities but doesn't define comprehensive testing plan. **Resolution:** Create RLS test suite during Phase 1 (see PITFALLS.md section 4 for test patterns).
-
-- **Incident response**: No playbook for handling data breach or COPPA complaint. **Resolution:** Defer to post-launch, but document security contacts and escalation paths during Phase 3.
+- **REVIEW node type not implemented**: Research strongly supports spaced repetition. Consider adding during this redesign or flagging for immediate follow-up.
+- **Song/applied practice nodes**: Research suggests real songs increase motivation. Current design is all abstract exercises. May require new game component.
+- **Adaptive difficulty**: Research supports dynamic question counts and tempo adjustment. Not in current design - could be future enhancement.
+- **Rhythm path pedagogy specifics**: Less established pattern than note reading. May need iteration based on user testing.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-
-**Supabase Official Documentation:**
-- [Row Level Security](https://supabase.com/docs/guides/database/postgres/row-level-security) — RLS policy patterns, consolidation strategy
-- [Database Functions](https://supabase.com/docs/guides/database/functions) — SECURITY DEFINER best practices, STABLE vs. VOLATILE
-- [Custom Access Token Hook](https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook) — JWT claims for RLS performance
-- [User Sessions](https://supabase.com/docs/guides/auth/sessions) — Session timeout configuration, autoRefreshToken behavior
-- [PGAudit Extension](https://supabase.com/docs/guides/database/extensions/pgaudit) — Audit logging for COPPA compliance
-- [SOC 2 Compliance](https://supabase.com/docs/guides/security/soc-2-compliance) — Third-party attestation for privacy policy references
-
-**COPPA Regulatory Guidance:**
-- [FTC COPPA FAQ](https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions) — Parental consent methods, verifiable consent requirements
-- [Federal Register: COPPA Final Rule (April 22, 2025)](https://www.federalregister.gov/documents/2025/04/22/2025-05904/childrens-online-privacy-protection-rule) — Neutral age gating requirement, separate third-party consent
-- [eCFR COPPA Rule](https://www.ecfr.gov/current/title-16/chapter-I/subchapter-C/part-312) — Personal information definition (includes persistent identifiers, device IDs)
-
-**App Store Requirements:**
-- [Apple Kids Category Requirements](https://developer.apple.com/kids/) — Third-party SDK ban, parental gate requirements
-- [Google Play Families Policies](https://support.google.com/googleplay/android-developer/answer/9893335?hl=en) — Self-certification, CSAM reporting requirements
-- [Google Play Child Safety Standards](https://support.google.com/googleplay/android-developer/answer/14747720?hl=en) — Designated CSAE contact requirement
+- Existing codebase: `src/data/skillTrail.js`, `src/data/nodeTypes.js`, `src/data/units/trebleUnit1Redesigned.js`
+- Existing generator (anti-pattern): `src/utils/nodeGenerator.js`
+- Database schema: `student_skill_progress`, `trigger_update_unit_progress`
 
 ### Secondary (MEDIUM confidence)
-
-**Security Best Practices:**
-- [Supabase Security Advisor: RLS References user_metadata](https://supabase.github.io/splinter/0015_rls_references_user_metadata/) — Detection method for user_metadata abuse
-- [Supabase Security Retro: 2025](https://supabase.com/blog/supabase-security-2025-retro) — 83% of breaches involve RLS misconfigurations (community-reported statistic)
-- [Multi-Tenant Applications with RLS on Supabase](https://www.antstack.com/blog/multi-tenant-applications-with-rls-on-supabase-postgress/) — Teacher-student relationship verification pattern
-
-**COPPA Compliance Guides:**
-- [COPPA Compliance in 2025: A Practical Guide](https://blog.promise.legal/startup-central/coppa-compliance-in-2025-a-practical-guide-for-tech-edtech-and-kids-apps/) — Analytics restrictions, third-party SDK limitations
-- [Children's Online Privacy in 2025: The Amended COPPA Rule](https://www.loeb.com/en/insights/publications/2025/05/childrens-online-privacy-in-2025-the-amended-coppa-rule) — Separate consent for third-party disclosure requirement
-
-**React Security:**
-- [React Security Checklist: Complete Guide for 2025](https://www.propelcode.ai/blog/react-security-checklist-complete-guide-2025) — XSS prevention, dependency auditing
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/) — General web application security framework
+- [Frontiers in Education: Gamified Educational Applications](https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2025.1668260/full)
+- [Mastery Learning - Education Endowment Foundation](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/mastery-learning)
+- [Spaced Repetition Learning Games](https://www.researchgate.net/publication/268130455_Spaced_repetition_learning_games_on_mobile_devices_Foundations_and_perspectives)
+- [Flow Theory and Learning Experience Design](https://edtechbooks.org/ux/flow_theory_and_lxd)
+- [Duolingo Path Structure](https://duolingoguides.com/how-many-sections-in-duolingo/)
 
 ### Tertiary (LOW confidence, needs validation)
-
-- [Hacker News: Your Supabase is public if you turn off RLS](https://news.ycombinator.com/item?id=46355345) — Community discussion of CVE-2025-48757, 170+ apps exposed (anecdotal, not verified by official source)
-- [Byteiota: Supabase Security Flaw](https://byteiota.com/supabase-security-flaw-170-apps-exposed-by-missing-rls/) — 83% statistic on RLS misconfigurations (secondary source, original data source unclear)
-- Community blog posts on rate limiting strategies — Various implementation approaches, need benchmarking for our use case
+- Music teaching methodology sources (varied quality, cross-referenced for consensus)
+- Piano app reviews (Simply Piano, Yousician) - user feedback, not research
 
 ---
-
-**Research completed:** January 31, 2026
-**Ready for roadmap:** Yes
-**Compliance deadline:** April 22, 2026 (COPPA neutral age gating requirement)
-**Next action:** Create roadmap based on 3-phase structure, prioritize Phase 1 security fixes
+*Research completed: 2026-02-03*
+*Ready for roadmap: yes*

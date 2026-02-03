@@ -1,822 +1,488 @@
-# Security Architecture Research
+# Architecture: Trail System Redesign Integration
 
-**Date**: 2026-01-31
-**Context**: Hardening security for a React 18 + Supabase piano learning PWA designed for 8-year-old children
-**Regulatory Concerns**: COPPA/GDPR-K compliance (child data protection)
-
----
+**Project:** Trail System Redesign
+**Researched:** 2026-02-03
+**Focus:** Integration strategy for redesigned bass/rhythm units into existing codebase
 
 ## Executive Summary
 
-This document outlines the defense-in-depth security architecture for the PianoMaster app. Security is implemented across three layers: **client-side validation**, **Supabase Row Level Security (RLS)**, and **privileged database functions**. The architecture is designed for:
+The current trail system uses a dual-source architecture: manually redesigned treble units (Unit 1-3) combined with legacy-generated bass/rhythm nodes via `nodeGenerator.js`. The goal is to complete the transition to 100% manually designed nodes while maintaining backward compatibility with existing student progress data.
 
-1. **Shared device safety**: Children using school computers or shared tablets
-2. **Child data protection**: COPPA/GDPR-K compliance for users under 13
-3. **Teacher-student data isolation**: Relationship-based access control
-4. **Progressive security**: Fast client checks with database enforcement
+**Key insight:** The database stores progress by `node_id` (string), not by node definition. This means we can safely change node definitions as long as IDs remain stable. Progress data only needs migration if node IDs change.
 
----
+## Current Architecture
 
-## Defense in Depth Layers
+### Data Flow
 
-### Layer 1: Client-Side Validation (JavaScript/React)
+```
+                    +-----------------------+
+                    |   src/data/skillTrail.js   |
+                    |   (UNITS, helper functions) |
+                    +-----------------------+
+                              |
+                              | imports
+                              v
+                    +-----------------------+
+                    |  src/data/expandedNodes.js |
+                    |  (combines all node sources)|
+                    +-----------------------+
+                         /    |    \
+                        /     |     \
+                       v      v      v
+            +--------+  +---------+  +----------+
+            |Treble  |  |Bass     |  |Rhythm    |
+            |Units   |  |Units    |  |Units     |
+            |1-3     |  |1-2      |  |1-2       |
+            |(manual)|  |(legacy) |  |(legacy)  |
+            +--------+  +---------+  +----------+
+                            |            |
+                            v            v
+                    +-----------------------+
+                    | src/utils/nodeGenerator.js |
+                    |   (generateUnit,           |
+                    |    generateRhythmUnit)     |
+                    +-----------------------+
+```
 
-**Purpose**: Fast, user-friendly authorization checks that provide immediate feedback and reduce unnecessary database calls.
+### File Responsibilities
 
-**Location**: `src/services/*.js` files
+| File | Current Role | After Redesign |
+|------|--------------|----------------|
+| `src/data/skillTrail.js` | Exports UNITS, SKILL_NODES, helper functions + LEGACY_NODES | No change to interface, LEGACY_NODES becomes empty |
+| `src/data/expandedNodes.js` | Combines treble + legacy bass/rhythm | Combines all manual units, no legacy imports |
+| `src/data/units/trebleUnit*.js` | Manually designed treble nodes | No change |
+| `src/data/units/bassUnit*.js` | Does not exist yet | NEW: Manual bass node definitions |
+| `src/data/units/rhythmUnit*.js` | Does not exist yet | NEW: Manual rhythm node definitions |
+| `src/utils/nodeGenerator.js` | Generates bass/rhythm nodes | KEEP but unused by main paths |
+| `src/data/constants.js` | NODE_CATEGORIES, EXERCISE_TYPES | No change |
+| `src/data/nodeTypes.js` | NODE_TYPES, RHYTHM_COMPLEXITY | No change |
 
-**Implementation Pattern**:
+## Recommended Integration Strategy
+
+### Strategy: Parallel Creation with Clean Cutover
+
+Instead of incremental migration, create all new unit files in parallel, then do a single clean cutover in `expandedNodes.js`.
+
+**Rationale:**
+1. No risk of breaking existing functionality during development
+2. Can test new units in isolation before integration
+3. Single atomic commit for the cutover
+4. Easy rollback if issues discovered
+
+### Phase 1: Create New Unit Files (No Integration)
+
+Create these files following the existing treble unit structure:
+
+```
+src/data/units/
+  bassUnit1Redesigned.js     # C4, B3, A3 (mirrors treble Unit 1 pedagogy)
+  bassUnit2Redesigned.js     # Add G3, F3 (five-finger position)
+  bassUnit3Redesigned.js     # Complete octave down to C3
+  rhythmUnit1Redesigned.js   # Steady beat (quarters only)
+  rhythmUnit2Redesigned.js   # Add half notes
+  rhythmUnit3Redesigned.js   # Add whole notes + rests
+  rhythmUnit4Redesigned.js   # Add eighth notes (unlocked after Unit 3)
+  rhythmUnit5Redesigned.js   # Mixed/advanced rhythms
+```
+
+### Phase 2: Update expandedNodes.js (Clean Cutover)
+
+Replace legacy imports with new manual imports:
+
 ```javascript
-// Example from apiScores.js
-async function verifyStudentDataAccess(studentId) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
+// BEFORE (current)
+import trebleUnit1Nodes from './units/trebleUnit1Redesigned.js';
+import trebleUnit2Nodes from './units/trebleUnit2Redesigned.js';
+import trebleUnit3Nodes from './units/trebleUnit3Redesigned.js';
+import { generateUnit, generateRhythmUnit } from '../utils/nodeGenerator.js';
+// ... legacy generation code
 
-  // Students can access their own data
-  if (user.id === studentId) {
-    return true;
-  }
+// AFTER (redesigned)
+import trebleUnit1Nodes from './units/trebleUnit1Redesigned.js';
+import trebleUnit2Nodes from './units/trebleUnit2Redesigned.js';
+import trebleUnit3Nodes from './units/trebleUnit3Redesigned.js';
+import bassUnit1Nodes from './units/bassUnit1Redesigned.js';
+import bassUnit2Nodes from './units/bassUnit2Redesigned.js';
+import bassUnit3Nodes from './units/bassUnit3Redesigned.js';
+import rhythmUnit1Nodes from './units/rhythmUnit1Redesigned.js';
+import rhythmUnit2Nodes from './units/rhythmUnit2Redesigned.js';
+import rhythmUnit3Nodes from './units/rhythmUnit3Redesigned.js';
+import rhythmUnit4Nodes from './units/rhythmUnit4Redesigned.js';
+import rhythmUnit5Nodes from './units/rhythmUnit5Redesigned.js';
 
-  // Teachers can access connected students' data
-  const { data: connection } = await supabase
-    .from("teacher_student_connections")
-    .select("id")
-    .eq("teacher_id", user.id)
-    .eq("student_id", studentId)
-    .eq("status", "accepted")
-    .single();
+export const EXPANDED_NODES = [
+  ...trebleUnit1Nodes,
+  ...trebleUnit2Nodes,
+  ...trebleUnit3Nodes,
+  ...bassUnit1Nodes,
+  ...bassUnit2Nodes,
+  ...bassUnit3Nodes,
+  ...rhythmUnit1Nodes,
+  ...rhythmUnit2Nodes,
+  ...rhythmUnit3Nodes,
+  ...rhythmUnit4Nodes,
+  ...rhythmUnit5Nodes
+];
+```
 
-  if (!connection) {
-    throw new Error("Unauthorized: No access to this student's data");
-  }
+### Phase 3: Clean Up Legacy Code
 
-  return true;
+After cutover is verified working:
+
+1. **Remove from skillTrail.js:** Empty the `LEGACY_NODES` array
+2. **Keep nodeGenerator.js:** May be useful for future testing/prototyping
+3. **Remove legacy unit generation:** Delete generateUnit/generateRhythmUnit calls from expandedNodes.js
+
+## File Changes Summary
+
+### Files to CREATE
+
+| File | Purpose | Node Count (estimated) |
+|------|---------|------------------------|
+| `src/data/units/bassUnit1Redesigned.js` | Bass Unit 1: Middle C Position | 8 nodes |
+| `src/data/units/bassUnit2Redesigned.js` | Bass Unit 2: Five Finger Low | 8 nodes |
+| `src/data/units/bassUnit3Redesigned.js` | Bass Unit 3: Full Octave Down | 10 nodes |
+| `src/data/units/rhythmUnit1Redesigned.js` | Rhythm Unit 1: Steady Beat | 6 nodes |
+| `src/data/units/rhythmUnit2Redesigned.js` | Rhythm Unit 2: Half Notes | 6 nodes |
+| `src/data/units/rhythmUnit3Redesigned.js` | Rhythm Unit 3: Whole Notes & Rests | 6 nodes |
+| `src/data/units/rhythmUnit4Redesigned.js` | Rhythm Unit 4: Eighth Notes | 6 nodes |
+| `src/data/units/rhythmUnit5Redesigned.js` | Rhythm Unit 5: Syncopation & Mixed | 8 nodes |
+
+### Files to MODIFY
+
+| File | Changes |
+|------|---------|
+| `src/data/expandedNodes.js` | Replace legacy generation with manual imports |
+| `src/data/skillTrail.js` | Empty LEGACY_NODES array, update UNITS metadata for new units |
+
+### Files to KEEP (no changes)
+
+| File | Reason |
+|------|--------|
+| `src/utils/nodeGenerator.js` | Keep for potential future use, no active imports |
+| `src/data/constants.js` | Shared constants, no changes needed |
+| `src/data/nodeTypes.js` | Node types system, no changes needed |
+| `src/services/skillProgressService.js` | Progress service works with any node_id |
+| `src/components/trail/*` | Components work with node objects generically |
+
+### Files to potentially DELETE (Phase 3)
+
+| File | Condition |
+|------|-----------|
+| `src/utils/nodeGenerator.js` | Only if confirmed never needed again |
+
+## Database Considerations
+
+### No Migration Required IF:
+
+Node IDs follow this pattern matching existing legacy IDs:
+- Legacy bass IDs: `bass_1_1`, `bass_1_2`, ... `boss_bass_1`, etc.
+- Legacy rhythm IDs: `rhythm_1_1`, `rhythm_1_2`, ... `boss_rhythm_1`, etc.
+
+**The current legacy generator uses this exact pattern**, so new manual files should maintain ID consistency:
+
+```javascript
+// Bass Unit 1 IDs (must match legacy)
+'bass_1_1', 'bass_1_2', 'bass_1_3', 'bass_1_4', 'bass_1_5', 'boss_bass_1'
+
+// Rhythm Unit 1 IDs (must match legacy)
+'rhythm_1_1', 'rhythm_1_2', 'rhythm_1_3', 'boss_rhythm_1'
+```
+
+### Migration Required IF:
+
+1. **Node IDs change:** Would need to update `student_skill_progress.node_id`
+2. **Exercise count changes:** May affect `exercise_progress` JSONB field
+
+### Recommended Approach: ID Preservation
+
+Design new node files with **exact ID matches** to legacy nodes:
+
+```javascript
+// bassUnit1Redesigned.js
+export const bassUnit1Nodes = [
+  { id: 'bass_1_1', ... },  // EXACT match to legacy
+  { id: 'bass_1_2', ... },
+  // ...
+  { id: 'boss_bass_1', ... }
+];
+```
+
+### Exercise Progress Consideration
+
+Legacy nodes have 2 exercises per node. If redesigned nodes have different exercise counts:
+
+| Scenario | Impact | Solution |
+|----------|--------|----------|
+| Same exercise count | No impact | None needed |
+| Fewer exercises | Progress shows "extra" | Clear exercise_progress for affected nodes |
+| More exercises | Missing exercise slots | Progress auto-fills on completion |
+
+**Recommendation:** Match exercise counts where possible. If changing, document which nodes are affected.
+
+## Component Integration Points
+
+### TrailMap.jsx (lines 460-463)
+
+```javascript
+const trebleNodes = getNodesByCategory(NODE_CATEGORIES.TREBLE_CLEF);
+const bassNodes = getNodesByCategory(NODE_CATEGORIES.BASS_CLEF);
+const rhythmNodes = getNodesByCategory(NODE_CATEGORIES.RHYTHM);
+const bossNodes = getBossNodes();
+```
+
+**No changes needed.** These functions work with whatever nodes are in SKILL_NODES.
+
+### TrailNodeModal.jsx (lines 106-127)
+
+```javascript
+switch (exercise.type) {
+  case 'note_recognition':
+    navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+    break;
+  case 'sight_reading':
+    navigate('/notes-master-mode/sight-reading-game', { state: navState });
+    break;
+  case 'memory_game':
+    navigate('/notes-master-mode/memory-game', { state: navState });
+    break;
+  case 'rhythm':
+    navigate('/rhythm-mode/metronome-trainer', { state: navState });
+    break;
+  // ...
 }
 ```
 
-**What Gets Checked**:
-- **Identity verification**: `auth.uid() === studentId`
-- **Relationship verification**: Query `teacher_student_connections` table for accepted relationships
-- **Role verification**: Check database tables (NOT user_metadata) for teacher/student status
+**No changes needed.** Exercise types are already defined in constants.js and game components handle them.
 
-**Security Principles**:
-- ✅ **DO**: Query database tables for role verification (`teachers`, `students` tables)
-- ✅ **DO**: Verify relationships before data access (`teacher_student_connections`)
-- ✅ **DO**: Provide clear error messages without exposing sensitive info
-- ❌ **DON'T**: Trust `user_metadata` for authorization (users can modify it)
-- ❌ **DON'T**: Skip checks assuming RLS will catch it (defense in depth)
+### Game Components
 
-**Key Files**:
-- `src/services/apiAuth.js`: Role verification via database tables (lines 89-153)
-- `src/services/apiScores.js`: Student data access verification (lines 10-35)
-- `src/services/apiTeacher.js`: Teacher-student connection verification (lines 15-28)
-- `src/services/skillProgressService.js`: Trail progress authorization
+All game components accept trail state via `location.state`:
 
-**Performance Impact**: Minimal (1-2 extra queries per request, cached by React Query)
+- `NotesRecognitionGame.jsx` - Handles `notePool`, `clef`, `questionCount`
+- `SightReadingGame.jsx` - Handles `notePool`, `clef`, `rhythmPatterns`, `tempo`
+- `MetronomeTrainer.jsx` - Handles `rhythmPatterns`, `tempo`, `measuresPerPattern`
+- `MemoryGame.jsx` - Handles `notePool`, `clef`, `gridSize`
 
----
+**No changes needed** as long as new node configs use the same property names.
 
-### Layer 2: Supabase Row Level Security (RLS)
+### skillProgressService.js
 
-**Purpose**: Database-enforced authorization that prevents unauthorized access even if client-side checks are bypassed.
-
-**Location**: `supabase/migrations/*.sql` files
-
-**Implementation Pattern**:
-```sql
--- Example: Students table consolidated SELECT policy
-CREATE POLICY "students_select_consolidated"
-ON public.students
-FOR SELECT
-USING (
-  -- Student views own profile
-  id = (SELECT auth.uid())
-  OR
-  -- Teacher can view connected students
-  EXISTS (
-    SELECT 1 FROM public.teacher_student_connections tsc
-    WHERE tsc.student_id = students.id
-      AND tsc.teacher_id = (SELECT auth.uid())
-      AND tsc.status = 'accepted'
-  )
-  OR
-  -- Teacher can search any student (for adding to classes)
-  EXISTS (
-    SELECT 1 FROM public.teachers
-    WHERE id = (SELECT auth.uid()) AND is_active = true
-  )
-  OR
-  -- Service role
-  (SELECT auth.role()) = 'service_role'
-);
-```
-
-**Policy Consolidation Strategy** (Migration 20260128000001):
-- Multiple permissive policies on same table cause performance overhead
-- **Consolidation**: Combine policies using OR logic into single policy per operation
-- **Example**: `student_skill_progress` had 2 SELECT policies → consolidated to 1
-- **Performance gain**: ~40% reduction in policy evaluation time
-
-**Security Anti-Patterns to Avoid**:
-
-1. **NEVER use `user_metadata` for authorization** (Migration 20260127000001):
-   ```sql
-   -- ❌ VULNERABLE: user_metadata can be modified by client
-   CREATE POLICY "bad_admin_policy"
-   USING (auth.jwt() -> 'user_metadata' ->> 'role' = 'admin');
-
-   -- ✅ SECURE: Query immutable database state
-   CREATE POLICY "good_admin_policy"
-   USING (public.is_admin()); -- Function checks teachers.is_admin column
-   ```
-
-2. **Admin verification must use database state**:
-   ```sql
-   -- Helper function with SECURITY DEFINER
-   CREATE OR REPLACE FUNCTION public.is_admin()
-   RETURNS BOOLEAN AS $$
-   BEGIN
-     RETURN EXISTS (
-       SELECT 1 FROM public.teachers
-       WHERE id = auth.uid() AND is_admin = true
-     );
-   END;
-   $$ LANGUAGE plpgsql STABLE SECURITY DEFINER;
-   ```
-
-3. **Service worker must NEVER cache auth endpoints** (see Layer 4)
-
-**Key Tables with RLS**:
-- `students`: Own data + teacher connections
-- `student_skill_progress`: Trail progress (own data + teacher view)
-- `student_daily_goals`: Daily goals (own data + teacher view)
-- `students_score`: Game scores (own data + teacher view)
-- `teacher_student_connections`: Relationship management
-- `practice_sessions`: Recording submissions (own data + teacher review)
-- `accessories`, `user_accessories`: Avatar customization (catalog public, ownership private)
-
-**Optimization**: Partial indexes on frequently queried columns:
-```sql
--- From migration 20260129000001_optimize_indexes.sql
-CREATE INDEX idx_teacher_student_connections_accepted
-ON teacher_student_connections(teacher_id, student_id)
-WHERE status = 'accepted';
-```
-
----
-
-### Layer 3: SECURITY DEFINER Functions
-
-**Purpose**: Privileged operations that require superuser permissions (e.g., updating multiple tables atomically, XP calculations).
-
-**Critical Security Requirement**: ALL `SECURITY DEFINER` functions MUST have explicit authorization checks.
-
-**Implementation Pattern**:
-```sql
--- Example: award_xp function (Migration 20260126000001)
-CREATE OR REPLACE FUNCTION award_xp(
-  p_student_id UUID,
-  p_xp_amount INTEGER
-)
-RETURNS TABLE(new_total_xp INTEGER, new_level INTEGER, leveled_up BOOLEAN)
-AS $$
-BEGIN
-  -- SECURITY CHECK: User can only award XP to themselves
-  IF auth.uid() IS NULL THEN
-    RAISE EXCEPTION 'Not authenticated';
-  END IF;
-
-  IF auth.uid() != p_student_id THEN
-    RAISE EXCEPTION 'Unauthorized: You can only award XP to yourself';
-  END IF;
-
-  -- Proceed with privileged operation...
-  UPDATE students
-  SET total_xp = total_xp + p_xp_amount
-  WHERE id = p_student_id;
-
-  -- Return results...
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
-
-**Functions with SECURITY DEFINER** (audited):
-1. `award_xp(UUID, INTEGER)`: XP system (self-only authorization)
-2. `is_admin()`: Admin role verification (read-only helper)
-3. `teacher_link_student(...)`: Teacher-student linking (teacher verification)
-4. `teacher_get_student_points()`: Teacher dashboard aggregation (relationship-based)
-
-**Security Checklist for New Functions**:
-- [ ] Explicit `auth.uid()` check at function start
-- [ ] Verify user can only modify their own data OR has valid relationship
-- [ ] No reliance on `user_metadata` for authorization
-- [ ] Function is marked `STABLE` (not `VOLATILE`) if read-only
-- [ ] Clear error messages without exposing sensitive data
-- [ ] Grant permissions limited to `authenticated` role (not `public`)
-
-**Why SECURITY DEFINER is Needed**:
-- **Atomic operations**: Update multiple tables in one transaction (e.g., XP + level calculation)
-- **Complex calculations**: Business logic that requires full table access
-- **Performance**: Bypass RLS for read-only aggregations (with authorization checks)
-
-**Alternative Approach**: For simple operations, prefer RLS policies over SECURITY DEFINER functions.
-
----
-
-## Session Management Architecture
-
-### Authentication Flow
-
-```
-┌──────────────┐
-│ User Login   │
-│ (email/pwd)  │
-└──────┬───────┘
-       │
-       ▼
-┌─────────────────────────────────┐
-│ Supabase Auth                   │
-│ - Creates JWT session token     │
-│ - Stores in httpOnly cookie     │
-│ - Sets refresh token            │
-└──────┬──────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────┐
-│ getCurrentUser() (apiAuth.js)   │
-│ 1. Get session from Supabase    │
-│ 2. Query students/teachers DB   │
-│ 3. Return role-enriched user    │
-└──────┬──────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────┐
-│ React Query Cache (useUser.js)  │
-│ - Caches user for 5 minutes     │
-│ - No refetch on window focus    │
-│ - Limited retry on network fail │
-└─────────────────────────────────┘
-```
-
-### Role Determination (CRITICAL SECURITY)
-
-**Secure Pattern** (from `apiAuth.js`, lines 89-153):
-```javascript
-// SECURITY: Determine role ONLY from database table presence
-// user_metadata is NOT trusted for authorization
-let userRole = null;
-let profile = null;
-
-// Use metadata as a hint for query optimization (NOT authorization)
-const metadataHint = user.user_metadata?.role;
-const checkTeacherFirst = metadataHint === "teacher";
-
-if (checkTeacherFirst) {
-  const { data: teacherData } = await supabase
-    .from("teachers")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (teacherData) {
-    userRole = "teacher"; // VERIFIED via database
-    profile = teacherData;
-  } else {
-    // Check students table...
-  }
-}
-```
-
-**Why This Matters**:
-- `user_metadata` can be modified via `supabase.auth.updateUser()` by the client
-- Database tables (`students`, `teachers`) are protected by RLS and cannot be manipulated
-- Metadata is only used as a performance hint, not for authorization decisions
-
-### Token Management
-
-**Storage**:
-- **Session token**: httpOnly cookie (Supabase default, cannot be accessed by JavaScript)
-- **Refresh token**: localStorage (Supabase default, used for silent token refresh)
-- **User cache**: React Query in-memory cache (5-minute stale time)
-
-**Refresh Strategy**:
-- Supabase auto-refreshes tokens before expiry
-- On network error or invalid token, `getCurrentUser()` calls `signOut()` and clears session
-- No manual token rotation needed
-
-**Security Considerations**:
-- Tokens are NOT cached in service worker (see Layer 4)
-- On logout, ALL user-specific localStorage keys are cleared (shared device safety)
-
----
-
-## Secure Logout Flow (Shared Device Safety)
-
-**Problem**: Children using shared school computers/tablets. User data persists in localStorage after logout.
-
-**Solution** (from `apiAuth.js`, lines 185-208):
+Service functions work with generic node_id strings:
 
 ```javascript
-export async function logout() {
-  // STEP 1: Clear user-specific localStorage keys BEFORE signing out
-  if (typeof window !== "undefined") {
-    const keysToRemove = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (
-        key &&
-        (key.startsWith("migration_completed_") ||
-         key.startsWith("dashboard_reminder_") ||
-         key.includes("_student_") ||
-         key.includes("_user_"))
-      ) {
-        keysToRemove.push(key);
+export const updateNodeProgress = async (studentId, nodeId, stars, score, options = {}) => { ... }
+export const updateExerciseProgress = async (studentId, nodeId, exerciseIndex, ...) => { ... }
+```
+
+**No changes needed.** Service layer is node-agnostic.
+
+## Node ID Registry (Critical)
+
+To ensure no ID conflicts, here is the complete ID registry:
+
+### Treble Clef (existing - DO NOT CHANGE)
+
+| Unit | Node IDs |
+|------|----------|
+| Unit 1 | `treble_1_1` through `treble_1_7`, `boss_treble_1` |
+| Unit 2 | `treble_2_1` through `treble_2_7`, `boss_treble_2` |
+| Unit 3 | `treble_3_1` through `treble_3_9`, `boss_treble_3` |
+
+### Bass Clef (to create)
+
+| Unit | Node IDs | Notes |
+|------|----------|-------|
+| Unit 1 | `bass_1_1` through `bass_1_7`, `boss_bass_1` | Match legacy generator output |
+| Unit 2 | `bass_2_1` through `bass_2_7`, `boss_bass_2` | Match legacy generator output |
+| Unit 3 | `bass_3_1` through `bass_3_9`, `boss_bass_3` | New - no legacy equivalent |
+
+### Rhythm (to create)
+
+| Unit | Node IDs | Notes |
+|------|----------|-------|
+| Unit 1 | `rhythm_1_1` through `rhythm_1_5`, `boss_rhythm_1` | Match legacy generator output |
+| Unit 2 | `rhythm_2_1` through `rhythm_2_5`, `boss_rhythm_2` | Match legacy generator output |
+| Unit 3 | `rhythm_3_1` through `rhythm_3_5`, `boss_rhythm_3` | New - no legacy equivalent |
+| Unit 4 | `rhythm_4_1` through `rhythm_4_5`, `boss_rhythm_4` | New - no legacy equivalent |
+| Unit 5 | `rhythm_5_1` through `rhythm_5_7`, `boss_rhythm_5` | New - no legacy equivalent |
+
+### Legacy Nodes to Deprecate
+
+These IDs exist in LEGACY_NODES array in skillTrail.js and should NOT be used by new nodes:
+
+```
+treble_c_d, treble_c_e, treble_five_finger, treble_c_a, treble_almost_there, treble_full_octave
+bass_c_b, bass_c_a, bass_c_g, bass_c_f, bass_almost_there, bass_master
+rhythm_intro, rhythm_quarter_notes, rhythm_half_notes, rhythm_eighth_notes, rhythm_mixed
+boss_treble_warrior, boss_bass_master, boss_rhythm_master
+```
+
+**These legacy IDs remain available for potential backward compatibility** but should not be actively used.
+
+## Migration Sequence (Safe Order)
+
+### Step 1: Create Files (Safe)
+- Create all new unit files in `src/data/units/`
+- No imports yet - files exist but are not used
+- Can test in isolation
+
+### Step 2: Update UNITS in skillTrail.js (Safe)
+- Add new unit metadata if needed (BASS_4, BASS_5, RHYTHM_3, etc.)
+- Does not affect SKILL_NODES until expandedNodes.js changes
+
+### Step 3: Update expandedNodes.js (Cutover)
+- Single commit that:
+  1. Adds imports for new manual unit files
+  2. Removes legacy generation calls
+  3. Updates EXPANDED_NODES array
+
+### Step 4: Empty LEGACY_NODES (Cleanup)
+- Remove contents of LEGACY_NODES array in skillTrail.js
+- Verify no references remain
+
+### Step 5: Verify (Testing)
+- Run existing tests
+- Test trail progression manually
+- Verify student progress loads correctly
+
+## Risk Areas and Mitigation
+
+### Risk 1: Node ID Mismatch
+
+**Impact:** Students lose progress on mismatched nodes
+**Mitigation:** Use exact ID matching to legacy generator output
+**Detection:** Compare generated IDs with new file IDs before cutover
+
+### Risk 2: Exercise Count Mismatch
+
+**Impact:** exercise_progress JSONB has wrong number of entries
+**Mitigation:** Match exercise counts or document differences
+**Detection:** Test with existing progress data
+
+### Risk 3: Prerequisite Chain Breaks
+
+**Impact:** Nodes become unlockable
+**Mitigation:** Verify prerequisite IDs exist after cutover
+**Detection:** Test unlock logic with unit tests
+
+### Risk 4: Order Conflicts
+
+**Impact:** Nodes display in wrong order in TrailMap
+**Mitigation:** Review `order` values across all units
+**Detection:** Visual inspection after cutover
+
+## Testing Checklist
+
+Before cutover:
+- [ ] All new unit files created with correct structure
+- [ ] Node IDs match legacy where applicable
+- [ ] Prerequisites reference valid node IDs
+- [ ] Order values are sequential and non-conflicting
+- [ ] UNITS metadata includes all new units
+
+After cutover:
+- [ ] TrailMap renders all categories correctly
+- [ ] Node unlock logic works (prerequisite chains)
+- [ ] Clicking nodes navigates to correct games
+- [ ] Existing student progress loads correctly
+- [ ] New students can start fresh
+- [ ] Boss nodes appear in Boss section
+
+## Appendix: Unit File Template
+
+Reference template for creating new unit files:
+
+```javascript
+/**
+ * [Category] Unit [N]: "[Name]" (Redesigned)
+ *
+ * [Description of pedagogical approach]
+ */
+
+import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.js';
+import { EXERCISE_TYPES } from '../constants.js';
+
+const UNIT_ID = [N];
+const UNIT_NAME = '[Name]';
+const CATEGORY = '[category]';  // 'treble_clef', 'bass_clef', or 'rhythm'
+const START_ORDER = [calculated based on previous units];
+
+export const [category]Unit[N]Nodes = [
+  {
+    id: '[category]_[N]_1',  // MUST match legacy if replacing existing
+    name: '[Node Name]',
+    description: '[Description]',
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER,
+    orderInUnit: 1,
+    prerequisites: ['[previous_boss_id]'],  // Empty for Unit 1 start nodes
+
+    nodeType: NODE_TYPES.[TYPE],
+
+    noteConfig: {
+      notePool: ['...'],
+      focusNotes: ['...'],
+      contextNotes: ['...'],
+      clef: '[clef]',
+      ledgerLines: false,
+      accidentals: false
+    },
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.[LEVEL],
+      allowedDurations: ['q', 'h'],
+      patterns: ['quarter', 'half'],
+      tempo: { min: 60, max: 75, default: 70 }
+    },
+
+    newContent: NEW_CONTENT_TYPES.[TYPE],
+    newContentDescription: '[What is new]',
+
+    exercises: [
+      {
+        type: EXERCISE_TYPES.[TYPE],
+        config: { ... }
       }
-    }
-    keysToRemove.forEach((key) => localStorage.removeItem(key));
-  }
+    ],
 
-  // STEP 2: Sign out from Supabase (invalidates session)
-  const { error } = await supabase.auth.signOut();
-  if (error) throw new Error(error.message);
-}
-```
-
-**What Gets Cleared**:
-- Migration flags (e.g., `migration_completed_{userId}`)
-- Dashboard reminder states (e.g., `dashboard_reminder_{userId}`)
-- Any keys containing `_student_` or `_user_` (user-specific caches)
-
-**React Query Cleanup** (from `useLogout.js`, lines 11-13):
-```javascript
-onSuccess: () => {
-  queryClient.removeQueries(); // Clear ALL React Query caches
-  navigate("/login", { replace: true });
-}
-```
-
-**Additional Considerations**:
-- **Service worker cache**: Already excludes auth endpoints (see Layer 4)
-- **sessionStorage**: Automatically cleared when browser tab closes (no action needed)
-- **Cookies**: httpOnly cookies are cleared by `supabase.auth.signOut()`
-
----
-
-## Service Worker Security (Layer 4)
-
-**Purpose**: Offline support for PWA WITHOUT compromising authentication security.
-
-**Location**: `public/sw.js`
-
-### Auth Endpoint Exclusion (CRITICAL)
-
-**Problem**: Caching auth endpoints causes:
-1. Auth tokens to persist after logout
-2. Session tokens to leak between users on shared devices
-3. Stale user data to be served after account changes
-
-**Solution** (from `sw.js`, lines 29-59):
-
-```javascript
-// SECURITY: Auth endpoints must NEVER be cached
-const AUTH_EXCLUDED_PATTERNS = [
-  /\/auth\//,           // All auth-related paths
-  /\/token/,            // Token endpoints
-  /\/session/,          // Session endpoints
-  /\/logout/,           // Logout endpoints
-  /\/signup/,           // Signup endpoints
-  /\/recover/,          // Password recovery
-  /\/verify/,           // Email/phone verification
-  /\/user/,             // User info endpoints
+    skills: ['...'],
+    xpReward: [value],
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: []
+  },
+  // ... more nodes
 ];
 
-function isAuthEndpoint(url) {
-  // Only check Supabase URLs
-  if (!url.hostname.includes('supabase.co')) {
-    return false;
-  }
-
-  const pathname = url.pathname;
-  return AUTH_EXCLUDED_PATTERNS.some((pattern) => pattern.test(pathname));
-}
+export default [category]Unit[N]Nodes;
 ```
 
-**Enforcement in Fetch Handler** (lines 236-271):
-
-```javascript
-// SECURITY: Never cache auth-related endpoints
-const isAuth = isAuthEndpoint(url);
-const shouldCache = matchesPattern && !isAuth;
-
-if (shouldCache) {
-  await cache.put(event.request, networkResponse.clone());
-}
-
-// On network failure, auth endpoints get error response (not cached fallback)
-if (isAuthEndpoint(url)) {
-  return new Response(
-    JSON.stringify({
-      error: "Offline",
-      message: "Authentication requires an active network connection",
-    }),
-    { status: 503, headers: { "Content-Type": "application/json" } }
-  );
-}
-```
-
-### Caching Strategy Summary
-
-| Resource Type | Strategy | Rationale |
-|--------------|----------|-----------|
-| **Auth endpoints** | Never cache | Prevent token persistence |
-| **Navigation** | Cache-first with offline fallback | PWA offline support |
-| **Static assets** (`/assets/*`) | Cache-first | Long-lived hashed files |
-| **Accessory images** | Cache-first (separate cache) | Large images, rarely change |
-| **API calls (non-auth)** | Network-first with cache fallback | Fresh data when online |
-| **JavaScript modules** | Never intercept | Prevent MIME type errors |
-
-**Cache Versioning**:
-- `CACHE_NAME = "pianomaster-v2"` (bump version to force cache refresh)
-- `ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2"` (separate for large images)
-
----
-
-## Rate Limiting Architecture
-
-**Current State**: No rate limiting implemented.
-
-**Where to Implement**:
-
-### Option 1: Supabase Edge Functions (Recommended)
-- **Location**: Between client and database
-- **Technology**: Deno runtime with Supabase Edge Functions
-- **Pattern**: Middleware wrapper for RPC calls
-- **Example**:
-  ```javascript
-  // edge-function/rate-limit-wrapper.ts
-  import { createClient } from '@supabase/supabase-js';
-  import { Ratelimit } from '@upstash/ratelimit';
-  import { Redis } from '@upstash/redis';
-
-  const ratelimit = new Ratelimit({
-    redis: Redis.fromEnv(),
-    limiter: Ratelimit.slidingWindow(10, "10 s"), // 10 requests per 10 seconds
-  });
-
-  Deno.serve(async (req) => {
-    const userId = req.headers.get('user-id');
-    const { success } = await ratelimit.limit(userId);
-
-    if (!success) {
-      return new Response("Too Many Requests", { status: 429 });
-    }
-
-    // Forward to actual function...
-  });
-  ```
-
-**Cost**: Upstash Redis (free tier: 10,000 requests/day)
-
-### Option 2: Database-Level (Simple, No External Dependencies)
-- **Location**: PostgreSQL database
-- **Technology**: `pg_cron` + custom tracking table
-- **Pattern**: Track request counts per user/endpoint in `rate_limit_log` table
-- **Example**:
-  ```sql
-  CREATE TABLE rate_limit_log (
-    user_id UUID,
-    endpoint TEXT,
-    request_count INTEGER DEFAULT 1,
-    window_start TIMESTAMPTZ DEFAULT NOW(),
-    PRIMARY KEY (user_id, endpoint, window_start)
-  );
-
-  -- Function to check rate limit before operation
-  CREATE FUNCTION check_rate_limit(p_endpoint TEXT, p_max_requests INT)
-  RETURNS BOOLEAN AS $$
-  DECLARE
-    v_count INT;
-  BEGIN
-    -- Count requests in last minute
-    SELECT COUNT(*) INTO v_count
-    FROM rate_limit_log
-    WHERE user_id = auth.uid()
-      AND endpoint = p_endpoint
-      AND window_start > NOW() - INTERVAL '1 minute';
-
-    IF v_count >= p_max_requests THEN
-      RAISE EXCEPTION 'Rate limit exceeded';
-    END IF;
-
-    -- Log this request
-    INSERT INTO rate_limit_log (user_id, endpoint)
-    VALUES (auth.uid(), p_endpoint);
-
-    RETURN TRUE;
-  END;
-  $$ LANGUAGE plpgsql SECURITY DEFINER;
-  ```
-
-**Cost**: Free (uses existing Supabase database)
-
-### Option 3: Client-Side (Least Secure, Development Only)
-- **Location**: React hooks with localStorage
-- **Technology**: Custom `useRateLimit` hook
-- **Pattern**: Track request timestamps in localStorage
-- **Security Risk**: Can be bypassed by clearing localStorage
-
-**Recommended Endpoints to Rate Limit**:
-1. **XP awards**: `award_xp()` - Max 10/minute (prevent XP farming)
-2. **Score submissions**: `updateStudentScore()` - Max 20/minute
-3. **Trail progress updates**: `updateExerciseProgress()` - Max 30/minute
-4. **Teacher bulk operations**: `removeMultipleStudentsFromTeacher()` - Max 5/minute
-
----
-
-## Implementation Order (Dependencies)
-
-### Phase 1: Foundation (Already Complete ✅)
-1. ✅ **RLS Policies** (migrations 20260128000001 and earlier)
-   - All tables have RLS enabled
-   - Policies consolidated for performance
-   - Admin verification uses database state (not user_metadata)
-
-2. ✅ **Client-Side Authorization** (services layer)
-   - `verifyStudentDataAccess()` in apiScores.js
-   - `verifyTeacherStudentConnection()` in apiTeacher.js
-   - Role verification from database tables in apiAuth.js
-
-3. ✅ **Secure Logout Flow** (apiAuth.js, useLogout.js)
-   - localStorage cleanup
-   - React Query cache clearing
-   - Service worker auth exclusion
-
-4. ✅ **SECURITY DEFINER Functions** (migrations)
-   - `award_xp()` with self-only authorization
-   - `is_admin()` helper function
-   - `teacher_link_student()` with relationship verification
-
-### Phase 2: Hardening (Upcoming)
-1. **Rate Limiting** (choose Option 1 or 2)
-   - Add rate limiting to XP awards, score submissions, bulk operations
-   - Implement before public launch (prevents abuse)
-   - Dependencies: None (can be added independently)
-
-2. **Audit Logging** (recommended for compliance)
-   - Log all teacher actions on student data (COPPA requirement)
-   - Table: `audit_log` with (user_id, action, target_id, timestamp)
-   - Implementation: Add to all teacher service functions
-   - Dependencies: Phase 1 complete
-
-3. **Session Timeout** (optional for shared devices)
-   - Auto-logout after 30 minutes of inactivity
-   - Implementation: React hook with `setTimeout` + logout()
-   - Dependencies: Secure logout flow
-
-4. **COPPA Compliance Enhancements**
-   - Parental consent workflow (for children under 13)
-   - Data export feature (GDPR right to access)
-   - Data deletion feature (GDPR right to erasure)
-   - Dependencies: Audit logging (to track data deletion requests)
-
-### Phase 3: Monitoring (Post-Launch)
-1. **Security Advisors** (Supabase built-in)
-   - Run `mcp__supabase__get_advisors` regularly
-   - Check for missing RLS policies, unindexed foreign keys
-   - Schedule: Weekly automated check
-
-2. **Log Analysis**
-   - Query `audit_log` for suspicious patterns
-   - Alert on multiple failed login attempts
-   - Alert on rate limit violations
-
----
-
-## Data Flow Diagrams
-
-### Authentication Flow
-```
-┌─────────────┐
-│   Client    │
-│  (Browser)  │
-└──────┬──────┘
-       │ 1. Login (email/password)
-       ▼
-┌─────────────────────────────┐
-│   Supabase Auth Service     │
-│   - Validates credentials   │
-│   - Creates JWT + refresh   │
-│   - Sets httpOnly cookie    │
-└──────┬──────────────────────┘
-       │ 2. Session token
-       ▼
-┌─────────────────────────────┐
-│   Client Service Layer      │
-│   (apiAuth.getCurrentUser)  │
-│   - Query students/teachers │
-│   - Verify role from DB     │
-└──────┬──────────────────────┘
-       │ 3. Role-enriched user
-       ▼
-┌─────────────────────────────┐
-│   React Query Cache         │
-│   (useUser hook)            │
-│   - Cached for 5 minutes    │
-└─────────────────────────────┘
-```
-
-### Authorization Flow (Teacher Accessing Student Data)
-```
-┌─────────────┐
-│   Teacher   │
-│   Client    │
-└──────┬──────┘
-       │ 1. Request student data (getStudentProgress)
-       ▼
-┌────────────────────────────────────┐
-│   Client-Side Check (Layer 1)     │
-│   verifyTeacherStudentConnection() │
-│   - Query teacher_student_conns   │
-│   - Verify status = 'accepted'    │
-└──────┬─────────────────────────────┘
-       │ 2. If authorized, proceed
-       ▼
-┌────────────────────────────────────┐
-│   Supabase Query                   │
-│   SELECT * FROM student_skill_prog │
-└──────┬─────────────────────────────┘
-       │ 3. RLS policy evaluation (Layer 2)
-       ▼
-┌────────────────────────────────────┐
-│   RLS Policy Check                 │
-│   - auth.uid() = teacher_id?       │
-│   - EXISTS in teacher_student_conn?│
-│   - status = 'accepted'?           │
-└──────┬─────────────────────────────┘
-       │ 4. If policy passes, return data
-       ▼
-┌────────────────────────────────────┐
-│   Response to Client               │
-└────────────────────────────────────┘
-```
-
-### Secure Logout Flow
-```
-┌─────────────┐
-│   Student   │
-│   Client    │
-└──────┬──────┘
-       │ 1. Click logout
-       ▼
-┌────────────────────────────────────┐
-│   useLogout hook                   │
-│   - Call logoutApi()               │
-└──────┬─────────────────────────────┘
-       │ 2. Execute logout
-       ▼
-┌────────────────────────────────────┐
-│   apiAuth.logout()                 │
-│   STEP 1: Clear localStorage keys  │
-│   - migration_completed_*          │
-│   - dashboard_reminder_*           │
-│   - *_student_*, *_user_*          │
-└──────┬─────────────────────────────┘
-       │ 3. After localStorage cleared
-       ▼
-┌────────────────────────────────────┐
-│   Supabase signOut()               │
-│   - Invalidate session token       │
-│   - Clear httpOnly cookies         │
-│   - Clear refresh token            │
-└──────┬─────────────────────────────┘
-       │ 4. On success
-       ▼
-┌────────────────────────────────────┐
-│   React Query                      │
-│   queryClient.removeQueries()      │
-│   - Clear ALL cached data          │
-└──────┬─────────────────────────────┘
-       │ 5. Navigate to login
-       ▼
-┌────────────────────────────────────┐
-│   /login page                      │
-│   - Fresh state, no user data      │
-└────────────────────────────────────┘
-```
-
----
-
-## Security Checklist for New Features
-
-When adding new features (gamification, social features, etc.), verify:
-
-### Client-Side (Layer 1)
-- [ ] Service function calls `supabase.auth.getUser()` to verify authentication
-- [ ] User can only modify their own data OR has valid relationship (teacher-student)
-- [ ] Relationship verification queries `teacher_student_connections` table
-- [ ] Errors provide clear messages without exposing sensitive info
-- [ ] No reliance on `user_metadata` for authorization decisions
-
-### Database (Layer 2)
-- [ ] Table has `ALTER TABLE ... ENABLE ROW LEVEL SECURITY;`
-- [ ] Policies use database state, not JWT metadata
-- [ ] Admin checks use `is_admin()` function (not user_metadata)
-- [ ] SELECT policies limit data exposure appropriately
-- [ ] Multiple permissive policies consolidated into single policy with OR logic
-
-### Functions (Layer 3)
-- [ ] `SECURITY DEFINER` functions have explicit `auth.uid()` checks
-- [ ] Functions verify user can only modify their own data OR have valid relationship
-- [ ] No use of `user_metadata` for authorization
-- [ ] Sensitive operations are logged for audit purposes
-- [ ] Function is marked `STABLE` (read-only) or `VOLATILE` (modifies data)
-
-### Session Management
-- [ ] Logout clears all user-specific localStorage data
-- [ ] Auth state changes trigger appropriate cleanup
-- [ ] No auth endpoints cached in service worker
-- [ ] Role verified from database tables, not user_metadata
-
-### Data Privacy (COPPA/GDPR-K)
-- [ ] Child usernames anonymized in public-facing features (leaderboards)
-- [ ] Only necessary data collected and stored
-- [ ] Parents/teachers can view and delete child data
-- [ ] No cross-user data leakage in shared features
-
----
-
-## Key Security Files
-
-### Client-Side Services
-- `src/services/apiAuth.js`: Authentication, role verification, secure logout
-- `src/services/apiScores.js`: Score operations with authorization checks
-- `src/services/apiTeacher.js`: Teacher operations with relationship verification
-- `src/services/skillProgressService.js`: Trail progress with authorization
-
-### React Hooks
-- `src/features/authentication/useUser.js`: User state with React Query caching
-- `src/features/authentication/useLogout.js`: Logout with cache clearing
-
-### Database Migrations
-- `supabase/migrations/20260126000001_fix_award_xp_security.sql`: SECURITY DEFINER with auth checks
-- `supabase/migrations/20260127000001_fix_admin_rls_verification.sql`: Admin verification via database
-- `supabase/migrations/20260128000001_consolidate_rls_policies.sql`: Policy consolidation for performance
-
-### Service Worker
-- `public/sw.js`: Caching strategy with auth endpoint exclusion
-
----
-
-## Performance Considerations
-
-### RLS Policy Optimization
-- **Consolidate policies**: Multiple permissive policies on same table cause 2-3x overhead
-- **Use partial indexes**: Index on filtered columns (e.g., `WHERE status = 'accepted'`)
-- **Cache helper functions**: Mark read-only functions as `STABLE` for query plan caching
-- **Avoid nested subqueries**: Use EXISTS instead of COUNT(*) in policies
-
-### Client-Side Optimization
-- **React Query caching**: 5-minute stale time reduces unnecessary re-fetches
-- **Relationship caching**: Cache teacher-student connections in React Query
-- **Batch operations**: Use Supabase `.in()` for bulk queries instead of loops
-
-### Service Worker Optimization
-- **Separate caches**: Large assets (accessories) in separate cache to avoid eviction
-- **Skip unnecessary intercepts**: Don't intercept JavaScript modules, let browser handle
-- **Cache versioning**: Bump version to force fresh cache after deployments
-
----
-
-## Threat Model
-
-### Threats Mitigated
-1. ✅ **IDOR (Insecure Direct Object Reference)**: Client + RLS verify user can only access own data
-2. ✅ **Privilege Escalation**: Role verification from database (not mutable metadata)
-3. ✅ **Session Hijacking (Shared Devices)**: Secure logout clears all user data
-4. ✅ **Auth Bypass**: SECURITY DEFINER functions have explicit authorization checks
-5. ✅ **Child Data Exposure**: RLS policies prevent cross-user data access
-
-### Threats Not Yet Mitigated
-1. ⚠️ **Rate Limiting**: No protection against XP farming or abuse (Phase 2)
-2. ⚠️ **Audit Logging**: Teacher actions on student data not logged (COPPA gap)
-3. ⚠️ **Session Timeout**: No auto-logout after inactivity (shared device risk)
-4. ⚠️ **COPPA Consent**: No parental consent workflow for children under 13
-
-### Out of Scope
-- **DDoS Protection**: Handled by Supabase/Vercel infrastructure
-- **SQL Injection**: Prevented by Supabase parameterized queries
-- **XSS**: Mitigated by React's automatic escaping
-
----
-
-## References
-
-- [Supabase RLS Best Practices](https://supabase.com/docs/guides/auth/row-level-security)
-- [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-- [COPPA Compliance Guide](https://www.ftc.gov/business-guidance/resources/complying-coppa-frequently-asked-questions)
-- [GDPR-K (Children's Privacy)](https://gdpr.eu/children/)
-
----
-
-**Researched**: 2026-01-31
-**Next Review**: Before Phase 2 implementation (rate limiting, audit logging)
+## Confidence Assessment
+
+| Area | Confidence | Rationale |
+|------|------------|-----------|
+| File structure | HIGH | Based on existing codebase analysis |
+| Node ID strategy | HIGH | Verified against legacy generator |
+| Database impact | HIGH | Schema uses string IDs, no structure changes |
+| Component compatibility | HIGH | Generic interfaces verified |
+| Migration sequence | MEDIUM | Depends on careful execution |
+| Exercise count impact | MEDIUM | May need case-by-case analysis |
+
+## Summary
+
+The integration strategy is straightforward:
+1. Create new unit files following established patterns
+2. Maintain node ID compatibility with legacy generator
+3. Single clean cutover in expandedNodes.js
+4. No database migration needed if IDs match
+5. Cleanup legacy code after verification
+
+Total estimated work:
+- 8 new unit files to create (11 total units in final system)
+- 1 file to modify significantly (expandedNodes.js)
+- 1 file to clean up (skillTrail.js LEGACY_NODES)
+- 58+ new nodes total (estimated)
