@@ -19,7 +19,7 @@ This milestone redesigns the trail data layer with consistent pedagogy across al
 - Decimal phases (8.1, 8.2): Urgent insertions if needed
 
 - [x] **Phase 8: Design & Data Modeling** - Validation infrastructure and pedagogy decisions
-- [ ] **Phase 9: Bass Clef Implementation** - 26 nodes across 3 units (C4 to C3)
+- [x] **Phase 9: Bass Clef Implementation** - 25 nodes across 3 units (C4 to C3)
 - [ ] **Phase 10: Rhythm Implementation** - 35 nodes across 5 units (quarter to sixteenth)
 - [ ] **Phase 11: Integration & Cutover** - Atomic switch with progress preservation
 - [ ] **Phase 12: Validation & Cleanup** - Test with production data, remove legacy code
@@ -54,10 +54,10 @@ Plans:
 **Plans**: 4 plans (Wave 1: 3 parallel, Wave 2: 1 sequential)
 
 Plans:
-- [ ] 09-01-PLAN.md — Bass Unit 1: Middle C Position (7 nodes: C4, B3, A3)
-- [ ] 09-02-PLAN.md — Bass Unit 2: Five Finger Low (8 nodes: adds G3, F3)
-- [ ] 09-03-PLAN.md — Bass Unit 3: The Full Octave (10 nodes: adds E3, D3, C3)
-- [ ] 09-04-PLAN.md — Integration into expandedNodes.js + validation
+- [x] 09-01-PLAN.md — Bass Unit 1: Middle C Position (7 nodes: C4, B3, A3)
+- [x] 09-02-PLAN.md — Bass Unit 2: Five Finger Low (8 nodes: adds G3, F3)
+- [x] 09-03-PLAN.md — Bass Unit 3: The Full Octave (10 nodes: adds E3, D3, C3)
+- [x] 09-04-PLAN.md — Integration into expandedNodes.js + validation
 
 ### Phase 10: Rhythm Implementation
 **Goal**: 35 rhythm nodes with duration-based progression from quarter notes to sixteenths
@@ -112,11 +112,11 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 8. Design & Data Modeling | v1.3 | 2/2 | Complete | 2026-02-03 |
-| 9. Bass Clef Implementation | v1.3 | 0/4 | Planned | - |
+| 9. Bass Clef Implementation | v1.3 | 4/4 | Complete | 2026-02-04 |
 | 10. Rhythm Implementation | v1.3 | 0/TBD | Not started | - |
 | 11. Integration & Cutover | v1.3 | 0/TBD | Not started | - |
 | 12. Validation & Cleanup | v1.3 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-04 — Phase 9 planned (4 plans)*
+*Last updated: 2026-02-04 — Phase 9 complete (25 bass clef nodes)*
