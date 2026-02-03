@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-03)
 ## Current Position
 
 Phase: 8 of 12 (Design & Data Modeling)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-02-03 — Roadmap created for v1.3
+Plan: 2 of 2 in current phase (COMPLETE)
+Status: Phase 8 complete
+Last activity: 2026-02-03 — Completed 08-02-PLAN.md (Pedagogy documentation)
 
-Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [░░░░░░░░░░] 0%
+Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [██░░░░░░░░] 20%
 
 ## Milestone History
 
@@ -40,6 +40,12 @@ Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [░░░░░░�
 
 All decisions from v1.0-v1.2 logged in PROJECT.md Key Decisions table.
 
+**Phase 8 decisions:**
+| ID | Decision | Rationale |
+|----|----------|-----------|
+| 08-01-01 | Validation runs at prebuild, fails on errors | Catches issues before deploy |
+| 08-02-01 | PEDAGOGY.md colocated with trail definitions | Discoverability for developers and agents |
+
 ### Pending Todos
 
 None.
@@ -53,15 +59,15 @@ None.
 
 **v1.3 Risk Areas (from research):**
 - Rhythm path pedagogy less established than note reading - may need iteration
-- Must preserve existing node IDs to avoid orphaned progress records
+- Progress will be reset with v1.3 (documented in PEDAGOGY.md)
 - XP economy audit needed before cutover
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Roadmap created for v1.3 milestone
-Resume file: None — ready for `/gsd:plan-phase 8`
+Stopped at: Completed Phase 8 (Design & Data Modeling)
+Resume file: None — ready for Phase 9 (Bass Clef Path)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-03 — v1.3 roadmap created*
+*Last updated: 2026-02-03 — Phase 8 complete (2 plans executed)*
