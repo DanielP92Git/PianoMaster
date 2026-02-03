@@ -2,7 +2,7 @@
 
 **Version:** v1.2 Trail System Stabilization
 **Created:** 2026-02-03
-**Phases:** 1 (Phase 6 — continues from v1.1)
+**Phases:** 2 (Phases 6-7 — continues from v1.1)
 
 ## Overview
 
@@ -10,7 +10,8 @@ This milestone commits and validates existing trail redesign work (Phases 1-2 fr
 
 | Phase | Name | Goal | Requirements | Status |
 |-------|------|------|--------------|--------|
-| 6 | Trail Stabilization | Commit, test, and fix trail redesign work | TRAIL-01-04, MEM-01-05, NAV-01-04, CLEAN-01-02 | ✓ Complete |
+| 6 | Trail Stabilization | Commit, test, and fix trail redesign work | TRAIL-01-04, MEM-01-05, NAV-01-04, CLEAN-01-02 | Complete |
+| 7 | Tech Debt Cleanup | Address 4 minor tech debt items from audit | DEBT-01-04 | Planned |
 
 **Total requirements:** 15
 **Coverage:** 100%
@@ -57,6 +58,40 @@ Plans:
 
 ---
 
+## Phase 7: Tech Debt Cleanup
+
+**Goal:** Address 4 minor tech debt items identified in milestone audit
+
+**Requirements covered:**
+- DEBT-01: Create missing 05-VERIFICATION.md (documentation gap)
+- DEBT-02: Add memory_game case to getExerciseTypeName() in TrailNodeModal
+- DEBT-03: Remove duplicate verifyStudentDataAccess from apiScores.js (use import)
+- DEBT-04: Remove window.supabase debug code from main.jsx
+
+**Plans:** 1 plan
+
+Plans:
+- [ ] 07-01-PLAN.md — Fix all 4 tech debt items (docs, i18n, refactor, debug removal)
+
+**Success criteria:**
+1. Phase 05 has VERIFICATION.md file documenting completion
+2. TrailNodeModal shows "Memory Game" instead of "memory_game" for memory exercises
+3. apiScores.js imports verifyStudentDataAccess from authorizationUtils.js
+4. main.jsx has no window.supabase assignment
+
+**Approach:**
+1. Create verification doc for Phase 05
+2. Fix UI string in TrailNodeModal + add i18n translations
+3. Refactor apiScores.js to use shared utility
+4. Remove debug code from main.jsx
+
+**Wave Structure:**
+| Wave | Plans | Notes |
+|------|-------|-------|
+| 1 | 07-01 | All 4 tasks (autonomous, independent) |
+
+---
+
 ## Dependencies
 
 - None — all work is already implemented
@@ -72,4 +107,4 @@ Plans:
 ---
 
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-03 — Phase 6 complete, milestone ready for audit*
+*Last updated: 2026-02-03 — Phase 7 planned*
