@@ -49,9 +49,6 @@ import { Provider } from "react-redux";
 import App from "./App.jsx";
 import store from "./store";
 import supabase from "./services/supabase";
-
-// Expose supabase for debugging (remove in production)
-window.supabase = supabase;
 import {
   registerServiceWorker,
   initializeFullscreen,
