@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Professional game-like learning progression for 8-year-olds with consistent pedagogy
-**Current focus:** Phase 10 - Rhythm Implementation (COMPLETE)
+**Current focus:** Phase 11 - Integration & Cutover (Plan 1 COMPLETE)
 
 ## Current Position
 
-Phase: 10 of 12 (Rhythm Implementation) - COMPLETE
-Plan: 4 of 6 in current phase (COMPLETE - Trail Registration)
-Status: Phase complete, ready for Phase 11 (Integration & Cutover)
-Last activity: 2026-02-04 - Completed 10-04-PLAN.md (Trail Registration)
+Phase: 11 of 12 (Integration & Cutover)
+Plan: 1 of 1 in current phase (COMPLETE - Atomic Cutover)
+Status: Phase complete, ready for Phase 12 (Cleanup & Legacy Removal)
+Last activity: 2026-02-04 - Completed 11-01-PLAN.md (Atomic Cutover)
 
-Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [█████████░] 85%
+Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [██████████] 95%
 
 ## Milestone History
 
@@ -28,9 +28,9 @@ Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [██████�
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29 (across v1.0-v1.3)
-- Average duration: ~27 min
-- Total execution time: ~11.5 hours
+- Total plans completed: 30 (across v1.0-v1.3)
+- Average duration: ~26 min
+- Total execution time: ~11.6 hours
 
 **By Phase:** See MILESTONES.md for detailed breakdown.
 
@@ -70,6 +70,12 @@ All decisions from v1.0-v1.2 logged in PROJECT.md Key Decisions table.
 | 10-04-01 | Remove legacy generateRhythmUnit import | All rhythm units now redesigned, no need for runtime generation |
 | 10-04-02 | Simplify linkUnitPrerequisites to pass-through | Prerequisites set in unit files, no runtime linking needed |
 
+**Phase 11 decisions:**
+| ID | Decision | Rationale |
+|----|----------|-----------|
+| 11-01-01 | 93 nodes in final system | Actual count from expandedNodes.js (was estimated as 87 in planning) |
+| 11-01-02 | Keep LEGACY_NODES with @deprecated | Phase 12 will handle deletion, keeps atomic change small |
+
 ### Pending Todos
 
 None.
@@ -83,15 +89,14 @@ None.
 
 **v1.3 Risk Areas (from research):**
 - Rhythm path pedagogy less established than note reading - may need iteration
-- Progress will be reset with v1.3 (documented in PEDAGOGY.md)
-- XP economy audit needed before cutover (42.9% variance between Rhythm and Bass paths)
+- XP economy variance 50.2% between paths (Rhythm: 2270 vs Bass: 1130) - monitor after user testing
 
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 10-04-PLAN.md (Trail Registration)
-Resume file: None - ready for Phase 11 (Integration & Cutover)
+Stopped at: Completed 11-01-PLAN.md (Atomic Cutover)
+Resume file: None - ready for Phase 12 (Cleanup & Legacy Removal)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-04 - Rhythm trail integration complete (42 nodes across 6 units)*
+*Last updated: 2026-02-04 - Phase 11 cutover complete (93-node system active)*
