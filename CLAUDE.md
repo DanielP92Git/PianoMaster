@@ -166,23 +166,30 @@ Game routes (`/notes-master-mode/*`, `/rhythm-mode/*`) also hide the sidebar and
 
 ## Gamification Trail System (Added Jan 2026)
 
-A Duolingo-style skill progression system for 8-year-old learners.
+A Duolingo-style skill progression system for 8-year-old learners with 93 nodes across three parallel learning paths.
 
 ### Core Concepts
 
-- **Skill Nodes**: Learning units organized by category (Treble Clef, Bass Clef, Rhythm)
+- **Skill Nodes**: 93 learning units organized by category (Treble: 23 nodes, Bass: 22 nodes, Rhythm: 36 nodes, Boss: 12 nodes)
 - **Star Rating**: 0-3 stars based on performance (60%=1★, 80%=2★, 95%=3★)
 - **XP System**: Experience points with 10 levels (Beginner → Legend)
 - **Daily Goals**: 3 random goals per day to encourage engagement
 - **Prerequisites**: Nodes unlock progressively (e.g., complete "C & D" before "C, D, E")
+- **Static Definitions**: All nodes statically defined in unit files under `src/data/units/`
 
 ### Key Files
 
 #### Data Layer
-- `src/data/skillTrail.js` - All node definitions, categories, prerequisites
-  - `SKILL_NODES` array with treble/bass/rhythm paths
+- `src/data/skillTrail.js` - Main export for all node definitions, categories, prerequisites
+  - `SKILL_NODES` array (93 nodes) imported from `expandedNodes.js`
   - `getNodeById()`, `getNodesByCategory()`, `getBossNodes()`
   - `isNodeUnlocked()`, `getUnlockedNodes()`, `getAllNodes()`
+- `src/data/expandedNodes.js` - Aggregates all unit files into single export
+- `src/data/units/` - Individual unit definition files:
+  - `trebleUnit1.js` through `trebleUnit4.js` (23 treble nodes total)
+  - `bassUnit1.js` through `bassUnit3.js` (22 bass nodes total)
+  - `rhythmUnit1.js` through `rhythmUnit6.js` (36 rhythm nodes total)
+  - Each unit file exports nodes with boss nodes marked for completion milestones
 
 #### Services
 - `src/services/skillProgressService.js` - CRUD for student progress
