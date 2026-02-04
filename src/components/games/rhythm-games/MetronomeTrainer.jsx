@@ -152,6 +152,17 @@ export function MetronomeTrainer() {
   // Pattern and timing state
 
 
+  // Helper to convert time signature string to TIME_SIGNATURES object
+  const getTimeSignatureObject = useCallback((timeSigString) => {
+    const mapping = {
+      '4/4': TIME_SIGNATURES.FOUR_FOUR,
+      '3/4': TIME_SIGNATURES.THREE_FOUR,
+      '2/4': TIME_SIGNATURES.TWO_FOUR,
+      '6/8': TIME_SIGNATURES.SIX_EIGHT
+    };
+    return mapping[timeSigString] || TIME_SIGNATURES.FOUR_FOUR;
+  }, []);
+
   // Auto-configure and auto-start from trail node
   const hasAutoConfigured = useRef(false);
 
@@ -160,10 +171,12 @@ export function MetronomeTrainer() {
       hasAutoConfigured.current = true;
 
       // Build settings from node configuration
+      // Convert string timeSignature to TIME_SIGNATURES object
+      const timeSigString = nodeConfig.timeSignature || '4/4';
       const trailSettings = {
         difficulty: nodeConfig.difficulty || 'easy',
         tempo: nodeConfig.tempo || 80,
-        timeSignature: nodeConfig.timeSignature || '4/4',
+        timeSignature: getTimeSignatureObject(timeSigString),
         totalExercises: 10
       };
 
