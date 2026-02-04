@@ -80,19 +80,20 @@ Plans:
 - [x] 10-04-PLAN.md — Integration into expandedNodes.js + validation
 
 ### Phase 11: Integration & Cutover
-**Goal**: Atomic switch from legacy nodes to new structure with full progress preservation
+**Goal**: Atomic switch from legacy nodes to new structure with progress reset (XP preserved)
 **Depends on**: Phases 9 and 10 (need all unit files complete)
 **Requirements**: DATA-04, INT-01, INT-02, INT-03, INT-04
 **Success Criteria** (what must be TRUE):
   1. Single expandedNodes.js import combines all unit files (treble + bass + rhythm)
-  2. Existing user progress on bass/rhythm Units 1-2 preserved (node IDs unchanged or mapped)
-  3. XP economy maintains parity (users don't lose or gain unfair XP)
-  4. Database triggers work with new node ID format
-  5. LEGACY_NODES array removed from skillTrail.js
-**Plans**: TBD
+  2. User XP totals preserved (progress reset per PEDAGOGY.md, but XP reflects effort)
+  3. Database triggers work with new node ID format
+  4. LEGACY_NODES array marked deprecated (not spread into SKILL_NODES)
+  5. Build passes with 87 validated nodes
+**Plans**: 2 plans (Wave 1: 1, Wave 2: 1)
 
 Plans:
-- [ ] 11-01: TBD
+- [ ] 11-01-PLAN.md — Core cutover (migration + skillTrail.js update)
+- [ ] 11-02-PLAN.md — Build verification + smoke test
 
 ### Phase 12: Validation & Cleanup
 **Goal**: Verify trail works with production data and remove all legacy code
@@ -119,9 +120,9 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 | 8. Design & Data Modeling | v1.3 | 2/2 | Complete | 2026-02-03 |
 | 9. Bass Clef Implementation | v1.3 | 4/4 | Complete | 2026-02-04 |
 | 10. Rhythm Implementation | v1.3 | 4/4 | Complete | 2026-02-04 |
-| 11. Integration & Cutover | v1.3 | 0/TBD | Not started | - |
+| 11. Integration & Cutover | v1.3 | 0/2 | In Progress | - |
 | 12. Validation & Cleanup | v1.3 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-04 — Phase 10 complete (42 rhythm nodes implemented and integrated)*
+*Last updated: 2026-02-04 — Phase 11 planned (2 plans: cutover + verification)*
