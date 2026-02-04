@@ -154,7 +154,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-01 | Phase 8 | Pending |
 | DATA-02 | Phase 12 | Pending |
 | DATA-03 | Phase 8 | Complete |
-| DATA-04 | Phase 11 | Pending |
+| DATA-04 | Phase 11 | Complete |
 | BASS1-01 | Phase 9 | Pending |
 | BASS1-02 | Phase 9 | Pending |
 | BASS1-03 | Phase 9 | Pending |
@@ -216,10 +216,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RHY5-06 | Phase 10 | Pending |
 | RHY5-07 | Phase 10 | Pending |
 | RHY5-08 | Phase 10 | Pending |
-| INT-01 | Phase 11 | Pending |
-| INT-02 | Phase 11 | Pending |
-| INT-03 | Phase 11 | Pending |
-| INT-04 | Phase 11 | Pending |
+| INT-01 | Phase 11 | Complete |
+| INT-02 | Phase 11 | Complete |
+| INT-03 | Phase 11 | Complete |
+| INT-04 | Phase 11 | Complete |
 | INT-05 | Phase 12 | Pending |
 
 **Coverage:**
@@ -229,4 +229,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-03*
-*Last updated: 2026-02-03 — traceability added after roadmap creation*
+*Last updated: 2026-02-04 — Phase 11 requirements marked Complete (DATA-04, INT-01 to INT-04)*
