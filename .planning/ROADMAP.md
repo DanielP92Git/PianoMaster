@@ -104,10 +104,11 @@ Plans:
   2. All trail paths (treble, bass, rhythm) playable end-to-end
   3. nodeGenerator.js dependency removed for main trail paths
   4. Build-time validation passes with 0 errors
-**Plans**: TBD
+**Plans**: 2 plans (Wave 1: 1, Wave 2: 1)
 
 Plans:
-- [ ] 12-01: TBD
+- [ ] 12-01-PLAN.md — Delete LEGACY_NODES and audit dead code
+- [ ] 12-02-PLAN.md — E2E verification and documentation update
 
 ## Progress
 
@@ -121,8 +122,8 @@ Note: Phases 9 and 10 could potentially run in parallel (both depend only on Pha
 | 9. Bass Clef Implementation | v1.3 | 4/4 | Complete | 2026-02-04 |
 | 10. Rhythm Implementation | v1.3 | 4/4 | Complete | 2026-02-04 |
 | 11. Integration & Cutover | v1.3 | 2/2 | Complete | 2026-02-04 |
-| 12. Validation & Cleanup | v1.3 | 0/TBD | Not started | - |
+| 12. Validation & Cleanup | v1.3 | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-02-03*
-*Last updated: 2026-02-04 — Phase 11 complete (93-node system active, ready for Phase 12)*
+*Last updated: 2026-02-04 — Phase 12 plans created (2 plans in 2 waves)*
