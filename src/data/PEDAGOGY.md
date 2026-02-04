@@ -202,7 +202,7 @@ From `nodeTypes.js` (`RHYTHM_COMPLEXITY` enum):
 
 ### Legacy Node IDs (for historical reference)
 
-These IDs existed in the original `LEGACY_NODES` array in `skillTrail.js`. Since all trail progress will be reset with v1.3, no runtime migration is needed. This section documents them for reference only.
+These IDs existed in the original `LEGACY_NODES` array in `skillTrail.js` (deleted in v1.3). Since all trail progress was reset with v1.3, no runtime migration is needed. This section documents them for reference only.
 
 **Treble Clef (Legacy):**
 - `treble_c_d` - C & D notes

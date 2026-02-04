@@ -30,7 +30,6 @@ import Fireflies from "../ui/Fireflies";
 import iconFlameSimple from "../../assets/icons/flame-simple.png";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
-import { runMigrationIfNeeded } from "../../utils/progressMigration";
 import { translateNodeName } from "../../utils/translateNodeName";
 
 function Dashboard() {
@@ -53,38 +52,7 @@ function Dashboard() {
   const { openModal, closeModal } = useModal();
   const [activeReminder, setActiveReminder] = useState(null);
 
-  // Run progress migration on first login (only for students)
-  useEffect(() => {
-    const runMigration = async () => {
-      if (!user?.id || !isStudent) return;
-
-      try {
-        const results = await runMigrationIfNeeded(user.id);
-
-        if (results && !results.skipped) {
-          // Show success toast if nodes were migrated
-          if (results.nodesCreated > 0) {
-            toast.success(
-              t('dashboard.toasts.migrationSuccess', {
-                nodesCreated: results.nodesCreated,
-                xpAwarded: results.totalXPAwarded
-              }),
-              { duration: 6000 }
-            );
-
-            // Invalidate queries to refresh UI
-            queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
-            queryClient.invalidateQueries({ queryKey: ["next-recommended-node", user.id] });
-          }
-        }
-      } catch (error) {
-        console.error('Migration failed:', error);
-        // Don't show error toast - fail silently to not confuse users
-      }
-    };
-
-    runMigration();
-  }, [user?.id, isStudent, queryClient]);
+  // Note: Progress migration removed in v1.3 - all users started fresh with redesigned trail system
 
   // Poll for active reminder status (only for students)
   useEffect(() => {
