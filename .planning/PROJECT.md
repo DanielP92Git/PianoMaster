@@ -63,14 +63,18 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-**Next Milestone: v1.4 (to be defined)**
+## Current Milestone: v1.4 UI Polish & Celebrations
 
-Use `/gsd:new-milestone` to define v1.4 requirements and roadmap.
+**Goal:** Make the 93-node trail system feel rewarding with node-type celebrations, boss unlock events, visual distinction, and prominent XP display.
 
-**Candidate features (from v1.3 Future Requirements):**
-- VictoryScreen node-type-specific celebrations
-- Unlock Event Modal after Boss completion
-- Node type icons and colors in TrailNode.jsx
+**Target features:**
+- Node-type-specific victory celebrations (different animations/messaging for each of 8 node types)
+- Boss unlock event modal (special celebration when completing Boss nodes that unlock next unit)
+- Node type visual distinction (icons and colors for Discovery, Practice, Boss, etc.)
+- XP prominence improvements (make XP display more visible throughout the app)
+- Dead code cleanup (remove orphaned progressMigration.js and any other unused code)
+
+**Deferred to future milestones:**
 - Hard delete Edge Function for accounts past 30-day grace period
 - Production deployment to Google Play / Apple App Store
 
@@ -81,7 +85,7 @@ Explicitly excluded:
 | Feature | Reason |
 |---------|--------|
 | Performance optimizations | Not security-critical, separate project |
-| Trail map UI redesign | Focus on data layer first; UI works with any node structure |
+| Trail map UI redesign | v1.4 addresses node visuals; full layout redesign deferred |
 | Grand Staff integration | Complex cross-clef learning; defer to future |
 | Adaptive difficulty system | Requires algorithm research; start with fixed difficulty |
 | Real song integration | Licensing complexity; use generated patterns for now |
@@ -158,4 +162,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-05 after v1.3 milestone*
+*Last updated: 2026-02-05 after v1.4 milestone started*
