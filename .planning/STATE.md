@@ -83,6 +83,9 @@ All decisions from v1.0-v1.2 logged in PROJECT.md Key Decisions table.
 | ID | Decision | Rationale |
 |----|----------|-----------|
 | 12-01-01 | Remove progressMigration.js usage | All progress reset in v1.3, migration obsolete |
+| 12-02-01 | Human verification for E2E trail paths | E2E requires actual gameplay to verify progression |
+| 12-02-02 | Navigation bug fix included in shipped state | Bug found during E2E testing, fixed before ship |
+| 12-02-03 | XP display gap documented as feature gap | XP stored correctly, UI display non-blocking |
 
 ### Pending Todos
 
