@@ -250,7 +250,14 @@ export const UNITS = {
 // Import expanded nodes (generated programmatically)
 import expandedNodes from './expandedNodes.js';
 
-// Legacy nodes (will be deprecated after migration)
+/**
+ * DEPRECATED: Legacy trail nodes retained for Phase 12 cleanup.
+ * DO NOT spread into SKILL_NODES - all nodes now come from expandedNodes.js
+ * These 18 nodes were replaced by 87 redesigned nodes in v1.3.
+ *
+ * @deprecated Phase 12 will delete this array entirely.
+ * @see .planning/phases/11-integration-cutover/11-CONTEXT.md
+ */
 const LEGACY_NODES = [
   // ============================================
   // TREBLE CLEF PATH (LEGACY)
@@ -842,11 +849,10 @@ const LEGACY_NODES = [
   }
 ];
 
-// Combine expanded nodes with legacy nodes
-// Priority order: expanded nodes first (new system), then legacy (for backward compat)
+// v1.3: All nodes now come from expandedNodes (redesigned system)
+// LEGACY_NODES retained for reference but NOT included
 export const SKILL_NODES = [
-  ...expandedNodes,
-  ...LEGACY_NODES
+  ...expandedNodes
 ];
 
 /**
