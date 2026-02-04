@@ -509,6 +509,10 @@ export function NotesRecognitionGame() {
   useEffect(() => {
     hasAutoStartedRef.current = false;
 
+    // Reset game progress to prevent VictoryScreen from showing immediately
+    // This is critical when navigating between trail nodes of the same game type
+    resetProgress();
+
     // Reset game state to prevent stuck UI from previous node
     setGameOver(false);
     isGameEndingRef.current = false;
@@ -525,7 +529,7 @@ export function NotesRecognitionGame() {
     setIsListening(false);
     setDetectedNote(null);
     setAudioInputLevel(0);
-  }, [nodeId]);
+  }, [nodeId, resetProgress]);
 
   // Auto-configure and auto-start from trail node
   useEffect(() => {
@@ -575,8 +579,8 @@ export function NotesRecognitionGame() {
           // Navigate based on exercise type
           switch (nextExercise.type) {
             case 'note_recognition':
+              // State resets automatically via nodeId change effect
               navigate('/notes-master-mode/notes-recognition-game', { state: navState, replace: true });
-              window.location.reload();
               break;
             case 'sight_reading':
               navigate('/notes-master-mode/sight-reading-game', { state: navState });

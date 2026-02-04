@@ -166,6 +166,21 @@ export function MetronomeTrainer() {
   // Auto-configure and auto-start from trail node
   const hasAutoConfigured = useRef(false);
 
+  // Reset game state when nodeId changes (navigating between trail nodes)
+  useEffect(() => {
+    hasAutoConfigured.current = false;
+
+    // Reset game to setup phase to prevent showing VictoryScreen from previous node
+    setGamePhase(GAME_PHASES.SETUP);
+    setCurrentPattern(null);
+    setCurrentBeat(0);
+    setUserTaps([]);
+    setExpectedTaps([]);
+    setFeedback(null);
+    setHasUserStartedTapping(false);
+    userTapsRef.current = [];
+  }, [nodeId]);
+
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
       hasAutoConfigured.current = true;
