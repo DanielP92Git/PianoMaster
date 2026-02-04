@@ -398,7 +398,8 @@ class HybridPatternService {
    * Generate a new pattern using rule-based logic
    */
   generatePattern(timeSignatureObj, difficulty) {
-    const rules = GENERATION_RULES[difficulty];
+    // Fallback to beginner if unknown difficulty
+    const rules = GENERATION_RULES[difficulty] || GENERATION_RULES[DIFFICULTY_LEVELS.BEGINNER];
     const { measureLength, strongBeats, mediumBeats, weakBeats } =
       timeSignatureObj;
 

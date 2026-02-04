@@ -174,7 +174,7 @@ export function MetronomeTrainer() {
       // Convert string timeSignature to TIME_SIGNATURES object
       const timeSigString = nodeConfig.timeSignature || '4/4';
       const trailSettings = {
-        difficulty: nodeConfig.difficulty || 'easy',
+        difficulty: nodeConfig.difficulty || 'beginner',
         tempo: nodeConfig.tempo || 80,
         timeSignature: getTimeSignatureObject(timeSigString),
         totalExercises: 10
@@ -233,6 +233,7 @@ export function MetronomeTrainer() {
   }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
 
   const [currentBeat, setCurrentBeat] = useState(0);
+  const [currentPattern, setCurrentPattern] = useState(null);
   const [expectedTaps, setExpectedTaps] = useState([]);
   const [userTaps, setUserTaps] = useState([]);
   const [feedback, setFeedback] = useState(null);
