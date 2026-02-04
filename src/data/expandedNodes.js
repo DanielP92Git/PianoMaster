@@ -1,13 +1,13 @@
 /**
- * Expanded Trail Nodes - Redesigned System
+ * Expanded Trail Nodes - Fully Redesigned System
  *
  * Educational psychology-driven trail system for 8-year-old learners.
  *
- * Treble Units 1-3: Redesigned (C4 to C5, quarters + halves only)
- * Bass Units 1-3: Redesigned (C4 to C3, quarters + halves only)
- * Rhythm Units 1-2: Legacy generator (to be redesigned in Phase 10)
+ * Treble Units 1-3: Redesigned (C4 to C5)
+ * Bass Units 1-3: Redesigned (C4 to C3)
+ * Rhythm Units 1-6: Redesigned (quarter notes to sixteenths)
  *
- * This file imports the redesigned units and combines them.
+ * All units follow consistent NODE_TYPES pattern with pedagogical scaffolding.
  */
 
 import trebleUnit1Nodes from './units/trebleUnit1Redesigned.js';
@@ -19,32 +19,13 @@ import bassUnit1Nodes from './units/bassUnit1Redesigned.js';
 import bassUnit2Nodes from './units/bassUnit2Redesigned.js';
 import bassUnit3Nodes from './units/bassUnit3Redesigned.js';
 
-// Legacy rhythm generator (rhythm will be redesigned in Phase 10)
-import { generateRhythmUnit } from '../utils/nodeGenerator.js';
-
-// ============================================
-// RHYTHM - Unit 1: Steady Beat
-// (Using legacy generator - will be redesigned later)
-// ============================================
-const rhythmUnit1 = generateRhythmUnit({
-  unitNumber: 1,
-  unitName: 'Steady Beat',
-  rhythmTiers: [1, 2],
-  startOrder: 100, // Start after clef units
-  includeBoss: true
-});
-
-// ============================================
-// RHYTHM - Unit 2: Eighth Notes
-// (Using legacy generator - will be redesigned later)
-// ============================================
-const rhythmUnit2 = generateRhythmUnit({
-  unitNumber: 2,
-  unitName: 'Eighth Notes',
-  rhythmTiers: [3, 4],
-  startOrder: rhythmUnit1[rhythmUnit1.length - 1].order + 1,
-  includeBoss: true
-});
+// Redesigned rhythm units
+import rhythmUnit1Nodes from './units/rhythmUnit1Redesigned.js';
+import rhythmUnit2Nodes from './units/rhythmUnit2Redesigned.js';
+import rhythmUnit3Nodes from './units/rhythmUnit3Redesigned.js';
+import rhythmUnit4Nodes from './units/rhythmUnit4Redesigned.js';
+import rhythmUnit5Nodes from './units/rhythmUnit5Redesigned.js';
+import rhythmUnit6Nodes from './units/rhythmUnit6Redesigned.js';
 
 // Combine all nodes
 export const EXPANDED_NODES = [
@@ -58,9 +39,13 @@ export const EXPANDED_NODES = [
   ...bassUnit2Nodes,
   ...bassUnit3Nodes,
 
-  // Legacy rhythm units (to be redesigned in Phase 10)
-  ...rhythmUnit1,
-  ...rhythmUnit2
+  // Redesigned rhythm units (Units 1-6)
+  ...rhythmUnit1Nodes,
+  ...rhythmUnit2Nodes,
+  ...rhythmUnit3Nodes,
+  ...rhythmUnit4Nodes,
+  ...rhythmUnit5Nodes,
+  ...rhythmUnit6Nodes
 ];
 
 // Export by category for easy integration
@@ -74,21 +59,21 @@ export const EXPANDED_BASS_NODES = [
   ...bassUnit2Nodes,
   ...bassUnit3Nodes
 ];
-export const EXPANDED_RHYTHM_NODES = [...rhythmUnit1, ...rhythmUnit2];
+export const EXPANDED_RHYTHM_NODES = [
+  ...rhythmUnit1Nodes,
+  ...rhythmUnit2Nodes,
+  ...rhythmUnit3Nodes,
+  ...rhythmUnit4Nodes,
+  ...rhythmUnit5Nodes,
+  ...rhythmUnit6Nodes
+];
 
 // Update prerequisites to link between units
-// Note: Treble and Bass unit prerequisites are already set in their redesigned files
-// Only rhythm units still need runtime linking
+// Note: All unit prerequisites are now set in their redesigned files
 export const linkUnitPrerequisites = (nodes) => {
-  const updatedNodes = [...nodes];
-
-  // Link Rhythm Unit 2 to Unit 1 boss (legacy rhythm units still need this)
-  const rhythmUnit2Start = updatedNodes.find(n => n.id === 'rhythm_2_1');
-  if (rhythmUnit2Start) {
-    rhythmUnit2Start.prerequisites = ['boss_rhythm_1'];
-  }
-
-  return updatedNodes;
+  // Prerequisites are now set in redesigned unit files
+  // No runtime linking needed
+  return [...nodes];
 };
 
 export default linkUnitPrerequisites(EXPANDED_NODES);
