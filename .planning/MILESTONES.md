@@ -1,5 +1,33 @@
 # Project Milestones: PianoApp
 
+## v1.3 Trail System Redesign (Shipped: 2026-02-05)
+
+**Delivered:** Professional game-like learning progression for 8-year-olds with 93 nodes across three parallel learning paths (Treble, Bass, Rhythm), consistent pedagogy following Discovery → Practice → Mix-Up → Speed → Boss pattern, and build-time validation infrastructure.
+
+**Phases completed:** 8-12 (14 plans total)
+
+**Key accomplishments:**
+
+- Build-time validation infrastructure with DFS cycle detection, node type validation, XP economy auditing
+- 22 redesigned bass clef nodes across 3 units (C4 → C3) mirroring treble pedagogy
+- 36 redesigned rhythm nodes across 6 units from quarter notes to sixteenths with proper pedagogical scaffolding
+- 93-node unified trail system with atomic cutover, progress reset, and XP preservation
+- 600+ lines of legacy code removed (LEGACY_NODES array, nodeGenerator.js dependency)
+- E2E verification passed for all three paths with human testing
+
+**Stats:**
+
+- 88 files created/modified
+- 17,003 lines added, 5,571 lines removed
+- 5 phases, 14 plans
+- 3 days (2026-02-03 → 2026-02-05)
+
+**Git range:** `144487b` → `fe4732f`
+
+**What's next:** VictoryScreen node-type celebrations, UI enhancements, production deployment to app stores
+
+---
+
 ## v1.2 Trail System Stabilization (Shipped: 2026-02-03)
 
 **Delivered:** Committed and validated 26-node trail redesign with Memory Game integration, 8 node types for engagement variety, and comprehensive bug fixes for score calculation and navigation.

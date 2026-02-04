@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 26 nodes across 3 units, 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
 
 ## Core Value
 
@@ -13,6 +13,14 @@ A piano learning PWA for 8-year-old learners with a Duolingo-style skill progres
 ### Validated
 
 These capabilities exist, are working, and have been shipped:
+
+**v1.3 Trail System Redesign (shipped 2026-02-05):**
+- 93-node trail system with consistent pedagogy across Treble (23), Bass (22), and Rhythm (36) paths
+- Build-time validation script catches prerequisite cycles and invalid node types before deploy
+- 22 bass clef nodes following treble pedagogy (C4 → C3 octave progression)
+- 36 rhythm nodes with duration-based progression (quarter → sixteenth notes)
+- Atomic cutover with progress reset and XP preservation
+- All 70 v1.3 requirements delivered (4 data + 26 bass + 35 rhythm + 5 integration)
 
 **v1.2 Trail System Stabilization (shipped 2026-02-03):**
 - TRAIL-01-04: 26 treble clef nodes across Units 1-3 (C4 through C5 progression)
@@ -55,43 +63,16 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-**Current Milestone: v1.3 Trail System Redesign**
+**Next Milestone: v1.4 (to be defined)**
 
-**Goal:** Redesign the trail data layer with consistent pedagogy across all three paths (Treble, Bass, Rhythm), eliminating duplicates and creating a professional game-like learning progression for 8-year-olds.
+Use `/gsd:new-milestone` to define v1.4 requirements and roadmap.
 
-**Target features:**
-
-*Data Layer Cleanup:*
-- [ ] Remove all legacy duplicate nodes (LEGACY_NODES in skillTrail.js)
-- [ ] Remove nodeGenerator.js dependency for bass/rhythm units
-- [ ] Single source of truth for all trail nodes
-
-*Bass Clef Redesign (mirror treble pedagogy):*
-- [ ] Bass Unit 1: C4 → B3 → A3 (8 nodes, same node types as treble)
-- [ ] Bass Unit 2: G3 → F3 (8 nodes, five-finger bass position)
-- [ ] Bass Unit 3: E3 → D3 → C3 (10 nodes, full octave)
-
-*Rhythm Path Redesign (node types, not tier-based):*
-- [ ] Rhythm Unit 1: Whole, Half, Quarter notes
-- [ ] Rhythm Unit 2: + Dotted Half
-- [ ] Rhythm Unit 3: + Eighth Notes
-- [ ] Rhythm Unit 4: + Dotted Quarter
-- [ ] Rhythm Unit 5: + Sixteenth Notes
-
-*Structure & Pedagogy:*
-- [ ] All units follow Discovery → Practice → Mix-Up → Speed → Boss pattern
-- [ ] One new concept per Discovery node
-- [ ] Node types provide engagement variety within each unit
-- [ ] Three parallel paths available from start (Treble, Bass, Rhythm)
-
-**Deferred to v1.4+:**
+**Candidate features (from v1.3 Future Requirements):**
 - VictoryScreen node-type-specific celebrations
-- Unlock Event Modal after Unit 3 Boss completion
+- Unlock Event Modal after Boss completion
 - Node type icons and colors in TrailNode.jsx
-- "What's New" badges in TrailNodeModal.jsx
 - Hard delete Edge Function for accounts past 30-day grace period
 - Production deployment to Google Play / Apple App Store
-- Beta testing with human verification checklist
 
 ### Out of Scope
 
@@ -100,23 +81,24 @@ Explicitly excluded:
 | Feature | Reason |
 |---------|--------|
 | Performance optimizations | Not security-critical, separate project |
-| Memory Game trail integration bug | Functional bug, not security |
-| Debug code cleanup | Code quality, not security |
-| Test coverage expansion | Important but not blocking security work |
-| VexFlow rendering optimization | Performance, not security |
-| Sound file bundle reduction | Performance, not security |
+| Trail map UI redesign | Focus on data layer first; UI works with any node structure |
+| Grand Staff integration | Complex cross-clef learning; defer to future |
+| Adaptive difficulty system | Requires algorithm research; start with fixed difficulty |
+| Real song integration | Licensing complexity; use generated patterns for now |
+| Path branching logic | Current linear progression works; complexity not justified |
+| REVIEW node automation | Manual review nodes for now; spaced repetition algorithm later |
 | Multi-language consent emails | English only for now, Hebrew later |
 
 ## Context
 
-**Current State (after v1.2):**
-- 26-node trail redesign committed with 8 node types for engagement variety
-- Memory Game fully integrated with trail auto-start and progress tracking
-- 4 game modes working: note recognition, sight reading, rhythm, memory
-- COPPA consent flow fully operational with Brevo email delivery
+**Current State (after v1.3):**
+- 93-node trail system with consistent pedagogy across all three paths
+- Build-time validation ensures node integrity on every build
+- Legacy 18-node system removed (600+ lines deleted)
+- All E2E paths verified working by human tester
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
-- Ready for production deployment and beta testing
-- v1.0: 177 files, 31,659 lines | v1.1: 15 files, 1,687 lines | v1.2: 31 files, 4,698 lines
+- COPPA consent flow fully operational with Brevo email delivery
+- v1.0: 177 files, 31,659 lines | v1.1: 15 files, 1,687 lines | v1.2: 31 files, 4,698 lines | v1.3: 88 files, 17,003 lines
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -135,6 +117,8 @@ Explicitly excluded:
 - Parental consent verification method needs legal review
 - Privacy policy language requires attorney review
 - State age verification laws may require Play Age Signals API
+- XP display in UI could be more prominent (stored correctly, UI gap)
+- Orphaned progressMigration.js file (175 lines unused)
 
 ## Constraints
 
@@ -166,7 +150,12 @@ Explicitly excluded:
 | 26 nodes in Units 1-3 vs 18 original | Gradual progression appropriate for 8-year-old learners | Good |
 | Score calc uses pairs: (cards/2)*10 | Cards count double-counts; pairs is correct game mechanic | Good |
 | Use shared verifyStudentDataAccess | Robustness (.maybeSingle), code deduplication | Good |
+| Validation runs at prebuild | Catches prerequisite cycles and invalid types before deploy | Good |
+| START_ORDER = 51 for bass, 100 for rhythm | Clear separation between clef and rhythm paths | Good |
+| Single pitch C4 for all rhythm nodes | Pure rhythm focus, no pitch confusion for learners | Good |
+| Silent progress reset, XP preserved | Maintains motivation despite trail restructure | Good |
+| 93 nodes final count | Actual count after implementation (was 87 estimate) | Good |
 
 ---
 
-*Last updated: 2026-02-03 after v1.3 milestone started*
+*Last updated: 2026-02-05 after v1.3 milestone*
