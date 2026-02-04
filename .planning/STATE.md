@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-03)
 
 **Core value:** Professional game-like learning progression for 8-year-olds with consistent pedagogy
-**Current focus:** Phase 11 - Integration & Cutover (COMPLETE)
+**Current focus:** Phase 12 - Validation & Cleanup (IN PROGRESS)
 
 ## Current Position
 
-Phase: 11 of 12 (Integration & Cutover) - COMPLETE
-Plan: 2 of 2 in current phase (COMPLETE - Verification)
-Status: Phase complete, ready for Phase 12 (Validation & Cleanup)
-Last activity: 2026-02-04 - Completed 11-02-PLAN.md (Verification)
+Phase: 12 of 12 (Validation & Cleanup) - IN PROGRESS
+Plan: 1 of 2 in current phase (COMPLETE - Legacy Code Deletion)
+Status: In progress - 1 plan remaining
+Last activity: 2026-02-04 - Completed 12-01-PLAN.md (Legacy Code Deletion)
 
-Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [██████████] 95%
+Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [███████████] 97%
 
 ## Milestone History
 
@@ -28,9 +28,9 @@ Progress: v1.0 SHIPPED | v1.1 SHIPPED | v1.2 SHIPPED | v1.3 [██████�
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 30 (across v1.0-v1.3)
-- Average duration: ~26 min
-- Total execution time: ~11.6 hours
+- Total plans completed: 31 (across v1.0-v1.3)
+- Average duration: ~25 min
+- Total execution time: ~11.8 hours
 
 **By Phase:** See MILESTONES.md for detailed breakdown.
 
@@ -79,6 +79,11 @@ All decisions from v1.0-v1.2 logged in PROJECT.md Key Decisions table.
 | 11-02-02 | XP totals preserved | Maintains user motivation despite trail reset |
 | 11-02-03 | Rhythm timeSignature string-to-object fix | Bug found during smoke test - rhythm nodes required TIME_SIGNATURES object |
 
+**Phase 12 decisions:**
+| ID | Decision | Rationale |
+|----|----------|-----------|
+| 12-01-01 | Remove progressMigration.js usage | All progress reset in v1.3, migration obsolete |
+
 ### Pending Todos
 
 None.
@@ -97,9 +102,9 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed Phase 11 (Integration & Cutover)
-Resume file: None - ready for Phase 12 (Validation & Cleanup)
+Stopped at: Completed 12-01-PLAN.md (Legacy Code Deletion)
+Resume file: None - ready for 12-02 (Final Validation)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-04 - Phase 11 complete (93-node system verified and ready for deployment)*
+*Last updated: 2026-02-04 - Completed 12-01 (600 lines of legacy code deleted, codebase clean)*
