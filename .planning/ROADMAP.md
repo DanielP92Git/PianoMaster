@@ -151,11 +151,11 @@ Plans:
   3. All celebration animations are skippable (click anywhere to dismiss)
   4. Accessibility-aware animation wrapper component is available for all celebration features
   5. Service worker excludes celebration components from cache (accessibility changes take effect immediately)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: TBD
-- [ ] 13-02: TBD
+- [ ] 13-01-PLAN.md -- Celebration constants, duration hook, and CelebrationWrapper component
+- [ ] 13-02-PLAN.md -- VictoryScreen animation accessibility integration
 
 #### Phase 14: Node Type Visual Distinction
 **Goal**: Provide visual identity for each of 8 node types across 93 trail nodes
@@ -253,7 +253,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17 → 18
 | 10. Rhythm Redesign | v1.3 | 4/4 | Complete | 2026-02-05 |
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
-| 13. Celebration Foundation & Accessibility | v1.4 | 0/TBD | Not started | - |
+| 13. Celebration Foundation & Accessibility | v1.4 | 0/2 | Not started | - |
 | 14. Node Type Visual Distinction | v1.4 | 0/TBD | Not started | - |
 | 15. VictoryScreen Celebration System | v1.4 | 0/TBD | Not started | - |
 | 16. Dashboard XP Prominence | v1.4 | 0/TBD | Not started | - |
@@ -261,4 +261,4 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17 → 18
 | 18. Code Cleanup | v1.4 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-02-05 after v1.4 roadmap creation*
+*Last updated: 2026-02-05 after Phase 13 planning*
