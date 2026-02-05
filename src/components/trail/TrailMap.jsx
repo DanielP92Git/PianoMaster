@@ -99,10 +99,25 @@ const UnitSection = ({
       }
     };
 
-    updateWidth();
+    // Delay initial measurement to ensure DOM is ready and expansion animation completes
+    const timer = setTimeout(updateWidth, 50);
     window.addEventListener('resize', updateWidth);
-    return () => window.removeEventListener('resize', updateWidth);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updateWidth);
+    };
   }, []);
+
+  // Re-measure when expansion state changes
+  useEffect(() => {
+    if (isExpanded && containerRef.current) {
+      // Wait for expansion animation to complete
+      const timer = setTimeout(() => {
+        setContainerWidth(containerRef.current.offsetWidth - 32);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isExpanded]);
 
   // Calculate node positions
   const NODE_SIZE = 70;
@@ -167,11 +182,11 @@ const UnitSection = ({
 
       {/* Collapsible Content */}
       {isExpanded && (
-        <div ref={containerRef} className="px-4 pb-4">
+        <div ref={containerRef} className="w-full px-4 pb-4">
           <svg
             width={svgWidth}
             height={svgHeight}
-            className="block"
+            className="block w-full"
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
             preserveAspectRatio="xMidYMid meet"
           >
