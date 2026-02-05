@@ -7,10 +7,14 @@
 
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Crown } from 'lucide-react';
 import { translateNodeName } from '../../utils/translateNodeName';
+import { useAccessibility } from '../../contexts/AccessibilityContext';
+import { getNodeStateConfig } from '../../utils/nodeTypeStyles';
 
 const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirstNode, onClick }) => {
   const { t, i18n } = useTranslation('trail');
+  const { reducedMotion } = useAccessibility();
 
   // Determine node state
   const nodeState = useMemo(() => {
@@ -31,67 +35,10 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
     }
   };
 
-  // State-specific styling with game-like colors
-  const stateConfig = {
-    locked: {
-      bgGradient: 'from-gray-600 to-gray-700',
-      borderColor: 'border-gray-500',
-      glowColor: '',
-      iconBg: 'bg-gray-500',
-      icon: (
-        <svg className="h-5 w-5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M12 1C8.676 1 6 3.676 6 7v2H4v14h16V9h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v2H8V7c0-2.276 1.724-4 4-4zm0 10c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z"/>
-        </svg>
-      ),
-    },
-    available: {
-      bgGradient: 'from-cyan-500 to-blue-600',
-      borderColor: 'border-cyan-400',
-      glowColor: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]',
-      iconBg: 'bg-white/20',
-      icon: (
-        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      ),
-    },
-    current: {
-      bgGradient: 'from-cyan-400 to-blue-500',
-      borderColor: 'border-cyan-300',
-      glowColor: 'shadow-[0_0_20px_rgba(34,211,238,0.6)]',
-      iconBg: 'bg-white/30',
-      icon: (
-        <svg className="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M8 5v14l11-7z"/>
-        </svg>
-      ),
-      pulse: true,
-    },
-    completed: {
-      bgGradient: 'from-green-500 to-emerald-600',
-      borderColor: 'border-green-400',
-      glowColor: 'shadow-[0_0_15px_rgba(74,222,128,0.4)]',
-      iconBg: 'bg-white/20',
-      icon: (
-        <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-        </svg>
-      ),
-    },
-    mastered: {
-      bgGradient: 'from-green-400 to-emerald-500',
-      borderColor: 'border-yellow-400',
-      glowColor: 'shadow-[0_0_18px_rgba(74,222,128,0.5)]',
-      iconBg: 'bg-white/30',
-      icon: (
-        <svg className="h-5 w-5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-        </svg>
-      ),
-    },
-  };
-
-  const config = stateConfig[nodeState];
+  // Get node styling from centralized system
+  const { IconComponent, colors, sizeClass, pulseClass, crownVisible } = useMemo(() => {
+    return getNodeStateConfig(node.nodeType, node.category, nodeState, isBoss);
+  }, [node.nodeType, node.category, nodeState, isBoss]);
 
   return (
     <div className="relative flex flex-col items-center">
@@ -118,27 +65,32 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
         onClick={handleClick}
         disabled={!isUnlocked}
         className={`
-          relative flex h-12 w-12 items-center justify-center
-          rounded-xl border-2 bg-gradient-to-br
+          relative flex items-center justify-center
+          ${sizeClass}
+          ${isBoss ? 'rounded-full' : 'rounded-xl'}
+          border-2
           transition-all duration-300
-          ${config.bgGradient}
-          ${config.borderColor}
-          ${config.glowColor}
+          ${colors.bg}
+          ${colors.border}
+          ${colors.glow}
           ${isUnlocked ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-60'}
-          ${config.pulse ? 'animate-pulse' : ''}
-          ${isBoss ? 'h-14 w-14 rounded-full' : ''}
+          ${!reducedMotion ? pulseClass : ''}
         `}
         aria-label={`${translateNodeName(node.name, t, i18n)} - ${nodeState}`}
       >
         {/* Boss crown indicator */}
-        {isBoss && (
-          <div className="absolute -top-4 text-xl drop-shadow-lg">&#128081;</div>
+        {crownVisible && (
+          <div className="absolute -top-4 text-lg drop-shadow-lg">
+            <Crown size={18} className="text-yellow-400 fill-yellow-400" />
+          </div>
         )}
 
-        {/* State icon */}
-        <div className={`flex items-center justify-center rounded-md p-0.5 ${config.iconBg}`}>
-          {config.icon}
-        </div>
+        {/* Node type icon */}
+        <IconComponent
+          size={isBoss ? 22 : 20}
+          className={`${colors.text} ${colors.icon}`}
+          strokeWidth={2}
+        />
 
         {/* Current indicator label */}
         {isCurrent && (
