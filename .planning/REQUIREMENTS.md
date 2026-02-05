@@ -76,13 +76,36 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| (Empty - populated by roadmapper) | | |
+| CELEB-01 | Phase 15 | Pending |
+| CELEB-02 | Phase 15 | Pending |
+| CELEB-03 | Phase 13 | Pending |
+| CELEB-04 | Phase 13 | Pending |
+| CELEB-05 | Phase 15 | Pending |
+| CELEB-06 | Phase 17 | Pending |
+| CELEB-07 | Phase 17 | Pending |
+| CELEB-08 | Phase 15 | Pending |
+| CELEB-09 | Phase 15 | Pending |
+| CELEB-10 | Phase 13 | Pending |
+| VISUAL-01 | Phase 14 | Pending |
+| VISUAL-02 | Phase 14 | Pending |
+| VISUAL-03 | Phase 14 | Pending |
+| VISUAL-04 | Phase 14 | Pending |
+| VISUAL-05 | Phase 14 | Pending |
+| VISUAL-06 | Phase 14 | Pending |
+| XP-01 | Phase 16 | Pending |
+| XP-02 | Phase 16 | Pending |
+| XP-03 | Phase 16 | Pending |
+| XP-04 | Phase 16 | Pending |
+| XP-05 | Phase 16 | Pending |
+| XP-06 | Phase 16 | Pending |
+| CLEAN-01 | Phase 18 | Pending |
+| CLEAN-02 | Phase 18 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 24 total
-- Mapped to phases: (pending roadmap)
-- Unmapped: (pending roadmap)
+- Mapped to phases: 24/24 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-05*
-*Last updated: 2026-02-05 after initial definition*
+*Last updated: 2026-02-05 after roadmap creation*
