@@ -11,14 +11,14 @@ Requirements for v1.4 UI Polish & Celebrations milestone. Each maps to roadmap p
 
 - [ ] **CELEB-01**: VictoryScreen shows tiered celebrations based on achievement (minimal/standard/full/epic)
 - [ ] **CELEB-02**: Confetti effects trigger for high achievements (3-star completions, boss wins)
-- [ ] **CELEB-03**: Celebrations are always skippable (click anywhere to dismiss)
-- [ ] **CELEB-04**: Celebration animations respect AccessibilityContext reducedMotion setting
+- [x] **CELEB-03**: Celebrations are always skippable (click anywhere to dismiss)
+- [x] **CELEB-04**: Celebration animations respect AccessibilityContext reducedMotion setting
 - [ ] **CELEB-05**: Node-type-specific messaging in VictoryScreen (8 different messages for 8 node types)
 - [ ] **CELEB-06**: Boss unlock modal shows 3-stage sequence (celebration → unlock animation → next unit preview)
 - [ ] **CELEB-07**: Boss unlock modal only shows once per boss node (localStorage tracking)
 - [ ] **CELEB-08**: XP breakdown display shows "Stars earned: +X, Node completion: +Y"
 - [ ] **CELEB-09**: Progress comparison shows "Better than X% of your previous scores" in VictoryScreen
-- [ ] **CELEB-10**: Standard celebrations complete within 500ms, boss celebrations within 2 seconds
+- [x] **CELEB-10**: Standard celebrations complete within 500ms, boss celebrations within 2 seconds
 
 ### Visual Distinction
 
@@ -78,14 +78,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | CELEB-01 | Phase 15 | Pending |
 | CELEB-02 | Phase 15 | Pending |
-| CELEB-03 | Phase 13 | Pending |
-| CELEB-04 | Phase 13 | Pending |
+| CELEB-03 | Phase 13 | Complete |
+| CELEB-04 | Phase 13 | Complete |
 | CELEB-05 | Phase 15 | Pending |
 | CELEB-06 | Phase 17 | Pending |
 | CELEB-07 | Phase 17 | Pending |
 | CELEB-08 | Phase 15 | Pending |
 | CELEB-09 | Phase 15 | Pending |
-| CELEB-10 | Phase 13 | Pending |
+| CELEB-10 | Phase 13 | Complete |
 | VISUAL-01 | Phase 14 | Pending |
 | VISUAL-02 | Phase 14 | Pending |
 | VISUAL-03 | Phase 14 | Pending |
