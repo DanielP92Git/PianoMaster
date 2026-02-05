@@ -12,6 +12,7 @@ import { getNodeById } from '../../data/skillTrail';
 import { getExerciseProgress, getNextExerciseIndex } from '../../services/skillProgressService';
 import { useUser } from '../../features/authentication/useUser';
 import { translateNodeName } from '../../utils/translateNodeName';
+import { getNodeTypeIcon, getCategoryColors } from '../../utils/nodeTypeStyles';
 
 /**
  * Get display name for exercise type
@@ -139,6 +140,24 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
   // Check if all exercises are complete
   const allExercisesComplete = exercisesCompleted >= totalExercises && totalExercises > 0;
 
+  // Get node type icon and category colors for header
+  const NodeIcon = getNodeTypeIcon(node.nodeType, node.category);
+  const headerColors = getCategoryColors(
+    node.isBoss ? 'boss' : node.category,
+    isUnlocked ? 'available' : 'locked'
+  );
+
+  // Determine skill badge colors based on category
+  const skillBadgeColors = node.isBoss
+    ? 'bg-yellow-100 text-yellow-800'
+    : node.category === 'treble_clef'
+      ? 'bg-blue-100 text-blue-700'
+      : node.category === 'bass_clef'
+        ? 'bg-purple-100 text-purple-700'
+        : node.category === 'rhythm'
+          ? 'bg-emerald-100 text-emerald-700'
+          : 'bg-blue-100 text-blue-700';
+
   return (
     <div className="fixed inset-0 z-50" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
@@ -147,8 +166,11 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
         <div className={`mb-3 sm:mb-4 flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
           <div className="flex-1">
             <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+              {/* Node type icon with category color background */}
+              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${headerColors.bg} ${headerColors.border} border`}>
+                <NodeIcon size={18} className={headerColors.text} strokeWidth={2} />
+              </div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{translateNodeName(node.name, t, i18n)}</h2>
-              {node.isBoss && <span className="text-xl sm:text-2xl">&#128081;</span>}
             </div>
             <p className="mt-1 text-xs sm:text-sm text-gray-600">{node.description}</p>
           </div>
@@ -292,7 +314,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
             {node.skills.map((skill, index) => (
               <span
                 key={index}
-                className="rounded-full bg-blue-100 px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium text-blue-700"
+                className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${skillBadgeColors}`}
               >
                 {skill}
               </span>
