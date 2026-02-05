@@ -7,10 +7,9 @@
  * - State-based styling (locked, available, current, completed, mastered)
  */
 
-import { Search, Gamepad2, Zap, RotateCcw, Dumbbell, Crown, Trophy } from 'lucide-react';
+import { Search, Gamepad2, Zap, RotateCcw, Dumbbell, Crown, Trophy, Metronome } from 'lucide-react';
 import TrebleClefIcon from '../components/trail/icons/TrebleClefIcon';
 import BassClefIcon from '../components/trail/icons/BassClefIcon';
-import MetronomeIcon from '../components/trail/icons/MetronomeIcon';
 import { NODE_TYPES } from '../data/nodeTypes';
 import { NODE_CATEGORIES } from '../data/constants';
 
@@ -35,7 +34,7 @@ export const getNodeTypeIcon = (nodeType, category) => {
   // Category-specific musical notation icons
   if (category === NODE_CATEGORIES.TREBLE_CLEF) return TrebleClefIcon;
   if (category === NODE_CATEGORIES.BASS_CLEF) return BassClefIcon;
-  if (category === NODE_CATEGORIES.RHYTHM) return MetronomeIcon;
+  if (category === NODE_CATEGORIES.RHYTHM) return Metronome;
 
   // Fallback to node type icons for non-category-specific nodes
   const iconMap = {
