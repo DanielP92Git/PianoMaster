@@ -12,6 +12,7 @@ import { useUser } from "../../features/authentication/useUser";
 import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../../services/skillProgressService";
 import { awardXP, calculateSessionXP } from "../../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
+import { useAccessibility } from "../../contexts/AccessibilityContext";
 
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
@@ -19,9 +20,9 @@ import { useTranslation } from "react-i18next";
 import { translateNodeName } from "../../utils/translateNodeName";
 const SHOWN_UNLOCKS_VERSION = 2;
 
-const useCountUp = (start, end, duration = 1400, shouldAnimate = true) => {
+const useCountUp = (start, end, duration = 1400, shouldAnimate = true, reducedMotion = false) => {
   const [value, setValue] = useState(() => {
-    if (!shouldAnimate) {
+    if (reducedMotion || !shouldAnimate) {
       return end ?? start ?? 0;
     }
     return start ?? 0;
@@ -29,7 +30,7 @@ const useCountUp = (start, end, duration = 1400, shouldAnimate = true) => {
 
   useEffect(() => {
     if (start === undefined || end === undefined) return;
-    if (!shouldAnimate || start === end) {
+    if (reducedMotion || !shouldAnimate || start === end) {
       setValue(end);
       return;
     }
@@ -50,7 +51,7 @@ const useCountUp = (start, end, duration = 1400, shouldAnimate = true) => {
 
     frame = requestAnimationFrame(runFrame);
     return () => cancelAnimationFrame(frame);
-  }, [start, end, duration, shouldAnimate]);
+  }, [start, end, duration, shouldAnimate, reducedMotion]);
 
   return value;
 };
@@ -85,6 +86,7 @@ const VictoryScreen = ({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useUser();
+  const { reducedMotion } = useAccessibility();
   const scorePercentage = (score / totalPossibleScore) * 100;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
   const updateStreakWithAchievements = useStreakWithAchievements();
@@ -130,7 +132,8 @@ const VictoryScreen = ({
     basePoints,
     pointsTarget,
     1400,
-    shouldAnimate
+    shouldAnimate,
+    reducedMotion
   );
 
   const actualGain = Math.max(
@@ -643,12 +646,14 @@ const VictoryScreen = ({
               {[1, 2, 3].map((starNum) => (
                 <span
                   key={starNum}
-                  className={`text-3xl transition-all duration-300 ${
+                  className={`text-3xl ${
                     starNum <= stars
-                      ? 'animate-bounce text-yellow-400 drop-shadow-lg'
+                      ? reducedMotion
+                        ? 'text-yellow-400 drop-shadow-lg'
+                        : 'animate-bounce text-yellow-400 drop-shadow-lg'
                       : 'text-gray-400/30'
-                  }`}
-                  style={{
+                  } ${!reducedMotion ? 'transition-all duration-300' : 'transition-opacity duration-100'}`}
+                  style={reducedMotion ? {} : {
                     animationDelay: `${starNum * 100}ms`,
                     animationDuration: '600ms'
                   }}
@@ -678,7 +683,7 @@ const VictoryScreen = ({
                   </p>
                 </div>
                 {xpData.leveledUp && (
-                  <div className="animate-bounce rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 text-xs font-bold text-white shadow-lg">
+                  <div className={`${reducedMotion ? '' : 'animate-bounce'} rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 text-xs font-bold text-white shadow-lg`}>
                     Level {xpData.newLevel}! 🎉
                   </div>
                 )}
