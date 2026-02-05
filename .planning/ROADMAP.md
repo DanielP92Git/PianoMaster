@@ -137,7 +137,7 @@ Plans:
 
 </details>
 
-### 🚧 v1.4 UI Polish & Celebrations (In Progress)
+### v1.4 UI Polish & Celebrations (In Progress)
 
 **Milestone Goal:** Make the 93-node trail system feel rewarding with node-type celebrations, boss unlock events, visual distinction, and prominent XP display.
 
@@ -169,11 +169,11 @@ Plans:
   3. Boss nodes display crown icon and gold accent making them visually distinct
   4. TrailNodeModal displays node type icon and color consistently with TrailNode
   5. Locked, available, and mastered states remain clear with new visual distinction
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 14-01: TBD
-- [ ] 14-02: TBD
+- [ ] 14-01-PLAN.md -- Node type style system (icons, colors, custom SVGs, CSS animation)
+- [ ] 14-02-PLAN.md -- TrailNode and TrailNodeModal visual integration
 
 #### Phase 15: VictoryScreen Celebration System
 **Goal**: Create tiered celebration system that matches achievement significance
@@ -256,11 +256,11 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17 → 18
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
 | 13. Celebration Foundation & Accessibility | v1.4 | 2/2 | Complete | 2026-02-05 |
-| 14. Node Type Visual Distinction | v1.4 | 0/TBD | Not started | - |
+| 14. Node Type Visual Distinction | v1.4 | 0/2 | Not started | - |
 | 15. VictoryScreen Celebration System | v1.4 | 0/TBD | Not started | - |
 | 16. Dashboard XP Prominence | v1.4 | 0/TBD | Not started | - |
 | 17. Boss Unlock Celebrations | v1.4 | 0/TBD | Not started | - |
 | 18. Code Cleanup | v1.4 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-02-05 after Phase 13 planning*
+*Last updated: 2026-02-05 after Phase 14 planning*
