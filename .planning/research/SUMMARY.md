@@ -1,170 +1,298 @@
 # Project Research Summary
 
-**Project:** PianoApp v1.3 Trail System Redesign
-**Domain:** Educational gamification - piano learning for children
-**Researched:** 2026-02-03
+**Project:** v1.4 UI Polish & Celebrations - Piano Learning PWA
+**Domain:** Educational gamification for 8-year-old music learners
+**Researched:** 2026-02-05
 **Confidence:** HIGH
 
 ## Executive Summary
 
-This research covers the redesign of the PianoApp trail system to fix inconsistent pedagogy between treble clef (already well-designed), bass clef (needs redesign), and rhythm (needs redesign) paths. The existing treble clef Units 1-3 use a well-structured "explicit node definition" pattern with 8 nodes per unit, pedagogically sound note progression, and proper node type variety. The bass and rhythm paths currently use a legacy code generator that produces inconsistent nodes and lacks the pedagogical intentionality of the treble redesign.
+This milestone adds celebration animations and visual polish to an existing 93-node trail system in a React-based piano learning PWA. The research reveals a critical insight: **no new dependencies are required**—the codebase already has everything needed (Framer Motion, react-confetti, Tailwind keyframes, lucide-react, accessibility infrastructure). The challenge is purely architectural: layering celebrations correctly across 4 integration points (VictoryScreen, TrailNode, Dashboard, BossUnlockModal) while respecting the existing accessibility system.
 
-The recommended approach is a **parallel creation with clean cutover** strategy: create all new bass (3 units) and rhythm (5 units) unit files following the treble template, then do a single atomic switch in `expandedNodes.js`. The key constraint is **maintaining existing node IDs** to preserve user progress data in `student_skill_progress`. The database stores progress by `node_id` string, so node definitions can change as long as IDs remain stable.
+Educational psychology research shows that over-celebration causes "gamification fatigue" where rewards lose meaning, while under-celebration fails to reinforce learning. The optimal approach uses tiered celebrations (minimal → standard → full → epic) matched to achievement significance. For 8-year-olds specifically, celebrations must be brief (400-800ms), node-type-aware, and focus on intrinsic motivation (mastery, progress) over extrinsic rewards (points for points' sake).
 
-Critical risks center on data integrity and child-appropriate pedagogy. Breaking node ID changes will orphan user progress and erode trust. Introducing difficulty too quickly (more than 1-2 new notes per node, eighth notes before Unit 4, tempo jumps greater than 15 BPM) will create frustration for 8-year-olds. The existing treble redesign provides a proven template - the work is extending that pattern consistently to bass and rhythm while preserving compatibility with existing progress data.
+Key architectural principle: all celebration logic is client-side and additive—no database schema changes, no new API endpoints. Critical risks include bypassing the existing AccessibilityContext (causing WCAG violations), animation performance budget violations on mobile (janky 60fps → 30fps), and the overjustification effect (children optimizing for stars instead of musical learning). All three risks are preventable with accessibility-first animation wrappers, 16ms frame budgets, and celebration tier systems that reserve big moments for meaningful achievements.
 
 ## Key Findings
 
-### Recommended Stack/Patterns
+### Recommended Stack
 
-The research confirms the existing architecture is sound. No new technologies are needed - this is a data structure and content redesign, not a technical rewrite.
+**No installation needed.** All required packages are already installed and actively maintained. The stack research confirms an "extend existing patterns" approach rather than adding libraries.
 
-**Core patterns to follow:**
-- **Explicit node definitions**: Each node is a complete, self-documenting object with all configuration inline (not generated). This matches the treble redesign and is how Duolingo and professional educational games structure content.
-- **String-based prerequisite IDs with build-time validation**: Simple, serializable, allows cross-file references without import complexity.
-- **Enumerated node types with metadata**: The existing `NODE_TYPES` (Discovery, Practice, Mix-Up, Speed Round, Review, Challenge, Mini-Boss, Boss) and `NODE_TYPE_METADATA` in `nodeTypes.js` should be reused verbatim.
-- **File-per-unit organization**: `src/data/units/{path}/unit{N}.js` pattern enables focused code review and clear diff history.
+**Core technologies (already installed):**
+- **Framer Motion v12.23.26**: Orchestrated animations with spring physics and accessibility support. Industry standard for React animations, actively maintained, perfect for sequential celebration animations.
+- **react-confetti v6.2.3**: Canvas-based confetti for boss unlocks. Lightweight (5KB gzipped), performant, customizable. Only triggered on rare boss node completions.
+- **Tailwind CSS 3.4.1**: Custom keyframes already configured (`animate-bounce`, `animate-pulse`, `animate-wiggle`, `animate-floatUp`, `animate-shimmer`). CSS-first approach ensures optimal bundle size.
+- **lucide-react v0.344.0**: 1500+ tree-shakeable SVG icons for node type visual distinction. Perfect for replacing emoji icons with scalable components.
 
-**Technologies unchanged:**
-- React 18 + Vite 6 (frontend)
-- Supabase (database, auth)
-- VexFlow v5 (notation rendering)
-- Existing component architecture (TrailMap, TrailNodeModal, game components)
+**Supporting infrastructure (already exists):**
+- **AccessibilityContext**: Provides `reducedMotion` and `highContrast` flags. All animations MUST respect this context.
+- **AnimationUtils.jsx**: 9 reusable animation components that are accessibility-aware. Extend these patterns, don't bypass them.
+- **VictoryScreen component**: Already handles star calculation, XP display, exercise tracking. Enhancement point for celebrations.
+
+**Critical finding:** The codebase has strong accessibility patterns that new celebrations must respect. Bypassing AccessibilityContext would cause WCAG 2.2.2 violations and break trust with users who explicitly disabled motion.
 
 ### Expected Features
 
-**Must have (table stakes - users expect these):**
-- 6-10 nodes per unit (current 8 nodes is optimal)
-- Progressive difficulty with stair-step pattern (each node slightly harder, recovery after challenges)
-- Mastery thresholds at 60%/80%/95% for 1/2/3 stars (research-validated)
-- Node type variety (minimum 3-4 types per unit for engagement)
-- Immediate, clear feedback (correct/incorrect shown instantly, no harsh penalties)
-- Visual progress indicators (trail map with star ratings on completed nodes)
+**Must have (table stakes) - 10 days:**
 
-**Should have (differentiators):**
-- Spaced repetition integration via REVIEW node type (high research backing, not currently implemented)
-- Adaptive difficulty hints after repeated mistakes
-- Song/applied practice nodes (connect learning to real music after Unit 1)
+1. **Visual feedback on completion** — Every educational app shows immediate confetti/animation on task completion. Missing this = feels incomplete. Implementation: VictoryScreen with 2-3 star confetti burst.
 
-**Defer to v2+:**
-- Path branching/Grand Staff integration (complex, not essential for trail consistency fix)
-- Complex recommendation algorithms
-- Comprehensive adaptive difficulty system
+2. **Differentiated celebrations by achievement** — Duolingo, Khan Academy scale celebration intensity to significance. 1 star ≠ 3 stars ≠ boss completion. Implementation: 5 celebration types (none, minimal, standard, full, epic).
+
+3. **Node type visual distinction** — Trail systems use color/icon coding for navigation. 8 node categories need visual identity (treble=blue, bass=purple, rhythm=orange, boss=yellow). Implementation: lucide-react icons + Tailwind color badges on TrailNode.
+
+4. **XP visibility in Dashboard** — Gamification research shows "XP users don't see doesn't motivate behavior." Current gap: Dashboard shows streak but NOT XP/level. Implementation: XPProgressCard with progress bar.
+
+5. **Screen reader announcements** — WCAG 2.1 Level AA compliance required for school software. Implementation: `aria-live="polite"` regions for celebration messages.
+
+**Should have (differentiators) - 5 days:**
+
+6. **Boss unlock event modal** — Creates memorable milestone moments. 12 boss nodes in 93 = 12.9% occurrence rate (rare enough to stay special). Implementation: Full-screen modal with confetti + badge reveal + unit summary.
+
+7. **Node-specific messaging** — Context-aware praise ("You discovered 3 new notes!") vs. generic ("Good job!"). Intrinsic motivation research shows specific praise develops growth mindset.
+
+8. **Progressive XP breakdown** — Staggered reveal (Base XP → First Time Bonus → Three Stars → Total) teaches effort-reward relationship. Implementation: CSS stagger animation, 200ms delays.
+
+**Defer to v2.0:**
+
+9. **Sound effects** — Audio layer requires user testing to validate. Many schools have sound disabled. Adds 5KB library + 20-80KB audio files.
+
+10. **Custom confetti shapes** — Musical notes instead of squares is polish, not core functionality.
 
 ### Architecture Approach
 
-The integration strategy is straightforward due to the existing architecture's modularity. The `skillProgressService.js` works with generic `node_id` strings, game components accept node configs via `location.state`, and the TrailMap renders whatever nodes are in `SKILL_NODES`. No component changes are required - only data layer changes.
+The architecture challenge is layering celebrations across 4 integration points without breaking existing systems. All celebration logic is client-side and additive—no database changes, no new API endpoints.
 
-**Major components (unchanged):**
-1. **Unit definition files** (`src/data/units/*.js`) - Manual node definitions following treble template
-2. **expandedNodes.js** - Combines all unit imports into `EXPANDED_NODES` array (single point of change for cutover)
-3. **skillTrail.js** - Exports `SKILL_NODES`, helper functions, `UNITS` metadata (empty `LEGACY_NODES` after migration)
-4. **TrailMap/TrailNodeModal** - Generic rendering of node arrays (no changes needed)
-5. **skillProgressService.js** - CRUD for `student_skill_progress` table (node-agnostic)
+**Major components:**
 
-**Files to create:** 8 new unit files (bassUnit1-3, rhythmUnit1-5)
-**Files to modify:** 2 (expandedNodes.js for imports, skillTrail.js for LEGACY_NODES cleanup)
-**Files to keep unchanged:** All components, services, constants, nodeTypes
+1. **VictoryScreen.jsx (lines 576-817)** — Primary celebration moment. Enhancement: node-type-aware confetti, sequential star animation, XP breakdown reveal. Accepts `nodeId` prop to fetch node metadata, calculates celebration intensity from `node.isBoss` and `stars` value. Integration pattern: `getCelebrationConfig(nodeId, stars) → confetti params`.
+
+2. **TrailNode.jsx (lines 1-168)** — Visual distinction for 93 nodes. Enhancement: Add `NODE_TYPE_CONFIG` mapping for icons + colors, render type badge in corner, keep state-based styling (locked/available/completed). Data flow: `node.category → NODE_TYPE_CONFIG[category] → overlay icon`.
+
+3. **Dashboard.jsx** — XP prominence. Enhancement: Create `XPProgressCard.jsx` component with level badge, progress bar, "XP to next level" display. Uses existing `getLevelProgress()` from xpSystem.js. Placement: above Daily Goals card.
+
+4. **BossUnlockModal (NEW)** — Special celebration for boss completions. Three-stage animation sequence (entrance → reveal → CTA) with 3-5 second duration. Uses `createPortal()` pattern like existing `AccessoryUnlockModal.jsx`, z-index 10000 (above VictoryScreen's 9999).
+
+**Key architectural patterns:**
+
+- **Sequential celebration layering**: Display elements in timed sequence (confetti 0ms → stars 500ms → XP 1500ms), not simultaneously. Prevents overstimulation, maintains 60fps.
+- **Node type polymorphism**: Single TrailNode component renders different visuals based on `node.category` flag. Avoids 93×4=372 specialized components.
+- **Portal-based modals**: BossUnlockModal uses `createPortal()` for highest z-index, ensuring it appears above everything.
+- **Accessibility-first animation gates**: Check `prefers-reduced-motion` and `AccessibilityContext` before every animation. Legal requirement (WCAG 2.3.3).
 
 ### Critical Pitfalls
 
-1. **Orphaned Progress Records** - Changing node IDs without migration mapping breaks user progress. Prevention: Use exact ID matching to legacy generator output (`bass_1_1`, `rhythm_1_1`, etc.). If IDs must change, update `LEGACY_TO_NEW_NODE_MAPPING` in `progressMigration.js` first.
+1. **Ignoring existing reduced motion system** — App has mature `AccessibilityContext` with `reducedMotion` setting. New celebrations that bypass this system cause WCAG 2.2.2 violations and sensory overload for ADHD/autism users. **Prevention:** Create accessibility-aware `<AnimatedElement>` wrapper that enforces checks before animations. Every celebration component must use this wrapper or directly check `useAccessibility().reducedMotion`. **Phase 1 blocker:** Must establish this pattern before implementing any celebrations.
 
-2. **Prerequisite Chain Breaking** - Adding new nodes with prerequisites existing users never completed creates permanently locked content. Prevention: Implement "grandfather" logic where users with progress past a point auto-unlock inserted prerequisites. Map progress to SKILLS, not just node IDs.
+2. **Animation performance budget violation** — Multiple simultaneous animations (confetti + stars + XP + modal) can exceed 16.7ms frame budget on low-end Android devices common in schools, causing janky <60fps experience. **Prevention:** Animate only GPU-accelerated properties (`transform`, `opacity`), limit confetti particles (30 on mobile, 50 desktop), lazy-load animation components, add GPU hints (`will-change: transform`). **Detection:** Chrome DevTools Performance tab should show no frames >16.7ms. **Phase 1 requirement:** Set performance budgets and testing protocol.
 
-3. **XP Economy Inflation/Deflation** - Different XP rewards cause level inconsistencies between old and new users. Prevention: Calculate total XP available in old vs. new trail during design phase. Decide policy (maintain parity vs. reset with bonus) before implementation.
+3. **Overjustification effect** — Excessive celebration rewards (confetti for every action) shift focus from learning piano to collecting rewards. Research shows external rewards can diminish intrinsic motivation in children. **Prevention:** Tier system—reserve big celebrations for meaningful achievements (boss nodes, 3 stars). Individual exercises get minimal feedback. Celebrate process/improvement, not just outcomes. **Implementation:** 1 star = minimal, 2 stars = standard, 3 stars = full, boss complete = epic. **Phase 2 design requirement:** Establish celebration tier system before visual implementation.
 
-4. **Difficulty Cliff for Kids** - Adding too many notes too fast or complex rhythms too early causes high abandonment. Prevention: Maximum 1-2 new notes per node, NO eighth notes until Unit 4, tempo increases under 15 BPM between nodes. User test with actual 8-year-olds.
+4. **Accessibility context sync issues with service worker cache** — User enables `reducedMotion`, but cached celebration code still plays animations because service worker served stale bundle. **Prevention:** Exclude `/components/celebrations/` from service worker cache, use runtime checks (not build-time), clear cache on accessibility settings change. **Phase 1 blocker:** Update `public/sw.js` exclusion patterns before adding celebrations.
 
-5. **Database Trigger Assumptions** - The `trigger_update_unit_progress` SQL trigger parses node_id prefixes (`treble_`, `bass_`, `rhythm_`). Prevention: Maintain consistent node ID naming conventions or update trigger if conventions change.
+5. **Celebration fatigue in multi-exercise nodes** — When node has 3 exercises, full celebration after each becomes repetitive and annoying. By the 3rd exercise, children tune out. **Prevention:** Differentiate exercise completion (minimal: just stars) from node completion (full: confetti + sound). Auto-advance for mid-node exercises with 1.5s delay. **Phase 3 requirement:** Design exercise vs. node completion UX flows.
 
 ## Implications for Roadmap
 
-Based on research, suggested phase structure:
+Based on research, suggested phase structure leverages existing infrastructure and builds incrementally to avoid breaking accessibility systems.
 
-### Phase 1: Design and Data Modeling
-**Rationale:** Pitfalls 1, 2, and 3 (orphaned progress, prerequisite breaks, XP economy) must be addressed BEFORE any coding begins. Design decisions here are irreversible without data migration.
-**Delivers:** Complete node ID mapping, pedagogical curriculum for bass/rhythm, XP audit document
-**Addresses:** Table stakes (progressive difficulty, node variety), pedagogy constraints (1-2 notes per node, no eighth notes until Unit 4)
-**Avoids:** Pitfall 1 (document all existing node IDs), Pitfall 3 (calculate total XP), Pitfall 6 (pedagogy constraints)
+### Phase 1: Foundation & Accessibility (Week 1, Days 1-2) - CRITICAL BLOCKER
 
-### Phase 2: Bass Clef Unit Implementation
-**Rationale:** Bass clef has fewer units (3 vs 5 for rhythm) and follows closer to treble pattern. Lower complexity, validates the approach before tackling rhythm.
-**Delivers:** bassUnit1Redesigned.js, bassUnit2Redesigned.js, bassUnit3Redesigned.js (26 nodes estimated)
-**Uses:** Treble unit template, explicit node definition pattern
-**Implements:** Note progression C4->B3->A3 (Unit 1), G3->F3 (Unit 2), E3->D3->C3 (Unit 3)
-**Avoids:** Pitfall 15 (Middle C position myopia - must expand downward to natural bass register)
+**Rationale:** Must establish accessibility-first patterns and performance budgets BEFORE implementing any celebrations. This prevents WCAG violations and ensures all subsequent work respects existing systems.
 
-### Phase 3: Rhythm Unit Implementation
-**Rationale:** Rhythm has unique considerations (no noteConfig, different exercise types) and more units (5). Benefits from lessons learned in Phase 2.
-**Delivers:** rhythmUnit1-5Redesigned.js (32 nodes estimated)
-**Uses:** RHYTHM_COMPLEXITY enum, rhythm-specific node template
-**Implements:** Steady beat (Unit 1), half notes (Unit 2), whole notes/rests (Unit 3), eighth notes (Unit 4), mixed/advanced (Unit 5)
-**Avoids:** Pitfall 12 (rhythm before reading confidence - no eighth notes until Unit 4)
+**Delivers:**
+- Accessibility-aware animation wrapper component
+- Service worker exclusion patterns updated (skip cache for `/components/celebrations/`)
+- Performance testing protocol (16ms frame budget, low-end Android baseline)
+- Node type color palette added to Tailwind config
+- Reduced motion detection verified in AccessibilityContext
 
-### Phase 4: Integration and Cutover
-**Rationale:** Single atomic switch minimizes risk. All files exist but unused until cutover commit.
-**Delivers:** Updated expandedNodes.js, cleaned LEGACY_NODES, working trail system
-**Implements:** Clean cutover pattern from ARCHITECTURE.md
-**Avoids:** Pitfall 5 (database trigger compatibility verified before deploy)
+**Addresses:**
+- Pitfall 1 (ignoring reduced motion)
+- Pitfall 2 (performance budget)
+- Pitfall 4 (service worker cache sync)
 
-### Phase 5: Validation and Cleanup
-**Rationale:** Testing with real user data snapshots and actual 8-year-olds catches issues before production.
-**Delivers:** Verified trail, removed legacy generator code, updated documentation
-**Avoids:** Pitfall 4 (exercise type routing), Pitfall 7 (sight reading config compatibility)
+**Critical path:** Nothing in subsequent phases should proceed until accessibility wrapper is established. This is the architectural foundation that prevents rework.
+
+### Phase 2: TrailNode Visual Distinction (Week 1, Days 2-3)
+
+**Rationale:** High visibility, low complexity, no animation dependencies. Provides immediate visual value while other systems are being built. Can develop in parallel with Phase 3.
+
+**Delivers:**
+- `NODE_TYPE_CONFIG` mapping with lucide-react icons
+- Type icon badges on all 93 trail nodes
+- Category-based color coding (treble=blue, bass=purple, rhythm=orange, boss=yellow)
+- Trail map with visually distinct node types
+
+**Uses:** Tailwind color utilities (from Phase 1), lucide-react icons (Music, Music2, Zap, Crown)
+
+**Addresses:** Feature 3 (node type visual distinction)
+
+**Avoids:** No animations yet, so no risk of accessibility violations. Pure presentation layer.
+
+### Phase 3: VictoryScreen Enhancements (Week 1, Days 3-5)
+
+**Rationale:** Core celebration moment. Depends on Phase 1 foundation (accessibility wrapper, performance budgets) and Phase 2 (node type detection).
+
+**Delivers:**
+- `getCelebrationConfig()` function (node-type-aware celebration logic)
+- Confetti rendering with reduced-motion checks
+- Tiered celebration system (minimal/standard/full/epic)
+- Sequential star reveal animation (staggered 100ms delays)
+- Node-specific celebration messages ("Boss Defeated!", "New notes discovered!")
+
+**Uses:** react-confetti-explosion, Framer Motion, Phase 1 accessibility wrapper
+
+**Implements:** Celebration tier system to prevent overjustification effect (Pitfall 3)
+
+**Addresses:**
+- Feature 1 (visual feedback on completion)
+- Feature 2 (differentiated celebrations)
+- Feature 7 (node-specific messaging)
+
+**Avoids:** Pitfall 5 (celebration fatigue) by implementing tier system—exercise completion gets minimal celebration, node completion gets full.
+
+### Phase 4: Dashboard XP Prominence (Week 2, Days 1-2)
+
+**Rationale:** Independent of victory flow, can develop in parallel with Phase 3. Pure presentation of existing XP data, no new backend logic.
+
+**Delivers:**
+- `XPProgressCard.jsx` component with level badge
+- Progress bar with gradient animation
+- "XP to next level" display
+- Prominent placement above Daily Goals card
+
+**Uses:** xpSystem.js functions (already exist), lucide-react TrendingUp icon
+
+**Implements:** XP visibility principle from gamification research—XP users don't see doesn't motivate behavior.
+
+**Addresses:** Feature 4 (XP visibility in Dashboard)
+
+**Research note:** Standard pattern, no phase-specific research needed.
+
+### Phase 5: Boss Unlock Modal (Week 2, Days 3-5)
+
+**Rationale:** Most complex, depends on all prior phases. Low priority (rare event—12 boss nodes in 93). Epic celebration experience for milestone moments.
+
+**Delivers:**
+- `BossUnlockModal.jsx` with portal rendering
+- Three-stage animation sequence (entrance → reveal → CTA)
+- Unlock detection logic in VictoryScreen
+- Boss completion flow (complete boss → modal → navigate to unlocked nodes)
+- Body scroll lock and focus trap
+
+**Uses:** Phase 1 animations, Phase 3 VictoryScreen hooks, createPortal pattern
+
+**Implements:** Intrinsic motivation principle—big celebrations for meaningful achievements (boss nodes), not trivial actions.
+
+**Addresses:** Feature 6 (boss unlock event modal)
+
+**Avoids:** Pitfall 3 (overjustification) by reserving epic celebration for rare, significant events (12.9% occurrence rate).
 
 ### Phase Ordering Rationale
 
-- **Design first**: Data modeling mistakes (wrong node IDs, broken prerequisites) are expensive to fix after users have progress
-- **Bass before Rhythm**: Lower complexity validates approach; rhythm has unique considerations
-- **Single cutover**: Atomic switch avoids partial states; easy rollback if issues discovered
-- **Validation last**: Real user data testing requires complete system; can't test incrementally
+- **Phase 1 first (blocker):** Accessibility violations are WCAG compliance issues and legal risks. Must establish patterns before any celebration code.
+- **Phase 2 independent:** Visual distinction has no animation dependencies, high visibility, quick win.
+- **Phase 3 after 1:** VictoryScreen celebrations depend on accessibility wrapper and performance budgets from Phase 1.
+- **Phase 4 parallel:** Dashboard XP can develop alongside Phase 3, no dependencies between them.
+- **Phase 5 last:** Most complex, depends on all prior infrastructure, low priority (rare event).
+
+**Dependency chain:**
+```
+Phase 1 (Foundation)
+    ↓
+    ├─→ Phase 2 (TrailNode) [parallel]
+    └─→ Phase 3 (VictoryScreen)
+            ↓
+    Phase 4 (Dashboard) [parallel with 3]
+            ↓
+        Phase 5 (BossUnlockModal)
+```
 
 ### Research Flags
 
-Phases likely needing deeper research during planning:
-- **Phase 3 (Rhythm):** Rhythm exercises have different game components (MetronomeTrainer) and config structure. May need research into rhythm-specific pedagogical patterns for 8-year-olds.
+**Phases with standard patterns (skip research-phase):**
+- **Phase 2:** lucide-react icon integration is well-documented, Tailwind color utilities established
+- **Phase 4:** XP progress bars are standard gamification UI, no novel patterns
 
-Phases with standard patterns (skip research-phase):
-- **Phase 2 (Bass):** Direct extension of treble pattern - well-documented in existing trebleUnit1Redesigned.js
-- **Phase 4 (Integration):** Pure file organization change - no domain knowledge needed
+**Phases needing validation during implementation:**
+- **Phase 3:** Celebration duration (400-800ms) is research-backed for children, but optimal values need user testing with 8-year-olds
+- **Phase 3:** Confetti particle count (30 mobile, 50 desktop) needs performance profiling on target devices (school-issued iPads/Chromebooks)
+- **Phase 5:** Boss unlock flow (auto-advance vs. return to trail) depends on teacher feedback—consider A/B test
+
+**Open questions requiring phase-specific research:**
+1. **Phase 3:** What is optimal confetti particle count for this app's performance profile on school-issued devices?
+2. **Phase 3:** At what repetition count do 8-year-olds report celebration fatigue? (Needs empirical testing)
+3. **Phase 5:** Should boss celebrations be longer/more elaborate, or does this violate "avoid overjustification" principle?
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Existing patterns proven in treble redesign, no new tech needed |
-| Features | HIGH | Multiple sources agree on 6-10 nodes, mastery thresholds, node variety |
-| Architecture | HIGH | Verified against existing codebase; integration points confirmed |
-| Pitfalls | HIGH | Based on internal codebase analysis + established migration patterns |
+| Stack | **HIGH** | All required libraries already installed and versions verified. No new dependencies needed. Existing animation infrastructure (AnimationUtils.jsx) is mature. |
+| Features | **HIGH** | Feature landscape research draws from established educational apps (Duolingo, Khan Academy) with public case studies. Child development research (8-year-olds) is well-documented. |
+| Architecture | **HIGH** | All 4 integration points identified and analyzed. Existing codebase (VictoryScreen, TrailNode, AccessibilityContext) reviewed. Component responsibilities matrix clear. No breaking changes required. |
+| Pitfalls | **HIGH** | Accessibility pitfalls verified against WCAG 2.1/2.2 requirements. Performance pitfalls backed by MDN/web.dev standards. Overjustification effect is established psychology research. |
 
 **Overall confidence:** HIGH
 
+Research covers domain comprehensively. Stack leverages existing libraries (no uncertainty about new tools). Architecture is additive (no refactoring risks). Pitfalls identified with concrete prevention strategies.
+
 ### Gaps to Address
 
-- **REVIEW node type not implemented**: Research strongly supports spaced repetition. Consider adding during this redesign or flagging for immediate follow-up.
-- **Song/applied practice nodes**: Research suggests real songs increase motivation. Current design is all abstract exercises. May require new game component.
-- **Adaptive difficulty**: Research supports dynamic question counts and tempo adjustment. Not in current design - could be future enhancement.
-- **Rhythm path pedagogy specifics**: Less established pattern than note reading. May need iteration based on user testing.
+**During Phase 1 implementation:**
+- **Accessibility wrapper API design:** Should it be a component (`<AnimatedElement>`) or HOC (`withAnimation()`)?  Recommend component for better composition.
+- **Service worker cache strategy:** Should celebration code be network-first or excluded entirely? Recommend exclude—accessibility changes must take effect immediately.
+
+**During Phase 3 implementation:**
+- **Celebration duration values:** Research suggests 400-800ms for children, but optimal value needs A/B testing with target age group (8-year-olds).
+- **Confetti particle count:** Desktop limit (50) is theoretical; needs performance profiling on school hardware (often 2-3 year old Chromebooks).
+
+**During Phase 5 implementation:**
+- **Boss unlock flow:** Research doesn't clarify whether users should auto-advance to first unlocked node or return to trail map for exploration. Needs teacher/parent feedback.
+
+**Post-v1.4 validation:**
+- **Sound effects (deferred to v2.0):** If implemented later, needs research on culturally appropriate celebration sounds for international audience (Hebrew speakers, diverse backgrounds).
+- **Long-term engagement:** Monitor telemetry for celebration fatigue indicators (replay rates, skip rates, session abandonment during celebrations).
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Existing codebase: `src/data/skillTrail.js`, `src/data/nodeTypes.js`, `src/data/units/trebleUnit1Redesigned.js`
-- Existing generator (anti-pattern): `src/utils/nodeGenerator.js`
-- Database schema: `student_skill_progress`, `trigger_update_unit_progress`
+
+**Stack Research:**
+- [Framer Motion v12 Docs](https://motion.dev/) — Animation API reference, accessibility features
+- [react-confetti npm](https://www.npmjs.com/package/react-confetti) — Latest version v6.4.0, API documentation
+- [lucide-react npm](https://www.npmjs.com/package/lucide-react) — 1500+ icons, tree-shaking patterns
+- [Tailwind CSS Animation Docs](https://tailwindcss.com/docs/animation) — Built-in animation utilities
+
+**Feature Research:**
+- [Duolingo Streak Animation Case Study](https://blog.duolingo.com/streak-milestone-design-animation/) — Celebration design patterns
+- [Khan Academy Gamification](https://trophy.so/blog/khan-academy-gamification-case-study) — XP systems and badges
+- [NN/g Animation Duration](https://www.nngroup.com/articles/animation-duration/) — Optimal timing 200-500ms (400-800ms for children)
+
+**Architecture Research:**
+- Codebase analysis: `VictoryScreen.jsx`, `TrailNode.jsx`, `AccessibilityContext.jsx`, `AnimationUtils.jsx`
+- [React Portal Documentation](https://react.dev/reference/react-dom/createPortal) — Modal rendering patterns
+
+**Pitfalls Research:**
+- [WCAG 2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html) — Accessibility requirements
+- [MDN Animation Performance](https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/Animation_performance_and_frame_rate) — 60fps = 16.7ms budget
+- [Deci & Ryan: Extrinsic Rewards](https://www.selfdeterminationtheory.org/SDT/documents/2001_DeciKoestnerRyan.pdf) — Overjustification effect research
 
 ### Secondary (MEDIUM confidence)
-- [Frontiers in Education: Gamified Educational Applications](https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2025.1668260/full)
-- [Mastery Learning - Education Endowment Foundation](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/mastery-learning)
-- [Spaced Repetition Learning Games](https://www.researchgate.net/publication/268130455_Spaced_repetition_learning_games_on_mobile_devices_Foundations_and_perspectives)
-- [Flow Theory and Learning Experience Design](https://edtechbooks.org/ux/flow_theory_and_lxd)
-- [Duolingo Path Structure](https://duolingoguides.com/how-many-sections-in-duolingo/)
+
+- [Why Gamification Fails: 2026 Findings](https://medium.com/design-bootcamp/why-gamification-fails-new-findings-for-2026-fff0d186722f) — Celebration fatigue patterns
+- [UX Design for Kids Best Practices](https://www.ramotion.com/blog/ux-design-for-kids/) — Age-appropriate design (8-year-olds)
+- [Progressive Disclosure in Product Design](https://uxplanet.org/progressive-disclosure-in-ai-powered-product-design-978da0aaeb08) — XP breakdown patterns
 
 ### Tertiary (LOW confidence, needs validation)
-- Music teaching methodology sources (varied quality, cross-referenced for consensus)
-- Piano app reviews (Simply Piano, Yousician) - user feedback, not research
+
+- Optimal celebration duration for 8-year-olds specifically — research suggests 400-800ms, but needs empirical testing with target age group
+- Celebration fatigue threshold — no authoritative source on exact repetition count where children disengage
 
 ---
-*Research completed: 2026-02-03*
+
+*Research completed: 2026-02-05*
 *Ready for roadmap: yes*
+*All 4 research files synthesized: STACK.md, FEATURES.md, ARCHITECTURE.md, PITFALLS_CELEBRATIONS.md*

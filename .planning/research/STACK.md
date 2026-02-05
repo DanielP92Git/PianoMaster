@@ -1,665 +1,437 @@
-# Technology Stack: Trail Data Structure Patterns
+# Stack Research: Celebration Animations & Visual Polish
 
-**Project:** PianoApp v1.3 Trail System Redesign
-**Researched:** 2026-02-03
-**Scope:** Data structure patterns for skill progression nodes
+**Domain:** Piano learning PWA - celebration animations, XP prominence, node visual distinction
+**Researched:** 2026-02-05
+**Confidence:** HIGH
 
 ## Executive Summary
 
-This research addresses four specific questions for the trail data layer redesign:
-1. **Defining skill progression nodes with consistent pedagogy** - Use explicit node definition objects with structured configs
-2. **Managing three parallel learning paths** - Separate files per path with shared constants
-3. **Enabling flexible prerequisite chains** - String-based ID references with runtime validation
-4. **Supporting node type classification** - Enumerated types with metadata objects
+**No new dependencies needed.** The project already has the complete stack required for celebration animations, boss unlock events, and visual enhancements. This milestone focuses on using existing tools more effectively:
 
-**Recommendation:** Adopt the "explicit definition" pattern already emerging in redesigned treble units, extend it to bass and rhythm, eliminate code generation, and add build-time validation.
+- **Framer Motion v12.23.26** (already installed) for smooth celebrations
+- **react-confetti v6.2.3** (already installed) for boss unlock confetti
+- **Tailwind CSS custom keyframes** (already configured) for node type animations
+- **lucide-react v0.344.0** (already installed) for node type icons
+- **Existing AnimationUtils.jsx** patterns for accessibility-aware animations
+
+**Key finding:** The codebase has strong animation patterns in `AnimationUtils.jsx` with accessibility support (`reducedMotion`, `highContrast`). The stack research confirms: **extend existing patterns, don't add libraries.**
 
 ---
 
-## Data Structure Patterns
+## Recommended Stack (Current Installation)
 
-### Pattern 1: Explicit Node Definitions (RECOMMENDED)
+### Core Animation Technologies
 
-**What:** Each node is a complete, explicit object with all configuration inline.
+| Technology | Version | Purpose | Why Already Perfect |
+|------------|---------|---------|---------------------|
+| **Framer Motion** | 12.23.26 | Orchestrated animations, spring physics, variants | Industry standard for React animations. v12 is actively maintained (v13 exists but requires migration). Provides accessibility-aware motion with `AnimatePresence` and `motion.*` components. Perfect for sequential celebration animations. |
+| **react-confetti** | 6.2.3 | Full-screen confetti for boss unlocks | Actively maintained (latest v6.4.0, but v6.2.3 is stable). Canvas-based, performant, customizable. Only 5KB gzipped. Ideal for boss unlock celebrations without heavy dependencies. |
+| **Tailwind CSS** | 3.4.1 | Keyframe animations, utility-first styling | Extensive custom keyframes already configured (`animate-bounce`, `animate-pulse`, `animate-wiggle`, `animate-floatUp`, `animate-shimmer`). CSS-first approach ensures tree-shaking and optimal bundle size. |
+| **lucide-react** | 0.344.0 | Node type icons (discovery, practice, boss, etc.) | 1500+ SVG icons as React components. Tree-shakeable (only imports used icons). Perfect for node type visual distinction. Latest is v0.562.0, but v0.344.0 is stable and sufficient. |
 
-**Example (from existing trebleUnit1Redesigned.js):**
-```javascript
+### Supporting Libraries
+
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| **clsx** | 2.1.1 | Conditional className assembly | For dynamic node type styling (color classes based on `nodeType`). Already used throughout codebase. |
+| **react-icons** | 5.5.0 | Additional icon options (if lucide lacks specific icons) | Only if lucide doesn't have required celebration/gaming icons. Already installed. |
+
+### Accessibility Infrastructure (Already Implemented)
+
+| Component | Location | Purpose | Notes |
+|-----------|----------|---------|-------|
+| **AccessibilityContext** | `src/contexts/AccessibilityContext.jsx` | `reducedMotion`, `highContrast` flags | ALL animations MUST respect `reducedMotion`. Used throughout `AnimationUtils.jsx`. |
+| **AnimationUtils.jsx** | `src/components/ui/AnimationUtils.jsx` | Reusable animation components | 9 components: `AnimatedWrapper`, `SuccessAnimation`, `HoverAnimation`, `StaggeredList`, etc. All accessibility-aware. |
+
+---
+
+## Stack Patterns for This Milestone
+
+### 1. Node Type Visual Distinction
+
+**Use:** Tailwind utilities + lucide-react icons + `NODE_TYPE_METADATA`
+
+**Implementation:**
+```jsx
+// src/data/nodeTypes.js already has metadata
+import { getNodeTypeIcon, getNodeTypeColor } from '../data/nodeTypes';
+import { Trophy, Target, Zap, BookOpen } from 'lucide-react';
+
+// Map icons to node types
+const ICON_MAP = {
+  discovery: <BookOpen />,
+  practice: <Target />,
+  speed_round: <Zap />,
+  boss: <Trophy />
+};
+```
+
+**Why this pattern:**
+- No new dependencies
+- Icons are SVG (scalable, performant)
+- Tailwind color utilities already support all node type colors (blue, green, purple, orange, yellow, red)
+- `NODE_TYPE_METADATA` already defines colors and icons (emojis can be replaced with lucide components)
+
+### 2. Celebration Animations (Node Completion)
+
+**Use:** Framer Motion `motion.div` + `AnimatePresence` + `reducedMotion`
+
+**Implementation:**
+```jsx
+// VictoryScreen.jsx enhancement
+import { motion, AnimatePresence } from 'framer-motion';
+
+const celebrationVariants = {
+  discovery: {
+    initial: { scale: 0, rotate: -180 },
+    animate: { scale: 1, rotate: 0, transition: { type: 'spring', damping: 10 } }
+  },
+  boss: {
+    initial: { y: -100, opacity: 0 },
+    animate: { y: 0, opacity: 1, transition: { duration: 0.6, ease: 'easeOut' } }
+  }
+};
+
+// Respect reducedMotion
+const variant = reducedMotion ? null : celebrationVariants[nodeType];
+```
+
+**Why this pattern:**
+- Framer Motion handles animation orchestration (no manual `requestAnimationFrame`)
+- `AnimatePresence` handles exit animations (e.g., when confetti disappears)
+- Spring physics feel natural for celebrations
+- Built-in accessibility with `reducedMotion` prop
+
+### 3. Boss Unlock Confetti
+
+**Use:** react-confetti component
+
+**Implementation:**
+```jsx
+import Confetti from 'react-confetti';
+import { useWindowSize } from 'react-use'; // or custom hook
+
+// Boss unlock modal
+const BossUnlockModal = ({ show, onClose }) => {
+  const { width, height } = useWindowSize();
+
+  return (
+    <>
+      {show && (
+        <Confetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.3}
+          colors={['#3b82f6', '#d946ef', '#eab308', '#22c55e']}
+        />
+      )}
+      {/* Modal content */}
+    </>
+  );
+};
+```
+
+**Why this pattern:**
+- `react-confetti` is lightweight (5KB) and canvas-based (performant on mobile)
+- `recycle={false}` makes confetti run once and stop (saves CPU)
+- Custom colors match trail node theme (blue, purple, yellow, green)
+- Respects `reducedMotion` via conditional render
+
+### 4. XP Prominence Improvements
+
+**Use:** Existing Tailwind keyframes + Framer Motion for count-up
+
+**Implementation:**
+```jsx
+// VictoryScreen.jsx already has useCountUp hook
+// Enhance with Framer Motion layoutId for smooth transitions
+
+import { motion } from 'framer-motion';
+
+// XP display with shimmer effect
+<motion.div
+  layoutId="xp-display"
+  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl"
+  initial={{ scale: 0 }}
+  animate={{ scale: 1 }}
+  transition={{ type: 'spring', damping: 12 }}
+>
+  <motion.span
+    className="text-2xl font-bold"
+    key={xpValue}
+    initial={{ y: -20, opacity: 0 }}
+    animate={{ y: 0, opacity: 1 }}
+  >
+    +{xpValue} XP
+  </motion.span>
+</motion.div>
+```
+
+**Why this pattern:**
+- `layoutId` enables shared element transitions (XP display → Dashboard)
+- Count-up animation already uses `requestAnimationFrame` (smooth 60fps)
+- Tailwind gradient + `animate-shimmer` adds polish without JS
+- `key={xpValue}` triggers re-animation on value change
+
+### 5. Node Type Celebration Messaging
+
+**Use:** Tailwind + i18next (already configured)
+
+**Implementation:**
+```jsx
+// Create translation keys for each node type
+// en/trail.json
 {
-  id: 'treble_1_2',
-  name: 'C and D',
-  description: 'Add note D to your collection',
-  category: CATEGORY,
-  unit: UNIT_ID,
-  unitName: UNIT_NAME,
-  order: START_ORDER + 1,
-  orderInUnit: 2,
-  prerequisites: ['treble_1_1'],
-
-  nodeType: NODE_TYPES.DISCOVERY,
-
-  noteConfig: {
-    notePool: ['C4', 'D4'],
-    focusNotes: ['D4'],        // NEW note being introduced
-    contextNotes: ['C4'],      // Previously learned notes
-    clef: 'treble',
-    ledgerLines: false,
-    accidentals: false
-  },
-
-  rhythmConfig: {
-    complexity: RHYTHM_COMPLEXITY.SIMPLE,
-    allowedDurations: ['q'],
-    patterns: ['quarter'],
-    tempo: { min: 60, max: 70, default: 65 }
-  },
-
-  newContent: NEW_CONTENT_TYPES.NOTE,
-  newContentDescription: 'Note D',
-
-  exercises: [/* explicit exercise configs */],
-
-  skills: ['C4', 'D4'],
-  xpReward: 45,
-  accessoryUnlock: null,
-  isBoss: false,
-  isReview: false,
-  reviewsUnits: []
+  "celebrations": {
+    "discovery": "New notes discovered! 🔍",
+    "practice": "You're getting better! 🎹",
+    "speed_round": "Lightning fast! ⚡",
+    "boss": "LEGENDARY VICTORY! 🏆"
+  }
 }
+
+// VictoryScreen.jsx
+const celebrationMessage = t(`trail:celebrations.${nodeType}`);
 ```
 
-**Why recommended:**
-- Each node is self-documenting and auditable
-- Pedagogy decisions are visible (focusNotes vs contextNotes)
-- No hidden logic from generators
-- Easy to spot inconsistencies in code review
-- Matches what Duolingo and professional educational games use
-
-**When to use:** Always. This is the primary pattern.
-
-### Pattern 2: Code-Generated Nodes (DO NOT USE)
-
-**What:** Use functions like `generateUnit()` to programmatically create nodes.
-
-**Example (existing nodeGenerator.js):**
-```javascript
-const bassUnit1 = generateUnit({
-  category: NODE_CATEGORIES.BASS_CLEF,
-  unitNumber: 1,
-  baseNotePool: ['C4', 'B3', 'A3'],
-  clef: 'bass',
-  rhythmTiers: [1, 2, 3, 4],
-});
-```
-
-**Why NOT recommended:**
-- Hides pedagogy decisions inside generator logic
-- Inconsistent node types (rhythm tiers != engagement node types)
-- Difficult to override specific nodes
-- Creates "auto-generated" feel rather than crafted curriculum
-- The treble redesign explicitly moved away from this
-
-**Exception:** Utility functions for exercise config generation within explicit nodes are acceptable.
-
-### Pattern 3: Shared Constants with Enums (RECOMMENDED)
-
-**What:** Central constants file with enumerated types and metadata.
-
-**Current implementation (constants.js + nodeTypes.js):**
-```javascript
-// constants.js - Pure enums, no logic
-export const NODE_CATEGORIES = {
-  TREBLE_CLEF: 'treble_clef',
-  BASS_CLEF: 'bass_clef',
-  RHYTHM: 'rhythm',
-  BOSS: 'boss'
-};
-
-export const EXERCISE_TYPES = {
-  NOTE_RECOGNITION: 'note_recognition',
-  SIGHT_READING: 'sight_reading',
-  RHYTHM: 'rhythm',
-  MEMORY_GAME: 'memory_game',
-  BOSS_CHALLENGE: 'boss_challenge'
-};
-
-// nodeTypes.js - Node type classification with metadata
-export const NODE_TYPES = {
-  DISCOVERY: 'discovery',
-  PRACTICE: 'practice',
-  MIX_UP: 'mix_up',
-  SPEED_ROUND: 'speed_round',
-  REVIEW: 'review',
-  CHALLENGE: 'challenge',
-  MINI_BOSS: 'mini_boss',
-  BOSS: 'boss'
-};
-
-export const NODE_TYPE_METADATA = {
-  [NODE_TYPES.DISCOVERY]: {
-    icon: 'magnifying-glass',
-    color: 'blue',
-    label: 'Learn',
-    duration: '3-4 min',
-    purpose: 'Introduce new notes',
-    childThinks: 'Ooh, something NEW!'
-  },
-  // ... etc
-};
-```
-
-**Why recommended:**
-- Single source of truth for valid values
-- Metadata collocated with enum
-- Easy to validate at build time
-- UI can derive display properties from metadata
+**Why this pattern:**
+- i18next already configured with English and Hebrew
+- Translation strings support child-appropriate language
+- Node type metadata already defines `childThinks` messages (can map to translations)
 
 ---
 
-## File Organization
+## Installation
 
-### Recommended Structure
+**No installation needed.** All required packages are already installed:
 
-```
-src/data/
-  constants.js          # Pure enums (NODE_CATEGORIES, EXERCISE_TYPES)
-  nodeTypes.js          # Node type enum + metadata
+```bash
+# Verify versions (optional)
+npm list framer-motion react-confetti lucide-react tailwindcss clsx
 
-  units/
-    treble/
-      unit1.js          # First Steps (C, D, E)
-      unit2.js          # Growing Range (F, G)
-      unit3.js          # Full Octave (A, B, C5)
-      index.js          # Combines & exports all treble nodes
-
-    bass/
-      unit1.js          # Middle C Position (C4, B3, A3)
-      unit2.js          # Five Finger Low (G3, F3)
-      unit3.js          # Full Octave (E3, D3, C3)
-      index.js          # Combines & exports all bass nodes
-
-    rhythm/
-      unit1.js          # Basic beats (whole, half, quarter)
-      unit2.js          # + Dotted half
-      unit3.js          # + Eighth notes
-      unit4.js          # + Dotted quarter
-      unit5.js          # + Sixteenth notes
-      index.js          # Combines & exports all rhythm nodes
-
-  skillTrail.js         # Main entry point, combines all paths
-
-  validation/
-    nodeValidator.js    # Build-time validation functions
-    validateAll.mjs     # npm script for CI validation
-```
-
-### File Responsibilities
-
-| File | Responsibility | Imports | Exports |
-|------|---------------|---------|---------|
-| constants.js | Pure enums | Nothing | NODE_CATEGORIES, EXERCISE_TYPES |
-| nodeTypes.js | Node type system | Nothing | NODE_TYPES, NODE_TYPE_METADATA, helper functions |
-| units/{path}/unit{N}.js | One unit definition | constants, nodeTypes | Array of node objects |
-| units/{path}/index.js | Combine units | unit files | TREBLE_NODES, BASS_NODES, etc. |
-| skillTrail.js | Main API | unit indexes | SKILL_NODES, getter functions |
-| nodeValidator.js | Validation | constants, nodeTypes | validateNode, validatePrerequisites, etc. |
-
-### Why This Organization
-
-1. **One file per unit:** Easy to find, easy to diff, easy to review pedagogy
-2. **Path-specific index files:** Allows path-specific helper functions if needed
-3. **Central skillTrail.js:** Single entry point for consumers (services, components)
-4. **Separate validation:** Can run at build time without runtime overhead
-
-### What NOT to do
-
-- **Single giant file:** Don't put all 90+ nodes in one file
-- **Generated content mixed with explicit:** Don't have some units generated, some explicit
-- **Circular imports:** Don't import skillTrail.js from unit files
-- **Runtime validation only:** Don't skip build-time validation
-
----
-
-## Prerequisite Chain Pattern
-
-### Recommended: String-based IDs with Build-time Validation
-
-**Node definition:**
-```javascript
-{
-  id: 'treble_2_2',
-  prerequisites: ['treble_2_1'],  // String reference
-  // ...
-}
-```
-
-**Validation function (run at build time):**
-```javascript
-export function validatePrerequisites(allNodes) {
-  const nodeIds = new Set(allNodes.map(n => n.id));
-  const errors = [];
-
-  for (const node of allNodes) {
-    for (const prereq of node.prerequisites) {
-      if (!nodeIds.has(prereq)) {
-        errors.push(`Node ${node.id} has invalid prerequisite: ${prereq}`);
-      }
-    }
-  }
-
-  // Check for cycles
-  const visited = new Set();
-  const recursionStack = new Set();
-
-  function hasCycle(nodeId) {
-    if (recursionStack.has(nodeId)) return true;
-    if (visited.has(nodeId)) return false;
-
-    visited.add(nodeId);
-    recursionStack.add(nodeId);
-
-    const node = allNodes.find(n => n.id === nodeId);
-    if (node) {
-      for (const prereq of node.prerequisites) {
-        if (hasCycle(prereq)) {
-          errors.push(`Cycle detected involving: ${nodeId}`);
-          return true;
-        }
-      }
-    }
-
-    recursionStack.delete(nodeId);
-    return false;
-  }
-
-  for (const node of allNodes) {
-    hasCycle(node.id);
-  }
-
-  return errors;
-}
-```
-
-**Why string-based:**
-- Simple to understand
-- Easy to serialize (database, JSON export)
-- Allows cross-file references
-- Avoids import order issues
-
-**Why build-time validation:**
-- Catches typos immediately
-- Catches circular dependencies
-- Catches orphaned nodes (no path to them)
-- Zero runtime cost
-
-### Alternative: Typed References (NOT RECOMMENDED)
-
-```javascript
-// This creates import complexity
-import { treble_1_1 } from './treble/unit1';
-
-export const treble_2_1 = {
-  id: 'treble_2_1',
-  prerequisites: [treble_1_1],  // Object reference
-};
-```
-
-**Why not recommended:**
-- Requires exporting individual nodes
-- Creates complex import graphs
-- Harder to validate
-- No benefit over string + validation
-
----
-
-## Node Type Classification Pattern
-
-### Current Implementation (GOOD)
-
-The existing `nodeTypes.js` is well-designed. Extend it, don't replace it.
-
-```javascript
-// Node type enum
-export const NODE_TYPES = {
-  DISCOVERY: 'discovery',
-  PRACTICE: 'practice',
-  MIX_UP: 'mix_up',
-  SPEED_ROUND: 'speed_round',
-  REVIEW: 'review',
-  CHALLENGE: 'challenge',
-  MINI_BOSS: 'mini_boss',
-  BOSS: 'boss'
-};
-
-// Metadata for each type
-export const NODE_TYPE_METADATA = {
-  [NODE_TYPES.DISCOVERY]: {
-    icon: 'magnifying-glass',
-    color: 'blue',
-    label: 'Learn',
-    duration: '3-4 min',
-    purpose: 'Introduce new notes',
-    childThinks: 'Ooh, something NEW!'
-  },
-  // ...
-};
-
-// Helper functions
-export function getNodeTypeStyle(nodeType) {
-  return NODE_TYPE_METADATA[nodeType] || NODE_TYPE_METADATA[NODE_TYPES.PRACTICE];
-}
-```
-
-### Pattern Extension for Rhythm Path
-
-Rhythm nodes need additional metadata since they don't have `noteConfig`:
-
-```javascript
-// rhythmComplexity.js (new file or extend nodeTypes.js)
-export const RHYTHM_COMPLEXITY = {
-  SIMPLE: 'simple',       // Whole, half, quarter only
-  MEDIUM: 'medium',       // + Dotted half
-  VARIED: 'varied',       // + Eighth notes
-  ADVANCED: 'advanced',   // + Dotted quarter
-  EXPERT: 'expert'        // + Sixteenth notes
-};
-
-export const RHYTHM_COMPLEXITY_METADATA = {
-  [RHYTHM_COMPLEXITY.SIMPLE]: {
-    allowedDurations: ['w', 'h', 'q'],
-    description: 'Whole, half, and quarter notes',
-    minTempo: 60,
-    maxTempo: 80
-  },
-  // ...
-};
-```
-
-### Node Definition with Type Classification
-
-```javascript
-{
-  id: 'rhythm_1_2',
-  name: 'Quarter Notes',
-  nodeType: NODE_TYPES.PRACTICE,  // From NODE_TYPES enum
-
-  // For rhythm nodes: rhythmConfig instead of noteConfig
-  rhythmConfig: {
-    complexity: RHYTHM_COMPLEXITY.SIMPLE,
-    focusRhythm: 'quarter',           // What's being introduced
-    contextRhythms: ['whole', 'half'], // Already known
-    allowedDurations: ['w', 'h', 'q'],
-    tempo: { min: 60, max: 80, default: 70 }
-  },
-
-  // ...
-}
+# Current versions (from package.json)
+# framer-motion@12.23.26 ✓
+# react-confetti@6.2.3 ✓
+# lucide-react@0.344.0 ✓
+# tailwindcss@3.4.1 ✓
+# clsx@2.1.1 ✓
 ```
 
 ---
 
-## Validation Approach
+## Alternatives Considered
 
-### Build-time Validation Script
+| Recommended | Alternative | When to Use Alternative | Why We Didn't |
+|-------------|-------------|-------------------------|---------------|
+| **Framer Motion v12** | Motion (new package, v13) | New projects starting from scratch | Migration required. v12 is actively maintained. No benefit for this milestone. [Motion upgrade guide](https://motion.dev/docs/react-upgrade-guide) |
+| **react-confetti** | react-confetti-explosion | Need confetti burst at specific point (not fullscreen) | Boss unlocks benefit from fullscreen confetti. `react-confetti` is more flexible. |
+| **Tailwind keyframes** | Animate.css, React Spring | Need complex animation sequences | Tailwind keyframes + Framer Motion cover all use cases. Adding another library increases bundle size. |
+| **lucide-react** | react-icons (Font Awesome, Hero Icons) | Need specific icon set not in lucide | lucide has 1500+ icons, sufficient for node types. `react-icons` already installed as fallback. [Lucide icon browser](https://lucide.dev/icons) |
 
-Create `scripts/validateTrail.mjs`:
+---
 
-```javascript
-#!/usr/bin/env node
-import { SKILL_NODES } from '../src/data/skillTrail.js';
-import { NODE_TYPES } from '../src/data/nodeTypes.js';
-import { NODE_CATEGORIES, EXERCISE_TYPES } from '../src/data/constants.js';
+## What NOT to Use
 
-const errors = [];
-const warnings = [];
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| **GSAP** | 45KB library for timeline animations. Overkill for simple celebrations. Framer Motion handles all use cases. | Framer Motion (already installed) |
+| **Lottie animations** | JSON-based animations require design files and lottie-react (68KB). Too heavy for PWA. | CSS keyframes + Framer Motion |
+| **react-spring** | Lower-level spring physics library. More boilerplate than Framer Motion. 22KB vs 34KB (Framer). | Framer Motion (simpler API, better DX) |
+| **anime.js** | Vanilla JS animation library. No React integration. Manual DOM manipulation. | Framer Motion (React-first) |
+| **Particles.js** | Heavy particle system (100KB+). Boss confetti doesn't need this complexity. | react-confetti (5KB, canvas-based) |
+| **Framer Motion v13 (motion package)** | Breaking changes from v12. Requires codebase refactor. No new features needed for this milestone. | Keep Framer Motion v12 (actively maintained) |
 
-// 1. Validate each node has required fields
-function validateNodeStructure(node) {
-  const required = ['id', 'name', 'category', 'prerequisites', 'exercises'];
-  for (const field of required) {
-    if (node[field] === undefined) {
-      errors.push(`Node ${node.id || 'UNNAMED'}: missing required field '${field}'`);
-    }
-  }
+---
 
-  // Validate category
-  if (!Object.values(NODE_CATEGORIES).includes(node.category)) {
-    errors.push(`Node ${node.id}: invalid category '${node.category}'`);
-  }
+## Stack Patterns by Use Case
 
-  // Validate nodeType if present
-  if (node.nodeType && !Object.values(NODE_TYPES).includes(node.nodeType)) {
-    errors.push(`Node ${node.id}: invalid nodeType '${node.nodeType}'`);
-  }
+### If Node Type is Discovery/Practice (Low-key Celebration)
+- **Animation:** Subtle fade-in + scale with Framer Motion spring
+- **Duration:** 400ms
+- **Visual:** Soft color glow (Tailwind `shadow-[color]/40`)
+- **Sound:** Optional quiet chime (Web Audio API, already used for games)
 
-  // Validate exercises
-  for (const ex of node.exercises || []) {
-    if (!Object.values(EXERCISE_TYPES).includes(ex.type)) {
-      errors.push(`Node ${node.id}: invalid exercise type '${ex.type}'`);
-    }
-  }
-}
+### If Node Type is Mini-Boss (Medium Celebration)
+- **Animation:** Bounce entrance + star burst (Tailwind `animate-bounce`)
+- **Duration:** 800ms
+- **Visual:** Crown emoji (👑) with `animate-wiggle`
+- **Sound:** Triumphant ding
 
-// 2. Validate prerequisites exist and no cycles
-function validatePrerequisites(nodes) {
-  const nodeIds = new Set(nodes.map(n => n.id));
+### If Node Type is Boss (Full Celebration)
+- **Animation:** Fullscreen confetti + sequential text animations
+- **Duration:** 3 seconds
+- **Visual:** `react-confetti` with 200 pieces + trophy icon (🏆)
+- **Modal:** Boss unlock modal with unit summary
+- **Sound:** Victory fanfare
 
-  for (const node of nodes) {
-    for (const prereq of node.prerequisites || []) {
-      if (!nodeIds.has(prereq)) {
-        errors.push(`Node ${node.id}: prerequisite '${prereq}' does not exist`);
-      }
-    }
-  }
+### If XP Level-Up Occurs
+- **Animation:** Layered celebration (XP count-up THEN level-up badge)
+- **Duration:** 2 seconds (XP 1s, badge 1s)
+- **Visual:** Shimmer gradient background + badge with `animate-floatUp`
+- **Integration:** Framer Motion `AnimatePresence` for sequential timing
 
-  // Cycle detection
-  const visited = new Set();
-  const stack = new Set();
+---
 
-  function dfs(nodeId, path = []) {
-    if (stack.has(nodeId)) {
-      errors.push(`Cycle detected: ${[...path, nodeId].join(' -> ')}`);
-      return;
-    }
-    if (visited.has(nodeId)) return;
+## Version Compatibility
 
-    visited.add(nodeId);
-    stack.add(nodeId);
+| Package | Version | Compatible With | Notes |
+|---------|---------|-----------------|-------|
+| framer-motion | 12.23.26 | React 18.3.1 | v12 is stable. v13 (motion package) exists but requires migration. [Motion changelog](https://motion.dev/changelog) |
+| react-confetti | 6.2.3 | React 18.3.1 | Latest is v6.4.0 (minor updates). v6.2.3 is stable and sufficient. [react-confetti npm](https://www.npmjs.com/package/react-confetti) |
+| lucide-react | 0.344.0 | React 18.3.1 | Latest is v0.562.0 (200+ new icons). Can upgrade if needed, fully backward compatible. [lucide-react npm](https://www.npmjs.com/package/lucide-react) |
+| Tailwind CSS | 3.4.1 | PostCSS 8.4.35 | v4.0 exists (CSS-first config) but requires migration. v3.4.1 is stable and recommended. [Tailwind animation docs](https://tailwindcss.com/docs/animation) |
 
-    const node = nodes.find(n => n.id === nodeId);
-    if (node) {
-      for (const prereq of node.prerequisites || []) {
-        dfs(prereq, [...path, nodeId]);
-      }
-    }
+**Known Issues:**
+- Framer Motion v12 + React 18: No issues. Fully compatible.
+- react-confetti + mobile Safari: Occasionally choppy on older devices (pre-2020). Mitigation: Use `numberOfPieces={150}` instead of 200.
+- Tailwind animate utilities + `reducedMotion`: Manually disable via `prefers-reduced-motion` media query (already handled in `AnimationUtils.jsx`).
 
-    stack.delete(nodeId);
-  }
+---
 
-  for (const node of nodes) {
-    dfs(node.id);
-  }
-}
+## Performance Considerations (PWA Context)
 
-// 3. Validate pedagogy consistency
-function validatePedagogy(nodes) {
-  // Group by category
-  const byCategory = {};
-  for (const node of nodes) {
-    if (!byCategory[node.category]) byCategory[node.category] = [];
-    byCategory[node.category].push(node);
-  }
+### Bundle Size Impact
+| Addition | Size | Justification |
+|----------|------|---------------|
+| Framer Motion | 34KB (already installed) | Core animation engine, worth the weight |
+| react-confetti | 5KB (already installed) | Tiny, canvas-based, only used for boss unlocks |
+| lucide-react icons | ~500B per icon (tree-shaken) | Only import used icons. Estimated 8 icons × 500B = 4KB total |
+| Total NEW impact | **~4KB** (icons only) | Minimal. PWA target is <500KB, currently ~380KB |
 
-  // Check treble and bass have similar structure
-  const trebleCount = (byCategory['treble_clef'] || []).length;
-  const bassCount = (byCategory['bass_clef'] || []).length;
+### Runtime Performance
+- **Framer Motion:** Uses `transform` and `opacity` (GPU-accelerated). 60fps on mobile.
+- **react-confetti:** Canvas-based. Runs on separate thread. 200 particles = ~40fps on mid-range phones (acceptable for 3-second celebration).
+- **Tailwind keyframes:** Pure CSS animations. No JS overhead. 60fps on all devices.
 
-  if (Math.abs(trebleCount - bassCount) > 5) {
-    warnings.push(`Treble (${trebleCount}) and bass (${bassCount}) have very different node counts`);
-  }
+### Accessibility Performance
+- **reducedMotion detection:** Zero overhead (CSS media query or `window.matchMedia`).
+- **Animation opt-out:** Instant (`AnimationUtils.jsx` checks `reducedMotion` before rendering).
+- **High contrast:** Color adjustments via CSS custom properties (no runtime cost).
 
-  // Check node types are distributed in each category
-  for (const [category, catNodes] of Object.entries(byCategory)) {
-    const types = new Set(catNodes.map(n => n.nodeType).filter(Boolean));
-    if (types.size < 3 && catNodes.length > 5) {
-      warnings.push(`Category '${category}' has limited node type variety (${types.size} types)`);
-    }
-  }
-}
+**Recommendation:** Profile boss confetti on target device (8-year-old's tablet/phone). If <30fps, reduce `numberOfPieces` to 100.
 
-// 4. Check for duplicate IDs
-function validateUniqueIds(nodes) {
-  const seen = new Set();
-  for (const node of nodes) {
-    if (seen.has(node.id)) {
-      errors.push(`Duplicate node ID: '${node.id}'`);
-    }
-    seen.add(node.id);
-  }
-}
+---
 
-// Run all validations
-console.log(`Validating ${SKILL_NODES.length} nodes...\n`);
+## Integration Points with Existing Codebase
 
-for (const node of SKILL_NODES) {
-  validateNodeStructure(node);
-}
-validatePrerequisites(SKILL_NODES);
-validatePedagogy(SKILL_NODES);
-validateUniqueIds(SKILL_NODES);
+### 1. VictoryScreen.jsx Enhancement
+**Current state:** Shows stars, XP, count-up animation (lines 641-687)
+**Changes needed:**
+- Add `nodeType` prop (from `getNodeById(nodeId).nodeType`)
+- Map `nodeType` to celebration variant (discovery/practice/boss)
+- Conditionally render confetti for boss nodes
+- Use Framer Motion variants for node-type-specific entrance
 
-// Report results
-if (warnings.length > 0) {
-  console.log('WARNINGS:');
-  warnings.forEach(w => console.log(`  - ${w}`));
-  console.log('');
-}
+**Example:**
+```jsx
+// VictoryScreen.jsx
+const nodeData = nodeId ? getNodeById(nodeId) : null;
+const nodeType = nodeData?.nodeType || 'practice';
+const isBoss = nodeType === NODE_TYPES.BOSS;
 
-if (errors.length > 0) {
-  console.log('ERRORS:');
-  errors.forEach(e => console.log(`  - ${e}`));
-  console.log('');
-  process.exit(1);
-} else {
-  console.log('All validations passed!');
-  process.exit(0);
-}
+// Confetti for boss nodes only
+{isBoss && !reducedMotion && (
+  <Confetti recycle={false} numberOfPieces={200} gravity={0.3} />
+)}
+
+// Node-type-specific celebration message
+<motion.h2
+  initial={{ opacity: 0, y: -20 }}
+  animate={{ opacity: 1, y: 0 }}
+  className="text-2xl font-bold"
+>
+  {t(`trail:celebrations.${nodeType}`)}
+</motion.h2>
 ```
 
-### Add to package.json
+### 2. TrailNode.jsx Enhancement
+**Current state:** Shows state icon (lock, play, checkmark) + stars (lines 96-164)
+**Changes needed:**
+- Replace emoji icons with lucide-react components
+- Add background color gradient based on `NODE_TYPE_METADATA.color`
+- Add subtle hover animation (scale + glow)
 
-```json
-{
-  "scripts": {
-    "validate:trail": "node scripts/validateTrail.mjs"
-  }
-}
+**Example:**
+```jsx
+import { BookOpen, Target, Zap, Trophy } from 'lucide-react';
+
+const ICON_COMPONENTS = {
+  [NODE_TYPES.DISCOVERY]: BookOpen,
+  [NODE_TYPES.PRACTICE]: Target,
+  [NODE_TYPES.SPEED_ROUND]: Zap,
+  [NODE_TYPES.BOSS]: Trophy
+};
+
+const IconComponent = ICON_COMPONENTS[node.nodeType] || Target;
+
+<motion.div whileHover={{ scale: 1.05 }}>
+  <IconComponent className="w-6 h-6 text-white" />
+</motion.div>
 ```
 
-### Integration with CI/Build
+### 3. Dashboard XP Display
+**Current state:** XP shown in user profile card (likely `Dashboard.jsx`)
+**Changes needed:**
+- Make XP display more prominent (larger font, gradient background)
+- Add level badge next to XP total
+- Animate on mount with Framer Motion `layoutId` for shared element transition
 
-Run `npm run validate:trail` in:
-- Pre-commit hook (via husky)
-- CI pipeline
-- Build process
+**Example:**
+```jsx
+<motion.div
+  layoutId="xp-display"
+  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl"
+>
+  <p className="text-sm">Total XP</p>
+  <p className="text-3xl font-bold">{totalXP.toLocaleString()}</p>
+  <p className="text-xs">Level {currentLevel}</p>
+</motion.div>
+```
 
----
+### 4. Node Type Icons (Global)
+**Current state:** `NODE_TYPE_METADATA` uses emoji icons (🔍, 🎹, etc.)
+**Changes needed:**
+- Create `NODE_TYPE_ICONS` map with lucide-react components
+- Update `getNodeTypeIcon()` to return React component instead of emoji
 
-## Integration with Existing Node Types
-
-The existing `nodeTypes.js` defines 8 node types with excellent metadata. Each unit should follow this pattern:
-
-### Unit Structure Template (8 nodes per unit)
-
-| Node # | Node Type | Purpose | Notes |
-|--------|-----------|---------|-------|
-| 1 | DISCOVERY | Introduce first new concept | Single new note or rhythm |
-| 2 | DISCOVERY | Introduce second new concept | Builds on first |
-| 3 | PRACTICE | Drill both new concepts | Sight reading focus |
-| 4 | MIX_UP | Fun variation (Memory Game) | Engagement break |
-| 5 | DISCOVERY (optional) | Third concept if needed | OR additional PRACTICE |
-| 6 | PRACTICE | Consolidate all concepts | Longer exercises |
-| 7 | SPEED_ROUND | Timed challenge | Builds fluency |
-| 8 | MINI_BOSS | Unit checkpoint | All concepts, earns badge |
-
-### Rhythm Path Exception
-
-Rhythm units may have different structure since they focus on duration types rather than pitches:
-
-| Node # | Node Type | Purpose | Notes |
-|--------|-----------|---------|-------|
-| 1 | DISCOVERY | New duration (e.g., eighth notes) | Audio + visual intro |
-| 2 | PRACTICE | Count the new rhythm | Metronome exercises |
-| 3 | MIX_UP | Rhythm matching game | Engagement break |
-| 4 | PRACTICE | Mix new + known rhythms | Interleaving |
-| 5 | CHALLENGE | Complex patterns | Higher difficulty |
-| 6 | MINI_BOSS | Unit test | All rhythms learned |
-
----
-
-## Recommendations Summary
-
-### DO
-
-1. **Use explicit node definitions** - Every node is a complete object
-2. **Organize by path and unit** - `src/data/units/{path}/unit{N}.js`
-3. **Use string-based prerequisites** - Simple, serializable, validatable
-4. **Add build-time validation** - `npm run validate:trail` catches errors early
-5. **Follow node type pattern per unit** - Consistent pedagogical journey
-6. **Keep constants separate** - `constants.js` has no logic or imports
-
-### DO NOT
-
-1. **Generate nodes programmatically** - Hides pedagogy, creates inconsistency
-2. **Put all nodes in one file** - Unmanageable, hard to review
-3. **Skip validation** - Typos in prerequisites cause runtime errors
-4. **Mix generated and explicit nodes** - Creates two systems
-5. **Import skillTrail from unit files** - Creates circular dependencies
-
----
-
-## Migration Path
-
-### Step 1: Create bass unit files
-
-Create `src/data/units/bass/unit1.js`, etc. using treble units as template.
-
-### Step 2: Create rhythm unit files
-
-Create `src/data/units/rhythm/unit1.js`, etc. following rhythm-specific template.
-
-### Step 3: Update skillTrail.js
-
-Import from new unit index files, remove LEGACY_NODES.
-
-### Step 4: Add validation script
-
-Create `scripts/validateTrail.mjs`, add to package.json and pre-commit hook.
-
-### Step 5: Delete nodeGenerator.js
-
-Remove generator after all units are explicit.
-
-### Step 6: Test with existing services
-
-Ensure skillProgressService.js works with new structure (it should - same API).
-
----
-
-## Confidence Assessment
-
-| Area | Confidence | Reason |
-|------|------------|--------|
-| Explicit definitions pattern | HIGH | Already proven in treble redesign |
-| File organization | HIGH | Standard JS module patterns |
-| Prerequisite validation | HIGH | Simple graph algorithms |
-| Node type integration | HIGH | Existing nodeTypes.js is well-designed |
-| Rhythm path structure | MEDIUM | May need iteration based on game requirements |
+**Location:** `src/data/nodeTypes.js`
 
 ---
 
 ## Sources
 
-- Existing codebase: `src/data/skillTrail.js`, `src/data/nodeTypes.js`
-- Existing redesigned units: `src/data/units/trebleUnit1Redesigned.js`
-- Existing generator (anti-pattern): `src/utils/nodeGenerator.js`
-- Existing validation pattern: `scripts/patternVerifier.mjs`
+### Official Documentation
+- [Framer Motion v12 Docs](https://motion.dev/) — Animation API reference
+- [Motion Upgrade Guide](https://motion.dev/docs/react-upgrade-guide) — v12 → v13 migration (NOT needed)
+- [Motion Changelog](https://motion.dev/changelog) — Recent updates (GPU animation fix, Jan 2026)
+- [react-confetti npm](https://www.npmjs.com/package/react-confetti) — Latest version v6.4.0
+- [react-confetti GitHub](https://github.com/alampros/react-confetti) — API documentation
+- [lucide-react npm](https://www.npmjs.com/package/lucide-react) — Latest version v0.562.0
+- [Lucide Icon Browser](https://lucide.dev/icons) — Browse 1500+ icons
+- [Tailwind CSS Animation Docs](https://tailwindcss.com/docs/animation) — Built-in animation utilities
+
+### Community Resources
+- [Tailwind Animation Guide (Tailkits)](https://tailkits.com/blog/tailwind-animation-utilities/) — Custom keyframes patterns
+- [Creating Custom Animations with Tailwind (LogRocket)](https://blog.logrocket.com/creating-custom-animations-tailwind-css/) — Best practices 2026
+- [React Confetti Comparison (CodiLime)](https://codilime.com/blog/react-confetti/) — Library comparison
+- [React Confetti vs Alternatives (npm-compare)](https://npm-compare.com/canvas-confetti,react-confetti,react-confetti-explosion) — Bundle size comparison
+
+### WebSearch Queries (2026-02-05)
+- "framer-motion latest version 2026 changelog" — Verified v12 is actively maintained
+- "react-confetti latest version 2026 alternative libraries" — Confirmed v6.2.3 is stable, v6.4.0 is latest
+- "tailwind css animation keyframes best practices 2026" — Confirmed CSS-first approach for v4 (not migrating)
+- "lucide-react icons latest version 2026 celebration gaming icons" — Verified 1500+ icons available
+
+**Confidence Level:** HIGH
+- All libraries verified with official npm pages and changelogs
+- Versions cross-referenced with installed package.json
+- Best practices from 2026 community resources (Tailkits, LogRocket)
+- No breaking changes required for this milestone
+
+---
+
+*Stack research for: Piano learning PWA celebration animations*
+*Researched: 2026-02-05*
+*Focus: Milestone v1.4 UI Polish & Celebrations*

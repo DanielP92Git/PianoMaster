@@ -1,452 +1,568 @@
-# Educational Progression Features Research
+# Feature Landscape: Celebration & Reward Systems
+
+**Domain:** Educational gamification for 8-year-old piano learners
+**Researched:** 2026-02-05
+**Confidence:** HIGH
 
 ## Executive Summary
 
-This research analyzes how successful educational apps structure learning progression for children, with specific focus on 8-year-old piano learners. Key findings are drawn from Duolingo (language learning), Simply Piano/Yousician/Flowkey (music learning), and educational psychology research on children's cognition and motivation.
+Celebration systems in educational apps for 8-year-olds must balance **delight** with **meaningfulness**. Research shows that over-celebration causes "gamification fatigue" where rewards lose significance, while under-celebration fails to reinforce learning achievements. The optimal approach uses **tiered celebrations** (basic → special → epic) matched to achievement significance, **variety** to prevent monotony, and **intrinsic motivation** (progress, mastery) over extrinsic rewards (points, badges).
 
-**Key Finding**: The current 8-node-per-unit structure in the PianoApp is well-aligned with research. The variety of node types (Discovery, Practice, Mix-Up, Speed Round, Mini-Boss) is a strength that should be preserved and potentially expanded.
-
-**Researched:** February 3, 2026
-**Confidence:** MEDIUM (based on available research, some WebSearch sources could not be fully verified)
+**Key insight:** Children think "If everything is special, nothing is special." Boss unlocks and perfect scores should feel dramatically different from routine completions.
 
 ---
 
-## Table Stakes
+## Table Stakes Features
 
-Features users expect. Missing = product feels incomplete or disengaging.
+Features users expect. Missing these = celebrations feel incomplete or meaningless.
 
-### 1. Optimal Unit/Node Structure: 6-10 Nodes Per Unit
+### 1. Visual Feedback on Completion ⭐⭐⭐
+**Why expected:** Every educational app since 2020 shows immediate visual feedback on task completion.
 
-| Criterion | Recommendation | Evidence |
-|-----------|---------------|----------|
-| Nodes per unit | 6-10 nodes | Duolingo uses ~8 "steps" per unit; your current 8 nodes aligns perfectly |
-| Session duration | 15-25 minutes | Research shows 8-year-olds have attention spans of approximately 10-15 minutes for focused tasks; your 25-30 minute target per unit works with breaks between nodes |
-| Node duration | 2-4 minutes each | Matches current design; keeps individual activities short and achievable |
+| Aspect | Requirement | Notes |
+|--------|-------------|-------|
+| **Trigger** | Every node completion | No silent completions |
+| **Timing** | <100ms after final answer | Instant gratification critical for 8-year-olds |
+| **Visual** | Stars appear, checkmark, confetti | Multi-modal (shape + motion + color) |
+| **Complexity** | Simple | Low cognitive load |
 
-**Current State**: Your Unit 1 has 8 nodes (3-4 min each) - this is OPTIMAL. Do not increase node count significantly.
+**Implementation:** VictoryScreen already shows stars (existing). Enhance with brief confetti burst on 2-3 stars.
 
-**Sources**:
-- [Frontiers in Education: Gamified Educational Applications for Children](https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2025.1668260/full)
-- [Engaging Children with Educational Content via Gamification](https://slejournal.springeropen.com/articles/10.1186/s40561-019-0085-2)
-
-### 2. Progressive Difficulty with "Stair-Step" Pattern
-
-| Pattern Element | Implementation |
-|-----------------|----------------|
-| Gradual increase | Each node slightly harder than previous |
-| Reset points | New unit starts slightly easier than end of previous |
-| Recovery periods | After challenging content, provide easier practice |
-
-**Why It Works**: Research shows the "stair-step difficulty curve" prevents fatigue by allowing recovery after intense challenges. The initial difficulty of a new task should be set slightly lower than the final difficulty of the preceding one.
-
-**Current Implementation**: Your Discovery -> Practice -> Mix-Up -> Speed Round -> Mini-Boss pattern already follows this. Discovery nodes are easier entry points; Mini-Boss tests cumulative knowledge.
-
-**Sources**:
-- [Design Components of Serious Games Based on Flow Theories](https://clausiuspress.com/assets/default/article/2025/05/31/article_1748743350.pdf)
-- [Psychology of Game Difficulty: Balancing Fun and Frustration](https://fact2day.com/psychology-of-game-difficulty/)
-
-### 3. Mastery Thresholds: 80-90% for Progression
-
-| Threshold | Stars | Recommendation |
-|-----------|-------|----------------|
-| 60% | 1 star | Minimum completion (allows progress but signals need for review) |
-| 80% | 2 stars | Solid understanding - research standard for "mastery learning" |
-| 95% | 3 stars | Excellence - higher threshold promotes retention per research |
-
-**Research Finding**: Studies show mastery criteria of 90%+ produce significantly higher levels of accurate responding during maintenance than 80% criteria. However, 80% is the widely accepted minimum for "mastery" in educational research.
-
-**Current Implementation**: Your 60%/80%/95% thresholds are well-designed. The 95% for 3 stars encourages perfection-seeking without making it required for progression.
-
-**Sources**:
-- [Mastery Learning - Education Endowment Foundation](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/mastery-learning)
-- [Mastery Criteria and Skill Maintenance in Children](https://onlinelibrary.wiley.com/doi/full/10.1002/bin.1778)
-- [Phonics Hero: Mastery in Phonics Learning](https://phonicshero.com/mastery_phonics/)
-
-### 4. Node Type Variety (Minimum 3-4 Types)
-
-| Node Type | Purpose | Cognitive Mode |
-|-----------|---------|----------------|
-| Discovery | Introduce new content | Receptive learning |
-| Practice | Apply knowledge | Active recall |
-| Mix-Up/Memory | Reinforce connections | Spaced retrieval |
-| Speed Round | Build fluency | Automaticity |
-| Boss/Challenge | Cumulative assessment | Integration |
-
-**Research Finding**: "Choosing apps that offer a variety of different activities rather than repetitive tasks can help keep children motivated and entertained for longer periods of time." Multi-modal learning (visual, auditory, kinesthetic) improves retention.
-
-**Current Implementation**: Your 5 node types provide excellent variety. This is a competitive strength.
-
-**Sources**:
-- [Fostering Children's Acceptance of Educational Apps](https://bera-journals.onlinelibrary.wiley.com/doi/10.1111/bjet.13314)
-- [Duolingo's Approach to Skill Coverage](https://blog.duolingo.com/covering-all-the-bases-duolingos-approach-to-speaking-skills/)
-
-### 5. Immediate, Clear Feedback
-
-| Feedback Type | When | What |
-|---------------|------|------|
-| Correct answer | Immediately | Visual + audio positive reinforcement |
-| Incorrect answer | Immediately | Show correct answer, no harsh penalty |
-| Progress | After each question | Progress bar or counter |
-| Completion | End of node | Stars, XP, celebration |
-
-**Research Finding**: "When a learner fails a task, the system should not impose penalties but assess the causes of failure, provide immediate feedback, and offer possible solutions when necessary."
-
-**Why 8-Year-Olds Need This**: Children at this age are developing self-efficacy beliefs. Immediate, constructive feedback helps them understand mistakes are learning opportunities, not failures.
-
-**Sources**:
-- [Flow Theory and Learning Experience Design](https://edtechbooks.org/ux/flow_theory_and_lxd)
-- [Game-Based Learning in Early Childhood Education](https://pmc.ncbi.nlm.nih.gov/articles/PMC11018941/)
-
-### 6. Visual Progress Indicators
-
-| Indicator | Purpose |
-|-----------|---------|
-| Unit progress bar | Shows completion within current unit |
-| Overall trail map | Shows position in learning journey |
-| Star display on completed nodes | Shows mastery level achieved |
-| XP/Level display | Shows cumulative achievement |
-
-**Research Finding**: Visualizations enhance perceptual salience and compress information into more digestible forms, especially for children. Progress indicators give children tangible evidence of advancement.
-
-**Current Implementation**: Your TrailMap with star ratings on nodes implements this well.
-
-**Sources**:
-- [How Educational Are 'Educational' Apps for Young Children?](https://pmc.ncbi.nlm.nih.gov/articles/PMC8916741/)
+**Age-appropriateness:** ✅ 8-year-olds need immediate, visible confirmation of success. Delayed feedback (>500ms) causes confusion about what triggered the reward.
 
 ---
 
-## Differentiators
+### 2. Differentiated Celebrations by Achievement Level ⭐⭐⭐
+**Why expected:** Duolingo, Khan Academy, and all major learning apps scale celebration intensity to achievement significance.
 
-Features that set the product apart. Not expected, but highly valued if present.
+| Achievement | Celebration Intensity | Visual Effect | Duration |
+|-------------|----------------------|---------------|----------|
+| 1 star (60-79%) | Minimal | Small confetti, single color | 1-2s |
+| 2 stars (80-94%) | Moderate | Medium confetti, 2-3 colors | 2-3s |
+| 3 stars (95%+) | High | Large confetti, sparkles, rainbow | 3-4s |
+| Boss node complete | Epic | Fireworks, multi-phase, special modal | 5-6s |
+| Level up | Special | Badge reveal, level-up animation | 4-5s |
 
-### 1. Intelligent Spaced Repetition (Review Nodes)
+**Why this matters:** Research shows children develop learned helplessness when effort doesn't correlate with reward. A child who gets 60% should not receive the same celebration as 95%.
 
-| Feature | Implementation |
-|---------|----------------|
-| Automatic review scheduling | System tracks when skills need reinforcement |
-| Review nodes | Dedicated nodes that revisit earlier content |
-| Interleaved practice | Mix old and new content naturally |
+**Age-appropriateness:** ✅ 8-year-olds understand graduated rewards. Star ratings map to school grading systems they already know.
 
-**Research Finding**: "Integrating spaced repetition content selection strategy in mobile learning games not only fosters learning more efficiently, but also keeps learners/players more motivated as their performance increases over time."
+**Complexity:** Medium (requires celebration type logic + node type awareness)
 
-**Gap in Current Design**: Your node types don't include a dedicated REVIEW type. Consider adding:
-- `REVIEW` nodes that appear after completing a unit
-- Algorithm that schedules review based on time since last practice
-- Integration with daily goals ("Review 3 notes from Unit 1")
+**Sources:**
+- [Duolingo Streak & XP Boost Engagement](https://www.orizon.co/blog/duolingos-gamification-secrets)
+- [Khan Academy Gamification Case Study](https://trophy.so/blog/khan-academy-gamification-case-study)
 
-**Implementation Recommendation**:
-```javascript
-{
-  nodeType: NODE_TYPES.REVIEW,
-  reviewsUnits: [1, 2],  // Reviews content from Units 1 and 2
-  reviewNotes: ['C4', 'D4', 'E4', 'F4', 'G4'],  // Specific notes to review
+---
+
+### 3. Node Type Visual Distinction ⭐⭐
+**Why expected:** Trail systems (Duolingo paths) use color/icon coding to help users navigate the learning journey.
+
+| Node Type | Icon | Color | Purpose Communicated |
+|-----------|------|-------|---------------------|
+| Discovery | 🔍 | Blue | "I'm learning something NEW" |
+| Practice | 🎹 | Green | "I'm getting better" |
+| Mix-Up | 🎮 | Purple | "This is FUN!" |
+| Speed Round | ⚡ | Orange | "Beat the clock!" |
+| Review | 🔁 | Gray | "I still remember!" |
+| Challenge | 💪 | Amber | "Harder... but I can do it!" |
+| Mini-Boss | 👑 | Yellow | "I've learned SO MUCH!" |
+| Boss | 🏆 | Red | "EPIC CHALLENGE!" |
+
+**Why this matters:** 8-year-olds have ~20-minute attention spans for similar tasks. Visual variety signals "this is different" and resets engagement.
+
+**Implementation:** Add icon + color badge to TrailNode, TrailNodeModal, and VictoryScreen header.
+
+**Complexity:** Simple (presentational component using existing nodeTypes.js metadata)
+
+**Age-appropriateness:** ✅ Icon + color coding is developmentally appropriate. 8-year-olds process visual symbols faster than text labels.
+
+**Sources:**
+- [UX Design for Kids Best Practices](https://www.ramotion.com/blog/ux-design-for-kids/)
+- Existing codebase: `src/data/nodeTypes.js` (already defines icon/color mapping)
+
+---
+
+### 4. XP Visibility in Dashboard ⭐⭐⭐
+**Why expected:** All gamification systems (Duolingo, Khan Academy, educational games) display progress persistently, not just on victory screens.
+
+| Display Location | Information Shown | Update Frequency |
+|------------------|-------------------|------------------|
+| Dashboard (top section) | Level, XP progress bar, XP to next level | On load + after game |
+| Header (compact) | Current level icon + mini progress | Persistent |
+| VictoryScreen | XP breakdown, level-up animation | Post-game only |
+
+**Why this matters:** Research shows "XP that users don't see doesn't motivate behavior. Visibility is as important as the point values themselves." ([Trophy: When Your App Needs an XP System](https://trophy.so/blog/when-your-app-needs-xp-system))
+
+**Current gap:** Dashboard shows streak but NOT XP/level. XP is only visible post-game in VictoryScreen.
+
+**Complexity:** Simple (query existing `students` table for `total_xp`, render progress bar)
+
+**Age-appropriateness:** ✅ Progress bars are universally understood by 8-year-olds. Visual metaphor of "filling up" taps into concrete operational thinking.
+
+**Sources:**
+- [Gamification in UX: How to Use Experience Points](https://differencebydesign.org/product-design/gamification-in-ux-how-to-use-experience-points-xp/)
+- [Game On: UI Design Meets Gamification](https://medium.com/@incharaprasad/game-on-ui-design-meets-gamification-a27d3a6de6b1)
+
+---
+
+### 5. Screen Reader Announcements for Celebrations ⭐
+**Why expected:** WCAG 2.1 Level AA compliance (required for school software).
+
+```html
+<div role="status" aria-live="polite" className="sr-only">
+  Congratulations! You earned 3 stars and 225 experience points!
+</div>
+```
+
+**Why this matters:** Visually impaired students should experience the same emotional reward as sighted students.
+
+**Complexity:** Simple (1-2 lines per celebration component)
+
+**Age-appropriateness:** ✅ Essential for inclusive education.
+
+---
+
+## Differentiator Features
+
+Features that make celebrations engaging for 8-year-olds. Not strictly expected, but highly valued.
+
+### 1. Node-Type-Specific Celebration Messaging ⭐⭐
+**Why valuable:** Generic "Good job!" doesn't reinforce what the child accomplished. Context-specific messages increase intrinsic motivation.
+
+| Node Type | Celebration Message Example |
+|-----------|----------------------------|
+| Discovery | "You discovered 2 new notes! 🔍" |
+| Practice | "Your skill is growing! 🎹" |
+| Mix-Up | "Game master! 🎮" |
+| Speed Round | "Lightning fast! ⚡" |
+| Review | "You still remember! 🔁" |
+| Challenge | "Challenge conquered! 💪" |
+| Mini-Boss | "Unit mastered! 👑" |
+| Boss | "LEGENDARY ACHIEVEMENT! 🏆" |
+
+**Why valuable:** Research on intrinsic motivation shows "celebrating progress and effort over outcomes helps children develop a growth mindset." ([Jan Peterson: Celebrating Milestones](https://janpetersoncdc.com/blog/celebrating-milestones-recognizing-and-supporting-child-development-progress/))
+
+**Complexity:** Simple (string mapping in celebrationConfig.js)
+
+**Age-appropriateness:** ✅ 8-year-olds respond strongly to specific praise ("You worked hard on X") vs. generic praise ("Good job").
+
+---
+
+### 2. Boss Unlock Event Modal 🏆⭐⭐⭐
+**Why valuable:** Creates memorable milestone moments. Marks transition between learning units.
+
+| Feature | Specification | Rationale |
+|---------|---------------|-----------|
+| **Trigger** | Boss node completion with 2+ stars | Rare event (12 bosses in 93 nodes = 12.9%) |
+| **Visual** | Full-screen modal, epic confetti (200+ particles), unit badge reveal | Multi-sensory celebration |
+| **Duration** | 5-6 seconds, requires button click to dismiss | Long enough to feel special, not auto-dismiss |
+| **Content** | Unit name, badge icon, "Next unit unlocked: [name]" | Clear progress narrative |
+| **Animation** | Fade-in modal → confetti burst → badge zoom-in → call-to-action | Sequenced for impact |
+
+**Why valuable:** Research shows milestone celebrations tap into intrinsic motivation ("When children experience the joy of accomplishment, they are more likely to be motivated by a genuine love for learning"). ([Brain Gym Jr: Intrinsic vs Extrinsic Motivation](https://www.braingymjr.com/blog/intrinsic-vs-extrinsic-motivation-for-children/))
+
+**Complexity:** Medium (new modal component, orchestration logic, animation sequencing)
+
+**Age-appropriateness:** ✅ 8-year-olds need clear "chapter breaks" in learning. Boss unlocks provide structure and anticipation ("What comes next?").
+
+**Celebration fatigue prevention:** Only triggered on boss nodes (rare), uses distinct visual language (modal vs. inline), requires user action to dismiss (intentional acknowledgment).
+
+**Sources:**
+- [Boss Battles in Education](https://educationgalaxy.com/documents/boss-battles/)
+- [How Duolingo Uses Gamification](https://www.orizon.co/blog/duolingos-gamification-secrets)
+
+---
+
+### 3. Progressive Disclosure of XP Breakdown ⭐⭐
+**Why valuable:** Teaches children the relationship between effort (perfect score) and reward (bonus XP).
+
+**Visual design (VictoryScreen):**
+```
+┌──────────────────────────────────┐
+│  ✨ XP Earned!                   │
+│                                  │
+│  Base XP        +150  🎯 [fade-in at 0ms]
+│  First Time     +25   🎉 [fade-in at 200ms]
+│  Three Stars    +50   ⭐ [fade-in at 400ms]
+│  ─────────────────────           │
+│  Total          +225  [fade-in at 600ms, zoom effect]
+│                                  │
+│  [Progress Bar] Level 5          │
+│  1,225 / 1,400 XP                │
+└──────────────────────────────────┘
+```
+
+**Why valuable:** Progressive disclosure prevents decision paralysis and respects attention span. ([Progressive Disclosure in AI-Powered Product Design](https://uxplanet.org/progressive-disclosure-in-ai-powered-product-design-978da0aaeb08))
+
+**Complexity:** Simple (stagger CSS animations with 200ms delay between items)
+
+**Age-appropriateness:** ✅ 8-year-olds can track 3-4 sequential items. Staggered reveal creates anticipation without overwhelming.
+
+---
+
+### 4. Star Reveal Animation (Pop-In Effect) ⭐
+**Why valuable:** Makes each star feel earned, not just displayed.
+
+**Animation pattern:**
+```css
+@keyframes star-pop {
+  0% { transform: scale(0) rotate(-180deg); }
+  50% { transform: scale(1.2) rotate(10deg); }
+  100% { transform: scale(1) rotate(0deg); }
 }
 ```
 
-**Sources**:
-- [Spaced Repetition Learning Games on Mobile Devices](https://www.researchgate.net/publication/268130455_Spaced_repetition_learning_games_on_mobile_devices_Foundations_and_perspectives)
-- [Funexpected Math: Interleaving, Feedback, and Spaced Repetition](https://funexpectedapps.com/en/blog-posts/math-learning-strategies-proven-to-work-interleaving-immediate-feedback-spaced-repetition)
+**Timing:** Stagger by 150ms per star (0ms, 150ms, 300ms)
 
-### 2. Adaptive Difficulty Within Nodes
+**Why valuable:** Research shows children aged 8 benefit from "straightforward game mechanics, immediate feedback, and frequent rewards." ([Gamification for Younger Students](https://link.springer.com/chapter/10.1007/978-981-96-6414-6_2))
 
-| Feature | How It Works |
-|---------|--------------|
-| Dynamic question count | If struggling, reduce questions; if excelling, maintain standard |
-| Tempo adjustment | Start slower, speed up as accuracy improves |
-| Hint system | Offer hints after 2 wrong answers on same type |
+**Complexity:** Simple (CSS animation, no JavaScript)
 
-**Research Finding**: "Adaptive scaffolding, through both individual and collaborative processes, and providing personalised adaptive feedback to improve students' performance" is a key success factor in gamified education.
+**Age-appropriateness:** ✅ Playful animation reinforces achievement without distraction.
 
-**Gap in Current Design**: Current nodes have fixed question counts and tempos. Consider:
-- If accuracy drops below 50% in first half, reduce remaining questions
-- If accuracy is 100% after 5 questions, offer optional challenge extension
-- Visual hints (staff line highlighting) for repeated mistakes
+---
 
-**Sources**:
-- [Latent Factors in Gamified Apps for Primary Education](https://pmc.ncbi.nlm.nih.gov/articles/PMC10126543/)
+### 5. Celebration Sound Effects (OPTIONAL - Defer to v2.0) 🔇⭐
+**Why valuable:** Multi-sensory feedback increases emotional impact.
 
-### 3. "Continue Learning" Smart Recommendations
+| Event | Sound | Duration | Rationale for Deferral |
+|-------|-------|----------|----------------------|
+| 1-2 stars | Soft chime | 0.5s | Low priority, visual sufficient |
+| 3 stars | Fanfare | 1.5s | Nice-to-have |
+| Boss unlock | Epic fanfare | 2s | Can add post-MVP |
+| Level up | Level-up jingle | 1.5s | Adds 5KB + sound files |
 
-| Feature | Recommendation Logic |
-|---------|---------------------|
-| Next recommended node | Based on: time since practice, stars earned, prerequisite completion |
-| Daily variety | Suggest different paths (Treble, Bass, Rhythm) to prevent monotony |
-| Struggle detection | If stuck on one path, suggest easier parallel content |
+**Why defer to v2.0:**
+- Many schools have sound disabled on devices
+- Adds 5KB (use-sound library) + 20-80KB (MP3 files) to bundle
+- Must respect `prefers-reduced-motion` (sound is motion for vestibular users)
+- Visual celebrations can validate engagement before adding audio layer
 
-**Gap Analysis**: Your `getNextRecommendedNode()` exists but could be enhanced with:
-- Time-decay factor (prioritize nodes not practiced recently)
-- Cross-path recommendations (if struggling with treble, suggest rhythm break)
-- Parent/teacher override capability
+**If implementing later:**
+- Use [use-sound](https://www.joshwcomeau.com/react/announcing-use-sound-react-hook/) library (5KB)
+- Keep sound files <20KB each (low bitrate MP3)
+- Mix at 50% volume to avoid startling children
+- Provide mute toggle in accessibility settings
 
-**Sources**:
-- [Simply Piano vs Yousician Comparison](https://www.omarimc.com/simply-piano-vs-yousician-vs-flowkey-review/)
+**Complexity:** Medium (sound file sourcing, volume balancing, accessibility considerations)
 
-### 4. Multiple Exercise Types Per Node (Sequential Mastery)
-
-| Feature | Value |
-|---------|-------|
-| 2-3 exercises per node | Deeper learning, varied practice |
-| Must complete all | Ensures thorough understanding |
-| Node stars = minimum across exercises | Encourages mastery of all exercise types |
-
-**Current Implementation**: Your Mini-Boss nodes already have 2 exercises. Consider extending this to more node types:
-- Discovery: 1 exercise (keep simple for introduction)
-- Practice: 2 exercises (recognition + sight reading)
-- Mix-Up: 1 exercise (memory game is engaging enough alone)
-- Speed Round: 1 exercise (timed challenge)
-- Boss: 2-3 exercises (comprehensive assessment)
-
-**Sources**:
-- [Yousician Piano Review](https://www.pianodreamers.com/yousician-piano-review/)
-
-### 5. "Song Mode" or Applied Practice Nodes
-
-| Feature | Value |
-|---------|-------|
-| Real song excerpts | Connects learning to real music |
-| Recognizable melodies | Intrinsic motivation boost |
-| Achievement: "Played first song!" | Milestone celebration |
-
-**Gap in Current Design**: All exercises are abstract (random notes). Consider:
-- After Unit 1: Play "Mary Had a Little Lamb" (uses C, D, E)
-- After Unit 2: Play "Twinkle Twinkle" excerpt
-- Label these as SONG nodes or include as special exercises
-
-**Why It Matters**: "The feedback in Yousician was quite surface-level... The song arrangements often felt overly simplified. After a few days, it started to feel a bit repetitive, like just playing to collect stars rather than actually learning to play well." - Real songs prevent this.
-
-**Sources**:
-- [Best Piano Learning Apps Review](https://www.artmaster.com/articles/the-best-piano-learning-apps-i-tried-them-so-you-don-t-have-to)
-
-### 6. Path Branching (Non-Linear Progression)
-
-| Feature | Value |
-|---------|-------|
-| Parallel paths | Treble, Bass, Rhythm can progress independently |
-| Cross-path unlocks | Completing Treble Unit 1 could unlock a "Grand Staff" bonus path |
-| Player choice | "Which path do you want to explore today?" |
-
-**Current Implementation**: Your three paths (Treble, Bass, Rhythm) are parallel but don't interact. Consider:
-- After completing Unit 1 in both Treble and Bass, unlock "Grand Staff Unit 1"
-- Cross-path achievements ("Complete all Unit 1 bosses across all paths")
-
-**Sources**:
-- [Duolingo Path Structure](https://duolingoguides.com/how-many-sections-in-duolingo/)
+**Age-appropriateness:** ⚠️ Some 8-year-olds have auditory sensitivities (ADHD, autism). Sound should always be opt-in, not default.
 
 ---
 
 ## Anti-Features
 
-Features to explicitly NOT build. Common mistakes that harm learning or engagement.
+Features to deliberately NOT build. Common mistakes in gamification for children.
 
-### 1. Over-Reliance on Extrinsic Rewards
+### ❌ 1. Celebration on Every Action
+**What:** Confetti/animation after every button click, every note played, every menu navigation.
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Badges for everything | Undermines intrinsic motivation | Reserve badges for significant milestones only |
-| Constant XP popups | Creates reward addiction, not learning love | Show XP at end of session, not after every answer |
-| Leaderboards | Creates unhealthy competition for 8-year-olds | Personal best tracking only |
+**Why avoid:** Causes "gamification fatigue"—novelty wears off and rewards lose meaning. "If you constantly reward users, the rewards won't feel special." ([Why Gamification Fails: 2026 Findings](https://medium.com/design-bootcamp/why-gamification-fails-new-findings-for-2026-fff0d186722f))
 
-**Research Finding**: "Tangible rewards, such as money, prizes, and good student awards, can undermine intrinsic motivation, especially in children... they have negative consequences for subsequent interest, persistence, and preference for challenge."
+**What to do instead:**
+- Celebrate **completions**, not interactions
+- Celebrate **milestones** (boss nodes, level-ups), not every node
+- Use subtle micro-interactions (button hover scale) for routine actions
 
-**Current Implementation Check**: Your star and XP system is well-balanced. Avoid adding:
-- Daily login streaks with harsh penalties
-- Competitive leaderboards showing other students
-- Rewards that require purchase to unlock
+**Real-world example:** Duolingo celebrates lesson completion, NOT every question answered.
 
-**When Rewards Can Help**: "Rewards that are tied to attaining a certain level of performance can enhance self-efficacy." Your star system (tied to performance, not just completion) follows this principle correctly.
+**Sources:**
+- [Streaks and Milestones for Gamification](https://www.plotline.so/blog/streaks-for-gamification-in-mobile-apps)
+- [Common Gamification Mistakes to Avoid](https://blog.captainup.com/game-over-common-gamification-mistakes-to-avoid/)
 
-**Sources**:
-- [The Real Impact of Rewards on Motivation](https://theeconomyofmeaning.com/2025/02/17/the-real-impact-of-rewards-on-motivation-more-than-just-a-dichotomy/)
-- [Mark Lepper: Intrinsic Motivation Research](https://bingschool.stanford.edu/news/mark-lepper-intrinsic-motivation-extrinsic-motivation-and-process-learning)
-- [Extrinsic Rewards and Intrinsic Motivation in Education](https://www.selfdeterminationtheory.org/SDT/documents/2001_DeciKoestnerRyan.pdf)
+---
 
-### 2. Harsh Failure Penalties
+### ❌ 2. Long Celebration Animations That Block Progression
+**What:** 10-second confetti animations, unskippable celebration modals, forced delays before "Continue" button.
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Losing stars/XP on failure | Creates anxiety, discourages experimentation | Stars show best score, can only improve |
-| "You failed!" messaging | Demoralizing for 8-year-olds | "Let's try again!" or "Almost there!" |
-| Locked out after failures | Frustration, game abandonment | Unlimited retries, optional hints |
-| Lives/hearts system | Artificial scarcity, pay-to-continue pressure | No lives for kids app |
+**Why avoid:** 8-year-olds have short attention spans (20 minutes for focused tasks). Blocking progression creates frustration. "The 8-second attention span myth" is debunked, but children DO disengage from animations >3 seconds. ([Marketing in 2026: The Attention Span Myth](https://brillitydigital.com/blog/marketing-in-2026-the-attention-span-myth/))
 
-**Research Finding**: "With each attempt, the player will become more skilled, defeat the challenge and become satisfied. If the player fails, you want to have him feel there was something better he could have done, and not leave him frustrated and helpless."
+**What to do instead:**
+- Keep celebrations brief: 2-3s standard, 5-6s maximum for epic events
+- Make epic celebrations **dismissible** (click to continue)
+- Show "Continue" button immediately, celebration overlays don't block it
+- Use auto-dismiss for routine celebrations (1-2 stars)
 
-**Current Implementation**: Verify that:
-- Stars are "best score" not "last score"
-- Incorrect answers show correct answer without punishment
-- No loss of progress on node failure
+**Animation duration guidelines:**
+| Duration | Use Case | User Experience |
+|----------|----------|----------------|
+| 100-150ms | Button feedback | "Instant" response |
+| 200-300ms | Modal entrance | Perceptible but smooth |
+| 300-500ms | Star reveal | Noticeable reward |
+| 1000-2000ms | Confetti burst | Special moment |
+| 5000ms+ | ONLY boss unlocks | Must be dismissible |
 
-**Sources**:
-- [Difficulty in Game Design](https://ricardo-valerio.medium.com/make-it-difficult-not-punishing-7198334573b8)
+**Sources:**
+- [Animation Duration Best Practices (NN/g)](https://www.nngroup.com/articles/animation-duration/)
+- [Children's UX Animation Research](https://www.ramotion.com/blog/ux-design-for-kids/)
 
-### 3. Excessive Session Length
+---
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| 45+ minute forced sessions | Exceeds attention span, creates fatigue | 15-20 minute sessions optimal |
-| No natural stopping points | Hard to take breaks | Clear unit boundaries |
-| Guilt for stopping | "You haven't finished!" messages | "Great job! Come back anytime" |
+### ❌ 3. Tangible Extrinsic Rewards (Virtual Prizes, Unlockables)
+**What:** "Earn 1000 XP to unlock a new avatar hat!" or "Complete 10 nodes to win a virtual trophy!"
 
-**Research Finding**: "Moderate app usage times of half an hour per week seem especially beneficial for girls' literacy skill gain." For 8-year-olds, 15-25 minutes per session is optimal.
+**Why avoid:** Research shows "tangible rewards, such as money, prizes, and good student awards, can undermine intrinsic motivation, especially in children." ([External Rewards & Intrinsic Motivation](https://www.learningonthemove.org/external-rewards--intrinsic-motivation.html))
 
-**Recommendation**:
-- Design units to complete in 20-25 minutes
-- Show encouraging message after each node completion ("Great job! Want to do one more?")
-- Never shame for stopping mid-session
+**What to do instead:**
+- Celebrate **competency** ("You mastered 5 notes!")
+- Celebrate **progress** ("Level 3 → Level 4")
+- Celebrate **effort** ("You practiced 3 days this week!")
+- Award badges for **milestones**, not as currency
 
-**Sources**:
-- [Game-Based Literacy App Learning in Preschool Children](https://www.sciencedirect.com/science/article/pii/S1041608024001729)
+**Implementation in PianoApp:** Unit badges are fine (mark real progress), but avoid "XP Shop" where children spend XP on cosmetic items. Focus on learning journey, not virtual goods.
 
-### 4. Too Many Nodes Per Unit
+**Why this matters:** Goal is to build lifelong pianists, not XP farmers. "When rewards are tied to well-defined, realistic yet challenging levels of mastery, intrinsic motivation is likely to increase." ([Separating Fact from Fiction: Rewards & Motivation](https://www.childandteensolutions.com/blog/separating-fact-from-fiction-the-impact-of-rewards-on-childrens-intrinsic-motivation))
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| 15+ nodes per unit | Overwhelming, never-ending feeling | 6-10 nodes maximum |
-| No visible end | "When will this end?" anxiety | Clear unit completion celebration |
-| Filler content | Repetitive, boring | Every node should teach something new |
+**Sources:**
+- [Intrinsic vs Extrinsic Motivation for Children](https://www.braingymjr.com/blog/intrinsic-vs-extrinsic-motivation-for-children/)
+- [Balancing Intrinsic and Extrinsic Motivation](https://scienceleaf.com/balancing-intrinsic-and-extrinsic-motivation/)
 
-**Your Current State**: 8 nodes per unit is CORRECT. Do not increase to 12+ nodes.
+---
 
-**Why It Matters**: Duolingo units have approximately 8 steps each. Research on children's motivation shows that visible, achievable goals are crucial for sustained engagement.
+### ❌ 4. Generic "Good Job!" Messages
+**What:** Same celebration text for every achievement: "Great work!" / "Awesome!" / "You did it!"
 
-### 5. Complex UI/Navigation
+**Why avoid:** Generic praise doesn't reinforce specific accomplishments. "Celebrating progress and effort over outcomes helps children develop a growth mindset." ([Celebrating Milestones: Child Development](https://janpetersoncdc.com/blog/celebrating-milestones-recognizing-and-supporting-child-development-progress/))
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Multiple menus | Confusing for 8-year-olds | Single tap to continue learning |
-| Hidden settings | Parents can't find controls | Clear "Parent Area" with parental gate |
-| Text-heavy interfaces | Reading is effortful at this age | Icons, images, minimal text |
+**What to do instead:**
+- **Specific:** "You discovered 3 new notes!" (not "Good job!")
+- **Effort-based:** "You practiced rhythm for 5 minutes!" (not "You're smart!")
+- **Progress-based:** "You improved from 70% to 90%!" (not "Perfect!")
 
-**Research Finding**: "Apps can support children's active engagement by embedding educational concepts into game-like activities... The educational quality of apps depends on their ability to support children's engagement with the learning process. This means avoiding the myriad distractions potentially available on-screen."
+**Implementation:** Use node type + achievement data to generate messages:
+```javascript
+function getCelebrationMessage(nodeType, stars, isFirstComplete) {
+  if (nodeType === NODE_TYPES.DISCOVERY && isFirstComplete) {
+    return "You discovered new notes! 🔍";
+  }
+  if (stars === 3) {
+    return "Perfect accuracy! ⭐⭐⭐";
+  }
+  // ... context-aware messages
+}
+```
 
-**Recommendation**: Your trail map should have:
-- One obvious "Continue" button
-- Nodes clearly show locked/available/completed status
-- Minimal text, clear icons
+---
 
-**Sources**:
-- [How Educational Are 'Educational' Apps?](https://pmc.ncbi.nlm.nih.gov/articles/PMC8916741/)
+### ❌ 5. Constant Animation Motion
+**What:** Background particles, floating stars, pulsing buttons, spinning icons—all at once, all the time.
 
-### 6. Gamification Over Pedagogy
+**Why avoid:**
+1. **Cognitive overload:** 8-year-olds have developing executive function. Motion competes for attention. ([Gamification Cognitive Assessment](https://games.jmir.org/2021/2/e21900/PDF))
+2. **Accessibility violations:** Users with vestibular disorders, ADHD, autism may experience nausea, anxiety, or distraction.
+3. **Performance impact:** Continuous animations drain battery on mobile devices (common in schools).
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| Playing to collect stars | Hollow achievement | Stars reflect actual skill |
-| Skippable learning content | Defeats educational purpose | Learn, then practice, then test |
-| "Too game-like" | Shallow learning, no depth | Balance fun with fundamentals |
+**What to do instead:**
+- Animations should **start and stop** (confetti bursts, not endless falling)
+- Respect `prefers-reduced-motion` media query
+- Use **subtle** motion: gentle pulse (2s cycle) not frantic spin (0.5s cycle)
+- Limit simultaneous animations: 1-2 elements max
 
-**Research Finding**: "As a music teacher, one reviewer felt that overall Yousician is a bit too game-like. This approach is good for beginners, but what it makes up for in fun it lacks in learning depth."
+**CSS for reduced motion:**
+```css
+@media (prefers-reduced-motion: reduce) {
+  .celebration-confetti,
+  .star-animation,
+  .xp-count-up {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+```
 
-**How to Balance**: Your node type variety (Discovery -> Practice -> Test) creates the right balance. Ensure Discovery nodes actually TEACH, not just test.
+**Existing infrastructure:** App already has AccessibilityContext with `reducedMotion` flag. Use it.
 
-**Sources**:
-- [Yousician Piano Review](https://pianistscompass.com/reviews/apps/yousician-piano/)
+**Sources:**
+- [W3C WCAG Animation Guidelines](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html)
+- [prefers-reduced-motion Best Practices](https://web.dev/articles/prefers-reduced-motion)
+
+---
+
+### ❌ 6. Leaderboards for 8-Year-Olds
+**What:** "Top 10 Students This Week" showing names and scores.
+
+**Why avoid:**
+1. **COPPA compliance:** Exposing children's names/performance to peers raises privacy concerns.
+2. **Psychological harm:** Fixed mindset reinforcement. Low performers internalize "I'm not smart." ([Why Gamification Fails](https://medium.com/design-bootcamp/why-gamification-fails-new-findings-for-2026-fff0d186722f))
+3. **Extrinsic motivation trap:** Shifts focus from learning to competition.
+
+**What to do instead:**
+- **Personal progress tracking:** "You improved 20% this week!"
+- **Class-wide goals:** "Our class earned 5,000 XP together!"
+- **Anonymous rankings:** "You're in the top 25% of learners" (no names)
+
+**Implementation:** Trail system focuses on individual progress. No leaderboards needed.
 
 ---
 
 ## Feature Dependencies
 
-```
-Prerequisites Map:
+How features build on each other.
 
-Discovery Node      -> Practice Node      -> Mix-Up Node
-(Introduce C4)         (Apply C4)            (Reinforce C4)
-      |                     |                      |
-      v                     v                      v
-Discovery Node      -> Practice Node      -> Speed Round
-(Add D4)               (Apply C4+D4)          (Fluency C4+D4)
-      |                     |                      |
-      v                     v                      v
-Discovery Node      -> Practice Node      -> Mini-Boss
-(Add E4)               (Apply C4+D4+E4)       (Test All)
-                                                   |
-                                                   v
-                                            [Next Unit Unlocks]
+```
+Foundation (Week 1):
+  ├─ Node type visual distinction (icons, colors)
+  └─ Star reveal animation
+
+Core Celebrations (Week 2):
+  ├─ Differentiated celebrations (1/2/3 stars)
+  ├─ Node-specific messaging
+  └─ XP visibility in Dashboard
+      ↓
+Advanced Celebrations (Week 3):
+  ├─ Boss unlock event modal
+  ├─ Progressive XP breakdown
+  └─ Level-up animations
 ```
 
-**Dependency Rules**:
-1. Each Discovery node requires previous Discovery completion
-2. Practice nodes require corresponding Discovery completion
-3. Mix-Up/Speed Round require Practice completion
-4. Mini-Boss requires all previous unit nodes
-5. Next unit requires previous unit's Mini-Boss
+**Dependencies on existing components:**
+- `VictoryScreen.jsx` - Already calculates stars, XP (lines 318-447)
+- `nodeTypes.js` - Already defines 8 node types with icons/colors
+- `xpSystem.js` - Already has XP calculation functions
+- `AccessibilityContext.jsx` - Already tracks `reducedMotion` preference
+
+**No blocking dependencies.** All features can be built incrementally.
 
 ---
 
 ## MVP Recommendation
 
-For the trail system redesign, prioritize:
+For v1.4 milestone (UI Polish & Celebrations), prioritize:
 
-### Must Have (Table Stakes)
-1. **6-10 nodes per unit** - Keep current 8-node structure
-2. **5 node types** - Keep Discovery, Practice, Mix-Up, Speed Round, Mini-Boss
-3. **Mastery thresholds** - Keep 60%/80%/95% for 1/2/3 stars
-4. **Immediate feedback** - Correct/incorrect shown instantly
-5. **Visual progress** - Trail map with star ratings
+### Must-Have (Table Stakes)
+1. ✅ **Visual feedback on completion** - Confetti on 2-3 stars (2 days)
+2. ✅ **Differentiated celebrations** - 5 celebration types by achievement (3 days)
+3. ✅ **Node type visual distinction** - Icons in trail nodes and modals (2 days)
+4. ✅ **XP visibility in Dashboard** - Progress bar component (2 days)
+5. ✅ **Screen reader announcements** - Celebration ARIA labels (1 day)
 
-### Should Have (Differentiators)
-1. **Spaced repetition integration** - Add REVIEW node type
-2. **Adaptive difficulty hints** - Offer help after repeated mistakes
-3. **Song/Applied nodes** - At least one real song after Unit 1
+**Total: 10 days / 2 weeks**
 
-### Defer to Post-MVP
-- Path branching/Grand Staff integration
-- Complex recommendation algorithms
-- Comprehensive adaptive difficulty system
+### Should-Have (Differentiators)
+6. ✅ **Boss unlock event modal** - Epic celebration for boss nodes (3 days)
+7. ✅ **Node-specific messaging** - Context-aware celebration text (1 day)
+8. ✅ **Progressive XP breakdown** - Staggered reveal animation (1 day)
+
+**Total: 5 days / 1 week**
+
+### Defer to v2.0
+9. ⏸️ **Sound effects** - Audio layer (requires user testing to validate)
+10. ⏸️ **Custom confetti shapes** - Musical notes instead of squares (polish, not core)
 
 ---
 
-## Confidence Assessment
+## Complexity Assessment
 
-| Finding | Confidence | Reason |
-|---------|------------|--------|
-| 6-10 nodes per unit | HIGH | Multiple sources agree, matches Duolingo structure |
-| Node type variety | HIGH | Educational psychology research supports this |
-| Mastery thresholds 80-90% | HIGH | Well-established in learning research |
-| Spaced repetition value | HIGH | Extensive research base |
-| Adaptive difficulty | MEDIUM | Known to help, implementation details vary |
-| Song integration | MEDIUM | Anecdotal user feedback, limited formal research |
-| Reward system risks | HIGH | Strong research on undermining intrinsic motivation |
+| Feature | Complexity | Dev Time | Dependencies |
+|---------|------------|----------|--------------|
+| Confetti on victory | Simple | 2 days | react-confetti-explosion (8KB) |
+| Node type icons | Simple | 2 days | lucide-react (1KB/icon) |
+| Star reveal animation | Simple | 1 day | CSS only |
+| XP Dashboard component | Simple | 2 days | React Query (existing) |
+| Differentiated celebrations | Medium | 3 days | Celebration type logic |
+| Boss unlock modal | Medium | 3 days | New modal component |
+| Progressive XP breakdown | Simple | 1 day | CSS stagger animation |
+| Node-specific messages | Simple | 1 day | String templates |
+| Screen reader support | Simple | 1 day | ARIA attributes |
+
+**Total estimated effort:** 16 days (3 weeks with buffer)
+
+---
+
+## Age-Appropriateness Summary (8-Year-Olds)
+
+### ✅ Developmentally Appropriate
+- **Star ratings** - Maps to school grading systems
+- **Icon + color coding** - Visual processing is strong at age 8
+- **Progress bars** - Concrete operational thinking (filling up = progress)
+- **Brief celebrations** (2-5s) - Matches attention span for rewards
+- **Tiered rewards** - Understands gradations (good → better → best)
+
+### ⚠️ Needs Careful Implementation
+- **XP numbers** - Some 8-year-olds struggle with numbers >100 (use progress bar as primary)
+- **Level titles** - Use concrete metaphors ("Music Sprout" not "Level 2")
+- **Animation timing** - Too fast = missed, too slow = boring (200-500ms sweet spot)
+
+### ❌ Avoid
+- **Leaderboards** - Causes anxiety, fixed mindset
+- **Complex unlock trees** - 8-year-olds need linear progression
+- **Meta-currencies** - "Spend XP on hats" distracts from learning
+
+**Sources:**
+- [Designing for Kids: Cognitive Considerations (NN/g)](https://www.nngroup.com/articles/kids-cognition/)
+- [UI/UX Design for Children](https://www.aufaitux.com/blog/ui-ux-designing-for-children/)
+
+---
+
+## Celebration Fatigue Prevention Checklist
+
+- [x] **Variable intensity:** 5 celebration types (not same for all achievements)
+- [x] **Scarcity of epic moments:** Boss unlocks are rare (12 in 93 nodes = 12.9%)
+- [x] **Short durations:** 2-5s standard, only boss unlocks >5s
+- [x] **User control:** Epic celebrations are dismissible
+- [x] **Evolving content:** Node-specific messages, not generic "Good job!"
+- [x] **Intrinsic focus:** Celebrate mastery/progress, not XP accumulation
+- [x] **Reduced motion support:** Respects accessibility preferences
+- [x] **No animation loops:** Confetti bursts and stops, doesn't loop infinitely
+
+**Key metric to monitor:** If teachers report "kids skip celebrations," that's fatigue. Solution: Reduce frequency or shorten duration.
+
+**Sources:**
+- [Why Gamification Fails: New Findings for 2026](https://medium.com/design-bootcamp/why-gamification-fails-new-findings-for-2026-fff0d186722f)
+- [Game Over: Gamification Mistakes](https://blog.captainup.com/game-over-common-gamification-mistakes-to-avoid/)
+
+---
+
+## Open Questions for Phase-Specific Research
+
+1. **Sound effects:** Should v2.0 include audio? Needs A/B testing with real classrooms to validate.
+2. **Custom confetti shapes:** Musical notes vs. generic squares? Requires design mockups.
+3. **Animation durations:** Are research-backed durations (200-500ms) optimal for THIS app? May need user testing.
+4. **Boss unlock flow:** Auto-advance to next unit or return to trail? Depends on teacher feedback.
 
 ---
 
 ## Sources
 
-### Educational Psychology & Gamification
-- [Frontiers in Education: Gamified Educational Applications](https://www.frontiersin.org/journals/education/articles/10.3389/feduc.2025.1668260/full)
-- [Engaging Children with Educational Content via Gamification](https://slejournal.springeropen.com/articles/10.1186/s40561-019-0085-2)
-- [Game-Based Learning in Early Childhood](https://pmc.ncbi.nlm.nih.gov/articles/PMC11018941/)
-- [How Educational Are 'Educational' Apps?](https://pmc.ncbi.nlm.nih.gov/articles/PMC8916741/)
-- [Latent Factors in Gamified Apps for Primary Education](https://pmc.ncbi.nlm.nih.gov/articles/PMC10126543/)
+### Gamification Research
+- [Animating the Duolingo Streak - Duolingo Blog](https://blog.duolingo.com/streak-milestone-design-animation/)
+- [How Khan Academy Leverages Gamification to Boost Retention](https://trophy.so/blog/khan-academy-gamification-case-study)
+- [Why Gamification Fails: New Findings for 2026](https://medium.com/design-bootcamp/why-gamification-fails-new-findings-for-2026-fff0d186722f)
+- [Streaks and Milestones for Gamification in Mobile Apps](https://www.plotline.so/blog/streaks-for-gamification-in-mobile-apps)
+- [Game Over: Common Gamification Mistakes to Avoid](https://blog.captainup.com/game-over-common-gamification-mistakes-to-avoid/)
 
-### Mastery Learning
-- [Mastery Learning - Education Endowment Foundation](https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/mastery-learning)
-- [Mastery Criteria and Skill Maintenance](https://onlinelibrary.wiley.com/doi/full/10.1002/bin.1778)
-- [A Practical Review of Mastery Learning](https://pmc.ncbi.nlm.nih.gov/articles/PMC10159400/)
+### Educational Psychology
+- [Intrinsic vs. Extrinsic Motivation for Children](https://www.braingymjr.com/blog/intrinsic-vs-extrinsic-motivation-for-children/)
+- [Celebrating Milestones: Child Development Progress](https://janpetersoncdc.com/blog/celebrating-milestones-recognizing-and-supporting-child-development-progress/)
+- [Balancing Intrinsic and Extrinsic Motivation With Learning](https://scienceleaf.com/balancing-intrinsic-and-extrinsic-motivation/)
+- [External Rewards & Intrinsic Motivation](https://www.learningonthemove.org/external-rewards--intrinsic-motivation.html)
+- [Separating Fact from Fiction: Rewards & Children's Motivation](https://www.childandteensolutions.com/blog/separating-fact-from-fiction-the-impact-of-rewards-on-childrens-intrinsic-motivation)
 
-### Spaced Repetition
-- [Spaced Repetition Learning Games on Mobile Devices](https://www.researchgate.net/publication/268130455_Spaced_repetition_learning_games_on_mobile_devices_Foundations_and_perspectives)
-- [Design Considerations for Spaced Repetition Games](https://www.researchgate.net/publication/268126812_Designing_for_Motivation_Design-Considerations_for_Spaced-Repetition-Based_Learning_Games_on_Mobile_Devices)
-- [Math Learning Strategies: Interleaving, Feedback, Spaced Repetition](https://funexpectedapps.com/en/blog-posts/math-learning-strategies-proven-to-work-interleaving-immediate-feedback-spaced-repetition)
+### UX & Design
+- [UX Design for Kids Best Practices](https://www.ramotion.com/blog/ux-design-for-kids/)
+- [Animation Duration Best Practices (NN/g)](https://www.nngroup.com/articles/animation-duration/)
+- [Progressive Disclosure in AI-Powered Product Design](https://uxplanet.org/progressive-disclosure-in-ai-powered-product-design-978da0aaeb08)
+- [Gamification in UX: How to Use Experience Points (XP)](https://differencebydesign.org/product-design/gamification-in-ux-how-to-use-experience-points-xp/)
+- [Game On: UI Design Meets Gamification](https://medium.com/@incharaprasad/game-on-ui-design-meets-gamification-a27d3a6de6b1)
 
-### Flow Theory & Difficulty
-- [Flow Theory and Learning Experience Design](https://edtechbooks.org/ux/flow_theory_and_lxd)
-- [Difficulty in Game Design](https://ricardo-valerio.medium.com/make-it-difficult-not-punishing-7198334573b8)
-- [Psychology of Game Difficulty](https://fact2day.com/psychology-of-game-difficulty/)
-- [Flow & Gamification](https://www.gamified.uk/2014/07/08/flow-gamification-misunderstanding/)
+### Accessibility
+- [W3C WCAG Animation Guidelines](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html)
+- [prefers-reduced-motion Best Practices](https://web.dev/articles/prefers-reduced-motion)
 
-### Motivation Research
-- [Extrinsic Rewards and Intrinsic Motivation in Education](https://www.selfdeterminationtheory.org/SDT/documents/2001_DeciKoestnerRyan.pdf)
-- [Mark Lepper: Intrinsic Motivation Research](https://bingschool.stanford.edu/news/mark-lepper-intrinsic-motivation-extrinsic-motivation-and-process-learning)
-- [Impact of Rewards on Children's Intrinsic Motivation](https://www.childandteensolutions.com/blog/separating-fact-from-fiction-the-impact-of-rewards-on-childrens-intrinsic-motivation)
+### XP Systems
+- [When Your App Needs an XP System - Trophy](https://trophy.so/blog/when-your-app-needs-xp-system)
+- [The Best Gamified Language Learning Apps for 2026](https://www.joinsabi.com/blog/gamified-language-apps)
 
-### Music Learning Apps
-- [Best Piano Learning Apps 2025](https://www.artmaster.com/articles/the-best-piano-learning-apps-i-tried-them-so-you-don-t-have-to)
-- [Simply Piano vs Yousician vs Flowkey](https://www.omarimc.com/simply-piano-vs-yousician-vs-flowkey-review/)
-- [Yousician Piano Review](https://www.pianodreamers.com/yousician-piano-review/)
-- [Best Piano Apps 2026](https://www.skoove.com/blog/best-piano-apps/)
+### Child Development
+- [Designing for Kids: Cognitive Considerations (NN/g)](https://www.nngroup.com/articles/kids-cognition/)
+- [UI/UX Design for Children](https://www.aufaitux.com/blog/ui-ux-designing-for-children/)
+- [Marketing in 2026: The Attention Span Myth](https://brillitydigital.com/blog/marketing-in-2026-the-attention-span-myth/)
+- [Gamification Approaches to Boost Attention Span](https://link.springer.com/chapter/10.1007/978-981-96-6414-6_2)
+- [Gamification Cognitive Assessment](https://games.jmir.org/2021/2/e21900/PDF)
 
-### Duolingo Structure
-- [Duolingo Path Structure Guide](https://duolingoguides.com/how-many-sections-in-duolingo/)
-- [How Many Units in Duolingo Languages](https://lingoly.io/units-each-duolingo-language/)
-- [Duolingo's Approach to Skill Development](https://blog.duolingo.com/covering-all-the-bases-duolingos-approach-to-speaking-skills/)
+### Existing Codebase
+- `src/data/nodeTypes.js` - 8 node types with icon/color metadata (HIGH confidence)
+- `src/components/games/VictoryScreen.jsx` - Star/XP calculation (HIGH confidence)
+- `src/utils/xpSystem.js` - XP level thresholds (HIGH confidence)
+- `src/contexts/AccessibilityContext.jsx` - Reduced motion support (HIGH confidence)
