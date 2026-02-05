@@ -15,7 +15,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 6;
-const UNIT_NAME = 'Sixteenth Notes';
+const UNIT_NAME = 'Speed Champions';
 const CATEGORY = 'rhythm';
 const START_ORDER = 135;   // After Unit 5's 7 nodes (128-134)
 
@@ -344,6 +344,7 @@ export const rhythmUnit6Nodes = [
     id: 'boss_rhythm_6',
     name: 'Rhythm Champion',
     description: 'Prove your mastery of ALL rhythms!',
+    unlockHint: 'Complete all lessons in this unit to unlock the ultimate challenge!',
     category: 'boss',                      // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,

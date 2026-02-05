@@ -345,6 +345,12 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
             <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-900">
               &#128274; {t('modal.prerequisites')}
             </h3>
+            {/* Show unlock hint for boss nodes */}
+            {node.unlockHint && (
+              <p className="mb-2 text-xs sm:text-sm text-red-700 font-medium">
+                {node.unlockHint}
+              </p>
+            )}
             <ul className="list-inside list-disc text-xs sm:text-sm text-red-700">
               {prerequisites.map((prereqId) => {
                 const prereqNode = getNodeById(prereqId);

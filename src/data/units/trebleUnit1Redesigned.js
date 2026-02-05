@@ -15,7 +15,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 1;
-const UNIT_NAME = 'First Steps';
+const UNIT_NAME = 'Note Adventure Begins';
 const CATEGORY = 'treble_clef';
 const START_ORDER = 1;
 
@@ -426,6 +426,7 @@ export const trebleUnit1Nodes = [
     id: 'boss_treble_1',
     name: 'First Steps Challenge',
     description: 'Complete your first unit!',
+    unlockHint: 'Complete all 7 lessons above to unlock this challenge!',
     category: 'boss',          // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,

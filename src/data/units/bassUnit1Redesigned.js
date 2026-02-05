@@ -15,7 +15,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 1;
-const UNIT_NAME = 'Middle C Position';
+const UNIT_NAME = 'Bass Note Detective';
 const CATEGORY = 'bass_clef';
 const START_ORDER = 51;
 
@@ -369,6 +369,7 @@ export const bassUnit1Nodes = [
     id: 'boss_bass_1',
     name: 'First Bass Challenge',
     description: 'Complete your first bass clef unit!',
+    unlockHint: 'Complete all bass clef lessons above to unlock this challenge!',
     category: 'boss',          // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,

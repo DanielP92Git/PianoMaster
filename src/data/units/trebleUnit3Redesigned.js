@@ -17,7 +17,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 3;
-const UNIT_NAME = 'The Full Octave';
+const UNIT_NAME = 'Rainbow of Notes';
 const CATEGORY = 'treble_clef';
 const START_ORDER = 17;  // After Unit 2 (8 nodes starting at 9)
 
@@ -534,6 +534,7 @@ export const trebleUnit3Nodes = [
     id: 'boss_treble_3',
     name: 'Octave Master',
     description: 'Master the full octave and unlock eighth notes!',
+    unlockHint: 'Complete all lessons in this unit to unlock the big challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: UNIT_NAME,

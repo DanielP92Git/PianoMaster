@@ -15,7 +15,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 4;
-const UNIT_NAME = 'The Sound of Silence';
+const UNIT_NAME = 'Quiet Moments';
 const CATEGORY = 'rhythm';
 const START_ORDER = 121;   // After Unit 3's 7 nodes (114-120)
 
@@ -356,6 +356,7 @@ export const rhythmUnit4Nodes = [
     id: 'boss_rhythm_4',
     name: 'Silence Master',
     description: 'Prove your mastery of counting silence!',
+    unlockHint: 'Complete all lessons in this unit to unlock the challenge!',
     category: 'boss',                      // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,

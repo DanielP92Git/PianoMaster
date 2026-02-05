@@ -16,7 +16,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 2;
-const UNIT_NAME = 'Growing Range';
+const UNIT_NAME = 'Five Finger Friends';
 const CATEGORY = 'treble_clef';
 const START_ORDER = 9;  // After Unit 1 (8 nodes)
 
@@ -423,6 +423,7 @@ export const trebleUnit2Nodes = [
     id: 'boss_treble_2',
     name: 'Five Finger Master',
     description: 'Master the five-finger position!',
+    unlockHint: 'Complete all lessons in this unit to unlock the challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: UNIT_NAME,

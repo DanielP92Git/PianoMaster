@@ -17,7 +17,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 3;
-const UNIT_NAME = 'The Full Octave';
+const UNIT_NAME = 'Deep Note Explorers';
 const CATEGORY = 'bass_clef';
 const START_ORDER = 66;  // After Unit 2 (8 nodes starting at 58)
 
@@ -534,6 +534,7 @@ export const bassUnit3Nodes = [
     id: 'boss_bass_3',
     name: 'Bass Clef Master',
     description: 'Master the full bass clef octave!',
+    unlockHint: 'Complete all lessons in this unit to unlock the big challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: UNIT_NAME,

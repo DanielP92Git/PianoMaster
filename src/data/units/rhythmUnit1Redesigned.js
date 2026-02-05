@@ -15,7 +15,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 1;
-const UNIT_NAME = 'Basic Beats';
+const UNIT_NAME = 'Rhythm Starters';
 const CATEGORY = 'rhythm';
 const START_ORDER = 100;
 
@@ -343,6 +343,7 @@ export const rhythmUnit1Nodes = [
     id: 'boss_rhythm_1',
     name: 'Basic Beats Master',
     description: 'Prove your mastery of quarters and halves!',
+    unlockHint: 'Complete all rhythm lessons above to unlock this challenge!',
     category: 'boss',                  // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,

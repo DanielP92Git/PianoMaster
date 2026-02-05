@@ -16,7 +16,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 2;
-const UNIT_NAME = 'Five Finger Low';
+const UNIT_NAME = 'Low Note Heroes';
 const CATEGORY = 'bass_clef';
 const START_ORDER = 58;  // After Unit 1 (7 nodes starting at 51)
 
@@ -421,6 +421,7 @@ export const bassUnit2Nodes = [
     id: 'boss_bass_2',
     name: 'Five Finger Master',
     description: 'Master the bass clef five-finger position!',
+    unlockHint: 'Complete all lessons in this unit to unlock the challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: UNIT_NAME,

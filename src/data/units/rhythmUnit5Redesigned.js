@@ -15,7 +15,7 @@ import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.j
 import { EXERCISE_TYPES } from '../constants.js';
 
 const UNIT_ID = 5;
-const UNIT_NAME = 'Dotted Notes';
+const UNIT_NAME = 'Magic Dots';
 const CATEGORY = 'rhythm';
 const START_ORDER = 128;   // After Unit 4's 7 nodes (121-127)
 
@@ -344,6 +344,7 @@ export const rhythmUnit5Nodes = [
     id: 'boss_rhythm_5',
     name: 'Dotted Notes Master',
     description: 'Prove your mastery of dotted notes and 3/4 time!',
+    unlockHint: 'Complete all lessons in this unit to unlock the challenge!',
     category: 'boss',                      // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
