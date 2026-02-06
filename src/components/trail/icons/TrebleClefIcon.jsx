@@ -14,18 +14,29 @@ const TrebleClefIcon = ({
   className = '',
   ...props
 }) => (
-  <img
-    src={trebleClefSvg}
-    alt=""
-    width={size}
-    height={size}
-    className={className}
+  <div
     style={{
-      filter: color === 'currentColor' ? 'none' : `brightness(0) saturate(100%)`,
-      color: color
+      width: size,
+      height: size,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center'
     }}
-    {...props}
-  />
+  >
+    <img
+      src={trebleClefSvg}
+      alt=""
+      className={className}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        filter: color === 'currentColor' ? 'none' : `brightness(0) saturate(100%)`,
+        color: color
+      }}
+      {...props}
+    />
+  </div>
 );
 
 export default TrebleClefIcon;
