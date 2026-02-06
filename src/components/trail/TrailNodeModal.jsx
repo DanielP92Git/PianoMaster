@@ -339,18 +339,29 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
           </div>
         )}
 
-        {/* Prerequisites (if locked) */}
+        {/* Boss unlock hint (prominent display for locked boss nodes) */}
+        {!isUnlocked && node.isBoss && node.unlockHint && (
+          <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-50 border-2 border-yellow-200 p-3 sm:p-4">
+            <div className="flex items-start gap-2">
+              <span className="text-2xl flex-shrink-0">&#128274;</span>
+              <div>
+                <h3 className="text-sm sm:text-base font-bold text-yellow-900 mb-1">
+                  {t('modal.bossUnlockTitle', { defaultValue: 'How to Unlock This Challenge' })}
+                </h3>
+                <p className="text-xs sm:text-sm text-yellow-800 font-medium">
+                  {node.unlockHint}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Prerequisites (if locked and has prerequisites) */}
         {!isUnlocked && prerequisites.length > 0 && (
           <div className="mb-3 sm:mb-4 rounded-lg bg-red-50 p-2.5 sm:p-3">
             <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-900">
               &#128274; {t('modal.prerequisites')}
             </h3>
-            {/* Show unlock hint for boss nodes */}
-            {node.unlockHint && (
-              <p className="mb-2 text-xs sm:text-sm text-red-700 font-medium">
-                {node.unlockHint}
-              </p>
-            )}
             <ul className="list-inside list-disc text-xs sm:text-sm text-red-700">
               {prerequisites.map((prereqId) => {
                 const prereqNode = getNodeById(prereqId);
