@@ -1,9 +1,11 @@
 /**
  * MetronomeIcon Component
  *
- * Custom SVG icon for metronome/rhythm with lucide-react compatible API.
- * Designed to be recognizable to 8-year-olds as a rhythm/timing device.
+ * Wrapper for the high-quality metronome SVG with lucide-react compatible API.
+ * Uses the professional metronome SVG from src/assets/icons/metronome.svg
  */
+
+import metronomeSvg from '../../../assets/icons/metronome.svg';
 
 const MetronomeIcon = ({
   size = 24,
@@ -12,27 +14,29 @@ const MetronomeIcon = ({
   className = '',
   ...props
 }) => (
-  <svg
-    width={size}
-    height={size}
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke={color}
-    strokeWidth={strokeWidth}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-    {...props}
+  <div
+    style={{
+      width: size,
+      height: size,
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}
   >
-    {/* Metronome body - trapezoid shape (wider at bottom) */}
-    <path d="M9 6L7 20L17 20L15 6Z" />
-    {/* Pendulum arm - diagonal line through center */}
-    <path d="M12 6L14 16" strokeWidth={strokeWidth * 1.2} />
-    {/* Top cap */}
-    <path d="M8 6L16 6" />
-    {/* Pendulum weight - small circle at end */}
-    <circle cx="14" cy="16" r="1.5" fill={color} />
-  </svg>
+    <img
+      src={metronomeSvg}
+      alt=""
+      className={className}
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'contain',
+        filter: color === 'currentColor' ? 'none' : `brightness(0) saturate(100%)`,
+        color: color
+      }}
+      {...props}
+    />
+  </div>
 );
 
 export default MetronomeIcon;
