@@ -15,9 +15,17 @@ export function translateNodeName(nodeName, t, i18n = null) {
   const i18nInstance = i18n || t.i18n;
 
   // First, try to get a full node translation from nodes.{nodeName}
-  const fullTranslation = t(`nodes.${nodeName}`, { ns: 'trail', defaultValue: null });
+  const translationKey = `nodes.${nodeName}`;
+  const fullTranslation = t(translationKey, { ns: 'trail', defaultValue: '' });
 
-  if (fullTranslation && fullTranslation !== nodeName) {
+  // Check if translation was found:
+  // - Not empty (defaultValue wasn't returned)
+  // - Not the key itself (i18next returns key when missing)
+  // - Not starting with 'nodes.' (another sign of failed lookup)
+  if (fullTranslation &&
+      fullTranslation !== nodeName &&
+      fullTranslation !== translationKey &&
+      !fullTranslation.startsWith('nodes.')) {
     return fullTranslation;
   }
 
