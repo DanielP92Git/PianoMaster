@@ -13,6 +13,10 @@ import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNod
 import { awardXP, calculateSessionXP } from "../../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
+import { determineCelebrationTier, getCelebrationConfig } from '../../utils/celebrationTiers';
+import { getCelebrationMessage } from '../../utils/celebrationMessages';
+import { ConfettiEffect } from '../celebrations/ConfettiEffect';
+import { calculateScorePercentile, getPercentileMessage } from '../../services/scoreComparisonService';
 
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
@@ -206,12 +210,37 @@ const VictoryScreen = ({
   const hasProcessedTrail = useRef(false);
   const hasCalledStreakUpdate = useRef(false);
 
+  // Celebration system state
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [percentileMessage, setPercentileMessage] = useState(null);
+
   // Rate limiting state
   const [rateLimited, setRateLimited] = useState(false);
   const [rateLimitResetTime, setRateLimitResetTime] = useState(null);
 
   // Check if current user is a teacher (teachers bypass rate limiting)
   const isTeacher = user?.user_metadata?.role === 'teacher';
+
+  // Celebration tier and messaging (derived from existing state)
+  const celebrationData = useMemo(() => {
+    const node = nodeId ? getNodeById(nodeId) : null;
+    const isBoss = node?.isBoss || false;
+    const nodeType = node?.nodeType || null;
+
+    // For free play, calculate stars from score percentage
+    const effectiveStars = nodeId ? stars : calculateStars(scorePercentage);
+
+    const tier = determineCelebrationTier(
+      effectiveStars,
+      isBoss,
+      xpData?.leveledUp || false,
+      scorePercentage
+    );
+    const config = getCelebrationConfig(tier);
+    const message = getCelebrationMessage(nodeType, effectiveStars, isBoss);
+
+    return { tier, config, message, isBoss, nodeType, effectiveStars };
+  }, [nodeId, stars, xpData?.leveledUp, scorePercentage]);
 
   // Capture initial progress state (before game completion)
   const initialProgressRef = useRef(null);
@@ -449,6 +478,30 @@ const VictoryScreen = ({
     processTrailCompletion();
   }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType, queryClient, isTeacher]);
 
+  // Trigger confetti for full/epic tiers (non-blocking, after trail processing)
+  useEffect(() => {
+    if (!isProcessingTrail && celebrationData.config.confetti && !reducedMotion) {
+      setShowConfetti(true);
+    }
+  }, [isProcessingTrail, celebrationData.config.confetti, reducedMotion]);
+
+  // Calculate percentile in background (non-blocking, never delays rendering)
+  useEffect(() => {
+    if (!nodeId || !user?.id || isProcessingTrail) return;
+
+    const loadPercentile = async () => {
+      const percentile = await calculateScorePercentile(
+        user.id,
+        Math.round(Math.min(scorePercentage, 100)),
+        nodeId
+      );
+      const message = getPercentileMessage(percentile);
+      setPercentileMessage(message);
+    };
+
+    loadPercentile();
+  }, [nodeId, user?.id, scorePercentage, isProcessingTrail]);
+
   // Fetch next recommended node when current node is complete
   useEffect(() => {
     const fetchNextNode = async () => {
@@ -578,6 +631,14 @@ const VictoryScreen = ({
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-2 sm:p-4">
+      {/* Confetti overlay for full/epic celebrations */}
+      {showConfetti && (
+        <ConfettiEffect
+          tier={celebrationData.tier}
+          onComplete={() => setShowConfetti(false)}
+        />
+      )}
+
       {/* Main content container - fits within viewport */}
       <div className="flex w-full max-w-md flex-col items-center">
         {/* Video avatar */}
@@ -620,10 +681,17 @@ const VictoryScreen = ({
           <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
             {rateLimited
               ? 'Great Practice!'
-              : nodeId && totalExercises > 1
-                ? (nodeComplete ? 'Node Complete!' : 'Exercise Complete!')
-                : 'Victory!'}
+              : isProcessingTrail
+                ? 'Loading...'
+                : celebrationData.message.title}
           </h2>
+
+          {/* Subtitle (only for trail nodes after processing completes) */}
+          {!isProcessingTrail && !rateLimited && nodeId && (
+            <p className="text-sm text-white/80">
+              {celebrationData.message.subtitle}
+            </p>
+          )}
 
           {/* Exercise indicator (if multi-exercise node) */}
           {nodeId && totalExercises > 1 && exerciseIndex !== null && (
@@ -664,30 +732,65 @@ const VictoryScreen = ({
             </div>
           )}
 
-          {/* XP gained display (if trail node) */}
+          {/* XP gained display with breakdown (if trail node) */}
           {xpData && xpData.totalXP > 0 && (
             <div className="relative mt-1 sm:mt-2">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-200/40 via-purple-200/30 to-pink-200/40 opacity-70 blur-lg" />
-              <div className="relative flex items-center justify-between gap-2 rounded-xl border-white/60 bg-white/90 px-3 py-2 shadow-lg sm:px-4 sm:py-2.5">
-                <div className="text-left">
-                  <p className="text-[10px] text-gray-500 sm:text-xs">
-                    XP Earned
-                  </p>
+              <div className="relative space-y-1.5 rounded-xl border-white/60 bg-white/90 px-3 py-2 shadow-lg sm:px-4 sm:py-2.5">
+                {/* Total XP header */}
+                <div className="text-center">
                   <p className="text-sm font-bold text-blue-600 sm:text-base">
-                    +{xpData.totalXP}
-                    {xpData.bonusXP > 0 && (
-                      <span className="ml-1 text-xs text-purple-500">
-                        (+{xpData.bonusXP} bonus)
-                      </span>
-                    )}
+                    +{xpData.totalXP} XP Earned
                   </p>
                 </div>
+
+                {/* XP Breakdown */}
+                <div className="space-y-0.5 text-xs text-gray-600">
+                  {/* Stars earned */}
+                  <div className="flex justify-between">
+                    <span>Stars earned ({xpData.stars}):</span>
+                    <span className="font-semibold text-blue-600">+{xpData.baseXP}</span>
+                  </div>
+
+                  {/* Bonus: First time */}
+                  {xpData.bonuses?.firstTime && (
+                    <div className="flex justify-between text-purple-600">
+                      <span>First time bonus:</span>
+                      <span className="font-semibold">+25</span>
+                    </div>
+                  )}
+
+                  {/* Bonus: Perfect score */}
+                  {xpData.bonuses?.perfect && (
+                    <div className="flex justify-between text-amber-600">
+                      <span>Perfect score:</span>
+                      <span className="font-semibold">+50</span>
+                    </div>
+                  )}
+
+                  {/* Bonus: Three stars */}
+                  {xpData.bonuses?.threeStars && (
+                    <div className="flex justify-between text-yellow-600">
+                      <span>Three stars:</span>
+                      <span className="font-semibold">+50</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Level up indicator */}
                 {xpData.leveledUp && (
-                  <div className={`${reducedMotion ? '' : 'animate-bounce'} rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 text-xs font-bold text-white shadow-lg`}>
-                    Level {xpData.newLevel}! 🎉
+                  <div className={`${reducedMotion ? '' : 'animate-bounce'} mt-1 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 text-center text-xs font-bold text-white shadow-lg`}>
+                    Level {xpData.newLevel}!
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Score percentile comparison (loads async, trail nodes only) */}
+          {percentileMessage && (
+            <div className="mt-1 rounded-lg bg-white/20 px-3 py-1.5 text-center text-sm text-white/90 sm:mt-2">
+              {percentileMessage}
             </div>
           )}
 
