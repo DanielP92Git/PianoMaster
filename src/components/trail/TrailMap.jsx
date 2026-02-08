@@ -304,9 +304,9 @@ const TrailSection = ({
         const unit = UNITS[key];
         return unit.category === category && unit.order === unitNum;
       });
-      return unitKey ? UNITS[unitKey] : { order: unitNum, name: `Unit ${unitNum}`, icon: '📚' };
+      return unitKey ? UNITS[unitKey] : { order: unitNum, name: `${t('units.unitLabel')} ${unitNum}`, icon: '📚' };
     });
-  }, [nodesByUnit, category]);
+  }, [nodesByUnit, category, t]);
 
   // Auto-expand current unit and adjacent units
   useEffect(() => {

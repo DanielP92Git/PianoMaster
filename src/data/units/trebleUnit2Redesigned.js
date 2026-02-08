@@ -364,7 +364,7 @@ export const trebleUnit2Nodes = [
   // ============================================
   {
     id: 'treble_2_7',
-    name: 'Mix: Units 1+2',
+    name: 'Mix Units 1+2',
     description: 'Challenge yourself with mixed practice',
     category: CATEGORY,
     unit: UNIT_ID,

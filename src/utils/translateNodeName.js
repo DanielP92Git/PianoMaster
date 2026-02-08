@@ -12,8 +12,11 @@
 export function translateNodeName(nodeName, t, i18n = null) {
   if (!nodeName || !t) return nodeName || "";
 
+  const i18nInstance = i18n || t.i18n;
+
   // First, try to get a full node translation from nodes.{nodeName}
   const fullTranslation = t(`nodes.${nodeName}`, { ns: 'trail', defaultValue: null });
+
   if (fullTranslation && fullTranslation !== nodeName) {
     return fullTranslation;
   }
@@ -32,9 +35,16 @@ export function translateNodeName(nodeName, t, i18n = null) {
     translatedName = translatedName.replace(regex, translatedNote);
   });
 
+  // Also translate common words that appear in node names
+  // Replace "Units" (plural) with the translated version
+  const unitsTranslation = t('units.unitsPlural', { ns: 'trail', defaultValue: 'Units' });
+
+  if (unitsTranslation !== 'Units') {
+    translatedName = translatedName.replace(/\bUnits\b/g, unitsTranslation);
+  }
+
   // For Hebrew (and other RTL languages), replace ampersands with commas
   // This ensures consistent separator usage: "דו & רה" becomes "דו, רה"
-  const i18nInstance = i18n || t.i18n;
   if (i18nInstance && i18nInstance.dir() === 'rtl') {
     translatedName = translatedName.replace(/\s*&\s*/g, ', ');
   }

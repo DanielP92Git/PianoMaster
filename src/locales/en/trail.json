@@ -29,6 +29,7 @@
   "units": {
     "classicNodes": "Classic Nodes",
     "unitLabel": "Unit",
+    "unitsPlural": "Units",
     "names": {
       "First Position": "First Position",
       "Five Finger Position": "Five Finger Position",
@@ -36,14 +37,14 @@
       "Extended Range": "Extended Range",
       "Accidentals": "Accidentals",
       "Middle C Position": "Middle C Position",
-      "Lower Bass": "Lower Bass",
-      "Bass Extension": "Bass Extension",
-      "Basic Beats": "Basic Beats",
-      "Half Notes": "Half Notes",
+      "Five Finger Low": "Five Finger Low",
+      "Full Octave Down": "Full Octave Down",
+      "Extended Bass": "Extended Bass",
+      "Bass Accidentals": "Bass Accidentals",
+      "Steady Beat": "Steady Beat",
       "Eighth Notes": "Eighth Notes",
-      "Rests": "Rests",
-      "Dotted Notes": "Dotted Notes",
-      "Sixteenth Notes": "Sixteenth Notes",
+      "Whole Notes & Rests": "Whole Notes & Rests",
+      "Dotted & Syncopation": "Dotted & Syncopation",
       "Note Adventure Begins": "Note Adventure Begins",
       "Bass Note Detective": "Bass Note Detective",
       "Rhythm Starters": "Rhythm Starters"
@@ -90,5 +91,9 @@
     "G": "G",
     "A": "A",
     "B": "B"
+  },
+  "nodes": {
+    "Mix Units 1+2": "Mix Units 1+2",
+    "Units 1+2": "Units 1+2"
   }
 }
