@@ -12,6 +12,13 @@
 export function translateNodeName(nodeName, t, i18n = null) {
   if (!nodeName || !t) return nodeName || "";
 
+  // First, try to get a full node translation from nodes.{nodeName}
+  const fullTranslation = t(`nodes.${nodeName}`, { ns: 'trail', defaultValue: null });
+  if (fullTranslation && fullTranslation !== nodeName) {
+    return fullTranslation;
+  }
+
+  // If no full translation exists, fall back to note-by-note translation
   // Map of note letters to translation keys with fallback to original
   const noteLetters = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
