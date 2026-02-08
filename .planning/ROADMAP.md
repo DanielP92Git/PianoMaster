@@ -206,11 +206,11 @@ Plans:
   3. Dashboard shows current XP / threshold display (e.g., "450 / 700 XP")
   4. Level-up animation triggers when user crosses level threshold
   5. VictoryScreen shows XP gain with count-up animation effect
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: TBD
-- [ ] 16-02: TBD
+- [ ] 16-01-PLAN.md -- XPProgressCard component, levelUpTracking utility, Dashboard integration
+- [ ] 16-02-PLAN.md -- VictoryScreen XP animation + mini bar + level-up dedup, Trail header XP summary
 
 #### Phase 17: Boss Unlock Celebrations
 **Goal**: Create memorable milestone moments for boss node completions
