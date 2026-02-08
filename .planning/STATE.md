@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Phase: 15 of 18 (VictoryScreen Celebration System)
-Plan: 02 of 03
+Plan: 01 of 03
 Status: In progress
-Last activity: 2026-02-08 — Completed 15-02-PLAN.md (Score Percentile Comparison)
+Last activity: 2026-02-09 — Completed 15-01-PLAN.md (Celebration Utility Layer)
 
-Progress: [█████████████████████░░░] 79% (40 plans complete)
+Progress: [█████████████████████░░░] 80% (41 plans complete)
 
 ## Milestone History
 
@@ -29,10 +29,10 @@ Progress: [█████████████████████░░
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 40 (35 in v1.0-v1.3, 5 in v1.4)
-- Average duration: ~20 min
-- Total execution time: ~13.3 hours
-- v1.4 plans: 5 complete (Phase 13: 2 plans, Phase 14: 2 plans, Phase 15: 1 plan)
+- Total plans completed: 41 (35 in v1.0-v1.3, 6 in v1.4)
+- Average duration: ~18 min
+- Total execution time: ~12.3 hours
+- v1.4 plans: 6 complete (Phase 13: 2 plans, Phase 14: 2 plans, Phase 15: 2 plans)
 
 **Recent Trend:**
 - v1.3 delivered 93-node trail system with 14 plans across 5 phases
@@ -58,9 +58,10 @@ Recent decisions affecting v1.4:
 - **Blue/purple/green color palette (14-01)**: Maximally distinguishable in all colorblindness types
 - **Locked state dominates colors (14-01)**: Gray overrides all category colors for clear availability signal
 - **Ring animation not scale (14-01)**: Box-shadow pulse more visible on dark background, less disruptive
-- **3-attempt minimum for percentile (15-02)**: Returns null when fewer than 3 historical attempts (insufficient data)
-- **Compare against ALL trail scores (15-02)**: Global context across all nodes, not per-node comparison
-- **Five-tier percentile messages (15-02)**: 90%+, 70%+, 50%+, 25%+, <25% with child-friendly encouragement
+- **Hardcoded English for celebrations (15-01)**: i18n adds complexity and delays feedback; English is primary language for learners
+- **Skip confetti in reduced motion (15-01)**: Return null entirely rather than simplifying animation
+- **Epic tier requires boss + stars (15-01)**: Boss nodes only epic when player earns at least 1 star
+- **All hooks unconditional (15-01)**: ConfettiEffect calls all hooks at top level before conditional render
 
 ### Pending Todos
 
@@ -73,6 +74,7 @@ None. v1.4 just started.
 - ✅ Celebration duration validated: 500ms standard chosen (within 400-800ms research range)
 - ✅ Node style system complete (Phase 14): Icons, colors, TrailNode/Modal integration verified
 - ✅ Visual distinction verified: 5/5 success criteria met
+- ✅ Celebration utilities complete (15-01): Tier logic, messages, confetti ready for VictoryScreen
 - Service worker cache strategy for celebration components needs clarification (exclude vs. network-first) — defer to Phase 15
 
 **Outstanding items (non-blocking):**
@@ -81,10 +83,10 @@ None. v1.4 just started.
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: Completed 15-02-PLAN.md (Score Percentile Comparison)
-Resume file: None
+Last session: 2026-02-09
+Stopped at: Completed 15-01-PLAN.md (Celebration Utility Layer)
+Resume file: None (ready for 15-03-PLAN.md)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-08 — Phase 15 Plan 02 complete (percentile comparison system)*
+*Last updated: 2026-02-09 — Phase 15-01 complete (celebration utility layer)*
