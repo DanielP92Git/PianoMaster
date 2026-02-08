@@ -88,7 +88,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
         {/* Locked boss badge - shows on top of locked boss nodes */}
         {isBoss && !isUnlocked && (
           <div className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <div className="flex items-center gap-0.5 rounded-full bg-yellow-400 px-1.5 py-0.5 text-[8px] font-bold text-yellow-900 shadow-md border border-yellow-500">
+            <div className="flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[9px] font-bold text-yellow-900 shadow-md border border-yellow-500">
               <span>🔒</span>
               <span>{t('node.bossLocked', { defaultValue: 'Complete all lessons' })}</span>
             </div>
