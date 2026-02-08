@@ -43,6 +43,16 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
 
   return (
     <div className="relative flex flex-col items-center">
+      {/* Locked boss badge - positioned above everything */}
+      {isBoss && !isUnlocked && (
+        <div className="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap">
+          <div className="flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[9px] font-bold text-yellow-900 shadow-md border border-yellow-500">
+            <span>🔒</span>
+            <span>{t('node.bossLocked', { defaultValue: 'Complete all lessons' })}</span>
+          </div>
+        </div>
+      )}
+
       {/* Stars display - always show 3 star slots above the node */}
       <div className="mb-0.5 flex gap-0.5">
         {[1, 2, 3].map((starNum) => (
@@ -83,16 +93,6 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
         {crownVisible && (
           <div className="absolute -top-4 text-lg drop-shadow-lg">
             <Crown size={18} className="text-yellow-400 fill-yellow-400" />
-          </div>
-        )}
-
-        {/* Locked boss badge - shows on top of locked boss nodes */}
-        {isBoss && !isUnlocked && (
-          <div className="absolute -top-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-            <div className="flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[9px] font-bold text-yellow-900 shadow-md border border-yellow-500">
-              <span>🔒</span>
-              <span>{t('node.bossLocked', { defaultValue: 'Complete all lessons' })}</span>
-            </div>
           </div>
         )}
 
