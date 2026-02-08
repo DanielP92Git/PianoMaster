@@ -187,12 +187,12 @@ Plans:
   3. Celebration messaging is node-type-specific (8 different messages for 8 node types)
   4. XP breakdown displays "Stars earned: +X, Node completion: +Y"
   5. Progress comparison shows "Better than X% of your previous scores"
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 15-01: TBD
-- [ ] 15-02: TBD
-- [ ] 15-03: TBD
+- [ ] 15-01-PLAN.md -- Celebration tier logic, node-type messages, and ConfettiEffect component
+- [ ] 15-02-PLAN.md -- Score percentile SQL function and client service
+- [ ] 15-03-PLAN.md -- VictoryScreen integration (tiered celebrations, confetti, messages, XP breakdown, percentile)
 
 #### Phase 16: Dashboard XP Prominence
 **Goal**: Make XP system visible and motivating throughout the app
@@ -259,10 +259,10 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17 → 18
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
 | 13. Celebration Foundation & Accessibility | v1.4 | 2/2 | Complete | 2026-02-05 |
 | 14. Node Type Visual Distinction | v1.4 | 2/2 | Complete | 2026-02-08 |
-| 15. VictoryScreen Celebration System | v1.4 | 0/TBD | Not started | - |
+| 15. VictoryScreen Celebration System | v1.4 | 0/3 | Not started | - |
 | 16. Dashboard XP Prominence | v1.4 | 0/TBD | Not started | - |
 | 17. Boss Unlock Celebrations | v1.4 | 0/TBD | Not started | - |
 | 18. Code Cleanup | v1.4 | 0/TBD | Not started | - |
 
 ---
-*Last updated: 2026-02-05 after Phase 14 planning*
+*Last updated: 2026-02-08 after Phase 15 planning*
