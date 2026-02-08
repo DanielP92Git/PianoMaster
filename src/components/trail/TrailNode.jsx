@@ -30,7 +30,8 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
   const isBoss = node.isBoss;
 
   const handleClick = () => {
-    if (isUnlocked) {
+    // Allow clicking for unlocked nodes OR locked boss nodes (to show unlock explanation)
+    if (isUnlocked || isBoss) {
       onClick(node);
     }
   };
@@ -63,7 +64,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
       {/* Node button */}
       <button
         onClick={handleClick}
-        disabled={!isUnlocked}
+        disabled={!isUnlocked && !isBoss}
         className={`
           relative flex items-center justify-center
           ${sizeClass}
@@ -73,7 +74,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
           ${colors.bg}
           ${colors.border}
           ${colors.glow}
-          ${isUnlocked ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-60'}
+          ${isUnlocked || isBoss ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-not-allowed opacity-60'}
           ${!reducedMotion ? pulseClass : ''}
         `}
         aria-label={`${translateNodeName(node.name, t, i18n)} - ${nodeState}`}
