@@ -9,25 +9,25 @@ Requirements for v1.4 UI Polish & Celebrations milestone. Each maps to roadmap p
 
 ### Celebration System
 
-- [ ] **CELEB-01**: VictoryScreen shows tiered celebrations based on achievement (minimal/standard/full/epic)
-- [ ] **CELEB-02**: Confetti effects trigger for high achievements (3-star completions, boss wins)
+- [x] **CELEB-01**: VictoryScreen shows tiered celebrations based on achievement (minimal/standard/full/epic)
+- [x] **CELEB-02**: Confetti effects trigger for high achievements (3-star completions, boss wins)
 - [x] **CELEB-03**: Celebrations are always skippable (click anywhere to dismiss)
 - [x] **CELEB-04**: Celebration animations respect AccessibilityContext reducedMotion setting
-- [ ] **CELEB-05**: Node-type-specific messaging in VictoryScreen (8 different messages for 8 node types)
+- [x] **CELEB-05**: Node-type-specific messaging in VictoryScreen (8 different messages for 8 node types)
 - [ ] **CELEB-06**: Boss unlock modal shows 3-stage sequence (celebration → unlock animation → next unit preview)
 - [ ] **CELEB-07**: Boss unlock modal only shows once per boss node (localStorage tracking)
-- [ ] **CELEB-08**: XP breakdown display shows "Stars earned: +X, Node completion: +Y"
-- [ ] **CELEB-09**: Progress comparison shows "Better than X% of your previous scores" in VictoryScreen
+- [x] **CELEB-08**: XP breakdown display shows "Stars earned: +X, Node completion: +Y"
+- [x] **CELEB-09**: Progress comparison shows "Better than X% of your previous scores" in VictoryScreen
 - [x] **CELEB-10**: Standard celebrations complete within 500ms, boss celebrations within 2 seconds
 
 ### Visual Distinction
 
-- [ ] **VISUAL-01**: TrailNode shows icon based on node type (8 different icons for 8 node types)
-- [ ] **VISUAL-02**: TrailNode shows color-coded badge based on node type
-- [ ] **VISUAL-03**: Boss nodes are visually distinct with crown icon and gold accent
-- [ ] **VISUAL-04**: Icon system uses lucide-react icons (BookOpen, Target, Zap, Trophy, Crown, etc.)
-- [ ] **VISUAL-05**: TrailNodeModal displays node type icon and color consistently with TrailNode
-- [ ] **VISUAL-06**: Locked/available/mastered states remain clear with new visual distinction
+- [x] **VISUAL-01**: TrailNode shows icon based on node type (8 different icons for 8 node types)
+- [x] **VISUAL-02**: TrailNode shows color-coded badge based on node type
+- [x] **VISUAL-03**: Boss nodes are visually distinct with crown icon and gold accent
+- [x] **VISUAL-04**: Icon system uses lucide-react icons (BookOpen, Target, Zap, Trophy, Crown, etc.)
+- [x] **VISUAL-05**: TrailNodeModal displays node type icon and color consistently with TrailNode
+- [x] **VISUAL-06**: Locked/available/mastered states remain clear with new visual distinction
 
 ### XP Prominence
 
@@ -76,22 +76,22 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CELEB-01 | Phase 15 | Pending |
-| CELEB-02 | Phase 15 | Pending |
+| CELEB-01 | Phase 15 | Complete |
+| CELEB-02 | Phase 15 | Complete |
 | CELEB-03 | Phase 13 | Complete |
 | CELEB-04 | Phase 13 | Complete |
-| CELEB-05 | Phase 15 | Pending |
+| CELEB-05 | Phase 15 | Complete |
 | CELEB-06 | Phase 17 | Pending |
 | CELEB-07 | Phase 17 | Pending |
-| CELEB-08 | Phase 15 | Pending |
-| CELEB-09 | Phase 15 | Pending |
+| CELEB-08 | Phase 15 | Complete |
+| CELEB-09 | Phase 15 | Complete |
 | CELEB-10 | Phase 13 | Complete |
-| VISUAL-01 | Phase 14 | Pending |
-| VISUAL-02 | Phase 14 | Pending |
-| VISUAL-03 | Phase 14 | Pending |
-| VISUAL-04 | Phase 14 | Pending |
-| VISUAL-05 | Phase 14 | Pending |
-| VISUAL-06 | Phase 14 | Pending |
+| VISUAL-01 | Phase 14 | Complete |
+| VISUAL-02 | Phase 14 | Complete |
+| VISUAL-03 | Phase 14 | Complete |
+| VISUAL-04 | Phase 14 | Complete |
+| VISUAL-05 | Phase 14 | Complete |
+| VISUAL-06 | Phase 14 | Complete |
 | XP-01 | Phase 16 | Pending |
 | XP-02 | Phase 16 | Pending |
 | XP-03 | Phase 16 | Pending |
@@ -108,4 +108,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-05*
-*Last updated: 2026-02-05 after roadmap creation*
+*Last updated: 2026-02-09 after Phase 15 complete*
