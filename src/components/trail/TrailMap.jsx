@@ -27,6 +27,7 @@ import {
 import TrailNode from './TrailNode';
 import TrailNodeModal from './TrailNodeModal';
 import supabase from '../../services/supabase';
+import { translateUnitName } from '../../utils/translateNodeName';
 
 /**
  * SVG Path connector between nodes
@@ -86,7 +87,8 @@ const UnitSection = ({
   getNodeProgress,
   isExpanded,
   onToggle,
-  isCurrent
+  isCurrent,
+  t
 }) => {
   const containerRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(600);
@@ -170,8 +172,8 @@ const UnitSection = ({
             {unit?.icon || '📚'}
           </div>
           <div className="text-left">
-            <h3 className="text-base font-bold text-white">{unit?.name || 'Unit'}</h3>
-            <p className="text-xs text-white/60">{completedInUnit}/{nodes.length} complete • {totalStars}/{maxStars} ⭐</p>
+            <h3 className="text-base font-bold text-white">{translateUnitName(unit?.name, t) || t('units.unitLabel')}</h3>
+            <p className="text-xs text-white/60">{completedInUnit}/{nodes.length} {t('stats.complete')} • {totalStars}/{maxStars} ⭐</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -257,7 +259,8 @@ const TrailSection = ({
   getNodeProgress,
   findCurrentNode,
   category,
-  currentUnit
+  currentUnit,
+  t
 }) => {
   // State for expanded units
   const [expandedUnits, setExpandedUnits] = useState(new Set());
@@ -360,6 +363,7 @@ const TrailSection = ({
               isExpanded={expandedUnits.has(unit.order)}
               onToggle={() => toggleUnit(unit.order)}
               isCurrent={currentUnit === unit.order}
+              t={t}
             />
           );
         })}
@@ -368,7 +372,7 @@ const TrailSection = ({
         {nodesByUnit[999] && (
           <UnitSection
             key="legacy"
-            unit={{ order: 999, name: 'Classic Nodes', icon: '📜' }}
+            unit={{ order: 999, name: t('units.classicNodes'), icon: '📜' }}
             nodes={nodesByUnit[999]}
             completedNodeIds={completedNodeIds}
             unlockedNodes={unlockedNodes}
@@ -377,6 +381,7 @@ const TrailSection = ({
             isExpanded={expandedUnits.has(999)}
             onToggle={() => toggleUnit(999)}
             isCurrent={false}
+            t={t}
           />
         )}
       </div>
@@ -646,6 +651,7 @@ const TrailMap = () => {
           findCurrentNode={findCurrentNode}
           category={NODE_CATEGORIES.TREBLE_CLEF}
           currentUnit={currentUnits.treble}
+          t={t}
         />
       </div>
 
@@ -663,6 +669,7 @@ const TrailMap = () => {
           findCurrentNode={findCurrentNode}
           category={NODE_CATEGORIES.BASS_CLEF}
           currentUnit={currentUnits.bass}
+          t={t}
         />
       </div>
 
@@ -680,6 +687,7 @@ const TrailMap = () => {
           findCurrentNode={findCurrentNode}
           category={NODE_CATEGORIES.RHYTHM}
           currentUnit={currentUnits.rhythm}
+          t={t}
         />
       </div>
 
@@ -695,6 +703,7 @@ const TrailMap = () => {
           onNodeClick={setSelectedNode}
           getNodeProgress={getNodeProgress}
           findCurrentNode={findCurrentNode}
+          t={t}
         />
       )}
 
@@ -733,7 +742,7 @@ const TrailMap = () => {
       </button>
 
       {/* DEV ONLY: Reset Progress Button */}
-      {import.meta.env.DEV && (
+      {/* {import.meta.env.DEV && (
         <button
           onClick={handleResetProgress}
           className="fixed bottom-6 left-6 z-50 flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-2xl transition-all hover:bg-red-700 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2"
@@ -744,7 +753,7 @@ const TrailMap = () => {
           <span className="hidden sm:inline">Reset Progress</span>
           <span className="sm:hidden">Reset</span>
         </button>
-      )}
+      )} */}
     </div>
   );
 };

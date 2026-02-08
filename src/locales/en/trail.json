@@ -23,7 +23,31 @@
   "stats": {
     "stars": "Stars",
     "done": "Done",
-    "open": "Open"
+    "open": "Open",
+    "complete": "complete"
+  },
+  "units": {
+    "classicNodes": "Classic Nodes",
+    "unitLabel": "Unit",
+    "names": {
+      "First Position": "First Position",
+      "Five Finger Position": "Five Finger Position",
+      "Full Octave": "Full Octave",
+      "Extended Range": "Extended Range",
+      "Accidentals": "Accidentals",
+      "Middle C Position": "Middle C Position",
+      "Lower Bass": "Lower Bass",
+      "Bass Extension": "Bass Extension",
+      "Basic Beats": "Basic Beats",
+      "Half Notes": "Half Notes",
+      "Eighth Notes": "Eighth Notes",
+      "Rests": "Rests",
+      "Dotted Notes": "Dotted Notes",
+      "Sixteenth Notes": "Sixteenth Notes",
+      "Note Adventure Begins": "Note Adventure Begins",
+      "Bass Note Detective": "Bass Note Detective",
+      "Rhythm Starters": "Rhythm Starters"
+    }
   },
   "node": {
     "startHere": "Start Here!",

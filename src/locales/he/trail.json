@@ -23,7 +23,31 @@
   "stats": {
     "stars": "כוכבים",
     "done": "הושלם",
-    "open": "פתוח"
+    "open": "פתוח",
+    "complete": "הושלמו"
+  },
+  "units": {
+    "classicNodes": "תווים קלאסיים",
+    "unitLabel": "יחידה",
+    "names": {
+      "First Position": "מיקום ראשון",
+      "Five Finger Position": "מיקום חמש אצבעות",
+      "Full Octave": "אוקטבה שלמה",
+      "Extended Range": "טווח מורחב",
+      "Accidentals": "סימני היסט",
+      "Middle C Position": "מיקום דו התיכון",
+      "Lower Bass": "בס נמוך",
+      "Bass Extension": "הרחבת בס",
+      "Basic Beats": "פעימות בסיסיות",
+      "Half Notes": "תווי חצי",
+      "Eighth Notes": "תווי שמינית",
+      "Rests": "הפסקות",
+      "Dotted Notes": "תווים מנוקדים",
+      "Sixteenth Notes": "תווי שישית עשרה",
+      "Note Adventure Begins": "הרפתקת התווים מתחילה",
+      "Bass Note Detective": "בלש תווי הבס",
+      "Rhythm Starters": "התחלת הקצב"
+    }
   },
   "node": {
     "startHere": "התחילו כאן!",
