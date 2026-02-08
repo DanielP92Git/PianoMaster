@@ -27,7 +27,8 @@
   },
   "node": {
     "startHere": "Start Here!",
-    "continue": "Continue"
+    "continue": "Continue",
+    "bossLocked": "Complete all lessons"
   },
   "exerciseTypes": {
     "note_recognition": "Note Recognition",
@@ -49,6 +50,7 @@
     "xpRewardValue": "{{xp}} x ⭐ stars",
     "unlockLabel": "Unlock:",
     "prerequisites": "Complete These First:",
+    "bossUnlockTitle": "How to Unlock This Challenge",
     "button": {
       "locked": "Locked",
       "practiceAgain": "Practice Again",

@@ -341,14 +341,18 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
 
         {/* Boss unlock hint (prominent display for locked boss nodes) */}
         {!isUnlocked && node.isBoss && node.unlockHint && (
-          <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-50 border-2 border-yellow-200 p-3 sm:p-4">
-            <div className="flex items-start gap-2">
-              <span className="text-2xl flex-shrink-0">&#128274;</span>
-              <div>
-                <h3 className="text-sm sm:text-base font-bold text-yellow-900 mb-1">
+          <div className="mb-3 sm:mb-4 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-50 border-4 border-yellow-300 p-4 sm:p-5 shadow-lg animate-pulse-slow">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-yellow-200 border-2 border-yellow-400">
+                  <span className="text-3xl sm:text-4xl">&#128274;</span>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base sm:text-lg font-black text-yellow-900 mb-2 uppercase tracking-wide">
                   {t('modal.bossUnlockTitle', { defaultValue: 'How to Unlock This Challenge' })}
                 </h3>
-                <p className="text-xs sm:text-sm text-yellow-800 font-medium">
+                <p className="text-sm sm:text-base text-yellow-900 font-bold leading-relaxed">
                   {node.unlockHint}
                 </p>
               </div>
