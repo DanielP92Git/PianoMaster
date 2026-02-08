@@ -157,7 +157,7 @@ const UnitSection = ({
   const unitComplete = completedInUnit === nodes.length;
 
   return (
-    <div className="rounded-2xl bg-white/5 backdrop-blur-sm overflow-hidden">
+    <div className="rounded-2xl bg-white/5 backdrop-blur-sm">
       {/* Unit Header */}
       <button
         onClick={onToggle}
@@ -191,6 +191,7 @@ const UnitSection = ({
             className="block w-full"
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
             preserveAspectRatio="xMidYMid meet"
+            style={{ overflow: 'visible' }}
           >
             {/* Path Connectors */}
             {nodePositions.map((pos, index) => {
@@ -219,10 +220,11 @@ const UnitSection = ({
               return (
                 <foreignObject
                   key={pos.node.id}
-                  x={pos.x - NODE_SIZE / 2}
-                  y={pos.y - NODE_SIZE / 2 - 15}
-                  width={NODE_SIZE + 10}
-                  height={NODE_SIZE + 50}
+                  x={pos.x - NODE_SIZE / 2 - 20}
+                  y={pos.y - NODE_SIZE / 2 - 45}
+                  width={NODE_SIZE + 50}
+                  height={NODE_SIZE + 85}
+                  style={{ overflow: 'visible' }}
                 >
                   <TrailNode
                     node={pos.node}
