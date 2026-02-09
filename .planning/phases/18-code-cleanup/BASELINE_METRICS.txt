@@ -1,0 +1,20 @@
+[2mdist/[22m[36massets/Gb5-CZyymvua.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Ab5-WM8f5LET.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Bb5-BfMwpHGU.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Db6-UaQ1RCcX.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Eb6-XnxRS7fd.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Gb6-CpQiK8X7.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Ab6-CkSKtQSt.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Bb6-Dvjbakz3.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Db7-DDNeixqY.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Eb7-DypgOWKo.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Gb7-O76QS7hn.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Ab7-DyeVjO4u.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/Bb7-DZ3mIeey.js                                      [39m[1m[2m    0.06 kB[22m[1m[22m[2m │ gzip:     0.08 kB[22m
+[2mdist/[22m[36massets/index-C4ccMXAX.js                                    [39m[1m[33m3,826.81 kB[39m[22m[2m │ gzip: 1,255.54 kB[22m
+[33m
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[32m✓ built in 28.60s[39m
