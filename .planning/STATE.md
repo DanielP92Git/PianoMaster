@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Phase: 16 of 18 (Dashboard XP Prominence)
-Plan: 1 of 3
+Plan: 2 of 3
 Status: In progress
-Last activity: 2026-02-09 — Completed 16-01-PLAN.md (Dashboard XP Card & Level Identity)
+Last activity: 2026-02-09 — Completed 16-02-PLAN.md (XP Count-Up Animation & Trail Header Display)
 
-Progress: [██████████████████████░░] 84% (15 phases complete, 43 plans)
+Progress: [██████████████████████░░] 85% (15 phases complete, 44 plans)
 
 ## Milestone History
 
@@ -29,10 +29,10 @@ Progress: [██████████████████████░
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 43 (35 in v1.0-v1.3, 8 in v1.4)
-- Average duration: ~16 min
-- Total execution time: ~12.5 hours
-- v1.4 plans: 8 complete (Phase 13: 2 plans, Phase 14: 2 plans, Phase 15: 3 plans, Phase 16: 1 plan)
+- Total plans completed: 44 (35 in v1.0-v1.3, 9 in v1.4)
+- Average duration: ~15 min
+- Total execution time: ~12.6 hours
+- v1.4 plans: 9 complete (Phase 13: 2 plans, Phase 14: 2 plans, Phase 15: 3 plans, Phase 16: 2 plans)
 
 **Recent Trend:**
 - v1.3 delivered 93-node trail system with 14 plans across 5 phases
@@ -68,6 +68,10 @@ Recent decisions affecting v1.4:
 - **XP card placement between actions and goals (16-01)**: Creates natural flow from action → progress → goals
 - **Badge animation on level change only (16-01)**: Compares lastSeenLevel with current level, respects reducedMotion
 - **5-tier badge color progression (16-01)**: Gray/blue/amber/purple/rainbow for colorblind accessibility
+- **XP animation duration 1s (16-02)**: Faster than points animation (1.4s) to keep VictoryScreen snappy
+- **Mini bar only when not leveled up (16-02)**: Hide progress bar during level-up celebration to avoid clutter
+- **Level name in trail header (16-02)**: Shows icon + name only; Dashboard XP Card has full detail
+- **Dedup at level-up trigger (16-02)**: Mark level celebrated when confetti fires, preventing re-trigger
 
 ### Pending Todos
 
@@ -91,8 +95,8 @@ None. v1.4 just started.
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 16-01-PLAN.md (Dashboard XP Card & Level Identity)
-Resume file: None (ready for 16-02)
+Stopped at: Completed 16-02-PLAN.md (XP Count-Up Animation & Trail Header Display)
+Resume file: None (ready for 16-03)
 
 ---
 *State initialized: 2026-01-31*
