@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail system features tiered celebrations, boss unlock events with musical confetti, node type visual distinction with colorblind-safe icons, and prominent XP/level progression. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
 
 ## Core Value
 
@@ -14,11 +14,19 @@ A piano learning PWA for 8-year-old learners with a Duolingo-style skill progres
 
 These capabilities exist, are working, and have been shipped:
 
+**v1.4 UI Polish & Celebrations (shipped 2026-02-09):**
+- Tiered VictoryScreen celebrations (minimal/standard/full/epic) with confetti and node-type-specific messaging
+- Boss unlock 3-stage modal (celebration, unlock animation, next unit preview) with musical confetti and Web Audio fanfare
+- Node type visual distinction: 8 unique lucide-react icons, colorblind-safe palette, boss crown/gold
+- Dashboard XP progress bar with level badges, "X XP to next level", count-up animation, level-up celebrations
+- All celebrations respect reducedMotion, are always skippable, and deduplicate (boss show-once, level-up show-once)
+- Codebase cleanup: 37 dead files removed, 5 unused dependencies removed, bundle visualizer added
+
 **v1.3 Trail System Redesign (shipped 2026-02-05):**
 - 93-node trail system with consistent pedagogy across Treble (23), Bass (22), and Rhythm (36) paths
 - Build-time validation script catches prerequisite cycles and invalid node types before deploy
-- 22 bass clef nodes following treble pedagogy (C4 → C3 octave progression)
-- 36 rhythm nodes with duration-based progression (quarter → sixteenth notes)
+- 22 bass clef nodes following treble pedagogy (C4 -> C3 octave progression)
+- 36 rhythm nodes with duration-based progression (quarter -> sixteenth notes)
 - Atomic cutover with progress reset and XP preservation
 - All 70 v1.3 requirements delivered (4 data + 26 bass + 35 rhythm + 5 integration)
 
@@ -32,7 +40,7 @@ These capabilities exist, are working, and have been shipped:
 **v1.1 Parental Consent Email Service (shipped 2026-02-02):**
 - EMAIL-01: Edge Function sends consent verification email via Brevo API
 - EMAIL-02: Email contains child-friendly branding and clear CTA for parent
-- EMAIL-03: Consent URL in email works end-to-end (verify → activate account)
+- EMAIL-03: Consent URL in email works end-to-end (verify -> activate account)
 - FIX-01: Eliminated 406 console errors during role detection (.maybeSingle())
 - FIX-02: Handle edge cases (resend, expired tokens, invalid links)
 
@@ -63,20 +71,14 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-## Current Milestone: v1.4 UI Polish & Celebrations
+No active requirements. Next milestone not yet defined.
 
-**Goal:** Make the 93-node trail system feel rewarding with node-type celebrations, boss unlock events, visual distinction, and prominent XP display.
-
-**Target features:**
-- Node-type-specific victory celebrations (different animations/messaging for each of 8 node types)
-- Boss unlock event modal (special celebration when completing Boss nodes that unlock next unit)
-- Node type visual distinction (icons and colors for Discovery, Practice, Boss, etc.)
-- XP prominence improvements (make XP display more visible throughout the app)
-- Dead code cleanup (remove orphaned progressMigration.js and any other unused code)
-
-**Deferred to future milestones:**
+**Deferred from v1.4 (candidates for next milestone):**
 - Hard delete Edge Function for accounts past 30-day grace period
 - Production deployment to Google Play / Apple App Store
+- Celebration sound effects with volume control (requires classroom A/B testing)
+- Streak/unit/path completion celebrations
+- i18n for celebration messages
 
 ### Out of Scope
 
@@ -85,24 +87,31 @@ Explicitly excluded:
 | Feature | Reason |
 |---------|--------|
 | Performance optimizations | Not security-critical, separate project |
-| Trail map UI redesign | v1.4 addresses node visuals; full layout redesign deferred |
+| Trail map full layout redesign | Current horizontal wavy path works; revisit if user feedback warrants |
 | Grand Staff integration | Complex cross-clef learning; defer to future |
 | Adaptive difficulty system | Requires algorithm research; start with fixed difficulty |
 | Real song integration | Licensing complexity; use generated patterns for now |
 | Path branching logic | Current linear progression works; complexity not justified |
 | REVIEW node automation | Manual review nodes for now; spaced repetition algorithm later |
 | Multi-language consent emails | English only for now, Hebrew later |
+| Avatar customization / unlockable items | Tangible rewards undermine intrinsic motivation for 8-year-olds |
+| Social comparison / leaderboard celebrations | COPPA concerns, inappropriate social pressure for age group |
 
 ## Context
 
-**Current State (after v1.3):**
-- 93-node trail system with consistent pedagogy across all three paths
+**Current State (after v1.4):**
+- 93-node trail system with celebrations, visual distinction, and XP prominence
+- Tiered celebration system (4 tiers) with accessibility-first design
+- Boss unlock events with 3-stage modal and musical confetti
+- 8 node types with unique icons and colorblind-safe colors
+- Dashboard XP card with level progression, badges, and animations
 - Build-time validation ensures node integrity on every build
-- Legacy 18-node system removed (600+ lines deleted)
-- All E2E paths verified working by human tester
+- Codebase cleaned: 37 dead files and 5 unused dependencies removed
+- Bundle visualizer (rollup-plugin-visualizer) for ongoing monitoring
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
-- v1.0: 177 files, 31,659 lines | v1.1: 15 files, 1,687 lines | v1.2: 31 files, 4,698 lines | v1.3: 88 files, 17,003 lines
+- ~67,000 lines JavaScript/JSX/CSS across src/
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -111,6 +120,8 @@ Explicitly excluded:
 - Email: Brevo API (300/day free tier)
 - Music: VexFlow v5 for notation, Klavier for keyboard input
 - Styling: Tailwind CSS with custom design system
+- Icons: lucide-react
+- Audio: Web Audio API (synthesized fanfare)
 
 **User Demographics:**
 - Primary users: 8-year-old children learning piano
@@ -121,12 +132,13 @@ Explicitly excluded:
 - Parental consent verification method needs legal review
 - Privacy policy language requires attorney review
 - State age verification laws may require Play Age Signals API
-- XP display in UI could be more prominent (stored correctly, UI gap)
-- Orphaned progressMigration.js file (175 lines unused)
+- Pre-existing test failure: SightReadingGame.micRestart.test.jsx (Router context)
+- Pre-existing lint: 24 errors, 415 warnings (all pre-v1.4)
+- syncPracticeSessions() stub in sw.js (zero runtime impact)
 
 ## Constraints
 
-- **Backend**: Supabase (auth, database, real-time) — no changes to this choice
+- **Backend**: Supabase (auth, database, real-time) -- no changes to this choice
 - **Compatibility**: Must not break existing beta user data or progress
 - **Compliance**: Must meet Google Play and Apple App Store security requirements
 - **COPPA**: Must comply with children's data protection regulations (under 13)
@@ -159,7 +171,19 @@ Explicitly excluded:
 | Single pitch C4 for all rhythm nodes | Pure rhythm focus, no pitch confusion for learners | Good |
 | Silent progress reset, XP preserved | Maintains motivation despite trail restructure | Good |
 | 93 nodes final count | Actual count after implementation (was 87 estimate) | Good |
+| Celebration duration tiers (500ms/1000ms/3000ms) | Based on 8-year-old attention span research | Good |
+| Extended timeouts 1.5x multiplier | Balances cognitive accessibility with engagement | Good |
+| Boss icons override category icons | Trophy/crown more recognizable for special nodes | Good |
+| Blue/purple/green colorblind-safe palette | Maximally distinguishable in all colorblindness types | Good |
+| Hardcoded English for celebrations | i18n deferred; English primary for learners | Good |
+| Epic tier requires boss + stars | Boss nodes only epic when player earns at least 1 star | Good |
+| Web Audio API fanfare (not bundled file) | 0kb bundle cost vs 20-50kb; synthesis quality sufficient | Good |
+| Singleton AudioContext pattern | Prevents browser "too many contexts" error | Good |
+| 3-stage boss modal | Matches Duolingo celebration patterns for milestone gravitas | Good |
+| Bundle visualizer as permanent tool | Ongoing monitoring vs one-time audit | Good |
+| Knip for dead code detection | JSX/TSX support, comprehensive analysis | Good |
+| Conservative dead code removal | Detection -> verification -> test -> atomic commit | Good |
 
 ---
 
-*Last updated: 2026-02-05 after v1.4 milestone started*
+*Last updated: 2026-02-09 after v1.4 milestone*

@@ -1,5 +1,33 @@
 # Project Milestones: PianoApp
 
+## v1.4 UI Polish & Celebrations (Shipped: 2026-02-09)
+
+**Delivered:** Rewarding celebration system for the 93-node trail with tiered VictoryScreen celebrations, boss unlock 3-stage modals, node type visual distinction with 8 unique icons, dashboard XP prominence with level-up animations, and codebase cleanup removing 37 dead files.
+
+**Phases completed:** 13-18 (13 plans total)
+
+**Key accomplishments:**
+
+- Accessibility-first celebration foundation with reducedMotion support and skippable animations
+- Node type visual distinction system with 8 unique icons, colorblind-safe palette, and custom musical SVGs
+- Tiered VictoryScreen celebrations (minimal/standard/full/epic) with confetti, node-type messages, and XP breakdown
+- Dashboard XP prominence with progress bar, level badges, count-up animation, and level-up celebrations
+- Boss unlock 3-stage modal (celebration, unlock, preview) with musical confetti and Web Audio fanfare
+- Codebase cleanup: 37 dead files (~8,000 lines) and 5 unused dependencies removed
+
+**Stats:**
+
+- 127 files created/modified
+- 13,566 lines added, 8,517 lines removed
+- 6 phases, 13 plans
+- 5 days (2026-02-05 to 2026-02-09)
+
+**Git range:** `384386e` to `122f90e`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
 ## v1.3 Trail System Redesign (Shipped: 2026-02-05)
 
 **Delivered:** Professional game-like learning progression for 8-year-olds with 93 nodes across three parallel learning paths (Treble, Bass, Rhythm), consistent pedagogy following Discovery → Practice → Mix-Up → Speed → Boss pattern, and build-time validation infrastructure.
@@ -112,4 +140,4 @@
 
 ---
 
-*Last updated: 2026-02-03*
+*Last updated: 2026-02-09*
