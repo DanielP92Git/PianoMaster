@@ -31,12 +31,12 @@ Requirements for v1.4 UI Polish & Celebrations milestone. Each maps to roadmap p
 
 ### XP Prominence
 
-- [ ] **XP-01**: Dashboard displays XP progress bar showing current level (e.g., "Level 3: Apprentice")
-- [ ] **XP-02**: Dashboard shows "X XP to next level" indicator
-- [ ] **XP-03**: Dashboard shows current XP / threshold display (e.g., "450 / 700 XP")
-- [ ] **XP-04**: Level-up animation triggers when user crosses level threshold (shimmer effect, badge unlock)
-- [ ] **XP-05**: VictoryScreen shows XP gain with count-up animation effect
-- [ ] **XP-06**: XP progress card respects AccessibilityContext reducedMotion setting
+- [x] **XP-01**: Dashboard displays XP progress bar showing current level (e.g., "Level 3: Apprentice")
+- [x] **XP-02**: Dashboard shows "X XP to next level" indicator
+- [x] **XP-03**: Dashboard shows current XP / threshold display (e.g., "450 / 700 XP")
+- [x] **XP-04**: Level-up animation triggers when user crosses level threshold (shimmer effect, badge unlock)
+- [x] **XP-05**: VictoryScreen shows XP gain with count-up animation effect
+- [x] **XP-06**: XP progress card respects AccessibilityContext reducedMotion setting
 
 ### Code Cleanup
 
@@ -92,12 +92,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VISUAL-04 | Phase 14 | Complete |
 | VISUAL-05 | Phase 14 | Complete |
 | VISUAL-06 | Phase 14 | Complete |
-| XP-01 | Phase 16 | Pending |
-| XP-02 | Phase 16 | Pending |
-| XP-03 | Phase 16 | Pending |
-| XP-04 | Phase 16 | Pending |
-| XP-05 | Phase 16 | Pending |
-| XP-06 | Phase 16 | Pending |
+| XP-01 | Phase 16 | Complete |
+| XP-02 | Phase 16 | Complete |
+| XP-03 | Phase 16 | Complete |
+| XP-04 | Phase 16 | Complete |
+| XP-05 | Phase 16 | Complete |
+| XP-06 | Phase 16 | Complete |
 | CLEAN-01 | Phase 18 | Pending |
 | CLEAN-02 | Phase 18 | Pending |
 
@@ -108,4 +108,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-05*
-*Last updated: 2026-02-09 after Phase 15 complete*
+*Last updated: 2026-02-09 after Phase 16 complete*
