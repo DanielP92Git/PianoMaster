@@ -6,11 +6,23 @@
 
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
+import { useUser } from '../features/authentication/useUser';
+import { getStudentXP } from '../utils/xpSystem';
 import TrailMap from '../components/trail/TrailMap';
 
 const TrailMapPage = () => {
   const { t, i18n } = useTranslation(['common', 'trail']);
   const isRTL = i18n.dir() === 'rtl';
+  const { user } = useUser();
+
+  // Fetch student XP data for header display
+  const { data: xpData } = useQuery({
+    queryKey: ['student-xp', user?.id],
+    queryFn: () => getStudentXP(user.id),
+    enabled: !!user?.id,
+    staleTime: 60 * 1000, // 1 minute
+  });
 
   return (
     <div className="fixed inset-0 overflow-y-auto bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -41,12 +53,21 @@ const TrailMapPage = () => {
             <span className="font-medium">{t('common.dashboard', { defaultValue: 'Dashboard' })}</span>
           </Link>
           <h1 className="text-xl font-bold text-white">{t('pageTitle', { ns: 'trail' })}</h1>
-          <Link
-            to="/practice-modes"
-            className="rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/15 hover:text-white"
-          >
-            {t('freePracticeLink', { ns: 'trail' })}
-          </Link>
+          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            {/* Compact XP display */}
+            {xpData && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-white/10 px-2.5 py-1 text-sm">
+                <span>{xpData.levelData.icon}</span>
+                <span className="font-semibold text-white/90">{xpData.levelData.title}</span>
+              </div>
+            )}
+            <Link
+              to="/practice-modes"
+              className="rounded-lg bg-white/10 px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-white/15 hover:text-white"
+            >
+              {t('freePracticeLink', { ns: 'trail' })}
+            </Link>
+          </div>
         </div>
       </div>
 
