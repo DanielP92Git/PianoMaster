@@ -232,17 +232,18 @@ Plans:
 - [x] 17-02-PLAN.md -- BossUnlockModal component + VictoryScreen integration
 
 #### Phase 18: Code Cleanup
-**Goal**: Remove orphaned code and dead dependencies
+**Goal**: Remove orphaned code, dead dependencies, and unused assets; add permanent bundle analysis tooling
 **Depends on**: Phase 17
 **Requirements**: CLEAN-01, CLEAN-02
 **Success Criteria** (what must be TRUE):
-  1. progressMigration.js file (175 lines) is removed from codebase
-  2. No dead code remains from previous milestones (validated via grep)
+  1. progressMigration.js file (241 lines) is removed from codebase
+  2. No dead code remains from previous milestones (validated via knip + depcheck)
   3. Bundle size analysis shows no unused dependencies
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 18-01: TBD
+- [ ] 18-01-PLAN.md -- Tooling setup, baseline capture, known dead code removal, automated audit
+- [ ] 18-02-PLAN.md -- Discovered dead code removal, service worker cleanup, final validation
 
 ## Progress
 
@@ -268,7 +269,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17 → 18
 | 15. VictoryScreen Celebration System | v1.4 | 3/3 | Complete | 2026-02-09 |
 | 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 17. Boss Unlock Celebrations | v1.4 | 2/2 | Complete | 2026-02-09 |
-| 18. Code Cleanup | v1.4 | 0/TBD | Not started | - |
+| 18. Code Cleanup | v1.4 | 0/2 | Not started | - |
 
 ---
-*Last updated: 2026-02-09 after Phase 17 execution complete*
+*Last updated: 2026-02-09 after Phase 18 planning complete*
