@@ -144,6 +144,9 @@ const VictoryScreen = ({
     reducedMotion
   );
 
+  // Trail/XP system state (declared early because useCountUp below references xpData)
+  const [xpData, setXpData] = useState(null);
+
   // XP count-up animation (1 second)
   const animatedXPGain = useCountUp(0, xpData?.totalXP || 0, 1000, !!xpData?.totalXP, reducedMotion);
 
@@ -205,7 +208,6 @@ const VictoryScreen = ({
 
   // Trail/XP system state
   const [stars, setStars] = useState(0);
-  const [xpData, setXpData] = useState(null);
   const [nodeData, setNodeData] = useState(null);
   const [isFirstComplete, setIsFirstComplete] = useState(false);
   const [exercisesRemaining, setExercisesRemaining] = useState(0);
@@ -676,7 +678,7 @@ const VictoryScreen = ({
   ]);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden p-2 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex justify-center overflow-y-auto p-2 sm:p-4">
       {/* Confetti overlay for full/epic celebrations */}
       {showConfetti && (
         <ConfettiEffect
@@ -701,7 +703,7 @@ const VictoryScreen = ({
       )}
 
       {/* Main content container - fits within viewport */}
-      <div className="flex w-full max-w-md flex-col items-center">
+      <div className="flex w-full max-w-md flex-col items-center my-auto">
         {/* Video avatar */}
         <div className="relative z-10 -mb-2 sm:-mb-3">
           <div

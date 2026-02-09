@@ -3100,8 +3100,8 @@ export function SightReadingGame() {
     <div className="flex flex-shrink-0 items-center justify-between gap-2 px-2 py-1 sm:gap-3 sm:px-3">
       {/* Back Button - Icon Only */}
       <BackButton
-        to="/notes-master-mode"
-        name="Notes Master"
+        to={nodeId ? "/trail" : "/notes-master-mode"}
+        name={nodeId ? "Trail" : "Notes Master"}
         iconOnly={true}
         styling="text-white/80 hover:text-white p-2"
       />

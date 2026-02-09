@@ -1997,8 +1997,8 @@ export function NotesRecognitionGame() {
               <div className="flex items-center justify-between gap-2">
                 {!progress.isFinished ? (
                   <BackButton
-                    to="/notes-master-mode"
-                    name={t("navigation.links.studentDashboard")}
+                    to={nodeId ? "/trail" : "/notes-master-mode"}
+                    name={nodeId ? t("navigation.links.trail", "Trail") : t("navigation.links.studentDashboard")}
                     styling="text-white/85 hover:text-white text-xs sm:text-sm flex-shrink-0"
                   />
                 ) : (
