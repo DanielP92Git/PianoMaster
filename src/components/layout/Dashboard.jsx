@@ -29,6 +29,7 @@ import iconStar from "../../assets/icons/star.png";
 import Fireflies from "../ui/Fireflies";
 import iconFlameSimple from "../../assets/icons/flame-simple.png";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
+import XPProgressCard from "../dashboard/XPProgressCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { translateNodeName } from "../../utils/translateNodeName";
 
@@ -643,6 +644,13 @@ function Dashboard() {
                 {t("dashboard.continueButton.freePractice", { defaultValue: "Free Practice Mode" })} →
               </Link>
             </div>
+          </section>
+        )}
+
+        {/* XP Progress Section (only for students) */}
+        {isStudent && (
+          <section>
+            <XPProgressCard />
           </section>
         )}
 
