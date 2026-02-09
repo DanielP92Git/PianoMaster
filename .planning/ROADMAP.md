@@ -223,11 +223,11 @@ Plans:
   2. Boss unlock modal only shows once per boss node (localStorage tracking prevents repetition)
   3. Boss unlock modal dismisses when user clicks anywhere or after auto-advance timer
   4. Boss unlock confetti uses musical-themed particles and elevated intensity
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 17-01: TBD
-- [ ] 17-02: TBD
+- [ ] 17-01-PLAN.md -- Utility foundations (localStorage tracking hook, music symbol shapes, fanfare sound)
+- [ ] 17-02-PLAN.md -- BossUnlockModal component + VictoryScreen integration
 
 #### Phase 18: Code Cleanup
 **Goal**: Remove orphaned code and dead dependencies
