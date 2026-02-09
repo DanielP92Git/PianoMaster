@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 ## Current Position
 
 Phase: 16 of 18 (Dashboard XP Prominence)
-Plan: Ready to plan
-Status: Not started
-Last activity: 2026-02-09 — Completed Phase 15 (VictoryScreen Celebration System)
+Plan: 1 of 3
+Status: In progress
+Last activity: 2026-02-09 — Completed 16-01-PLAN.md (Dashboard XP Card & Level Identity)
 
-Progress: [██████████████████████░░] 83% (15 phases complete, 42 plans)
+Progress: [██████████████████████░░] 84% (15 phases complete, 43 plans)
 
 ## Milestone History
 
@@ -29,10 +29,10 @@ Progress: [██████████████████████░
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 42 (35 in v1.0-v1.3, 7 in v1.4)
-- Average duration: ~17 min
-- Total execution time: ~12.4 hours
-- v1.4 plans: 7 complete (Phase 13: 2 plans, Phase 14: 2 plans, Phase 15: 3 plans)
+- Total plans completed: 43 (35 in v1.0-v1.3, 8 in v1.4)
+- Average duration: ~16 min
+- Total execution time: ~12.5 hours
+- v1.4 plans: 8 complete (Phase 13: 2 plans, Phase 14: 2 plans, Phase 15: 3 plans, Phase 16: 1 plan)
 
 **Recent Trend:**
 - v1.3 delivered 93-node trail system with 14 plans across 5 phases
@@ -65,6 +65,9 @@ Recent decisions affecting v1.4:
 - **celebrationData useMemo pattern (15-03)**: Derives tier and messages from existing state; handles free play gracefully
 - **Confetti trigger timing (15-03)**: useEffect waits for isProcessingTrail=false before showing confetti
 - **Percentile async loading (15-03)**: Background useEffect never blocks VictoryScreen rendering
+- **XP card placement between actions and goals (16-01)**: Creates natural flow from action → progress → goals
+- **Badge animation on level change only (16-01)**: Compares lastSeenLevel with current level, respects reducedMotion
+- **5-tier badge color progression (16-01)**: Gray/blue/amber/purple/rainbow for colorblind accessibility
 
 ### Pending Todos
 
@@ -83,14 +86,14 @@ None. v1.4 just started.
 
 **Outstanding items (non-blocking):**
 - Orphaned progressMigration.js file (175 lines) — scheduled for removal in Phase 18
-- XP display prominence — addressed in Phase 16
+- ✅ XP display prominence — completed in 16-01 (Dashboard XP Card)
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed 15-03-PLAN.md (VictoryScreen Celebration Integration) — Phase 15 complete
-Resume file: None (ready for Phase 16)
+Stopped at: Completed 16-01-PLAN.md (Dashboard XP Card & Level Identity)
+Resume file: None (ready for 16-02)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-09 — Phase 15 complete (VictoryScreen celebration system)*
+*Last updated: 2026-02-09 — Phase 16 in progress (Dashboard XP Prominence)*
