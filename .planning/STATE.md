@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-05)
 
 ## Current Position
 
-Phase: 17 of 18 complete (Boss Unlock Celebrations)
-Plan: Ready for Phase 18
-Status: Phase 17 verified, Phase 18 not started
-Last activity: 2026-02-09 — Completed Phase 17 (Boss Unlock Celebrations)
+Phase: 18 of 18 in progress (Code Cleanup)
+Plan: 01 of 02 complete
+Status: Bundle analysis tooling installed, baseline captured, known dead code removed
+Last activity: 2026-02-09 — Completed 18-01-PLAN.md
 
-Progress: [█████████████████████████░] 94% (17 phases complete, 46 plans)
+Progress: [█████████████████████████░] 96% (17 phases complete, 47 plans)
 
 ## Milestone History
 
@@ -29,16 +29,16 @@ Progress: [███████████████████████
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 46 (35 in v1.0-v1.3, 11 in v1.4)
+- Total plans completed: 47 (35 in v1.0-v1.3, 12 in v1.4)
 - Average duration: ~15 min
-- Total execution time: ~13 hours
-- v1.4 plans: 11 complete (Phase 13: 2, Phase 14: 2, Phase 15: 3, Phase 16: 2, Phase 17: 2)
+- Total execution time: ~13.1 hours
+- v1.4 plans: 12 complete (Phase 13: 2, Phase 14: 2, Phase 15: 3, Phase 16: 2, Phase 17: 2, Phase 18: 1)
 
 **Recent Trend:**
-- v1.4 delivered celebration system across 5 phases (13-17)
-- Boss unlock celebrations complete with 3-stage modal
-- All planned work complete
-- Trend: Complete
+- v1.4 celebration system complete (phases 13-17)
+- Phase 18 cleanup started: bundle analysis + dead code removal
+- 241 lines removed (progressMigration.js), 37 dead files identified
+- Trend: Final phase in progress
 
 ## Accumulated Context
 
@@ -81,10 +81,15 @@ Recent decisions affecting v1.4:
 - **Fanfare on Continue click (17-02)**: User gesture satisfies browser autoplay policy naturally
 - **Gold/amber/white confetti palette (17-02)**: Differentiates boss celebrations from standard tier confetti
 - **500ms boss modal delay (17-02)**: Lets VictoryScreen render XP/stars first for layered reveal
+- **Bundle visualizer as permanent tool (18-01)**: Ongoing monitoring vs one-time audit; enables regression detection
+- **Treemap visualization format (18-01)**: Most intuitive for identifying large modules at a glance
+- **Knip over alternatives (18-01)**: JSX/TSX support, comprehensive analysis (files + exports + deps)
+- **Atomic commits for removals (18-01)**: One commit per logical unit for easy revert if issues arise
 
 ### Pending Todos
 
-None. All planned work complete.
+- **Phase 18-02**: Remove 37 dead files identified in audit (estimated 2000-3000 lines)
+- **Post-cleanup metrics**: Capture final bundle size for comparison with baseline
 
 ### Blockers/Concerns
 
@@ -100,15 +105,16 @@ None. All planned work complete.
 - Boss unlock modal complete (17-02): 3-stage celebration + VictoryScreen integration
 
 **Outstanding items (non-blocking):**
-- Orphaned progressMigration.js file (175 lines) — scheduled for removal if Phase 18 created
-- Service worker cache strategy — deferred to potential Phase 18
+- 37 dead files identified by Knip (estimated 2000-3000 lines) — removal scheduled for 18-02
+- 5 unused dependencies flagged by depcheck — verification needed before removal
+- Pre-existing test failure: SightReadingGame.micRestart.test.jsx (Router context issue)
 
 ## Session Continuity
 
 Last session: 2026-02-09
-Stopped at: Completed Phase 17 (Boss Unlock Celebrations) — verified, ready for Phase 18
+Stopped at: Completed 18-01-PLAN.md — bundle analysis complete, ready for 18-02
 Resume file: None
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-09 — Phase 17 complete (Boss Unlock Celebrations)*
+*Last updated: 2026-02-09 — Phase 18 Plan 01 complete (Bundle Analysis & Dead Code Removal)*
