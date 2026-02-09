@@ -189,17 +189,6 @@ self.addEventListener("fetch", (event) => {
   const isSameOrigin = url.origin === self.location.origin;
   const isAsset = isSameOrigin && url.pathname.startsWith("/assets/");
   const isNavigate = event.request.mode === "navigate";
-  
-  // Never intercept JavaScript or module requests - they must come from network
-  // This prevents MIME type errors where HTML is served instead of JS
-  if (
-    event.request.destination === "script" ||
-    event.request.destination === "module" ||
-    url.pathname.endsWith(".js") ||
-    url.pathname.endsWith(".mjs")
-  ) {
-    return; // Let browser handle directly
-  }
 
   // Offline reload support (preview/prod): serve app shell + hashed assets cache-first
   // Only handle navigation requests and static assets (images, CSS, etc.)
