@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-05)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 18 - Code Cleanup (next)
+**Current focus:** v1.4 milestone complete — ready for next milestone
 
 ## Current Position
 

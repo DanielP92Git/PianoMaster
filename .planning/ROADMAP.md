@@ -6,7 +6,7 @@
 - ✅ **v1.1 Parental Consent Email Service** - Phase 5 (shipped 2026-02-02)
 - ✅ **v1.2 Trail System Stabilization** - Phases 6-7 (shipped 2026-02-03)
 - ✅ **v1.3 Trail System Redesign** - Phases 8-12 (shipped 2026-02-05)
-- 🚧 **v1.4 UI Polish & Celebrations** - Phases 13-18 (in progress)
+- ✅ **v1.4 UI Polish & Celebrations** - Phases 13-18 (shipped 2026-02-09)
 
 ## Phases
 
@@ -137,7 +137,8 @@ Plans:
 
 </details>
 
-### v1.4 UI Polish & Celebrations (In Progress)
+<details>
+<summary>✅ v1.4 UI Polish & Celebrations (Phases 13-18) - SHIPPED 2026-02-09</summary>
 
 **Milestone Goal:** Make the 93-node trail system feel rewarding with node-type celebrations, boss unlock events, visual distinction, and prominent XP display.
 
@@ -240,10 +241,14 @@ Plans:
   2. No dead code remains from previous milestones (validated via knip + depcheck)
   3. Bundle size analysis shows no unused dependencies
 **Plans**: 2 plans
+**Status**: Complete
+**Completed**: 2026-02-09
 
 Plans:
-- [ ] 18-01-PLAN.md -- Tooling setup, baseline capture, known dead code removal, automated audit
-- [ ] 18-02-PLAN.md -- Discovered dead code removal, service worker cleanup, final validation
+- [x] 18-01-PLAN.md -- Tooling setup, baseline capture, known dead code removal, automated audit
+- [x] 18-02-PLAN.md -- Discovered dead code removal, service worker cleanup, final validation
+
+</details>
 
 ## Progress
 
@@ -269,7 +274,7 @@ Phases execute in numeric order: 13 → 14 → 15 → 16 → 17 → 18
 | 15. VictoryScreen Celebration System | v1.4 | 3/3 | Complete | 2026-02-09 |
 | 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 17. Boss Unlock Celebrations | v1.4 | 2/2 | Complete | 2026-02-09 |
-| 18. Code Cleanup | v1.4 | 0/2 | Not started | - |
+| 18. Code Cleanup | v1.4 | 2/2 | Complete | 2026-02-09 |
 
 ---
-*Last updated: 2026-02-09 after Phase 18 planning complete*
+*Last updated: 2026-02-09 after Phase 18 execution complete*

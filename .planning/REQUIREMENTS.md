@@ -40,8 +40,8 @@ Requirements for v1.4 UI Polish & Celebrations milestone. Each maps to roadmap p
 
 ### Code Cleanup
 
-- [ ] **CLEAN-01**: Remove orphaned progressMigration.js file (175 lines unused)
-- [ ] **CLEAN-02**: Remove any other dead code identified during implementation
+- [x] **CLEAN-01**: Remove orphaned progressMigration.js file (175 lines unused)
+- [x] **CLEAN-02**: Remove any other dead code identified during implementation
 
 ## Future Requirements
 
@@ -98,8 +98,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | XP-04 | Phase 16 | Complete |
 | XP-05 | Phase 16 | Complete |
 | XP-06 | Phase 16 | Complete |
-| CLEAN-01 | Phase 18 | Pending |
-| CLEAN-02 | Phase 18 | Pending |
+| CLEAN-01 | Phase 18 | Complete |
+| CLEAN-02 | Phase 18 | Complete |
 
 **Coverage:**
 - v1.4 requirements: 24 total
@@ -108,4 +108,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-05*
-*Last updated: 2026-02-09 after Phase 17 complete*
+*Last updated: 2026-02-09 after Phase 18 complete — all v1.4 requirements Complete*
