@@ -18,6 +18,8 @@ import { getCelebrationMessage } from '../../utils/celebrationMessages';
 import { ConfettiEffect } from '../celebrations/ConfettiEffect';
 import { calculateScorePercentile, getPercentileMessage } from '../../services/scoreComparisonService';
 import { hasLevelBeenCelebrated, markLevelCelebrated } from '../../utils/levelUpTracking';
+import { BossUnlockModal } from '../celebrations/BossUnlockModal';
+import { useBossUnlockTracking } from '../../hooks/useBossUnlockTracking';
 
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
@@ -92,6 +94,7 @@ const VictoryScreen = ({
   const queryClient = useQueryClient();
   const { user } = useUser();
   const { reducedMotion } = useAccessibility();
+  const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } = useBossUnlockTracking(user?.id, nodeId);
   const scorePercentage = (score / totalPossibleScore) * 100;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
   const updateStreakWithAchievements = useStreakWithAchievements();
@@ -216,6 +219,7 @@ const VictoryScreen = ({
 
   // Celebration system state
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showBossModal, setShowBossModal] = useState(false);
   const [percentileMessage, setPercentileMessage] = useState(null);
 
   // Rate limiting state
@@ -512,6 +516,21 @@ const VictoryScreen = ({
     markLevelCelebrated(user.id, xpData.newLevel);
   }, [xpData?.leveledUp, xpData?.newLevel, user?.id, reducedMotion]);
 
+  // Trigger boss unlock modal (after trail processing completes)
+  useEffect(() => {
+    if (!isProcessingTrail && nodeComplete && celebrationData.isBoss && shouldShowBossModal) {
+      // Short delay to let VictoryScreen render first
+      const timer = setTimeout(() => setShowBossModal(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [isProcessingTrail, nodeComplete, celebrationData.isBoss, shouldShowBossModal]);
+
+  // Boss modal close handler
+  const handleBossModalClose = useCallback(() => {
+    markBossAsShown();
+    setShowBossModal(false);
+  }, [markBossAsShown]);
+
   // Calculate percentile in background (non-blocking, never delays rendering)
   useEffect(() => {
     if (!nodeId || !user?.id || isProcessingTrail) return;
@@ -663,6 +682,21 @@ const VictoryScreen = ({
         <ConfettiEffect
           tier={celebrationData.tier}
           onComplete={() => setShowConfetti(false)}
+        />
+      )}
+
+      {/* Boss unlock celebration modal (renders on top at z-[10000]) */}
+      {showBossModal && (
+        <BossUnlockModal
+          nodeId={nodeId}
+          nodeName={getNodeById(nodeId)?.name || 'Boss'}
+          nextNode={nextNode}
+          stars={stars}
+          onClose={handleBossModalClose}
+          onNavigateToNext={() => {
+            handleBossModalClose();
+            navigateToNextNode();
+          }}
         />
       )}
 
