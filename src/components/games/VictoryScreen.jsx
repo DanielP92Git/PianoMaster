@@ -10,13 +10,14 @@ import { usePointBalance } from "../../hooks/useAccessories";
 import { useAccessoryUnlockDetection } from "../../hooks/useAccessoryUnlockDetection";
 import { useUser } from "../../features/authentication/useUser";
 import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../../services/skillProgressService";
-import { awardXP, calculateSessionXP } from "../../utils/xpSystem";
+import { awardXP, calculateSessionXP, getLevelProgress } from "../../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
 import { determineCelebrationTier, getCelebrationConfig } from '../../utils/celebrationTiers';
 import { getCelebrationMessage } from '../../utils/celebrationMessages';
 import { ConfettiEffect } from '../celebrations/ConfettiEffect';
 import { calculateScorePercentile, getPercentileMessage } from '../../services/scoreComparisonService';
+import { hasLevelBeenCelebrated, markLevelCelebrated } from '../../utils/levelUpTracking';
 
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
@@ -140,6 +141,9 @@ const VictoryScreen = ({
     reducedMotion
   );
 
+  // XP count-up animation (1 second)
+  const animatedXPGain = useCountUp(0, xpData?.totalXP || 0, 1000, !!xpData?.totalXP, reducedMotion);
+
   const actualGain = Math.max(
     finalTotalPoints > basePoints
       ? finalTotalPoints - basePoints
@@ -241,6 +245,12 @@ const VictoryScreen = ({
 
     return { tier, config, message, isBoss, nodeType, effectiveStars };
   }, [nodeId, stars, xpData?.leveledUp, scorePercentage]);
+
+  // Mini XP progress bar data (after XP is awarded, shows level context)
+  const levelProgressData = useMemo(() => {
+    if (!xpData?.newTotalXP) return null;
+    return getLevelProgress(xpData.newTotalXP);
+  }, [xpData?.newTotalXP]);
 
   // Capture initial progress state (before game completion)
   const initialProgressRef = useRef(null);
@@ -484,6 +494,23 @@ const VictoryScreen = ({
       setShowConfetti(true);
     }
   }, [isProcessingTrail, celebrationData.config.confetti, reducedMotion]);
+
+  // Level-up celebration with deduplication
+  useEffect(() => {
+    if (!xpData?.leveledUp || !user?.id) return;
+    if (reducedMotion) return;
+
+    // Check if this level was already celebrated
+    if (hasLevelBeenCelebrated(user.id, xpData.newLevel)) {
+      return;
+    }
+
+    // Show confetti for level-up (this may already be showing from the tier-based trigger)
+    setShowConfetti(true);
+
+    // Mark as celebrated so it doesn't repeat
+    markLevelCelebrated(user.id, xpData.newLevel);
+  }, [xpData?.leveledUp, xpData?.newLevel, user?.id, reducedMotion]);
 
   // Calculate percentile in background (non-blocking, never delays rendering)
   useEffect(() => {
@@ -737,10 +764,10 @@ const VictoryScreen = ({
             <div className="relative mt-1 sm:mt-2">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-200/40 via-purple-200/30 to-pink-200/40 opacity-70 blur-lg" />
               <div className="relative space-y-1.5 rounded-xl border-white/60 bg-white/90 px-3 py-2 shadow-lg sm:px-4 sm:py-2.5">
-                {/* Total XP header */}
+                {/* Total XP header with count-up animation */}
                 <div className="text-center">
                   <p className="text-sm font-bold text-blue-600 sm:text-base">
-                    +{xpData.totalXP} XP Earned
+                    +{animatedXPGain} XP Earned
                   </p>
                 </div>
 
@@ -777,10 +804,34 @@ const VictoryScreen = ({
                   )}
                 </div>
 
-                {/* Level up indicator */}
+                {/* Mini XP progress bar - shows level context */}
+                {levelProgressData && !xpData.leveledUp && (
+                  <div className="mt-2 space-y-1 rounded-lg bg-blue-50/80 p-2">
+                    <div className="flex items-center justify-between text-xs font-semibold text-blue-900">
+                      <span>{levelProgressData.currentLevel.title}</span>
+                      <span>Level {levelProgressData.currentLevel.level}</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-blue-200">
+                      <div
+                        className={`h-full bg-gradient-to-r from-blue-500 to-indigo-600 ${
+                          reducedMotion ? 'transition-opacity duration-100' : 'transition-all duration-1000'
+                        }`}
+                        style={{ width: `${levelProgressData.progressPercentage}%` }}
+                      />
+                    </div>
+                    <div className="text-center text-xs text-blue-700">
+                      {levelProgressData.xpInCurrentLevel} / {levelProgressData.nextLevelXP - levelProgressData.currentLevel.xpRequired} XP
+                    </div>
+                  </div>
+                )}
+
+                {/* Level up indicator - enhanced with level name */}
                 {xpData.leveledUp && (
-                  <div className={`${reducedMotion ? '' : 'animate-bounce'} mt-1 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-2 py-1 text-center text-xs font-bold text-white shadow-lg`}>
-                    Level {xpData.newLevel}!
+                  <div className={`${reducedMotion ? '' : 'animate-bounce'} mt-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-2 text-center shadow-lg`}>
+                    <div className="text-xs font-semibold text-white/90">Level Up!</div>
+                    <div className="text-base font-bold text-white">
+                      {levelProgressData?.currentLevel?.title || `Level ${xpData.newLevel}`}
+                    </div>
                   </div>
                 )}
               </div>
