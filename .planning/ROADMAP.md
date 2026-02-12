@@ -100,5 +100,15 @@ See `.planning/milestones/` for archived details of each milestone.
 
 **Total: 22 phases, 58 plans across 6 milestones (all shipped)**
 
+### Phase 1: complete the Hebrew translations gaps
+
+**Goal:** Fix missing/broken translation keys and remove dead keys from EN and HE locale files
+**Depends on:** Phase 0
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Fix EN root install namespace and add missing Hebrew notification key
+- [ ] 01-02-PLAN.md — Remove dead keys from EN/HE common.json and deprecated trail names from HE trail.json
+
 ---
-*Last updated: 2026-02-12 — v1.5 milestone archived*
+*Last updated: 2026-02-13 — Phase 1 planned*
