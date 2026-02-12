@@ -107,8 +107,10 @@ See `.planning/milestones/` for archived details of each milestone.
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Fix EN root install namespace and add missing Hebrew notification key
-- [ ] 01-02-PLAN.md — Remove dead keys from EN/HE common.json and deprecated trail names from HE trail.json
+- [x] 01-01-PLAN.md — Fix EN root install namespace and add missing Hebrew notification key
+- [x] 01-02-PLAN.md — Remove dead keys from EN/HE common.json and deprecated trail names from HE trail.json
+
+**Status:** ✓ Complete — 2026-02-13
 
 ---
-*Last updated: 2026-02-13 — Phase 1 planned*
+*Last updated: 2026-02-13 — Phase 1 complete*
