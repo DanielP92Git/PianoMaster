@@ -302,9 +302,18 @@
       "unavailableInsecure": "Install isn’t available from this address. On Android, open Chrome’s menu (⋮) and choose {{step}}."
     },
     "ios": {
-      "installDescription": "On iPhone or iPad, install PianoMaster manually:"
+      "installDescription": "On iPhone or iPad, install PianoMaster manually:",
+      "installStep1": "Tap the Share button",
+      "installStep2": "Choose \"Add to Home Screen\"",
+      "installStep3": "Tap \"Add\" to confirm"
     },
-    "unavailableToast": "Install isn’t available right now. If you’re on Android, open Chrome’s menu (⋮) and choose Add to Home screen, then reload."
+    "safari": {
+      "installDescription": "Safari's Share button sits at the bottom toolbar. Once installed, reopen PianoMaster from your home screen for a full-screen experience.",
+      "installStep1": "Tap the Share button",
+      "installStep2": "Choose \"Add to Home Screen\"",
+      "installStep3": "Tap \"Add\" to confirm"
+    },
+    "unavailableToast": "Install isn't available right now. If you're on Android, open Chrome's menu (⋮) and choose Add to Home screen, then reload."
   },
   "avatars": {
     "title": "Choose Your Avatar",
