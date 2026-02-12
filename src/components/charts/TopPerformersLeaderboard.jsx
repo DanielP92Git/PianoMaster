@@ -79,10 +79,11 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
         return `${student.average_accuracy || 0}%`;
       case "streak":
         return student.current_streak || 0;
-      case "practiceTime":
+      case "practiceTime": {
         const hours = Math.floor((student.total_practice_minutes || 0) / 60);
         const minutes = Math.floor((student.total_practice_minutes || 0) % 60);
         return `${hours}h ${minutes}m`;
+      }
       default:
         return 0;
     }
@@ -147,9 +148,7 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
                   <div className="font-medium text-gray-900">
                     {student.student_name || "Unknown Student"}
                   </div>
-                  <div className="text-sm text-gray-400">
-                    {student.email || "No email"}
-                  </div>
+                  
                 </div>
               </div>
 

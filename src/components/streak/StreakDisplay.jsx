@@ -1,6 +1,8 @@
+import React from "react";
 import { Flame, Loader2, Star, Zap, Trophy, Target } from "lucide-react";
 import { streakService } from "../../services/streakService";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 // Get visual indicator and color scheme based on streak length
 const getStreakVisuals = (streak) => {
@@ -11,7 +13,7 @@ const getStreakVisuals = (streak) => {
       bgColor: "bg-gray-500/20",
       textColor: "text-gray-400",
       iconColor: "text-gray-400",
-      message: "Start Your Journey!",
+      messageKey: "dashboard.streak.messages.startJourney",
       animation: "",
     };
   } else if (streak < 3) {
@@ -21,7 +23,7 @@ const getStreakVisuals = (streak) => {
       bgColor: "bg-orange-500/20",
       textColor: "text-orange-500",
       iconColor: "text-orange-500",
-      message: "Building Momentum",
+      messageKey: "dashboard.streak.messages.buildingMomentum",
       animation: "animate-pulse",
     };
   } else if (streak < 7) {
@@ -31,7 +33,7 @@ const getStreakVisuals = (streak) => {
       bgColor: "bg-red-500/20",
       textColor: "text-red-500",
       iconColor: "text-red-500",
-      message: "Getting Hot!",
+      messageKey: "dashboard.streak.messages.gettingHot",
       animation: "animate-pulse",
     };
   } else if (streak < 14) {
@@ -41,7 +43,7 @@ const getStreakVisuals = (streak) => {
       bgColor: "bg-yellow-500/20",
       textColor: "text-yellow-500",
       iconColor: "text-yellow-500",
-      message: "On Fire!",
+      messageKey: "dashboard.streak.messages.onFire",
       animation: "animate-bounce",
     };
   } else if (streak < 30) {
@@ -51,7 +53,7 @@ const getStreakVisuals = (streak) => {
       bgColor: "bg-blue-500/20",
       textColor: "text-blue-500",
       iconColor: "text-blue-500",
-      message: "Superstar!",
+      messageKey: "dashboard.streak.messages.superstar",
       animation: "animate-spin",
     };
   } else {
@@ -61,51 +63,74 @@ const getStreakVisuals = (streak) => {
       bgColor: "bg-purple-500/20",
       textColor: "text-purple-500",
       iconColor: "text-purple-500",
-      message: "Legend!",
+      messageKey: "dashboard.streak.messages.legend",
       animation: "animate-bounce",
     };
   }
 };
 
-// Get milestone message for special streak numbers
-const getMilestoneMessage = (streak) => {
-  const milestones = {
-    1: "🎉 First day! You've started your journey!",
-    3: "🔥 3-day streak! You're building a habit!",
-    7: "⭐ Week streak! Amazing consistency!",
-    14: "💫 Two weeks! You're a practice star!",
-    30: "🏆 30-day streak! You're a legend!",
-    50: "👑 50 days! Absolutely incredible!",
-    100: "🌟 100 days! You're a practice master!",
-  };
-  return milestones[streak];
+// Get milestone translation key for special streak numbers
+const milestoneMap = {
+  1: "dashboard.streak.milestones.1",
+  3: "dashboard.streak.milestones.3",
+  7: "dashboard.streak.milestones.7",
+  14: "dashboard.streak.milestones.14",
+  30: "dashboard.streak.milestones.30",
+  50: "dashboard.streak.milestones.50",
+  100: "dashboard.streak.milestones.100",
 };
 
-export default function StreakDisplay({ variant = "default" }) {
+const getMilestoneKey = (streak) => milestoneMap[streak] || null;
+
+const getNextMilestoneData = (streak) => {
+  const milestones = [1, 3, 7, 14, 30, 50, 100];
+  const nextMilestone = milestones.find((m) => m > streak);
+
+  if (!nextMilestone) return null;
+
+  return {
+    remaining: nextMilestone - streak,
+    milestone: nextMilestone,
+  };
+};
+
+const renderLoaderIcon = (className) =>
+  React.createElement(Loader2, { className });
+
+const renderLucideIcon = (IconComponent, className) =>
+  IconComponent ? React.createElement(IconComponent, { className }) : null;
+
+export default function StreakDisplay({ variant = "default", className = "" }) {
   const { data: streak, isLoading } = useQuery({
     queryKey: ["streak"],
     queryFn: () => streakService.getStreak(),
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
+    retry: 1,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
+  const { t } = useTranslation("common");
 
   if (isLoading) {
     // Match the card variant styling for consistent appearance
     if (variant === "card") {
       return (
-        <div className="card-compact p-3 relative overflow-hidden">
+        <div className={`card-compact p-3 relative overflow-hidden ${className}`}>
           <div className="relative flex flex-col items-center text-center">
             <div className="flex items-center gap-1 mb-1">
-              <Loader2 className="w-3 h-3 text-gray-600 animate-spin" />
+              {renderLoaderIcon("w-3 h-3 text-gray-600 animate-spin")}
               <h3 className="text-xs font-medium text-gray-600">
-                Daily Streak
+                {t("dashboard.stats.dailyStreak")}
               </h3>
             </div>
             <p className="text-lg font-bold text-gray-900 mb-1">
-              <span className="text-xs ml-1">Loading...</span>
+              <span className="text-xs ml-1">
+                {t("dashboard.streak.loadingState")}
+              </span>
             </p>
             <div className="text-xs font-medium text-gray-400 mb-1">
-              Please wait...
+              {t("dashboard.streak.loadingHint")}
             </div>
           </div>
         </div>
@@ -114,16 +139,25 @@ export default function StreakDisplay({ variant = "default" }) {
 
     return (
       <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-        <Loader2 className="w-4 h-4 text-gray-600 animate-spin" />
-        <span className="text-sm font-medium text-gray-900">Loading...</span>
+        {renderLoaderIcon("w-4 h-4 text-gray-600 animate-spin")}
+        <span className="text-sm font-medium text-gray-900">
+          {t("dashboard.streak.loadingState")}
+        </span>
       </div>
     );
   }
 
   const currentStreak = streak || 0;
   const visuals = getStreakVisuals(currentStreak);
-  const milestoneMessage = getMilestoneMessage(currentStreak);
-  const IconComponent = visuals.icon;
+  const milestoneKey = getMilestoneKey(currentStreak);
+  const milestoneMessage = milestoneKey ? t(milestoneKey) : null;
+  const nextMilestoneData = getNextMilestoneData(currentStreak);
+  const dayLabel = t("dashboard.streak.dayLabel", { count: currentStreak });
+  const renderIcon = (sizeClasses) =>
+    renderLucideIcon(
+      visuals.icon,
+      `${sizeClasses} ${visuals.iconColor} ${visuals.animation}`
+    );
 
   // Compact variant for smaller displays
   if (variant === "compact") {
@@ -131,11 +165,9 @@ export default function StreakDisplay({ variant = "default" }) {
       <div
         className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm`}
       >
-        <IconComponent
-          className={`w-4 h-4 ${visuals.iconColor} ${visuals.animation}`}
-        />
+        {renderIcon("w-4 h-4")}
         <span className={`text-sm font-medium ${visuals.textColor}`}>
-          {currentStreak} Day{currentStreak !== 1 ? "s" : ""}
+          {currentStreak} {dayLabel}
         </span>
       </div>
     );
@@ -144,7 +176,7 @@ export default function StreakDisplay({ variant = "default" }) {
   // Enhanced card variant for dashboard
   if (variant === "card") {
     return (
-      <div className="card-compact p-3 relative overflow-hidden">
+      <div className={`card-compact p-3 relative overflow-hidden ${className}`}>
         {/* Background glow effect for high streaks */}
         {currentStreak >= 7 && (
           <div
@@ -154,21 +186,21 @@ export default function StreakDisplay({ variant = "default" }) {
 
         <div className="relative flex flex-col items-center text-center">
           <div className="flex items-center gap-1 mb-1">
-            <IconComponent
-              className={`w-3 h-3 ${visuals.iconColor} ${visuals.animation}`}
-            />
-            <h3 className="text-xs font-medium text-gray-600">Daily Streak</h3>
+            {renderIcon("w-3 h-3")}
+            <h3 className="text-xs font-medium text-gray-600">
+              {t("dashboard.stats.dailyStreak")}
+            </h3>
           </div>
 
           <p className="text-lg font-bold text-gray-900 mb-1">
             {currentStreak}
             <span className="text-xs ml-1">
-              day{currentStreak !== 1 ? "s" : ""}
+              {dayLabel}
             </span>
           </p>
 
           <div className={`text-xs font-medium ${visuals.textColor} mb-1`}>
-            {visuals.message}
+            {t(visuals.messageKey)}
           </div>
 
           {/* Progress bar for next milestone */}
@@ -183,7 +215,9 @@ export default function StreakDisplay({ variant = "default" }) {
                 />
               </div>
               <div className="text-xs text-gray-500 mt-0.5">
-                {getNextMilestoneText(currentStreak)}
+                {nextMilestoneData
+                  ? t("dashboard.streak.nextMilestone", nextMilestoneData)
+                  : t("dashboard.streak.maxReached")}
               </div>
             </div>
           )}
@@ -206,15 +240,13 @@ export default function StreakDisplay({ variant = "default" }) {
     <div
       className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm`}
     >
-      <IconComponent
-        className={`w-4 h-4 ${visuals.iconColor} ${visuals.animation}`}
-      />
+      {renderIcon("w-4 h-4")}
       <span className={`text-sm font-medium ${visuals.textColor}`}>
-        {currentStreak} Day{currentStreak !== 1 ? "s" : ""} Streak!
+        {t("dashboard.streak.streakSummary", { count: currentStreak })}
       </span>
       {milestoneMessage && (
         <div className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-900 animate-pulse">
-          Milestone!
+          {t("dashboard.streak.milestoneBadge")}
         </div>
       )}
     </div>
@@ -236,12 +268,3 @@ function getProgressToNextMilestone(streak) {
 }
 
 // Helper function to get next milestone text
-function getNextMilestoneText(streak) {
-  const milestones = [1, 3, 7, 14, 30, 50, 100];
-  const nextMilestone = milestones.find((m) => m > streak);
-
-  if (!nextMilestone) return "Max level reached!";
-
-  const remaining = nextMilestone - streak;
-  return `${remaining} to ${nextMilestone} days`;
-}

@@ -11,21 +11,30 @@ export function TimePicker({
   onChange,
   disabled = false,
   className = "",
+  isRTL = false,
 }) {
   const handleChange = (e) => {
     onChange(e.target.value);
   };
+  const labelClasses = [
+    "text-white font-medium text-sm block mb-2",
+    isRTL ? "text-right" : "",
+  ].join(" ");
+  const descriptionClasses = [
+    "text-white/60 text-xs mb-3",
+    isRTL ? "text-right" : "",
+  ].join(" ");
+  const iconPositionClass = isRTL ? "right-4" : "left-4";
+  const inputPaddingClass = isRTL ? "pr-16 pl-4 text-right" : "pl-16 pr-4";
 
   return (
     <div className={`py-3 ${className}`}>
-      <label className="text-white font-medium text-sm block mb-2">
-        {label}
-      </label>
-      {description && (
-        <p className="text-white/60 text-xs mb-3">{description}</p>
-      )}
+      <label className={labelClasses}>{label}</label>
+      {description && <p className={descriptionClasses}>{description}</p>}
       <div className="relative">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none z-10">
+        <div
+          className={`absolute ${iconPositionClass} top-1/2 -translate-y-1/2 pointer-events-none z-10`}
+        >
           <div className="p-2 bg-blue-500/20 rounded-lg">
             <Clock className="w-5 h-5 text-blue-400" />
           </div>
@@ -36,7 +45,7 @@ export function TimePicker({
           onChange={handleChange}
           disabled={disabled}
           className={`
-            w-full pl-16 pr-4 py-3
+            w-full ${inputPaddingClass} py-3
             bg-gradient-to-r from-slate-800/50 to-slate-700/50 
             border border-white/20 rounded-xl
             text-white font-medium text-base

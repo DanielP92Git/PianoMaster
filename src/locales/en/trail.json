@@ -1,0 +1,197 @@
+{
+  "pageTitle": "Learning Trail",
+  "freePracticeLink": "Free Practice",
+  "loading": "Loading your trail...",
+  "sections": {
+    "trebleClef": {
+      "title": "Treble Clef Path",
+      "subtitle": "Learn to read notes in the treble clef"
+    },
+    "bassClef": {
+      "title": "Bass Clef Path",
+      "subtitle": "Master the bass clef notes"
+    },
+    "rhythm": {
+      "title": "Rhythm Path",
+      "subtitle": "Keep the beat and learn rhythm patterns"
+    },
+    "boss": {
+      "title": "Boss Challenges",
+      "subtitle": "Test your mastery with special challenges"
+    }
+  },
+  "stats": {
+    "stars": "Stars",
+    "done": "Done",
+    "open": "Open",
+    "complete": "complete"
+  },
+  "units": {
+    "classicNodes": "Classic Nodes",
+    "unitLabel": "Unit",
+    "unitsPlural": "Units",
+    "names": {
+      "First Position": "First Position",
+      "Five Finger Position": "Five Finger Position",
+      "Full Octave": "Full Octave",
+      "Extended Range": "Extended Range",
+      "Accidentals": "Accidentals",
+      "Middle C Position": "Middle C Position",
+      "Five Finger Low": "Five Finger Low",
+      "Full Octave Down": "Full Octave Down",
+      "Extended Bass": "Extended Bass",
+      "Bass Accidentals": "Bass Accidentals",
+      "Steady Beat": "Steady Beat",
+      "Eighth Notes": "Eighth Notes",
+      "Whole Notes & Rests": "Whole Notes & Rests",
+      "Dotted & Syncopation": "Dotted & Syncopation",
+      "Note Adventure Begins": "Note Adventure Begins",
+      "Bass Note Detective": "Bass Note Detective",
+      "Rhythm Starters": "Rhythm Starters"
+    }
+  },
+  "tabs": {
+    "ariaLabel": "Learning paths",
+    "treble": "Treble",
+    "bass": "Bass",
+    "rhythm": "Rhythm"
+  },
+  "node": {
+    "startHere": "Start Here!",
+    "continue": "Continue",
+    "bossLocked": "Complete all lessons"
+  },
+  "exerciseTypes": {
+    "note_recognition": "Note Recognition",
+    "sight_reading": "Sight Reading",
+    "rhythm": "Rhythm Practice",
+    "boss_challenge": "Boss Challenge",
+    "memory_game": "Memory Game"
+  },
+  "modal": {
+    "yourProgress": "Your Progress",
+    "exercises": "Exercises",
+    "exerciseCount": "{{completed}}/{{total}}",
+    "bestScore": "Best Score:",
+    "bestScoreValue": "{{score}}%",
+    "startButton": "Start",
+    "replayButton": "Replay",
+    "skillsYoullLearn": "Skills You'll Learn",
+    "xpReward": "XP Reward",
+    "xpRewardValue": "{{xp}} x ⭐ stars",
+    "unlockLabel": "Unlock:",
+    "prerequisites": "Complete These First:",
+    "bossUnlockTitle": "How to Unlock This Challenge",
+    "button": {
+      "locked": "Locked",
+      "practiceAgain": "Practice Again",
+      "startPractice": "Start Practice",
+      "continue": "Continue ({{completed}}/{{total}})"
+    }
+  },
+  "noteNames": {
+    "C": "C",
+    "D": "D",
+    "E": "E",
+    "F": "F",
+    "G": "G",
+    "A": "A",
+    "B": "B"
+  },
+  "nodes": {
+    "Meet Middle C": "Meet Middle C",
+    "C and D": "C and D",
+    "Play C and D": "Play C and D",
+    "Note Pairs": "Note Pairs",
+    "Three Note Songs": "Three Note Songs",
+    "Speed C-D-E": "Speed C-D-E",
+    "First Steps Challenge": "First Steps Challenge",
+
+    "Remember C-D-E": "Remember C-D-E",
+    "Meet F": "Meet F",
+    "C to F Journey": "C to F Journey",
+    "Meet G": "Meet G",
+    "Five Finger Fun": "Five Finger Fun",
+    "Five Note Songs": "Five Note Songs",
+    "Mix Units 1+2": "Mix Units 1+2",
+    "Units 1+2": "Units 1+2",
+    "Five Finger Master": "Five Finger Master",
+
+    "Five Finger Warm-Up": "Five Finger Warm-Up",
+    "Meet A": "Meet A",
+    "F-G-A Trio": "F-G-A Trio",
+    "Meet B": "Meet B",
+    "Almost There": "Almost There",
+    "High C!": "High C!",
+    "Full Octave Songs": "Full Octave Songs",
+    "Octave Memory": "Octave Memory",
+    "Octave Master": "Octave Master",
+
+    "C and B": "C and B",
+    "Play C and B": "Play C and B",
+    "Speed C-B-A": "Speed C-B-A",
+    "First Bass Challenge": "First Bass Challenge",
+
+    "Remember Unit 1": "Remember Unit 1",
+    "Play with G": "Play with G",
+    "Five Note Mix": "Five Note Mix",
+    "Five Finger Songs": "Five Finger Songs",
+    "Mix It Up": "Mix It Up",
+
+    "Meet E": "Meet E",
+    "Play with E": "Play with E",
+    "Meet D": "Meet D",
+    "Play with D": "Play with D",
+    "Meet Low C": "Meet Low C",
+    "Octave Mix": "Octave Mix",
+    "Speed Octave": "Speed Octave",
+    "Bass Clef Master": "Bass Clef Master",
+
+    "Meet Quarter Notes": "Meet Quarter Notes",
+    "Practice Quarter Notes": "Practice Quarter Notes",
+    "Meet Half Notes": "Meet Half Notes",
+    "Practice Quarters and Halves": "Practice Quarters and Halves",
+    "Rhythm Patterns": "Rhythm Patterns",
+    "Speed Challenge": "Speed Challenge",
+    "Basic Beats Master": "Basic Beats Master",
+
+    "Meet Whole Notes": "Meet Whole Notes",
+    "Practice Whole Notes": "Practice Whole Notes",
+    "Long and Short": "Long and Short",
+    "All Basic Durations": "All Basic Durations",
+    "Duration Mix": "Duration Mix",
+    "Speed Basics": "Speed Basics",
+    "Duration Master": "Duration Master",
+
+    "Meet Eighth Notes": "Meet Eighth Notes",
+    "Practice Eighth Notes": "Practice Eighth Notes",
+    "Running and Walking": "Running and Walking",
+    "Rhythm Variety": "Rhythm Variety",
+    "Speed Running": "Speed Running",
+    "Running Notes Master": "Running Notes Master",
+
+    "Meet Quarter Rest": "Meet Quarter Rest",
+    "Practice Quarter Rests": "Practice Quarter Rests",
+    "Meet Half Rest": "Meet Half Rest",
+    "Practice Rests": "Practice Rests",
+    "Meet Whole Rest": "Meet Whole Rest",
+    "Speed Silence": "Speed Silence",
+    "Silence Master": "Silence Master",
+
+    "Meet Dotted Half Notes": "Meet Dotted Half Notes",
+    "Practice Dotted Halves": "Practice Dotted Halves",
+    "Waltz Time (3/4)": "Waltz Time (3/4)",
+    "Meet Dotted Quarter Notes": "Meet Dotted Quarter Notes",
+    "Practice All Dotted Notes": "Practice All Dotted Notes",
+    "Speed Dots": "Speed Dots",
+    "Dotted Notes Master": "Dotted Notes Master",
+
+    "Meet Sixteenth Notes": "Meet Sixteenth Notes",
+    "Practice Sixteenth Notes": "Practice Sixteenth Notes",
+    "Sixteenths and Eighths": "Sixteenths and Eighths",
+    "Fast and Faster": "Fast and Faster",
+    "All Rhythms": "All Rhythms",
+    "Speed Master": "Speed Master",
+    "Rhythm Champion": "Rhythm Champion"
+  }
+}

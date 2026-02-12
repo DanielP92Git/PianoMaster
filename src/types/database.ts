@@ -36,6 +36,42 @@ export type Database = {
   };
   public: {
     Tables: {
+      accessories: {
+        Row: {
+          category: string;
+          created_at: string;
+          id: string;
+          image_url: string;
+          metadata: Json | null;
+          name: string;
+          price_points: number;
+          slug: string;
+          unlock_level: number | null;
+        };
+        Insert: {
+          category: string;
+          created_at?: string;
+          id?: string;
+          image_url: string;
+          metadata?: Json | null;
+          name: string;
+          price_points: number;
+          slug?: string;
+          unlock_level?: number | null;
+        };
+        Update: {
+          category?: string;
+          created_at?: string;
+          id?: string;
+          image_url?: string;
+          metadata?: Json | null;
+          name?: string;
+          price_points?: number;
+          slug?: string;
+          unlock_level?: number | null;
+        };
+        Relationships: [];
+      };
       avatars: {
         Row: {
           created_at: string;
@@ -250,10 +286,46 @@ export type Database = {
         };
         Relationships: [];
       };
+      student_point_transactions: {
+        Row: {
+          created_at: string;
+          delta: number;
+          id: string;
+          metadata: Json | null;
+          reason: string | null;
+          student_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          delta: number;
+          id?: string;
+          metadata?: Json | null;
+          reason?: string | null;
+          student_id: string;
+        };
+        Update: {
+          created_at?: string;
+          delta?: number;
+          id?: string;
+          metadata?: Json | null;
+          reason?: string | null;
+          student_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "student_point_transactions_student_id_fkey";
+            columns: ["student_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       students: {
         Row: {
           avatar_id: string | null;
           created_at: string;
+          equipped_accessories: Json;
           email: string | null;
           first_name: string | null;
           last_name: string | null;
@@ -266,6 +338,7 @@ export type Database = {
         Insert: {
           avatar_id?: string | null;
           created_at?: string;
+          equipped_accessories?: Json;
           email?: string | null;
           first_name?: string | null;
           last_name?: string | null;
@@ -278,6 +351,7 @@ export type Database = {
         Update: {
           avatar_id?: string | null;
           created_at?: string;
+          equipped_accessories?: Json;
           email?: string | null;
           first_name?: string | null;
           last_name?: string | null;
@@ -293,6 +367,51 @@ export type Database = {
             columns: ["avatar_id"];
             isOneToOne: false;
             referencedRelation: "avatars";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      user_accessories: {
+        Row: {
+          accessory_id: string;
+          created_at: string;
+          equipped_at: string | null;
+          id: string;
+          is_equipped: boolean;
+          slot: string;
+          user_id: string;
+        };
+        Insert: {
+          accessory_id: string;
+          created_at?: string;
+          equipped_at?: string | null;
+          id?: string;
+          is_equipped?: boolean;
+          slot?: string;
+          user_id: string;
+        };
+        Update: {
+          accessory_id?: string;
+          created_at?: string;
+          equipped_at?: string | null;
+          id?: string;
+          is_equipped?: boolean;
+          slot?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "user_accessories_accessory_id_fkey";
+            columns: ["accessory_id"];
+            isOneToOne: false;
+            referencedRelation: "accessories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "user_accessories_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "students";
             referencedColumns: ["id"];
           },
         ];
@@ -334,38 +453,6 @@ export type Database = {
             foreignKeyName: "students_score_student_id_fkey";
             columns: ["student_id"];
             isOneToOne: false;
-            referencedRelation: "students";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      students_total_score: {
-        Row: {
-          created_at: string;
-          email: string | null;
-          student_id: string;
-          total_score: number | null;
-          user_email: string | null;
-        };
-        Insert: {
-          created_at?: string;
-          email?: string | null;
-          student_id: string;
-          total_score?: number | null;
-          user_email?: string | null;
-        };
-        Update: {
-          created_at?: string;
-          email?: string | null;
-          student_id?: string;
-          total_score?: number | null;
-          user_email?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "students_total_score_student_id_fkey";
-            columns: ["student_id"];
-            isOneToOne: true;
             referencedRelation: "students";
             referencedColumns: ["id"];
           },
@@ -503,7 +590,6 @@ export type Game = Tables<"games">;
 export type GameCategory = Tables<"games_categories">;
 export type PracticeSession = Tables<"practice_sessions">;
 export type StudentScore = Tables<"students_score">;
-export type StudentTotalScore = Tables<"students_total_score">;
 export type CurrentStreak = Tables<"current_streak">;
 export type HighestStreak = Tables<"highest_streak">;
 export type LastPracticedDate = Tables<"last_practiced_date">;

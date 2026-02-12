@@ -5,14 +5,21 @@ import {
   getNotificationPermission,
   requestNotificationPermission,
 } from "../../services/notificationService";
+import { useTranslation } from "react-i18next";
 
 /**
  * Notification permission request card
  */
-export function NotificationPermissionCard({ onPermissionChange }) {
+export function NotificationPermissionCard({
+  onPermissionChange,
+  isRTL = false,
+}) {
+  const { t } = useTranslation();
   const [permission, setPermission] = useState("default");
   const [isRequesting, setIsRequesting] = useState(false);
   const [isSupported, setIsSupported] = useState(true);
+  const rowClasses = `flex items-start gap-3 ${isRTL ? "flex-row-reverse text-right" : ""}`;
+  const textAlign = isRTL ? "text-right" : "";
 
   useEffect(() => {
     setIsSupported(isPushNotificationSupported());
@@ -39,15 +46,16 @@ export function NotificationPermissionCard({ onPermissionChange }) {
   if (!isSupported) {
     return (
       <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
-        <div className="flex items-start gap-3">
+        <div className={rowClasses}>
           <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className={textAlign}>
             <h4 className="text-white font-medium text-sm mb-1">
-              Notifications Not Supported
+              {t("pages.settings.notifications.notificationsNotSupported")}
             </h4>
             <p className="text-white/70 text-xs">
-              Your browser doesn't support push notifications. You can still use
-              in-app reminders.
+              {t(
+                "pages.settings.notifications.notificationsNotSupportedDescription"
+              )}
             </p>
           </div>
         </div>
@@ -58,15 +66,16 @@ export function NotificationPermissionCard({ onPermissionChange }) {
   if (permission === "granted") {
     return (
       <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-        <div className="flex items-start gap-3">
+        <div className={`flex items-start gap-3 ${isRTL ? "direction-rtl text-right" : ""}`}>
           <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className={textAlign}>
             <h4 className="text-white font-medium text-sm mb-1">
-              Notifications Enabled
+              {t("pages.settings.notifications.notificationsEnabled")}
             </h4>
             <p className="text-white/70 text-xs">
-              You'll receive push notifications when practice reminders and
-              achievements are triggered.
+              {t(
+                "pages.settings.notifications.notificationsEnabledDescription"
+              )}
             </p>
           </div>
         </div>
@@ -77,19 +86,21 @@ export function NotificationPermissionCard({ onPermissionChange }) {
   if (permission === "denied") {
     return (
       <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-        <div className="flex items-start gap-3">
+        <div className={rowClasses}>
           <BellOff className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-          <div>
+          <div className={textAlign}>
             <h4 className="text-white font-medium text-sm mb-1">
-              Notifications Blocked
+              {t("pages.settings.notifications.notificationsBlocked")}
             </h4>
             <p className="text-white/70 text-xs mb-2">
-              You've blocked notifications for this site. To enable them, please
-              update your browser settings.
+              {t(
+                "pages.settings.notifications.notificationsBlockedDescription"
+              )}
             </p>
             <p className="text-white/60 text-xs">
-              Look for the lock icon in your browser's address bar and allow
-              notifications.
+              {t(
+                "pages.settings.notifications.notificationsBlockedDescription2"
+              )}
             </p>
           </div>
         </div>
@@ -99,22 +110,25 @@ export function NotificationPermissionCard({ onPermissionChange }) {
 
   return (
     <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-4">
-      <div className="flex items-start gap-3">
+      <div className={rowClasses}>
         <Bell className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
-        <div className="flex-1">
+        <div className={`flex-1 ${textAlign}`}>
           <h4 className="text-white font-medium text-sm mb-1">
-            Enable Push Notifications
+            {t("pages.settings.notifications.enablePushNotifications")}
           </h4>
           <p className="text-white/70 text-xs mb-3">
-            Get timely reminders for your practice sessions and instant updates
-            on achievements.
+            {t(
+              "pages.settings.notifications.enablePushNotificationsDescription"
+            )}
           </p>
           <button
             onClick={handleRequestPermission}
             disabled={isRequesting}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isRequesting ? "Requesting..." : "Enable Notifications"}
+            {isRequesting
+              ? t("pages.settings.notifications.requesting")
+              : t("pages.settings.notifications.enableNotifications")}
           </button>
         </div>
       </div>

@@ -1,0 +1,976 @@
+{
+  "app": {
+    "title": "PianoMaster"
+  },
+  "common": {
+    "locale": "he-IL",
+    "gotIt": "הבנתי",
+    "dontShowAgain": "הבנתי! אל תציג שוב",
+    "actions": {
+      "next": "הבא",
+      "back": "חזרה",
+      "cancel": "בטל",
+      "save": "שמור",
+      "setReminder": "קבע תזכורת",
+      "startTraining": "התחל אימון",
+      "recordAgain": "הקלט שוב",
+      "deleteAllSessions": "מחק הכול",
+      "selectAll": "בחר הכול",
+      "unselectAll": "בטל בחירת הכול",
+      "deleteSelected": "מחק בחירה"
+    },
+    "navigating": "טוען...",
+    "backTo": "חזרה ל{{name}}",
+    "saving": "שומר...",
+    "save": "שמירה",
+    "cancel": "בטל",
+    "points": "נקודות",
+    "loading": "טוען...",
+    "next": "הבא",
+    "toGamesMode": "למסך המשחקים",  
+    "dashboard": "למסך הבית",
+    "playAgain": "שחק שוב"
+  },
+  "auth": {
+    "logIn": "התחבר",
+    "logOut": "התנתק",
+    "loggingOut": "מתנתק...",
+    "login": {
+      "subtitle": "התחילו את המסע המוזיקלי שלכם!",
+      "emailLabel": "אימייל",
+      "emailPlaceholder": "הקלידו כתובת אימייל",
+      "passwordLabel": "סיסמה",
+      "passwordPlaceholder": "הקלידו סיסמה",
+      "submit": "התחבר",
+      "orSocial": "או המשיכו עם",
+      "noAccountPrompt": "חדשים ב-PianoMaster?",
+      "signupLink": "יצירת חשבון"
+    }
+  },
+  "navigation": {
+    "menuTitle": "תפריט",
+    "closeMenu": "סגור תפריט",
+    "links": {
+      "studentDashboard": "מסך הבית",
+      "teacherDashboard": "לוח מורה",
+      "practiceGames": "משחקים",
+      "recordings": "הקלטות",
+      "achievements": "הישגים",
+      "settings": "הגדרות",
+      "legal": "מידע משפטי וקרדיטים"
+    }
+  },
+  "pages": {
+    "notesMaster": "מאסטר תווים",
+    "rhythmMaster": "מאסטר קצב",
+    "gameModes": "משחקי תרגול",
+    "practiceSessions": {
+      "title": "הקלטות אימון",
+      "noPracticeSessions": "אין הקלטות אימון",
+      "latestRecording": "הקלטה אחרונה",
+      "deleteSelectedConfirm": "האם למחוק את ההקלטות הנבחרות?",
+      "deleteSelectedConfirmation": "ההקלטות הנבחרות נמחקו בהצלחה",
+      "deleteSelectedError": "הפעלת מחיקת ההקלטות הנבחרות נכשלה",
+      "deleteSelectedErrorConfirm": "האם לנסות שוב?",
+      "deleteSelectedErrorConfirmation": "הפעלת מחיקת ההקלטות הנבחרות נכשלה, נסו שוב",
+      "sessionStudentNotes": "הערות תלמיד",
+      "editStudentNotes": "עריכת הערות",
+      "deleteSession": "מחיקת הקלטה",
+      "addStudentNotes": "הוספת הערות",
+      "noStudentNotesAdded": "אין הערות נוספות. לחץו על כפתור העריכה כדי להוסיף הערות.",
+      "teacherFeedback": "משוב מורה",
+      "statusLabel": "מצב",
+      "status": {
+        "excellent": "מעולה",
+        "reviewed": "נבדק",
+        "needs_work": "דורש שיפור",
+        "pending_review": "ממתין לבדיקה"
+      }
+    },
+    "achievements": {
+      "title": "הישגים",
+      "loading": "טוען הישגים...",
+      "earned": "הישג שקיבלתם",
+      "points": "סך כל הנקודות",
+      "pointsBreakdown": "{{gameplay}} נקודות משחק + {{achievements}} נקודות הישגים",
+      "completionRate": "מידת השלמה",
+      "description": "עקבו אחרי התקדמותכם ופתחו תגי הישגים",
+      "recentAchievements": "הישגים אחרונים",
+      "achievements": "הישגי",
+      "complete": "הושלמו",
+      "noAchievementsAvailable": "אין הישגים זמינים",
+      "checkBackLater": "בואו שוב מאוחר יותר לפתח תגי תקדמות חדשים!",
+      "milestone": "צעדים ראשונים",
+      "categories": {
+        "milestone": "צעדים משמעותיים ראשונים",
+        "streak": "רצף",
+        "performance": "ביצועים",
+        "points": "נקודות",
+        "skill": "מיומנות",
+        "time": "זמן"
+      },
+      "items": {
+        "first_session": {
+          "title": "צעדים ראשונים",
+          "description": "השלימו את אימון התרגול הראשון שלכם"
+        },
+        "streak_3": {
+          "title": "בונים הרגלים",
+          "description": "שמרו על רצף תרגול של 3 ימים"
+        },
+        "streak_7": {
+          "title": "אלוף שבועי",
+          "description": "תרגלו 7 ימים ברצף"
+        },
+        "streak_30": {
+          "title": "מאסטר חודשי",
+          "description": "השיגו רצף של 30 ימי תרגול"
+        },
+        "perfect_score": {
+          "title": "מאסטר שמיעה",
+          "description": "השיגו 100% במשחק זיהוי תווים"
+        },
+        "high_scorer": {
+          "title": "שוברי שיאים",
+          "description": "הגיעו ל-1000 נקודות בסך הכול"
+        },
+        "note_master": {
+          "title": "מאסטר קריאת תווים",
+          "description": "ענו נכון על 100 שאלות זיהוי תווים"
+        },
+        "practice_time_10": {
+          "title": "לומד נחוש",
+          "description": "תרגלו בסך הכול 10 שעות"
+        },
+        "consistent_player": {
+          "title": "שחקנ/ית עקבי/ת",
+          "description": "השלימו 20 אימוני תרגול"
+        },
+        "accuracy_master": {
+          "title": "מאסטר הדיוק",
+          "description": "שמרו על ממוצע דיוק של 90% לאורך 10 אימונים"
+        }
+      },
+      "pointsReward": "+{{points}} נקודות"
+    },
+    "settings": {
+      "title": "הגדרות",
+      "chooseYourAvatar": "בחרו את האווטאר שלכם",
+      "chooseYourAvatarDescription": "האווטאר שלכם ילווה במסע המוזיקלי שלכם",
+      "languageTitle": "שפה",
+      "languageDescription": "בחרו את השפה המועדפת עליכם",
+      "languages": {
+        "english": "אנגלית",
+        "hebrew": "עברית"
+      },
+      "installTitle": "התקנת PianoMaster",
+      "installDescription": "הוסיפו את האפליקציה למסך הבית לחויית אימון מהנה יותר!",
+      "installDescriptionNoInstall": "בקרו באפליקציה דרך דפדפן ספארי (iOS) או כרום (Android) כדי לראות אפשרויות התקנה.",
+      "installDescriptionAndroid": "אם הכפתור לא מופיע, פתחו תפריט כרום (⋮) ובחרו ",
+      "profile": {
+        "profileSettingsTitle": "הגדרות פרופיל",
+        "profileSettingsDescription": "ניהול פרטי הפרופיל שלכם",
+        "firstName": "שם פרטי",
+        "firstNamePlaceholder": "הקלידו שם פרטי",
+        "lastName": "שם משפחה",
+        "lastNamePlaceholder": "הקלידו שם משפחה",
+        "username": "שם משתמש",
+        "usernamePlaceholder": "הקלידו שם משתמש",
+        "usernameDescription": "שם משתמש 3-20 תווים (אותיות, מספרים, - ו _ בלבד)",
+        "clickToEditUsername": "לחצו כדי לערוך את שם המשתמש",
+        "email": "אימייל",
+        "emailPlaceholder": "הקלידו אימייל",
+        "emailDescription": "האימייל שלכם ישמש לצורך חיבור למערכת",
+        "level": "רמה",
+        "levelDescription": "רמתכם תסומן על ידי המורה שלכם",
+        "levelPlaceholder": "הקלידו רמה"
+      },
+      "accessibility": {
+        "accessibilitySettingsTitle": "הגדרות נגישות",
+        "accessibilitySettingsDescription": "הגדרות נגישות של האפליקציה",
+        "visualSettingsTitle": "הגדרות תצוגה",
+        "visualSettingsDescription": "הגדרות תצוגה של האפליקציה",
+        "navigationSettingsTitle": "הגדרות ניווט",
+        "navigationSettingsDescription": "הגדרות ניווט של האפליקציה",
+        "highContrastMode": "מצב ניגודיות גבוהה",
+        "highContrastModeDescription": "הפעלת ניגודיות גבוהה של האפליקציה",
+        "reducedMotion": "מצב תנועה מופחתת",
+        "reducedMotionDescription": "הפעלת תנועה מופחתת באפליקציה",
+        "fontSize": "גודל גופן",
+        "fontSizeDescription": "הגדרות גודל גופן של האפליקציה",
+        "fontSizes": {
+          "small": "קטן",
+          "normal": "רגיל",
+          "large": "גדול",
+          "xl": "גדול מאוד"
+        },
+        "motorSettingsTitle": "הגדרות מוטוריות",
+        "motorSettingsDescription": "הגדרות מוטוריות של האפליקציה",
+        "largeTouchTargets": "כפתורי מגע גדולים",
+        "largeTouchTargetsDescription": "הפעלת כפתורי מגע גדולים באפליקציה",
+        "stickyHover": "השהיית מעבר של העכבר",
+        "stickyHoverDescription": "הפעלת השהייה של מעבר העכבר באפליקציה (משהה מעבר של העכבר על אלמנטים לזמן ארוך יותר)",
+        "cognitiveSettingsTitle": "הגדרות קוגניטיביות",
+        "cognitiveSettingsDescription": "הגדרות קוגניטיביות של האפליקציה",
+        "simplifiedUI": "ממשק פשוט",
+        "simplifiedUIDescription": "הפעלת ממשק פשוט של האפליקציה",
+        "extendedTimeouts": "זמן תצוגת הודעות",
+        "extendedTimeoutsDescription": "הארכת זמן תצוגת הודעות באפליקציה (משהה זמן תצוגת הודעות לזמן ארוך יותר)",
+        "keyboardNavigation": "ניווט בעזרת מקלדת",
+        "keyboardNavigationDescription": "הגדרות ניווט באפליקציה בעזרת מקלדת",
+        "focusIndicators": "סמני מיקוד",
+        "focusIndicatorsDescription": "הפעלת סמני מיקוד באפליקציה",
+        "screenReaderOptimization": "הגדרות קורא מסך",
+        "screenReaderOptimizationDescription": "מוסיף טקסט תיאורי נוסף לקורא המסך כדי להקריא רכיבים בצורה ברורה",
+        "announcements": "הקראת טקסט בעזרת קורא מסך",
+        "announcementsDescription": "הפעלת הקראת טקסט באפליקציה בעזרת קורא מסך"
+      },
+      "notifications": {
+        "notificationsSettingsTitle": "הגדרות התראות",
+        "notificationsSettingsDescription": "הגדרות התראות של האפליקציה",
+        "notificationTypesTitle": "סוגי התראות",
+        "quietHours": "שעות שקטות",
+        "quietHoursDescription": "הפעלת שעות שקטות בהן לא תקבלו התראות מהאפליקציה",
+        "enableAllNotifications": "הפעלת כל התראות",
+        "achievements": "התראות הישגים",
+        "assignments": "התראות משימות",
+        "messages": "התראות הודעות",
+        "reminders": "התראות תזכורות",
+        "system": "התראות מערכת",
+        "notificationsNotSupported": "התראות לא נתמכות",
+        "notificationsNotSupportedDescription": "הדפדפן שלכם לא תומך בהתראות. עדיין ניתן להשתמש בתזכורות פנימיות.",
+        "startTime": "שעת התחלה",
+        "endTime": "שעת סיום",
+        "dailyPracticeReminder": "התראות תרגול יומי",
+        "dailyPracticeReminderDescription": "הפעלת התראות תרגול יומי באפליקציה",
+        "reminderTime": "שעת התראות",
+        "reminderTimeDescription": "שעת התראות באפליקציה",
+        "enableDailyPracticeReminder": "הפעלת התראות תרגול יומי",
+        "enableDailyPracticeReminderDescription": "הפעלת התראות תרגול יומי באפליקציה",
+        "notificationsEnabled": "התראות פעילות",
+        "notificationsEnabledDescription": "תקבלו התראות דרך התראות push של הדפדפן",
+        "notificationsBlocked": "התראות חסומות",
+        "notificationsBlockedDescription": "התראות חסומות בדפדפן שלכם. כדי להפעיל אותן, עדכן את הגדרות הדפדפן שלכם.",
+        "notificationsBlockedDescription2": "חפש את הסמל הסולמית בסרגל הכתובת של הדפדפן ואפשר התראות.",
+        "enablePushNotifications": "הפעלת התראות בעזרת התראות של הדפדפן",
+        "enablePushNotificationsDescription": "קבלו התראות דרך התראות push של הדפדפן",
+        "requesting": "מבוקש...",
+        "enableNotifications": "הפעלת התראות"
+      },
+      "audio": {
+        "audioSettingsTitle": "הגדרות שמע",
+        "audioSettingsDescription": "הגדרות שמע של האפליקציה",
+        "enableSounds": "הפעלת צליל",
+        "enableSoundsDescription": "הפעלת/השתקה של צלילי האפליקציה",
+        "masterVolume": "עוצמת שמע",
+        "masterVolumeDescription": "עוצמת שמע עיקרית של האפליקציה (0-100%)",
+        "testSound": "בדיקת שמע"
+      }
+    }
+  },
+  "install": {
+    "chrome": {
+      "installDescription": "אתם יכולים להתקין את PianoMaster ישירות מכרום.",
+      "installButton": "התקן מגוגל כרום"
+    },
+    "android": {
+      "installDescription": "אם הכפתור לא מופיע, פתחו תפריט כרום (⋮) ובחרו",
+      "installStep": "הוסף למסך הבית",
+      "unavailableInsecure": "אי אפשר לפתוח חלון התקנה מהכתובת הזו. באנדרואיד: פתחו את תפריט כרום (⋮) ובחרו {{step}}."
+    },
+    "ios": {
+      "installDescription": "על iPhone או iPad, התקינו את PianoMaster באופן ידני:",
+      "installStep": "לחץו על הכפתור השיתוף"
+    },
+    "safari": {
+      "installDescription": "כפתור השיתוף של Safari נמצא בסרגל הכלים התחתון. לאחר ההתקנה, פתחו את PianoMaster ממסך הבית לחויית אימון מהנה יותר!",
+      "installStep1": "לחץו על הכפתור השיתוף",
+      "installStep2": "בחרו \"הוסף למסך הבית\"",
+      "installStep3": "לחץו על \"הוסף\" כדי לאשר"
+    },
+    "unavailableToast": "אפשרות ההתקנה לא זמינה כרגע. באנדרואיד: פתחו את תפריט כרום (⋮) ובחרו \"הוסף למסך הבית\", ואז רעננו."
+  },
+  "avatars": {
+    "title": "בחרו את הדמות שלכם",
+    "selected_avatar": "דמות נבחרה",
+    "click_another_avatar": "לחץ על דמות אחרת כדי לשנות את בחירתכם",
+    "saving": "שומר את הדמות...",
+    "shop": {
+      "title": "חנות אביזרים",
+      "subtitle": "השתמשו בנקודות שהרווחתם כדי להלביש את האווטאר שלכם.",
+      "previewTitle": "תצוגה מקדימה",
+      "previewPlaceholder": "בחרו אווטאר כדי לראות כאן את האביזרים.",
+      "previewDescription": "האביזרים הפעילים מוצגים כאן בזמן אמת.",
+      "balanceLabel": "יתרת נקודות",
+      "availableToSpend": "זמין להוצאה",
+      "totalEarned": "סה\"כ נצבר",
+      "totalSpent": "הוצאו",
+      "availablePoints": "{{points}} נק׳ זמינות",
+      "pointsSpent": "{{points}} נק׳ הושקעו באביזרים",
+      "ownedTitle": "האביזרים שלי",
+      "ownedDescription": "נהלו את מה שרכשתם והלבישו אותו על הדמות.",
+      "ownedEmpty": "עדיין לא רכשתם אביזרים.",
+      "ownedLabel": "בבעלותך",
+      "unknownAccessory": "אביזר",
+      "equip": "ללבוש",
+      "unequip": "להוריד",
+      "equipped": "פעיל",
+      "purchase": "קנו ב-{{points}} נק׳",
+      "purchased": "נרכש",
+      "notEnoughPoints": "אין מספיק נקודות",
+      "shopEmpty": "אביזרים חדשים יופיעו כאן בקרוב.",
+      "purchaseSuccess": "האביזר נוסף לארון שלכם!",
+      "equipSuccess": "האביזר נלבש",
+      "unequipSuccess": "האביזר הוסר",
+      "locked": "נעול",
+      "howToUnlock": "איך לפתוח"
+    },
+    "unlockModal": {
+      "locked": "פריט נעול",
+      "achievement": "דרוש הישג",
+      "gamesPlayed": "משחקים ששוחקו",
+      "pointsEarned": "נקודות שנצברו",
+      "streak": "רצף תרגול",
+      "perfectGames": "משחקים מושלמים",
+      "level": "רמת שחקן",
+      "progress": "התקדמות",
+      "complete": "הושלם",
+      "tip": "טיפ",
+      "gotIt": "הבנתי!",
+      "achievementDescription": "השיגו את ההישג: {{name}}",
+      "achievementTipDetailed": "השיגו את ההישג \"{{name}}\" כדי לפתוח אביזר זה.",
+      "achievementCompleted": "השגתם את ההישג \"{{name}}\"! ✨",
+      "gamesPlayedDescription": "שחקו {{count}} משחק",
+      "gamesPlayedDescription_plural": "שחקו {{count}} משחקים",
+      "gamesPlayedTipDetailed": "שחקו עוד משחק אחד כדי לפתוח אביזר זה.",
+      "gamesPlayedTipDetailed_plural": "שחקו עוד {{count}} משחקים כדי לפתוח אביזר זה.",
+      "gamesPlayedCompleted": "שיחקתם {{count}} משחקים! ✨",
+      "pointsEarnedDescription": "צברו {{amount}} נקודות סה\"כ (לכל החיים)",
+      "pointsEarnedShort": "{{amount}} סה\"כ נק׳",
+      "pointsEarnedTipDetailed": "צברו עוד {{amount}} נקודות כדי לפתוח. זה סופר את כל הנקודות שצברתם מאז ההתחלה, לא רק את הזמין להוצאה.",
+      "pointsEarnedCompleted": "צברתם {{amount}} נקודות סה\"כ! ✨",
+      "streakDescription": "שמרו על רצף תרגול של {{days}} ימים",
+      "streakTipDetailed": "תרגלו עוד יום אחד רצוף כדי לפתוח אביזר זה.",
+      "streakTipDetailed_plural": "תרגלו עוד {{days}} ימים רצופים כדי לפתוח אביזר זה.",
+      "streakCompleted": "הגעתם לרצף של {{days}} ימים! ✨",
+      "perfectGamesDescription": "השיגו ציון של 100% ב-{{count}} משחק",
+      "perfectGamesDescription_plural": "השיגו ציון של 100% ב-{{count}} משחקים",
+      "perfectGamesTipDetailed": "השיגו 100% בעוד משחק אחד כדי לפתוח אביזר זה.",
+      "perfectGamesTipDetailed_plural": "השיגו 100% בעוד {{count}} משחקים כדי לפתוח אביזר זה.",
+      "perfectGamesCompleted": "השגתם {{count}} משחק מושלם! ✨",
+      "perfectGamesCompleted_plural": "השגתם {{count}} משחקים מושלמים! ✨",
+      "levelDescription": "הגיעו לרמה {{level}}",
+      "levelTipDetailed": "עלו עוד רמה אחת כדי לפתוח אביזר זה.",
+      "levelTipDetailed_plural": "עלו עוד {{levels}} רמות כדי לפתוח אביזר זה.",
+      "levelCompleted": "הגעתם לרמה {{level}}! ✨"
+    },
+    "customization": {
+      "editPositions": "עריכה",
+      "doneEditing": "סיים עריכה",
+      "dragHint": "גררו את האביזרים כדי למקם אותם מחדש",
+      "positionSaved": "המיקום נשמר!",
+      "scaleControls": "גודל"
+    },
+    "unlockAnimation": {
+      "newAccessoryUnlocked": "!אביזר חדש נפתח",
+      "unlockedMessage": "!פתחתם את {{name}}",
+      "equipNow": "לקנות עכשיו",
+      "viewLater": "לצפות מאוחר יותר",
+      "equipFailed": "לא הצלחנו להלביש את האביזר. נסו שוב."
+    },
+    "funFact": "עובדה משעשעת",
+    "beethoven": {
+      "name": "לודוויג ואן בטהובן",
+      "description": "לודוויג וואן בטהובן היה מלחין גרמני שאהב לכתוב מוזיקה שנשמעת כמו סערות, חגיגות והרפתקאות ענקיות. למרות שבגיל צעיר הוא התחיל לאבד את השמיעה שלו, בטהובן לא ויתר. הוא המשיך להלחין על ידי כך שהרגיש את הרטט של הפסנתר ודמיין את הצלילים בראש. המוזיקה שלו, כמו “הסימפוניה החמישית” ו“לאליזה”, עדיין מנוגנת בכל העולם, ואנשים בכל הגילים אוהבים את העוצמה והרגש שבמנגינות שלו",
+      "fun_fact": "בטהובן היה ידוע בשיער המאוד פרוע שלו ובכך שלפעמים שכח לסדר אותו - אנשים בווינה היו מזהים אותו ברחוב רק לפי התסרוקת המבולגנת!"
+    },
+    "bach": {
+      "name": "יוהאן סבסטיאן באך",
+      "description": "יוהאן סבסטיאן באך היה מלחין גרמני ואחד המלחינים הגדולים של המוזיקה. באך עבד מאוד קשה - הוא לימד, הלחין וניגן בעוגב כמעט כל יום. המוזיקה שלו, כמו הקונצ’רטי הברנדנבורגים וספרי “הפרלודים והפוגות” שלו, מוערכת בכל העולם בזכות היופי והמבנה המדהים שלה.",
+      "fun_fact": "לבאך היו 20 ילדים, וחלק מהם הפכו גם הם למלחינים!"
+    },
+    "mozart": {
+      "name": "וולפגאנג אמדאוס מוצרט",
+      "description": "וולפגנג אמדאוס מוצרט היה מלחין אוסטרי וגאון מוזיקלי שהתחיל להלחין כבר בגיל חמש! הוא נסע ברחבי אירופה עם משפחתו וניגן מול מלכים ומלכות. המוזיקה של מוצרט מלאה בהומור, אנרגיה ומנגינות מבריקות, והוא אהב לגרום לאנשים לחייך דרך המנגינות שלו. למרות שחי רק 35 שנים, הוא כתב יותר מ־600 יצירות שמנגנים עד היום בכל העולם.",
+      "fun_fact": "מוצרט היה מסוגל לשמוע יצירה פעם אחת בלבד ואז לכתוב אותה מהזיכרון בצורה מושלמת!"
+    },
+    "brahms": {
+      "name": "יוהנס ברהמס",
+      "description": "יוהנס ברהמס היה מלחין גרמני שכתב מוזיקה שנשמעה גם עוצמתית וגם \"מחבקת\", כמו גלים גדולים שמתערבבים עם חום ונעימות. הוא העריץ את באך ובטהובן ועבד קשה כדי להמשיך את המסורת שלהם, תוך שהוא מוסיף סגנון עשיר ורגשי משלו. ברהמס היה אדם טוב לב, אהב ספרים ובילה ערבים רבים בקריאה או בהלחנה. המוזיקה שלו - כולל הסימפוניות ושירי הערש - עדיין אהובה מאוד.",
+      "fun_fact": "ברהמס כתב את שיר הערש המפורסם ביותר בעולם - “שיר הערש של ברהמס”, שהורים שרים לתינוקות עד היום."
+    },
+    "schubert": {
+      "name": "פרנץ שוברט",
+      "description": "פרנץ שוברט היה מלחין אוסטרי והיה מוכשר במיוחד בכתיבת מנגינות חמימות, מתוקות ומלאות רגש. הוא אהב להלחין שירים - הוא כתב יותר מ־600! - אנשים העריצו את הדרך שבה העביר תחושות דרך מוזיקה. למרות שהיה ביישן, היו לו הרבה חברים שאהבו את יצירתו וערכו מפגשים מיוחדים שנקראו “שוברטיאדות”, שבהם ניגנו את המוזיקה שלו יחד.",
+      "fun_fact": "שוברט כתב חלק מהמוזיקה המפורסמת שלו במחברות קטנות שנשא איתו בכל מקום - אפילו בזמן הליכה!"
+    },
+    "chopin": {
+      "name": "פרדריק שופן",
+      "description": "פרדריק שופן היה אמן הפסנתר הגדול. כמעט כל מה שכתב היה לפסנתר, והמוזיקה שלו מלאה רגש, שירה ומנגינות יפות במיוחד. הוא הצליח לגרום לפסנתר להישמע כמו רוח לוחשת, צעדי ריקוד או שיר ערש עדין. שופן אהב לנגן בחדרים קטנים ולא באולמות גדולים, כי הוא רצה שהמוזיקה תרגיש אישית ועדינה.",
+      "fun_fact": "שופן היה כל כך מוכשר, שמוזיקאים אחרים אמרו שהוא גורם לפסנתר “לשיר כמו קול אנושי.”"
+    },
+    "schumann": {
+      "name": "רוברט שומאן",
+      "description": "שומאן היה מלחין גרמני שאהב לכתוב שירים ומוזיקה. הוא היה חבר בקבוצת מלחינים שהיו יריבים וכתב מוזיקה מדהימה שהייתה יריבה.",
+      "fun_fact": "שומאן היה אדם צעיר ועזר למשפחתו על ידי נגינת מוזיקה בבתי קפה ומסעדות בשכונתו."
+    },
+    "handel": {
+      "name": "ג'ורג' פרידריך הנדל",
+      "description": "ג'ורג' פרידריך הנדל היה מלחין מפורסם שחי לפני יותר מ־300 שנה, והוא אהב לכתוב מוזיקה שגורמת לאנשים להרגיש אנרגטיים ומלאי התלהבות. למרות שנולד בגרמניה, הוא עבר לאנגליה והפך לאחד המוזיקאים האהובים ביותר שם. הנדל היה ידוע בכך שעבד מהר במיוחד - הוא כתב את היצירה הכי מפורסמת שלו, “המשיח”, תוך כמה שבועות בלבד! אנשים כל כך אהבו את המוזיקה שלו, שאפילו מלכים באו לשמוע אותו. גם היום מנגנים את היצירות שלו בכל העולם, במיוחד את מקהלת ה“הללויה” המשמחת, שגורמת לכולם לרצות לעמוד ולשיר יחד. אם מקשיבים טוב, אפשר כמעט לשמוע את האנרגיה והכיף שהוא הכניס לכל תו!",
+      "fun_fact": "הנדל כתב את \"המשיח\" בזמן מאוד קצר - כ-24 יום!"
+    },
+    "vivaldi": {
+      "name": "אנטוניו ויואלדי",
+      "description": "ויואלדי היה מלחין איטלקי שאהב לכתוב שירים ומוזיקה. הוא היה חבר בקבוצת מלחינים שהיו יריבים וכתב מוזיקה מדהימה שהייתה יריבה.",
+      "fun_fact": "ויואלדי היה אדם צעיר ועזר למשפחתו על ידי נגינת מוזיקה בבתי קפה ומסעדות בשכונתו."
+    }
+  },
+  "games": {
+    "backToModes": "משחקי תרגול",
+    "score": "ניקוד",
+    "time": "זמן",
+    "actions": {
+      "start": "התחל משחק",
+      "pause": "עצור",
+      "listen": "האזינו",
+      "stop": "עצור",
+      "stopListening": "הפסיקו האזנה"
+    },
+    "labels": {
+      "practiceMode": "מצב תרגול"
+    },
+    "gameOver": {
+      "title": "המשחק הסתיים",
+      "finalScore": "ציון סופי",
+      "timeUp": "הזמן נגמר!",
+      "scoreTooLow": "ציון נמוך מדי",
+      "timeUpMessage": "עניתם על {count} מתוך 10 שאלות",
+      "scoreTooLowMessage": "נדרש לפחות 50% תשובות נכונות כדי לנצח",
+      "tryAgain": "נסו שוב",
+      "exit": "יציאה"
+    },
+    "difficulties": {
+      "easy": "קל",
+      "medium": "בינוני",
+      "advanced": "מתקדם",
+      "allLevels": "כל הרמות"
+    },
+    "cards": {
+      "memory": {
+        "name": "משחק זיכרון",
+        "description": "התאימו בין תווים לשמותיהם"
+      },
+      "notesRecognition": {
+        "name": "זיהוי תווים",
+        "description": "זהו תווים על החמשה"
+      },
+      "sightReading": {
+        "name": "קריאה מהירה",
+        "description": "נגנו תבניות מוזיקליות בקצב ובצלילים הנכונים"
+      },
+      "notesReading": {
+        "name": "קריאת תווים",
+        "description": "זהו תווים על החמשה"
+      },
+      "metronomeTrainer": {
+        "name": "תרגול קצב עם מטרונום",
+        "description": "האזינו לתבניות הקצב והקישו אותן במדויק"
+      }
+    },
+    "modeCard": {
+      "progress": "התקדמות",
+      "playNow": "שחק עכשיו"
+    },
+    "metronomeTrainer": {
+      "headerTitle": "מאמן המטרונום",
+      "progressLabel": "תרגיל {{current}} מתוך {{total}}",
+      "sessionCompleteTitle": "המשחק הושלם!",
+      "sessionCompleteSubtitle": "עבודה נהדרת בתרגול הקצב שלך!",
+      "stats": {
+        "exercisesCompleted": "תרגילים שהושלמו",
+        "finalScore": "ציון סופי",
+        "excellent": "מצוין (80%+)",
+        "passed": "עבר (50%+)",
+        "patterns": "מקצבים",
+        "score": "נקודות",
+        "maxCombo": "קומבו מקסימלי",
+        "goodTaps": "הקשות מוצלחות"
+      },
+      "details": {
+        "title": "ציוני התרגילים",
+        "averageSummary": "ממוצע: {{average}}% | הטוב ביותר: {{best}}% | החלש ביותר: {{worst}}%"
+      },
+      "buttons": {
+        "playAgain": "שחק שוב",
+        "home": "חזרה למסך הבית",
+        "nextPattern": "למקצב הבא",
+        "endSession": "סיום המשחק"
+      },
+      "guidance": {
+        "countIn": "הקשיבו לפעמה החזקה והקישו כדי להתחיל!",
+        "patternPlayback": "הקשיבו למקצב",
+        "getReady": "התכוננו להקיש את המקצב",
+        "userActive": "המשיכו להקיש את המקצב!",
+        "userWaiting": "הקשיבו למקצב ולאחר מכן הקישו כדי להתחיל",
+        "feedback": "איך הלך?",
+        "default": "הקשיבו לפעימה הקבועה"
+      },
+      "tapArea": {
+        "getReady": "התכונן",
+        "tapHere": "הקש כאן",
+        "listen": "הקשב",
+        "accuracy": {
+          "perfect": "בול",
+          "good": "טוב",
+          "fair": "בסדר",
+          "miss": "פספוס"
+        }
+      }
+    },
+    "practiceModes": {
+      "loading": "טוען את המסע המוזיקלי...",
+      "errorTitle": "אופס!",
+      "errorMessage": "לא הצלחנו לטעון את משחקי התרגול. נסו שוב.",
+      "startMode": "התחל משחק"
+    }
+  },
+  "dashboard": {
+    "header": {
+      "welcomeBack": "ברוכ/ה השב/ה",
+      "defaultName": "מוזיקאי/ת",
+      "subtitle": "המסע המוזיקלי שלך נמשך"
+    },
+    "continueButton": {
+      "title": "המשך ללמוד",
+      "freePractice": "תרגול חופשי"
+    },
+    "dailyGoals": {
+      "title": "יעדים יומיים",
+      "allComplete": "כל היעדים הושלמו היום!",
+      "noGoals": "אין יעדים זמינים",
+      "goals": {
+        "completeExercises": {
+          "name": "השלימו תרגילים",
+          "description": "השלימו {{target}} תרגילים היום"
+        },
+        "earnThreeStars": {
+          "name": "ביצוע מושלם",
+          "description": "קבלו 3 כוכבים על מסלול כלשהו"
+        },
+        "practiceNewNode": {
+          "name": "נסו משהו חדש",
+          "description": "תרגלו מסלול חדש"
+        },
+        "perfectScore": {
+          "name": "הצלחתי בכולם!",
+          "description": "לענות נכון על כל השאלות"
+        },
+        "maintainStreak": {
+          "name": "שמרו על הרצף",
+          "description": "שמרו על רצף התרגול היומי שלכם"
+        }
+      }
+    },
+    "myProgress": {
+      "title": "ההתקדמות שלי"
+    },
+    "toasts": {
+      "migrationSuccess": "ברוכים הבאים למערכת השביל החדשה! {{nodesCreated}} מסלולים ו-{{xpAwarded}} XP הועברו מההתקדמות הקודמת שלך."
+    },
+    "assignments": {
+      "title": "משימות",
+      "noPending": "אין משימות ממתינות",
+      "pending_zero": "אין משימות ממתינות",
+      "pending_one": "משימה ממתינה אחת",
+      "pending_other": "{{count}} משימות ממתינות",
+      "completed_zero": "אין משימות שהושלמו",
+      "completed_one": "משימה אחת הושלמה",
+      "completed_other": "{{count}} משימות הושלמו",
+      "allCaughtUp": "אתם מעודכנים לחלוטין!",
+      "empty": "אין משימות כרגע",
+      "viewAll": "צפו בכל {{count}} המשימות",
+      "status": {
+        "completed": "הושלמה",
+        "overdue": "פג תוקף",
+        "dueIn_one": "להגשה בעוד יום",
+        "dueIn_other": "להגשה בעוד {{count}} ימים",
+        "noDueDate": "ללא תאריך יעד"
+      },
+      "pointsLabel": "{{earned}}/{{possible}} נק׳"
+    },
+    "stats": {
+      "practiceTime": "זמן תרגול",
+      "hoursAbbrev": "ש׳",
+      "totalPoints": "סך-הכל נקודות",
+      "dailyStreak": "רצף יומי",
+      "level": "רמה"
+    },
+    "teacherPanel": {
+      "students": {
+        "title": "תלמידים",
+        "description": "נהלו ועקבו אחר התקדמות התלמידים"
+      },
+      "assignments": {
+        "title": "משימות",
+        "description": "צרו ועקבו אחר משימות של התלמידים"
+      }
+    },
+    "nextSteps": {
+      "title": "השלבים הבאים לקבלת הישגים",
+      "emptyTitle": "התקדמות מרשימה!",
+      "emptyDescription": "השלמתם את הצעדים העיקריים. המשיכו לתרגל כדי לקבל הישגים מתקדמים!",
+      "viewAll": "צפו בכל ההישגים",
+      "cta": "צפו בכל ההישגים →",
+      "points": "+{{points}} נקודות",
+      "items": {
+        "firstSession": {
+          "title": "הקליטו את האימון הראשון שלכם",
+          "description": "סיימו אימון ראשון כדי לקבל את ההישג \"צעדים ראשונים\""
+        },
+        "streak3": {
+          "title": "בנו רצף תרגול",
+          "description": "תרגלו 3 ימים ברצף כדי לפתוח את \"בונים הרגלים\""
+        },
+        "perfectScore": {
+          "title": "שלטו במשחקי התרגול",
+          "description": "השיגו 100% במשחק קצב או זיהוי תווים"
+        },
+        "highScorer": {
+          "title": "הגיעו ל-1000 נקודות",
+          "description": "צברו 1000 נקודות בסך הכול כדי להפוך ל\"שוברי שיאים\""
+        },
+        "streak7": {
+          "title": "לוחם שבועי",
+          "description": "תרגלו 7 ימים ברצף"
+        }
+      }
+    },
+    "practiceTools": {
+      "title": "כלים לתרגול",
+      "activeReminder": {
+        "title": "תזכורת תרגול בעוד:",
+        "setFor": "נקבע ל־{{time}}"
+      },
+      "cards": {
+        "reminder": {
+          "title": "הוסיפו תזכורת לתרגול",
+          "description": "שמרו על רצף אימונים קבוע"
+        },
+        "recording": {
+          "title": "הקליטו את האימון שלכם",
+          "description": "הקליטו לקבלת משוב מהמורה"
+        },
+        "history": {
+          "title": "צפו בתרגולים הקודמים שלכם",
+          "description": "עקבו אחר ההתקדמות שלכם"
+        }
+      }
+    },
+    "reminders": {
+      "modalTitle": "הוסיפו תזכורת לתרגול",
+      "dateLabel": "תאריך",
+      "timeLabel": "שעה"
+    },
+    "toasts": {
+      "reminderCancelled": "התזכורת בוטלה",
+      "permissionRequired": "אנא אפשרו התראות כדי להפעיל תזכורות",
+      "requestFailed": "בקשת ההרשאה נכשלה",
+      "notificationsBlocked": "התראות חסומות. הפעילו אותן בהגדרות הדפדפן.",
+      "reminderScheduled": "התזכורת נשמרה בהצלחה!",
+      "futureTimeRequired": "בחרו תאריך ושעה עתידיים"
+    },
+    "recording": {
+      "title": "הקליטו אימון",
+      "startRecording": "התחילו להקליט",
+      "reviewTitle": "האזינו להקלטה",
+      "notesLabel": "הערות תרגול (לא חובה)",
+      "notesPlaceholder": "כתבו מה תרגלתם, אתגרים שזיהיתם ועוד...",
+      "submit": "שלחו הקלטה",
+      "completed": "ההקלטה הסתיימה ({{minutes}}:{{seconds}})",
+      "uploadStatus": {
+        "preparing": "מכין...",
+        "uploading": "מעלה... ({{percentage}}%)",
+        "finalizing": "מסיים...",
+        "default": "מעלה..."
+      },
+      "retry": "העלאה נכשלה, מנסים שוב... ({{attempt}}/3)"
+    },
+    "streak": {
+      "loadingLabel": "רצף יומי",
+      "loadingState": "טוען...",
+      "loadingHint": "רק רגע...",
+      "dayLabel_one": "יום",
+      "dayLabel_two": "יומיים",
+      "dayLabel_many": "ימים",
+      "dayLabel_other": "ימים",
+      "streakSummary": "{{count}} ימים רצופים!",
+      "milestoneBadge": "אבני דרך!",
+      "nextMilestone": "עוד {{remaining}} כדי להשלים {{milestone}} ימים",
+      "maxReached": "הגעתם לשיא!",
+      "rangeSeparator": "עד",
+      "messages": {
+        "startJourney": "יוצאים לדרך!",
+        "buildingMomentum": "צוברים תנופה",
+        "gettingHot": "מתחממים!",
+        "onFire": "על האש!",
+        "superstar": "כוכבים אמיתיים!",
+        "legend": "אגדה מהלכת!"
+      },
+      "milestones": {
+        "1": "🎉 יום ראשון! התחלתם ברגל ימין!",
+        "3": "🔥 רצף של 3 ימים! ההרגל נבנה!",
+        "7": "⭐ שבוע שלם! התמדה מרשימה!",
+        "14": "💫 שבועיים! אתם כוכבי תרגול!",
+        "30": "🏆 30 ימים! אתם אגדה!",
+        "50": "👑 50 ימים! הישג יוצא דופן!",
+        "100": "🌟 100 ימים! מאסטרים אמיתיים!"
+      }
+    },
+    "points": {
+      "progressLabel": "התקדמות אל {{level}}",
+      "remaining": "עוד {{count}}"
+    },
+    "levels": {
+      "beginner": {
+        "name": "מתחילים",
+        "description": "עושים את הצעד הראשון",
+        "next": "student"
+      },
+      "student": {
+        "name": "תלמידים",
+        "description": "לומדים את הבסיס",
+        "next": "practitioner"
+      },
+      "practitioner": {
+        "name": "מתרגלים",
+        "description": "משפרים מיומנויות",
+        "next": "expert"
+      },
+      "expert": {
+        "name": "מומחים",
+        "description": "שחקנים מתקדמים",
+        "next": "master"
+      },
+      "master": {
+        "name": "מאסטרים",
+        "description": "שולטים בכלי",
+        "next": "legend"
+      },
+      "legend": {
+        "name": "אגדה",
+        "description": "אגדת פסנתר",
+        "next": null
+      }
+    }
+  },
+  "errors": {
+    "auth": {
+      "notAuthenticated": "בבקשה התחברו כדי להמשיך.",
+      "sessionExpired": "החיבור נסגר. בבקשה התחברו שוב."
+    },
+    "authorization": {
+      "unauthorized": "אופס! אין לך גישה לזה.",
+      "noAccess": "אופס! זה לא שלך לראות.",
+      "teacherNoConnection": "צריך להתחבר לתלמיד הזה קודם.",
+      "selfOnly": "אפשר לעשות את זה רק לעצמך."
+    },
+    "rateLimited": {
+      "student": "לאט לאט! נסו שוב בעוד כמה דקות.",
+      "teacher": "יותר מדי ניסיונות. אנא המתינו {{minutes}} דקות.",
+      "generic": "אנא המתינו רגע ונסו שוב."
+    },
+    "network": {
+      "offline": "אתם לא מחוברים לאינטרנט. התחברו כדי להמשיך.",
+      "timeout": "זה לקח יותר מדי זמן. נסו שוב."
+    },
+    "generic": {
+      "somethingWrong": "אופס! משהו לא עבד.",
+      "tryAgain": "נסו שוב.",
+      "contactSupport": "אם זה ממשיך לקרות, בקשו עזרה ממבוגר."
+    }
+  },
+  "gameControls": {
+    "play": "נגן",
+    "pause": "השהה",
+    "reset": "אפס",
+    "settings": "הגדרות",
+    "title": "הגדרות משחק"
+  },
+  "audioRecorder": {
+    "toasts": {
+      "error": "אירעה שגיאה בהקלטה",
+      "started": "ההקלטה התחילה",
+      "paused": "ההקלטה הושהתה",
+      "resumed": "ההקלטה נמשכה",
+      "cancelled": "ההקלטה בוטלה",
+      "micDenied": "הגישה למיקרופון נחסמה. אפשרו גישה למיקרופון ונסו שוב.",
+      "noMic": "לא נמצא מיקרופון. בדקו את הגדרות המכשיר.",
+      "notSupported": "הקלטת אודיו אינה נתמכת במכשיר זה.",
+      "browserNotSupported": "הקלטת אודיו אינה נתמכת בדפדפן זה.",
+      "genericFailure": "ניסיון ההקלטה נכשל"
+    },
+    "status": {
+      "recording": "ששששש... מקליטים...",
+      "paused": "הקלטה בהשהיה",
+      "recorded": "ההקלטה נשמרה"
+    },
+    "buttons": {
+      "starting": "מתחיל...",
+      "start": "התחל הקלטה",
+      "pause": "הפסקה",
+      "stop": "עצור",
+      "cancel": "בטל",
+      "resume": "המשך"
+    },
+    "quality": {
+      "title": "איכות אודיו",
+      "estimatedSize": "גודל משוער: {{size}}",
+      "format": "פורמט: {{format}}",
+      "presets": {
+        "LOW": {
+          "label": "נמוכה (64kbps)",
+          "description": "קבצים קטנים"
+        },
+        "MEDIUM": {
+          "label": "בינונית (128kbps)",
+          "description": "איזון בין איכות לגודל"
+        },
+        "HIGH": {
+          "label": "גבוהה (192kbps)",
+          "description": "קבצים איכותיים יותר"
+        },
+        "LOSSLESS": {
+          "label": "ללא דחיסה (320kbps)",
+          "description": "קבצים גדולים במיוחד"
+        }
+      }
+    },
+    "tooltips": {
+      "quality": "הגדרות איכות אודיו"
+    },
+    "labels": {
+      "maxDuration": "מקסימום {{duration}}"
+    }
+  },
+  "gameSettings": {
+    "titles": {
+      "metronomeTrainer": "מאמן קצב עם מטרונום",
+      "metronomeSubtitle": "הגדירו את אימון הקצב שלכם"
+    },
+    "steps": {
+      "progress": "שלב {{current}} מתוך {{total}}: {{title}}",
+      "labels": {
+        "difficulty": "בחרו רמת קושי",
+        "timeSignature": "בחרו משקל",
+        "rhythmSettings": "הגדרות קצב",
+        "tempo": "בחרו מהירות",
+        "clef": "בחרו מפתח",
+        "notes": "בחרו תווים",
+        "gameMode": "מצב משחק",
+        "gridSize": "בחרו גודל לוח",
+        "beginner": "קל",
+        "intermediate": "בינוני",
+        "advanced": "מתקדם"
+      }
+    },
+    "buttons": {
+      "back": "חזרה",
+      "next": "הבא",
+      "startTraining": "התחל אימון",
+      "startGame": "התחל משחק",
+      "saveSettings": "שמור הגדרות",
+      "cancel": "בטל",
+      "gotIt": "הבנתי"
+    },
+    "difficulty": {
+      "levels": {
+        "beginner": {
+          "label": "מתחילים",
+          "bars_two": "{{count}} תיבות",
+          "bars_other": "{{count}} תיבות",
+          "summary": "תבניות פשוטות"
+        },
+        "intermediate": {
+          "label": "בינוני",
+          "bars_two": "{{count}} תיבות",
+          "bars_other": "{{count}} תיבות",
+          "summary": "תבניות בינוניות"
+        },
+        "advanced": {
+          "label": "מתקדם",
+          "bars_two": "{{count}} תיבות",
+          "bars_other": "{{count}} תיבות",
+          "summary": "תבניות מורכבות"
+        }
+      }
+    },
+    "noteSelection": {
+      "instruction": "בחרו אילו תווים תרצו לתרגל:",
+      "deselectAll": "נקה בחירה",
+      "selectAll": "בחר הכל",
+      "sharps": "דיאזים",
+      "flats": "במולים",
+      "selectedCount_zero": "נבחרו 0 תווים",
+      "selectedCount_one": "נבחר תו אחד",
+      "selectedCount_two": "נבחרו {{count}} תווים",
+      "selectedCount_other": "נבחרו {{count}} תווים",
+      "minNotesTitle": "בחרו לפחות {{count}} תווים",
+      "minNotesDescription": "עליכם לבחור לפחות {{count}} תווים או יותר כדי לתרגל"
+    },
+    "rhythmSettings": {
+      "title": "הגדרות קצב",
+      "noteValuesLabel": "ערכי תווים מותרים",
+      "allowRestsLabel": "לאפשר הפסקות",
+      "restValuesLabel": "ערכי הפסקות מותרים",
+      "noteValuesRequired": "בחרו לפחות ערך תו אחד כדי להמשיך.",
+      "restValuesRequired": "בחרו לפחות ערך הפסקה אחד (או בטלו הפסקות) כדי להמשיך.",
+      "complexityLabel": "מורכבות קצב",
+      "simpleLabel": "קצב פשוט",
+      "complexLabel": "קצב מורכב",
+      "simpleHint": "מקבץ שמיניות בזוגות (ללא סינקופות).",
+      "complexHint": "מאפשר תבניות סינקופיות (למשל 1/8–1/4–1/8)."
+    },
+    "tempo": {
+      "label": "טמפו: {{tempo}} BPM",
+      "min": "{{value}} BPM",
+      "max": "{{value}} BPM"
+    },
+    "modes": {
+      "untimed": {
+        "label": "ללא זמן",
+        "description": "מצב תרגול"
+      },
+      "timed": {
+        "label": "מתוזמן",
+        "description": "מצב אתגר",
+        "durationLabel": "בחרו משך זמן",
+        "seconds": "{{value}} שניות"
+      }
+    },
+    "gridSize": {
+      "pairs_one": "{{count}} זוג",
+      "pairs_two": "{{count}} זוגות",
+      "pairs_other": "{{count}} זוגות"
+    },
+    "clefs": {
+      "treble": {
+        "label": "מפתח סול",
+        "alt": "מפתח סול"
+      },
+      "bass": {
+        "label": "מפתח פה",
+        "alt": "מפתח פה"
+      },
+      "both": {
+        "label": "שניהם",
+        "alt": "מפתח סול ומפתח פה"
+      }
+    }
+  },
+  "iosTip": {
+    "bestExperienceLabel": "טיפ לחוויית שימוש מיטבית",
+    "title": "השתמשו במצב רוחב באייפד",
+    "body": "לחוויית PianoMaster הטובה ביותר באייפד, סובבו את המכשיר לרוחב והפעילו את האפליקציה ממסך המכשיר.",
+    "installInstructions": "התקינו את האפליקציה דרך כפתור השיתוף בספארי ובחרו \"הוסף למסך הבית\", ולאחר מכן פתחו את PianoMaster מהאייקון החדש."
+  }
+}

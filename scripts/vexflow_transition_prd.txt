@@ -1,0 +1,834 @@
+# VexFlow Migration PRD
+## Product Requirements Document: Transitioning Sight Reading Game from Custom SVG to VexFlow
+
+---
+
+## 1. EXECUTIVE SUMMARY
+
+### 1.1 Objective
+Migrate the Sight Reading Game's music notation rendering system from custom SVG/Tailwind implementation to VexFlow library for improved maintainability, professional rendering quality, and access to advanced music notation features.
+
+### 1.2 Current State
+- Custom SVG-based rendering in `StaffDisplay.jsx`
+- Manual positioning of staff lines, clefs, time signatures, notes, rests, stems, and ledger lines
+- Custom rhythm analysis and notation object creation in `rhythmAnalyzer.js`
+- Dynamic staff width calculation based on pattern duration
+- Support for treble and bass clefs
+- Support for 2/4, 3/4, and 4/4 time signatures
+- Active note highlighting during playback
+- Hebrew note naming system integration
+
+### 1.3 Target State
+- VexFlow-powered music notation rendering
+- Simplified codebase with library-managed notation elements
+- Enhanced visual quality with professional engraving standards
+- Maintained feature parity (clefs, time signatures, note highlighting, dynamic sizing)
+- Seamless integration with existing game logic and audio playback
+
+### 1.4 Success Criteria
+- All current features work identically or better
+- Visual rendering quality matches or exceeds current implementation
+- Code complexity reduced by at least 40%
+- Performance maintained or improved
+- No regression in user experience
+- Active note highlighting preserved
+- Responsive layout maintained
+
+---
+
+## 2. TECHNICAL BACKGROUND
+
+### 2.1 VexFlow Overview
+VexFlow is a JavaScript library for rendering music notation in web browsers. Key features:
+- **EasyScore API**: Simplified string-based notation input
+- **Factory Pattern**: Streamlined object creation and management
+- **System**: Automatic stave layout and formatting
+- **SVG/Canvas Rendering**: Flexible rendering backends
+- **Professional Quality**: Standard music engraving practices
+
+### 2.2 Current Architecture Analysis
+
+#### Files to be Modified/Replaced:
+1. **`StaffDisplay.jsx`** (319 lines)
+   - Currently: Custom SVG rendering with manual positioning
+   - Target: VexFlow Factory + EasyScore rendering
+
+2. **`rhythmAnalyzer.js`** (269 lines)
+   - Currently: Converts sixteenth-note patterns to notation objects
+   - Target: Convert to VexFlow EasyScore format strings
+
+3. **`noteSymbols.js`** (obsolete after migration)
+   - Currently: SVG asset paths and positioning specs
+   - Target: Remove (VexFlow handles internally)
+
+4. **`usePatternGeneration.js`** (minor updates)
+   - Currently: Generates pattern with notation objects
+   - Target: Generate VexFlow-compatible format
+
+#### Files to Keep (minimal changes):
+- `gameSettings.js` - Note definitions and settings
+- `staffPositions.js` - May simplify or remove
+- `SightReadingGame.jsx` - Minor prop updates
+- `useMetronome.js` - No changes
+- `useRhythmPlayback.js` - No changes
+
+### 2.3 VexFlow Integration Points
+
+#### Renderer Setup (from VexFlow docs):
+```javascript
+// Factory initialization
+const vf = new Vex.Flow.Factory({
+  renderer: {
+    elementId: 'staff-container',
+    width: dynamicWidth,
+    height: 200,
+    backend: Vex.Flow.Renderer.Backends.SVG
+  }
+});
+```
+
+#### EasyScore Format:
+```javascript
+// Example pattern conversion
+// Current: notation objects array
+// VexFlow: "C4/q, D4/q, E4/h, F4/q/r"
+//   - Note: pitch + octave + duration
+//   - Rest: /r suffix
+//   - Dot: . suffix (e.g., /q. for dotted quarter)
+//   - Chord: (C4 E4 G4)/q
+```
+
+---
+
+## 3. IMPLEMENTATION PLAN
+
+### Phase 1: Setup & Dependencies (Estimated: 2 hours)
+
+#### Step 1.1: Install VexFlow
+- **Task**: Add VexFlow to project dependencies
+- **Command**: `npm install vexflow`
+- **Files**: `package.json`
+- **Verification**: Import VexFlow successfully in test file
+
+#### Step 1.2: Create VexFlow Utility Module
+- **Task**: Create wrapper utilities for common VexFlow operations
+- **New File**: `src/components/games/sight-reading-game/utils/vexflowHelpers.js`
+- **Functions**:
+  - `initializeVexFlow(containerId, width, height)` - Factory setup
+  - `convertToEasyScoreFormat(notationObjects)` - Pattern converter
+  - `applyNoteHighlight(note, isActive)` - Active state styling
+  - `calculateOptimalWidth(totalDuration, timeSignature)` - Dynamic sizing
+
+**Code Structure**:
+```javascript
+import Vex from 'vexflow';
+
+export const initializeVexFlow = (containerId, width, height) => {
+  return new Vex.Flow.Factory({
+    renderer: {
+      elementId: containerId,
+      width,
+      height,
+      backend: Vex.Flow.Renderer.Backends.SVG
+    }
+  });
+};
+
+export const convertToEasyScoreFormat = (notationObjects) => {
+  // Convert notation objects to EasyScore string
+  // Handle notes, rests, dotted notes, etc.
+};
+```
+
+---
+
+### Phase 2: Pattern Format Conversion (Estimated: 4 hours)
+
+#### Step 2.1: Update Rhythm Analyzer Output
+- **Task**: Modify `rhythmAnalyzer.js` to add VexFlow format generation
+- **Current Output**: Array of notation objects
+- **New Output**: Both notation objects (for compatibility) + EasyScore string
+- **File**: `src/components/games/sight-reading-game/utils/rhythmAnalyzer.js`
+
+**New Function**:
+```javascript
+export function generateEasyScoreString(notationObjects) {
+  return notationObjects.map(obj => {
+    if (obj.type === 'rest') {
+      return `${obj.notation}/r`; // e.g., "q/r" for quarter rest
+    }
+    // Notes will be added in pattern generation (need pitch)
+    return obj.notation; // e.g., "q", "h", "q."
+  }).join(', ');
+}
+```
+
+#### Step 2.2: Enhance Pattern Generation for VexFlow
+- **Task**: Update `usePatternGeneration.js` to generate VexFlow-compatible strings
+- **File**: `src/components/games/sight-reading-game/hooks/usePatternGeneration.js`
+- **New Fields in Pattern Object**:
+  ```javascript
+  return {
+    notes: enrichedNotation, // Existing
+    rhythmPattern: rhythmPattern.pattern, // Existing
+    totalDuration, // Existing
+    timeSignature: timeSignature.name, // Existing
+    tempo, // Existing
+    easyscoreString: generateEasyScoreString(enrichedNotation), // NEW
+    vexflowNotes: enrichedNotation.map(toVexFlowNote) // NEW
+  };
+  ```
+
+**EasyScore Format Examples**:
+```javascript
+// Quarter note C4
+"C4/q"
+
+// Quarter rest
+"B4/q/r"
+
+// Dotted half note
+"D4/h."
+
+// Eighth notes
+"E4/8, F4/8, G4/8, A4/8"
+
+// Mixed durations with rests
+"C4/q, D4/q/r, E4/h, F4/8"
+```
+
+#### Step 2.3: Create Format Converter Utility
+- **Task**: Build comprehensive converter from notation objects to EasyScore
+- **File**: `src/components/games/sight-reading-game/utils/vexflowConverter.js`
+- **Functions**:
+  - `notationToEasyScore(notation)` - Map notation type to EasyScore duration
+  - `buildEasyScoreNote(notationObj)` - Complete note/rest string
+  - `buildEasyScorePattern(notationObjects)` - Full pattern string
+
+**Duration Mapping**:
+```javascript
+const NOTATION_TO_EASYSCORE = {
+  'whole': 'w',
+  'dotted-half': 'h.',
+  'half': 'h',
+  'dotted-quarter': 'q.',
+  'quarter': 'q',
+  'dotted-eighth': '8.',
+  'eighth': '8',
+  'sixteenth': '16'
+};
+```
+
+---
+
+### Phase 3: VexFlow Component Implementation (Estimated: 6 hours)
+
+#### Step 3.1: Create New VexFlowStaffDisplay Component
+- **Task**: Build replacement for `StaffDisplay.jsx` using VexFlow
+- **New File**: `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx`
+- **Props**:
+  - `pattern` - Pattern object with VexFlow format
+  - `currentNoteIndex` - For highlighting active notes
+  - `clef` - 'treble' or 'bass'
+  - `containerRef` - React ref for VexFlow rendering
+
+**Component Structure**:
+```javascript
+import React, { useEffect, useRef } from 'react';
+import Vex from 'vexflow';
+import { initializeVexFlow, applyNoteHighlight } from '../utils/vexflowHelpers';
+
+export function VexFlowStaffDisplay({ pattern, currentNoteIndex, clef = 'treble' }) {
+  const containerRef = useRef(null);
+  const vfRef = useRef(null);
+  const notesRef = useRef([]);
+
+  useEffect(() => {
+    if (!pattern || !containerRef.current) return;
+
+    // Clear previous rendering
+    containerRef.current.innerHTML = '';
+
+    // Calculate dynamic width
+    const width = calculateWidth(pattern.totalDuration);
+    
+    // Initialize VexFlow
+    const vf = initializeVexFlow(
+      containerRef.current.id,
+      width,
+      200
+    );
+    vfRef.current = vf;
+
+    // Create system and render
+    renderStaff(vf, pattern, clef);
+  }, [pattern, clef]);
+
+  useEffect(() => {
+    // Handle active note highlighting
+    if (notesRef.current.length > 0 && currentNoteIndex >= 0) {
+      highlightNote(notesRef.current[currentNoteIndex]);
+    }
+  }, [currentNoteIndex]);
+
+  return (
+    <div className="relative w-full max-w-5xl mx-auto px-2 sm:px-4">
+      <div
+        id="vexflow-staff"
+        ref={containerRef}
+        className="relative w-full bg-white"
+        style={{ minHeight: "200px" }}
+      />
+    </div>
+  );
+}
+```
+
+#### Step 3.2: Implement Staff Rendering Logic
+- **Task**: Core VexFlow rendering implementation
+- **File**: `VexFlowStaffDisplay.jsx` (continued)
+
+**Rendering Function**:
+```javascript
+function renderStaff(vf, pattern, clef) {
+  const score = vf.EasyScore();
+  const system = vf.System();
+
+  // Build EasyScore string from pattern
+  const easyscoreString = pattern.easyscoreString || 
+    buildEasyScoreFromPattern(pattern);
+
+  // Add clef option to notes
+  const notesWithClef = easyscoreString + `[clef="${clef}"]`;
+
+  // Create stave with voice
+  system.addStave({
+    voices: [
+      score.voice(
+        score.notes(notesWithClef, { 
+          clef: clef,
+          stem: 'auto' // Let VexFlow determine stem direction
+        })
+      )
+    ]
+  })
+  .addClef(clef)
+  .addTimeSignature(pattern.timeSignature);
+
+  // Render
+  vf.draw();
+
+  // Store note references for highlighting
+  notesRef.current = extractNoteElements();
+}
+```
+
+#### Step 3.3: Implement Note Highlighting
+- **Task**: Preserve active note highlighting during playback
+- **Approach**: CSS classes + VexFlow styling API
+
+**Highlighting Implementation**:
+```javascript
+function highlightNote(noteIndex) {
+  // Remove previous highlights
+  notesRef.current.forEach(note => {
+    note.setAttribute('class', 'vf-note');
+    note.setAttribute('fill', '#000000');
+  });
+
+  // Apply highlight to current note
+  if (noteIndex >= 0 && notesRef.current[noteIndex]) {
+    const note = notesRef.current[noteIndex];
+    note.setAttribute('class', 'vf-note vf-note-active');
+    note.setAttribute('fill', '#8B5CF6'); // Purple highlight
+    
+    // Add pulsing animation via CSS
+    note.style.animation = 'pulse 0.5s ease-in-out';
+  }
+}
+```
+
+**CSS for Highlighting**:
+```css
+.vf-note-active {
+  filter: hue-rotate(250deg) brightness(1.2);
+  transition: all 0.3s ease;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+```
+
+#### Step 3.4: Handle Dynamic Sizing
+- **Task**: Maintain responsive staff width based on pattern duration
+- **Function**: `calculateOptimalWidth(totalDuration, timeSignature)`
+
+**Width Calculation**:
+```javascript
+function calculateOptimalWidth(totalDuration, timeSignature) {
+  const baseWidth = 500; // Minimum width (clef + time sig + margins)
+  const pixelsPerBeat = 90; // Spacing per quarter note
+  
+  const calculatedWidth = baseWidth + (totalDuration * pixelsPerBeat);
+  const maxWidth = 1200; // Responsive max width
+  
+  return Math.min(calculatedWidth, maxWidth);
+}
+```
+
+---
+
+### Phase 4: Integration & Testing (Estimated: 4 hours)
+
+#### Step 4.1: Swap Components in SightReadingGame
+- **Task**: Replace `StaffDisplay` with `VexFlowStaffDisplay`
+- **File**: `src/components/games/sight-reading-game/SightReadingGame.jsx`
+- **Changes**:
+  ```javascript
+  // OLD
+  import { StaffDisplay } from './components/StaffDisplay';
+  
+  // NEW
+  import { VexFlowStaffDisplay } from './components/VexFlowStaffDisplay';
+  
+  // In render:
+  {currentPattern && gamePhase !== GAME_PHASES.COUNT_IN && (
+    <VexFlowStaffDisplay
+      pattern={currentPattern}
+      currentNoteIndex={currentNoteIndex}
+      clef={gameSettings.clef.toLowerCase()}
+    />
+  )}
+  ```
+
+#### Step 4.2: Verify Feature Parity
+- **Task**: Test all existing features
+- **Test Cases**:
+  1. ✓ Staff renders with correct clef (treble/bass)
+  2. ✓ Time signature displays correctly (2/4, 3/4, 4/4)
+  3. ✓ Notes render with correct pitches and durations
+  4. ✓ Rests render correctly (quarter, half, whole, etc.)
+  5. ✓ Dotted notes render with dots
+  6. ✓ Active note highlighting works during playback
+  7. ✓ Double barline appears at end
+  8. ✓ Staff width adjusts to pattern length
+  9. ✓ Responsive layout on different screen sizes
+  10. ✓ Pattern generation produces correct VexFlow format
+
+#### Step 4.3: Performance Testing
+- **Task**: Ensure rendering performance meets or exceeds current implementation
+- **Metrics**:
+  - Initial render time < 100ms
+  - Pattern switching time < 50ms
+  - Note highlighting latency < 16ms (60fps)
+  - Memory usage stable over 100+ pattern generations
+
+#### Step 4.4: Visual Quality Assurance
+- **Task**: Compare rendering quality with reference images
+- **Checklist**:
+  - ✓ Staff lines properly aligned
+  - ✓ Notes properly positioned on/between lines
+  - ✓ Ledger lines render for notes outside staff
+  - ✓ Stem direction follows music engraving rules
+  - ✓ Spacing between notes is proportional to duration
+  - ✓ Clef and time signature properly sized
+  - ✓ Double barline thickness and spacing correct
+
+---
+
+### Phase 5: Cleanup & Optimization (Estimated: 2 hours)
+
+#### Step 5.1: Remove Obsolete Files
+- **Task**: Delete old custom SVG implementation files
+- **Files to Remove**:
+  - `src/components/games/sight-reading-game/components/StaffDisplay.jsx` (old)
+  - `src/components/games/sight-reading-game/constants/noteSymbols.js`
+  - `src/assets/musicSymbols/` (SVG files - may keep for other uses)
+
+#### Step 5.2: Update Documentation
+- **Task**: Document VexFlow integration
+- **Files**:
+  - Update component JSDoc comments
+  - Add VexFlow format examples to `rhythmAnalyzer.js`
+  - Create `VEXFLOW_INTEGRATION.md` in `docs/`
+
+#### Step 5.3: Code Review & Refactoring
+- **Task**: Optimize and clean up implementation
+- **Focus Areas**:
+  - Remove duplicate code
+  - Simplify format conversion logic
+  - Optimize re-rendering triggers
+  - Add error boundaries for VexFlow failures
+
+---
+
+## 4. TECHNICAL SPECIFICATIONS
+
+### 4.1 VexFlow Configuration
+
+#### Renderer Settings:
+```javascript
+{
+  renderer: {
+    elementId: 'staff-container',
+    width: dynamicWidth,
+    height: 200,
+    backend: Vex.Flow.Renderer.Backends.SVG
+  }
+}
+```
+
+#### EasyScore Options:
+```javascript
+score.notes(notesString, {
+  clef: 'treble', // or 'bass'
+  stem: 'auto',   // Auto stem direction
+})
+```
+
+### 4.2 Data Format Specifications
+
+#### Input: Notation Objects (from rhythmAnalyzer)
+```javascript
+{
+  type: 'note' | 'rest',
+  notation: 'quarter' | 'half' | 'dotted-quarter' | etc.,
+  duration: 1.0, // in beats
+  sixteenthUnits: 4,
+  startPosition: 0,
+  startTime: 0.0,
+  endPosition: 4,
+  pitch: 'C4', // only for notes
+  frequency: 261.63, // only for notes
+  position: { y: 850, type: 'line', ledger: false }, // only for notes
+  index: 0
+}
+```
+
+#### Output: VexFlow EasyScore String
+```javascript
+"C4/q, D4/q/r, E4/h., F4/8, G4/8"
+```
+
+#### Output: VexFlow Notes Array (alternative format)
+```javascript
+[
+  { keys: ['c/4'], duration: 'q' },
+  { keys: ['d/4'], duration: 'qr' }, // rest
+  { keys: ['e/4'], duration: 'hd' }, // dotted
+  { keys: ['f/4'], duration: '8' },
+  { keys: ['g/4'], duration: '8' }
+]
+```
+
+### 4.3 Component Props Specification
+
+#### VexFlowStaffDisplay Props:
+```typescript
+interface VexFlowStaffDisplayProps {
+  pattern: {
+    notes: NotationObject[];
+    rhythmPattern: number[];
+    totalDuration: number;
+    timeSignature: string; // "4/4", "3/4", "2/4"
+    tempo: number;
+    easyscoreString?: string;
+  };
+  currentNoteIndex: number;
+  clef?: 'treble' | 'bass';
+  className?: string;
+}
+```
+
+### 4.4 Styling & Theming
+
+#### Tailwind Integration:
+```javascript
+<div className="relative w-full max-w-5xl mx-auto px-2 sm:px-4">
+  <div
+    id="vexflow-staff"
+    className="relative w-full bg-white rounded-lg shadow-sm"
+    style={{ minHeight: "200px" }}
+  />
+</div>
+```
+
+#### VexFlow Custom Styling:
+```css
+/* VexFlow elements can be styled via CSS */
+.vf-stave {
+  /* Staff line styling */
+}
+
+.vf-note {
+  transition: all 0.3s ease;
+}
+
+.vf-note-active {
+  filter: hue-rotate(250deg) brightness(1.2);
+  animation: pulse 0.5s ease-in-out;
+}
+```
+
+---
+
+## 5. MIGRATION STRATEGY
+
+### 5.1 Parallel Implementation Approach
+- Keep old `StaffDisplay.jsx` during development
+- Create new `VexFlowStaffDisplay.jsx` alongside
+- Use feature flag to toggle between implementations
+- Test both versions side-by-side
+
+### 5.2 Rollback Plan
+- Git branch: `feature/vexflow-migration`
+- Keep old files until migration fully validated
+- Document known issues and workarounds
+- Have quick rollback script ready
+
+### 5.3 Testing Strategy
+
+#### Unit Tests:
+- Format conversion functions
+- Width calculation logic
+- EasyScore string generation
+
+#### Integration Tests:
+- Component rendering
+- Note highlighting
+- Pattern switching
+- Audio playback sync
+
+#### Visual Regression Tests:
+- Screenshot comparison for multiple patterns
+- Different time signatures
+- Different clefs
+- Different note ranges
+
+---
+
+## 6. RISKS & MITIGATION
+
+### 6.1 Risk: VexFlow Learning Curve
+- **Impact**: Development delays
+- **Probability**: Medium
+- **Mitigation**: 
+  - Study VexFlow examples thoroughly
+  - Build proof-of-concept first
+  - Ask for help in VexFlow community
+
+### 6.2 Risk: Feature Compatibility
+- **Impact**: Loss of current functionality
+- **Probability**: Low
+- **Mitigation**:
+  - Detailed feature checklist
+  - Parallel testing
+  - Incremental migration
+
+### 6.3 Risk: Performance Regression
+- **Impact**: Slower rendering
+- **Probability**: Low
+- **Mitigation**:
+  - Profile before/after
+  - Optimize VexFlow initialization
+  - Implement memoization
+
+### 6.4 Risk: Styling/Theming Issues
+- **Impact**: Visual inconsistency
+- **Probability**: Medium
+- **Mitigation**:
+  - Custom CSS for VexFlow elements
+  - Tailwind integration testing
+  - Reference images for comparison
+
+---
+
+## 7. SUCCESS METRICS
+
+### 7.1 Quantitative Metrics
+- **Code Reduction**: 40% less code in notation rendering
+- **Render Performance**: < 100ms initial render
+- **Bundle Size**: VexFlow adds ~200KB (acceptable)
+- **Test Coverage**: > 80% for new components
+
+### 7.2 Qualitative Metrics
+- **Visual Quality**: Professional music engraving
+- **Maintainability**: Easier to add new features
+- **Developer Experience**: Simpler codebase
+- **User Experience**: No perceptible difference or better
+
+---
+
+## 8. IMPLEMENTATION CHECKLIST
+
+### Phase 1: Setup ✓
+- [ ] Install VexFlow package
+- [ ] Create vexflowHelpers.js utility
+- [ ] Test basic VexFlow rendering
+
+### Phase 2: Format Conversion ✓
+- [ ] Update rhythmAnalyzer.js
+- [ ] Create vexflowConverter.js
+- [ ] Add EasyScore string generation
+- [ ] Test format conversion with sample data
+
+### Phase 3: Component Implementation ✓
+- [ ] Create VexFlowStaffDisplay.jsx
+- [ ] Implement renderStaff function
+- [ ] Implement note highlighting
+- [ ] Implement dynamic sizing
+- [ ] Add error handling
+
+### Phase 4: Integration ✓
+- [ ] Swap components in SightReadingGame.jsx
+- [ ] Test all features (10 test cases)
+- [ ] Performance testing
+- [ ] Visual QA
+
+### Phase 5: Cleanup ✓
+- [ ] Remove obsolete files
+- [ ] Update documentation
+- [ ] Code review & refactoring
+- [ ] Final testing
+
+---
+
+## 9. TIMELINE & EFFORT ESTIMATION
+
+### Total Estimated Time: 18 hours (2-3 days)
+
+**Day 1 (8 hours)**:
+- Phase 1: Setup & Dependencies (2h)
+- Phase 2: Format Conversion (4h)
+- Phase 3: Start Component Implementation (2h)
+
+**Day 2 (8 hours)**:
+- Phase 3: Complete Component Implementation (4h)
+- Phase 4: Integration & Testing (4h)
+
+**Day 3 (2 hours)**:
+- Phase 5: Cleanup & Optimization (2h)
+
+---
+
+## 10. DEPENDENCIES
+
+### 10.1 External Dependencies
+- **VexFlow**: ^4.2.0 (latest stable)
+- No additional dependencies required
+
+### 10.2 Internal Dependencies
+- Existing game logic (no changes)
+- Existing audio playback (no changes)
+- Pattern generation (minor updates)
+
+---
+
+## 11. FUTURE ENHANCEMENTS (Post-Migration)
+
+### 11.1 Advanced Features Enabled by VexFlow
+1. **Beaming**: Automatic beaming of eighth/sixteenth notes
+2. **Articulations**: Staccato, accent, fermata marks
+3. **Dynamics**: Crescendo, diminuendo, dynamic markings
+4. **Multiple Voices**: Polyphonic notation on single staff
+5. **Grace Notes**: Acciaccatura, appoggiatura
+6. **Ties & Slurs**: Connect notes across measures
+7. **Chord Symbols**: Jazz notation support
+8. **Tablature**: Guitar tab notation
+
+### 11.2 Potential Game Enhancements
+- Multi-measure patterns with automatic line breaks
+- Grand staff (treble + bass clefs connected)
+- Interactive note clicking for rhythm training
+- Export patterns as PDF or image
+- Custom engraving style options
+
+---
+
+## 12. REFERENCES
+
+### 12.1 VexFlow Documentation
+- Main Documentation: https://github.com/0xfe/vexflow/wiki
+- EasyScore Tutorial: https://github.com/0xfe/vexflow/wiki/Using-EasyScore
+- VexFlow Tutorial: https://github.com/0xfe/vexflow/wiki/Tutorial
+- Renderer Context: https://github.com/0xfe/vexflow/wiki/Understanding-Renderer-&-Context
+- API Reference: https://www.vexflow.com/docs/
+
+### 12.2 Music Notation Standards
+- Music engraving best practices
+- Standard Music Font Layout (SMuFL)
+- Music notation conventions
+
+---
+
+## 13. APPENDIX
+
+### A. Sample EasyScore Patterns
+
+#### Beginner Pattern (4/4):
+```javascript
+"C4/q, D4/q, E4/h"
+// Quarter C, Quarter D, Half E
+```
+
+#### Intermediate Pattern (3/4):
+```javascript
+"G4/q., A4/8, B4/q, C5/q"
+// Dotted quarter G, Eighth A, Quarter B, Quarter C
+```
+
+#### Advanced Pattern (4/4):
+```javascript
+"C4/16, D4/16, E4/8, F4/q/r, G4/h."
+// Sixteenth C, Sixteenth D, Eighth E, Quarter rest F, Dotted half G
+```
+
+### B. Notation Object to EasyScore Mapping Table
+
+| Notation Type | Sixteenth Units | VexFlow Duration | Example |
+|--------------|-----------------|------------------|---------|
+| whole | 16 | w | C4/w |
+| dotted-half | 12 | h. | D4/h. |
+| half | 8 | h | E4/h |
+| dotted-quarter | 6 | q. | F4/q. |
+| quarter | 4 | q | G4/q |
+| dotted-eighth | 3 | 8. | A4/8. |
+| eighth | 2 | 8 | B4/8 |
+| sixteenth | 1 | 16 | C5/16 |
+
+### C. Clef & Time Signature Options
+
+#### Supported Clefs:
+- `treble` - G clef (default)
+- `bass` - F clef
+- `alto` - C clef (future)
+- `tenor` - C clef (future)
+
+#### Supported Time Signatures:
+- `4/4` - Common time
+- `3/4` - Waltz time
+- `2/4` - March time
+- `6/8` - Compound meter (future)
+
+---
+
+**END OF PRD**
+
+---
+
+## APPROVAL & SIGN-OFF
+
+**Document Version**: 1.0  
+**Date**: [Current Date]  
+**Author**: AI Assistant  
+**Status**: Ready for Implementation  
+
+**Next Steps**:
+1. Review PRD with development team
+2. Create implementation tasks from checklist
+3. Set up development branch
+4. Begin Phase 1: Setup & Dependencies
+
+

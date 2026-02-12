@@ -1,11 +1,13 @@
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-function BackButton({ to, name, styling }) {
+function BackButton({ to, name, styling, iconOnly = false }) {
   const navigate = useNavigate();
   const [isNavigating, setIsNavigating] = useState(false);
-
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -23,17 +25,18 @@ function BackButton({ to, name, styling }) {
     <button
       onClick={handleClick}
       disabled={isNavigating}
-      className={`flex items-center text-white hover:text-amber-50 relative z-50 cursor-pointer disabled:opacity-50 disabled:cursor-wait ${styling}`}
+      className={`flex items-center text-white hover:text-amber-50 relative z-40 cursor-pointer disabled:opacity-50 disabled:cursor-wait ${styling}`}
+      title={iconOnly ? `Back to ${name}` : undefined}
     >
       {isNavigating ? (
         <>
           <Loader2 className="w-5 h-5 mr-1 animate-spin" />
-          Navigating...
+          {!iconOnly && t("common.navigating")}
         </>
       ) : (
         <>
-          <ArrowLeft className="w-5 h-5 mr-1" />
-          {`Back to ${name}`}
+          {isRTL ? <ArrowRight className={`w-5 h-5 ${iconOnly ? "" : "ml-1"}`} /> : <ArrowLeft className={`w-5 h-5 ${iconOnly ? "" : "mr-1"}`} />}
+          {!iconOnly && t("common.backTo", { name })}
         </>
       )}
     </button>

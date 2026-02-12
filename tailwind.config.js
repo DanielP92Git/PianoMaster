@@ -18,6 +18,15 @@ module.exports = {
         rounded: ["Nunito", "sans-serif"],
         playful: ["Fredoka One", "cursive"],
         signature: ["Dancing Script", "cursive"],
+        hebrew: [
+          "Heebo",
+          "Assistant",
+          "Noto Sans Hebrew",
+          "Open Sans",
+          "Arial",
+          "sans-serif",
+        ],
+        quicksand: ['Quicksand', 'Nunito', 'sans-serif'],
       },
       fontSize: {
         xs: ["0.75rem", { lineHeight: "1.5" }],
@@ -321,6 +330,13 @@ module.exports = {
           warning: "#ffa500",
           error: "#ff0000",
         },
+        trail: {
+          'cyan-glow': '#00f2ff',
+          'purple-glow': '#aa00ff',
+          'forest-base': '#0f172a',
+          'forest-mid': '#1a1040',
+          'forest-accent': '#2d1b69',
+        },
       },
       borderRadius: {
         // Use CSS custom properties for border radius
@@ -359,6 +375,14 @@ module.exports = {
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
         "2xl": "var(--shadow-2xl)",
+        'node-3d': '0 6px 0 #009eb3, 0 10px 20px rgba(0, 242, 255, 0.4)',
+        'node-3d-pressed': '0 2px 0 #009eb3, 0 5px 10px rgba(0, 242, 255, 0.4)',
+        'glow-cyan': '0 0 20px rgba(0, 242, 255, 0.6)',
+        'glow-purple': '0 0 15px rgba(147, 51, 234, 0.5)',
+      },
+      dropShadow: {
+        'glow-cyan': '0 0 8px #00FFFF',
+        'glow-purple': '0 0 6px #aa00ff',
       },
       transitionDuration: {
         fast: "var(--transition-fast)",

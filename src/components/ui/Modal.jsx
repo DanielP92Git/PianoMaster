@@ -86,7 +86,7 @@ const Modal = ({
         className={`
           relative w-full ${sizes[size]} max-h-[90vh] overflow-auto
           rounded-kids-xl shadow-2xl transform transition-all duration-300
-          animate-fadeIn custom-scrollbar
+          animate-fadeIn custom-scrollbar system-font
           ${variants[variant]}
           ${className}
         `}

@@ -1,0 +1,171 @@
+# Project Milestones: PianoApp
+
+## v1.5 Trail Page Visual Redesign (Shipped: 2026-02-12)
+
+**Delivered:** Immersive enchanted forest trail page with CSS-only backgrounds, 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and WCAG 2.2 AA accessibility compliance. Pure UI redesign with zero database changes.
+
+**Phases completed:** 19-22 (10 plans total)
+
+**Key accomplishments:**
+
+- Enchanted forest CSS-only background with starfield animation, glow orbs, and Quicksand font integration
+- 3D node buttons with radial gradients, state-based glow effects (cyan active, green completed, dark locked), and press animations
+- Tab-based path switching (Treble/Bass/Rhythm) with URL query param persistence and ARIA keyboard navigation
+- Responsive zigzag trail layout with SVG Bezier S-curve path connectors and glass-morphism unit progress cards
+- Trail header redesign with shield level badge, XP progress bar, and Free Practice navigation
+- WCAG 2.2 AA compliance: 48px touch targets, RTL mirroring for Hebrew, focus-visible indicators, service worker cache v4
+
+**Stats:**
+
+- 45 files created/modified
+- 8,015 lines added, 605 lines removed
+- 4 phases, 10 plans
+- 3 days (2026-02-10 to 2026-02-12)
+
+**Git range:** `cfab76e` to `49d7e44`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
+## v1.4 UI Polish & Celebrations (Shipped: 2026-02-09)
+
+**Delivered:** Rewarding celebration system for the 93-node trail with tiered VictoryScreen celebrations, boss unlock 3-stage modals, node type visual distinction with 8 unique icons, dashboard XP prominence with level-up animations, and codebase cleanup removing 37 dead files.
+
+**Phases completed:** 13-18 (13 plans total)
+
+**Key accomplishments:**
+
+- Accessibility-first celebration foundation with reducedMotion support and skippable animations
+- Node type visual distinction system with 8 unique icons, colorblind-safe palette, and custom musical SVGs
+- Tiered VictoryScreen celebrations (minimal/standard/full/epic) with confetti, node-type messages, and XP breakdown
+- Dashboard XP prominence with progress bar, level badges, count-up animation, and level-up celebrations
+- Boss unlock 3-stage modal (celebration, unlock, preview) with musical confetti and Web Audio fanfare
+- Codebase cleanup: 37 dead files (~8,000 lines) and 5 unused dependencies removed
+
+**Stats:**
+
+- 127 files created/modified
+- 13,566 lines added, 8,517 lines removed
+- 6 phases, 13 plans
+- 5 days (2026-02-05 to 2026-02-09)
+
+**Git range:** `384386e` to `122f90e`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
+## v1.3 Trail System Redesign (Shipped: 2026-02-05)
+
+**Delivered:** Professional game-like learning progression for 8-year-olds with 93 nodes across three parallel learning paths (Treble, Bass, Rhythm), consistent pedagogy following Discovery -> Practice -> Mix-Up -> Speed -> Boss pattern, and build-time validation infrastructure.
+
+**Phases completed:** 8-12 (14 plans total)
+
+**Key accomplishments:**
+
+- Build-time validation infrastructure with DFS cycle detection, node type validation, XP economy auditing
+- 22 redesigned bass clef nodes across 3 units (C4 -> C3) mirroring treble pedagogy
+- 36 redesigned rhythm nodes across 6 units from quarter notes to sixteenths with proper pedagogical scaffolding
+- 93-node unified trail system with atomic cutover, progress reset, and XP preservation
+- 600+ lines of legacy code removed (LEGACY_NODES array, nodeGenerator.js dependency)
+- E2E verification passed for all three paths with human testing
+
+**Stats:**
+
+- 88 files created/modified
+- 17,003 lines added, 5,571 lines removed
+- 5 phases, 14 plans
+- 3 days (2026-02-03 -> 2026-02-05)
+
+**Git range:** `144487b` -> `fe4732f`
+
+**What's next:** VictoryScreen node-type celebrations, UI enhancements, production deployment to app stores
+
+---
+
+## v1.2 Trail System Stabilization (Shipped: 2026-02-03)
+
+**Delivered:** Committed and validated 26-node trail redesign with Memory Game integration, 8 node types for engagement variety, and comprehensive bug fixes for score calculation and navigation.
+
+**Phases completed:** 6-7 (4 plans total)
+
+**Key accomplishments:**
+
+- Committed 26-node trail redesign across Units 1-3 (C4 through C5 progression)
+- Integrated Memory Game with trail auto-start and correct configuration parsing
+- Fixed critical score calculation bug (pairs not cards) that caused 0 stars
+- Added VictoryScreen improvements (loading states, Back to Trail button)
+- Completed tech debt cleanup (Phase 05 docs, i18n, code deduplication)
+- Removed 7 temporary documentation/debug files from repo root
+
+**Stats:**
+
+- 31 files created/modified
+- 4,698 lines added, 349 lines removed
+- 2 phases, 4 plans
+- 1 day (2026-02-03)
+
+**Git range:** `aec1e0f` -> `a5aff93`
+
+**What's next:** VictoryScreen node-type celebrations, Unit 4 (eighth notes), production deployment
+
+---
+
+## v1.1 Parental Consent Email Service (Shipped: 2026-02-02)
+
+**Delivered:** Working parental consent email flow enabling under-13 children to complete COPPA-required verification via parent email confirmation.
+
+**Phases completed:** 5 (2 plans total)
+
+**Key accomplishments:**
+
+- Supabase Edge Function sends consent emails via Brevo API (300/day free tier)
+- Child-friendly HTML email template with purple gradient branding
+- End-to-end consent flow: signup -> parent email -> click link -> account activated
+- Fixed 406 console errors with .maybeSingle() pattern for optional queries
+- Session conflict resolution for clean new user signup
+- Comprehensive error handling for expired/invalid/network errors
+
+**Stats:**
+
+- 15 files created/modified
+- 1,687 lines added, 41 lines removed
+- 1 phase, 2 plans
+- 1 day (2026-02-02)
+
+**Git range:** `dbb4708` to `44c7bdb`
+
+**What's next:** Hard delete Edge Function for expired accounts, production deployment to app stores
+
+---
+
+## v1.0 Security Hardening (Shipped: 2026-02-01)
+
+**Delivered:** Complete security hardening and COPPA compliance for the piano learning PWA, protecting children's data and enabling safe operation on shared devices.
+
+**Phases completed:** 1-4 (15 plans total)
+
+**Key accomplishments:**
+
+- Authorization hardened at 3 layers (RLS policies, SECURITY DEFINER functions, client-side services)
+- COPPA compliance achieved (age gate, parental consent, data export/deletion, username anonymization)
+- Production safeguards active (rate limiting 10/5min, session timeout 30min/2hr)
+- Shared device protection (secure logout, service worker auth exclusion)
+- Third-party data collection eliminated (self-hosted fonts via @fontsource)
+- Child-friendly error messages in English and Hebrew
+
+**Stats:**
+
+- 177 files created/modified
+- 31,659 lines added, 1,560 lines removed
+- 4 phases, 15 plans
+- 2 days from start to ship (2026-01-31 to 2026-02-01)
+
+**Git range:** `feat(01-01)` to `docs(04)`
+
+**What's next:** Production deployment preparation, beta testing with human verification checklist
+
+---
+
+*Last updated: 2026-02-12*

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import {
@@ -7,29 +8,34 @@ import {
   DIFFICULTY_LEVELS,
   TIME_SIGNATURES,
 } from "./RhythmPatternGenerator";
-import { MetronomeDisplay, TapArea, PreGameSettingsScreen } from "./components";
+import { MetronomeDisplay, TapArea } from "./components";
+import RhythmGameSetup from "./components/RhythmGameSetup";
 import BackButton from "../../ui/BackButton";
+import VictoryScreen from "../VictoryScreen";
+import { getNodeById } from "../../../data/skillTrail";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import Button from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
 import { Trophy, RotateCcw, Home } from "lucide-react";
 
 // Progress bar component to track completed exercises
 const ProgressBar = ({ current, total }) => {
+  const { t } = useTranslation("common");
   const progressPercent = Math.min(100, (current / total) * 100);
   return (
-    <div className="w-full bg-white/20 rounded-full h-3 mb-2 overflow-hidden shadow-inner">
+    <div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-white/20 shadow-inner">
       <div
-        className="bg-indigo-500 h-3 rounded-full transition-all duration-300 ease-out flex items-center justify-end pr-2"
+        className="flex h-3 items-center justify-end rounded-full bg-indigo-500 pr-2 transition-all duration-300 ease-out"
         style={{ width: `${progressPercent}%` }}
       >
         {progressPercent > 15 && (
-          <span className="text-xs text-white font-medium">
+          <span className="text-xs font-medium text-white">
             {current}/{total}
           </span>
         )}
       </div>
-      <div className="text-xs text-white text-center mt-1 font-medium">
-        Exercise {current} of {total}
+      <div className="mt-1 text-center text-xs font-medium text-white">
+        {t("games.metronomeTrainer.progressLabel", { current, total })}
       </div>
     </div>
   );
@@ -88,6 +94,15 @@ const SCORING = {
 
 export function MetronomeTrainer() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation("common");
+
+  // Get nodeId from trail navigation (if coming from trail)
+  const nodeId = location.state?.nodeId || null;
+  const nodeConfig = location.state?.nodeConfig || null;
+  const trailExerciseIndex = location.state?.exerciseIndex ?? null;
+  const trailTotalExercises = location.state?.totalExercises ?? null;
+  const trailExerciseType = location.state?.exerciseType ?? null;
   const audioEngine = useAudioEngine(120);
   const {
     playCorrectSound,
@@ -105,9 +120,135 @@ export function MetronomeTrainer() {
     adaptiveDifficulty: false,
   });
 
+  // Session timeout controls - pause timer during active gameplay
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider, timer controls are no-ops
+  }
+
+  // Pause/resume inactivity timer based on game phase
+  useEffect(() => {
+    // Active phases where user is playing
+    const activePhases = [
+      GAME_PHASES.COUNT_IN,
+      GAME_PHASES.PATTERN_PLAYBACK,
+      GAME_PHASES.GET_READY,
+      GAME_PHASES.USER_PERFORMANCE,
+    ];
+    const isGameActive = activePhases.includes(gamePhase);
+    if (isGameActive) {
+      pauseTimer();
+    } else {
+      resumeTimer();
+    }
+    return () => resumeTimer(); // Always resume on unmount
+  }, [gamePhase, pauseTimer, resumeTimer]);
+
   // Pattern and timing state
-  const [currentPattern, setCurrentPattern] = useState(null);
+
+
+  // Helper to convert time signature string to TIME_SIGNATURES object
+  const getTimeSignatureObject = useCallback((timeSigString) => {
+    const mapping = {
+      '4/4': TIME_SIGNATURES.FOUR_FOUR,
+      '3/4': TIME_SIGNATURES.THREE_FOUR,
+      '2/4': TIME_SIGNATURES.TWO_FOUR,
+      '6/8': TIME_SIGNATURES.SIX_EIGHT
+    };
+    return mapping[timeSigString] || TIME_SIGNATURES.FOUR_FOUR;
+  }, []);
+
+  // Auto-configure and auto-start from trail node
+  const hasAutoConfigured = useRef(false);
+
+  // Reset game state when nodeId changes (navigating between trail nodes)
+  useEffect(() => {
+    hasAutoConfigured.current = false;
+
+    // Reset game to setup phase to prevent showing VictoryScreen from previous node
+    setGamePhase(GAME_PHASES.SETUP);
+    setCurrentPattern(null);
+    setCurrentBeat(0);
+    setUserTaps([]);
+    setExpectedTaps([]);
+    setFeedback(null);
+    setHasUserStartedTapping(false);
+    userTapsRef.current = [];
+  }, [nodeId]);
+
+  useEffect(() => {
+    if (nodeConfig && !hasAutoConfigured.current) {
+      hasAutoConfigured.current = true;
+
+      // Build settings from node configuration
+      // Convert string timeSignature to TIME_SIGNATURES object
+      const timeSigString = nodeConfig.timeSignature || '4/4';
+      const trailSettings = {
+        difficulty: nodeConfig.difficulty || 'beginner',
+        tempo: nodeConfig.tempo || 80,
+        timeSignature: getTimeSignatureObject(timeSigString),
+        totalExercises: 10
+      };
+
+      setGameSettings(trailSettings);
+
+      // Auto-start the game after a brief delay to ensure settings are applied
+      setTimeout(() => {
+        startGame(trailSettings);
+      }, 100);
+    }
+  }, [nodeConfig]);
+
+  // Handle navigation to next exercise in the trail node
+  const handleNextExercise = useCallback(() => {
+    if (nodeId && trailExerciseIndex !== null && trailTotalExercises !== null) {
+      const nextIndex = trailExerciseIndex + 1;
+      if (nextIndex < trailTotalExercises) {
+        // Get the node to find next exercise config
+        const node = getNodeById(nodeId);
+        if (node && node.exercises && node.exercises[nextIndex]) {
+          const nextExercise = node.exercises[nextIndex];
+          const navState = {
+            nodeId,
+            nodeConfig: nextExercise.config,
+            exerciseIndex: nextIndex,
+            totalExercises: trailTotalExercises,
+            exerciseType: nextExercise.type
+          };
+
+          // Navigate based on exercise type
+          switch (nextExercise.type) {
+            case 'note_recognition':
+              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+              break;
+            case 'sight_reading':
+              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              break;
+            case 'memory_game':
+              navigate('/notes-master-mode/memory-game', { state: navState });
+              break;
+            case 'rhythm':
+              navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });
+              window.location.reload(); // Force reload for same route
+              break;
+            case 'boss_challenge':
+              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true } });
+              break;
+            default:
+              navigate('/trail');
+          }
+        }
+      }
+    }
+  }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
+
   const [currentBeat, setCurrentBeat] = useState(0);
+  const [currentPattern, setCurrentPattern] = useState(null);
   const [expectedTaps, setExpectedTaps] = useState([]);
   const [userTaps, setUserTaps] = useState([]);
   const [feedback, setFeedback] = useState(null);
@@ -1032,191 +1173,122 @@ export function MetronomeTrainer() {
     setGamePhase(GAME_PHASES.SESSION_COMPLETE);
   }, []);
 
-  // Show setup screen
+  // Show setup screen (for free play mode only)
   if (gamePhase === GAME_PHASES.SETUP) {
+    // Show loading screen when coming from trail and waiting for auto-start
+    if (nodeConfig) {
+      return (
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+            <p className="text-lg font-medium text-white/80">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <PreGameSettingsScreen
+      <RhythmGameSetup
         settings={gameSettings}
-        onUpdateSettings={(newSettings) => {
-          setGameSettings(newSettings);
+        onUpdateSettings={setGameSettings}
+        onStart={(finalSettings) => {
+          setGameSettings(finalSettings);
+          startGame(finalSettings);
         }}
-        onStart={startGame}
-        title="Metronome Rhythm Trainer"
-        subtitle="Listen to rhythm patterns and tap them back with precise timing"
+        backRoute="/rhythm-mode"
       />
     );
   }
 
   // Show session complete screen
   if (gamePhase === GAME_PHASES.SESSION_COMPLETE) {
-    const finalScorePercentage =
-      exerciseProgress.exerciseScores.length > 0
-        ? exerciseProgress.exerciseScores.reduce(
-            (sum, score) => sum + score,
-            0
-          ) / exerciseProgress.exerciseScores.length
-        : 0;
+    // Calculate total score for VictoryScreen
+    const totalScore = exerciseProgress.exerciseScores.reduce(
+      (sum, score) => sum + score,
+      0
+    );
+    const totalPossibleScore = exerciseProgress.exerciseScores.length * 100;
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-6">
-        <Card className="w-full max-w-2xl bg-white/10 backdrop-blur-md border-white/20">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Trophy className="w-16 h-16 text-yellow-400" />
-            </div>
-            <CardTitle className="text-3xl font-bold text-white mb-2">
-              Session Complete!
-            </CardTitle>
-            <p className="text-gray-200">Great work on your rhythm training!</p>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Session Statistics */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center">
-                <div className="text-3xl font-bold text-blue-400">
-                  {exerciseProgress.exerciseScores.length}
-                </div>
-                <div className="text-sm text-gray-300">Exercises Completed</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-green-400">
-                  {Math.round(finalScorePercentage)}%
-                </div>
-                <div className="text-sm text-gray-300">Final Score</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-yellow-400">
-                  {
-                    exerciseProgress.exerciseScores.filter(
-                      (score) => score >= 80
-                    ).length
-                  }
-                </div>
-                <div className="text-sm text-gray-300">Excellent (80%+)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-purple-400">
-                  {
-                    exerciseProgress.exerciseScores.filter(
-                      (score) => score >= 50
-                    ).length
-                  }
-                </div>
-                <div className="text-sm text-gray-300">Passed (50%+)</div>
-              </div>
-            </div>
-
-            {/* Detailed Breakdown */}
-            <div className="bg-white/5 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-white mb-3">
-                Individual Exercise Scores
-              </h3>
-              <div className="grid grid-cols-5 gap-2">
-                {exerciseProgress.exerciseScores.map((score, index) => (
-                  <div key={index} className="text-center">
-                    <div
-                      className={`text-lg font-bold ${
-                        score >= 80
-                          ? "text-green-400"
-                          : score >= 50
-                            ? "text-yellow-400"
-                            : "text-red-400"
-                      }`}
-                    >
-                      {score}%
-                    </div>
-                    <div className="text-xs text-gray-300">Ex {index + 1}</div>
-                  </div>
-                ))}
-              </div>
-              {exerciseProgress.exerciseScores.length > 0 && (
-                <div className="mt-4 text-center text-sm text-gray-300">
-                  Average: {Math.round(finalScorePercentage)}% | Best:{" "}
-                  {Math.max(...exerciseProgress.exerciseScores)}% | Worst:{" "}
-                  {Math.min(...exerciseProgress.exerciseScores)}%
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-4 justify-center">
-              <Button
-                onClick={resetGame}
-                variant="outline"
-                icon={RotateCcw}
-                className="px-6 py-3"
-              >
-                Play Again
-              </Button>
-              <Button
-                onClick={() => navigate("/practice-modes")}
-                variant="primary"
-                icon={Home}
-                className="px-6 py-3"
-              >
-                Home
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <VictoryScreen
+        score={Math.round(totalScore)}
+        totalPossibleScore={totalPossibleScore}
+        onReset={resetGame}
+        onExit={() => navigate("/practice-modes")}
+        nodeId={nodeId}
+        exerciseIndex={trailExerciseIndex}
+        totalExercises={trailTotalExercises}
+        exerciseType={trailExerciseType}
+        onNextExercise={handleNextExercise}
+      />
     );
   }
 
   // Get guidance text based on game phase
   const getGuidanceText = () => {
     if (gamePhase === GAME_PHASES.COUNT_IN) {
-      return "Listen for the strong beat - tap to start!";
+      return t("games.metronomeTrainer.guidance.countIn");
     }
     if (gamePhase === GAME_PHASES.PATTERN_PLAYBACK) {
-      return "Listen to the pattern";
+      return t("games.metronomeTrainer.guidance.patternPlayback");
     }
     if (gamePhase === GAME_PHASES.GET_READY) {
-      return "Get ready to tap the pattern";
+      return t("games.metronomeTrainer.guidance.getReady");
     }
     if (gamePhase === GAME_PHASES.USER_PERFORMANCE) {
       return hasUserStartedTapping
-        ? "Keep tapping the pattern!"
-        : "Listen for the strong downbeat, then tap to start";
+        ? t("games.metronomeTrainer.guidance.userActive")
+        : t("games.metronomeTrainer.guidance.userWaiting");
     }
     if (gamePhase === GAME_PHASES.FEEDBACK) {
-      return "How did you do?";
+      return t("games.metronomeTrainer.guidance.feedback");
     }
-    return "Listen to the steady beat";
+    return t("games.metronomeTrainer.guidance.default");
   };
+
+  const displayExerciseNumber = Math.min(
+    exerciseProgress.currentExercise +
+      (gamePhase === GAME_PHASES.SESSION_COMPLETE ? 0 : 1),
+    Math.max(1, exerciseProgress.totalExercises || 1)
+  );
 
   // Main game interface - New compact layout
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+    <div
+      className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
+      dir="rtl"
+    >
       {/* Compact Header */}
-      <div className="flex-shrink-0 px-4 py-2 flex items-center justify-between">
+      <div className="flex flex-shrink-0 items-center justify-between px-4 py-2">
         {/* Only show back button during gameplay (not on session complete screen) */}
         {gamePhase !== GAME_PHASES.SESSION_COMPLETE && (
           <BackButton
-            to="/rhythm-mode"
-            name="Rhythm Games"
-            className="text-white/80 hover:text-white text-sm"
+            to={nodeId ? "/trail" : "/rhythm-mode"}
+            name={nodeId ? "Trail" : t("games.backToModes")}
+            className="text-sm text-white/80 hover:text-white"
           />
         )}
         <div className="text-center text-white">
-          <h1 className="text-base sm:text-lg font-bold">
-            Metronome Rhythm Trainer
+          <h1 className="text-base font-bold sm:text-lg">
+            {t("games.metronomeTrainer.headerTitle")}
           </h1>
           <p className="text-xs">
             {gameSettings.timeSignature.name} • {gameSettings.tempo} BPM •{" "}
             {gameSettings.difficulty}
           </p>
         </div>
-        <div className="text-xs text-white text-right whitespace-nowrap">
-          Ex {exerciseProgress.currentExercise}/
-          {exerciseProgress.totalExercises}
+        <div className="whitespace-nowrap text-right text-xs text-white">
+          {t("games.metronomeTrainer.progressLabel", {
+            current: displayExerciseNumber,
+            total: exerciseProgress.totalExercises,
+          })}
         </div>
       </div>
 
       {/* Main Game Area - Side by Side */}
-      <div className="flex-1 flex flex-col sm:flex-row gap-4 px-4 overflow-hidden min-h-0">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row">
         {/* Left Side: Metronome + Guidance */}
-        <div className="flex-1 flex flex-col justify-center space-y-4 min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col justify-center space-y-4">
           {/* Metronome Beats - Horizontal */}
           <MetronomeDisplay
             currentBeat={currentBeat}
@@ -1226,55 +1298,55 @@ export function MetronomeTrainer() {
           />
 
           {/* User Guidance Text */}
-          <div className="text-center text-white text-sm sm:text-base px-4">
+          <div className="px-4 text-center text-sm text-white sm:text-base">
             {getGuidanceText()}
           </div>
         </div>
 
         {/* Right Side: TAP HERE Button */}
-        <div className="flex-1 flex items-center justify-center min-h-0">
+        <div className="flex min-h-0 flex-1 items-center justify-center">
           <TapArea
             onTap={handleTap}
             feedback={feedback}
             isActive={gamePhase === GAME_PHASES.USER_PERFORMANCE}
             title={
               gamePhase === GAME_PHASES.GET_READY
-                ? "GET READY"
+                ? t("games.metronomeTrainer.tapArea.getReady")
                 : gamePhase === GAME_PHASES.USER_PERFORMANCE
-                  ? "TAP HERE"
-                  : "LISTEN"
+                  ? t("games.metronomeTrainer.tapArea.tapHere")
+                  : t("games.metronomeTrainer.tapArea.listen")
             }
           />
         </div>
       </div>
 
       {/* Bottom Stats + Controls */}
-      <div className="flex-shrink-0 px-4 pb-4 space-y-3">
+      <div className="flex-shrink-0 space-y-3 px-4 pb-4">
         {/* Compact Stats Row */}
-        <div className="flex justify-around text-center text-white text-xs sm:text-sm">
+        <div className="flex justify-around text-center text-xs text-white sm:text-sm">
           <div>
-            <div className="text-lg sm:text-2xl font-bold text-blue-400">
+            <div className="text-lg font-bold text-blue-400 sm:text-2xl">
               {sessionStats.patternsCompleted}
             </div>
-            <div>Patterns</div>
+            <div>{t("games.metronomeTrainer.stats.patterns")}</div>
           </div>
           <div>
-            <div className="text-lg sm:text-2xl font-bold text-green-400">
+            <div className="text-lg font-bold text-green-400 sm:text-2xl">
               {sessionStats.totalScore}
             </div>
-            <div>Score</div>
+            <div>{t("games.metronomeTrainer.stats.score")}</div>
           </div>
           <div>
-            <div className="text-lg sm:text-2xl font-bold text-yellow-400">
+            <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
               {sessionStats.maxCombo}
             </div>
-            <div>Max Combo</div>
+            <div>{t("games.metronomeTrainer.stats.maxCombo")}</div>
           </div>
           <div>
-            <div className="text-lg sm:text-2xl font-bold text-purple-400">
+            <div className="text-lg font-bold text-purple-400 sm:text-2xl">
               {sessionStats.perfectTaps + sessionStats.goodTaps}
             </div>
-            <div>Good Taps</div>
+            <div>{t("games.metronomeTrainer.stats.goodTaps")}</div>
           </div>
         </div>
 
@@ -1287,14 +1359,14 @@ export function MetronomeTrainer() {
                 variant="primary"
                 className="px-6 py-2 text-sm sm:text-base"
               >
-                Next Pattern
+                {t("games.metronomeTrainer.buttons.nextPattern")}
               </Button>
               <Button
                 onClick={endSession}
                 variant="outline"
                 className="px-6 py-2 text-sm sm:text-base"
               >
-                End Session
+                {t("games.metronomeTrainer.buttons.endSession")}
               </Button>
             </div>
           )}

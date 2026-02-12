@@ -14,11 +14,9 @@ export function useGameTimer(options) {
   const debugLog = (message, data) => {
     if (DEBUG) {
       if (data !== undefined) {
-        // eslint-disable-next-line no-console
-        console.log(message, data);
+         
       } else {
-        // eslint-disable-next-line no-console
-        console.log(message);
+         
       }
     }
   };

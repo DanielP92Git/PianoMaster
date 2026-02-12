@@ -220,6 +220,13 @@ export const AccessibilityProvider = ({ children }) => {
       documentElement.classList.remove("simplified-ui");
     }
 
+    // Sticky hover
+    if (state.stickyHover) {
+      documentElement.classList.add("sticky-hover");
+    } else {
+      documentElement.classList.remove("sticky-hover");
+    }
+
     // Screen reader optimized
     if (state.screenReaderOptimized) {
       documentElement.classList.add("screen-reader-optimized");
@@ -227,6 +234,57 @@ export const AccessibilityProvider = ({ children }) => {
       documentElement.classList.remove("screen-reader-optimized");
     }
   }, [state]);
+
+  // Sticky hover interaction handler
+  useEffect(() => {
+    if (!state.stickyHover) return undefined;
+
+    const interactiveSelector =
+      'button, [role="button"], [role="tab"], [role="menuitem"], [role="link"], a[href], input, select, textarea';
+    const trackedElements = new Map();
+    const persistDuration = 800;
+
+    const clearStickyState = (element) => {
+      if (!element) return;
+      const timeoutId = trackedElements.get(element);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        trackedElements.delete(element);
+      }
+      element.classList.remove("sticky-hover-active");
+    };
+
+    const handleMouseLeave = (event) => {
+      const target = event.target.closest(interactiveSelector);
+      if (!target) return;
+      target.classList.add("sticky-hover-active");
+      clearStickyState(target);
+      const timeoutId = window.setTimeout(() => {
+        target.classList.remove("sticky-hover-active");
+        trackedElements.delete(target);
+      }, persistDuration);
+      trackedElements.set(target, timeoutId);
+    };
+
+    const handleMouseEnter = (event) => {
+      const target = event.target.closest(interactiveSelector);
+      if (!target) return;
+      clearStickyState(target);
+    };
+
+    document.addEventListener("mouseleave", handleMouseLeave, true);
+    document.addEventListener("mouseenter", handleMouseEnter, true);
+
+    return () => {
+      document.removeEventListener("mouseleave", handleMouseLeave, true);
+      document.removeEventListener("mouseenter", handleMouseEnter, true);
+      trackedElements.forEach((timeoutId, element) => {
+        clearTimeout(timeoutId);
+        element.classList.remove("sticky-hover-active");
+      });
+      trackedElements.clear();
+    };
+  }, [state.stickyHover]);
 
   // Action creators
   const actions = {

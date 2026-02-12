@@ -1,0 +1,106 @@
+import { generatePatternData } from "./patternBuilder";
+
+describe("patternBuilder (noBeam tagging)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("tags the eighth after dotted-quarter (6+2) with noBeam: true", async () => {
+    // Force multi-beat pattern insertion
+    vi.spyOn(Math, "random").mockReturnValue(0.1);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4", "F4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q", "8", "16"],
+        allowedRestDurations: [],
+        enabledComplexPatterns: ["dottedQuarterEighth"],
+      },
+      rhythmComplexity: "complex",
+    });
+
+    const notes = Array.isArray(result?.notes) ? result.notes : [];
+
+    // Find at least one dotted-quarter event.
+    const dottedQuarterIdx = notes.findIndex((n) => n?.notation === "dotted-quarter");
+    expect(dottedQuarterIdx).toBeGreaterThanOrEqual(0);
+
+    // The next event should be an eighth with noBeam true.
+    const next = notes[dottedQuarterIdx + 1];
+    expect(next?.notation).toBe("eighth");
+    expect(next?.noBeam).toBe(true);
+  });
+});
+
+describe("patternBuilder (multi-bar metadata)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("preserves barIndex on notes when measuresPerPattern=2", async () => {
+    // deterministic-ish
+    vi.spyOn(Math, "random").mockReturnValue(0.2);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4", "F4"],
+      clef: "Treble",
+      measuresPerPattern: 2,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q", "8", "16"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    expect(result.measuresPerPattern).toBe(2);
+    const barIndices = (result.notes || [])
+      .filter((n) => n?.type === "note")
+      .map((n) => n?.barIndex);
+
+    expect(barIndices.some((b) => b === 0)).toBe(true);
+    expect(barIndices.some((b) => b === 1)).toBe(true);
+  });
+
+  it.each([4, 8])(
+    "preserves barIndex on notes when measuresPerPattern=%s",
+    async (bars) => {
+      vi.spyOn(Math, "random").mockReturnValue(0.2);
+
+      const result = await generatePatternData({
+        difficulty: "beginner",
+        timeSignature: "4/4",
+        tempo: 80,
+        selectedNotes: ["C4", "D4", "E4", "F4"],
+        clef: "Treble",
+        measuresPerPattern: bars,
+        rhythmSettings: {
+          allowRests: false,
+          allowedNoteDurations: ["q", "8", "16"],
+          allowedRestDurations: [],
+        },
+        rhythmComplexity: "simple",
+      });
+
+      expect(result.measuresPerPattern).toBe(bars);
+
+      const barIndices = (result.notes || [])
+        .filter((n) => n?.type === "note")
+        .map((n) => n?.barIndex)
+        .filter((v) => typeof v === "number");
+
+      expect(barIndices.length).toBeGreaterThan(0);
+      expect(Math.min(...barIndices)).toBe(0);
+      expect(Math.max(...barIndices)).toBe(bars - 1);
+    }
+  );
+});

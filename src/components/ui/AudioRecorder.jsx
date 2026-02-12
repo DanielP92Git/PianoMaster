@@ -13,6 +13,7 @@ import AudioCompressionService, {
   AUDIO_QUALITY_PRESETS,
 } from "../../services/audioCompressionService";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 export default function AudioRecorder({
   onRecordingComplete,
@@ -26,6 +27,7 @@ export default function AudioRecorder({
   defaultQuality = "MEDIUM",
   useCase = "practice",
 }) {
+  const { t } = useTranslation("common");
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -185,7 +187,7 @@ export default function AudioRecorder({
 
       // Check browser support
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Audio recording is not supported in this browser");
+        throw new Error(t("audioRecorder.toasts.browserNotSupported"));
       }
 
       // Get optimized recording options with fallback validation
@@ -232,7 +234,7 @@ export default function AudioRecorder({
 
       mediaRecorder.current.onerror = (e) => {
         console.error("MediaRecorder error:", e);
-        toast.error("Recording error occurred");
+        toast.error(t("audioRecorder.toasts.error"));
         cleanup();
       };
 
@@ -257,32 +259,33 @@ export default function AudioRecorder({
         });
       }, 1000);
 
-      toast.success("Recording started");
+      toast.success(t("audioRecorder.toasts.started"));
     } catch (error) {
       console.error("Error starting recording:", error);
       setIsProcessing(false);
 
       // Handle specific error types
       if (error.name === "NotAllowedError") {
-        toast.error(
-          "Microphone access denied. Please allow microphone access and try again."
-        );
+        toast.error(t("audioRecorder.toasts.micDenied"));
       } else if (error.name === "NotFoundError") {
-        toast.error("No microphone found. Please check your device settings.");
+        toast.error(t("audioRecorder.toasts.noMic"));
       } else if (error.name === "NotSupportedError") {
-        toast.error("Audio recording is not supported on this device.");
+        toast.error(t("audioRecorder.toasts.notSupported"));
       } else {
-        toast.error(error.message || "Failed to start recording");
+        toast.error(error.message || t("audioRecorder.toasts.genericFailure"));
       }
 
       cleanup();
     }
   }, [
+    defaultQuality,
     disabled,
     maxDuration,
     onRecordingComplete,
+    qualityPreset,
     recordingDuration,
     setupVisualization,
+    t,
   ]);
 
   // Pause recording
@@ -296,9 +299,9 @@ export default function AudioRecorder({
         durationTimer.current = null;
       }
 
-      toast.success("Recording paused");
+      toast.success(t("audioRecorder.toasts.paused"));
     }
-  }, []);
+  }, [t]);
 
   // Resume recording
   const resumeRecording = useCallback(() => {
@@ -319,9 +322,9 @@ export default function AudioRecorder({
         });
       }, 1000);
 
-      toast.success("Recording resumed");
+      toast.success(t("audioRecorder.toasts.resumed"));
     }
-  }, [maxDuration]);
+  }, [maxDuration, t]);
 
   // Stop recording
   const stopRecording = useCallback(() => {
@@ -341,8 +344,8 @@ export default function AudioRecorder({
     cleanup();
     setRecordingBlob(null);
     onRecordingCancel?.();
-    toast.success("Recording cancelled");
-  }, [onRecordingCancel]);
+    toast.success(t("audioRecorder.toasts.cancelled"));
+  }, [onRecordingCancel, t]);
 
   // Format duration
   const formatDuration = useCallback((seconds) => {
@@ -377,7 +380,9 @@ export default function AudioRecorder({
               {formatDuration(recordingDuration)}
             </div>
             <div className="text-white/60 text-sm">
-              / {formatDuration(maxDuration)}
+              {t("audioRecorder.labels.maxDuration", {
+                duration: formatDuration(maxDuration),
+              })}
             </div>
           </div>
         </div>
@@ -402,7 +407,7 @@ export default function AudioRecorder({
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
               <span className="text-red-400 text-sm font-medium">
-                Recording
+                {t("audioRecorder.status.recording")}
               </span>
             </div>
           )}
@@ -410,7 +415,7 @@ export default function AudioRecorder({
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-yellow-500 rounded-full" />
               <span className="text-yellow-400 text-sm font-medium">
-                Paused
+                {t("audioRecorder.status.paused")}
               </span>
             </div>
           )}
@@ -418,7 +423,7 @@ export default function AudioRecorder({
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-green-500 rounded-full" />
               <span className="text-green-400 text-sm font-medium">
-                Recorded
+                {t("audioRecorder.status.recorded")}
               </span>
             </div>
           )}
@@ -430,7 +435,7 @@ export default function AudioRecorder({
             <button
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 text-white/70 hover:text-white transition-colors"
-              title="Audio Quality Settings"
+              title={t("audioRecorder.tooltips.quality")}
             >
               <Settings className="w-4 h-4" />
             </button>
@@ -444,38 +449,56 @@ export default function AudioRecorder({
 
       {/* Quality Settings Panel */}
       {showSettings && showQualitySettings && !isRecording && (
-        <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
+            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
           <div className="flex items-center gap-4 mb-3">
-            <h4 className="text-white text-sm font-semibold">Audio Quality</h4>
+            <h4 className="text-white text-sm font-semibold">
+              {t("audioRecorder.quality.title")}
+            </h4>
             {estimatedFileSize && (
               <span className="text-white/70 text-xs">
-                Est. Size: {estimatedFileSize.humanReadable}
+                {t("audioRecorder.quality.estimatedSize", {
+                  size: estimatedFileSize.humanReadable,
+                })}
               </span>
             )}
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            {Object.entries(AUDIO_QUALITY_PRESETS).map(([key, preset]) => (
-              <button
-                key={key}
-                onClick={() => setQualityPreset(key)}
-                className={`p-2 rounded-lg text-left transition-colors ${
-                  qualityPreset === key
-                    ? "bg-indigo-600 text-white"
-                    : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                <div className="text-sm font-medium">{preset.label}</div>
-                <div className="text-xs opacity-70">
-                  {preset.fileSize} files
-                </div>
-              </button>
-            ))}
+            {Object.entries(AUDIO_QUALITY_PRESETS).map(([key, preset]) => {
+              const label = t(
+                `audioRecorder.quality.presets.${key}.label`,
+                {
+                  defaultValue: preset.label,
+                }
+              );
+              const description = t(
+                `audioRecorder.quality.presets.${key}.description`,
+                {
+                  defaultValue: preset.fileSize,
+                }
+              );
+              return (
+                <button
+                  key={key}
+                  onClick={() => setQualityPreset(key)}
+                  className={`p-2 rounded-lg text-left transition-colors ${
+                    qualityPreset === key
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <div className="text-sm font-medium">{label}</div>
+                  <div className="text-xs opacity-70">{description}</div>
+                </button>
+              );
+            })}
           </div>
 
           {recordingConfig && (
             <div className="mt-3 text-xs text-white/50">
-              Format: {recordingConfig.description}
+              {t("audioRecorder.quality.format", {
+                format: recordingConfig.description,
+              })}
             </div>
           )}
         </div>
@@ -492,12 +515,16 @@ export default function AudioRecorder({
             {isProcessing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="hidden sm:inline">Starting...</span>
+                <span className="hidden sm:inline">
+                  {t("audioRecorder.buttons.starting")}
+                </span>
               </>
             ) : (
               <>
                 <Mic className="w-4 h-4" />
-                <span className="hidden sm:inline">Start Recording</span>
+                <span className="hidden sm:inline">
+                  {t("audioRecorder.buttons.start")}
+                </span>
               </>
             )}
           </button>
@@ -510,21 +537,27 @@ export default function AudioRecorder({
               className="flex-1 min-w-0 px-2 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <Pause className="w-4 h-4" />
-              <span className="hidden sm:inline">Pause</span>
+              <span className="hidden sm:inline">
+                {t("audioRecorder.buttons.pause")}
+              </span>
             </button>
             <button
               onClick={stopRecording}
               className="flex-1 min-w-0 px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <Square className="w-4 h-4" />
-              <span className="hidden sm:inline">Stop</span>
+              <span className="hidden sm:inline">
+                {t("audioRecorder.buttons.stop")}
+              </span>
             </button>
             <button
               onClick={cancelRecording}
               className="flex-1 min-w-0 px-2 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <X className="w-4 h-4" />
-              <span className="hidden sm:inline">Cancel</span>
+              <span className="hidden sm:inline">
+                {t("audioRecorder.buttons.cancel")}
+              </span>
             </button>
           </>
         )}
@@ -536,21 +569,27 @@ export default function AudioRecorder({
               className="flex-1 min-w-0 px-2 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <Play className="w-4 h-4" />
-              <span className="hidden sm:inline">Resume</span>
+              <span className="hidden sm:inline">
+                {t("audioRecorder.buttons.resume")}
+              </span>
             </button>
             <button
               onClick={stopRecording}
               className="flex-1 min-w-0 px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <Square className="w-4 h-4" />
-              <span className="hidden sm:inline">Stop</span>
+              <span className="hidden sm:inline">
+                {t("audioRecorder.buttons.stop")}
+              </span>
             </button>
             <button
               onClick={cancelRecording}
               className="flex-1 min-w-0 px-2 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
             >
               <X className="w-4 h-4" />
-              <span className="hidden sm:inline">Cancel</span>
+              <span className="hidden sm:inline">
+                {t("audioRecorder.buttons.cancel")}
+              </span>
             </button>
           </>
         )}

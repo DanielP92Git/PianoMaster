@@ -62,10 +62,8 @@ export default function AudioPlayer({
     const handleLoadedMetadata = () => {
       // This fires when metadata (including duration) is loaded
       if (audio.duration && isFinite(audio.duration)) {
-        console.log("Duration loaded from metadata:", audio.duration);
         setDuration(audio.duration);
       } else if (knownDuration) {
-        console.log("Using known duration from database:", knownDuration);
         setDuration(knownDuration);
       }
     };
@@ -73,10 +71,8 @@ export default function AudioPlayer({
     const handleDurationChange = () => {
       // This fires when duration changes or becomes available
       if (audio.duration && isFinite(audio.duration)) {
-        console.log("Duration changed:", audio.duration);
         setDuration(audio.duration);
       } else if (knownDuration) {
-        console.log("Using known duration (durationchange):", knownDuration);
         setDuration(knownDuration);
       }
     };
@@ -85,10 +81,8 @@ export default function AudioPlayer({
       setIsLoading(false);
       // Also try to set duration here as a fallback
       if (audio.duration && isFinite(audio.duration)) {
-        console.log("Duration from canplay:", audio.duration);
         setDuration(audio.duration);
       } else if (knownDuration) {
-        console.log("Using known duration (canplay):", knownDuration);
         setDuration(knownDuration);
       }
       onLoadEnd?.();
@@ -317,28 +311,28 @@ export default function AudioPlayer({
       )}
 
       {/* Main controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
         {/* Skip backward */}
         <button
           onClick={skipBackward}
           disabled={disabled || !src}
-          className="p-2 text-white hover:text-indigo-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+          className="p-2 text-white hover:text-indigo-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
-          <SkipBack className="w-5 h-5" />
+          <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Play/Pause button */}
         <button
           onClick={togglePlayPause}
           disabled={disabled || !src || isLoading}
-          className="p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full transition-colors flex items-center justify-center"
+          className="p-2.5 sm:p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full transition-colors flex items-center justify-center flex-shrink-0"
         >
           {isLoading ? (
-            <Loader2 className="w-6 h-6 animate-spin" />
+            <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
           ) : isPlaying ? (
-            <Pause className="w-6 h-6" />
+            <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
           ) : (
-            <Play className="w-6 h-6" />
+            <Play className="w-5 h-5 sm:w-6 sm:h-6" />
           )}
         </button>
 
@@ -346,31 +340,31 @@ export default function AudioPlayer({
         <button
           onClick={stop}
           disabled={disabled || !src}
-          className="p-2 text-white hover:text-red-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+          className="p-2 text-white hover:text-red-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
-          <Square className="w-5 h-5" />
+          <Square className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Skip forward */}
         <button
           onClick={skipForward}
           disabled={disabled || !src}
-          className="p-2 text-white hover:text-indigo-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+          className="p-2 text-white hover:text-indigo-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex-shrink-0"
         >
-          <SkipForward className="w-5 h-5" />
+          <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Volume control */}
         {showVolumeControl && (
-          <div className="flex items-center gap-2 ml-4">
+          <div className="flex items-center gap-1.5 sm:gap-2 ml-2 sm:ml-4 flex-shrink-0 min-w-0">
             <button
               onClick={toggleMute}
-              className="p-1 text-white hover:text-indigo-300 transition-colors"
+              className="p-1 text-white hover:text-indigo-300 transition-colors flex-shrink-0"
             >
               {isMuted || volume === 0 ? (
-                <VolumeX className="w-5 h-5" />
+                <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" />
               ) : (
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />
               )}
             </button>
             <input
@@ -380,7 +374,7 @@ export default function AudioPlayer({
               step="0.1"
               value={isMuted ? 0 : volume}
               onChange={handleVolumeChange}
-              className="w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+              className="w-12 sm:w-16 md:w-20 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer flex-shrink-0"
               style={{
                 background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${
                   (isMuted ? 0 : volume) * 100
@@ -392,7 +386,7 @@ export default function AudioPlayer({
 
         {/* Time display */}
         {showTimeDisplay && (
-          <div className="text-white text-sm font-mono ml-auto">
+          <div className="text-white text-xs sm:text-sm font-mono ml-auto flex-shrink-0 whitespace-nowrap">
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
         )}
