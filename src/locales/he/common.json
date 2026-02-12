@@ -232,6 +232,7 @@
         "quietHours": "שעות שקטות",
         "quietHoursDescription": "הפעלת שעות שקטות בהן לא תקבלו התראות מהאפליקציה",
         "enableAllNotifications": "הפעלת כל התראות",
+        "enableAllNotificationsDescription": "הפעלת כל ההתראות באפליקציה",
         "achievements": "התראות הישגים",
         "assignments": "התראות משימות",
         "messages": "התראות הודעות",
