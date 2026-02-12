@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-12)
 ## Current Position
 
 Phase: 01-complete-the-hebrew-translations-gaps
-Current Plan: 2 of 2
-Status: In progress
-Last activity: 2026-02-12 -- Completed plan 01-01 (Fix EN root install namespace and add missing Hebrew notification key)
+Current Plan: Complete (2/2 plans done)
+Status: Complete
+Last activity: 2026-02-13 -- Completed plan 01-02 (Remove dead translation keys from EN and HE JSON files)
 
-Progress: [█░░░░░░░░░░░░░░░░░░░░░░░] 1% (59/60 plans total, 1/2 in phase 01)
+Progress: [█░░░░░░░░░░░░░░░░░░░░░░░] 3% (60/60 plans total, 2/2 in phase 01)
 
 ## Milestone History
 
@@ -30,23 +30,27 @@ Progress: [█░░░░░░░░░░░░░░░░░░░░░░
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 59
+- Total plans completed: 60
 - 6 milestones shipped in 13 days (2026-01-31 to 2026-02-12)
-- 22 phases complete, Phase 01 in progress (1/2 plans)
+- Phase 01 complete (2/2 plans), 22 prior phases
 - ~67,835 lines JavaScript/JSX/CSS
 
 **Recent execution:**
 | Phase-Plan | Duration | Tasks | Files | Date |
 |------------|----------|-------|-------|------|
 | 01-01 | 3 min | 1 | 2 | 2026-02-12 |
+| 01-02 | 5 min | 2 | 3 | 2026-02-13 |
 
 ## Accumulated Context
 
 ### Decisions
 
-**Phase 01-01 decisions:**
-- Added install.safari as separate object at root install level to match install.ios structure
-- Used Hebrew translation 'הפעלת כל ההתראות באפליקציה' for enableAllNotificationsDescription
+**Phase 01 decisions:**
+- [01-01] Added install.safari as separate object at root install level to match install.ios structure
+- [01-01] Used Hebrew translation 'הפעלת כל ההתראות באפליקציה' for enableAllNotificationsDescription
+- [01-02] Removed entire pages.install object from EN as duplicate of root install namespace
+- [01-02] Fixed install.ios in HE to use installStep1/2/3 pattern matching EN and code
+- [01-02] Preserved all Hebrew plural forms (_two, _many) as valid Hebrew grammar
 
 All milestone decisions logged in PROJECT.md Key Decisions table (50 entries across 6 milestones).
 
@@ -67,12 +71,12 @@ None -- between milestones.
 
 ## Session Continuity
 
-Last session: 2026-02-12
-Stopped at: Completed 01-01-PLAN.md (Fix EN root install namespace and add missing Hebrew notification key)
-Resume file: .planning/phases/01-complete-the-hebrew-translations-gaps/01-02-PLAN.md
+Last session: 2026-02-13
+Stopped at: Completed 01-02-PLAN.md (Remove dead translation keys from EN and HE JSON files)
+Resume file: Phase 01 complete. See ROADMAP.md for next phase.
 
-**Next action:** `/gsd:execute-phase 01` to execute plan 01-02
+**Next action:** Review ROADMAP.md for next phase or milestone planning.
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-12 -- Phase 01 plan 01-01 completed*
+*Last updated: 2026-02-13 -- Phase 01 complete (2/2 plans)*
