@@ -4,6 +4,7 @@ import AudioPlayer from "./AudioPlayer";
 import { practiceService } from "../../services/practiceService";
 import audioCacheService from "../../services/audioCacheService";
 import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 
 export default function PracticeSessionPlayer({
   session,
@@ -13,6 +14,7 @@ export default function PracticeSessionPlayer({
   disabled = false,
   showDownload = false,
 }) {
+  const { t } = useTranslation("common");
   const [audioUrl, setAudioUrl] = useState(null);
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
@@ -134,9 +136,12 @@ export default function PracticeSessionPlayer({
 
   // Format session info
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
+    const date = new Date(dateString);
+    const locale = t("common.locale"); // Get locale from translations
+
+    return date.toLocaleString(locale, {
       year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
@@ -250,7 +255,9 @@ export default function PracticeSessionPlayer({
       {/* Status Indicator */}
       {session.status && (
         <div className="mt-3 flex items-center gap-2 text-xs">
-          <span className="text-white/50">Status:</span>
+          <span className="text-white/50">
+            {t("pages.practiceSessions.statusLabel")}:
+          </span>
           <span
             className={`px-2 py-1 rounded text-xs font-medium ${
               session.status === "excellent"
@@ -262,10 +269,7 @@ export default function PracticeSessionPlayer({
                     : "bg-gray-500/20 text-gray-400"
             }`}
           >
-            {session.status
-              .split("_")
-              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-              .join(" ")}
+            {t(`pages.practiceSessions.status.${session.status}`)}
           </span>
         </div>
       )}

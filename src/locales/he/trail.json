@@ -1,0 +1,206 @@
+{
+  "pageTitle": "מסלול הלמידה",
+  "freePracticeLink": "תרגול חופשי",
+  "loading": "טוען את המסלול שלך...",
+  "sections": {
+    "trebleClef": {
+      "title": "מסלול מפתח סול",
+      "subtitle": "למדו לקרוא תווים במפתח סול"
+    },
+    "bassClef": {
+      "title": "מסלול מפתח פה",
+      "subtitle": "שלטו בתווי מפתח פה"
+    },
+    "rhythm": {
+      "title": "מסלול קצב",
+      "subtitle": "שמרו על הקצב ולמדו תבניות מקצב"
+    },
+    "boss": {
+      "title": "אתגרי בוס",
+      "subtitle": "בדקו את השליטה שלכם עם אתגרים מיוחדים"
+    }
+  },
+  "stats": {
+    "stars": "כוכבים",
+    "done": "הושלם",
+    "open": "פתוח",
+    "complete": "הושלמו"
+  },
+  "units": {
+    "classicNodes": "תווים קלאסיים",
+    "unitLabel": "יחידה",
+    "unitsPlural": "יחידות",
+    "names": {
+      "First Position": "3 תווים ראשונים במפתח סול",
+      "Five Finger Position": "חמישה תווים במפתח סול",
+      "Full Octave": "אוקטבה שלמה במפתח סול",
+      "Extended Range": "טווח מורחב במפתח סול",
+      "Accidentals": "סימני היסט",
+      "Middle C Position": "3 תווים ראשונים במפתח פה",
+      "Five Finger Low": "חמישה תווים במפתח פה",
+      "Full Octave Down": "אוקטבה שלמה במפתח פה",
+      "Extended Bass": "טווח מורחב במפתח פה",
+      "Bass Accidentals": "סימני היסט במפתח פה",
+      "Steady Beat": "קצב יציב",
+      "Eighth Notes": "רצים והולכים",
+      "Whole Notes & Rests": "תווים ארוכים והפסקות",
+      "Dotted & Syncopation": "נקודות וסינקופות",
+      "Note Adventure Begins": "3 תווים ראשונים במפתח סול",
+      "Five Finger Friends": "לומדים את פה וסול",
+      "Rainbow of Notes": "קשת התווים",
+      "Deep Note Explorers": "מגלי התווים הנמוכים",
+      "Bass Note Detective": "3 תווים ראשונים במפתח פה",
+      "Low Note Heroes": "לומדים את סול ופה",
+      "Rhythm Starters": "קצב יציב",
+      "Beat Builders": "בוני הקצב",
+      "Fast Note Friends": "רצים והולכים",
+      "Quiet Moments": "רגעי דממה",
+      "Magic Dots": "הנקודות הקסומות",
+      "Speed Champions": "אלופי המהירות"
+    }
+  },
+  "tabs": {
+    "ariaLabel": "מסלולי למידה",
+    "treble": "מפתח סול",
+    "bass": "מפתח פה",
+    "rhythm": "קצב"
+  },
+  "node": {
+    "startHere": "התחילו כאן!",
+    "continue": "המשיכו",
+    "bossLocked": "השלימו את כל השיעורים"
+  },
+  "exerciseTypes": {
+    "note_recognition": "זיהוי תווים",
+    "sight_reading": "קריאה מהירה",
+    "rhythm": "תרגול קצב",
+    "boss_challenge": "אתגר בוס",
+    "memory_game": "משחק זיכרון"
+  },
+  "modal": {
+    "yourProgress": "ההתקדמות שלכם",
+    "exercises": "תרגילים",
+    "exerciseCount": "{{completed}}/{{total}}",
+    "bestScore": "ציון הטוב ביותר:",
+    "bestScoreValue": "{{score}}%",
+    "startButton": "התחל",
+    "replayButton": "שחק שוב",
+    "skillsYoullLearn": "מיומנויות שתלמדו",
+    "xpReward": "פרס XP",
+    "xpRewardValue": "{{xp}} x ⭐ כוכבים",
+    "unlockLabel": "פתחו:",
+    "prerequisites": "השלימו אלה קודם:",
+    "bossUnlockTitle": "איך לפתוח את האתגר הזה",
+    "button": {
+      "locked": "נעול",
+      "practiceAgain": "תרגלו שוב",
+      "startPractice": "התחילו תרגול",
+      "continue": "המשיכו ({{completed}}/{{total}})"
+    }
+  },
+  "noteNames": {
+    "C": "דו",
+    "D": "רה",
+    "E": "מי",
+    "F": "פה",
+    "G": "סול",
+    "A": "לה",
+    "B": "סי"
+  },
+  "nodes": {
+    "Meet Middle C": "הכר את דו האמצעי",
+    "C and D": "דו ורה",
+    "Play C and D": "מנגנים דו ורה",
+    "Note Pairs": "משחק זיכרון",
+    "Three Note Songs": "מנגינות של שלושה תווים",
+    "Speed C-D-E": "אתגר הזריזות: דו-רה-מי",
+    "First Steps Challenge": "אתגר הצעדים הראשונים",
+
+    "Remember C-D-E": "חזרה על דו-רה-מי",
+    "Meet F": "מכירים את פה",
+    "C to F Journey": "המסע מדו לפה",
+    "Meet G": "מכירים את סול",
+    "Five Finger Fun": "משחק בחמש אצבעות",
+    "Five Note Songs": "מנגינות של חמישה תווים",
+    "Mix Units 1+2": "מעורבב: יחידות 1+2",
+    "Units 1+2": "יחידות 1+2",
+    "Five Finger Master": "מאסטר חמש האצבעות",
+
+    "Five Finger Warm-Up": "חימום חמש אצבעות",
+    "Meet A": "מכירים את לה",
+    "F-G-A Trio": "שלישיית פה-סול-לה",
+    "Meet B": "מכירים את סי",
+    "Almost There": "כמעט הגענו",
+    "High C!": "דו גבוה!",
+    "Full Octave Songs": "שירי אוקטבה מלאה",
+    "Octave Memory": "זיכרון אוקטבה",
+    "Octave Master": "מאסטר האוקטבה",
+
+    "C and B": "דו וסי",
+    "Play C and B": "מנגנים דו וסי",
+    "Speed C-B-A": "אתגר זריזות: דו-סי-לה",
+    "First Bass Challenge": "האתגר הראשון במפתח פה",
+
+    "Remember Unit 1": "חזרה על דו-סי-לה",
+    "Play with G": "מנגנים עם סול",
+    "Five Note Mix": "מעורבב חמישה תווים",
+    "Five Finger Songs": "שירי חמש האצבעות",
+    "Mix It Up": "מעורבב",
+
+    "Meet E": "מכירים את מי",
+    "Play with E": "מנגנים עם מי",
+    "Meet D": "מכירים את רה",
+    "Play with D": "מנגנים עם רה",
+    "Meet Low C": "מכירים את דו נמוך",
+    "Octave Mix": "מעורבב אוקטבה",
+    "Speed Octave": "אתגר הזריזות: אוקטבה",
+    "Bass Clef Master": "מאסטר מפתח פה",
+
+    "Meet Quarter Notes": "מכירים תווי רבע",
+    "Practice Quarter Notes": "תרגול תווי רבע",
+    "Meet Half Notes": "מכירים את תווי חצי",
+    "Practice Quarters and Halves": "תרגול רבעים וחצאים",
+    "Rhythm Patterns": "תבניות קצב",
+    "Speed Challenge": "אתגר מהירות",
+    "Basic Beats Master": "מאסטר הקצב הבסיסי",
+
+    "Meet Whole Notes": "מכירים תווים שלמים",
+    "Practice Whole Notes": "תרגול תווים שלמים",
+    "Long and Short": "ארוך וקצר",
+    "All Basic Durations": "כל האורכים הבסיסיים",
+    "Duration Mix": "מעורבב אורכים",
+    "Speed Basics": "אתגר מהירות: יסודות",
+    "Duration Master": "מאסטר האורכים",
+
+    "Meet Eighth Notes": "מכירים תווי שמינית",
+    "Practice Eighth Notes": "תרגול תווי שמינית",
+    "Running and Walking": "רצים והולכים",
+    "Rhythm Variety": "מגוון קצבי",
+    "Speed Running": "אתגר מהירות: ריצה",
+    "Running Notes Master": "מאסטר התווים הרצים",
+
+    "Meet Quarter Rest": "מכירים הפסקת רבע",
+    "Practice Quarter Rests": "תרגול שתיקות רבע",
+    "Meet Half Rest": "מכירים הפסקת חצי",
+    "Practice Rests": "תרגול שתיקות",
+    "Meet Whole Rest": "מכירים הפסקת שלמה",
+    "Speed Silence": "אתגר מהירות: הפסקות",
+    "Silence Master": "מאסטר ההפסקות!",
+
+    "Meet Dotted Half Notes": "מכירים תווי חצי מנוקדים",
+    "Practice Dotted Halves": "תרגול חצאים מנוקדים",
+    "Waltz Time (3/4)": "זמן ואלס (3/4)",
+    "Meet Dotted Quarter Notes": "מכירים תווי רבע מנוקדים",
+    "Practice All Dotted Notes": "תרגול כל התווים המנוקדים",
+    "Speed Dots": "אתגר מהירות: נקודות",
+    "Dotted Notes Master": "מאסטר התווים המנוקדים",
+
+    "Meet Sixteenth Notes": "מכירים תווי שש-עשרה",
+    "Practice Sixteenth Notes": "תרגול תווי שש-עשרה",
+    "Sixteenths and Eighths": "שש-עשרה ושמיניות",
+    "Fast and Faster": "מהיר ומהיר יותר",
+    "All Rhythms": "כל הקצבים",
+    "Speed Master": "מאסטר המהירות",
+    "Rhythm Champion": "אלוף הקצב"
+  }
+}

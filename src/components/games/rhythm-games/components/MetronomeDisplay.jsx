@@ -14,17 +14,17 @@ export function MetronomeDisplay({
   if (!isActive) return null;
 
   return (
-    <div className="flex gap-2 justify-center">
+    <div className="flex justify-center gap-2" dir="ltr">
       {Array.from({ length: timeSignature.beats }, (_, i) => i + 1).map(
         (beat) => (
           <div
             key={beat}
-            className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full border-2 flex items-center justify-center text-base sm:text-lg font-bold transition-all duration-150 ${
+            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-base font-bold transition-all duration-150 sm:h-14 sm:w-14 sm:text-lg ${
               beat === currentBeat
                 ? isCountIn
-                  ? "bg-yellow-500 text-black border-yellow-500 scale-125 shadow-xl animate-pulse"
-                  : "bg-blue-500 text-white border-blue-500 scale-110 shadow-lg"
-                : "bg-white/10 border-white/30 text-white/80"
+                  ? "scale-125 animate-pulse border-yellow-500 bg-yellow-500 text-black shadow-xl"
+                  : "scale-110 border-blue-500 bg-blue-500 text-white shadow-lg"
+                : "border-white/30 bg-white/10 text-white/80"
             }`}
           >
             {beat}
@@ -47,15 +47,9 @@ export function MetronomeIndicator({
   return (
     <div className={className}>
       <div
-        className={`
-        w-16 h-16 rounded-full border-4 border-white/30 
-        flex items-center justify-center text-white font-bold
-        transition-all duration-100
-        ${isFlashing ? "bg-yellow-400 scale-110" : "bg-white/10"}
-        ${isActive ? "animate-pulse" : ""}
-      `}
+        className={`flex h-16 w-16 items-center justify-center rounded-full border-4 border-white/30 font-bold text-white transition-all duration-100 ${isFlashing ? "scale-110 bg-yellow-400" : "bg-white/10"} ${isActive ? "animate-pulse" : ""} `}
       >
-        <Volume2 className="w-6 h-6" />
+        <Volume2 className="h-6 w-6" />
       </div>
     </div>
   );

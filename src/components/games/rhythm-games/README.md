@@ -51,7 +51,7 @@ The main game components have been removed to allow for a fresh start with the i
 - **Settings button** integration
 - **Floating settings** button variant
 
-#### `PreGameSettingsScreen.jsx`
+#### `RhythmGameSetup.jsx`
 
 - **Full-screen settings** interface for game setup
 - **Difficulty and time signature** selection
@@ -117,7 +117,7 @@ src/components/games/rhythm-games/
 │   ├── RhythmGameSettings.jsx # Settings modal
 │   ├── PatternDisplay.jsx  # Pattern visualization
 │   ├── GameControls.jsx    # Control buttons
-│   ├── PreGameSettingsScreen.jsx # Full-screen setup
+│   ├── RhythmGameSetup.jsx # Full-screen setup
 │   └── index.js           # Clean exports
 ├── RhythmPatternGenerator.js # 🎵 Enhanced pattern logic
 └── README.md              # 📚 Documentation
@@ -149,11 +149,11 @@ import {
   TapArea,
   RhythmGameSettings,
   PatternDisplay,
-  PreGameSettingsScreen
+  RhythmGameSetup
 } from './components';
 
 // Pre-game setup screen
-<PreGameSettingsScreen
+<RhythmGameSetup
   settings={gameSettings}
   onUpdateSettings={setGameSettings}
   onStart={startGame}

@@ -25,6 +25,9 @@ export function useStreakWithAchievements() {
       // Invalidate relevant queries to refresh UI
       queryClient.invalidateQueries(["streak", user?.id]);
       queryClient.invalidateQueries(["earned-achievements", user?.id]);
+      // Invalidate points-related queries (achievements give points!)
+      queryClient.invalidateQueries(["point-balance", user?.id]);
+      queryClient.invalidateQueries(["total-points", user?.id]);
 
       // Log new achievements for debugging
       if (newAchievements.length > 0) {

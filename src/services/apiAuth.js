@@ -46,8 +46,34 @@ export async function login({ email, password }) {
 
 export async function getCurrentUser() {
   try {
-    const { data: session } = await supabase.auth.getSession();
-    if (!session.session) return null;
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+
+    // If the stored refresh token is invalid/revoked, Supabase may throw an
+    // AuthApiError and log a 400 in the console during refresh.
+    // Clear the local session so the app doesn't keep retrying/logging.
+    if (sessionError) {
+      const msg = String(sessionError.message || "");
+      const isInvalidRefresh =
+        /invalid refresh token/i.test(msg) ||
+        /refresh token not found/i.test(msg);
+
+      if (isInvalidRefresh) {
+        try {
+          await supabase.auth.signOut();
+        } catch (signOutError) {
+          console.warn(
+            "Failed to sign out after refresh token error:",
+            signOutError
+          );
+        }
+        return null;
+      }
+
+      throw new Error(sessionError.message);
+    }
+
+    if (!sessionData?.session) return null;
 
     const { data, error } = await supabase.auth.getUser();
 
@@ -60,151 +86,89 @@ export async function getCurrentUser() {
 
     const user = data.user;
 
-    // Determine user role and profile
+    // SECURITY: Determine user role ONLY from database table presence.
+    // user_metadata is NOT trusted for authorization decisions.
+    // Metadata is only used as a hint for query optimization (which table to check first).
     let userRole = null;
     let profile = null;
 
-    // First check if we have role information in metadata
-    const metadataRole = user.user_metadata?.role;
+    // Use metadata as a hint for which table to query first (optimization only)
+    const metadataHint = user.user_metadata?.role;
+    const checkTeacherFirst = metadataHint === "teacher";
 
-    if (metadataRole === "teacher") {
-      // Only check teachers table for teachers
-      try {
-        const { data: teacherData, error: teacherError } = await supabase
-          .from("teachers")
-          .select("*")
-          .eq("id", user.id)
-          .single();
+    if (checkTeacherFirst) {
+      // Check teachers table first (optimization based on metadata hint)
+      const { data: teacherData, error: teacherError } = await supabase
+        .from("teachers")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
 
-        if (teacherData && !teacherError) {
-          userRole = "teacher";
-          profile = teacherData;
-        } else if (teacherError && teacherError.code === "PGRST116") {
-          // Teacher profile doesn't exist, but user has teacher role in metadata
-          userRole = "teacher";
-          profile = null; // Will be created below
-        }
-      } catch (teacherQueryError) {
-        console.warn("Teacher query failed:", teacherQueryError);
+      if (teacherData && !teacherError) {
+        // VERIFIED: User exists in teachers table
         userRole = "teacher";
-        profile = null;
-      }
-    } else if (metadataRole === "student") {
-      // Only check students table for students
-      try {
+        profile = teacherData;
+      } else {
+        // Not found in teachers, check students table
         const { data: studentData, error: studentError } = await supabase
           .from("students")
           .select("*")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (studentData && !studentError) {
+          // VERIFIED: User exists in students table
           userRole = "student";
           profile = studentData;
-        } else if (studentError && studentError.code === "PGRST116") {
-          // Student profile doesn't exist, but user has student role in metadata
-          userRole = "student";
-          profile = null; // Will be created below
         }
-      } catch (studentQueryError) {
-        console.warn("Student query failed:", studentQueryError);
-        userRole = "student";
-        profile = null;
+        // If not in either table, userRole remains null
       }
     } else {
-      // No role in metadata, check both tables (but handle errors gracefully)
-      try {
+      // Check students table first (default or metadata hint says student)
+      const { data: studentData, error: studentError } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (studentData && !studentError) {
+        // VERIFIED: User exists in students table
+        userRole = "student";
+        profile = studentData;
+      } else {
+        // Not found in students, check teachers table
         const { data: teacherData, error: teacherError } = await supabase
           .from("teachers")
           .select("*")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (teacherData && !teacherError) {
+          // VERIFIED: User exists in teachers table
           userRole = "teacher";
           profile = teacherData;
         }
-      } catch (teacherCheckError) {
-        // Ignore errors when checking teacher table
-      }
-
-      // Only check students table if we haven't found a teacher
-      if (!userRole) {
-        try {
-          const { data: studentData, error: studentError } = await supabase
-            .from("students")
-            .select("*")
-            .eq("id", user.id)
-            .single();
-
-          if (studentData && !studentError) {
-            userRole = "student";
-            profile = studentData;
-          }
-        } catch (studentCheckError) {
-          // Ignore errors when checking student table
-        }
+        // If not in either table, userRole remains null
       }
     }
 
-    // Create missing profile if we have a role but no profile
-    if (userRole && !profile) {
-      // Create the missing profile
-      if (userRole === "teacher") {
-        const { data: newTeacher, error: createTeacherError } = await supabase
-          .from("teachers")
-          .insert([
-            {
-              id: user.id,
-              first_name:
-                user.user_metadata?.first_name ||
-                user.user_metadata?.full_name?.split(" ")[0] ||
-                "Teacher",
-              last_name:
-                user.user_metadata?.last_name ||
-                user.user_metadata?.full_name?.split(" ").slice(1).join(" ") ||
-                "",
-              email: user.email,
-              is_active: true,
-            },
-          ])
-          .select()
-          .single();
-
-        if (!createTeacherError) {
-          profile = newTeacher;
-        }
-      } else if (userRole === "student") {
-        const { data: newStudent, error: createStudentError } = await supabase
-          .from("students")
-          .insert([
-            {
-              id: user.id,
-              first_name:
-                user.user_metadata?.first_name ||
-                user.user_metadata?.full_name?.split(" ")[0] ||
-                "Student",
-              email: user.email,
-              username: `user${Math.random().toString(36).substr(2, 4)}`,
-              level: "Beginner",
-            },
-          ])
-          .select()
-          .single();
-
-        if (!createStudentError) {
-          profile = newStudent;
-        }
-      }
-    }
-
-    // If we still don't have a role, user needs to select one
+    // If user has no profile in either table, they need to complete registration
+    // SECURITY: Do NOT auto-create profiles based on metadata claims.
+    // Profile creation should only happen through proper registration flows.
     if (!userRole) {
-      userRole = null;
-      profile = null;
+      // User is authenticated but has no profile - needs to select role
+      // Return user without role so the app can redirect to role selection
+      return {
+        ...user,
+        userRole: null,
+        profile: null,
+        isTeacher: false,
+        isStudent: false,
+        needsRoleSelection: true,
+      };
     }
 
-    // Return enhanced user object with role and profile information
+    // Return enhanced user object with VERIFIED role and profile information
     return {
       ...user,
       userRole,
@@ -218,9 +182,71 @@ export async function getCurrentUser() {
   }
 }
 
+/**
+ * Logs out the current user and clears all user-specific localStorage data.
+ *
+ * SECURITY: This function clears user-specific data to prevent data leakage
+ * on shared devices (school computers, family tablets). App-wide preferences
+ * like language and accessibility settings are preserved.
+ *
+ * UI NOTE: The calling component should show a confirmation dialog
+ * ("Are you sure you want to log out?") before invoking this function,
+ * especially on shared devices where accidental logout could be disruptive.
+ *
+ * @throws {Error} If Supabase signOut fails
+ */
 export async function logout() {
-  const { err } = await supabase.auth.signOut();
-  if (err) throw new Error(err.message);
+  // Clear user-specific localStorage keys before signing out
+  // This prevents data leakage on shared devices (school computers, family tablets)
+  if (typeof window !== "undefined") {
+    const keysToRemove = [];
+
+    // Keys to preserve (app-wide preferences)
+    const keysToPreserve = ["i18nextLng", "theme", "security_update_shown"];
+    const prefixesToPreserve = ["accessibility_"];
+
+    // UUID pattern for detecting user ID keys
+    const uuidPattern =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+
+      // Skip preserved keys (app-wide preferences)
+      if (keysToPreserve.includes(key)) continue;
+      if (prefixesToPreserve.some((prefix) => key.startsWith(prefix))) continue;
+
+      // Remove user-specific keys
+      const shouldRemove =
+        key.startsWith("migration_completed_") || // XP migration flags
+        key.startsWith("trail_migration_") || // Trail migration flags (e.g., trail_migration_v2_<uuid>)
+        key.startsWith("dashboard_reminder_") || // User-specific reminders
+        key.includes("_student_") || // Student-related data
+        key.includes("_user_") || // User-related data
+        key === "xp_migration_complete" || // Legacy migration flag
+        key === "cached_user_progress" || // Cached progress data
+        key.startsWith("sb-") || // Supabase auth tokens
+        uuidPattern.test(key); // Keys that are UUIDs (user IDs)
+
+      if (shouldRemove) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+
+    // Log cleanup count in development only
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Logout: Cleared ${keysToRemove.length} user-specific localStorage keys`
+      );
+    }
+  }
+
+  // Then sign out from Supabase
+  const { error } = await supabase.auth.signOut();
+  if (error) throw new Error(error.message);
 }
 
 export async function socialAuth({
@@ -319,6 +345,12 @@ export async function updateUserAvatar(userId, avatarId) {
 }
 
 export async function checkUserPermissions() {
+  // Only allow in development mode - prevents exposing permission info in production
+  if (process.env.NODE_ENV !== "development") {
+    console.warn("checkUserPermissions is only available in development mode");
+    return { error: "Not available in production" };
+  }
+
   try {
     // Get the current session
     const {
@@ -373,6 +405,12 @@ export async function checkUserPermissions() {
 }
 
 export async function checkDatabaseStructure() {
+  // Only allow in development mode - prevents exposing database structure info in production
+  if (process.env.NODE_ENV !== "development") {
+    console.warn("checkDatabaseStructure is only available in development mode");
+    return { error: "Not available in production" };
+  }
+
   try {
     // Check if the students table exists
     const { data: studentsData, error: studentsError } = await supabase

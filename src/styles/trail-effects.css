@@ -1,0 +1,360 @@
+/**
+ * Trail Effects CSS Module
+ * Trail-scoped CSS for enchanted forest visual redesign
+ * Import only in TrailMapPage.jsx (not globally)
+ */
+
+/* ========================================
+   SECTION 1: CSS Custom Properties
+   ======================================== */
+.trail-page {
+  --trail-primary-glow: #00f2ff;
+  --trail-secondary-glow: #aa00ff;
+  --trail-glass-bg: rgba(255, 255, 255, 0.1);
+  --trail-glass-border: rgba(255, 255, 255, 0.2);
+  --trail-node-active-start: #4facfe;
+  --trail-node-active-end: #00f2fe;
+  --trail-node-locked-start: rgb(80, 65, 120);
+  --trail-node-locked-end: rgb(45, 35, 70);
+  --trail-node-completed-start: #4ade80;
+  --trail-node-completed-end: #16a34a;
+  --trail-forest-base: #0f172a;
+  --trail-forest-mid: #1a1040;
+  --trail-forest-accent: #2d1b69;
+}
+
+/* ========================================
+   SECTION 2: Enchanted Forest Background
+   ======================================== */
+.trail-forest-bg {
+  position: relative;
+  background: var(--trail-forest-mid);
+}
+
+.trail-forest-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: transparent;
+}
+
+/* ========================================
+   SECTION 3: Ambient Glow Orbs
+   ======================================== */
+.trail-glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.trail-glow-orb--purple {
+  background: rgba(139, 92, 246, 0.4);
+  filter: blur(20px);
+}
+
+.trail-glow-orb--blue {
+  background: rgba(59, 130, 246, 0.35);
+  filter: blur(30px);
+}
+
+.trail-glow-orb--green {
+  background: rgba(74, 222, 128, 0.3);
+  filter: blur(25px);
+}
+
+/* ========================================
+   SECTION 4: Starfield Animation
+   ======================================== */
+@keyframes trail-twinkle {
+  0%, 100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.trail-star {
+  position: absolute;
+  border-radius: 9999px;
+  background: white;
+  animation: trail-twinkle var(--star-duration, 3s) var(--star-delay, 0s) ease-in-out infinite;
+}
+
+/* Reduced motion overrides for starfield */
+@media (prefers-reduced-motion: reduce) {
+  .trail-star {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+.reduced-motion .trail-star {
+  animation: none;
+  opacity: 0.4;
+}
+
+/* ========================================
+   SECTION 5: Glass Panel
+   ======================================== */
+.trail-glass-panel {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--trail-glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  border-radius: 1rem;
+}
+
+/* Fallback for browsers without backdrop-filter */
+@supports not (backdrop-filter: blur(12px)) {
+  .trail-glass-panel {
+    background: rgba(30, 20, 60, 0.95);
+  }
+}
+
+/* Unit progress card - backdrop fallback */
+@supports not (backdrop-filter: blur(10px)) {
+  .trail-unit-card-fallback {
+    background: rgba(30, 20, 60, 0.92);
+  }
+}
+
+/* Path connector glow classes */
+.path-connector-glow {
+  filter: drop-shadow(0 0 3px rgba(0, 242, 255, 0.4));
+}
+
+/* ========================================
+   SECTION 6: 3D Node Styles
+   ======================================== */
+
+/* Ensure :active works on touch devices inside foreignObject */
+.node-3d-active,
+.node-3d-completed,
+.node-3d-available,
+.node-3d-locked-boss {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Active Node - Ready to play */
+.node-3d-active {
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, var(--trail-node-active-start) 0%, var(--trail-node-active-end) 100%);
+  border: 2px solid #00d4e0;
+  box-shadow:
+    0 0 0 3px rgba(0, 242, 255, 0.6),
+    0 6px 0 #009eb3,
+    0 10px 20px rgba(0, 242, 255, 0.4);
+  transition: transform 150ms ease-out;
+}
+
+.node-3d-active::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 20px rgba(0, 242, 255, 0.6);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.node-3d-active:hover {
+  will-change: transform;
+}
+
+.node-3d-active:hover::before {
+  opacity: 0.8;
+}
+
+.node-3d-active:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 0 0 3px rgba(0, 242, 255, 0.6),
+    0 4px 0 #009eb3,
+    0 5px 10px rgba(0, 242, 255, 0.4);
+}
+
+/* Locked Node - Not yet available */
+.node-3d-locked {
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, var(--trail-node-locked-start) 0%, var(--trail-node-locked-end) 100%);
+  border: 2px solid rgba(100, 80, 150, 0.5);
+  box-shadow:
+    0 4px 0 rgba(40, 30, 60, 0.8),
+    0 6px 12px rgba(0, 0, 0, 0.4);
+  cursor: not-allowed;
+}
+
+/* Locked Boss Node - Dim gold to distinguish from regular locked */
+.node-3d-locked-boss {
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, rgb(130, 80, 10) 0%, rgb(100, 45, 12) 100%);
+  border: 2px solid rgba(202, 138, 4, 0.4);
+  box-shadow:
+    0 4px 0 rgba(80, 50, 10, 0.8),
+    0 6px 12px rgba(0, 0, 0, 0.4),
+    0 0 12px rgba(202, 138, 4, 0.15);
+  cursor: pointer;
+}
+
+/* Completed Node - All stars earned */
+.node-3d-completed {
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, var(--trail-node-completed-start) 0%, var(--trail-node-completed-end) 100%);
+  border: 2px solid #22c55e;
+  box-shadow:
+    0 6px 0 #15803d,
+    0 10px 20px rgba(74, 222, 128, 0.4);
+  transition: transform 150ms ease-out;
+}
+
+.node-3d-completed::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 15px rgba(74, 222, 128, 0.6);
+  opacity: 0.4;
+  animation: trail-glow-pulse 2s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.node-3d-completed:hover {
+  will-change: transform;
+}
+
+.node-3d-completed:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 4px 0 #15803d,
+    0 5px 10px rgba(74, 222, 128, 0.4);
+}
+
+/* Available Node - Unlocked but not started, subtle breathing animation */
+.node-3d-available {
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, #60a5fa 0%, #3b82f6 100%);
+  border: 2px solid #2563eb;
+  box-shadow:
+    0 6px 0 #1e40af,
+    0 10px 20px rgba(59, 130, 246, 0.3);
+  transition: transform 150ms ease-out;
+}
+
+.node-3d-available::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 18px rgba(59, 130, 246, 0.5);
+  opacity: 0.5;
+  animation: trail-glow-pulse 3s ease-in-out infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.node-3d-available:hover {
+  will-change: transform;
+}
+
+.node-3d-available:hover::before {
+  opacity: 0.9;
+}
+
+.node-3d-available:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 4px 0 #1e40af,
+    0 5px 10px rgba(59, 130, 246, 0.3);
+}
+
+/* ========================================
+   SECTION 7: Glow Pulse Keyframe
+   ======================================== */
+@keyframes trail-glow-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Reduced motion overrides for glow pulse */
+@media (prefers-reduced-motion: reduce) {
+  .node-3d-completed::after,
+  .node-3d-available::before {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+.reduced-motion .node-3d-completed::after,
+.reduced-motion .node-3d-available::before {
+  animation: none;
+  opacity: 0.5;
+}
+
+/* ========================================
+   SECTION 8: Text Glow Utilities
+   ======================================== */
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.6);
+}
+
+.text-glow-purple {
+  text-shadow: 0 0 10px rgba(170, 0, 255, 0.5);
+}
+
+.text-shadow-deep {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* ========================================
+   SECTION 9: SVG Path Glow
+   ======================================== */
+.path-svg-glow {
+  filter: drop-shadow(0 0 4px var(--trail-primary-glow));
+}
+
+.path-svg-glow--completed {
+  filter: drop-shadow(0 0 6px rgba(74, 222, 128, 0.6));
+}
+
+/* ========================================
+   SECTION 10: Locked Node Tooltip
+   ======================================== */
+.locked-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 50;
+  animation: tooltip-fade-in 150ms ease-out;
+}
+
+@keyframes tooltip-fade-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ========================================
+   SECTION 11: Focus-Visible Styles
+   ======================================== */
+.node-3d-active:focus-visible,
+.node-3d-completed:focus-visible,
+.node-3d-available:focus-visible,
+.node-3d-locked:focus-visible,
+.node-3d-locked-boss:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}

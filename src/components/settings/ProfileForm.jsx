@@ -4,11 +4,19 @@ import { useUser } from "../../features/authentication/useUser";
 import { updateProfile, validateUsername } from "../../services/profileService";
 import { toast } from "react-hot-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 /**
  * Profile editing form
  */
 export function ProfileForm() {
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
+  const labelAlignClass = isRTL ? "text-right" : "";
+  const iconPositionClass = isRTL ? "right-3" : "left-3";
+  const inputPaddingClass = isRTL ? "pr-11 pl-4 text-right" : "pl-11 pr-4";
+  const usernamePaddingClass = isRTL ? "pr-11 pl-20 text-right" : "pl-11 pr-20";
+  const readOnlyPaddingClass = inputPaddingClass;
   const { profile } = useUser();
   const queryClient = useQueryClient();
   const [isEditingUsername, setIsEditingUsername] = useState(false);
@@ -83,8 +91,7 @@ export function ProfileForm() {
       const changed =
         (name === "first_name" && value !== profile?.first_name) ||
         (name === "last_name" && value !== profile?.last_name) ||
-        (name === "first_name" &&
-          formData.last_name !== profile?.last_name) ||
+        (name === "first_name" && formData.last_name !== profile?.last_name) ||
         (name === "last_name" && formData.first_name !== profile?.first_name);
       setHasNameChanges(changed);
     }
@@ -171,11 +178,15 @@ export function ProfileForm() {
     <form onSubmit={handleSubmit} className="space-y-4 mt-4">
       {/* First Name */}
       <div>
-        <label className="text-white font-medium text-sm block mb-2">
-          First Name *
+        <label
+          className={`text-white font-medium text-sm block mb-2 ${labelAlignClass}`}
+        >
+          {t("pages.settings.profile.firstName")} *
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div
+            className={`absolute ${iconPositionClass} top-1/2 -translate-y-1/2 pointer-events-none`}
+          >
             <User className="w-5 h-5 text-white/40" />
           </div>
           <input
@@ -184,7 +195,7 @@ export function ProfileForm() {
             value={formData.first_name}
             onChange={handleChange}
             className={`
-              w-full pl-11 pr-4 py-2.5 
+              w-full ${inputPaddingClass} py-2.5 
               bg-white/10 border ${errors.first_name ? "border-red-500" : "border-white/20"} rounded-lg
               text-white placeholder-white/40
               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
@@ -200,11 +211,15 @@ export function ProfileForm() {
 
       {/* Last Name */}
       <div>
-        <label className="text-white font-medium text-sm block mb-2">
-          Last Name
+        <label
+          className={`text-white font-medium text-sm block mb-2 ${labelAlignClass}`}
+        >
+          {t("pages.settings.profile.lastName")} *
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div
+            className={`absolute ${iconPositionClass} top-1/2 -translate-y-1/2 pointer-events-none`}
+          >
             <User className="w-5 h-5 text-white/40" />
           </div>
           <input
@@ -213,7 +228,7 @@ export function ProfileForm() {
             value={formData.last_name}
             onChange={handleChange}
             className={`
-              w-full pl-11 pr-4 py-2.5 
+              w-full ${inputPaddingClass} py-2.5 
               bg-white/10 border ${errors.last_name ? "border-red-500" : "border-white/20"} rounded-lg
               text-white placeholder-white/40
               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
@@ -229,11 +244,15 @@ export function ProfileForm() {
 
       {/* Username */}
       <div>
-        <label className="text-white font-medium text-sm block mb-2">
-          Username *
+        <label
+          className={`text-white font-medium text-sm block mb-2 ${labelAlignClass}`}
+        >
+          {t("pages.settings.profile.username")} *
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div
+            className={`absolute ${iconPositionClass} top-1/2 -translate-y-1/2 pointer-events-none`}
+          >
             <User className="w-5 h-5 text-white/40" />
           </div>
           <input
@@ -243,7 +262,7 @@ export function ProfileForm() {
             onChange={handleChange}
             disabled={!isEditingUsername}
             className={`
-              w-full pl-11 pr-20 py-2.5 
+              w-full ${usernamePaddingClass} py-2.5 
               bg-white/10 border ${errors.username ? "border-red-500" : "border-white/20"} rounded-lg
               text-white placeholder-white/40
               focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent
@@ -252,7 +271,11 @@ export function ProfileForm() {
             `}
             placeholder="Choose a username"
           />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+          <div
+            className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-2 ${
+              isRTL ? "left-3" : "right-3"
+            }`}
+          >
             {isEditingUsername && (
               <>
                 {isCheckingUsername ? (
@@ -281,54 +304,64 @@ export function ProfileForm() {
             onClick={() => setIsEditingUsername(true)}
             className="text-indigo-400 hover:text-indigo-300 text-xs mt-1 transition-colors"
           >
-            Click to edit username
+            {t("pages.settings.profile.clickToEditUsername")}
           </button>
         )}
       </div>
 
       {/* Email (Read-only) */}
       <div>
-        <label className="text-white font-medium text-sm block mb-2">
-          Email
+        <label
+          className={`text-white font-medium text-sm block mb-2 ${labelAlignClass}`}
+        >
+          {t("pages.settings.profile.email")}
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div
+            className={`absolute ${iconPositionClass} top-1/2 -translate-y-1/2 pointer-events-none`}
+          >
             <Mail className="w-5 h-5 text-white/40" />
           </div>
           <input
             type="email"
             value={profile.email || ""}
             disabled
-            className="w-full pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white/50 cursor-not-allowed"
+            className={`w-full ${readOnlyPaddingClass} py-2.5 bg-white/5 border border-white/10 rounded-lg text-white/50 cursor-not-allowed`}
           />
         </div>
-        <p className="text-white/40 text-xs mt-1">Email cannot be changed</p>
+        <p className={`text-white/40 text-xs mt-1 ${labelAlignClass}`}>
+          {t("pages.settings.profile.emailDescription")}
+        </p>
       </div>
 
       {/* Level (Read-only, teacher-managed) */}
       <div>
-        <label className="text-white font-medium text-sm block mb-2">
-          Level
+        <label
+          className={`text-white font-medium text-sm block mb-2 ${labelAlignClass}`}
+        >
+          {t("pages.settings.profile.level")}
         </label>
         <div className="relative">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+          <div
+            className={`absolute ${iconPositionClass} top-1/2 -translate-y-1/2 pointer-events-none`}
+          >
             <Award className="w-5 h-5 text-white/40" />
           </div>
           <input
             type="text"
             value={profile.level || "Not set"}
             disabled
-            className="w-full pl-11 pr-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-white/50 cursor-not-allowed"
+            className={`w-full ${readOnlyPaddingClass} py-2.5 bg-white/5 border border-white/10 rounded-lg text-white/50 cursor-not-allowed`}
           />
         </div>
-        <p className="text-white/40 text-xs mt-1">
-          Level is set by your teacher
+        <p className={`text-white/40 text-xs mt-1 ${labelAlignClass}`}>
+          {t("pages.settings.profile.levelDescription")}
         </p>
       </div>
 
       {/* Action Buttons */}
       {(hasNameChanges || isEditingUsername) && (
-        <div className="flex gap-3 pt-2">
+        <div className={`flex gap-3 pt-2 ${isRTL ? "flex-row-reverse" : ""}`}>
           <button
             type="submit"
             disabled={
@@ -339,7 +372,7 @@ export function ProfileForm() {
             className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {isSaving ? "Saving..." : "Save Changes"}
+            {isSaving ? t("common.saving") : t("common.save")}
           </button>
           <button
             type="button"
@@ -347,7 +380,7 @@ export function ProfileForm() {
             disabled={isSaving}
             className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
         </div>
       )}

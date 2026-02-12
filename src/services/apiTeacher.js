@@ -1,5 +1,53 @@
 import supabase from "./supabase";
 
+// ============================================
+// Security Helper Functions
+// ============================================
+
+/**
+ * Verifies that a teacher has an accepted connection to a specific student.
+ * This MUST be called before any operation that modifies student data.
+ * @param {string} teacherId - The teacher's user ID
+ * @param {string} studentId - The student's user ID
+ * @throws {Error} If no valid connection exists
+ * @returns {Promise<boolean>} True if connection exists
+ */
+async function verifyTeacherStudentConnection(teacherId, studentId) {
+  const { data, error } = await supabase
+    .from("teacher_student_connections")
+    .select("id")
+    .eq("teacher_id", teacherId)
+    .eq("student_id", studentId)
+    .eq("status", "accepted")
+    .single();
+
+  if (error || !data) {
+    throw new Error("Unauthorized: No connection to this student");
+  }
+  return true;
+}
+
+/**
+ * Verifies that a teacher owns a specific assignment.
+ * @param {string} teacherId - The teacher's user ID
+ * @param {string} assignmentId - The assignment ID
+ * @throws {Error} If the teacher does not own the assignment
+ * @returns {Promise<Object>} The assignment data if owned
+ */
+async function verifyTeacherOwnsAssignment(teacherId, assignmentId) {
+  const { data, error } = await supabase
+    .from("assignments")
+    .select("id, teacher_id")
+    .eq("id", assignmentId)
+    .eq("teacher_id", teacherId)
+    .single();
+
+  if (error || !data) {
+    throw new Error("Unauthorized: You do not own this assignment");
+  }
+  return data;
+}
+
 // Get teacher's students (simplified approach - direct teacher-student connections)
 export const getTeacherStudents = async () => {
   try {
@@ -54,6 +102,11 @@ export const getTeacherStudents = async () => {
     // Get student details from available tables
     const studentIds = connections?.map((conn) => conn.student_id) || [];
 
+    // No connected students; nothing else to aggregate.
+    if (studentIds.length === 0) {
+      return [];
+    }
+
     let students = [];
     if (studentIds.length > 0) {
       // Try to get student data from students table
@@ -95,27 +148,60 @@ export const getTeacherStudents = async () => {
     // Get all practice sessions
     const { data: allPracticeSessions, error: practiceError } = await supabase
       .from("practice_sessions")
-      .select("id, student_id, duration, analysis_score, submitted_at");
+      .select(
+        "id, student_id, duration, analysis_score, submitted_at, has_recording, recording_url"
+      )
+      .in("student_id", studentIds);
 
     if (practiceError) throw practiceError;
 
-    // Get student scores
-    const { data: studentScores, error: scoresError } = await supabase
-      .from("students_total_score")
-      .select("student_id, total_score");
+    // Get student points (preferred): RPC returns per-student totals for this teacher.
+    // This is robust against future RLS consolidations that might hide direct table reads.
+    let pointsRows = null;
+    const { data: rpcPoints, error: rpcPointsError } = await supabase.rpc(
+      "teacher_get_student_points"
+    );
+    if (rpcPointsError) {
+      console.warn(
+        "Teacher points RPC unavailable; falling back to direct table reads. Consider applying migration 20251215000001_restore_teacher_points_access.sql.",
+        rpcPointsError
+      );
+    } else {
+      pointsRows = rpcPoints || [];
+    }
 
-    if (scoresError) throw scoresError;
+    // Fallback path: compute totals from students_score + student_achievements if RPC is missing.
+    // Note: This requires RLS policies to allow teachers to SELECT connected students' rows.
+    let gameScores = [];
+    let achievements = [];
+    if (!pointsRows) {
+      const { data: gameScoresData, error: gameScoresError } = await supabase
+        .from("students_score")
+        .select("student_id, score")
+        .in("student_id", studentIds);
+      if (gameScoresError) throw gameScoresError;
+      gameScores = gameScoresData || [];
+
+      const { data: achievementsData, error: achievementsError } =
+        await supabase
+          .from("student_achievements")
+          .select("student_id, points")
+          .in("student_id", studentIds);
+      if (achievementsError) throw achievementsError;
+      achievements = achievementsData || [];
+    }
 
     // Get current streaks
     const { data: streaks, error: streaksError } = await supabase
       .from("current_streak")
-      .select("student_id, streak_count");
+      .select("student_id, streak_count")
+      .in("student_id", studentIds);
 
     if (streaksError) throw streaksError;
 
     // Create lookup maps for performance
     const practicesByStudent = {};
-    const scoresByStudent = {};
+    const scoresByStudent = {}; // student_id -> total points (game + achievements)
     const streaksByStudent = {};
 
     allPracticeSessions?.forEach((session) => {
@@ -125,9 +211,42 @@ export const getTeacherStudents = async () => {
       practicesByStudent[session.student_id].push(session);
     });
 
-    studentScores?.forEach((score) => {
-      scoresByStudent[score.student_id] = score.total_score;
-    });
+    if (pointsRows) {
+      // RPC already returns totals; use those.
+      pointsRows.forEach((row) => {
+        if (!row?.student_id) return;
+        scoresByStudent[row.student_id] = Number(row.total_points || 0);
+      });
+      if (studentIds.length > 0 && pointsRows.length === 0) {
+        console.warn(
+          "Teacher points RPC returned 0 rows despite having connected students. Check teacher_student_connections.status and RLS/auth context.",
+          { teacherId: user.id, connectedStudentCount: studentIds.length }
+        );
+      }
+    } else {
+      // Compute totals dynamically (game scores + achievement points)
+      gameScores?.forEach((score) => {
+        scoresByStudent[score.student_id] =
+          (scoresByStudent[score.student_id] || 0) + (score.score || 0);
+      });
+
+      achievements?.forEach((achievement) => {
+        scoresByStudent[achievement.student_id] =
+          (scoresByStudent[achievement.student_id] || 0) +
+          (achievement.points || 0);
+      });
+
+      if (
+        studentIds.length > 0 &&
+        gameScores.length === 0 &&
+        achievements.length === 0
+      ) {
+        console.warn(
+          "Teacher score/achievement queries returned no rows. This commonly indicates RLS blocking teacher reads. Apply migration 20251215000001_restore_teacher_points_access.sql or rely on teacher_get_student_points RPC.",
+          { teacherId: user.id, connectedStudentCount: studentIds.length }
+        );
+      }
+    }
 
     streaks?.forEach((streak) => {
       streaksByStudent[streak.student_id] = streak.streak_count;
@@ -136,6 +255,14 @@ export const getTeacherStudents = async () => {
     // Transform students with metrics (show all connected students, not just those with practice data)
     const studentsWithMetrics = (students || []).map((student) => {
       const practices = practicesByStudent[student.id] || [];
+      const recordings = practices.filter((session) => {
+        const hasRecordingFlag =
+          session.has_recording === null || session.has_recording === true;
+        const hasRecordingUrl =
+          typeof session.recording_url === "string" &&
+          session.recording_url.trim().length > 0;
+        return hasRecordingFlag && hasRecordingUrl;
+      });
 
       // Calculate metrics
       const totalPracticeMinutes = practices.reduce(
@@ -177,6 +304,11 @@ export const getTeacherStudents = async () => {
         recent_practices: practices
           .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
           .slice(0, 5), // Last 5 sessions
+        // For the teacher detail modal: sessions that actually have an audio recording attached.
+        // UI intentionally shows only date + duration (no audio playback here).
+        recent_recordings: recordings
+          .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
+          .slice(0, 5),
       };
 
       return transformedStudent;
@@ -197,140 +329,46 @@ export const addStudentToTeacher = async (studentData) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
-    // Check if student already exists by email
-    const { data: existingStudent, error: studentCheckError } = await supabase
-      .from("students")
-      .select("id, first_name, last_name, email, username")
-      .eq("email", studentData.email.toLowerCase())
-      .maybeSingle();
-
-    let student;
-
-    if (existingStudent) {
-      // Student already exists, use existing record
-      student = existingStudent;
-    } else {
-      // Student doesn't exist OR we can't check due to RLS policies
-      // Try to create new student, handle potential duplicates gracefully
-      
-      // Generate a UUID for the student (teachers can't create auth users, but can create student records)
-      const { data: newStudent, error: createError } = await supabase
-        .from("students")
-        .insert([
-          {
-            // Generate UUID using Supabase's gen_random_uuid() function
-            // Note: The id should eventually link to auth.users when student signs up
-            first_name: studentData.firstName,
-            last_name: studentData.lastName,
-            email: studentData.email.toLowerCase(),
-            level: studentData.level,
-            studying_year: studentData.studyingYear,
-            username: `${studentData.firstName.toLowerCase()}_${studentData.lastName.toLowerCase()}`,
-            user_role: 'student', // Explicitly set the role
-          },
-        ])
-        .select()
-        .single();
-
-      if (createError) {
-        // If duplicate email error, try to find the existing student
-        if (
-          createError.code === "23505" ||
-          createError.message?.includes("duplicate")
-        ) {
-          // Email already exists, try to get the existing student
-          // Use a different approach that might work with RLS
-          const { data: existingByEmail, error: findError } = await supabase
-            .from("students")
-            .select("id, first_name, last_name, email, username")
-            .eq("email", studentData.email.toLowerCase())
-            .maybeSingle();
-
-          if (existingByEmail) {
-            student = existingByEmail;
-          } else {
-            // If we still can't find the student due to RLS, throw the original error
-            throw createError;
-          }
-        } else {
-          throw createError;
-        }
-      } else {
-        student = newStudent;
-      }
+    const normalizedEmail = studentData.email?.trim().toLowerCase();
+    if (!normalizedEmail) {
+      throw new Error("Student email is required to add a connection");
     }
 
-    // Check if connection already exists (remove .single() to avoid 406 on empty results)
-    const { data: existingConnections, error: connectionCheckError } =
-      await supabase
-        .from("teacher_student_connections")
-        .select("id, status")
-        .eq("teacher_id", user.id)
-        .eq("student_id", student.id);
+    const payload = {
+      p_student_email: normalizedEmail,
+      p_first_name: studentData.firstName?.trim() || null,
+      p_last_name: studentData.lastName?.trim() || null,
+      p_level: studentData.level || null,
+      p_studying_year: studentData.studyingYear || null,
+      p_start_date: studentData.startDate
+        ? new Date(studentData.startDate).toISOString()
+        : null,
+    };
 
-    if (connectionCheckError) {
-      throw connectionCheckError;
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "teacher_link_student",
+      payload
+    );
+
+    if (rpcError) {
+      throw rpcError;
     }
 
-    // Check if any connection exists
-    if (existingConnections && existingConnections.length > 0) {
-      const existingConnection = existingConnections[0];
-      throw new Error(
-        `Connection already exists with status: ${existingConnection.status}`
-      );
+    if (!rpcResult) {
+      throw new Error("Failed to link student. No data was returned.");
     }
-
-    // Create a teacher-student connection
-    const { data: connection, error: connectionError } = await supabase
-      .from("teacher_student_connections")
-      .insert([
-        {
-          teacher_id: user.id,
-          student_id: student.id,
-          status: "accepted", // Auto-approved for now
-          connected_at: studentData.startDate
-            ? new Date(studentData.startDate).toISOString()
-            : new Date().toISOString(),
-        },
-      ])
-      .select()
-      .single();
-
-    if (connectionError) throw connectionError;
-
-    // Temporarily disable notification creation due to RLS policy issues
-    // TODO: Re-enable once policy is fixed
-    /*
-    try {
-      await supabase.from("notifications").insert([
-        {
-          recipient_id: student.id,
-          sender_id: user.id,
-          type: "message",
-          title: "Teacher Connection",
-          message: `You've been connected with teacher ${user.email}. They can now track your practice progress.`,
-          data: {
-            teacher_id: user.id,
-            teacher_email: user.email,
-            connection_id: connection.id,
-          },
-        },
-      ]);
-    } catch (notificationError) {
-      // Notification is optional, don't fail the whole operation
-      console.warn("Could not create notification:", notificationError);
-    }
-    */
 
     const result = {
-      student_id: student.id,
+      student_id: rpcResult.student_id,
       student_name:
-        `${student.first_name || ""} ${student.last_name || ""}`.trim() ||
-        student.username ||
+        rpcResult.student_name ||
+        rpcResult.email?.split("@")[0] ||
         "Unknown Student",
-      student_email: student.email,
-      connection_status: "accepted",
-      connection_id: connection.id,
+      student_email: rpcResult.email,
+      connection_status: rpcResult.connection_status || "accepted",
+      connection_id: rpcResult.connection_id,
+      needs_signup: rpcResult.needs_signup,
+      was_existing_student: rpcResult.was_existing_student,
     };
 
     return result;
@@ -347,6 +385,9 @@ export const getStudentProgress = async (studentId) => {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
+
+    // SECURITY: Verify teacher has connection to this student
+    await verifyTeacherStudentConnection(user.id, studentId);
 
     // Get student details
     const { data: student, error: studentError } = await supabase
@@ -452,6 +493,9 @@ export const sendStudentMessage = async (studentId, messageText) => {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
+
+    // SECURITY: Verify teacher has connection to this student
+    await verifyTeacherStudentConnection(user.id, studentId);
 
     // Create a notification for the student as a message
     const { data: notification, error } = await supabase
@@ -674,7 +718,6 @@ export const getTeacherRecordings = async (filters = {}) => {
     }
 
     if (!connections || connections.length === 0) {
-      
       return [];
     }
 
@@ -687,6 +730,7 @@ export const getTeacherRecordings = async (filters = {}) => {
         `
         id,
         student_id,
+        has_recording,
         recording_url,
         submitted_at,
         duration,
@@ -700,6 +744,7 @@ export const getTeacherRecordings = async (filters = {}) => {
       )
       .in("student_id", studentIds)
       .not("recording_url", "is", null)
+      .neq("recording_url", "")
       .order("submitted_at", { ascending: false });
 
     // Apply filters
@@ -730,7 +775,21 @@ export const getTeacherRecordings = async (filters = {}) => {
     }
 
     if (!recordings || recordings.length === 0) {
-      
+      return [];
+    }
+
+    // Only keep sessions that we know have an audio recording.
+    const audioRecordings = recordings.filter((recording) => {
+      const hasRecordingFlag =
+        recording.has_recording === null || recording.has_recording === true;
+      const hasRecordingUrl =
+        typeof recording.recording_url === "string" &&
+        recording.recording_url.trim().length > 0;
+
+      return hasRecordingFlag && hasRecordingUrl;
+    });
+
+    if (audioRecordings.length === 0) {
       return [];
     }
 
@@ -751,7 +810,7 @@ export const getTeacherRecordings = async (filters = {}) => {
     }, {});
 
     // Format the data
-    const formattedRecordings = recordings.map((recording) => {
+    const formattedRecordings = audioRecordings.map((recording) => {
       const student = studentsMap[recording.student_id];
       return {
         ...recording,
@@ -848,7 +907,27 @@ export const deletePracticeSessions = async (sessionIds) => {
       throw new Error("Only teachers can delete recordings");
     }
 
-    // Delete the practice sessions
+    // SECURITY: First, fetch the sessions to verify teacher has connection to each student
+    const { data: sessions, error: fetchError } = await supabase
+      .from("practice_sessions")
+      .select("id, student_id")
+      .in("id", sessionIds);
+
+    if (fetchError) throw fetchError;
+
+    if (!sessions || sessions.length === 0) {
+      throw new Error("No practice sessions found with the provided IDs");
+    }
+
+    // Get unique student IDs from the sessions
+    const uniqueStudentIds = [...new Set(sessions.map((s) => s.student_id))];
+
+    // Verify teacher has connection to ALL students whose sessions are being deleted
+    for (const studentId of uniqueStudentIds) {
+      await verifyTeacherStudentConnection(user.id, studentId);
+    }
+
+    // Delete the practice sessions (now that authorization is verified)
     const { error } = await supabase
       .from("practice_sessions")
       .delete()
@@ -1105,6 +1184,21 @@ export const updateSubmissionGrade = async (submissionId, score, feedback) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // SECURITY: First, fetch the submission to get the assignment_id
+    const { data: existingSubmission, error: fetchError } = await supabase
+      .from("assignment_submissions")
+      .select("id, assignment_id")
+      .eq("id", submissionId)
+      .single();
+
+    if (fetchError || !existingSubmission) {
+      throw new Error("Submission not found");
+    }
+
+    // Verify the teacher owns the assignment this submission belongs to
+    await verifyTeacherOwnsAssignment(user.id, existingSubmission.assignment_id);
+
+    // Now proceed with the update (authorization verified)
     const { data: submission, error } = await supabase
       .from("assignment_submissions")
       .update({
@@ -1256,6 +1350,9 @@ export const sendNotificationToStudent = async (notificationData) => {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
+
+    // SECURITY: Verify teacher has connection to the recipient student
+    await verifyTeacherStudentConnection(user.id, notificationData.recipientId);
 
     const { data: notification, error } = await supabase
       .from("notifications")

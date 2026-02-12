@@ -1,39 +1,64 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
-import AssignmentsList from "../student/AssignmentsList";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streakService } from "../../services/streakService";
-import { achievementService } from "../../services/achievementService";
-import StreakDisplay from "../streak/StreakDisplay";
-import PointsDisplay from "../ui/PointsDisplay";
-import LevelDisplay from "../ui/LevelDisplay";
+import { getNextRecommendedNode } from "../../services/skillProgressService";
 import { useModal } from "../../contexts/ModalContext";
-import { Bell, X, BellOff } from "lucide-react";
+import { Bell, X, TrendingUp } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { practiceService } from "../../services/practiceService";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
-import { Send, Loader2, Mic } from "lucide-react";
+import { Send, Loader2, Music2 } from "lucide-react";
+import { useTotalPoints } from "../../hooks/useTotalPoints";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 import {
   dashboardReminderService,
   formatTimeRemaining,
 } from "../../services/dashboardReminderService";
+import { useUserProfile } from "../../hooks/useUserProfile";
+import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
+import { getAvatarImageSource } from "../../utils/avatarAssets";
+import { getStudentScores } from "../../services/apiDatabase";
+import iconClock from "../../assets/icons/clock.png";
+import iconCrown from "../../assets/icons/crown.png";
+import iconFlame from "../../assets/icons/flame.png";
+import iconStar from "../../assets/icons/star.png";
+import Fireflies from "../ui/Fireflies";
+import iconFlameSimple from "../../assets/icons/flame-simple.png";
+import DailyGoalsCard from "../dashboard/DailyGoalsCard";
+import XPProgressCard from "../dashboard/XPProgressCard";
+import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
+import { translateNodeName } from "../../utils/translateNodeName";
 
 function Dashboard() {
-  const { user, isTeacher, isStudent, userRole, profile } = useUser();
-  
+  const { user, isTeacher, isStudent, profile } = useUser();
+  const { t, i18n } = useTranslation(["common", "trail"]);
+  const isRTL = i18n.dir() === "rtl";
+  const queryClient = useQueryClient();
+  const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
+  const avatarUrl = getAvatarImageSource(
+    profileData?.avatars || profileData?.avatar_url,
+    profileData?.avatar_url
+  );
+  const layeredAccessories = Array.isArray(profileData?.equipped_accessories)
+    ? profileData.equipped_accessories.filter((item) => item?.image_url)
+    : [];
+
+
   // Only load student-specific data if user is a student (Performance optimization for teachers)
   const { scores, isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();
   const [activeReminder, setActiveReminder] = useState(null);
 
+  // Note: Progress migration removed in v1.3 - all users started fresh with redesigned trail system
+
   // Poll for active reminder status (only for students)
   useEffect(() => {
     if (!isStudent) return;
-    
+
     const updateReminderStatus = () => {
       const reminder = dashboardReminderService.getActiveReminder();
       setActiveReminder(reminder);
@@ -50,111 +75,145 @@ function Dashboard() {
 
   // Fetch user streak (only for students)
   const {
-    data: streak = { current_streak: 0, longest_streak: 0 },
+    data: currentStreak = 0,
     isLoading: streakLoading,
   } = useQuery({
     queryKey: ["streak", user?.id],
-    queryFn: () => streakService.getUserStreak(user.id),
+    queryFn: () => streakService.getStreak(),
     enabled: !!user?.id && isStudent, // Only fetch for students
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
   });
 
-  // Check if connected to real-time updates
-  const isConnected = true; // Placeholder for real-time connection status
+  // Fetch total points and calculate trend
+  const { data: totalPointsData } = useTotalPoints({
+    staleTime: 0,
+    refetchOnMount: "always",
+    keepPreviousData: false,
+  });
+  const totalPoints = totalPointsData?.totalPoints || 0;
 
-  // Fetch user's earned achievements to filter out completed next steps (only for students)
-  const { data: earnedAchievements = [] } = useQuery({
-    queryKey: ["earned-achievements", user?.id],
-    queryFn: () => achievementService.getEarnedAchievements(user.id),
-    enabled: !!user?.id && isStudent, // Only fetch for students
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  // Calculate points trend (simplified - using recent scores if available)
+  const calculateRecentTrend = (scores) => {
+    if (!scores || !Array.isArray(scores) || scores.length === 0) return 0;
+    const recent = scores.slice(0, 7);
+    const older = scores.slice(7, 14);
+    const recentAvg =
+      recent.reduce((sum, score) => sum + (score.score || 0), 0) /
+      recent.length;
+    const olderAvg =
+      older.length > 0
+        ? older.reduce((sum, score) => sum + (score.score || 0), 0) /
+          older.length
+        : recentAvg;
+    if (olderAvg === 0) return 0;
+    return ((recentAvg - olderAvg) / olderAvg) * 100;
+  };
+
+  const { data: scoresData } = useQuery({
+    queryKey: ["student-scores", user?.id],
+    queryFn: () => {
+      if (!user?.id || !isStudent) return [];
+      return getStudentScores(user.id);
+    },
+    enabled: !!user?.id && isStudent,
+    staleTime: 3 * 60 * 1000,
   });
 
-  // Create a set of earned achievement IDs for quick lookup
-  const earnedAchievementIds = new Set(
-    earnedAchievements.map((achievement) => achievement.achievement_id)
-  );
+  const pointsTrend = calculateRecentTrend(scoresData || []);
 
-  // Define next steps with their corresponding achievement IDs
-  const allNextSteps = [
-    {
-      id: "first_session",
-      icon: "🎯",
-      title: "Record Your First Session",
-      description:
-        'Complete your first practice session to earn the "First Steps" badge',
-      points: 50,
-      colors: {
-        bg: "from-blue-50 to-indigo-50",
-        border: "border-blue-100",
-        icon: "from-blue-500 to-indigo-500",
-        text: "text-blue-600",
-      },
+  // Fetch next recommended trail node (only for students)
+  const { data: nextNode } = useQuery({
+    queryKey: ["next-recommended-node", user?.id],
+    queryFn: () => {
+      if (!user?.id || !isStudent) return null;
+      return getNextRecommendedNode(user.id);
     },
-    {
-      id: "streak_3",
-      icon: "🔥",
-      title: "Build a Practice Streak",
-      description: 'Practice for 3 days in a row to unlock "Building Habits"',
-      points: 100,
-      colors: {
-        bg: "from-orange-50 to-red-50",
-        border: "border-orange-100",
-        icon: "from-orange-500 to-red-500",
-        text: "text-orange-600",
-      },
-    },
-    {
-      id: "perfect_score",
-      icon: "🎵",
-      title: "Master Practice Games",
-      description: "Score 100% in a rhythm or note recognition game",
-      points: 150,
-      colors: {
-        bg: "from-purple-50 to-pink-50",
-        border: "border-purple-100",
-        icon: "from-purple-500 to-pink-500",
-        text: "text-purple-600",
-      },
-    },
-    {
-      id: "high_scorer",
-      icon: "💎",
-      title: "Reach 1000 Points",
-      description: 'Accumulate 1000 total points to become a "High Scorer"',
-      points: 250,
-      colors: {
-        bg: "from-green-50 to-emerald-50",
-        border: "border-green-100",
-        icon: "from-green-500 to-emerald-500",
-        text: "text-green-600",
-      },
-    },
-    {
-      id: "streak_7",
-      icon: "⭐",
-      title: "Weekly Warrior",
-      description: "Practice for 7 days in a row",
-      points: 200,
-      colors: {
-        bg: "from-yellow-50 to-amber-50",
-        border: "border-yellow-100",
-        icon: "from-yellow-500 to-amber-500",
-        text: "text-yellow-600",
-      },
-    },
-  ];
+    enabled: !!user?.id && isStudent,
+    staleTime: 1 * 60 * 1000, // 1 minute - node availability changes when exercises complete
+  });
 
-  // Filter out completed achievements and limit to 4 items
-  const availableNextSteps = allNextSteps
-    .filter((step) => !earnedAchievementIds.has(step.id))
-    .slice(0, 4);
+  // Fetch daily goals with progress (only for students)
+  const { data: dailyGoals = [], isLoading: goalsLoading, error: goalsError } = useQuery({
+    queryKey: ["daily-goals", user?.id, (() => {
+      const today = new Date();
+      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    })()],
+    queryFn: async () => {
+      if (!user?.id || !isStudent) {
+        return [];
+      }
+      return await getDailyGoalsWithProgress(user.id);
+    },
+    enabled: !!user?.id && isStudent,
+    staleTime: 30 * 1000, // 30 seconds - goals update frequently during practice
+    refetchInterval: 60 * 1000, // Refetch every minute to keep progress fresh
+  });
 
-  // Handle cancel reminder
-  const handleCancelReminder = () => {
-    dashboardReminderService.cancelReminder();
-    toast.success("Reminder cancelled");
+  // Log goals error if any
+  useEffect(() => {
+    if (goalsError) {
+      console.error('Daily goals query error:', goalsError);
+    }
+  }, [goalsError]);
+
+  // Get level info
+  const getLevelInfo = (points) => {
+    if (points === 0) {
+      return {
+        name: t("dashboard.levels.beginner.name"),
+        description: t("dashboard.levels.beginner.description"),
+      };
+    } else if (points < 100) {
+      return {
+        name: t("dashboard.levels.student.name"),
+        description: t("dashboard.levels.student.description"),
+      };
+    } else if (points < 500) {
+      return {
+        name: t("dashboard.levels.practitioner.name"),
+        description: t("dashboard.levels.practitioner.description"),
+      };
+    } else if (points < 1000) {
+      return {
+        name: t("dashboard.levels.expert.name"),
+        description: t("dashboard.levels.expert.description"),
+      };
+    } else if (points < 2500) {
+      return {
+        name: t("dashboard.levels.master.name"),
+        description: t("dashboard.levels.master.description"),
+      };
+    } else {
+      return {
+        name: t("dashboard.levels.legend.name"),
+        description: t("dashboard.levels.legend.description"),
+      };
+    }
+  };
+
+  const levelInfo = getLevelInfo(totalPoints);
+  const levelName = levelInfo.name;
+
+  // Helper functions for streak progress
+  const getStreakProgress = (currentStreak) => {
+    const milestones = [1, 3, 7, 14, 30, 50, 100];
+    const nextMilestone = milestones.find((m) => m > currentStreak);
+    if (!nextMilestone) return 100;
+    const prevMilestone =
+      milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+    const progress =
+      ((currentStreak - prevMilestone) / (nextMilestone - prevMilestone)) * 100;
+    return Math.min(100, Math.max(0, progress));
+  };
+
+  const getNextStreakMilestone = (currentStreak) => {
+    const milestones = [1, 3, 7, 14, 30, 50, 100];
+    const nextMilestone = milestones.find((m) => m > currentStreak);
+    if (!nextMilestone) return t("dashboard.streak.maxReached");
+    const prevMilestone =
+      milestones[milestones.indexOf(nextMilestone) - 1] || 0;
+    return `${prevMilestone} ${t("dashboard.streak.rangeSeparator")} ${nextMilestone} ${t("dashboard.streak.dayLabel", { count: nextMilestone })}`;
   };
 
   // Modal opening functions
@@ -165,18 +224,16 @@ function Dashboard() {
       try {
         const result = await dashboardReminderService.requestPermission();
         if (result !== "granted") {
-          toast.error("Please allow notifications to enable reminders");
+          toast.error(t("dashboard.toasts.permissionRequired"));
           return;
         }
       } catch (error) {
         console.error("Permission request failed:", error);
-        toast.error("Failed to request notification permission");
+        toast.error(t("dashboard.toasts.requestFailed"));
         return;
       }
     } else if (permission === "denied") {
-      toast.error(
-        "Notifications are blocked. Please enable them in your browser settings."
-      );
+      toast.error(t("dashboard.toasts.notificationsBlocked"));
       return;
     }
 
@@ -205,17 +262,17 @@ function Dashboard() {
             new Date().getTime() + timeDifferenceInMinutes * 60 * 1000;
           dashboardReminderService.scheduleReminder(dateTimeMs);
           closeModal();
-          toast.success("Reminder set successfully!");
+          toast.success(t("dashboard.toasts.reminderScheduled"));
         } else {
-          toast.error("Please select a future date and time");
+          toast.error(t("dashboard.toasts.futureTimeRequired"));
         }
       };
 
       return (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Date
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("dashboard.reminders.dateLabel")}
             </label>
             <input
               type="date"
@@ -223,27 +280,27 @@ function Dashboard() {
               min={minDate}
               value={formDate}
               onChange={(e) => setFormDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full rounded-md border border-gray-300 p-2"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Time
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              {t("dashboard.reminders.timeLabel")}
             </label>
             <input
               type="time"
               required
               value={formTime}
               onChange={(e) => setFormTime(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
+              className="w-full rounded-md border border-gray-300 p-2"
             />
           </div>
           <button
             type="submit"
-            className="w-full py-3 px-6 text-lg font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-6 py-3 text-lg font-medium text-white transition-colors hover:bg-blue-700"
           >
-            <Bell className="w-5 h-5" />
-            Set Reminder
+            <Bell className="h-5 w-5" />
+            {t("common.actions.setReminder")}
           </button>
         </form>
       );
@@ -253,12 +310,12 @@ function Dashboard() {
       <>
         <button
           onClick={closeModal}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
         >
           <X className="h-6 w-6" />
         </button>
-        <h3 className="text-xl font-bold text-gray-800 mb-4">
-          Set Practice Reminder
+        <h3 className="mb-4 text-xl font-bold text-gray-800">
+          {t("dashboard.reminders.modalTitle")}
         </h3>
         <ReminderForm />
       </>
@@ -278,8 +335,12 @@ function Dashboard() {
         setRecordingDuration(duration);
         const minutes = Math.floor(duration / 60);
         const seconds = duration % 60;
+        const secondsString = seconds.toString().padStart(2, "0");
         toast.success(
-          `Recording completed (${minutes}:${seconds.toString().padStart(2, "0")})`
+          t("dashboard.recording.completed", {
+            minutes,
+            seconds: secondsString,
+          })
         );
       };
 
@@ -300,7 +361,7 @@ function Dashboard() {
         try {
           setUploadProgress({ phase: "preparing", percentage: 0 });
 
-          const result = await uploadPracticeSession.mutateAsync({
+          await uploadPracticeSession.mutateAsync({
             recordingBlob,
             notes,
             recordingDuration,
@@ -312,35 +373,37 @@ function Dashboard() {
               },
               onRetry: (retryInfo) => {
                 toast.error(
-                  `Upload failed, retrying... (${retryInfo.attempt}/3)`
+                  t("dashboard.recording.retry", {
+                    attempt: retryInfo.attempt,
+                  })
                 );
               },
             },
           });
 
           closeModal();
-        } catch (error) {
+        } catch {
           // Error handling is done in the hook
         }
       };
 
       return (
-        <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-800">
-              Record Practice Session
+              {t("dashboard.recording.title")}
             </h2>
             <button
               onClick={handleModalClose}
-              className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+              className="p-2 text-gray-500 transition-colors hover:text-gray-700"
             >
-              <X className="w-6 h-6" />
+              <X className="h-6 w-6" />
             </button>
           </div>
 
           <div className="space-y-6">
             {!recordingBlob && (
-              <div className="bg-gray-50 rounded-xl p-6">
+              <div className="rounded-xl bg-gray-50 p-6">
                 <AudioRecorder
                   onRecordingComplete={handleRecordingComplete}
                   onRecordingCancel={handleRecordingCancel}
@@ -354,9 +417,9 @@ function Dashboard() {
 
             {recordingBlob && (
               <div className="space-y-6">
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Review Your Recording
+                <div className="rounded-xl bg-gray-50 p-6">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-800">
+                    {t("dashboard.recording.reviewTitle")}
                   </h3>
                   <AudioPlayer
                     src={URL.createObjectURL(recordingBlob)}
@@ -368,14 +431,14 @@ function Dashboard() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 text-sm font-medium mb-2">
-                    Practice Notes (Optional)
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    {t("dashboard.recording.notesLabel")}
                   </label>
                   <textarea
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Add notes about your practice session, what you worked on, challenges faced, etc..."
-                    className="w-full p-4 rounded-xl border border-gray-300 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"
+                    placeholder={t("dashboard.recording.notesPlaceholder")}
+                    className="w-full resize-none rounded-xl border border-gray-300 p-4 text-gray-900 placeholder-gray-500 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     rows="4"
                   />
                 </div>
@@ -384,33 +447,36 @@ function Dashboard() {
                   <button
                     onClick={handleSubmit}
                     disabled={uploadPracticeSession.isPending}
-                    className="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-green-600 px-6 py-3 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {uploadPracticeSession.isPending ? (
                       <>
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin" />
                         {uploadProgress?.phase === "preparing" &&
-                          "Preparing..."}
+                          t("dashboard.recording.uploadStatus.preparing")}
                         {uploadProgress?.phase === "uploading" &&
-                          `Uploading... (${uploadProgress.percentage}%)`}
+                          t("dashboard.recording.uploadStatus.uploading", {
+                            percentage: uploadProgress.percentage,
+                          })}
                         {uploadProgress?.phase === "completed" &&
-                          "Finalizing..."}
-                        {!uploadProgress && "Uploading..."}
+                          t("dashboard.recording.uploadStatus.finalizing")}
+                        {!uploadProgress &&
+                          t("dashboard.recording.uploadStatus.default")}
                       </>
                     ) : (
                       <>
-                        <Send className="w-5 h-5" />
-                        Submit Recording
+                        <Send className="h-5 w-5" />
+                        {t("dashboard.recording.submit")}
                       </>
                     )}
                   </button>
                   <button
                     onClick={handleRecordingCancel}
                     disabled={uploadPracticeSession.isPending}
-                    className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex items-center gap-2 rounded-xl bg-gray-600 px-6 py-3 font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    <X className="w-5 h-5" />
-                    Record Again
+                    <X className="h-5 w-5" />
+                    {t("common.actions.recordAgain")}
                   </button>
                 </div>
               </div>
@@ -425,13 +491,13 @@ function Dashboard() {
 
   if (isLoading || streakLoading) {
     return (
-      <div className="min-h-screen p-6">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen">
+        <div className="mx-auto max-w-7xl px-6 py-6 md:px-8 md:py-8">
           <div className="animate-pulse space-y-6">
-            <div className="h-8 bg-white/20 rounded w-1/3"></div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="h-8 w-1/3 rounded bg-white/20"></div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 bg-white/20 rounded-2xl"></div>
+                <div key={i} className="h-32 rounded-2xl bg-white/20"></div>
               ))}
             </div>
           </div>
@@ -441,267 +507,544 @@ function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen  p-6">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header Section */}
-        <div className="text-center lg:text-left">
-          <h1 className="text-3xl lg:text-4xl font-bold text-white mb-2">
-            Welcome back,
-            {profile?.first_name ? (
-              <span className="ml-2">{profile.first_name}!</span>
-            ) : user?.user_metadata?.full_name ? (
-              <span className="block mt-1">
-                {user.user_metadata.full_name}!
+    <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Hero (full-width on mobile, contained on desktop) */}
+      <header className="group relative h-[320px] overflow-hidden rounded-none shadow-2xl md:mx-auto md:h-[400px] md:max-w-7xl md:rounded-[2.5rem] md:px-6 md:py-6 lg:px-8 lg:py-8">
+        <picture className="absolute inset-0">
+          <source
+            media="(min-width: 1024px)"
+            type="image/webp"
+            srcSet="/images/desktop-dashboard-hero.webp"
+          />
+          <source
+            type="image/webp"
+            srcSet="/images/dashboard-hero.webp"
+          />
+          <source
+            media="(min-width: 1024px)"
+            srcSet="/images/desktop-dashboard-hero.png"
+          />
+          <img
+            src="/images/dashboard-hero.png"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            aria-hidden="true"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </picture>
+
+        {/* Dark gradient overlay like the reference */}
+        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-violet-950 via-violet-950/40 to-transparent opacity-90" />
+
+        {/* Fireflies effect overlay */}
+        <Fireflies count={5} className="z-[2]" />
+
+        <div className="relative z-20 flex h-full flex-col justify-between p-4 md:p-8 lg:p-10">
+          {/* Hero top row: avatar + app icon/name (matches reference screenshots) */}
+          <div
+            className={`absolute left-4 top-[calc(var(--safe-area-top)+1rem)] z-30 flex items-center gap-4 md:left-6 md:top-[calc(var(--safe-area-top)+1.5rem)] lg:left-0 lg:top-0 ${
+              isRTL
+                ? "left-auto right-4 flex-row-reverse md:left-auto md:right-6 lg:left-auto lg:right-8"
+                : ""
+            }`}
+          >
+            {isProfileLoading ? (
+              <div className="h-12 w-12 animate-pulse rounded-full bg-white/10" />
+            ) : avatarUrl ? (
+              <Link to="/avatars">
+                <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full border-2 border-indigo-500/60 bg-white/10">
+                  <img
+                    className="h-full w-full object-cover"
+                    src={avatarUrl}
+                    alt={t("avatars.title", { defaultValue: "User avatar" })}
+                    loading="eager"
+                  />
+                  {layeredAccessories.map((item) => {
+                    const slot = item.slot || item.category || "accessory";
+                    const slotClass =
+                      ACCESSORY_SLOT_STYLES[slot] ||
+                      ACCESSORY_SLOT_STYLES.accessory;
+                    return (
+                      <img
+                        key={`${item.accessory_id || item.image_url}-${slot}`}
+                        src={item.image_url}
+                        alt=""
+                        aria-hidden="true"
+                        className={`${slotClass} pointer-events-none object-contain`}
+                      />
+                    );
+                  })}
+                </div>
+              </Link>
+            ) : null}
+
+            <div
+              className={`flex items-center gap-2 text-white/90 ${
+                isRTL ? "flex-row-reverse" : ""
+              }`}
+            >
+              <Music2 className="h-6 w-6 text-indigo-300" />
+              <span className="text-xl font-extrabold tracking-wide">
+                {t("app.title")}
               </span>
-            ) : (
-              <span className="block mt-1">Musician!</span>
-            )}
-          </h1>
-        </div>
-
-        {/* Stats Section */}
-        <div className="space-y-8">
-          {/* Stats Grid - 4 columns on large, 2 on medium, 1 on small */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-            {/* Daily Streak */}
-            <StreakDisplay variant="card" />
-
-            {/* Total Points */}
-            <PointsDisplay variant="card" />
-
-            {/* Practice Time */}
-            <div className="card-compact p-3">
-              <div className="flex flex-col items-center text-center">
-                <h3 className="text-xs font-medium text-gray-600">
-                  Practice Time
-                </h3>
-                <p className="mt-1 text-lg font-bold text-gray-900">
-                  {scores?.practice_time || 0}
-                  <span className="text-xs ml-1">h</span>
-                </p>
-              </div>
             </div>
-
-            {/* Level */}
-            <LevelDisplay variant="card" />
           </div>
 
-          {/* Quick Access Panel for Teachers */}
-          {isTeacher && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Students Overview */}
-              <Link
-                to="/teacher/students"
-                className="card-hover p-6 block group"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl">👥</span>
-                  </div>
-                  <div className="text-gray-900 font-medium mb-2">Students</div>
-                  <div className="text-gray-600 text-sm">
-                    Manage and track student progress
-                  </div>
-                </div>
-              </Link>
+          {/* Hero center: welcome text */}
+          <div className="flex flex-1 items-center justify-center">
+            <div className="space-y-3 text-center md:space-y-4">
+              <h1 className="text-4xl font-medium tracking-tight text-white drop-shadow-lg md:text-6xl">
+                {t("dashboard.header.welcomeBack")},{" "}
+                <span className="bg-gradient-to-r from-purple-300 to-indigo-300 bg-clip-text text-transparent">
+                  {profile?.first_name
+                    ? `${profile.first_name}!`
+                    : user?.user_metadata?.full_name
+                      ? `${user.user_metadata.full_name}!`
+                      : `${t("dashboard.header.defaultName")}!`}
+                </span>
+              </h1>
+              <p className="text-base font-medium text-white/80 md:text-lg">
+                {t("dashboard.header.subtitle", {
+                  defaultValue: "Your musical journey continues",
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+      </header>
 
-              {/* Assignments */}
-              <Link
-                to="/teacher/assignments"
-                className="card-hover p-6 block group"
-              >
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                    <span className="text-2xl">📋</span>
+      <div className="relative z-30 mx-auto max-w-7xl space-y-8 px-6 py-6 md:px-8 md:py-8">
+        {/* Continue Learning Section (only for students with trail access) */}
+        {isStudent && nextNode && (
+          <section className="space-y-3">
+            <Link
+              to="/trail"
+              state={{ highlightNodeId: nextNode.id }}
+              className="group relative block overflow-hidden rounded-3xl border-2 border-blue-400/60 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 p-6 shadow-[0_0_0_1px_rgba(59,130,246,0.4),0_0_20px_rgba(99,102,241,0.5),0_0_40px_rgba(139,92,246,0.4)] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_0_0_2px_rgba(59,130,246,0.5),0_0_30px_rgba(99,102,241,0.6),0_0_60px_rgba(139,92,246,0.5)]"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-white/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="relative z-10">
+                <div className={isRTL ? "text-right" : ""}>
+                  <div className="text-xl font-bold text-white drop-shadow">
+                    {t("dashboard.continueButton.title", { defaultValue: "Continue Learning" })}
                   </div>
-                  <div className="text-gray-900 font-medium">Assignments</div>
-                  <div className="text-gray-600 text-sm">
-                    Create and track assignments
+                  <div className="mt-1 text-sm text-white/80">
+                    {translateNodeName(nextNode.name, t, i18n)} {nextNode.progress?.stars > 0 && `(${nextNode.progress.stars}★)`}
                   </div>
                 </div>
+              </div>
+            </Link>
+
+            <div className="text-center">
+              <Link
+                to="/practice-modes"
+                className="text-sm font-medium text-white/70 transition-colors hover:text-white/90 hover:underline"
+              >
+                {t("dashboard.continueButton.freePractice", { defaultValue: "Free Practice Mode" })} →
               </Link>
             </div>
-          )}
-        </div>
+          </section>
+        )}
 
-        {/* Bottom Section - Three Equal Width Containers */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Next Steps Section */}
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-6">
-              Next Steps to Earn Badges
-            </h3>
+        {/* XP Progress Section (only for students) */}
+        {isStudent && (
+          <section>
+            <XPProgressCard />
+          </section>
+        )}
 
-            <div className="space-y-4">
-              {availableNextSteps.length > 0 ? (
-                availableNextSteps.map((step) => (
-                  <div
-                    key={step.id}
-                    className={`flex items-start gap-3 p-4 bg-gradient-to-r ${step.colors.bg} rounded-xl border ${step.colors.border}`}
-                  >
-                    <div
-                      className={`w-10 h-10 bg-gradient-to-br ${step.colors.icon} rounded-full flex items-center justify-center flex-shrink-0`}
-                    >
-                      <span className="text-white text-lg">{step.icon}</span>
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900 mb-1">
-                        {step.title}
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">
-                        {step.description}
-                      </div>
-                      <div
-                        className={`text-xs ${step.colors.text} font-medium`}
-                      >
-                        +{step.points} points
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <div className="text-4xl mb-4">🎉</div>
-                  <div className="font-medium text-gray-900 mb-2">
-                    Great Progress!
-                  </div>
-                  <div className="text-sm text-gray-600 mb-4">
-                    You've completed the main achievement milestones. Keep
-                    practicing to unlock more advanced badges!
-                  </div>
-                  <Link
-                    to="/achievements"
-                    className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
-                  >
-                    View All Achievements
-                  </Link>
+        {/* Daily Goals Section (only for students) */}
+        {isStudent && (
+          <section>
+            <DailyGoalsCard goals={dailyGoals} isLoading={goalsLoading} />
+          </section>
+        )}
+
+        {/* Stats grid (glass style like reference image) */}
+        <section className="relative z-30 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Daily Streak Card */}
+          <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-orange flex h-full w-full items-center justify-center">
+                <img
+                  src={iconFlame}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(255, 140, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 69, 0, 0.4)) drop-shadow(0 0 60px rgba(255, 140, 0, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              {t("dashboard.stats.dailyStreak")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-3xl font-black text-white"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {currentStreak || 0}{" "}
+                <span className="text-base font-bold text-white/70">
+                  {t("dashboard.streak.dayLabel", {
+                    count: currentStreak || 0,
+                  })}
+                </span>
+              </div>
+              <div className="mt-1 text-sm font-bold text-orange-200">
+                {currentStreak >= 3 && currentStreak < 7
+                  ? t("dashboard.streak.messages.gettingHot")
+                  : currentStreak >= 7
+                    ? t("dashboard.streak.messages.onFire")
+                    : t("dashboard.streak.messages.buildingMomentum")}
+              </div>
+            </div>
+            <div className="mt-2 w-full">
+              <div className="h-2 w-full rounded-full bg-white/15">
+                <div
+                  className="h-2 rounded-full bg-gradient-to-r from-orange-400 to-red-500 transition-all duration-500"
+                  style={{
+                    width: `${getStreakProgress(currentStreak || 0)}%`,
+                  }}
+                />
+              </div>
+              <div className="mt-2 text-center text-xs font-medium text-white/60">
+                {getNextStreakMilestone(currentStreak || 0)}
+              </div>
+            </div>
+          </div>
+
+          {/* Total Points Card */}
+          <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-gold flex h-full w-full items-center justify-center">
+                <img
+                  src={iconStar}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 223, 0, 0.4)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              {t("dashboard.stats.totalPoints")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-3xl font-black text-white"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {totalPoints.toLocaleString()}
+              </div>
+              {pointsTrend > 0 && (
+                <div className="mt-1 flex items-center justify-center gap-1 text-sm font-bold text-green-300">
+                  <TrendingUp className="h-4 w-4" />
+                  {Math.round(pointsTrend)}%
                 </div>
               )}
             </div>
+            <div className="h-2" />
+          </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <div className="text-center">
-                <Link
-                  to="/achievements"
-                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors"
+          {/* Practice Time Card */}
+          <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-blue flex h-full w-full items-center justify-center">
+                <img
+                  src={iconClock}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(100, 181, 246, 0.6)) drop-shadow(0 0 40px rgba(66, 165, 245, 0.4)) drop-shadow(0 0 60px rgba(100, 181, 246, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              {t("dashboard.stats.practiceTime")}
+            </div>
+            <div className="text-center">
+              <div
+                className="text-3xl font-black text-white"
+                style={{ fontFamily: "'Nunito', sans-serif" }}
+              >
+                {scores?.practice_time || 0}{" "}
+                <span className="text-lg font-bold text-white/70">
+                  {t("dashboard.stats.hoursAbbrev")}
+                </span>
+              </div>
+            </div>
+            <div className="h-2" />
+          </div>
+
+          {/* Level Card */}
+          <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
+            <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
+              <div className="stats-icon-glow stats-icon-glow-amber flex h-full w-full items-center justify-center">
+                <img
+                  src={iconCrown}
+                  alt=""
+                  aria-hidden="true"
+                  className="h-full w-full select-none object-contain"
+                  style={{
+                    filter:
+                      "drop-shadow(0 0 20px rgba(255, 215, 0, 0.6)) drop-shadow(0 0 40px rgba(255, 193, 7, 0.4)) drop-shadow(0 0 60px rgba(255, 215, 0, 0.2))",
+                  }}
+                  draggable="false"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+              {t("dashboard.stats.level")}
+            </div>
+            <div className="text-center">
+              <div className="text-3xl font-black text-yellow-200">
+                {String(levelName || "").toUpperCase()}
+              </div>
+            </div>
+            <div className="h-2" />
+          </div>
+        </section>
+
+        {/* Quick Access Panel for Teachers */}
+        {isTeacher && (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Students Overview */}
+            <Link to="/teacher/students" className="card-hover group block p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-green-500 to-emerald-500 transition-transform group-hover:scale-110">
+                  <span className="text-2xl">👥</span>
+                </div>
+                <div className="mb-2 font-medium text-gray-900">
+                  {t("dashboard.teacherPanel.students.title")}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("dashboard.teacherPanel.students.description")}
+                </div>
+              </div>
+            </Link>
+
+            {/* Assignments */}
+            <Link
+              to="/teacher/assignments"
+              className="card-hover group block p-6"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 transition-transform group-hover:scale-110">
+                  <span className="text-2xl">📋</span>
+                </div>
+                <div className="font-medium text-gray-900">
+                  {t("dashboard.teacherPanel.assignments.title")}
+                </div>
+                <div className="text-sm text-gray-600">
+                  {t("dashboard.teacherPanel.assignments.description")}
+                </div>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Bottom Section - Mystical forest style (matches reference) */}
+        <section className="grid grid-cols-1 gap-6 pb-8 lg:grid-cols-3">
+          {/* Left / Big Panel: My Progress */}
+          <div
+            className="relative overflow-hidden rounded-[2.25rem] border-2 border-purple-400/60 bg-gradient-to-br from-purple-900/90 via-indigo-900/90 to-violet-900/90 shadow-[0_0_0_1px_rgba(168,85,247,0.4),0_0_0_2px_rgba(139,92,246,0.3),0_0_20px_rgba(168,85,247,0.5),0_0_40px_rgba(139,92,246,0.4),0_0_60px_rgba(168,85,247,0.3),0_0_80px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(168,85,247,0.1)] lg:col-span-2"
+          >
+            <div className="relative z-10 p-6 sm:p-8">
+              <div
+                className={`mb-6 flex items-center justify-between ${
+                  isRTL ? "flex-row-reverse" : ""
+                }`}
+              >
+                <h3 className="text-lg font-bold text-white/90 drop-shadow">
+                  {t("dashboard.myProgress.title", {
+                    defaultValue: "My Progress",
+                  })}
+                </h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {/* Build a Practice Streak */}
+                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_24px_rgba(99,102,241,0.22)] backdrop-blur-md">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+                  <div className="relative">
+                    <div className={isRTL ? "text-right" : ""}>
+                      <div className="text-sm font-semibold text-white/90">
+                        {t("dashboard.nextSteps.items.streak3.title", {
+                          defaultValue: "Build a Practice Streak",
+                        })}
+                      </div>
+                      <div className="mt-2 text-xs text-white/70">
+                        {t("dashboard.nextSteps.items.streak3.description", {
+                          defaultValue: "Keep it up!",
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Assignments */}
+                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_24px_rgba(168,85,247,0.20)] backdrop-blur-md">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
+                  <div className="relative">
+                    <div
+                      className={`mb-4 flex items-center justify-between ${
+                        isRTL ? "flex-row-reverse" : ""
+                      }`}
+                    >
+                      <h4 className="text-sm font-semibold text-white/90">
+                        {t("dashboard.assignments.title", {
+                          defaultValue: "Assignments",
+                        })}
+                      </h4>
+                    </div>
+
+                    <div
+                      className={`flex flex-wrap gap-3 ${
+                        isRTL ? "justify-end" : ""
+                      }`}
+                    >
+                      <span className="rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 shadow-[0_0_16px_rgba(59,130,246,0.18)]">
+                        {t("dashboard.assignments.noPending", {
+                          defaultValue: "No pending",
+                        })}
+                      </span>
+                      <span className="rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 shadow-[0_0_16px_rgba(34,197,94,0.14)]">
+                        {t("dashboard.assignments.completed", {
+                          count: 0,
+                          defaultValue: "0 completed",
+                        })}
+                      </span>
+                    </div>
+
+                    <div className="mt-6 text-center text-xs italic text-white/70">
+                      {t("dashboard.assignments.allCaughtUp", {
+                        defaultValue: "You're all caught up!",
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Panel: Practice Tools */}
+          <div
+            className="relative overflow-hidden rounded-[2.25rem] border-2 border-indigo-400/60 bg-gradient-to-br from-indigo-900/90 via-blue-900/90 to-cyan-900/90 shadow-[0_0_0_1px_rgba(99,102,241,0.4),0_0_0_2px_rgba(79,70,229,0.3),0_0_20px_rgba(99,102,241,0.5),0_0_40px_rgba(79,70,229,0.4),0_0_60px_rgba(99,102,241,0.3),0_0_80px_rgba(59,130,246,0.2),inset_0_0_20px_rgba(99,102,241,0.1)]"
+          >
+            <div className="relative z-10 p-6 sm:p-8">
+              <h3 className="mb-6 text-lg font-bold text-white/90 drop-shadow">
+                {t("dashboard.practiceTools.title", {
+                  defaultValue: "Practice Tools",
+                })}
+              </h3>
+
+              <div className="grid grid-cols-1 gap-4">
+                {/* Shared card style */}
+                {!activeReminder && (
+                  <button
+                    onClick={openReminderModal}
+                    className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-left text-white/90 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_26px_rgba(168,85,247,0.20)] backdrop-blur-md transition hover:bg-white/10 ${
+                      isRTL ? "flex-row-reverse text-right" : ""
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/25 shadow-[0_0_18px_rgba(168,85,247,0.28)]">
+                      <Bell className="h-6 w-6 text-white/90" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">
+                        {t("dashboard.practiceTools.cards.reminder.title")}
+                      </div>
+                      <div className="mt-0.5 text-xs text-white/70">
+                        {t(
+                          "dashboard.practiceTools.cards.reminder.description"
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                )}
+
+                {activeReminder && (
+                  <div
+                    className={`flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-white/90 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_26px_rgba(168,85,247,0.20)] backdrop-blur-md ${
+                      isRTL ? "flex-row-reverse text-right" : ""
+                    }`}
+                  >
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/25 shadow-[0_0_18px_rgba(168,85,247,0.28)]">
+                      <Bell className="h-6 w-6 animate-pulse text-white/90" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold">
+                        {t("dashboard.practiceTools.activeReminder.title")}{" "}
+                        {formatTimeRemaining(activeReminder.timeLeft)}
+                      </div>
+                      <div className="mt-0.5 text-xs text-white/70">
+                        {t("dashboard.practiceTools.activeReminder.setFor", {
+                          time: new Date(
+                            activeReminder.dateTime
+                          ).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }),
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  onClick={openRecordModal}
+                  className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-left text-white/90 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_26px_rgba(34,197,94,0.14)] backdrop-blur-md transition hover:bg-white/10 ${
+                    isRTL ? "flex-row-reverse text-right" : ""
+                  }`}
                 >
-                  View All Achievements →
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/25 shadow-[0_0_18px_rgba(34,197,94,0.18)]">
+                    <span className="text-lg">🎤</span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">
+                      {t("dashboard.practiceTools.cards.recording.title")}
+                    </div>
+                    <div className="mt-0.5 text-xs text-white/70">
+                      {t("dashboard.practiceTools.cards.recording.description")}
+                    </div>
+                  </div>
+                </button>
+
+                <Link
+                  to="/practice-sessions"
+                  className={`group flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4 text-left text-white/90 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_26px_rgba(59,130,246,0.18)] backdrop-blur-md transition hover:bg-white/10 ${
+                    isRTL ? "flex-row-reverse text-right" : ""
+                  }`}
+                >
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/25 shadow-[0_0_18px_rgba(59,130,246,0.22)]">
+                    <span className="text-lg">📊</span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold">
+                      {t("dashboard.practiceTools.cards.history.title")}
+                    </div>
+                    <div className="mt-0.5 text-xs text-white/70">
+                      {t("dashboard.practiceTools.cards.history.description")}
+                    </div>
+                  </div>
                 </Link>
               </div>
             </div>
           </div>
-
-          {/* Assignments Section */}
-          <div>
-            <AssignmentsList />
-          </div>
-
-          {/* Practice Tools Section */}
-          <div className="card p-6">
-            <h3 className="text-lg font-medium text-gray-900 mb-6">
-              Practice Tools
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
-              {/* Active Reminder Indicator */}
-              {activeReminder && (
-                <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/40 rounded-xl p-4">
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 animate-pulse">
-                        🔔
-                      </div>
-                      <div className="flex-1">
-                        <div className="text-gray-900 font-medium mb-1">
-                          ⏰ Practice reminder in:{" "}
-                          {formatTimeRemaining(activeReminder.timeLeft)}
-                        </div>
-                        <div className="text-gray-600 text-sm">
-                          Set for{" "}
-                          {new Date(activeReminder.dateTime).toLocaleTimeString(
-                            [],
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            }
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleCancelReminder}
-                      className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors font-medium text-sm"
-                    >
-                      <BellOff className="w-4 h-4" />
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Practice Reminder Button */}
-              {!activeReminder && (
-                <button
-                  onClick={openReminderModal}
-                  className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
-                      🔔
-                    </div>
-                    <div className="flex-1">
-                      <div className="text-gray-900 font-medium mb-1">
-                        Set a Practice Reminder
-                      </div>
-                      <div className="text-gray-600 text-sm">
-                        Stay consistent with your practice
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              )}
-
-              {/* Record Practice Session */}
-              <button
-                onClick={openRecordModal}
-                className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block text-left w-full transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    🎤
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-gray-900 font-medium mb-1">
-                      Record Practice Session
-                    </div>
-                    <div className="text-gray-600 text-sm">
-                      Record your practice for feedback
-                    </div>
-                  </div>
-                </div>
-              </button>
-
-              {/* View Practice History */}
-              <Link
-                to="/practice-sessions"
-                className="bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl p-4 block transition-colors"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-full flex items-center justify-center flex-shrink-0">
-                    📊
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-gray-900 font-medium mb-1">
-                      View Practice History
-                    </div>
-                    <div className="text-gray-600 text-sm">
-                      Review your progress and sessions
-                    </div>
-                  </div>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
+        </section>
       </div>
     </div>
   );

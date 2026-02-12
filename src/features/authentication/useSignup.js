@@ -1,25 +1,61 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import supabase from "../../services/supabase";
 import { useNavigate } from "react-router-dom";
+import { sendParentalConsentEmail } from "../../services/consentService";
+
+const normalizeEmail = (value = "") => value.trim().toLowerCase();
+
+/**
+ * Calculate if a date of birth indicates under 13 years old
+ * @param {Date} dateOfBirth - The date of birth
+ * @returns {boolean} True if under 13
+ */
+function calculateIsUnder13(dateOfBirth) {
+  if (!dateOfBirth) return false;
+  const today = new Date();
+  const thirteenYearsAgo = new Date(
+    today.getFullYear() - 13,
+    today.getMonth(),
+    today.getDate()
+  );
+  return dateOfBirth > thirteenYearsAgo;
+}
 
 export function useSignup() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const { mutate: signup, isLoading } = useMutation({
-    mutationFn: async ({ email, password, firstName, lastName, role }) => {
+  const { mutate: signup, isPending } = useMutation({
+    mutationFn: async ({ email, password, firstName, lastName, role, dateOfBirth, parentEmail }) => {
       try {
+        const normalizedEmail = normalizeEmail(email);
+        const normalizedFirstName = firstName?.trim() || "";
+        const normalizedLastName = lastName?.trim() || "";
+
+        // Calculate is_under_13 on client (defense in depth - DB has computed column too)
+        const isUnder13 = calculateIsUnder13(dateOfBirth);
+
+        // Sign out any existing session to ensure clean signup state
+        // This prevents issues where a previous user's session interferes
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Ignore signout errors - continue with signup
+        }
+
         // Create the auth user first
         const { data: authData, error: authError } = await supabase.auth.signUp(
           {
-            email,
+            email: normalizedEmail,
             password,
             options: {
               emailRedirectTo: `${window.location.origin}/`,
               data: {
-                full_name: `${firstName} ${lastName}`.trim(),
-                first_name: firstName,
-                last_name: lastName,
+                full_name:
+                  `${normalizedFirstName} ${normalizedLastName}`.trim(),
+                first_name: normalizedFirstName,
+                last_name: normalizedLastName,
                 role: role,
               },
             },
@@ -27,7 +63,6 @@ export function useSignup() {
         );
 
         if (authError) {
-          
           if (
             authError.message?.toLowerCase().includes("already exists") ||
             authError.message?.toLowerCase().includes("already registered") ||
@@ -54,9 +89,9 @@ export function useSignup() {
               [
                 {
                   id: userId,
-                  first_name: firstName,
-                  last_name: lastName,
-                  email: email,
+                  first_name: normalizedFirstName,
+                  last_name: normalizedLastName,
+                  email: normalizedEmail,
                   is_active: true,
                 },
               ],
@@ -66,24 +101,31 @@ export function useSignup() {
             );
 
           if (teacherError) {
-            
             // Don't throw here - let the user complete signup even if profile creation fails
             // The profile can be created later when they try to access teacher features
           }
         } else {
           // Create student record - use upsert to handle potential duplicates
+          // For under-13 users, set account_status to 'suspended_consent'
           const { error: studentError } = await supabase
             .from("students")
             .upsert(
               [
                 {
                   id: userId,
-                  first_name: firstName,
-                  last_name: lastName || "", // Fix: Add the missing last_name field
-                  email: email,
-                  username: `${firstName.toLowerCase()}${Math.random().toString(36).substr(2, 4)}`,
+                  first_name: normalizedFirstName,
+                  last_name: normalizedLastName || "",
+                  email: normalizedEmail,
+                  username: `${normalizedFirstName.toLowerCase() || "student"}${Math.random()
+                    .toString(36)
+                    .substr(2, 4)}`,
                   level: "Beginner",
-                  studying_year: "1st Year", // Fix: Add default studying_year
+                  studying_year: "1st Year",
+                  // COPPA fields
+                  date_of_birth: dateOfBirth ? dateOfBirth.toISOString().split('T')[0] : null,
+                  parent_email: parentEmail || null,
+                  account_status: isUnder13 ? 'suspended_consent' : 'active',
+                  // musical_nickname will be generated by DB trigger if configured
                 },
               ],
               {
@@ -92,23 +134,59 @@ export function useSignup() {
             );
 
           if (studentError) {
-            
-            // Don't throw here - let the user complete signup even if profile creation fails  
+            // Don't throw here - let the user complete signup even if profile creation fails
             // The profile can be created later when they try to access student features
+            console.warn("Student record creation warning:", studentError);
+          }
+
+          // Try to promote any placeholder student rows that used this email
+          try {
+            await supabase.rpc("promote_placeholder_student", {
+              p_student_id: userId,
+              p_student_email: normalizedEmail,
+            });
+          } catch (promotionError) {
+            console.warn(
+              "Placeholder promotion skipped (student signup):",
+              promotionError
+            );
+          }
+
+          // Send consent email for under-13 users
+          if (isUnder13 && parentEmail) {
+            try {
+              await sendParentalConsentEmail(userId, parentEmail);
+            } catch (consentError) {
+              // Don't fail signup - account created, consent email can be resent
+              console.warn("Failed to send consent email:", consentError);
+            }
           }
         }
 
-        return authData;
+        return { ...authData, isUnder13, parentEmail };
       } catch (error) {
         console.error("Signup error:", error);
         throw error;
       }
     },
     onSuccess: (data, variables) => {
-      const { role } = variables;
-      toast.success(
-        `${role === "teacher" ? "Teacher" : "Student"} account created successfully! Please check your email to confirm your account.`
-      );
+      const { role, dateOfBirth, parentEmail } = variables;
+      const isUnder13 = calculateIsUnder13(dateOfBirth);
+
+      // Invalidate user query to ensure fresh data is fetched with new session
+      queryClient.invalidateQueries({ queryKey: ["user"] });
+
+      if (isUnder13 && parentEmail) {
+        // Mask parent email for privacy: "jo***@example.com"
+        const maskedEmail = parentEmail.replace(/(.{2}).*@/, '$1***@');
+        toast.success(
+          `Account created! We've sent an email to ${maskedEmail} for approval.`
+        );
+      } else {
+        toast.success(
+          `${role === "teacher" ? "Teacher" : "Student"} account created successfully! Please check your email to confirm your account.`
+        );
+      }
       navigate("/");
     },
     onError: (error) => {
@@ -116,5 +194,5 @@ export function useSignup() {
     },
   });
 
-  return { signup, isLoading };
+  return { signup, isPending };
 }

@@ -1,6 +1,9 @@
 import supabase from "./supabase";
+import { checkRateLimit } from "./rateLimitService";
+import { verifyStudentDataAccess } from "./authorizationUtils";
 
 export async function getStudentScores(studentId) {
+  await verifyStudentDataAccess(studentId);
   try {
     const { data: scores, error: scoresError } = await supabase
       .from("students_score")
@@ -8,22 +11,11 @@ export async function getStudentScores(studentId) {
       .eq("student_id", studentId)
       .order("created_at", { ascending: false });
 
-    const { data: totalScore, error: totalScoreError } = await supabase
-      .from("students_total_score")
-      .select("total_score")
-      .eq("student_id", studentId)
-      .maybeSingle(); // Use maybeSingle() instead of single() to handle no records
-
     if (scoresError) throw scoresError;
-
-    // Handle case where student doesn't have a total score record yet
-    if (totalScoreError && totalScoreError.code !== "PGRST116") {
-      throw totalScoreError;
-    }
 
     return {
       scores: scores || [],
-      totalScore: totalScore?.total_score ?? 0,
+      totalScore: 0, // Deprecated field, calculate dynamically from scores + achievements
     };
   } catch (error) {
     console.error("Error fetching scores:", error);
@@ -31,8 +23,31 @@ export async function getStudentScores(studentId) {
   }
 }
 
-export async function updateStudentScore(studentId, score, gameType) {
+/**
+ * Update (insert) a student score
+ * @param {string} studentId - The student's ID
+ * @param {number} score - Score value
+ * @param {string} gameType - Type of game played
+ * @param {string} nodeId - Optional trail node ID (if playing from trail)
+ * @param {Object} options - Optional configuration
+ * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
+ * @returns {Promise<Object>} Object with newScore, or { rateLimited: true, resetTime, newScore: null }
+ */
+export async function updateStudentScore(studentId, score, gameType, nodeId = null, options = {}) {
   try {
+    // If nodeId is provided and not skipping rate limit, check rate limit
+    // Note: Teacher check is done by the caller before calling this function
+    if (nodeId && !options.skipRateLimit) {
+      const rateLimitResult = await checkRateLimit(studentId, nodeId);
+      if (!rateLimitResult.allowed) {
+        return {
+          rateLimited: true,
+          resetTime: rateLimitResult.resetTime,
+          newScore: null
+        };
+      }
+    }
+
     // Insert new score
     const { data: scoreData, error: scoreError } = await supabase
       .from("students_score")
@@ -48,71 +63,9 @@ export async function updateStudentScore(studentId, score, gameType) {
 
     if (scoreError) throw scoreError;
 
-    // Handle total score update with retry logic to prevent 409 conflicts
-    let retryCount = 0;
-    const maxRetries = 3;
-    let updatedTotalScore;
-
-    while (retryCount < maxRetries) {
-      try {
-        // Get current total score
-        const { data: currentData, error: fetchError } = await supabase
-          .from("students_total_score")
-          .select("total_score")
-          .eq("student_id", studentId)
-          .maybeSingle();
-
-        if (fetchError && fetchError.code !== "PGRST116") {
-          throw fetchError;
-        }
-
-        const currentTotal = currentData?.total_score || 0;
-        const newTotal = currentTotal + score;
-
-        // Use UPSERT to handle race conditions
-        const { data: upsertData, error: upsertError } = await supabase
-          .from("students_total_score")
-          .upsert({
-            student_id: studentId,
-            total_score: newTotal,
-          })
-          .select("total_score")
-          .single();
-
-        if (upsertError) {
-          // If it's a conflict error, retry
-          if (
-            upsertError.code === "23505" ||
-            upsertError.message?.includes("409")
-          ) {
-            retryCount++;
-            if (retryCount < maxRetries) {
-              // Wait a bit before retrying to reduce contention
-              await new Promise((resolve) =>
-                setTimeout(resolve, 100 * retryCount)
-              );
-              continue;
-            }
-          }
-          throw upsertError;
-        }
-
-        updatedTotalScore = upsertData.total_score;
-        break; // Success, exit retry loop
-      } catch (error) {
-        retryCount++;
-        if (retryCount >= maxRetries) {
-          console.error("Failed to update total score after retries:", error);
-          throw error;
-        }
-        // Wait before retrying
-        await new Promise((resolve) => setTimeout(resolve, 100 * retryCount));
-      }
-    }
-
     return {
+      rateLimited: false,
       newScore: scoreData,
-      totalScore: updatedTotalScore,
     };
   } catch (error) {
     console.error("Error updating score:", error);

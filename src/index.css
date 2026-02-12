@@ -191,19 +191,191 @@
   --z-popover: 1060;
   --z-tooltip: 1070;
   --z-toast: 1080;
+
+  /* Safe area insets (PWA / iOS notch) */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
 /* ========================================
    GLOBAL STYLES
    ======================================== */
 
+html {
+  background-color: var(--color-background);
+  /* Prevent overscroll bounce */
+  overscroll-behavior: none;
+  /* Support for notch/safe areas and fullscreen PWA */
+  height: 100%;
+  height: -webkit-fill-available;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  /* Fullscreen PWA - hide scrollbars on html level */
+  overflow: hidden;
+}
+
 body {
   background-color: var(--color-background);
   min-height: 100vh;
+  /* iOS PWA fullscreen support */
+  min-height: -webkit-fill-available;
+  /* Prevent overscroll bounce */
+  overscroll-behavior: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
 }
 
-html {
-  background-color: var(--color-background);
+#root {
+  width: 100%;
+  height: 100vh;
+  height: -webkit-fill-available;
+  overflow: auto;
+}
+
+/* Hebrew/RTL Font Support
+   Note: we set <html dir="rtl"> via i18n so this applies globally. */
+html[dir="rtl"] {
+  font-family:
+    "Heebo", "Assistant", "Noto Sans Hebrew", "Open Sans", "Arial", sans-serif;
+}
+
+/* iOS Standalone PWA Support */
+.ios-standalone {
+  /* Additional iOS-specific styles if needed */
+  /* iOS-specific optimizations are handled via:
+     - Safe area insets (env(safe-area-inset-*))
+     - -webkit-fill-available for height
+     - -webkit-touch-callout: none for UI elements
+     - viewport-fit=cover in meta tag */
+}
+
+/* Utility helpers for safe-area spacing when needed */
+.safe-area-padding {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+/* App-level safe area: avoid pushing content down from the top.
+   This prevents a visible "gap" above the hero image in Android PWAs where
+   safe-area-inset-top may be non-zero. Use targeted safe-area padding classes
+   (e.g. .safe-area-padding-top) for fixed headers/overlays instead. */
+.safe-area-app {
+  padding-top: 0;
+  padding-bottom: var(--safe-area-bottom);
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+.safe-area-padding-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-area-padding-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+/* Custom viewport height using CSS variable (set by JS) */
+:root {
+  --vh: 1vh;
+}
+
+.h-screen-safe {
+  height: 100vh;
+  height: calc(var(--vh, 1vh) * 100);
+}
+
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: calc(var(--vh, 1vh) * 100);
+}
+
+/* ========================================
+   PWA BEST PRACTICES
+   ======================================== */
+
+/* User selection prevention on UI elements (buttons, nav items, menus) */
+button,
+a,
+[role="button"],
+nav a,
+nav button,
+.nav-item,
+.btn,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  user-select: none;
+  -webkit-user-select: none;
+  /* iOS: Prevent long-press menu on interactive elements */
+  -webkit-touch-callout: none;
+}
+
+/* iOS: Prevent long-press menu on images and other touchable elements */
+img,
+[role="img"],
+.interactive-image {
+  -webkit-touch-callout: none;
+}
+
+/* Accent color for form controls to match brand */
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+progress,
+[type="checkbox"],
+[type="radio"] {
+  accent-color: #581c87;
+}
+
+/* System font stack for dialogs, modals, and system-like messages */
+.system-font {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* Display mode media queries */
+/* Hide installation prompts when app is installed */
+@media (display-mode: standalone) {
+  .install-prompt,
+  .pwa-install-prompt {
+    display: none !important;
+  }
+}
+
+/* Show app-specific elements only when installed */
+@media (display-mode: browser) {
+  .app-only {
+    display: none !important;
+  }
+}
+
+/* Show elements only in installed app modes */
+@media (display-mode: standalone),
+  (display-mode: fullscreen),
+  (display-mode: minimal-ui) {
+  .browser-only {
+    display: none !important;
+  }
 }
 
 /* ========================================
@@ -213,65 +385,65 @@ html {
 @layer components {
   /* Card Components */
   .card {
-    @apply bg-white/80 border border-gray-200 rounded-2xl shadow-sm;
+    @apply rounded-2xl border border-gray-200 bg-white/80 shadow-sm;
   }
 
   .card-hover {
-    @apply card hover:bg-gray-50 transition-colors duration-200;
+    @apply card transition-colors duration-200 hover:bg-gray-50;
   }
 
   .card-glass {
-    @apply bg-white border border-gray-200 rounded-2xl;
+    @apply rounded-2xl border border-gray-200 bg-white;
   }
 
   .card-elevated {
-    @apply card shadow-lg hover:shadow-xl transition-shadow duration-200;
+    @apply card shadow-lg transition-shadow duration-200 hover:shadow-xl;
   }
 
   /* Legacy Glassmorphism Classes (for backward compatibility) */
   .card-glass-legacy {
-    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl;
+    @apply rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md;
   }
 
   .card-glass-legacy-hover {
-    @apply card-glass-legacy hover:bg-white/15 transition-colors duration-200;
+    @apply card-glass-legacy transition-colors duration-200 hover:bg-white/15;
   }
 
   /* Compact Card Variants */
   .card-compact {
-    @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+    @apply rounded-lg border border-gray-200 bg-white shadow-sm;
   }
 
   .card-compact-hover {
-    @apply card-compact hover:bg-gray-50 transition-colors duration-200;
+    @apply card-compact transition-colors duration-200 hover:bg-gray-50;
   }
 
   /* Input and Form Elements */
   .input-white {
-    @apply bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
+    @apply rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 
   .input-glass-legacy {
-    @apply bg-white/10 border-white/30 text-white placeholder:text-white/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-transparent transition-colors duration-200;
+    @apply rounded-lg border-white/30 bg-white/10 text-white transition-colors duration-200 placeholder:text-white/60 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-white/50;
   }
 
   /* Button Variants */
   .btn-glass-legacy {
-    @apply px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-lg hover:bg-white/20 transition-colors duration-200;
+    @apply rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-colors duration-200 hover:bg-white/20;
   }
 
   /* Loading States */
   .loading-skeleton {
-    @apply bg-gray-200 rounded animate-pulse;
+    @apply animate-pulse rounded bg-gray-200;
   }
 
   .loading-skeleton-legacy {
-    @apply bg-white/10 rounded animate-pulse;
+    @apply animate-pulse rounded bg-white/10;
   }
 
   /* Button Components */
   .btn {
-    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent;
+    @apply rounded-xl px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-transparent;
   }
 
   .btn-primary {
@@ -304,7 +476,7 @@ html {
 
   /* Input Components */
   .input {
-    @apply w-full p-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-200;
+    @apply w-full rounded-lg border border-gray-300 p-3 text-gray-900 placeholder-gray-500 transition-colors duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 
   .input-error {
@@ -313,7 +485,7 @@ html {
 
   /* Badge Components */
   .badge {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
 
   .badge-primary {
@@ -372,11 +544,11 @@ html {
 
   /* Layout Components */
   .container-glass {
-    @apply bg-white border border-gray-200 rounded-2xl p-6 shadow-sm;
+    @apply rounded-2xl border border-gray-200 bg-white p-6 shadow-sm;
   }
 
   .sidebar-glass {
-    @apply bg-gradient-to-b from-gray-900/95 to-gray-800/95 backdrop-blur-xl border-r border-white/10;
+    @apply from-gray-900/95 to-gray-800/95 border-r border-white/10 bg-gradient-to-b backdrop-blur-xl;
   }
 
   /* Animation Classes */
@@ -535,6 +707,55 @@ html {
 .custom-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: rgba(168, 85, 247, 0.4) transparent;
+}
+
+/* Always-visible scrollbar for settings containers */
+.settings-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.8) rgba(255, 255, 255, 0.05);
+}
+
+.settings-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.settings-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  margin: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 92, 246, 0.9) 0%,
+    rgba(168, 85, 247, 1) 50%,
+    rgba(192, 132, 252, 0.9) 100%
+  );
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    0 2px 8px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  opacity: 1;
+}
+
+.settings-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 1) 0%,
+    rgba(147, 51, 234, 1) 50%,
+    rgba(168, 85, 247, 1) 100%
+  );
+  box-shadow:
+    0 4px 12px rgba(124, 58, 237, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.settings-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -910,6 +1131,205 @@ html {
 }
 
 /* ========================================
+   DASHBOARD HERO SECTION STYLES
+   ======================================== */
+
+/* Hero section animations and transitions */
+.dashboard-hero-enter {
+  animation: heroFadeIn 0.8s ease-out;
+}
+
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stats cards with glass morphism and elevation */
+.stats-card-elevated {
+  @apply rounded-2xl border border-white/10 bg-white/95 shadow-2xl backdrop-blur-sm;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stats-card-elevated:hover {
+  @apply shadow-xl;
+  transform: translateY(-2px);
+}
+
+/* Smooth parallax effect for hero background */
+.hero-parallax {
+  transition: transform 0.3s ease-out;
+}
+
+/* Elegant fade transition from hero to content */
+.hero-to-content-fade {
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(49, 46, 129, 0.4) 50%,
+    rgba(49, 46, 129, 0.8) 100%
+  );
+}
+
+/* Enhanced text shadow for hero title */
+.hero-title-shadow {
+  text-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.3),
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 8px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth scroll animation for stats appearing */
+@keyframes statsSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stats-animate-in {
+  animation: statsSlideIn 0.6s ease-out forwards;
+}
+
+.stats-animate-in:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.stats-animate-in:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.stats-animate-in:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.stats-animate-in:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+/* Persistent glow halos for dashboard stat icons (more reliable on iOS).
+   Scope to iOS standalone so desktop/web keep original positioning/appearance.
+   NOTE: Do NOT override the element's positioning here, since the stat icon
+   wrapper uses Tailwind's `absolute` positioning for centering above cards. */
+body.ios-standalone .stats-icon-glow {
+  /* Anchor pseudo-element for the glow to this inner wrapper.
+     This wrapper is the inner element inside an absolute-positioned outer
+     container (see Dashboard.jsx). Making it `position: relative` here is
+     safe and required so the ::before radial-gradient is positioned and
+     clipped correctly on iOS/Safari. */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Ensure the wrapper is circular so the pseudo-element masks correctly */
+  border-radius: 9999px;
+  overflow: visible;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+body.ios-standalone .stats-icon-glow::before {
+  content: "";
+  position: absolute;
+  /* Make the pseudo-element slightly larger than the icon so the blur renders
+     smoothly and any rasterization artifacts are outside the visible area.
+     Use a strong blur + box-shadow to create a soft halo rather than crisp
+     colored geometry which some WebKit versions can render as squares. */
+  inset: -10%;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle at 50% 40%,
+    rgba(var(--glow-rgb, 255, 255, 255), 0.95) 0%,
+    rgba(var(--glow-rgb, 255, 255, 255), 0.12) 28%,
+    rgba(var(--glow-rgb, 255, 255, 255), 0.02) 45%,
+    transparent 75%
+  );
+  filter: blur(22px);
+  /* Add an extra blurred shadow using the glow color to smooth edges on iOS */
+  box-shadow:
+    0 0 36px rgba(var(--glow-rgb, 255, 255, 255), 0.6),
+    0 0 18px rgba(0, 0, 0, 0.06) inset;
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: 0;
+  transform: translateZ(0);
+  will-change: opacity, filter, transform;
+  /* Ensure the glow stays circular on iOS rendering; mask reduces artifacts */
+  -webkit-mask-image: radial-gradient(
+    circle at 50% 50%,
+    black 62%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(circle at 50% 50%, black 62%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+body.ios-standalone .stats-icon-glow img {
+  position: relative;
+  z-index: 2;
+  /* Hint to GPU to avoid rendering artifacts */
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  /* Ensure the icon stays rounded and doesn't expose square background when
+     compositing occurs on older WebKit renderers. */
+  border-radius: inherit;
+}
+
+body.ios-standalone .stats-icon-glow-orange {
+  --glow-color: rgba(255, 165, 80, 1);
+  --glow-rgb: 255, 165, 80;
+}
+
+body.ios-standalone .stats-icon-glow-gold {
+  --glow-color: rgba(255, 230, 120, 1);
+  --glow-rgb: 255, 230, 120;
+}
+
+body.ios-standalone .stats-icon-glow-blue {
+  --glow-color: rgba(130, 200, 255, 1);
+  --glow-rgb: 130, 200, 255;
+}
+
+body.ios-standalone .stats-icon-glow-amber {
+  --glow-color: rgba(255, 195, 110, 1);
+  --glow-rgb: 255, 195, 110;
+}
+
+/* Force a tiny composite/repaint pass on initial load to avoid early rasterization
+   artifacts on some iOS Safari versions. The animation is effectively instantaneous. */
+@keyframes _stats_force_paint {
+  from {
+    opacity: 0.999;
+  }
+  to {
+    opacity: 1;
+  }
+}
+body.ios-standalone .stats-icon-glow {
+  animation: _stats_force_paint 0.001s linear both;
+}
+
+/* On iOS standalone, let the bottom navigation own the safe-area padding so
+   we don't show extra gradient below the app menu buttons. */
+body.ios-standalone .safe-area-app {
+  padding-bottom: 0;
+}
+
+/* ========================================
    ACCESSIBILITY STYLES
    ======================================== */
 
@@ -1041,6 +1461,25 @@ html {
   border-radius: 4px !important;
 }
 
+/* Sticky Hover Assistance */
+.sticky-hover button,
+.sticky-hover [role="button"],
+.sticky-hover a,
+.sticky-hover input,
+.sticky-hover select,
+.sticky-hover textarea {
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sticky-hover .sticky-hover-active {
+  transform: scale(1.02);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
 /* Screen Reader Optimized */
 .screen-reader-optimized [aria-label]::after {
   content: " (" attr(aria-label) ")";
@@ -1135,4 +1574,312 @@ html {
     background: white !important;
     color: black !important;
   }
+}
+
+/* ========================================
+   VEXFLOW MUSIC NOTATION STYLES
+   ======================================== */
+
+/* VexFlow container with horizontal scroll support */
+.vexflow-container {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: visible;
+  /* Note: scroll-behavior: smooth removed - conflicts with JS RAF-based scrolling */
+  /* Smooth scrolling is handled programmatically via linear interpolation */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.vexflow-container::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+/* Active note highlighting */
+.vf-note-active {
+  filter: hue-rotate(250deg) brightness(1.2);
+  transition: all 0.3s ease;
+}
+
+/* Ensure VexFlow SVG elements are properly displayed */
+.vexflow-container svg {
+  display: block;
+
+  margin: 0 auto;
+}
+
+.sightreading-staff-wrapper {
+  overflow: visible;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sightreading-keyboard-wrapper {
+  overflow: visible;
+}
+
+/* Ensure the staff renderer fills its allocated band (grid row 1) */
+.sightreading-staff-wrapper > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* Desktop only: keep a reasonable minimum staff height */
+@media (min-width: 768px) {
+  .sightreading-staff-wrapper {
+    min-height: 140px;
+  }
+}
+
+.feedback-summary-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* ========================================
+   NOTE CARD RESPONSIVE SIZING
+   ======================================== */
+
+/* Mobile: larger cards for easier tapping */
+.note-card-responsive {
+  width: clamp(110px, 28vw, 140px);
+  height: clamp(140px, 32vh, 180px);
+  flex-shrink: 0;
+}
+
+/* Tablet: medium cards */
+@media (min-width: 640px) {
+  .note-card-responsive {
+    width: clamp(120px, 20vw, 150px);
+    height: clamp(150px, 28vh, 190px);
+  }
+}
+
+/* Desktop: larger cards */
+@media (min-width: 1024px) {
+  .note-card-responsive {
+    width: clamp(130px, 12vw, 170px);
+    height: clamp(160px, 28vh, 230px);
+  }
+}
+
+/* Large desktop: even larger cards */
+@media (min-width: 1280px) {
+  .note-card-responsive {
+    width: clamp(140px, 10vw, 180px);
+    height: clamp(180px, 30vh, 250px);
+  }
+}
+
+/* Two-row mode (for "Both" clefs): larger cards to fit both rows while still being tappable */
+.note-card-two-row {
+  width: clamp(100px, 26vw, 130px);
+  height: clamp(120px, 28vh, 160px);
+  flex-shrink: 0;
+}
+
+@media (min-width: 640px) {
+  .note-card-two-row {
+    width: clamp(110px, 20vw, 140px);
+    height: clamp(130px, 24vh, 170px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .note-card-two-row {
+    width: clamp(120px, 12vw, 160px);
+    height: clamp(150px, 26vh, 200px);
+  }
+}
+
+@media (min-width: 1280px) {
+  .note-card-two-row {
+    width: clamp(130px, 10vw, 170px);
+    height: clamp(170px, 28vh, 220px);
+  }
+}
+
+/* Short viewports (landscape phones): let the cards grow taller to fill available space */
+@media (max-height: 500px) {
+  .note-card-responsive {
+    width: clamp(120px, 22vw, 170px);
+    height: clamp(140px, 58vh, 300px);
+  }
+
+  .note-card-two-row {
+    width: clamp(110px, 20vw, 160px);
+    height: clamp(120px, 52vh, 240px);
+  }
+}
+
+/* Very short landscape: reduce height further so labels never clip */
+@media (max-height: 400px) {
+  .note-card-responsive {
+    height: clamp(130px, 52vh, 260px);
+  }
+
+  .note-card-two-row {
+    height: clamp(110px, 48vh, 220px);
+  }
+}
+
+/* Split-step row padding (keeps scrollbar visible without stealing too much height) */
+.note-selection-split-row {
+  padding-bottom: 1rem; /* 16px */
+}
+
+@media (max-height: 420px) {
+  .note-selection-split-row {
+    padding-bottom: 0.5rem; /* 8px */
+  }
+}
+
+/* Custom range slider styling for accessory scale controls */
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  background: rgb(224, 231, 255);
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+  background: rgb(224, 231, 255);
+}
+
+/* Horizontal scrollbar for accessory shop */
+.scrollbar-thumb-white\/20 {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-white\/20:hover::-webkit-scrollbar-thumb,
+.hover\:scrollbar-thumb-white\/30:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* Rhythm Pattern Preview - Styles for mini VexFlow notation previews */
+.rhythm-pattern-preview {
+  pointer-events: none; /* Let clicks pass through to parent button */
+  /* border: 1px solid red; */
+  /* z-index: 1000; */
+}
+
+.rhythm-pattern-preview svg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* border: 1px solid blue; */
+  z-index: 1000;
+  overflow: visible;
+}
+
+/* ========================================
+   MODAL SCROLLBAR STYLES
+   ======================================== */
+
+/* Modern modal scrollbar - subtle and polished */
+.modal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 85, 247, 0.3) transparent;
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.4) 0%,
+    rgba(139, 92, 246, 0.5) 50%,
+    rgba(124, 58, 237, 0.4) 100%
+  );
+  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.6) 0%,
+    rgba(139, 92, 246, 0.7) 50%,
+    rgba(124, 58, 237, 0.6) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(
+    180deg,
+    rgba(168, 85, 247, 0.8) 0%,
+    rgba(139, 92, 246, 0.9) 50%,
+    rgba(124, 58, 237, 0.8) 100%
+  );
+}
+
+/* ========================================
+   TRAIL NODE ANIMATIONS
+   ======================================== */
+
+@keyframes pulse-subtle {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Respect system preference */
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-subtle {
+    animation: none;
+  }
+}
+
+/* Respect AccessibilityContext setting */
+.reduced-motion .animate-pulse-subtle {
+  animation: none;
 }

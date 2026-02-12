@@ -1,6 +1,44 @@
 import supabase from "./supabase";
 
 // ============================================
+// AUTHORIZATION HELPER
+// ============================================
+
+/**
+ * Verify the current user has access to the specified student's data.
+ * - Students can only access their own data
+ * - Teachers can access data of connected students
+ * @param {string} studentId - The student ID to verify access for
+ * @throws {Error} If not authenticated or unauthorized
+ */
+async function verifyStudentDataAccess(studentId) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // Students can access their own data
+  if (user.id === studentId) {
+    return true;
+  }
+
+  // Check if user is a teacher connected to this student
+  const { data: connection, error } = await supabase
+    .from("teacher_student_connections")
+    .select("id")
+    .eq("teacher_id", user.id)
+    .eq("student_id", studentId)
+    .eq("status", "accepted")
+    .single();
+
+  if (error || !connection) {
+    throw new Error("Unauthorized: No access to this student's data");
+  }
+
+  return true;
+}
+
+// ============================================
 // STUDENTS TABLE OPERATIONS
 // ============================================
 
@@ -16,6 +54,8 @@ export async function createStudent(studentData) {
 }
 
 export async function getStudentById(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("students")
     .select(
@@ -137,6 +177,8 @@ export async function createPracticeSession(sessionData) {
 }
 
 export async function getPracticeSessionsByStudentId(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("practice_sessions")
     .select(
@@ -343,6 +385,8 @@ export async function createStudentScore(scoreData) {
 }
 
 export async function getStudentScores(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from("students_score")
     .select(
@@ -357,6 +401,80 @@ export async function getStudentScores(studentId) {
 
   if (error) throw new Error(error.message);
   return data;
+}
+
+export async function getStudentScoreStats(studentId) {
+  await verifyStudentDataAccess(studentId);
+
+  const { data, error } = await supabase
+    .from("students_score")
+    .select("score, created_at, game_type")
+    .eq("student_id", studentId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getPracticeSessionStats(studentId, limit = 200) {
+  await verifyStudentDataAccess(studentId);
+
+  const { data, error } = await supabase
+    .from("practice_sessions")
+    .select(
+      "analysis_score, duration, notes_played, unique_notes, submitted_at"
+    )
+    .eq("student_id", studentId)
+    .order("submitted_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getStudentScoreValues(studentId) {
+  const pageSize = 1000;
+  let from = 0;
+  let to = pageSize - 1;
+  const allScores = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from("students_score")
+      .select("score")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      break;
+    }
+
+    allScores.push(...data);
+
+    if (data.length < pageSize) {
+      break;
+    }
+
+    from += pageSize;
+    to += pageSize;
+  }
+
+  return allScores;
+}
+
+export async function getAchievementPointsTotal(studentId) {
+  const { data, error } = await supabase
+    .from("student_achievements")
+    .select("points")
+    .eq("student_id", studentId);
+
+  if (error && error.code !== "PGRST116") throw error;
+  if (!data || data.length === 0) return 0;
+
+  return data.reduce((sum, achievement) => sum + (achievement?.points || 0), 0);
 }
 
 export async function getStudentScoresByGame(studentId, gameId) {
@@ -416,59 +534,6 @@ export async function getHighScores(gameId, limit = 10) {
 // ============================================
 // STUDENT TOTAL SCORES TABLE OPERATIONS
 // ============================================
-
-export async function getStudentTotalScore(studentId) {
-  const { data, error } = await supabase
-    .from("students_total_score")
-    .select(
-      `
-      *,
-      student:students(*)
-    `
-    )
-    .eq("student_id", studentId)
-    .maybeSingle();
-
-  // Handle case where student doesn't have a total score record yet
-  if (error && error.code !== "PGRST116") {
-    throw new Error(error.message);
-  }
-
-  return data || { student_id: studentId, total_score: 0 };
-}
-
-export async function updateStudentTotalScore(studentId, totalScore) {
-  const { data, error } = await supabase
-    .from("students_total_score")
-    .upsert([
-      {
-        student_id: studentId,
-        total_score: totalScore,
-        updated_at: new Date().toISOString(),
-      },
-    ])
-    .select()
-    .single();
-
-  if (error) throw new Error(error.message);
-  return data;
-}
-
-export async function getTopStudentsByTotalScore(limit = 10) {
-  const { data, error } = await supabase
-    .from("students_total_score")
-    .select(
-      `
-      *,
-      student:students(*)
-    `
-    )
-    .order("total_score", { ascending: false })
-    .limit(limit);
-
-  if (error) throw new Error(error.message);
-  return data;
-}
 
 // ============================================
 // STREAK TRACKING OPERATIONS
@@ -538,24 +603,34 @@ export async function getLastPracticedDate(studentId) {
     .eq("student_id", studentId)
     .single();
 
-  if (error) throw new Error(error.message);
+  // Silently handle table not found errors
+  if (error) {
+    console.warn("last_practiced_date query failed:", error.message);
+    return null;
+  }
   return data;
 }
 
 export async function updateLastPracticedDate(studentId) {
   const { data, error } = await supabase
     .from("last_practiced_date")
-    .upsert([
-      {
-        student_id: studentId,
-        practiced_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      },
-    ])
+    .upsert(
+      [
+        {
+          student_id: studentId,
+          practiced_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      { onConflict: "student_id" }
+    )
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.warn("last_practiced_date upsert failed:", error.message);
+    return null;
+  }
   return data;
 }
 
@@ -564,6 +639,8 @@ export async function updateLastPracticedDate(studentId) {
 // ============================================
 
 export async function getStudentStats(studentId) {
+  await verifyStudentDataAccess(studentId);
+
   // Get student's practice sessions
   const { data: sessions, error: sessionsError } = await supabase
     .from("practice_sessions")

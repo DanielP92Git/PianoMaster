@@ -4,5 +4,5 @@ export { TapArea } from "./TapArea";
 export { RhythmGameSettings } from "./RhythmGameSettings";
 export { PatternDisplay, PatternVisualization } from "./PatternDisplay";
 export { GameControls, FloatingSettingsButton } from "./GameControls";
-export { PreGameSettingsScreen } from "./PreGameSettingsScreen";
+export { RhythmGameSetup } from "./RhythmGameSetup";
 export { RhythmNotationRenderer, InlineNotationDisplay } from "./RhythmNotationRenderer";

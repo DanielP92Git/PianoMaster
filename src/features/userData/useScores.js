@@ -28,13 +28,28 @@ export function useScores() {
   // Update student score
   const {
     mutate: updateScore,
+    mutateAsync: updateScoreAsync,
     error: updateError,
     isLoading: isUpdating,
   } = useMutation({
     mutationFn: ({ score, gameType }) =>
       updateStudentScore(studentId, score, gameType),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["scores"]);
+    onSuccess: async () => {
+      const prevTotals =
+        queryClient.getQueryData(["total-points", studentId])?.totalPoints ??
+        null;
+      if (prevTotals !== null) {
+        queryClient.setQueryData(["pre-total-points", studentId], prevTotals);
+      }
+
+      await Promise.all([
+        queryClient.invalidateQueries(["scores"]),
+        queryClient.invalidateQueries(["student-scores", studentId]),
+        queryClient.invalidateQueries(["point-balance", studentId]),
+        queryClient.invalidateQueries(["total-points", studentId]),
+        queryClient.invalidateQueries(["gamesPlayed"]),
+        queryClient.invalidateQueries(["earned-achievements", studentId]),
+      ]);
     },
     onError: (error) => {
       console.error(error);
@@ -47,6 +62,7 @@ export function useScores() {
     fetchError,
     isLoading: isFetching,
     updateScore,
+    updateScoreAsync,
     updateError,
     isUpdating,
   };

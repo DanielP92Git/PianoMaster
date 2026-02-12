@@ -1,0 +1,117 @@
+/**
+ * CelebrationWrapper Styles
+ *
+ * Provides full-animation and reduced-motion variants for celebration animations.
+ * Uses CSS variables for dynamic duration control.
+ */
+
+/* Base wrapper styles */
+.celebration-wrapper {
+  position: relative;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Full animation mode - uses transforms, scale, bounce */
+.celebration-full {
+  /* Duration controlled via CSS variable set by component */
+}
+
+/* Reduced motion mode - opacity-only transitions, no transforms */
+.celebration-reduced {
+  /* All animations limited to opacity changes with 100ms duration */
+}
+
+/* Star animation - full motion with bounce and glow */
+@keyframes bounce-and-glow {
+  0% {
+    transform: scale(0) translateY(20px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) translateY(-10px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Fade-in animation for reduced motion */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Star element with full animation */
+.celebration-full .celebration-star {
+  animation: bounce-and-glow var(--celebration-duration, 500ms) ease-out forwards;
+}
+
+/* Star element with reduced motion - opacity only */
+.celebration-reduced .celebration-star,
+.reduced-motion .celebration-star {
+  animation: fade-in 100ms ease-out forwards;
+  transform: none !important;
+}
+
+/* Skip hint styles - visible indicator for 8-year-olds */
+.celebration-skip-hint {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  padding: 12px 24px;
+  background: rgba(0, 0, 0, 0.75);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 24px;
+  pointer-events: none;
+  z-index: 1000;
+  animation: pulse 2s ease-in-out infinite;
+  user-select: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Pulse animation for skip hint */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* No pulse in reduced motion mode */
+.celebration-reduced .celebration-skip-hint {
+  animation: none;
+  opacity: 0.9;
+}
+
+/* System preference fallback - applies before AccessibilityContext loads */
+@media (prefers-reduced-motion: reduce) {
+  .celebration-star {
+    animation: fade-in 100ms ease-out forwards !important;
+    transform: none !important;
+  }
+
+  .celebration-skip-hint {
+    animation: none !important;
+    opacity: 0.9;
+  }
+
+  .celebration-wrapper * {
+    animation-duration: 100ms !important;
+  }
+}
+
+/* Ensure smooth transitions for opacity changes */
+.celebration-wrapper * {
+  transition: opacity 100ms ease-out;
+}
