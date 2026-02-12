@@ -100,7 +100,6 @@
       "complete": "הושלמו",
       "noAchievementsAvailable": "אין הישגים זמינים",
       "checkBackLater": "בואו שוב מאוחר יותר לפתח תגי תקדמות חדשים!",
-      "milestone": "צעדים ראשונים",
       "categories": {
         "milestone": "צעדים משמעותיים ראשונים",
         "streak": "רצף",
@@ -245,9 +244,6 @@
         "dailyPracticeReminder": "התראות תרגול יומי",
         "dailyPracticeReminderDescription": "הפעלת התראות תרגול יומי באפליקציה",
         "reminderTime": "שעת התראות",
-        "reminderTimeDescription": "שעת התראות באפליקציה",
-        "enableDailyPracticeReminder": "הפעלת התראות תרגול יומי",
-        "enableDailyPracticeReminderDescription": "הפעלת התראות תרגול יומי באפליקציה",
         "notificationsEnabled": "התראות פעילות",
         "notificationsEnabledDescription": "תקבלו התראות דרך התראות push של הדפדפן",
         "notificationsBlocked": "התראות חסומות",
@@ -281,7 +277,9 @@
     },
     "ios": {
       "installDescription": "על iPhone או iPad, התקינו את PianoMaster באופן ידני:",
-      "installStep": "לחץו על הכפתור השיתוף"
+      "installStep1": "לחץו על הכפתור השיתוף",
+      "installStep2": "בחרו \"הוסף למסך הבית\"",
+      "installStep3": "לחץו על \"הוסף\" כדי לאשר"
     },
     "safari": {
       "installDescription": "כפתור השיתוף של Safari נמצא בסרגל הכלים התחתון. לאחר ההתקנה, פתחו את PianoMaster ממסך הבית לחויית אימון מהנה יותר!",
@@ -868,10 +866,7 @@
         "clef": "בחרו מפתח",
         "notes": "בחרו תווים",
         "gameMode": "מצב משחק",
-        "gridSize": "בחרו גודל לוח",
-        "beginner": "קל",
-        "intermediate": "בינוני",
-        "advanced": "מתקדם"
+        "gridSize": "בחרו גודל לוח"
       }
     },
     "buttons": {
@@ -909,8 +904,6 @@
       "instruction": "בחרו אילו תווים תרצו לתרגל:",
       "deselectAll": "נקה בחירה",
       "selectAll": "בחר הכל",
-      "sharps": "דיאזים",
-      "flats": "במולים",
       "selectedCount_zero": "נבחרו 0 תווים",
       "selectedCount_one": "נבחר תו אחד",
       "selectedCount_two": "נבחרו {{count}} תווים",
