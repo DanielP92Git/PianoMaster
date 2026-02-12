@@ -228,21 +228,15 @@
         "notificationsSettingsTitle": "Notifications Settings",
         "notificationsSettingsDescription": "Notifications settings for the app",
         "notificationTypesTitle": "Notification Types",
-        "notificationTypesDescription": "Notification types settings for the app",
         "quietHours": "Quiet Hours",
         "quietHoursDescription": "You will not receive notifications during these hours",
         "enableAllNotifications": "Enable All Notifications",
         "enableAllNotificationsDescription": "Enable all notifications settings for the app",
         "achievements": "Achievements",
-        "achievementsDescription": "You will receive notifications for the achievements you earn",
         "assignments": "Assignments",
-        "assignmentsDescription": "You will receive notifications for the assignments you complete",
         "messages": "Messages",
-        "messagesDescription": "You will receive notifications for the messages you send",
         "reminders": "Reminders",
-        "remindersDescription": "You will receive notifications for the reminders you set",
         "system": "System",
-        "systemDescription": "You will receive notifications for the system events",
         "notificationsNotSupported": "Notifications Not Supported",
         "notificationsNotSupportedDescription": "Your browser doesn’t support notifications. You can still use in-app reminders.",
         "notificationsEnabled": "Notifications Enabled",
@@ -268,26 +262,6 @@
         "masterVolume": "Master Volume",
         "masterVolumeDescription": "Adjust the master volume for the app",
         "testSound": "Test Sound"
-      }
-    },
-    "install": {
-      "chrome": {
-        "installDescription": "You can install PianoMaster directly from Chrome.",
-        "installButton": "Install via Chrome"
-      },
-      "android": {
-        "installDescription": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose",
-        "installStep": "Add to Home screen"
-      },
-      "ios": {
-        "installDescription": "On iPhone or iPad, install PianoMaster manually:",
-        "installStep": "Tap the Share button"
-      },
-      "safari": {
-        "installDescription": "Safari’s Share button sits at the bottom toolbar. Once installed, reopen PianoMaster from your home screen for a full-screen experience.",
-        "installStep1": "Tap the Share button",
-        "installStep2": "Choose \"Add to Home Screen\"",
-        "installStep3": "Tap \"Add\" to confirm"
       }
     }
   },
