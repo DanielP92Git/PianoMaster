@@ -122,12 +122,12 @@ Plans:
   4. Games remain fully playable in portrait mode if user dismisses rotate prompt (WCAG 1.3.4 compliance)
   5. Orientation changes during gameplay trigger smooth layout recalculation without losing state
 
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Add landscape-optimized CSS layouts to all 4 game modes
-- [ ] 03-02: Handle VexFlow re-render on orientation change with debouncing
-- [ ] 03-03: Optimize modals (settings, victory) for landscape orientation
+- [ ] 03-01-PLAN.md — Add Tailwind orientation modifiers and landscape-optimized CSS layouts to all 4 game modes
+- [ ] 03-02-PLAN.md — Create debounced VexFlow resize hook and integrate into VexFlowStaffDisplay
+- [ ] 03-03-PLAN.md — Optimize VictoryScreen and UnifiedGameSettings modals for landscape + human verification
 
 ---
 
@@ -214,7 +214,7 @@ Phases execute in numeric order: 01 → 02 → 03 → 04 → 05
 | 04. Platform-Specific Android Enhancement | v1.6 | 0/3 | Not started | - |
 | 05. Accessibility & Internationalization | v1.6 | 0/3 | Not started | - |
 
-**Total: 26 phases, 72 plans across 6 shipped milestones + 1 in progress**
+**Total: 26 phases, 73 plans across 6 shipped milestones + 1 in progress**
 
 ---
-*Last updated: 2026-02-13 — Phase 02 complete*
+*Last updated: 2026-02-14 — Phase 03 planned*
