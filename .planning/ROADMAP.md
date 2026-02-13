@@ -91,7 +91,7 @@ Plans:
 
 **Phase Numbering Note:** Starting at Phase 02 (Phase 01 was Hebrew translations, complete).
 
-#### Phase 02: Foundation - Orientation Detection & Prompt
+#### Phase 02: Foundation - Orientation Detection & Prompt ✅
 
 **Goal**: Mobile users see a playful rotate prompt when entering games in portrait mode, with universal orientation detection that works on both iOS and Android.
 
@@ -99,18 +99,11 @@ Plans:
 
 **Requirements**: ORIENT-01, ORIENT-02, ORIENT-03, ORIENT-04, ORIENT-05
 
-**Success Criteria** (what must be TRUE):
-  1. User entering any of the 4 game modes in portrait mode sees an animated rotate prompt overlay
-  2. Rotate prompt disappears automatically when user rotates device to landscape
-  3. User can dismiss the rotate prompt with a close button and it stays dismissed for the session
-  4. Rotate prompt does not appear on desktop devices or when device is already in landscape
-  5. Orientation detection works universally via CSS media queries (no reliance on Screen Orientation API)
-
-**Plans**: 2 plans
+**Completed**: 2026-02-13 | **Verification**: PASSED (8/8 must-haves)
 
 Plans:
-- [ ] 02-01-PLAN.md — Create useOrientation hook, useRotatePrompt hook, and RotatePromptOverlay component
-- [ ] 02-02-PLAN.md — Integrate rotate prompt into all 4 game modes + visual verification
+- [x] 02-01-PLAN.md — Create useOrientation hook, useRotatePrompt hook, and RotatePromptOverlay component
+- [x] 02-02-PLAN.md — Integrate rotate prompt into all 4 game modes + visual verification
 
 ---
 
@@ -216,12 +209,12 @@ Phases execute in numeric order: 01 → 02 → 03 → 04 → 05
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
 | 01. Hebrew Translations | v1.6 prep | 2/2 | Complete | 2026-02-13 |
-| 02. Foundation - Orientation Detection & Prompt | v1.6 | 0/2 | Not started | - |
+| 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 03. Game Layout Optimization | v1.6 | 0/3 | Not started | - |
 | 04. Platform-Specific Android Enhancement | v1.6 | 0/3 | Not started | - |
 | 05. Accessibility & Internationalization | v1.6 | 0/3 | Not started | - |
 
-**Total: 26 phases, 70 plans across 6 shipped milestones + 1 in progress**
+**Total: 26 phases, 72 plans across 6 shipped milestones + 1 in progress**
 
 ---
-*Last updated: 2026-02-13 — v1.6 roadmap created*
+*Last updated: 2026-02-13 — Phase 02 complete*
