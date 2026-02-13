@@ -1,6 +1,7 @@
 import React from 'react';
 import Countdown from 'react-countdown';
 import { Coffee } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * Banner shown when a student is rate-limited from submitting scores.
@@ -11,6 +12,8 @@ import { Coffee } from 'lucide-react';
  * @param {Function} props.onComplete - Called when countdown reaches zero
  */
 export default function RateLimitBanner({ resetTime, onComplete }) {
+  const { t } = useTranslation();
+
   // Countdown renderer for MM:SS format
   const countdownRenderer = ({ minutes, seconds, completed }) => {
     if (completed) {
@@ -45,11 +48,11 @@ export default function RateLimitBanner({ resetTime, onComplete }) {
         {/* Content */}
         <div className="flex-1">
           <h3 className="text-lg font-bold text-kidsWarning-800 flex items-center gap-2">
-            Take a breather!
+            {t('rateLimit.title')}
           </h3>
 
           <p className="text-kidsWarning-700 mt-1">
-            You can continue in{' '}
+            {t('rateLimit.continueIn')}
             <Countdown
               date={resetTime}
               renderer={countdownRenderer}
@@ -58,7 +61,7 @@ export default function RateLimitBanner({ resetTime, onComplete }) {
           </p>
 
           <p className="text-sm text-kidsWarning-600 mt-2 italic">
-            Practice Mode — scores won't be saved
+            {t('rateLimit.practiceMode')}
           </p>
         </div>
       </div>

@@ -57,7 +57,8 @@
       "recordings": "Recordings",
       "achievements": "Achievements",
       "settings": "Settings",
-      "legal": "Legal & Attributions"
+      "legal": "Legal & Attributions",
+      "trail": "Trail"
     }
   },
   "pages": {
@@ -953,6 +954,83 @@
         "alt": "Treble and Bass Clefs"
       }
     }
+  },
+  "victory": {
+    "greatPractice": "Great Practice!",
+    "loading": "Loading...",
+    "exerciseIndicator": "Exercise {{current}} of {{total}}",
+    "exercisesRemaining": "({{count}} remaining)",
+    "finalScore": "Final Score: {{score}}/{{total}}",
+    "xpEarned": "+{{xp}} XP Earned",
+    "starsEarned": "Stars earned ({{count}}):",
+    "firstTimeBonus": "First time bonus:",
+    "perfectScore": "Perfect score:",
+    "threeStars": "Three stars:",
+    "levelLabel": "Level {{level}}",
+    "xpProgress": "{{current}} / {{total}} XP",
+    "levelUp": "Level Up!",
+    "pointsEarned": "Points earned",
+    "totalPoints": "Total Points",
+    "nextExercise": "Next Exercise ({{count}} left)",
+    "continueToNode": "Continue to \"{{name}}\"",
+    "backToTrail": "Back to Trail",
+    "continueLearning": "Continue Learning"
+  },
+  "celebration": {
+    "boss.perfectVictory": "PERFECT VICTORY!",
+    "boss.defeated": "BOSS DEFEATED!",
+    "boss.subtitle": "You conquered the challenge!",
+    "threeStars.discovery.title": "NEW NOTES MASTERED!",
+    "threeStars.discovery.subtitle": "You learned something new!",
+    "threeStars.practice.title": "PRACTICE PERFECT!",
+    "threeStars.practice.subtitle": "You're getting really good!",
+    "threeStars.mix_up.title": "GAME CHAMPION!",
+    "threeStars.mix_up.subtitle": "You aced the memory game!",
+    "threeStars.speed_round.title": "LIGHTNING FAST!",
+    "threeStars.speed_round.subtitle": "Wow, you beat the clock!",
+    "threeStars.review.title": "YOU REMEMBERED!",
+    "threeStars.review.subtitle": "Those notes stuck with you!",
+    "threeStars.challenge.title": "CHALLENGE CRUSHED!",
+    "threeStars.challenge.subtitle": "That was a tough one!",
+    "threeStars.mini_boss.title": "MINI-BOSS DOWN!",
+    "threeStars.mini_boss.subtitle": "Unit checkpoint completed!",
+    "threeStars.default.title": "PERFECT!",
+    "threeStars.default.subtitle": "You got every single one!",
+    "twoStars.title": "Great Job!",
+    "twoStars.subtitle": "You did really well!",
+    "oneStar.title": "Good Try!",
+    "oneStar.subtitle": "Keep practicing!",
+    "zeroStars.title": "Nice Effort!",
+    "zeroStars.subtitle": "Try again to earn stars!"
+  },
+  "xpLevels": {
+    "Beginner": "Beginner",
+    "Music Sprout": "Music Sprout",
+    "Note Finder": "Note Finder",
+    "Melody Maker": "Melody Maker",
+    "Rhythm Keeper": "Rhythm Keeper",
+    "Music Explorer": "Music Explorer",
+    "Sound Wizard": "Sound Wizard",
+    "Piano Pro": "Piano Pro",
+    "Music Master": "Music Master",
+    "Symphony Star": "Symphony Star",
+    "Harmony Hero": "Harmony Hero",
+    "Virtuoso": "Virtuoso",
+    "Maestro": "Maestro",
+    "Grand Master": "Grand Master",
+    "Legend": "Legend"
+  },
+  "percentile": {
+    "bestYet": "Your best score yet! Better than {{percentile}}% of your attempts!",
+    "greatImprovement": "Great improvement! Better than {{percentile}}% of your previous scores!",
+    "gettingBetter": "You're getting better! Beat {{percentile}}% of your past tries!",
+    "keepPracticing": "Keep practicing! Better than {{percentile}}% of before!",
+    "roomToGrow": "Room to grow! Keep trying!"
+  },
+  "rateLimit": {
+    "title": "Take a breather!",
+    "continueIn": "You can continue in ",
+    "practiceMode": "Practice Mode — scores won't be saved"
   },
   "iosTip": {
     "bestExperienceLabel": "Best experience tip",

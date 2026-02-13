@@ -57,7 +57,8 @@
       "recordings": "הקלטות",
       "achievements": "הישגים",
       "settings": "הגדרות",
-      "legal": "מידע משפטי וקרדיטים"
+      "legal": "מידע משפטי וקרדיטים",
+      "trail": "מסלול"
     }
   },
   "pages": {
@@ -960,6 +961,83 @@
         "alt": "מפתח סול ומפתח פה"
       }
     }
+  },
+  "victory": {
+    "greatPractice": "תרגול מעולה!",
+    "loading": "טוען...",
+    "exerciseIndicator": "תרגיל {{current}} מתוך {{total}}",
+    "exercisesRemaining": "({{count}} נותרו)",
+    "finalScore": "ציון סופי: {{score}}/{{total}}",
+    "xpEarned": "+{{xp}} XP הושגו",
+    "starsEarned": "כוכבים שהושגו ({{count}}):",
+    "firstTimeBonus": "בונוס פעם ראשונה:",
+    "perfectScore": "ציון מושלם:",
+    "threeStars": "שלושה כוכבים:",
+    "levelLabel": "רמה {{level}}",
+    "xpProgress": "{{current}} / {{total}} XP",
+    "levelUp": "עליית רמה!",
+    "pointsEarned": "נקודות שהושגו",
+    "totalPoints": "סך הנקודות",
+    "nextExercise": "התרגיל הבא ({{count}} נותרו)",
+    "continueToNode": "המשיכו ל\"{{name}}\"",
+    "backToTrail": "חזרה למסלול",
+    "continueLearning": "המשיכו ללמוד"
+  },
+  "celebration": {
+    "boss.perfectVictory": "ניצחון מושלם!",
+    "boss.defeated": "הבוס הובס!",
+    "boss.subtitle": "כבשתם את האתגר!",
+    "threeStars.discovery.title": "תווים חדשים נלמדו!",
+    "threeStars.discovery.subtitle": "למדתם משהו חדש!",
+    "threeStars.practice.title": "תרגול מושלם!",
+    "threeStars.practice.subtitle": "אתם ממש משתפרים!",
+    "threeStars.mix_up.title": "אלופי המשחק!",
+    "threeStars.mix_up.subtitle": "הצלחתם במשחק הזיכרון!",
+    "threeStars.speed_round.title": "מהירים כברק!",
+    "threeStars.speed_round.subtitle": "וואו, ניצחתם את השעון!",
+    "threeStars.review.title": "זכרתם!",
+    "threeStars.review.subtitle": "התווים האלה נשארו אצלכם!",
+    "threeStars.challenge.title": "האתגר נכבש!",
+    "threeStars.challenge.subtitle": "זה היה קשה!",
+    "threeStars.mini_boss.title": "מיני-בוס הובס!",
+    "threeStars.mini_boss.subtitle": "נקודת ביקורת של היחידה הושלמה!",
+    "threeStars.default.title": "מושלם!",
+    "threeStars.default.subtitle": "הצלחתם בכל אחד ואחד!",
+    "twoStars.title": "כל הכבוד!",
+    "twoStars.subtitle": "הצלחתם ממש טוב!",
+    "oneStar.title": "ניסיון טוב!",
+    "oneStar.subtitle": "המשיכו לתרגל!",
+    "zeroStars.title": "מאמץ יפה!",
+    "zeroStars.subtitle": "נסו שוב כדי להרוויח כוכבים!"
+  },
+  "xpLevels": {
+    "Beginner": "מתחילים",
+    "Music Sprout": "נבט מוזיקלי",
+    "Note Finder": "מוצא תווים",
+    "Melody Maker": "יוצר מנגינות",
+    "Rhythm Keeper": "שומר הקצב",
+    "Music Explorer": "חוקר מוזיקה",
+    "Sound Wizard": "קוסם הצלילים",
+    "Piano Pro": "מקצוען הפסנתר",
+    "Music Master": "מאסטר המוזיקה",
+    "Symphony Star": "כוכב הסימפוניה",
+    "Harmony Hero": "גיבור ההרמוניה",
+    "Virtuoso": "וירטואוז",
+    "Maestro": "מאסטרו",
+    "Grand Master": "גרנד מאסטר",
+    "Legend": "אגדה"
+  },
+  "percentile": {
+    "bestYet": "הציון הכי טוב שלכם! טוב יותר מ-{{percentile}}% מהניסיונות שלכם!",
+    "greatImprovement": "שיפור מעולה! טוב יותר מ-{{percentile}}% מהציונים הקודמים שלכם!",
+    "gettingBetter": "אתם משתפרים! ניצחתם {{percentile}}% מהניסיונות הקודמים!",
+    "keepPracticing": "המשיכו לתרגל! טוב יותר מ-{{percentile}}% מקודם!",
+    "roomToGrow": "יש מקום לצמוח! המשיכו לנסות!"
+  },
+  "rateLimit": {
+    "title": "קחו הפסקה!",
+    "continueIn": "תוכלו להמשיך בעוד ",
+    "practiceMode": "מצב תרגול — הציונים לא יישמרו"
   },
   "iosTip": {
     "bestExperienceLabel": "טיפ לחוויית שימוש מיטבית",

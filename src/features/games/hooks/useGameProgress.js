@@ -3,7 +3,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useScores } from "../../../features/userData/useScores";
 import { createPracticeSession } from "../../../services/apiDatabase";
 import { useUser } from "../../authentication/useUser";
-import { showPointsGain } from "../../../components/ui/Toast";
 
 export function useGameProgress() {
   const [progress, setProgress] = useState({
@@ -92,8 +91,6 @@ export function useGameProgress() {
           gameType: "note-recognition",
         });
 
-        // Show points gain notification
-        showPointsGain(finalScore, "note-recognition");
       }
 
       // Update state to mark game as finished AFTER score is saved

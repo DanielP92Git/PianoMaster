@@ -137,8 +137,11 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
   const bestScore = progress?.best_score || 0;
   const exercisesCompleted = exerciseProgress.filter(ep => ep.stars > 0).length;
 
-  // Check if all exercises are complete
-  const allExercisesComplete = exercisesCompleted >= totalExercises && totalExercises > 0;
+  // Check if all exercises are complete.
+  // While loading, fall back to the parent-provided progress (stars > 0 means node was completed before)
+  const allExercisesComplete = isLoading
+    ? stars > 0
+    : exercisesCompleted >= totalExercises && totalExercises > 0;
 
   // Get node type icon and category colors for header
   const NodeIcon = getNodeTypeIcon(node.nodeType, node.category);
@@ -147,265 +150,288 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
     isUnlocked ? 'available' : 'locked'
   );
 
-  // Determine skill badge colors based on category
+  // Determine skill badge colors based on category (dark theme)
   const skillBadgeColors = node.isBoss
-    ? 'bg-yellow-100 text-yellow-800'
+    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
     : node.category === 'treble_clef'
-      ? 'bg-blue-100 text-blue-700'
+      ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
       : node.category === 'bass_clef'
-        ? 'bg-purple-100 text-purple-700'
+        ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30'
         : node.category === 'rhythm'
-          ? 'bg-emerald-100 text-emerald-700'
-          : 'bg-blue-100 text-blue-700';
+          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
+          : 'bg-blue-500/20 text-blue-300 border border-blue-400/30';
+
+  // Category-aware gradient for progress bar and CTA button
+  const progressGradient = node.isBoss
+    ? 'bg-gradient-to-r from-yellow-400 to-amber-500'
+    : node.category === 'treble_clef'
+      ? 'bg-gradient-to-r from-blue-500 to-indigo-600'
+      : node.category === 'bass_clef'
+        ? 'bg-gradient-to-r from-purple-500 to-violet-600'
+        : node.category === 'rhythm'
+          ? 'bg-gradient-to-r from-emerald-500 to-teal-600'
+          : 'bg-gradient-to-r from-blue-500 to-indigo-600';
 
   return (
     <div className="fixed inset-0 z-50" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="fixed inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-white p-4 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto modal-scrollbar ${isRTL ? 'text-right' : ''}`}>
-        {/* Header */}
-        <div className={`mb-3 sm:mb-4 flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className="flex-1">
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
-              {/* Node type icon with category color background */}
-              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${headerColors.bg} ${headerColors.border} border`}>
-                <NodeIcon size={18} className={headerColors.text} strokeWidth={2} />
+      <div className="fixed inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
+      <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-slate-800/95 backdrop-blur-sm border ${headerColors.border} shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden modal-scrollbar ${isRTL ? 'text-right' : ''}`}>
+        {/* Category accent strip */}
+        <div className={`h-1 w-full rounded-t-2xl ${headerColors.bg}`} />
+
+        <div className="p-4 sm:p-6">
+          {/* Header */}
+          <div className={`mb-3 sm:mb-4 flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="flex-1">
+              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                {/* Node type icon with category color background + glow */}
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${headerColors.bg} ${headerColors.border} border ${headerColors.glow}`}>
+                  <NodeIcon size={18} className={headerColors.text} strokeWidth={2} />
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">{translateNodeName(node.name, t, i18n)}</h2>
               </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{translateNodeName(node.name, t, i18n)}</h2>
+              <p className="mt-1 text-xs sm:text-sm text-white/70">{t(`descriptions.${node.name}`, { defaultValue: node.description })}</p>
             </div>
-            <p className="mt-1 text-xs sm:text-sm text-gray-600">{node.description}</p>
+            <button
+              onClick={onClose}
+              className={`rounded-lg p-1.5 sm:p-2 text-white/50 hover:bg-white/10 hover:text-white/80 flex-shrink-0 transition-colors ${isRTL ? 'mr-2' : 'ml-2'}`}
+              aria-label={t('common:actions.close', { defaultValue: 'Close' })}
+            >
+              &#10005;
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className={`rounded-lg p-1.5 sm:p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 flex-shrink-0 ${isRTL ? 'mr-2' : 'ml-2'}`}
-            aria-label={t('common:actions.close', { defaultValue: 'Close' })}
-          >
-            &#10005;
-          </button>
-        </div>
 
-        {/* Progress section (if unlocked) */}
-        {isUnlocked && (
-          <div className="mb-3 sm:mb-4 rounded-xl bg-gray-50 p-3 sm:p-4">
-            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('modal.yourProgress')}</h3>
+          {/* Progress section (if unlocked) */}
+          {isUnlocked && (
+            <div className="mb-3 sm:mb-4 rounded-xl bg-white/5 border border-white/10 p-3 sm:p-4">
+              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.yourProgress')}</h3>
 
-            {/* Node Stars (only show if all exercises complete) */}
-            {allExercisesComplete && (
-              <div className="mb-2 flex items-center gap-1">
-                {[1, 2, 3].map((starNum) => (
-                  <span
-                    key={starNum}
-                    className={`text-xl sm:text-2xl ${
-                      starNum <= stars ? 'text-yellow-400' : 'text-gray-300'
-                    }`}
-                  >
-                    &#11088;
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Exercises progress bar */}
-            {totalExercises > 1 && (
-              <div className="mb-2">
-                <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                  <span>{t('modal.exercises')}</span>
-                  <span>{t('modal.exerciseCount', { completed: exercisesCompleted, total: totalExercises })}</span>
+              {/* Node Stars (only show if all exercises complete) */}
+              {allExercisesComplete && (
+                <div className="mb-2 flex items-center gap-1">
+                  {[1, 2, 3].map((starNum) => (
+                    <span
+                      key={starNum}
+                      className={`text-xl sm:text-2xl drop-shadow-lg ${
+                        starNum <= stars ? 'text-yellow-400' : 'text-gray-600'
+                      }`}
+                    >
+                      &#11088;
+                    </span>
+                  ))}
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 transition-all duration-300"
-                    style={{ width: `${(exercisesCompleted / totalExercises) * 100}%` }}
-                  />
+              )}
+
+              {/* Exercises progress bar (hidden while loading) */}
+              {!isLoading && totalExercises > 1 && (
+                <div className="mb-2">
+                  <div className="flex items-center justify-between text-xs text-white/60 mb-1">
+                    <span>{t('modal.exercises')}</span>
+                    <span>{t('modal.exerciseCount', { completed: exercisesCompleted, total: totalExercises })}</span>
+                  </div>
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${progressGradient} transition-all duration-300`}
+                      style={{ width: `${(exercisesCompleted / totalExercises) * 100}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Best score */}
-            {bestScore > 0 && allExercisesComplete && (
-              <p className="text-xs sm:text-sm text-gray-600">
-                {t('modal.bestScore')} <span className="font-bold text-gray-900">{t('modal.bestScoreValue', { score: bestScore })}</span>
-              </p>
-            )}
-          </div>
-        )}
+              {/* Best score */}
+              {bestScore > 0 && allExercisesComplete && (
+                <p className="text-xs sm:text-sm text-white/60">
+                  {t('modal.bestScore')} <span className="font-bold text-white">{t('modal.bestScoreValue', { score: bestScore })}</span>
+                </p>
+              )}
+            </div>
+          )}
 
-        {/* Exercise List (if multiple exercises) */}
-        {isUnlocked && totalExercises > 1 && (
-          <div className="mb-3 sm:mb-4">
-            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('modal.exercises')}</h3>
-            <div className="space-y-1.5 sm:space-y-2">
-              {node.exercises.map((exercise, index) => {
-                const epData = getExerciseData(index);
-                const isCompleted = epData && epData.stars > 0;
-                const isNext = index === nextExerciseIndex;
-                const isLocked = index > 0 && !getExerciseData(index - 1)?.stars;
+          {/* Exercise List (if multiple exercises, hidden while loading) */}
+          {isUnlocked && !isLoading && totalExercises > 1 && (
+            <div className="mb-3 sm:mb-4">
+              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.exercises')}</h3>
+              <div className="space-y-1.5 sm:space-y-2">
+                {node.exercises.map((exercise, index) => {
+                  const epData = getExerciseData(index);
+                  const isCompleted = epData && epData.stars > 0;
+                  const isNext = index === nextExerciseIndex;
+                  const isLocked = index > 0 && !getExerciseData(index - 1)?.stars;
 
-                return (
-                  <div
-                    key={index}
-                    className={`
-                      flex items-center justify-between rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 transition-colors
-                      ${isNext ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'}
-                      ${isCompleted ? 'bg-green-50' : ''}
-                    `}
-                  >
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      {/* Status indicator */}
-                      <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-xs sm:text-sm font-medium">
-                        {isCompleted ? (
-                          <span className="text-green-600">&#10003;</span>
-                        ) : isLocked ? (
-                          <span className="text-gray-400">&#128274;</span>
-                        ) : (
-                          <span className="text-gray-500">{index + 1}</span>
-                        )}
-                      </span>
+                  return (
+                    <div
+                      key={index}
+                      className={`
+                        flex items-center justify-between rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 transition-colors
+                        ${isNext ? `bg-white/10 border ${headerColors.border}` : 'bg-white/5'}
+                        ${isCompleted ? 'bg-emerald-500/10' : ''}
+                      `}
+                    >
+                      <div className="flex items-center gap-1.5 sm:gap-2">
+                        {/* Status indicator */}
+                        <span className="flex h-5 w-5 sm:h-6 sm:w-6 items-center justify-center rounded-full text-xs sm:text-sm font-medium">
+                          {isCompleted ? (
+                            <span className="text-emerald-400">&#10003;</span>
+                          ) : isLocked ? (
+                            <span className="text-gray-600">&#128274;</span>
+                          ) : (
+                            <span className="text-white/50">{index + 1}</span>
+                          )}
+                        </span>
 
-                      {/* Exercise name */}
-                      <span className={`text-xs sm:text-sm ${isLocked ? 'text-gray-400' : 'text-gray-700'}`}>
-                        {getExerciseTypeName(exercise.type, t)}
-                      </span>
-                    </div>
+                        {/* Exercise name */}
+                        <span className={`text-xs sm:text-sm ${isLocked ? 'text-white/30' : 'text-white/80'}`}>
+                          {getExerciseTypeName(exercise.type, t)}
+                        </span>
+                      </div>
 
-                    {/* Stars or action */}
-                    <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {isCompleted && epData ? (
-                        // Show stars earned + replay button for completed exercises
-                        <>
-                          <div className="flex items-center gap-0.5">
-                            {[1, 2, 3].map((s) => (
-                              <span
-                                key={s}
-                                className={`text-xs sm:text-sm ${s <= epData.stars ? 'text-yellow-400' : 'text-gray-300'}`}
-                              >
-                                &#11088;
-                              </span>
-                            ))}
-                          </div>
+                      {/* Stars or action */}
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        {isCompleted && epData ? (
+                          // Show stars earned + replay button for completed exercises
+                          <>
+                            <div className="flex items-center gap-0.5">
+                              {[1, 2, 3].map((s) => (
+                                <span
+                                  key={s}
+                                  className={`text-xs sm:text-sm ${s <= epData.stars ? 'text-yellow-400' : 'text-gray-600'}`}
+                                >
+                                  &#11088;
+                                </span>
+                              ))}
+                            </div>
+                            <button
+                              onClick={() => navigateToExercise(index)}
+                              className="rounded-md bg-white/10 px-2 py-1 text-xs font-medium text-white/70 hover:bg-white/20 whitespace-nowrap transition-colors"
+                              aria-label={t('modal.replayButton')}
+                            >
+                              {t('modal.replayButton')}
+                            </button>
+                          </>
+                        ) : isNext ? (
+                          // Show "Start" button for next exercise
                           <button
                             onClick={() => navigateToExercise(index)}
-                            className="rounded-md bg-gray-200 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-300 whitespace-nowrap"
-                            aria-label={t('modal.replayButton')}
+                            className={`rounded-md ${progressGradient} px-2 py-1 text-xs font-medium text-white hover:scale-[1.02] whitespace-nowrap transition-transform`}
                           >
-                            {t('modal.replayButton')}
+                            {t('modal.startButton')}
                           </button>
-                        </>
-                      ) : isNext ? (
-                        // Show "Start" button for next exercise
-                        <button
-                          onClick={() => navigateToExercise(index)}
-                          className="rounded-md bg-blue-500 px-2 py-1 text-xs font-medium text-white hover:bg-blue-600 whitespace-nowrap"
-                        >
-                          {t('modal.startButton')}
-                        </button>
-                      ) : null}
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Skills covered */}
+          <div className="mb-3 sm:mb-4">
+            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.skillsYoullLearn')}</h3>
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {node.skills.map((skill, index) => (
+                <span
+                  key={index}
+                  className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${skillBadgeColors}`}
+                >
+                  {skill}
+                </span>
+              ))}
             </div>
           </div>
-        )}
 
-        {/* Skills covered */}
-        <div className="mb-3 sm:mb-4">
-          <h3 className="mb-2 text-xs sm:text-sm font-semibold text-gray-700">{t('modal.skillsYoullLearn')}</h3>
-          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {node.skills.map((skill, index) => (
-              <span
-                key={index}
-                className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${skillBadgeColors}`}
-              >
-                {skill}
-              </span>
-            ))}
+          {/* XP reward */}
+          <div className="mb-3 sm:mb-4 flex items-center justify-between rounded-lg bg-white/5 border border-white/10 p-2.5 sm:p-3">
+            <span className="text-xs sm:text-sm font-medium text-white/80">{t('modal.xpReward')}</span>
+            <span className="text-base sm:text-lg font-bold text-purple-400">
+              {t('modal.xpRewardValue', { xp: node.xpReward })}
+            </span>
           </div>
-        </div>
 
-        {/* XP reward */}
-        <div className="mb-3 sm:mb-4 flex items-center justify-between rounded-lg bg-purple-50 p-2.5 sm:p-3">
-          <span className="text-xs sm:text-sm font-medium text-purple-900">{t('modal.xpReward')}</span>
-          <span className="text-base sm:text-lg font-bold text-purple-600">
-            {t('modal.xpRewardValue', { xp: node.xpReward })}
-          </span>
-        </div>
+          {/* Accessory unlock (if applicable) */}
+          {node.accessoryUnlock && (
+            <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30 p-2.5 sm:p-3">
+              <p className="text-xs font-medium text-yellow-300">
+                &#127873; {t('modal.unlockLabel')} <span className="font-bold">{node.accessoryUnlock}</span>
+              </p>
+            </div>
+          )}
 
-        {/* Accessory unlock (if applicable) */}
-        {node.accessoryUnlock && (
-          <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-50 p-2.5 sm:p-3">
-            <p className="text-xs font-medium text-yellow-900">
-              &#127873; {t('modal.unlockLabel')} <span className="font-bold">{node.accessoryUnlock}</span>
-            </p>
-          </div>
-        )}
-
-        {/* Boss unlock hint (prominent display for locked boss nodes) */}
-        {!isUnlocked && node.isBoss && node.unlockHint && (
-          <div className="mb-3 sm:mb-4 rounded-xl bg-gradient-to-br from-yellow-100 to-yellow-50 border-4 border-yellow-300 p-4 sm:p-5 shadow-lg animate-pulse-slow">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-yellow-200 border-2 border-yellow-400">
-                  <span className="text-3xl sm:text-4xl">&#128274;</span>
+          {/* Boss unlock hint (prominent display for locked boss nodes) */}
+          {!isUnlocked && node.isBoss && node.unlockHint && (
+            <div className="mb-3 sm:mb-4 rounded-xl bg-yellow-400/10 border-2 border-yellow-500/30 p-4 sm:p-5 shadow-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]">
+                    <span className="text-3xl sm:text-4xl">&#128274;</span>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3
+                    className="text-base sm:text-lg font-black text-yellow-400 mb-2 uppercase tracking-wide"
+                    style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.3)' }}
+                  >
+                    {t('modal.bossUnlockTitle', { defaultValue: 'How to Unlock This Challenge' })}
+                  </h3>
+                  <p className="text-sm sm:text-base text-white/80 font-bold leading-relaxed">
+                    {t(`unlockHints.${node.name}`, { defaultValue: node.unlockHint })}
+                  </p>
                 </div>
               </div>
-              <div className="flex-1">
-                <h3 className="text-base sm:text-lg font-black text-yellow-900 mb-2 uppercase tracking-wide">
-                  {t('modal.bossUnlockTitle', { defaultValue: 'How to Unlock This Challenge' })}
-                </h3>
-                <p className="text-sm sm:text-base text-yellow-900 font-bold leading-relaxed">
-                  {node.unlockHint}
-                </p>
-              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Prerequisites (if locked and has prerequisites) */}
-        {!isUnlocked && prerequisites.length > 0 && (
-          <div className="mb-3 sm:mb-4 rounded-lg bg-red-50 p-2.5 sm:p-3">
-            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-900">
-              &#128274; {t('modal.prerequisites')}
-            </h3>
-            <ul className="list-inside list-disc text-xs sm:text-sm text-red-700">
-              {prerequisites.map((prereqId) => {
-                const prereqNode = getNodeById(prereqId);
-                return (
-                  <li key={prereqId}>{prereqNode ? translateNodeName(prereqNode.name, t, i18n) : prereqId}</li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
+          {/* Prerequisites (if locked and has prerequisites) */}
+          {!isUnlocked && prerequisites.length > 0 && (
+            <div className="mb-3 sm:mb-4 rounded-lg bg-red-500/10 border border-red-400/30 p-2.5 sm:p-3">
+              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-400">
+                &#128274; {t('modal.prerequisites')}
+              </h3>
+              <ul className="list-inside list-disc text-xs sm:text-sm text-red-400/80">
+                {prerequisites.map((prereqId) => {
+                  const prereqNode = getNodeById(prereqId);
+                  return (
+                    <li key={prereqId}>{prereqNode ? translateNodeName(prereqNode.name, t, i18n) : prereqId}</li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
-        {/* Action buttons */}
-        <div className={`flex gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl border-2 border-gray-300 bg-white px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-          >
-            {t('common:actions.cancel', { defaultValue: 'Cancel' })}
-          </button>
-          <button
-            onClick={handleStartPractice}
-            disabled={!isUnlocked}
-            className={`
-              flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-all
-              ${
-                isUnlocked
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-xl'
-                  : 'cursor-not-allowed bg-gray-300 text-gray-500'
+          {/* Action buttons */}
+          <div className={`flex gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <button
+              onClick={onClose}
+              className="flex-1 rounded-xl bg-gradient-to-b from-gray-100 to-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-transform hover:scale-[1.02] duration-200"
+            >
+              {t('common:actions.cancel', { defaultValue: 'Cancel' })}
+            </button>
+            <button
+              onClick={handleStartPractice}
+              disabled={!isUnlocked || isLoading}
+              className={`
+                flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-all duration-200
+                ${
+                  !isUnlocked
+                    ? 'cursor-not-allowed bg-gray-700 text-gray-500'
+                    : isLoading
+                      ? `${progressGradient} opacity-70 cursor-wait`
+                      : `${progressGradient} hover:scale-[1.02] hover:shadow-xl`
+                }
+              `}
+            >
+              {!isUnlocked
+                ? t('modal.button.locked')
+                : isLoading
+                  ? (stars > 0 ? t('modal.button.practiceAgain') : t('modal.button.startPractice'))
+                  : allExercisesComplete
+                    ? t('modal.button.practiceAgain')
+                    : nextExerciseIndex === 0
+                      ? t('modal.button.startPractice')
+                      : t('modal.button.continue', { completed: exercisesCompleted, total: totalExercises })
               }
-            `}
-          >
-            {!isUnlocked
-              ? t('modal.button.locked')
-              : allExercisesComplete
-                ? t('modal.button.practiceAgain')
-                : nextExerciseIndex === 0
-                  ? t('modal.button.startPractice')
-                  : t('modal.button.continue', { completed: exercisesCompleted, total: totalExercises })
-            }
-          </button>
+            </button>
+          </div>
         </div>
       </div>
     </div>

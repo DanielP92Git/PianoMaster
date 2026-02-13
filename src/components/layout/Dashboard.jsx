@@ -11,7 +11,7 @@ import { Bell, X, TrendingUp } from "lucide-react";
 import { toast } from "react-hot-toast";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
-import { Send, Loader2, Music2 } from "lucide-react";
+import { Send, Loader2, Music2, Mic, Piano } from "lucide-react";
 import { useTotalPoints } from "../../hooks/useTotalPoints";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 import {
@@ -1011,7 +1011,7 @@ function Dashboard() {
                   }`}
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/25 shadow-[0_0_18px_rgba(34,197,94,0.18)]">
-                    <span className="text-lg">🎤</span>
+                    <Mic className="h-5 w-5 text-emerald-400" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold">
@@ -1030,7 +1030,7 @@ function Dashboard() {
                   }`}
                 >
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/25 shadow-[0_0_18px_rgba(59,130,246,0.22)]">
-                    <span className="text-lg">📊</span>
+                    <Piano className="h-5 w-5 text-blue-400" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold">
