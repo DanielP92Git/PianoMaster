@@ -106,12 +106,11 @@ Plans:
   4. Rotate prompt does not appear on desktop devices or when device is already in landscape
   5. Orientation detection works universally via CSS media queries (no reliance on Screen Orientation API)
 
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Create useOrientation hook with matchMedia for reactive detection
-- [ ] 02-02: Build RotatePromptOverlay component with animated phone icon
-- [ ] 02-03: Integrate orientation detection into all 4 game modes
+- [ ] 02-01-PLAN.md — Create useOrientation hook, useRotatePrompt hook, and RotatePromptOverlay component
+- [ ] 02-02-PLAN.md — Integrate rotate prompt into all 4 game modes + visual verification
 
 ---
 
@@ -217,7 +216,7 @@ Phases execute in numeric order: 01 → 02 → 03 → 04 → 05
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
 | 01. Hebrew Translations | v1.6 prep | 2/2 | Complete | 2026-02-13 |
-| 02. Foundation - Orientation Detection & Prompt | v1.6 | 0/3 | Not started | - |
+| 02. Foundation - Orientation Detection & Prompt | v1.6 | 0/2 | Not started | - |
 | 03. Game Layout Optimization | v1.6 | 0/3 | Not started | - |
 | 04. Platform-Specific Android Enhancement | v1.6 | 0/3 | Not started | - |
 | 05. Accessibility & Internationalization | v1.6 | 0/3 | Not started | - |
