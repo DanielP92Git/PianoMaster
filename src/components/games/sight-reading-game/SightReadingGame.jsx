@@ -40,6 +40,8 @@ import {
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 
 // #region agent log (debug-mode instrumentation)
 // Network logging is disabled by default. Enable by setting
@@ -148,6 +150,7 @@ export function SightReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
+  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
@@ -3314,6 +3317,7 @@ export function SightReadingGame() {
   // Show game interface
   return (
     <>
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       <div className="relative">
         {showMicDebug && (
           <div className="pointer-events-none absolute bottom-2 right-2 z-50 w-[260px] rounded-xl border border-white/15 bg-black/40 p-3 text-xs text-white backdrop-blur">

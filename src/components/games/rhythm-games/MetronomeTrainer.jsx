@@ -14,6 +14,8 @@ import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import Button from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
 import { Trophy, RotateCcw, Home } from "lucide-react";
@@ -96,6 +98,7 @@ export function MetronomeTrainer() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation("common");
+  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
@@ -1258,6 +1261,7 @@ export function MetronomeTrainer() {
       className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
       dir="rtl"
     >
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       {/* Compact Header */}
       <div className="flex flex-shrink-0 items-center justify-between px-4 py-2">
         {/* Only show back button during gameplay (not on session complete screen) */}
