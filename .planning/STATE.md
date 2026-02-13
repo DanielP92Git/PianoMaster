@@ -5,16 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-12)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 01 - Complete Hebrew translation gaps
+**Current focus:** Milestone v1.6 - Auto-Rotate Landscape for Games
 
 ## Current Position
 
-Phase: 01-complete-the-hebrew-translations-gaps
-Current Plan: Complete (2/2 plans done)
-Status: Complete
-Last activity: 2026-02-13 -- Completed plan 01-02 (Remove dead translation keys from EN and HE JSON files)
-
-Progress: [█░░░░░░░░░░░░░░░░░░░░░░░] 3% (60/60 plans total, 2/2 in phase 01)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-13 — Milestone v1.6 started
 
 ## Milestone History
 
