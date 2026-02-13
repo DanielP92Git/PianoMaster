@@ -84,7 +84,15 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-(No active requirements -- next milestone not yet planned)
+## Current Milestone: v1.6 Auto-Rotate Landscape for Games
+
+**Goal:** Automatically rotate to landscape mode when entering games on mobile, with API lock on Android and a playful rotate prompt on iOS.
+
+**Target features:**
+- Screen Orientation API landscape lock on Android PWA
+- Playful animated rotate prompt for iOS PWA (tilting phone icon, kid-friendly message)
+- Full game lifecycle coverage (settings → gameplay → victory screen)
+- Orientation unlock on navigation away from game
 
 **Deferred (candidates for future milestones):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -92,7 +100,6 @@ These capabilities exist, are working, and have been shipped:
 - Celebration sound effects with volume control (requires classroom A/B testing)
 - Streak/unit/path completion celebrations
 - i18n for celebration messages
-- Auto-rotate to landscape for games on mobile
 - Grand Staff integration (cross-clef learning)
 - Adaptive difficulty system (algorithm research needed)
 
@@ -213,4 +220,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-12 after v1.5 milestone*
+*Last updated: 2026-02-13 after v1.6 milestone start*
