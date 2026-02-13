@@ -18,10 +18,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Confetti from 'react-confetti';
 import { Trophy, Crown } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAccessibility } from '../../contexts/AccessibilityContext';
 import { getRandomMusicShape } from '../../utils/musicSymbolShapes';
 import { playFanfare } from '../../utils/fanfareSound';
 import { SKILL_NODES, getNodeById } from '../../data/skillTrail';
+import { translateNodeName } from '../../utils/translateNodeName';
 
 // Stage constants
 const STAGES = {
@@ -48,11 +50,17 @@ const BOSS_CONFETTI_COLORS = ['#FFD700', '#FFC107', '#FFA000', '#FFFFFF', '#FFE0
  * @param {string} nodeId - The boss node ID
  * @returns {string} Category-specific congratulatory message
  */
-const getPathCompleteMessage = (nodeId) => {
+const getPathCompleteMessage = (nodeId, t) => {
   const node = getNodeById(nodeId);
-  if (!node) return 'You have mastered this path!';
+  if (!node) {
+    return t ? t('trail:boss.pathCompleteMessages.default') : 'You have mastered this path!';
+  }
 
   const category = node.category;
+  if (t) {
+    const key = `trail:boss.pathCompleteMessages.${category}`;
+    return t(key, { defaultValue: t('trail:boss.pathCompleteMessages.default') });
+  }
   if (category === 'treble_clef') return "You've mastered all Treble Clef notes!";
   if (category === 'bass_clef') return 'Bass Clef Master!';
   if (category === 'rhythm') return 'Rhythm Champion!';
@@ -107,6 +115,7 @@ export function BossUnlockModal({
   onClose,
   onNavigateToNext
 }) {
+  const { t, i18n } = useTranslation(['trail', 'common']);
   const { reducedMotion } = useAccessibility();
   const [stage, setStage] = useState(STAGES.CELEBRATION);
   const [showContinueButton, setShowContinueButton] = useState(false);
@@ -223,7 +232,7 @@ export function BossUnlockModal({
       >
         <div className="w-full max-w-sm rounded-2xl border border-yellow-500/30 bg-slate-800/95 p-6 text-center backdrop-blur-sm">
           <h2 className="mb-3 text-2xl font-bold text-yellow-400">
-            Boss Cleared!
+            {t('trail:boss.cleared')}
           </h2>
 
           {/* Star display */}
@@ -240,32 +249,32 @@ export function BossUnlockModal({
             ))}
           </div>
 
-          <p className="mb-2 text-sm text-white/70">{nodeName}</p>
+          <p className="mb-2 text-sm text-white/70">{translateNodeName(nodeName, t, i18n)}</p>
 
           {nextNode ? (
             <>
               <p className="mb-4 text-sm text-white/80">
-                Next: {nextNode.name}
+                {t('trail:boss.next', { name: translateNodeName(nextNode.name, t, i18n) })}
               </p>
               <button
                 onClick={onNavigateToNext}
                 className="min-h-[48px] w-full rounded-full bg-white px-6 py-3 text-base font-bold text-slate-900 shadow-lg"
                 autoFocus
               >
-                Start Next Node
+                {t('trail:boss.startNextNode')}
               </button>
             </>
           ) : (
             <>
               <p className="mb-4 text-sm text-white/80">
-                {getPathCompleteMessage(nodeId)}
+                {getPathCompleteMessage(nodeId, t)}
               </p>
               <button
                 onClick={onClose}
                 className="min-h-[48px] w-full rounded-full bg-white px-6 py-3 text-base font-bold text-slate-900 shadow-lg"
                 autoFocus
               >
-                Back to Trail
+                {t('trail:boss.backToTrail')}
               </button>
             </>
           )}
@@ -312,7 +321,7 @@ export function BossUnlockModal({
               className="mb-3 text-3xl font-black text-yellow-400"
               style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.5)' }}
             >
-              {stars === 3 ? 'PERFECT VICTORY!' : 'Boss Defeated!'}
+              {stars === 3 ? t('trail:boss.perfectVictory') : t('trail:boss.defeated')}
             </h2>
 
             {/* Star display */}
@@ -335,7 +344,7 @@ export function BossUnlockModal({
               ))}
             </div>
 
-            <p className="mb-6 text-sm text-white/60">{nodeName}</p>
+            <p className="mb-6 text-sm text-white/60">{translateNodeName(nodeName, t, i18n)}</p>
 
             {/* Continue button */}
             <button
@@ -349,7 +358,7 @@ export function BossUnlockModal({
               tabIndex={showContinueButton ? 0 : -1}
               aria-hidden={!showContinueButton}
             >
-              Continue
+              {t('trail:boss.continue')}
             </button>
           </div>
         )}
@@ -366,10 +375,10 @@ export function BossUnlockModal({
               className="mb-2 text-2xl font-black text-yellow-400"
               style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}
             >
-              Unit Complete!
+              {t('trail:boss.unitComplete')}
             </h2>
 
-            <p className="mb-6 text-lg text-white/80">{nodeName}</p>
+            <p className="mb-6 text-lg text-white/80">{translateNodeName(nodeName, t, i18n)}</p>
 
             {/* Continue button */}
             <button
@@ -383,7 +392,7 @@ export function BossUnlockModal({
               tabIndex={showContinueButton ? 0 : -1}
               aria-hidden={!showContinueButton}
             >
-              Continue
+              {t('trail:boss.continue')}
             </button>
           </div>
         )}
@@ -397,11 +406,11 @@ export function BossUnlockModal({
                   className="mb-3 text-2xl font-black text-yellow-400"
                   style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}
                 >
-                  New Path Unlocked!
+                  {t('trail:boss.newPathUnlocked')}
                 </h2>
 
                 <p className="mb-4 text-lg text-white/90">
-                  Next: {nextNode.name}
+                  {t('trail:boss.next', { name: translateNodeName(nextNode.name, t, i18n) })}
                 </p>
 
                 {/* Mini trail preview - upcoming nodes */}
@@ -437,7 +446,7 @@ export function BossUnlockModal({
                   tabIndex={showContinueButton ? 0 : -1}
                   aria-hidden={!showContinueButton}
                 >
-                  Start Next Node
+                  {t('trail:boss.startNextNode')}
                 </button>
               </>
             ) : (
@@ -451,11 +460,11 @@ export function BossUnlockModal({
                   className="mb-3 text-2xl font-black text-yellow-400"
                   style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}
                 >
-                  Path Complete!
+                  {t('trail:boss.pathComplete')}
                 </h2>
 
                 <p className="mb-6 text-base text-white/80">
-                  {getPathCompleteMessage(nodeId)}
+                  {getPathCompleteMessage(nodeId, t)}
                 </p>
 
                 {/* CTA: Back to Trail */}
@@ -470,7 +479,7 @@ export function BossUnlockModal({
                   tabIndex={showContinueButton ? 0 : -1}
                   aria-hidden={!showContinueButton}
                 >
-                  Back to Trail
+                  {t('trail:boss.backToTrail')}
                 </button>
               </>
             )}

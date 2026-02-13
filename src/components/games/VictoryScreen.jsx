@@ -247,10 +247,10 @@ const VictoryScreen = ({
       scorePercentage
     );
     const config = getCelebrationConfig(tier);
-    const message = getCelebrationMessage(nodeType, effectiveStars, isBoss);
+    const message = getCelebrationMessage(nodeType, effectiveStars, isBoss, t);
 
     return { tier, config, message, isBoss, nodeType, effectiveStars };
-  }, [nodeId, stars, xpData?.leveledUp, scorePercentage]);
+  }, [nodeId, stars, xpData?.leveledUp, scorePercentage, t]);
 
   // Mini XP progress bar data (after XP is awarded, shows level context)
   const levelProgressData = useMemo(() => {
@@ -543,7 +543,7 @@ const VictoryScreen = ({
         Math.round(Math.min(scorePercentage, 100)),
         nodeId
       );
-      const message = getPercentileMessage(percentile);
+      const message = getPercentileMessage(percentile, t);
       setPercentileMessage(message);
     };
 
@@ -743,9 +743,9 @@ const VictoryScreen = ({
           {/* Victory title */}
           <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
             {rateLimited
-              ? 'Great Practice!'
+              ? t('victory.greatPractice')
               : isProcessingTrail
-                ? 'Loading...'
+                ? t('victory.loading')
                 : celebrationData.message.title}
           </h2>
 
@@ -759,16 +759,16 @@ const VictoryScreen = ({
           {/* Exercise indicator (if multi-exercise node) */}
           {nodeId && totalExercises > 1 && exerciseIndex !== null && (
             <p className="text-xs text-white/70">
-              Exercise {exerciseIndex + 1} of {totalExercises}
+              {t('victory.exerciseIndicator', { current: exerciseIndex + 1, total: totalExercises })}
               {!nodeComplete && exercisesRemaining > 0 && (
-                <span className="ml-1">({exercisesRemaining} remaining)</span>
+                <span className="ml-1">{t('victory.exercisesRemaining', { count: exercisesRemaining })}</span>
               )}
             </p>
           )}
 
           {/* Score display */}
           <p className="text-sm text-white/90 sm:text-base">
-            Final Score: {score}/{totalPossibleScore}
+            {t('victory.finalScore', { score, total: totalPossibleScore })}
           </p>
 
           {/* Star rating display (if trail node) */}
@@ -803,7 +803,7 @@ const VictoryScreen = ({
                 {/* Total XP header with count-up animation */}
                 <div className="text-center">
                   <p className="text-sm font-bold text-blue-600 sm:text-base">
-                    +{animatedXPGain} XP Earned
+                    {t('victory.xpEarned', { xp: animatedXPGain })}
                   </p>
                 </div>
 
@@ -811,14 +811,14 @@ const VictoryScreen = ({
                 <div className="space-y-0.5 text-xs text-gray-600">
                   {/* Stars earned */}
                   <div className="flex justify-between">
-                    <span>Stars earned ({xpData.stars}):</span>
+                    <span>{t('victory.starsEarned', { count: xpData.stars })}</span>
                     <span className="font-semibold text-blue-600">+{xpData.baseXP}</span>
                   </div>
 
                   {/* Bonus: First time */}
                   {xpData.bonuses?.firstTime && (
                     <div className="flex justify-between text-purple-600">
-                      <span>First time bonus:</span>
+                      <span>{t('victory.firstTimeBonus')}</span>
                       <span className="font-semibold">+25</span>
                     </div>
                   )}
@@ -826,7 +826,7 @@ const VictoryScreen = ({
                   {/* Bonus: Perfect score */}
                   {xpData.bonuses?.perfect && (
                     <div className="flex justify-between text-amber-600">
-                      <span>Perfect score:</span>
+                      <span>{t('victory.perfectScore')}</span>
                       <span className="font-semibold">+50</span>
                     </div>
                   )}
@@ -834,7 +834,7 @@ const VictoryScreen = ({
                   {/* Bonus: Three stars */}
                   {xpData.bonuses?.threeStars && (
                     <div className="flex justify-between text-yellow-600">
-                      <span>Three stars:</span>
+                      <span>{t('victory.threeStars')}</span>
                       <span className="font-semibold">+50</span>
                     </div>
                   )}
@@ -844,8 +844,8 @@ const VictoryScreen = ({
                 {levelProgressData && !xpData.leveledUp && (
                   <div className="mt-2 space-y-1 rounded-lg bg-blue-50/80 p-2">
                     <div className="flex items-center justify-between text-xs font-semibold text-blue-900">
-                      <span>{levelProgressData.currentLevel.title}</span>
-                      <span>Level {levelProgressData.currentLevel.level}</span>
+                      <span>{t(`xpLevels.${levelProgressData.currentLevel.title}`)}</span>
+                      <span>{t('victory.levelLabel', { level: levelProgressData.currentLevel.level })}</span>
                     </div>
                     <div className="h-2 w-full overflow-hidden rounded-full bg-blue-200">
                       <div
@@ -856,7 +856,7 @@ const VictoryScreen = ({
                       />
                     </div>
                     <div className="text-center text-xs text-blue-700">
-                      {levelProgressData.xpInCurrentLevel} / {levelProgressData.nextLevelXP - levelProgressData.currentLevel.xpRequired} XP
+                      {t('victory.xpProgress', { current: levelProgressData.xpInCurrentLevel, total: levelProgressData.nextLevelXP - levelProgressData.currentLevel.xpRequired })}
                     </div>
                   </div>
                 )}
@@ -864,9 +864,9 @@ const VictoryScreen = ({
                 {/* Level up indicator - enhanced with level name */}
                 {xpData.leveledUp && (
                   <div className={`${reducedMotion ? '' : 'animate-bounce'} mt-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-2 text-center shadow-lg`}>
-                    <div className="text-xs font-semibold text-white/90">Level Up!</div>
+                    <div className="text-xs font-semibold text-white/90">{t('victory.levelUp')}</div>
                     <div className="text-base font-bold text-white">
-                      {levelProgressData?.currentLevel?.title || `Level ${xpData.newLevel}`}
+                      {levelProgressData?.currentLevel?.title ? t(`xpLevels.${levelProgressData.currentLevel.title}`) : t('victory.levelLabel', { level: xpData.newLevel })}
                     </div>
                   </div>
                 )}
@@ -896,7 +896,7 @@ const VictoryScreen = ({
               <div className="relative flex items-center justify-between gap-2 rounded-xl border-white/60 bg-white/90 px-3 py-2 shadow-lg sm:px-4 sm:py-2.5">
                 <div className="text-left">
                   <p className="text-[10px] text-gray-500 sm:text-xs">
-                    Points earned
+                    {t('victory.pointsEarned')}
                   </p>
                   <p className="text-sm font-bold text-emerald-500 sm:text-base">
                     +{actualGain.toLocaleString()}
@@ -904,7 +904,7 @@ const VictoryScreen = ({
                 </div>
                 <div className="text-right">
                   <p className="text-[10px] uppercase tracking-wide text-gray-500 sm:text-xs">
-                    Total Points
+                    {t('victory.totalPoints')}
                   </p>
                   <p className="text-lg font-black tracking-tight text-gray-900 sm:text-xl">
                     {animatedTotal.toLocaleString()}
@@ -925,28 +925,28 @@ const VictoryScreen = ({
                     onClick={onNextExercise}
                     className="w-full transform rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
                   >
-                    Next Exercise ({exercisesRemaining} left)
+                    {t('victory.nextExercise', { count: exercisesRemaining })}
                   </button>
                 ) : isProcessingTrail || fetchingNextNode ? (
                   <button
                     disabled
                     className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white opacity-80"
                   >
-                    <span className="inline-block animate-pulse">Loading...</span>
+                    <span className="inline-block animate-pulse">{t('victory.loading')}</span>
                   </button>
                 ) : nodeComplete && nextNode ? (
                   <button
                     onClick={navigateToNextNode}
                     className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
                   >
-                    Continue to &quot;{translateNodeName(nextNode.name, t, i18n)}&quot;
+                    {t('victory.continueToNode', { name: translateNodeName(nextNode.name, t, i18n) })}
                   </button>
                 ) : (
                   <button
                     onClick={() => navigate('/trail')}
                     className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
                   >
-                    {nodeComplete ? 'Back to Trail' : 'Continue Learning'}
+                    {nodeComplete ? t('victory.backToTrail') : t('victory.continueLearning')}
                   </button>
                 )}
                 <div className="flex gap-2">
@@ -960,7 +960,7 @@ const VictoryScreen = ({
                     onClick={() => navigate('/trail')}
                     className="flex-1 transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:py-2.5"
                   >
-                    {t("trail:backToTrail", "Back to Trail")}
+                    {t("victory.backToTrail")}
                   </button>
                 </div>
               </>
