@@ -26,12 +26,12 @@ export function RotatePromptOverlay({ onDismiss }) {
           {/* TODO Phase 05: Gate animation with AccessibilityContext reducedMotion */}
           <motion.div
             animate={{
-              rotate: [-15, 80]
+              rotate: [0, 0, -90, -90, 0]
             }}
             transition={{
-              duration: 1.5,
+              duration: 3,
               repeat: Infinity,
-              repeatType: "reverse",
+              times: [0, 0.1, 0.4, 0.75, 0.75],
               ease: "easeInOut"
             }}
             className="relative"
@@ -60,10 +60,6 @@ export function RotatePromptOverlay({ onDismiss }) {
             </div>
           </motion.div>
 
-          {/* Music note emoji for playfulness */}
-          <div className="absolute -top-4 -right-4 text-4xl">
-            🎵
-          </div>
         </div>
 
         {/* Playful text for 8-year-olds */}
