@@ -1,437 +1,534 @@
-# Stack Research: Celebration Animations & Visual Polish
+# Technology Stack: Auto-Rotate Landscape for Mobile Games
 
-**Domain:** Piano learning PWA - celebration animations, XP prominence, node visual distinction
-**Researched:** 2026-02-05
-**Confidence:** HIGH
+**Project:** PianoApp2 - Piano Learning PWA
+**Feature:** Auto-rotate to landscape on mobile games
+**Researched:** 2026-02-13
+**Overall confidence:** HIGH
 
 ## Executive Summary
 
-**No new dependencies needed.** The project already has the complete stack required for celebration animations, boss unlock events, and visual enhancements. This milestone focuses on using existing tools more effectively:
+Auto-rotate landscape functionality can be implemented **without additional npm packages** using native Web APIs and existing project dependencies (Tailwind CSS, Framer Motion, lucide-react). The Screen Orientation API has 95% browser support but requires fullscreen mode and is **unavailable on iOS PWAs**. The recommended approach is CSS media queries + custom React hooks for orientation detection, with optional prompt overlay for portrait users, rather than attempting programmatic orientation locking.
 
-- **Framer Motion v12.23.26** (already installed) for smooth celebrations
-- **react-confetti v6.2.3** (already installed) for boss unlock confetti
-- **Tailwind CSS custom keyframes** (already configured) for node type animations
-- **lucide-react v0.344.0** (already installed) for node type icons
-- **Existing AnimationUtils.jsx** patterns for accessibility-aware animations
+## Recommended Stack
 
-**Key finding:** The codebase has strong animation patterns in `AnimationUtils.jsx` with accessibility support (`reducedMotion`, `highContrast`). The stack research confirms: **extend existing patterns, don't add libraries.**
+### Core Technologies (Use Existing)
 
----
+| Technology | Version | Purpose | Why |
+|------------|---------|---------|-----|
+| CSS Media Queries | Native | Orientation detection | Universal support, zero dependencies, works on iOS |
+| `window.matchMedia()` | Native Web API | Reactive orientation changes | Standard API, 99%+ support, no polyfill needed |
+| Tailwind CSS | ^3.4.1 (existing) | Responsive orientation utilities | Already in project, supports `portrait:` and `landscape:` variants |
+| Framer Motion | ^12.23.26 (existing) | Rotate prompt animations | Already in project, smooth animations for device rotation prompts |
+| lucide-react | ^0.344.0 (existing) | Smartphone/rotate icons | Already in project, `Smartphone` + `RotateCw` icons available |
 
-## Recommended Stack (Current Installation)
+### Custom Implementation (No New Packages)
 
-### Core Animation Technologies
+| Component | Implementation | Purpose | Complexity |
+|-----------|---------------|---------|------------|
+| `useOrientation` hook | Custom hook with `matchMedia` | Detect portrait/landscape state | Low (15-20 lines) |
+| `OrientationPrompt` component | Overlay with rotate animation | Prompt portrait users to rotate | Low (30-40 lines) |
+| Tailwind orientation utilities | `portrait:hidden`, `landscape:block` | Hide/show content by orientation | Trivial (built-in) |
 
-| Technology | Version | Purpose | Why Already Perfect |
-|------------|---------|---------|---------------------|
-| **Framer Motion** | 12.23.26 | Orchestrated animations, spring physics, variants | Industry standard for React animations. v12 is actively maintained (v13 exists but requires migration). Provides accessibility-aware motion with `AnimatePresence` and `motion.*` components. Perfect for sequential celebration animations. |
-| **react-confetti** | 6.2.3 | Full-screen confetti for boss unlocks | Actively maintained (latest v6.4.0, but v6.2.3 is stable). Canvas-based, performant, customizable. Only 5KB gzipped. Ideal for boss unlock celebrations without heavy dependencies. |
-| **Tailwind CSS** | 3.4.1 | Keyframe animations, utility-first styling | Extensive custom keyframes already configured (`animate-bounce`, `animate-pulse`, `animate-wiggle`, `animate-floatUp`, `animate-shimmer`). CSS-first approach ensures tree-shaking and optimal bundle size. |
-| **lucide-react** | 0.344.0 | Node type icons (discovery, practice, boss, etc.) | 1500+ SVG icons as React components. Tree-shakeable (only imports used icons). Perfect for node type visual distinction. Latest is v0.562.0, but v0.344.0 is stable and sufficient. |
+## Supporting Libraries (NOT RECOMMENDED)
 
-### Supporting Libraries
-
-| Library | Version | Purpose | When to Use |
-|---------|---------|---------|-------------|
-| **clsx** | 2.1.1 | Conditional className assembly | For dynamic node type styling (color classes based on `nodeType`). Already used throughout codebase. |
-| **react-icons** | 5.5.0 | Additional icon options (if lucide lacks specific icons) | Only if lucide doesn't have required celebration/gaming icons. Already installed. |
-
-### Accessibility Infrastructure (Already Implemented)
-
-| Component | Location | Purpose | Notes |
-|-----------|----------|---------|-------|
-| **AccessibilityContext** | `src/contexts/AccessibilityContext.jsx` | `reducedMotion`, `highContrast` flags | ALL animations MUST respect `reducedMotion`. Used throughout `AnimationUtils.jsx`. |
-| **AnimationUtils.jsx** | `src/components/ui/AnimationUtils.jsx` | Reusable animation components | 9 components: `AnimatedWrapper`, `SuccessAnimation`, `HoverAnimation`, `StaggeredList`, etc. All accessibility-aware. |
-
----
-
-## Stack Patterns for This Milestone
-
-### 1. Node Type Visual Distinction
-
-**Use:** Tailwind utilities + lucide-react icons + `NODE_TYPE_METADATA`
-
-**Implementation:**
-```jsx
-// src/data/nodeTypes.js already has metadata
-import { getNodeTypeIcon, getNodeTypeColor } from '../data/nodeTypes';
-import { Trophy, Target, Zap, BookOpen } from 'lucide-react';
-
-// Map icons to node types
-const ICON_MAP = {
-  discovery: <BookOpen />,
-  practice: <Target />,
-  speed_round: <Zap />,
-  boss: <Trophy />
-};
-```
-
-**Why this pattern:**
-- No new dependencies
-- Icons are SVG (scalable, performant)
-- Tailwind color utilities already support all node type colors (blue, green, purple, orange, yellow, red)
-- `NODE_TYPE_METADATA` already defines colors and icons (emojis can be replaced with lucide components)
-
-### 2. Celebration Animations (Node Completion)
-
-**Use:** Framer Motion `motion.div` + `AnimatePresence` + `reducedMotion`
-
-**Implementation:**
-```jsx
-// VictoryScreen.jsx enhancement
-import { motion, AnimatePresence } from 'framer-motion';
-
-const celebrationVariants = {
-  discovery: {
-    initial: { scale: 0, rotate: -180 },
-    animate: { scale: 1, rotate: 0, transition: { type: 'spring', damping: 10 } }
-  },
-  boss: {
-    initial: { y: -100, opacity: 0 },
-    animate: { y: 0, opacity: 1, transition: { duration: 0.6, ease: 'easeOut' } }
-  }
-};
-
-// Respect reducedMotion
-const variant = reducedMotion ? null : celebrationVariants[nodeType];
-```
-
-**Why this pattern:**
-- Framer Motion handles animation orchestration (no manual `requestAnimationFrame`)
-- `AnimatePresence` handles exit animations (e.g., when confetti disappears)
-- Spring physics feel natural for celebrations
-- Built-in accessibility with `reducedMotion` prop
-
-### 3. Boss Unlock Confetti
-
-**Use:** react-confetti component
-
-**Implementation:**
-```jsx
-import Confetti from 'react-confetti';
-import { useWindowSize } from 'react-use'; // or custom hook
-
-// Boss unlock modal
-const BossUnlockModal = ({ show, onClose }) => {
-  const { width, height } = useWindowSize();
-
-  return (
-    <>
-      {show && (
-        <Confetti
-          width={width}
-          height={height}
-          recycle={false}
-          numberOfPieces={200}
-          gravity={0.3}
-          colors={['#3b82f6', '#d946ef', '#eab308', '#22c55e']}
-        />
-      )}
-      {/* Modal content */}
-    </>
-  );
-};
-```
-
-**Why this pattern:**
-- `react-confetti` is lightweight (5KB) and canvas-based (performant on mobile)
-- `recycle={false}` makes confetti run once and stop (saves CPU)
-- Custom colors match trail node theme (blue, purple, yellow, green)
-- Respects `reducedMotion` via conditional render
-
-### 4. XP Prominence Improvements
-
-**Use:** Existing Tailwind keyframes + Framer Motion for count-up
-
-**Implementation:**
-```jsx
-// VictoryScreen.jsx already has useCountUp hook
-// Enhance with Framer Motion layoutId for smooth transitions
-
-import { motion } from 'framer-motion';
-
-// XP display with shimmer effect
-<motion.div
-  layoutId="xp-display"
-  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl"
-  initial={{ scale: 0 }}
-  animate={{ scale: 1 }}
-  transition={{ type: 'spring', damping: 12 }}
->
-  <motion.span
-    className="text-2xl font-bold"
-    key={xpValue}
-    initial={{ y: -20, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-  >
-    +{xpValue} XP
-  </motion.span>
-</motion.div>
-```
-
-**Why this pattern:**
-- `layoutId` enables shared element transitions (XP display → Dashboard)
-- Count-up animation already uses `requestAnimationFrame` (smooth 60fps)
-- Tailwind gradient + `animate-shimmer` adds polish without JS
-- `key={xpValue}` triggers re-animation on value change
-
-### 5. Node Type Celebration Messaging
-
-**Use:** Tailwind + i18next (already configured)
-
-**Implementation:**
-```jsx
-// Create translation keys for each node type
-// en/trail.json
-{
-  "celebrations": {
-    "discovery": "New notes discovered! 🔍",
-    "practice": "You're getting better! 🎹",
-    "speed_round": "Lightning fast! ⚡",
-    "boss": "LEGENDARY VICTORY! 🏆"
-  }
-}
-
-// VictoryScreen.jsx
-const celebrationMessage = t(`trail:celebrations.${nodeType}`);
-```
-
-**Why this pattern:**
-- i18next already configured with English and Hebrew
-- Translation strings support child-appropriate language
-- Node type metadata already defines `childThinks` messages (can map to translations)
-
----
-
-## Installation
-
-**No installation needed.** All required packages are already installed:
-
-```bash
-# Verify versions (optional)
-npm list framer-motion react-confetti lucide-react tailwindcss clsx
-
-# Current versions (from package.json)
-# framer-motion@12.23.26 ✓
-# react-confetti@6.2.3 ✓
-# lucide-react@0.344.0 ✓
-# tailwindcss@3.4.1 ✓
-# clsx@2.1.1 ✓
-```
-
----
+| Library | Version | Weekly Downloads | Why NOT Recommended |
+|---------|---------|------------------|---------------------|
+| react-screen-orientation | 0.0.4 | 1,533 | Last updated 6 years ago, unmaintained |
+| react-device-detect | 2.2.3 | 1,098,432 | User-agent based (unreliable), last updated 3 years ago, overkill for orientation |
+| expo-screen-orientation | Latest | N/A | React Native only, not applicable to web PWA |
 
 ## Alternatives Considered
 
-| Recommended | Alternative | When to Use Alternative | Why We Didn't |
-|-------------|-------------|-------------------------|---------------|
-| **Framer Motion v12** | Motion (new package, v13) | New projects starting from scratch | Migration required. v12 is actively maintained. No benefit for this milestone. [Motion upgrade guide](https://motion.dev/docs/react-upgrade-guide) |
-| **react-confetti** | react-confetti-explosion | Need confetti burst at specific point (not fullscreen) | Boss unlocks benefit from fullscreen confetti. `react-confetti` is more flexible. |
-| **Tailwind keyframes** | Animate.css, React Spring | Need complex animation sequences | Tailwind keyframes + Framer Motion cover all use cases. Adding another library increases bundle size. |
-| **lucide-react** | react-icons (Font Awesome, Hero Icons) | Need specific icon set not in lucide | lucide has 1500+ icons, sufficient for node types. `react-icons` already installed as fallback. [Lucide icon browser](https://lucide.dev/icons) |
+### 1. Screen Orientation API (`screen.orientation.lock()`)
 
----
+**Browser Support (CanIUse):**
+- Chrome 38+: Full support
+- Firefox 44+: Full support
+- Safari 16.4+: Full support
+- iOS Safari 16.4+: Full support in browser, **NO support in PWA mode**
+- Android Chrome 144+: Full support
+- Global: 95.14% coverage
+
+**Why NOT Recommended:**
+- **Requires fullscreen mode** - Must call `requestFullscreen()` before `lock()` works
+- **iOS PWA blocker** - iOS Safari explicitly blocks orientation locking in installed PWAs
+- **Security restrictions** - Throws `SecurityError` if document is hidden
+- **UX friction** - Fullscreen requirement creates jarring transition
+- **Over-engineering** - Games don't need forced lock, just optimized layout
+
+**Source:** [MDN ScreenOrientation.lock()](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock), [CanIUse Screen Orientation](https://caniuse.com/screen-orientation)
+
+### 2. Manifest.json `orientation` Key
+
+**What it does:** Locks installed PWA to specific orientation
+
+```json
+{
+  "orientation": "landscape"
+}
+```
+
+**Why NOT Recommended:**
+- **iOS ignores it** - Apple doesn't allow custom orientation in PWA manifest
+- **All-or-nothing** - Locks entire app, not just game pages
+- **Breaks user expectations** - Users expect to control device orientation
+- **Non-game pages** - Dashboard, settings, trail map work fine in portrait
+
+**Source:** [How to Lock Screen Orientation in PWA](https://nashatech.com/blogs/sXOqruRY2ECD5EIVqwP9/)
+
+### 3. Device Detection Libraries
+
+**Why NOT Recommended:**
+- User-agent sniffing is unreliable (spoofing, new devices)
+- Overkill for simple orientation detection
+- Adds bundle size (20-40KB) for single use case
+- `window.matchMedia()` achieves same result natively
 
 ## What NOT to Use
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| **GSAP** | 45KB library for timeline animations. Overkill for simple celebrations. Framer Motion handles all use cases. | Framer Motion (already installed) |
-| **Lottie animations** | JSON-based animations require design files and lottie-react (68KB). Too heavy for PWA. | CSS keyframes + Framer Motion |
-| **react-spring** | Lower-level spring physics library. More boilerplate than Framer Motion. 22KB vs 34KB (Framer). | Framer Motion (simpler API, better DX) |
-| **anime.js** | Vanilla JS animation library. No React integration. Manual DOM manipulation. | Framer Motion (React-first) |
-| **Particles.js** | Heavy particle system (100KB+). Boss confetti doesn't need this complexity. | react-confetti (5KB, canvas-based) |
-| **Framer Motion v13 (motion package)** | Breaking changes from v12. Requires codebase refactor. No new features needed for this milestone. | Keep Framer Motion v12 (actively maintained) |
+### DO NOT Install:
+- `react-screen-orientation` - Abandoned package (6 years old)
+- `react-device-detect` - Unmaintained (3 years), user-agent based
+- `react-native-orientation-locker` - React Native only
+- `mobile-detect` - Server-side focus, not React-optimized
 
----
+### DO NOT Attempt:
+- `screen.orientation.lock()` - Requires fullscreen, blocked on iOS PWAs
+- Manifest `orientation` key - iOS doesn't respect it
+- `screen.lockOrientation()` - Deprecated API (renamed to `screen.orientation.lock()`)
 
-## Stack Patterns by Use Case
+### DO NOT Rely On:
+- User-agent detection - Unreliable, breaks with spoofing
+- Device pixel ratio - Doesn't indicate orientation preference
+- `window.innerWidth > window.innerHeight` alone - Keyboard opening can flip this
 
-### If Node Type is Discovery/Practice (Low-key Celebration)
-- **Animation:** Subtle fade-in + scale with Framer Motion spring
-- **Duration:** 400ms
-- **Visual:** Soft color glow (Tailwind `shadow-[color]/40`)
-- **Sound:** Optional quiet chime (Web Audio API, already used for games)
+## Recommended Implementation Pattern
 
-### If Node Type is Mini-Boss (Medium Celebration)
-- **Animation:** Bounce entrance + star burst (Tailwind `animate-bounce`)
-- **Duration:** 800ms
-- **Visual:** Crown emoji (👑) with `animate-wiggle`
-- **Sound:** Triumphant ding
+### 1. CSS-First Approach (Tailwind)
 
-### If Node Type is Boss (Full Celebration)
-- **Animation:** Fullscreen confetti + sequential text animations
-- **Duration:** 3 seconds
-- **Visual:** `react-confetti` with 200 pieces + trophy icon (🏆)
-- **Modal:** Boss unlock modal with unit summary
-- **Sound:** Victory fanfare
+Tailwind CSS supports orientation-based utilities out of the box:
 
-### If XP Level-Up Occurs
-- **Animation:** Layered celebration (XP count-up THEN level-up badge)
-- **Duration:** 2 seconds (XP 1s, badge 1s)
-- **Visual:** Shimmer gradient background + badge with `animate-floatUp`
-- **Integration:** Framer Motion `AnimatePresence` for sequential timing
-
----
-
-## Version Compatibility
-
-| Package | Version | Compatible With | Notes |
-|---------|---------|-----------------|-------|
-| framer-motion | 12.23.26 | React 18.3.1 | v12 is stable. v13 (motion package) exists but requires migration. [Motion changelog](https://motion.dev/changelog) |
-| react-confetti | 6.2.3 | React 18.3.1 | Latest is v6.4.0 (minor updates). v6.2.3 is stable and sufficient. [react-confetti npm](https://www.npmjs.com/package/react-confetti) |
-| lucide-react | 0.344.0 | React 18.3.1 | Latest is v0.562.0 (200+ new icons). Can upgrade if needed, fully backward compatible. [lucide-react npm](https://www.npmjs.com/package/lucide-react) |
-| Tailwind CSS | 3.4.1 | PostCSS 8.4.35 | v4.0 exists (CSS-first config) but requires migration. v3.4.1 is stable and recommended. [Tailwind animation docs](https://tailwindcss.com/docs/animation) |
-
-**Known Issues:**
-- Framer Motion v12 + React 18: No issues. Fully compatible.
-- react-confetti + mobile Safari: Occasionally choppy on older devices (pre-2020). Mitigation: Use `numberOfPieces={150}` instead of 200.
-- Tailwind animate utilities + `reducedMotion`: Manually disable via `prefers-reduced-motion` media query (already handled in `AnimationUtils.jsx`).
-
----
-
-## Performance Considerations (PWA Context)
-
-### Bundle Size Impact
-| Addition | Size | Justification |
-|----------|------|---------------|
-| Framer Motion | 34KB (already installed) | Core animation engine, worth the weight |
-| react-confetti | 5KB (already installed) | Tiny, canvas-based, only used for boss unlocks |
-| lucide-react icons | ~500B per icon (tree-shaken) | Only import used icons. Estimated 8 icons × 500B = 4KB total |
-| Total NEW impact | **~4KB** (icons only) | Minimal. PWA target is <500KB, currently ~380KB |
-
-### Runtime Performance
-- **Framer Motion:** Uses `transform` and `opacity` (GPU-accelerated). 60fps on mobile.
-- **react-confetti:** Canvas-based. Runs on separate thread. 200 particles = ~40fps on mid-range phones (acceptable for 3-second celebration).
-- **Tailwind keyframes:** Pure CSS animations. No JS overhead. 60fps on all devices.
-
-### Accessibility Performance
-- **reducedMotion detection:** Zero overhead (CSS media query or `window.matchMedia`).
-- **Animation opt-out:** Instant (`AnimationUtils.jsx` checks `reducedMotion` before rendering).
-- **High contrast:** Color adjustments via CSS custom properties (no runtime cost).
-
-**Recommendation:** Profile boss confetti on target device (8-year-old's tablet/phone). If <30fps, reduce `numberOfPieces` to 100.
-
----
-
-## Integration Points with Existing Codebase
-
-### 1. VictoryScreen.jsx Enhancement
-**Current state:** Shows stars, XP, count-up animation (lines 641-687)
-**Changes needed:**
-- Add `nodeType` prop (from `getNodeById(nodeId).nodeType`)
-- Map `nodeType` to celebration variant (discovery/practice/boss)
-- Conditionally render confetti for boss nodes
-- Use Framer Motion variants for node-type-specific entrance
-
-**Example:**
 ```jsx
-// VictoryScreen.jsx
-const nodeData = nodeId ? getNodeById(nodeId) : null;
-const nodeType = nodeData?.nodeType || 'practice';
-const isBoss = nodeType === NODE_TYPES.BOSS;
+<div className="portrait:hidden landscape:block">
+  {/* Game content - only visible in landscape */}
+</div>
 
-// Confetti for boss nodes only
-{isBoss && !reducedMotion && (
-  <Confetti recycle={false} numberOfPieces={200} gravity={0.3} />
-)}
-
-// Node-type-specific celebration message
-<motion.h2
-  initial={{ opacity: 0, y: -20 }}
-  animate={{ opacity: 1, y: 0 }}
-  className="text-2xl font-bold"
->
-  {t(`trail:celebrations.${nodeType}`)}
-</motion.h2>
+<div className="portrait:block landscape:hidden">
+  <OrientationPrompt />
+</div>
 ```
 
-### 2. TrailNode.jsx Enhancement
-**Current state:** Shows state icon (lock, play, checkmark) + stars (lines 96-164)
-**Changes needed:**
-- Replace emoji icons with lucide-react components
-- Add background color gradient based on `NODE_TYPE_METADATA.color`
-- Add subtle hover animation (scale + glow)
+**Why:** Zero JavaScript, instant response, works on all browsers including iOS PWAs
 
-**Example:**
-```jsx
-import { BookOpen, Target, Zap, Trophy } from 'lucide-react';
+**Source:** [Tailwind CSS: How to Detect Device Orientation](https://www.kindacode.com/article/tailwind-css-how-to-detect-device-orientation)
 
-const ICON_COMPONENTS = {
-  [NODE_TYPES.DISCOVERY]: BookOpen,
-  [NODE_TYPES.PRACTICE]: Target,
-  [NODE_TYPES.SPEED_ROUND]: Zap,
-  [NODE_TYPES.BOSS]: Trophy
-};
+### 2. Custom `useOrientation` Hook
 
-const IconComponent = ICON_COMPONENTS[node.nodeType] || Target;
+For programmatic access to orientation state:
 
-<motion.div whileHover={{ scale: 1.05 }}>
-  <IconComponent className="w-6 h-6 text-white" />
-</motion.div>
+```javascript
+import { useEffect, useState } from 'react';
+
+export function useOrientation() {
+  const [orientation, setOrientation] = useState(
+    window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape'
+  );
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(orientation: portrait)');
+
+    const handleChange = (e) => {
+      setOrientation(e.matches ? 'portrait' : 'landscape');
+    };
+
+    // Modern approach (preferred)
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  return orientation;
+}
 ```
 
-### 3. Dashboard XP Display
-**Current state:** XP shown in user profile card (likely `Dashboard.jsx`)
-**Changes needed:**
-- Make XP display more prominent (larger font, gradient background)
-- Add level badge next to XP total
-- Animate on mount with Framer Motion `layoutId` for shared element transition
+**Why:**
+- Uses native `matchMedia` API (99%+ support)
+- Reactive - updates on orientation change
+- SSR-safe (checks `window` existence)
+- Modern `addEventListener` syntax
 
-**Example:**
+**Source:** [Let's create a custom hook useScreenOrientation](https://medium.com/@perenciolo659/let-s-create-a-custom-hook-usescreenorientation-e5f66919b8b)
+
+### 3. OrientationPrompt Component
+
+Animated overlay prompting users to rotate:
+
+```jsx
+import { motion } from 'framer-motion';
+import { Smartphone, RotateCw } from 'lucide-react';
+
+export function OrientationPrompt() {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900">
+      <div className="text-center">
+        <motion.div
+          animate={{ rotate: [0, -90, -90, 0] }}
+          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+          className="mx-auto mb-6"
+        >
+          <Smartphone className="h-24 w-24 text-white" />
+        </motion.div>
+        <RotateCw className="mx-auto mb-4 h-12 w-12 text-blue-400" />
+        <p className="text-xl font-semibold text-white">
+          Please rotate your device
+        </p>
+        <p className="mt-2 text-gray-400">
+          This game works best in landscape mode
+        </p>
+      </div>
+    </div>
+  );
+}
+```
+
+**Why:**
+- Uses existing Framer Motion (no new dependency)
+- Uses existing lucide-react icons
+- Tailwind for styling (existing)
+- Smooth animation guides user action
+
+**Source:** Framer Motion docs + lucide-react icons
+
+### 4. Game Page Integration
+
+```jsx
+import { useOrientation } from '@/hooks/useOrientation';
+import { OrientationPrompt } from '@/components/OrientationPrompt';
+
+export function NotesRecognitionGame() {
+  const orientation = useOrientation();
+
+  return (
+    <>
+      {/* CSS-based approach (preferred) */}
+      <div className="portrait:hidden landscape:block">
+        <GameContent />
+      </div>
+
+      <div className="portrait:block landscape:hidden">
+        <OrientationPrompt />
+      </div>
+
+      {/* OR programmatic approach */}
+      {orientation === 'portrait' ? (
+        <OrientationPrompt />
+      ) : (
+        <GameContent />
+      )}
+    </>
+  );
+}
+```
+
+## Installation (Zero New Dependencies)
+
+**No npm packages needed.** Everything uses:
+- Native Web APIs (`matchMedia`)
+- Existing Tailwind CSS utilities
+- Existing Framer Motion
+- Existing lucide-react icons
+
+## iOS PWA Limitations
+
+### What Doesn't Work on iOS PWAs:
+- `screen.orientation.lock()` - Explicitly blocked
+- Manifest `orientation` key - Ignored by Safari
+- `navigator.vibrate()` - Not supported
+- Wake Lock API - Not supported
+
+### What DOES Work on iOS PWAs:
+- CSS media queries (`@media (orientation: portrait)`)
+- `window.matchMedia()` - Full support
+- Tailwind orientation utilities
+- CSS animations and transitions
+- Framer Motion animations
+
+**Key Insight:** iOS Safari team intentionally blocks orientation locking to prevent fingerprinting and preserve user control. The workaround is not to fight the platform, but to adapt the UI gracefully.
+
+**Sources:**
+- [PWA on iOS - Current Status & Limitations](https://brainhub.eu/library/pwa-on-ios)
+- [PWA iOS Limitations and Safari Support](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
+- [Danny Moerkerke on X about iOS PWA limitations](https://x.com/dannymoerkerke/status/1803055577100091874)
+
+## Animation Strategy
+
+### Tailwind CSS Built-in Animations
+
+```jsx
+// Simple rotation animation (no extra packages)
+<div className="animate-spin">
+  <RotateCw />
+</div>
+
+// Custom rotation via Tailwind config
+// tailwind.config.js
+{
+  theme: {
+    extend: {
+      keyframes: {
+        'rotate-device': {
+          '0%, 100%': { transform: 'rotate(0deg)' },
+          '50%': { transform: 'rotate(-90deg)' }
+        }
+      },
+      animation: {
+        'rotate-device': 'rotate-device 2s ease-in-out infinite'
+      }
+    }
+  }
+}
+```
+
+**Why:** Zero dependencies, Tailwind already in project
+
+**Source:** [Tailwind CSS Animation](https://tailwindcss.com/docs/animation)
+
+### Framer Motion (Preferred for Complex Animations)
+
 ```jsx
 <motion.div
-  layoutId="xp-display"
-  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl"
+  animate={{
+    rotate: [0, -90, -90, 0],
+    scale: [1, 1.1, 1.1, 1]
+  }}
+  transition={{
+    duration: 2,
+    repeat: Infinity,
+    repeatDelay: 1,
+    ease: "easeInOut"
+  }}
 >
-  <p className="text-sm">Total XP</p>
-  <p className="text-3xl font-bold">{totalXP.toLocaleString()}</p>
-  <p className="text-xs">Level {currentLevel}</p>
+  <Smartphone />
 </motion.div>
 ```
 
-### 4. Node Type Icons (Global)
-**Current state:** `NODE_TYPE_METADATA` uses emoji icons (🔍, 🎹, etc.)
-**Changes needed:**
-- Create `NODE_TYPE_ICONS` map with lucide-react components
-- Update `getNodeTypeIcon()` to return React component instead of emoji
+**Why:** Already in project (Framer Motion v12.23.26), spring physics, gesture support, better DX
 
-**Location:** `src/data/nodeTypes.js`
+**Source:** [How to Integrate Tailwind with Framer Motion](https://tailkits.com/blog/how-to-integrate-tailwind-with-framer-motion/)
 
----
+### tailwindcss-animate (Already Installed)
+
+Project already has `tailwindcss-animate@1.0.7` - provides enter/exit animations:
+
+```jsx
+<div className="animate-in fade-in zoom-in duration-300">
+  <OrientationPrompt />
+</div>
+```
+
+**Source:** [tailwindcss-animate GitHub](https://github.com/jamiebuilds/tailwindcss-animate)
+
+## Browser Support Summary
+
+| Feature | Chrome | Firefox | Safari | iOS Safari (PWA) | Android Chrome |
+|---------|--------|---------|--------|------------------|----------------|
+| CSS `@media (orientation)` | ✅ All | ✅ All | ✅ All | ✅ All | ✅ All |
+| `window.matchMedia()` | ✅ 9+ | ✅ 6+ | ✅ 5.1+ | ✅ 5+ | ✅ All |
+| `screen.orientation.lock()` | ✅ 38+ | ✅ 44+ | ✅ 16.4+ | ❌ Blocked | ✅ 144+ |
+| Manifest `orientation` | ✅ Yes | ✅ Yes | ⚠️ Partial | ❌ Ignored | ✅ Yes |
+| Tailwind orientation utilities | ✅ All | ✅ All | ✅ All | ✅ All | ✅ All |
+| Framer Motion | ✅ Modern | ✅ Modern | ✅ Modern | ✅ Modern | ✅ Modern |
+
+**Key Takeaway:** CSS-based approach has universal support. API-based locking has 95% support but fails where it matters most (iOS PWAs for 8-year-olds on iPads).
+
+## Integration Points with Existing Stack
+
+### 1. React Router Navigation
+Games already use `location.state` for trail integration. Orientation detection integrates seamlessly:
+
+```jsx
+// No changes to navigation needed
+navigate('/notes-master-mode/recognition', {
+  state: { nodeId, nodeConfig, exerciseIndex }
+});
+
+// Game component just adds orientation check
+function NotesRecognitionGame() {
+  const orientation = useOrientation();
+  // ... rest of game logic
+}
+```
+
+### 2. Tailwind Design System
+Project uses custom design system (`docs/DESIGN_SYSTEM.md`). Orientation prompt should follow existing patterns:
+
+```jsx
+<div className="card-elevated fixed inset-0 z-50 bg-slate-900">
+  {/* Uses existing card utilities */}
+</div>
+```
+
+### 3. Accessibility Context
+Project has `AccessibilityContext` for high contrast, reduced motion. Orientation prompt should respect `reducedMotion`:
+
+```jsx
+const { reducedMotion } = useAccessibility();
+
+<motion.div
+  animate={reducedMotion ? {} : { rotate: [0, -90, -90, 0] }}
+>
+```
+
+### 4. i18n Support
+Project supports English and Hebrew (RTL). Orientation prompt needs translations:
+
+```json
+// locales/en/common.json
+{
+  "orientation": {
+    "prompt": "Please rotate your device",
+    "description": "This game works best in landscape mode"
+  }
+}
+
+// locales/he/common.json
+{
+  "orientation": {
+    "prompt": "אנא סובב את המכשיר שלך",
+    "description": "המשחק הזה עובד הכי טוב במצב אופקי"
+  }
+}
+```
+
+## Performance Considerations
+
+### 1. CSS vs JavaScript Detection
+
+**CSS Approach (Recommended):**
+- Zero JavaScript overhead
+- Instant response (no React re-render)
+- Works before JavaScript loads
+- Better for Core Web Vitals
+
+**JavaScript Approach (Use When Needed):**
+- Required for programmatic logic
+- Adds event listener overhead
+- Triggers React re-renders
+- Use only when CSS won't suffice
+
+### 2. Event Listener Cleanup
+
+`matchMedia` listeners must be cleaned up:
+
+```javascript
+useEffect(() => {
+  const mql = window.matchMedia('(orientation: portrait)');
+  const handler = (e) => setOrientation(e.matches ? 'portrait' : 'landscape');
+
+  mql.addEventListener('change', handler);
+  return () => mql.removeEventListener('change', handler); // Critical
+}, []);
+```
+
+### 3. Animation Performance
+
+Use Framer Motion's hardware-accelerated transforms:
+
+```jsx
+// Good: GPU-accelerated
+<motion.div animate={{ rotate: -90, scale: 1.1 }} />
+
+// Bad: Forces layout recalc
+<motion.div animate={{ width: '200px', marginTop: '20px' }} />
+```
+
+**Source:** Framer Motion performance docs
+
+## Testing Strategy
+
+### 1. Chrome DevTools Device Emulation
+- Open DevTools > Device Toolbar
+- Select mobile device
+- Click rotate icon to test orientation changes
+
+### 2. Real Device Testing
+- Test on actual iOS devices (iPad for 8-year-olds)
+- Test on Android phones/tablets
+- Verify PWA installed behavior differs from browser
+
+### 3. Edge Cases to Test
+- Keyboard opening (changes viewport aspect ratio)
+- Switching apps (hidden document)
+- Orientation change during game session
+- Slow network (prompt should show before game assets load)
+
+## Migration Path
+
+### Phase 1: CSS-Only (Day 1)
+1. Add Tailwind orientation utilities to game pages
+2. Create static `OrientationPrompt` component
+3. Test on real devices
+
+### Phase 2: Enhanced UX (Day 2-3)
+1. Create `useOrientation` hook
+2. Add Framer Motion animations to prompt
+3. Add i18n translations
+4. Integrate with accessibility settings
+
+### Phase 3: Polish (Day 4-5)
+1. Add orientation state to game analytics
+2. Add user preference persistence (if user dismisses prompt)
+3. Add skip button for users who prefer portrait
+4. Test on all supported devices
+
+## Open Questions
+
+1. **Should users be able to dismiss orientation prompt?** (Probably yes for accessibility)
+2. **Should orientation preference persist across sessions?** (localStorage key)
+3. **Should all games require landscape?** (Rhythm games might work in portrait)
+4. **Should landscape be required for tablet-sized screens?** (iPads work fine in portrait)
 
 ## Sources
 
-### Official Documentation
-- [Framer Motion v12 Docs](https://motion.dev/) — Animation API reference
-- [Motion Upgrade Guide](https://motion.dev/docs/react-upgrade-guide) — v12 → v13 migration (NOT needed)
-- [Motion Changelog](https://motion.dev/changelog) — Recent updates (GPU animation fix, Jan 2026)
-- [react-confetti npm](https://www.npmjs.com/package/react-confetti) — Latest version v6.4.0
-- [react-confetti GitHub](https://github.com/alampros/react-confetti) — API documentation
-- [lucide-react npm](https://www.npmjs.com/package/lucide-react) — Latest version v0.562.0
-- [Lucide Icon Browser](https://lucide.dev/icons) — Browse 1500+ icons
-- [Tailwind CSS Animation Docs](https://tailwindcss.com/docs/animation) — Built-in animation utilities
+### Browser Compatibility
+- [CanIUse - Screen Orientation API](https://caniuse.com/screen-orientation)
+- [MDN - ScreenOrientation.lock()](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock)
+- [MDN - CSS orientation media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/orientation)
 
-### Community Resources
-- [Tailwind Animation Guide (Tailkits)](https://tailkits.com/blog/tailwind-animation-utilities/) — Custom keyframes patterns
-- [Creating Custom Animations with Tailwind (LogRocket)](https://blog.logrocket.com/creating-custom-animations-tailwind-css/) — Best practices 2026
-- [React Confetti Comparison (CodiLime)](https://codilime.com/blog/react-confetti/) — Library comparison
-- [React Confetti vs Alternatives (npm-compare)](https://npm-compare.com/canvas-confetti,react-confetti,react-confetti-explosion) — Bundle size comparison
+### iOS PWA Limitations
+- [PWA on iOS - Current Status & Limitations [2025]](https://brainhub.eu/library/pwa-on-ios)
+- [PWA iOS Limitations and Safari Support: Complete Guide](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
+- [Danny Moerkerke on X: iOS PWA limitations](https://x.com/dannymoerkerke/status/1803055577100091874)
+- [Can we lock the orientation of PWA apps in iOS?](https://basecamp.temenos.com/s/question/0D56N00000mpN5U/can-we-lock-the-orientation-of-pwa-apps-in-ios)
 
-### WebSearch Queries (2026-02-05)
-- "framer-motion latest version 2026 changelog" — Verified v12 is actively maintained
-- "react-confetti latest version 2026 alternative libraries" — Confirmed v6.2.3 is stable, v6.4.0 is latest
-- "tailwind css animation keyframes best practices 2026" — Confirmed CSS-first approach for v4 (not migrating)
-- "lucide-react icons latest version 2026 celebration gaming icons" — Verified 1500+ icons available
+### Implementation Patterns
+- [CSS Orientation Media Queries: Complete Guide](https://codelucky.com/css-orientation-media-queries/)
+- [How to Detect Device Orientation with CSS Media Queries](https://www.w3docs.com/snippets/css/how-to-detect-device-orientation-with-css-media-queries.html)
+- [Tailwind CSS: How to Detect Device Orientation](https://www.kindacode.com/article/tailwind-css-how-to-detect-device-orientation)
+- [Let's create a custom hook useScreenOrientation](https://medium.com/@perenciolo659/let-s-create-a-custom-hook-usescreenorientation-e5f66919b8b)
+- [Using window.matchMedia in React](https://betterprogramming.pub/using-window-matchmedia-in-react-8116eada2588)
 
-**Confidence Level:** HIGH
-- All libraries verified with official npm pages and changelogs
-- Versions cross-referenced with installed package.json
-- Best practices from 2026 community resources (Tailkits, LogRocket)
-- No breaking changes required for this milestone
+### React Hooks & Libraries
+- [useOrientation React Hook – useHooks](https://usehooks.com/useorientation)
+- [useMediaQuery React Hook – useHooks](https://usehooks.com/usemediaquery)
+- [react-screen-orientation - npm](https://www.npmjs.com/package/react-screen-orientation)
+- [react-device-detect - npm](https://www.npmjs.com/package/react-device-detect)
 
----
+### Animation Resources
+- [Tailwind CSS Animation](https://tailwindcss.com/docs/animation)
+- [How to Integrate Tailwind with Framer Motion for Animations](https://tailkits.com/blog/how-to-integrate-tailwind-with-framer-motion/)
+- [Comparing the best React animation libraries for 2026](https://blog.logrocket.com/best-react-animation-libraries/)
+- [tailwindcss-animate GitHub](https://github.com/jamiebuilds/tailwindcss-animate)
 
-*Stack research for: Piano learning PWA celebration animations*
-*Researched: 2026-02-05*
-*Focus: Milestone v1.4 UI Polish & Celebrations*
+### Icons
+- [Lucide Icons - Smartphone](https://lucide.dev/icons/smartphone)
+- [Lucide Icons - RotateCw](https://lucide.dev/icons/rotate-cw)
+- [Lucide React Documentation](https://lucide.dev/guide/packages/lucide-react)
+
+### PWA Orientation Locking
+- [How to Lock Screen Orientation in PWA Using manifest.json](https://nashatech.com/blogs/sXOqruRY2ECD5EIVqwP9/)
+- [Realizing a PWA Screen Orientation Lock](https://hearthero.medium.com/locking-orientation-for-ionic-pwas-7c75c5bb3639)
+- [PWA: Automatic screen orientation does not work in Chrome on Android](https://github.com/photoprism/photoprism/issues/3413)
+- [W3C Screen Orientation Specification](https://w3c.github.io/screen-orientation/)
