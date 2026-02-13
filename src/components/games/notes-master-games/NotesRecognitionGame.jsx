@@ -21,6 +21,8 @@ import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
 import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -426,6 +428,7 @@ export function NotesRecognitionGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
+  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
@@ -1908,6 +1911,7 @@ export function NotesRecognitionGame() {
 
   return (
     <div className="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 supports-[height:100svh]:h-[100svh]">
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       {/* Stage background accents */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-indigo-500/15 blur-3xl" />

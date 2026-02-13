@@ -21,6 +21,8 @@ import { useGameTimer } from "../../../features/games/hooks/useGameTimer";
 import GameOverScreen from "../GameOverScreen";
 import { useTranslation } from "react-i18next";
 import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 
 const trebleNotes = TREBLE_NOTES;
 const bassNotes = BASS_NOTES;
@@ -63,6 +65,7 @@ export function MemoryGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation("common");
+  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
@@ -794,6 +797,7 @@ export function MemoryGame() {
 
   return (
     <div className="flex h-screen flex-col">
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       <div className="flex items-center justify-between gap-2 p-2 sm:p-3">
         {!gameFinished && gameStarted && (
           <BackButton
