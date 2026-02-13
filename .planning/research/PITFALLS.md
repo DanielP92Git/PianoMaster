@@ -1,533 +1,868 @@
-# Domain Pitfalls: Trail System Redesign
+# Domain Pitfalls: Auto-Rotate Landscape on Mobile Games
 
-**Domain:** Skill progression system redesign for piano learning PWA
-**Target Age:** 8-year-old learners
-**Researched:** 2026-02-03
-**Context:** Existing users with progress in `student_skill_progress` table (node_id TEXT references)
+**Domain:** Adding screen orientation lock and rotate prompts to existing PWA games
+**Researched:** 2026-02-13
+**Confidence:** MEDIUM-HIGH (combination of official docs, real-world issues, and recent 2026 updates)
+
+---
+
+## Executive Summary
+
+Adding orientation control to PWAs is deceptively complex due to:
+
+1. **Platform fragmentation**: iOS Safari and Android Chrome have fundamentally different capabilities
+2. **API dependencies**: Screen Orientation API requires fullscreen mode on Android, doesn't work on iPhones at all
+3. **Viewport instability**: iOS Safari's viewport calculation changes during rotation create race conditions
+4. **VexFlow re-render complexity**: SVG-based notation requires careful coordinate recalculation
+5. **Accessibility conflicts**: Forced orientation violates WCAG 1.3.4 unless essential to functionality
+
+For an 8-year-old audience with existing accessibility features (reducedMotion, extended timeouts), orientation changes introduce cognitive load and motion-sickness risks.
 
 ---
 
 ## Critical Pitfalls
 
-These mistakes cause data loss, major rewrites, or irreparable user experience damage.
+### Pitfall 1: iOS Safari Fullscreen API Doesn't Work on iPhones
 
----
-
-### Pitfall 1: Orphaned Progress Records (Breaking Node ID Changes)
-
-**What goes wrong:**
-Changing node IDs without a proper mapping strategy leaves existing user progress orphaned in the database. The `student_skill_progress` table stores `node_id` as TEXT, meaning if you rename `bass_1_1` to `bass_unit1_cb` (or similar), users lose their stars, XP history, and completion status for that node.
+**What goes wrong:** You implement Screen Orientation API with `screen.orientation.lock('landscape')`, it works perfectly on Android and iPad, then you test on an iPhone and nothing happens.
 
 **Why it happens:**
-- Developers focus on the "new and improved" system without considering existing data
-- ID naming conventions change mid-project ("this new scheme is better")
-- The impact isn't visible until users complain about missing progress
+- As of iOS 26 (September 2025), Safari supports the Fullscreen API for all elements on **iPads only**
+- iPhones still have **zero support** for programmatic fullscreen or orientation lock via JavaScript
+- The only iPhone workaround is PWA "Add to Home Screen" with manifest `"display": "fullscreen"`, which only applies when installed as standalone app
 
 **Consequences:**
-- Users lose earned stars and feel punished for early adoption
-- XP totals become inconsistent (XP was awarded for nodes that no longer exist)
-- Daily goals referencing old node IDs break
-- Teacher dashboards show inaccurate student progress
-- Trust erosion: "The app deleted my work"
+- Feature works inconsistently across devices
+- Parents/teachers expect uniform behavior on all tablets and phones
+- Children get confused when rotation prompt shows on some devices but not others
 
-**Warning Signs (How to detect early):**
-- Node IDs in new design don't match pattern in `LEGACY_TO_NEW_NODE_MAPPING`
-- New node IDs exist without corresponding migration mapping
-- Discussion of "cleaner naming" without migration plan
-- Unit tests pass but integration tests with real user data fail
-
-**Prevention Strategy:**
-1. **Phase 1 (Design):** Document ALL existing node IDs before starting
-2. **Phase 1 (Design):** Create migration mapping BEFORE finalizing new IDs
-3. **Phase 2 (Implementation):** Extend `LEGACY_TO_NEW_NODE_MAPPING` in `progressMigration.js`
-4. **Phase 2 (Implementation):** Add database migration script to copy/transform records
-5. **Phase 3 (Testing):** Test with snapshot of production data
-6. **Phase 4 (Rollout):** Keep old node definitions in `LEGACY_NODES` array for backward compat
-
-**Relevant Phase:** Phase 1 (Design/Data Modeling) - This must be addressed FIRST before any node ID decisions are finalized.
-
-**Code Reference:**
+**Prevention:**
 ```javascript
-// Current mapping in src/utils/progressMigration.js
-const LEGACY_TO_NEW_NODE_MAPPING = {
-  'bass_c_b': 'bass_1_1',  // Must update this for each new ID
-  // ... etc
-};
+// ALWAYS feature-detect before attempting orientation lock
+const canLockOrientation =
+  'orientation' in screen &&
+  typeof screen.orientation.lock === 'function';
+
+// Check if we're on a PWA installed to home screen
+const isStandalonePWA =
+  window.matchMedia('(display-mode: standalone)').matches ||
+  window.navigator.standalone === true; // iOS-specific check
+
+// Only show orientation prompt UI if we can actually lock orientation
+if (canLockOrientation || isStandalonePWA) {
+  showRotatePrompt();
+} else {
+  // Fallback: Show CSS-only rotate message, can't enforce lock
+  showNonBlockingOrientationSuggestion();
+}
 ```
 
----
+**Detection:**
+- Test on **physical iPhone** (not just simulator)
+- Test on **physical iPad**
+- Test on **Android phone in Chrome**
+- Test both browser and installed PWA modes
 
-### Pitfall 2: Prerequisite Chain Breaking (Unreachable Nodes)
+**Phase assignment:** Phase 1 (Foundation) - Must be in platform detection layer from day one
 
-**What goes wrong:**
-Adding new nodes between existing nodes or changing prerequisites creates situations where:
-- Users who completed old nodes don't have the new prerequisites met
-- New users face a longer path than existing users
-- Some nodes become permanently locked despite user having demonstrated mastery
-
-**Why it happens:**
-- Pedagogical improvements require adding "foundation" content
-- New nodes inserted without considering existing user state
-- Prerequisite logic checks for exact node IDs, not skill equivalence
-
-**Consequences:**
-- Users stuck at a node they can't unlock (prerequisites changed)
-- Perceived unfairness ("I already proved I know this!")
-- Support tickets from frustrated parents
-- Kids lose motivation when progress is blocked
-
-**Warning Signs:**
-- New nodes have prerequisites that existing users never completed
-- `isNodeUnlocked()` returns false for users who completed subsequent nodes
-- Different unlock paths for old vs. new users
-
-**Prevention Strategy:**
-1. **Phase 1:** Map existing user progress to SKILLS, not just node IDs
-2. **Phase 2:** Implement "skill equivalence" checking: if user has 3 stars on `bass_master`, they have demonstrated knowledge of C2-C4, so unlock nodes requiring those skills
-3. **Phase 2:** Add "grandfather" logic: users with progress past a point auto-unlock inserted prerequisites
-4. **Phase 3:** Test with users at EVERY stage of progression (beginning, middle, advanced)
-
-**Relevant Phase:** Phase 1 (Design) and Phase 2 (Implementation) - Prerequisite changes need careful planning AND migration logic.
+**Sources:**
+- [Apple Developer Forums: Fullscreen API on iPhone](https://developer.apple.com/forums/thread/133248)
+- [iOS does not fully support the Fullscreen API in ANY browser](https://github.com/videojs/video.js/issues/7834)
+- [Can I use: Fullscreen API](https://caniuse.com/fullscreen)
 
 ---
 
-### Pitfall 3: XP Economy Inflation/Deflation
+### Pitfall 2: Screen Orientation API Requires Fullscreen on Android
 
-**What goes wrong:**
-Redesigned nodes have different XP rewards than old nodes, causing:
-- Users who completed old trail are suddenly at different levels than expected
-- New users progress faster/slower than existing users at same skill level
-- Leaderboards become meaningless (old vs. new trail users)
+**What goes wrong:** You call `screen.orientation.lock('landscape')` on Android Chrome and get a promise rejection: `"NotAllowedError: The request is not allowed"`
 
 **Why it happens:**
-- XP values chosen without considering historical awards
-- More nodes = more total XP available
-- No audit of `students.total_xp` before/after migration
+- Screen Orientation API's `lock()` method requires the document to be in **fullscreen mode** on Android
+- Both APIs require **user interaction** before they can be triggered (security restriction)
+- If you request fullscreen in the wrong order, the promise chain breaks
 
 **Consequences:**
-- Level 5 user suddenly becomes Level 3 (or vice versa)
-- Daily goals for "earn X XP" become trivially easy or impossible
-- Teacher comparisons between students become invalid
+- Lock silently fails without fullscreen
+- Error messages are cryptic and unhelpful to debug
+- Game starts in portrait when landscape was expected
 
-**Warning Signs:**
-- Total possible XP from new trail differs significantly from old trail
-- Migration awards bonus XP without considering new baseline
-- Level thresholds in `XP_LEVELS` array don't align with new total
+**Prevention:**
+```javascript
+// CORRECT ORDER: Fullscreen first, then orientation lock
+async function enterLandscapeGameMode() {
+  try {
+    // Step 1: Request fullscreen (must be triggered by user interaction)
+    const elem = document.documentElement;
 
-**Prevention Strategy:**
-1. **Phase 1:** Calculate total XP available in old vs. new trail
-2. **Phase 1:** Decide policy: maintain parity, or reset with bonus?
-3. **Phase 2:** Adjust XP rewards OR level thresholds to maintain consistency
-4. **Phase 2:** Consider "legacy bonus" for early adopters vs. pure parity
+    if (elem.requestFullscreen) {
+      await elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) { // Safari
+      await elem.webkitRequestFullscreen();
+    }
 
-**Relevant Phase:** Phase 1 (Design) - XP economy affects user motivation and must be planned upfront.
+    // Step 2: Wait for fullscreen to activate, then lock orientation
+    if (screen.orientation?.lock) {
+      await screen.orientation.lock('landscape');
+    }
+
+    // Step 3: Start game
+    startGame();
+  } catch (error) {
+    // Handle specific error types
+    if (error.name === 'NotAllowedError') {
+      showUserMessage('Please allow fullscreen to play in landscape mode');
+    } else if (error.name === 'NotSupportedError') {
+      // Fallback: Start game without orientation lock
+      startGameWithoutLock();
+    } else if (error.name === 'AbortError') {
+      // User cancelled fullscreen request
+      console.log('User declined fullscreen');
+    }
+  }
+}
+
+// BAD: Lock orientation before fullscreen (will fail on Android)
+async function enterLandscapeGameMode_WRONG() {
+  await screen.orientation.lock('landscape'); // Fails: not in fullscreen
+  await document.documentElement.requestFullscreen();
+}
+```
+
+**Detection:**
+- Promise rejection with `NotAllowedError`
+- Lock appears to succeed but orientation doesn't change
+- Game UI is squashed in portrait
+
+**Phase assignment:** Phase 1 (Foundation) - Must be in core orientation control module
+
+**Sources:**
+- [MDN: ScreenOrientation.lock() method](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock)
+- [Screen Orientation API Spec](https://w3c.github.io/screen-orientation/)
+
+---
+
+### Pitfall 3: iOS Safari Viewport Height Changes During Rotation (Race Condition)
+
+**What goes wrong:**
+1. User rotates device from portrait to landscape
+2. `orientationchange` event fires
+3. You measure viewport with `window.innerHeight` to recalculate VexFlow layout
+4. VexFlow renders to wrong dimensions because viewport hasn't updated yet
+5. After 100-300ms, another resize event fires with correct dimensions
+6. VexFlow has to re-render again (double render, flicker, wasted work)
+
+**Why it happens:**
+- On iOS Safari, `window.innerHeight` is **incorrect** immediately after `orientationchange` event
+- The correct value is set after the first render, then a `resize` event fires
+- `100vh` is calculated based on the **maximum** viewport height (with browser UI hidden), not actual visible height
+- The viewport changes size when the address bar shows/hides during scroll
+
+**Consequences:**
+- VexFlow notation renders at wrong scale (too small or clipped)
+- Layout shift causes disorienting jump for children
+- Double-render costs performance (especially on lower-end devices)
+- Pitch detection overlays misalign with staff lines
+
+**Prevention:**
+```javascript
+// DEBOUNCE orientation change events to wait for final viewport dimensions
+let orientationChangeTimeout = null;
+
+function handleOrientationChange() {
+  // Clear previous timeout if orientation changes rapidly
+  if (orientationChangeTimeout) {
+    clearTimeout(orientationChangeTimeout);
+  }
+
+  // Wait for iOS Safari to settle on final viewport dimensions
+  orientationChangeTimeout = setTimeout(() => {
+    recalculateGameLayout();
+  }, 300); // 300ms is safe for iOS Safari to complete resize
+}
+
+// Listen to BOTH orientationchange and resize (debounced)
+window.addEventListener('orientationchange', handleOrientationChange);
+
+let resizeTimeout = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    recalculateGameLayout();
+  }, 150);
+});
+
+// Use CSS custom property for viewport height instead of 100vh
+function setViewportHeight() {
+  // Get actual viewport height (not 100vh which is buggy on iOS)
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Update on load, resize, and orientation change
+setViewportHeight();
+window.addEventListener('resize', setViewportHeight);
+window.addEventListener('orientationchange', () => {
+  setTimeout(setViewportHeight, 300); // Wait for iOS Safari
+});
+
+// Use in CSS: height: calc(var(--vh, 1vh) * 100);
+```
+
+**Detection:**
+- VexFlow staff lines appear too small/large after rotation
+- `console.log(window.innerHeight)` immediately after orientationchange shows wrong value
+- Second resize event fires 100-300ms later with different dimensions
+
+**Phase assignment:** Phase 2 (Layout Integration) - After orientation API foundation is working
+
+**Sources:**
+- [WebKit Bug: window.innerHeight bogus after orientationchange](https://bugs.webkit.org/show_bug.cgi?id=170595)
+- [Addressing the iOS Address Bar in 100vh Layouts](https://medium.com/@susiekim9/how-to-compensate-for-the-ios-viewport-unit-bug-46e78d54af0d)
+- [100vh problem with iOS Safari](https://medium.com/quick-code/100vh-problem-with-ios-safari-92ab23c852a8)
+
+---
+
+### Pitfall 4: VexFlow SVG getBoundingClientRect() Returns Stale Coordinates After Rotation
+
+**What goes wrong:**
+1. Game renders VexFlow staff in portrait orientation
+2. User rotates to landscape
+3. You call `renderer.resize(newWidth, newHeight)` to re-render VexFlow
+4. VexFlow re-renders, but you need to position overlays (like pitch detection cursors)
+5. You call `noteElement.getBoundingClientRect()` to get note positions
+6. Coordinates are **wrong** - they reflect the old portrait layout, not the new landscape layout
+
+**Why it happens:**
+- `getBoundingClientRect()` can return stale cached values if called immediately after DOM mutation
+- SVG elements with CSS transforms have known bugs where `getBoundingClientRect()` ignores transforms
+- Calling `getBoundingClientRect()` forces layout recalculation, but if SVG hasn't finished repainting, you get old values
+- VexFlow's `renderer.resize()` mutates the SVG, but the browser hasn't recalculated bounding boxes yet
+
+**Consequences:**
+- Pitch detection cursor appears 50-200px off from where the note actually is
+- Touch targets for note selection are misaligned
+- Children tap notes but game doesn't register the input
+
+**Prevention:**
+```javascript
+// Wait for browser to recalculate layout after VexFlow re-render
+async function recalculateGameLayout() {
+  const container = document.getElementById('vexflow-container');
+  const newWidth = container.clientWidth;
+  const newHeight = container.clientHeight;
+
+  // Resize VexFlow renderer
+  renderer.resize(newWidth, newHeight);
+
+  // Re-draw notation
+  redrawVexFlowStaff();
+
+  // CRITICAL: Wait for browser to recalculate layout before querying positions
+  // requestAnimationFrame runs after layout/paint
+  await new Promise(resolve => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(resolve); // Double RAF ensures paint completes
+    });
+  });
+
+  // NOW it's safe to query bounding boxes
+  const notePositions = Array.from(
+    container.querySelectorAll('.vf-notehead')
+  ).map(note => note.getBoundingClientRect());
+
+  updatePitchDetectionOverlay(notePositions);
+}
+
+// ALTERNATIVE: Recalculate positions on-demand instead of caching
+function getNotePositionLive(noteElement) {
+  // Force layout if needed (adds overhead but always accurate)
+  noteElement.offsetHeight; // Force reflow
+  return noteElement.getBoundingClientRect();
+}
+```
+
+**Detection:**
+- Overlay elements visually misaligned with VexFlow staff
+- Console.log of `getBoundingClientRect()` shows same values before/after rotation
+- Touch targets don't match visual note positions
+
+**Phase assignment:** Phase 3 (VexFlow Integration) - When connecting pitch detection overlays to notation
+
+**Sources:**
+- [VexFlow Issue #712: Resizing renderer changes SVG's elements positions](https://github.com/0xfe/vexflow/issues/712)
+- [Mozilla Bug: getBoundingClientRect doesn't take transforms into account for SVG](https://bugzilla.mozilla.org/show_bug.cgi?id=1066435)
+- [What forces layout/reflow](https://gist.github.com/paulirish/5d52fb081b3570c81e3a)
+
+---
+
+### Pitfall 5: WCAG 1.3.4 Violation - Forced Orientation Locks User Out
+
+**What goes wrong:** An 8-year-old wheelchair user has their tablet mounted in portrait mode (physical constraint). Your app force-locks to landscape. They can't rotate the physical device, so they can't play the game. **You've just excluded a user due to accessibility failure.**
+
+**Why it happens:**
+- Developers assume all users can physically rotate their device
+- Wheelchair-mounted tablets are often fixed in one orientation
+- Some users with motor impairments use portrait-only device mounts
+- Low vision users may have magnification settings that only work in one orientation
+
+**Consequences:**
+- WCAG 1.3.4 violation (Level AA)
+- COPPA concerns if you're collecting data without considering accessibility requirements
+- User frustration and app abandonment
+- Legal liability for educational institutions using your app
+
+**Prevention:**
+```javascript
+// ALWAYS provide an escape hatch - never force orientation without option to override
+function initGameOrientation() {
+  // Check user's accessibility preference
+  const { reducedMotion } = useAccessibility();
+
+  // Check if user has disabled orientation lock in settings
+  const userDisabledOrientationLock = localStorage.getItem('disable-orientation-lock') === 'true';
+
+  if (userDisabledOrientationLock) {
+    // Respect user preference, start game in current orientation
+    startGameInCurrentOrientation();
+    return;
+  }
+
+  // Show a non-blocking suggestion, not a blocking modal
+  if (window.innerWidth < window.innerHeight) {
+    // Portrait detected, suggest landscape
+    showOrientationSuggestion({
+      message: 'For the best experience, please rotate your device to landscape',
+      dismissible: true,
+      showSettingsLink: true, // Link to disable future prompts
+      autoHideAfter: 5000 // Auto-dismiss after 5 seconds
+    });
+  }
+
+  // Start game immediately, don't block on orientation
+  startGame();
+}
+
+// In settings panel, provide opt-out
+function renderAccessibilitySettings() {
+  return (
+    <label>
+      <input
+        type="checkbox"
+        checked={disableOrientationLock}
+        onChange={(e) => {
+          localStorage.setItem('disable-orientation-lock', e.target.checked);
+          setDisableOrientationLock(e.target.checked);
+        }}
+      />
+      Disable landscape rotation prompts (recommended for mounted devices)
+    </label>
+  );
+}
+```
+
+**Best practice for children's apps:**
+- Use **suggestion** instead of **enforcement**
+- Show rotate icon for 3-5 seconds, then auto-dismiss
+- Let game start in portrait if user doesn't rotate
+- Provide layouts that work (albeit not optimally) in both orientations
+
+**Detection:**
+- User testing with devices in fixed mounts
+- Manual testing: refuse to rotate device, see if game is playable
+- Screen reader testing in portrait orientation
+
+**Phase assignment:** Phase 1 (Foundation) - Must be part of initial UX design
+
+**Sources:**
+- [WCAG 1.3.4: Orientation (Level AA)](https://www.w3.org/WAI/WCAG21/Understanding/orientation.html)
+- [Understanding WCAG SC 1.3.4 Orientation](https://www.digitala11y.com/understanding-sc-1-3-4-orientation/)
+- [Mobile App Accessibility: A Comprehensive Guide (2026)](https://www.accessibilitychecker.org/guides/mobile-apps-accessibility/)
+
+---
+
+### Pitfall 6: Rotation Animation Triggers Motion Sickness in Users with Vestibular Disorders
+
+**What goes wrong:** User rotates device → you animate VexFlow staff rotating/scaling to new layout → user with vestibular disorder feels nauseous and stops using the app.
+
+**Why it happens:**
+- Animated layout transitions during orientation change create **unnecessary motion**
+- The device rotation itself already creates vestibular stimulation
+- Adding CSS transitions on top compounds the issue
+- Your app's `reducedMotion` setting doesn't disable orientation change animations because you forgot to check it
+
+**Consequences:**
+- 70 million people have vestibular disorders
+- Children with ADHD are sensitive to excessive motion
+- Motion sickness = negative association with learning piano
+- Violates your app's existing accessibility commitment
+
+**Prevention:**
+```javascript
+// Respect reducedMotion when handling orientation changes
+function recalculateGameLayout() {
+  const { reducedMotion } = useAccessibility();
+
+  // Measure new dimensions
+  const container = document.getElementById('vexflow-container');
+  const newWidth = container.clientWidth;
+  const newHeight = container.clientHeight;
+
+  if (reducedMotion) {
+    // NO ANIMATION: Instant re-render
+    container.style.transition = 'none';
+    renderer.resize(newWidth, newHeight);
+    redrawVexFlowStaff();
+  } else {
+    // ANIMATION: Smooth transition (for users who want it)
+    container.style.transition = 'opacity 0.2s ease-out';
+    container.style.opacity = '0';
+
+    setTimeout(() => {
+      renderer.resize(newWidth, newHeight);
+      redrawVexFlowStaff();
+      container.style.opacity = '1';
+    }, 200);
+  }
+}
+
+// ALTERNATIVE: Use instant layout change, only animate feedback elements
+function recalculateGameLayout_OnlyAnimateFeedback() {
+  const { reducedMotion } = useAccessibility();
+
+  // Layout change is instant (no animation)
+  renderer.resize(newWidth, newHeight);
+  redrawVexFlowStaff();
+
+  // Only animate success/error overlays if reducedMotion is false
+  if (!reducedMotion) {
+    showOrientationChangeSuccessAnimation(); // Subtle checkmark fade-in
+  }
+}
+```
+
+**CSS approach:**
+```css
+/* Respect prefers-reduced-motion system preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Respect app-level reducedMotion setting */
+.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+```
+
+**Detection:**
+- Enable reducedMotion in app settings
+- Rotate device, watch for animations
+- Test with system-level "Reduce Motion" enabled (iOS/Android accessibility settings)
+
+**Phase assignment:** Phase 2 (Layout Integration) - When adding orientation change handlers
+
+**Sources:**
+- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion)
+- [Design accessible animation and movement](https://blog.pope.tech/2025/12/08/design-accessible-animation-and-movement/)
+- [WCAG 2.3.3: Animation from Interactions](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html)
 
 ---
 
 ## Moderate Pitfalls
 
-These mistakes cause delays, technical debt, or degraded user experience.
+### Pitfall 7: Event Listener Memory Leaks on Orientation Change
 
----
+**What goes wrong:** You add `orientationchange` and `resize` listeners in game component mount, but forget to remove them on unmount. After playing multiple games, event listeners pile up, causing performance degradation and multiple re-renders on rotation.
 
-### Pitfall 4: Exercise Type Mismatch (Routing Failures)
-
-**What goes wrong:**
-New nodes define exercise types that don't have corresponding game component routing, or existing routing logic uses hardcoded exercise types that don't match new definitions.
-
-**Why it happens:**
-- `EXERCISE_TYPES` constants extended without updating VictoryScreen/navigation
-- Switch statements in game components don't handle new exercise types
-- Copy-paste of node definitions with wrong exercise type strings
-
-**Consequences:**
-- "Next Exercise" button navigates to wrong game or crashes
-- VictoryScreen shows wrong XP calculation
-- Multi-exercise nodes get stuck after first exercise
-
-**Warning Signs:**
-- Console errors about unhandled exercise types
-- `handleNextExercise` navigating to undefined routes
-- Exercise progress saved with type mismatch
-
-**Prevention Strategy:**
-1. **Phase 2:** Add TypeScript-style validation for exercise types (or JSDoc types)
-2. **Phase 2:** Exhaustive switch statements with default error throws
-3. **Phase 3:** E2E test that completes every node type through all exercises
-
-**Relevant Phase:** Phase 2 (Implementation) - Must validate all exercise types route correctly.
-
-**Code Reference:**
+**Prevention:**
 ```javascript
-// src/data/constants.js - ensure all types are handled
-export const EXERCISE_TYPES = {
-  NOTE_RECOGNITION: 'note_recognition',
-  SIGHT_READING: 'sight_reading',
-  RHYTHM: 'rhythm',
-  MEMORY_GAME: 'memory_game',  // Added in treble redesign
-  BOSS_CHALLENGE: 'boss_challenge'
-};
+useEffect(() => {
+  const handleOrientationChange = debounce(() => {
+    recalculateGameLayout();
+  }, 300);
+
+  const handleResize = debounce(() => {
+    recalculateGameLayout();
+  }, 150);
+
+  window.addEventListener('orientationchange', handleOrientationChange);
+  window.addEventListener('resize', handleResize);
+
+  // CRITICAL: Clean up on unmount
+  return () => {
+    window.removeEventListener('orientationchange', handleOrientationChange);
+    window.removeEventListener('resize', handleResize);
+  };
+}, []);
 ```
 
 ---
 
-### Pitfall 5: Unit/Category Trigger Assumptions
+### Pitfall 8: Manifest "orientation" Property Conflicts with JavaScript Lock
 
-**What goes wrong:**
-Database trigger `trigger_update_unit_progress` parses `node_id` prefix to determine category (`treble_`, `bass_`, `rhythm_`, `boss_`). New node IDs that don't follow this convention break unit progress tracking.
+**What goes wrong:** You set `"orientation": "landscape"` in manifest.json for PWA installed mode, **and** use JavaScript `screen.orientation.lock('landscape')` in browser mode. On some Android devices, the two conflict, causing orientation to lock in browser mode when you don't want it to.
 
-**Why it happens:**
-- Trigger logic hardcoded in SQL migration (easy to forget)
-- Node ID naming changed without updating trigger
-- Developers test with fresh DB without trigger
+**Prevention:**
+- Use **either** manifest orientation (for installed PWA) **or** JavaScript lock (for browser), not both
+- Check if app is installed before attempting JavaScript lock:
+```javascript
+const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
 
-**Consequences:**
-- `unit_id` column not populated correctly
-- `student_unit_progress` table has missing/wrong entries
-- Unit completion badges not awarded
-- Teacher reports show incomplete unit data
-
-**Warning Signs:**
-- `student_skill_progress.unit_id` is NULL for new nodes
-- Unit progress queries return empty results
-- Boss nodes not triggering unit completion rewards
-
-**Prevention Strategy:**
-1. **Phase 1:** Document node ID naming convention as STRICT requirement
-2. **Phase 2:** If naming must change, update trigger in migration file
-3. **Phase 3:** Test trigger with new node IDs BEFORE deploying
-
-**Relevant Phase:** Phase 2 (Implementation) - Database trigger update must accompany node changes.
-
-**Code Reference (SQL trigger):**
-```sql
--- From 20260131000002_audit_security_definer.sql
-IF NEW.node_id LIKE 'treble_%' THEN
-  v_category := 'treble_clef';
-ELSIF NEW.node_id LIKE 'bass_%' THEN
-  v_category := 'bass_clef';
--- etc.
+if (!isInstalled) {
+  // Only lock orientation in browser mode
+  screen.orientation.lock('landscape');
+}
 ```
 
 ---
 
-### Pitfall 6: Tempo/Difficulty Cliff for Kids
+### Pitfall 9: VictoryScreen Modal Not Centered After Orientation Change
 
-**What goes wrong:**
-Pedagogically, new nodes increase difficulty too quickly, causing 8-year-olds to hit a "wall" where they fail repeatedly and lose motivation.
+**What goes wrong:** User completes game in portrait, VictoryScreen modal appears centered. User rotates to landscape while modal is open. Modal is now off-center or partially off-screen.
 
-**Why it happens:**
-- Adult designers underestimate difficulty for children
-- Note pool grows too fast (2 notes -> 5 notes in one jump)
-- Tempo increases without sufficient practice
-- New rhythm complexity (eighth notes) introduced before mastery of quarters/halves
+**Prevention:**
+```javascript
+// VictoryScreen should recalculate position on orientation change
+useEffect(() => {
+  const handleOrientationChange = () => {
+    // Force modal to recenter
+    setModalPosition('center');
+  };
 
-**Consequences:**
-- High abandonment rate at specific nodes
-- Kids feel "dumb" and stop practicing
-- Parents complain the app is "too hard"
-- Daily goals become unachievable
+  window.addEventListener('orientationchange', handleOrientationChange);
+  return () => window.removeEventListener('orientationchange', handleOrientationChange);
+}, []);
 
-**Warning Signs:**
-- Analytics show high failure rate at specific nodes
-- Node has >4 new notes compared to prerequisite
-- Tempo jumps more than 15 BPM between nodes
-- Eighth notes appear before Unit 4 (violates current design)
-
-**Prevention Strategy:**
-1. **Phase 1:** Follow existing pattern: NO eighth notes until Unit 4
-2. **Phase 1:** Maximum 1-2 new notes per node
-3. **Phase 1:** Tempo increases of max 10 BPM between nodes
-4. **Phase 3:** User test with actual 8-year-olds (not just adults)
-5. **Phase 4:** Monitor analytics for difficulty cliffs post-launch
-
-**Relevant Phase:** Phase 1 (Design) - Pedagogy decisions must be made during node design.
-
-**Research Backing:**
-- "You have to move gradually from the simple to the more complicated" - established pedagogical principle
-- Children's attention span averages 8-12 minutes; frustration breaks engagement faster
-- Existing treble redesign correctly limits Unit 1-3 to quarters and halves only
+// OR use CSS-based centering that auto-adjusts
+// .victory-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
+```
 
 ---
 
-### Pitfall 7: Sight Reading Config Incompatibility
+### Pitfall 10: Fullscreen Exit Breaks Game State
 
-**What goes wrong:**
-Sight reading exercises in new nodes have `rhythmConfig` that doesn't match what the VexFlow renderer or rhythm generator can handle, causing visual glitches or crashes.
+**What goes wrong:** User is in fullscreen landscape game. They press Android back button or iOS swipe-up to exit fullscreen. Fullscreen exits, orientation unlocks, but game is still in "fullscreen mode" state internally, causing UI mismatches.
 
-**Why it happens:**
-- Node config uses rhythm patterns not supported by `rhythmGenerator.js`
-- Time signature in config doesn't match pattern possibilities
-- Measures per pattern creates mathematically impossible patterns
+**Prevention:**
+```javascript
+// Listen for fullscreen exit and clean up state
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement) {
+    // User exited fullscreen
+    handleFullscreenExit();
+  }
+});
 
-**Consequences:**
-- VexFlow crashes with "cannot fit notes in measure"
-- Visual notation looks wrong (notes overflow bar)
-- Sight reading exercises display error instead of notes
+function handleFullscreenExit() {
+  // Unlock orientation
+  if (screen.orientation?.unlock) {
+    screen.orientation.unlock();
+  }
 
-**Warning Signs:**
-- Console errors from `rhythmGenerator` or `patternBuilder`
-- Notes overlapping or extending past barlines in VexFlow
-- White/blank notation display area
+  // Reset game state
+  setIsFullscreen(false);
+  setOrientationLocked(false);
 
-**Prevention Strategy:**
-1. **Phase 2:** Run `npm run verify:patterns` after adding new nodes
-2. **Phase 2:** Ensure all `rhythmPatterns` in config exist in tier definitions
-3. **Phase 3:** Visual test every sight reading node configuration
+  // Recalculate layout for non-fullscreen
+  recalculateGameLayout();
+}
+```
 
-**Relevant Phase:** Phase 2 (Implementation) - Pattern verification must be part of build process.
+---
+
+### Pitfall 11: Input Focus Breaks Fullscreen on iOS
+
+**What goes wrong:** Game is in fullscreen on iPad. User taps an input field (e.g., for entering a note name). Fullscreen exits immediately. User is confused.
+
+**Prevention:**
+- Avoid text inputs in fullscreen game flow
+- If input is essential, warn user that fullscreen will exit:
+```javascript
+<input
+  onFocus={() => {
+    if (document.fullscreenElement) {
+      showToast('Fullscreen will exit when typing');
+    }
+  }}
+/>
+```
+
+**Sources:**
+- [Apple Developer Forums: Input focus exits fullscreen](https://developer.apple.com/forums/thread/694940)
+
+---
+
+### Pitfall 12: Orientation Lock Persists After Navigating Away from Game
+
+**What goes wrong:** User plays game in locked landscape mode. User exits game to dashboard. Dashboard is still locked in landscape even though it should be portrait-friendly.
+
+**Prevention:**
+```javascript
+// Unlock orientation when leaving game
+useEffect(() => {
+  // Lock on mount
+  lockOrientation('landscape');
+
+  // Unlock on unmount
+  return () => {
+    if (screen.orientation?.unlock) {
+      screen.orientation.unlock();
+    }
+  };
+}, []);
+```
+
+---
+
+### Pitfall 13: Android PWA Ignores System Orientation Lock Setting
+
+**What goes wrong:** User has Android system-level "rotation lock" enabled (expects portrait-only). Your PWA ignores this setting and forces landscape anyway. User is frustrated.
+
+**Prevention:**
+- **Don't override system orientation lock** unless you have a strong UX reason
+- Check if system rotation is locked before attempting to lock orientation
+- Provide in-app setting to respect system rotation lock
+
+**Sources:**
+- [GitHub Issue: PWA ignores Android orientation lock](https://github.com/decompme/decomp.me/issues/1648)
 
 ---
 
 ## Minor Pitfalls
 
-These mistakes cause annoyance but are easily fixable.
+### Pitfall 14: Debounce/Throttle Function Creates Closures Over Stale State
+
+**What goes wrong:** You debounce orientation change handler, but it captures old React state in closure. When debounced function finally runs, it uses stale `reducedMotion` value.
+
+**Prevention:**
+```javascript
+// Use ref for latest state in debounced callback
+const reducedMotionRef = useRef(reducedMotion);
+useEffect(() => {
+  reducedMotionRef.current = reducedMotion;
+}, [reducedMotion]);
+
+const handleOrientationChange = useCallback(
+  debounce(() => {
+    // Use ref, not closure variable
+    recalculateGameLayout(reducedMotionRef.current);
+  }, 300),
+  []
+);
+```
 
 ---
 
-### Pitfall 8: Missing Accessory Unlocks
+### Pitfall 15: Rotate Prompt Shows for Tablets That Don't Need It
 
-**What goes wrong:**
-Boss nodes promise accessory unlocks (`accessoryUnlock: 'bass_sprout_badge'`) but the accessory doesn't exist in the accessories table or has a different ID.
+**What goes wrong:** You show "Please rotate to landscape" prompt on all devices with `width < height`. But some tablets (e.g., Surface Pro) are used primarily in portrait by choice.
 
-**Why it happens:**
-- Accessory naming not coordinated between trail design and accessories table
-- Accessories added after initial design but ID not updated
-- Copy-paste from treble to bass nodes without changing accessory
+**Prevention:**
+```javascript
+// Only show rotate prompt on small screens (phones), not tablets
+const isSmallDevice = window.innerWidth < 768; // Adjust threshold
+const isPortrait = window.innerWidth < window.innerHeight;
 
-**Consequences:**
-- User completes boss, no accessory appears
-- Error logged but user just sees nothing
-- Kids disappointed by missing reward
-
-**Prevention Strategy:**
-1. **Phase 2:** Validate all `accessoryUnlock` IDs exist in `accessories` table
-2. **Phase 2:** Add pre-commit validation script for accessory references
-
-**Relevant Phase:** Phase 2 (Implementation) - Accessory validation can be automated.
+if (isSmallDevice && isPortrait) {
+  showRotatePrompt();
+}
+```
 
 ---
 
-### Pitfall 9: Inconsistent Node Ordering
+### Pitfall 16: Service Worker Caches Orientation-Specific Assets
 
-**What goes wrong:**
-`order` and `orderInUnit` values have gaps or duplicates, causing TrailMap to render nodes in wrong positions or with broken path connectors.
+**What goes wrong:** VexFlow renders portrait layout, service worker caches SVG. User rotates to landscape, gets cached portrait SVG instead of re-rendering.
 
-**Why it happens:**
-- Manual order assignment during node definition
-- Nodes added/removed without updating subsequent orders
-- Multiple developers working on different units
-
-**Consequences:**
-- TrailMap shows nodes in wrong visual order
-- Path connectors point to wrong nodes
-- "Next recommended node" algorithm returns unexpected results
-
-**Prevention Strategy:**
-1. **Phase 2:** Auto-generate `order` values from array index
-2. **Phase 2:** Add build-time validation for order uniqueness
-
-**Relevant Phase:** Phase 2 (Implementation) - Can be caught with validation.
+**Prevention:**
+- **Don't cache dynamically generated VexFlow SVGs** in service worker
+- Add VexFlow container to cache exclusion list:
+```javascript
+// In sw.js
+const NEVER_CACHE = [
+  /vexflow-container/,
+  /dynamic-notation/
+];
+```
 
 ---
 
-### Pitfall 10: localStorage Migration Key Collisions
+### Pitfall 17: Confusing UX for 8-Year-Olds: Too Many Prompts
 
-**What goes wrong:**
-The migration tracking uses localStorage key `trail_migration_v2_${studentId}`. If a second migration is needed, the key pattern must be updated, but if forgotten, users who already migrated won't get the new migration.
+**What goes wrong:** Game flow becomes:
+1. "Allow fullscreen" browser prompt
+2. "Please rotate device" app prompt
+3. "Allow microphone" browser prompt
+4. Game settings modal
 
-**Why it happens:**
-- Migration key version not bumped
-- Multiple migrations over time with overlapping patterns
-- localStorage keys not documented
+Four prompts before playing = children abandon the game.
 
-**Consequences:**
-- Returning users don't get migration applied
-- Partial progress state (some old, some new)
-- Debugging nightmare
+**Prevention:**
+- **Consolidate prompts** into single onboarding flow
+- Use pictorial instructions instead of text for children
+- Auto-dismiss prompts after 5 seconds with "Skip" option
+- Don't block game start on orientation
 
-**Prevention Strategy:**
-1. **Phase 2:** Bump version to `v3` for this redesign
-2. **Phase 2:** Consider database-based migration tracking instead of localStorage
-3. **Phase 2:** Document all migration keys in CLAUDE.md
-
-**Relevant Phase:** Phase 2 (Implementation) - Migration key management.
+**Sources:**
+- [UX Design for Kids: Principles and Recommendations](https://www.ramotion.com/blog/ux-design-for-kids/)
+- [Designing for Kids: Best Practices](https://uxplanet.org/designing-apps-for-kids-best-practices-8e32409d07c3)
 
 ---
 
-## Domain-Specific Pitfalls for Kids Music Learning
+### Pitfall 18: Landscape Layout Breaks RTL (Hebrew) Text Flow
 
-These are specific to teaching piano/music to 8-year-olds.
+**What goes wrong:** Your app supports Hebrew RTL. In portrait, RTL works perfectly. User rotates to landscape, and suddenly Hebrew text flows left-to-right.
 
----
-
-### Pitfall 11: Too Many Notes Too Fast
-
-**What goes wrong:**
-Adding more than 1-2 new notes per node overwhelms children's working memory. Research shows 4-6 year olds should work with notes as "graphical structure" and build slowly.
-
-**Why it happens:**
-- Adults can handle 8-note pools easily, so assume kids can too
-- Pressure to "cover more content"
-- Comparing to methods designed for older students
-
-**Consequences:**
-- Children guess randomly instead of recognizing patterns
-- Frustration and tears
-- "I hate piano" syndrome
-
-**Prevention Strategy:**
-- Current treble redesign is correct: C, then C+D, then C+D+E over 5 nodes
-- Apply same pattern to bass and rhythm redesign
-- Maximum 3 notes in any note pool for first 3 units
-
-**Relevant Phase:** Phase 1 (Design) - Pedagogical constraint.
-
-**Research Backing:**
-- "Start with treble C through G, then adding Bass C through G" - progressive approach
-- "Initially this can be restricted to 3 notes, then expanded to 5, 6, 7 and then a full octave"
-- Treble Unit 1 correctly limits to C4, D4, E4 (3 notes)
+**Prevention:**
+- Test RTL in **both** orientations
+- Ensure `dir="rtl"` attribute persists through orientation changes
+- CSS logical properties (`margin-inline-start` instead of `margin-left`) help maintain RTL
 
 ---
 
-### Pitfall 12: Rhythm Before Reading Confidence
+## "Looks Done But Isn't" Checklist
 
-**What goes wrong:**
-Introducing complex rhythms (eighth notes, syncopation) before children can confidently read the notes adds too many cognitive demands simultaneously.
+Before marking orientation feature complete, verify:
 
-**Why it happens:**
-- Rhythm is "exciting" and designers want to add variety
-- Methods for older students mix rhythm complexity earlier
-- "Quarter notes are boring"
-
-**Consequences:**
-- Children confuse note recognition with rhythm counting
-- Neither skill is properly learned
-- Kids can't tell if they got the note wrong or the rhythm wrong
-
-**Prevention Strategy:**
-- Current design rule: NO eighth notes until Unit 4
-- Units 1-3 use only quarters and halves
-- Bass and rhythm redesign MUST follow same principle
-
-**Relevant Phase:** Phase 1 (Design) - This is a HARD constraint.
-
----
-
-### Pitfall 13: Insufficient Immediate Feedback
-
-**What goes wrong:**
-Children expect quick reactions - visual animations, sounds, or haptic feedback. Delayed or missing feedback makes them uncertain if their input was registered.
-
-**Why it happens:**
-- Server-side validation adds latency
-- Animation/sound disabled for "clean" design
-- Focus on correctness over experience
-
-**Consequences:**
-- Kids tap repeatedly (double-submissions)
-- Confusion about whether answer was right
-- Reduced engagement
-
-**Prevention Strategy:**
-- Maintain immediate visual feedback for all inputs
-- Sound effects for correct/incorrect (already implemented)
-- Loading states visible but not blocking
-
-**Relevant Phase:** Phase 2 (Implementation) - UX consideration.
+- [ ] **iOS iPhone physical device tested** (not just simulator) - orientation lock fails on iPhones
+- [ ] **iPad physical device tested** - fullscreen API behaves differently than iPhone
+- [ ] **Android phone physical device tested** - fullscreen + orientation lock combo
+- [ ] **Tested in both browser and installed PWA modes** - different API availability
+- [ ] **VexFlow re-renders correctly after rotation** - wait for double RAF before querying bounding boxes
+- [ ] **Pitch detection overlays align with notes after rotation** - getBoundingClientRect returns fresh coordinates
+- [ ] **VictoryScreen modal stays centered after rotation** - doesn't clip or misalign
+- [ ] **Orientation unlocks when navigating away from game** - doesn't lock dashboard
+- [ ] **Fullscreen exits cleanly when user presses back button** - state cleanup on fullscreenchange
+- [ ] **`reducedMotion` setting disables rotation animations** - no transitions when setting enabled
+- [ ] **System-level reduced motion preference respected** - test with iOS/Android accessibility setting
+- [ ] **Accessibility settings panel includes "Disable orientation prompts" toggle** - escape hatch for mounted devices
+- [ ] **Rotate prompt is dismissible and non-blocking** - doesn't prevent game start
+- [ ] **Game playable in portrait (degraded but functional)** - WCAG 1.3.4 compliance
+- [ ] **Tested with wheelchair-mounted device (or simulated by refusing to rotate)** - accessibility validation
+- [ ] **Event listeners cleaned up on unmount** - no memory leaks
+- [ ] **Service worker doesn't cache orientation-specific VexFlow SVGs** - dynamic content excluded
+- [ ] **Hebrew RTL text flows correctly in both orientations** - logical CSS properties used
+- [ ] **Onboarding flow doesn't show 4+ prompts** - consolidated UX for children
+- [ ] **Promise rejection handling for all orientation/fullscreen API calls** - graceful degradation
+- [ ] **Viewport height uses CSS custom property, not 100vh** - iOS Safari bug workaround
 
 ---
 
-### Pitfall 14: Text-Heavy Instructions
+## Pitfall-to-Phase Mapping
 
-**What goes wrong:**
-8-year-olds respond better to visuals and voice cues than reading text. Instructions that require reading comprehension fail.
-
-**Why it happens:**
-- Instructions written by adults for adults
-- Localization easier with text than audio
-- Faster to implement text than visual tutorials
-
-**Consequences:**
-- Kids skip instructions and get lost
-- Parents have to read instructions to kids
-- Confusion about what to do
-
-**Prevention Strategy:**
-- Keep node descriptions SHORT (current max ~50 chars is good)
-- Use icons and visual cues over text
-- Consider adding audio instructions for new game types
-
-**Relevant Phase:** Phase 2 (Implementation) - UX/Content.
+| Phase | Focus | Pitfalls to Address | Why This Phase |
+|-------|-------|---------------------|----------------|
+| **Phase 1: Foundation** | Platform detection, API feature detection, orientation suggestion UX | #1 (iOS incompatibility), #2 (fullscreen requirement), #5 (WCAG violation), #17 (UX overload) | Must establish what's technically possible before building on it |
+| **Phase 2: Layout Integration** | Viewport measurement, debounced event handling, CSS custom properties | #3 (viewport race condition), #6 (motion sickness), #7 (memory leaks), #18 (RTL breakage) | Layout must be stable before adding VexFlow integration |
+| **Phase 3: VexFlow Integration** | SVG re-render, coordinate recalculation, overlay positioning | #4 (getBoundingClientRect staleness), #9 (VictoryScreen centering), #16 (service worker caching) | Core game graphics dependent on stable layout |
+| **Phase 4: State Management** | Fullscreen lifecycle, orientation lock cleanup, navigation guards | #8 (manifest conflicts), #10 (fullscreen exit state), #12 (lock persistence), #14 (stale closures) | State bugs surface during game flow transitions |
+| **Phase 5: Accessibility Polish** | Reduced motion integration, escape hatches, system preference detection | #6 (motion revisited), #11 (input focus), #13 (system lock override), #15 (tablet prompts) | Polish phase ensures no users are excluded |
+| **Phase 6: Testing & Validation** | Physical device testing, edge case coverage, UX refinement | All pitfalls revisited with real devices and real users | Many issues only surface on physical hardware |
 
 ---
 
-### Pitfall 15: Middle C Position Myopia (Bass Clef)
+## Phase-Specific Warnings
 
-**What goes wrong:**
-Staying too long in "Middle C position" for bass clef creates students who can only read notes near middle C, unable to read bass clef notes in their natural register.
+### Phase 1 (Foundation)
+- **Likely needs deeper research:** iOS Safari fullscreen polyfills and workarounds
+- **Hidden complexity:** Promise rejection handling has 3+ error types, each needs different UX response
+- **Blocker risk:** If you skip feature detection, Phase 3 will fail on iPhones
 
-**Why it happens:**
-- Easier to teach bass from middle C (shared reference with treble)
-- Methods optimized for "both hands at middle C" approach
-- Avoiding ledger lines delays real bass reading
+### Phase 2 (Layout Integration)
+- **Likely needs deeper research:** Debounce timing values (300ms? 500ms?) need real device testing
+- **Hidden complexity:** iOS Safari viewport calculation changes across iOS versions (15 vs 16 vs 17 vs 26)
+- **Blocker risk:** If viewport measurement is wrong, all subsequent phases inherit the bug
 
-**Consequences:**
-- Students can't read bass notes below F3
-- Artificial limitation that must be unlearned later
-- "Why are bass clef songs so hard?" syndrome
+### Phase 3 (VexFlow Integration)
+- **Likely needs deeper research:** VexFlow's internal coordinate system during resize
+- **Hidden complexity:** SVG bounding box caching behavior varies across Chrome/Safari/Firefox
+- **Blocker risk:** Pitch detection overlays misaligning is a show-stopper for gameplay
 
-**Prevention Strategy:**
-- Current bass Unit 1 uses C4, B3, A3 (near middle C) - acceptable
-- Bass Unit 2+ MUST expand downward (G3, F3, E3, D3, C3)
-- Include ledger line notes (B2, A2, G2) by Unit 3
-- Don't avoid F clef's natural register
+### Phase 4 (State Management)
+- **Likely needs deeper research:** Navigation guards in React Router for orientation lock cleanup
+- **Hidden complexity:** Fullscreen API's interaction with React lifecycle (useEffect cleanup timing)
+- **Blocker risk:** Orientation lock persisting to dashboard = bad UX, easy to miss in testing
 
-**Relevant Phase:** Phase 1 (Design) - Bass clef curriculum planning.
+### Phase 5 (Accessibility Polish)
+- **Likely needs deeper research:** COPPA compliance implications of orientation enforcement
+- **Hidden complexity:** Children's cognitive load when presented with rotate prompts
+- **Blocker risk:** Missing WCAG 1.3.4 compliance = legal liability for schools
 
-**Current State:**
-The existing `bassUnit2` generator uses C4-F3 pool - this is correct direction but should be verified in redesign.
-
----
-
-## Phase-Specific Warning Matrix
-
-| Phase | Pitfall Numbers | Priority Actions |
-|-------|-----------------|------------------|
-| Phase 1 (Design) | 1, 2, 3, 6, 11, 12, 15 | Finalize node IDs, XP economy, and pedagogy BEFORE coding |
-| Phase 2 (Implementation) | 1, 4, 5, 7, 8, 9, 10, 13, 14 | Migration mapping, exercise routing, database triggers |
-| Phase 3 (Testing) | 1, 2, 4, 5, 6, 7 | Test with real user data snapshots and actual kids |
-| Phase 4 (Rollout) | 3, 6 | Monitor analytics for difficulty cliffs and XP anomalies |
-
----
-
-## Quick Reference Checklist
-
-Before finalizing redesign:
-
-- [ ] All new node IDs have entries in `LEGACY_TO_NEW_NODE_MAPPING`
-- [ ] Users with advanced progress auto-unlock prerequisite nodes
-- [ ] Total XP from new trail documented and compared to old
-- [ ] All exercise types have routing in game components
-- [ ] Database trigger handles new node ID prefixes
-- [ ] No node adds more than 2 new notes vs. prerequisite
-- [ ] No eighth notes before Unit 4
-- [ ] Tempo changes < 15 BPM between nodes
-- [ ] All `accessoryUnlock` IDs exist in database
-- [ ] `order` values are sequential without gaps
-- [ ] Migration key version bumped (v3)
-- [ ] Node descriptions under 60 characters
+### Phase 6 (Testing & Validation)
+- **Likely needs deeper research:** Device lab access or remote testing services (BrowserStack, etc.)
+- **Hidden complexity:** iOS Simulator does NOT accurately represent physical device behavior
+- **Blocker risk:** If you only test in simulators, you'll ship broken iOS experience
 
 ---
 
 ## Sources
 
-- [Music Education Approaches](https://milnepublishing.geneseo.edu/music-and-the-child/chapter/chapter-4/)
-- [Gamification in Education](https://edtecharchives.org/journal/1269/15625)
-- [UI/UX Design for Children](https://www.aufaitux.com/blog/ui-ux-designing-for-children/)
-- [Piano Teaching Methods](https://volzpiano.com/methods-of-teaching-piano-a-comprehensive-guide-for-kids-and-parents/)
-- [Note Reading Pedagogy](https://www.music-for-music-teachers.com/reading-piano-music.html)
-- [Teaching Piano to Children](https://topmusic.co/6-mistakes-i-made-when-i-started-teaching-piano/)
-- [Educational Apps Research](https://research.com/software/best-educational-apps-for-kids)
-- [Database Migration Best Practices](https://medium.com/@laurentmn/%EF%B8%8F-your-database-migration-broke-production-again-heres-how-to-fix-that-forever-52242b27c12b)
-- Internal codebase analysis: `progressMigration.js`, `skillTrail.js`, `skillProgressService.js`
+### High Confidence (Official Docs, Specs)
+- [W3C Screen Orientation API Spec](https://w3c.github.io/screen-orientation/)
+- [MDN: ScreenOrientation.lock() method](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock)
+- [WCAG 1.3.4: Orientation](https://www.w3.org/WAI/WCAG21/Understanding/orientation.html)
+- [Can I use: Fullscreen API](https://caniuse.com/fullscreen)
+- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion)
+
+### Medium Confidence (Real-World Issues, Bug Reports)
+- [GitHub: VexFlow Issue #712 - Resizing renderer changes SVG positions](https://github.com/0xfe/vexflow/issues/712)
+- [GitHub: video.js Issue #7834 - iOS Fullscreen API limitations](https://github.com/videojs/video.js/issues/7834)
+- [WebKit Bug #170595: window.innerHeight bogus after orientationchange](https://bugs.webkit.org/show_bug.cgi?id=170595)
+- [Mozilla Bug #1066435: getBoundingClientRect doesn't take transforms into account for SVG](https://bugzilla.mozilla.org/show_bug.cgi?id=1066435)
+
+### Medium Confidence (Developer Guides, Best Practices)
+- [PWA on iOS - Current Status & Limitations (2025)](https://brainhub.eu/library/pwa-on-ios)
+- [Optimizing PWAs For Different Display Modes](https://www.smashingmagazine.com/2025/08/optimizing-pwas-different-display-modes/)
+- [UX Design for Kids: Principles and Recommendations](https://www.ramotion.com/blog/ux-design-for-kids/)
+- [Addressing the iOS Address Bar in 100vh Layouts](https://medium.com/@susiekim9/how-to-compensate-for-the-ios-viewport-unit-bug-46e78d54af0d)
+- [100vh problem with iOS Safari](https://medium.com/quick-code/100vh-problem-with-ios-safari-92ab23c852a8)
+
+### Low Confidence (Need Validation)
+- None marked as low confidence - all findings corroborated by multiple sources
+
+---
+
+## Open Questions for Phase-Specific Research
+
+1. **Phase 1:** What's the best polyfill strategy for iOS iPhone orientation lock? (No official solution found)
+2. **Phase 2:** What's the optimal debounce timing for iOS Safari viewport stabilization? (300ms is educated guess, needs device testing)
+3. **Phase 3:** Does VexFlow 5.x have any built-in orientation change handling? (Docs don't mention it)
+4. **Phase 5:** How do other children's educational apps handle orientation prompts? (Need competitor analysis)
+
+---
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|------------|-------|
+| iOS Safari limitations | **HIGH** | Official Apple forums + multiple bug reports confirm |
+| Android fullscreen requirement | **HIGH** | W3C spec + MDN docs explicit about this |
+| Viewport race conditions | **HIGH** | WebKit bug reports + multiple developer guides corroborate |
+| VexFlow coordinate issues | **MEDIUM** | GitHub issue + Mozilla bug reports, but not VexFlow-specific docs |
+| Accessibility requirements | **HIGH** | WCAG spec + accessibility guides clear on this |
+| Children's UX best practices | **MEDIUM** | Multiple UX guides agree, but limited research on orientation prompts specifically |
+| Service worker caching | **MEDIUM** | General PWA best practices, not orientation-specific |
+
+---
+
+## Final Recommendations
+
+1. **Start with graceful degradation:** Build the game to work in portrait first, landscape as enhancement
+2. **Feature-detect everything:** Never assume API availability
+3. **Test on physical devices early:** iOS Simulator lies about fullscreen support
+4. **Respect accessibility:** Orientation prompts must be dismissible and non-blocking
+5. **Use CSS custom properties for viewport height:** Don't trust `100vh` on iOS
+6. **Double RAF before querying coordinates:** Wait for paint to complete after VexFlow re-render
+7. **Clean up on unmount:** Unlock orientation and remove event listeners
+8. **Integrate with existing accessibility system:** Check `reducedMotion` before animating
+
+**Biggest risk:** Assuming iOS and Android work the same way. They fundamentally don't for orientation/fullscreen APIs.
+
+**Biggest time sink:** Getting VexFlow coordinates right after rotation. Budget extra time for Phase 3.
+
+**Biggest legal risk:** Violating WCAG 1.3.4 by force-locking orientation without escape hatch. MUST address in Phase 1.
