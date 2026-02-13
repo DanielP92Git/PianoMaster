@@ -64,30 +64,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ORIENT-01 | — | Pending |
-| ORIENT-02 | — | Pending |
-| ORIENT-03 | — | Pending |
-| ORIENT-04 | — | Pending |
-| ORIENT-05 | — | Pending |
-| LAYOUT-01 | — | Pending |
-| LAYOUT-02 | — | Pending |
-| LAYOUT-03 | — | Pending |
-| LAYOUT-04 | — | Pending |
-| PLAT-01 | — | Pending |
-| PLAT-02 | — | Pending |
-| PLAT-03 | — | Pending |
-| PLAT-04 | — | Pending |
-| A11Y-01 | — | Pending |
-| A11Y-02 | — | Pending |
-| A11Y-03 | — | Pending |
-| A11Y-04 | — | Pending |
-| A11Y-05 | — | Pending |
+| ORIENT-01 | Phase 02 | Pending |
+| ORIENT-02 | Phase 02 | Pending |
+| ORIENT-03 | Phase 02 | Pending |
+| ORIENT-04 | Phase 02 | Pending |
+| ORIENT-05 | Phase 02 | Pending |
+| LAYOUT-01 | Phase 03 | Pending |
+| LAYOUT-02 | Phase 03 | Pending |
+| LAYOUT-03 | Phase 03 | Pending |
+| LAYOUT-04 | Phase 03 | Pending |
+| PLAT-01 | Phase 04 | Pending |
+| PLAT-02 | Phase 04 | Pending |
+| PLAT-03 | Phase 04 | Pending |
+| PLAT-04 | Phase 04 | Pending |
+| A11Y-01 | Phase 05 | Pending |
+| A11Y-02 | Phase 05 | Pending |
+| A11Y-03 | Phase 05 | Pending |
+| A11Y-04 | Phase 05 | Pending |
+| A11Y-05 | Phase 05 | Pending |
 
 **Coverage:**
 - v1.6 requirements: 18 total
-- Mapped to phases: 0
-- Unmapped: 18 (pending roadmap creation)
+- Mapped to phases: 18
+- Unmapped: 0 (100% coverage)
 
 ---
 *Requirements defined: 2026-02-13*
-*Last updated: 2026-02-13 after initial definition*
+*Last updated: 2026-02-13 after roadmap creation*
