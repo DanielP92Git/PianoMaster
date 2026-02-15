@@ -21,6 +21,7 @@ import { useGameTimer } from "../../../features/games/hooks/useGameTimer";
 import GameOverScreen from "../GameOverScreen";
 import { useTranslation } from "react-i18next";
 import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
+import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 
@@ -65,6 +66,11 @@ export function MemoryGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation("common");
+
+  // Android PWA: fullscreen + orientation lock
+  useLandscapeLock();
+
+  // iOS/non-PWA: rotate prompt overlay
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)
