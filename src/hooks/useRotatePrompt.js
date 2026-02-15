@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useOrientation } from "./useOrientation";
 import { useIsMobile } from "./useIsMobile";
+import { isAndroidDevice, isInStandaloneMode } from "../utils/pwaDetection";
 
 /**
  * Prompt visibility logic with permanent dismiss and re-show-once behavior.
@@ -14,6 +15,9 @@ import { useIsMobile } from "./useIsMobile";
 export function useRotatePrompt() {
   const { isPortrait } = useOrientation();
   const isMobile = useIsMobile();
+
+  // Android PWA suppression (API-based lock available)
+  const [isAndroidPWA] = useState(() => isAndroidDevice() && isInStandaloneMode());
 
   // Permanent dismiss state
   const [permanentlyDismissed, setPermanentlyDismissed] = useState(() => {
@@ -51,6 +55,7 @@ export function useRotatePrompt() {
 
   // Determine if prompt should be shown
   const shouldShowPrompt =
+    !isAndroidPWA &&
     !permanentlyDismissed &&
     isMobile &&
     isPortrait &&
