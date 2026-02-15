@@ -13,8 +13,8 @@ module.exports = {
     },
     extend: {
       screens: {
-        'portrait': { 'raw': '(orientation: portrait)' },
-        'landscape': { 'raw': '(orientation: landscape)' },
+        // portrait/landscape removed — Tailwind v3.2+ built-in variants
+        // support modifier stacking (sm:landscape:) which custom screens cannot
       },
       fontFamily: {
         outfit: ["Outfit", "sans-serif"],

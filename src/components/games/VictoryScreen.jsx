@@ -703,15 +703,11 @@ const VictoryScreen = ({
       )}
 
       {/* Main content container - fits within viewport */}
-      <div className="flex w-full max-w-md flex-col items-center my-auto landscape:max-w-3xl landscape:flex-row landscape:flex-wrap landscape:items-start landscape:gap-4">
+      <div className="flex w-full max-w-md flex-col items-center my-auto landscape:max-w-2xl">
         {/* Video avatar */}
-        <div className="relative z-10 -mb-2 sm:-mb-3">
+        <div className="relative z-10 -mb-2 landscape:-mb-1 sm:-mb-3">
           <div
-            className="overflow-hidden rounded-2xl bg-white shadow-xl"
-            style={{
-              width: "clamp(130px, 15vh, 160px)",
-              height: "clamp(130px, 15vh, 160px)",
-            }}
+            className="overflow-hidden rounded-2xl bg-white shadow-xl h-[clamp(130px,15vh,160px)] w-[clamp(130px,15vh,160px)] landscape:h-[clamp(70px,12vh,90px)] landscape:w-[clamp(70px,12vh,90px)]"
           >
             <video
               src="/avatars/mozart_happy.mp4"
@@ -739,9 +735,9 @@ const VictoryScreen = ({
         )}
 
         {/* Content area */}
-        <div className="w-full space-y-1.5 px-2 pt-4 text-center landscape:grid landscape:grid-cols-2 landscape:gap-4 landscape:space-y-0 landscape:py-1 landscape:text-left sm:space-y-2 sm:px-4 sm:pt-2">
+        <div className="w-full space-y-1.5 px-2 pt-4 text-center landscape:space-y-1 landscape:pt-1 sm:space-y-2 sm:px-4 sm:pt-2">
           {/* Victory title */}
-          <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent landscape:col-span-2 landscape:text-center sm:text-2xl">
+          <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
             {rateLimited
               ? t('victory.greatPractice')
               : isProcessingTrail
@@ -915,7 +911,7 @@ const VictoryScreen = ({
           )}
 
           {/* Action buttons */}
-          <div className="flex flex-col gap-2 pt-1 landscape:col-span-2 sm:pt-2">
+          <div className="flex flex-col gap-2 pt-1 sm:pt-2">
             {/* If trail node: Show exercise-aware buttons */}
             {nodeId ? (
               <>
