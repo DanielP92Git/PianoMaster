@@ -390,25 +390,25 @@ export function UnifiedGameSettings({
     return (
       <>
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 landscape:p-3 backdrop-blur-sm"
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={fade}
         >
           <motion.div
-            className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
+            className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] landscape:max-w-5xl landscape:max-h-[85vh]"
             initial={reduce ? false : { opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.96 }}
             transition={soft}
           >
-            <div className="flex flex-1 items-center justify-center overflow-hidden p-4">
+            <div className="flex flex-1 items-center justify-center overflow-hidden p-4 landscape:p-3">
               <div className="flex h-full w-full flex-col items-stretch gap-3 sm:flex-row">
                 {/* Settings Container */}
                 <div className="flex flex-1 items-center overflow-hidden">
-                  <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md sm:p-3">
-                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg">
+                  <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md landscape:p-2 sm:p-3">
+                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white landscape:mb-1 landscape:text-base sm:text-lg">
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
                         total: effectiveSteps.length,
@@ -564,12 +564,12 @@ export function UnifiedGameSettings({
   // Regular full-screen mode
   return (
     <>
-      <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white supports-[height:100svh]:h-[100svh]">
-        <div className="flex flex-1 items-center justify-center overflow-hidden p-2 sm:p-4">
-          <div className="flex h-full min-h-0 w-full max-w-5xl flex-col items-stretch gap-3 sm:flex-row">
+      <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white supports-[height:100svh]:h-[100svh] landscape:items-center landscape:justify-center">
+        <div className="flex flex-1 items-center justify-center overflow-hidden p-2 landscape:p-3 sm:p-4">
+          <div className="flex h-full min-h-0 w-full max-w-5xl flex-col items-stretch gap-3 landscape:max-w-6xl sm:flex-row">
             {/* Settings Container - Full width on mobile */}
             <div className="flex min-h-0 flex-1 items-center overflow-hidden">
-              <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md sm:p-3">
+              <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md landscape:p-2 sm:p-3">
                 {/* Desktop: Back button, title, and NoteSelection controls in one line */}
                 {currentStepConfig?.component === "NoteSelection" ? (
                   <NoteSelectionHeader
@@ -600,7 +600,7 @@ export function UnifiedGameSettings({
                       </h2>
                       <div className="w-[110px] flex-shrink-0" />
                     </div>
-                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:hidden sm:text-lg">
+                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white landscape:mb-1 landscape:text-base sm:hidden sm:text-lg">
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
                         total: effectiveSteps.length,
