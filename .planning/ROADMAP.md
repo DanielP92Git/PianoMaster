@@ -146,12 +146,11 @@ Plans:
   4. Orientation lock/prompt covers full game lifecycle from settings modal through victory screen
   5. Feature detection prevents errors when Screen Orientation API is unavailable
 
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Add platform detection utility (Android vs iOS)
-- [ ] 04-02: Implement fullscreen + orientation lock for Android
-- [ ] 04-03: Add orientation unlock cleanup on navigation and unmount
+- [ ] 04-01-PLAN.md — Create useLandscapeLock hook + suppress rotate prompt on Android PWA
+- [ ] 04-02-PLAN.md — Integrate landscape lock into all 4 game components + human verification
 
 ---
 
