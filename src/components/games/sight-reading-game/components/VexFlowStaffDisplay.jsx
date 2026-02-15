@@ -11,6 +11,7 @@ import {
   initializeVexFlow,
   calculateOptimalWidth,
 } from "../utils/vexflowHelpers";
+import { useVexFlowResize } from "../../../../hooks/useVexFlowResize";
 import {
   Formatter,
   Stave,
@@ -157,51 +158,16 @@ export function VexFlowStaffDisplay({
     return calculateOptimalWidth(pattern.totalDuration, pattern.timeSignature);
   }, [pattern]);
 
-  // Track container dimensions for responsive rendering
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const element = containerRef.current;
-    if (!element) return;
-
-    const updateSize = () => {
-      setContainerSize({
-        width: element.clientWidth,
-        height: element.clientHeight,
-      });
-    };
-
-    updateSize();
-
-    if (typeof ResizeObserver === "undefined") {
-      window.addEventListener("resize", updateSize);
-      return () => {
-        window.removeEventListener("resize", updateSize);
-      };
-    }
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (!entry) return;
-      const { width, height } = entry.contentRect;
-      setContainerSize((prev) => {
-        const roundedWidth = Math.round(width);
-        const roundedHeight = Math.round(height);
-        if (prev.width === roundedWidth && prev.height === roundedHeight) {
-          return prev;
-        }
-        return {
-          width: roundedWidth,
-          height: roundedHeight,
-        };
-      });
+  // Stable resize callback for debounced hook
+  const handleContainerResize = useCallback(({ width, height }) => {
+    setContainerSize((prev) => {
+      if (prev.width === width && prev.height === height) return prev;
+      return { width, height };
     });
-
-    resizeObserver.observe(element);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
   }, []);
+
+  // Track container dimensions for responsive rendering with debounced resize
+  useVexFlowResize(containerRef, handleContainerResize, 150);
 
   const responsiveWidth = useMemo(() => {
     if (!containerSize.width) return staffWidth;
