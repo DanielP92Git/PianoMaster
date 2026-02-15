@@ -678,7 +678,7 @@ const VictoryScreen = ({
   ]);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex justify-center overflow-y-auto p-2 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex justify-center overflow-y-auto p-2 landscape:items-center landscape:p-3 sm:p-4">
       {/* Confetti overlay for full/epic celebrations */}
       {showConfetti && (
         <ConfettiEffect
@@ -703,7 +703,7 @@ const VictoryScreen = ({
       )}
 
       {/* Main content container - fits within viewport */}
-      <div className="flex w-full max-w-md flex-col items-center my-auto">
+      <div className="flex w-full max-w-md flex-col items-center my-auto landscape:max-w-3xl landscape:flex-row landscape:flex-wrap landscape:items-start landscape:gap-4">
         {/* Video avatar */}
         <div className="relative z-10 -mb-2 sm:-mb-3">
           <div
@@ -739,9 +739,9 @@ const VictoryScreen = ({
         )}
 
         {/* Content area */}
-        <div className="w-full space-y-1.5 px-2 pt-4 text-center sm:space-y-2 sm:px-4 sm:pt-2">
+        <div className="w-full space-y-1.5 px-2 pt-4 text-center landscape:grid landscape:grid-cols-2 landscape:gap-4 landscape:space-y-0 landscape:py-1 landscape:text-left sm:space-y-2 sm:px-4 sm:pt-2">
           {/* Victory title */}
-          <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent sm:text-2xl">
+          <h2 className="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent landscape:col-span-2 landscape:text-center sm:text-2xl">
             {rateLimited
               ? t('victory.greatPractice')
               : isProcessingTrail
@@ -915,7 +915,7 @@ const VictoryScreen = ({
           )}
 
           {/* Action buttons */}
-          <div className="flex flex-col gap-2 pt-1 sm:pt-2">
+          <div className="flex flex-col gap-2 pt-1 landscape:col-span-2 sm:pt-2">
             {/* If trail node: Show exercise-aware buttons */}
             {nodeId ? (
               <>
@@ -923,28 +923,28 @@ const VictoryScreen = ({
                 {exercisesRemaining > 0 && onNextExercise ? (
                   <button
                     onClick={onNextExercise}
-                    className="w-full transform rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2"
+                    className="w-full transform rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {t('victory.nextExercise', { count: exercisesRemaining })}
                   </button>
                 ) : isProcessingTrail || fetchingNextNode ? (
                   <button
                     disabled
-                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white opacity-80"
+                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white opacity-80 landscape:py-2"
                   >
                     <span className="inline-block animate-pulse">{t('victory.loading')}</span>
                   </button>
                 ) : nodeComplete && nextNode ? (
                   <button
                     onClick={navigateToNextNode}
-                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {t('victory.continueToNode', { name: translateNodeName(nextNode.name, t, i18n) })}
                   </button>
                 ) : (
                   <button
                     onClick={() => navigate('/trail')}
-                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2"
+                    className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {nodeComplete ? t('victory.backToTrail') : t('victory.continueLearning')}
                   </button>
