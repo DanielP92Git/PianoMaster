@@ -426,7 +426,7 @@ export function UnifiedGameSettings({
                     </div>
 
                     {/* Mobile Navigation Buttons (inside the main card) */}
-                    <div className="mt-3 flex flex-shrink-0 flex-wrap items-center gap-2 sm:hidden sm:landscape:flex lg:landscape:hidden landscape:mt-1">
+                    <div className="mt-3 flex max-w-2xl mx-auto w-full flex-shrink-0 flex-wrap items-center gap-2 sm:hidden sm:landscape:flex lg:landscape:hidden landscape:mt-1">
                       {currentStep < effectiveSteps.length ? (
                         <button
                           onClick={handleNextStep}
@@ -620,7 +620,7 @@ export function UnifiedGameSettings({
                 </div>
 
                 {/* Mobile Navigation Buttons (inside the main card) */}
-                <div className="mt-3 flex flex-shrink-0 items-center gap-2 sm:hidden sm:landscape:flex lg:landscape:hidden landscape:mt-1">
+                <div className="mt-3 flex max-w-2xl mx-auto w-full flex-shrink-0 items-center gap-2 sm:hidden sm:landscape:flex lg:landscape:hidden landscape:mt-1">
                   {currentStep < effectiveSteps.length ? (
                     <button
                       onClick={handleNextStep}
