@@ -12,6 +12,10 @@ module.exports = {
       },
     },
     extend: {
+      screens: {
+        'portrait': { 'raw': '(orientation: portrait)' },
+        'landscape': { 'raw': '(orientation: landscape)' },
+      },
       fontFamily: {
         outfit: ["Outfit", "sans-serif"],
         comic: ["Comic Neue", "cursive"],
