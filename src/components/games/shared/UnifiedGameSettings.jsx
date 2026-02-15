@@ -430,7 +430,7 @@ export function UnifiedGameSettings({
                       {currentStep < effectiveSteps.length ? (
                         <button
                           onClick={handleNextStep}
-                          className={`min-w-[140px] flex-[2] touch-manipulation rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 ${
+                          className={`flex-1 touch-manipulation rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 ${
                             currentStepConfig?.component !== "NoteSelection" &&
                             !isStepValid()
                               ? "cursor-not-allowed opacity-50"
@@ -446,7 +446,7 @@ export function UnifiedGameSettings({
                       ) : (
                         <button
                           onClick={handleStart}
-                          className={`min-w-[140px] flex-[2] touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 ${
+                          className={`flex-1 touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 ${
                             currentStepConfig?.component !== "NoteSelection" &&
                             !isStepValid()
                               ? "cursor-not-allowed opacity-50"
@@ -628,12 +628,12 @@ export function UnifiedGameSettings({
                         currentStepConfig?.component !== "NoteSelection" &&
                         !isStepValid()
                       }
-                      className={`touch-manipulation rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 ${
+                      className={`flex-1 touch-manipulation rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-indigo-700 ${
                         currentStepConfig?.component !== "NoteSelection" &&
                         !isStepValid()
                           ? "cursor-not-allowed opacity-50"
                           : ""
-                      } flex-[2]`}
+                      }`}
                     >
                       {t("gameSettings.buttons.next")}
                     </button>
@@ -644,12 +644,12 @@ export function UnifiedGameSettings({
                         currentStepConfig?.component !== "NoteSelection" &&
                         !isStepValid()
                       }
-                      className={`touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 ${
+                      className={`flex-1 touch-manipulation rounded-xl bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] transition-colors hover:bg-green-700 ${
                         currentStepConfig?.component !== "NoteSelection" &&
                         !isStepValid()
                           ? "cursor-not-allowed opacity-50"
                           : ""
-                      } flex-[2]`}
+                      }`}
                     >
                       {t("gameSettings.buttons.startGame")}
                     </button>
