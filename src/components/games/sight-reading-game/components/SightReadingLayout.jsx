@@ -113,12 +113,12 @@ export function SightReadingLayout({
       }
     >
       {/* Header - fixed height, no flex grow */}
-      <div className="flex-shrink-0">{headerControls}</div>
+      <div className="flex-shrink-0 landscape:py-1">{headerControls}</div>
 
       {/* Main content area */}
       <div className="relative min-h-0 flex-1">
         <div
-          className={`flex h-full flex-col items-center px-2 sm:px-0 ${mainGap}`}
+          className={`flex h-full flex-col items-center px-2 sm:px-0 landscape:px-4 ${mainGap}`}
           style={{
             paddingBottom:
               "calc(var(--sr-kb-height) + env(safe-area-inset-bottom))",
@@ -144,7 +144,7 @@ export function SightReadingLayout({
                 <div className={`h-full ${cardInteriorClass}`}>
                   {/* Staff band - full height, guidance shown as overlay */}
                   <div
-                    className="relative z-0 flex min-h-[120px] w-full flex-1 items-center justify-center px-2 py-1 sm:px-3 sm:py-2"
+                    className="relative z-0 flex min-h-[120px] w-full flex-1 items-center justify-center px-2 py-1 sm:px-3 sm:py-2 landscape:py-1"
                     data-sr-region="staff"
                     style={{
                       overflowX: "hidden", // Prevent staff region from showing horizontal scrollbar

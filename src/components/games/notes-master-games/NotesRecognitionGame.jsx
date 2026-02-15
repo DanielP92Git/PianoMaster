@@ -1996,8 +1996,8 @@ export function NotesRecognitionGame() {
       ) : (
         <>
           {/* HUD */}
-          <div className="relative mx-auto w-full max-w-5xl px-3 pt-2 sm:px-6 sm:pt-3">
-            <StageCard className="px-3 py-2 sm:px-4 sm:py-2">
+          <div className="relative mx-auto w-full max-w-5xl px-3 pt-2 sm:px-6 sm:pt-3 landscape:pt-1">
+            <StageCard className="px-3 py-2 sm:px-4 sm:py-2 landscape:py-1">
               <div className="flex items-center justify-between gap-2">
                 {!progress.isFinished ? (
                   <BackButton
@@ -2034,7 +2034,7 @@ export function NotesRecognitionGame() {
             </StageCard>
           </div>
 
-          <div className="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 pb-4 sm:px-6 sm:pb-6">
+          <div className="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 pb-4 sm:px-6 sm:pb-6 landscape:pb-2">
             {/* Progress Bar */}
             <div className="mt-4">
               <ProgressBar
@@ -2070,7 +2070,7 @@ export function NotesRecognitionGame() {
             )}
 
             {/* Main game area */}
-            <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-hidden lg:grid lg:flex-none lg:grid-cols-[0.95fr_1.05fr] lg:items-start landscape:grid landscape:flex-none landscape:grid-cols-[0.95fr_1.05fr] landscape:items-start">
+            <div className="mt-4 flex min-h-0 flex-1 flex-col gap-3 overflow-hidden lg:grid lg:flex-none lg:grid-cols-[0.95fr_1.05fr] lg:items-start landscape:mt-2 landscape:grid landscape:flex-none landscape:grid-cols-[0.95fr_1.05fr] landscape:items-start landscape:gap-2">
               {/* Note hero card */}
               <motion.div
                 key={`${progress.currentNote?.pitch || progress.currentNote?.englishName || progress.currentNote?.note || "none"}`}

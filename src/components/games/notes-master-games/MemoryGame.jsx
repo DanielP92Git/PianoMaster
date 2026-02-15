@@ -664,15 +664,15 @@ export function MemoryGame() {
   const getGridClassName = () => {
     switch (gridSize) {
       case "3 X 4":
-        return "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mx-auto place-items-stretch";
+        return "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mx-auto place-items-stretch landscape:grid-cols-6 landscape:gap-2";
       case "3 X 6":
-        return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-3 w-full max-w-5xl mx-auto place-items-stretch";
+        return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 md:gap-3 w-full max-w-5xl mx-auto place-items-stretch landscape:grid-cols-6 landscape:gap-1.5";
       case "3 X 8":
         // Keep cards larger on tablets (incl. large iPad landscape) by staying at 6 columns up to 2xl.
         // Switch to 8 columns only on very large screens.
-        return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 2xl:grid-cols-8 gap-2 md:gap-3 w-full max-w-7xl mx-auto place-items-stretch";
+        return "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 2xl:grid-cols-8 gap-2 md:gap-3 w-full max-w-7xl mx-auto place-items-stretch landscape:grid-cols-8 landscape:gap-1.5";
       default:
-        return "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mx-auto place-items-stretch";
+        return "grid grid-cols-4 gap-3 md:gap-4 w-full max-w-2xl mx-auto place-items-stretch landscape:grid-cols-6 landscape:gap-2";
     }
   };
 
@@ -798,7 +798,7 @@ export function MemoryGame() {
   return (
     <div className="flex h-screen flex-col">
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
-      <div className="flex items-center justify-between gap-2 p-2 sm:p-3">
+      <div className="flex items-center justify-between gap-2 p-2 sm:p-3 landscape:p-1 landscape:gap-1">
         {!gameFinished && gameStarted && (
           <BackButton
             to={nodeId ? "/trail" : "/notes-master-mode"}

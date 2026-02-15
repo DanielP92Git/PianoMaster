@@ -1263,7 +1263,7 @@ export function MetronomeTrainer() {
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       {/* Compact Header */}
-      <div className="flex flex-shrink-0 items-center justify-between px-4 py-2">
+      <div className="flex flex-shrink-0 items-center justify-between px-4 py-2 landscape:py-1">
         {/* Only show back button during gameplay (not on session complete screen) */}
         {gamePhase !== GAME_PHASES.SESSION_COMPLETE && (
           <BackButton
@@ -1290,7 +1290,7 @@ export function MetronomeTrainer() {
       </div>
 
       {/* Main Game Area - Side by Side */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row landscape:flex-row landscape:gap-2">
         {/* Left Side: Metronome + Guidance */}
         <div className="flex min-h-0 flex-1 flex-col justify-center space-y-4">
           {/* Metronome Beats - Horizontal */}
