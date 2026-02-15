@@ -21,6 +21,7 @@ import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
 import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 
@@ -428,6 +429,11 @@ export function NotesRecognitionGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
+
+  // Android PWA: fullscreen + orientation lock
+  useLandscapeLock();
+
+  // iOS/non-PWA: rotate prompt overlay
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)

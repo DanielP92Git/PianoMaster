@@ -14,6 +14,7 @@ import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import Button from "../../ui/Button";
@@ -98,6 +99,11 @@ export function MetronomeTrainer() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation("common");
+
+  // Android PWA: fullscreen + orientation lock
+  useLandscapeLock();
+
+  // iOS/non-PWA: rotate prompt overlay
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // Get nodeId from trail navigation (if coming from trail)
