@@ -169,12 +169,10 @@ Plans:
   4. Rotate prompt text is available in both English and Hebrew languages
   5. Rotate prompt layout properly mirrors for RTL (right-to-left) in Hebrew mode
 
-**Plans**: TBD
+**Plans**: 1 plan
 
 Plans:
-- [ ] 05-01: Integrate with AccessibilityContext for reducedMotion support
-- [ ] 05-02: Add ARIA labels and screen reader announcements
-- [ ] 05-03: Add English and Hebrew translations with RTL layout support
+- [ ] 05-01-PLAN.md — Integrate reducedMotion, ARIA screen reader support, EN/HE translations, and RTL layout into RotatePromptOverlay
 
 ---
 
@@ -211,9 +209,9 @@ Phases execute in numeric order: 01 → 02 → 03 → 04 → 05
 | 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 03. Game Layout Optimization | v1.6 | Complete    | 2026-02-15 | - |
 | 04. Platform-Specific Android Enhancement | v1.6 | Complete    | 2026-02-16 | - |
-| 05. Accessibility & Internationalization | v1.6 | 0/3 | Not started | - |
+| 05. Accessibility & Internationalization | v1.6 | 0/1 | Not started | - |
 
-**Total: 26 phases, 73 plans across 6 shipped milestones + 1 in progress**
+**Total: 26 phases, 68 plans across 6 shipped milestones + 1 in progress**
 
 ---
-*Last updated: 2026-02-14 — Phase 03 planned*
+*Last updated: 2026-02-16 — Phase 05 planned*
