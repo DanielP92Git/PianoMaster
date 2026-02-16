@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-13)
 
 ## Current Position
 
-Phase: 04 of 05 (Platform-Specific Android Enhancement)
-Plan: 2 of 2 complete
+Phase: 05 of 05 (Accessibility & Internationalization)
+Plan: 1 of 1 complete
 Status: Complete
-Last activity: 2026-02-16 — Completed 04-02-PLAN.md (game component landscape lock integration)
+Last activity: 2026-02-16 — Completed 05-01-PLAN.md (accessible & translated rotate prompt)
 
-Progress: [████████░░] 67 of 73 plans complete (92%)
+Progress: [█████████░] 68 of 73 plans complete (93%)
 
 ## Milestone History
 
@@ -45,6 +45,7 @@ Progress: [████████░░] 67 of 73 plans complete (92%)
 | 03-03 | ~30 min | 3 | 3 | 2026-02-15 |
 | 04-01 | 2 min | 2 | 2 | 2026-02-15 |
 | 04-02 | 35 min | 2 | 4 | 2026-02-16 |
+| 05-01 | 2 min | 2 | 3 | 2026-02-16 |
 
 ## Accumulated Context
 
@@ -77,6 +78,10 @@ Progress: [████████░░] 67 of 73 plans complete (92%)
 - Empty dependency array for run-once-on-mount effect hook
 - useState function initializer for isAndroidPWA (synchronous detection, same pattern as permanentlyDismissed)
 - useLandscapeLock called BEFORE useRotatePrompt in all game components for consistent mount order
+
+**Phase 05 decisions (Accessibility & i18n):**
+- Kept useMotionTokens for overlay fade (already respects reduced motion), used AccessibilityContext for phone icon conditional rendering
+- ARIA live region placed as first child in overlay for immediate screen reader monitoring (sr-only class for visual hiding)
 
 All milestone decisions logged in PROJECT.md Key Decisions table (220 entries across 6 milestones).
 
@@ -111,11 +116,11 @@ None — between milestones.
 ## Session Continuity
 
 Last session: 2026-02-16
-Stopped at: Completed 04-02-PLAN.md
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
 
-**Next action:** Phase 04 complete. Ready for Phase 05 or milestone completion.
+**Next action:** Phase 05 complete. All milestone v1.6 phases complete. Ready for milestone verification and ship.
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-16 — Phase 04 complete (Android PWA landscape lock integrated and verified)*
+*Last updated: 2026-02-16 — Phase 05 complete (accessible & translated rotate prompt with ARIA, i18n, and RTL support)*
