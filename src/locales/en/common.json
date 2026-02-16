@@ -1037,5 +1037,11 @@
     "title": "Use landscape on iPad",
     "body": "For the best PianoMaster experience on iPad, rotate your device to landscape and use the installed app from your Home Screen.",
     "installInstructions": "Install the app by tapping the Share button in Safari and choosing Add to Home Screen, then open PianoMaster from the new icon."
+  },
+  "rotatePrompt": {
+    "title": "Turn Your Phone Sideways!",
+    "description": "Games work best when your phone is sideways",
+    "dismissButton": "Play anyway",
+    "screenReaderAnnouncement": "Please rotate your device to landscape for the best experience. You can dismiss this prompt and play in portrait mode."
   }
 }
