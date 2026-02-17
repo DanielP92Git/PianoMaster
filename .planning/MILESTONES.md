@@ -168,4 +168,33 @@
 
 ---
 
-*Last updated: 2026-02-12*
+## v1.6 Auto-Rotate Landscape for Games (Shipped: 2026-02-17)
+
+**Delivered:** Automatic landscape orientation handling for all 4 game modes on mobile, with API-based lock on Android PWA, playful animated rotate prompt on iOS, landscape-optimized CSS layouts, and full accessibility/i18n integration.
+
+**Phases completed:** 01-05 (10 plans total)
+
+**Key accomplishments:**
+
+- Reactive orientation detection with animated rotate prompt overlay for iOS mobile portrait users
+- Landscape-optimized CSS layouts for all 4 game modes via Tailwind orientation modifiers
+- Debounced VexFlow resize for smooth notation re-rendering on orientation change
+- Android PWA automatic landscape lock via Screen Orientation + Fullscreen APIs
+- VictoryScreen and settings modals optimized for landscape orientation
+- Full a11y integration (reduced motion, ARIA live regions) + EN/HE translations with RTL support
+
+**Stats:**
+
+- 42 files created/modified
+- 5,128 lines added, 132 lines removed
+- 5 phases, 10 plans
+- 4 days (2026-02-13 to 2026-02-16)
+
+**Git range:** `1d6219d` to `ca0b42b`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
+*Last updated: 2026-02-17*
+
