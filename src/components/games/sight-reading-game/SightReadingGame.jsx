@@ -959,7 +959,7 @@ export function SightReadingGame() {
           name: "microphone",
         });
         if (result.state === "denied") {
-          setShowMicPermissionPrompt(true);
+          setMicError({ type: "permission_denied", retryCount: 0 });
           return false;
         }
         if (result.state === "granted") {
@@ -976,7 +976,7 @@ export function SightReadingGame() {
       return true;
     } catch (error) {
       console.error("Microphone permission check failed:", error);
-      setShowMicPermissionPrompt(true);
+      setMicError({ type: "mic_stopped", retryCount: 0 });
       return false;
     }
   }, []);
