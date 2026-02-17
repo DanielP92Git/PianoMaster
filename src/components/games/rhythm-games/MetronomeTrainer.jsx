@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import {
   getPattern,
@@ -112,7 +113,8 @@ export function MetronomeTrainer() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const audioEngine = useAudioEngine(120);
+  const { audioContextRef } = useAudioContext();
+  const audioEngine = useAudioEngine(120, { sharedAudioContext: audioContextRef.current });
   const {
     playCorrectSound,
     playWrongSound,

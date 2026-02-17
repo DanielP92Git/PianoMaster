@@ -6,6 +6,7 @@ import { Piano, Settings, Mic } from "lucide-react";
 import MetronomeIcon from "../../../assets/icons/metronome.svg";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { MIC_INPUT_PRESETS } from "../../../hooks/micInputPresets";
 import { PreGameSetup } from "./components/PreGameSetup";
 import { VexFlowStaffDisplay } from "./components/VexFlowStaffDisplay";
@@ -165,7 +166,8 @@ export function SightReadingGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const audioEngine = useAudioEngine(80);
+  const { audioContextRef, requestMic, releaseMic } = useAudioContext();
+  const audioEngine = useAudioEngine(80, { sharedAudioContext: audioContextRef.current });
   const { generatePattern } = usePatternGeneration();
   const { user, isStudent } = useUser();
   const studentId = user?.id;
@@ -855,12 +857,13 @@ export function SightReadingGame() {
   const startListeningSync = useCallback(async () => {
     micIsListeningRef.current = true;
     try {
-      await startListening();
+      const { analyser, audioContext: ctx } = await requestMic();
+      await startListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
     } catch (err) {
       micIsListeningRef.current = false;
       throw err;
     }
-  }, [startListening]);
+  }, [startListening, requestMic]);
 
   const stopListeningSync = useCallback(() => {
     micIsListeningRef.current = false;
