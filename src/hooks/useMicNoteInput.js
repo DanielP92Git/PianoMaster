@@ -1,25 +1,6 @@
 import { useCallback, useMemo, useRef } from "react";
 import { usePitchDetection } from "./usePitchDetection";
 
-// #region agent log (debug-mode instrumentation)
-// Network logging is disabled by default. Enable by setting
-// VITE_DEBUG_MIC_LOGS="true" in your Vite env and running the local
-// collector on 127.0.0.1:7242.
-const __MIC_LOG_ENDPOINT =
-  "http://127.0.0.1:7242/ingest/636d1c48-b2ea-491c-896a-7ce448793071";
-const __MIC_LOG_ENABLED =
-  typeof import.meta !== "undefined" &&
-  import.meta.env &&
-  import.meta.env.VITE_DEBUG_MIC_LOGS === "true";
-const __micLog = (payload) => {
-  if (!__MIC_LOG_ENABLED) return;
-  fetch(__MIC_LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-};
-// #endregion
 
 /**
  * Mic note event model (JS shape):
@@ -86,9 +67,6 @@ export function useMicNoteInput({
     lastEmitAt: -Infinity,
     lastFrequency: -1,
     lastAudioLevel: 0,
-    // debug-only counters / throttling
-    __dbgFrames: 0,
-    __dbgLastLogAt: -Infinity,
   });
 
   const resetInternalState = useCallback((reason) => {
@@ -102,19 +80,6 @@ export function useMicNoteInput({
     s.lastEmitAt = -Infinity;
     s.lastFrequency = -1;
     // keep lastAudioLevel as-is (helps debug)
-    s.__dbgFrames = 0;
-    s.__dbgLastLogAt = -Infinity;
-    // #region agent log
-    __micLog({
-      sessionId: "debug-session",
-      runId: "mic-reset-pre",
-      hypothesisId: "Hmic",
-      location: "src/hooks/useMicNoteInput.js:resetInternalState",
-      message: "mic.stateReset",
-      data: { reason: reason ?? null },
-      timestamp: Date.now(),
-    });
-    // #endregion
   }, []);
 
   const emit = useCallback(
@@ -134,40 +99,6 @@ export function useMicNoteInput({
       s.prevPitchAt = prevPitchAt;
       s.lastPitchAt = now;
       s.lastFrequency = frequency;
-      // #region agent log
-      // Throttle: log roughly every ~250ms while pitches are flowing.
-      s.__dbgFrames += 1;
-      if (now - s.__dbgLastLogAt >= 250) {
-        s.__dbgLastLogAt = now;
-        __micLog({
-          sessionId: "debug-session",
-          runId: "mic-latency-pre",
-          hypothesisId: "Hmic",
-          location: "src/hooks/useMicNoteInput.js:handlePitchDetected",
-          message: "mic.pitchFrame",
-          data: {
-            mappedNote: note,
-            frequency,
-            frameDeltaMs:
-              Number.isFinite(prevPitchAt) && prevPitchAt > 0
-                ? Math.round(now - prevPitchAt)
-                : null,
-            audioLevel: s.lastAudioLevel,
-            currentNote: s.currentNote,
-            candidateNote: s.candidateNote,
-            candidateFrames: s.candidateFrames,
-            candidateAgeMs: Number.isFinite(s.candidateStartedAt)
-              ? Math.round(now - s.candidateStartedAt)
-              : null,
-            onFrames,
-            changeFrames,
-            minInterOnMs,
-          },
-          timestamp: Date.now(),
-        });
-      }
-      // #endregion
-
       // If we're already holding this note, do nothing.
       if (s.currentNote && note === s.currentNote) {
         s.candidateNote = note;
@@ -195,26 +126,6 @@ export function useMicNoteInput({
             : null;
           s.currentNote = note;
           s.lastEmitAt = now;
-          // #region agent log
-          __micLog({
-            sessionId: "debug-session",
-            runId: "mic-latency-pre",
-            hypothesisId: "Hmic",
-            location: "src/hooks/useMicNoteInput.js:handlePitchDetected",
-            message: "mic.emit.noteOn",
-            data: {
-              pitch: note,
-              frequency,
-              audioLevel: s.lastAudioLevel,
-              candidateFrames: s.candidateFrames,
-              candidateAgeMs: latencyMs,
-              onFrames,
-              minInterOnMs,
-              perfNow: now,
-            },
-            timestamp: Date.now(),
-          });
-          // #endregion
           emit({
             pitch: note,
             source: "mic",
