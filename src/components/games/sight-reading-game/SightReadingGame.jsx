@@ -836,14 +836,34 @@ export function SightReadingGame() {
       onNoteEvent: handleNoteEvent,
     });
 
-  useEffect(() => {
-    stopListeningRef.current = stopListening;
+  // Sync ref: tracks mic listening state synchronously so that reads in the same
+  // render tick (e.g. phase-enforcement effect) see the current value instead of
+  // the previous render's stale React state.
+  const micIsListeningRef = useRef(false);
+
+  // Sync wrappers: update micIsListeningRef at call time rather than relying on
+  // a useEffect to propagate isListening → ref on the *next* render. This closes
+  // the race window between calling stopListening() and reading micIsListeningRef.current.
+  const startListeningSync = useCallback(async () => {
+    micIsListeningRef.current = true;
+    try {
+      await startListening();
+    } catch (err) {
+      micIsListeningRef.current = false;
+      throw err;
+    }
+  }, [startListening]);
+
+  const stopListeningSync = useCallback(() => {
+    micIsListeningRef.current = false;
+    stopListening();
   }, [stopListening]);
 
-  const micIsListeningRef = useRef(false);
+  // Keep stopListeningRef in sync with the latest sync wrapper so that
+  // abortPerformanceForPenalty (and other stable-ref consumers) also update micIsListeningRef.
   useEffect(() => {
-    micIsListeningRef.current = Boolean(isListening);
-  }, [isListening]);
+    stopListeningRef.current = stopListeningSync;
+  }, [stopListeningSync]);
 
   useEffect(() => {
     if (!currentPattern) {
@@ -2522,7 +2542,7 @@ export function SightReadingGame() {
         timestamp: Date.now(),
       });
       // #endregion
-      startListening()
+      startListeningSync()
         .then(() => {
           // #region agent log
           __srLog({
@@ -2551,7 +2571,7 @@ export function SightReadingGame() {
   }, [
     audioEngine,
     inputMode,
-    startListening,
+    startListeningSync,
     schedulePerformanceTimeline,
     stopCountInVisualization,
     clearCountInTimeouts,
@@ -2742,7 +2762,7 @@ export function SightReadingGame() {
               timestamp: Date.now(),
             });
             // #endregion
-            startListening()
+            startListeningSync()
               .then(() => {
                 // #region agent log
                 __srLog({
@@ -2836,6 +2856,7 @@ export function SightReadingGame() {
     clearCountInTimeouts,
     gameSettings.timeSignature?.beats,
     resetPerformanceLiveState,
+    startListeningSync,
   ]);
 
   /**
@@ -2902,12 +2923,18 @@ export function SightReadingGame() {
   );
 
   // Enforce phase-specific mic behavior (PRD-aligned)
+  // NOTE: This effect reads micIsListeningRef.current (a synchronous ref) instead of
+  // the isListening state value. This is intentional: isListening is async React state
+  // that may not reflect the latest value within the same render cycle. The ref is
+  // updated synchronously by startListeningSync/stopListeningSync at call time,
+  // eliminating the race window between calling stop and checking the state.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Only enforce mic behavior if mic input mode is selected
     if (inputMode !== "mic") {
       // In keyboard mode, ensure mic is stopped
-      if (isListening) {
-        stopListening();
+      if (micIsListeningRef.current) {
+        stopListeningSync();
       }
       return;
     }
@@ -2929,9 +2956,9 @@ export function SightReadingGame() {
         // the first note due to startListening() latency.
         if (
           timingStateRef.current !== TIMING_STATE.EARLY_WINDOW &&
-          isListening
+          micIsListeningRef.current
         ) {
-          stopListening();
+          stopListeningSync();
         }
         break;
 
@@ -2943,22 +2970,22 @@ export function SightReadingGame() {
       case GAME_PHASES.DISPLAY:
       case GAME_PHASES.FEEDBACK:
         // Stop mic when displaying results or feedback
-        if (isListening) {
-          stopListening();
+        if (micIsListeningRef.current) {
+          stopListeningSync();
         }
         break;
 
       default:
         break;
     }
-  }, [gamePhase, inputMode, stopListening, isListening]);
+  }, [gamePhase, inputMode, stopListeningSync]);
 
   // Debug logging for performance phase
 
   // Cleanup on unmount only (not on every isListening change)
   useEffect(() => {
     return () => {
-      stopListening();
+      stopListeningSync();
       performanceTimeoutsRef.current.forEach((id) => clearTimeout(id));
       performanceTimeoutsRef.current = [];
       audioEngine.stopScheduler();
@@ -2994,8 +3021,8 @@ export function SightReadingGame() {
         micStatus={{
           isListening,
           audioLevel,
-          startListening,
-          stopListening,
+          startListening: startListeningSync,
+          stopListening: stopListeningSync,
         }}
       />
     );
@@ -3475,7 +3502,7 @@ export function SightReadingGame() {
                   }
                   setShowMicPermissionPrompt(false);
                   try {
-                    await startListening();
+                    await startListeningSync();
                     setGamePhase(GAME_PHASES.PERFORMANCE);
                   } catch (err) {
                     console.error("Still denied:", err);
