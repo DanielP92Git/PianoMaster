@@ -1043,5 +1043,22 @@
     "description": "Games work best when your phone is sideways",
     "dismissButton": "Play anyway",
     "screenReaderAnnouncement": "Please rotate your device to landscape for the best experience. You can dismiss this prompt and play in portrait mode."
+  },
+  "micError": {
+    "permissionDenied": {
+      "title": "Microphone Needed!",
+      "message": "We need to hear you play! Ask a grown-up to help enable the microphone.",
+      "tryAgain": "Try Again",
+      "backToMenu": "Back to Menu"
+    },
+    "micStopped": {
+      "title": "Oops, the mic stopped!",
+      "message": "Something went wrong with the microphone. Let's try again!",
+      "tryAgain": "Try Again",
+      "backToMenu": "Back to Menu"
+    },
+    "retrying": "Connecting microphone...",
+    "success": "Mic is ready!",
+    "noMoreRetries": "The microphone isn't responding. Ask a grown-up to check your browser settings."
   }
 }
