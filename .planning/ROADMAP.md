@@ -8,7 +8,7 @@
 - ✅ **v1.3 Trail System Redesign** — Phases 8-12 (shipped 2026-02-05)
 - ✅ **v1.4 UI Polish & Celebrations** — Phases 13-18 (shipped 2026-02-09)
 - ✅ **v1.5 Trail Page Visual Redesign** — Phases 19-22 (shipped 2026-02-12)
-- 🚧 **v1.6 Auto-Rotate Landscape for Games** — Phases 02-05 (in progress)
+- ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -73,113 +73,17 @@ See `.planning/milestones/` for archived details of each milestone.
 </details>
 
 <details>
-<summary>✅ Phase 01: Hebrew Translations (v1.6 prep) — COMPLETE 2026-02-13</summary>
+<summary>✅ v1.6 Auto-Rotate Landscape for Games (Phases 01-05) — SHIPPED 2026-02-17</summary>
 
-**Goal:** Fix missing/broken translation keys and remove dead keys from EN and HE locale files
-
-Plans:
-- [x] 01-01: Fix EN root install namespace and add missing Hebrew notification key
-- [x] 01-02: Remove dead keys from EN/HE common.json and deprecated trail names from HE trail.json
+- [x] Phase 01: Hebrew Translations (2/2 plans) — completed 2026-02-13
+- [x] Phase 02: Foundation - Orientation Detection & Prompt (2/2 plans) — completed 2026-02-13
+- [x] Phase 03: Game Layout Optimization (3/3 plans) — completed 2026-02-15
+- [x] Phase 04: Platform-Specific Android Enhancement (2/2 plans) — completed 2026-02-16
+- [x] Phase 05: Accessibility & Internationalization (1/1 plan) — completed 2026-02-16
 
 </details>
 
----
-
-### 🚧 v1.6 Auto-Rotate Landscape for Games (In Progress)
-
-**Milestone Goal:** Automatically rotate to landscape mode when entering games on mobile, with API lock on Android and a playful rotate prompt on iOS.
-
-**Phase Numbering Note:** Starting at Phase 02 (Phase 01 was Hebrew translations, complete).
-
-#### Phase 02: Foundation - Orientation Detection & Prompt ✅
-
-**Goal**: Mobile users see a playful rotate prompt when entering games in portrait mode, with universal orientation detection that works on both iOS and Android.
-
-**Depends on**: Phase 01
-
-**Requirements**: ORIENT-01, ORIENT-02, ORIENT-03, ORIENT-04, ORIENT-05
-
-**Completed**: 2026-02-13 | **Verification**: PASSED (8/8 must-haves)
-
-Plans:
-- [x] 02-01-PLAN.md — Create useOrientation hook, useRotatePrompt hook, and RotatePromptOverlay component
-- [x] 02-02-PLAN.md — Integrate rotate prompt into all 4 game modes + visual verification
-
----
-
-#### Phase 03: Game Layout Optimization
-
-**Goal**: All game modes display optimized layouts in landscape orientation while remaining playable in portrait mode with degraded but functional layouts.
-
-**Depends on**: Phase 02
-
-**Requirements**: LAYOUT-01, LAYOUT-02, LAYOUT-03, LAYOUT-04
-
-**Success Criteria** (what must be TRUE):
-  1. VexFlow notation in sight reading game uses full horizontal space in landscape
-  2. Settings modals render correctly in both landscape and portrait orientations
-  3. VictoryScreen displays correctly in both orientations without layout breaking
-  4. Games remain fully playable in portrait mode if user dismisses rotate prompt (WCAG 1.3.4 compliance)
-  5. Orientation changes during gameplay trigger smooth layout recalculation without losing state
-
-**Plans**: 3 plans
-
-Plans:
-- [ ] 03-01-PLAN.md — Add Tailwind orientation modifiers and landscape-optimized CSS layouts to all 4 game modes
-- [ ] 03-02-PLAN.md — Create debounced VexFlow resize hook and integrate into VexFlowStaffDisplay
-- [ ] 03-03-PLAN.md — Optimize VictoryScreen and UnifiedGameSettings modals for landscape + human verification
-
----
-
-#### Phase 04: Platform-Specific Android Enhancement
-
-**Goal**: Android PWA users get automatic landscape lock when entering games, with proper unlock on navigation away from games.
-
-**Depends on**: Phase 03
-
-**Requirements**: PLAT-01, PLAT-02, PLAT-03, PLAT-04
-
-**Success Criteria** (what must be TRUE):
-  1. On Android PWA, device automatically locks to landscape orientation when entering a game
-  2. On Android PWA, orientation unlocks when user navigates away from game (Back to Trail/dashboard)
-  3. On iOS, users see the rotate prompt instead of orientation lock (graceful platform fallback)
-  4. Orientation lock/prompt covers full game lifecycle from settings modal through victory screen
-  5. Feature detection prevents errors when Screen Orientation API is unavailable
-
-**Plans**: 2 plans
-
-Plans:
-- [ ] 04-01-PLAN.md — Create useLandscapeLock hook + suppress rotate prompt on Android PWA
-- [ ] 04-02-PLAN.md — Integrate landscape lock into all 4 game components + human verification
-
----
-
-#### Phase 05: Accessibility & Internationalization
-
-**Goal**: Rotate prompt and orientation features fully integrated with app's accessibility system, translated in English and Hebrew with RTL support.
-
-**Depends on**: Phase 04
-
-**Requirements**: A11Y-01, A11Y-02, A11Y-03, A11Y-04, A11Y-05
-
-**Success Criteria** (what must be TRUE):
-  1. Rotate prompt animation respects user's reducedMotion preference (instant appearance if enabled)
-  2. Screen readers announce rotate prompt with appropriate ARIA labels and live regions
-  3. User can dismiss prompt and play in portrait without game blocking them (WCAG 1.3.4 escape hatch)
-  4. Rotate prompt text is available in both English and Hebrew languages
-  5. Rotate prompt layout properly mirrors for RTL (right-to-left) in Hebrew mode
-
-**Plans**: 1 plan
-
-Plans:
-- [ ] 05-01-PLAN.md — Integrate reducedMotion, ARIA screen reader support, EN/HE translations, and RTL layout into RotatePromptOverlay
-
----
-
 ## Progress
-
-**Execution Order:**
-Phases execute in numeric order: 01 → 02 → 03 → 04 → 05
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -205,13 +109,13 @@ Phases execute in numeric order: 01 → 02 → 03 → 04 → 05
 | 20. Component Integration & Tab Navigation | v1.5 | 3/3 | Complete | 2026-02-10 |
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
-| 01. Hebrew Translations | v1.6 prep | 2/2 | Complete | 2026-02-13 |
+| 01. Hebrew Translations | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
-| 03. Game Layout Optimization | v1.6 | Complete    | 2026-02-15 | - |
-| 04. Platform-Specific Android Enhancement | v1.6 | Complete    | 2026-02-16 | - |
-| 05. Accessibility & Internationalization | v1.6 | Complete    | 2026-02-16 | - |
+| 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
+| 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
+| 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
 
-**Total: 26 phases, 68 plans across 6 shipped milestones + 1 in progress**
+**Total: 27 phases, 68 plans across 7 shipped milestones**
 
 ---
-*Last updated: 2026-02-16 — Phase 05 planned*
+*Last updated: 2026-02-17 — v1.6 shipped*

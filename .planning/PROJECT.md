@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
 
 ## Core Value
 
@@ -82,19 +82,16 @@ These capabilities exist, are working, and have been shipped:
 - Daily goals generation and tracking
 - Multiple game modes (sight reading, notes recognition, rhythm, memory)
 
+**v1.6 Auto-Rotate Landscape for Games (shipped 2026-02-17):**
+- ORIENT-01 through ORIENT-05: Playful animated rotate prompt on mobile portrait with auto-dismiss, permanent dismiss, all 4 game modes
+- LAYOUT-01 through LAYOUT-04: Landscape-optimized CSS layouts for all 4 games, settings modals, VictoryScreen, portrait playable (WCAG 1.3.4)
+- PLAT-01 through PLAT-04: Android PWA auto-locks landscape via Screen Orientation API, unlocks on navigation away, iOS fallback to rotate prompt
+- A11Y-01 through A11Y-05: Reduced motion support, ARIA live regions, WCAG 1.3.4 escape hatch, EN/HE translations, RTL layout
+- 18/18 requirements delivered with zero database changes
+
 ### Active
 
-## Current Milestone: v1.6 Auto-Rotate Landscape for Games
-
-**Goal:** Automatically rotate to landscape mode when entering games on mobile, with API lock on Android and a playful rotate prompt on iOS.
-
-**Target features:**
-- Screen Orientation API landscape lock on Android PWA
-- Playful animated rotate prompt for iOS PWA (tilting phone icon, kid-friendly message)
-- Full game lifecycle coverage (settings → gameplay → victory screen)
-- Orientation unlock on navigation away from game
-
-**Deferred (candidates for future milestones):**
+Candidates for next milestone (to be defined via `/gsd:new-milestone`):
 - Hard delete Edge Function for accounts past 30-day grace period
 - Production deployment to Google Play / Apple App Store
 - Celebration sound effects with volume control (requires classroom A/B testing)
@@ -118,7 +115,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v1.5):**
+**Current State (after v1.6):**
 - 93-node trail system with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Tiered celebration system (4 tiers) with accessibility-first design
 - Boss unlock events with 3-stage modal and musical confetti
@@ -126,10 +123,13 @@ Explicitly excluded:
 - Dashboard XP card with level progression, badges, and animations
 - Build-time validation ensures node integrity on every build
 - WCAG 2.2 AA compliant trail page with RTL support
+- Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
+- Landscape-optimized CSS layouts for all 4 game modes and modals
+- VexFlow auto-resizes on orientation change via debounced ResizeObserver
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
-- ~67,835 lines JavaScript/JSX/CSS across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files
+- ~68,298 lines JavaScript/JSX/CSS across src/
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -217,7 +217,20 @@ Explicitly excluded:
 | will-change only on hover states | Avoids GPU layer promotion for all 93 nodes simultaneously | Good |
 | Semi-opaque bg-slate-900/40 overlay | Ensures WCAG 4.5:1 contrast on glass panels | Good |
 | 40% Bezier control point offset | Creates winding river S-curves (not sharp zigzags) | Good |
+| Function initializer useState for orientation | Synchronous first-render value avoids flash of incorrect state | Good |
+| Text-only "Play anyway" dismiss (no X icon) | WCAG 1.3.4 escape hatch, simple and clear for 8-year-olds | Good |
+| localStorage permanent dismiss for rotate prompt | Matches pianoapp- naming convention, persists across sessions | Good |
+| Rotate-pause-reset animation cycle | User feedback: phone rotates to landscape, pauses, snaps back | Good |
+| Tailwind raw media queries for orientation | No aspect-ratio guards needed (games have no text inputs) | Good |
+| Portrait-first design philosophy | WCAG 1.3.4: portrait as baseline, landscape as CSS-only enhancement | Good |
+| MemoryGame landscape grid 6-8 cols | Better horizontal space utilization in landscape orientation | Good |
+| Fullscreen before orientation lock | Android API requirement: requestFullscreen then screen.orientation.lock | Good |
+| fullscreenchange listener for Escape key | Auto-unlocks orientation when user exits fullscreen manually | Good |
+| Platform guard: Android PWA only | iOS/desktop/browser get rotate prompt or no-op, not API lock | Good |
+| useLandscapeLock before useRotatePrompt | Consistent mount order in all game components | Good |
+| ARIA live region as first child | Immediate screen reader monitoring with sr-only visual hiding | Good |
+| useMotionTokens for fade, AccessibilityContext for icon | Kept existing fade (already respects motion), added explicit control for phone icon | Good |
 
 ---
 
-*Last updated: 2026-02-13 after v1.6 milestone start*
+*Last updated: 2026-02-17 after v1.6 milestone*
