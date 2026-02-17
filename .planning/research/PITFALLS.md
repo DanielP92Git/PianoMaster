@@ -1,868 +1,509 @@
-# Domain Pitfalls: Auto-Rotate Landscape on Mobile Games
+# Pitfalls Research: Mic Pitch Detection Overhaul
 
-**Domain:** Adding screen orientation lock and rotate prompts to existing PWA games
-**Researched:** 2026-02-13
-**Confidence:** MEDIUM-HIGH (combination of official docs, real-world issues, and recent 2026 updates)
+**Domain:** Refactoring browser-based piano pitch detection in an existing PWA
+**Researched:** 2026-02-17
+**Confidence:** HIGH (current codebase reviewed + official WebKit bugs + Web Audio API spec + algorithm research)
 
 ---
 
-## Executive Summary
+## Context
 
-Adding orientation control to PWAs is deceptively complex due to:
+This research covers common mistakes when **replacing or improving** the existing `usePitchDetection` / `useMicNoteInput` hook stack in a React 18 PWA targeting iOS Safari (installed PWA), Android Chrome (installed PWA), and desktop browsers. The app serves 8-year-old learners; user experience failures (missed notes, wrong notes, latency) directly cause children to disengage and blame themselves.
 
-1. **Platform fragmentation**: iOS Safari and Android Chrome have fundamentally different capabilities
-2. **API dependencies**: Screen Orientation API requires fullscreen mode on Android, doesn't work on iPhones at all
-3. **Viewport instability**: iOS Safari's viewport calculation changes during rotation create race conditions
-4. **VexFlow re-render complexity**: SVG-based notation requires careful coordinate recalculation
-5. **Accessibility conflicts**: Forced orientation violates WCAG 1.3.4 unless essential to functionality
-
-For an 8-year-old audience with existing accessibility features (reducedMotion, extended timeouts), orientation changes introduce cognitive load and motion-sickness risks.
+The current implementation uses:
+- Naive autocorrelation in `usePitchDetection.js` (`fftSize: 2048`, `smoothingTimeConstant: 0.8`)
+- Frame-stability layer in `useMicNoteInput.js` (`onFrames: 4-5`, `offMs: 140ms`)
+- `requestAnimationFrame` loop on the main thread
+- `AudioContext` created fresh on every `startListening()` call
+- There is already one failing test: `SightReadingGame.micRestart.test.jsx` (mic-flag-not-reset regression)
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: iOS Safari Fullscreen API Doesn't Work on iPhones
-
-**What goes wrong:** You implement Screen Orientation API with `screen.orientation.lock('landscape')`, it works perfectly on Android and iPad, then you test on an iPhone and nothing happens.
-
-**Why it happens:**
-- As of iOS 26 (September 2025), Safari supports the Fullscreen API for all elements on **iPads only**
-- iPhones still have **zero support** for programmatic fullscreen or orientation lock via JavaScript
-- The only iPhone workaround is PWA "Add to Home Screen" with manifest `"display": "fullscreen"`, which only applies when installed as standalone app
-
-**Consequences:**
-- Feature works inconsistently across devices
-- Parents/teachers expect uniform behavior on all tablets and phones
-- Children get confused when rotation prompt shows on some devices but not others
-
-**Prevention:**
-```javascript
-// ALWAYS feature-detect before attempting orientation lock
-const canLockOrientation =
-  'orientation' in screen &&
-  typeof screen.orientation.lock === 'function';
-
-// Check if we're on a PWA installed to home screen
-const isStandalonePWA =
-  window.matchMedia('(display-mode: standalone)').matches ||
-  window.navigator.standalone === true; // iOS-specific check
-
-// Only show orientation prompt UI if we can actually lock orientation
-if (canLockOrientation || isStandalonePWA) {
-  showRotatePrompt();
-} else {
-  // Fallback: Show CSS-only rotate message, can't enforce lock
-  showNonBlockingOrientationSuggestion();
-}
-```
-
-**Detection:**
-- Test on **physical iPhone** (not just simulator)
-- Test on **physical iPad**
-- Test on **Android phone in Chrome**
-- Test both browser and installed PWA modes
-
-**Phase assignment:** Phase 1 (Foundation) - Must be in platform detection layer from day one
-
-**Sources:**
-- [Apple Developer Forums: Fullscreen API on iPhone](https://developer.apple.com/forums/thread/133248)
-- [iOS does not fully support the Fullscreen API in ANY browser](https://github.com/videojs/video.js/issues/7834)
-- [Can I use: Fullscreen API](https://caniuse.com/fullscreen)
-
----
-
-### Pitfall 2: Screen Orientation API Requires Fullscreen on Android
-
-**What goes wrong:** You call `screen.orientation.lock('landscape')` on Android Chrome and get a promise rejection: `"NotAllowedError: The request is not allowed"`
-
-**Why it happens:**
-- Screen Orientation API's `lock()` method requires the document to be in **fullscreen mode** on Android
-- Both APIs require **user interaction** before they can be triggered (security restriction)
-- If you request fullscreen in the wrong order, the promise chain breaks
-
-**Consequences:**
-- Lock silently fails without fullscreen
-- Error messages are cryptic and unhelpful to debug
-- Game starts in portrait when landscape was expected
-
-**Prevention:**
-```javascript
-// CORRECT ORDER: Fullscreen first, then orientation lock
-async function enterLandscapeGameMode() {
-  try {
-    // Step 1: Request fullscreen (must be triggered by user interaction)
-    const elem = document.documentElement;
-
-    if (elem.requestFullscreen) {
-      await elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) { // Safari
-      await elem.webkitRequestFullscreen();
-    }
-
-    // Step 2: Wait for fullscreen to activate, then lock orientation
-    if (screen.orientation?.lock) {
-      await screen.orientation.lock('landscape');
-    }
-
-    // Step 3: Start game
-    startGame();
-  } catch (error) {
-    // Handle specific error types
-    if (error.name === 'NotAllowedError') {
-      showUserMessage('Please allow fullscreen to play in landscape mode');
-    } else if (error.name === 'NotSupportedError') {
-      // Fallback: Start game without orientation lock
-      startGameWithoutLock();
-    } else if (error.name === 'AbortError') {
-      // User cancelled fullscreen request
-      console.log('User declined fullscreen');
-    }
-  }
-}
-
-// BAD: Lock orientation before fullscreen (will fail on Android)
-async function enterLandscapeGameMode_WRONG() {
-  await screen.orientation.lock('landscape'); // Fails: not in fullscreen
-  await document.documentElement.requestFullscreen();
-}
-```
-
-**Detection:**
-- Promise rejection with `NotAllowedError`
-- Lock appears to succeed but orientation doesn't change
-- Game UI is squashed in portrait
-
-**Phase assignment:** Phase 1 (Foundation) - Must be in core orientation control module
-
-**Sources:**
-- [MDN: ScreenOrientation.lock() method](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock)
-- [Screen Orientation API Spec](https://w3c.github.io/screen-orientation/)
-
----
-
-### Pitfall 3: iOS Safari Viewport Height Changes During Rotation (Race Condition)
+### Pitfall 1: Autocorrelation Octave Errors on Piano
 
 **What goes wrong:**
-1. User rotates device from portrait to landscape
-2. `orientationchange` event fires
-3. You measure viewport with `window.innerHeight` to recalculate VexFlow layout
-4. VexFlow renders to wrong dimensions because viewport hasn't updated yet
-5. After 100-300ms, another resize event fires with correct dimensions
-6. VexFlow has to re-render again (double render, flicker, wasted work)
+The autocorrelation algorithm in `usePitchDetection.js` detects the wrong octave — typically one octave too high (2x the true frequency) or, less commonly, one octave too low. A child plays C4 (261 Hz) and the game reports C5 (523 Hz). This is the single most common cause of "wrong note" errors on piano.
 
 **Why it happens:**
-- On iOS Safari, `window.innerHeight` is **incorrect** immediately after `orientationchange` event
-- The correct value is set after the first render, then a `resize` event fires
-- `100vh` is calculated based on the **maximum** viewport height (with browser UI hidden), not actual visible height
-- The viewport changes size when the address bar shows/hides during scroll
+Piano tones have strong harmonic partials. When the 2nd harmonic (overtone at 2x fundamental) dominates the signal — which happens during the attack phase and for higher registers — the autocorrelation function finds the 2nd harmonic's period first and reports double the real frequency. The current implementation uses `GOOD_ENOUGH_CORRELATION = 0.9` with a first-peak-wins strategy, making it highly susceptible to sub-harmonic selection errors. This is a known 4% average error rate even in better algorithms (McLeod MPM, SNAC), and naive autocorrelation is significantly worse.
 
 **Consequences:**
-- VexFlow notation renders at wrong scale (too small or clipped)
-- Layout shift causes disorienting jump for children
-- Double-render costs performance (especially on lower-end devices)
-- Pitch detection overlays misalign with staff lines
+- Child plays C4, game marks it wrong (detected as C5)
+- Child gets frustrated; thinks they played incorrectly
+- Problem is worse for notes with bright attack (C, G, high register notes)
+- The 5% frequency tolerance (`tolerance: 0.05`) was likely widened to compensate, causing cross-note false positives
 
 **Prevention:**
-```javascript
-// DEBOUNCE orientation change events to wait for final viewport dimensions
-let orientationChangeTimeout = null;
+Replace naive autocorrelation with the YIN algorithm or McLeod Pitch Method (MPM). Both add:
+1. Difference function instead of similarity correlation (reduces harmonic confusion)
+2. Cumulative mean normalization (eliminates the "first peak wins" problem)
+3. Parabolic interpolation (sub-sample accuracy without a bigger FFT)
 
-function handleOrientationChange() {
-  // Clear previous timeout if orientation changes rapidly
-  if (orientationChangeTimeout) {
-    clearTimeout(orientationChangeTimeout);
-  }
+Validated JS implementations: `pitchfinder` npm package (includes YIN, MPM); `pitchy` npm package (MPM only, zero dependencies, ~2KB). Do NOT write YIN from scratch — the normalization step is subtle and commonly implemented incorrectly.
 
-  // Wait for iOS Safari to settle on final viewport dimensions
-  orientationChangeTimeout = setTimeout(() => {
-    recalculateGameLayout();
-  }, 300); // 300ms is safe for iOS Safari to complete resize
-}
+**Warning signs:**
+- Child hits "wrong note" on the first beat of a note (attack phase), but not during sustain
+- Errors cluster on C, E, G (bright harmonic content)
+- Detected frequency is always approximately 2x or 0.5x the expected frequency
 
-// Listen to BOTH orientationchange and resize (debounced)
-window.addEventListener('orientationchange', handleOrientationChange);
-
-let resizeTimeout = null;
-window.addEventListener('resize', () => {
-  clearTimeout(resizeTimeout);
-  resizeTimeout = setTimeout(() => {
-    recalculateGameLayout();
-  }, 150);
-});
-
-// Use CSS custom property for viewport height instead of 100vh
-function setViewportHeight() {
-  // Get actual viewport height (not 100vh which is buggy on iOS)
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty('--vh', `${vh}px`);
-}
-
-// Update on load, resize, and orientation change
-setViewportHeight();
-window.addEventListener('resize', setViewportHeight);
-window.addEventListener('orientationchange', () => {
-  setTimeout(setViewportHeight, 300); // Wait for iOS Safari
-});
-
-// Use in CSS: height: calc(var(--vh, 1vh) * 100);
-```
-
-**Detection:**
-- VexFlow staff lines appear too small/large after rotation
-- `console.log(window.innerHeight)` immediately after orientationchange shows wrong value
-- Second resize event fires 100-300ms later with different dimensions
-
-**Phase assignment:** Phase 2 (Layout Integration) - After orientation API foundation is working
-
-**Sources:**
-- [WebKit Bug: window.innerHeight bogus after orientationchange](https://bugs.webkit.org/show_bug.cgi?id=170595)
-- [Addressing the iOS Address Bar in 100vh Layouts](https://medium.com/@susiekim9/how-to-compensate-for-the-ios-viewport-unit-bug-46e78d54af0d)
-- [100vh problem with iOS Safari](https://medium.com/quick-code/100vh-problem-with-ios-safari-92ab23c852a8)
+**Phase to address:** Phase 1 (Algorithm Replacement)
 
 ---
 
-### Pitfall 4: VexFlow SVG getBoundingClientRect() Returns Stale Coordinates After Rotation
+### Pitfall 2: AudioContext Created on Every startListening() Call
 
 **What goes wrong:**
-1. Game renders VexFlow staff in portrait orientation
-2. User rotates to landscape
-3. You call `renderer.resize(newWidth, newHeight)` to re-render VexFlow
-4. VexFlow re-renders, but you need to position overlays (like pitch detection cursors)
-5. You call `noteElement.getBoundingClientRect()` to get note positions
-6. Coordinates are **wrong** - they reflect the old portrait layout, not the new landscape layout
+The current `startListening()` creates a new `AudioContext` and a new `MediaStreamSource` on every call. If the game is restarted (Try Again flow), a new AudioContext is created while the previous one may not be fully closed yet. This causes:
+- Orphaned AudioContext instances competing for mic resources
+- "AudioContext limit exceeded" errors on some browsers (Chrome has a hard limit of 6 concurrent AudioContext instances)
+- Memory pressure that causes audio glitches mid-session
+- The existing failing test (`micRestart.test.jsx`) directly tests this regression
 
 **Why it happens:**
-- `getBoundingClientRect()` can return stale cached values if called immediately after DOM mutation
-- SVG elements with CSS transforms have known bugs where `getBoundingClientRect()` ignores transforms
-- Calling `getBoundingClientRect()` forces layout recalculation, but if SVG hasn't finished repainting, you get old values
-- VexFlow's `renderer.resize()` mutates the SVG, but the browser hasn't recalculated bounding boxes yet
+`audioContext.close()` is asynchronous. The current `stopListening()` calls `close().catch(...)` but then immediately sets `audioContext` state to null. If `startListening()` is called before close completes, two contexts coexist. React state batching makes this worse — state transitions during re-renders can cause double-invocations of the start/stop cycle.
 
 **Consequences:**
-- Pitch detection cursor appears 50-200px off from where the note actually is
-- Touch targets for note selection are misaligned
-- Children tap notes but game doesn't register the input
+- Mic input works on first game start, fails silently on restart
+- Chrome DevTools shows "AudioContext was not allowed to start" warnings
+- Memory grows across game sessions — important on low-end tablets used by children
 
 **Prevention:**
-```javascript
-// Wait for browser to recalculate layout after VexFlow re-render
-async function recalculateGameLayout() {
-  const container = document.getElementById('vexflow-container');
-  const newWidth = container.clientWidth;
-  const newHeight = container.clientHeight;
+1. Create one `AudioContext` per component mount (in a ref, not state), reuse across start/stop cycles
+2. Use `context.suspend()` / `context.resume()` instead of close/create when pausing between exercises
+3. Only `context.close()` on component unmount
+4. Use a ref guard: `if (audioContextRef.current && audioContextRef.current.state !== 'closed') { await audioContextRef.current.close(); }`
+5. Add a lifecycle state machine: `idle → acquiring → running → suspended → idle` to prevent concurrent starts
 
-  // Resize VexFlow renderer
-  renderer.resize(newWidth, newHeight);
+**Warning signs:**
+- Console shows "AudioContext limit exceeded" or "The AudioContext was not allowed to start"
+- `startListening` called twice in rapid succession (React Strict Mode double-invokes effects)
+- Memory grows visibly in DevTools Memory tab across game restarts
 
-  // Re-draw notation
-  redrawVexFlowStaff();
-
-  // CRITICAL: Wait for browser to recalculate layout before querying positions
-  // requestAnimationFrame runs after layout/paint
-  await new Promise(resolve => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(resolve); // Double RAF ensures paint completes
-    });
-  });
-
-  // NOW it's safe to query bounding boxes
-  const notePositions = Array.from(
-    container.querySelectorAll('.vf-notehead')
-  ).map(note => note.getBoundingClientRect());
-
-  updatePitchDetectionOverlay(notePositions);
-}
-
-// ALTERNATIVE: Recalculate positions on-demand instead of caching
-function getNotePositionLive(noteElement) {
-  // Force layout if needed (adds overhead but always accurate)
-  noteElement.offsetHeight; // Force reflow
-  return noteElement.getBoundingClientRect();
-}
-```
-
-**Detection:**
-- Overlay elements visually misaligned with VexFlow staff
-- Console.log of `getBoundingClientRect()` shows same values before/after rotation
-- Touch targets don't match visual note positions
-
-**Phase assignment:** Phase 3 (VexFlow Integration) - When connecting pitch detection overlays to notation
-
-**Sources:**
-- [VexFlow Issue #712: Resizing renderer changes SVG's elements positions](https://github.com/0xfe/vexflow/issues/712)
-- [Mozilla Bug: getBoundingClientRect doesn't take transforms into account for SVG](https://bugzilla.mozilla.org/show_bug.cgi?id=1066435)
-- [What forces layout/reflow](https://gist.github.com/paulirish/5d52fb081b3570c81e3a)
+**Phase to address:** Phase 1 (AudioContext Lifecycle) — this is the current bug
 
 ---
 
-### Pitfall 5: WCAG 1.3.4 Violation - Forced Orientation Locks User Out
+### Pitfall 3: iOS Safari AudioContext "interrupted" State Not Handled
 
-**What goes wrong:** An 8-year-old wheelchair user has their tablet mounted in portrait mode (physical constraint). Your app force-locks to landscape. They can't rotate the physical device, so they can't play the game. **You've just excluded a user due to accessibility failure.**
+**What goes wrong:**
+On iOS, the AudioContext enters an `"interrupted"` state (not just `"suspended"`) when:
+- The user receives a phone call
+- The user switches apps
+- The device is locked
+- A system alert appears (permission dialog, etc.)
+
+The current code only checks for `"suspended"` and handles it with `resume()`. The `"interrupted"` state requires a different recovery strategy — the MediaStream itself is killed by iOS and must be re-acquired via `getUserMedia` again. Simply calling `resume()` on an interrupted context does not restore mic input.
 
 **Why it happens:**
-- Developers assume all users can physically rotate their device
-- Wheelchair-mounted tablets are often fixed in one orientation
-- Some users with motor impairments use portrait-only device mounts
-- Low vision users may have magnification settings that only work in one orientation
+iOS Safari treats audio interruptions as a separate state from suspension. A WebKit bug (237878) confirms that AudioContext is suspended when backgrounded "even though AudioContext is not used directly for playing audio." The spec addition of the `"interrupted"` state was a late addition and many tutorials predate it. Additionally, iOS Safari PWA installed mode has different behavior from browser tab mode — mic permissions do not persist the same way.
 
 **Consequences:**
-- WCAG 1.3.4 violation (Level AA)
-- COPPA concerns if you're collecting data without considering accessibility requirements
-- User frustration and app abandonment
-- Legal liability for educational institutions using your app
+- Child switches to Messages app mid-lesson, returns — game appears to run but no mic input is detected
+- Audio level meter shows 0 even though `isListening: true` in state
+- No error is thrown; the game silently accepts no input and the child thinks they're playing wrong
 
 **Prevention:**
 ```javascript
-// ALWAYS provide an escape hatch - never force orientation without option to override
-function initGameOrientation() {
-  // Check user's accessibility preference
-  const { reducedMotion } = useAccessibility();
-
-  // Check if user has disabled orientation lock in settings
-  const userDisabledOrientationLock = localStorage.getItem('disable-orientation-lock') === 'true';
-
-  if (userDisabledOrientationLock) {
-    // Respect user preference, start game in current orientation
-    startGameInCurrentOrientation();
-    return;
-  }
-
-  // Show a non-blocking suggestion, not a blocking modal
-  if (window.innerWidth < window.innerHeight) {
-    // Portrait detected, suggest landscape
-    showOrientationSuggestion({
-      message: 'For the best experience, please rotate your device to landscape',
-      dismissible: true,
-      showSettingsLink: true, // Link to disable future prompts
-      autoHideAfter: 5000 // Auto-dismiss after 5 seconds
-    });
-  }
-
-  // Start game immediately, don't block on orientation
-  startGame();
-}
-
-// In settings panel, provide opt-out
-function renderAccessibilitySettings() {
-  return (
-    <label>
-      <input
-        type="checkbox"
-        checked={disableOrientationLock}
-        onChange={(e) => {
-          localStorage.setItem('disable-orientation-lock', e.target.checked);
-          setDisableOrientationLock(e.target.checked);
-        }}
-      />
-      Disable landscape rotation prompts (recommended for mounted devices)
-    </label>
-  );
-}
-```
-
-**Best practice for children's apps:**
-- Use **suggestion** instead of **enforcement**
-- Show rotate icon for 3-5 seconds, then auto-dismiss
-- Let game start in portrait if user doesn't rotate
-- Provide layouts that work (albeit not optimally) in both orientations
-
-**Detection:**
-- User testing with devices in fixed mounts
-- Manual testing: refuse to rotate device, see if game is playable
-- Screen reader testing in portrait orientation
-
-**Phase assignment:** Phase 1 (Foundation) - Must be part of initial UX design
-
-**Sources:**
-- [WCAG 1.3.4: Orientation (Level AA)](https://www.w3.org/WAI/WCAG21/Understanding/orientation.html)
-- [Understanding WCAG SC 1.3.4 Orientation](https://www.digitala11y.com/understanding-sc-1-3-4-orientation/)
-- [Mobile App Accessibility: A Comprehensive Guide (2026)](https://www.accessibilitychecker.org/guides/mobile-apps-accessibility/)
-
----
-
-### Pitfall 6: Rotation Animation Triggers Motion Sickness in Users with Vestibular Disorders
-
-**What goes wrong:** User rotates device → you animate VexFlow staff rotating/scaling to new layout → user with vestibular disorder feels nauseous and stops using the app.
-
-**Why it happens:**
-- Animated layout transitions during orientation change create **unnecessary motion**
-- The device rotation itself already creates vestibular stimulation
-- Adding CSS transitions on top compounds the issue
-- Your app's `reducedMotion` setting doesn't disable orientation change animations because you forgot to check it
-
-**Consequences:**
-- 70 million people have vestibular disorders
-- Children with ADHD are sensitive to excessive motion
-- Motion sickness = negative association with learning piano
-- Violates your app's existing accessibility commitment
-
-**Prevention:**
-```javascript
-// Respect reducedMotion when handling orientation changes
-function recalculateGameLayout() {
-  const { reducedMotion } = useAccessibility();
-
-  // Measure new dimensions
-  const container = document.getElementById('vexflow-container');
-  const newWidth = container.clientWidth;
-  const newHeight = container.clientHeight;
-
-  if (reducedMotion) {
-    // NO ANIMATION: Instant re-render
-    container.style.transition = 'none';
-    renderer.resize(newWidth, newHeight);
-    redrawVexFlowStaff();
-  } else {
-    // ANIMATION: Smooth transition (for users who want it)
-    container.style.transition = 'opacity 0.2s ease-out';
-    container.style.opacity = '0';
-
-    setTimeout(() => {
-      renderer.resize(newWidth, newHeight);
-      redrawVexFlowStaff();
-      container.style.opacity = '1';
-    }, 200);
-  }
-}
-
-// ALTERNATIVE: Use instant layout change, only animate feedback elements
-function recalculateGameLayout_OnlyAnimateFeedback() {
-  const { reducedMotion } = useAccessibility();
-
-  // Layout change is instant (no animation)
-  renderer.resize(newWidth, newHeight);
-  redrawVexFlowStaff();
-
-  // Only animate success/error overlays if reducedMotion is false
-  if (!reducedMotion) {
-    showOrientationChangeSuccessAnimation(); // Subtle checkmark fade-in
-  }
-}
-```
-
-**CSS approach:**
-```css
-/* Respect prefers-reduced-motion system preference */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Respect app-level reducedMotion setting */
-.reduced-motion * {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
-}
-```
-
-**Detection:**
-- Enable reducedMotion in app settings
-- Rotate device, watch for animations
-- Test with system-level "Reduce Motion" enabled (iOS/Android accessibility settings)
-
-**Phase assignment:** Phase 2 (Layout Integration) - When adding orientation change handlers
-
-**Sources:**
-- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion)
-- [Design accessible animation and movement](https://blog.pope.tech/2025/12/08/design-accessible-animation-and-movement/)
-- [WCAG 2.3.3: Animation from Interactions](https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html)
-
----
-
-## Moderate Pitfalls
-
-### Pitfall 7: Event Listener Memory Leaks on Orientation Change
-
-**What goes wrong:** You add `orientationchange` and `resize` listeners in game component mount, but forget to remove them on unmount. After playing multiple games, event listeners pile up, causing performance degradation and multiple re-renders on rotation.
-
-**Prevention:**
-```javascript
-useEffect(() => {
-  const handleOrientationChange = debounce(() => {
-    recalculateGameLayout();
-  }, 300);
-
-  const handleResize = debounce(() => {
-    recalculateGameLayout();
-  }, 150);
-
-  window.addEventListener('orientationchange', handleOrientationChange);
-  window.addEventListener('resize', handleResize);
-
-  // CRITICAL: Clean up on unmount
-  return () => {
-    window.removeEventListener('orientationchange', handleOrientationChange);
-    window.removeEventListener('resize', handleResize);
-  };
-}, []);
-```
-
----
-
-### Pitfall 8: Manifest "orientation" Property Conflicts with JavaScript Lock
-
-**What goes wrong:** You set `"orientation": "landscape"` in manifest.json for PWA installed mode, **and** use JavaScript `screen.orientation.lock('landscape')` in browser mode. On some Android devices, the two conflict, causing orientation to lock in browser mode when you don't want it to.
-
-**Prevention:**
-- Use **either** manifest orientation (for installed PWA) **or** JavaScript lock (for browser), not both
-- Check if app is installed before attempting JavaScript lock:
-```javascript
-const isInstalled = window.matchMedia('(display-mode: standalone)').matches;
-
-if (!isInstalled) {
-  // Only lock orientation in browser mode
-  screen.orientation.lock('landscape');
-}
-```
-
----
-
-### Pitfall 9: VictoryScreen Modal Not Centered After Orientation Change
-
-**What goes wrong:** User completes game in portrait, VictoryScreen modal appears centered. User rotates to landscape while modal is open. Modal is now off-center or partially off-screen.
-
-**Prevention:**
-```javascript
-// VictoryScreen should recalculate position on orientation change
-useEffect(() => {
-  const handleOrientationChange = () => {
-    // Force modal to recenter
-    setModalPosition('center');
-  };
-
-  window.addEventListener('orientationchange', handleOrientationChange);
-  return () => window.removeEventListener('orientationchange', handleOrientationChange);
-}, []);
-
-// OR use CSS-based centering that auto-adjusts
-// .victory-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; }
-```
-
----
-
-### Pitfall 10: Fullscreen Exit Breaks Game State
-
-**What goes wrong:** User is in fullscreen landscape game. They press Android back button or iOS swipe-up to exit fullscreen. Fullscreen exits, orientation unlocks, but game is still in "fullscreen mode" state internally, causing UI mismatches.
-
-**Prevention:**
-```javascript
-// Listen for fullscreen exit and clean up state
-document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement) {
-    // User exited fullscreen
-    handleFullscreenExit();
+// Listen for the specific interrupted state
+audioContext.addEventListener('statechange', async () => {
+  if (audioContext.state === 'interrupted') {
+    // On iOS: the stream is dead. Must stop, re-acquire, and restart.
+    await fullMicRestart(); // stop tracks, close context, re-getUserMedia
+  } else if (audioContext.state === 'suspended') {
+    // On others: just resume
+    await audioContext.resume();
   }
 });
 
-function handleFullscreenExit() {
-  // Unlock orientation
-  if (screen.orientation?.unlock) {
-    screen.orientation.unlock();
+// Also handle visibilitychange for page background/foreground
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && isListening) {
+    verifyMicStreamIsAlive(); // Check track.readyState !== 'ended'
+  }
+});
+```
+
+Always verify `track.readyState === 'live'` after returning from background before trusting `isListening` state.
+
+**Warning signs:**
+- Mic appears active (isListening: true) but audioLevel stays at 0 after screen unlock
+- Only happens on iOS, not Android or desktop
+- Issue begins after iOS interruption events (calls, alerts)
+
+**Phase to address:** Phase 2 (Cross-Browser Hardening)
+
+---
+
+### Pitfall 4: iOS Safari Requires User Gesture to Create/Resume AudioContext — Every Time
+
+**What goes wrong:**
+iOS Safari requires that `AudioContext.resume()` (or creation) be called in the synchronous stack frame of a user gesture (tap, click). If the code creates the AudioContext in a `useEffect`, a Promise chain, or any async path that does not trace back to a user gesture event handler, Safari silently keeps the context in `"suspended"` state. The context shows `state: "suspended"` with no error thrown.
+
+**Why it happens:**
+This is a longstanding Safari security restriction (WebKit bug #790 from 2015, still enforced). Safari's gesture detector uses a strict call stack check — even a single `await` between the user event and the `resume()` call can break the gesture association. The current `startListening()` is `async` and does `await navigator.mediaDevices.getUserMedia(...)` before creating the context — this works because `getUserMedia` itself is a user gesture trigger on most platforms, but iOS handles it differently in PWA standalone mode.
+
+**Consequences:**
+- AudioContext is created, `state: "suspended"`, but no error is thrown
+- `detectLoop()` runs but `analyserNode.getFloatTimeDomainData()` returns all zeros
+- Detected frequency is always -1; the game accepts no input and looks broken
+- Works perfectly on Chrome/Android/desktop; only fails on iOS Safari
+
+**Prevention:**
+1. Wire the `startListening()` call directly to an `onClick` handler — never via `useEffect`
+2. Call `audioContext.resume()` synchronously at the start of the gesture handler, before any `await`:
+   ```javascript
+   const handleStartGame = async () => {
+     // Synchronous resume FIRST (while still in gesture stack)
+     if (audioContextRef.current?.state === 'suspended') {
+       audioContextRef.current.resume(); // No await here
+     }
+     // Then do async work
+     await startListening();
+   };
+   ```
+3. Add an explicit "warm-up" touch event on first app load to unlock the AudioContext early
+4. Test specifically with iOS Safari in standalone PWA mode (installed to home screen), not just in Safari tab
+
+**Warning signs:**
+- Works in Chrome, breaks in iOS Safari
+- `audioContext.state` is always `"suspended"` after creation
+- `audioLevel` stays at 0 even when mic permission is granted
+- No `NotAllowedError` thrown (context is created, just not running)
+
+**Phase to address:** Phase 2 (Cross-Browser Hardening)
+
+---
+
+### Pitfall 5: requestAnimationFrame Loop Ties Pitch Detection to Frame Rate and Main Thread
+
+**What goes wrong:**
+The current `detectLoop()` uses `requestAnimationFrame` to run the autocorrelation algorithm. This means:
+- Detection rate drops from 60Hz to ~30Hz when the browser throttles rAF (background tab, low-power mode, frame budget exceeded)
+- The autocorrelation loop runs on the main thread — it blocks React rendering during the ~1ms computation
+- On slow mobile devices, frame budget pressure from VexFlow SVG rendering and pitch detection compete, causing both to glitch
+
+**Why it happens:**
+`requestAnimationFrame` is tied to display refresh rate and browser rendering budget. It is intentionally throttled by browsers in background tabs and on battery-saver mode. It was the right choice for visual animations; it is the wrong choice for continuous audio analysis.
+
+**Consequences:**
+- On iPhone SE (low-end device), eighth notes at 120 BPM (250ms each) are missed because detection rate drops to 15Hz (66ms per frame) — not enough samples to stably confirm a short note
+- When the child changes the music sheet display (React re-render), pitch detection stutters
+- Audio glitches from main thread congestion cause false `noteOff` events (silence detected mid-note)
+
+**Prevention:**
+Move pitch detection off the main thread. Two options:
+1. **AudioWorklet** (preferred): Process audio in the dedicated audio rendering thread at 128-frame quanta. The worklet thread is never throttled and has no GC pressure from main thread work.
+2. **Web Worker + SharedArrayBuffer**: Run the algorithm in a Worker, share a ring buffer with the audio graph. More complex but supported on all browsers with COOP/COEP headers.
+
+For this app's complexity level and cross-browser needs, AudioWorklet with a main-thread message fallback is the right call. Keep the existing rAF loop as the fallback for browsers without AudioWorklet support.
+
+**Warning signs:**
+- Audio level shows activity but notes are missed during heavy UI interactions
+- Frame timing logs show >16ms gaps in the detection loop
+- Problem is worse when VexFlow is re-rendering (note changes, beat markers)
+
+**Phase to address:** Phase 3 (Performance Hardening — later phase)
+
+---
+
+### Pitfall 6: AudioWorklet Has a 128-Frame Fixed Buffer — Not 2048
+
+**What goes wrong:**
+Developers who migrate from `AnalyserNode` (which supports configurable `fftSize: 2048`) to `AudioWorklet` expect to control buffer size. AudioWorklet processes audio in fixed 128-sample render quanta. At 44100 Hz, that is 2.9ms per processing call. Running YIN or autocorrelation on 128 samples only gives frequency resolution down to ~344 Hz — far too coarse to detect piano notes below E4 (329 Hz). C3 (130 Hz) is completely invisible.
+
+**Why it happens:**
+The AudioWorklet spec intentionally fixes the quantum at 128 frames for low latency. Developers assume they can set it like `fftSize` on AnalyserNode. The solution is to accumulate frames into a ring buffer (circular buffer) within the AudioWorklet processor until enough samples are available for the detection window.
+
+**Consequences:**
+- Notes below E4 are never detected
+- Bass clef exercises (C3-B3) are completely broken
+- Developers assume the algorithm is broken; the real problem is buffer accumulation
+
+**Prevention:**
+Use a ring buffer pattern in the AudioWorklet processor:
+```javascript
+// In AudioWorkletProcessor
+class PitchProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this._buffer = new Float32Array(2048); // accumulate 2048 samples
+    this._bufferIndex = 0;
   }
 
-  // Reset game state
-  setIsFullscreen(false);
-  setOrientationLocked(false);
+  process(inputs) {
+    const input = inputs[0][0]; // mono channel
+    if (!input) return true;
 
-  // Recalculate layout for non-fullscreen
-  recalculateGameLayout();
+    // Accumulate into ring buffer
+    for (let i = 0; i < input.length; i++) {
+      this._buffer[this._bufferIndex++] = input[i];
+      if (this._bufferIndex >= 2048) {
+        this.port.postMessage({ buffer: this._buffer.slice() });
+        this._bufferIndex = 0;
+      }
+    }
+    return true;
+  }
 }
 ```
+This introduces 2048/44100 = 46ms of latency from buffering, which is acceptable for note detection (not real-time synthesis).
+
+**Warning signs:**
+- Low notes (below E4) are never detected regardless of tuning
+- Problem disappears when falling back to AnalyserNode-based approach
+- Only manifests after migrating to AudioWorklet
+
+**Phase to address:** Phase 3 (AudioWorklet Migration)
 
 ---
 
-### Pitfall 11: Input Focus Breaks Fullscreen on iOS
+### Pitfall 7: Piano Attack Transient Causes Pitch Detection to Fire on Key Release Noise
 
-**What goes wrong:** Game is in fullscreen on iPad. User taps an input field (e.g., for entering a note name). Fullscreen exits immediately. User is confused.
+**What goes wrong:**
+When a piano key is released, the key mechanism produces a percussive "thud" sound at 200-400 Hz — the same frequency range as low piano notes. The `rmsThreshold` that is set to pass the note attack also passes the key-release noise. The detector fires a false `noteOn` event for the key release, causing the next expected note to be pre-consumed.
+
+**Why it happens:**
+The key release noise has a very short duration (~30ms) and broadband frequency content, but its fundamental happens to fall in the piano note range. The current `onFrames: 4` stability requirement (at 60fps = 66ms) is supposed to filter this, but during rAF throttling or when the release noise is clean, it can survive the stability window.
+
+**Consequences:**
+- Child releases a held note; the game registers a phantom note-on for the next note
+- Sequential note exercises get out of sync by one note
+- Problem is worse with acoustic pianos (louder key mechanisms) than digital piano keyboards
 
 **Prevention:**
-- Avoid text inputs in fullscreen game flow
-- If input is essential, warn user that fullscreen will exit:
-```javascript
-<input
-  onFocus={() => {
-    if (document.fullscreenElement) {
-      showToast('Fullscreen will exit when typing');
-    }
-  }}
-/>
-```
+1. Require minimum note duration: reject `noteOn` events for candidates that resolve in under 50ms (key release noise rarely sustains)
+2. Track energy decay: if RMS drops from detection peak to below threshold in under 40ms, classify as transient noise, not a note
+3. For the `offMs` timing: 140ms is appropriate for the note sustain, but add a "holdout" after `noteOff` of 80ms before allowing the next `noteOn` — this gaps the key-release noise from counting as the next note
+4. Increase `onFrames` to 6-8 for note-recognition (less time-critical) games while keeping 4 for sight-reading
 
-**Sources:**
-- [Apple Developer Forums: Input focus exits fullscreen](https://developer.apple.com/forums/thread/694940)
+**Warning signs:**
+- "Double fires" where one keypress produces two game events
+- Errors cluster at the end of held notes rather than during the note
+- Problem worse with acoustic piano, better with digital keyboard
+
+**Phase to address:** Phase 1 (Detection Logic Hardening)
 
 ---
 
-### Pitfall 12: Orientation Lock Persists After Navigating Away from Game
+### Pitfall 8: Mic Permission Denied Silently Fails on iOS PWA Re-Launch
 
-**What goes wrong:** User plays game in locked landscape mode. User exits game to dashboard. Dashboard is still locked in landscape even though it should be portrait-friendly.
+**What goes wrong:**
+On iOS Safari (PWA standalone mode), if the user denies microphone permission, the app receives `NotAllowedError`. On subsequent launches of the PWA, iOS does not re-prompt — it silently denies. The current `startListening()` catches the error, sets `isListening: false`, and rethrows. There is no persistent UI state to tell the child "microphone access is disabled in Settings." The game appears to start (the "Start Playing" button works) but produces no detections.
+
+**Why it happens:**
+iOS Safari does not have a browser-level permission management UI like Chrome. Permission revocation requires the user to navigate to Settings > Safari > Websites > Microphone. Children cannot do this themselves, and parents do not know to look. Additionally, unlike Chrome where `navigator.permissions.query({ name: 'microphone' })` returns the current state, iOS Safari's Permissions API has limited support.
+
+**Consequences:**
+- Child taps "Start Playing" — nothing happens — assumes they're playing wrong
+- Teacher cannot remotely diagnose the issue
+- The COPPA-compliant scenario: parent installs the PWA, denies mic on first launch, comes back days later — permission is permanently denied with no UI indication
 
 **Prevention:**
-```javascript
-// Unlock orientation when leaving game
-useEffect(() => {
-  // Lock on mount
-  lockOrientation('landscape');
+1. On every `startListening()` call, check permission state BEFORE attempting to open the stream:
+   ```javascript
+   // Try permission query (Chrome/Android); fall back to attempt-and-catch (iOS)
+   const checkMicPermission = async () => {
+     try {
+       const status = await navigator.permissions.query({ name: 'microphone' });
+       return status.state; // 'granted', 'denied', 'prompt'
+     } catch {
+       return 'unknown'; // iOS does not support this query
+     }
+   };
+   ```
+2. If a `NotAllowedError` is caught, show a persistent, parent-readable message with instructions for enabling mic in iOS Settings — not just a toast
+3. Store permission state in localStorage; if denied, show the instructions banner before attempting `getUserMedia` again
+4. Never silently swallow the error; at minimum log and update a `permissionState` ref
 
-  // Unlock on unmount
-  return () => {
-    if (screen.orientation?.unlock) {
-      screen.orientation.unlock();
-    }
-  };
-}, []);
-```
+**Warning signs:**
+- `startListening` is called, `isListening` stays false, no console error visible to user
+- Regression: the error is caught but no user-visible state change occurs
+- iOS-only issue; Chrome shows a permission re-request dialog
+
+**Phase to address:** Phase 1 (Permission Error Handling)
 
 ---
 
-### Pitfall 13: Android PWA Ignores System Orientation Lock Setting
+### Pitfall 9: Smoothing Constant Obscures Rapid Note Changes (Eighth Notes)
 
-**What goes wrong:** User has Android system-level "rotation lock" enabled (expects portrait-only). Your PWA ignores this setting and forces landscape anyway. User is frustrated.
+**What goes wrong:**
+The `AnalyserNode` is configured with `smoothingTimeConstant: 0.8`. This is a moving average filter that blends 80% of the previous frame's data into each new frame. For sustained notes (half notes, quarter notes), this improves stability. For eighth notes at 100 BPM (300ms each), the smoother causes the note's FFT data to "ramp up" over multiple frames, meaning the true peak isn't represented in the buffer until 2-3 frames in. Combined with `onFrames: 4`, this effectively adds ~100ms of latency to note detection — enough to miss an eighth note entirely.
+
+**Why it happens:**
+`smoothingTimeConstant: 0.8` is the MDN-recommended default for visualization purposes. It was not designed for note detection. Autocorrelation runs on time-domain data (`getFloatTimeDomainData`), which is less affected by the smoother than frequency-domain data — but the AnalyserNode still applies a small amount of temporal blending that compounds with the stability frame requirement.
+
+**Consequences:**
+- Sight-reading game: child plays an eighth note correctly, but the note is detected 100ms late and counted as the next beat
+- The perceived latency issue ("wrong timing on eighth notes") reported as the current bug is likely this compound problem
+- Reducing `onFrames` to fix latency increases false positives (noise triggers notes)
 
 **Prevention:**
-- **Don't override system orientation lock** unless you have a strong UX reason
-- Check if system rotation is locked before attempting to lock orientation
-- Provide in-app setting to respect system rotation lock
+1. Set `smoothingTimeConstant: 0` for time-domain pitch detection. The smoother is for spectral visualization; YIN/autocorrelation needs raw samples.
+2. Compensate for the loss of smoothing in the algorithm, not in the analyser — YIN's normalization step handles transient noise better than smoother-based filtering.
+3. For the stability layer in `useMicNoteInput`, use time-based accumulation (e.g., require stable detection for 60ms) rather than frame counting — frame count is unstable under rAF throttling.
 
-**Sources:**
-- [GitHub Issue: PWA ignores Android orientation lock](https://github.com/decompme/decomp.me/issues/1648)
+**Warning signs:**
+- Eighth notes at 120+ BPM are consistently missed or detected one slot late
+- Problem improves when the stability frame count is reduced (but then false positives appear)
+- `smoothingTimeConstant` is set to 0.8 or higher in the AnalyserNode configuration
+
+**Phase to address:** Phase 1 (Algorithm Configuration)
 
 ---
 
-## Minor Pitfalls
+### Pitfall 10: Regression: mic-flag-not-reset After Try Again (Current Bug)
 
-### Pitfall 14: Debounce/Throttle Function Creates Closures Over Stale State
+**What goes wrong:**
+The failing test `SightReadingGame.micRestart.test.jsx` captures an existing regression: after clicking "Try Again" and restarting a performance, `startListening` is called only once instead of twice. The mic is not re-activated on the second attempt.
 
-**What goes wrong:** You debounce orientation change handler, but it captures old React state in closure. When debounced function finally runs, it uses stale `reducedMotion` value.
+**Why it happens:**
+The likely cause is an internal flag or guard in the component (or hook) that prevents `startListening` from being called when the hook's state still shows `isListening: true` from the previous session. The `stopListening` on "Try Again" sets `isListening: false` in React state, but this state update is asynchronous — by the time the user clicks "Start Playing" again, the previous state hasn't fully settled, or the flag preventing double-starts hasn't been reset.
+
+This is exactly the pattern the `resetInternalState` call in `useMicNoteInput.stopListeningWrapped` is supposed to handle, but the timing between `stopListening` (async state reset) and the next `startListening` (triggered by user) is a classic race condition in React hook state management.
+
+**Consequences:**
+- After "Try Again": game starts, no mic input, child appears to play wrong notes
+- The test proves the regression exists; fixing the algorithm without fixing this will leave users on the old broken path when they retry exercises
 
 **Prevention:**
-```javascript
-// Use ref for latest state in debounced callback
-const reducedMotionRef = useRef(reducedMotion);
-useEffect(() => {
-  reducedMotionRef.current = reducedMotion;
-}, [reducedMotion]);
+1. Fix this regression FIRST before any algorithm changes — it is already tested and broken
+2. The fix pattern: use a `ref` (not state) for the "is currently listening" guard, so it can be read synchronously in `startListening` without waiting for a state flush
+3. Ensure `stopListening` synchronously resets the guard ref before returning, so the next `startListening` sees the cleared state
+4. The test must pass as a prerequisite gate for any further pitch detection work
 
-const handleOrientationChange = useCallback(
-  debounce(() => {
-    // Use ref, not closure variable
-    recalculateGameLayout(reducedMotionRef.current);
-  }, 300),
-  []
-);
-```
+**Warning signs:**
+- The existing test `SightReadingGame.micRestart.test.jsx` is failing
+- `startListeningSpy` is called once instead of twice in the restart flow
+- Only happens after "Try Again", not on first start
+
+**Phase to address:** Phase 0 (Pre-existing Bug — must fix before any other work)
 
 ---
 
-### Pitfall 15: Rotate Prompt Shows for Tablets That Don't Need It
+## Technical Debt Patterns
 
-**What goes wrong:** You show "Please rotate to landscape" prompt on all devices with `width < height`. But some tablets (e.g., Surface Pro) are used primarily in portrait by choice.
-
-**Prevention:**
-```javascript
-// Only show rotate prompt on small screens (phones), not tablets
-const isSmallDevice = window.innerWidth < 768; // Adjust threshold
-const isPortrait = window.innerWidth < window.innerHeight;
-
-if (isSmallDevice && isPortrait) {
-  showRotatePrompt();
-}
-```
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Keep naive autocorrelation, tune thresholds | No algorithm change, fast fix | Octave errors persist; tuning is whack-a-mole | Never — the error is algorithmic, not parametric |
+| Keep rAF loop, reduce onFrames | Fixes latency on fast devices | Breaks on throttled rAF (low battery, background); increases false positives | Never for production; only for initial prototype |
+| Create new AudioContext on every startListening | Simpler state management | Memory leak across restarts; Chrome context limit | Never — already causing the current mic-restart bug |
+| Set smoothingTimeConstant: 0.8 for "stability" | Smoother frequency display | 100ms phantom latency for eighth note detection | Acceptable ONLY for visualization-only components |
+| Use `isListening` state as the guard for startListening | Simpler code | State batching race condition (current bug) | Never — use a ref for synchronous guards |
+| Ship without AudioWorklet, defer to later | Faster first phase | main-thread congestion on slow tablets; rAF throttle problems | Acceptable if rAF loop has explicit throttle guards |
 
 ---
 
-### Pitfall 16: Service Worker Caches Orientation-Specific Assets
+## Integration Gotchas
 
-**What goes wrong:** VexFlow renders portrait layout, service worker caches SVG. User rotates to landscape, gets cached portrait SVG instead of re-rendering.
-
-**Prevention:**
-- **Don't cache dynamically generated VexFlow SVGs** in service worker
-- Add VexFlow container to cache exclusion list:
-```javascript
-// In sw.js
-const NEVER_CACHE = [
-  /vexflow-container/,
-  /dynamic-notation/
-];
-```
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| `useMicNoteInput` + `SightReadingGame` | Restart sequence does not call `stopListening` before `startListening` | Enforce explicit stop-then-start sequence; never call `startListening` when `isListeningRef.current === true` |
+| `usePitchDetection` + `useAudioEngine` | Two AudioContext instances created (one for pitch, one for metronome) | Share a single AudioContext via a context provider or pass ref down; browser limits to ~6 concurrent contexts |
+| `AudioContext.resume()` + iOS gesture | `resume()` called after an `await` in the same handler | Call `resume()` synchronously before any async work in gesture handlers |
+| `getUserMedia` + PWA reinstall | Permission state assumed from previous session | Always attempt `getUserMedia` fresh; don't cache permission state across app launches |
+| `requestAnimationFrame` + React Strict Mode | `detectLoop` fires twice on mount in dev mode | Use the `hasAutoStartedRef` pattern already in the codebase; guard rAF with a running flag ref |
+| New pitch algorithm + existing test suite | Tests mock `useMicNoteInput` — algorithm changes don't break them | Add dedicated algorithm unit tests for YIN/MPM output accuracy before replacing autocorrelation |
 
 ---
 
-### Pitfall 17: Confusing UX for 8-Year-Olds: Too Many Prompts
+## Performance Traps
 
-**What goes wrong:** Game flow becomes:
-1. "Allow fullscreen" browser prompt
-2. "Please rotate device" app prompt
-3. "Allow microphone" browser prompt
-4. Game settings modal
-
-Four prompts before playing = children abandon the game.
-
-**Prevention:**
-- **Consolidate prompts** into single onboarding flow
-- Use pictorial instructions instead of text for children
-- Auto-dismiss prompts after 5 seconds with "Skip" option
-- Don't block game start on orientation
-
-**Sources:**
-- [UX Design for Kids: Principles and Recommendations](https://www.ramotion.com/blog/ux-design-for-kids/)
-- [Designing for Kids: Best Practices](https://uxplanet.org/designing-apps-for-kids-best-practices-8e32409d07c3)
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Autocorrelation at O(N^2) in rAF loop | Main thread blocked ~1-3ms per frame on slow devices; VexFlow renders stutter | Use YIN (O(N) with optimizations) or move to AudioWorklet; profile with Chrome DevTools Performance tab | Consistently on iPhone SE / low-end Android; intermittently on mid-range |
+| Large Float32Array allocation on every frame | GC pauses cause audio glitches every ~30 seconds (GC frequency) | Pre-allocate the analysis buffer in a ref outside the loop; never `new Float32Array` inside `detectLoop` | Immediately on any device after ~1 minute of continuous detection |
+| `setDetectedFrequency` / `setDetectedNote` called at 60Hz | 60 React state updates per second cause excessive re-renders | Debounce state updates; only update state when note changes, not every frame | Immediately visible in React DevTools Profiler; causes visible frame drops during notation rendering |
+| AudioWorklet with 128-frame quanta + no ring buffer | Low notes never detected | Accumulate to 2048 samples in ring buffer before running detection | Every bass clef note; manifests immediately in testing |
 
 ---
 
-### Pitfall 18: Landscape Layout Breaks RTL (Hebrew) Text Flow
+## Security Mistakes
 
-**What goes wrong:** Your app supports Hebrew RTL. In portrait, RTL works perfectly. User rotates to landscape, and suddenly Hebrew text flows left-to-right.
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Caching microphone stream across page navigations | Audio continues recording when user navigates away from game (COPPA violation) | Always stop and release all MediaStream tracks in component cleanup; verify with `track.readyState === 'ended'` after cleanup |
+| Logging pitch data with user identifiers | Audio patterns could identify individuals (COPPA/GDPR-K) | Do not log raw audio data or frequency time series with student IDs; debug logging gated behind `VITE_DEBUG_MIC_LOGS` (already implemented) |
+| `getUserMedia` constraint with no echo cancellation | Mic feedback loop on devices with speakers (game feedback sounds fed back into mic) | Always request `echoCancellation: true, noiseSuppression: true` in getUserMedia constraints |
 
-**Prevention:**
-- Test RTL in **both** orientations
-- Ensure `dir="rtl"` attribute persists through orientation changes
-- CSS logical properties (`margin-inline-start` instead of `margin-left`) help maintain RTL
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| No mic permission UI on first load | Child taps Start and nothing works; assumes they're playing wrong | Show a "We'll need your microphone" prompt with visual before requesting permission; only request on explicit user action |
+| Mic icon shows "active" when AudioContext is suspended (iOS) | Child thinks the game is listening; plays note; nothing detected | Show mic status based on verified stream liveness (`track.readyState === 'live'`), not just `isListening` state |
+| No fallback when mic fails | Child stuck at blank game screen | Show keyboard input fallback (Klavier is already implemented) if mic fails to start within 3 seconds |
+| Pitch detection confidence not surfaced | Child plays a note that is borderline (between two frequencies); game randomly accepts/rejects | Show a visual "confidence bar" for detected note; only register note when confidence is above threshold |
+| Latency gap between note play and green flash | Child thinks they played wrong because feedback is 200ms late | Target <100ms from sound to visual confirmation; measure the pipeline end-to-end before shipping |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-Before marking orientation feature complete, verify:
+- [ ] **Octave error fix:** Verify by playing C4 on acoustic piano (not digital) with bright attack — should detect C4, not C5. Do not rely on synthetic test tones which have clean harmonics.
+- [ ] **Mic restart regression:** `SightReadingGame.micRestart.test.jsx` must pass before claiming the restart flow is fixed.
+- [ ] **iOS Safari interruption:** Test by starting a game session, receiving a phone call (or activating Siri), then returning — mic must resume correctly.
+- [ ] **AudioContext limit:** Run 7+ consecutive game sessions in the same app session (without full page reload) — no "AudioContext limit exceeded" errors.
+- [ ] **Bass clef detection:** Play C3 and D3 on a piano — these must be detected if the app supports bass clef exercises (the current frequency table only goes down to C3).
+- [ ] **Permission denied path:** Deny microphone on first launch, relaunch the PWA — a clear "enable in Settings" message must appear, not a silent failure.
+- [ ] **Eighth note timing:** At 120 BPM, play 4 eighth notes in a row — all 4 must register, with no missed notes or timing offset.
+- [ ] **rAF throttle:** Open Chrome DevTools, CPU throttle to 4x slowdown, play notes — detection must still function (may be slower but not break).
+- [ ] **Klavier keyboard fallback:** With mic blocked, keyboard input must still work for all exercises.
 
-- [ ] **iOS iPhone physical device tested** (not just simulator) - orientation lock fails on iPhones
-- [ ] **iPad physical device tested** - fullscreen API behaves differently than iPhone
-- [ ] **Android phone physical device tested** - fullscreen + orientation lock combo
-- [ ] **Tested in both browser and installed PWA modes** - different API availability
-- [ ] **VexFlow re-renders correctly after rotation** - wait for double RAF before querying bounding boxes
-- [ ] **Pitch detection overlays align with notes after rotation** - getBoundingClientRect returns fresh coordinates
-- [ ] **VictoryScreen modal stays centered after rotation** - doesn't clip or misalign
-- [ ] **Orientation unlocks when navigating away from game** - doesn't lock dashboard
-- [ ] **Fullscreen exits cleanly when user presses back button** - state cleanup on fullscreenchange
-- [ ] **`reducedMotion` setting disables rotation animations** - no transitions when setting enabled
-- [ ] **System-level reduced motion preference respected** - test with iOS/Android accessibility setting
-- [ ] **Accessibility settings panel includes "Disable orientation prompts" toggle** - escape hatch for mounted devices
-- [ ] **Rotate prompt is dismissible and non-blocking** - doesn't prevent game start
-- [ ] **Game playable in portrait (degraded but functional)** - WCAG 1.3.4 compliance
-- [ ] **Tested with wheelchair-mounted device (or simulated by refusing to rotate)** - accessibility validation
-- [ ] **Event listeners cleaned up on unmount** - no memory leaks
-- [ ] **Service worker doesn't cache orientation-specific VexFlow SVGs** - dynamic content excluded
-- [ ] **Hebrew RTL text flows correctly in both orientations** - logical CSS properties used
-- [ ] **Onboarding flow doesn't show 4+ prompts** - consolidated UX for children
-- [ ] **Promise rejection handling for all orientation/fullscreen API calls** - graceful degradation
-- [ ] **Viewport height uses CSS custom property, not 100vh** - iOS Safari bug workaround
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Autocorrelation octave errors shipped | MEDIUM | Replace algorithm in `usePitchDetection.js` with YIN via `pitchfinder` or `pitchy`; adjust `rmsThreshold` and `tolerance` to match new algorithm's output scale; re-run all game flows |
+| AudioContext leak shipped | HIGH | Must add context reuse pattern; requires changing hook interface (creates vs. reuses context); downstream consumers need update |
+| iOS AudioContext suspension not handled | LOW-MEDIUM | Add `statechange` event listener and `visibilitychange` handler to `usePitchDetection`; no interface change needed |
+| Mic restart regression still in production | LOW | Fix the `isListening` state vs. ref guard; the test already exists — just make it pass |
+| Main-thread rAF blocking shipped | HIGH | Requires AudioWorklet migration with fallback; significant architectural change; 2-3 week effort |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
-| Phase | Focus | Pitfalls to Address | Why This Phase |
-|-------|-------|---------------------|----------------|
-| **Phase 1: Foundation** | Platform detection, API feature detection, orientation suggestion UX | #1 (iOS incompatibility), #2 (fullscreen requirement), #5 (WCAG violation), #17 (UX overload) | Must establish what's technically possible before building on it |
-| **Phase 2: Layout Integration** | Viewport measurement, debounced event handling, CSS custom properties | #3 (viewport race condition), #6 (motion sickness), #7 (memory leaks), #18 (RTL breakage) | Layout must be stable before adding VexFlow integration |
-| **Phase 3: VexFlow Integration** | SVG re-render, coordinate recalculation, overlay positioning | #4 (getBoundingClientRect staleness), #9 (VictoryScreen centering), #16 (service worker caching) | Core game graphics dependent on stable layout |
-| **Phase 4: State Management** | Fullscreen lifecycle, orientation lock cleanup, navigation guards | #8 (manifest conflicts), #10 (fullscreen exit state), #12 (lock persistence), #14 (stale closures) | State bugs surface during game flow transitions |
-| **Phase 5: Accessibility Polish** | Reduced motion integration, escape hatches, system preference detection | #6 (motion revisited), #11 (input focus), #13 (system lock override), #15 (tablet prompts) | Polish phase ensures no users are excluded |
-| **Phase 6: Testing & Validation** | Physical device testing, edge case coverage, UX refinement | All pitfalls revisited with real devices and real users | Many issues only surface on physical hardware |
-
----
-
-## Phase-Specific Warnings
-
-### Phase 1 (Foundation)
-- **Likely needs deeper research:** iOS Safari fullscreen polyfills and workarounds
-- **Hidden complexity:** Promise rejection handling has 3+ error types, each needs different UX response
-- **Blocker risk:** If you skip feature detection, Phase 3 will fail on iPhones
-
-### Phase 2 (Layout Integration)
-- **Likely needs deeper research:** Debounce timing values (300ms? 500ms?) need real device testing
-- **Hidden complexity:** iOS Safari viewport calculation changes across iOS versions (15 vs 16 vs 17 vs 26)
-- **Blocker risk:** If viewport measurement is wrong, all subsequent phases inherit the bug
-
-### Phase 3 (VexFlow Integration)
-- **Likely needs deeper research:** VexFlow's internal coordinate system during resize
-- **Hidden complexity:** SVG bounding box caching behavior varies across Chrome/Safari/Firefox
-- **Blocker risk:** Pitch detection overlays misaligning is a show-stopper for gameplay
-
-### Phase 4 (State Management)
-- **Likely needs deeper research:** Navigation guards in React Router for orientation lock cleanup
-- **Hidden complexity:** Fullscreen API's interaction with React lifecycle (useEffect cleanup timing)
-- **Blocker risk:** Orientation lock persisting to dashboard = bad UX, easy to miss in testing
-
-### Phase 5 (Accessibility Polish)
-- **Likely needs deeper research:** COPPA compliance implications of orientation enforcement
-- **Hidden complexity:** Children's cognitive load when presented with rotate prompts
-- **Blocker risk:** Missing WCAG 1.3.4 compliance = legal liability for schools
-
-### Phase 6 (Testing & Validation)
-- **Likely needs deeper research:** Device lab access or remote testing services (BrowserStack, etc.)
-- **Hidden complexity:** iOS Simulator does NOT accurately represent physical device behavior
-- **Blocker risk:** If you only test in simulators, you'll ship broken iOS experience
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Mic-restart regression (current bug) | Phase 0 — fix before any new work | `SightReadingGame.micRestart.test.jsx` passes |
+| Autocorrelation octave errors | Phase 1 — Algorithm replacement | Play C4 on acoustic piano; detected note matches; octave error rate < 1% in manual testing |
+| AudioContext multiple instances | Phase 1 — AudioContext lifecycle | 10 game restarts with no console errors; memory stable in DevTools |
+| Permission denied silent failure | Phase 1 — Error handling | Deny mic in iOS Settings; clear message appears on next game start |
+| Smoothing constant latency | Phase 1 — Configuration | Set `smoothingTimeConstant: 0`; eighth note test at 120 BPM passes |
+| Key release noise false positives | Phase 1 — Detection tuning | Acoustic piano hold-release test; no phantom events after note release |
+| iOS AudioContext interruption | Phase 2 — Cross-browser hardening | Phone call during game session; mic resumes on return |
+| iOS gesture requirement | Phase 2 — Cross-browser hardening | Test in iOS Safari PWA standalone; no suspended context issues |
+| rAF main-thread blocking | Phase 3 — Performance (later) | Chrome 4x CPU throttle; detection still functions |
+| AudioWorklet 128-frame buffer size | Phase 3 — AudioWorklet migration | Bass clef notes C3-B3 all detected after migration |
 
 ---
 
 ## Sources
 
-### High Confidence (Official Docs, Specs)
-- [W3C Screen Orientation API Spec](https://w3c.github.io/screen-orientation/)
-- [MDN: ScreenOrientation.lock() method](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock)
-- [WCAG 1.3.4: Orientation](https://www.w3.org/WAI/WCAG21/Understanding/orientation.html)
-- [Can I use: Fullscreen API](https://caniuse.com/fullscreen)
-- [MDN: prefers-reduced-motion](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/prefers-reduced-motion)
-
-### Medium Confidence (Real-World Issues, Bug Reports)
-- [GitHub: VexFlow Issue #712 - Resizing renderer changes SVG positions](https://github.com/0xfe/vexflow/issues/712)
-- [GitHub: video.js Issue #7834 - iOS Fullscreen API limitations](https://github.com/videojs/video.js/issues/7834)
-- [WebKit Bug #170595: window.innerHeight bogus after orientationchange](https://bugs.webkit.org/show_bug.cgi?id=170595)
-- [Mozilla Bug #1066435: getBoundingClientRect doesn't take transforms into account for SVG](https://bugzilla.mozilla.org/show_bug.cgi?id=1066435)
-
-### Medium Confidence (Developer Guides, Best Practices)
-- [PWA on iOS - Current Status & Limitations (2025)](https://brainhub.eu/library/pwa-on-ios)
-- [Optimizing PWAs For Different Display Modes](https://www.smashingmagazine.com/2025/08/optimizing-pwas-different-display-modes/)
-- [UX Design for Kids: Principles and Recommendations](https://www.ramotion.com/blog/ux-design-for-kids/)
-- [Addressing the iOS Address Bar in 100vh Layouts](https://medium.com/@susiekim9/how-to-compensate-for-the-ios-viewport-unit-bug-46e78d54af0d)
-- [100vh problem with iOS Safari](https://medium.com/quick-code/100vh-problem-with-ios-safari-92ab23c852a8)
-
-### Low Confidence (Need Validation)
-- None marked as low confidence - all findings corroborated by multiple sources
+- [WebKit Bug 237878: AudioContext suspended when iOS page is backgrounded](https://bugs.webkit.org/show_bug.cgi?id=237878)
+- [WebKit Bug 237322: Web Audio muted when iOS ringer is muted](https://bugs.webkit.org/show_bug.cgi?id=237322)
+- [WebKit Bug 198277: Audio stops when standalone web app is not in foreground](https://bugs.webkit.org/show_bug.cgi?id=198277)
+- [Web Audio API GitHub Issue #790: Context stuck in suspended state on iOS](https://github.com/WebAudio/web-audio-api/issues/790)
+- [AudioWorklet Design Pattern — Chrome Developers Blog](https://developer.chrome.com/blog/audio-worklet-design-pattern)
+- [AudioWorklet is a real world disaster — WebAudio Spec Issue #2632](https://github.com/WebAudio/web-audio-api/issues/2632)
+- [Garbage Collection in Web Audio — WebAudio Spec Issue #373](https://github.com/WebAudio/web-audio-api/issues/373)
+- [Autocorrelation vs YIN for Pitch Detection](https://pitchdetector.com/autocorrelation-vs-yin-algorithm-for-pitch-detection/)
+- [pitchfinder JS library — includes YIN, MPM, AMDF implementations](https://github.com/peterkhayes/pitchfinder)
+- [Microphone stops working in PWA on iOS — Apple Developer Forums](https://developer.apple.com/forums/thread/733229)
+- [Unlock Web Audio in Safari for iOS — Matt Montag](https://www.mattmontag.com/web/unlock-web-audio-in-safari-for-ios-and-macos)
+- [MDN: Web Audio API Best Practices](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices)
+- [MDN: AnalyserNode.fftSize](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/fftSize)
+- [Exploring System Adaptations for Minimum Latency Real-Time Piano Transcription (arXiv 2509.07586)](https://arxiv.org/html/2509.07586)
+- [Current codebase: `src/hooks/usePitchDetection.js` — reviewed 2026-02-17]
+- [Current codebase: `src/hooks/useMicNoteInput.js` — reviewed 2026-02-17]
+- [Current codebase: `src/components/games/sight-reading-game/SightReadingGame.micRestart.test.jsx` — reviewed 2026-02-17]
 
 ---
-
-## Open Questions for Phase-Specific Research
-
-1. **Phase 1:** What's the best polyfill strategy for iOS iPhone orientation lock? (No official solution found)
-2. **Phase 2:** What's the optimal debounce timing for iOS Safari viewport stabilization? (300ms is educated guess, needs device testing)
-3. **Phase 3:** Does VexFlow 5.x have any built-in orientation change handling? (Docs don't mention it)
-4. **Phase 5:** How do other children's educational apps handle orientation prompts? (Need competitor analysis)
-
----
-
-## Confidence Assessment
-
-| Area | Confidence | Notes |
-|------|------------|-------|
-| iOS Safari limitations | **HIGH** | Official Apple forums + multiple bug reports confirm |
-| Android fullscreen requirement | **HIGH** | W3C spec + MDN docs explicit about this |
-| Viewport race conditions | **HIGH** | WebKit bug reports + multiple developer guides corroborate |
-| VexFlow coordinate issues | **MEDIUM** | GitHub issue + Mozilla bug reports, but not VexFlow-specific docs |
-| Accessibility requirements | **HIGH** | WCAG spec + accessibility guides clear on this |
-| Children's UX best practices | **MEDIUM** | Multiple UX guides agree, but limited research on orientation prompts specifically |
-| Service worker caching | **MEDIUM** | General PWA best practices, not orientation-specific |
-
----
-
-## Final Recommendations
-
-1. **Start with graceful degradation:** Build the game to work in portrait first, landscape as enhancement
-2. **Feature-detect everything:** Never assume API availability
-3. **Test on physical devices early:** iOS Simulator lies about fullscreen support
-4. **Respect accessibility:** Orientation prompts must be dismissible and non-blocking
-5. **Use CSS custom properties for viewport height:** Don't trust `100vh` on iOS
-6. **Double RAF before querying coordinates:** Wait for paint to complete after VexFlow re-render
-7. **Clean up on unmount:** Unlock orientation and remove event listeners
-8. **Integrate with existing accessibility system:** Check `reducedMotion` before animating
-
-**Biggest risk:** Assuming iOS and Android work the same way. They fundamentally don't for orientation/fullscreen APIs.
-
-**Biggest time sink:** Getting VexFlow coordinates right after rotation. Budget extra time for Phase 3.
-
-**Biggest legal risk:** Violating WCAG 1.3.4 by force-locking orientation without escape hatch. MUST address in Phase 1.
+*Pitfalls research for: Browser-based piano pitch detection overhaul in existing React 18 PWA*
+*Researched: 2026-02-17*

@@ -1,502 +1,235 @@
-# Feature Landscape: Mobile Landscape Orientation for Games
+# Feature Research: Mic Pitch Detection Overhaul
 
-**Domain:** Mobile web game orientation management
-**Researched:** 2026-02-13
-**Confidence:** MEDIUM (WebSearch + official MDN docs, no iOS-specific PWA testing available)
+**Domain:** Real-time browser-based piano pitch detection for children's music education
+**Researched:** 2026-02-17
+**Confidence:** MEDIUM-HIGH (official MDN docs + JUCE forum + academic sources + codebase audit)
 
-## Executive Summary
+---
 
-Mobile landscape orientation for web games involves **detecting device orientation**, **prompting users to rotate**, and optionally **locking orientation** (Android only). Educational apps like Duolingo support landscape but don't force it. Music notation apps (Symphony Pro, OKTAV) offer landscape mode because wide staves require horizontal space. The key UX pattern is graceful degradation: detect portrait → show rotate prompt → hide prompt when user complies.
+## Feature Landscape
 
-**Critical iOS limitation:** Screen Orientation Lock API is **not supported on iPhone** (only iPad). Must rely on CSS-only detection + prompts.
+### Table Stakes (Users Expect These)
 
-**Platform split:**
-- **Android PWA:** Full support for `screen.orientation.lock('landscape')` (requires fullscreen)
-- **iOS PWA:** No lock support; CSS media queries + rotate prompts only
+These are the behaviors that define "it works." Missing any of these means the app fails for note values shorter than quarter notes.
 
-## Table Stakes
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| **Accurate note classification (monophonic)** | One note played = one note reported, correct pitch | MEDIUM | Current autocorrelation works for quarter notes; breaks on 8th/16th. Switch to multi-algorithm consensus (YIN + MPM). No polyphonic needed — children play one note at a time. |
+| **Onset detection (note-on triggering)** | Note must register within the timing window for the game to score it | MEDIUM | Current approach: N consecutive frames above RMS threshold. Minimum latency for a note is 2x its period. For C4 (261 Hz), that's ~7.6ms. For A2 (110 Hz), ~18ms. Onset fires after `onFrames` (currently 4–5 frames at 60fps = 66–83ms). Too slow for 8th notes at 100+ BPM. |
+| **Note-off detection** | Held note must clear before next note is scored | MEDIUM | Current `offMs = 140ms`. At 120 BPM, a quarter note is 500ms, 8th is 250ms, 16th is 125ms. 140ms note-off works for quarters; is too long for 8th and 16th notes — makes them seem merged. |
+| **Noise rejection / silence floor** | No phantom notes when not playing | MEDIUM | Current `rmsThreshold = 0.01`. Needed: disable browser echo cancellation, noise suppression, and auto gain control via `getUserMedia` constraints. Currently not set — browser may corrupt audio. |
+| **Pitch confidence threshold** | Weak/ambiguous detections must be discarded, not emitted | MEDIUM | Current autocorrelation uses `GOOD_ENOUGH_CORRELATION = 0.9`. YIN and MPM have their own confidence metrics. Must gate emissions behind a minimum confidence score, not just RMS level. |
+| **Dynamic note-off timing based on note duration** | Short notes require fast note-off; long notes allow longer decay | HIGH | A 16th note at 100 BPM lasts 150ms. Note-off must fire within ~75ms of release for the next note to register in time. Current fixed `offMs = 140ms` breaks 8th and 16th notes. Must scale with BPM and target note value. |
+| **Correct getUserMedia audio constraints** | Clean audio input without browser-altered signal | LOW | Must explicitly set `echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false`. Browser applies destructive DSP by default that degrades pitch detection. Already missing from current `startListening()`. |
+| **State machine for note lifecycle** | Stable ARMED/ACTIVE/IDLE prevents flicker between neighboring semitones | MEDIUM | Current `useMicNoteInput` has frame counting but no formal state machine. The `apankrat/note-detector` pattern (Search → Confirm → Track) is the correct model. Must prevent C4/B3 flickering during transitions. |
+| **Frequency-to-note mapping for full piano range** | All notes in the app's note pool are detectable | LOW | Current mapping covers C3–F5. Must include all notes in `skillTrail.js` node configs. Currently limited — bass clef notes (B2, A2, etc.) may not be in the lookup table. |
 
-Features users expect. Missing = product feels incomplete.
+---
 
-| Feature | Why Expected | Complexity | Platform | Notes |
-|---------|--------------|------------|----------|-------|
-| **Orientation detection** | Must know if device is portrait/landscape | Low | iOS + Android | CSS `@media (orientation)` or `window.matchMedia()` |
-| **Rotate prompt overlay** | Games show "Please rotate" when wrong orientation | Low | iOS + Android | Standard UX pattern; conditional render based on orientation |
-| **Hide prompt on rotate** | Overlay disappears when user complies | Low | iOS + Android | Listen to orientation change, re-render |
-| **Landscape-optimized layout** | VexFlow staves, settings, victory screen fit landscape | Medium | iOS + Android | Responsive design with `@media (orientation: landscape)` |
-| **Graceful portrait fallback** | If user refuses to rotate, game still playable (degraded) | Medium | iOS + Android | Smaller staves, scrollable content |
+### Differentiators (Competitive Advantage)
 
-## Differentiators
+Features that make the pitch detection noticeably better than a basic implementation, appropriate for a children's learning context.
 
-Features that set product apart. Not expected, but valued.
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| **Multi-algorithm consensus (YIN + MPM + autocorrelation)** | Eliminates octave errors; dramatically improves accuracy on piano's complex harmonic spectrum | HIGH | The `apankrat/note-detector` approach: require 2-of-3 algorithm agreement before emitting noteOn. YIN reduces octave errors vs plain autocorrelation. MPM outperforms YIN at low latency. Neither alone is sufficient for piano. |
+| **Tempo-aware dynamic `onFrames` (onset speed)** | Faster playing gets faster detection; slow playing gets more stability | HIGH | At 60fps, each frame = 16.7ms. For 120 BPM 8th notes (250ms window), onset must fire in <125ms = max 7 frames. For 60 BPM quarters (1000ms window), 5 frames = fine. Formula: `onFrames = min(5, floor(noteDurationMs / 33))`. Depends on BPM being passed into the hook. |
+| **Tempo-aware dynamic `offMs` (note-off speed)** | Short notes release fast; long notes don't cut off | HIGH | `offMs = max(40, noteDurationMs * 0.3)`. At 120 BPM 8th note: `offMs = max(40, 250*0.3) = 75ms`. At 60 BPM quarter: `max(40, 1000*0.3) = 300ms`. Connects to `useMicNoteInput` accepting BPM + noteValue. |
+| **AudioWorklet migration for pitch processing** | Moves pitch detection off main thread; eliminates requestAnimationFrame throttling in background tabs; lower, more consistent latency | HIGH | Current loop uses `requestAnimationFrame` — throttled to 1fps when tab is in background. AudioWorklet runs on dedicated audio thread (128-sample quanta at 48kHz = 2.67ms per quantum). Required for consistent sub-50ms detection. Implementation: `AudioWorkletProcessor` posts pitch data back to main thread via `port.postMessage`. |
+| **Cents deviation tracking** | Show how sharp/flat a note is, not just right/wrong | MEDIUM | Useful for sight reading feedback. `cents = 1200 * log2(detected / target)`. Already noted in `SIGHT_READING_GAME_IMPROVEMENT_PLAN.md` as future addition. Hooks already emit `frequency` — just needs UI. Deferred: not needed for basic accuracy. |
+| **Per-note debouncing in the scoring layer** | Prevents double-scoring when detection fires twice for one played note | LOW | Already planned in `SIGHT_READING_GAME_IMPROVEMENT_PLAN.md` section 3.2. `DEBOUNCE_MS = 80`. Simple ref-based guard. Does not require pitch detection changes — lives in game layer. |
+| **Device calibration wizard (one-time)** | Accounts for device-specific mic latency and acoustic conditions | HIGH | Plays metronome, user taps key, app measures offset, stores in localStorage. Already sketched in `SIGHT_READING_GAME_IMPROVEMENT_PLAN.md` section 2.3. Deferred to later: core accuracy must work first. |
 
-| Feature | Value Proposition | Complexity | Platform | Notes |
-|---------|-------------------|------------|----------|-------|
-| **Orientation lock (Android)** | Prevents accidental rotation during gameplay | High | Android only | Requires fullscreen API + user gesture; iOS not supported |
-| **Animated rotate icon** | Cute phone rotation animation in prompt | Low | iOS + Android | Improves child UX (target audience: 8-year-olds) |
-| **Auto-fullscreen on game start** | Immersive experience, hides browser chrome | Medium | Android (reliable), iOS (limited) | Requires user gesture; iOS doesn't support on iPhone |
-| **Remember orientation preference** | If user dismissed prompt, don't nag again | Low | iOS + Android | localStorage flag per session |
-| **Orientation-aware trail map** | Trail map works in both orientations | Medium | iOS + Android | Differentiator: other games force landscape, this adapts |
+---
 
-## Anti-Features
+### Anti-Features (Commonly Requested, Often Problematic)
 
-Features to explicitly NOT build.
+| Feature | Why Requested | Why Problematic | Alternative |
+|---------|---------------|-----------------|-------------|
+| **Polyphonic pitch detection** | Sounds impressive; piano can play chords | Children play one note at a time for all current exercises. Polyphonic detection (CREPE neural, NMF, etc.) is 10-100x more computationally expensive, requires WASM/WebAssembly, and adds latency. Wrong tool for this use case. | Stay monophonic. If chords are needed in future, add chord validation in game layer on top of individual note detections. |
+| **CREPE neural network in browser** | SOTA pitch accuracy (~97%) | CREPE requires TensorFlow.js; model is ~7MB download; inference is 100-300ms on mobile CPU; kills battery; throttled aggressively on iOS. Not viable for real-time 8-year-old UX. | Use YIN + MPM (CPU-friendly, <5ms per frame, no model download). |
+| **Global fftSize increase (4096+)** | More FFT resolution sounds better | fftSize 4096 at 48kHz = 85ms latency floor per buffer. For 120 BPM 8th notes (250ms), this uses 34% of the entire window just on the buffer — before algorithm runs. Worse for fast notes. | Keep fftSize at 2048 (42ms buffer). For low notes requiring more data, use overlapping buffers in AudioWorklet, not larger fftSize. |
+| **Showing raw Hz display to children** | Developer debugging appeal | Children don't understand Hz. Showing raw frequency data adds UI clutter and no learning value. | Show note name (C4, D4) and optionally a simple "sharp/flat" indicator with a green/red arrow. |
+| **Noise suppression via ML in browser** | Modern AI noise cancellation sounds good | Adds massive compute overhead; introduces non-linear distortion that breaks pitch detection. The Krisp-style approach requires 10-20ms extra latency. | Disable browser's built-in noise suppression (`noiseSuppression: false`). Use RMS threshold gating instead — faster, simpler, deterministic. |
+| **Always-on mic during non-game screens** | Simpler architecture | Privacy concern (especially for children, COPPA). Microphone indicator in browser stays lit. Drains battery. Must start/stop mic per game session. | Already handled by `startListening`/`stopListening` pattern. Keep it; enforce stop on every game exit and route change. |
 
-| Anti-Feature | Why Avoid | What to Do Instead |
-|--------------|-----------|-------------------|
-| **Force landscape on app launch** | Not supported on iOS; violates PWA principles | Show prompt overlay, let user choose |
-| **Block gameplay in portrait** | Frustrating; accessibility issue (some users can't rotate device) | Allow degraded portrait experience with prominent rotate suggestion |
-| **Auto-lock on all routes** | Dashboard, settings, profile don't need landscape | Only suggest landscape for game routes (`/notes-master-mode/*`, `/rhythm-mode/*`, `/sight-reading/*`) |
-| **Persistent nag prompts** | Annoying if user dismissed once | Respect dismissal; show prompt max once per session |
-| **Hard dependency on Fullscreen API** | Not supported on iPhone; breaks iOS UX | Make fullscreen optional enhancement (Android only) |
-| **Complex orientation state management** | Over-engineering for simple show/hide logic | Use CSS media queries where possible; React state only for prompt visibility |
+---
 
 ## Feature Dependencies
 
-### Dependency Graph
-
 ```
-Orientation Detection (CSS @media)
-  ↓
-Rotate Prompt Overlay Component
-  ↓
-├─→ Orientation Change Listener (React hook)
-├─→ Dismiss Logic (localStorage + state)
-└─→ Animated Icon (optional)
+getUserMedia audio constraints (echoCancellation=false, etc.)
+    └──required by──> Any pitch detection accuracy improvement
+                          (all other features depend on clean input)
 
-Fullscreen API (Android only)
-  ↓
-Orientation Lock API
-  ↓
-Auto-unlock on game exit
-```
+YIN / MPM algorithm implementation
+    └──required by──> Multi-algorithm consensus
+                          └──required by──> Accurate note classification
+                                               └──required by──> Onset detection accuracy
+                                               └──required by──> Dynamic onFrames / offMs
 
-### Existing Codebase Dependencies
+AudioWorklet migration
+    └──enables──> Consistent sub-50ms latency
+    └──enables──> Tempo-aware onFrames (needs reliable frame timing)
+    NOTE: Can be done independently of algorithm switch;
+          algorithm switch is more urgent (accuracy > latency)
 
-| New Feature | Depends On (Existing) | Integration Point |
-|-------------|----------------------|-------------------|
-| Rotate prompt overlay | Game lifecycle (settings → gameplay → victory) | Wrap game components; hide when landscape detected |
-| Orientation detection hook | None (browser API) | Custom hook `useOrientation()` |
-| Landscape CSS layout | Existing responsive design | Extend Tailwind breakpoints with orientation queries |
-| Fullscreen toggle | User gesture (Start Game button) | `UnifiedGameSettings` → trigger fullscreen on game start |
-| Auto-unlock orientation | Game exit/unmount | `useEffect` cleanup in game components |
+Dynamic onFrames (onset speed)
+    └──requires──> BPM propagated into useMicNoteInput hook
+    └──requires──> Note duration context available at detection time
 
-## MVP Recommendation
+Dynamic offMs (note-off speed)
+    └──requires──> BPM propagated into useMicNoteInput hook
+    └──same inputs as──> Dynamic onFrames (bundle together)
 
-### Phase 1: CSS Detection + Prompt (Table Stakes)
-**Complexity:** Low | **Platforms:** iOS + Android
+State machine (IDLE/ARMED/ACTIVE)
+    └──replaces──> Current frame-count candidacy logic in useMicNoteInput
+    └──required for──> Multi-algorithm consensus to work correctly
 
-**Must have:**
-1. CSS media query orientation detection
-2. `<OrientationPrompt>` component (overlay with rotate icon + message)
-3. Custom hook `useOrientation()` returning `{ isPortrait, isLandscape }`
-4. Conditional render: show prompt if portrait, hide if landscape
-5. Landscape-optimized CSS for game components
+Per-note debouncing (scoring layer)
+    └──independent of──> Detection layer (lives in SightReadingGame.jsx)
+    └──depends on──> Accurate noteOn events from useMicNoteInput
 
-**Implementation:**
-```jsx
-// Pseudo-code
-function SightReadingGame() {
-  const { isPortrait } = useOrientation();
+Cents deviation tracking
+    └──depends on──> Accurate frequency from algorithm (YIN gives better frequency precision)
+    └──feeds into──> UI feedback (deferred)
 
-  if (isPortrait) {
-    return <OrientationPrompt message="Rotate your device for the best experience" />;
-  }
-
-  return <GameContent />;
-}
+Device calibration wizard
+    └──depends on──> Stable onset detection (must work before calibrating)
+    └──depends on──> useAudioEngine latencyOffset infrastructure (already exists)
 ```
 
-**Why this order:**
-- Works on **both iOS and Android** (no API restrictions)
-- Solves core UX problem: music notation needs horizontal space
-- Minimal code: CSS + one component + one hook
-- No fullscreen/lock complexity
+### Dependency Notes
 
-**Defer:** Fullscreen API, orientation lock, auto-rotate (requires platform detection, higher complexity)
+- **getUserMedia constraints require algorithm switch:** Fixing audio constraints alone gets 20-30% improvement; combined with algorithm switch gets 70-80% improvement.
+- **Dynamic onFrames/offMs require BPM in hook:** The current `useMicNoteInput` has no BPM param. Must thread BPM from game settings down to the mic hook.
+- **AudioWorklet is independent but high-value:** Migrate after algorithm switch. Wrong order = two migrations.
+- **State machine replaces frame counting:** These conflict. Implement state machine as the replacement, not addition.
+- **Per-note debouncing is purely in game layer:** Zero changes to detection hooks required. Quick win.
 
-### Phase 2: Optional Enhancements (Differentiators)
-**Complexity:** Medium | **Platform:** Android only
+---
 
-**Nice to have:**
-1. Fullscreen API integration on game start (Android)
-2. Orientation lock after entering fullscreen (Android)
-3. Auto-unlock on game exit
-4. Platform detection to show fullscreen button only on Android
+## MVP Definition
 
-**Why defer:**
-- iOS doesn't support these features
-- Fullscreen requires user gesture (can't auto-trigger)
-- Adds significant complexity (error handling, platform detection, state management)
-- Phase 1 already solves 80% of the problem
+This is a refactor milestone, not greenfield. MVP = "quarter through sixteenth notes work accurately on mobile and desktop."
 
-### Phase 3: Polish (If Time Permits)
-**Complexity:** Low
+### Launch With (v1 — Core Accuracy)
 
-1. Animated rotate icon (Lottie or CSS animation)
-2. Remember dismissal preference (localStorage)
-3. i18n for rotate prompt message (English + Hebrew)
-4. Accessibility: screen reader announcement when orientation changes
+- [ ] **getUserMedia constraints** — `echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false`. One-line change in `usePitchDetection.js`. Prevents browser from corrupting audio before detection runs.
+- [ ] **YIN algorithm replacing current autocorrelation** — Reduces octave errors. YIN's normalized difference function avoids the main failure mode of plain autocorrelation on piano's rich harmonic series.
+- [ ] **Dynamic `onFrames` based on BPM and note value** — Fastest notes (16th at 100 BPM) need onset in <60ms. Static 4–5 frames at 60fps is too slow. Formula: `min(5, floor(noteDurationMs / 33))`.
+- [ ] **Dynamic `offMs` based on BPM and note value** — 16th notes need note-off in <75ms. Static 140ms merges adjacent notes. Formula: `max(40, noteDurationMs * 0.3)`.
+- [ ] **Formal IDLE/ARMED/ACTIVE state machine in `useMicNoteInput`** — Replaces frame-counting candidacy. More predictable, easier to tune, eliminates pitch flicker.
+- [ ] **Full note frequency map for all trail notes** — Audit `usePitchDetection.js` frequency table against all `nodeConfig.notePool` values in `skillTrail.js` units. Add missing bass clef low notes.
+
+### Add After Validation (v1.x — Consistency)
+
+- [ ] **Multi-algorithm consensus (MPM added)** — Add MPM as second estimator alongside YIN. Require 2-of-2 agreement or accept YIN alone if MPM returns null. Threshold: `onFrames` can drop to 3 frames once consensus validates pitch is correct.
+- [ ] **AudioWorklet migration for detection loop** — Move pitch computation off `requestAnimationFrame` onto dedicated audio thread. Prerequisite: algorithm implementations ported to worklet. Fixes background-tab throttling.
+- [ ] **Per-note debouncing in SightReadingGame.jsx** — Already specced in improvement plan. 80ms debounce guard per note index. No detection changes needed.
+
+### Future Consideration (v2+)
+
+- [ ] **Cents deviation display** — Show sharpness/flatness in feedback. Requires accurate Hz from YIN (which gives it). Needs UI design for 8-year-old comprehension.
+- [ ] **Device calibration wizard** — One-time per-device latency measurement. Only worthwhile once base accuracy is solved.
+- [ ] **Polyphonic mode** — Only if exercise types expand to chords. Out of scope for current trail node types.
+
+---
 
 ## Feature Prioritization Matrix
 
-| Feature | Impact | Effort | Priority | Phase |
-|---------|--------|--------|----------|-------|
-| Orientation detection (CSS) | High | Low | P0 | MVP |
-| Rotate prompt overlay | High | Low | P0 | MVP |
-| `useOrientation()` hook | High | Low | P0 | MVP |
-| Landscape CSS layout | High | Medium | P0 | MVP |
-| Portrait fallback (degraded) | Medium | Medium | P1 | MVP |
-| Fullscreen API (Android) | Medium | High | P2 | Phase 2 |
-| Orientation lock (Android) | Low | High | P3 | Phase 2 |
-| Animated icon | Low | Low | P4 | Phase 3 |
-| Remember dismissal | Low | Low | P4 | Phase 3 |
-| Auto-fullscreen | Low | High | P5 | Deferred |
-
-## Platform-Specific Behavior Matrix
-
-| Feature | iOS (iPhone) | iOS (iPad) | Android PWA | Web (Desktop) |
-|---------|--------------|------------|-------------|---------------|
-| CSS orientation detection | ✓ | ✓ | ✓ | ✓ |
-| Rotate prompt overlay | ✓ | ✓ | ✓ | N/A (skip) |
-| `screen.orientation` API | ✗ | ✓ (partial) | ✓ | ✓ |
-| Orientation lock | ✗ | ✓ | ✓ | ✓ |
-| Fullscreen API | ✗ (iPhone) | ✓ | ✓ | ✓ |
-| PWA manifest `orientation` | Ignored | Ignored | ✓ | N/A |
-
-**Key takeaway:** Build for lowest common denominator (iOS iPhone) = CSS + prompts. Enhance for Android with lock/fullscreen.
-
-## UX Patterns from Research
-
-### Pattern 1: Non-Blocking Prompt (Recommended)
-**Used by:** Most mobile games, Symphony Pro, OKTAV
-
-**Behavior:**
-1. User starts game in portrait
-2. Overlay appears: "For the best experience, rotate your device 📱→🔄"
-3. User can dismiss or rotate
-4. If rotated, overlay disappears; game continues
-5. If dismissed, game continues in degraded portrait mode
-
-**Why recommended:**
-- Accessible (doesn't block users who can't rotate)
-- Educational (explains *why* landscape is better)
-- Respects user choice
-
-### Pattern 2: Blocking Prompt (Anti-pattern for PWA)
-**Used by:** Some native games
-
-**Behavior:**
-1. User starts game in portrait
-2. Overlay blocks all interaction: "Please rotate to continue"
-3. Game unplayable until rotated
-
-**Why avoid:**
-- Accessibility violation (users with locked orientation settings)
-- Frustrating on shared devices (e.g., classroom tablets with forced portrait)
-- Not suitable for 8-year-olds (may not understand how to rotate)
-
-### Pattern 3: Auto-Rotate + Lock (Android Native Apps)
-**Used by:** Racing games, AR apps
-
-**Behavior:**
-1. App manifest declares `orientation: landscape`
-2. OS forces landscape on app launch
-3. Orientation locked during gameplay
-
-**Why not applicable:**
-- iOS PWA ignores manifest `orientation` field
-- Requires native app capabilities
-- Overly restrictive for educational app (users browse in portrait, play in landscape)
-
-## Recommended User Flow
-
-### Entry Points
-1. **Dashboard (portrait)** → User taps "Continue Learning"
-2. **Trail map (any orientation)** → User taps node → Modal → "Start Practice"
-3. **Game mode grid (portrait)** → User taps game card
-
-### Game Lifecycle with Orientation
-
-```
-┌─────────────────────────────────────────────────────┐
-│ 1. Settings Modal (works in both orientations)     │
-│    User configures clef, difficulty, etc.          │
-│    [Start Game] button clicked                     │
-└─────────────────────────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│ 2. Orientation Check                                │
-│    If portrait → Show rotate prompt overlay         │
-│    If landscape → Start game immediately            │
-└─────────────────────────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│ 3. Gameplay (landscape optimized)                   │
-│    VexFlow staves render full width                 │
-│    Keyboard/tap area below staves                   │
-│    Listen for orientation change                    │
-│    If user rotates back to portrait → show prompt  │
-└─────────────────────────────────────────────────────┘
-                      ↓
-┌─────────────────────────────────────────────────────┐
-│ 4. Victory Screen (works in both orientations)      │
-│    Stats, stars, XP earned                          │
-│    Buttons: "Play Again" / "Back to Trail"          │
-└─────────────────────────────────────────────────────┘
-```
-
-### Key Decision: When to Show Prompt?
-
-**Option A:** Before game start (during settings modal)
-- ✓ User rotates before gameplay starts
-- ✓ No interruption once playing
-- ✗ Settings modal harder to use in landscape (text fields, dropdowns)
-
-**Option B:** After clicking "Start Game" (before first exercise)
-- ✓ Settings modal stays portrait-friendly
-- ✓ Prompt appears when landscape is most needed
-- ✓ User can rotate just before playing
-- ✗ Slight delay between "Start" and actual gameplay
-
-**Recommendation:** Option B (prompt after clicking "Start Game", before rendering first exercise)
-
-**Rationale:**
-- Settings modal has text inputs, dropdowns, toggles → easier in portrait
-- VexFlow staves need landscape → prompt right before rendering
-- Existing codebase has clear separation: `UnifiedGameSettings` → game components
-- Integration point: Add `<OrientationGate>` wrapper in game components
-
-## Accessibility Considerations
-
-### For 8-Year-Old Audience
-
-| Consideration | Implementation |
-|---------------|----------------|
-| **Simple language** | "Turn your device sideways" (not "rotate to landscape orientation") |
-| **Visual cues** | Animated phone icon showing rotation direction |
-| **Non-blocking** | Allow portrait play even if degraded (some kids use phones with cases that block rotation) |
-| **No time pressure** | Don't auto-dismiss prompt; let child ask adult for help if needed |
-
-### General Accessibility
-
-| Consideration | Implementation |
-|---------------|----------------|
-| **Screen readers** | Announce orientation change: "Device rotated to landscape" |
-| **Motor impairments** | Large dismiss button (48px minimum touch target) |
-| **Reduced motion** | Respect `prefers-reduced-motion` for animated icon |
-| **Locked orientation** | Respect device settings; don't force if OS prevents rotation |
-
-## Technical Implementation Notes
-
-### CSS Media Query Approach
-
-**Pros:**
-- Zero JavaScript required
-- Works on all platforms
-- No event listeners to clean up
-- Instant re-render on orientation change
-
-**Cons:**
-- Can't programmatically lock orientation
-- Can't detect specific angles (only portrait/landscape)
-
-**Example:**
-```css
-/* Hide rotate prompt in landscape */
-@media (orientation: landscape) {
-  .rotate-prompt {
-    display: none;
-  }
-}
-
-/* Optimize game layout for landscape */
-@media (orientation: landscape) {
-  .game-container {
-    flex-direction: row; /* Staves left, controls right */
-  }
-}
-```
-
-### JavaScript API Approach
-
-**Pros:**
-- Can lock orientation (Android)
-- Can detect specific angles (0°, 90°, 180°, 270°)
-- Can trigger fullscreen
-
-**Cons:**
-- Requires event listener setup/cleanup
-- iOS support limited
-- Must handle browser compatibility
-
-**Example:**
-```javascript
-// Modern API (not supported on iOS iPhone)
-screen.orientation.addEventListener('change', () => {
-  console.log(screen.orientation.type); // "portrait-primary", "landscape-primary", etc.
-});
-
-// Lock to landscape (Android + user gesture required)
-async function lockLandscape() {
-  try {
-    await screen.orientation.lock('landscape');
-  } catch (err) {
-    // iOS or permission denied
-    console.warn('Orientation lock not supported');
-  }
-}
-```
-
-### React Hook Pattern
-
-**Recommended implementation:**
-```javascript
-// Custom hook: useOrientation.js
-import { useEffect, useState } from 'react';
-
-export function useOrientation() {
-  const [orientation, setOrientation] = useState(() => {
-    // Initial state from matchMedia
-    return window.matchMedia('(orientation: portrait)').matches
-      ? 'portrait'
-      : 'landscape';
-  });
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(orientation: portrait)');
-
-    const handleChange = (e) => {
-      setOrientation(e.matches ? 'portrait' : 'landscape');
-    };
-
-    // Modern browsers
-    mediaQuery.addEventListener('change', handleChange);
-
-    // Cleanup
-    return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
-
-  return {
-    orientation,
-    isPortrait: orientation === 'portrait',
-    isLandscape: orientation === 'landscape'
-  };
-}
-```
-
-**Why this pattern:**
-- Uses `matchMedia` (better browser support than `screen.orientation`)
-- Works on iOS + Android
-- Proper cleanup prevents memory leaks
-- Synchronous initial state (no flash of wrong orientation)
-
-## Open Questions & Research Gaps
-
-### Unverified Assumptions (Need Testing)
-
-1. **iOS PWA behavior:** Does installed PWA on iOS Home Screen behave differently than Safari? (Research didn't find definitive answer)
-2. **Fullscreen + orientation lock interaction:** Does entering fullscreen automatically trigger orientation lock on Android? (Conflicting sources)
-3. **Trail map orientation:** Should trail map also suggest landscape, or only game routes? (No precedent found in research)
-4. **Settings modal orientation:** Is landscape settings modal unusable, or just suboptimal? (Need UX testing)
-
-### Phase-Specific Research Needed
-
-- **Phase 2 (Fullscreen API):** Deep dive into error handling, permission prompts, iOS fallback behavior
-- **Phase 3 (Animation):** Performance testing of Lottie vs CSS animations on low-end Android devices
-- **Post-MVP:** A/B testing of prompt copy ("Rotate device" vs "Turn sideways" vs icon-only)
-
-## Confidence Assessment
-
-| Area | Confidence | Evidence |
-|------|------------|----------|
-| **CSS orientation detection** | HIGH | MDN official docs, widespread use |
-| **iOS limitations** | HIGH | Multiple sources confirm no iPhone support for lock API |
-| **Android fullscreen + lock** | MEDIUM | Documented in MDN, but user gesture requirement varies by browser |
-| **UX patterns (prompt overlay)** | MEDIUM | Common in games, but no formal design system documentation found |
-| **Kids app precedent** | LOW | Duolingo/Khan Academy research inconclusive (no detailed orientation docs) |
-| **Music notation apps** | MEDIUM | Symphony Pro/OKTAV confirmed landscape support, but implementation details sparse |
-
-## Summary: What Users Expect
-
-### For 8-Year-Olds Learning Piano
-
-1. **Simple prompt:** "Turn your phone sideways" with visual icon
-2. **Non-blocking:** Can still play in portrait if they want (or can't rotate)
-3. **No complex interactions:** No buttons, settings, or choices in the prompt
-4. **Immediate feedback:** Prompt disappears as soon as they rotate
-
-### For Educational Apps (Duolingo, Khan Academy Model)
-
-1. **Support both orientations:** App adapts, doesn't force
-2. **Optimize for landscape where needed:** Games, videos, wide content
-3. **Portrait-first navigation:** Menus, settings, text-heavy screens stay portrait
-
-### For Music Notation Apps (Symphony Pro, OKTAV Model)
-
-1. **Landscape mode available:** Users can choose when editing/viewing scores
-2. **Toggle in settings:** Not forced on app launch
-3. **Persistent preference:** Remember user's choice
-
-### For Mobile Web Games (General Pattern)
-
-1. **Detect orientation:** Show prompt if wrong orientation for game
-2. **Allow dismissal:** Don't block gameplay entirely
-3. **Auto-hide prompt:** Remove when user complies
-4. **Landscape-optimized UI:** Controls, HUD, content arranged for horizontal view
-
-## Final Recommendation
-
-**Build Phase 1 (CSS + Prompt) for MVP.** This solves the core problem (VexFlow staves need horizontal space) without platform-specific complexity. Works on iOS + Android. Low risk, high value.
-
-**Defer Phase 2 (Fullscreen + Lock) until post-MVP.** Nice-to-have for Android users, but not critical. iOS users won't benefit. Focus on table stakes first.
-
-**Skip Phase 3 (Advanced Features) unless user feedback demands it.** Animated icons, dismissal memory, etc. are polish. Validate that Phase 1 works before investing in enhancements.
+| Feature | User Value | Implementation Cost | Priority |
+|---------|------------|---------------------|----------|
+| getUserMedia audio constraints | HIGH | LOW | P1 |
+| YIN algorithm | HIGH | MEDIUM | P1 |
+| Dynamic onFrames | HIGH | MEDIUM | P1 |
+| Dynamic offMs | HIGH | MEDIUM | P1 |
+| State machine (IDLE/ARMED/ACTIVE) | HIGH | MEDIUM | P1 |
+| Full note frequency map | HIGH | LOW | P1 |
+| Per-note debouncing (game layer) | MEDIUM | LOW | P2 |
+| MPM multi-algorithm consensus | MEDIUM | HIGH | P2 |
+| AudioWorklet migration | MEDIUM | HIGH | P2 |
+| Cents deviation display | LOW | MEDIUM | P3 |
+| Device calibration wizard | LOW | HIGH | P3 |
+
+**Priority key:**
+- P1: Must have for pitch detection overhaul to succeed
+- P2: Should have, adds reliability after P1 is stable
+- P3: Nice to have, defer until product-market fit for advanced features
+
+---
+
+## Competitor Feature Analysis
+
+Piano learning apps using mic input: Simply Piano, Flowkey, Piano Marvel, OKTAV, Yousician.
+
+| Feature | Simply Piano / Yousician | OKTAV | Our Current | Our Target |
+|---------|--------------------------|-------|-------------|------------|
+| Algorithm | Proprietary (likely multi-algorithm) | Not disclosed | Single autocorrelation | YIN + MPM consensus |
+| Onset latency | <50ms marketed | <80ms typical | ~83ms (5 frames) | <50ms for 8th, <80ms for 16th |
+| Note-off | Adaptive | Adaptive | Fixed 140ms | Dynamic per note duration |
+| Audio constraints | Disabled browser DSP | Disabled | Not set (browser default) | Explicitly disabled |
+| Polyphonic | Yes (chord detection) | Yes | No | No (monophonic sufficient) |
+| Mobile support | Native app (no Web Audio) | Native app | Web Audio (limited) | Web Audio + AudioWorklet |
+| AudioWorklet | Native API (no constraint) | Native API | No (requestAnimationFrame) | Yes (v1.x) |
+
+---
+
+## Technical Context: Existing Architecture
+
+These are integration points where new pitch detection features plug into the existing codebase:
+
+| New Feature | Touches | Integration Complexity |
+|-------------|---------|------------------------|
+| getUserMedia constraints | `usePitchDetection.js` line 213 | LOW — add 3 properties to `getUserMedia` call |
+| YIN algorithm | `usePitchDetection.js` `detectPitch()` | MEDIUM — replace inner loop; keep same API |
+| Dynamic onFrames/offMs | `useMicNoteInput.js` + `micInputPresets.js` | MEDIUM — add `bpm` + `noteValue` params; compute derived values |
+| State machine | `useMicNoteInput.js` | MEDIUM — replace `candidateFrames` logic; preserve emit API |
+| Full note frequency map | `usePitchDetection.js` DEFAULT_NOTE_FREQUENCIES | LOW — add missing frequencies |
+| Per-note debouncing | `SightReadingGame.jsx` | LOW — ref-based guard; no hook changes |
+| MPM consensus | `usePitchDetection.js` | HIGH — second algorithm alongside YIN |
+| AudioWorklet migration | `usePitchDetection.js` + new `pitch-detector.worklet.js` | HIGH — architectural shift; two files, MessagePort plumbing |
+
+### Key Existing Parameters to Tune (not replace)
+
+From `micInputPresets.js`:
+- `rmsThreshold`: Keep but lower may be needed after disabling browser noise suppression
+- `tolerance`: Keep at 2% for sight reading (piano is well-tempered, 2% is correct)
+- `minInterOnMs`: Keep as floor (80ms); dynamic `onFrames` is the primary fix
+
+---
+
+## Latency Budget Analysis
+
+At 120 BPM:
+- Quarter note duration: 500ms
+- Eighth note duration: 250ms
+- Sixteenth note duration: 125ms
+
+For a note to score, detection must fire within the timing window. Typical window is ~20-30% of note duration (from `SIGHT_READING_GAME_IMPROVEMENT_PLAN.md` section 2.2).
+
+| Note Value @ 120 BPM | Duration | Window (25%) | Max Acceptable Onset Latency | Current Latency | Fix |
+|----------------------|----------|--------------|------------------------------|-----------------|-----|
+| Quarter | 500ms | 125ms | 125ms | 83ms (5 frames) | Already works |
+| Eighth | 250ms | 62ms | 62ms | 83ms (5 frames) | Fails (83 > 62) — reduce to 3 frames |
+| Sixteenth | 125ms | 31ms | 31ms | 83ms (5 frames) | Fails hard — needs AudioWorklet + 2 frames |
+
+**Root cause of reported symptoms:** Eighth and sixteenth notes fail because 5-frame onset latency (83ms) exceeds the timing window for those note values. Dynamic `onFrames` is the primary fix. AudioWorklet reduces the frame budget ceiling.
+
+---
 
 ## Sources
 
-### Mobile Game Orientation Best Practices
-- [Guide to Screen Orientation: Optimize Your App Experience](https://www.devzery.com/post/guide-to-screen-orientation-optimize-your-app-experience)
-- [Managing screen orientation - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/CSS_Object_Model/Managing_screen_orientation)
-- [Should you Lock your App's Orientation?](https://webtoapp.design/blog/device-app-orientation)
-- [3 Ways to Lock Screen Orientation With CSS & JS](https://code-boxx.com/lock-screen-orientation/)
+- [GitHub - apankrat/note-detector: Piano note detector](https://github.com/apankrat/note-detector) — Multi-algorithm consensus state machine (Search/Confirm/Track), 50ms confirmation periods
+- [Lowest-latency real-time pitch detection - JUCE Forum](https://forum.juce.com/t/lowest-latency-real-time-pitch-detection/51741) — Minimum latency = 2x fundamental period; YIN and MPM algorithmic recommendations
+- [Autocorrelation vs YIN for Pitch Detection](https://pitchdetector.com/autocorrelation-vs-yin-algorithm-for-pitch-detection/) — YIN accuracy advantages over plain autocorrelation
+- [getUserMedia() Audio Constraints](https://blog.addpipe.com/audio-constraints-getusermedia/) — echoCancellation, noiseSuppression, autoGainControl impact on music audio
+- [AudioWorklet - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) — Dedicated audio thread, 128-sample render quanta
+- [Audio worklet design pattern | Chrome Developers](https://developer.chrome.com/blog/audio-worklet-design-pattern) — AudioWorklet vs ScriptProcessorNode (deprecated) vs requestAnimationFrame
+- [Onset Detection — Cycfi Research](https://www.cycfi.com/2021/01/onset-detection/) — Why amplitude-only onset detection fails for soft piano notes
+- [Musical note onset detection — PMC](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8550344/) — Energy threshold detection, 512-sample buffer for onset
+- Existing codebase: `src/hooks/usePitchDetection.js`, `src/hooks/useMicNoteInput.js`, `src/hooks/micInputPresets.js`, `docs/SIGHT_READING_GAME_IMPROVEMENT_PLAN.md`, `docs/MIC_INPUT_TESTING.md`
 
-### PWA Orientation API Compatibility
-- [PWA on iOS - Current Status & Limitations for Users [2025]](https://brainhub.eu/library/pwa-on-ios)
-- [iOS PWA Compatibility － firt.dev](https://firt.dev/notes/pwa-ios/)
-- [How to Lock Screen Orientation in Your Progressive Web App (PWA) Using manifest.json](https://nashatech.com/blogs/sXOqruRY2ECD5EIVqwP9/)
-- [Realizing a PWA Screen Orientation Lock](https://hearthero.medium.com/locking-orientation-for-ionic-pwas-7c75c5bb3639)
-
-### Music Notation Apps
-- [Learn Piano – OKTAV App](https://apps.apple.com/us/app/learn-piano-oktav/id6466106363)
-- [Symphony Pro for iPad](https://symphonypro.net/static/SP3/index.html)
-- [Music Tutor (Sight-reading) App](https://apps.apple.com/ca/app/music-tutor-sight-reading/id514363426)
-
-### Educational Game UX Patterns
-- [Educational Game Development Best Practices: Animation and Voiceover](https://www.filamentgames.com/blog/educational-game-development-best-practices-animation-and-voiceover/)
-- [Prompting readers to rotate their phones — Joshua Bartz](https://www.jshbrtz.com/posts/desktop-screenshots-on-mobile/)
-- [Mobile UX - orientation](https://openinclusion.com/blog/mobile-ux-orientation/)
-
-### Fullscreen API & User Gestures
-- [Using the Fullscreen API without gestures | ChromeOS.dev](https://chromeos.dev/en/posts/using-the-fullscreen-api-without-gestures)
-- [User Gesture Restricted Web APIs](https://plainenglish.io/blog/user-gesture-restricted-web-apis)
-- [App design | web.dev](https://web.dev/learn/pwa/app-design)
-- [PWAs Power Tips － firt.dev](https://firt.dev/pwa-design-tips/)
-
-### CSS Media Queries & Orientation Detection
-- [orientation - CSS | MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/orientation)
-- [How to Detect Device Orientation with CSS Media Queries](https://www.w3docs.com/snippets/css/how-to-detect-device-orientation-with-css-media-queries.html)
-- [CSS Orientation Media Queries: Complete Guide](https://codelucky.com/css-orientation-media-queries/)
-
-### React Hooks for Orientation
-- [Using React Hooks for Device Orientation | UXPin](https://www.uxpin.com/studio/blog/using-react-hooks-for-device-orientation/)
-- [useOrientation React Hook – useHooks](https://usehooks.com/useorientation)
-- [ReactJS useOrientation Custom Hook | GeeksforGeeks](https://www.geeksforgeeks.org/reactjs-useorientation-custom-hook/)
-- [Let`s create a custom hook useScreenOrientation](https://medium.com/@perenciolo659/let-s-create-a-custom-hook-usescreenorientation-e5f66919b8b)
-- [GitHub - bence-toth/react-hook-screen-orientation](https://github.com/bence-toth/react-hook-screen-orientation)
-
-### Screen Orientation API
-- [Window: orientationchange event - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/Window/orientationchange_event)
-- [ScreenOrientation: change event - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/change_event)
-- [Screen Orientation](https://w3c.github.io/screen-orientation/)
-- [ScreenOrientation - Web APIs | MDN](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation)
+---
+*Feature research for: real-time browser-based piano pitch detection overhaul*
+*Researched: 2026-02-17*
