@@ -91,7 +91,18 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-Candidates for next milestone (to be defined via `/gsd:new-milestone`):
+## Current Milestone: v1.7 Mic Pitch Detection Overhaul
+
+**Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input.
+
+**Target features:**
+- Fix wrong note detection (pitch detection inaccuracy)
+- Eliminate missed notes (notes played but not registered)
+- Reduce latency between playing and game response
+- Reliable detection for all note values (quarter through sixteenth)
+- Applies to all games using mic input (sight reading, notes recognition, etc.)
+
+**Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
 - Production deployment to Google Play / Apple App Store
 - Celebration sound effects with volume control (requires classroom A/B testing)
@@ -233,4 +244,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-17 after v1.6 milestone*
+*Last updated: 2026-02-17 after v1.7 milestone started*
