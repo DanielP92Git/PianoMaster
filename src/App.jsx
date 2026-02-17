@@ -48,6 +48,7 @@ import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
+import { AudioContextProvider } from "./contexts/AudioContextProvider";
 import { lockOrientation } from "./utils/pwa";
 import { resolveProfileAvatarSource } from "./utils/avatarAssets";
 import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
@@ -307,16 +308,16 @@ function AppRoutes() {
           />
           <Route
             path="/notes-master-mode/notes-recognition-game"
-            element={<NotesRecognitionGame />}
+            element={<AudioContextProvider><NotesRecognitionGame /></AudioContextProvider>}
           />
           <Route
             path="/notes-master-mode/sight-reading-game"
-            element={<SightReadingGame />}
+            element={<AudioContextProvider><SightReadingGame /></AudioContextProvider>}
           />
           <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
           <Route
             path="/rhythm-mode/metronome-trainer"
-            element={<MetronomeTrainer />}
+            element={<AudioContextProvider><MetronomeTrainer /></AudioContextProvider>}
           />
           {/* TODO: Add new rhythm game routes here */}
         </Route>
