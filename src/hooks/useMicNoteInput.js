@@ -59,6 +59,22 @@ export function useMicNoteInput({
    * Minimal time between noteOn events to prevent rapid re-triggering (ms).
    */
   minInterOnMs = 80,
+  /**
+   * Shared AnalyserNode from AudioContextProvider (ARCH-03).
+   * When provided, usePitchDetection skips getUserMedia and uses this analyser directly.
+   * Defaults to null (usePitchDetection creates its own analyser via getUserMedia).
+   */
+  analyserNode = null,
+  /**
+   * Sample rate of the shared AudioContext. Required when analyserNode is provided.
+   * Defaults to null (usePitchDetection reads sampleRate from its own AudioContext).
+   */
+  sampleRate = null,
+  /**
+   * Minimum clarity/confidence threshold for pitch detection (0–1).
+   * Forwarded to usePitchDetection for McLeod Pitch Method (pitchy).
+   */
+  clarityThreshold,
 } = {}) {
   const stateRef = useRef({
     currentNote: null,
@@ -291,11 +307,27 @@ export function useMicNoteInput({
     tolerance,
     onPitchDetected: handlePitchDetected,
     onLevelChange: handleLevelChange,
+    // Pass through shared analyser props (ARCH-03).
+    // usePitchDetection ignores these if null (falls back to getUserMedia).
+    analyserNode,
+    sampleRate,
+    clarityThreshold,
   });
 
-  const startListeningWrapped = useCallback(async () => {
+  /**
+   * Wrapped startListening that resets internal stability state first, then
+   * forwards any call-time overrides to usePitchDetection's startListening.
+   *
+   * Accepts an optional overrides object with { analyserNode, sampleRate } so
+   * callers can pass a freshly-obtained analyser at call time (Plan 04 pattern):
+   *   const { analyser, audioContext: ctx } = await requestMic();
+   *   await startMicListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
+   *
+   * Existing callers that pass no arguments are unaffected.
+   */
+  const startListeningWrapped = useCallback(async (overrides = {}) => {
     resetInternalState("startListening");
-    await startListening();
+    await startListening(overrides);
   }, [resetInternalState, startListening]);
 
   const stopListeningWrapped = useCallback(() => {
