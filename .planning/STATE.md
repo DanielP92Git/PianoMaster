@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 07 COMPLETE, ready for Phase 08
+**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 07 COMPLETE (all 5 plans including gap closure), ready for Phase 08
 
 ## Current Position
 
 Phase: 07 of 10 (v1.7) — Audio Architecture and Core Algorithm — COMPLETE
-Plan: 4 of 4 complete
-Status: Phase 07 complete — all plans executed (07-01 through 07-04)
-Last activity: 2026-02-17 — Phase 07 Plan 04 complete (NotesRecognitionGame shared audio integration)
+Plan: 5 of 5 complete (07-01 through 07-05, including gap closure 07-05)
+Status: Phase 07 fully complete — all ARCH-01/ARCH-03 verification gaps closed
+Last activity: 2026-02-17 — Phase 07 Plan 05 complete (SightReadingGame + MetronomeTrainer shared audio wiring + debug cleanup)
 
-Progress: [█████░░░░░] 50% (v1.7) — 6 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04)
+Progress: [█████░░░░░] 50% (v1.7) — 7 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 71 (across 27 phases in 7 shipped milestones + v1.7 phases 06-07)
+- Total plans completed: 72 (across 27 phases in 7 shipped milestones + v1.7 phases 06-07)
 - 7 milestones shipped in 18 days (2026-01-31 to 2026-02-17)
 - ~68,298 lines JavaScript/JSX/CSS
 
@@ -32,6 +32,7 @@ Progress: [█████░░░░░] 50% (v1.7) — 6 plans complete (6-01
 | 07-02 | 3 min | 1 | 1 | 2026-02-17 |
 | 07-03 | 3 min | 2 | 2 | 2026-02-17 |
 | 07-04 | 4 min | 1 | 1 | 2026-02-17 |
+| 07-05 | 7 min | 2 | 4 | 2026-02-17 |
 
 **Recent execution (v1.6):**
 | Phase-Plan | Duration | Tasks | Files | Date |
@@ -54,6 +55,10 @@ Progress: [█████░░░░░] 50% (v1.7) — 6 plans complete (6-01
 All v1.6 decisions archived in PROJECT.md Key Decisions table (234+ entries across 7 milestones).
 
 Recent decisions affecting v1.7:
+- Phase 07-05: SightReadingGame requestMic() called in startListeningSync at call time — follows Plan 04 NotesRecognitionGame pattern to avoid async mic init race
+- Phase 07-05: MetronomeTrainer only uses audioContextRef (no requestMic) — rhythm game has no mic input path
+- Phase 07-05: __dbgFrames/__dbgLastLogAt removed with __micLog — debug-only state had no remaining consumers
+- Phase 07-05: METRONOME_TIMING_DEBUG flag preserved but set to false — developers can enable locally without touching logic
 - Phase 07-04: stopAudioInput added to nodeId-change effect deps — ensures mic releases when navigating between trail nodes before auto-start fires
 - Phase 07-04: isListening from hook replaces isListeningRef.current in playSound guard — hook provides stable boolean, no ref needed
 - Phase 07-04: waitingForRelease detection via useEffect watching audioLevel — replaces rAF-loop level check; semantically identical, React-idiomatic
@@ -80,7 +85,7 @@ Recent decisions affecting v1.7:
 
 ### Pending Todos
 
-None — Phase 07 complete (all 4 plans).
+None — Phase 07 fully complete (all 5 plans including gap closure 07-05).
 
 ### Blockers/Concerns
 
@@ -95,11 +100,11 @@ None — Phase 07 complete (all 4 plans).
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 07-04-PLAN.md (Phase 07 complete)
+Stopped at: Completed 07-05-PLAN.md (Phase 07 gap closure complete — all three game modes share one AudioContext)
 Resume file: .planning/phases/08-*/08-01-PLAN.md (next phase)
 
 **Next action:** Begin Phase 08 (integration testing for shared audio pipeline)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-17 — Phase 07 Plan 04 complete (NotesRecognitionGame inline audio replaced with useMicNoteInput + useAudioContext)*
+*Last updated: 2026-02-17 — Phase 07 Plan 05 complete (SightReadingGame + MetronomeTrainer wired to shared AudioContext; debug anti-patterns removed)*
