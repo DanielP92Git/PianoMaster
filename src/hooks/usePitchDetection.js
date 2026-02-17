@@ -1,95 +1,106 @@
 import { useState, useCallback, useEffect, useRef } from "react";
+import { PitchDetector } from "pitchy";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+/** Minimum McLeod clarity score required to emit a pitch detection (ALGO-02). */
+export const PITCH_CLARITY_THRESHOLD = 0.9;
+
+/** Chromatic note names (index 0 = C). */
+export const NOTE_NAMES = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B",
+];
+
+/** MIDI note number for C3 (lowest accepted note). */
+const MIN_MIDI = 48; // C3
+
+/** MIDI note number for C6 (highest accepted note). */
+const MAX_MIDI = 84; // C6
+
+// ---------------------------------------------------------------------------
+// Pure helper: frequency → note name via MIDI math (ALGO-03)
+// ---------------------------------------------------------------------------
 
 /**
- * Default note frequency mappings
- * Includes both Hebrew note names (for note recognition games)
- * and English note names (for sight reading game)
+ * Convert a frequency in Hz to a note name string (e.g. "C4") using MIDI math.
+ *
+ * Only notes in the range C3 (MIDI 48) to C6 (MIDI 84) are returned.
+ * Frequencies outside this range, or invalid inputs, return null.
+ *
+ * @param {number} hz - Frequency in Hz
+ * @returns {string|null} Note name (e.g. "C4", "F#3") or null
  */
-const DEFAULT_NOTE_FREQUENCIES = {
-  // Hebrew notes with multiple octaves
-  דו: [261.63, 523.25, 1046.5, 2093.0], // C4, C5, C6, C7
-  רה: [293.66, 587.33, 1174.66, 2349.32], // D4, D5, D6, D7
-  מי: [329.63, 659.25, 1318.51, 2637.02], // E4, E5, E6, E7
-  פה: [349.23, 698.46, 1396.91, 2793.83], // F4, F5, F6, F7
-  סול: [392.0, 783.99, 1567.98, 3135.96], // G4, G5, G6, G7
-  לה: [440.0, 880.0, 1760.0, 3520.0], // A4, A5, A6, A7
-  סי: [493.88, 987.77, 1975.53, 3951.07], // B4, B5, B6, B7
+export function frequencyToNote(hz) {
+  if (!hz || hz <= 0) return null;
+  const midi = Math.round(12 * Math.log2(hz / 440) + 69);
+  if (midi < MIN_MIDI || midi > MAX_MIDI) return null;
+  const octave = Math.floor(midi / 12) - 1;
+  const name = NOTE_NAMES[midi % 12];
+  return `${name}${octave}`;
+}
 
-  // English notes (single octave values for sight reading)
-  A3: 220.0,
-  B3: 246.94,
-  C3: 130.81,
-  D3: 146.83,
-  E3: 164.81,
-  F3: 174.61,
-  G3: 196.0,
-  C4: 261.63,
-  D4: 293.66,
-  E4: 329.63,
-  F4: 349.23,
-  G4: 392.0,
-  A4: 440.0,
-  B4: 493.88,
-  C5: 523.25,
-  D5: 587.33,
-  E5: 659.25,
-  F5: 698.46,
-};
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
 
 /**
- * Custom hook for real-time pitch detection using microphone input
+ * Custom hook for real-time pitch detection using microphone input.
  *
- * Provides autocorrelation-based pitch detection with configurable parameters.
- * Handles microphone permissions, Web Audio API setup, and proper cleanup.
+ * Uses the McLeod Pitch Method via the pitchy library for accurate pitch
+ * detection with clarity-based noise gating. Supports two operating modes:
  *
- * @param {Object} options - Configuration options
- * @param {boolean} [options.isActive=false] - Enable/disable detection automatically
- * @param {Function} [options.onPitchDetected=null] - Callback when pitch detected: (note, frequency) => {}
- * @param {Function} [options.onLevelChange=null] - Callback when audio level changes: (level) => {}
- * @param {Object} [options.noteFrequencies=DEFAULT_NOTE_FREQUENCIES] - Custom frequency mappings
- * @param {number} [options.rmsThreshold=0.01] - Minimum signal threshold (0-1)
- * @param {number} [options.tolerance=0.05] - Note matching tolerance (0-1, where 0.05 = 5%)
+ * **Mode A — Shared analyser (ARCH-02):**
+ * When an analyserNode is supplied (either as a hook prop or as a
+ * call-time override on startListening), no new AudioContext is created.
+ * The hook uses the provided node directly and does NOT close it on stop.
+ *
+ * **Mode B — Self-created (fallback / backward compat):**
+ * When no analyserNode is available, the hook requests mic access and
+ * creates its own AudioContext + AnalyserNode, mirroring the legacy
+ * behaviour so existing tests continue to pass.
+ *
+ * @param {Object} [options]
+ * @param {boolean} [options.isActive=false] - Auto-start when true
+ * @param {Function} [options.onPitchDetected=null] - (note, frequency) => void
+ * @param {Function} [options.onLevelChange=null] - (level) => void
+ * @param {Object}  [options.noteFrequencies] - Legacy param (ignored by pitchy path)
+ * @param {number}  [options.rmsThreshold=0.01] - Legacy param (kept for compat)
+ * @param {number}  [options.tolerance=0.05] - Legacy param (kept for compat)
+ * @param {AnalyserNode|null} [options.analyserNode=null] - Shared analyser (ARCH-02)
+ * @param {number|null} [options.sampleRate=null] - Sample rate of shared analyser
+ * @param {number} [options.clarityThreshold=PITCH_CLARITY_THRESHOLD] - Min clarity
  *
  * @returns {Object} Pitch detection state and controls
- * @returns {string|null} detectedNote - Current detected note name or null
- * @returns {number} detectedFrequency - Detected frequency in Hz or -1
- * @returns {number} audioLevel - Audio input level (0-1)
- * @returns {boolean} isListening - Whether microphone is active
- * @returns {Function} startListening - Async function to start microphone: async () => Promise<void>
- * @returns {Function} stopListening - Function to stop microphone and cleanup: () => void
- * @returns {AudioContext|null} audioContext - Web Audio API context (for advanced usage)
- * @returns {AnalyserNode|null} analyser - Web Audio API analyser node (for advanced usage)
- * @returns {Function} detectPitch - Manual pitch detection: (buffer, sampleRate) => frequency
- * @returns {Function} frequencyToNote - Manual frequency conversion: (frequency) => noteName
- *
- * @example
- * // Basic usage with automatic activation
- * const { detectedNote, isListening, startListening } = usePitchDetection({
- *   isActive: true,
- * });
- *
- * @example
- * // Manual control with custom frequencies
- * const { detectedNote, startListening, stopListening } = usePitchDetection({
- *   noteFrequencies: { 'C4': 261.63, 'D4': 293.66 },
- *   rmsThreshold: 0.02,
- *   tolerance: 0.03
- * });
- *
- * // Later, manually start/stop
- * await startListening();
- * // ... do something ...
- * stopListening();
  */
 export function usePitchDetection({
   isActive = false,
   onPitchDetected = null,
   onLevelChange = null,
-  noteFrequencies = DEFAULT_NOTE_FREQUENCIES,
+  // Legacy params kept for backward compat — ignored by pitchy path
+  noteFrequencies,
   rmsThreshold = 0.01,
   tolerance = 0.05,
+  // NEW: shared analyser from AudioContextProvider (ARCH-02)
+  analyserNode = null,
+  sampleRate = null,
+  clarityThreshold = PITCH_CLARITY_THRESHOLD,
 } = {}) {
+  // ---------------------------------------------------------------------------
   // State
+  // ---------------------------------------------------------------------------
   const [audioContext, setAudioContext] = useState(null);
   const [analyser, setAnalyser] = useState(null);
   const [microphone, setMicrophone] = useState(null);
@@ -98,19 +109,34 @@ export function usePitchDetection({
   const [detectedFrequency, setDetectedFrequency] = useState(-1);
   const [audioLevel, setAudioLevel] = useState(0);
 
-  // Refs for cleanup and animation frame
+  // ---------------------------------------------------------------------------
+  // Refs
+  // ---------------------------------------------------------------------------
   const animationFrameRef = useRef(null);
   const stopListeningRef = useRef(null);
 
-  /**
-   * Detect pitch using autocorrelation algorithm
-   *
-   * @param {Float32Array} buffer - Audio buffer from analyser
-   * @param {number} sampleRate - Audio context sample rate
-   * @returns {number} Detected frequency in Hz, or -1 if no pitch detected
-   */
+  /** pitchy PitchDetector instance — created once per analyser setup. */
+  const detectorRef = useRef(null);
+
+  /** Input buffer sized to pitchy's required inputLength. */
+  const inputBufferRef = useRef(null);
+
+  /** Tracks whether we are operating in shared-analyser mode. */
+  const isSharedModeRef = useRef(false);
+
+  /** Ref to the currently-active analyser (shared or self-created). */
+  const currentAnalyserRef = useRef(null);
+
+  /** Ref to the currently-effective sample rate. */
+  const currentSampleRateRef = useRef(null);
+
+  // ---------------------------------------------------------------------------
+  // Deprecated detectPitch shim (autocorrelation)
+  // Kept for backward compat with tests that call result.current.detectPitch().
+  // New code should rely on pitchy (called internally in the detect loop).
+  // ---------------------------------------------------------------------------
   const detectPitch = useCallback(
-    (buffer, sampleRate) => {
+    (buffer, sr) => {
       const SIZE = buffer.length;
       const MAX_SAMPLES = Math.floor(SIZE / 2);
       let bestOffset = -1;
@@ -119,28 +145,21 @@ export function usePitchDetection({
       let foundGoodCorrelation = false;
       const GOOD_ENOUGH_CORRELATION = 0.9;
 
-      // Calculate RMS (Root Mean Square) for signal strength
       for (let i = 0; i < SIZE; i++) {
         const val = buffer[i];
         rms += val * val;
       }
       rms = Math.sqrt(rms / SIZE);
 
-      // Not enough signal - return early
       if (rms < rmsThreshold) return -1;
 
-      // Autocorrelation loop to find pitch
       let lastCorrelation = 1;
       for (let offset = 1; offset < MAX_SAMPLES; offset++) {
         let correlation = 0;
-
-        // Calculate correlation at this offset
         for (let i = 0; i < MAX_SAMPLES; i++) {
           correlation += Math.abs(buffer[i] - buffer[i + offset]);
         }
         correlation = 1 - correlation / MAX_SAMPLES;
-
-        // Check if this is a good correlation peak
         if (
           correlation > GOOD_ENOUGH_CORRELATION &&
           correlation > lastCorrelation
@@ -151,170 +170,210 @@ export function usePitchDetection({
             bestOffset = offset;
           }
         } else if (foundGoodCorrelation) {
-          // Found the peak, stop searching
           break;
         }
         lastCorrelation = correlation;
       }
 
-      // Convert offset to frequency
       if (bestCorrelation > 0.01) {
-        return sampleRate / bestOffset;
+        return sr / bestOffset;
       }
       return -1;
     },
     [rmsThreshold]
   );
 
+  // ---------------------------------------------------------------------------
+  // Internal helpers
+  // ---------------------------------------------------------------------------
+
   /**
-   * Convert frequency to note name using provided frequency mappings
-   *
-   * @param {number} frequency - Frequency in Hz
-   * @returns {string|null} Note name or null if no match found
+   * Build pitchy detector and input buffer for a given analyser.
+   * Stored in refs to avoid per-frame allocation (PITFALL-1).
    */
-  const frequencyToNote = useCallback(
-    (frequency) => {
-      if (frequency <= 0) return null;
+  const initDetector = useCallback((node) => {
+    detectorRef.current = PitchDetector.forFloat32Array(node.fftSize);
+    inputBufferRef.current = new Float32Array(detectorRef.current.inputLength);
+  }, []);
 
-      let closestNote = null;
-      let minDifference = Infinity;
+  // ---------------------------------------------------------------------------
+  // startListening
+  // ---------------------------------------------------------------------------
 
-      // Search through all note frequencies
-      Object.entries(noteFrequencies).forEach(([note, frequencies]) => {
-        // Handle both array format (Hebrew notes) and single value format (English notes)
-        const freqArray = Array.isArray(frequencies)
-          ? frequencies
-          : [frequencies];
+  /**
+   * Start pitch detection.
+   *
+   * Accepts optional call-time overrides so callers can pass a freshly-created
+   * analyser after mic permission is granted:
+   *
+   * ```js
+   * const { analyser, audioContext: ctx } = await requestMic();
+   * await startListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
+   * ```
+   *
+   * Call-time args take priority over hook-level props.
+   *
+   * @param {Object} [overrides]
+   * @param {AnalyserNode|null} [overrides.analyserNode]
+   * @param {number|null} [overrides.sampleRate]
+   */
+  const startListening = useCallback(
+    async (overrides = {}) => {
+      const {
+        analyserNode: callTimeAnalyser = null,
+        sampleRate: callTimeSampleRate = null,
+      } = overrides;
 
-        freqArray.forEach((freq) => {
-          const difference = Math.abs(frequency - freq);
-          const toleranceValue = freq * tolerance;
+      // Resolve effective analyser: call-time arg > hook prop > null (fallback)
+      const effectiveAnalyser = callTimeAnalyser || analyserNode;
+      const effectiveSampleRate = callTimeSampleRate || sampleRate;
 
-          if (difference < toleranceValue && difference < minDifference) {
-            minDifference = difference;
-            closestNote = note;
+      try {
+        if (effectiveAnalyser) {
+          // ---------------------------------------------------------------
+          // MODE A: shared analyserNode — no new AudioContext
+          // ---------------------------------------------------------------
+          isSharedModeRef.current = true;
+          currentAnalyserRef.current = effectiveAnalyser;
+          currentSampleRateRef.current =
+            effectiveSampleRate || effectiveAnalyser.context?.sampleRate || 44100;
+
+          initDetector(effectiveAnalyser);
+          setAnalyser(effectiveAnalyser);
+          setIsListening(true);
+        } else {
+          // ---------------------------------------------------------------
+          // MODE B: self-created AudioContext (fallback / backward compat)
+          // ---------------------------------------------------------------
+          isSharedModeRef.current = false;
+
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+            },
+          });
+
+          const context = new (window.AudioContext || window.webkitAudioContext)();
+          const source = context.createMediaStreamSource(stream);
+          const analyserNode_self = context.createAnalyser();
+
+          analyserNode_self.fftSize = 4096;
+          analyserNode_self.smoothingTimeConstant = 0.0;
+
+          source.connect(analyserNode_self);
+
+          currentAnalyserRef.current = analyserNode_self;
+          currentSampleRateRef.current = context.sampleRate;
+
+          initDetector(analyserNode_self);
+
+          setAudioContext(context);
+          setAnalyser(analyserNode_self);
+          setMicrophone(stream);
+          setIsListening(true);
+        }
+
+        // ---------------------------------------------------------------
+        // Detection loop (shared by both modes)
+        // ---------------------------------------------------------------
+        const currentAnalyser = currentAnalyserRef.current;
+        const currentSampleRate = currentSampleRateRef.current;
+
+        const detectLoop = () => {
+          if (!currentAnalyser || !detectorRef.current || !inputBufferRef.current)
+            return;
+
+          // Full fftSize buffer (pitchy requires this, not frequencyBinCount)
+          currentAnalyser.getFloatTimeDomainData(inputBufferRef.current);
+
+          // RMS audio level
+          let sum = 0;
+          const len = inputBufferRef.current.length;
+          for (let i = 0; i < len; i++) {
+            sum += inputBufferRef.current[i] * inputBufferRef.current[i];
           }
-        });
-      });
+          const level = Math.sqrt(sum / len);
+          setAudioLevel(level);
+          if (onLevelChange) onLevelChange(level);
 
-      return closestNote;
+          // McLeod Pitch Method via pitchy (ALGO-01)
+          const [pitch, clarity] = detectorRef.current.findPitch(
+            inputBufferRef.current,
+            currentSampleRate
+          );
+
+          // ALGO-02: clarity gate — reject weak/ambiguous detections
+          if (clarity >= clarityThreshold && pitch > 0) {
+            const note = frequencyToNote(pitch);
+            setDetectedFrequency(pitch);
+            setDetectedNote(note);
+            if (onPitchDetected && note) {
+              onPitchDetected(note, pitch);
+            }
+          } else {
+            setDetectedFrequency(-1);
+            setDetectedNote(null);
+          }
+
+          animationFrameRef.current = requestAnimationFrame(detectLoop);
+        };
+
+        detectLoop();
+      } catch (error) {
+        console.error("Error starting pitch detection:", error);
+        setIsListening(false);
+        throw error;
+      }
     },
-    [noteFrequencies, tolerance]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [analyserNode, sampleRate, clarityThreshold, initDetector, onLevelChange, onPitchDetected]
   );
 
-  /**
-   * Start listening to microphone input and begin pitch detection
-   *
-   * @throws {Error} If microphone permission denied or not available
-   */
-  const startListening = useCallback(async () => {
-    try {
-      // Request microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  // ---------------------------------------------------------------------------
+  // stopListening
+  // ---------------------------------------------------------------------------
 
-      // Create Web Audio API context
-      const context = new (window.AudioContext || window.webkitAudioContext)();
-      const source = context.createMediaStreamSource(stream);
-      const analyserNode = context.createAnalyser();
-
-      // Configure analyser
-      analyserNode.fftSize = 2048;
-      analyserNode.smoothingTimeConstant = 0.8;
-
-      // Connect nodes
-      source.connect(analyserNode);
-
-      // Update state
-      setAudioContext(context);
-      setAnalyser(analyserNode);
-      setMicrophone(stream);
-      setIsListening(true);
-
-      // Start pitch detection loop
-      const bufferLength = analyserNode.frequencyBinCount;
-      const dataArray = new Float32Array(bufferLength);
-      const sampleRate = context.sampleRate;
-
-      const detectLoop = () => {
-        if (!analyserNode) return;
-
-        // Get audio data
-        analyserNode.getFloatTimeDomainData(dataArray);
-
-        // Calculate audio level (RMS)
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i] * dataArray[i];
-        }
-        const level = Math.sqrt(sum / bufferLength);
-        setAudioLevel(level);
-
-        // Call level change callback if provided
-        if (onLevelChange) {
-          onLevelChange(level);
-        }
-
-        // Detect pitch
-        const pitch = detectPitch(dataArray, sampleRate);
-        const note = frequencyToNote(pitch);
-
-        setDetectedFrequency(pitch);
-        setDetectedNote(note);
-
-        // Call pitch detected callback if provided and note detected
-        if (onPitchDetected && note) {
-          onPitchDetected(note, pitch);
-        }
-
-        // Continue loop
-        animationFrameRef.current = requestAnimationFrame(detectLoop);
-      };
-
-      // Start detection loop
-      detectLoop();
-    } catch (error) {
-      console.error("Error accessing microphone:", error);
-      setIsListening(false);
-      throw error;
-    }
-  }, [detectPitch, frequencyToNote, onPitchDetected, onLevelChange]);
-
-  /**
-   * Stop listening to microphone and clean up all resources
-   * Made idempotent to avoid errors on repeated calls
-   */
   const stopListening = useCallback(() => {
-
-    // Cancel animation frame loop
+    // Cancel detection loop
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
 
-    // Stop microphone tracks safely
-    if (microphone) {
-      try {
-        microphone.getTracks().forEach((track) => {
-          if (track.readyState !== "ended") {
-            track.stop();
+    if (isSharedModeRef.current) {
+      // Shared mode: do NOT close audioContext or stop stream — provider owns those
+      isSharedModeRef.current = false;
+    } else {
+      // Fallback mode: full cleanup
+      if (microphone) {
+        try {
+          microphone.getTracks().forEach((track) => {
+            if (track.readyState !== "ended") {
+              track.stop();
+            }
+          });
+        } catch (err) {
+          console.warn("Error stopping microphone tracks:", err);
+        }
+      }
+
+      if (audioContext && audioContext.state !== "closed") {
+        audioContext.close().catch((err) => {
+          if (err.name !== "InvalidStateError") {
+            console.warn("Error closing audio context:", err);
           }
         });
-      } catch (err) {
-        console.warn("Error stopping microphone tracks:", err);
       }
     }
 
-    // Close audio context only if not already closed
-    if (audioContext && audioContext.state !== "closed") {
-      audioContext.close().catch((err) => {
-        // Silently ignore if already closed
-        if (err.name !== "InvalidStateError") {
-          console.warn("Error closing audio context:", err);
-        }
-      });
-    }
+    // Reset all state
+    currentAnalyserRef.current = null;
+    currentSampleRateRef.current = null;
+    detectorRef.current = null;
+    inputBufferRef.current = null;
 
-    // Reset state
     setIsListening(false);
     setAudioContext(null);
     setAnalyser(null);
@@ -336,13 +395,12 @@ export function usePitchDetection({
         console.error("Failed to start listening:", err);
       });
     }
-    // Note: In manual control mode (isActive=false), this effect doesn't interfere
-  }, [isActive, isListening, startListening]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActive, isListening]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      // Defer cleanup to not block navigation
       setTimeout(() => {
         if (stopListeningRef.current) {
           stopListeningRef.current();
@@ -351,6 +409,10 @@ export function usePitchDetection({
     };
   }, []);
 
+  // ---------------------------------------------------------------------------
+  // Return
+  // ---------------------------------------------------------------------------
+
   return {
     // State
     detectedNote,
@@ -358,14 +420,14 @@ export function usePitchDetection({
     audioLevel,
     isListening,
 
-    // Methods
-    startListening,
+    // Controls
+    startListening, // async (overrides?: { analyserNode?, sampleRate? }) => void
     stopListening,
 
-    // Advanced (for custom detection logic)
+    // Advanced / backward compat
     audioContext,
-    analyser,
-    detectPitch,
-    frequencyToNote,
+    analyser: currentAnalyserRef.current || analyser,
+    detectPitch, // Deprecated — kept for backward compat with tests
+    frequencyToNote, // MIDI-math version exported for external use
   };
 }
