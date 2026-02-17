@@ -12,6 +12,7 @@ import { VexFlowStaffDisplay } from "./components/VexFlowStaffDisplay";
 import { KlavierKeyboard } from "./components/KlavierKeyboard";
 import { FeedbackSummary } from "./components/FeedbackSummary";
 import { SightReadingLayout } from "./components/SightReadingLayout";
+import { MicErrorOverlay } from "./components/MicErrorOverlay";
 import { MetronomeDisplay } from "../rhythm-games/components/MetronomeDisplay";
 import { usePatternGeneration } from "./hooks/usePatternGeneration";
 import { useRhythmPlayback } from "./hooks/useRhythmPlayback";
@@ -555,7 +556,14 @@ export function SightReadingGame() {
   const [performanceResults, setPerformanceResults] = useState([]);
   const [, setExpectedNoteStartTime] = useState(null);
   const [, setDetectedPitches] = useState([]);
-  const [showMicPermissionPrompt, setShowMicPermissionPrompt] = useState(false);
+
+  // Mic error overlay state (replaces old showMicPermissionPrompt)
+  // null | { type: 'permission_denied' | 'mic_stopped', retryCount: number }
+  const [micError, setMicError] = useState(null);
+  const MIC_MAX_RETRIES = 3;
+  const [isMicRetrying, setIsMicRetrying] = useState(false);
+  const [showVolumeMeter, setShowVolumeMeter] = useState(false);
+  const volumeMeterTimeoutRef = useRef(null);
 
   // Persist input mode changes to localStorage
   useEffect(() => {
@@ -571,9 +579,9 @@ export function SightReadingGame() {
       micEarlyWindowStartRequestedRef.current = false;
       pendingMicLatencyMsRef.current = null;
     }
-    // Dismiss any mic permission prompts when switching away from mic mode
+    // Dismiss any mic error overlay when switching away from mic mode
     if (inputMode !== "mic") {
-      setShowMicPermissionPrompt(false);
+      setMicError(null);
     }
   }, [inputMode]);
 
@@ -2280,6 +2288,53 @@ export function SightReadingGame() {
   }, [replayPattern]);
 
   /**
+   * Mic error overlay: retry handler
+   * Called by MicErrorOverlay when user taps "Try Again"
+   */
+  const handleMicRetry = useCallback(async () => {
+    setIsMicRetrying(true);
+    micEarlyWindowStartRequestedRef.current = false; // Reset before retry
+    try {
+      await startListeningSync();
+      // Success — clear error, show volume meter, resume timer
+      setMicError(null);
+      setIsMicRetrying(false);
+      setShowVolumeMeter(true);
+      resumeTimer?.();
+      if (volumeMeterTimeoutRef.current) clearTimeout(volumeMeterTimeoutRef.current);
+      volumeMeterTimeoutRef.current = setTimeout(() => setShowVolumeMeter(false), 4000);
+    } catch (err) {
+      setIsMicRetrying(false);
+      const isPermissionDenied =
+        err?.name === "NotAllowedError" ||
+        err?.name === "PermissionDeniedError" ||
+        err?.message?.toLowerCase().includes("permission");
+      setMicError((prev) => ({
+        type: isPermissionDenied ? "permission_denied" : "mic_stopped",
+        retryCount: (prev?.retryCount ?? 0) + 1,
+      }));
+    }
+  }, [startListeningSync, resumeTimer]);
+
+  /**
+   * Mic error overlay: back-to-menu handler
+   * Returns to SETUP phase, preserving all scores
+   */
+  const handleMicBack = useCallback(() => {
+    setMicError(null);
+    setIsMicRetrying(false);
+    resumeTimer?.();
+    setGamePhase(GAME_PHASES.SETUP);
+  }, [resumeTimer]);
+
+  // Clean up volumeMeterTimeoutRef on unmount
+  useEffect(() => {
+    return () => {
+      if (volumeMeterTimeoutRef.current) clearTimeout(volumeMeterTimeoutRef.current);
+    };
+  }, []);
+
+  /**
    * Return to setup screen
    */
   const returnToSetup = useCallback(() => {
@@ -2563,7 +2618,15 @@ export function SightReadingGame() {
         })
         .catch((error) => {
           console.error("❌ Failed to start microphone:", error);
-          setShowMicPermissionPrompt(true);
+          const isPermissionDenied =
+            error?.name === "NotAllowedError" ||
+            error?.name === "PermissionDeniedError" ||
+            error?.message?.toLowerCase().includes("permission");
+          setMicError((prev) => ({
+            type: isPermissionDenied ? "permission_denied" : "mic_stopped",
+            retryCount: (prev?.retryCount ?? 0) + 1,
+          }));
+          pauseTimer();
           // Fall back to display mode
           setGamePhase(GAME_PHASES.DISPLAY);
         });
@@ -3481,54 +3544,23 @@ export function SightReadingGame() {
         </div>
       )}
 
-      {/* Microphone Permission Prompt */}
-      {showMicPermissionPrompt && inputMode === "mic" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 max-w-md rounded-lg bg-white p-6">
-            <h3 className="mb-2 text-xl font-bold">
-              Microphone Access Required
-            </h3>
-            <p className="mb-4 text-gray-600">
-              This game needs microphone access to detect the notes you play.
-              Please enable microphone permissions in your browser.
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={async () => {
-                  // Only try again if still in mic mode
-                  if (inputMode !== "mic") {
-                    setShowMicPermissionPrompt(false);
-                    return;
-                  }
-                  setShowMicPermissionPrompt(false);
-                  try {
-                    await startListeningSync();
-                    setGamePhase(GAME_PHASES.PERFORMANCE);
-                  } catch (err) {
-                    console.error("Still denied:", err);
-                    // Show prompt again if still denied and still in mic mode
-                    if (inputMode === "mic") {
-                      setShowMicPermissionPrompt(true);
-                    }
-                  }
-                }}
-                className="flex-1 rounded bg-purple-600 px-4 py-2 text-white transition-colors hover:bg-purple-700"
-              >
-                Try Again
-              </button>
-              <button
-                onClick={() => {
-                  setShowMicPermissionPrompt(false);
-                  // Switch to keyboard mode if mic permission denied
-                  setInputMode("keyboard");
-                  setGamePhase(GAME_PHASES.DISPLAY);
-                }}
-                className="flex-1 rounded bg-gray-300 px-4 py-2 transition-colors hover:bg-gray-400"
-              >
-                Use Keyboard Instead
-              </button>
-            </div>
-          </div>
+      {/* Microphone Error Overlay */}
+      <MicErrorOverlay
+        errorType={micError?.type ?? null}
+        isRetrying={isMicRetrying}
+        canRetry={(micError?.retryCount ?? 0) < MIC_MAX_RETRIES}
+        onRetry={handleMicRetry}
+        onBack={handleMicBack}
+      />
+
+      {/* Volume meter — appears briefly after mic recovery to confirm audio is active */}
+      {showVolumeMeter && (
+        <div className="fixed right-3 top-3 z-40 flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-1 shadow-sm backdrop-blur-sm transition-opacity">
+          <div
+            className="h-2 rounded-full bg-green-500 transition-all duration-75"
+            style={{ width: `${Math.min(100, (audioLevel || 0) * 400)}%`, maxWidth: "64px", minWidth: "4px" }}
+          />
+          <span className="text-xs text-gray-600">mic</span>
         </div>
       )}
 
