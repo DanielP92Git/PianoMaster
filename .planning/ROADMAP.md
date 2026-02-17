@@ -104,7 +104,9 @@ See `.planning/milestones/` for archived details of each milestone.
   1. Tapping "Try Again" after a failed mic attempt successfully reactivates the mic — the game does not silently stay stuck with no audio input
   2. SightReadingGame.micRestart.test.jsx passes in CI — the pre-existing test failure is resolved
   3. The mic listening guard uses a synchronous ref so rapid start/stop sequences do not race
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 06-01-PLAN.md -- Fix test infrastructure, runtime mic-restart bug, and sync ref guard
+- [ ] 06-02-PLAN.md -- Build MicErrorOverlay component with i18n and integrate into SightReadingGame
 
 ### Phase 07: Audio Architecture and Core Algorithm
 **Goal**: Piano notes are identified at the correct pitch without octave errors, all three AudioContext instances are unified into one shared provider, and the audio chain is configured to pass the raw piano signal without browser DSP corruption
@@ -182,7 +184,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
-| 06. Bug Fix Prerequisite | v1.7 | 0/TBD | Not started | - |
+| 06. Bug Fix Prerequisite | v1.7 | 0/2 | Planned | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 0/TBD | Not started | - |
 | 08. Detection Pipeline | v1.7 | 0/TBD | Not started | - |
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
