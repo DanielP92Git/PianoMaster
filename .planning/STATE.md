@@ -5,16 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Planning next milestone
+**Current focus:** v1.7 Mic Pitch Detection Overhaul
 
 ## Current Position
 
-Phase: Between milestones
-Plan: N/A
-Status: v1.6 shipped
-Last activity: 2026-02-17 — Milestone v1.6 archived and tagged
-
-Progress: [██████████] 68 of 68 plans complete (100%)
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-02-17 — Milestone v1.7 started
 
 ## Milestone History
 
@@ -72,8 +70,8 @@ Last session: 2026-02-17
 Stopped at: Milestone v1.6 archived
 Resume file: None
 
-**Next action:** Start next milestone via `/gsd:new-milestone`
+**Next action:** Define requirements for v1.7
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-17 — v1.6 Auto-Rotate Landscape for Games shipped*
+*Last updated: 2026-02-17 — Milestone v1.7 Mic Pitch Detection Overhaul started*
