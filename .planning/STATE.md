@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 07 (Audio Architecture & Core Algorithm)
+**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 07 COMPLETE, ready for Phase 08
 
 ## Current Position
 
-Phase: 07 of 10 (v1.7) — Audio Architecture and Core Algorithm
-Plan: 03 of 4 complete
-Status: Phase 07 in progress — Plans 01-03 complete, Plan 04 remaining
-Last activity: 2026-02-17 — Phase 07 Plan 03 complete (useAudioEngine shared context + useMicNoteInput analyser passthrough)
+Phase: 07 of 10 (v1.7) — Audio Architecture and Core Algorithm — COMPLETE
+Plan: 4 of 4 complete
+Status: Phase 07 complete — all plans executed (07-01 through 07-04)
+Last activity: 2026-02-17 — Phase 07 Plan 04 complete (NotesRecognitionGame shared audio integration)
 
-Progress: [████░░░░░░] 40% (v1.7) — 5 plans complete (6-01, 6-02, 7-01, 7-02*, 7-03)
+Progress: [█████░░░░░] 50% (v1.7) — 6 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 70 (across 27 phases in 7 shipped milestones + v1.7 phases 06-07)
+- Total plans completed: 71 (across 27 phases in 7 shipped milestones + v1.7 phases 06-07)
 - 7 milestones shipped in 18 days (2026-01-31 to 2026-02-17)
 - ~68,298 lines JavaScript/JSX/CSS
 
@@ -31,6 +31,7 @@ Progress: [████░░░░░░] 40% (v1.7) — 5 plans complete (6-01
 | 07-01 | 3 min | 2 | 3 | 2026-02-17 |
 | 07-02 | 3 min | 1 | 1 | 2026-02-17 |
 | 07-03 | 3 min | 2 | 2 | 2026-02-17 |
+| 07-04 | 4 min | 1 | 1 | 2026-02-17 |
 
 **Recent execution (v1.6):**
 | Phase-Plan | Duration | Tasks | Files | Date |
@@ -53,6 +54,10 @@ Progress: [████░░░░░░] 40% (v1.7) — 5 plans complete (6-01
 All v1.6 decisions archived in PROJECT.md Key Decisions table (234+ entries across 7 milestones).
 
 Recent decisions affecting v1.7:
+- Phase 07-04: stopAudioInput added to nodeId-change effect deps — ensures mic releases when navigating between trail nodes before auto-start fires
+- Phase 07-04: isListening from hook replaces isListeningRef.current in playSound guard — hook provides stable boolean, no ref needed
+- Phase 07-04: waitingForRelease detection via useEffect watching audioLevel — replaces rAF-loop level check; semantically identical, React-idiomatic
+- Phase 07-04: NOTE_FREQUENCIES removed — was exclusively used by frequencyToNote which is now replaced by useMicNoteInput
 - Phase 07-03: isOwnedContextRef (useRef, not state) tracks AudioContext ownership — no re-render, stable throughout hook lifetime
 - Phase 07-03: cleanup nulls audioContextRef.current in both owned/shared paths — prevents stale ref after cleanup
 - Phase 07-03: clarityThreshold forwarded through useMicNoteInput now, before usePitchDetection supports it — avoids another refactor when Plan 02 lands
@@ -75,7 +80,7 @@ Recent decisions affecting v1.7:
 
 ### Pending Todos
 
-None — Phase 07 Plan 03 complete.
+None — Phase 07 complete (all 4 plans).
 
 ### Blockers/Concerns
 
@@ -90,11 +95,11 @@ None — Phase 07 Plan 03 complete.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 07-03-PLAN.md
-Resume file: .planning/phases/07-audio-architecture-core-algorithm/07-04-PLAN.md
+Stopped at: Completed 07-04-PLAN.md (Phase 07 complete)
+Resume file: .planning/phases/08-*/08-01-PLAN.md (next phase)
 
-**Next action:** Execute Phase 07 Plan 04 (NotesRecognitionGame integration with shared AudioContext)
+**Next action:** Begin Phase 08 (integration testing for shared audio pipeline)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-17 — Phase 07 Plan 02 complete (usePitchDetection with McLeod Pitch Method via pitchy)*
+*Last updated: 2026-02-17 — Phase 07 Plan 04 complete (NotesRecognitionGame inline audio replaced with useMicNoteInput + useAudioContext)*
