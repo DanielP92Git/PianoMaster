@@ -2235,6 +2235,15 @@ export function SightReadingGame() {
     setShowKeyboard(inputMode === "keyboard");
     setExerciseRecorded(false);
 
+    // Reset mic warm-up flag so the next performance can start the mic.
+    // Without this, micEarlyWindowStartRequestedRef stays true from the previous
+    // run and the early-window guard skips startListening() on the next attempt.
+    // Note: beginPerformanceWithPattern() also resets this flag (authoritative reset
+    // just before performance); this reset here is an early reset to prevent stale
+    // flag edge cases when the user returns to DISPLAY phase.
+    micEarlyWindowStartRequestedRef.current = false;
+    pendingMicLatencyMsRef.current = null;
+
     // Go back to display phase to show pattern before count-in
     setGamePhase(GAME_PHASES.DISPLAY);
   }, [

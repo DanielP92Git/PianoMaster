@@ -1,4 +1,5 @@
 import { render, screen, act, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 
 import { SightReadingGame } from "./SightReadingGame";
 
@@ -12,6 +13,7 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => vi.fn(),
+    useLocation: () => ({ state: null, pathname: "/" }),
   };
 });
 
@@ -138,7 +140,11 @@ describe("SightReadingGame (mic)", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
 
-    render(<SightReadingGame />);
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/", state: null }]}>
+        <SightReadingGame />
+      </MemoryRouter>
+    );
 
     // Start -> DISPLAY
     await act(async () => {
