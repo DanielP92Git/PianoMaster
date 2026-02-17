@@ -5,26 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul
+**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 06 (Bug Fix Prerequisite)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-17 — Milestone v1.7 started
+Phase: 06 of 10 (v1.7) — Bug Fix Prerequisite
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-02-17 — v1.7 roadmap created (5 phases, 26 requirements mapped)
 
-## Milestone History
-
-| Version | Name | Phases | Plans | Shipped |
-|---------|------|--------|-------|---------|
-| v1.0 | Security Hardening | 1-4 | 15 | 2026-02-01 |
-| v1.1 | Parental Consent Email Service | 5 | 2 | 2026-02-02 |
-| v1.2 | Trail System Stabilization | 6-7 | 4 | 2026-02-03 |
-| v1.3 | Trail System Redesign | 8-12 | 14 | 2026-02-05 |
-| v1.4 | UI Polish & Celebrations | 13-18 | 13 | 2026-02-09 |
-| v1.5 | Trail Page Visual Redesign | 19-22 | 10 | 2026-02-12 |
-| v1.6 | Auto-Rotate Landscape for Games | 01-05 | 10 | 2026-02-17 |
+Progress: [░░░░░░░░░░] 0% (v1.7)
 
 ## Performance Metrics
 
@@ -51,27 +41,35 @@ Last activity: 2026-02-17 — Milestone v1.7 started
 
 ### Decisions
 
-All v1.6 decisions archived in PROJECT.md Key Decisions table (234 entries across 7 milestones).
+All v1.6 decisions archived in PROJECT.md Key Decisions table (234+ entries across 7 milestones).
+
+Recent decisions affecting v1.7:
+- Phase 07: Single AudioContextProvider wraps game routes (not app root) — mic permission never requested on non-game pages
+- Phase 07: pitchy 4.1.0 chosen for McLeod Pitch Method — 5KB, ESM-compatible, zero CDN fetch (COPPA-compliant)
+- Phase 10: AudioWorklet is profiling-gated — do not build speculatively; Phase 09 must ship first
 
 ### Pending Todos
 
-None — between milestones.
+None — between phases.
 
 ### Blockers/Concerns
 
-**Outstanding items (non-blocking):**
-- Pre-existing test failure: SightReadingGame.micRestart.test.jsx (Router context issue)
-- Pre-existing lint warnings: 24 errors, 415 warnings (all pre-v1.4)
+**Outstanding items (non-blocking, pre-existing):**
+- Pre-existing test failure: SightReadingGame.micRestart.test.jsx — this is Phase 06's primary target
+- Pre-existing lint: 24 errors, 415 warnings (all pre-v1.4)
 - syncPracticeSessions() stub in sw.js (zero runtime impact)
+
+**v1.7 Phase 10 gate:**
+- PERF-02 and PERF-03 are conditional on PERF-01 profiling result — if no frame drop observed, Phase 10 closes with only PERF-01 delivered
 
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Milestone v1.6 archived
+Stopped at: v1.7 roadmap written — ROADMAP.md, STATE.md, REQUIREMENTS.md traceability updated
 Resume file: None
 
-**Next action:** Define requirements for v1.7
+**Next action:** `/gsd:plan-phase 06`
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-17 — Milestone v1.7 Mic Pitch Detection Overhaul started*
+*Last updated: 2026-02-17 — v1.7 roadmap created, Phase 06 ready to plan*

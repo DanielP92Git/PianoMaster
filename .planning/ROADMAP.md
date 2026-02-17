@@ -9,6 +9,7 @@
 - ✅ **v1.4 UI Polish & Celebrations** — Phases 13-18 (shipped 2026-02-09)
 - ✅ **v1.5 Trail Page Visual Redesign** — Phases 19-22 (shipped 2026-02-12)
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
+- 🚧 **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -83,6 +84,73 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### 🚧 v1.7 Mic Pitch Detection Overhaul (In Progress)
+
+**Milestone Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input — eliminating wrong notes, missed notes, and latency on all note durations from quarter through sixteenth.
+
+- [ ] **Phase 06: Bug Fix Prerequisite** - Fix mic-restart regression so the test suite is a reliable baseline for all subsequent work
+- [ ] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration
+- [ ] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably
+- [ ] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS
+- [ ] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop
+
+## Phase Details
+
+### Phase 06: Bug Fix Prerequisite
+**Goal**: The mic-restart flow works correctly on second attempt and the test suite provides a reliable baseline for all subsequent v1.7 work
+**Depends on**: Phase 05 (v1.6 complete)
+**Requirements**: FIX-01, FIX-02
+**Success Criteria** (what must be TRUE):
+  1. Tapping "Try Again" after a failed mic attempt successfully reactivates the mic — the game does not silently stay stuck with no audio input
+  2. SightReadingGame.micRestart.test.jsx passes in CI — the pre-existing test failure is resolved
+  3. The mic listening guard uses a synchronous ref so rapid start/stop sequences do not race
+**Plans**: TBD
+
+### Phase 07: Audio Architecture and Core Algorithm
+**Goal**: Piano notes are identified at the correct pitch without octave errors, all three AudioContext instances are unified into one shared provider, and the audio chain is configured to pass the raw piano signal without browser DSP corruption
+**Depends on**: Phase 06
+**Requirements**: ARCH-01, ARCH-02, ARCH-03, ARCH-04, ARCH-05, AUDIO-01, AUDIO-02, AUDIO-03, ALGO-01, ALGO-02, ALGO-03
+**Success Criteria** (what must be TRUE):
+  1. Playing a C4 on the piano registers as C4 in the game — not C3 or C5 — across quarter through sixteenth note durations
+  2. All three game modes (sight reading, notes recognition, any other mic-enabled game) share one AudioContext — the browser console shows no "too many AudioContext" warnings
+  3. Detection latency for a quarter note is perceptibly faster compared to before (smoothing eliminated, fftSize increased for bass resolution)
+  4. Notes below E4 (bass clef notes including B2, A2) are classified correctly — bass trail nodes detect the right note
+  5. Only notes with sufficient clarity reach the game scoring layer — random background noise does not trigger false note registrations
+**Plans**: TBD
+
+### Phase 08: Detection Pipeline
+**Goal**: All note durations from quarter through sixteenth are detected reliably at 60-120 BPM — onset and note-off timing scale dynamically with the playing tempo and duration, the detection state machine prevents pitch flicker, and the game scoring layer never double-scores one played note
+**Depends on**: Phase 07
+**Requirements**: PIPE-01, PIPE-02, PIPE-03, PIPE-04, PIPE-05, PIPE-06
+**Success Criteria** (what must be TRUE):
+  1. Playing eighth notes at 120 BPM registers each note individually — notes are not merged or skipped due to fixed timing windows
+  2. Playing quarter notes at 60 BPM registers each note cleanly — long notes do not trigger multiple scoring events for a single physical key press
+  3. Rapid alternation between two adjacent notes (e.g., C4 then D4) registers both correctly — pitch flicker at the note boundary does not produce phantom detections
+  4. Bass clef trail nodes (including nodes requiring B2 and A2) detect all required notes — the frequency map covers the full trail note pool
+  5. BPM and note duration context flows from the game settings into the detection hooks without requiring manual wiring in each game component
+**Plans**: TBD
+
+### Phase 09: iOS Safari Hardening
+**Goal**: Mic input works reliably in Safari PWA on physical iOS devices — the app recovers from AudioContext interruption caused by phone calls, app switches, and device lock; permission denial shows a clear message with recovery instructions
+**Depends on**: Phase 08
+**Requirements**: IOS-01, IOS-02, IOS-03, IOS-04
+**Success Criteria** (what must be TRUE):
+  1. Receiving a phone call mid-game and then returning to the app resumes mic detection without requiring a page reload on iOS Safari
+  2. Switching to another app and back (e.g., checking a message) resumes mic detection correctly on iOS Safari
+  3. Starting a mic-enabled game responds correctly on first tap — the AudioContext does not stay permanently suspended on iOS Safari
+  4. Denying mic permission shows a persistent, parent-readable error message with instructions for re-enabling in iOS Settings — the app does not silently stop working with no explanation
+**Plans**: TBD
+
+### Phase 10: Performance (Profiling-Gated)
+**Goal**: Audio processing does not cause measurable frame drop on mid-range Android devices; if profiling reveals a problem, pitch detection is moved off the main thread via AudioWorklet
+**Depends on**: Phase 09
+**Requirements**: PERF-01, PERF-02, PERF-03
+**Success Criteria** (what must be TRUE):
+  1. A Chrome DevTools CPU profile from a mid-range Android device (2019-era class) is collected and reviewed — the decision to build AudioWorklet is data-driven, not speculative
+  2. If profiling shows audio processing causes more than 5% frame drop: pitch detection runs in an AudioWorklet and the main thread frame rate is measurably improved during active mic detection
+  3. If AudioWorklet is built: bass clef notes (below E4) are detected correctly — the ring buffer accumulates 128-frame quanta to at least 2048 samples before running detection
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -114,8 +182,13 @@ See `.planning/milestones/` for archived details of each milestone.
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
+| 06. Bug Fix Prerequisite | v1.7 | 0/TBD | Not started | - |
+| 07. Audio Architecture and Core Algorithm | v1.7 | 0/TBD | Not started | - |
+| 08. Detection Pipeline | v1.7 | 0/TBD | Not started | - |
+| 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
+| 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 
-**Total: 27 phases, 68 plans across 7 shipped milestones**
+**Total: 32 phases across 8 milestones (27 shipped, 5 in planning for v1.7)**
 
 ---
-*Last updated: 2026-02-17 — v1.6 shipped*
+*Last updated: 2026-02-17 — v1.7 roadmap created*

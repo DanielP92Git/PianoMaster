@@ -88,38 +88,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | — | Pending |
-| FIX-02 | — | Pending |
-| AUDIO-01 | — | Pending |
-| AUDIO-02 | — | Pending |
-| AUDIO-03 | — | Pending |
-| ALGO-01 | — | Pending |
-| ALGO-02 | — | Pending |
-| ALGO-03 | — | Pending |
-| PIPE-01 | — | Pending |
-| PIPE-02 | — | Pending |
-| PIPE-03 | — | Pending |
-| PIPE-04 | — | Pending |
-| PIPE-05 | — | Pending |
-| PIPE-06 | — | Pending |
-| ARCH-01 | — | Pending |
-| ARCH-02 | — | Pending |
-| ARCH-03 | — | Pending |
-| ARCH-04 | — | Pending |
-| ARCH-05 | — | Pending |
-| IOS-01 | — | Pending |
-| IOS-02 | — | Pending |
-| IOS-03 | — | Pending |
-| IOS-04 | — | Pending |
-| PERF-01 | — | Pending |
-| PERF-02 | — | Pending |
-| PERF-03 | — | Pending |
+| FIX-01 | Phase 06 | Pending |
+| FIX-02 | Phase 06 | Pending |
+| AUDIO-01 | Phase 07 | Pending |
+| AUDIO-02 | Phase 07 | Pending |
+| AUDIO-03 | Phase 07 | Pending |
+| ALGO-01 | Phase 07 | Pending |
+| ALGO-02 | Phase 07 | Pending |
+| ALGO-03 | Phase 07 | Pending |
+| ARCH-01 | Phase 07 | Pending |
+| ARCH-02 | Phase 07 | Pending |
+| ARCH-03 | Phase 07 | Pending |
+| ARCH-04 | Phase 07 | Pending |
+| ARCH-05 | Phase 07 | Pending |
+| PIPE-01 | Phase 08 | Pending |
+| PIPE-02 | Phase 08 | Pending |
+| PIPE-03 | Phase 08 | Pending |
+| PIPE-04 | Phase 08 | Pending |
+| PIPE-05 | Phase 08 | Pending |
+| PIPE-06 | Phase 08 | Pending |
+| IOS-01 | Phase 09 | Pending |
+| IOS-02 | Phase 09 | Pending |
+| IOS-03 | Phase 09 | Pending |
+| IOS-04 | Phase 09 | Pending |
+| PERF-01 | Phase 10 | Pending |
+| PERF-02 | Phase 10 | Pending |
+| PERF-03 | Phase 10 | Pending |
 
 **Coverage:**
 - v1.7 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 after initial definition*
+*Last updated: 2026-02-17 — traceability complete after roadmap creation*
