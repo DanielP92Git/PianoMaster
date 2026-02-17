@@ -6,9 +6,12 @@ const METRONOME_TIMING_DEBUG = true;
  * Custom hook for managing Web Audio API operations
  * Handles metronome clicks, pattern playback, and precise timing
  * @param {number} initialTempo - Initial tempo in BPM (60-200)
+ * @param {Object} [options={}] - Optional configuration
+ * @param {AudioContext|null} [options.sharedAudioContext=null] - Shared AudioContext from AudioContextProvider.
+ *   When provided, the hook uses this context instead of creating its own, and does NOT close it on cleanup.
  * @returns {Object} Audio engine API
  */
-export const useAudioEngine = (initialTempo = 120) => {
+export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null } = {}) => {
   // State management
   const [tempo, setTempo] = useState(Math.max(60, Math.min(200, initialTempo)));
   const [isPlaying, setIsPlaying] = useState(false);
@@ -21,6 +24,11 @@ export const useAudioEngine = (initialTempo = 120) => {
   const audioContextRef = useRef(null);
   const gainNodeRef = useRef(null);
   const schedulerIdRef = useRef(null);
+
+  // Tracks whether this hook created (and therefore owns) the AudioContext.
+  // When using a shared context, isOwnedContextRef.current = false and cleanup
+  // must NOT call audioContext.close() — only the provider manages the lifecycle.
+  const isOwnedContextRef = useRef(false);
 
   // Timing constants
   const lookaheadTime = 0.1; // How far ahead to schedule audio (seconds)
@@ -45,17 +53,29 @@ export const useAudioEngine = (initialTempo = 120) => {
    */
   const initializeAudioContext = useCallback(async () => {
     try {
-      // Check for Web Audio API support
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) {
-        throw new Error("Web Audio API not supported in this browser");
+      let context;
+
+      if (sharedAudioContext && sharedAudioContext.state !== "closed") {
+        // --- Shared context path (ARCH-03) ---
+        // Use the provided AudioContext. We do NOT own it.
+        context = sharedAudioContext;
+        audioContextRef.current = context;
+        isOwnedContextRef.current = false;
+      } else {
+        // --- Owned context path (default / standalone) ---
+        // Check for Web Audio API support
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+          throw new Error("Web Audio API not supported in this browser");
+        }
+
+        // Create audio context
+        context = new AudioContext();
+        audioContextRef.current = context;
+        isOwnedContextRef.current = true;
       }
 
-      // Create audio context
-      const context = new AudioContext();
-      audioContextRef.current = context;
-
-      // Create master gain node
+      // Create master gain node connected to this context's destination
       const gainNode = context.createGain();
       gainNode.connect(context.destination);
       gainNode.gain.value = 0.5; // Master volume at 50%
@@ -85,7 +105,7 @@ export const useAudioEngine = (initialTempo = 120) => {
       console.error("❌ Error stack:", err.stack);
       return false;
     }
-  }, []); // No dependencies to avoid circular refs
+  }, [sharedAudioContext]); // sharedAudioContext is the only external dep
 
   /**
    * Load piano sound asynchronously (non-blocking helper)
@@ -1115,7 +1135,13 @@ export const useAudioEngine = (initialTempo = 120) => {
   );
 
   /**
-   * Clean up audio resources
+   * Clean up audio resources.
+   *
+   * IMPORTANT (ARCH-03 / Pitfall 4):
+   * When using a shared AudioContext (isOwnedContextRef.current === false),
+   * we must NOT call audioContext.close() — the AudioContextProvider manages
+   * the shared context lifecycle. We only stop the scheduler, disconnect our
+   * gain node, and null out our local ref.
    */
   const cleanup = useCallback(() => {
     // Stop scheduler
@@ -1126,10 +1152,15 @@ export const useAudioEngine = (initialTempo = 120) => {
       schedulerIdRef.current = null;
     }
 
-    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+    if (isOwnedContextRef.current) {
+      // We created this context — close it on cleanup
+      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+        audioContextRef.current.close();
+      }
     }
+    // Whether owned or shared: null out our local ref.
+    // For shared: the provider retains the real reference and manages lifecycle.
+    audioContextRef.current = null;
 
     setIsPlaying(false);
     setIsInitialized(false);
