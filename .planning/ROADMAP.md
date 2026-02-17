@@ -118,7 +118,11 @@ See `.planning/milestones/` for archived details of each milestone.
   3. Detection latency for a quarter note is perceptibly faster compared to before (smoothing eliminated, fftSize increased for bass resolution)
   4. Notes below E4 (bass clef notes including B2, A2) are classified correctly — bass trail nodes detect the right note
   5. Only notes with sufficient clarity reach the game scoring layer — random background noise does not trigger false note registrations
-**Plans**: TBD
+**Plans**: 4 plans
+- [ ] 07-01-PLAN.md -- Install pitchy, create AudioContextProvider, wrap game routes
+- [ ] 07-02-PLAN.md -- Replace autocorrelation with McLeod Pitch Method (pitchy) in usePitchDetection
+- [ ] 07-03-PLAN.md -- Refactor useAudioEngine for shared context, update useMicNoteInput passthrough
+- [ ] 07-04-PLAN.md -- Remove NotesRecognitionGame inline detection, replace with useMicNoteInput
 
 ### Phase 08: Detection Pipeline
 **Goal**: All note durations from quarter through sixteenth are detected reliably at 60-120 BPM — onset and note-off timing scale dynamically with the playing tempo and duration, the detection state machine prevents pitch flicker, and the game scoring layer never double-scores one played note
@@ -185,7 +189,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
 | 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
-| 07. Audio Architecture and Core Algorithm | v1.7 | 0/TBD | Not started | - |
+| 07. Audio Architecture and Core Algorithm | v1.7 | 0/4 | Not started | - |
 | 08. Detection Pipeline | v1.7 | 0/TBD | Not started | - |
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
