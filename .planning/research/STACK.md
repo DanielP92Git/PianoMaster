@@ -1,534 +1,316 @@
-# Technology Stack: Auto-Rotate Landscape for Mobile Games
+# Technology Stack: Pro-Level Pitch Detection
 
 **Project:** PianoApp2 - Piano Learning PWA
-**Feature:** Auto-rotate to landscape on mobile games
-**Researched:** 2026-02-13
-**Overall confidence:** HIGH
+**Feature:** Mic-based piano pitch detection overhaul
+**Researched:** 2026-02-17
+**Confidence:** HIGH
 
-## Executive Summary
+---
 
-Auto-rotate landscape functionality can be implemented **without additional npm packages** using native Web APIs and existing project dependencies (Tailwind CSS, Framer Motion, lucide-react). The Screen Orientation API has 95% browser support but requires fullscreen mode and is **unavailable on iOS PWAs**. The recommended approach is CSS media queries + custom React hooks for orientation detection, with optional prompt overlay for portrait users, rather than attempting programmatic orientation locking.
+## Context: What the Current Implementation Does and Why It Fails
 
-## Recommended Stack
+The current `usePitchDetection.js` implements a hand-rolled autocorrelation algorithm:
+- `fftSize = 2048` on `AnalyserNode`
+- Simple autocorrelation loop: `correlation += Math.abs(buffer[i] - buffer[i + offset])`
+- `getFloatTimeDomainData()` polled via `requestAnimationFrame`
+- Threshold: `GOOD_ENOUGH_CORRELATION = 0.9`
+- `smoothingTimeConstant = 0.8` (heavy temporal smoothing — kills transients)
 
-### Core Technologies (Use Existing)
+**Why it fails for piano:**
 
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| CSS Media Queries | Native | Orientation detection | Universal support, zero dependencies, works on iOS |
-| `window.matchMedia()` | Native Web API | Reactive orientation changes | Standard API, 99%+ support, no polyfill needed |
-| Tailwind CSS | ^3.4.1 (existing) | Responsive orientation utilities | Already in project, supports `portrait:` and `landscape:` variants |
-| Framer Motion | ^12.23.26 (existing) | Rotate prompt animations | Already in project, smooth animations for device rotation prompts |
-| lucide-react | ^0.344.0 (existing) | Smartphone/rotate icons | Already in project, `Smartphone` + `RotateCw` icons available |
+1. **Octave errors:** Simple autocorrelation cannot reliably find the fundamental frequency when overtones are louder than the fundamental — common in piano notes, especially in the midrange.
+2. **smoothingTimeConstant = 0.8 kills transients:** Heavy smoothing erases note onsets. For eighth notes at 120+ BPM, the attack is ~125ms — the smoother destroys the signal before the algorithm sees it.
+3. **fftSize = 2048 is a mismatch:** At 44.1kHz, 2048 samples = ~46ms window. Piano low notes (C2 = 65Hz) need at least one full cycle, which is 15ms, so 2048 is OK for pitch, but the algorithm never exploits frequency-domain data — it uses time-domain only. The buffer length passed to `detectPitch` is `frequencyBinCount = fftSize/2 = 1024`, not 2048, meaning even the time-domain window is half the declared fftSize.
+4. **requestAnimationFrame + smoothing = inconsistent timing:** `rAF` fires at ~60fps (16ms intervals) but can be delayed when the tab is backgrounded or the main thread is busy. Pitch detection then misses note attacks entirely.
+5. **No onset detection:** The `useMicNoteInput` stability layer requires `onFrames = 4-5` consecutive detections before emitting `noteOn`. At 60fps this is 65-80ms of mandatory latency after note onset — long enough to miss eighth notes at tempos above 90 BPM.
 
-### Custom Implementation (No New Packages)
+---
 
-| Component | Implementation | Purpose | Complexity |
-|-----------|---------------|---------|------------|
-| `useOrientation` hook | Custom hook with `matchMedia` | Detect portrait/landscape state | Low (15-20 lines) |
-| `OrientationPrompt` component | Overlay with rotate animation | Prompt portrait users to rotate | Low (30-40 lines) |
-| Tailwind orientation utilities | `portrait:hidden`, `landscape:block` | Hide/show content by orientation | Trivial (built-in) |
+## Recommended Stack for Pitch Detection Overhaul
 
-## Supporting Libraries (NOT RECOMMENDED)
+### Core Algorithm Change: pitchy v4.1.0 (McLeod Pitch Method)
 
-| Library | Version | Weekly Downloads | Why NOT Recommended |
-|---------|---------|------------------|---------------------|
-| react-screen-orientation | 0.0.4 | 1,533 | Last updated 6 years ago, unmaintained |
-| react-device-detect | 2.2.3 | 1,098,432 | User-agent based (unreliable), last updated 3 years ago, overkill for orientation |
-| expo-screen-orientation | Latest | N/A | React Native only, not applicable to web PWA |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| **pitchy** | 4.1.0 | Primary pitch detection algorithm | McLeod Pitch Method (MPM) dramatically reduces octave errors vs. naive autocorrelation by using a specially normalized correlation function (NSDF). This is the de-facto choice for browser-based instrument tuners. Pure JS/ESM, zero dependencies, ~5KB, works in AudioWorklet. |
 
-## Alternatives Considered
+**Why pitchy over alternatives:**
 
-### 1. Screen Orientation API (`screen.orientation.lock()`)
+- **vs. hand-rolled autocorrelation (current):** Pitchy's MPM uses normalized square difference function rather than mean absolute difference. This produces sharper peaks at the true fundamental, not at overtones — the exact failure mode of the current code.
+- **vs. ml5.js CREPE:** CREPE is a CNN model that must load a multi-MB TensorFlow model file on startup (10-50ms cold load, up to 2MB), introducing latency and bundle size inappropriate for a children's app. CREPE is also COPPA-adjacent: ml5.js by default fetches models from external CDN (`https://cdn.jsdelivr.net`), violating the no-external-data-collection requirement. Model accuracy is excellent for professional tools but the infra overhead is unjustifiable here.
+- **vs. essentia.js:** ~2MB WASM bundle, academic-grade signal processing. Massive overkill for single-note piano detection. Real-time analysis tutorial exists but setup complexity is high. Not justified when pitchy achieves acceptable accuracy at 5KB.
+- **vs. pitchfinder:** Less maintained, based on older algorithm implementations, no MPM.
+- **vs. aubio.js:** WASM port of C library, ~800KB, deprecated npm package. Last meaningful update 2019.
 
-**Browser Support (CanIUse):**
-- Chrome 38+: Full support
-- Firefox 44+: Full support
-- Safari 16.4+: Full support
-- iOS Safari 16.4+: Full support in browser, **NO support in PWA mode**
-- Android Chrome 144+: Full support
-- Global: 95.14% coverage
-
-**Why NOT Recommended:**
-- **Requires fullscreen mode** - Must call `requestFullscreen()` before `lock()` works
-- **iOS PWA blocker** - iOS Safari explicitly blocks orientation locking in installed PWAs
-- **Security restrictions** - Throws `SecurityError` if document is hidden
-- **UX friction** - Fullscreen requirement creates jarring transition
-- **Over-engineering** - Games don't need forced lock, just optimized layout
-
-**Source:** [MDN ScreenOrientation.lock()](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock), [CanIUse Screen Orientation](https://caniuse.com/screen-orientation)
-
-### 2. Manifest.json `orientation` Key
-
-**What it does:** Locks installed PWA to specific orientation
-
-```json
-{
-  "orientation": "landscape"
-}
-```
-
-**Why NOT Recommended:**
-- **iOS ignores it** - Apple doesn't allow custom orientation in PWA manifest
-- **All-or-nothing** - Locks entire app, not just game pages
-- **Breaks user expectations** - Users expect to control device orientation
-- **Non-game pages** - Dashboard, settings, trail map work fine in portrait
-
-**Source:** [How to Lock Screen Orientation in PWA](https://nashatech.com/blogs/sXOqruRY2ECD5EIVqwP9/)
-
-### 3. Device Detection Libraries
-
-**Why NOT Recommended:**
-- User-agent sniffing is unreliable (spoofing, new devices)
-- Overkill for simple orientation detection
-- Adds bundle size (20-40KB) for single use case
-- `window.matchMedia()` achieves same result natively
-
-## What NOT to Use
-
-### DO NOT Install:
-- `react-screen-orientation` - Abandoned package (6 years old)
-- `react-device-detect` - Unmaintained (3 years), user-agent based
-- `react-native-orientation-locker` - React Native only
-- `mobile-detect` - Server-side focus, not React-optimized
-
-### DO NOT Attempt:
-- `screen.orientation.lock()` - Requires fullscreen, blocked on iOS PWAs
-- Manifest `orientation` key - iOS doesn't respect it
-- `screen.lockOrientation()` - Deprecated API (renamed to `screen.orientation.lock()`)
-
-### DO NOT Rely On:
-- User-agent detection - Unreliable, breaks with spoofing
-- Device pixel ratio - Doesn't indicate orientation preference
-- `window.innerWidth > window.innerHeight` alone - Keyboard opening can flip this
-
-## Recommended Implementation Pattern
-
-### 1. CSS-First Approach (Tailwind)
-
-Tailwind CSS supports orientation-based utilities out of the box:
-
-```jsx
-<div className="portrait:hidden landscape:block">
-  {/* Game content - only visible in landscape */}
-</div>
-
-<div className="portrait:block landscape:hidden">
-  <OrientationPrompt />
-</div>
-```
-
-**Why:** Zero JavaScript, instant response, works on all browsers including iOS PWAs
-
-**Source:** [Tailwind CSS: How to Detect Device Orientation](https://www.kindacode.com/article/tailwind-css-how-to-detect-device-orientation)
-
-### 2. Custom `useOrientation` Hook
-
-For programmatic access to orientation state:
+**pitchy API (HIGH confidence — verified from GitHub README + npm page):**
 
 ```javascript
-import { useEffect, useState } from 'react';
+import { PitchDetector } from 'pitchy';
 
-export function useOrientation() {
-  const [orientation, setOrientation] = useState(
-    window.matchMedia('(orientation: portrait)').matches ? 'portrait' : 'landscape'
-  );
+// Create once, reuse per frame
+const detector = PitchDetector.forFloat32Array(bufferSize);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(orientation: portrait)');
-
-    const handleChange = (e) => {
-      setOrientation(e.matches ? 'portrait' : 'landscape');
-    };
-
-    // Modern approach (preferred)
-    mediaQuery.addEventListener('change', handleChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleChange);
-    };
-  }, []);
-
-  return orientation;
-}
+// Per-frame detection
+const [pitch, clarity] = detector.findPitch(float32Buffer, sampleRate);
+// pitch: Hz or -1 if not detected
+// clarity: 0-1; values > 0.9 indicate confident detection
 ```
 
-**Why:**
-- Uses native `matchMedia` API (99%+ support)
-- Reactive - updates on orientation change
-- SSR-safe (checks `window` existence)
-- Modern `addEventListener` syntax
+**Confidence threshold:** Use `clarity >= 0.9` as the gate. The current code uses correlation > 0.9 as equivalent — but pitchy's clarity score is more meaningful because it's normalized against the fundamental, not a raw correlation value.
 
-**Source:** [Let's create a custom hook useScreenOrientation](https://medium.com/@perenciolo659/let-s-create-a-custom-hook-usescreenorientation-e5f66919b8b)
+---
 
-### 3. OrientationPrompt Component
+### Web Audio API Configuration Changes
 
-Animated overlay prompting users to rotate:
+These are the specific parameter changes needed — no new packages, just different values in existing `usePitchDetection.js`:
 
-```jsx
-import { motion } from 'framer-motion';
-import { Smartphone, RotateCw } from 'lucide-react';
+#### 1. fftSize: 2048 → 4096
 
-export function OrientationPrompt() {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900">
-      <div className="text-center">
-        <motion.div
-          animate={{ rotate: [0, -90, -90, 0] }}
-          transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-          className="mx-auto mb-6"
-        >
-          <Smartphone className="h-24 w-24 text-white" />
-        </motion.div>
-        <RotateCw className="mx-auto mb-4 h-12 w-12 text-blue-400" />
-        <p className="text-xl font-semibold text-white">
-          Please rotate your device
-        </p>
-        <p className="mt-2 text-gray-400">
-          This game works best in landscape mode
-        </p>
-      </div>
-    </div>
-  );
-}
-```
+| Parameter | Current | Recommended | Why |
+|-----------|---------|-------------|-----|
+| `fftSize` | 2048 | **4096** | At 44.1kHz: 4096 samples = ~93ms window. Gives pitchy 2048 samples of time-domain data (frequencyBinCount = fftSize/2). Better frequency resolution for low notes. Still well under 120ms latency budget for eighth notes at 60 BPM. |
+| `smoothingTimeConstant` | 0.8 | **0.0** | Set to zero. Smoothing averages consecutive FFT frames — it destroys note onsets. Pitchy's McLeod method is already robust to noise; pre-smoothing only hurts transient detection. |
 
-**Why:**
-- Uses existing Framer Motion (no new dependency)
-- Uses existing lucide-react icons
-- Tailwind for styling (existing)
-- Smooth animation guides user action
+**Note on fftSize vs. pitchy inputLength:** pitchy's `inputLength` must equal the buffer length passed to `findPitch`. When using `getFloatTimeDomainData`, the array length is `analyserNode.frequencyBinCount` which is `fftSize / 2`. So `PitchDetector.forFloat32Array(analyserNode.frequencyBinCount)` is the correct initialization.
 
-**Source:** Framer Motion docs + lucide-react icons
+#### 2. getUserMedia Constraints (Critical for Piano)
 
-### 4. Game Page Integration
+The current code uses `{ audio: true }` — default constraints. Browser default enables echoCancellation, noiseSuppression, and autoGainControl. **These destroy piano audio:**
+- AutoGainControl compresses the attack transient
+- NoiseSuppression removes harmonic content it misidentifies as noise
+- EchoCancellation introduces phase shifts
 
-```jsx
-import { useOrientation } from '@/hooks/useOrientation';
-import { OrientationPrompt } from '@/components/OrientationPrompt';
-
-export function NotesRecognitionGame() {
-  const orientation = useOrientation();
-
-  return (
-    <>
-      {/* CSS-based approach (preferred) */}
-      <div className="portrait:hidden landscape:block">
-        <GameContent />
-      </div>
-
-      <div className="portrait:block landscape:hidden">
-        <OrientationPrompt />
-      </div>
-
-      {/* OR programmatic approach */}
-      {orientation === 'portrait' ? (
-        <OrientationPrompt />
-      ) : (
-        <GameContent />
-      )}
-    </>
-  );
-}
-```
-
-## Installation (Zero New Dependencies)
-
-**No npm packages needed.** Everything uses:
-- Native Web APIs (`matchMedia`)
-- Existing Tailwind CSS utilities
-- Existing Framer Motion
-- Existing lucide-react icons
-
-## iOS PWA Limitations
-
-### What Doesn't Work on iOS PWAs:
-- `screen.orientation.lock()` - Explicitly blocked
-- Manifest `orientation` key - Ignored by Safari
-- `navigator.vibrate()` - Not supported
-- Wake Lock API - Not supported
-
-### What DOES Work on iOS PWAs:
-- CSS media queries (`@media (orientation: portrait)`)
-- `window.matchMedia()` - Full support
-- Tailwind orientation utilities
-- CSS animations and transitions
-- Framer Motion animations
-
-**Key Insight:** iOS Safari team intentionally blocks orientation locking to prevent fingerprinting and preserve user control. The workaround is not to fight the platform, but to adapt the UI gracefully.
-
-**Sources:**
-- [PWA on iOS - Current Status & Limitations](https://brainhub.eu/library/pwa-on-ios)
-- [PWA iOS Limitations and Safari Support](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
-- [Danny Moerkerke on X about iOS PWA limitations](https://x.com/dannymoerkerke/status/1803055577100091874)
-
-## Animation Strategy
-
-### Tailwind CSS Built-in Animations
-
-```jsx
-// Simple rotation animation (no extra packages)
-<div className="animate-spin">
-  <RotateCw />
-</div>
-
-// Custom rotation via Tailwind config
-// tailwind.config.js
-{
-  theme: {
-    extend: {
-      keyframes: {
-        'rotate-device': {
-          '0%, 100%': { transform: 'rotate(0deg)' },
-          '50%': { transform: 'rotate(-90deg)' }
-        }
-      },
-      animation: {
-        'rotate-device': 'rotate-device 2s ease-in-out infinite'
-      }
-    }
+**Required:**
+```javascript
+const stream = await navigator.mediaDevices.getUserMedia({
+  audio: {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+    // Optional: prefer higher sample rate for better high-note resolution
+    sampleRate: { ideal: 44100 },
+    channelCount: 1,  // Mono sufficient, reduces processing
   }
-}
-```
-
-**Why:** Zero dependencies, Tailwind already in project
-
-**Source:** [Tailwind CSS Animation](https://tailwindcss.com/docs/animation)
-
-### Framer Motion (Preferred for Complex Animations)
-
-```jsx
-<motion.div
-  animate={{
-    rotate: [0, -90, -90, 0],
-    scale: [1, 1.1, 1.1, 1]
-  }}
-  transition={{
-    duration: 2,
-    repeat: Infinity,
-    repeatDelay: 1,
-    ease: "easeInOut"
-  }}
->
-  <Smartphone />
-</motion.div>
-```
-
-**Why:** Already in project (Framer Motion v12.23.26), spring physics, gesture support, better DX
-
-**Source:** [How to Integrate Tailwind with Framer Motion](https://tailkits.com/blog/how-to-integrate-tailwind-with-framer-motion/)
-
-### tailwindcss-animate (Already Installed)
-
-Project already has `tailwindcss-animate@1.0.7` - provides enter/exit animations:
-
-```jsx
-<div className="animate-in fade-in zoom-in duration-300">
-  <OrientationPrompt />
-</div>
-```
-
-**Source:** [tailwindcss-animate GitHub](https://github.com/jamiebuilds/tailwindcss-animate)
-
-## Browser Support Summary
-
-| Feature | Chrome | Firefox | Safari | iOS Safari (PWA) | Android Chrome |
-|---------|--------|---------|--------|------------------|----------------|
-| CSS `@media (orientation)` | ✅ All | ✅ All | ✅ All | ✅ All | ✅ All |
-| `window.matchMedia()` | ✅ 9+ | ✅ 6+ | ✅ 5.1+ | ✅ 5+ | ✅ All |
-| `screen.orientation.lock()` | ✅ 38+ | ✅ 44+ | ✅ 16.4+ | ❌ Blocked | ✅ 144+ |
-| Manifest `orientation` | ✅ Yes | ✅ Yes | ⚠️ Partial | ❌ Ignored | ✅ Yes |
-| Tailwind orientation utilities | ✅ All | ✅ All | ✅ All | ✅ All | ✅ All |
-| Framer Motion | ✅ Modern | ✅ Modern | ✅ Modern | ✅ Modern | ✅ Modern |
-
-**Key Takeaway:** CSS-based approach has universal support. API-based locking has 95% support but fails where it matters most (iOS PWAs for 8-year-olds on iPads).
-
-## Integration Points with Existing Stack
-
-### 1. React Router Navigation
-Games already use `location.state` for trail integration. Orientation detection integrates seamlessly:
-
-```jsx
-// No changes to navigation needed
-navigate('/notes-master-mode/recognition', {
-  state: { nodeId, nodeConfig, exerciseIndex }
 });
-
-// Game component just adds orientation check
-function NotesRecognitionGame() {
-  const orientation = useOrientation();
-  // ... rest of game logic
-}
 ```
 
-### 2. Tailwind Design System
-Project uses custom design system (`docs/DESIGN_SYSTEM.md`). Orientation prompt should follow existing patterns:
+**MEDIUM confidence** — disabling these constraints works on Chrome and Firefox. Safari on iOS may partially ignore them. The `sampleRate` ideal hint is best-effort; browser picks the actual rate.
 
-```jsx
-<div className="card-elevated fixed inset-0 z-50 bg-slate-900">
-  {/* Uses existing card utilities */}
-</div>
+#### 3. AudioContext Sample Rate
+
+The existing code already reads `context.sampleRate` correctly and passes it to the pitch algorithm. Keep this pattern — do not hardcode a sample rate.
+
+---
+
+### Architecture Change: AnalyserNode Poll Strategy
+
+**Current:** `requestAnimationFrame` poll loop inside `detectLoop()`
+
+**Problem:** `rAF` is throttled to 1fps when the tab is hidden (child switches to another app). More importantly, `rAF` fires at display frame rate (60fps), which is about right, but can be delayed when the main React render is heavy.
+
+**Recommendation:** Keep `requestAnimationFrame` for now, but consider a future migration path to `AudioWorkletProcessor` for zero-latency processing on the audio thread. The `rAF` approach is acceptable if:
+- `smoothingTimeConstant` is set to 0.0 (done above)
+- The stability layer parameters in `useMicNoteInput` are tuned (see below)
+
+**Why not AudioWorklet now:** AudioWorklet requires serving a separate `.js` file from the same origin (Vite requires extra config), cross-origin isolation headers for SharedArrayBuffer, and Safari's AudioWorklet implementation has had correctness bugs. The complexity cost is not justified for the current failure modes — which are all fixable at the algorithm and parameter level.
+
+---
+
+### useMicNoteInput Parameter Tuning
+
+The stability layer in `useMicNoteInput.js` adds mandatory latency. With pitchy producing cleaner, more accurate detections per frame, these parameters can be tightened:
+
+| Parameter | Current (sightReading preset) | Recommended | Why |
+|-----------|------------------------------|-------------|-----|
+| `onFrames` | 4 | **3** | Pitchy gives cleaner signals — fewer false positives — so 3 frames (50ms at 60fps) is sufficient stability without excessive latency |
+| `changeFrames` | 5 | **4** | Same reasoning; note changes are cleaner with MPM |
+| `offMs` | 140 | **100** | With `smoothingTimeConstant = 0`, signal silence is detected faster; 100ms is enough to distinguish end of note from momentary spectral dip |
+| `minInterOnMs` | 80 | **60** | Tighter inter-note minimum since algorithm is cleaner; still prevents double-fires |
+| `rmsThreshold` | 0.01 | **0.015** | Slightly raise after disabling autoGainControl — the mic signal will have more dynamic range, so higher threshold avoids noise triggering |
+| `tolerance` | 0.02 | **0.02** | Keep — this is frequency tolerance for note matching, not algorithm tuning |
+
+**MEDIUM confidence** — these are starting values that will need empirical tuning against real piano audio.
+
+---
+
+### Supporting Libraries (No New Additions Needed)
+
+The following are explicitly NOT needed:
+
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| **ml5.js** | 2MB+ TensorFlow bundle, fetches from CDN (COPPA violation), 50ms cold start per detection call | pitchy |
+| **essentia.js** | 2MB WASM bundle, complex setup with AudioWorklet required, overkill for monophonic note detection | pitchy |
+| **aubio.js** | npm package abandoned (~2019), no ESM build, WASM port unmaintained | pitchy |
+| **web-audio-analyser** | Thin wrapper that adds abstraction without solving the algorithm problem | native AnalyserNode |
+| **Meyda.js** | Feature extraction library (MFCCs, spectral flux), not pitch detection — wrong tool for note identification | pitchy |
+| **tone.js** | Synthesis and scheduling, not pitch detection | not applicable |
+
+---
+
+## Installation
+
+```bash
+# Single new package
+npm install pitchy
 ```
 
-### 3. Accessibility Context
-Project has `AccessibilityContext` for high contrast, reduced motion. Orientation prompt should respect `reducedMotion`:
+**pitchy is ESM-only (v4+).** This project already uses `"type": "module"` in package.json and Vite 6, so ESM is fully supported. No additional bundler configuration needed.
 
-```jsx
-const { reducedMotion } = useAccessibility();
+---
 
-<motion.div
-  animate={reducedMotion ? {} : { rotate: [0, -90, -90, 0] }}
->
-```
+## Integration Points in Existing Code
 
-### 4. i18n Support
-Project supports English and Hebrew (RTL). Orientation prompt needs translations:
+### 1. usePitchDetection.js — Replace `detectPitch` function
 
-```json
-// locales/en/common.json
-{
-  "orientation": {
-    "prompt": "Please rotate your device",
-    "description": "This game works best in landscape mode"
-  }
-}
-
-// locales/he/common.json
-{
-  "orientation": {
-    "prompt": "אנא סובב את המכשיר שלך",
-    "description": "המשחק הזה עובד הכי טוב במצב אופקי"
-  }
-}
-```
-
-## Performance Considerations
-
-### 1. CSS vs JavaScript Detection
-
-**CSS Approach (Recommended):**
-- Zero JavaScript overhead
-- Instant response (no React re-render)
-- Works before JavaScript loads
-- Better for Core Web Vitals
-
-**JavaScript Approach (Use When Needed):**
-- Required for programmatic logic
-- Adds event listener overhead
-- Triggers React re-renders
-- Use only when CSS won't suffice
-
-### 2. Event Listener Cleanup
-
-`matchMedia` listeners must be cleaned up:
+The `detectPitch` function currently contains the hand-rolled autocorrelation. Replace it with pitchy:
 
 ```javascript
-useEffect(() => {
-  const mql = window.matchMedia('(orientation: portrait)');
-  const handler = (e) => setOrientation(e.matches ? 'portrait' : 'landscape');
+import { PitchDetector } from 'pitchy';
 
-  mql.addEventListener('change', handler);
-  return () => mql.removeEventListener('change', handler); // Critical
-}, []);
+// Create detector once when analyser is initialized
+// bufferLength = analyserNode.frequencyBinCount
+const detector = PitchDetector.forFloat32Array(bufferLength);
+
+// In detectLoop (replaces current detectPitch call)
+analyserNode.getFloatTimeDomainData(dataArray);
+const [pitch, clarity] = detector.findPitch(dataArray, sampleRate);
+const frequency = clarity > 0.9 ? pitch : -1;
 ```
 
-### 3. Animation Performance
+**Important:** The `detector` instance must be created after the `analyserNode` is configured and must persist across frames (do not recreate per frame — expensive). Store in a `useRef`.
 
-Use Framer Motion's hardware-accelerated transforms:
+### 2. usePitchDetection.js — AnalyserNode configuration
 
-```jsx
-// Good: GPU-accelerated
-<motion.div animate={{ rotate: -90, scale: 1.1 }} />
-
-// Bad: Forces layout recalc
-<motion.div animate={{ width: '200px', marginTop: '20px' }} />
+```javascript
+analyserNode.fftSize = 4096;           // Was 2048
+analyserNode.smoothingTimeConstant = 0.0;  // Was 0.8 — critical change
 ```
 
-**Source:** Framer Motion performance docs
+### 3. usePitchDetection.js — getUserMedia constraints
 
-## Testing Strategy
+```javascript
+const stream = await navigator.mediaDevices.getUserMedia({
+  audio: {
+    echoCancellation: false,
+    noiseSuppression: false,
+    autoGainControl: false,
+    channelCount: 1,
+  }
+});
+```
 
-### 1. Chrome DevTools Device Emulation
-- Open DevTools > Device Toolbar
-- Select mobile device
-- Click rotate icon to test orientation changes
+### 4. micInputPresets.js — Update preset values
 
-### 2. Real Device Testing
-- Test on actual iOS devices (iPad for 8-year-olds)
-- Test on Android phones/tablets
-- Verify PWA installed behavior differs from browser
+```javascript
+export const MIC_INPUT_PRESETS = {
+  sightReading: {
+    rmsThreshold: 0.015,  // Was 0.01
+    tolerance: 0.02,
+    onFrames: 3,          // Was 4
+    changeFrames: 4,      // Was 5
+    offMs: 100,           // Was 140
+    minInterOnMs: 60,     // Was 80
+  },
+  notesRecognition: {
+    rmsThreshold: 0.015,  // Was 0.012
+    tolerance: 0.03,
+    onFrames: 3,          // Was 4
+    changeFrames: 4,      // Was 5
+    offMs: 120,           // Was 160
+    minInterOnMs: 70,     // Was 90
+  },
+};
+```
 
-### 3. Edge Cases to Test
-- Keyboard opening (changes viewport aspect ratio)
-- Switching apps (hidden document)
-- Orientation change during game session
-- Slow network (prompt should show before game assets load)
+### 5. usePitchDetection.js — Detector lifecycle
 
-## Migration Path
+The `PitchDetector` instance depends on `bufferLength`, which is fixed once the AnalyserNode is created. Store it in a ref alongside the analyser:
 
-### Phase 1: CSS-Only (Day 1)
-1. Add Tailwind orientation utilities to game pages
-2. Create static `OrientationPrompt` component
-3. Test on real devices
+```javascript
+const detectorRef = useRef(null);
 
-### Phase 2: Enhanced UX (Day 2-3)
-1. Create `useOrientation` hook
-2. Add Framer Motion animations to prompt
-3. Add i18n translations
-4. Integrate with accessibility settings
+// When setting up analyserNode:
+analyserNode.fftSize = 4096;
+const bufferLength = analyserNode.frequencyBinCount; // 2048
+const dataArray = new Float32Array(bufferLength);
+detectorRef.current = PitchDetector.forFloat32Array(bufferLength);
+```
 
-### Phase 3: Polish (Day 4-5)
-1. Add orientation state to game analytics
-2. Add user preference persistence (if user dismisses prompt)
-3. Add skip button for users who prefer portrait
-4. Test on all supported devices
+---
 
-## Open Questions
+## What NOT to Change
 
-1. **Should users be able to dismiss orientation prompt?** (Probably yes for accessibility)
-2. **Should orientation preference persist across sessions?** (localStorage key)
-3. **Should all games require landscape?** (Rhythm games might work in portrait)
-4. **Should landscape be required for tablet-sized screens?** (iPads work fine in portrait)
+| Thing | Keep As-Is | Why |
+|-------|------------|-----|
+| `useMicNoteInput.js` state machine | Keep — only tune parameters | The noteOn/noteOff stability logic is well-designed; pitchy improvements flow through it |
+| `requestAnimationFrame` poll | Keep for now | AudioWorklet migration is future work; rAF is adequate once smoothing is removed |
+| `frequencyToNote` lookup | Keep | Frequency-to-note mapping is independent of detection algorithm |
+| `getFloatTimeDomainData` | Keep | pitchy operates on time-domain data (not frequency domain) |
+| React Context integration | Keep | Audio context/analyser exposed via hook return values works fine |
+| `AudioContext` / `AnalyserNode` setup | Keep pattern, change parameters | The Web Audio graph topology is correct |
+
+---
+
+## Version Compatibility
+
+| Package | Version | Compatible With | Notes |
+|---------|---------|-----------------|-------|
+| pitchy | 4.1.0 | Vite 6, React 18, ESM | ESM-only, works without config changes in this project |
+| pitchy | 4.1.0 | Vitest 3.x | Vitest handles ESM natively with `"type": "module"` |
+| Web Audio API | Native | Chrome 66+, Firefox 76+, Safari 14.1+, iOS 14.5+ | All current browser targets |
+
+---
+
+## Frequency Resolution Reality Check
+
+At 44.1kHz sample rate with fftSize = 4096:
+- Window duration: 4096 / 44100 ≈ 93ms
+- Frequency resolution (FFT bins): 44100 / 4096 ≈ 10.7 Hz per bin
+
+Piano note spacing near middle C: C4 = 261.63Hz, D4 = 293.66Hz, gap = 32Hz. At 10.7Hz/bin, C4 and D4 are 3 bins apart — distinguishable. Lower notes are trickier: C2 = 65.4Hz, D2 = 73.4Hz, gap = 8Hz, less than one bin. However, pitchy operates in the time domain (autocorrelation), not frequency domain bins, so frequency resolution is not limited by bin size — it interpolates based on the period of the waveform. This is why time-domain algorithms like MPM outperform FFT peak-picking for pitch detection.
+
+**Bottom line:** 4096-sample buffer gives pitchy enough signal for accurate detection down to C2 (65Hz) with a single pitch period visible in the window. For the piano range the app targets (approximately C3-C6 for a children's learning app), 2048 samples would also work, but 4096 provides headroom.
+
+---
+
+## COPPA Compliance
+
+All pitch detection with pitchy runs **entirely client-side in the browser**. pitchy:
+- Has zero external network calls
+- Requires no CDN model files
+- Introduces no analytics or telemetry
+- Processes audio in memory only — audio data never leaves the device
+
+The `getUserMedia` audio stream is never sent to any server. This is fully COPPA-compliant.
+
+---
+
+## Confidence Assessment
+
+| Area | Confidence | Source |
+|------|------------|--------|
+| pitchy algorithm superiority (MPM vs autocorrelation) | HIGH | McLeod's original paper + pitchy GitHub README |
+| pitchy v4.1.0 is ESM, compatible with Vite 6 | HIGH | GitHub release page (January 2024) |
+| `smoothingTimeConstant = 0` being the right fix | HIGH | Web Audio API MDN docs, direct cause-effect analysis |
+| `getUserMedia` constraint behavior for piano | MEDIUM | MDN docs; Safari may partially ignore on iOS |
+| Tuned `useMicNoteInput` parameters | MEDIUM | Based on algorithm reasoning; requires empirical validation with real piano audio |
+| AudioWorklet unnecessary for current failures | MEDIUM | Based on root cause analysis; worth revisiting if latency issues persist after pitchy migration |
+
+---
 
 ## Sources
 
-### Browser Compatibility
-- [CanIUse - Screen Orientation API](https://caniuse.com/screen-orientation)
-- [MDN - ScreenOrientation.lock()](https://developer.mozilla.org/en-US/docs/Web/API/ScreenOrientation/lock)
-- [MDN - CSS orientation media feature](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/@media/orientation)
+- [pitchy GitHub — ianprime0509/pitchy](https://github.com/ianprime0509/pitchy) — Algorithm, API, v4.1.0 release, ESM-only status
+- [McLeod, Philip & Wyvill, Geoff: "A Smarter Way to Find Pitch" (2005)](https://www.cs.otago.ac.nz/research/publications/oucs-2008-03.pdf) — MPM algorithm foundation
+- [MDN AnalyserNode.fftSize](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/fftSize) — Valid sizes, default behavior
+- [MDN AnalyserNode.smoothingTimeConstant](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode) — Temporal smoothing behavior
+- [MDN getUserMedia audio constraints](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackSettings/echoCancellation) — echoCancellation, noiseSuppression, autoGainControl
+- [apankrat/note-detector](https://github.com/apankrat/note-detector) — Consensus detection approach (YIN + MPM + autocorrelation) for context
+- [Chrome Developer Blog: Audio Worklet design pattern](https://developer.chrome.com/blog/audio-worklet-design-pattern) — AudioWorklet + SharedArrayBuffer pattern
+- [Pitch detection algorithm — Wikipedia](https://en.wikipedia.org/wiki/Pitch_detection_algorithm) — Algorithm comparison overview
 
-### iOS PWA Limitations
-- [PWA on iOS - Current Status & Limitations [2025]](https://brainhub.eu/library/pwa-on-ios)
-- [PWA iOS Limitations and Safari Support: Complete Guide](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide)
-- [Danny Moerkerke on X: iOS PWA limitations](https://x.com/dannymoerkerke/status/1803055577100091874)
-- [Can we lock the orientation of PWA apps in iOS?](https://basecamp.temenos.com/s/question/0D56N00000mpN5U/can-we-lock-the-orientation-of-pwa-apps-in-ios)
+---
 
-### Implementation Patterns
-- [CSS Orientation Media Queries: Complete Guide](https://codelucky.com/css-orientation-media-queries/)
-- [How to Detect Device Orientation with CSS Media Queries](https://www.w3docs.com/snippets/css/how-to-detect-device-orientation-with-css-media-queries.html)
-- [Tailwind CSS: How to Detect Device Orientation](https://www.kindacode.com/article/tailwind-css-how-to-detect-device-orientation)
-- [Let's create a custom hook useScreenOrientation](https://medium.com/@perenciolo659/let-s-create-a-custom-hook-usescreenorientation-e5f66919b8b)
-- [Using window.matchMedia in React](https://betterprogramming.pub/using-window-matchmedia-in-react-8116eada2588)
-
-### React Hooks & Libraries
-- [useOrientation React Hook – useHooks](https://usehooks.com/useorientation)
-- [useMediaQuery React Hook – useHooks](https://usehooks.com/usemediaquery)
-- [react-screen-orientation - npm](https://www.npmjs.com/package/react-screen-orientation)
-- [react-device-detect - npm](https://www.npmjs.com/package/react-device-detect)
-
-### Animation Resources
-- [Tailwind CSS Animation](https://tailwindcss.com/docs/animation)
-- [How to Integrate Tailwind with Framer Motion for Animations](https://tailkits.com/blog/how-to-integrate-tailwind-with-framer-motion/)
-- [Comparing the best React animation libraries for 2026](https://blog.logrocket.com/best-react-animation-libraries/)
-- [tailwindcss-animate GitHub](https://github.com/jamiebuilds/tailwindcss-animate)
-
-### Icons
-- [Lucide Icons - Smartphone](https://lucide.dev/icons/smartphone)
-- [Lucide Icons - RotateCw](https://lucide.dev/icons/rotate-cw)
-- [Lucide React Documentation](https://lucide.dev/guide/packages/lucide-react)
-
-### PWA Orientation Locking
-- [How to Lock Screen Orientation in PWA Using manifest.json](https://nashatech.com/blogs/sXOqruRY2ECD5EIVqwP9/)
-- [Realizing a PWA Screen Orientation Lock](https://hearthero.medium.com/locking-orientation-for-ionic-pwas-7c75c5bb3639)
-- [PWA: Automatic screen orientation does not work in Chrome on Android](https://github.com/photoprism/photoprism/issues/3413)
-- [W3C Screen Orientation Specification](https://w3c.github.io/screen-orientation/)
+*Stack research for: Pro-level piano pitch detection in browser PWA*
+*Researched: 2026-02-17*

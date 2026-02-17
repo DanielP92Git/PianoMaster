@@ -1,904 +1,566 @@
-# Architecture Integration for Trail Visual Redesign
+# Architecture Research
 
-**Project:** Trail Page UI Redesign
-**Researched:** 2026-02-09
-**Target Scope:** Vertical zigzag mobile layout, horizontal desktop layout, enchanted forest theme
-
-## Executive Summary
-
-The trail redesign requires **selective component rewrites** rather than a full rebuild. The existing data layer (`skillTrail.js`, progress services) is robust and untouched. The UI layer needs a **new responsive layout system** with **enhanced CSS effects**. Core changes:
-
-1. **TrailMap.jsx** → Major rewrite (layout logic from 3-row stacking to vertical/horizontal responsive)
-2. **TrailNode.jsx** → CSS enhancement (3D glowing buttons, radial gradients)
-3. **TrailMapPage.jsx** → Minor modification (add tab switcher, update header)
-4. **PathConnector** → Moderate rewrite (glowing animated SVG paths)
-5. **UnitSection** → Remove/replace (unit cards become per-node indicators)
-6. **New: TabSwitcher.jsx** → Path navigation component
-7. **New: trail-effects.css** → Enchanted forest CSS module
-
-The redesign maintains all existing data flow and navigation patterns. No changes to:
-- `skillProgressService.js`
-- `dailyGoalsService.js`
-- `skillTrail.js` node definitions
-- `TrailNodeModal.jsx` (unchanged functionality)
+**Domain:** Pitch Detection Pipeline Refactor — React PWA (piano learning)
+**Researched:** 2026-02-17
+**Confidence:** HIGH (direct codebase analysis + verified browser API support data)
 
 ---
 
-## Component Analysis
+## Diagnosis: What Exists Today
 
-### 1. TrailMapPage.jsx (MINOR MODIFICATION)
+Before recommending architecture, the current state must be understood precisely from the source code.
 
-**Current State:**
-- `fixed inset-0` full-viewport container
-- Dark gradient background (`bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900`)
-- Simple navigation bar with level badge + free practice link
-- Renders `<TrailMap />` directly
+### Current Hook Hierarchy
 
-**Required Changes:**
-```diff
-+ Add TabSwitcher component above TrailMap
-+ Replace background with forest-themed container (CSS class)
-+ Update header to show "Learning Paths" title
-+ Add Quicksand font family
-- Remove subtle star accent (replaced by forest effects)
+```
+usePitchDetection.js          Layer 1: Raw signal -> frequency -> note string
+    ^-- wraps
+useMicNoteInput.js            Layer 2: Frequency events -> stable note-on/note-off
+    ^-- consumed by
+SightReadingGame.jsx          Uses useMicNoteInput + useAudioEngine (two separate contexts)
+
+NotesRecognitionGame.jsx      Has its own INLINE COPY of usePitchDetection logic
+                              (250+ lines: getUserMedia, detectLoop, frequencyToNote, detectPitch)
+                              This is the primary duplication problem.
+
+MetronomeTrainer.jsx          Uses tap gestures only, no mic pitch detection.
+                              Uses useAudioEngine for playback scheduling.
 ```
 
-**Complexity:** Low (primarily markup + CSS class changes)
+### Critical Problem: Multiple AudioContexts
 
-**Build Order:** Phase 2 (after CSS module, before layout rewrite)
+Every hook that touches Web Audio creates its own `AudioContext`:
+- `usePitchDetection.startListening()` creates a new AudioContext on each call
+- `useAudioEngine` creates its own AudioContext on mount
+- `NotesRecognitionGame.startAudioInput()` creates yet another AudioContext inline
+
+When `SightReadingGame` runs, it has **two simultaneous AudioContexts**: one from `useAudioEngine` (for metronome/playback) and one from `usePitchDetection` (for mic input). Problems:
+- iOS Safari has undocumented limits on concurrent AudioContext instances — silent failures observed
+- Each context consumes audio hardware independently
+- Cleanup bugs multiply — each context must be closed separately
+- Mic stream timing is disconnected from playback timing, making beat-correlation harder
+
+### Current Detection Algorithm
+
+`usePitchDetection` uses simplified time-domain autocorrelation:
+- FFT size: 2048 samples at ~60fps via `requestAnimationFrame`
+- `GOOD_ENOUGH_CORRELATION = 0.9` hardcoded
+- No parabolic interpolation between bins
+- Octave errors are common: detects F3 when F4 is played
+
+### What Each Game Actually Needs from Mic Input
+
+| Game | Needs Pitch | Needs Timing | Current State |
+|------|------------|--------------|---------------|
+| SightReadingGame | Yes | Yes — note-on vs. expected beat | Uses `useMicNoteInput` (correct) |
+| NotesRecognitionGame | Yes | No — just "did they play X" | Has inline detection copy (wrong) |
+| MetronomeTrainer | No | Yes — tap timestamps vs. beat | No mic, uses tap events only |
 
 ---
 
-### 2. TrailMap.jsx (MAJOR REWRITE)
+## Recommended Architecture
 
-**Current State:**
-- Renders 3 `<TrailSection>` components (Treble, Bass, Rhythm)
-- Each section visible simultaneously (vertical scroll)
-- `UnitSection` → collapsible unit cards with horizontal node layout
-- Uses SVG `<foreignObject>` for node positioning
-- Container width measured via `useRef` + `useEffect`
+### Guiding Principle
 
-**Required Changes:**
+**One AudioContext, shared.** Everything else is a layer on top of it.
 
-#### Phase 1: Tab-Based Path Switching
-```javascript
-// Replace parallel rendering with single active path
-const [activeCategory, setActiveCategory] = useState('treble_clef')
+The Web Audio API specification explicitly states that multiple audio sources and pipelines can share a single AudioContext. A shared context means:
+- One permission prompt for the entire game session
+- Mic stream connects to the same context as playback (enables future timing correlation)
+- Single cleanup path on game exit
+- Predictable behavior on iOS Safari
 
-// Filter nodes by active category
-const activeNodes = getNodesByCategory(activeCategory)
+### System Overview
 
-// Pass to single TrailSection (or new TrailPath component)
-<TrailPath
-  nodes={activeNodes}
-  category={activeCategory}
-  // ... progress props
-/>
+```
++-----------------------------------------------------------------------+
+|                      GAME COMPONENTS (consumers)                      |
+|  +------------------+  +-------------------+  +-------------------+  |
+|  | SightReadingGame |  | NotesRecognitionGm|  | MetronomeTrainer  |  |
+|  | needs: pitch     |  | needs: pitch      |  | needs: playback   |  |
+|  |         timing   |  |                   |  |         tap timing|  |
+|  +--------+---------+  +----------+--------+  +---------+---------+  |
+|           |                       |                     |            |
++-----------|------------------------|---------------------|------------+
+|                    FEATURE HOOKS (composable units)                   |
+|  +--------------------+     +--------------------------------------+  |
+|  |  useMicNoteInput   |     |         useAudioEngine               |  |
+|  | (stability layer)  |     | (scheduling, metronome, playback)    |  |
+|  +----------+---------+     +-----------------+--------------------+  |
+|             |                                 |                       |
+|  +----------+---------------------------------+--------------------+  |
+|  |               usePitchDetection (detection algorithm)           |  |
+|  +-------------------------------+---------------------------------+  |
+|                                  |                                    |
++----------------------------------|------------------------------------+
+|                   AudioContext PROVIDER (new)                         |
+|  +---------------------------------------------------------------+   |
+|  |  AudioContextProvider (React Context)                         |   |
+|  |  - one AudioContext, created on first user interaction        |   |
+|  |  - owns: audioContextRef, micStreamRef, analyserNodeRef       |   |
+|  |  - provides: initialize(), isReady state                      |   |
+|  +---------------------------------------------------------------+   |
++-----------------------------------------------------------------------+
 ```
 
-#### Phase 2: Responsive Layout Logic
-```javascript
-// Desktop: Horizontal wavy path (current logic preserved)
-// Mobile: Vertical zigzag path (new layout)
+### Component Responsibilities
 
-const isMobile = useMediaQuery('(max-width: 768px)')
-
-if (isMobile) {
-  return <VerticalZigzagLayout nodes={activeNodes} />
-} else {
-  return <HorizontalWavyLayout nodes={activeNodes} />
-}
-```
-
-**Vertical Zigzag Layout:**
-- Stack nodes vertically (40-60px spacing)
-- Alternate left/right positioning (20-30% horizontal offset)
-- PathConnector draws S-curves between offset nodes
-- No SVG container width measurement needed (fixed column layout)
-
-**Horizontal Wavy Layout:**
-- Keep existing `containerWidth` measurement
-- Keep existing sine wave `verticalWobble` calculation
-- Enhance PathConnector glow effects
-
-#### Phase 3: Remove UnitSection Logic
-```diff
-- Collapsible unit cards with header
-- Unit progress aggregation
-- Expanded/collapsed state management
-+ Show all nodes in selected path
-+ Unit indicators per-node (small badge above node)
-```
-
-**Complexity:** High (layout rewrite, responsive breakpoints, state refactor)
-
-**Build Order:** Phase 3-4 (core milestone work)
+| Component | Responsibility | File Location |
+|-----------|---------------|---------------|
+| `AudioContextProvider` | Owns the single AudioContext and mic stream. Creates lazily on user interaction. Cleans up on unmount. | `src/contexts/AudioContextProvider.jsx` (new) |
+| `usePitchDetection` | Connects to context's analyserNode. Runs detection algorithm. Returns raw `{ frequency, note }`. No AudioContext management. | `src/hooks/usePitchDetection.js` (modify) |
+| `useMicNoteInput` | Stability debouncing: frame counting, note-on/note-off semantics, preset configs. | `src/hooks/useMicNoteInput.js` (minor modify) |
+| `useAudioEngine` | Playback: metronome scheduling, piano sounds, timing math. Receives audioContextRef from provider. | `src/hooks/useAudioEngine.js` (modify) |
+| `MIC_INPUT_PRESETS` | Per-game stability parameters. | `src/hooks/micInputPresets.js` (keep as-is) |
 
 ---
 
-### 3. TrailNode.jsx (CSS ENHANCEMENT)
+## Recommended Project Structure (Delta Only)
 
-**Current State:**
-- Flat circular/rounded buttons (`rounded-xl`)
-- Simple gradient backgrounds (via `getCategoryColors()`)
-- 2D shadow effects (`shadow-[0_0_15px_rgba(...)]`)
-- Stars displayed above node (3 slots)
-- Icon from `getNodeStateConfig()` utility
-
-**Required Changes:**
-```diff
-+ Add 3D depth via layered shadows (3-4 shadow layers)
-+ Replace simple gradients with radial gradients (center glow)
-+ Add CSS transform for pseudo-3D effect (translateZ + perspective)
-+ Enhance glow with animated pulse (CSS keyframes)
-- Keep existing state logic (locked/available/completed/mastered)
-- Keep existing icon system
-- Keep existing star display
-```
-
-**CSS Pattern:**
-```css
-.trail-node-3d {
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.3),
-    var(--category-color) 50%,
-    var(--category-color-dark) 100%
-  );
-  box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.1),          /* Base shadow */
-    0 4px 8px rgba(0, 0, 0, 0.15),         /* Mid shadow */
-    0 8px 16px rgba(0, 0, 0, 0.2),         /* Deep shadow */
-    0 0 20px var(--glow-color);            /* Category glow */
-  transform: translateZ(0); /* GPU acceleration */
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.trail-node-3d:hover {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow:
-    0 4px 8px rgba(0, 0, 0, 0.15),
-    0 8px 16px rgba(0, 0, 0, 0.2),
-    0 16px 32px rgba(0, 0, 0, 0.25),
-    0 0 30px var(--glow-color);
-}
-```
-
-**Complexity:** Low-Medium (CSS-focused, minimal JSX changes)
-
-**Build Order:** Phase 2 (parallel with CSS module creation)
-
----
-
-### 4. PathConnector Component (MODERATE REWRITE)
-
-**Current State:**
-```javascript
-// Simple curved SVG path with optional glow for completed paths
-<g>
-  {isCompleted && <path /* blur glow */ />}
-  <path d={curvedPath} stroke={color} strokeDasharray={...} />
-</g>
-```
-
-**Required Changes:**
-
-#### Animated Glowing Paths
-```javascript
-// Add animated gradient definitions
-<defs>
-  <linearGradient id="path-glow-${id}">
-    <stop offset="0%" stopColor="var(--glow-start)">
-      <animate attributeName="stop-color"
-        values="var(--glow-start);var(--glow-mid);var(--glow-start)"
-        dur="2s" repeatCount="indefinite" />
-    </stop>
-    <stop offset="100%" stopColor="var(--glow-end)" />
-  </linearGradient>
-</defs>
-
-<g>
-  {/* Outer glow layer */}
-  <path d={path} stroke="url(#path-glow-${id})" strokeWidth="16"
-    opacity="0.4" filter="blur(8px)" />
-
-  {/* Inner glow layer */}
-  <path d={path} stroke="var(--glow-core)" strokeWidth="8"
-    opacity="0.7" filter="blur(4px)" />
-
-  {/* Main path */}
-  <path d={path} stroke="var(--path-color)" strokeWidth="4" />
-
-  {/* Animated sparkles (for completed paths) */}
-  {isCompleted && <AnimatedSparkles path={path} />}
-</g>
-```
-
-#### Responsive Path Calculation
-```javascript
-// Mobile: Vertical S-curves
-// Desktop: Horizontal waves (keep existing logic)
-
-const getPathData = (startX, startY, endX, endY, isMobile) => {
-  if (isMobile) {
-    // S-curve for vertical zigzag
-    const midY = (startY + endY) / 2
-    return `M ${startX} ${startY}
-            C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`
-  } else {
-    // Keep existing horizontal curve logic
-    // ...
-  }
-}
-```
-
-**Complexity:** Medium (SVG filters, gradient animation, responsive logic)
-
-**Build Order:** Phase 3 (after layout rewrite confirms node positions)
-
----
-
-### 5. UnitSection Component (REMOVE/REPLACE)
-
-**Current State:**
-- Collapsible card wrapper (`rounded-2xl bg-white/5`)
-- Unit header with icon, name, progress stats
-- Horizontal node layout in SVG
-- Expand/collapse state management
-
-**Required Changes:**
-```diff
-- Remove entire component
-+ Replace with per-node unit indicator badges
-+ Move progress stats to header summary (per-path)
-```
-
-**New Pattern:**
-```javascript
-// In TrailNode.jsx
-{node.unit && (
-  <div className="absolute -top-8 left-1/2 -translate-x-1/2">
-    <span className="text-xs text-white/60 font-semibold">
-      Unit {node.unit}
-    </span>
-  </div>
-)}
-```
-
-**Complexity:** Low (deletion + small badge addition)
-
-**Build Order:** Phase 3 (during layout rewrite)
-
----
-
-### 6. TrailNodeModal.jsx (NO CHANGES)
-
-**Current State:**
-- Modal overlay with node details
-- Exercise list with completion status
-- "Start Practice" navigation button
-- Multi-exercise support with sequential progression
-
-**Required Changes:** None
-
-**Rationale:** Modal functionality is independent of trail layout. The visual redesign affects the trail page, not the modal interaction flow.
-
-**Build Order:** N/A (not modified)
-
----
-
-## New Components
-
-### 1. TabSwitcher.jsx (NEW)
-
-**Purpose:** Navigate between Treble, Bass, Rhythm paths
-
-**Design:**
-```javascript
-<div className="flex gap-2 justify-center mb-6">
-  {paths.map(path => (
-    <button
-      key={path.id}
-      onClick={() => setActiveCategory(path.id)}
-      className={`
-        px-6 py-3 rounded-full font-semibold
-        transition-all duration-300
-        ${activeCategory === path.id
-          ? 'bg-white text-indigo-900 shadow-lg scale-105'
-          : 'bg-white/10 text-white hover:bg-white/20'}
-      `}
-    >
-      {path.icon} {path.name}
-    </button>
-  ))}
-</div>
-```
-
-**Props:**
-- `activeCategory: string` - Currently selected path ID
-- `onCategoryChange: (id: string) => void` - Selection callback
-- `paths: Array<{ id, name, icon }>` - Path metadata
-
-**Responsive:**
-- Mobile: Full-width buttons, stacked if needed
-- Desktop: Horizontal row, centered
-
-**Complexity:** Low (simple button group)
-
-**Build Order:** Phase 2 (before layout rewrite)
-
----
-
-### 2. trail-effects.css (NEW CSS MODULE)
-
-**Purpose:** Enchanted forest CSS effects (backgrounds, animations, glows)
-
-**Key Styles:**
-
-#### Forest Background
-```css
-.trail-forest-bg {
-  background: linear-gradient(
-    180deg,
-    #0f172a 0%,      /* Deep night blue */
-    #1e293b 30%,     /* Slate */
-    #334155 60%,     /* Lighter slate */
-    #475569 100%     /* Horizon glow */
-  );
-  position: relative;
-  overflow: hidden;
-}
-
-.trail-forest-bg::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(2px 2px at 20% 30%, white, transparent),
-    radial-gradient(2px 2px at 60% 70%, white, transparent),
-    radial-gradient(1px 1px at 50% 50%, white, transparent);
-  background-size: 200px 200px, 300px 300px, 150px 150px;
-  animation: starfield 60s linear infinite;
-  opacity: 0.4;
-}
-
-@keyframes starfield {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-200px); }
-}
-```
-
-#### Node Glow Effects
-```css
-.node-glow-treble {
-  --glow-color: rgba(59, 130, 246, 0.6);      /* Blue */
-  --glow-start: #3b82f6;
-  --glow-mid: #60a5fa;
-}
-
-.node-glow-bass {
-  --glow-color: rgba(168, 85, 247, 0.6);      /* Purple */
-  --glow-start: #a855f7;
-  --glow-mid: #c084fc;
-}
-
-.node-glow-rhythm {
-  --glow-color: rgba(16, 185, 129, 0.6);      /* Green */
-  --glow-start: #10b981;
-  --glow-mid: #34d399;
-}
-```
-
-#### Path Glow Animation
-```css
-@keyframes path-pulse {
-  0%, 100% {
-    filter: brightness(1) drop-shadow(0 0 8px var(--glow-color));
-  }
-  50% {
-    filter: brightness(1.3) drop-shadow(0 0 16px var(--glow-color));
-  }
-}
-
-.path-animated {
-  animation: path-pulse 2s ease-in-out infinite;
-}
-```
-
-#### Quicksand Font Import
-```css
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
-
-.trail-text {
-  font-family: 'Quicksand', sans-serif;
-}
-```
-
-**Build Order:** Phase 1 (foundation before component work)
-
----
-
-## CSS Architecture
-
-### Where Do Forest Styles Live?
-
-**Recommended Approach:** Dedicated CSS module + Tailwind utilities
+Only new or changed files from the current state:
 
 ```
 src/
-├── components/trail/
-│   ├── trail-effects.css     ← NEW: Forest theme styles
-│   ├── TrailMap.jsx           (imports trail-effects.css)
-│   ├── TrailNode.jsx
-│   └── PathConnector.jsx
-└── index.css                  (existing global styles, no changes)
++-- contexts/
+|   +-- AudioContextProvider.jsx    NEW: single AudioContext + mic stream ownership
++-- hooks/
+|   +-- usePitchDetection.js        MODIFY: accept analyserNode from context param
+|   +-- useMicNoteInput.js          MINOR: remove AudioContext creation, delegate to provider
+|   +-- useAudioEngine.js           MODIFY: accept shared audioContextRef prop
+|   +-- micInputPresets.js          KEEP: no changes needed
++-- components/games/
+    +-- notes-master-games/
+        +-- NotesRecognitionGame.jsx MODIFY: replace ~250 lines inline detection with useMicNoteInput
 ```
 
-### Import Pattern
-```javascript
-// TrailMapPage.jsx
-import './trail/trail-effects.css'
+App tree wiring (add `AudioContextProvider` at game route boundary in `AppLayout.jsx`):
 
-// Component usage
-<div className="trail-forest-bg fixed inset-0 overflow-y-auto">
-  <TrailMap />
-</div>
 ```
-
-### Why Not Global CSS?
-
-1. **Scoped styles** - Forest effects only apply to trail page
-2. **Performance** - CSS module not loaded on other pages
-3. **Maintainability** - Trail redesign CSS isolated from design system
-4. **Clean rollback** - Remove single file to revert styles
-
-### Tailwind Integration
-
-**Use Tailwind for:**
-- Layout utilities (flex, grid, spacing)
-- Responsive breakpoints (md:, lg:)
-- Interactive states (hover:, focus:)
-
-**Use trail-effects.css for:**
-- Complex gradients (radial, multi-stop)
-- Keyframe animations (starfield, pulse, glow)
-- CSS custom properties (--glow-color)
-- Pseudo-elements (::before, ::after for effects)
+AppLayout.jsx
++-- [dashboard, trail, settings routes] → no AudioContextProvider
++-- [game routes] → wrapped in AudioContextProvider
+    +-- SightReadingGame
+    +-- NotesRecognitionGame
+    +-- MetronomeTrainer
+```
 
 ---
 
-## Responsive Strategy
+## Architectural Patterns
 
-### Breakpoint System
+### Pattern 1: Shared AudioContext via React Context
 
-```javascript
-// Use Tailwind breakpoints for consistency
-const breakpoints = {
-  mobile: '(max-width: 767px)',    // md: breakpoint
-  desktop: '(min-width: 768px)'
-}
+**What:** `AudioContextProvider` wraps all game routes. It creates one `AudioContext` lazily (on first user interaction, required by browser autoplay policy) and exposes it via React Context. All hooks that need Web Audio receive the shared context.
 
-// React hook
-const isMobile = useMediaQuery('(max-width: 767px)')
-```
+**When to use:** Always — for every game in this app.
 
-### Layout Switch Logic
+**Trade-offs:** One more indirection step. Games cannot fully self-contain their audio teardown. Worth it: iOS Safari's limit on concurrent AudioContexts is a real constraint causing silent failures in the current architecture.
+
+**Example:**
 
 ```javascript
-// TrailMap.jsx
-const TrailMap = () => {
-  const isMobile = useMediaQuery('(max-width: 767px)')
+// src/contexts/AudioContextProvider.jsx
+
+const AudioContextContext = createContext(null);
+
+export function AudioContextProvider({ children }) {
+  const contextRef = useRef(null);
+  const gainNodeRef = useRef(null);
+  const analyserNodeRef = useRef(null);
+  const micStreamRef = useRef(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // Called from a click handler — never from useEffect
+  const initialize = useCallback(async () => {
+    if (contextRef.current) return contextRef.current;
+
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioCtx();
+
+    const gain = ctx.createGain();
+    gain.connect(ctx.destination);
+
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    analyser.smoothingTimeConstant = 0.8;
+
+    contextRef.current = ctx;
+    gainNodeRef.current = gain;
+    analyserNodeRef.current = analyser;
+
+    if (ctx.state === 'suspended') {
+      await ctx.resume();
+    }
+
+    setIsReady(true);
+    return ctx;
+  }, []);
+
+  // Called when starting mic input
+  const initializeMic = useCallback(async () => {
+    if (micStreamRef.current) return; // already open
+
+    const ctx = contextRef.current || await initialize();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = ctx.createMediaStreamSource(stream);
+    source.connect(analyserNodeRef.current);
+    micStreamRef.current = stream;
+  }, [initialize]);
+
+  const stopMic = useCallback(() => {
+    if (micStreamRef.current) {
+      micStreamRef.current.getTracks().forEach(track => {
+        if (track.readyState !== 'ended') track.stop();
+      });
+      micStreamRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopMic();
+      if (contextRef.current && contextRef.current.state !== 'closed') {
+        contextRef.current.close();
+      }
+    };
+  }, [stopMic]);
+
+  const value = useMemo(() => ({
+    audioContextRef: contextRef,
+    gainNodeRef,
+    analyserNodeRef,
+    isReady,
+    initialize,
+    initializeMic,
+    stopMic,
+  }), [isReady, initialize, initializeMic, stopMic]);
 
   return (
-    <div className="trail-container">
-      {isMobile ? (
-        <VerticalZigzagLayout nodes={activeNodes} />
-      ) : (
-        <HorizontalWavyLayout nodes={activeNodes} />
-      )}
-    </div>
-  )
+    <AudioContextContext.Provider value={value}>
+      {children}
+    </AudioContextContext.Provider>
+  );
 }
+
+export const useAudioContext = () => useContext(AudioContextContext);
 ```
 
-### Vertical Zigzag Layout (Mobile)
+### Pattern 2: Layered Hook Composition (Preserve Existing Separation)
 
-**Container:**
-```css
-.vertical-zigzag-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem 1rem;
-  position: relative;
-}
-```
+**What:** The current two-layer design (`usePitchDetection` -> `useMicNoteInput`) is architecturally correct and must be kept. The layers have clear responsibilities:
+- Layer 1 (`usePitchDetection`): Signal processing — raw frequency detection
+- Layer 2 (`useMicNoteInput`): Event semantics — stability, debouncing, note-on/off
 
-**Node Positioning:**
+**When to use:** Always. Do not merge the layers.
+
+**Trade-offs:** Two hops of indirection. Worth it because stability parameters differ per game (tuned in `MIC_INPUT_PRESETS`) while the algorithm is shared.
+
+**After refactor, `usePitchDetection` becomes:**
+
 ```javascript
-// Alternate left/right
-const getZigzagPosition = (index) => {
-  const isLeft = index % 2 === 0
-  return {
-    x: isLeft ? '25%' : '75%',  // 25% offset from edges
-    y: index * 100,              // 100px vertical spacing
-    transform: `translateX(${isLeft ? -50 : 50}px)`
-  }
+// Modified: accepts analyserNode from context instead of creating AudioContext
+export function usePitchDetection({
+  analyserNode,        // From AudioContextProvider
+  sampleRate,          // From AudioContextProvider.audioContextRef.current.sampleRate
+  isActive = false,
+  onPitchDetected = null,
+  onLevelChange = null,
+  noteFrequencies = DEFAULT_NOTE_FREQUENCIES,
+  rmsThreshold = 0.01,
+  tolerance = 0.05,
+} = {}) {
+  // No getUserMedia() or AudioContext creation here
+  // Detection loop runs against provided analyserNode
+  // All existing detectPitch() and frequencyToNote() logic stays unchanged
 }
 ```
 
-**SVG Path:**
+`useMicNoteInput` stays nearly identical — it calls `usePitchDetection` and manages stability state. The only change: mic stream acquisition moves to `AudioContextProvider.initializeMic()`.
+
+### Pattern 3: Per-Game Configuration via Presets (Keep As-Is)
+
+**What:** Game-specific detection parameters live in `micInputPresets.js`. Each game passes its preset to `useMicNoteInput`. This is already implemented and correct.
+
+**Example (existing, no changes needed):**
+
 ```javascript
-// S-curve between vertically stacked nodes
-const midY = (startY + endY) / 2
-const path = `
-  M ${startX} ${startY}
-  C ${startX} ${midY},
-    ${endX} ${midY},
-    ${endX} ${endY}
-`
+// SightReadingGame.jsx — already correct
+const { audioLevel, isListening, startListening, stopListening } =
+  useMicNoteInput({
+    isActive: false,
+    noteFrequencies,
+    ...MIC_INPUT_PRESETS.sightReading,
+    onNoteEvent: handleNoteEvent,
+  });
+
+// NotesRecognitionGame.jsx — after migration from inline code
+const { audioLevel, isListening, startListening, stopListening } =
+  useMicNoteInput({
+    isActive: false,
+    noteFrequencies: hebrewNoteFrequencies,
+    ...MIC_INPUT_PRESETS.notesRecognition,
+    onNoteEvent: handleNoteEvent,
+  });
 ```
 
-### Horizontal Wavy Layout (Desktop)
+### Pattern 4: AudioWorklet Deferral — Do Not Use Yet
 
-**Keep Existing Logic:**
-- Container width measurement via `useRef`
-- Sine wave vertical offset (`Math.sin(index * 0.7) * WAVE_AMPLITUDE`)
-- Horizontal spacing (`availableWidth / (numNodes - 1)`)
+**What:** AudioWorklet runs detection on the audio rendering thread, off the main thread.
 
-**Enhance:**
-- Smoother curves via increased `cpOffset` control points
-- Larger `NODE_SIZE` (80px vs 70px for desktop)
-- Increased glow intensity
+**Why not now:**
+- The current autocorrelation loop at ~60fps takes approximately 2-5% CPU per the implementation docs. This is not a measurable performance problem.
+- AudioWorklet requires a separate processor `.js` file served from same origin, loaded via `audioContext.audioWorklet.addModule(url)` — Vite needs special configuration for this.
+- iOS Safari introduced AudioWorklet in 14.5 but has documented bugs on iPhone (not iPad/Mac) — Apple Developer Forums show active AudioWorklet issues as of iOS 18 (2024).
+- MessagePort serialization overhead for sending audio data back to the main thread partially negates the off-thread benefit when note matching still happens on the main thread anyway.
+
+**Decision:** Keep `requestAnimationFrame` + `AnalyserNode.getFloatTimeDomainData()`. It is sufficient. Flag AudioWorklet as a revisit item only if CPU profiling ever shows main-thread audio pressure.
 
 ---
 
 ## Data Flow
 
-### Unchanged Flow (Preserved)
+### Mic Pitch Detection Flow (After Refactor)
 
 ```
-User → Dashboard "Continue Learning"
-     → TrailMapPage
-     → TrailMap
-     → Node Click
-     → TrailNodeModal
-     → "Start Practice"
-     → Game Component
-
-Progress saved → VictoryScreen
-              → updateNodeProgress()
-              → Re-fetch progress
-              → Trail updates node state
+User clicks "Start Game" button
+    |
+    v
+AudioContextProvider.initialize()
+    --> new AudioContext()
+    --> getUserMedia({ audio: true })
+    --> context.createMediaStreamSource(stream)
+    --> source.connect(analyserNode)
+    |
+    v
+usePitchDetection receives analyserNode
+    --> requestAnimationFrame loop
+    --> analyserNode.getFloatTimeDomainData(buffer)
+    --> detectPitch(buffer, sampleRate) --> frequency
+    --> frequencyToNote(frequency) --> note string
+    --> onPitchDetected(note, frequency) callback
+    |
+    v
+useMicNoteInput receives onPitchDetected events
+    --> frame counting: candidateFrames >= onFrames
+    --> emit({ type: 'noteOn', pitch, time, frequency })
+    |
+    v
+Game component (onNoteEvent handler)
+    --> check against expected note / timing window
+    --> update score and feedback state
 ```
 
-### New Flow (Tab Navigation)
+### Playback and Detection Coordination Flow
 
 ```
-User → TrailMapPage
-     → TabSwitcher
-     → setActiveCategory(category)
-     → TrailMap re-renders with filtered nodes
-     → Single path displayed (Treble OR Bass OR Rhythm)
+AudioContextProvider.audioContextRef (single context)
+    |
+    +-- useAudioEngine reads it:
+    |       --> schedules metronome clicks via audioContext.currentTime
+    |       --> createOscillator(), scheduleEvent()
+    |
+    +-- usePitchDetection reads it:
+            --> analyserNode.getFloatTimeDomainData() for pitch
+            --> performance.now() for event timestamps
+
+SightReadingGame correlates:
+    --> audioEngine.getCurrentTime() (audioContext.currentTime, seconds)
+    --> useMicNoteInput noteOn event.time (performance.now(), ms)
+    --> timing window check: is the note-on within +/- N ms of expected beat?
 ```
 
-**State Management:**
-```javascript
-// TrailMapPage.jsx
-const [activeCategory, setActiveCategory] = useState('treble_clef')
+Note: `audioContext.currentTime` and `performance.now()` are different clocks. The correlation already works in the existing code via the `useTimingAnalysis` hook. The refactor does not change this. Sharing the AudioContext opens the future option of reading `audioContext.currentTime` directly from mic events for tighter timing accuracy.
 
-// Pass down
-<TabSwitcher
-  activeCategory={activeCategory}
-  onCategoryChange={setActiveCategory}
-/>
+### State Management for Audio
 
-<TrailMap activeCategory={activeCategory} />
-```
+Audio state must NOT go into React `useState` for the hot path. The current `useRef` pattern for audio nodes, streams, and animation frames is correct and must be preserved.
 
-**TrailMap receives category, filters nodes:**
-```javascript
-// TrailMap.jsx
-const TrailMap = ({ activeCategory }) => {
-  const activeNodes = getNodesByCategory(activeCategory)
-  // Render single path
-}
-```
+`useState` is appropriate only for:
+- `isListening` — drives the mic indicator UI
+- `audioLevel` — drives the level meter (throttle updates to every 5th frame)
+- `isReady` — drives "mic not ready" user warnings
 
-### Progress Data Flow (Unchanged)
-
-```javascript
-// Existing hooks and services preserved
-const { data: progress } = useQuery({
-  queryKey: ['student-progress', user.id],
-  queryFn: () => getStudentProgress(user.id)
-})
-
-const completedNodeIds = getCompletedNodeIds(user.id)
-const unlockedNodes = calculateUnlockedNodes(progress, completedNodeIds)
-
-// Node state determined client-side (no service changes)
-const isUnlocked = unlockedNodes.has(node.id)
-const isCompleted = completedNodeIds.includes(node.id)
-```
+Everything else — AudioContext, AnalyserNode, MediaStream, animationFrameRef — stays in refs. This is the existing pattern in `usePitchDetection.js` and `useAudioEngine.js`. Preserve it.
 
 ---
 
 ## Integration Points
 
-### TrailMapPage ↔ TrailMap
-- **Prop:** `activeCategory: string` (new)
-- **Data:** Progress fetching stays in TrailMap (React Query)
-- **Layout:** TrailMapPage adds TabSwitcher, passes category selection
+### New vs. Modified Files (Explicit)
 
-### TrailMap ↔ TrailNode
-- **Prop:** `node: object` (unchanged)
-- **Prop:** `progress: object` (unchanged)
-- **Prop:** `isUnlocked: boolean` (unchanged)
-- **Prop:** `onClick: function` (unchanged)
-- **CSS:** TrailNode receives new CSS classes for 3D effects
+| File | Action | What Changes |
+|------|--------|-------------|
+| `src/contexts/AudioContextProvider.jsx` | CREATE | New context owns AudioContext, mic stream, analyserNode |
+| `src/hooks/usePitchDetection.js` | MODIFY | Remove `getUserMedia` and `AudioContext` creation; add `analyserNode` and `sampleRate` params; keep all detection logic |
+| `src/hooks/useMicNoteInput.js` | MINOR MODIFY | `startListening` calls `AudioContextProvider.initializeMic()` instead of managing its own stream |
+| `src/hooks/useAudioEngine.js` | MODIFY | Accept shared `audioContextRef` and `gainNodeRef` from `useAudioContext()` instead of `new AudioContext()` on mount |
+| `src/components/games/notes-master-games/NotesRecognitionGame.jsx` | MODIFY | Replace ~250 lines of inline detection (`startAudioInput`, `detectPitch`, `frequencyToNote`, `detectLoop`) with `useMicNoteInput` + `MIC_INPUT_PRESETS.notesRecognition` |
+| `src/hooks/micInputPresets.js` | KEEP | No changes needed |
+| `src/components/layout/AppLayout.jsx` | MODIFY | Wrap game routes with `AudioContextProvider` |
 
-### TrailMap ↔ PathConnector
-- **Prop:** `startX, startY, endX, endY` (unchanged positions)
-- **Prop:** `isCompleted: boolean` (unchanged)
-- **Prop:** `isMobile: boolean` (NEW - responsive path calculation)
-- **Prop:** `category: string` (NEW - glow color selection)
+### Where AudioContextProvider Mounts in the Component Tree
 
-### TrailNode ↔ TrailNodeModal
-- **Prop:** `node: object` (unchanged)
-- **Unchanged:** Modal functionality, exercise list, navigation
+Mount at the game route boundary — not at app root. Mic permission must not be requested until a user enters a game. The existing `AppLayout.jsx` already distinguishes game routes (they hide sidebar/header). Use the same boundary:
 
----
+```jsx
+// AppLayout.jsx — existing isGameRoute logic already gates sidebar/header
+const isGameRoute =
+  location.pathname.startsWith('/notes-master-mode') ||
+  location.pathname.startsWith('/rhythm-mode') ||
+  location.pathname.startsWith('/practice');
 
-## Component Dependency Graph
-
-```
-TrailMapPage.jsx (minor changes)
-├── TabSwitcher.jsx (NEW)
-│   └── setActiveCategory callback → TrailMapPage state
-└── TrailMap.jsx (major rewrite)
-    ├── getNodesByCategory(activeCategory) → filtered nodes
-    ├── VerticalZigzagLayout (NEW for mobile)
-    │   ├── TrailNode.jsx (CSS enhancement)
-    │   └── PathConnector (rewrite)
-    └── HorizontalWavyLayout (existing, enhanced)
-        ├── TrailNode.jsx (CSS enhancement)
-        └── PathConnector (rewrite)
-
-TrailNode.jsx (CSS changes)
-├── nodeTypeStyles.js (unchanged utility)
-└── TrailNodeModal.jsx (unchanged, triggered by onClick)
-
-trail-effects.css (NEW)
-├── .trail-forest-bg
-├── .node-glow-* variants
-└── @keyframes animations
+// Add AudioContextProvider at the same boundary
+{isGameRoute ? (
+  <AudioContextProvider>
+    <Outlet />
+  </AudioContextProvider>
+) : (
+  <Outlet />
+)}
 ```
 
----
+This ensures:
+- One AudioContext per game session, destroyed on route exit
+- Dashboard, trail, and settings pages never trigger mic permission
+- Context cleanup happens at the natural navigation boundary
 
-## Build Order (Phase Dependencies)
+### Browser Compatibility for This Architecture
 
-### Phase 1: Foundation (No Component Dependencies)
-1. **Create `trail-effects.css`**
-   - Forest background gradients
-   - Node glow CSS custom properties
-   - Keyframe animations (starfield, pulse)
-   - Quicksand font import
+The `requestAnimationFrame` + `AnalyserNode` approach has full target browser support. No compatibility gates needed.
 
-2. **Create `TabSwitcher.jsx`**
-   - Simple button group component
-   - No dependencies on TrailMap
-   - Can be built and styled independently
+| API | Chrome | Firefox | Safari Desktop | iOS Safari |
+|-----|--------|---------|---------------|------------|
+| AudioContext (webkit prefix) | 35+ | 25+ | 14.1+ (prefix 6+) | 14.5+ (prefix 6+) |
+| getUserMedia | 53+ | 36+ | 11+ | 11+ |
+| AnalyserNode.getFloatTimeDomainData | All | All | All | All |
+| requestAnimationFrame | All | All | All | All |
 
-**Deliverable:** CSS module + tab component ready for integration
-
----
-
-### Phase 2: Page-Level Integration (Depends on Phase 1)
-1. **Modify `TrailMapPage.jsx`**
-   - Import `trail-effects.css`
-   - Add `<TabSwitcher />` component
-   - Add `activeCategory` state
-   - Replace background className with `.trail-forest-bg`
-   - Update header title and font to Quicksand
-
-2. **Enhance `TrailNode.jsx` CSS**
-   - Add 3D shadow layers
-   - Replace flat gradients with radial gradients
-   - Add `.node-glow-*` classes
-   - Test node appearance with new styles
-
-**Deliverable:** Visual theme applied, tab switcher functional, nodes look 3D
+The `webkitAudioContext` fallback already in `useAudioEngine.js` and `usePitchDetection.js` covers older iOS. Keep it.
 
 ---
 
-### Phase 3: Layout Rewrite (Depends on Phase 2)
-1. **Add responsive layout logic to `TrailMap.jsx`**
-   - Add `useMediaQuery` hook
-   - Create `VerticalZigzagLayout` component (mobile)
-   - Create `HorizontalWavyLayout` component (desktop, wraps existing)
-   - Implement category filtering (`activeCategory` prop)
-   - Remove `UnitSection` rendering
+## Suggested Build Order
 
-2. **Rewrite `PathConnector` component**
-   - Add `isMobile` prop for path calculation
-   - Add `category` prop for glow color
-   - Implement animated gradient SVG
-   - Add multi-layer glow effect
+Build in this order: each step leaves the app in a working state.
 
-**Deliverable:** Responsive layout functional, single path displayed at a time
+**Step 1: Create `AudioContextProvider`**
+Standalone new file. Does not break any existing hooks. Add to game route wrapper in `AppLayout.jsx`. Test: game routes load without error; no AudioContext created until user interaction.
 
----
+**Step 2: Modify `useAudioEngine`**
+Accept `audioContextRef` and `gainNodeRef` from `useAudioContext()`. Keep internal fallback (creates own context) for tests. Test: MetronomeTrainer and SightReadingGame playback still works.
 
-### Phase 4: Polish & Animation (Depends on Phase 3)
-1. **Enhance PathConnector animations**
-   - Add animated sparkles for completed paths
-   - Fine-tune glow intensity
-   - Add hover effects
+**Step 3: Modify `usePitchDetection`**
+Accept `analyserNode` and `sampleRate` params. Keep existing internal path (creates own AudioContext) as fallback when params are not provided — this preserves test compatibility and README examples. Test: existing `usePitchDetection.test.js` still passes.
 
-2. **Add unit indicator badges**
-   - Small "Unit X" labels above nodes
-   - Positioned via absolute positioning
+**Step 4: Minor update `useMicNoteInput`**
+Delegate AudioContext init and mic stream to provider. `startListeningWrapped` calls `AudioContextProvider.initializeMic()`. Test: SightReadingGame mic input still works end-to-end.
 
-3. **Responsive testing**
-   - Test breakpoint transitions (768px)
-   - Test node spacing on various screen sizes
-   - Test path rendering edge cases (first/last node)
+**Step 5: Migrate `NotesRecognitionGame`**
+Replace 250-line inline detection block with `useMicNoteInput` + `MIC_INPUT_PRESETS.notesRecognition`. Keep the `waitingForRelease` / `pendingNextNote` state — those are game logic, not detection logic, and should survive the migration. Test: Hebrew note recognition still works.
 
-**Deliverable:** Fully polished, production-ready trail page
+**Step 6: Regression test all three games**
+Chrome desktop, Chrome Android, Safari iOS (physical device). Verify: single AudioContext in DevTools, no "AudioContext was not allowed to start" warnings, mic permission prompt appears once per session.
 
 ---
 
-## Testing Strategy
+## Algorithm Improvement: YIN Over Autocorrelation
 
-### Visual Regression Testing
-```bash
-# Capture screenshots at key breakpoints
-- Mobile: 375px, 414px (iPhone sizes)
-- Tablet: 768px (breakpoint)
-- Desktop: 1024px, 1440px
+**Confidence: MEDIUM** — based on algorithm benchmarks; would require A/B testing to confirm magnitude in this specific use case.
 
-# Test states
-- Empty trail (new user)
-- Partial progress (some nodes completed)
-- Full completion (all nodes mastered)
-```
+The current autocorrelation in `usePitchDetection.detectPitch()` is the primary source of octave errors (C3 detected when C4 is played). YIN algorithm reduces octave error rates approximately 3x compared to autocorrelation per published benchmarks.
 
-### Component Testing
-```javascript
-// TrailMap.test.jsx
-describe('TrailMap responsive layout', () => {
-  it('renders vertical zigzag on mobile', () => {
-    mockMediaQuery('(max-width: 767px)')
-    render(<TrailMap activeCategory="treble_clef" />)
-    expect(screen.getByTestId('vertical-layout')).toBeInTheDocument()
-  })
+YIN adds three refinements over autocorrelation:
+1. Difference function (reduces false peaks)
+2. Cumulative mean normalization (reduces false positives at low frequencies)
+3. Parabolic interpolation (finer frequency resolution between bins)
 
-  it('renders horizontal wavy on desktop', () => {
-    mockMediaQuery('(min-width: 768px)')
-    render(<TrailMap activeCategory="treble_clef" />)
-    expect(screen.getByTestId('horizontal-layout')).toBeInTheDocument()
-  })
-})
-```
+**Scope this as a drop-in replacement** for `detectPitch()` — same input (`Float32Array buffer`, `sampleRate`) and same output (`frequency in Hz or -1`).
 
-### Integration Testing
-```javascript
-// User flow: tab switching
-it('switches between paths via tabs', async () => {
-  render(<TrailMapPage />)
-
-  // Start on Treble
-  expect(screen.getByText('Treble Clef')).toBeInTheDocument()
-
-  // Click Bass tab
-  fireEvent.click(screen.getByText('Bass'))
-
-  // Verify Bass nodes displayed
-  await waitFor(() => {
-    expect(screen.getByText('Middle C Position')).toBeInTheDocument()
-  })
-})
-```
-
----
-
-## Performance Considerations
-
-### SVG Rendering
-- **Problem:** Large SVG canvases can cause jank on mobile
-- **Solution:** Limit visible nodes per path (use virtualization if needed)
-- **Target:** 60fps scroll on iPhone 8+
-
-### CSS Animations
-- **Problem:** Multiple animated gradients + glows can tax GPU
-- **Solution:**
-  - Use `will-change: transform` sparingly
-  - Prefer `transform` over `top/left` for animations
-  - Reduce animation complexity on older devices
-
-### Media Query Handling
-- **Problem:** Layout thrashing on window resize
-- **Solution:** Debounce `useMediaQuery` checks (150ms)
+The `pitchfinder` npm library includes a YIN implementation that works in browsers:
 
 ```javascript
-const useMediaQuery = (query) => {
-  const [matches, setMatches] = useState(window.matchMedia(query).matches)
+import { YIN } from 'pitchfinder';
 
-  useEffect(() => {
-    const media = window.matchMedia(query)
-    const handler = debounce(() => setMatches(media.matches), 150)
-    media.addEventListener('change', handler)
-    return () => media.removeEventListener('change', handler)
-  }, [query])
+// Created once, not per-frame
+const detectPitchYIN = YIN({ sampleRate: context.sampleRate });
 
-  return matches
-}
+// In detection loop (replaces existing detectPitch call):
+const frequency = detectPitchYIN(buffer); // returns null or Hz
 ```
 
----
+If avoiding a dependency, YIN is ~60 lines of JavaScript — the original 2002 paper is public domain.
 
-## Rollback Strategy
-
-If redesign issues arise in production:
-
-### Quick Rollback (CSS-Only)
-```bash
-# Remove trail-effects.css import
-# Revert TrailMapPage background to original gradient
-# Nodes revert to flat appearance (existing Tailwind classes)
-```
-
-### Full Rollback (Layout)
-```bash
-# Revert TrailMap.jsx to commit before layout rewrite
-# Remove TabSwitcher component
-# Restore UnitSection rendering
-# All data layer unchanged, so no database issues
-```
-
-**Risk Mitigation:** The data layer and services are untouched, so rollback only affects UI rendering. No migration scripts or database changes required.
+**Recommendation:** Replace `detectPitch()` with YIN as part of this refactor, scoped as a single function swap. All games benefit simultaneously.
 
 ---
 
-## Confidence Assessment
+## Anti-Patterns
 
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Data Layer | **HIGH** | No changes to services or node definitions |
-| Component Separation | **HIGH** | Clear boundaries: TrailMap layout, TrailNode styling, PathConnector effects |
-| Responsive Strategy | **MEDIUM** | Media query + conditional rendering tested, but edge cases may arise |
-| CSS Effects | **MEDIUM** | Radial gradients + SVG filters work cross-browser, but performance varies on older devices |
-| Build Order | **HIGH** | Phased approach isolates risk: CSS foundation → integration → layout → polish |
+### Anti-Pattern 1: AudioContext Per Hook Instance
+
+**What people do:** Every hook that needs Web Audio calls `new AudioContext()` internally. This is the current state of `usePitchDetection` and `useAudioEngine`.
+
+**Why it's wrong:** Two contexts = two audio processing graphs. On iOS Safari, exceeding ~2-3 concurrent AudioContexts produces silent failures — the context is created but mic access or playback silently drops. Cleanup bugs multiply. Missing `context.close()` in any path leaks audio resources.
+
+**Do this instead:** `AudioContextProvider` owns one context. Hooks receive it via `useAudioContext()`.
+
+### Anti-Pattern 2: Inline Detection Logic in Game Components
+
+**What people do:** `NotesRecognitionGame.jsx` has 250+ lines of `getUserMedia`, `detectPitch`, `frequencyToNote` copied from `usePitchDetection`. This duplication already exists and must be removed in this milestone.
+
+**Why it's wrong:** Bug fixes and algorithm improvements in `usePitchDetection` never reach `NotesRecognitionGame`. The two implementations have already diverged (different `rmsThreshold` values, different debounce logic). YIN algorithm improvements would need to be applied in two places.
+
+**Do this instead:** All games use `useMicNoteInput` with their preset config. Zero inline detection code in game components.
+
+### Anti-Pattern 3: React State for Audio Buffer Data
+
+**What people do:** Storing `AudioContext`, `AnalyserNode`, `MediaStream`, or audio buffer arrays in `useState`.
+
+**Why it's wrong:** React's reconciler is not designed for 60fps state updates. Even with automatic batching, 60fps state changes cause visible jank on mid-range Android devices. Audio glitches can result from the rendering pipeline competing with audio processing.
+
+**Do this instead:** Audio infrastructure lives in `useRef`. Only user-visible derived values (isListening, audioLevel throttled to every 5th frame) go in `useState`. The existing hooks already do this correctly — preserve it.
+
+### Anti-Pattern 4: AudioWorklet for This Use Case
+
+**What people do:** Reach for AudioWorklet because it is more modern or described as better in documentation.
+
+**Why it's wrong for now:** The autocorrelation loop at 60fps is computationally cheap. AudioWorklet adds a separate processor file to serve, Vite bundler configuration complexity, a MessagePort serialization boundary for data transfer, and real iOS Safari bugs that have no fix timeline.
+
+**Do this instead:** Keep `requestAnimationFrame`. Revisit AudioWorklet only if CPU profiling shows audio processing is a bottleneck on target devices (which it is not currently).
+
+### Anti-Pattern 5: Requesting Mic Permission at App Root
+
+**What people do:** Mount `AudioContextProvider` at the top of the React tree so audio is always available.
+
+**Why it's wrong:** Browser mic permission prompt appears on app load, even for non-game pages (dashboard, trail, settings). Users who visit the trail or settings will see an unexpected mic permission request. On iOS, this is especially jarring.
+
+**Do this instead:** Mount `AudioContextProvider` only at the game route boundary, as described in the integration points section.
 
 ---
 
-## Open Questions
+## Scaling Considerations
 
-1. **Node spacing:** What's the optimal vertical spacing for mobile zigzag? (40px, 60px, 80px?)
-   - **Resolution:** Prototype with 60px, adjust after user testing
+This is a client-side PWA. Scaling means device performance, not server load.
 
-2. **Path glow intensity:** How strong should the animated glow be without overwhelming the design?
-   - **Resolution:** Start conservative (opacity: 0.4), increase if feedback requests more "magic"
-
-3. **Tab persistence:** Should active tab persist in localStorage or URL query params?
-   - **Resolution:** URL query params (`?path=bass`) for shareable links + browser back button support
-
-4. **Unit indicator placement:** Above node (as suggested) or inline with node name?
-   - **Resolution:** Above node to avoid cluttering the name label
+| Device Class | Risk | Mitigation |
+|-------------|------|------------|
+| High-end desktop/mobile | None | Current approach is fine |
+| Mid-range Android (2019-2021) | requestAnimationFrame at 60fps + React renders cause frame drops | Throttle `audioLevel` state update to every 5th frame; keep note events in refs not state |
+| Low-end Android / older iOS | getUserMedia startup latency is higher; mic stream may take 1-2s | Show loading state during mic initialization; do not start game countdown until analyserNode is receiving signal (RMS > threshold for 3+ frames) |
+| iOS Safari (any version) | AudioContext requires user gesture; context silently suspends | `initialize()` must be called from a click handler, never from `useEffect` |
 
 ---
 
-## Success Criteria
+## Sources
 
-Redesign is complete when:
-- ✅ Mobile users see vertical zigzag layout with alternating node positions
-- ✅ Desktop users see horizontal wavy layout (enhanced from existing)
-- ✅ Glowing animated paths connect nodes with category-specific colors
-- ✅ Nodes have 3D appearance with radial gradients and layered shadows
-- ✅ Background shows enchanted forest gradient with subtle star animation
-- ✅ Tab switcher allows toggling between Treble, Bass, Rhythm paths
-- ✅ All existing functionality preserved (progress tracking, modal, navigation)
-- ✅ No regressions in VictoryScreen → trail update flow
-- ✅ 60fps on iPhone 12 and above (target device)
+- [MDN: Web Audio API Best Practices](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices) — single AudioContext reuse recommendation
+- [MDN: AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet) — widely available since April 2021
+- [Can I Use: AudioWorklet](https://caniuse.com/mdn-api_audioworklet) — 95.63% global support; Safari 14.1+, iOS Safari 14.5+
+- [Apple Developer Forums: AudioWorklet not playing on iOS 18](https://developer.apple.com/forums/thread/768347) — confirms active iOS AudioWorklet bugs as of 2024
+- [pitchfinder library (GitHub)](https://github.com/peterkhayes/pitchfinder) — JavaScript YIN and other algorithm implementations
+- [Autocorrelation vs YIN](https://pitchdetector.com/autocorrelation-vs-yin-algorithm-for-pitch-detection/) — accuracy comparison showing ~3x fewer octave errors with YIN
+- Codebase direct analysis (February 2026): `src/hooks/usePitchDetection.js`, `useMicNoteInput.js`, `useAudioEngine.js`, `micInputPresets.js`, `NotesRecognitionGame.jsx`, `SightReadingGame.jsx`, `MetronomeTrainer.jsx`
+
+---
+*Architecture research for: Pitch Detection Pipeline Refactor — Piano Learning PWA*
+*Researched: 2026-02-17*
