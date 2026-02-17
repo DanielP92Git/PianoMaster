@@ -88,7 +88,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 **Milestone Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input — eliminating wrong notes, missed notes, and latency on all note durations from quarter through sixteenth.
 
-- [ ] **Phase 06: Bug Fix Prerequisite** - Fix mic-restart regression so the test suite is a reliable baseline for all subsequent work
+- [x] **Phase 06: Bug Fix Prerequisite** - Fix mic-restart regression so the test suite is a reliable baseline for all subsequent work (completed 2026-02-17)
 - [ ] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration
 - [ ] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably
 - [ ] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS
@@ -184,7 +184,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
-| 06. Bug Fix Prerequisite | v1.7 | 0/2 | Planned | - |
+| 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 0/TBD | Not started | - |
 | 08. Detection Pipeline | v1.7 | 0/TBD | Not started | - |
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
