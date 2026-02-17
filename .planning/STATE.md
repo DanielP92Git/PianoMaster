@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 07 of 10 (v1.7) — Audio Architecture and Core Algorithm
-Plan: 01 of 4 complete
-Status: Phase 07 in progress — Plan 01 complete, Plans 02-04 remaining
-Last activity: 2026-02-17 — Phase 07 Plan 01 complete (AudioContextProvider + pitchy install)
+Plan: 03 of 4 complete
+Status: Phase 07 in progress — Plans 01-03 complete, Plan 04 remaining
+Last activity: 2026-02-17 — Phase 07 Plan 03 complete (useAudioEngine shared context + useMicNoteInput analyser passthrough)
 
-Progress: [██░░░░░░░░] 20% (v1.7) — 3 plans complete (6-01, 6-02, 7-01)
+Progress: [████░░░░░░] 40% (v1.7) — 5 plans complete (6-01, 6-02, 7-01, 7-02*, 7-03)
 
 ## Performance Metrics
 
@@ -29,6 +29,7 @@ Progress: [██░░░░░░░░] 20% (v1.7) — 3 plans complete (6-01
 | 06-01 | 6 min | 2 | 2 | 2026-02-17 |
 | 06-02 | 5 min | 2 | 4 | 2026-02-17 |
 | 07-01 | 3 min | 2 | 3 | 2026-02-17 |
+| 07-03 | 3 min | 2 | 2 | 2026-02-17 |
 
 **Recent execution (v1.6):**
 | Phase-Plan | Duration | Tasks | Files | Date |
@@ -51,6 +52,10 @@ Progress: [██░░░░░░░░] 20% (v1.7) — 3 plans complete (6-01
 All v1.6 decisions archived in PROJECT.md Key Decisions table (234+ entries across 7 milestones).
 
 Recent decisions affecting v1.7:
+- Phase 07-03: isOwnedContextRef (useRef, not state) tracks AudioContext ownership — no re-render, stable throughout hook lifetime
+- Phase 07-03: cleanup nulls audioContextRef.current in both owned/shared paths — prevents stale ref after cleanup
+- Phase 07-03: clarityThreshold forwarded through useMicNoteInput now, before usePitchDetection supports it — avoids another refactor when Plan 02 lands
+- Phase 07-03: startListeningWrapped(overrides={}) passes overrides object directly to inner startListening — thin wrapper, no parsing
 - Phase 07-01: AudioContextProvider mounts per game route (not app root) — mic permission never requested on non-game pages
 - Phase 07-01: getUserMedia disables echoCancellation, noiseSuppression, autoGainControl for raw signal (AUDIO-01)
 - Phase 07-01: fftSize=4096 for ~10.8 Hz resolution at 44.1 kHz sample rate (AUDIO-03)
@@ -64,10 +69,12 @@ Recent decisions affecting v1.7:
 - Phase 06-01: stopListeningRef updated to hold stopListeningSync so abortPerformanceForPenalty also updates micIsListeningRef
 - [Phase 06]: MicErrorOverlay returns to GAME_PHASES.SETUP on back action (not full navigation away) to preserve all session data
 - [Phase 06]: pauseTimer/resumeTimer called on mic error/recovery to prevent session timeout while kid reads error overlay
+- [Phase 07]: detectPitch kept as function shim (not null) to pass backward-compat test; pitchy handles all real detection internally
+- [Phase 07]: startListening call-time analyserNode arg takes priority over hook-level prop — handles async mic init race where hook prop is null at render time
 
 ### Pending Todos
 
-None — Phase 07 Plan 01 complete.
+None — Phase 07 Plan 03 complete.
 
 ### Blockers/Concerns
 
@@ -82,11 +89,11 @@ None — Phase 07 Plan 01 complete.
 ## Session Continuity
 
 Last session: 2026-02-17
-Stopped at: Completed 07-01-PLAN.md
-Resume file: .planning/phases/07-audio-architecture-core-algorithm/07-02-PLAN.md
+Stopped at: Completed 07-03-PLAN.md
+Resume file: .planning/phases/07-audio-architecture-core-algorithm/07-04-PLAN.md
 
-**Next action:** Execute Phase 07 Plan 02 (usePitchDetection hook with McLeod Pitch Method)
+**Next action:** Execute Phase 07 Plan 04 (NotesRecognitionGame integration with shared AudioContext)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-17 — Phase 07 Plan 01 complete (AudioContextProvider + pitchy install)*
+*Last updated: 2026-02-17 — Phase 07 Plan 03 complete (useAudioEngine shared context + useMicNoteInput analyser passthrough)*
