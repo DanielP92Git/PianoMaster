@@ -24,6 +24,8 @@ import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -32,15 +34,6 @@ const bassNotes = BASS_NOTES;
 // Audio level threshold for note release detection (percentage)
 const RELEASE_THRESHOLD = 1.5; // 1.5% - low enough to catch release, high enough to avoid background noise
 
-const NOTE_FREQUENCIES = {
-  דו: [130.81, 261.63, 523.25, 1046.5], // C3, C4, C5, C6
-  רה: [146.83, 293.66, 587.33, 1174.66], // D3, D4, D5, D6
-  מי: [164.81, 329.63, 659.25, 1318.51], // E3, E4, E5, E6
-  פה: [174.61, 349.23, 698.46, 1396.91], // F3, F4, F5, F6
-  סול: [196.0, 392.0, 783.99, 1567.98], // G3, G4, G5, G6
-  לה: [220.0, 440.0, 880.0, 1760.0], // A3, A4, A5, A6
-  סי: [246.94, 493.88, 987.77, 1975.53], // B3, B4, B5, B6
-};
 
 const NOTE_AUDIO_LOADERS = {
   B0: () => import("../../../assets/sounds/piano/B0.wav"),
@@ -534,11 +527,10 @@ export function NotesRecognitionGame() {
     setPendingNextNote(null);
     setVariantModal(null);
 
-    // Reset audio input state
-    setIsListening(false);
+    // Reset audio input state — stop mic if listening when navigating to new node
+    stopAudioInput();
     setDetectedNote(null);
-    setAudioInputLevel(0);
-  }, [nodeId, resetProgress]);
+  }, [nodeId, resetProgress, stopAudioInput]);
 
   // Auto-configure and auto-start from trail node
   useEffect(() => {
@@ -614,17 +606,11 @@ export function NotesRecognitionGame() {
   // Game state
   const [gameOver, setGameOver] = useState(false);
 
-  // Audio input state
-  const [isListening, setIsListening] = useState(false);
-  const isListeningRef = useRef(false); // Ref for immediate access in closures
-  const [audioContext, setAudioContext] = useState(null);
-  const [, setAnalyser] = useState(null);
-  const [microphone, setMicrophone] = useState(null);
+  // Audio input state — managed by shared audio pipeline hooks
   const [detectedNote, setDetectedNote] = useState(null);
-  const [audioInputLevel, setAudioInputLevel] = useState(0);
-  const lastMatchTimeRef = useRef(0); // Use ref instead of state for immediate updates
-  const animationFrameRef = useRef(null);
-  const stopAudioInputRef = useRef(null);
+
+  // Shared AudioContextProvider consumption
+  const { requestMic, releaseMic } = useAudioContext();
 
   // State for button highlighting feedback
   const [answerFeedback, setAnswerFeedback] = useState({
@@ -767,9 +753,7 @@ export function NotesRecognitionGame() {
     setGameOver(false);
     isGameEndingRef.current = false;
     resetTimer();
-    setIsListening(false);
     setDetectedNote(null);
-    setAudioInputLevel(0);
   }, [resetProgress, resetTimer]);
 
   // Handle game over logic
@@ -1375,7 +1359,7 @@ export function NotesRecognitionGame() {
       const noteLabel = noteObj?.note || noteObj?.englishName || "Unknown";
 
       // Don't play audio during pitch detection to avoid conflicts
-      if (isListeningRef.current) {
+      if (isListening) {
         return;
       }
 
@@ -1419,7 +1403,7 @@ export function NotesRecognitionGame() {
         playWrongSound();
       }
     },
-    [preloadedSounds, playCorrectSound, playWrongSound, settings.clef]
+    [isListening, preloadedSounds, playCorrectSound, playWrongSound, settings.clef]
   );
 
   // Handle answer selection
@@ -1651,228 +1635,85 @@ export function NotesRecognitionGame() {
     settings.timedMode,
   ]);
 
-  // Pitch detection using autocorrelation
-  const detectPitch = useCallback((buffer, sampleRate) => {
-    const SIZE = buffer.length;
-    const MAX_SAMPLES = Math.floor(SIZE / 2);
-    let bestOffset = -1;
-    let bestCorrelation = 0;
-    let rms = 0;
-    let foundGoodCorrelation = false;
-    const GOOD_ENOUGH_CORRELATION = 0.9;
+  // Callback for useMicNoteInput: handle incoming note events from shared audio pipeline
+  const handleMicNoteEvent = useCallback((event) => {
+    if (event.type !== 'noteOn') return;
 
-    // Calculate RMS
-    for (let i = 0; i < SIZE; i++) {
-      const val = buffer[i];
-      rms += val * val;
+    const note = event.pitch;
+    setDetectedNote(note);
+
+    // Game-specific logic: if waiting for note release, ignore new note events
+    if (waitingForRelease) return;
+
+    // Check if detected note matches current question
+    if (note && progress.currentNote && note === progress.currentNote.note) {
+      handleAnswerSelect(note);
     }
-    rms = Math.sqrt(rms / SIZE);
+  }, [waitingForRelease, progress.currentNote, handleAnswerSelect]);
 
-    // Not enough signal
-    if (rms < 0.01) return -1;
+  // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
+  const {
+    audioLevel,
+    isListening,
+    startListening: startMicListening,
+    stopListening: stopMicListening,
+  } = useMicNoteInput({
+    isActive: false, // Manual control via startAudioInput / stopAudioInput
+    onNoteEvent: handleMicNoteEvent,
+    // NOTE: analyserNode/sampleRate NOT passed here at render time.
+    // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).
+  });
 
-    let lastCorrelation = 1;
-    for (let offset = 1; offset < MAX_SAMPLES; offset++) {
-      let correlation = 0;
-
-      for (let i = 0; i < MAX_SAMPLES; i++) {
-        correlation += Math.abs(buffer[i] - buffer[i + offset]);
-      }
-      correlation = 1 - correlation / MAX_SAMPLES;
-
-      if (
-        correlation > GOOD_ENOUGH_CORRELATION &&
-        correlation > lastCorrelation
-      ) {
-        foundGoodCorrelation = true;
-        if (correlation > bestCorrelation) {
-          bestCorrelation = correlation;
-          bestOffset = offset;
-        }
-      } else if (foundGoodCorrelation) {
-        break;
-      }
-      lastCorrelation = correlation;
-    }
-
-    if (bestCorrelation > 0.01) {
-      return sampleRate / bestOffset;
-    }
-    return -1;
-  }, []);
-
-  // Convert frequency to note name
-  const frequencyToNote = useCallback((frequency) => {
-    if (frequency <= 0) return null;
-
-    let closestNote = null;
-    let minDifference = Infinity;
-
-    Object.entries(NOTE_FREQUENCIES).forEach(([note, frequencies]) => {
-      frequencies.forEach((freq) => {
-        const difference = Math.abs(frequency - freq);
-        const tolerance = freq * 0.05; // 5% tolerance - reduces false fluctuations during note decay
-        if (difference < tolerance && difference < minDifference) {
-          minDifference = difference;
-          closestNote = note;
-        }
-      });
-    });
-
-    return closestNote;
-  }, []);
-
-  // Start audio input
+  // Start audio input — requests mic from shared provider, then starts detection
   const startAudioInput = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const context = new (window.AudioContext || window.webkitAudioContext)();
-      const source = context.createMediaStreamSource(stream);
-      const analyserNode = context.createAnalyser();
-
-      analyserNode.fftSize = 2048;
-      analyserNode.smoothingTimeConstant = 0.8;
-
-      source.connect(analyserNode);
-
-      setAudioContext(context);
-      setAnalyser(analyserNode);
-      setMicrophone(stream);
-
-      // Start pitch detection loop
-      const bufferLength = analyserNode.frequencyBinCount;
-      const dataArray = new Float32Array(bufferLength);
-      const sampleRate = context.sampleRate;
-
-      const detectLoop = () => {
-        analyserNode.getFloatTimeDomainData(dataArray);
-
-        // Calculate audio level
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i] * dataArray[i];
-        }
-        const level = Math.sqrt(sum / bufferLength);
-        const levelPercent = level * 100;
-        setAudioInputLevel(level);
-
-        // Check if we're waiting for note release
-        if (waitingForRelease) {
-          if (levelPercent < RELEASE_THRESHOLD) {
-            setWaitingForRelease(false);
-            setAnswerFeedback({
-              selectedNote: null,
-              correctNote: null,
-              isCorrect: null,
-            });
-            updateProgress({ currentNote: pendingNextNote });
-            setPendingNextNote(null);
-          }
-          animationFrameRef.current = requestAnimationFrame(detectLoop);
-          return;
-        }
-
-        // Detect pitch with correct sample rate
-        const pitch = detectPitch(dataArray, sampleRate);
-        const note = frequencyToNote(pitch);
-        setDetectedNote(note);
-
-        // Check if detected note matches current note
-        if (
-          note &&
-          progress.currentNote &&
-          note === progress.currentNote.note
-        ) {
-          const now = Date.now();
-          const timeSinceLastMatch =
-            lastMatchTimeRef.current === 0
-              ? 1000
-              : now - lastMatchTimeRef.current;
-
-          // Debounce: only process match if 1000ms has passed since last match
-          if (timeSinceLastMatch >= 1000) {
-            lastMatchTimeRef.current = now;
-            handleAnswerSelect(note);
-          }
-        }
-
-        animationFrameRef.current = requestAnimationFrame(detectLoop);
-      };
-
-      detectLoop();
+      // requestMic() returns { audioContext, analyser } — pass directly at call time
+      const { analyser, audioContext: ctx } = await requestMic();
+      await startMicListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
     } catch (error) {
-      console.error("Error accessing microphone:", error);
-      setIsListening(false);
+      console.error('Error accessing microphone:', error);
     }
-  }, [
-    detectPitch,
-    frequencyToNote,
-    pendingNextNote,
-    progress.currentNote,
-    handleAnswerSelect,
-    updateProgress,
-    waitingForRelease,
-  ]);
+  }, [requestMic, startMicListening]);
 
-  // Stop audio input
+  // Stop audio input — stops detection and releases shared mic
   const stopAudioInput = useCallback(() => {
-    lastMatchTimeRef.current = 0;
-    isListeningRef.current = false;
+    stopMicListening();
+    releaseMic();
     setWaitingForRelease(false);
     setPendingNextNote(null);
-
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-    if (microphone) {
-      microphone.getTracks().forEach((track) => track.stop());
-    }
-    if (audioContext) {
-      audioContext.close().catch(() => {});
-    }
-    setIsListening(false);
-    setAudioContext(null);
-    setAnalyser(null);
-    setMicrophone(null);
     setDetectedNote(null);
-    setAudioInputLevel(0);
-  }, [microphone, audioContext]);
+  }, [stopMicListening, releaseMic]);
 
-  // Store the stopAudioInput function in a ref for cleanup useEffects
-  useEffect(() => {
-    stopAudioInputRef.current = stopAudioInput;
-  }, [stopAudioInput]);
-
-  // Toggle audio input
+  // Toggle audio input (Listen mode button)
   const toggleAudioInput = useCallback(() => {
     if (isListening) {
       stopAudioInput();
     } else {
-      setIsListening(true); // Update state for UI
-      isListeningRef.current = true; // Update ref immediately for closures
       startAudioInput();
     }
   }, [isListening, stopAudioInput, startAudioInput]);
 
-  // Cleanup audio input on unmount or game end
+  // Effect: watch audioLevel to detect note release after a correct answer
+  // This replaces the rAF-loop level check from the old inline detectLoop
   useEffect(() => {
-    return () => {
-      // Defer cleanup to not block navigation - run asynchronously
-      setTimeout(() => {
-        if (stopAudioInputRef.current) {
-          stopAudioInputRef.current();
-        }
-      }, 0);
-    };
-  }, []); // No dependencies - uses ref to avoid re-running cleanup
+    if (waitingForRelease && audioLevel * 100 < RELEASE_THRESHOLD) {
+      setWaitingForRelease(false);
+      setAnswerFeedback({
+        selectedNote: null,
+        correctNote: null,
+        isCorrect: null,
+      });
+      updateProgress({ currentNote: pendingNextNote });
+      setPendingNextNote(null);
+    }
+  }, [waitingForRelease, audioLevel, pendingNextNote, updateProgress]);
 
   // Stop audio input when game finishes
   useEffect(() => {
-    if (progress.isFinished && stopAudioInputRef.current) {
-      stopAudioInputRef.current();
+    if (progress.isFinished) {
+      stopAudioInput();
     }
-  }, [progress.isFinished]); // No stopAudioInput dependency - uses ref
+  }, [progress.isFinished, stopAudioInput]);
 
   // Cleanup: stop audio when component unmounts
   useEffect(() => {
@@ -2062,7 +1903,7 @@ export function NotesRecognitionGame() {
                     <div
                       className="h-2 rounded-full bg-green-500 transition-all duration-100"
                       style={{
-                        width: `${Math.min(audioInputLevel * 1000, 100)}%`,
+                        width: `${Math.min(audioLevel * 1000, 100)}%`,
                       }}
                     />
                   </div>
