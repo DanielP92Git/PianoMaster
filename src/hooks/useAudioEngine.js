@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-const METRONOME_TIMING_DEBUG = true;
+const METRONOME_TIMING_DEBUG = false;
 
 /**
  * Custom hook for managing Web Audio API operations
