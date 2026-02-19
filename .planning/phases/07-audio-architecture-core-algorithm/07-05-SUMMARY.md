@@ -125,3 +125,14 @@ None - no external service configuration required.
 ---
 *Phase: 07-audio-architecture-core-algorithm*
 *Completed: 2026-02-17*
+
+## Self-Check: PASSED
+
+- FOUND: src/components/games/sight-reading-game/SightReadingGame.jsx
+- FOUND: src/components/games/rhythm-games/MetronomeTrainer.jsx
+- FOUND: src/hooks/useAudioEngine.js
+- FOUND: src/hooks/useMicNoteInput.js
+- FOUND: .planning/phases/07-audio-architecture-core-algorithm/07-05-SUMMARY.md
+- FOUND commit: 0d100a4 (Task 1 — shared AudioContext wiring)
+- FOUND commit: 06d5aa7 (Task 2 — debug cleanup)
+- FOUND commit: 157ac3f (docs — plan metadata)

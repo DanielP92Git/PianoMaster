@@ -437,7 +437,7 @@ export function NotesRecognitionGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
   const isRTL = i18n.language === "he";
   const useHebrewNoteLabels = i18n.language === "he";
-  const SHOW_LISTEN_BUTTON = false;
+  const SHOW_LISTEN_BUTTON = true;
   const [isNavigating] = useState(false);
   const [preloadedSounds, setPreloadedSounds] = useState({});
   const currentAudioRef = useRef(null);
@@ -470,8 +470,16 @@ export function NotesRecognitionGame() {
     ]
   );
 
+  // Ref for current note — keeps mic callback in sync with displayed question.
+  // The callback chain (useMicNoteInput → usePitchDetection → rAF loop) can
+  // hold stale closures, so we read from a ref instead of the closure value.
+  const currentNoteRef = useRef(null);
+  const totalQuestionsRef = useRef(0);
+
   const { progress, updateProgress, handleAnswer, finishGame, resetProgress } =
     useGameProgress();
+  currentNoteRef.current = progress.currentNote;
+  totalQuestionsRef.current = progress.totalQuestions;
 
   // Use the centralized sounds hook
   const {
@@ -526,11 +534,8 @@ export function NotesRecognitionGame() {
     setWaitingForRelease(false);
     setPendingNextNote(null);
     setVariantModal(null);
-
-    // Reset audio input state — stop mic if listening when navigating to new node
-    stopAudioInput();
     setDetectedNote(null);
-  }, [nodeId, resetProgress, stopAudioInput]);
+  }, [nodeId, resetProgress]);
 
   // Auto-configure and auto-start from trail node
   useEffect(() => {
@@ -612,6 +617,10 @@ export function NotesRecognitionGame() {
   // Shared AudioContextProvider consumption
   const { requestMic, releaseMic } = useAudioContext();
 
+  // Ref to track mic listening state — avoids TDZ since useMicNoteInput
+  // is called after playSound (which needs to check listening state)
+  const isListeningRef = useRef(false);
+
   // State for button highlighting feedback
   const [answerFeedback, setAnswerFeedback] = useState({
     selectedNote: null,
@@ -621,6 +630,8 @@ export function NotesRecognitionGame() {
 
   // State for note release detection in Listen mode
   const [waitingForRelease, setWaitingForRelease] = useState(false);
+  const waitingForReleaseRef = useRef(false);
+  waitingForReleaseRef.current = waitingForRelease;
   const isGameEndingRef = useRef(false);
   const [pendingNextNote, setPendingNextNote] = useState(null);
   const [variantModal, setVariantModal] = useState(null);
@@ -1359,7 +1370,7 @@ export function NotesRecognitionGame() {
       const noteLabel = noteObj?.note || noteObj?.englishName || "Unknown";
 
       // Don't play audio during pitch detection to avoid conflicts
-      if (isListening) {
+      if (isListeningRef.current) {
         return;
       }
 
@@ -1403,33 +1414,37 @@ export function NotesRecognitionGame() {
         playWrongSound();
       }
     },
-    [isListening, preloadedSounds, playCorrectSound, playWrongSound, settings.clef]
+    [preloadedSounds, playCorrectSound, playWrongSound, settings.clef]
   );
 
   // Handle answer selection
   const handleAnswerSelect = useCallback(
     (selectedAnswer) => {
-      if (!progress.currentNote || isGameEndingRef.current) return;
+      // Read from refs to avoid stale closure through mic callback chain
+      const curNote = currentNoteRef.current;
+      const curTotalQuestions = totalQuestionsRef.current;
 
-      const isCorrect = handleAnswer(selectedAnswer, progress.currentNote.note);
+      if (!curNote || isGameEndingRef.current) return;
+
+      const isCorrect = handleAnswer(selectedAnswer, curNote.note);
       const questionLimit = settings.timedMode ? 10 : 20;
-      // `progress.totalQuestions` here is the count *before* this answer; `handleAnswer` increments it.
-      const willEndGame = progress.totalQuestions + 1 >= questionLimit;
+      // `curTotalQuestions` here is the count *before* this answer; `handleAnswer` increments it.
+      const willEndGame = curTotalQuestions + 1 >= questionLimit;
 
       // Set feedback state to highlight the buttons
       setAnswerFeedback({
         selectedNote: selectedAnswer,
-        correctNote: progress.currentNote.note,
+        correctNote: curNote.note,
         isCorrect: isCorrect,
       });
 
-      playSound(isCorrect, progress.currentNote);
+      playSound(isCorrect, curNote);
 
       // Game completion check is now handled by useEffect below
       // This ensures state updates are complete before checking
 
       // In Listen mode, wait for note release before advancing
-      if (isListening) {
+      if (isListeningRef.current) {
         // If this was the last question, don't queue another note.
         if (!willEndGame) {
           const nextNote = getRandomNote();
@@ -1457,10 +1472,7 @@ export function NotesRecognitionGame() {
       }
     },
     [
-      progress.currentNote,
-      progress.totalQuestions,
       handleAnswer,
-      isListening,
       getRandomNote,
       playSound,
       settings.timedMode,
@@ -1635,7 +1647,9 @@ export function NotesRecognitionGame() {
     settings.timedMode,
   ]);
 
-  // Callback for useMicNoteInput: handle incoming note events from shared audio pipeline
+  // Callback for useMicNoteInput: handle incoming note events from shared audio pipeline.
+  // Reads currentNote from ref to avoid stale closure — the callback chain through
+  // useMicNoteInput → usePitchDetection → rAF loop can lag behind React re-renders.
   const handleMicNoteEvent = useCallback((event) => {
     if (event.type !== 'noteOn') return;
 
@@ -1643,13 +1657,18 @@ export function NotesRecognitionGame() {
     setDetectedNote(note);
 
     // Game-specific logic: if waiting for note release, ignore new note events
-    if (waitingForRelease) return;
+    if (waitingForReleaseRef.current) return;
+
+    // Read from ref for latest value (avoids stale closure)
+    const cur = currentNoteRef.current;
 
     // Check if detected note matches current question
-    if (note && progress.currentNote && note === progress.currentNote.note) {
-      handleAnswerSelect(note);
+    // event.pitch is English format ("C4"), match against .pitch or .englishName
+    if (note && cur &&
+        (note === cur.pitch || note === cur.englishName)) {
+      handleAnswerSelect(cur.note);
     }
-  }, [waitingForRelease, progress.currentNote, handleAnswerSelect]);
+  }, [handleAnswerSelect]);
 
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
@@ -1663,6 +1682,7 @@ export function NotesRecognitionGame() {
     // NOTE: analyserNode/sampleRate NOT passed here at render time.
     // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).
   });
+  isListeningRef.current = isListening;
 
   // Start audio input — requests mic from shared provider, then starts detection
   const startAudioInput = useCallback(async () => {
@@ -1683,6 +1703,11 @@ export function NotesRecognitionGame() {
     setPendingNextNote(null);
     setDetectedNote(null);
   }, [stopMicListening, releaseMic]);
+
+  // Stop mic when navigating to a new trail node
+  useEffect(() => {
+    stopAudioInput();
+  }, [nodeId, stopAudioInput]);
 
   // Toggle audio input (Listen mode button)
   const toggleAudioInput = useCallback(() => {
