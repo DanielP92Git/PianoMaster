@@ -135,7 +135,10 @@ See `.planning/milestones/` for archived details of each milestone.
   3. Rapid alternation between two adjacent notes (e.g., C4 then D4) registers both correctly — pitch flicker at the note boundary does not produce phantom detections
   4. Bass clef trail nodes (including nodes requiring B2 and A2) detect all required notes — the frequency map covers the full trail note pool
   5. BPM and note duration context flows from the game settings into the detection hooks without requiring manual wiring in each game component
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 08-01-PLAN.md -- BPM-adaptive timing calculator + FSM refactor of useMicNoteInput
+- [ ] 08-02-PLAN.md -- Propagate BPM context from SightReadingGame + remove fixed debounce
 
 ### Phase 09: iOS Safari Hardening
 **Goal**: Mic input works reliably in Safari PWA on physical iOS devices — the app recovers from AudioContext interruption caused by phone calls, app switches, and device lock; permission denial shows a clear message with recovery instructions
@@ -191,7 +194,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
 | 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 4/5 | Gap closure | - |
-| 08. Detection Pipeline | v1.7 | 0/TBD | Not started | - |
+| 08. Detection Pipeline | v1.7 | 0/2 | Not started | - |
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 
