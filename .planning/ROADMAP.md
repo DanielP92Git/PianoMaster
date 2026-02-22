@@ -137,8 +137,8 @@ See `.planning/milestones/` for archived details of each milestone.
   5. BPM and note duration context flows from the game settings into the detection hooks without requiring manual wiring in each game component
 **Plans**: 2 plans
 Plans:
-- [ ] 08-01-PLAN.md -- BPM-adaptive timing calculator + FSM refactor of useMicNoteInput
-- [ ] 08-02-PLAN.md -- Propagate BPM context from SightReadingGame + remove fixed debounce
+- [ ] 08-01-PLAN.md -- BPM-adaptive timing utility, FSM refactor of useMicNoteInput, MIN_MIDI fix for bass notes
+- [ ] 08-02-PLAN.md -- Wire BPM timing into game components + per-note scoring dedup
 
 ### Phase 09: iOS Safari Hardening
 **Goal**: Mic input works reliably in Safari PWA on physical iOS devices — the app recovers from AudioContext interruption caused by phone calls, app switches, and device lock; permission denial shows a clear message with recovery instructions
