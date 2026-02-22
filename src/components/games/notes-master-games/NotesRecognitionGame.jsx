@@ -25,6 +25,7 @@ import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
+import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 
 // Use comprehensive note definitions from Sight Reading game
@@ -631,6 +632,7 @@ export function NotesRecognitionGame() {
   // State for note release detection in Listen mode
   const [waitingForRelease, setWaitingForRelease] = useState(false);
   const waitingForReleaseRef = useRef(false);
+  const lastScoredRef = useRef({ pitch: null, time: 0 });
   waitingForReleaseRef.current = waitingForRelease;
   const isGameEndingRef = useRef(false);
   const [pendingNextNote, setPendingNextNote] = useState(null);
@@ -1653,6 +1655,14 @@ export function NotesRecognitionGame() {
   const handleMicNoteEvent = useCallback((event) => {
     if (event.type !== 'noteOn') return;
 
+    const now = performance.now();
+    const last = lastScoredRef.current;
+    const minScoreInterval = micTiming.minInterOnMs || 80;
+    if (last.pitch === event.pitch && now - last.time < minScoreInterval * 2) {
+      return; // Block double-scoring same pitch
+    }
+    lastScoredRef.current = { pitch: event.pitch, time: now };
+
     const note = event.pitch;
     setDetectedNote(note);
 
@@ -1668,7 +1678,13 @@ export function NotesRecognitionGame() {
         (note === cur.pitch || note === cur.englishName)) {
       handleAnswerSelect(cur.note);
     }
-  }, [handleAnswerSelect]);
+  }, [handleAnswerSelect, micTiming]);
+
+  const micTiming = useMemo(() => {
+    // NotesRecognitionGame may not have BPM settings — use a moderate default
+    const bpm = settings?.tempo || settings?.bpm || 90;
+    return calcMicTimingFromBpm(bpm, 'q'); // Quarter note default for recognition
+  }, [settings?.tempo, settings?.bpm]);
 
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
@@ -1679,6 +1695,7 @@ export function NotesRecognitionGame() {
   } = useMicNoteInput({
     isActive: false, // Manual control via startAudioInput / stopAudioInput
     onNoteEvent: handleMicNoteEvent,
+    ...micTiming,
     // NOTE: analyserNode/sampleRate NOT passed here at render time.
     // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).
   });
