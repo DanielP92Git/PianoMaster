@@ -1,125 +1,110 @@
 ---
 phase: 08-design-data-modeling
 plan: 01
-subsystem: trail-validation
-tags: [build-tools, validation, trail-data, npm-lifecycle]
+subsystem: audio
+tags: [pitch-detection, mic-input, fsm, bpm, timing, midi]
 
-dependency_graph:
-  requires: []
-  provides:
-    - Build-time trail validation
-    - Prerequisite cycle detection
-    - Node type validation
-    - XP economy audit
-  affects:
-    - Phase 09-12 (trail system changes validated at build)
-    - CI/CD pipeline
+# Dependency graph
+requires:
+  - phase: 07-audio-architecture
+    provides: useMicNoteInput, usePitchDetection, AudioContextProvider shared analyser (ARCH-02/03)
+provides:
+  - calcMicTimingFromBpm(bpm, shortestNoteDuration) exported from micInputPresets.js
+  - IDLE/ARMED/ACTIVE FSM inside useMicNoteInput replacing ad-hoc candidateFrames
+  - MIN_MIDI = 45 in usePitchDetection covering A2/B2 bass trail notes
+affects:
+  - 08-02 (game components wiring BPM context via calcMicTimingFromBpm)
+  - any game component using useMicNoteInput (NotesRecognitionGame, SightReadingGame)
 
-tech_stack:
+# Tech tracking
+tech-stack:
   added: []
   patterns:
-    - DFS three-state cycle detection
-    - npm prebuild lifecycle hook
+    - "calcMicTimingFromBpm: BPM-to-frame-timing formula — onFrames=15%/16.7ms, offMs=40%, changeFrames=onFrames+1, minInterOnMs=25%"
+    - "FSM enum at module scope — const FSM = { IDLE, ARMED, ACTIVE } — transitions inside stateRef.current"
 
-file_tracking:
-  key_files:
-    created:
-      - scripts/validateTrail.mjs
-    modified:
-      - package.json
+key-files:
+  created: []
+  modified:
+    - src/hooks/micInputPresets.js
+    - src/hooks/useMicNoteInput.js
+    - src/hooks/usePitchDetection.js
 
-decisions:
-  - id: validation-warnings-vs-errors
-    choice: XP imbalance is warning, cycles/invalid types are errors
-    rationale: XP balance will be fixed in Phase 11, but structural errors must block deploy
+key-decisions:
+  - "calcMicTimingFromBpm uses 60fps assumption (16.7ms/frame) — consistent with existing onFrames semantics"
+  - "MIN_MIDI lowered from 48 (C3) to 45 (A2) — required for bass trail notes A2 and B2 to pass frequencyToNote filter"
+  - "FSM ARMED→IDLE on silence emits no noteOff — noteOn was never sent so no paired noteOff is needed"
+  - "ARMED state resets candidateNote on different pitch (not back to IDLE) — keeps onset detection active without re-arming overhead"
+  - "debug object adds fsmState field — zero external API change, observability only"
 
-metrics:
-  duration: 6 minutes
-  completed: 2026-02-03
+patterns-established:
+  - "FSM pattern: module-scope FSM enum + fsmState field in stateRef + explicit if/else state dispatch in callbacks"
+  - "BPM timing formula: all timing params derived from noteMs with minimum floors (2 frames / 60ms / 40ms)"
+
+requirements-completed: [PIPE-01, PIPE-02, PIPE-03, PIPE-04]
+
+# Metrics
+duration: 3min
+completed: 2026-02-22
 ---
 
-# Phase 08 Plan 01: Build-time Validation Script Summary
+# Phase 08 Plan 01: Detection Pipeline Foundation Summary
 
-**One-liner:** DFS cycle detection + node type validation with npm prebuild hook (263 LOC)
+**BPM-adaptive mic timing calculator, IDLE/ARMED/ACTIVE FSM refactor for useMicNoteInput, and MIN_MIDI lowered to A2 for bass trail note coverage**
 
-## What Was Built
+## Performance
 
-Created `scripts/validateTrail.mjs` - a Node.js ESM script that validates trail data structure at build time.
+- **Duration:** ~3 min
+- **Started:** 2026-02-22T18:08:19Z
+- **Completed:** 2026-02-22T18:11:39Z
+- **Tasks:** 2
+- **Files modified:** 3
 
-### Validation Functions
+## Accomplishments
 
-| Function | Purpose | Failure Mode |
-|----------|---------|--------------|
-| `validatePrerequisiteChains()` | DFS cycle detection with three-state tracking | ERROR (exit 1) |
-| `validateNodeTypes()` | Verifies nodeType against NODE_TYPES enum | ERROR (exit 1) |
-| `validateDuplicateIds()` | Catches duplicate node IDs | ERROR (exit 1) |
-| `validateXPEconomy()` | Calculates per-category XP totals | WARNING only |
+- Added `calcMicTimingFromBpm(bpm, shortestNoteDuration)` to `micInputPresets.js` — returns dynamic `{ onFrames, offMs, changeFrames, minInterOnMs }` scaling with tempo (PIPE-01, PIPE-02)
+- Refactored `useMicNoteInput` to use formal `FSM = { IDLE, ARMED, ACTIVE }` enum with explicit state transitions in `handlePitchDetected` and `handleLevelChange` (PIPE-03)
+- Lowered `MIN_MIDI` from 48 (C3) to 45 (A2) in `usePitchDetection.js` — bass trail notes A2 and B2 now pass through `frequencyToNote` (PIPE-04)
 
-### npm Integration
+## Task Commits
 
-- **`prebuild`**: Runs validation automatically before `npm run build`
-- **`verify:trail`**: Standalone command for development
+Each task was committed atomically:
 
-## Tasks Completed
+1. **Task 1: Create calcMicTimingFromBpm utility and lower MIN_MIDI** - `7f4a2e5` (feat)
+2. **Task 2: Refactor useMicNoteInput to formal IDLE/ARMED/ACTIVE FSM** - `ed91205` (feat)
 
-| Task | Description | Commit | Files |
-|------|-------------|--------|-------|
-| 1 | Create validateTrail.mjs | f0de845 | scripts/validateTrail.mjs |
-| 2 | Integrate into npm lifecycle | 6efaffb | package.json |
+## Files Created/Modified
 
-## Verification Results
+- `src/hooks/micInputPresets.js` - Added `calcMicTimingFromBpm` export; `MIC_INPUT_PRESETS` object unchanged
+- `src/hooks/usePitchDetection.js` - Changed `MIN_MIDI` from 48 to 45; updated JSDoc range description
+- `src/hooks/useMicNoteInput.js` - Added `FSM` enum, `fsmState` field in stateRef, rewrote `handlePitchDetected` and `handleLevelChange` with FSM transitions; added `fsmState` to debug object
 
-1. `npm run verify:trail` - PASS (exits 0, shows warnings)
-2. `npm run build` - PASS (shows validation before Vite build)
-3. Cycle detection test - PASS (detects `treble_c_d -> treble_c_e -> treble_c_d`)
-4. Invalid nodeType test - PASS (reports `invalid_type_xyz` as error)
-5. XP imbalance - PASS (65% variance logged as warning, not error)
+## Decisions Made
 
-## Current Trail Status
-
-Validation output on current data:
-```
-Validating 64 trail nodes...
-  Prerequisite chains: OK
-  Node types: OK (26 typed, 38 legacy)
-  Unique IDs: OK (64 nodes)
-  Treble: 1530 XP | Boss: 1550 XP | Bass: 870 XP | Rhythm: 535 XP
-  WARNING: XP variance 65.0% between paths
-Validation passed with warnings.
-```
+- `calcMicTimingFromBpm` uses 16.7ms/frame (60fps) — consistent with the existing `onFrames` semantics already in use by presets
+- MIN_MIDI lowered from C3 to A2 — smallest change needed to unblock bass trail notes without widening to B1 or below
+- ARMED→IDLE on silence emits no noteOff — noteOn was never emitted from ARMED so no paired event is needed
+- ARMED state resets candidateNote on different pitch but stays ARMED — avoids returning to IDLE which would waste the already-armed state
 
 ## Deviations from Plan
 
 None - plan executed exactly as written.
 
-## Key Implementation Details
+## Issues Encountered
 
-### DFS Cycle Detection Algorithm
+Pre-existing test failure in `SightReadingGame.micRestart.test.jsx` (1 of 4 test files) — confirmed pre-existing before this plan's changes by running tests on stashed state. All other tests (29/30) pass. This failure is documented in STATE.md blockers.
 
-Uses three-state tracking (UNVISITED=0, VISITING=1, VISITED=2) to detect back edges:
+## User Setup Required
 
-```javascript
-if (state === VISITING) {
-  // Found a cycle - node already in current path
-  const cycle = [...path.slice(cycleStart), nodeId];
-  console.error(`Cycle detected: ${cycle.join(' -> ')}`);
-}
-```
-
-### Exit Codes
-
-- **0**: Validation passed (may have warnings)
-- **1**: Validation failed (has errors) - build aborted
+None - no external service configuration required.
 
 ## Next Phase Readiness
 
-The validation infrastructure is ready for Phases 9-12:
-- New nodes added will be validated automatically
-- Prerequisite changes will be cycle-checked
-- Node type additions will be verified against NODE_TYPES
-- XP economy changes will be tracked (warnings for Phase 11 balancing)
+- Foundation layer complete: `calcMicTimingFromBpm` available for Plan 02 game component BPM wiring
+- `useMicNoteInput` FSM ready for Plan 02 to pass dynamic timing params without internal changes
+- Bass trail notes A2/B2 detectable — trail integration can proceed
+- Plan 02 (`08-02-PLAN.md`) can begin immediately
 
-## Files Reference
-
-- **Created**: `scripts/validateTrail.mjs` (263 lines)
-- **Modified**: `package.json` (2 lines added)
+---
+*Phase: 08-design-data-modeling*
+*Completed: 2026-02-22*
