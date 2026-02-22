@@ -1,6 +1,18 @@
 import { useCallback, useMemo, useRef } from "react";
 import { usePitchDetection } from "./usePitchDetection";
 
+// ---------------------------------------------------------------------------
+// FSM state enum
+// ---------------------------------------------------------------------------
+
+/**
+ * Formal state machine states for note onset/sustain/silence tracking.
+ *
+ * IDLE   — no pitch detected, no note held.
+ * ARMED  — a candidate note is accumulating onset confidence (frames counted).
+ * ACTIVE — a note is currently held (noteOn emitted, waiting for noteOff or change).
+ */
+const FSM = { IDLE: 'IDLE', ARMED: 'ARMED', ACTIVE: 'ACTIVE' };
 
 /**
  * Mic note event model (JS shape):
@@ -15,6 +27,9 @@ import { usePitchDetection } from "./usePitchDetection";
  *
  * This hook wraps `usePitchDetection` and adds stability + note-on/off semantics.
  * It emits only stable noteOn events (and noteOff when audio goes silent).
+ *
+ * Internal state is managed by a formal IDLE/ARMED/ACTIVE FSM instead of
+ * ad-hoc candidateFrames counting.
  */
 export function useMicNoteInput({
   isActive = false,
@@ -58,10 +73,15 @@ export function useMicNoteInput({
   clarityThreshold,
 } = {}) {
   const stateRef = useRef({
-    currentNote: null,
+    // FSM
+    fsmState: FSM.IDLE,
+    // Candidate tracking (used in ARMED and during note-change in ACTIVE)
     candidateNote: null,
     candidateFrames: 0,
     candidateStartedAt: -Infinity,
+    // Currently held note (set when ACTIVE)
+    currentNote: null,
+    // Timing bookkeeping
     lastPitchAt: -Infinity,
     prevPitchAt: -Infinity,
     lastEmitAt: -Infinity,
@@ -71,6 +91,7 @@ export function useMicNoteInput({
 
   const resetInternalState = useCallback((reason) => {
     const s = stateRef.current;
+    s.fsmState = FSM.IDLE;
     s.currentNote = null;
     s.candidateNote = null;
     s.candidateFrames = 0;
@@ -91,89 +112,124 @@ export function useMicNoteInput({
     [onNoteEvent]
   );
 
+  // ---------------------------------------------------------------------------
+  // FSM transitions — called on every pitch detection frame
+  // ---------------------------------------------------------------------------
+
   const handlePitchDetected = useCallback(
     (note, frequency) => {
       const now = performance.now();
       const s = stateRef.current;
-      const prevPitchAt = s.lastPitchAt;
-      s.prevPitchAt = prevPitchAt;
+
+      // Update timing bookkeeping
+      s.prevPitchAt = s.lastPitchAt;
       s.lastPitchAt = now;
       s.lastFrequency = frequency;
-      // If we're already holding this note, do nothing.
-      if (s.currentNote && note === s.currentNote) {
-        s.candidateNote = note;
-        s.candidateFrames = Math.max(s.candidateFrames, onFrames);
-        return;
-      }
 
-      // Track candidate stability
-      if (note === s.candidateNote) {
-        s.candidateFrames += 1;
-      } else {
+      if (s.fsmState === FSM.IDLE) {
+        // -----------------------------------------------------------------------
+        // IDLE: no note held, no candidate — first pitch detected → arm it
+        // -----------------------------------------------------------------------
+        s.fsmState = FSM.ARMED;
         s.candidateNote = note;
         s.candidateFrames = 1;
         s.candidateStartedAt = now;
-      }
 
-      // Emit noteOn for initial note after stability
-      if (!s.currentNote) {
-        if (
-          s.candidateFrames >= onFrames &&
-          now - s.lastEmitAt >= minInterOnMs
-        ) {
-          const latencyMs = Number.isFinite(s.candidateStartedAt)
-            ? Math.round(now - s.candidateStartedAt)
-            : null;
-          s.currentNote = note;
-          s.lastEmitAt = now;
-          emit({
-            pitch: note,
-            source: "mic",
-            type: "noteOn",
-            time: now,
-            frequency,
-            audioLevel: s.lastAudioLevel,
-            latencyMs,
-          });
+      } else if (s.fsmState === FSM.ARMED) {
+        // -----------------------------------------------------------------------
+        // ARMED: accumulating onset confidence for a candidate note
+        // -----------------------------------------------------------------------
+        if (note === s.candidateNote) {
+          s.candidateFrames += 1;
+
+          if (
+            s.candidateFrames >= onFrames &&
+            now - s.lastEmitAt >= minInterOnMs
+          ) {
+            // Threshold met → emit noteOn, transition to ACTIVE
+            const latencyMs = Number.isFinite(s.candidateStartedAt)
+              ? Math.round(now - s.candidateStartedAt)
+              : null;
+            s.fsmState = FSM.ACTIVE;
+            s.currentNote = note;
+            s.lastEmitAt = now;
+            emit({
+              pitch: note,
+              source: "mic",
+              type: "noteOn",
+              time: now,
+              frequency,
+              audioLevel: s.lastAudioLevel,
+              latencyMs,
+            });
+          }
+        } else {
+          // Different note detected → reset candidate (stay ARMED)
+          s.candidateNote = note;
+          s.candidateFrames = 1;
+          s.candidateStartedAt = now;
         }
-        return;
-      }
 
-      // Handle note changes while holding (legato-like)
-      if (
-        s.currentNote &&
-        note !== s.currentNote &&
-        s.candidateFrames >= changeFrames &&
-        now - s.lastEmitAt >= minInterOnMs
-      ) {
-        const latencyMs = Number.isFinite(s.candidateStartedAt)
-          ? Math.round(now - s.candidateStartedAt)
-          : null;
-        const prev = s.currentNote;
-        s.currentNote = note;
-        s.lastEmitAt = now;
+      } else if (s.fsmState === FSM.ACTIVE) {
+        // -----------------------------------------------------------------------
+        // ACTIVE: note is currently held
+        // -----------------------------------------------------------------------
+        if (note === s.currentNote) {
+          // Same note sustaining — do nothing
+          return;
+        }
 
-        emit({
-          pitch: prev,
-          source: "mic",
-          type: "noteOff",
-          time: now,
-          frequency: s.lastFrequency,
-          audioLevel: s.lastAudioLevel,
-        });
-        emit({
-          pitch: note,
-          source: "mic",
-          type: "noteOn",
-          time: now,
-          frequency,
-          audioLevel: s.lastAudioLevel,
-          latencyMs,
-        });
+        // Different note — track as candidate for note-change
+        if (s.candidateNote === note) {
+          s.candidateFrames += 1;
+
+          if (
+            s.candidateFrames >= changeFrames &&
+            now - s.lastEmitAt >= minInterOnMs
+          ) {
+            const latencyMs = Number.isFinite(s.candidateStartedAt)
+              ? Math.round(now - s.candidateStartedAt)
+              : null;
+            const prev = s.currentNote;
+            s.currentNote = note;
+            s.lastEmitAt = now;
+            // Stay ACTIVE with new note
+            s.candidateNote = null;
+            s.candidateFrames = 0;
+            s.candidateStartedAt = -Infinity;
+
+            emit({
+              pitch: prev,
+              source: "mic",
+              type: "noteOff",
+              time: now,
+              frequency: s.lastFrequency,
+              audioLevel: s.lastAudioLevel,
+            });
+            emit({
+              pitch: note,
+              source: "mic",
+              type: "noteOn",
+              time: now,
+              frequency,
+              audioLevel: s.lastAudioLevel,
+              latencyMs,
+            });
+          }
+        } else {
+          // New different note — reset candidate tracking (stay ACTIVE)
+          s.candidateNote = note;
+          s.candidateFrames = 1;
+          s.candidateStartedAt = now;
+        }
       }
     },
     [changeFrames, emit, minInterOnMs, onFrames]
   );
+
+  // ---------------------------------------------------------------------------
+  // Silence detection — called every audio frame via onLevelChange
+  // ---------------------------------------------------------------------------
 
   const handleLevelChange = useCallback(
     (level) => {
@@ -181,10 +237,11 @@ export function useMicNoteInput({
       const s = stateRef.current;
       s.lastAudioLevel = level;
 
-      // If we haven't detected pitch recently, treat as silence and emit noteOff.
-      if (s.currentNote && now - s.lastPitchAt >= offMs) {
+      if (s.fsmState === FSM.ACTIVE && now - s.lastPitchAt >= offMs) {
+        // Held note gone silent → emit noteOff, return to IDLE
         const prev = s.currentNote;
         const prevFrequency = s.lastFrequency;
+        s.fsmState = FSM.IDLE;
         s.currentNote = null;
         s.candidateNote = null;
         s.candidateFrames = 0;
@@ -199,6 +256,13 @@ export function useMicNoteInput({
           frequency: prevFrequency,
           audioLevel: level,
         });
+      } else if (s.fsmState === FSM.ARMED && now - s.lastPitchAt >= offMs) {
+        // Candidate never reached threshold, silence detected → back to IDLE
+        s.fsmState = FSM.IDLE;
+        s.candidateNote = null;
+        s.candidateFrames = 0;
+        s.candidateStartedAt = -Infinity;
+        // No emission needed (noteOn was never sent)
       }
     },
     [emit, offMs]
@@ -249,6 +313,7 @@ export function useMicNoteInput({
   const debug = useMemo(() => {
     const s = stateRef.current;
     return {
+      fsmState: s.fsmState,
       currentNote: s.currentNote,
       candidateNote: s.candidateNote,
       candidateFrames: s.candidateFrames,
