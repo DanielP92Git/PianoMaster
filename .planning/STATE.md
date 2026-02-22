@@ -5,21 +5,21 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 08 IN PROGRESS (1 of 2 plans complete)
+**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 08 COMPLETE (2 of 2 plans done)
 
 ## Current Position
 
-Phase: 08 of 10 (v1.7) — Design and Data Modeling — In Progress
-Plan: 1 of 2 complete (08-01 done, 08-02 next)
-Status: Phase 08 Plan 01 complete — PIPE-01/02/03/04 delivered
-Last activity: 2026-02-22 — Phase 08 Plan 01 complete (calcMicTimingFromBpm utility + IDLE/ARMED/ACTIVE FSM + MIN_MIDI=45)
+Phase: 08 of 10 (v1.7) — Design and Data Modeling — Complete
+Plan: 2 of 2 complete (08-01 done, 08-02 done)
+Status: Phase 08 complete — PIPE-01 through PIPE-06 delivered
+Last activity: 2026-02-22 — Phase 08 Plan 02 complete (BPM timing wiring + per-note dedup in both game components)
 
-Progress: [█████░░░░░] 50%+ (v1.7) — 8 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05, 8-01)
+Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05, 8-01, 8-02)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 72 (across 27 phases in 7 shipped milestones + v1.7 phases 06-07)
+- Total plans completed: 73 (across 27 phases in 7 shipped milestones + v1.7 phases 06-08)
 - 7 milestones shipped in 18 days (2026-01-31 to 2026-02-17)
 - ~68,298 lines JavaScript/JSX/CSS
 
@@ -33,6 +33,8 @@ Progress: [█████░░░░░] 50%+ (v1.7) — 8 plans complete (6-0
 | 07-03 | 3 min | 2 | 2 | 2026-02-17 |
 | 07-04 | 4 min | 1 | 1 | 2026-02-17 |
 | 07-05 | 7 min | 2 | 4 | 2026-02-17 |
+| 08-01 | 3 min | 2 | 3 | 2026-02-22 |
+| 08-02 | 2 min | 2 | 2 | 2026-02-22 |
 
 **Recent execution (v1.6):**
 | Phase-Plan | Duration | Tasks | Files | Date |
@@ -47,7 +49,6 @@ Progress: [█████░░░░░] 50%+ (v1.7) — 8 plans complete (6-0
 | 04-01 | 2 min | 2 | 2 | 2026-02-15 |
 | 04-02 | 35 min | 2 | 4 | 2026-02-16 |
 | 05-01 | 2 min | 2 | 3 | 2026-02-16 |
-| 08-01 | 3 min | 2 | 3 | 2026-02-22 |
 
 ## Accumulated Context
 
@@ -86,10 +87,13 @@ Recent decisions affecting v1.7:
 - [Phase 08-design-data-modeling]: calcMicTimingFromBpm uses 16.7ms/frame (60fps) — consistent with existing onFrames semantics
 - [Phase 08-design-data-modeling]: MIN_MIDI lowered from 48 (C3) to 45 (A2) — smallest change needed to unblock bass trail notes A2/B2
 - [Phase 08-design-data-modeling]: FSM ARMED->IDLE on silence emits no noteOff — noteOn was never sent from ARMED so no paired event needed
+- [Phase 08-design-data-modeling]: SightReadingGame uses MIC_INPUT_PRESETS.sightReading as explicit fallback when gameSettings.tempo absent (PIPE-05)
+- [Phase 08-design-data-modeling]: NotesRecognitionGame uses settings.tempo || settings.bpm || 90 — always computes from BPM, no preset fallback (PIPE-05)
+- [Phase 08-design-data-modeling]: Dedup window is minInterOnMs*2 — blocks held-note re-triggers without blocking legitimate repeated melody notes (PIPE-06)
 
 ### Pending Todos
 
-None — Phase 07 fully complete (all 5 plans including gap closure 07-05).
+None — Phase 08 fully complete (all 2 plans including game component BPM wiring 08-02).
 
 ### Blockers/Concerns
 
@@ -104,11 +108,11 @@ None — Phase 07 fully complete (all 5 plans including gap closure 07-05).
 ## Session Continuity
 
 Last session: 2026-02-22
-Stopped at: Completed 08-01-PLAN.md (PIPE-01/02/03/04 — calcMicTimingFromBpm + FSM refactor + MIN_MIDI=45)
-Resume file: .planning/phases/08-design-data-modeling/08-02-PLAN.md (next plan)
+Stopped at: Completed 08-02-PLAN.md (PIPE-05/06 — BPM timing wiring + per-note dedup in SightReadingGame and NotesRecognitionGame)
+Resume file: Phase 09 (audio reliability / iOS recovery)
 
-**Next action:** Begin Phase 08 Plan 02 (game component BPM context wiring)
+**Next action:** Begin Phase 09 (audio reliability)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-22 — Phase 08 Plan 01 complete (calcMicTimingFromBpm utility, IDLE/ARMED/ACTIVE FSM, MIN_MIDI lowered to A2)*
+*Last updated: 2026-02-22 — Phase 08 Plan 02 complete (BPM timing wiring + per-note dedup, PIPE-05/PIPE-06)*

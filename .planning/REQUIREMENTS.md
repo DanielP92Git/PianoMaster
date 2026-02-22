@@ -30,8 +30,8 @@ Requirements for mic pitch detection overhaul. Each maps to roadmap phases.
 - [x] **PIPE-02**: Dynamic `offMs` (note-off speed) scales with BPM and note duration — short notes release fast, long notes allow natural decay
 - [x] **PIPE-03**: Formal IDLE/ARMED/ACTIVE state machine in `useMicNoteInput` replaces frame-counting candidacy logic
 - [x] **PIPE-04**: Full piano frequency map covers all note pools used in trail nodes (including bass clef low notes B2, A2, etc.)
-- [ ] **PIPE-05**: BPM and note duration context propagated into mic detection hooks from game components
-- [ ] **PIPE-06**: Per-note debouncing in game scoring layer prevents double-scoring when detection fires twice for one played note
+- [x] **PIPE-05**: BPM and note duration context propagated into mic detection hooks from game components
+- [x] **PIPE-06**: Per-note debouncing in game scoring layer prevents double-scoring when detection fires twice for one played note
 
 ### Architecture
 
@@ -105,8 +105,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PIPE-02 | Phase 08 | Complete |
 | PIPE-03 | Phase 08 | Complete |
 | PIPE-04 | Phase 08 | Complete |
-| PIPE-05 | Phase 08 | Pending |
-| PIPE-06 | Phase 08 | Pending |
+| PIPE-05 | Phase 08 | Complete |
+| PIPE-06 | Phase 08 | Complete |
 | IOS-01 | Phase 09 | Pending |
 | IOS-02 | Phase 09 | Pending |
 | IOS-03 | Phase 09 | Pending |
