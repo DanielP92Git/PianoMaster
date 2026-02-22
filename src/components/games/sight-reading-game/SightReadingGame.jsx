@@ -7,7 +7,7 @@ import MetronomeIcon from "../../../assets/icons/metronome.svg";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
-import { MIC_INPUT_PRESETS } from "../../../hooks/micInputPresets";
+import { calcMicTimingFromBpm, MIC_INPUT_PRESETS } from "../../../hooks/micInputPresets";
 import { PreGameSetup } from "./components/PreGameSetup";
 import { VexFlowStaffDisplay } from "./components/VexFlowStaffDisplay";
 import { KlavierKeyboard } from "./components/KlavierKeyboard";
@@ -784,6 +784,7 @@ export function SightReadingGame() {
   }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
   const [exerciseRecorded, setExerciseRecorded] = useState(false);
   const pendingMicLatencyMsRef = useRef(null);
+  const lastScoredRef = useRef({ pitch: null, time: 0 });
   const performanceTimelineRafRef = useRef(null);
   const performanceTimelineIdxRef = useRef(-1);
 
@@ -828,8 +829,15 @@ export function SightReadingGame() {
       timestamp: Date.now(),
     });
     // #endregion
+    const now = performance.now();
+    const last = lastScoredRef.current;
+    const minScoreInterval = micTiming.minInterOnMs || 80;
+    if (last.pitch === event.pitch && now - last.time < minScoreInterval * 2) {
+      return; // Block double-scoring same pitch within dedup window
+    }
+    lastScoredRef.current = { pitch: event.pitch, time: now };
     handleNoteDetectedRef.current(event.pitch, event.frequency ?? 440);
-  }, []);
+  }, [micTiming]);
 
   // Dev-only mic debug overlay toggle:
   // In console: localStorage.setItem("debug-mic", "1") then refresh.
@@ -838,11 +846,21 @@ export function SightReadingGame() {
     return window.localStorage?.getItem("debug-mic") === "1";
   }, []);
 
+  const micTiming = useMemo(() => {
+    const bpm = gameSettings?.tempo || gameSettings?.bpm;
+    const shortestDuration = gameSettings?.shortestDuration || 'q';
+    if (bpm) {
+      return calcMicTimingFromBpm(bpm, shortestDuration);
+    }
+    // Fallback to static preset when no BPM available
+    return MIC_INPUT_PRESETS.sightReading;
+  }, [gameSettings?.tempo, gameSettings?.bpm, gameSettings?.shortestDuration]);
+
   const { audioLevel, isListening, startListening, stopListening, debug } =
     useMicNoteInput({
       isActive: false, // Manual control
       noteFrequencies,
-      ...MIC_INPUT_PRESETS.sightReading,
+      ...micTiming,
       onNoteEvent: handleNoteEvent,
     });
 
