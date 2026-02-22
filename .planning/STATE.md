@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 07 COMPLETE (all 5 plans including gap closure), ready for Phase 08
+**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 08 IN PROGRESS (1 of 2 plans complete)
 
 ## Current Position
 
-Phase: 07 of 10 (v1.7) — Audio Architecture and Core Algorithm — COMPLETE
-Plan: 5 of 5 complete (07-01 through 07-05, including gap closure 07-05)
-Status: Phase 07 fully complete — all ARCH-01/ARCH-03 verification gaps closed
-Last activity: 2026-02-17 — Phase 07 Plan 05 complete (SightReadingGame + MetronomeTrainer shared audio wiring + debug cleanup)
+Phase: 08 of 10 (v1.7) — Design and Data Modeling — In Progress
+Plan: 1 of 2 complete (08-01 done, 08-02 next)
+Status: Phase 08 Plan 01 complete — PIPE-01/02/03/04 delivered
+Last activity: 2026-02-22 — Phase 08 Plan 01 complete (calcMicTimingFromBpm utility + IDLE/ARMED/ACTIVE FSM + MIN_MIDI=45)
 
-Progress: [█████░░░░░] 50% (v1.7) — 7 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05)
+Progress: [█████░░░░░] 50%+ (v1.7) — 8 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05, 8-01)
 
 ## Performance Metrics
 
@@ -47,6 +47,7 @@ Progress: [█████░░░░░] 50% (v1.7) — 7 plans complete (6-01
 | 04-01 | 2 min | 2 | 2 | 2026-02-15 |
 | 04-02 | 35 min | 2 | 4 | 2026-02-16 |
 | 05-01 | 2 min | 2 | 3 | 2026-02-16 |
+| 08-01 | 3 min | 2 | 3 | 2026-02-22 |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Recent decisions affecting v1.7:
 - [Phase 06]: pauseTimer/resumeTimer called on mic error/recovery to prevent session timeout while kid reads error overlay
 - [Phase 07]: detectPitch kept as function shim (not null) to pass backward-compat test; pitchy handles all real detection internally
 - [Phase 07]: startListening call-time analyserNode arg takes priority over hook-level prop — handles async mic init race where hook prop is null at render time
+- [Phase 08-design-data-modeling]: calcMicTimingFromBpm uses 16.7ms/frame (60fps) — consistent with existing onFrames semantics
+- [Phase 08-design-data-modeling]: MIN_MIDI lowered from 48 (C3) to 45 (A2) — smallest change needed to unblock bass trail notes A2/B2
+- [Phase 08-design-data-modeling]: FSM ARMED->IDLE on silence emits no noteOff — noteOn was never sent from ARMED so no paired event needed
 
 ### Pending Todos
 
@@ -99,12 +103,12 @@ None — Phase 07 fully complete (all 5 plans including gap closure 07-05).
 
 ## Session Continuity
 
-Last session: 2026-02-17
-Stopped at: Completed 07-05-PLAN.md (Phase 07 gap closure complete — all three game modes share one AudioContext)
-Resume file: .planning/phases/08-*/08-01-PLAN.md (next phase)
+Last session: 2026-02-22
+Stopped at: Completed 08-01-PLAN.md (PIPE-01/02/03/04 — calcMicTimingFromBpm + FSM refactor + MIN_MIDI=45)
+Resume file: .planning/phases/08-design-data-modeling/08-02-PLAN.md (next plan)
 
-**Next action:** Begin Phase 08 (integration testing for shared audio pipeline)
+**Next action:** Begin Phase 08 Plan 02 (game component BPM context wiring)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-17 — Phase 07 Plan 05 complete (SightReadingGame + MetronomeTrainer wired to shared AudioContext; debug anti-patterns removed)*
+*Last updated: 2026-02-22 — Phase 08 Plan 01 complete (calcMicTimingFromBpm utility, IDLE/ARMED/ACTIVE FSM, MIN_MIDI lowered to A2)*
