@@ -24,8 +24,8 @@ export const NOTE_NAMES = [
   "B",
 ];
 
-/** MIDI note number for C3 (lowest accepted note). */
-const MIN_MIDI = 48; // C3
+/** MIDI note number for A2 (lowest accepted note). */
+const MIN_MIDI = 45; // A2
 
 /** MIDI note number for C6 (highest accepted note). */
 const MAX_MIDI = 84; // C6
@@ -37,7 +37,7 @@ const MAX_MIDI = 84; // C6
 /**
  * Convert a frequency in Hz to a note name string (e.g. "C4") using MIDI math.
  *
- * Only notes in the range C3 (MIDI 48) to C6 (MIDI 84) are returned.
+ * Only notes in the range A2 (MIDI 45) to C6 (MIDI 84) are returned.
  * Frequencies outside this range, or invalid inputs, return null.
  *
  * @param {number} hz - Frequency in Hz

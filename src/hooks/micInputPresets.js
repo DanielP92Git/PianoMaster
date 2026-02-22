@@ -1,3 +1,43 @@
+/**
+ * Convert BPM and shortest note duration into mic input timing parameters.
+ *
+ * Produces dynamic onFrames/offMs/changeFrames/minInterOnMs values that scale
+ * with the current tempo and note granularity, rather than fixed preset values.
+ *
+ * @param {number} bpm - Tempo in beats per minute (expected range: 60–200)
+ * @param {string} [shortestNoteDuration='q'] - VexFlow duration code:
+ *   'w' (whole), 'h' (half), 'q' (quarter), '8' (eighth), '16' (sixteenth)
+ * @returns {{ onFrames: number, offMs: number, changeFrames: number, minInterOnMs: number }}
+ *
+ * @example
+ * // 120 BPM, eighth notes → beatMs=500, noteMs=250
+ * calcMicTimingFromBpm(120, '8')
+ * // => { onFrames: 2, offMs: 100, changeFrames: 3, minInterOnMs: 63 }
+ */
+export function calcMicTimingFromBpm(bpm, shortestNoteDuration = 'q') {
+  const beatMs = 60000 / bpm;
+
+  const durationMultipliers = {
+    w: 4,
+    h: 2,
+    q: 1,
+    '8': 0.5,
+    '16': 0.25,
+  };
+  const multiplier = durationMultipliers[shortestNoteDuration] ?? 1;
+  const noteMs = beatMs * multiplier;
+
+  // ~60fps → 1 frame ≈ 16.7ms
+  const FRAME_MS = 16.7;
+
+  const onFrames = Math.max(2, Math.round(noteMs * 0.15 / FRAME_MS));
+  const offMs = Math.max(60, Math.round(noteMs * 0.4));
+  const changeFrames = Math.max(3, onFrames + 1);
+  const minInterOnMs = Math.max(40, Math.round(noteMs * 0.25));
+
+  return { onFrames, offMs, changeFrames, minInterOnMs };
+}
+
 export const MIC_INPUT_PRESETS = {
   // Sight reading prioritizes precision + timing; keep tolerances tighter.
   sightReading: {
