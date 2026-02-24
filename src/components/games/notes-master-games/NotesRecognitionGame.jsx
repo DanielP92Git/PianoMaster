@@ -1649,6 +1649,12 @@ export function NotesRecognitionGame() {
     settings.timedMode,
   ]);
 
+  const micTiming = useMemo(() => {
+    // NotesRecognitionGame may not have BPM settings — use a moderate default
+    const bpm = settings?.tempo || settings?.bpm || 90;
+    return calcMicTimingFromBpm(bpm, 'q'); // Quarter note default for recognition
+  }, [settings?.tempo, settings?.bpm]);
+
   // Callback for useMicNoteInput: handle incoming note events from shared audio pipeline.
   // Reads currentNote from ref to avoid stale closure — the callback chain through
   // useMicNoteInput → usePitchDetection → rAF loop can lag behind React re-renders.
@@ -1679,12 +1685,6 @@ export function NotesRecognitionGame() {
       handleAnswerSelect(cur.note);
     }
   }, [handleAnswerSelect, micTiming]);
-
-  const micTiming = useMemo(() => {
-    // NotesRecognitionGame may not have BPM settings — use a moderate default
-    const bpm = settings?.tempo || settings?.bpm || 90;
-    return calcMicTimingFromBpm(bpm, 'q'); // Quarter note default for recognition
-  }, [settings?.tempo, settings?.bpm]);
 
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
