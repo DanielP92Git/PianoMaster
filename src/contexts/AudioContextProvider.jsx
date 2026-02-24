@@ -27,7 +27,18 @@ import React, {
 const AudioCtx = createContext(null);
 
 export function AudioContextProvider({ children }) {
+  // Eagerly create the AudioContext so useAudioEngine consumers always see a
+  // non-null ref on their first render.  Without this, useAudioEngine creates
+  // its own context, then switches to the shared one when requestMic() triggers
+  // a re-render — closing the owned context mid-playback and stalling timers.
   const audioContextRef = useRef(null);
+  if (!audioContextRef.current) {
+    const Ctor = window.AudioContext || window.webkitAudioContext;
+    if (Ctor) {
+      audioContextRef.current = new Ctor();
+    }
+  }
+
   const analyserRef = useRef(null);
   const streamRef = useRef(null);
   const sourceRef = useRef(null); // Store to prevent GC
@@ -99,6 +110,12 @@ export function AudioContextProvider({ children }) {
       analyser.fftSize = 4096;
 
       source.connect(analyser);
+
+      // Connecting a MediaStreamSource can briefly suspend the AudioContext in
+      // some browsers. Resume explicitly so scheduled audio timers keep ticking.
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
 
       sourceRef.current = source;
       analyserRef.current = analyser;
