@@ -194,7 +194,7 @@ Plans:
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
 | 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 4/5 | Gap closure | - |
-| 08. Detection Pipeline | v1.7 | Complete    | 2026-02-22 | - |
+| 08. Detection Pipeline | v1.7 | Complete    | 2026-02-24 | - |
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 
