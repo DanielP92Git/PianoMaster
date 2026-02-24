@@ -10,6 +10,7 @@
 - ✅ **v1.5 Trail Page Visual Redesign** — Phases 19-22 (shipped 2026-02-12)
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
 - 🚧 **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (in progress)
+- 🚧 **v1.8 Monetization** — Phases TBD (in progress, parallel with v1.7)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -161,6 +162,14 @@ Plans:
   3. If AudioWorklet is built: bass clef notes (below E4) are detected correctly — the ring buffer accumulates 128-frame quanta to at least 2048 samples before running detection
 **Plans**: TBD
 
+### 🚧 v1.8 Monetization (In Progress — Parallel)
+
+**Milestone Goal:** TBD — to be defined via `/gsd:new-milestone` on the monetization feature branch.
+
+_Phases will be added after milestone planning is complete._
+
+---
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -198,7 +207,7 @@ Plans:
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 
-**Total: 32 phases across 8 milestones (27 shipped, 5 in planning for v1.7)**
+**Total: 32 phases across 8 milestones (27 shipped, 5 in progress for v1.7, v1.8 phases TBD)**
 
 ---
-*Last updated: 2026-02-17 — v1.7 roadmap created*
+*Last updated: 2026-02-25 — v1.8 Monetization milestone added (parallel with v1.7)*
