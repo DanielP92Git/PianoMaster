@@ -5,16 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 08 COMPLETE (2 of 2 plans done)
+**Current focus:** Two parallel streams active (see below)
 
-## Current Position
+## Parallel Streams
 
-Phase: 08 of 10 (v1.7) — Design and Data Modeling — Complete
+Two milestones are active simultaneously on separate feature branches:
+
+| Stream | Branch | Worktree | Status |
+|--------|--------|----------|--------|
+| v1.7 Mic Pitch Detection | `feature/v1.7-mic-fix` | `.cursor/worktrees/PianoApp2/mic-fix` | Phase 09 next |
+| v1.8 Monetization | `feature/v1.8-monetization` | `.cursor/worktrees/PianoApp2/monetization` | Milestone planning |
+
+**Ownership rules:** `main` owns shared GSD docs (ROADMAP, STATE, PROJECT). Feature branches own their phase directories only. Sync after each phase/plan completion.
+
+## Current Position — v1.7 Mic Pitch Detection
+
+Phase: 08 of 10 (v1.7) — Detection Pipeline — Complete
 Plan: 2 of 2 complete (08-01 done, 08-02 done)
 Status: Phase 08 complete — PIPE-01 through PIPE-06 delivered
 Last activity: 2026-02-22 — Phase 08 Plan 02 complete (BPM timing wiring + per-note dedup in both game components)
+Next: Phase 09 — iOS Safari Hardening
 
 Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05, 8-01, 8-02)
+
+## Current Position — v1.8 Monetization
+
+Phase: Not started
+Status: Milestone scaffolding added to ROADMAP.md — run `/gsd:new-milestone` from monetization worktree to define requirements and phases
+Next: Define milestone requirements and create roadmap phases
 
 ## Performance Metrics
 
@@ -107,12 +125,13 @@ None — Phase 08 fully complete (all 2 plans including game component BPM wirin
 
 ## Session Continuity
 
-Last session: 2026-02-22
-Stopped at: Completed 08-02-PLAN.md (PIPE-05/06 — BPM timing wiring + per-note dedup in SightReadingGame and NotesRecognitionGame)
-Resume file: Phase 09 (audio reliability / iOS recovery)
+Last session: 2026-02-25
+Stopped at: Set up parallel worktree workflow for v1.7 + v1.8
 
-**Next action:** Begin Phase 09 (audio reliability)
+**Next actions:**
+- **v1.7 stream (mic-fix worktree):** Begin Phase 09 — iOS Safari Hardening
+- **v1.8 stream (monetization worktree):** Run `/gsd:new-milestone` to define monetization requirements and phases
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-22 — Phase 08 Plan 02 complete (BPM timing wiring + per-note dedup, PIPE-05/PIPE-06)*
+*Last updated: 2026-02-25 — Parallel worktree workflow established (v1.7 + v1.8)*
