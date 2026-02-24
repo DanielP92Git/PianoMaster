@@ -803,6 +803,16 @@ export function SightReadingGame() {
     return frequencies;
   }, [currentPattern]);
 
+  const micTiming = useMemo(() => {
+    const bpm = gameSettings?.tempo || gameSettings?.bpm;
+    const shortestDuration = gameSettings?.shortestDuration || 'q';
+    if (bpm) {
+      return calcMicTimingFromBpm(bpm, shortestDuration);
+    }
+    // Fallback to static preset when no BPM available
+    return MIC_INPUT_PRESETS.sightReading;
+  }, [gameSettings?.tempo, gameSettings?.bpm, gameSettings?.shortestDuration]);
+
   const handleNoteEvent = useCallback((event) => {
     if (!event || event.type !== "noteOn") return;
     pendingMicLatencyMsRef.current =
@@ -845,16 +855,6 @@ export function SightReadingGame() {
     if (typeof window === "undefined") return false;
     return window.localStorage?.getItem("debug-mic") === "1";
   }, []);
-
-  const micTiming = useMemo(() => {
-    const bpm = gameSettings?.tempo || gameSettings?.bpm;
-    const shortestDuration = gameSettings?.shortestDuration || 'q';
-    if (bpm) {
-      return calcMicTimingFromBpm(bpm, shortestDuration);
-    }
-    // Fallback to static preset when no BPM available
-    return MIC_INPUT_PRESETS.sightReading;
-  }, [gameSettings?.tempo, gameSettings?.bpm, gameSettings?.shortestDuration]);
 
   const { audioLevel, isListening, startListening, stopListening, debug } =
     useMicNoteInput({
