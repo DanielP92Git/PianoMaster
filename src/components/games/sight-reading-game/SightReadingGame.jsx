@@ -803,15 +803,34 @@ export function SightReadingGame() {
     return frequencies;
   }, [currentPattern]);
 
+  // Detect the shortest note duration in the current pattern so mic timing
+  // parameters scale correctly. Patterns with eighth notes need smaller
+  // onFrames/changeFrames than quarter-note patterns; using 'q' as a blanket
+  // default gives changeFrames=8 (134ms) which is too slow for 375ms eighths.
+  const shortestPatternDuration = useMemo(() => {
+    if (!currentPattern?.notes?.length) return 'q';
+    const bpm = gameSettings?.tempo || 80;
+    const beatSec = 60 / bpm;
+    let minRatio = 4; // whole note = 4 beats
+    for (const n of currentPattern.notes) {
+      if (n.type === 'rest' || !n.duration) continue;
+      const ratio = n.duration / beatSec;
+      if (ratio < minRatio) minRatio = ratio;
+    }
+    if (minRatio <= 0.26) return '16';
+    if (minRatio <= 0.51) return '8';
+    if (minRatio <= 1.01) return 'q';
+    return 'h';
+  }, [currentPattern, gameSettings?.tempo]);
+
   const micTiming = useMemo(() => {
     const bpm = gameSettings?.tempo || gameSettings?.bpm;
-    const shortestDuration = gameSettings?.shortestDuration || 'q';
     if (bpm) {
-      return calcMicTimingFromBpm(bpm, shortestDuration);
+      return calcMicTimingFromBpm(bpm, shortestPatternDuration);
     }
     // Fallback to static preset when no BPM available
     return MIC_INPUT_PRESETS.sightReading;
-  }, [gameSettings?.tempo, gameSettings?.bpm, gameSettings?.shortestDuration]);
+  }, [gameSettings?.tempo, gameSettings?.bpm, shortestPatternDuration]);
 
   const handleNoteEvent = useCallback((event) => {
     if (!event || event.type !== "noteOn") return;
