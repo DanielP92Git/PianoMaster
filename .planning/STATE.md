@@ -93,7 +93,8 @@ Recent decisions affecting v1.7:
 
 ### Pending Todos
 
-None — Phase 08 fully complete (all 2 plans including game component BPM wiring 08-02).
+- Review engagement research for v1.9+ milestone planning (see `.planning/research/ENGAGEMENT_RETENTION.md`)
+- Trail content expansion needs scoping: 5 new sections (~85 nodes) identified, requires content authoring effort estimate
 
 ### Blockers/Concerns
 
@@ -107,12 +108,11 @@ None — Phase 08 fully complete (all 2 plans including game component BPM wirin
 
 ## Session Continuity
 
-Last session: 2026-02-22
-Stopped at: Completed 08-02-PLAN.md (PIPE-05/06 — BPM timing wiring + per-note dedup in SightReadingGame and NotesRecognitionGame)
-Resume file: Phase 09 (audio reliability / iOS recovery)
+Last session: 2026-02-25
+Stopped at: Engagement/retention research completed — documented to `.planning/research/ENGAGEMENT_RETENTION.md` and `PITFALLS_ENGAGEMENT.md`; PROJECT.md updated with future candidates for v1.9+
 
-**Next action:** Begin Phase 09 (audio reliability)
+**Next action:** Continue v1.7 Phase 09 (iOS Safari Hardening) on mic-fix worktree; v1.8 monetization on monetization worktree
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-22 — Phase 08 Plan 02 complete (BPM timing wiring + per-note dedup, PIPE-05/PIPE-06)*
+*Last updated: 2026-02-25 — engagement research documented, v1.9 milestone identified*

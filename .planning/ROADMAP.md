@@ -10,8 +10,11 @@
 - ✅ **v1.5 Trail Page Visual Redesign** — Phases 19-22 (shipped 2026-02-12)
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
 - 🚧 **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (in progress)
+- 📋 **v1.8 App Monetization** — Phases 11-16 (planned)
+- 💡 **v1.9 Engagement & Retention** — Not yet scoped (research complete)
 
 See `.planning/milestones/` for archived details of each milestone.
+See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 
 ## Phases
 
@@ -201,4 +204,4 @@ Plans:
 **Total: 32 phases across 8 milestones (27 shipped, 5 in planning for v1.7)**
 
 ---
-*Last updated: 2026-02-17 — v1.7 roadmap created*
+*Last updated: 2026-02-25 — v1.8 milestone added, v1.9 engagement research added*

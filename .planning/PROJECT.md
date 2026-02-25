@@ -111,18 +111,65 @@ These capabilities exist, are working, and have been shipped:
 - Grand Staff integration (cross-clef learning)
 - Adaptive difficulty system (algorithm research needed)
 
+**Future candidates — Engagement & Retention (researched 2026-02-25):**
+See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.planning/research/PITFALLS_ENGAGEMENT.md` for pitfalls.
+
+*Content Expansion (extends trail from 2-3 months → 12+ months):*
+- Trail Section 4: Sharps & Flats (~20 nodes)
+- Trail Section 5: Key Signatures (~15 nodes)
+- Trail Section 6: Two-Hand Basics (~20 nodes)
+- Trail Section 7: Simple Melodies (~15 nodes, public domain songs)
+- Trail Section 8: Advanced Rhythm (~15 nodes, syncopation/compound meters)
+- Procedural "Endless Practice" mode (infinite post-trail content)
+- Real Song Library (public domain first, licensed later)
+
+*Daily Return Hooks:*
+- PWA push notifications (1/day, parent-gated, COPPA consent required)
+- Streak freeze / protection mechanic (earned consumable)
+- Daily challenge system (rotating unique challenges with bonus XP)
+- Weekly bonus events (Double XP, Bass Week, Speed Week, Review Week)
+
+*Progression Plateau Solutions:*
+- Prestige / mastery star tiers (Gold 4th, Diamond 5th beyond current 3-star max)
+- Spaced repetition "Rusty Skills" system (accuracy decay + review incentives)
+- Extended level system (15 → 25-30 levels + prestige tiers)
+
+*Game Variety:*
+- Notes Recognition engagement upgrade (combo/streak mechanics, speed bonuses, lives)
+- New mini-game types: Note Catcher (Guitar Hero style), Melody Puzzle, Rhythm Battle, Interval Training
+- Adaptive difficulty within sessions (flow zone management)
+
+*Narrative & Emotional:*
+- Story campaign wrapper ("Help Beethoven restore his musical powers")
+- Seasonal events (quarterly themed content with exclusive cosmetics)
+- Accessory system expansion (avatar in gameplay, themed sets, rare items)
+- Unit completion ceremonies + weekly progress summaries + personal bests
+
+*Social & Competitive (COPPA-safe):*
+- Classroom challenges (teacher-set, anonymous collective progress)
+- Parent weekly progress email reports (via existing Brevo infrastructure)
+- Classroom leaderboard with consent (first names, weekly reset, "most improved")
+
 ### Out of Scope
 
 Explicitly excluded:
 
 | Feature | Reason |
 |---------|--------|
-| Real song integration | Licensing complexity; use generated patterns for now |
+| Real song integration (licensed) | Licensing complexity ($500-5000/song); start with public domain only |
 | Path branching logic | Current linear progression works; complexity not justified |
-| REVIEW node automation | Manual review nodes for now; spaced repetition algorithm later |
 | Multi-language consent emails | English only for now, Hebrew later |
-| Avatar customization / unlockable items | Tangible rewards undermine intrinsic motivation for 8-year-olds |
-| Social comparison / leaderboard celebrations | COPPA concerns, inappropriate social pressure for age group |
+| Social network features (chat, friend lists) | COPPA prohibits without verifiable parental consent; classroom-level features preferred |
+| Daily login rewards (open-and-close) | Manipulative pattern; reward meaningful activity instead |
+| Virtual currency purchasable with money | COPPA dark pattern risk; earn-only accessories tied to achievements |
+
+**Revisited decisions (2026-02-25 engagement research):**
+
+| Previously Excluded | New Status | Rationale |
+|---|---|---|
+| Avatar customization / unlockable items | **Moved to future candidate** | Engagement research shows cosmetic rewards critical for 12-month retention; balance with intrinsic motivation per SDT theory |
+| Social comparison / leaderboard celebrations | **Moved to future candidate (COPPA-safe variant)** | Anonymous classroom challenges and teacher-set goals are COPPA-compliant and add social accountability |
+| REVIEW node automation (spaced repetition) | **Moved to future candidate** | Critical for post-trail retention; "rusty skills" system prevents content exhaustion |
 
 ## Context
 
