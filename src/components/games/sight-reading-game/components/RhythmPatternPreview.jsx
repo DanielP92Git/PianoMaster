@@ -214,17 +214,29 @@ export function RhythmPatternPreview({
         svg.style.height = "100%";
         svg.style.display = "block";
 
-        // Apply color styling to all note elements
+        // Apply color styling to all note elements.
+        // IMPORTANT: Only override stroke on elements that originally use stroke.
+        // Setting stroke on fill-only elements (like stem rects) causes iOS Safari
+        // to render an extra border that creates visible gaps between stems and noteheads.
         if (noteColor) {
           const elements = svg.querySelectorAll("path, text, rect, line");
           elements.forEach((el) => {
             if (el.tagName === "text") {
               el.style.fill = noteColor;
             } else {
-              // Many VexFlow paths are stroke-based; keep both set to ensure visibility.
-              // (If a path intentionally has fill="none", setting fill is harmless.)
+              const origStroke = el.getAttribute("stroke");
+              const origFill = el.getAttribute("fill");
+              // Always recolor fill (harmless on fill="none" elements)
               el.style.fill = noteColor;
-              el.style.stroke = noteColor;
+              // Only recolor stroke if the element originally had a visible stroke.
+              // Stem rects use fill-only; adding stroke shifts them on iOS.
+              if (origStroke && origStroke !== "none") {
+                el.style.stroke = noteColor;
+              }
+              // For fill-only rects/paths, ensure no accidental stroke
+              if (!origStroke || origStroke === "none") {
+                el.style.stroke = "none";
+              }
             }
           });
         }
