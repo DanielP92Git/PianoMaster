@@ -125,17 +125,17 @@ export default function Achievements() {
       <div className="p-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">
-            <p className="text-white/80">{t("pages.achievements.loading")}</p>
+            <p className="text-white/70">{t("pages.achievements.loading")}</p>
           </div>
           <div className="space-y-6">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="card p-6">
-                <div className="h-6 bg-gray-200 rounded mb-4 animate-pulse"></div>
+              <div key={i} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6">
+                <div className="h-6 bg-white/20 rounded mb-4 animate-pulse"></div>
                 <div className="space-y-3">
                   {[1, 2, 3].map((j) => (
                     <div
                       key={j}
-                      className="h-16 bg-gray-100 rounded-xl animate-pulse"
+                      className="h-16 bg-white/10 rounded-xl animate-pulse"
                     ></div>
                   ))}
                 </div>
@@ -152,41 +152,41 @@ export default function Achievements() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <p className="text-white/80">{t("pages.achievements.description")}</p>
+          <p className="text-white/70">{t("pages.achievements.description")}</p>
         </div>
 
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="card p-6 text-center">
-            <div className="text-2xl font-bold text-indigo-600 mb-1">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6 text-center">
+            <div className="text-2xl font-bold text-indigo-300 mb-1">
               {earnedAchievements.length}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-white/70">
               {t("pages.achievements.earned")}
             </div>
           </div>
-          <div className="card p-6 text-center">
-            <div className="text-2xl font-bold text-green-600 mb-1">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6 text-center">
+            <div className="text-2xl font-bold text-green-300 mb-1">
               {totalPoints.toLocaleString()}
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-white/70">
               {t("pages.achievements.points")}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-white/60">
               {t("pages.achievements.pointsBreakdown", {
                 gameplay: gameplayPoints.toLocaleString(),
                 achievements: achievementPoints.toLocaleString(),
               })}
             </div>
           </div>
-          <div className="card p-6 text-center">
-            <div className="text-2xl font-bold text-purple-600 mb-1">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6 text-center">
+            <div className="text-2xl font-bold text-purple-300 mb-1">
               {Math.round(
                 (earnedAchievements.length / allAchievements.length) * 100
               ) || 0}
               %
             </div>
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-white/70">
               {t("pages.achievements.completionRate")}
             </div>
           </div>
@@ -194,8 +194,8 @@ export default function Achievements() {
 
         {/* Recent Achievements */}
         {earnedAchievements.length > 0 && (
-          <div className="card p-6 mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6 mb-8">
+            <h2 className="text-lg font-semibold text-white mb-4">
               {t("pages.achievements.recentAchievements")}
             </h2>
             <div className="space-y-3">
@@ -205,7 +205,6 @@ export default function Achievements() {
                 );
                 if (!achievement) return null;
 
-                 
                 const CategoryIcon =
                   categoryIcons[achievement.category] || Trophy;
                 const colorClass =
@@ -215,7 +214,7 @@ export default function Achievements() {
                 return (
                   <div
                     key={earned.id}
-                    className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100"
+                    className="flex items-center gap-4 p-4 bg-white/5 rounded-xl border border-white/10"
                   >
                     <div
                       className={`w-12 h-12 bg-gradient-to-br ${colorClass} rounded-full flex items-center justify-center flex-shrink-0`}
@@ -224,15 +223,15 @@ export default function Achievements() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-white">
                           {getAchievementTitle(achievement)}
                         </h3>
                         <span className="text-xl">{achievement.icon}</span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-1">
+                      <p className="text-sm text-white/70 mb-1">
                         {getAchievementDescription(achievement)}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                      <div className="flex items-center gap-4 text-xs text-white/60">
                         <span>
                           {t("pages.achievements.pointsReward", {
                             points: achievement.points,
@@ -261,14 +260,14 @@ export default function Achievements() {
                 categoryColors[category] || categoryColors.milestone;
 
               return (
-                <div key={category} className="card p-6">
+                <div key={category} className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6">
                   <div className="flex items-center gap-3 mb-6">
                     <div
                       className={`w-10 h-10 bg-gradient-to-br ${colorClass} rounded-lg flex items-center justify-center`}
                     >
                       <CategoryIcon className="h-5 w-5 text-white" />
                     </div>
-                    <h2 className="text-lg font-semibold text-gray-900 capitalize">
+                    <h2 className="text-lg font-semibold text-white capitalize">
                       {t("pages.achievements.achievements")}{" "}
                       {getCategoryLabel(category)}
                     </h2>
@@ -285,8 +284,8 @@ export default function Achievements() {
                           key={achievement.id}
                           className={`p-4 rounded-xl border transition-all ${
                             isEarned
-                              ? "bg-gradient-to-r from-green-50 to-emerald-50 border-green-200"
-                              : "bg-gray-50 border-gray-200 hover:border-gray-300"
+                              ? "bg-white/10 border-white/20 border-l-4 border-l-green-400"
+                              : "bg-white/5 border-white/10 hover:bg-white/10"
                           }`}
                         >
                           <div className="flex items-start gap-3">
@@ -310,25 +309,25 @@ export default function Achievements() {
                             </div>
                             <div className="flex-1">
                               <h3
-                                className={`font-medium mb-1 ${isEarned ? "text-gray-900" : "text-gray-600"}`}
+                                className={`font-medium mb-1 ${isEarned ? "text-white" : "text-white/60"}`}
                               >
                                 {getAchievementTitle(achievement)}
                               </h3>
                               <p
-                                className={`text-sm mb-2 ${isEarned ? "text-gray-600" : "text-gray-500"}`}
+                                className={`text-sm mb-2 ${isEarned ? "text-white/70" : "text-white/50"}`}
                               >
                                 {getAchievementDescription(achievement)}
                               </p>
                               <div className="flex items-center justify-between">
                                 <span
-                                  className={`text-xs font-medium ${isEarned ? "text-green-600" : "text-gray-500"}`}
+                                  className={`text-xs font-medium ${isEarned ? "text-green-300" : "text-white/50"}`}
                                 >
                                   {t("pages.achievements.pointsReward", {
                                     points: achievement.points,
                                   })}
                                 </span>
                                 {isEarned && earned && (
-                                  <span className="text-xs text-gray-500">
+                                  <span className="text-xs text-white/50">
                                     {formatDate(earned.earned_at)}
                                   </span>
                                 )}
@@ -337,15 +336,15 @@ export default function Achievements() {
                                 progress.progress !== undefined &&
                                 !isEarned && (
                                   <div className="mt-2">
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div className="w-full bg-white/15 rounded-full h-2">
                                       <div
-                                        className="bg-indigo-600 h-2 rounded-full transition-all"
+                                        className="bg-indigo-400 h-2 rounded-full transition-all"
                                         style={{
                                           width: `${Math.min(progress.progress * 100, 100)}%`,
                                         }}
                                       ></div>
                                     </div>
-                                    <div className="text-xs text-gray-500 mt-1">
+                                    <div className="text-xs text-white/50 mt-1">
                                       {Math.round(progress.progress * 100)}%
                                       {t("pages.achievements.complete")}
                                     </div>
@@ -366,11 +365,11 @@ export default function Achievements() {
         {/* Empty State */}
         {allAchievements.length === 0 && !isLoading && (
           <div className="text-center py-12">
-            <Trophy className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Trophy className="h-16 w-16 text-white/30 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">
               {t("pages.achievements.noAchievementsAvailable")}
             </h3>
-            <p className="text-gray-600">
+            <p className="text-white/70">
               {t("pages.achievements.checkBackLater")}
             </p>
           </div>

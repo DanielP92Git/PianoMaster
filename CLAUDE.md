@@ -66,14 +66,28 @@ See `docs/vexflow-notation/vexflow-guidelines.md` for detailed patterns.
 
 ## Design System
 
-Use Tailwind utilities with the centralized design system:
+The app uses a **glassmorphism design** on a purple gradient background (`bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900` in AppLayout.jsx).
 
-- **Cards:** `.card`, `.card-hover`, `.card-compact`, `.card-elevated`
-- **Text colors:** `text-gray-900` (primary), `text-gray-600` (secondary), `text-gray-500` (tertiary)
-- **Backgrounds:** `bg-white` for cards, `bg-gray-100` for nested elements
-- **Borders:** `border-gray-200` standard
+### Glass Card Pattern (primary — used by all inner pages)
+- **Container:** `bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg`
+- **Nested elements:** `bg-white/5 border-white/10` or `bg-white/10 border-white/20`
+- **Text colors:** `text-white` (primary), `text-white/70` (secondary), `text-white/60` (tertiary)
+- **Accent numbers:** Use `-300` variants (e.g., `text-indigo-300`, `text-green-300`) for colored values
+- **Progress bars:** Track `bg-white/15`, fill `bg-indigo-400`
+- **Hover states:** `hover:bg-white/5` or `hover:bg-white/10`
 
-The app migrated from glassmorphism to white cards. See `docs/DESIGN_SYSTEM.md` for migration patterns.
+### CSS Card Classes (legacy — defined in index.css)
+- `.card` = `bg-white/80 border-gray-200` — semi-transparent, avoid on purple bg pages
+- `.card-hover`, `.card-compact`, `.card-elevated` — white card variants
+- `.card-glass-legacy` = `bg-white/10 backdrop-blur-md border-white/20` — matches the glass pattern above
+
+### Reference Pages
+- **Settings:** Uses `SettingsSection` component with glass card pattern
+- **PracticeSessions:** Glass cards with `bg-white/10 backdrop-blur-md`
+- **Dashboard:** Glass stat cards with `bg-white/10 border-white/10`
+- **Achievements:** Glass cards matching the pattern above
+
+See `docs/DESIGN_SYSTEM.md` for additional patterns.
 
 ## Testing
 
@@ -191,6 +205,13 @@ A Duolingo-style skill progression system for 8-year-old learners with 93 nodes 
   - `rhythmUnit1.js` through `rhythmUnit6.js` (36 rhythm nodes total)
   - Each unit file exports nodes with boss nodes marked for completion milestones
 
+#### Config
+- `src/config/subscriptionConfig.js` - Single source of truth for free tier boundary
+  - `FREE_NODE_IDS` Set (19 IDs: treble_1_1..7, bass_1_1..6, rhythm_1_1..6)
+  - `isFreeNode(nodeId)` - Returns true if node is in free tier
+  - `PAYMENT_PROCESSOR` - Lemon Squeezy config placeholder
+  - Must stay in sync with Postgres `is_free_node()` function
+
 #### Services
 - `src/services/skillProgressService.js` - CRUD for student progress
   - `getStudentProgress()`, `getNodeProgress()`, `updateNodeProgress()`
@@ -250,7 +271,54 @@ student_daily_goals (
 -- XP columns on students table
 students.total_xp INTEGER
 students.current_level INTEGER (1-10)
+
+-- Subscription plans (read-only reference, public SELECT)
+subscription_plans (
+  id TEXT PRIMARY KEY,          -- e.g., 'monthly-ils', 'yearly-usd'
+  name TEXT,
+  billing_period TEXT,          -- 'monthly' or 'yearly'
+  currency TEXT,                -- 'ILS' or 'USD'
+  amount_cents INTEGER,         -- e.g., 2990 = 29.90 ILS
+  lemon_squeezy_variant_id TEXT, -- NULL until Phase 13
+  is_active BOOLEAN
+)
+
+-- Parent subscriptions (SELECT-only for authenticated, writes via service_role webhook)
+parent_subscriptions (
+  student_id UUID FK → students.id,
+  ls_subscription_id TEXT,      -- Lemon Squeezy subscription ID
+  ls_customer_id TEXT,
+  ls_variant_id TEXT,
+  plan_id TEXT FK → subscription_plans.id,
+  status TEXT,                  -- on_trial|active|paused|past_due|unpaid|cancelled|expired
+  current_period_end TIMESTAMP, -- determines access expiry on cancellation
+  parent_email TEXT             -- denormalized for display, not auth
+)
+
+-- Content gate: students_score has node_id for RLS enforcement
+students_score.node_id TEXT     -- NULL for non-trail games (always allowed)
+-- Sparse index: WHERE node_id IS NOT NULL
 ```
+
+### Postgres Helper Functions
+
+```sql
+-- Returns true if node is free (19 Unit 1 nodes + NULL)
+is_free_node(p_node_id TEXT) → BOOLEAN  -- IMMUTABLE, SECURITY INVOKER
+-- Mirrors FREE_NODE_IDS in src/config/subscriptionConfig.js
+
+-- Returns true if student has active subscription (with grace periods)
+has_active_subscription(p_student_id UUID) → BOOLEAN  -- STABLE, SECURITY DEFINER
+-- Active OR (cancelled + period not ended) OR (past_due + 3-day grace)
+```
+
+### Content Gate (Defense in Depth)
+
+Premium trail nodes are gated at two layers:
+1. **React UI** — `isFreeNode()` from `src/config/subscriptionConfig.js` (fast UX, shows paywall)
+2. **Database RLS** — `students_score_insert_gate` and `student_skill_progress_insert_gate` policies call `is_free_node(node_id) OR has_active_subscription(auth.uid())` (ground truth enforcement)
+
+Non-trail games pass `node_id: null` which always passes `is_free_node(NULL) = true`.
 
 ### Trail Node Structure
 
@@ -813,4 +881,7 @@ When adding new features, verify the following:
 - `src/services/authService.js` - Authentication with secure logout
 - `src/services/scoreService.js` - Score operations with authorization checks
 - `src/services/teacherService.js` - Teacher operations with relationship verification
+- `src/config/subscriptionConfig.js` - Free tier boundary (must sync with Postgres `is_free_node()`)
 - `supabase/migrations/*` - Database schema with RLS policies
+- `supabase/migrations/20260226000001_add_subscription_tables.sql` - Subscription RLS + helper functions
+- `supabase/migrations/20260226000003_add_content_gate_rls.sql` - Content gate RLS on score tables
