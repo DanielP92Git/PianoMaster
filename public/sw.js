@@ -1,7 +1,7 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v5";
+const CACHE_NAME = "pianomaster-v6";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
@@ -53,6 +53,20 @@ function isAuthEndpoint(url) {
 
   // Check against all auth-excluded patterns
   return AUTH_EXCLUDED_PATTERNS.some((pattern) => pattern.test(pathname));
+}
+
+/**
+ * Check if a URL is a Supabase REST API endpoint that should not be cached.
+ * REST API responses (including subscription status) must always be fetched
+ * from the network to prevent stale data.
+ * @param {URL} url - The URL object to check
+ * @returns {boolean} - True if the URL is a REST API endpoint
+ */
+function isRestApiEndpoint(url) {
+  if (!url.hostname.includes('supabase.co')) {
+    return false;
+  }
+  return url.pathname.startsWith('/rest/');
 }
 
 async function cacheFirst(request, cacheName = CACHE_NAME) {
@@ -221,8 +235,8 @@ self.addEventListener("fetch", (event) => {
           // SECURITY: Never cache auth-related endpoints
           const isAuth = isAuthEndpoint(url);
 
-          // Only cache if matches pattern AND is not an auth endpoint
-          const shouldCache = matchesPattern && !isAuth;
+          // Only cache if matches pattern AND is not an auth or REST API endpoint
+          const shouldCache = matchesPattern && !isAuth && !isRestApiEndpoint(url);
 
           if (shouldCache) {
             const cache = await caches.open(CACHE_NAME);
@@ -247,6 +261,21 @@ self.addEventListener("fetch", (event) => {
             JSON.stringify({
               error: "Offline",
               message: "Authentication requires an active network connection",
+            }),
+            {
+              status: 503,
+              statusText: "Service Unavailable",
+              headers: { "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        // Never serve REST API endpoints from cache (prevents stale subscription state)
+        if (isRestApiEndpoint(url)) {
+          return new Response(
+            JSON.stringify({
+              error: "Offline",
+              message: "API data requires an active network connection",
             }),
             {
               status: 503,
