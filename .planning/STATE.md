@@ -1,3 +1,16 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: Mic Pitch Detection Overhaul
+status: unknown
+last_updated: "2026-02-26T22:48:00.000Z"
+progress:
+  total_phases: 25
+  completed_phases: 23
+  total_plans: 67
+  completed_plans: 64
+---
+
 # Project State
 
 ## Project Reference
@@ -49,6 +62,7 @@ Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-0
 | 04-01 | 2 min | 2 | 2 | 2026-02-15 |
 | 04-02 | 35 min | 2 | 4 | 2026-02-16 |
 | 05-01 | 2 min | 2 | 3 | 2026-02-16 |
+| Phase 13-payment-webhook-service-worker P02 | 8 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -90,6 +104,9 @@ Recent decisions affecting v1.7:
 - [Phase 08-design-data-modeling]: SightReadingGame uses MIC_INPUT_PRESETS.sightReading as explicit fallback when gameSettings.tempo absent (PIPE-05)
 - [Phase 08-design-data-modeling]: NotesRecognitionGame uses settings.tempo || settings.bpm || 90 — always computes from BPM, no preset fallback (PIPE-05)
 - [Phase 08-design-data-modeling]: Dedup window is minInterOnMs*2 — blocks held-note re-triggers without blocking legitimate repeated melody notes (PIPE-06)
+- [Phase 13-payment-webhook-service-worker]: Cache version bumped from pianomaster-v5 to pianomaster-v6 — forces cache refresh for all PWA users on monetization deploy
+- [Phase 13-payment-webhook-service-worker]: isRestApiEndpoint() added to sw.js — REST API responses never cached, prevents stale subscription data; mirrors auth endpoint exclusion pattern
+- [Phase 13-payment-webhook-service-worker]: Offline 503 for REST API fallback — React layer (SubscriptionContext/React Query in-memory) handles graceful offline UX, not service worker
 
 ### Pending Todos
 
@@ -108,11 +125,11 @@ Recent decisions affecting v1.7:
 
 ## Session Continuity
 
-Last session: 2026-02-25
-Stopped at: Engagement/retention research completed — documented to `.planning/research/ENGAGEMENT_RETENTION.md` and `PITFALLS_ENGAGEMENT.md`; PROJECT.md updated with future candidates for v1.9+
+Last session: 2026-02-26
+Stopped at: Completed 13-payment-webhook-service-worker-02-PLAN.md — service worker REST API cache exclusion + cache version bump + DEPLOY.md
 
-**Next action:** Continue v1.7 Phase 09 (iOS Safari Hardening) on mic-fix worktree; v1.8 monetization on monetization worktree
+**Next action:** Continue v1.8 Phase 13 Plan 03+ (SubscriptionContext, paywall UI) on monetization worktree
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-25 — engagement research documented, v1.9 milestone identified*
+*Last updated: 2026-02-26 — Phase 13 Plan 02 complete (SW REST cache exclusion + DEPLOY.md)*
