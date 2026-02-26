@@ -97,6 +97,17 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [ ] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS
 - [ ] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop
 
+### 📋 v1.8 App Monetization (Planned)
+
+**Milestone Goal:** Add freemium monetization so parents can subscribe to unlock the full trail, with COPPA-safe purchase flows and dual-market support (Israel + USA).
+
+- [x] **Phase 11: Legal, Gate Design, and Processor Setup** - All pre-code decisions locked — payment processor selected, free tier boundary validated, parental consent email updated (completed)
+- [x] **Phase 12: Database Schema and RLS** - Subscription tables with correct RLS, pricing data seeded, content gate enforced at database layer (completed)
+- [x] **Phase 13: Payment Webhook and Service Worker** - Webhook receives/verifies/applies subscription events idempotently, service worker excludes subscription state from cache (completed 2026-02-26)
+- [ ] **Phase 14: Subscription Context and Service Layer** - SubscriptionContext provides isPremium globally, Realtime channel invalidates on webhook writes
+- [ ] **Phase 15: Trail Content Gating UI** - Subscription-locked nodes visually distinct from prerequisite locks, child-appropriate messaging with no pricing
+- [ ] **Phase 16: Parent-Facing Pages and Checkout** - Pricing page, checkout flow, success confirmation, and in-app cancellation
+
 ## Phase Details
 
 ### Phase 06: Bug Fix Prerequisite
@@ -164,6 +175,85 @@ Plans:
   3. If AudioWorklet is built: bass clef notes (below E4) are detected correctly — the ring buffer accumulates 128-frame quanta to at least 2048 samples before running detection
 **Plans**: TBD
 
+### Phase 11: Legal, Gate Design, and Processor Setup
+**Goal**: All pre-code decisions are locked — payment processor is selected and verified for Israel support, the free tier boundary is validated against actual unit files, the parental consent email names the payment processor, and no child PII flows to the billing system
+**Depends on**: Phase 10 (v1.7 complete) or parallel with v1.7 wrap-up
+**Requirements**: PAY-01, COMP-03, COMP-04
+**Status**: Complete
+**Success Criteria** (what must be TRUE):
+  1. Payment processor account is registered with sandbox active and payout path to an Israeli bank confirmed
+  2. The parental consent email shown to parents names the payment processor explicitly
+  3. No child personal data (name, age, grade) is included in any payment processor API call — only the parent's email address is transmitted
+  4. The free tier boundary (Unit 1 per path) is verified against unit files — the exact count of free nodes is documented
+**Plans**: 3 plans
+- [x] 11-01-PLAN.md -- Subscription config and consent modal
+- [x] 11-02-PLAN.md -- Processor placeholder (TBD documented)
+- [x] 11-03-PLAN.md -- Lemon Squeezy processor confirmation
+
+### Phase 12: Database Schema and RLS
+**Goal**: The subscription database foundation exists — tables are created with correct RLS so the client can only read subscription state, all writes are restricted to the webhook service role, the pricing data is seeded, and the content gate is enforced at the database layer
+**Depends on**: Phase 11
+**Requirements**: SUB-01, SUB-02, SUB-03, SUB-04, GATE-03
+**Status**: Complete
+**Success Criteria** (what must be TRUE):
+  1. A logged-in student calling the Supabase client directly cannot INSERT or UPDATE rows in `parent_subscriptions` — only the webhook service role key can write
+  2. The `subscription_plans` table contains monthly and yearly rows for both ILS and USD
+  3. `src/config/subscriptionConfig.js` exists with an `isFreeNode(node)` function
+  4. A student who bypasses React's `isPremium` check and attempts to save a score on a premium node is blocked at the database level
+**Plans**: 2 plans
+- [x] 12-01-PLAN.md -- Database schema and RLS
+- [x] 12-02-PLAN.md -- Content gate RLS
+
+### Phase 13: Payment Webhook and Service Worker
+**Goal**: Subscription lifecycle events from the payment processor are received, verified, and applied to the database — the webhook is idempotent and handles duplicate delivery, the service worker never caches subscription state, and the cache version is bumped for the monetization deploy
+**Depends on**: Phase 12
+**Requirements**: PAY-02, PAY-03, PAY-04, COMP-01, COMP-02
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+  1. Sending a `subscription.created` test event via the payment processor's sandbox sets `status = 'active'` in `parent_subscriptions`
+  2. Sending the same event twice produces one row in `parent_subscriptions`, not two — the webhook handler is idempotent
+  3. A webhook request with an invalid or missing signature header returns a 400 error and no database write occurs
+  4. Subscription status API responses are never served from the service worker cache
+**Plans**: 2 plans
+- [ ] 13-01-PLAN.md -- Webhook Edge Function with signature verification, payload extraction, UPSERT idempotency, and Vitest tests
+- [ ] 13-02-PLAN.md -- Service worker REST API cache exclusion, cache version bump, and DEPLOY.md checklist
+
+### Phase 14: Subscription Context and Service Layer
+**Goal**: React components can read subscription status globally — `SubscriptionContext` provides `isPremium` with staleTime: 0, a Supabase Realtime channel invalidates the query the moment the webhook writes an update
+**Depends on**: Phase 13
+**Requirements**: SVC-01, SVC-02, SVC-03
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+  1. Any component can call `useSubscription()` and receive the current `isPremium` boolean — no prop drilling
+  2. After a parent completes checkout and the webhook delivers, the child's trail view unlocks within seconds without refreshing
+  3. Opening the app after a period offline and reconnecting re-fetches subscription status immediately
+**Plans**: TBD
+
+### Phase 15: Trail Content Gating UI
+**Goal**: Students see a clearly gated trail where subscription-locked nodes look different from prerequisite-locked nodes, and tapping a locked premium node shows a child-appropriate message with no pricing
+**Depends on**: Phase 14
+**Requirements**: GATE-01, GATE-02, CHILD-01, CHILD-02
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+  1. A student on a free account sees nodes beyond Unit 1 with a distinct gold lock overlay — visually different from the gray prerequisite lock
+  2. Tapping a subscription-locked node shows a modal with no prices, no "buy" buttons, no payment form — only a friendly message
+  3. No navigation path reachable by a student leads to a pricing page or payment interface
+  4. A student with an active subscription sees all trail nodes as available (subject to prerequisite unlock)
+**Plans**: TBD
+
+### Phase 16: Parent-Facing Pages and Checkout
+**Goal**: A parent can view pricing in their local currency, initiate checkout via the payment processor without leaving the PWA, confirm activation, and cancel within the app
+**Depends on**: Phase 15
+**Requirements**: PARENT-01, PARENT-02, PARENT-03, PARENT-04, PARENT-05
+**Status**: Not started
+**Success Criteria** (what must be TRUE):
+  1. A parent visiting `/subscribe` sees prices in ILS or USD based on their account association
+  2. Clicking a plan opens the payment processor's checkout — payment completes without leaving the PWA
+  3. After checkout, the success page confirms subscription activation (polls up to 10 seconds for webhook)
+  4. A parent can cancel from `/parent-portal` without leaving the PWA
+  5. After cancellation, the child retains access until the current billing period ends
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -180,7 +270,7 @@ Plans:
 | 10. Rhythm Redesign | v1.3 | 4/4 | Complete | 2026-02-05 |
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
-| 13. Celebration Foundation & Accessibility | v1.4 | 2/2 | Complete | 2026-02-05 |
+| 13. Celebration Foundation & Accessibility | 2/2 | Complete   | 2026-02-26 | 2026-02-05 |
 | 14. Node Type Visual Distinction | v1.4 | 2/2 | Complete | 2026-02-08 |
 | 15. VictoryScreen Celebration System | v1.4 | 3/3 | Complete | 2026-02-09 |
 | 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
@@ -200,8 +290,14 @@ Plans:
 | 08. Detection Pipeline | v1.7 | Complete    | 2026-02-24 | - |
 | 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
+| 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | - |
+| 12. Database Schema and RLS | v1.8 | 2/2 | Complete | - |
+| 13. Payment Webhook and Service Worker | v1.8 | 0/2 | Not started | - |
+| 14. Subscription Context and Service Layer | v1.8 | 0/TBD | Not started | - |
+| 15. Trail Content Gating UI | v1.8 | 0/TBD | Not started | - |
+| 16. Parent-Facing Pages and Checkout | v1.8 | 0/TBD | Not started | - |
 
-**Total: 32 phases across 8 milestones (27 shipped, 5 in planning for v1.7)**
+**Total: 38 phases across 9 milestones (27 shipped, 5 v1.7 in progress, 6 v1.8 planned)**
 
 ---
 *Last updated: 2026-02-25 — v1.8 milestone added, v1.9 engagement research added*

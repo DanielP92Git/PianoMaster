@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-02-26T22:48:00.000Z"
+last_updated: "2026-02-26T22:46:21.717Z"
 progress:
   total_phases: 25
-  completed_phases: 23
+  completed_phases: 24
   total_plans: 67
-  completed_plans: 64
+  completed_plans: 65
 ---
 
 # Project State
@@ -63,6 +63,7 @@ Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-0
 | 04-02 | 35 min | 2 | 4 | 2026-02-16 |
 | 05-01 | 2 min | 2 | 3 | 2026-02-16 |
 | Phase 13-payment-webhook-service-worker P02 | 8 | 2 tasks | 2 files |
+| Phase 13-payment-webhook-service-worker P01 | 4 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -107,6 +108,10 @@ Recent decisions affecting v1.7:
 - [Phase 13-payment-webhook-service-worker]: Cache version bumped from pianomaster-v5 to pianomaster-v6 — forces cache refresh for all PWA users on monetization deploy
 - [Phase 13-payment-webhook-service-worker]: isRestApiEndpoint() added to sw.js — REST API responses never cached, prevents stale subscription data; mirrors auth endpoint exclusion pattern
 - [Phase 13-payment-webhook-service-worker]: Offline 503 for REST API fallback — React layer (SubscriptionContext/React Query in-memory) handles graceful offline UX, not service worker
+- [Phase 13-payment-webhook-service-worker]: Unknown student_id returns HTTP 200 (not 400/500) — LS retries can't fix missing student_id; 200 stops wasteful retries
+- [Phase 13-payment-webhook-service-worker]: verifySignature.ts imports timingSafeEqual from pinned deno.land/std@0.224.0 — avoids version ambiguity
+- [Phase 13-payment-webhook-service-worker]: upsertSubscription takes injected supabase client (not createClient internally) — enables testability without Deno runtime
+- [Phase 13-payment-webhook-service-worker]: plan_id left NULL in parent_subscriptions upsert — Phase 16 will map ls_variant_id to plan_id
 
 ### Pending Todos
 
@@ -125,11 +130,11 @@ Recent decisions affecting v1.7:
 
 ## Session Continuity
 
-Last session: 2026-02-26
-Stopped at: Completed 13-payment-webhook-service-worker-02-PLAN.md — service worker REST API cache exclusion + cache version bump + DEPLOY.md
+Last session: 2026-02-27
+Stopped at: Completed 13-payment-webhook-service-worker-01-PLAN.md — Lemon Squeezy webhook Edge Function + 25 Vitest tests
 
-**Next action:** Continue v1.8 Phase 13 Plan 03+ (SubscriptionContext, paywall UI) on monetization worktree
+**Next action:** Continue v1.8 Phase 13 Plan 02 (service worker updates) on monetization worktree
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-26 — Phase 13 Plan 02 complete (SW REST cache exclusion + DEPLOY.md)*
+*Last updated: 2026-02-27 — Phase 13 Plan 01 complete (LS webhook Edge Function + tests)*
