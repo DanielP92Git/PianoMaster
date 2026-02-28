@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-02-26T22:46:21.717Z"
+last_updated: "2026-02-28T22:24:06.267Z"
 progress:
-  total_phases: 25
-  completed_phases: 24
-  total_plans: 67
-  completed_plans: 65
+  total_phases: 26
+  completed_phases: 25
+  total_plans: 68
+  completed_plans: 66
 ---
 
 # Project State
@@ -64,6 +64,7 @@ Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-0
 | 05-01 | 2 min | 2 | 3 | 2026-02-16 |
 | Phase 13-payment-webhook-service-worker P02 | 8 | 2 tasks | 2 files |
 | Phase 13-payment-webhook-service-worker P01 | 4 | 2 tasks | 6 files |
+| Phase 14-subscription-context-service-layer P01 | 3 | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,10 @@ Recent decisions affecting v1.7:
 - [Phase 13-payment-webhook-service-worker]: verifySignature.ts imports timingSafeEqual from pinned deno.land/std@0.224.0 — avoids version ambiguity
 - [Phase 13-payment-webhook-service-worker]: upsertSubscription takes injected supabase client (not createClient internally) — enables testability without Deno runtime
 - [Phase 13-payment-webhook-service-worker]: plan_id left NULL in parent_subscriptions upsert — Phase 16 will map ls_variant_id to plan_id
+- [Phase 14-subscription-context-service-layer]: vi.hoisted() used for Vitest mock variables — vi.mock factory hoisted before const declarations
+- [Phase 14-subscription-context-service-layer]: Toast shown only in useEffect watching query data, not in Realtime callback — prevents duplicate toasts on reconnect
+- [Phase 14-subscription-context-service-layer]: staleTime: 0 with refetchOnWindowFocus: false — Realtime push handles isPremium freshness; polling is redundant
+- [Phase 14-subscription-context-service-layer]: maybeSingle() used in subscriptionService: unsubscribed students have no parent_subscriptions row; single() would throw
 
 ### Pending Todos
 
@@ -130,11 +135,11 @@ Recent decisions affecting v1.7:
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Completed 13-payment-webhook-service-worker-01-PLAN.md — Lemon Squeezy webhook Edge Function + 25 Vitest tests
+Last session: 2026-02-28
+Stopped at: Completed 14-subscription-context-service-layer-01-PLAN.md — SubscriptionProvider + fetchSubscriptionStatus + 8 unit tests
 
-**Next action:** Continue v1.8 Phase 13 Plan 02 (service worker updates) on monetization worktree
+**Next action:** Phase 14 complete — proceed to Phase 15 (trail gating UI) or Phase 16 (parent checkout)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-27 — Phase 13 Plan 01 complete (LS webhook Edge Function + tests)*
+*Last updated: 2026-02-28 — Phase 14 Plan 01 complete (SubscriptionProvider + React Query + Supabase Realtime)*
