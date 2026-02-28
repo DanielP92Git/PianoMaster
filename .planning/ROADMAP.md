@@ -273,7 +273,7 @@ Plans:
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
 | 13. Celebration Foundation & Accessibility | 2/2 | Complete   | 2026-02-26 | 2026-02-05 |
-| 14. Node Type Visual Distinction | 1/1 | Complete   | 2026-02-28 | 2026-02-08 |
+| 14. Node Type Visual Distinction | 1/1 | Complete    | 2026-02-28 | 2026-02-08 |
 | 15. VictoryScreen Celebration System | v1.4 | 3/3 | Complete | 2026-02-09 |
 | 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 17. Boss Unlock Celebrations | v1.4 | 2/2 | Complete | 2026-02-09 |
