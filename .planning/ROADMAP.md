@@ -87,7 +87,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 
 </details>
 
-### 🚧 v1.7 Mic Pitch Detection Overhaul (In Progress)
+### v1.7 Mic Pitch Detection Overhaul (In Progress)
 
 **Milestone Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input — eliminating wrong notes, missed notes, and latency on all note durations from quarter through sixteenth.
 
@@ -97,7 +97,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [ ] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS
 - [ ] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop
 
-### 📋 v1.8 App Monetization (Planned)
+### v1.8 App Monetization (Planned)
 
 **Milestone Goal:** Add freemium monetization so parents can subscribe to unlock the full trail, with COPPA-safe purchase flows and dual-market support (Israel + USA).
 
@@ -227,7 +227,9 @@ Plans:
   1. Any component can call `useSubscription()` and receive the current `isPremium` boolean — no prop drilling
   2. After a parent completes checkout and the webhook delivers, the child's trail view unlocks within seconds without refreshing
   3. Opening the app after a period offline and reconnecting re-fetches subscription status immediately
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 14-01-PLAN.md -- subscriptionService, SubscriptionContext with Realtime, App.jsx wiring, and unit tests
 
 ### Phase 15: Trail Content Gating UI
 **Goal**: Students see a clearly gated trail where subscription-locked nodes look different from prerequisite-locked nodes, and tapping a locked premium node shows a child-appropriate message with no pricing
@@ -293,11 +295,11 @@ Plans:
 | 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | - |
 | 12. Database Schema and RLS | v1.8 | 2/2 | Complete | - |
 | 13. Payment Webhook and Service Worker | v1.8 | 0/2 | Not started | - |
-| 14. Subscription Context and Service Layer | v1.8 | 0/TBD | Not started | - |
+| 14. Subscription Context and Service Layer | v1.8 | 0/1 | Not started | - |
 | 15. Trail Content Gating UI | v1.8 | 0/TBD | Not started | - |
 | 16. Parent-Facing Pages and Checkout | v1.8 | 0/TBD | Not started | - |
 
 **Total: 38 phases across 9 milestones (27 shipped, 5 v1.7 in progress, 6 v1.8 planned)**
 
 ---
-*Last updated: 2026-02-25 — v1.8 milestone added, v1.9 engagement research added*
+*Last updated: 2026-02-28 — Phase 14 plan created (1 plan)*
