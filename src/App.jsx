@@ -48,6 +48,7 @@ import NetworkStatus from "./components/pwa/NetworkStatus";
 import AlarmModal from "./components/ui/AlarmModal";
 import { useUserProfile } from "./hooks/useUserProfile";
 import { SightReadingSessionProvider } from "./contexts/SightReadingSessionContext";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import { AudioContextProvider } from "./contexts/AudioContextProvider";
 import { lockOrientation } from "./utils/pwa";
 import { resolveProfileAvatarSource } from "./utils/avatarAssets";
@@ -407,19 +408,21 @@ function App() {
             <ModalProvider>
               <RhythmProvider>
                 <SightReadingSessionProvider>
-                <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 safe-area-app">
-                  <AccessibleToaster />
-                  <AppRoutes />
+                  <SubscriptionProvider>
+                    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 safe-area-app">
+                      <AccessibleToaster />
+                      <AppRoutes />
 
-                  {/* PWA Components */}
-                  <PWAInstallPrompt />
-                  <IOSInstallPrompt />
-                  <PWAUpdateNotification />
-                  <NetworkStatus />
+                      {/* PWA Components */}
+                      <PWAInstallPrompt />
+                      <IOSInstallPrompt />
+                      <PWAUpdateNotification />
+                      <NetworkStatus />
 
-                  {/* Alarm Modal */}
-                  <AlarmModal />
-                </div>
+                      {/* Alarm Modal */}
+                      <AlarmModal />
+                    </div>
+                  </SubscriptionProvider>
                 </SightReadingSessionProvider>
               </RhythmProvider>
             </ModalProvider>
