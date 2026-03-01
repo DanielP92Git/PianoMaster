@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-03-01T16:58:48.777Z"
+last_updated: "2026-03-01T17:05:49.889Z"
 progress:
   total_phases: 28
   completed_phases: 26
   total_plans: 73
-  completed_plans: 69
+  completed_plans: 70
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 ## Current Position
 
 Phase: 16 of 27 (v1.8-monetization) — Parent-Facing Pages and Checkout — IN PROGRESS
-Plan: 1 of 3 complete (16-01 done)
-Status: Phase 16 Plan 01 complete — Edge Functions for checkout creation and cancellation, subscriptionService extensions
-Last activity: 2026-03-01 — Phase 16 Plan 01 complete (create-checkout Edge Function, cancel-subscription Edge Function, plan_id mapping in upsertSubscription, fetchSubscriptionPlans/fetchSubscriptionDetail in subscriptionService)
+Plan: 2 of 3 complete (16-01, 16-02 done)
+Status: Phase 16 Plan 02 complete — SubscribePage with Lemon.js overlay checkout, SubscribeSuccessPage with polling, /subscribe and /subscribe/success routes wired
+Last activity: 2026-03-01 — Phase 16 Plan 02 complete (SubscribePage.jsx, SubscribeSuccessPage.jsx, App.jsx routes, en/he i18n translations)
 
-Progress: [████████░░] 75%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02, 16-01 complete
+Progress: [█████████░] 80%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02, 16-01, 16-02 complete
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [████████░░] 75%+ (v1.8) — 13-01, 13-02, 14-01, 
 | Phase 15-trail-content-gating-ui P01 | 20 | 2 tasks | 8 files |
 | Phase 15-trail-content-gating-ui P02 | 9 | 1 tasks | 3 files |
 | Phase 16 P01 | 3 | 2 tasks | 6 files |
+| Phase 16 P02 | 4 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -131,6 +132,8 @@ Recent decisions affecting v1.7:
 - [Phase 16]: cancel-subscription returns endsAt with fallback to current_period_end from DB if LS DELETE response lacks ends_at field — prevents null return to client for optimistic UI
 - [Phase 16]: verify_jwt = true in config.toml for create-checkout and cancel-subscription + manual auth.getUser() check — defense-in-depth per security guidelines
 - [Phase 16]: upsertSubscription.ts plan_id lookup: maybeSingle() + plan?.id ?? null — null fallback if no matching plan found for unknown variant IDs
+- [Phase 16]: Option B chosen for App.jsx: /subscribe and /subscribe/success only; /parent-portal deferred to Plan 03 to avoid forward-reference build error
+- [Phase 16]: lemonSetupRef (useRef) guards LemonSqueezy.Setup() against StrictMode double-invocation in SubscribePage
 
 ### Pending Todos
 
@@ -150,10 +153,10 @@ Recent decisions affecting v1.7:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 16-parent-facing-pages-and-checkout-01-PLAN.md — create-checkout and cancel-subscription Edge Functions + subscriptionService extensions
+Stopped at: Completed 16-parent-facing-pages-and-checkout-02-PLAN.md — SubscribePage with Lemon.js overlay + SubscribeSuccessPage polling + App.jsx routes
 
-**Next action:** Phase 16 Plan 02 — pricing page (/subscribe route, Lemon.js overlay, plan cards)
+**Next action:** Phase 16 Plan 03 — ParentPortalPage (subscription details, cancel subscription, /parent-portal route)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-01 — Phase 16 Plan 01 complete (create-checkout Edge Function, cancel-subscription Edge Function, plan_id mapping, fetchSubscriptionPlans/fetchSubscriptionDetail)*
+*Last updated: 2026-03-01 — Phase 16 Plan 02 complete (SubscribePage.jsx, SubscribeSuccessPage.jsx, App.jsx /subscribe routes, en/he i18n translations)*
