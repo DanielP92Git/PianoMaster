@@ -100,6 +100,33 @@
     "A": "לה",
     "B": "סי"
   },
+  "skillNames": {
+    "quarter_note": "רבע תו",
+    "half_note": "חצי תו",
+    "whole_note": "תו שלם",
+    "eighth_note": "שמינית",
+    "sixteenth_note": "שש-עשרית",
+    "dotted_quarter_note": "רבע מנוקד",
+    "dotted_half_note": "חצי מנוקד",
+    "quarter_rest": "שתיקת רבע",
+    "half_rest": "שתיקת חצי",
+    "whole_rest": "שתיקת תו שלם",
+    "three_four_time": "משקל 3/4"
+  },
+  "accessories": {
+    "sprout_badge": "תג נבט מוזיקלי",
+    "bass_sprout_badge": "תג נבט באס",
+    "five_finger_badge": "תג אלוף חמש אצבעות",
+    "bass_five_finger_badge": "תג אלוף חמש אצבעות באס",
+    "octave_master_badge": "תג מאסטר אוקטבה",
+    "golden_bass_badge": "תג מפתח באס זהוב",
+    "rhythm_badge_1": "תג קצב",
+    "rhythm_badge_2": "תג קצב II",
+    "rhythm_badge_3": "תג קצב III",
+    "rhythm_badge_4": "תג קצב IV",
+    "rhythm_badge_5": "תג קצב V",
+    "rhythm_champion_badge": "תג אלוף הקצב"
+  },
   "nodes": {
     "Meet Middle C": "הכר את דו האמצעי",
     "C and D": "דו ורה",

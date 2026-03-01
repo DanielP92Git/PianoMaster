@@ -338,14 +338,22 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
           <div className="mb-3 sm:mb-4">
             <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.skillsYoullLearn')}</h3>
             <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {node.skills.map((skill, index) => (
-                <span
-                  key={index}
-                  className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${skillBadgeColors}`}
-                >
-                  {skill}
-                </span>
-              ))}
+              {node.skills.map((skill, index) => {
+                // Translate skill: note names like "C4" → strip octave → lookup noteNames
+                // Rhythm skills like "quarter_note" → lookup skillNames
+                const noteMatch = skill.match(/^([A-Ga-g][b#]?)(\d)$/);
+                const displaySkill = noteMatch
+                  ? t(`trail:noteNames.${noteMatch[1].toUpperCase()}`, { defaultValue: noteMatch[1] })
+                  : t(`trail:skillNames.${skill}`, { defaultValue: skill.replace(/_/g, ' ') });
+                return (
+                  <span
+                    key={index}
+                    className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${skillBadgeColors}`}
+                  >
+                    {displaySkill}
+                  </span>
+                );
+              })}
             </div>
           </div>
 
@@ -361,7 +369,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
           {node.accessoryUnlock && (
             <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30 p-2.5 sm:p-3">
               <p className="text-xs font-medium text-yellow-300">
-                &#127873; {t('modal.unlockLabel')} <span className="font-bold">{node.accessoryUnlock}</span>
+                &#127873; {t('modal.unlockLabel')} <span className="font-bold">{t(`trail:accessories.${node.accessoryUnlock}`, { defaultValue: node.accessoryUnlock.replace(/_/g, ' ') })}</span>
               </p>
             </div>
           )}
