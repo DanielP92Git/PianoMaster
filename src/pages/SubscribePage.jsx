@@ -25,8 +25,8 @@ export default function SubscribePage() {
   const { user } = useUser();
   const { isPremium, isLoading: isSubscriptionLoading } = useSubscription();
 
-  // Locale-based currency detection
-  const currency = navigator.language?.startsWith("he") ? "ILS" : "USD";
+  // Locale-based currency detection — use app i18n language, not browser language
+  const currency = i18n.language?.startsWith("he") ? "ILS" : "USD";
 
   // Track which plan is in the loading state for its CTA button
   const [loadingPlanId, setLoadingPlanId] = useState(null);

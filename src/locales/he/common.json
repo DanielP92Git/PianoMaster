@@ -1086,7 +1086,8 @@
     "pendingTitle": "התשלום התקבל!",
     "pendingSubtitle": "המנוי שלכם בתהליך הפעלה. זה בדרך כלל לוקח רגע.",
     "goToDashboard": "חזרה לדף הבית",
-    "confirming": "מאשרים את המנוי שלכם..."
+    "confirming": "מאשרים את המנוי שלכם...",
+    "pleaseWait": "זה עשוי לקחת כמה שניות…"
   },
   "parentPortal": {
     "title": "ניהול מנוי",

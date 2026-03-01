@@ -1079,7 +1079,8 @@
     "pendingTitle": "Payment Received!",
     "pendingSubtitle": "Your subscription is being activated. This usually takes just a moment.",
     "goToDashboard": "Go to Dashboard",
-    "confirming": "Confirming your subscription..."
+    "confirming": "Confirming your subscription...",
+    "pleaseWait": "This may take a few seconds…"
   },
   "parentPortal": {
     "title": "Subscription Management",
