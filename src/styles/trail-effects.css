@@ -136,7 +136,8 @@
 .node-3d-active,
 .node-3d-completed,
 .node-3d-available,
-.node-3d-locked-boss {
+.node-3d-locked-boss,
+.node-3d-premium-locked {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
@@ -202,6 +203,40 @@
     0 6px 12px rgba(0, 0, 0, 0.4),
     0 0 12px rgba(202, 138, 4, 0.15);
   cursor: pointer;
+}
+
+/* Premium Locked Node - Subscription required (gold, tappable) */
+.node-3d-premium-locked {
+  position: relative;
+  background: radial-gradient(circle at 30% 30%, #fbbf24 0%, #d97706 100%);
+  border: 2px solid rgba(251, 191, 36, 0.7);
+  box-shadow:
+    0 0 0 2px rgba(251, 191, 36, 0.4),
+    0 4px 0 rgba(120, 60, 0, 0.6),
+    0 6px 16px rgba(251, 191, 36, 0.3);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.node-3d-premium-locked::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.5);
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.node-3d-premium-locked:hover::before {
+  opacity: 0.7;
+}
+
+.node-3d-premium-locked:active {
+  transform: translateY(2px);
 }
 
 /* Completed Node - All stars earned */
@@ -354,7 +389,8 @@
 .node-3d-completed:focus-visible,
 .node-3d-available:focus-visible,
 .node-3d-locked:focus-visible,
-.node-3d-locked-boss:focus-visible {
+.node-3d-locked-boss:focus-visible,
+.node-3d-premium-locked:focus-visible {
   outline: 3px solid #fff;
   outline-offset: 3px;
 }
