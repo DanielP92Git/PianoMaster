@@ -124,7 +124,7 @@ export default function SubscribeSuccessPage() {
               {t("subscribeSuccess.confirming")}
             </p>
             <p className="text-white/50 text-sm">
-              This may take a few seconds…
+              {t("subscribeSuccess.pleaseWait")}
             </p>
           </>
         )}
