@@ -8,6 +8,7 @@ import supabase from './supabase';
 import { verifyStudentDataAccess } from './authorizationUtils';
 import { getNodeById, isNodeUnlocked, getUnlockedNodes, EXERCISE_TYPES } from '../data/skillTrail';
 import { checkRateLimit } from './rateLimitService';
+import { isFreeNode } from '../config/subscriptionConfig';
 
 /**
  * Calculate stars based on score percentage
@@ -194,10 +195,15 @@ export const getAvailableNodes = async (studentId) => {
  * @param {string} studentId - The student's ID
  * @returns {Promise<Object|null>} Next recommended node or null
  */
-export const getNextRecommendedNode = async (studentId) => {
+export const getNextRecommendedNode = async (studentId, isPremium = false) => {
   await verifyStudentDataAccess(studentId);
   try {
-    const availableNodes = await getAvailableNodes(studentId);
+    let availableNodes = await getAvailableNodes(studentId);
+
+    // Filter out premium-locked nodes for free-tier users
+    if (!isPremium) {
+      availableNodes = availableNodes.filter(node => isFreeNode(node.id));
+    }
 
     if (availableNodes.length === 0) {
       return null;

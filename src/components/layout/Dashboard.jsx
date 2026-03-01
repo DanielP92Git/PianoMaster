@@ -32,9 +32,11 @@ import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import XPProgressCard from "../dashboard/XPProgressCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { translateNodeName } from "../../utils/translateNodeName";
+import { useSubscription } from "../../contexts/SubscriptionContext";
 
 function Dashboard() {
   const { user, isTeacher, isStudent, profile } = useUser();
+  const { isPremium } = useSubscription();
   const { t, i18n } = useTranslation(["common", "trail"]);
   const isRTL = i18n.dir() === "rtl";
   const queryClient = useQueryClient();
@@ -123,11 +125,12 @@ function Dashboard() {
   const pointsTrend = calculateRecentTrend(scoresData || []);
 
   // Fetch next recommended trail node (only for students)
+  // isPremium in queryKey ensures cache invalidates when subscription status changes
   const { data: nextNode } = useQuery({
-    queryKey: ["next-recommended-node", user?.id],
+    queryKey: ["next-recommended-node", user?.id, isPremium],
     queryFn: () => {
       if (!user?.id || !isStudent) return null;
-      return getNextRecommendedNode(user.id);
+      return getNextRecommendedNode(user.id, isPremium);
     },
     enabled: !!user?.id && isStudent,
     staleTime: 1 * 60 * 1000, // 1 minute - node availability changes when exercises complete
