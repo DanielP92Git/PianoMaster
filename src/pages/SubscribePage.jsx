@@ -112,10 +112,14 @@ export default function SubscribePage() {
     if (!user) return;
     setLoadingPlanId(plan.id);
     try {
+      // Always use the USD plan for checkout — LS only supports one store currency.
+      // ILS plans are display-only; map billing_period to the USD plan ID.
+      const checkoutPlanId = `${plan.billing_period}-usd`;
+
       const { data, error } = await supabase.functions.invoke(
         "create-checkout",
         {
-          body: { planId: plan.id, studentId: user.id },
+          body: { planId: checkoutPlanId, studentId: user.id },
         }
       );
 
