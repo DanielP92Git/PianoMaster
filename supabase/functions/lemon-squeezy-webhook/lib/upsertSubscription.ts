@@ -10,7 +10,8 @@ import type { WebhookPayload } from './extractPayload.ts';
  * Requires a service-role Supabase client (bypasses RLS — parent_subscriptions has
  * no authenticated INSERT/UPDATE/DELETE policies).
  *
- * plan_id is left NULL intentionally — Phase 16 will map ls_variant_id → plan_id.
+ * Maps ls_variant_id → plan_id via subscription_plans table lookup.
+ * Falls back to null if no matching plan found (defensive — handles unknown variant IDs).
  *
  * @param supabase - A Supabase client initialized with SUPABASE_SERVICE_ROLE_KEY
  * @param payload  - The whitelisted webhook payload from extractPayload()
@@ -20,6 +21,14 @@ export async function upsertSubscription(
   supabase: any,
   payload: WebhookPayload
 ): Promise<void> {
+  // Look up plan_id from subscription_plans by ls_variant_id.
+  // Defensive: falls back to null if no matching plan found (e.g., unknown variant ID).
+  const { data: plan } = await supabase
+    .from('subscription_plans')
+    .select('id')
+    .eq('lemon_squeezy_variant_id', payload.ls_variant_id)
+    .maybeSingle();
+
   const { error } = await supabase
     .from('parent_subscriptions')
     .upsert(
@@ -28,7 +37,7 @@ export async function upsertSubscription(
         ls_subscription_id: payload.ls_subscription_id,
         ls_customer_id: payload.ls_customer_id,
         ls_variant_id: payload.ls_variant_id,
-        plan_id: null, // Phase 16 will map ls_variant_id → plan_id
+        plan_id: plan?.id ?? null,
         status: payload.status,
         current_period_end: payload.current_period_end || null,
         parent_email: payload.parent_email || null,
