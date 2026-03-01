@@ -167,6 +167,12 @@
       "installDescription": "Add the app to your home screen for the best experience",
       "installDescriptionNoInstall": "Visit PianoMaster on your mobile device using Safari (iOS) or Chrome (Android) to see install options.",
       "installDescriptionAndroid": "If the button doesn’t appear, open Chrome’s menu (⋮) and choose ",
+      "subscriptionTitle": "Subscription",
+      "subscriptionActive": "Premium Active",
+      "manageSubscription": "Manage Subscription",
+      "subscriptionFree": "Free Plan",
+      "unlockFullAccess": "Unlock Full Access",
+      "subscriptionLoading": "Loading...",
       "profile": {
         "profileSettingsTitle": "Profile Settings",
         "profileSettingsDescription": "Manage your personal information",

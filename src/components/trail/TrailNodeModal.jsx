@@ -428,12 +428,20 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
           {/* Action buttons */}
           <div className={`flex gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {isPremiumLocked ? (
-              <button
-                onClick={onClose}
-                className="flex-1 rounded-xl bg-gradient-to-b from-amber-400 to-yellow-500 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-amber-900 transition-transform hover:scale-[1.02] duration-200"
-              >
-                {t('trail:modal.button.gotIt')}
-              </button>
+              <>
+                <button
+                  onClick={onClose}
+                  className="flex-1 rounded-xl bg-gradient-to-b from-gray-100 to-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-transform hover:scale-[1.02] duration-200"
+                >
+                  {t('trail:modal.button.gotIt')}
+                </button>
+                <button
+                  onClick={() => { onClose(); navigate('/subscribe'); }}
+                  className="flex-1 rounded-xl bg-gradient-to-b from-amber-400 to-yellow-500 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-amber-900 transition-transform hover:scale-[1.02] duration-200"
+                >
+                  {t('trail:modal.button.askParent')}
+                </button>
+              </>
             ) : (
               <>
                 <button

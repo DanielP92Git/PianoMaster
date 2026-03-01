@@ -88,7 +88,8 @@
       "practiceAgain": "Practice Again",
       "startPractice": "Start Practice",
       "continue": "Continue ({{completed}}/{{total}})",
-      "gotIt": "Got it!"
+      "gotIt": "Got it!",
+      "askParent": "Ask a parent to unlock!"
     }
   },
   "noteNames": {
