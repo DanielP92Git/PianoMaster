@@ -1082,6 +1082,33 @@
     "goToDashboard": "חזרה לדף הבית",
     "confirming": "מאשרים את המנוי שלכם..."
   },
+  "parentPortal": {
+    "title": "ניהול מנוי",
+    "premiumTitle": "מנוי פרימיום",
+    "status": "סטטוס",
+    "statusActive": "פעיל",
+    "statusOnTrial": "תקופת ניסיון",
+    "statusCancelled": "בוטל",
+    "statusPastDue": "תשלום באיחור",
+    "statusExpired": "פג תוקף",
+    "plan": "מסלול",
+    "monthly": "חודשי",
+    "yearly": "שנתי",
+    "nextRenewal": "חידוש הבא",
+    "accessUntil": "גישה עד",
+    "cancelSubscription": "ביטול מנוי",
+    "cancelConfirmTitle": "לבטל את המנוי?",
+    "cancelConfirmBody": "תישאר לכם גישה מלאה עד {{date}}. אחרי כן תחזרו למסלול החינמי.",
+    "keepSubscription": "להשאיר מנוי",
+    "yesCancel": "כן, לבטל",
+    "cancelling": "מבטל...",
+    "cancelSuccess": "המנוי בוטל. תישאר לכם גישה עד {{date}}.",
+    "cancelError": "לא ניתן לבטל את המנוי. נסו שוב.",
+    "resubscribe": "להירשם מחדש",
+    "noSubscription": "אין מנוי פעיל",
+    "unlockAccess": "פתחו גישה מלאה",
+    "back": "חזרה"
+  },
   "micError": {
     "permissionDenied": {
       "title": "צריך מיקרופון!",

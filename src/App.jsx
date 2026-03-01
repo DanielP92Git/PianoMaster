@@ -14,6 +14,7 @@ import AppSettings from "./pages/AppSettings";
 import Legal from "./pages/Legal";
 import SubscribePage from "./pages/SubscribePage";
 import SubscribeSuccessPage from "./pages/SubscribeSuccessPage";
+import ParentPortalPage from "./pages/ParentPortalPage";
 import Avatars from "./components/Avatars";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -304,6 +305,7 @@ function AppRoutes() {
           <Route path="/legal" element={<Legal />} />
           <Route path="/subscribe" element={<SubscribePage />} />
           <Route path="/subscribe/success" element={<SubscribeSuccessPage />} />
+          <Route path="/parent-portal" element={<ParentPortalPage />} />
           <Route path="/avatars" element={<Avatars />} />
           <Route path="/teacher/*" element={<TeacherDashboard />} />
           <Route path="/notes-master-mode" element={<NotesMasterMode />} />

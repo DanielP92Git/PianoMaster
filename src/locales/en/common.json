@@ -1075,6 +1075,33 @@
     "goToDashboard": "Go to Dashboard",
     "confirming": "Confirming your subscription..."
   },
+  "parentPortal": {
+    "title": "Subscription Management",
+    "premiumTitle": "Premium Subscription",
+    "status": "Status",
+    "statusActive": "Active",
+    "statusOnTrial": "Trial",
+    "statusCancelled": "Cancelled",
+    "statusPastDue": "Past Due",
+    "statusExpired": "Expired",
+    "plan": "Plan",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "nextRenewal": "Next Renewal",
+    "accessUntil": "Access Until",
+    "cancelSubscription": "Cancel Subscription",
+    "cancelConfirmTitle": "Cancel Subscription?",
+    "cancelConfirmBody": "You'll keep full access until {{date}}. After that, you'll return to the free plan.",
+    "keepSubscription": "Keep Subscription",
+    "yesCancel": "Yes, Cancel",
+    "cancelling": "Cancelling...",
+    "cancelSuccess": "Subscription cancelled. You'll keep access until {{date}}.",
+    "cancelError": "Could not cancel subscription. Please try again.",
+    "resubscribe": "Re-subscribe",
+    "noSubscription": "No active subscription",
+    "unlockAccess": "Unlock Full Access",
+    "back": "Back"
+  },
   "micError": {
     "permissionDenied": {
       "title": "Microphone Needed!",
