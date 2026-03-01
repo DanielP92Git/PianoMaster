@@ -275,7 +275,7 @@ Plans:
 | 13. Celebration Foundation & Accessibility | 2/2 | Complete   | 2026-02-26 | 2026-02-05 |
 | 14. Node Type Visual Distinction | 1/1 | Complete    | 2026-02-28 | 2026-02-08 |
 | 15. VictoryScreen Celebration System | 2/2 | Complete    | 2026-03-01 | 2026-02-09 |
-| 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
+| 16. Dashboard XP Prominence | 1/3 | In Progress|  | 2026-02-09 |
 | 17. Boss Unlock Celebrations | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 18. Code Cleanup | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 19. CSS Foundation & Font Setup | v1.5 | 2/2 | Complete | 2026-02-10 |

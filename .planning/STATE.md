@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-03-01T15:55:55.188Z"
+last_updated: "2026-03-01T16:58:48.777Z"
 progress:
-  total_phases: 27
+  total_phases: 28
   completed_phases: 26
-  total_plans: 70
-  completed_plans: 68
+  total_plans: 73
+  completed_plans: 69
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 15 of 26 (v1.8-monetization) — Trail Content Gating UI — COMPLETE
-Plan: 2 of 2 complete (15-01, 15-02 done)
-Status: Phase 15 complete — full trail content gating UI delivered (paywall modal + recommendation filter + visual premium_locked state)
-Last activity: 2026-03-01 — Phase 15 Plan 02 complete (paywall modal branch + Dashboard recommendation filtering + useSubscription wiring)
+Phase: 16 of 27 (v1.8-monetization) — Parent-Facing Pages and Checkout — IN PROGRESS
+Plan: 1 of 3 complete (16-01 done)
+Status: Phase 16 Plan 01 complete — Edge Functions for checkout creation and cancellation, subscriptionService extensions
+Last activity: 2026-03-01 — Phase 16 Plan 01 complete (create-checkout Edge Function, cancel-subscription Edge Function, plan_id mapping in upsertSubscription, fetchSubscriptionPlans/fetchSubscriptionDetail in subscriptionService)
 
-Progress: [███████░░░] 70%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02 complete
+Progress: [████████░░] 75%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02, 16-01 complete
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [███████░░░] 70%+ (v1.8) — 13-01, 13-02, 14-01, 
 | Phase 14-subscription-context-service-layer P01 | 3 | 2 tasks | 4 files |
 | Phase 15-trail-content-gating-ui P01 | 20 | 2 tasks | 8 files |
 | Phase 15-trail-content-gating-ui P02 | 9 | 1 tasks | 3 files |
+| Phase 16 P01 | 3 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,10 @@ Recent decisions affecting v1.7:
 - [Phase 15-trail-content-gating-ui]: isPremiumLocked defaults to false in TrailNodeModal — safe default, wrong direction fails open to normal modal
 - [Phase 15-trail-content-gating-ui]: getNextRecommendedNode isPremium defaults to false — free-tier filter is always active unless explicitly unlocked
 - [Phase 15-trail-content-gating-ui]: isPremium included in Dashboard queryKey — React Query re-fetches automatically when subscription flips, no manual invalidation needed
+- [Phase 16]: create-checkout uses service role client for plan lookup (RLS: subscription_plans_select_public = USING(true)) — consistent with webhook pattern
+- [Phase 16]: cancel-subscription returns endsAt with fallback to current_period_end from DB if LS DELETE response lacks ends_at field — prevents null return to client for optimistic UI
+- [Phase 16]: verify_jwt = true in config.toml for create-checkout and cancel-subscription + manual auth.getUser() check — defense-in-depth per security guidelines
+- [Phase 16]: upsertSubscription.ts plan_id lookup: maybeSingle() + plan?.id ?? null — null fallback if no matching plan found for unknown variant IDs
 
 ### Pending Todos
 
@@ -145,10 +150,10 @@ Recent decisions affecting v1.7:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 15-trail-content-gating-ui-02-PLAN.md — paywall modal branch + Dashboard recommendation filtering
+Stopped at: Completed 16-parent-facing-pages-and-checkout-01-PLAN.md — create-checkout and cancel-subscription Edge Functions + subscriptionService extensions
 
-**Next action:** Phase 15 complete — proceed to Phase 16 (Dashboard XP Prominence)
+**Next action:** Phase 16 Plan 02 — pricing page (/subscribe route, Lemon.js overlay, plan cards)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-01 — Phase 15 Plan 02 complete (TrailNodeModal paywall modal + getNextRecommendedNode free-tier filter + Dashboard useSubscription wiring)*
+*Last updated: 2026-03-01 — Phase 16 Plan 01 complete (create-checkout Edge Function, cancel-subscription Edge Function, plan_id mapping, fetchSubscriptionPlans/fetchSubscriptionDetail)*
