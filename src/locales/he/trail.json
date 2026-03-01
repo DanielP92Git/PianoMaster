@@ -82,11 +82,13 @@
     "unlockLabel": "פתחו:",
     "prerequisites": "השלימו אלה קודם:",
     "bossUnlockTitle": "איך לפתוח את האתגר הזה",
+    "premiumMessage": "השיעור הזה הוא חלק מההרפתקה המלאה! בקשו ממבוגר לפתוח את כל השיעורים.",
     "button": {
       "locked": "נעול",
       "practiceAgain": "תרגלו שוב",
       "startPractice": "התחילו תרגול",
-      "continue": "המשיכו ({{completed}}/{{total}})"
+      "continue": "המשיכו ({{completed}}/{{total}})",
+      "gotIt": "הבנתי!"
     }
   },
   "noteNames": {

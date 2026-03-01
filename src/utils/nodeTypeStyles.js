@@ -7,7 +7,7 @@
  * - State-based styling (locked, available, current, completed, mastered)
  */
 
-import { Search, Gamepad2, Zap, RotateCcw, Dumbbell, Crown, Trophy } from 'lucide-react';
+import { Search, Gamepad2, Zap, RotateCcw, Dumbbell, Crown, Trophy, Sparkles } from 'lucide-react';
 import TrebleClefIcon from '../components/trail/icons/TrebleClefIcon';
 import BassClefIcon from '../components/trail/icons/BassClefIcon';
 import MetronomeIcon from '../components/trail/icons/MetronomeIcon';
@@ -63,10 +63,21 @@ export const getNodeTypeIcon = (nodeType, category) => {
  * - Child-friendly (bright but not overwhelming)
  *
  * @param {string} category - Node category from NODE_CATEGORIES
- * @param {string} state - Node state: 'locked' | 'available' | 'current' | 'completed' | 'mastered'
+ * @param {string} state - Node state: 'locked' | 'premium_locked' | 'available' | 'current' | 'completed' | 'mastered'
  * @returns {Object} { bg, border, text, icon, glow } - Tailwind class strings
  */
 export const getCategoryColors = (category, state) => {
+  // Premium-locked state: gold/amber gradient — subscription required (visually distinct from gray prerequisite lock)
+  if (state === 'premium_locked') {
+    return {
+      bg: 'bg-gradient-to-br from-amber-400 to-yellow-600',
+      border: 'border-amber-400',
+      text: 'text-amber-900',
+      icon: 'opacity-100',
+      glow: 'shadow-[0_0_20px_rgba(251,191,36,0.6)]'
+    };
+  }
+
   // Locked state overrides everything - clear visual language that node is unavailable
   if (state === 'locked') {
     return {
@@ -126,13 +137,24 @@ export const getCategoryColors = (category, state) => {
  *
  * @param {string} nodeType - Node type from NODE_TYPES
  * @param {string} category - Node category from NODE_CATEGORIES
- * @param {string} state - Node state: 'locked' | 'available' | 'current' | 'completed' | 'mastered'
+ * @param {string} state - Node state: 'locked' | 'premium_locked' | 'available' | 'current' | 'completed' | 'mastered'
  * @param {boolean} isBoss - Whether this is a boss node
  * @returns {Object} { IconComponent, colors, sizeClass, pulseClass, crownVisible }
  */
 export const getNodeStateConfig = (nodeType, category, state, isBoss = false) => {
   const IconComponent = getNodeTypeIcon(nodeType, category);
   const colors = getCategoryColors(isBoss ? NODE_CATEGORIES.BOSS : category, state);
+
+  // Premium-locked overrides: Sparkles icon, no crown, no pulse
+  if (state === 'premium_locked') {
+    return {
+      IconComponent: Sparkles,
+      colors: getCategoryColors(category, 'premium_locked'),
+      sizeClass: isBoss ? 'h-14 w-14' : 'h-12 w-12',
+      pulseClass: '',
+      crownVisible: false
+    };
+  }
 
   return {
     IconComponent,

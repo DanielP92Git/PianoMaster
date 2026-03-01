@@ -82,11 +82,13 @@
     "unlockLabel": "Unlock:",
     "prerequisites": "Complete These First:",
     "bossUnlockTitle": "How to Unlock This Challenge",
+    "premiumMessage": "This lesson is part of the full adventure! Ask a grown-up to unlock all the lessons.",
     "button": {
       "locked": "Locked",
       "practiceAgain": "Practice Again",
       "startPractice": "Start Practice",
-      "continue": "Continue ({{completed}}/{{total}})"
+      "continue": "Continue ({{completed}}/{{total}})",
+      "gotIt": "Got it!"
     }
   },
   "noteNames": {
