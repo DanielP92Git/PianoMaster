@@ -1051,6 +1051,37 @@
     "dismissButton": "שחק בכל מקרה",
     "screenReaderAnnouncement": "אנא סובבו את המכשיר למצב רוחב לחוויה הטובה ביותר. ניתן לסגור הודעה זו ולשחק במצב אנכי."
   },
+  "subscribe": {
+    "title": "פתחו גישה מלאה",
+    "subtitle": "בחרו את המסלול המתאים למשפחה שלכם",
+    "monthly": "חודשי",
+    "yearly": "שנתי",
+    "bestValue": "הכי משתלם",
+    "perMonth": "/חודש",
+    "perYear": "/שנה",
+    "equivalentMonthly": "= {{price}}/חודש",
+    "savePercent": "חיסכון של {{percent}}%",
+    "subscribeCta": "להתחיל",
+    "featuresTitle": "כולל הכל:",
+    "feature1": "כל 93 תחנות המסלול",
+    "feature2": "שלבי בוס מאתגרים",
+    "feature3": "עדכוני תוכן עתידיים",
+    "feature4": "חוויה ללא פרסומות",
+    "securePayment": "תשלום מאובטח דרך Lemon Squeezy. פרטי כרטיס אשראי לא עוברים דרך השרתים שלנו.",
+    "checkoutError": "לא ניתן להתחיל את התשלום. נסו שוב.",
+    "alreadySubscribed": "כבר יש לכם מנוי!",
+    "goToDashboard": "חזרה לדף הבית",
+    "loading": "טוען מסלולים..."
+  },
+  "subscribeSuccess": {
+    "confirmedTitle": "פרימיום הופעל!",
+    "confirmedSubtitle": "למשפחה שלכם יש עכשיו גישה לכל תוכן הלמידה.",
+    "startLearning": "להתחיל ללמוד",
+    "pendingTitle": "התשלום התקבל!",
+    "pendingSubtitle": "המנוי שלכם בתהליך הפעלה. זה בדרך כלל לוקח רגע.",
+    "goToDashboard": "חזרה לדף הבית",
+    "confirming": "מאשרים את המנוי שלכם..."
+  },
   "micError": {
     "permissionDenied": {
       "title": "צריך מיקרופון!",
