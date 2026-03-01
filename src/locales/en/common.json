@@ -1044,6 +1044,37 @@
     "dismissButton": "Play anyway",
     "screenReaderAnnouncement": "Please rotate your device to landscape for the best experience. You can dismiss this prompt and play in portrait mode."
   },
+  "subscribe": {
+    "title": "Unlock Full Access",
+    "subtitle": "Choose the plan that's right for your family",
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "bestValue": "Best Value",
+    "perMonth": "/month",
+    "perYear": "/year",
+    "equivalentMonthly": "= {{price}}/mo",
+    "savePercent": "Save {{percent}}%",
+    "subscribeCta": "Get Started",
+    "featuresTitle": "Everything included:",
+    "feature1": "All 93 learning trail nodes",
+    "feature2": "Boss challenge levels",
+    "feature3": "Future content updates",
+    "feature4": "Ad-free experience",
+    "securePayment": "Secure payment via Lemon Squeezy. No credit card data touches our servers.",
+    "checkoutError": "Could not start checkout. Please try again.",
+    "alreadySubscribed": "You're already subscribed!",
+    "goToDashboard": "Go to Dashboard",
+    "loading": "Loading plans..."
+  },
+  "subscribeSuccess": {
+    "confirmedTitle": "Premium Unlocked!",
+    "confirmedSubtitle": "Your family now has access to all learning content.",
+    "startLearning": "Start Learning",
+    "pendingTitle": "Payment Received!",
+    "pendingSubtitle": "Your subscription is being activated. This usually takes just a moment.",
+    "goToDashboard": "Go to Dashboard",
+    "confirming": "Confirming your subscription..."
+  },
   "micError": {
     "permissionDenied": {
       "title": "Microphone Needed!",
