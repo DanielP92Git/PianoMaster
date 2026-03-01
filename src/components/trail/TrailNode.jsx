@@ -7,32 +7,39 @@
 
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crown, Lock } from 'lucide-react';
+import { Crown, Lock, Sparkles } from 'lucide-react';
 import { translateNodeName } from '../../utils/translateNodeName';
 import { useAccessibility } from '../../contexts/AccessibilityContext';
 import { getNodeStateConfig } from '../../utils/nodeTypeStyles';
 import { getNodeById } from '../../data/skillTrail';
 
-const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirstNode, onClick }) => {
+const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirstNode, isPremiumLocked = false, onClick }) => {
   const { t, i18n } = useTranslation('trail');
   const { reducedMotion } = useAccessibility();
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Determine node state
   const nodeState = useMemo(() => {
+    if (isPremiumLocked) return 'premium_locked';  // Gold — subscription gate takes visual priority
     if (!isUnlocked) return 'locked';
     if (isCompleted && progress?.stars === 3) return 'mastered';
     if (isCompleted) return 'completed';
     if (isCurrent) return 'current';
     return 'available';
-  }, [isUnlocked, isCompleted, isCurrent, progress]);
+  }, [isPremiumLocked, isUnlocked, isCompleted, isCurrent, progress]);
 
   const stars = progress?.stars || 0;
   const bestScore = progress?.best_score || 0;
   const isBoss = node.isBoss;
 
   const handleClick = () => {
-    // Locked node: show tooltip
+    // Premium-locked: open modal directly (shows paywall branch)
+    if (isPremiumLocked) {
+      onClick(node);
+      return;
+    }
+
+    // Prerequisite-locked node: show tooltip
     if (!isUnlocked && !isBoss) {
       setShowTooltip(true);
       setTimeout(() => setShowTooltip(false), 2000);
@@ -61,6 +68,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
 
   // Determine CSS class for node state
   const nodeCssClass = useMemo(() => {
+    if (nodeState === 'premium_locked') return 'node-3d-premium-locked';
     if (nodeState === 'current') return 'node-3d-active';
     if (nodeState === 'mastered' || nodeState === 'completed') return 'node-3d-completed';
     if (nodeState === 'locked' && isBoss) return 'node-3d-locked-boss';
@@ -97,9 +105,9 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
           ${isBoss ? 'rounded-full' : 'rounded-xl'}
           ${nodeCssClass}
           touch-action-manipulation
-          ${isUnlocked || isBoss ? 'cursor-pointer hover:scale-110' : 'cursor-pointer'}
+          ${isPremiumLocked || isUnlocked || isBoss ? 'cursor-pointer hover:scale-110' : 'cursor-pointer'}
         `}
-        aria-label={`${translateNodeName(node.name, t, i18n)} - ${nodeState}${isCompleted && stars > 0 ? ` - ${stars} stars` : ''}`}
+        aria-label={`${translateNodeName(node.name, t, i18n)} - ${nodeState === 'premium_locked' ? 'premium' : nodeState}${isCompleted && stars > 0 ? ` - ${stars} stars` : ''}`}
         aria-roledescription="skill node"
       >
         {/* Boss crown indicator */}
@@ -109,7 +117,7 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
           </div>
         )}
 
-        {/* Node content: stars for completed, lock for locked, icon otherwise */}
+        {/* Node content: stars for completed, lock for locked, sparkles for premium-locked, icon otherwise */}
         {isCompleted && stars > 0 ? (
           <div className="absolute inset-0 flex items-center justify-center gap-0.5">
             {[1, 2, 3].map((starNum) => (
@@ -127,6 +135,8 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
               </svg>
             ))}
           </div>
+        ) : nodeState === 'premium_locked' ? (
+          <Sparkles size={18} className="text-white opacity-90" />
         ) : nodeState === 'locked' ? (
           <Lock size={18} className="text-white opacity-60" />
         ) : (
@@ -147,7 +157,9 @@ const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirst
 
       {/* Node name */}
       <div className="mt-2.5 max-w-[70px] text-center">
-        <div className={`text-[10px] font-semibold leading-tight ${isUnlocked ? 'text-white' : 'text-white/40'}`}>
+        <div className={`text-[10px] font-semibold leading-tight ${
+          isPremiumLocked ? 'text-amber-400/60' : isUnlocked ? 'text-white' : 'text-white/40'
+        }`}>
           {translateNodeName(node.name, t, i18n)}
         </div>
         {/* Best score */}

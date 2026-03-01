@@ -11,6 +11,8 @@ import { Drum, Target } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '../../features/authentication/useUser';
+import { useSubscription } from '../../contexts/SubscriptionContext';
+import { isFreeNode } from '../../config/subscriptionConfig';
 import trebleClefIcon from '../../assets/noteImages/treble/treble-clef.svg';
 import bassClefIcon from '../../assets/noteImages/bass/bass-clef.svg';
 import {
@@ -60,6 +62,7 @@ const TRAIL_TABS = [
 
 const TrailMap = () => {
   const { user } = useUser();
+  const { isPremium } = useSubscription();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('path') || 'treble'; // Default to treble
@@ -215,6 +218,20 @@ const TrailMap = () => {
 
     return { nodesByUnit: grouped, units: unitsList };
   }, [activeNodes, activeCategory]);
+
+  // Pre-compute which nodes are premium-locked for free-tier users
+  // During loading/error, isPremium defaults to false → premium nodes show gold (safe default per CONTEXT.md)
+  const premiumLockedNodeIds = useMemo(() => {
+    if (isPremium) return new Set(); // Subscribed users see normal colors
+    const locked = new Set();
+    const allNodes = [...trebleWithBoss, ...bassWithBoss, ...rhythmWithBoss];
+    for (const node of allNodes) {
+      if (!isFreeNode(node.id)) {
+        locked.add(node.id);
+      }
+    }
+    return locked;
+  }, [isPremium, trebleWithBoss, bassWithBoss, rhythmWithBoss]);
 
   // Tab change handler
   const handleTabChange = (tabId) => {
@@ -414,6 +431,7 @@ const TrailMap = () => {
           nodes={activeNodes}
           completedNodeIds={completedNodeIds}
           unlockedNodes={unlockedNodes}
+          premiumLockedNodeIds={premiumLockedNodeIds}
           onNodeClick={setSelectedNode}
           getNodeProgress={getNodeProgress}
           activeNodeRef={activeNodeRef}
@@ -430,6 +448,7 @@ const TrailMap = () => {
           node={selectedNode}
           progress={getNodeProgress(selectedNode.id)}
           isUnlocked={unlockedNodes.has(selectedNode.id)}
+          isPremiumLocked={premiumLockedNodeIds.has(selectedNode.id)}
           prerequisites={selectedNode.prerequisites}
           onClose={() => setSelectedNode(null)}
         />

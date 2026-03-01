@@ -16,6 +16,7 @@ const ZigzagTrailLayout = ({
   nodes,
   completedNodeIds,
   unlockedNodes,
+  premiumLockedNodeIds = new Set(),
   onNodeClick,
   getNodeProgress,
   activeNodeRef,
@@ -255,6 +256,7 @@ const ZigzagTrailLayout = ({
                 isCompleted={isCompleted}
                 isCurrent={isCurrent}
                 isFirstNode={isFirstNode}
+                isPremiumLocked={premiumLockedNodeIds.has(node.id)}
                 onClick={onNodeClick}
               />
             </div>
