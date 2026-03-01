@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-03-01T15:29:30.092Z"
+last_updated: "2026-03-01T15:41:46.185Z"
 progress:
   total_phases: 27
-  completed_phases: 25
+  completed_phases: 26
   total_plans: 70
-  completed_plans: 67
+  completed_plans: 68
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 15 of 26 (v1.8-monetization) — Trail Content Gating UI — In Progress
-Plan: 1 of 2 complete (15-01 done)
-Status: Phase 15 Plan 01 complete — premium_locked visual state wired, premiumLockedNodeIds threading done
-Last activity: 2026-03-01 — Phase 15 Plan 01 complete (subscriptionConfig + premium_locked state + TrailMap/ZigzagTrailLayout/TrailNode wiring)
+Phase: 15 of 26 (v1.8-monetization) — Trail Content Gating UI — COMPLETE
+Plan: 2 of 2 complete (15-01, 15-02 done)
+Status: Phase 15 complete — full trail content gating UI delivered (paywall modal + recommendation filter + visual premium_locked state)
+Last activity: 2026-03-01 — Phase 15 Plan 02 complete (paywall modal branch + Dashboard recommendation filtering + useSubscription wiring)
 
-Progress: [██████░░░░] 60%+ (v1.8) — 13-01, 13-02, 14-01, 15-01 complete
+Progress: [███████░░░] 70%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02 complete
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████░░░░] 60%+ (v1.8) — 13-01, 13-02, 14-01, 
 | Phase 13-payment-webhook-service-worker P01 | 4 | 2 tasks | 6 files |
 | Phase 14-subscription-context-service-layer P01 | 3 | 2 tasks | 4 files |
 | Phase 15-trail-content-gating-ui P01 | 20 | 2 tasks | 8 files |
+| Phase 15-trail-content-gating-ui P02 | 9 | 1 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,9 @@ Recent decisions affecting v1.7:
 - [Phase 15-trail-content-gating-ui]: premiumLockedNodeIds computed once at TrailMap level via useMemo — single subscription check, no per-node hook calls
 - [Phase 15-trail-content-gating-ui]: isPremium defaults to false during loading → non-free nodes show gold (no flash of unlocked content)
 - [Phase 15-trail-content-gating-ui]: premium_locked is highest priority in nodeState useMemo — subscription gate overrides prerequisite-locked state
+- [Phase 15-trail-content-gating-ui]: isPremiumLocked defaults to false in TrailNodeModal — safe default, wrong direction fails open to normal modal
+- [Phase 15-trail-content-gating-ui]: getNextRecommendedNode isPremium defaults to false — free-tier filter is always active unless explicitly unlocked
+- [Phase 15-trail-content-gating-ui]: isPremium included in Dashboard queryKey — React Query re-fetches automatically when subscription flips, no manual invalidation needed
 
 ### Pending Todos
 
@@ -141,10 +145,10 @@ Recent decisions affecting v1.7:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 15-trail-content-gating-ui-01-PLAN.md — premium_locked visual state wired from subscriptionConfig through TrailMap to TrailNode
+Stopped at: Completed 15-trail-content-gating-ui-02-PLAN.md — paywall modal branch + Dashboard recommendation filtering
 
-**Next action:** Phase 15 Plan 01 complete — proceed to Phase 15 Plan 02 (TrailNodeModal paywall branch + Dashboard "Continue Learning" filtering)
+**Next action:** Phase 15 complete — proceed to Phase 16 (Dashboard XP Prominence)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-02-28 — Phase 14 Plan 01 complete (SubscriptionProvider + React Query + Supabase Realtime)*
+*Last updated: 2026-03-01 — Phase 15 Plan 02 complete (TrailNodeModal paywall modal + getNextRecommendedNode free-tier filter + Dashboard useSubscription wiring)*
