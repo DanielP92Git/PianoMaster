@@ -22,10 +22,10 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 16 of 27 (v1.8-monetization) — Parent-Facing Pages and Checkout — IN PROGRESS
-Plan: 2 of 3 complete (16-01, 16-02 done)
-Status: Phase 16 Plan 02 complete — SubscribePage with Lemon.js overlay checkout, SubscribeSuccessPage with polling, /subscribe and /subscribe/success routes wired
-Last activity: 2026-03-01 — Phase 16 Plan 02 complete (SubscribePage.jsx, SubscribeSuccessPage.jsx, App.jsx routes, en/he i18n translations)
+Phase: 16 of 27 (v1.8-monetization) — Parent-Facing Pages and Checkout — COMPLETE
+Plan: 3 of 3 complete (16-01, 16-02, 16-03 done)
+Status: Phase 16 COMPLETE — ParentPortalPage with cancel flow, TrailNodeModal paywall upgrade button, AppSettings Subscription section, /parent-portal route
+Last activity: 2026-03-01 — Phase 16 Plan 03 complete (ParentPortalPage.jsx, TrailNodeModal.jsx, AppSettings.jsx, App.jsx route, en/he i18n translations)
 
 Progress: [█████████░] 80%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02, 16-01, 16-02 complete
 
@@ -134,6 +134,10 @@ Recent decisions affecting v1.7:
 - [Phase 16]: upsertSubscription.ts plan_id lookup: maybeSingle() + plan?.id ?? null — null fallback if no matching plan found for unknown variant IDs
 - [Phase 16]: Option B chosen for App.jsx: /subscribe and /subscribe/success only; /parent-portal deferred to Plan 03 to avoid forward-reference build error
 - [Phase 16]: lemonSetupRef (useRef) guards LemonSqueezy.Setup() against StrictMode double-invocation in SubscribePage
+- [Phase 16-03]: ParentPortalPage staleTime:0 for subscription-detail — matches SubscriptionContext, never shows stale data
+- [Phase 16-03]: Optimistic cancel state via setOptimisticCancel merges on fetched detail — avoids refetch delay while keeping real data as source of truth
+- [Phase 16-03]: AppSettings Subscription section defaultOpen:true — high-priority info for parents visiting settings
+- [Phase 16-03]: TrailNodeModal paywall: Got it (gray secondary) + Ask a parent (amber primary) — reverses priority to nudge upgrade without removing dismiss
 
 ### Pending Todos
 
@@ -153,9 +157,9 @@ Recent decisions affecting v1.7:
 ## Session Continuity
 
 Last session: 2026-03-01
-Stopped at: Completed 16-parent-facing-pages-and-checkout-02-PLAN.md — SubscribePage with Lemon.js overlay + SubscribeSuccessPage polling + App.jsx routes
+Stopped at: Completed 16-parent-facing-pages-and-checkout-03-PLAN.md — ParentPortalPage with cancel flow, TrailNodeModal paywall upgrade button, AppSettings Subscription section
 
-**Next action:** Phase 16 Plan 03 — ParentPortalPage (subscription details, cancel subscription, /parent-portal route)
+**Next action:** Phase 17 — Next v1.8 monetization phase or review engagement research for next milestone
 
 ---
 *State initialized: 2026-01-31*

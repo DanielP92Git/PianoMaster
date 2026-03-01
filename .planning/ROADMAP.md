@@ -106,7 +106,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] **Phase 13: Payment Webhook and Service Worker** - Webhook receives/verifies/applies subscription events idempotently, service worker excludes subscription state from cache (completed 2026-02-26)
 - [x] **Phase 14: Subscription Context and Service Layer** - SubscriptionContext provides isPremium globally, Realtime channel invalidates on webhook writes (completed 2026-02-28)
 - [x] **Phase 15: Trail Content Gating UI** - Subscription-locked nodes visually distinct from prerequisite locks, child-appropriate messaging with no pricing (completed 2026-03-01)
-- [ ] **Phase 16: Parent-Facing Pages and Checkout** - Pricing page, checkout flow, success confirmation, and in-app cancellation
+- [x] **Phase 16: Parent-Facing Pages and Checkout** - Pricing page, checkout flow, success confirmation, and in-app cancellation (completed 2026-03-01)
 
 ## Phase Details
 
@@ -275,7 +275,7 @@ Plans:
 | 13. Celebration Foundation & Accessibility | 2/2 | Complete   | 2026-02-26 | 2026-02-05 |
 | 14. Node Type Visual Distinction | 1/1 | Complete    | 2026-02-28 | 2026-02-08 |
 | 15. VictoryScreen Celebration System | 2/2 | Complete    | 2026-03-01 | 2026-02-09 |
-| 16. Dashboard XP Prominence | 2/3 | In Progress|  | 2026-02-09 |
+| 16. Dashboard XP Prominence | 3/3 | Complete   | 2026-03-01 | 2026-02-09 |
 | 17. Boss Unlock Celebrations | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 18. Code Cleanup | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 19. CSS Foundation & Font Setup | v1.5 | 2/2 | Complete | 2026-02-10 |
