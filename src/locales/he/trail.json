@@ -88,7 +88,8 @@
       "practiceAgain": "תרגלו שוב",
       "startPractice": "התחילו תרגול",
       "continue": "המשיכו ({{completed}}/{{total}})",
-      "gotIt": "הבנתי!"
+      "gotIt": "הבנתי!",
+      "askParent": "בקשו מהורה לפתוח!"
     }
   },
   "noteNames": {

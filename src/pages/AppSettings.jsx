@@ -11,6 +11,7 @@ import {
   Download,
   Share,
   Plus,
+  CreditCard,
 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -32,6 +33,7 @@ import {
 } from "../utils/pwaDetection";
 import { useTranslation } from "react-i18next";
 import AuthButton from "../components/auth/AuthButton";
+import { useSubscription } from "../contexts/SubscriptionContext";
 
 function AppSettings() {
   const { t, i18n } = useTranslation("common");
@@ -43,6 +45,7 @@ function AppSettings() {
     useSettings();
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
+  const { isPremium, isLoading: subLoading } = useSubscription();
   const [installEnv, setInstallEnv] = useState({
     isReady: false,
     isIOS: false,
@@ -166,6 +169,45 @@ function AppSettings() {
             </p>
           </div>
         </Link>
+        {/* Subscription Section */}
+        <SettingsSection
+          isRTL={isRTL}
+          title={t("pages.settings.subscriptionTitle")}
+          icon={CreditCard}
+          defaultOpen={true}
+        >
+          <div className="space-y-3">
+            {subLoading ? (
+              <div className={`flex items-center gap-2 text-white/60 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <Loader2 size={16} className="animate-spin" />
+                <span>{t("pages.settings.subscriptionLoading")}</span>
+              </div>
+            ) : isPremium ? (
+              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-400/20 border border-green-400/30 px-3 py-1 text-sm font-medium text-green-300">
+                  {t("pages.settings.subscriptionActive")}
+                </span>
+                <Link
+                  to="/parent-portal"
+                  className="text-sm font-medium text-indigo-300 hover:text-indigo-200 underline underline-offset-2"
+                >
+                  {t("pages.settings.manageSubscription")}
+                </Link>
+              </div>
+            ) : (
+              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <span className="text-white/70 text-sm">{t("pages.settings.subscriptionFree")}</span>
+                <Link
+                  to="/subscribe"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 px-4 py-2 text-sm font-bold text-amber-900 hover:from-amber-300 hover:to-yellow-300 transition-all duration-200"
+                >
+                  {t("pages.settings.unlockFullAccess")}
+                </Link>
+              </div>
+            )}
+          </div>
+        </SettingsSection>
+
         <SettingsSection
           isRTL={isRTL}
           title={t("pages.settings.installTitle")}
