@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
+milestone: v1.7
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-02-28T22:27:40.451Z"
+last_updated: "2026-03-01T15:29:30.092Z"
 progress:
-  total_phases: 26
+  total_phases: 27
   completed_phases: 25
-  total_plans: 68
-  completed_plans: 66
+  total_plans: 70
+  completed_plans: 67
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-02-17)
 
 ## Current Position
 
-Phase: 08 of 10 (v1.7) — Design and Data Modeling — Complete
-Plan: 2 of 2 complete (08-01 done, 08-02 done)
-Status: Phase 08 complete — PIPE-01 through PIPE-06 delivered
-Last activity: 2026-02-22 — Phase 08 Plan 02 complete (BPM timing wiring + per-note dedup in both game components)
+Phase: 15 of 26 (v1.8-monetization) — Trail Content Gating UI — In Progress
+Plan: 1 of 2 complete (15-01 done)
+Status: Phase 15 Plan 01 complete — premium_locked visual state wired, premiumLockedNodeIds threading done
+Last activity: 2026-03-01 — Phase 15 Plan 01 complete (subscriptionConfig + premium_locked state + TrailMap/ZigzagTrailLayout/TrailNode wiring)
 
-Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-01, 6-02, 7-01, 7-02, 7-03, 7-04, 7-05, 8-01, 8-02)
+Progress: [██████░░░░] 60%+ (v1.8) — 13-01, 13-02, 14-01, 15-01 complete
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████░░░░] 60%+ (v1.7) — 9 plans complete (6-0
 | Phase 13-payment-webhook-service-worker P02 | 8 | 2 tasks | 2 files |
 | Phase 13-payment-webhook-service-worker P01 | 4 | 2 tasks | 6 files |
 | Phase 14-subscription-context-service-layer P01 | 3 | 2 tasks | 4 files |
+| Phase 15-trail-content-gating-ui P01 | 20 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -117,6 +118,10 @@ Recent decisions affecting v1.7:
 - [Phase 14-subscription-context-service-layer]: Toast shown only in useEffect watching query data, not in Realtime callback — prevents duplicate toasts on reconnect
 - [Phase 14-subscription-context-service-layer]: staleTime: 0 with refetchOnWindowFocus: false — Realtime push handles isPremium freshness; polling is redundant
 - [Phase 14-subscription-context-service-layer]: maybeSingle() used in subscriptionService: unsubscribed students have no parent_subscriptions row; single() would throw
+- [Phase 15-trail-content-gating-ui]: subscriptionConfig.js uses explicit static node ID lists — prevents accidental paywall expansion if unit files grow
+- [Phase 15-trail-content-gating-ui]: premiumLockedNodeIds computed once at TrailMap level via useMemo — single subscription check, no per-node hook calls
+- [Phase 15-trail-content-gating-ui]: isPremium defaults to false during loading → non-free nodes show gold (no flash of unlocked content)
+- [Phase 15-trail-content-gating-ui]: premium_locked is highest priority in nodeState useMemo — subscription gate overrides prerequisite-locked state
 
 ### Pending Todos
 
@@ -135,10 +140,10 @@ Recent decisions affecting v1.7:
 
 ## Session Continuity
 
-Last session: 2026-02-28
-Stopped at: Completed 14-subscription-context-service-layer-01-PLAN.md — SubscriptionProvider + fetchSubscriptionStatus + 8 unit tests
+Last session: 2026-03-01
+Stopped at: Completed 15-trail-content-gating-ui-01-PLAN.md — premium_locked visual state wired from subscriptionConfig through TrailMap to TrailNode
 
-**Next action:** Phase 14 complete — proceed to Phase 15 (trail gating UI) or Phase 16 (parent checkout)
+**Next action:** Phase 15 Plan 01 complete — proceed to Phase 15 Plan 02 (TrailNodeModal paywall branch + Dashboard "Continue Learning" filtering)
 
 ---
 *State initialized: 2026-01-31*
