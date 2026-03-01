@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Sparkles } from 'lucide-react';
 import { getNodeById } from '../../data/skillTrail';
 import { getExerciseProgress, getNextExerciseIndex } from '../../services/skillProgressService';
 import { useUser } from '../../features/authentication/useUser';
@@ -34,7 +35,7 @@ const getExerciseTypeName = (type, t) => {
   }
 };
 
-const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClose }) => {
+const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, prerequisites = [], onClose }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { t, i18n } = useTranslation(['trail', 'common']);
@@ -50,7 +51,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
   // Fetch exercise progress when modal opens
   useEffect(() => {
     const fetchExerciseProgress = async () => {
-      if (!user?.id || !node?.id) {
+      if (isPremiumLocked || !user?.id || !node?.id) {
         setIsLoading(false);
         return;
       }
@@ -72,7 +73,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
     };
 
     fetchExerciseProgress();
-  }, [user?.id, node?.id, totalExercises]);
+  }, [user?.id, node?.id, totalExercises, isPremiumLocked]);
 
   /**
    * Get the exercise data by index from exerciseProgress array
@@ -144,11 +145,19 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
     : exercisesCompleted >= totalExercises && totalExercises > 0;
 
   // Get node type icon and category colors for header
-  const NodeIcon = getNodeTypeIcon(node.nodeType, node.category);
-  const headerColors = getCategoryColors(
-    node.isBoss ? 'boss' : node.category,
-    isUnlocked ? 'available' : 'locked'
-  );
+  const NodeIcon = isPremiumLocked ? Sparkles : getNodeTypeIcon(node.nodeType, node.category);
+  const headerColors = isPremiumLocked
+    ? {
+        bg: 'bg-gradient-to-br from-amber-400 to-yellow-600',
+        border: 'border-amber-400',
+        text: 'text-amber-900',
+        icon: 'opacity-100',
+        glow: 'shadow-[0_0_20px_rgba(251,191,36,0.6)]'
+      }
+    : getCategoryColors(
+        node.isBoss ? 'boss' : node.category,
+        isUnlocked ? 'available' : 'locked'
+      );
 
   // Determine skill badge colors based on category (dark theme)
   const skillBadgeColors = node.isBoss
@@ -358,7 +367,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
           )}
 
           {/* Boss unlock hint (prominent display for locked boss nodes) */}
-          {!isUnlocked && node.isBoss && node.unlockHint && (
+          {!isUnlocked && !isPremiumLocked && node.isBoss && node.unlockHint && (
             <div className="mb-3 sm:mb-4 rounded-xl bg-yellow-400/10 border-2 border-yellow-500/30 p-4 sm:p-5 shadow-lg">
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
@@ -382,7 +391,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
           )}
 
           {/* Prerequisites (if locked and has prerequisites) */}
-          {!isUnlocked && prerequisites.length > 0 && (
+          {!isUnlocked && !isPremiumLocked && prerequisites.length > 0 && (
             <div className="mb-3 sm:mb-4 rounded-lg bg-red-500/10 border border-red-400/30 p-2.5 sm:p-3">
               <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-400">
                 &#128274; {t('modal.prerequisites')}
@@ -398,39 +407,60 @@ const TrailNodeModal = ({ node, progress, isUnlocked, prerequisites = [], onClos
             </div>
           )}
 
+          {/* Paywall message for premium-locked nodes */}
+          {isPremiumLocked && (
+            <div className="mb-3 rounded-xl bg-amber-400/10 border border-amber-400/30 p-4 text-center">
+              <Sparkles size={28} className="mx-auto mb-2 text-amber-400" />
+              <p className="text-sm font-medium text-amber-300">
+                {t('trail:modal.premiumMessage')}
+              </p>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className={`flex gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <button
-              onClick={onClose}
-              className="flex-1 rounded-xl bg-gradient-to-b from-gray-100 to-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-transform hover:scale-[1.02] duration-200"
-            >
-              {t('common:actions.cancel', { defaultValue: 'Cancel' })}
-            </button>
-            <button
-              onClick={handleStartPractice}
-              disabled={!isUnlocked || isLoading}
-              className={`
-                flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-all duration-200
-                ${
-                  !isUnlocked
-                    ? 'cursor-not-allowed bg-gray-700 text-gray-500'
+            {isPremiumLocked ? (
+              <button
+                onClick={onClose}
+                className="flex-1 rounded-xl bg-gradient-to-b from-amber-400 to-yellow-500 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-amber-900 transition-transform hover:scale-[1.02] duration-200"
+              >
+                {t('trail:modal.button.gotIt')}
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  className="flex-1 rounded-xl bg-gradient-to-b from-gray-100 to-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-transform hover:scale-[1.02] duration-200"
+                >
+                  {t('common:actions.cancel', { defaultValue: 'Cancel' })}
+                </button>
+                <button
+                  onClick={handleStartPractice}
+                  disabled={!isUnlocked || isLoading}
+                  className={`
+                    flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-all duration-200
+                    ${
+                      !isUnlocked
+                        ? 'cursor-not-allowed bg-gray-700 text-gray-500'
+                        : isLoading
+                          ? `${progressGradient} opacity-70 cursor-wait`
+                          : `${progressGradient} hover:scale-[1.02] hover:shadow-xl`
+                    }
+                  `}
+                >
+                  {!isUnlocked
+                    ? t('modal.button.locked')
                     : isLoading
-                      ? `${progressGradient} opacity-70 cursor-wait`
-                      : `${progressGradient} hover:scale-[1.02] hover:shadow-xl`
-                }
-              `}
-            >
-              {!isUnlocked
-                ? t('modal.button.locked')
-                : isLoading
-                  ? (stars > 0 ? t('modal.button.practiceAgain') : t('modal.button.startPractice'))
-                  : allExercisesComplete
-                    ? t('modal.button.practiceAgain')
-                    : nextExerciseIndex === 0
-                      ? t('modal.button.startPractice')
-                      : t('modal.button.continue', { completed: exercisesCompleted, total: totalExercises })
-              }
-            </button>
+                      ? (stars > 0 ? t('modal.button.practiceAgain') : t('modal.button.startPractice'))
+                      : allExercisesComplete
+                        ? t('modal.button.practiceAgain')
+                        : nextExerciseIndex === 0
+                          ? t('modal.button.startPractice')
+                          : t('modal.button.continue', { completed: exercisesCompleted, total: totalExercises })
+                  }
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
