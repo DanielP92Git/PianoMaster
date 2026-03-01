@@ -308,6 +308,14 @@ deno_version = 1
 # This function performs its own HMAC-SHA256 signature verification instead.
 verify_jwt = false
 
+[functions.create-checkout]
+# Called by authenticated browser clients — Supabase verifies the JWT automatically.
+verify_jwt = true
+
+[functions.cancel-subscription]
+# Called by authenticated browser clients — Supabase verifies the JWT automatically.
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327
