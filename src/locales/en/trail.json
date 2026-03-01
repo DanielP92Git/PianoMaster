@@ -100,6 +100,33 @@
     "A": "A",
     "B": "B"
   },
+  "skillNames": {
+    "quarter_note": "Quarter Note",
+    "half_note": "Half Note",
+    "whole_note": "Whole Note",
+    "eighth_note": "Eighth Note",
+    "sixteenth_note": "Sixteenth Note",
+    "dotted_quarter_note": "Dotted Quarter",
+    "dotted_half_note": "Dotted Half",
+    "quarter_rest": "Quarter Rest",
+    "half_rest": "Half Rest",
+    "whole_rest": "Whole Rest",
+    "three_four_time": "3/4 Time"
+  },
+  "accessories": {
+    "sprout_badge": "Music Sprout Badge",
+    "bass_sprout_badge": "Bass Sprout Badge",
+    "five_finger_badge": "Five Finger Champion",
+    "bass_five_finger_badge": "Bass Five Finger Champion",
+    "octave_master_badge": "Octave Master Badge",
+    "golden_bass_badge": "Golden Bass Clef Badge",
+    "rhythm_badge_1": "Rhythm Badge",
+    "rhythm_badge_2": "Rhythm Badge II",
+    "rhythm_badge_3": "Rhythm Badge III",
+    "rhythm_badge_4": "Rhythm Badge IV",
+    "rhythm_badge_5": "Rhythm Badge V",
+    "rhythm_champion_badge": "Rhythm Champion Badge"
+  },
   "nodes": {
     "Meet Middle C": "Meet Middle C",
     "C and D": "C and D",
