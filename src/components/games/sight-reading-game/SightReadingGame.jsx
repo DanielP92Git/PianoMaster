@@ -88,8 +88,25 @@ const MIC_LATENCY_COMP_MS = 300;
 // so we reduce the perceived "late" penalty slightly.
 const MIC_FIRST_NOTE_LATE_GRACE_MS = 400;
 
-const ANTI_CHEAT_WINDOW_MS = 1000;
-const ANTI_CHEAT_THRESHOLD = 3;
+const ANTI_CHEAT_WINDOW_MS = 1500;
+const ANTI_CHEAT_THRESHOLD = 5;
+
+// Semitone distance helper — used to exclude adjacent-pitch mic misdetections
+// from anti-cheat tracking (mic commonly oscillates ±1 semitone).
+const SEMITONE_MAP = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };
+function noteToMidi(note) {
+  if (!note) return null;
+  const m = note.match(/^([A-G][b#]?)(\d)$/);
+  if (!m) return null;
+  const semi = SEMITONE_MAP[m[1]];
+  if (semi === undefined) return null;
+  return (parseInt(m[2], 10) + 1) * 12 + semi;
+}
+function isAdjacentSemitone(noteA, noteB) {
+  const a = noteToMidi(noteA), b = noteToMidi(noteB);
+  if (a == null || b == null) return false;
+  return Math.abs(a - b) <= 1;
+}
 
 const PC_KEYBOARD_KEYS = [
   "a",
@@ -645,9 +662,10 @@ export function SightReadingGame() {
       document.body.style.overflow = "";
     };
   }, [showPenaltyModal]);
-  const { buildTimingWindows, evaluateTiming } = useTimingAnalysis({
-    tempo: gameSettings.tempo,
-  });
+  const { buildTimingWindows, evaluateTiming, shortestNoteDurationMsRef } =
+    useTimingAnalysis({
+      tempo: gameSettings.tempo,
+    });
   const rhythmPlayback = useRhythmPlayback({
     audioEngine,
     tempo: gameSettings.tempo,
@@ -1581,11 +1599,21 @@ export function SightReadingGame() {
             gamePhase: phase,
           });
         }
-        trackFailedAttemptForAntiCheat({
-          type: "no_window",
-          detectedNote,
-          elapsedTimeMs,
-        });
+        // Only count as a cheat attempt if the detected pitch isn't in the pattern
+        // (or within 1 semitone of a pattern note for mic input — transient wobble).
+        const isExpectedPitch = pattern?.notes?.some(
+          (n) => n.pitch === detectedNote
+        );
+        const isAdjacentToExpected = inputMode === "mic" && pattern?.notes?.some(
+          (n) => isAdjacentSemitone(n.pitch, detectedNote)
+        );
+        if (!isExpectedPitch && !isAdjacentToExpected) {
+          trackFailedAttemptForAntiCheat({
+            type: "no_window",
+            detectedNote,
+            elapsedTimeMs,
+          });
+        }
         return;
       }
 
@@ -1626,8 +1654,10 @@ export function SightReadingGame() {
         });
       }
 
-      // Per-note debouncing: prevent rapid re-triggering of the same note
-      const DEBOUNCE_MS = 80;
+      // Per-note debouncing: scale with shortest note duration to avoid
+      // suppressing legitimate fast input at high BPM (80ms = 32% of 250ms 8th note)
+      const shortestNoteMs = shortestNoteDurationMsRef.current || 250;
+      const DEBOUNCE_MS = Math.max(30, Math.round(shortestNoteMs * 0.15));
       const lastTime =
         lastDetectionTimesRef.current[matchingNoteIndex] ?? -Infinity;
       if (elapsedTimeMs - lastTime < DEBOUNCE_MS) {
@@ -1801,12 +1831,16 @@ export function SightReadingGame() {
 
         // Show wrong note feedback (immediate red flash), but keep the note pending.
         showTimingFeedback({ status: "wrong_pitch", label: "Wrong Note!" });
-        trackFailedAttemptForAntiCheat({
-          type: "wrong_pitch",
-          detected: detectedNote,
-          expected: matchingEvent.pitch,
-          noteIndex: matchingNoteIndex,
-        });
+        // Mic pitch detection commonly oscillates ±1 semitone from the true pitch.
+        // Don't count these transient adjacent-semitone misdetections toward anti-cheat.
+        if (!(inputMode === "mic" && isAdjacentSemitone(detectedNote, matchingEvent.pitch))) {
+          trackFailedAttemptForAntiCheat({
+            type: "wrong_pitch",
+            detected: detectedNote,
+            expected: matchingEvent.pitch,
+            noteIndex: matchingNoteIndex,
+          });
+        }
 
         // Also track in detected pitches for reference
         setDetectedPitches((prev) => [
@@ -2942,6 +2976,27 @@ export function SightReadingGame() {
       };
       countInRafRef.current.completion =
         requestAnimationFrame(tickCompletionGate);
+
+      // Wall-clock safety net: if AudioContext stalls (common on mobile),
+      // the RAF-based completion gate may spin indefinitely on beat 4.
+      // Force the transition after countInDurationMs + 500ms wall-clock time.
+      const safetyTimeoutMs = countInDurationMs + 500;
+      countInTimeoutRef.current.completion = setTimeout(() => {
+        if (gamePhaseRef.current === GAME_PHASES.COUNT_IN) {
+          console.warn(
+            "[CountIn] Safety timeout fired — forcing completion after",
+            safetyTimeoutMs,
+            "ms"
+          );
+          if (countInRafRef.current.completion) {
+            cancelAnimationFrame(countInRafRef.current.completion);
+            countInRafRef.current.completion = null;
+          }
+          stopCountInVisualization();
+          setCurrentBeat(0);
+          handleCountInComplete();
+        }
+      }, safetyTimeoutMs);
     } catch (error) {
       console.error("Error beginning performance:", error);
       alert(error.message || "Failed to start performance. Please try again.");

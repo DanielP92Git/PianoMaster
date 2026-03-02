@@ -228,13 +228,16 @@ export function RhythmPatternPreview({
               const origFill = el.getAttribute("fill");
               // Always recolor fill (harmless on fill="none" elements)
               el.style.fill = noteColor;
-              // Only recolor stroke if the element originally had a visible stroke.
-              // Stem rects use fill-only; adding stroke shifts them on iOS.
-              if (origStroke && origStroke !== "none") {
+              if (origFill === "none") {
+                // Stroke-based element (stems) — VexFlow inherits stroke from
+                // parent <g> so getAttribute("stroke") returns null. Set explicitly.
                 el.style.stroke = noteColor;
-              }
-              // For fill-only rects/paths, ensure no accidental stroke
-              if (!origStroke || origStroke === "none") {
+              } else if (origStroke && origStroke !== "none") {
+                // Element has explicit visible stroke — recolor it
+                el.style.stroke = noteColor;
+              } else {
+                // Fill-based element with no visible stroke — prevent iOS Safari
+                // gap between stems and noteheads
                 el.style.stroke = "none";
               }
             }
