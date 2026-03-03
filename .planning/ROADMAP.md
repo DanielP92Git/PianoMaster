@@ -293,7 +293,7 @@ Plans:
 | 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 4/5 | Gap closure | - |
 | 08. Detection Pipeline | v1.7 | Complete    | 2026-02-24 | - |
-| 09. iOS Safari Hardening | v1.7 | 0/2 | Planned | - |
+| 09. iOS Safari Hardening | 1/2 | In Progress|  | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 | 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | - |
 | 12. Database Schema and RLS | v1.8 | 2/2 | Complete | - |
