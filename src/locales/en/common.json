@@ -1109,12 +1109,29 @@
     "unlockAccess": "Unlock Full Access",
     "back": "Back"
   },
+  "micInterrupted": {
+    "ariaLabel": "Game paused",
+    "title": "Paused",
+    "message": "Tap to continue where you left off",
+    "tapToContinue": "Tap to Continue",
+    "resumeFailed": "Something went wrong. Ask a grown-up to check the microphone.",
+    "restartExercise": "Restart Exercise"
+  },
   "micError": {
     "permissionDenied": {
       "title": "Microphone Needed!",
       "message": "We need to hear you play! Ask a grown-up to help enable the microphone.",
       "tryAgain": "Try Again",
-      "backToMenu": "Back to Menu"
+      "backToMenu": "Back to Menu",
+      "ios": {
+        "title": "I can't hear you!",
+        "step1": "Open the Settings app",
+        "step2": "Scroll down and tap Safari",
+        "step3": "Tap Microphone",
+        "step4": "Set it to Allow",
+        "step5": "Come back here and tap Retry"
+      },
+      "genericHint": "Check your browser settings for microphone permission."
     },
     "micStopped": {
       "title": "Oops, the mic stopped!",
