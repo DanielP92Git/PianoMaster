@@ -94,7 +94,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] **Phase 06: Bug Fix Prerequisite** - Fix mic-restart regression so the test suite is a reliable baseline for all subsequent work (completed 2026-02-17)
 - [ ] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration
 - [x] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably (completed 2026-02-22)
-- [ ] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS
+- [x] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS (completed 2026-03-03)
 - [ ] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop
 
 ### v1.8 App Monetization (Planned)
@@ -293,7 +293,7 @@ Plans:
 | 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 4/5 | Gap closure | - |
 | 08. Detection Pipeline | v1.7 | Complete    | 2026-02-24 | - |
-| 09. iOS Safari Hardening | 1/2 | In Progress|  | - |
+| 09. iOS Safari Hardening | 2/2 | Complete    | 2026-03-03 | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 | 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | - |
 | 12. Database Schema and RLS | v1.8 | 2/2 | Complete | - |

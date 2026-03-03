@@ -46,7 +46,7 @@ Requirements for mic pitch detection overhaul. Each maps to roadmap phases.
 - [x] **IOS-01**: iOS Safari `"interrupted"` AudioContext state handled — full mic stream re-acquired via getUserMedia when interrupted
 - [x] **IOS-02**: AudioContext `resume()` called synchronously within user gesture call stack (before any `await`) to satisfy iOS Safari requirement
 - [x] **IOS-03**: `visibilitychange` listener recovers mic after app switch, phone call, or device lock
-- [ ] **IOS-04**: Mic permission denied shows clear, persistent error message with iOS Settings instructions (not silent failure)
+- [x] **IOS-04**: Mic permission denied shows clear, persistent error message with iOS Settings instructions (not silent failure)
 
 ### Performance (Conditional — Profiling-Gated)
 
@@ -110,7 +110,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IOS-01 | Phase 09 | Complete |
 | IOS-02 | Phase 09 | Complete |
 | IOS-03 | Phase 09 | Complete |
-| IOS-04 | Phase 09 | Pending |
+| IOS-04 | Phase 09 | Complete |
 | PERF-01 | Phase 10 | Pending |
 | PERF-02 | Phase 10 | Pending |
 | PERF-03 | Phase 10 | Pending |
