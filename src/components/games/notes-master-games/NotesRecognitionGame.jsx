@@ -27,6 +27,7 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -541,6 +542,13 @@ export function NotesRecognitionGame() {
   // Auto-configure and auto-start from trail node
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
+      // IOS-02: If AudioContext needs a gesture to resume, defer to user tap
+      const ctx = audioContextProviderRef?.current;
+      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+        setNeedsGestureToStart(true);
+        return; // Don't auto-start — show tap-to-start overlay
+      }
+
       hasAutoStartedRef.current = true;
 
       // Build settings from node configuration
@@ -616,7 +624,8 @@ export function NotesRecognitionGame() {
   const [detectedNote, setDetectedNote] = useState(null);
 
   // Shared AudioContextProvider consumption
-  const { requestMic, releaseMic } = useAudioContext();
+  const { requestMic, releaseMic, audioContextRef: audioContextProviderRef, isInterrupted, handleTapToResume } = useAudioContext();
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
 
   // Ref to track mic listening state — avoids TDZ since useMicNoteInput
   // is called after playSound (which needs to check listening state)
@@ -1043,6 +1052,37 @@ export function NotesRecognitionGame() {
       }, 300);
     }
   };
+
+  // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = audioContextProviderRef?.current;
+    if (ctx) {
+      // resume() synchronously before any await — IOS-02 requirement
+      const resumePromise = ctx.resume();
+      await resumePromise;
+    }
+    setNeedsGestureToStart(false);
+    hasAutoStartedRef.current = true;
+    const trailSettings = {
+      clef: nodeConfig?.clef || 'treble',
+      selectedNotes: nodeConfig?.notePool || [],
+      timedMode: nodeConfig?.timeLimit !== null && nodeConfig?.timeLimit !== undefined,
+      timeLimit: nodeConfig?.timeLimit || 45,
+      enableSharps: false,
+      enableFlats: false
+    };
+    updateSettings(trailSettings);
+    updateProgress({ showSettingsModal: false });
+    setTimeout(() => startGame(trailSettings), 50);
+  }, [audioContextProviderRef, nodeConfig, updateSettings, updateProgress, startGame]);
+
+  // IOS-01/03: Freeze game timer when AudioContext is interrupted
+  useEffect(() => {
+    if (isInterrupted && progress.isStarted && !progress.isFinished) {
+      pauseGameTimer();
+    }
+    // Note: we don't auto-resume since the user must tap the overlay to resume
+  }, [isInterrupted]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const formatNoteLabel = useCallback(
     (noteObj) => {
@@ -1704,13 +1744,15 @@ export function NotesRecognitionGame() {
   // Start audio input — requests mic from shared provider, then starts detection
   const startAudioInput = useCallback(async () => {
     try {
+      // IOS-02: resume() synchronously on gesture before any await (no-op when already running)
+      audioContextProviderRef?.current?.resume();
       // requestMic() returns { audioContext, analyser } — pass directly at call time
       const { analyser, audioContext: ctx } = await requestMic();
       await startMicListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
     } catch (error) {
       console.error('Error accessing microphone:', error);
     }
-  }, [requestMic, startMicListening]);
+  }, [requestMic, startMicListening, audioContextProviderRef]);
 
   // Stop audio input — stops detection and releases shared mic
   const stopAudioInput = useCallback(() => {
@@ -2230,6 +2272,22 @@ export function NotesRecognitionGame() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
+      <AudioInterruptedOverlay
+        isVisible={isInterrupted}
+        onTapToResume={handleTapToResume}
+        onRestartExercise={() => navigate('/notes-master-mode')}
+      />
+
+      {/* Trail gesture gate — shown when trail auto-start needs a user gesture to resume AudioContext */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
+      )}
 
       {/* Settings Modal (for free play mode) */}
       <AnimatePresence>
