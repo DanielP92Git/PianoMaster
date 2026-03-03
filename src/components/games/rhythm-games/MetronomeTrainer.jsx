@@ -18,6 +18,7 @@ import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
 import { Trophy, RotateCcw, Home } from "lucide-react";
@@ -113,7 +114,8 @@ export function MetronomeTrainer() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const { audioContextRef } = useAudioContext();
+  const { audioContextRef, isInterrupted, handleTapToResume } = useAudioContext();
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(120, { sharedAudioContext: audioContextRef.current });
   const {
     playCorrectSound,
@@ -194,6 +196,13 @@ export function MetronomeTrainer() {
 
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
+      // IOS-02: If AudioContext needs a gesture to resume, defer to user tap
+      const ctx = audioContextRef.current;
+      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+        setNeedsGestureToStart(true);
+        return; // Don't auto-start — show tap-to-start overlay
+      }
+
       hasAutoConfigured.current = true;
 
       // Build settings from node configuration
@@ -734,6 +743,27 @@ export function MetronomeTrainer() {
     ]
   );
 
+  // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = audioContextRef.current;
+    if (ctx) {
+      // resume() synchronously before any await — IOS-02 requirement
+      const resumePromise = ctx.resume();
+      await resumePromise;
+    }
+    setNeedsGestureToStart(false);
+    hasAutoConfigured.current = true;
+    const timeSigString = nodeConfig?.timeSignature || '4/4';
+    const trailSettings = {
+      difficulty: nodeConfig?.difficulty || 'beginner',
+      tempo: nodeConfig?.tempo || 80,
+      timeSignature: getTimeSignatureObject(timeSigString),
+      totalExercises: 10
+    };
+    setGameSettings(trailSettings);
+    setTimeout(() => startGame(trailSettings), 50);
+  }, [audioContextRef, nodeConfig, getTimeSignatureObject, startGame]);
+
   /**
    * Evaluate user performance using metronome-based timing
    */
@@ -1270,6 +1300,23 @@ export function MetronomeTrainer() {
       dir="rtl"
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+
+      {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
+      <AudioInterruptedOverlay
+        isVisible={isInterrupted}
+        onTapToResume={handleTapToResume}
+        onRestartExercise={() => setGamePhase(GAME_PHASES.SETUP)}
+      />
+
+      {/* Trail gesture gate — shown when trail auto-start needs a user gesture to resume AudioContext */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
+      )}
+
       {/* Compact Header */}
       <div className="flex flex-shrink-0 items-center justify-between px-4 py-2 landscape:py-1">
         {/* Only show back button during gameplay (not on session complete screen) */}

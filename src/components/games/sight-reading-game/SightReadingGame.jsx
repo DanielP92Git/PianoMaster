@@ -45,6 +45,8 @@ import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
+import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 
 // #region agent log (debug-mode instrumentation)
 // Network logging is disabled by default. Enable by setting
@@ -126,20 +128,7 @@ const METRONOME_TIMING_DEBUG = import.meta.env?.VITE_DEBUG_METRONOME === "true";
 const FIRST_NOTE_DEBUG = import.meta.env?.VITE_DEBUG_FIRST_NOTE === "true";
 const PERFORMANCE_START_BUFFER_MS = 0;
 const COUNT_IN_AUDIO_GUARD_EARLY_MS = 30;
-const isIOSSafari =
-  typeof navigator !== "undefined" &&
-  (() => {
-    const ua = navigator.userAgent || "";
-    const isIOSDevice =
-      /iPad|iPhone|iPod/i.test(ua) ||
-      // iPadOS sometimes reports as Macintosh
-      (ua.includes("Macintosh") &&
-        typeof document !== "undefined" &&
-        "ontouchend" in document);
-    const isSafari =
-      /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|Chrome/i.test(ua);
-    return isIOSDevice && isSafari;
-  })();
+// isIOSSafari is imported from src/utils/isIOSSafari.js (Plan 01 shared utility)
 // Ensure there's an audible downbeat exactly when the performance phase begins (end of count-in).
 // Without this, the last count-in click is beat 4 and the start downbeat can be "silent",
 // which makes users play to a later click and get graded as late.
@@ -183,7 +172,8 @@ export function SightReadingGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const { audioContextRef, requestMic, releaseMic } = useAudioContext();
+  const { audioContextRef, requestMic, releaseMic, isInterrupted, handleTapToResume } = useAudioContext();
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(80, { sharedAudioContext: audioContextRef.current });
   const { generatePattern } = usePatternGeneration();
   const { user, isStudent } = useUser();
@@ -294,6 +284,13 @@ export function SightReadingGame() {
   // Auto-configure and auto-start from trail node
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
+      // IOS-02: If AudioContext needs a gesture to resume, defer to user tap
+      const ctx = audioContextRef.current;
+      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+        setNeedsGestureToStart(true);
+        return; // Don't auto-start — show tap-to-start overlay
+      }
+
       hasAutoConfigured.current = true;
 
       // Build settings from node configuration
@@ -912,13 +909,15 @@ export function SightReadingGame() {
   const startListeningSync = useCallback(async () => {
     micIsListeningRef.current = true;
     try {
+      // IOS-02: resume() synchronously on gesture before any await (no-op when already running)
+      audioContextRef.current?.resume();
       const { analyser, audioContext: ctx } = await requestMic();
       await startListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
     } catch (err) {
       micIsListeningRef.current = false;
       throw err;
     }
-  }, [startListening, requestMic]);
+  }, [startListening, requestMic, audioContextRef]);
 
   const stopListeningSync = useCallback(() => {
     micIsListeningRef.current = false;
@@ -3080,6 +3079,36 @@ export function SightReadingGame() {
     [gameSettings, audioEngine, generatePattern, rhythmPlayback]
   );
 
+  // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = audioContextRef.current;
+    if (ctx) {
+      // resume() synchronously before any await — IOS-02 requirement
+      const resumePromise = ctx.resume();
+      await resumePromise;
+    }
+    setNeedsGestureToStart(false);
+    hasAutoConfigured.current = true;
+    const trailSettings = {
+      ...DEFAULT_SETTINGS,
+      clef: nodeConfig?.clef || 'treble',
+      selectedNotes: nodeConfig?.notePool || [],
+      measuresPerPattern: nodeConfig?.measuresPerPattern || 1,
+      timeSignature: nodeConfig?.timeSignature || '4/4'
+    };
+    setGameSettings(trailSettings);
+    setTimeout(() => startGame(trailSettings), 50);
+  }, [audioContextRef, nodeConfig, startGame]);
+
+  // IOS-01/03: Freeze session timer when AudioContext is interrupted
+  useEffect(() => {
+    if (isInterrupted && gamePhase !== GAME_PHASES.SETUP && gamePhase !== GAME_PHASES.FEEDBACK) {
+      pauseTimer();
+    } else if (!isInterrupted && gamePhase !== GAME_PHASES.SETUP && gamePhase !== GAME_PHASES.FEEDBACK) {
+      resumeTimer();
+    }
+  }, [isInterrupted]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Enforce phase-specific mic behavior (PRD-aligned)
   // NOTE: This effect reads micIsListeningRef.current (a synchronous ref) instead of
   // the isListening state value. This is intentional: isListening is async React state
@@ -3637,6 +3666,22 @@ export function SightReadingGame() {
             </button>
           </div>
         </div>
+      )}
+
+      {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
+      <AudioInterruptedOverlay
+        isVisible={isInterrupted}
+        onTapToResume={handleTapToResume}
+        onRestartExercise={() => setGamePhase(GAME_PHASES.SETUP)}
+      />
+
+      {/* Trail gesture gate — shown when trail auto-start needs a user gesture to resume AudioContext */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
       )}
 
       {/* Microphone Error Overlay */}
