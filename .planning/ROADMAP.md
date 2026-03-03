@@ -163,7 +163,10 @@ Plans:
   2. Switching to another app and back (e.g., checking a message) resumes mic detection correctly on iOS Safari
   3. Starting a mic-enabled game responds correctly on first tap — the AudioContext does not stay permanently suspended on iOS Safari
   4. Denying mic permission shows a persistent, parent-readable error message with instructions for re-enabling in iOS Settings — the app does not silently stop working with no explanation
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 09-01-PLAN.md -- isIOSSafari utility, AudioContextProvider interruption detection, AudioInterruptedOverlay component, i18n keys
+- [ ] 09-02-PLAN.md -- Wire overlay into game components, Start button resume(), trail gesture gate, MicErrorOverlay iOS instructions
 
 ### Phase 10: Performance (Profiling-Gated)
 **Goal**: Audio processing does not cause measurable frame drop on mid-range Android devices; if profiling reveals a problem, pitch detection is moved off the main thread via AudioWorklet
@@ -290,7 +293,7 @@ Plans:
 | 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
 | 07. Audio Architecture and Core Algorithm | v1.7 | 4/5 | Gap closure | - |
 | 08. Detection Pipeline | v1.7 | Complete    | 2026-02-24 | - |
-| 09. iOS Safari Hardening | v1.7 | 0/TBD | Not started | - |
+| 09. iOS Safari Hardening | v1.7 | 0/2 | Planned | - |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
 | 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | - |
 | 12. Database Schema and RLS | v1.8 | 2/2 | Complete | - |
@@ -302,4 +305,4 @@ Plans:
 **Total: 38 phases across 9 milestones (27 shipped, 5 v1.7 in progress, 6 v1.8 planned)**
 
 ---
-*Last updated: 2026-02-28 — Phase 14 plan created (1 plan)*
+*Last updated: 2026-03-03 — Phase 09 plan created (2 plans)*
