@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { isIOSSafari } from "../../../../utils/isIOSSafari.js";
 
 /**
  * MicErrorOverlay - Kid-friendly microphone error overlay for the Sight Reading game.
@@ -111,6 +112,29 @@ export function MicErrorOverlay({ errorType, isRetrying, canRetry, onRetry, onBa
                   ? t("micError.permissionDenied.message")
                   : t("micError.micStopped.message")}
               </p>
+
+              {/* iOS Safari: numbered step-by-step instructions for re-enabling mic in Settings */}
+              {isPermissionDenied && isIOSSafari && (
+                <div className="mt-3 text-left">
+                  <p className="mb-2 text-sm font-semibold text-gray-700">
+                    {t("micError.permissionDenied.ios.title")}
+                  </p>
+                  <ol className="space-y-1 rounded-lg bg-gray-50 p-3 text-left text-sm text-gray-600">
+                    <li>1. {t("micError.permissionDenied.ios.step1")}</li>
+                    <li>2. {t("micError.permissionDenied.ios.step2")}</li>
+                    <li>3. {t("micError.permissionDenied.ios.step3")}</li>
+                    <li>4. {t("micError.permissionDenied.ios.step4")}</li>
+                    <li>5. {t("micError.permissionDenied.ios.step5")}</li>
+                  </ol>
+                </div>
+              )}
+
+              {/* Non-iOS browsers: generic hint about browser settings */}
+              {isPermissionDenied && !isIOSSafari && (
+                <p className="mt-3 text-sm text-gray-500">
+                  {t("micError.permissionDenied.genericHint")}
+                </p>
+              )}
 
               {/* Exhausted retries message */}
               {!canRetry && (
