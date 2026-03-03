@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.7
 milestone_name: Mic Pitch Detection Overhaul
 status: unknown
-last_updated: "2026-03-02T09:46:59.156Z"
+last_updated: "2026-03-03T14:26:43.972Z"
 progress:
   total_phases: 28
-  completed_phases: 27
-  total_plans: 73
-  completed_plans: 71
+  completed_phases: 26
+  total_plans: 71
+  completed_plans: 68
 ---
 
 # Project State
@@ -18,14 +18,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-17)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 08 COMPLETE (2 of 2 plans done)
+**Current focus:** v1.7 Mic Pitch Detection Overhaul — Phase 09 iOS Safari Hardening IN PROGRESS (1 of 2 plans done)
 
 ## Current Position
 
-Phase: 16 of 27 (v1.8-monetization) — Parent-Facing Pages and Checkout — COMPLETE
-Plan: 3 of 3 complete (16-01, 16-02, 16-03 done)
-Status: Phase 16 COMPLETE — ParentPortalPage with cancel flow, TrailNodeModal paywall upgrade button, AppSettings Subscription section, /parent-portal route
-Last activity: 2026-03-01 — Phase 16 Plan 03 complete (ParentPortalPage.jsx, TrailNodeModal.jsx, AppSettings.jsx, App.jsx route, en/he i18n translations)
+Phase: 09 (v1.7) — iOS Safari Hardening — IN PROGRESS
+Plan: 1 of 2 complete (09-01 done)
+Status: Phase 09 Plan 01 COMPLETE — isIOSSafari utility, AudioContextProvider interruption detection (IOS-01/02/03), AudioInterruptedOverlay component, all Phase 09 i18n keys
+Last activity: 2026-03-03 — Phase 09 Plan 01 complete (isIOSSafari.js, AudioContextProvider.jsx, AudioInterruptedOverlay.jsx, en/he locales)
 
 Progress: [█████████░] 80%+ (v1.8) — 13-01, 13-02, 14-01, 15-01, 15-02, 16-01, 16-02 complete
 
@@ -69,6 +69,7 @@ Progress: [█████████░] 80%+ (v1.8) — 13-01, 13-02, 14-01, 
 | Phase 15-trail-content-gating-ui P02 | 9 | 1 tasks | 3 files |
 | Phase 16 P01 | 3 | 2 tasks | 6 files |
 | Phase 16 P02 | 4 | 2 tasks | 5 files |
+| Phase 09-ios-safari-hardening P01 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,9 @@ Recent decisions affecting v1.7:
 - [Phase 16-03]: Optimistic cancel state via setOptimisticCancel merges on fetched detail — avoids refetch delay while keeping real data as source of truth
 - [Phase 16-03]: AppSettings Subscription section defaultOpen:true — high-priority info for parents visiting settings
 - [Phase 16-03]: TrailNodeModal paywall: Got it (gray secondary) + Ask a parent (amber primary) — reverses priority to nudge upgrade without removing dismiss
+- [Phase 09-ios-safari-hardening]: onstatechange wired in mount-time useEffect so setIsInterrupted is in scope (not ref initializer block)
+- [Phase 09-ios-safari-hardening]: handleTapToResume calls ctx.resume() synchronously before any await - satisfies iOS user-gesture requirement (IOS-02)
+- [Phase 09-ios-safari-hardening]: AudioInterruptedOverlay uses bg-black/30 (calmer than MicErrorOverlay bg-black/50) - interruptions are less alarming than errors
 
 ### Pending Todos
 
