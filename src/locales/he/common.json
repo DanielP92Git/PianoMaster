@@ -993,6 +993,19 @@
       }
     }
   },
+  "streak": {
+    "freezeEarned": "הרווחת הקפאת רצף! ❄️",
+    "freezeConsumed": "הקפאת רצף הצילה את הרצף שלך! ❄️",
+    "freezeCount": "{{count}} הקפאה/ות",
+    "freezeUsedYesterday": "הקפאה בשימוש",
+    "graceWarning": "תתרגל/י היום כדי לשמור על הרצף!",
+    "comebackBanner": "XP כפול פעיל! עוד {{days}} ימים",
+    "comebackDescription": "השלם/י תרגילים כדי להרוויח XP כפול",
+    "weekendPassLabel": "פטור סוף שבוע",
+    "weekendPassDescription": "הרצף לא ידרוש תרגול בימי שישי ושבת",
+    "weekendPassEnabled": "פטור סוף שבוע פעיל",
+    "weekendPassDisabled": "פטור סוף שבוע כבוי"
+  },
   "victory": {
     "greatPractice": "תרגול מעולה!",
     "loading": "טוען...",
@@ -1004,6 +1017,7 @@
     "firstTimeBonus": "בונוס פעם ראשונה:",
     "perfectScore": "ציון מושלם:",
     "threeStars": "שלושה כוכבים:",
+    "comebackBonus": "בונוס חזרה",
     "levelLabel": "רמה {{level}}",
     "xpProgress": "{{current}} / {{total}} XP",
     "levelUp": "עליית רמה!",

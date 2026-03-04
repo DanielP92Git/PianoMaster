@@ -88,6 +88,16 @@ function Dashboard() {
     refetchInterval: 5 * 60 * 1000, // Check every 5 minutes
   });
 
+  // Fetch full streak state for comeback bonus banner (only for students)
+  const { data: streakState } = useQuery({
+    queryKey: ["streak-state", user?.id],
+    queryFn: () => streakService.getStreakState(),
+    enabled: !!user?.id && isStudent,
+    staleTime: 2 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
+  });
+  const comebackBonus = streakState?.comebackBonus;
+
   // Fetch total points and calculate trend
   const { data: totalPointsData } = useTotalPoints({
     staleTime: 0,
@@ -672,6 +682,20 @@ function Dashboard() {
             createdAt={profileData?.created_at}
             isRTL={isRTL}
           />
+        )}
+
+        {/* Comeback bonus banner (shown when 2x XP is active after streak break) */}
+        {isStudent && comebackBonus?.active && (
+          <section>
+            <div className="w-full rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/30 px-4 py-3 text-center">
+              <p className="text-sm font-bold text-amber-300">
+                {t('streak.comebackBanner', { days: comebackBonus.daysLeft })}
+              </p>
+              <p className="text-xs text-amber-200/70 mt-0.5">
+                {t('streak.comebackDescription')}
+              </p>
+            </div>
+          </section>
         )}
 
         {/* Stats grid (glass style like reference image) */}
