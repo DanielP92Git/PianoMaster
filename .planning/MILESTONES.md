@@ -196,5 +196,69 @@
 
 ---
 
-*Last updated: 2026-02-17*
+## v1.7 Mic Pitch Detection Overhaul (Shipped: 2026-03-04)
+
+**Delivered:** Complete refactor of the pitch detection pipeline for accurate mic input across all game modes, replacing naive autocorrelation with McLeod Pitch Method, unifying three AudioContext instances into a shared provider, adding iOS Safari interruption recovery, and validating performance on mid-range Android.
+
+**Phases completed:** 06-10 (12 plans total, 1 skipped)
+
+**Key accomplishments:**
+
+- Fixed mic-restart regression with sync ref guard and MicErrorOverlay with i18n
+- Single shared AudioContextProvider replaces 3 separate AudioContext instances across game modes
+- McLeod Pitch Method (pitchy 4.1.0) eliminates octave errors on piano harmonics
+- Raw piano signal: echoCancellation/noiseSuppression/autoGainControl disabled, smoothing=0, fftSize=4096
+- BPM-adaptive onset/note-off timing with formal IDLE/ARMED/ACTIVE FSM state machine
+- Full piano frequency map covering C3-C6 including bass clef notes A2/B2
+- Per-note dedup in game scoring layer prevents double-scoring
+- iOS Safari AudioContext interruption recovery (phone calls, app switches, device lock)
+- AudioContext resume() called synchronously within user gesture for iOS compliance
+- CPU profiling PASS on Pixel 6: 85-95fps during active mic detection, AudioWorklet not needed
+
+**Stats:**
+
+- ~30 files created/modified
+- 5 phases, 12 plans (1 skipped: AudioWorklet migration — profiling gate PASS)
+- 15 days (2026-02-17 to 2026-03-04)
+
+**Git range:** v1.6 tag to `0b651dc`
+
+**What's next:** v1.9 Engagement & Retention milestone scoping
+
+---
+
+## v1.8 App Monetization (Shipped: 2026-03-01)
+
+**Delivered:** Freemium monetization with Lemon Squeezy payment processor, COPPA-safe child paywall (no prices visible to children), dual-market pricing (ILS/USD), database-layer content gating, webhook-driven subscription lifecycle, parent portal with checkout and cancel flow, and Supabase Realtime subscription status propagation.
+
+**Phases completed:** 11-16 (13 plans total)
+
+**Key accomplishments:**
+
+- Lemon Squeezy selected as payment processor (Israel bank payout support, sandbox verified)
+- Subscription database with RLS: client SELECT-only, webhook service_role writes only
+- Dual-layer content gate: React UI (isFreeNode) + database RLS (is_free_node + has_active_subscription)
+- Webhook Edge Function with cryptographic signature verification and idempotent UPSERT
+- Service worker excludes subscription/REST API endpoints from cache (pianomaster-v6)
+- SubscriptionContext provides global isPremium with staleTime:0, Supabase Realtime push invalidation
+- Gold lock overlay for subscription-locked nodes (distinct from gray prerequisite lock)
+- Child-appropriate paywall modal: no prices, no buy buttons, "Ask a parent" nudge
+- Pricing page with ILS/USD auto-detection, Lemon Squeezy checkout overlay
+- Subscription success page with webhook polling (up to 10s)
+- Parent portal with cancel flow, access preserved until billing period end
+- Consent email updated to disclose payment processor, no child PII sent to Lemon Squeezy
+
+**Stats:**
+
+- ~40 files created/modified
+- 6 phases, 13 plans
+- 4 days (2026-02-25 to 2026-03-01)
+
+**Git range:** post-v1.7 to `monetization merge`
+
+**What's next:** v1.9 Engagement & Retention milestone scoping
+
+---
+
+*Last updated: 2026-03-04*
 

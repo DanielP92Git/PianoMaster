@@ -89,18 +89,32 @@ These capabilities exist, are working, and have been shipped:
 - A11Y-01 through A11Y-05: Reduced motion support, ARIA live regions, WCAG 1.3.4 escape hatch, EN/HE translations, RTL layout
 - 18/18 requirements delivered with zero database changes
 
+**v1.7 Mic Pitch Detection Overhaul (shipped 2026-03-04):**
+- FIX-01/02: Mic-restart regression fixed with sync ref guard
+- AUDIO-01/02/03: Raw piano signal (no browser DSP), zero smoothing, 4096 fftSize for bass resolution
+- ALGO-01/02/03: McLeod Pitch Method via pitchy library — octave errors eliminated, confidence gating
+- ARCH-01-05: Single shared AudioContextProvider replaces 3 separate instances, suspend/resume between exercises
+- PIPE-01-06: BPM-adaptive onset/note-off timing, FSM state machine, full bass frequency map, per-note dedup
+- IOS-01-04: AudioContext interruption recovery, user-gesture-first resume, visibilitychange listener, mic error overlay with iOS instructions
+- PERF-01: CPU profiling PASS (85-95fps on Pixel 6) — AudioWorklet not needed
+- 24/24 requirements delivered (2 conditional N/A), 12 plans across 5 phases
+
+**v1.8 App Monetization (shipped 2026-03-01):**
+- SUB-01-04: Subscription database with RLS (client SELECT-only, webhook service_role writes)
+- PAY-01-04: Lemon Squeezy integration with webhook signature verification, idempotent UPSERT
+- GATE-01-03: Dual-layer content gate (React UI + database RLS), gold lock vs gray prerequisite lock
+- CHILD-01/02: Child-appropriate paywall modal (no prices, no buy buttons)
+- PARENT-01-05: Pricing page (ILS/USD), Lemon Squeezy checkout overlay, subscription confirmation, cancel from parent portal
+- SVC-01-03: SubscriptionContext with staleTime:0, Supabase Realtime invalidation
+- COMP-01-04: Service worker cache exclusion for subscription APIs, consent email updated
+- 25/25 requirements delivered, 13 plans across 6 phases
+
 ### Active
 
-## Current Milestone: v1.7 Mic Pitch Detection Overhaul
+## Current Milestone: v1.9 Engagement & Retention (not yet scoped)
 
-**Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input.
-
-**Target features:**
-- Fix wrong note detection (pitch detection inaccuracy)
-- Eliminate missed notes (notes played but not registered)
-- Reduce latency between playing and game response
-- Reliable detection for all note values (quarter through sixteenth)
-- Applies to all games using mic input (sight reading, notes recognition, etc.)
+**Status:** Research complete, milestone not yet scoped.
+See `.planning/research/ENGAGEMENT_RETENTION.md` for findings.
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -173,7 +187,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v1.6):**
+**Current State (after v1.8):**
 - 93-node trail system with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Tiered celebration system (4 tiers) with accessibility-first design
 - Boss unlock events with 3-stage modal and musical confetti
@@ -186,8 +200,14 @@ Explicitly excluded:
 - VexFlow auto-resizes on orientation change via debounced ResizeObserver
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
+- McLeod Pitch Method (pitchy) for accurate mic detection across all game modes
+- Single shared AudioContextProvider with iOS Safari interruption recovery
+- BPM-adaptive detection pipeline with FSM state machine and per-note dedup
+- Freemium monetization with Lemon Squeezy (dual-market ILS/USD, COPPA-safe child paywall)
+- Dual-layer content gate: React UI + database RLS enforcement
+- Parent portal with subscription management and cancel flow
 - ~68,298 lines JavaScript/JSX/CSS across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -209,7 +229,6 @@ Explicitly excluded:
 - Parental consent verification method needs legal review
 - Privacy policy language requires attorney review
 - State age verification laws may require Play Age Signals API
-- Pre-existing test failure: SightReadingGame.micRestart.test.jsx (Router context)
 - Pre-existing lint: 24 errors, 415 warnings (all pre-v1.4)
 - syncPracticeSessions() stub in sw.js (zero runtime impact)
 
@@ -291,4 +310,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-02-17 after v1.7 milestone started*
+*Last updated: 2026-03-04 — all milestones v1.0-v1.8 shipped*

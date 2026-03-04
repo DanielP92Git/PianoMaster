@@ -51,8 +51,8 @@ Requirements for mic pitch detection overhaul. Each maps to roadmap phases.
 ### Performance (Conditional — Profiling-Gated)
 
 - [x] **PERF-01**: CPU profiling conducted on mid-range Android device to measure audio processing frame drop
-- [ ] **PERF-02**: If profiling shows >5% frame drop from audio processing, AudioWorklet migration moves pitch detection off main thread
-- [ ] **PERF-03**: If AudioWorklet built, uses ring buffer accumulation pattern (128-frame quanta to 2048 samples) for bass clef detection
+- [~] **PERF-02**: ~~If profiling shows >5% frame drop from audio processing, AudioWorklet migration moves pitch detection off main thread~~ — N/A (PERF-01 profiling showed no frame drop; condition not met)
+- [~] **PERF-03**: ~~If AudioWorklet built, uses ring buffer accumulation pattern (128-frame quanta to 2048 samples) for bass clef detection~~ — N/A (AudioWorklet not needed; PERF-01 PASS)
 
 ## Future Requirements
 
@@ -112,14 +112,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | IOS-03 | Phase 09 | Complete |
 | IOS-04 | Phase 09 | Complete |
 | PERF-01 | Phase 10 | Complete |
-| PERF-02 | Phase 10 | Pending |
-| PERF-03 | Phase 10 | Pending |
+| PERF-02 | Phase 10 | N/A (profiling PASS) |
+| PERF-03 | Phase 10 | N/A (profiling PASS) |
 
 **Coverage:**
 - v1.7 requirements: 26 total
 - Mapped to phases: 26
-- Complete: 23
-- Pending: 3 (Phase 10 only)
+- Complete: 24
+- N/A (conditional skip): 2 (PERF-02, PERF-03 — profiling gate PASS)
 
 ---
 *Requirements defined: 2026-02-17*
