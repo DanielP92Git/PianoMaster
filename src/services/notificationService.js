@@ -1,6 +1,7 @@
 /**
  * Notification service for managing Web Push notifications
  */
+import supabase from "./supabase";
 
 /**
  * Check if browser supports push notifications
@@ -192,6 +193,81 @@ export async function showLocalNotification(title, options = {}) {
     console.error("Error showing notification:", error);
     throw error;
   }
+}
+
+/**
+ * Save (upsert) a push subscription to the push_subscriptions table.
+ * Writes parent_consent_granted = true and parent_consent_at = now.
+ * Defense-in-depth: verifies the caller owns the studentId.
+ *
+ * @param {string} studentId - The authenticated student's UUID
+ * @param {Object} subscriptionJSON - The serialised PushSubscription (subscription.toJSON())
+ * @returns {Promise<void>}
+ */
+export async function savePushSubscription(studentId, subscriptionJSON) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || user.id !== studentId) throw new Error("Unauthorized");
+
+  const { error } = await supabase
+    .from("push_subscriptions")
+    .upsert(
+      {
+        student_id: studentId,
+        subscription: subscriptionJSON,
+        is_enabled: true,
+        parent_consent_granted: true,
+        parent_consent_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "student_id" }
+    );
+
+  if (error) throw error;
+}
+
+/**
+ * Remove a push subscription: unsubscribes from the browser PushManager
+ * and marks the DB row as disabled.
+ *
+ * @param {string} studentId - The authenticated student's UUID
+ * @returns {Promise<void>}
+ */
+export async function removePushSubscription(studentId) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user || user.id !== studentId) throw new Error("Unauthorized");
+
+  await unsubscribeFromPushNotifications();
+
+  const { error } = await supabase
+    .from("push_subscriptions")
+    .update({
+      is_enabled: false,
+      subscription: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("student_id", studentId);
+
+  if (error) throw error;
+}
+
+/**
+ * Get push subscription status for a student from the DB.
+ *
+ * @param {string} studentId - The student's UUID
+ * @returns {Promise<{ is_enabled: boolean, parent_consent_granted: boolean } | null>}
+ */
+export async function getPushSubscriptionStatus(studentId) {
+  const { data } = await supabase
+    .from("push_subscriptions")
+    .select("is_enabled, parent_consent_granted")
+    .eq("student_id", studentId)
+    .maybeSingle();
+
+  return data;
 }
 
 /**

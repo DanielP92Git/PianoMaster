@@ -502,6 +502,32 @@ self.addEventListener("notificationclick", (event) => {
     }
   }
 
+  // Handle daily push notification clicks (from server-sent Web Push via send-daily-push Edge Function)
+  if (notificationType === "daily-practice") {
+    event.notification.close();
+    event.waitUntil(
+      (async () => {
+        const urlToOpen = new URL("/trail", self.location.origin).href;
+        const allClients = await self.clients.matchAll({
+          type: "window",
+          includeUncontrolled: true,
+        });
+        // Try to focus an existing window and navigate it to /trail
+        for (const client of allClients) {
+          if ("focus" in client) {
+            await client.navigate(urlToOpen);
+            return client.focus();
+          }
+        }
+        // No existing window — open new one
+        if (self.clients.openWindow) {
+          return self.clients.openWindow(urlToOpen);
+        }
+      })()
+    );
+    return;
+  }
+
   // Default behavior for other notifications
   event.notification.close();
 
