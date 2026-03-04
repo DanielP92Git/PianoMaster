@@ -95,7 +95,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration (completed 2026-02-17, human verification needed)
 - [x] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably (completed 2026-02-22, UAT blocker: count-in stall)
 - [x] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS (completed 2026-03-03)
-- [ ] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop
+- [x] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop (completed 2026-03-04)
 
 <details>
 <summary>✅ v1.8 App Monetization (Phases 11-16) — SHIPPED 2026-03-01</summary>
@@ -277,7 +277,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 7. Tech Debt Cleanup | v1.2 | 2/2 | Complete | 2026-02-03 |
 | 8. Validation Infrastructure | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 9. Bass Clef Redesign | v1.3 | 3/3 | Complete | 2026-02-05 |
-| 10. Rhythm Redesign | 1/2 | In Progress|  | 2026-02-05 |
+| 10. Rhythm Redesign | 1/2 | Complete    | 2026-03-04 | 2026-02-05 |
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
 | 13. Celebration Foundation & Accessibility | v1.4 | 2/2 | Complete | 2026-02-05 |
