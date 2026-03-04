@@ -111,10 +111,17 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-## Current Milestone: v1.9 Engagement & Retention (not yet scoped)
+## Current Milestone: v1.9 Engagement & Retention
 
-**Status:** Research complete, milestone not yet scoped.
-See `.planning/research/ENGAGEMENT_RETENTION.md` for findings.
+**Goal:** Improve daily return rate and session satisfaction with quick-win engagement features that leverage existing infrastructure — no new content authoring required.
+
+**Target features:**
+- PWA push notifications (parent-gated, COPPA consent, 1/day max)
+- Streak freeze / protection mechanic (earned consumable, grace period, comeback bonus)
+- Notes Recognition engagement upgrade (combo/streak, speed bonus, lives, "on fire" mode)
+- Extended level system (15 → 25-30 levels + prestige tiers)
+- Celebration upgrades (weekly summary, personal bests, varied login messages)
+- Parent progress reports (weekly email via existing Brevo infrastructure)
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -310,4 +317,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-04 — all milestones v1.0-v1.8 shipped*
+*Last updated: 2026-03-04 — milestone v1.9 Engagement & Retention started*
