@@ -986,6 +986,19 @@
       }
     }
   },
+  "streak": {
+    "freezeEarned": "You earned a Streak Freeze! ❄️",
+    "freezeConsumed": "A Streak Freeze saved your streak! ❄️",
+    "freezeCount": "{{count}} freeze(s)",
+    "freezeUsedYesterday": "Freeze used",
+    "graceWarning": "Practice today to keep your streak!",
+    "comebackBanner": "2x XP Active! {{days}} day(s) left",
+    "comebackDescription": "Complete exercises to earn double XP",
+    "weekendPassLabel": "Weekend Pass",
+    "weekendPassDescription": "Streaks won't require Friday & Saturday practice",
+    "weekendPassEnabled": "Weekend Pass is on",
+    "weekendPassDisabled": "Weekend Pass is off"
+  },
   "victory": {
     "greatPractice": "Great Practice!",
     "loading": "Loading...",
@@ -997,6 +1010,7 @@
     "firstTimeBonus": "First time bonus:",
     "perfectScore": "Perfect score:",
     "threeStars": "Three stars:",
+    "comebackBonus": "Comeback Bonus",
     "levelLabel": "Level {{level}}",
     "xpProgress": "{{current}} / {{total}} XP",
     "levelUp": "Level Up!",

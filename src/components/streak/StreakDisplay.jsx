@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useRef, useEffect } from "react";
 import { Flame, Loader2, Star, Zap, Trophy, Target } from "lucide-react";
 import { streakService } from "../../services/streakService";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-hot-toast";
 
 // Get visual indicator and color scheme based on streak length
 const getStreakVisuals = (streak) => {
@@ -101,9 +102,9 @@ const renderLucideIcon = (IconComponent, className) =>
   IconComponent ? React.createElement(IconComponent, { className }) : null;
 
 export default function StreakDisplay({ variant = "default", className = "" }) {
-  const { data: streak, isLoading } = useQuery({
-    queryKey: ["streak"],
-    queryFn: () => streakService.getStreak(),
+  const { data: streakState, isLoading } = useQuery({
+    queryKey: ["streak-state"],
+    queryFn: () => streakService.getStreakState(),
     staleTime: 2 * 60 * 1000, // 2 minutes - streak doesn't change often
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes instead of 30 seconds
     retry: 1,
@@ -111,6 +112,21 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
     refetchOnReconnect: false,
   });
   const { t } = useTranslation("common");
+
+  // Show toast once per session when a freeze was consumed in the last 24 hours
+  const freezeConsumedToastRef = useRef(false);
+  useEffect(() => {
+    if (!streakState?.lastFreezeConsumedAt) return;
+    if (freezeConsumedToastRef.current) return;
+
+    const consumedAt = new Date(streakState.lastFreezeConsumedAt);
+    const hoursSince = (Date.now() - consumedAt.getTime()) / (1000 * 60 * 60);
+
+    if (hoursSince <= 24) {
+      freezeConsumedToastRef.current = true;
+      toast.success(t('streak.freezeConsumed'));
+    }
+  }, [streakState?.lastFreezeConsumedAt, t]);
 
   if (isLoading) {
     // Match the card variant styling for consistent appearance
@@ -147,8 +163,26 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
     );
   }
 
-  const currentStreak = streak || 0;
-  const visuals = getStreakVisuals(currentStreak);
+  const currentStreak = streakState?.streakCount || 0;
+  const freezeCount = streakState?.freezeCount || 0;
+  const inGraceWindow = streakState?.inGraceWindow || false;
+  const lastFreezeConsumedAt = streakState?.lastFreezeConsumedAt || null;
+
+  // Determine if freeze was used within last 24h for annotation
+  const freezeUsedRecently = lastFreezeConsumedAt
+    ? (Date.now() - new Date(lastFreezeConsumedAt).getTime()) / (1000 * 60 * 60) <= 24
+    : false;
+
+  // Use amber visuals when in grace window, otherwise normal
+  const visuals = inGraceWindow
+    ? {
+        ...getStreakVisuals(currentStreak),
+        bgColor: "bg-amber-500/20",
+        textColor: "text-amber-400",
+        iconColor: "text-amber-400",
+      }
+    : getStreakVisuals(currentStreak);
+
   const milestoneKey = getMilestoneKey(currentStreak);
   const milestoneMessage = milestoneKey ? t(milestoneKey) : null;
   const nextMilestoneData = getNextMilestoneData(currentStreak);
@@ -199,8 +233,19 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
             </span>
           </p>
 
+          {/* Freeze count indicator */}
+          {freezeCount > 0 && (
+            <div className="flex items-center justify-center gap-1 text-xs text-blue-500 mb-0.5">
+              <span>❄️</span>
+              <span>{freezeCount}</span>
+              {freezeUsedRecently && (
+                <span className="text-gray-400">({t('streak.freezeUsedYesterday')})</span>
+              )}
+            </div>
+          )}
+
           <div className={`text-xs font-medium ${visuals.textColor} mb-1`}>
-            {t(visuals.messageKey)}
+            {inGraceWindow ? t('streak.graceWarning') : t(visuals.messageKey)}
           </div>
 
           {/* Progress bar for next milestone */}
