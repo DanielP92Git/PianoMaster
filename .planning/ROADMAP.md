@@ -113,7 +113,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 ### v1.9 Engagement & Retention (Phases 17-21)
 
 - [x] **Phase 17: Push Notifications** — COPPA-compliant parent opt-in, service worker Web Push, 1/day rate limit, context-aware messages, disable from settings (completed 2026-03-04)
-- [ ] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle
+- [x] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle (completed 2026-03-04)
 - [ ] **Phase 19: Notes Recognition Engagement** — Combo/streak counter with multiplier, speed bonus, lives system, on-fire mode, auto-grow note pool
 - [ ] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants
 - [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
@@ -360,7 +360,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 15. VictoryScreen Celebration System | v1.4 | 3/3 | Complete | 2026-02-09 |
 | 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 17. Boss Unlock Celebrations | 2/2 | Complete    | 2026-03-04 | 2026-02-09 |
-| 18. Code Cleanup | 2/3 | In Progress|  | 2026-02-09 |
+| 18. Code Cleanup | 3/3 | Complete   | 2026-03-04 | 2026-02-09 |
 | 19. CSS Foundation & Font Setup | v1.5 | 2/2 | Complete | 2026-02-10 |
 | 20. Component Integration & Tab Navigation | v1.5 | 3/3 | Complete | 2026-02-10 |
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
