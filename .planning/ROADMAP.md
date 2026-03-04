@@ -175,7 +175,9 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   1. A Chrome DevTools CPU profile from a mid-range Android device (2019-era class) is collected and reviewed — the decision to build AudioWorklet is data-driven, not speculative
   2. If profiling shows audio processing causes more than 5% frame drop: pitch detection runs in an AudioWorklet and the main thread frame rate is measurably improved during active mic detection
   3. If AudioWorklet is built: bass clef notes (below E4) are detected correctly — the ring buffer accumulates 128-frame quanta to at least 2048 samples before running detection
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 10-01-PLAN.md — Profiling instrumentation, Android device CPU profile, pass/fail decision (PERF-01)
+- [ ] 10-02-PLAN.md — AudioWorklet migration with ring buffer (PERF-02, PERF-03) — conditional on Plan 01 FAIL result
 
 ### Phase 11: Legal, Gate Design, and Processor Setup
 **Goal**: All pre-code decisions are locked — payment processor is selected and verified for Israel support, the free tier boundary is validated against actual unit files, the parental consent email names the payment processor, and no child PII flows to the billing system
@@ -297,7 +299,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 07. Audio Architecture and Core Algorithm | v1.7 | 5/5 | Complete (human verification needed) | 2026-02-17 |
 | 08. Detection Pipeline | v1.7 | 2/2 | Complete (UAT blocker: count-in stall) | 2026-02-22 |
 | 09. iOS Safari Hardening | v1.7 | 2/2 | Complete | 2026-03-03 |
-| 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
+| 10. Performance (Profiling-Gated) | v1.7 | 0/2 | Not started | - |
 | 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | 2026-02-26 |
 | 12. Database Schema and RLS | v1.8 | 2/2 | Complete | 2026-02-26 |
 | 13. Payment Webhook and Service Worker | v1.8 | 2/2 | Complete | 2026-02-26 |
@@ -308,4 +310,4 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 **Total: 38 phases across 9 milestones (27 shipped in v1.0-v1.6, 4 of 5 v1.7 complete, 6 v1.8 shipped)**
 
 ---
-*Last updated: 2026-03-04 — Progress table corrected, v1.8 marked shipped, all plan checkboxes updated*
+*Last updated: 2026-03-04 — Phase 10 plans created (2 plans, Plan 02 conditional on Plan 01 profiling result)*
