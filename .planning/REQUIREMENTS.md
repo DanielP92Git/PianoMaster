@@ -9,20 +9,20 @@ Requirements for mic pitch detection overhaul. Each maps to roadmap phases.
 
 ### Bug Fix (Prerequisite)
 
-- [ ] **FIX-01**: Mic-restart regression fixed — "Try Again" reactivates mic correctly on second attempt (SightReadingGame.micRestart.test.jsx passes)
-- [ ] **FIX-02**: Mic listening guard uses synchronous ref instead of async React state to prevent race conditions
+- [x] **FIX-01**: Mic-restart regression fixed — "Try Again" reactivates mic correctly on second attempt (SightReadingGame.micRestart.test.jsx passes)
+- [x] **FIX-02**: Mic listening guard uses synchronous ref instead of async React state to prevent race conditions
 
 ### Audio Configuration
 
-- [ ] **AUDIO-01**: getUserMedia requests mic with `echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false` to prevent browser DSP from corrupting piano signal
-- [ ] **AUDIO-02**: AnalyserNode `smoothingTimeConstant` set to `0.0` (was `0.8`) to eliminate ~100ms phantom latency
-- [ ] **AUDIO-03**: AnalyserNode `fftSize` increased to `4096` (was `2048`) for better frequency resolution on bass clef notes
+- [x] **AUDIO-01**: getUserMedia requests mic with `echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false` to prevent browser DSP from corrupting piano signal
+- [x] **AUDIO-02**: AnalyserNode `smoothingTimeConstant` set to `0.0` (was `0.8`) to eliminate ~100ms phantom latency
+- [x] **AUDIO-03**: AnalyserNode `fftSize` increased to `4096` (was `2048`) for better frequency resolution on bass clef notes
 
 ### Algorithm
 
-- [ ] **ALGO-01**: Pitch detection uses McLeod Pitch Method (via pitchy library) instead of naive autocorrelation, eliminating octave errors on piano harmonics
-- [ ] **ALGO-02**: Pitch confidence threshold gates emissions — only notes with clarity above threshold are reported (prevents weak/ambiguous detections)
-- [ ] **ALGO-03**: Pitch detection accurately identifies all notes in the app's trail node pools from C3 to C6
+- [x] **ALGO-01**: Pitch detection uses McLeod Pitch Method (via pitchy library) instead of naive autocorrelation, eliminating octave errors on piano harmonics
+- [x] **ALGO-02**: Pitch confidence threshold gates emissions — only notes with clarity above threshold are reported (prevents weak/ambiguous detections)
+- [x] **ALGO-03**: Pitch detection accurately identifies all notes in the app's trail node pools from C3 to C6
 
 ### Detection Pipeline
 
@@ -35,11 +35,11 @@ Requirements for mic pitch detection overhaul. Each maps to roadmap phases.
 
 ### Architecture
 
-- [ ] **ARCH-01**: Single shared `AudioContextProvider` React Context owns one AudioContext per game session (replaces 3 separate instances)
-- [ ] **ARCH-02**: `usePitchDetection` accepts shared analyserNode from AudioContextProvider instead of creating its own AudioContext
-- [ ] **ARCH-03**: `useAudioEngine` accepts shared AudioContext from AudioContextProvider instead of creating its own
-- [ ] **ARCH-04**: `NotesRecognitionGame` inline detection code (~250 lines) replaced with shared `useMicNoteInput` hook
-- [ ] **ARCH-05**: AudioContext uses `suspend()`/`resume()` between exercises instead of creating new contexts
+- [x] **ARCH-01**: Single shared `AudioContextProvider` React Context owns one AudioContext per game session (replaces 3 separate instances)
+- [x] **ARCH-02**: `usePitchDetection` accepts shared analyserNode from AudioContextProvider instead of creating its own AudioContext
+- [x] **ARCH-03**: `useAudioEngine` accepts shared AudioContext from AudioContextProvider instead of creating its own
+- [x] **ARCH-04**: `NotesRecognitionGame` inline detection code (~250 lines) replaced with shared `useMicNoteInput` hook
+- [x] **ARCH-05**: AudioContext uses `suspend()`/`resume()` between exercises instead of creating new contexts
 
 ### Cross-Browser (iOS Safari)
 
@@ -88,19 +88,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 06 | Pending |
-| FIX-02 | Phase 06 | Pending |
-| AUDIO-01 | Phase 07 | Pending |
-| AUDIO-02 | Phase 07 | Pending |
-| AUDIO-03 | Phase 07 | Pending |
-| ALGO-01 | Phase 07 | Pending |
-| ALGO-02 | Phase 07 | Pending |
-| ALGO-03 | Phase 07 | Pending |
-| ARCH-01 | Phase 07 | Pending |
-| ARCH-02 | Phase 07 | Pending |
-| ARCH-03 | Phase 07 | Pending |
-| ARCH-04 | Phase 07 | Pending |
-| ARCH-05 | Phase 07 | Pending |
+| FIX-01 | Phase 06 | Complete |
+| FIX-02 | Phase 06 | Complete |
+| AUDIO-01 | Phase 07 | Complete |
+| AUDIO-02 | Phase 07 | Complete |
+| AUDIO-03 | Phase 07 | Complete |
+| ALGO-01 | Phase 07 | Complete |
+| ALGO-02 | Phase 07 | Complete |
+| ALGO-03 | Phase 07 | Complete |
+| ARCH-01 | Phase 07 | Complete |
+| ARCH-02 | Phase 07 | Complete |
+| ARCH-03 | Phase 07 | Complete |
+| ARCH-04 | Phase 07 | Complete |
+| ARCH-05 | Phase 07 | Complete |
 | PIPE-01 | Phase 08 | Complete |
 | PIPE-02 | Phase 08 | Complete |
 | PIPE-03 | Phase 08 | Complete |
@@ -118,8 +118,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v1.7 requirements: 26 total
 - Mapped to phases: 26
-- Unmapped: 0
+- Complete: 23
+- Pending: 3 (Phase 10 only)
 
 ---
 *Requirements defined: 2026-02-17*
-*Last updated: 2026-02-17 — traceability complete after roadmap creation*
+*Last updated: 2026-03-04 — FIX, AUDIO, ALGO, ARCH requirements marked complete (Phases 06-07 shipped)*

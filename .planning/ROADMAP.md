@@ -10,7 +10,7 @@
 - ✅ **v1.5 Trail Page Visual Redesign** — Phases 19-22 (shipped 2026-02-12)
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
 - 🚧 **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (in progress)
-- 📋 **v1.8 App Monetization** — Phases 11-16 (planned)
+- ✅ **v1.8 App Monetization** — Phases 11-16 (shipped 2026-03-01)
 - 💡 **v1.9 Engagement & Retention** — Not yet scoped (research complete)
 
 See `.planning/milestones/` for archived details of each milestone.
@@ -92,21 +92,22 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 **Milestone Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input — eliminating wrong notes, missed notes, and latency on all note durations from quarter through sixteenth.
 
 - [x] **Phase 06: Bug Fix Prerequisite** - Fix mic-restart regression so the test suite is a reliable baseline for all subsequent work (completed 2026-02-17)
-- [ ] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration
-- [x] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably (completed 2026-02-22)
+- [x] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration (completed 2026-02-17, human verification needed)
+- [x] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably (completed 2026-02-22, UAT blocker: count-in stall)
 - [x] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS (completed 2026-03-03)
 - [ ] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop
 
-### v1.8 App Monetization (Planned)
+<details>
+<summary>✅ v1.8 App Monetization (Phases 11-16) — SHIPPED 2026-03-01</summary>
 
-**Milestone Goal:** Add freemium monetization so parents can subscribe to unlock the full trail, with COPPA-safe purchase flows and dual-market support (Israel + USA).
+- [x] Phase 11: Legal, Gate Design, and Processor Setup (3/3 plans) — completed 2026-02-26
+- [x] Phase 12: Database Schema and RLS (2/2 plans) — completed 2026-02-26
+- [x] Phase 13: Payment Webhook and Service Worker (2/2 plans) — completed 2026-02-26
+- [x] Phase 14: Subscription Context and Service Layer (1/1 plan) — completed 2026-02-28
+- [x] Phase 15: Trail Content Gating UI (2/2 plans) — completed 2026-03-01
+- [x] Phase 16: Parent-Facing Pages and Checkout (3/3 plans) — completed 2026-03-01
 
-- [x] **Phase 11: Legal, Gate Design, and Processor Setup** - All pre-code decisions locked — payment processor selected, free tier boundary validated, parental consent email updated (completed)
-- [x] **Phase 12: Database Schema and RLS** - Subscription tables with correct RLS, pricing data seeded, content gate enforced at database layer (completed)
-- [x] **Phase 13: Payment Webhook and Service Worker** - Webhook receives/verifies/applies subscription events idempotently, service worker excludes subscription state from cache (completed 2026-02-26)
-- [x] **Phase 14: Subscription Context and Service Layer** - SubscriptionContext provides isPremium globally, Realtime channel invalidates on webhook writes (completed 2026-02-28)
-- [x] **Phase 15: Trail Content Gating UI** - Subscription-locked nodes visually distinct from prerequisite locks, child-appropriate messaging with no pricing (completed 2026-03-01)
-- [x] **Phase 16: Parent-Facing Pages and Checkout** - Pricing page, checkout flow, success confirmation, and in-app cancellation (completed 2026-03-01)
+</details>
 
 ## Phase Details
 
@@ -119,8 +120,8 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   2. SightReadingGame.micRestart.test.jsx passes in CI — the pre-existing test failure is resolved
   3. The mic listening guard uses a synchronous ref so rapid start/stop sequences do not race
 **Plans**: 2 plans
-- [ ] 06-01-PLAN.md -- Fix test infrastructure, runtime mic-restart bug, and sync ref guard
-- [ ] 06-02-PLAN.md -- Build MicErrorOverlay component with i18n and integrate into SightReadingGame
+- [x] 06-01-PLAN.md -- Fix test infrastructure, runtime mic-restart bug, and sync ref guard
+- [x] 06-02-PLAN.md -- Build MicErrorOverlay component with i18n and integrate into SightReadingGame
 
 ### Phase 07: Audio Architecture and Core Algorithm
 **Goal**: Piano notes are identified at the correct pitch without octave errors, all three AudioContext instances are unified into one shared provider, and the audio chain is configured to pass the raw piano signal without browser DSP corruption
@@ -137,7 +138,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] 07-02-PLAN.md -- Replace autocorrelation with McLeod Pitch Method (pitchy) in usePitchDetection
 - [x] 07-03-PLAN.md -- Refactor useAudioEngine for shared context, update useMicNoteInput passthrough
 - [x] 07-04-PLAN.md -- Remove NotesRecognitionGame inline detection, replace with useMicNoteInput
-- [ ] 07-05-PLAN.md -- Gap closure: Wire SightReadingGame and MetronomeTrainer to shared AudioContext
+- [x] 07-05-PLAN.md -- Gap closure: Wire SightReadingGame and MetronomeTrainer to shared AudioContext
 
 ### Phase 08: Detection Pipeline
 **Goal**: All note durations from quarter through sixteenth are detected reliably at 60-120 BPM — onset and note-off timing scale dynamically with the playing tempo and duration, the detection state machine prevents pitch flicker, and the game scoring layer never double-scores one played note
@@ -150,9 +151,8 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   4. Bass clef trail nodes (including nodes requiring B2 and A2) detect all required notes — the frequency map covers the full trail note pool
   5. BPM and note duration context flows from the game settings into the detection hooks without requiring manual wiring in each game component
 **Plans**: 2 plans
-Plans:
-- [ ] 08-01-PLAN.md -- BPM-adaptive timing utility, FSM refactor of useMicNoteInput, MIN_MIDI fix for bass notes
-- [ ] 08-02-PLAN.md -- Wire BPM timing into game components + per-note scoring dedup
+- [x] 08-01-PLAN.md -- BPM-adaptive timing utility, FSM refactor of useMicNoteInput, MIN_MIDI fix for bass notes
+- [x] 08-02-PLAN.md -- Wire BPM timing into game components + per-note scoring dedup
 
 ### Phase 09: iOS Safari Hardening
 **Goal**: Mic input works reliably in Safari PWA on physical iOS devices — the app recovers from AudioContext interruption caused by phone calls, app switches, and device lock; permission denial shows a clear message with recovery instructions
@@ -164,9 +164,8 @@ Plans:
   3. Starting a mic-enabled game responds correctly on first tap — the AudioContext does not stay permanently suspended on iOS Safari
   4. Denying mic permission shows a persistent, parent-readable error message with instructions for re-enabling in iOS Settings — the app does not silently stop working with no explanation
 **Plans**: 2 plans
-Plans:
-- [ ] 09-01-PLAN.md -- isIOSSafari utility, AudioContextProvider interruption detection, AudioInterruptedOverlay component, i18n keys
-- [ ] 09-02-PLAN.md -- Wire overlay into game components, Start button resume(), trail gesture gate, MicErrorOverlay iOS instructions
+- [x] 09-01-PLAN.md -- isIOSSafari utility, AudioContextProvider interruption detection, AudioInterruptedOverlay component, i18n keys
+- [x] 09-02-PLAN.md -- Wire overlay into game components, Start button resume(), trail gesture gate, MicErrorOverlay iOS instructions
 
 ### Phase 10: Performance (Profiling-Gated)
 **Goal**: Audio processing does not cause measurable frame drop on mid-range Android devices; if profiling reveals a problem, pitch detection is moved off the main thread via AudioWorklet
@@ -211,53 +210,57 @@ Plans:
 **Goal**: Subscription lifecycle events from the payment processor are received, verified, and applied to the database — the webhook is idempotent and handles duplicate delivery, the service worker never caches subscription state, and the cache version is bumped for the monetization deploy
 **Depends on**: Phase 12
 **Requirements**: PAY-02, PAY-03, PAY-04, COMP-01, COMP-02
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
   1. Sending a `subscription.created` test event via the payment processor's sandbox sets `status = 'active'` in `parent_subscriptions`
   2. Sending the same event twice produces one row in `parent_subscriptions`, not two — the webhook handler is idempotent
   3. A webhook request with an invalid or missing signature header returns a 400 error and no database write occurs
   4. Subscription status API responses are never served from the service worker cache
 **Plans**: 2 plans
-- [ ] 13-01-PLAN.md -- Webhook Edge Function with signature verification, payload extraction, UPSERT idempotency, and Vitest tests
-- [ ] 13-02-PLAN.md -- Service worker REST API cache exclusion, cache version bump, and DEPLOY.md checklist
+- [x] 13-01-PLAN.md -- Webhook Edge Function with signature verification, payload extraction, UPSERT idempotency, and Vitest tests
+- [x] 13-02-PLAN.md -- Service worker REST API cache exclusion, cache version bump, and DEPLOY.md checklist
 
 ### Phase 14: Subscription Context and Service Layer
 **Goal**: React components can read subscription status globally — `SubscriptionContext` provides `isPremium` with staleTime: 0, a Supabase Realtime channel invalidates the query the moment the webhook writes an update
 **Depends on**: Phase 13
 **Requirements**: SVC-01, SVC-02, SVC-03
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
   1. Any component can call `useSubscription()` and receive the current `isPremium` boolean — no prop drilling
   2. After a parent completes checkout and the webhook delivers, the child's trail view unlocks within seconds without refreshing
   3. Opening the app after a period offline and reconnecting re-fetches subscription status immediately
 **Plans**: 1 plan
-Plans:
-- [ ] 14-01-PLAN.md -- subscriptionService, SubscriptionContext with Realtime, App.jsx wiring, and unit tests
+- [x] 14-01-PLAN.md -- subscriptionService, SubscriptionContext with Realtime, App.jsx wiring, and unit tests
 
 ### Phase 15: Trail Content Gating UI
 **Goal**: Students see a clearly gated trail where subscription-locked nodes look different from prerequisite-locked nodes, and tapping a locked premium node shows a child-appropriate message with no pricing
 **Depends on**: Phase 14
 **Requirements**: GATE-01, GATE-02, CHILD-01, CHILD-02
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
   1. A student on a free account sees nodes beyond Unit 1 with a distinct gold lock overlay — visually different from the gray prerequisite lock
   2. Tapping a subscription-locked node shows a modal with no prices, no "buy" buttons, no payment form — only a friendly message
   3. No navigation path reachable by a student leads to a pricing page or payment interface
   4. A student with an active subscription sees all trail nodes as available (subject to prerequisite unlock)
-**Plans**: TBD
+**Plans**: 2 plans
+- [x] 15-01-PLAN.md -- Subscription config, premium node detection, TrailNode gold lock overlay, TrailNodeModal paywall
+- [x] 15-02-PLAN.md -- Dashboard gating, getNextRecommendedNode premium filter, i18n
 
 ### Phase 16: Parent-Facing Pages and Checkout
 **Goal**: A parent can view pricing in their local currency, initiate checkout via the payment processor without leaving the PWA, confirm activation, and cancel within the app
 **Depends on**: Phase 15
 **Requirements**: PARENT-01, PARENT-02, PARENT-03, PARENT-04, PARENT-05
-**Status**: Not started
+**Status**: Complete
 **Success Criteria** (what must be TRUE):
   1. A parent visiting `/subscribe` sees prices in ILS or USD based on their account association
   2. Clicking a plan opens the payment processor's checkout — payment completes without leaving the PWA
   3. After checkout, the success page confirms subscription activation (polls up to 10 seconds for webhook)
   4. A parent can cancel from `/parent-portal` without leaving the PWA
   5. After cancellation, the child retains access until the current billing period ends
-**Plans**: TBD
+**Plans**: 3 plans
+- [x] 16-01-PLAN.md -- SubscribePage with Lemon Squeezy checkout overlay
+- [x] 16-02-PLAN.md -- SubscribeSuccessPage with webhook polling, App.jsx routes
+- [x] 16-03-PLAN.md -- ParentPortalPage with cancel flow, TrailNodeModal paywall upgrade, AppSettings subscription section
 
 ## Progress
 
@@ -270,15 +273,15 @@ Plans:
 | 5. Consent Email Service | v1.1 | 2/2 | Complete | 2026-02-02 |
 | 6. Trail Commitment | v1.2 | 2/2 | Complete | 2026-02-03 |
 | 7. Tech Debt Cleanup | v1.2 | 2/2 | Complete | 2026-02-03 |
-| 8. Validation Infrastructure | 2/2 | Complete   | 2026-02-22 | 2026-02-05 |
+| 8. Validation Infrastructure | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 9. Bass Clef Redesign | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 10. Rhythm Redesign | v1.3 | 4/4 | Complete | 2026-02-05 |
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
-| 13. Celebration Foundation & Accessibility | 2/2 | Complete   | 2026-02-26 | 2026-02-05 |
-| 14. Node Type Visual Distinction | 1/1 | Complete    | 2026-02-28 | 2026-02-08 |
-| 15. VictoryScreen Celebration System | 2/2 | Complete    | 2026-03-01 | 2026-02-09 |
-| 16. Dashboard XP Prominence | 3/3 | Complete    | 2026-03-02 | 2026-02-09 |
+| 13. Celebration Foundation & Accessibility | v1.4 | 2/2 | Complete | 2026-02-05 |
+| 14. Node Type Visual Distinction | v1.4 | 2/2 | Complete | 2026-02-08 |
+| 15. VictoryScreen Celebration System | v1.4 | 3/3 | Complete | 2026-02-09 |
+| 16. Dashboard XP Prominence | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 17. Boss Unlock Celebrations | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 18. Code Cleanup | v1.4 | 2/2 | Complete | 2026-02-09 |
 | 19. CSS Foundation & Font Setup | v1.5 | 2/2 | Complete | 2026-02-10 |
@@ -290,19 +293,19 @@ Plans:
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
-| 06. Bug Fix Prerequisite | v1.7 | Complete    | 2026-02-17 | - |
-| 07. Audio Architecture and Core Algorithm | v1.7 | 4/5 | Gap closure | - |
-| 08. Detection Pipeline | v1.7 | Complete    | 2026-02-24 | - |
-| 09. iOS Safari Hardening | 2/2 | Complete    | 2026-03-03 | - |
+| 06. Bug Fix Prerequisite | v1.7 | 2/2 | Complete | 2026-02-17 |
+| 07. Audio Architecture and Core Algorithm | v1.7 | 5/5 | Complete (human verification needed) | 2026-02-17 |
+| 08. Detection Pipeline | v1.7 | 2/2 | Complete (UAT blocker: count-in stall) | 2026-02-22 |
+| 09. iOS Safari Hardening | v1.7 | 2/2 | Complete | 2026-03-03 |
 | 10. Performance (Profiling-Gated) | v1.7 | 0/TBD | Not started | - |
-| 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | - |
-| 12. Database Schema and RLS | v1.8 | 2/2 | Complete | - |
-| 13. Payment Webhook and Service Worker | v1.8 | 0/2 | Not started | - |
-| 14. Subscription Context and Service Layer | v1.8 | 0/1 | Not started | - |
-| 15. Trail Content Gating UI | v1.8 | 0/TBD | Not started | - |
-| 16. Parent-Facing Pages and Checkout | v1.8 | 0/TBD | Not started | - |
+| 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | 2026-02-26 |
+| 12. Database Schema and RLS | v1.8 | 2/2 | Complete | 2026-02-26 |
+| 13. Payment Webhook and Service Worker | v1.8 | 2/2 | Complete | 2026-02-26 |
+| 14. Subscription Context and Service Layer | v1.8 | 1/1 | Complete | 2026-02-28 |
+| 15. Trail Content Gating UI | v1.8 | 2/2 | Complete | 2026-03-01 |
+| 16. Parent-Facing Pages and Checkout | v1.8 | 3/3 | Complete | 2026-03-01 |
 
-**Total: 38 phases across 9 milestones (27 shipped, 5 v1.7 in progress, 6 v1.8 planned)**
+**Total: 38 phases across 9 milestones (27 shipped in v1.0-v1.6, 4 of 5 v1.7 complete, 6 v1.8 shipped)**
 
 ---
-*Last updated: 2026-03-03 — Phase 09 plan created (2 plans)*
+*Last updated: 2026-03-04 — Progress table corrected, v1.8 marked shipped, all plan checkboxes updated*
