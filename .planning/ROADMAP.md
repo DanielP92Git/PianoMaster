@@ -301,7 +301,10 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   3. A student who practices at 11pm one day and 1am the following day does not lose their streak — the grace window accepts practice within 36 hours of the previous session
   4. A student who lost their streak sees a "2x XP" indicator on the dashboard for 3 days — completing exercises during that window awards double XP
   5. A parent or teacher can toggle weekend mode so a student's streak does not require Saturday or Sunday practice — the streak counter does not reset over the weekend when this is enabled
-**Plans**: TBD
+**Plans**: 3 plans
+- [ ] 18-01-PLAN.md -- Database migration and streakService refactor (grace, freeze, comeback, weekend)
+- [ ] 18-02-PLAN.md -- UI integration: StreakDisplay, Dashboard banner, VictoryScreen 2x badge, XP multiplier, i18n
+- [ ] 18-03-PLAN.md -- Weekend pass settings toggle with parent gate, human verification
 
 ### Phase 19: Notes Recognition Engagement
 **Goal**: The most-played game transforms from a drill into an arcade-feel experience — students feel momentum through a visible combo counter, get rewarded for speed, experience tension from a lives system, get excited by on-fire visual mode, and the game progressively challenges them as their streak grows
@@ -379,7 +382,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 15. Trail Content Gating UI | v1.8 | 2/2 | Complete | 2026-03-01 |
 | 16. Parent-Facing Pages and Checkout | v1.8 | 3/3 | Complete | 2026-03-01 |
 | 17. Push Notifications | v1.9 | 0/2 | Planned | - |
-| 18. Streak Protection | v1.9 | 0/? | Not started | - |
+| 18. Streak Protection | v1.9 | 0/3 | Planned | - |
 | 19. Notes Recognition Engagement | v1.9 | 0/? | Not started | - |
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
