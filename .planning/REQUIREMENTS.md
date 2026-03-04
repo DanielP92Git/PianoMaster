@@ -11,8 +11,8 @@ Requirements for engagement and retention improvements. Each maps to roadmap pha
 
 - [ ] **NOTIF-01**: Parent can opt-in to push notifications for their child with COPPA-compliant consent
 - [ ] **NOTIF-02**: App requests Web Push API permission and registers service worker subscription
-- [ ] **NOTIF-03**: Student receives max 1 push notification per day
-- [ ] **NOTIF-04**: Notifications include context-aware messages (streak at risk, XP near level-up, daily goals waiting)
+- [x] **NOTIF-03**: Student receives max 1 push notification per day
+- [x] **NOTIF-04**: Notifications include context-aware messages (streak at risk, XP near level-up, daily goals waiting)
 - [ ] **NOTIF-05**: Student or parent can disable notifications from settings
 
 ### Streak Protection
@@ -107,8 +107,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | NOTIF-01 | Phase 17 | Pending |
 | NOTIF-02 | Phase 17 | Pending |
-| NOTIF-03 | Phase 17 | Pending |
-| NOTIF-04 | Phase 17 | Pending |
+| NOTIF-03 | Phase 17 | Complete |
+| NOTIF-04 | Phase 17 | Complete |
 | NOTIF-05 | Phase 17 | Pending |
 | STRK-01 | Phase 18 | Pending |
 | STRK-02 | Phase 18 | Pending |
