@@ -732,12 +732,19 @@ function Dashboard() {
                   })}
                 </span>
               </div>
-              <div className="mt-1 text-sm font-bold text-orange-200">
-                {currentStreak >= 3 && currentStreak < 7
-                  ? t("dashboard.streak.messages.gettingHot")
-                  : currentStreak >= 7
-                    ? t("dashboard.streak.messages.onFire")
-                    : t("dashboard.streak.messages.buildingMomentum")}
+              {streakState?.freezeCount > 0 && (
+                <div className="flex items-center justify-center gap-1 text-xs text-blue-300 mt-0.5">
+                  <span>🛡️ {t('streak.freezeCount', { count: streakState.freezeCount })}</span>
+                </div>
+              )}
+              <div className={`mt-1 text-sm font-bold ${streakState?.inGraceWindow ? 'text-amber-300' : 'text-orange-200'}`}>
+                {streakState?.inGraceWindow
+                  ? t('streak.graceWarning')
+                  : currentStreak >= 3 && currentStreak < 7
+                    ? t("dashboard.streak.messages.gettingHot")
+                    : currentStreak >= 7
+                      ? t("dashboard.streak.messages.onFire")
+                      : t("dashboard.streak.messages.buildingMomentum")}
               </div>
             </div>
             <div className="mt-2 w-full">

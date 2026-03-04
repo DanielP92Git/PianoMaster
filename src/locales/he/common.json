@@ -994,10 +994,11 @@
     }
   },
   "streak": {
-    "freezeEarned": "הרווחת הקפאת רצף! ❄️",
-    "freezeConsumed": "הקפאת רצף הצילה את הרצף שלך! ❄️",
-    "freezeCount": "{{count}} הקפאה/ות",
-    "freezeUsedYesterday": "הקפאה בשימוש",
+    "freezeEarned": "הרווחת מגן רצף! 🛡️",
+    "freezeConsumed": "מגן רצף הציל את הרצף שלך! 🛡️",
+    "freezeCount_one": "מגן {{count}} נשאר",
+    "freezeCount_other": "{{count}} מגנים נשארו",
+    "freezeUsedYesterday": "מגן בשימוש",
     "graceWarning": "תתרגל/י היום כדי לשמור על הרצף!",
     "comebackBanner": "XP כפול פעיל! עוד {{days}} ימים",
     "comebackDescription": "השלם/י תרגילים כדי להרוויח XP כפול",
