@@ -12,8 +12,9 @@ const getStreakVisuals = (streak) => {
       icon: Target,
       color: "gray",
       bgColor: "bg-gray-500/20",
-      textColor: "text-gray-400",
-      iconColor: "text-gray-400",
+      textColor: "text-white/60",
+      iconColor: "text-white/40",
+      glowColor: "from-gray-400/20 to-gray-500/10",
       messageKey: "dashboard.streak.messages.startJourney",
       animation: "",
     };
@@ -22,8 +23,9 @@ const getStreakVisuals = (streak) => {
       icon: Flame,
       color: "orange",
       bgColor: "bg-orange-500/20",
-      textColor: "text-orange-500",
-      iconColor: "text-orange-500",
+      textColor: "text-orange-300",
+      iconColor: "text-orange-400",
+      glowColor: "from-orange-500/30 to-amber-500/10",
       messageKey: "dashboard.streak.messages.buildingMomentum",
       animation: "animate-pulse",
     };
@@ -32,8 +34,9 @@ const getStreakVisuals = (streak) => {
       icon: Flame,
       color: "red",
       bgColor: "bg-red-500/20",
-      textColor: "text-red-500",
-      iconColor: "text-red-500",
+      textColor: "text-red-300",
+      iconColor: "text-red-400",
+      glowColor: "from-red-500/30 to-orange-500/10",
       messageKey: "dashboard.streak.messages.gettingHot",
       animation: "animate-pulse",
     };
@@ -42,8 +45,9 @@ const getStreakVisuals = (streak) => {
       icon: Zap,
       color: "yellow",
       bgColor: "bg-yellow-500/20",
-      textColor: "text-yellow-500",
-      iconColor: "text-yellow-500",
+      textColor: "text-yellow-300",
+      iconColor: "text-yellow-400",
+      glowColor: "from-yellow-500/30 to-orange-500/10",
       messageKey: "dashboard.streak.messages.onFire",
       animation: "animate-bounce",
     };
@@ -52,8 +56,9 @@ const getStreakVisuals = (streak) => {
       icon: Star,
       color: "blue",
       bgColor: "bg-blue-500/20",
-      textColor: "text-blue-500",
-      iconColor: "text-blue-500",
+      textColor: "text-blue-300",
+      iconColor: "text-blue-400",
+      glowColor: "from-blue-500/30 to-indigo-500/10",
       messageKey: "dashboard.streak.messages.superstar",
       animation: "animate-spin",
     };
@@ -62,8 +67,9 @@ const getStreakVisuals = (streak) => {
       icon: Trophy,
       color: "purple",
       bgColor: "bg-purple-500/20",
-      textColor: "text-purple-500",
-      iconColor: "text-purple-500",
+      textColor: "text-purple-300",
+      iconColor: "text-purple-400",
+      glowColor: "from-purple-500/30 to-indigo-500/10",
       messageKey: "dashboard.streak.messages.legend",
       animation: "animate-bounce",
     };
@@ -154,9 +160,9 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
     }
 
     return (
-      <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
-        {renderLoaderIcon("w-4 h-4 text-gray-600 animate-spin")}
-        <span className="text-sm font-medium text-gray-900">
+      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20 shadow-lg">
+        {renderLoaderIcon("w-4 h-4 text-white/60 animate-spin")}
+        <span className="text-sm font-medium text-white/60">
           {t("dashboard.streak.loadingState")}
         </span>
       </div>
@@ -196,9 +202,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
   // Compact variant for smaller displays
   if (variant === "compact") {
     return (
-      <div
-        className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm`}
-      >
+      <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/20 shadow-lg">
         {renderIcon("w-4 h-4")}
         <span className={`text-sm font-medium ${visuals.textColor}`}>
           {currentStreak} {dayLabel}
@@ -236,8 +240,7 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
           {/* Freeze count indicator */}
           {freezeCount > 0 && (
             <div className="flex items-center justify-center gap-1 text-xs text-blue-500 mb-0.5">
-              <span>❄️</span>
-              <span>{freezeCount}</span>
+              <span>🛡️ {t('streak.freezeCount', { count: freezeCount })}</span>
               {freezeUsedRecently && (
                 <span className="text-gray-400">({t('streak.freezeUsedYesterday')})</span>
               )}
@@ -282,16 +285,35 @@ export default function StreakDisplay({ variant = "default", className = "" }) {
 
   // Default variant
   return (
-    <div
-      className={`flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm`}
-    >
-      {renderIcon("w-4 h-4")}
-      <span className={`text-sm font-medium ${visuals.textColor}`}>
-        {t("dashboard.streak.streakSummary", { count: currentStreak })}
-      </span>
+    <div className={`relative overflow-hidden flex items-center gap-3 backdrop-blur-md px-4 py-2.5 rounded-xl border shadow-lg ${
+      inGraceWindow
+        ? 'bg-amber-500/15 border-amber-400/30'
+        : 'bg-white/10 border-white/20'
+    }`}>
+      {/* Subtle glow behind icon */}
+      <div className={`absolute inset-0 bg-gradient-to-r ${visuals.glowColor} opacity-50 pointer-events-none`} />
+
+      <div className="relative flex items-center gap-3">
+        {renderIcon("w-5 h-5")}
+        <span className="text-sm font-bold text-white">
+          {currentStreak}
+        </span>
+        <span className="text-sm font-medium text-white/70">
+          {dayLabel}
+        </span>
+      </div>
+
+      {freezeCount > 0 && (
+        <span className="relative text-xs text-blue-300 font-medium">🛡️ {t('streak.freezeCount', { count: freezeCount })}</span>
+      )}
+
+      {inGraceWindow && (
+        <span className="relative text-xs text-amber-300 font-medium">{t('streak.graceWarning')}</span>
+      )}
+
       {milestoneMessage && (
-        <div className="ml-2 text-xs bg-gray-100 px-2 py-1 rounded-full text-gray-900 animate-pulse">
-          {t("dashboard.streak.milestoneBadge")}
+        <div className="relative text-xs bg-white/10 px-2 py-0.5 rounded-full text-white/80 animate-pulse">
+          {milestoneMessage}
         </div>
       )}
     </div>

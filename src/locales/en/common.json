@@ -987,10 +987,11 @@
     }
   },
   "streak": {
-    "freezeEarned": "You earned a Streak Freeze! ❄️",
-    "freezeConsumed": "A Streak Freeze saved your streak! ❄️",
-    "freezeCount": "{{count}} freeze(s)",
-    "freezeUsedYesterday": "Freeze used",
+    "freezeEarned": "You earned a Streak Shield! 🛡️",
+    "freezeConsumed": "A Streak Shield saved your streak! 🛡️",
+    "freezeCount_one": "{{count}} shield left",
+    "freezeCount_other": "{{count}} shields left",
+    "freezeUsedYesterday": "Shield used",
     "graceWarning": "Practice today to keep your streak!",
     "comebackBanner": "2x XP Active! {{days}} day(s) left",
     "comebackDescription": "Complete exercises to earn double XP",
