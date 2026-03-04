@@ -2,6 +2,19 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { PitchDetector } from "pitchy";
 
 // ---------------------------------------------------------------------------
+// Performance instrumentation flag (zero overhead when marks unavailable)
+// ---------------------------------------------------------------------------
+
+/**
+ * True when the Performance Marks API is available (all modern browsers).
+ * Gated here so the detect loop never pays a property-lookup cost in envs
+ * where `performance` is undefined (e.g. some Jest/Node setups).
+ */
+const __PERF_MARKS =
+  typeof performance !== "undefined" &&
+  typeof performance.mark === "function";
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -286,7 +299,11 @@ export function usePitchDetection({
             return;
 
           // Full fftSize buffer (pitchy requires this, not frequencyBinCount)
+          if (__PERF_MARKS) performance.mark("getAudioData-start");
           currentAnalyser.getFloatTimeDomainData(inputBufferRef.current);
+          if (__PERF_MARKS) performance.mark("getAudioData-end");
+          if (__PERF_MARKS)
+            performance.measure("getAudioData", "getAudioData-start", "getAudioData-end");
 
           // RMS audio level
           let sum = 0;
@@ -299,10 +316,14 @@ export function usePitchDetection({
           if (onLevelChange) onLevelChange(level);
 
           // McLeod Pitch Method via pitchy (ALGO-01)
+          if (__PERF_MARKS) performance.mark("findPitch-start");
           const [pitch, clarity] = detectorRef.current.findPitch(
             inputBufferRef.current,
             currentSampleRate
           );
+          if (__PERF_MARKS) performance.mark("findPitch-end");
+          if (__PERF_MARKS)
+            performance.measure("findPitch", "findPitch-start", "findPitch-end");
 
           // ALGO-02: clarity gate — reject weak/ambiguous detections
           if (clarity >= clarityThreshold && pitch > 0) {
