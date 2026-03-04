@@ -1004,7 +1004,9 @@
     "weekendPassLabel": "פטור סוף שבוע",
     "weekendPassDescription": "הרצף לא ידרוש תרגול בימי שישי ושבת",
     "weekendPassEnabled": "פטור סוף שבוע פעיל",
-    "weekendPassDisabled": "פטור סוף שבוע כבוי"
+    "weekendPassDisabled": "פטור סוף שבוע כבוי",
+    "streakSettingsTitle": "הגדרות רצף",
+    "streakSettingsDescription": "הגן על רצף התרגול שלך"
   },
   "victory": {
     "greatPractice": "תרגול מעולה!",

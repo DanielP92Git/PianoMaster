@@ -78,7 +78,7 @@ export function SettingsSection({
 
       {/* Section Content */}
       {isOpen && (
-        <div className="px-6 pb-6 space-y-4 border-t border-white/10">
+        <div className="px-6 py-6 space-y-4 border-t border-white/10">
           {children}
         </div>
       )}

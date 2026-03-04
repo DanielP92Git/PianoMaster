@@ -997,7 +997,9 @@
     "weekendPassLabel": "Weekend Pass",
     "weekendPassDescription": "Streaks won't require Friday & Saturday practice",
     "weekendPassEnabled": "Weekend Pass is on",
-    "weekendPassDisabled": "Weekend Pass is off"
+    "weekendPassDisabled": "Weekend Pass is off",
+    "streakSettingsTitle": "Streak Settings",
+    "streakSettingsDescription": "Protect your practice streak"
   },
   "victory": {
     "greatPractice": "Great Practice!",
