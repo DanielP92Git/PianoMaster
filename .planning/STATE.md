@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
 status: "Roadmap created, ready for /gsd:plan-phase 17"
-stopped_at: Phase 17 context gathered
-last_updated: "2026-03-04T10:47:28.373Z"
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-04T11:29:15.178Z"
 last_activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
 progress:
   total_phases: 19
   completed_phases: 16
-  total_plans: 44
-  completed_plans: 41
+  total_plans: 46
+  completed_plans: 42
 ---
 
 # Project State
@@ -68,6 +68,7 @@ Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
 | 16-01 | 3 min | 2 | 6 | 2026-03-01 |
 | 16-02 | 4 min | 2 | 5 | 2026-03-01 |
 | 16-03 | — | — | — | 2026-03-01 |
+| Phase 17 P01 | 2 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,10 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - Notes Recognition game component: src/components/games/notes-master-games/NotesRecognitionGame.jsx — add combo/lives/speed bonus without breaking existing trail session flow or exercise_progress saving
 - PROG-01/02/03: extend src/utils/xpSystem.js XP_LEVELS array (currently 15 entries) — level-up celebration modal in VictoryScreen and Dashboard must handle new tiers
 - PROG-07 parent email: use existing Brevo Edge Function pattern from v1.1 (consent email) — weekly cron trigger, same branding
+- [Phase 17]: verify_jwt = false for send-daily-push; security via x-cron-secret header checked inside function — pg_cron sends no JWT
+- [Phase 17]: Single Edge Function file (no lib/ subdirectory) — linear logic, splitting adds indirection without benefit
+- [Phase 17]: UNIQUE constraint on student_id in push_subscriptions — one subscription per student; Plan 02 upserts on re-subscribe
+- [Phase 17]: Expired subscription (410 Gone) sets subscription = null AND is_enabled = false — prevents retry loop; client must re-subscribe
 
 ### Pending Todos
 
@@ -165,8 +170,8 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-04T10:47:28.362Z
-Stopped at: Phase 17 context gathered
+Last session: 2026-03-04T11:29:15.163Z
+Stopped at: Completed 17-01-PLAN.md
 
 **Next action:**
 - Run /gsd:plan-phase 17 to plan the Push Notifications phase
