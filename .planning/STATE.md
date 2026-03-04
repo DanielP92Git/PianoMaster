@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
 status: "Roadmap created, ready for /gsd:plan-phase 17"
-stopped_at: Completed 18-01-PLAN.md
-last_updated: "2026-03-04T22:03:40.353Z"
+stopped_at: Completed 18-02-PLAN.md
+last_updated: "2026-03-04T22:10:57.810Z"
 last_activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
 progress:
   total_phases: 20
   completed_phases: 17
   total_plans: 49
-  completed_plans: 44
+  completed_plans: 45
 ---
 
 # Project State
@@ -71,6 +71,7 @@ Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
 | Phase 17 P01 | 2 | 2 tasks | 3 files |
 | Phase 17 P02 | 4 | 2 tasks | 9 files |
 | Phase 18 P01 | 3m 11s | 2 tasks | 2 files |
+| Phase 18 P02 | 3m 46s | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -164,6 +165,9 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - [Phase 18]: Column on current_streak (not new table) for freeze inventory — avoids joins and matches existing upsert pattern
 - [Phase 18]: All streak logic in JS service layer — no new Postgres functions, consistent with existing patterns and testable without DB
 - [Phase 18]: getStreakState() fetches current_streak + last_practiced_date in parallel with Promise.all — minimizes latency for UI consumers
+- [Phase 18]: StreakDisplay switches from getStreak() to getStreakState() — single query gets all state for UI consumption
+- [Phase 18]: comebackMultiplier defaults to 1 in calculateSessionXP — zero breaking change to existing callers
+- [Phase 18]: VictoryScreen fetches streak-state independently via useQuery — can't rely on parent data in isolated mount
 
 ### Pending Todos
 
@@ -177,8 +181,8 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-04T22:03:40.337Z
-Stopped at: Completed 18-01-PLAN.md
+Last session: 2026-03-04T22:10:57.795Z
+Stopped at: Completed 18-02-PLAN.md
 
 **Next action:**
 - Run /gsd:plan-phase 17 to plan the Push Notifications phase
