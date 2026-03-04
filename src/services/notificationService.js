@@ -4,6 +4,19 @@
 import supabase from "./supabase";
 
 /**
+ * Get the active SW registration, auto-registering if needed.
+ * Prevents indefinite hang on navigator.serviceWorker.ready when
+ * the SW has been unregistered (e.g., after clearing site data).
+ */
+async function getServiceWorkerRegistration() {
+  const reg = await navigator.serviceWorker.getRegistration("/");
+  if (reg?.active) return reg;
+  // No active SW — register and wait
+  await navigator.serviceWorker.register("/sw.js");
+  return navigator.serviceWorker.ready;
+}
+
+/**
  * Check if browser supports push notifications
  * @returns {boolean} True if supported
  */
@@ -59,7 +72,7 @@ export async function subscribeToPushNotifications(vapidPublicKey) {
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await getServiceWorkerRegistration();
 
     // Check if already subscribed
     const existingSubscription =
@@ -91,7 +104,7 @@ export async function unsubscribeFromPushNotifications() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await getServiceWorkerRegistration();
     const subscription = await registration.pushManager.getSubscription();
 
     if (subscription) {
@@ -116,7 +129,7 @@ export async function getCurrentPushSubscription() {
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await getServiceWorkerRegistration();
     const subscription = await registration.pushManager.getSubscription();
     return subscription ? subscription.toJSON() : null;
   } catch (error) {
@@ -183,7 +196,7 @@ export async function showLocalNotification(title, options = {}) {
   }
 
   try {
-    const registration = await navigator.serviceWorker.ready;
+    const registration = await getServiceWorkerRegistration();
     await registration.showNotification(title, {
       icon: "/icons/favicon_192x192.png",
       badge: "/icons/favicon_96x96.png",
