@@ -287,7 +287,9 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   3. A student who has not practiced today receives at most one notification — sending multiple triggers from the backend delivers only one notification to the device
   4. The notification message reflects the student's current state: streak at risk, XP near level-up, or daily goals waiting — not a generic reminder
   5. A student or parent can disable notifications from the app settings page and the push subscription is unregistered from the service worker
-**Plans**: TBD
+**Plans**: 2 plans
+- [ ] 17-01-PLAN.md -- Database migration (push_subscriptions table) and send-daily-push Edge Function
+- [ ] 17-02-PLAN.md -- Parent gate, push subscribe flow, settings UI, dashboard opt-in card, i18n
 
 ### Phase 18: Streak Protection
 **Goal**: A broken streak no longer forces students to quit — the streak system uses a 36-hour grace window, earns freeze consumables as rewards, automatically uses them on missed days, offers a comeback bonus to re-engage lapsed students, and gives parents a weekend pass option
@@ -376,7 +378,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 14. Subscription Context and Service Layer | v1.8 | 1/1 | Complete | 2026-02-28 |
 | 15. Trail Content Gating UI | v1.8 | 2/2 | Complete | 2026-03-01 |
 | 16. Parent-Facing Pages and Checkout | v1.8 | 3/3 | Complete | 2026-03-01 |
-| 17. Push Notifications | v1.9 | 0/? | Not started | - |
+| 17. Push Notifications | v1.9 | 0/2 | Planned | - |
 | 18. Streak Protection | v1.9 | 0/? | Not started | - |
 | 19. Notes Recognition Engagement | v1.9 | 0/? | Not started | - |
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
