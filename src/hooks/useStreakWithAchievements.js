@@ -11,19 +11,20 @@ export function useStreakWithAchievements() {
     mutationFn: async () => {
       if (!user?.id) throw new Error("User not authenticated");
 
-      // Update streak first
-      const newStreak = await streakService.updateStreak();
+      // Update streak first — returns full result with freeze/comeback flags
+      const streakResult = await streakService.updateStreak();
 
       // Check for new achievements after streak update
       const newAchievements = await achievementService.checkForNewAchievements(
         user.id
       );
 
-      return { newStreak, newAchievements };
+      return { newStreak: streakResult, newAchievements };
     },
     onSuccess: ({ newStreak, newAchievements }) => {
       // Invalidate relevant queries to refresh UI
       queryClient.invalidateQueries(["streak", user?.id]);
+      queryClient.invalidateQueries(["streak-state", user?.id]);
       queryClient.invalidateQueries(["earned-achievements", user?.id]);
       // Invalidate points-related queries (achievements give points!)
       queryClient.invalidateQueries(["point-balance", user?.id]);
@@ -31,12 +32,12 @@ export function useStreakWithAchievements() {
 
       // Log new achievements for debugging
       if (newAchievements.length > 0) {
-        
+
       }
 
       // Optionally show toast notifications for new achievements
       newAchievements.forEach((achievement) => {
-        
+
       });
     },
     onError: (error) => {
