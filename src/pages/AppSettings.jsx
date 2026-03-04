@@ -12,7 +12,9 @@ import {
   Share,
   Plus,
   CreditCard,
+  Flame,
 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import { useUser } from "../features/authentication/useUser";
@@ -23,6 +25,7 @@ import SliderSetting from "../components/settings/SliderSetting";
 import TimePicker from "../components/settings/TimePicker";
 import ProfileForm from "../components/settings/ProfileForm";
 import NotificationPermissionCard from "../components/settings/NotificationPermissionCard";
+import ParentGateMath from "../components/settings/ParentGateMath";
 import LanguageSelector from "../components/settings/LanguageSelector";
 import { toast } from "react-hot-toast";
 import {
@@ -35,6 +38,9 @@ import {
 import { useTranslation } from "react-i18next";
 import AuthButton from "../components/auth/AuthButton";
 import { useSubscription } from "../contexts/SubscriptionContext";
+import { streakService } from "../services/streakService";
+import { getPushSubscriptionStatus } from "../services/notificationService";
+import supabase from "../services/supabase";
 
 function AppSettings() {
   const { t, i18n } = useTranslation("common");
@@ -48,6 +54,79 @@ function AppSettings() {
   const audio = useGlobalAudioSettings();
   const { isPremium, isLoading: subLoading } = useSubscription();
   const { user } = useUser();
+  const queryClient = useQueryClient();
+  const [showParentGate, setShowParentGate] = useState(false);
+  const [pendingToggleValue, setPendingToggleValue] = useState(null);
+
+  // Fetch streak state for weekend pass toggle
+  const { data: streakState } = useQuery({
+    queryKey: ["streak-state", user?.id],
+    queryFn: () => streakService.getStreakState(),
+    enabled: !!user?.id,
+    staleTime: 60 * 1000,
+  });
+
+  // Fetch push subscription consent status (reuse as global COPPA consent flag)
+  const { data: pushStatus } = useQuery({
+    queryKey: ["push-subscription-status", user?.id],
+    queryFn: () => getPushSubscriptionStatus(user.id),
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const parentConsentGranted = pushStatus?.parent_consent_granted === true;
+
+  const handleWeekendPassToggle = async (newValue) => {
+    if (parentConsentGranted) {
+      // Consent already granted — toggle directly
+      try {
+        await streakService.setWeekendPass(newValue);
+        queryClient.invalidateQueries({ queryKey: ["streak-state", user?.id] });
+      } catch {
+        toast.error(t("common.saving"));
+      }
+    } else {
+      // First time — show parent gate
+      setPendingToggleValue(newValue);
+      setShowParentGate(true);
+    }
+  };
+
+  const handleParentConsentGranted = async () => {
+    setShowParentGate(false);
+    try {
+      // Mark parent_consent_granted in push_subscriptions (upsert pattern)
+      if (user?.id) {
+        await supabase
+          .from("push_subscriptions")
+          .upsert(
+            {
+              student_id: user.id,
+              parent_consent_granted: true,
+              parent_consent_at: new Date().toISOString(),
+              is_enabled: false,
+            },
+            { onConflict: "student_id" }
+          );
+      }
+      // Apply the pending toggle
+      if (pendingToggleValue !== null) {
+        await streakService.setWeekendPass(pendingToggleValue);
+      }
+      queryClient.invalidateQueries({ queryKey: ["streak-state", user?.id] });
+      queryClient.invalidateQueries({ queryKey: ["push-subscription-status", user?.id] });
+    } catch {
+      toast.error(t("common.saving"));
+    } finally {
+      setPendingToggleValue(null);
+    }
+  };
+
+  const handleParentGateCancel = () => {
+    setShowParentGate(false);
+    setPendingToggleValue(null);
+  };
+
   const [installEnv, setInstallEnv] = useState({
     isReady: false,
     isIOS: false,
@@ -149,6 +228,14 @@ function AppSettings() {
 
   return (
     <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
+      {/* Parent Gate Overlay (COPPA) */}
+      {showParentGate && (
+        <ParentGateMath
+          onConsent={handleParentConsentGranted}
+          onCancel={handleParentGateCancel}
+          isRTL={isRTL}
+        />
+      )}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 flex flex-col min-h-[calc(100vh-200px)]">
         <LanguageSelector />
 
@@ -206,6 +293,30 @@ function AppSettings() {
                   {t("pages.settings.unlockFullAccess")}
                 </Link>
               </div>
+            )}
+          </div>
+        </SettingsSection>
+
+        {/* Streak Settings */}
+        <SettingsSection
+          isRTL={isRTL}
+          title={t("streak.streakSettingsTitle")}
+          description={t("streak.streakSettingsDescription")}
+          icon={Flame}
+          defaultOpen={false}
+        >
+          <div className="mt-4">
+            <ToggleSetting
+              isRTL={isRTL}
+              label={t("streak.weekendPassLabel")}
+              description={t("streak.weekendPassDescription")}
+              value={streakState?.weekendPassEnabled || false}
+              onChange={handleWeekendPassToggle}
+            />
+            {streakState?.weekendPassEnabled && (
+              <p className="text-xs text-green-300 mt-2">
+                {t("streak.weekendPassEnabled")}
+              </p>
             )}
           </div>
         </SettingsSection>

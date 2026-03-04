@@ -626,6 +626,41 @@ export const streakService = {
   },
 
   /**
+   * Enables or disables the weekend pass for the current student.
+   * Weekend pass prevents Fri/Sat from counting as missed days.
+   *
+   * @param {boolean} enabled
+   * @returns {Promise<void>}
+   */
+  async setWeekendPass(enabled) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { error } = await supabase
+      .from("current_streak")
+      .upsert(
+        {
+          student_id: session.user.id,
+          weekend_pass_enabled: enabled,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "student_id" }
+      );
+
+    if (error) {
+      console.error("Error updating weekend pass:", error);
+      throw error;
+    }
+
+    // Invalidate module-level in-flight cache so next getStreakState() is fresh
+    streakStateFetchInFlight = null;
+    streakStateFetchFailed = false;
+    streakStateFailureTS = 0;
+  },
+
+  /**
    * Resets the streak to 0 and clears all protection state.
    * Also clears freeze inventory and comeback bonus columns.
    */
