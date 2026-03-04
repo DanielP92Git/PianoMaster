@@ -130,6 +130,9 @@ export const calculateNodeXP = (stars, baseXP = XP_REWARDS.nodeBaseXP, bonuses =
     totalXP += XP_REWARDS.bonuses.threeStarNode;
   }
 
+  // Apply comeback multiplier as final step (default 1 = no change, backward compatible)
+  totalXP = totalXP * (bonuses.comebackMultiplier || 1);
+
   return totalXP;
 };
 
@@ -254,13 +257,18 @@ export const calculateSessionXP = (session) => {
     bonusXP += XP_REWARDS.bonuses.threeStarNode;
   }
 
-  const totalXP = baseXP + bonusXP;
+  let totalXP = baseXP + bonusXP;
+
+  // Apply comeback multiplier as final step (default 1 = no change, backward compatible)
+  const comebackMultiplier = session.comebackMultiplier || 1;
+  totalXP = totalXP * comebackMultiplier;
 
   return {
     stars,
     baseXP,
     bonusXP,
     bonuses,
+    comebackMultiplier,
     totalXP
   };
 };

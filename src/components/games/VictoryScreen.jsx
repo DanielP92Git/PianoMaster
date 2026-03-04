@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useStreakWithAchievements } from "../../hooks/useStreakWithAchievements";
 import { useTotalPoints } from "../../hooks/useTotalPoints";
 import { useAccessoriesList } from "../../hooks/useAccessories";
@@ -12,6 +12,8 @@ import { useUser } from "../../features/authentication/useUser";
 import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../../services/skillProgressService";
 import { awardXP, calculateSessionXP, getLevelProgress } from "../../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
+import { streakService } from "../../services/streakService";
+import { toast } from "react-hot-toast";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
 import { determineCelebrationTier, getCelebrationConfig } from '../../utils/celebrationTiers';
 import { getCelebrationMessage } from '../../utils/celebrationMessages';
@@ -96,6 +98,15 @@ const VictoryScreen = ({
   const { reducedMotion } = useAccessibility();
   const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } = useBossUnlockTracking(user?.id, nodeId);
   const scorePercentage = (score / totalPossibleScore) * 100;
+
+  // Fetch streak state to check comeback bonus (for 2x XP display)
+  const { data: streakState } = useQuery({
+    queryKey: ["streak-state", user?.id],
+    queryFn: () => streakService.getStreakState(),
+    enabled: !!user?.id,
+    staleTime: 2 * 60 * 1000,
+  });
+  const comebackActive = streakState?.comebackBonus?.active === true;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
   const updateStreakWithAchievements = useStreakWithAchievements();
   const { data: totalPointsData } = useTotalPoints({
@@ -349,7 +360,7 @@ const VictoryScreen = ({
     if (scorePercentage >= 80 && !hasCalledStreakUpdate.current) {
       hasCalledStreakUpdate.current = true;
       updateStreakWithAchievements.mutate(undefined, {
-        onSuccess: ({ newAchievements }) => {
+        onSuccess: ({ newStreak, newAchievements }) => {
           const bonus = newAchievements?.reduce(
             (sum, achievement) => sum + (achievement?.points || 0),
             0
@@ -357,10 +368,17 @@ const VictoryScreen = ({
           if (bonus) {
             setAchievementBonus(bonus);
           }
+
+          // Show freeze-earned toast with a short delay so it doesn't overlap XP animation
+          if (newStreak?.freezeEarned) {
+            setTimeout(() => {
+              toast.success(t('streak.freezeEarned'));
+            }, 1500);
+          }
         },
       });
     }
-  }, [scorePercentage, updateStreakWithAchievements]);
+  }, [scorePercentage, updateStreakWithAchievements, t]);
 
   // Trail system: Calculate stars, update progress, and award XP
   useEffect(() => {
@@ -425,7 +443,8 @@ const VictoryScreen = ({
                   score,
                   maxScore: totalPossibleScore,
                   nodeId,
-                  isFirstComplete: true
+                  isFirstComplete: true,
+                  comebackMultiplier: comebackActive ? 2 : 1
                 };
                 const xpBreakdown = calculateSessionXP(sessionData);
 
@@ -469,7 +488,8 @@ const VictoryScreen = ({
                 score,
                 maxScore: totalPossibleScore,
                 nodeId,
-                isFirstComplete: isFirst
+                isFirstComplete: isFirst,
+                comebackMultiplier: comebackActive ? 2 : 1
               };
               const xpBreakdown = calculateSessionXP(sessionData);
 
@@ -492,7 +512,7 @@ const VictoryScreen = ({
     };
 
     processTrailCompletion();
-  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType, queryClient, isTeacher]);
+  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType, queryClient, isTeacher, comebackActive]);
 
   // Trigger confetti for full/epic tiers (non-blocking, after trail processing)
   useEffect(() => {
@@ -797,10 +817,15 @@ const VictoryScreen = ({
               <div className="absolute inset-0 bg-gradient-to-r from-blue-200/40 via-purple-200/30 to-pink-200/40 opacity-70 blur-lg" />
               <div className="relative space-y-1.5 rounded-xl border-white/60 bg-white/90 px-3 py-2 shadow-lg sm:px-4 sm:py-2.5">
                 {/* Total XP header with count-up animation */}
-                <div className="text-center">
+                <div className="flex items-center justify-center gap-1.5 text-center">
                   <p className="text-sm font-bold text-blue-600 sm:text-base">
                     {t('victory.xpEarned', { xp: animatedXPGain })}
                   </p>
+                  {comebackActive && (
+                    <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+                      2x
+                    </span>
+                  )}
                 </div>
 
                 {/* XP Breakdown */}
@@ -832,6 +857,14 @@ const VictoryScreen = ({
                     <div className="flex justify-between text-yellow-600">
                       <span>{t('victory.threeStars')}</span>
                       <span className="font-semibold">+50</span>
+                    </div>
+                  )}
+
+                  {/* Comeback bonus multiplier */}
+                  {comebackActive && xpData.comebackMultiplier > 1 && (
+                    <div className="flex justify-between text-amber-600">
+                      <span>{t('victory.comebackBonus')}</span>
+                      <span className="font-semibold">x{xpData.comebackMultiplier}</span>
                     </div>
                   )}
                 </div>
