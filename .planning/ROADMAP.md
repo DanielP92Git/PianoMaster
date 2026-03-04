@@ -9,7 +9,7 @@
 - ✅ **v1.4 UI Polish & Celebrations** — Phases 13-18 (shipped 2026-02-09)
 - ✅ **v1.5 Trail Page Visual Redesign** — Phases 19-22 (shipped 2026-02-12)
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
-- 🚧 **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (in progress)
+- ✅ **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (shipped 2026-03-04)
 - ✅ **v1.8 App Monetization** — Phases 11-16 (shipped 2026-03-01)
 - 💡 **v1.9 Engagement & Retention** — Not yet scoped (research complete)
 
@@ -87,15 +87,16 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 
 </details>
 
-### v1.7 Mic Pitch Detection Overhaul (In Progress)
+<details>
+<summary>✅ v1.7 Mic Pitch Detection Overhaul (Phases 06-10) — SHIPPED 2026-03-04</summary>
 
-**Milestone Goal:** Refactor the pitch detection pipeline for pro-level accuracy across all game modes that use mic input — eliminating wrong notes, missed notes, and latency on all note durations from quarter through sixteenth.
+- [x] Phase 06: Bug Fix Prerequisite (2/2 plans) — completed 2026-02-17
+- [x] Phase 07: Audio Architecture and Core Algorithm (5/5 plans) — completed 2026-02-17
+- [x] Phase 08: Detection Pipeline (2/2 plans) — completed 2026-02-22
+- [x] Phase 09: iOS Safari Hardening (2/2 plans) — completed 2026-03-03
+- [x] Phase 10: Performance (Profiling-Gated) (1/2 plans, Plan 02 skipped — profiling PASS) — completed 2026-03-04
 
-- [x] **Phase 06: Bug Fix Prerequisite** - Fix mic-restart regression so the test suite is a reliable baseline for all subsequent work (completed 2026-02-17)
-- [x] **Phase 07: Audio Architecture and Core Algorithm** - Replace naive autocorrelation with McLeod Pitch Method, consolidate three AudioContext instances into one shared provider, and fix audio chain configuration (completed 2026-02-17, human verification needed)
-- [x] **Phase 08: Detection Pipeline** - Implement dynamic timing, formal state machine, full frequency map, and game-layer debouncing so all note durations and tempos are detected reliably (completed 2026-02-22, UAT blocker: count-in stall)
-- [x] **Phase 09: iOS Safari Hardening** - Handle interrupted AudioContext state, synchronous gesture requirement, visibility recovery, and denied-permission messaging for reliable mic input on iOS (completed 2026-03-03)
-- [x] **Phase 10: Performance (Profiling-Gated)** - Profile audio processing on mid-range Android; migrate to AudioWorklet only if profiling shows measurable frame drop (completed 2026-03-04)
+</details>
 
 <details>
 <summary>✅ v1.8 App Monetization (Phases 11-16) — SHIPPED 2026-03-01</summary>
@@ -176,8 +177,8 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   2. If profiling shows audio processing causes more than 5% frame drop: pitch detection runs in an AudioWorklet and the main thread frame rate is measurably improved during active mic detection
   3. If AudioWorklet is built: bass clef notes (below E4) are detected correctly — the ring buffer accumulates 128-frame quanta to at least 2048 samples before running detection
 **Plans**: 2 plans
-- [ ] 10-01-PLAN.md — Profiling instrumentation, Android device CPU profile, pass/fail decision (PERF-01)
-- [ ] 10-02-PLAN.md — AudioWorklet migration with ring buffer (PERF-02, PERF-03) — conditional on Plan 01 FAIL result
+- [x] 10-01-PLAN.md — Profiling instrumentation, Android device CPU profile, pass/fail decision (PERF-01) — PASS
+- [~] 10-02-PLAN.md — AudioWorklet migration with ring buffer (PERF-02, PERF-03) — SKIPPED (profiling gate PASS)
 
 ### Phase 11: Legal, Gate Design, and Processor Setup
 **Goal**: All pre-code decisions are locked — payment processor is selected and verified for Israel support, the free tier boundary is validated against actual unit files, the parental consent email names the payment processor, and no child PII flows to the billing system
@@ -277,7 +278,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 7. Tech Debt Cleanup | v1.2 | 2/2 | Complete | 2026-02-03 |
 | 8. Validation Infrastructure | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 9. Bass Clef Redesign | v1.3 | 3/3 | Complete | 2026-02-05 |
-| 10. Rhythm Redesign | 1/2 | Complete    | 2026-03-04 | 2026-02-05 |
+| 10. Rhythm Redesign | v1.3 | 4/4 | Complete | 2026-02-05 |
 | 11. Trail System Integration | v1.3 | 3/3 | Complete | 2026-02-05 |
 | 12. E2E Verification | v1.3 | 1/1 | Complete | 2026-02-05 |
 | 13. Celebration Foundation & Accessibility | v1.4 | 2/2 | Complete | 2026-02-05 |
@@ -299,7 +300,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 07. Audio Architecture and Core Algorithm | v1.7 | 5/5 | Complete (human verification needed) | 2026-02-17 |
 | 08. Detection Pipeline | v1.7 | 2/2 | Complete (UAT blocker: count-in stall) | 2026-02-22 |
 | 09. iOS Safari Hardening | v1.7 | 2/2 | Complete | 2026-03-03 |
-| 10. Performance (Profiling-Gated) | v1.7 | 0/2 | Not started | - |
+| 10. Performance (Profiling-Gated) | v1.7 | 1/2 (Plan 02 skipped) | Complete | 2026-03-04 |
 | 11. Legal, Gate Design, and Processor Setup | v1.8 | 3/3 | Complete | 2026-02-26 |
 | 12. Database Schema and RLS | v1.8 | 2/2 | Complete | 2026-02-26 |
 | 13. Payment Webhook and Service Worker | v1.8 | 2/2 | Complete | 2026-02-26 |
@@ -307,7 +308,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 15. Trail Content Gating UI | v1.8 | 2/2 | Complete | 2026-03-01 |
 | 16. Parent-Facing Pages and Checkout | v1.8 | 3/3 | Complete | 2026-03-01 |
 
-**Total: 38 phases across 9 milestones (27 shipped in v1.0-v1.6, 4 of 5 v1.7 complete, 6 v1.8 shipped)**
+**Total: 38 phases across 9 milestones (all v1.0-v1.8 shipped, v1.9 not yet scoped)**
 
 ---
-*Last updated: 2026-03-04 — Phase 10 plans created (2 plans, Plan 02 conditional on Plan 01 profiling result)*
+*Last updated: 2026-03-04 — v1.7 complete (Phase 10 profiling PASS, AudioWorklet skipped); all milestones v1.0-v1.8 shipped*
