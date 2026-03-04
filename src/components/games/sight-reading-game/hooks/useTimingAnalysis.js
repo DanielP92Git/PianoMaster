@@ -1,4 +1,4 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useRef } from "react";
 import { TIMING_TOLERANCES, NOTE_LATE_MS } from "../constants/timingConstants";
 
 const TIMING_STATUS_MAP = [
@@ -19,11 +19,17 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
     return (60 / safeBpm) * 1000;
   }, [tempo]);
 
+  // Tracks the shortest playable note duration (ms) from the last buildTimingWindows call.
+  // Consumers can use this for BPM-adaptive debounce.
+  const shortestNoteDurationMsRef = useRef(250);
+
   const buildTimingWindows = useCallback(
     (pattern) => {
       if (!pattern?.notes) return [];
 
-      return pattern.notes.map((event, index) => {
+      let minDurationMs = Infinity;
+
+      const windows = pattern.notes.map((event, index) => {
         const hasStart = typeof event.startTime === "number";
         const hasEnd = typeof event.endTime === "number";
         const durationSeconds =
@@ -41,9 +47,18 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
 
         const isFirstPlayable =
           index === 0 && event.type !== "rest" && event.pitch;
+
+        // BPM-adaptive tolerances: cap late/early to a fraction of note duration
+        // to prevent massive window overlap at high BPM (e.g., 120 BPM 8th notes = 250ms)
+        const scaledLate = Math.min(NOTE_LATE_MS, durationMs * 0.6);
         const earlyAllowance = isFirstPlayable
           ? TIMING_TOLERANCES.firstNoteEarly
-          : TIMING_TOLERANCES.early;
+          : Math.min(TIMING_TOLERANCES.early, durationMs * 0.5);
+
+        // Track shortest playable note for debounce scaling
+        if (event.type !== "rest" && event.pitch && durationMs < minDurationMs) {
+          minDurationMs = durationMs;
+        }
 
         return {
           noteIndex: index,
@@ -52,9 +67,14 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
           endMs,
           durationMs,
           windowStart: startMs - earlyAllowance,
-          windowEnd: endMs + NOTE_LATE_MS,
+          windowEnd: endMs + scaledLate,
         };
       });
+
+      shortestNoteDurationMsRef.current =
+        minDurationMs === Infinity ? beatDurationMs : minDurationMs;
+
+      return windows;
     },
     [beatDurationMs]
   );
@@ -83,5 +103,6 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
     beatDurationMs,
     buildTimingWindows,
     evaluateTiming,
+    shortestNoteDurationMsRef,
   };
 }
