@@ -11,7 +11,7 @@
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
 - ✅ **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (shipped 2026-03-04)
 - ✅ **v1.8 App Monetization** — Phases 11-16 (shipped 2026-03-01)
-- 💡 **v1.9 Engagement & Retention** — Not yet scoped (research complete)
+- 🎯 **v1.9 Engagement & Retention** — Phases 17-21 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
@@ -109,6 +109,14 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] Phase 16: Parent-Facing Pages and Checkout (3/3 plans) — completed 2026-03-01
 
 </details>
+
+### v1.9 Engagement & Retention (Phases 17-21)
+
+- [ ] **Phase 17: Push Notifications** — COPPA-compliant parent opt-in, service worker Web Push, 1/day rate limit, context-aware messages, disable from settings
+- [ ] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle
+- [ ] **Phase 19: Notes Recognition Engagement** — Combo/streak counter with multiplier, speed bonus, lives system, on-fire mode, auto-grow note pool
+- [ ] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants
+- [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
 
 ## Phase Details
 
@@ -265,6 +273,67 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] 16-02-PLAN.md -- SubscribeSuccessPage with webhook polling, App.jsx routes
 - [x] 16-03-PLAN.md -- ParentPortalPage with cancel flow, TrailNodeModal paywall upgrade, AppSettings subscription section
 
+---
+
+## v1.9 Phase Details
+
+### Phase 17: Push Notifications
+**Goal**: Parents can opt-in to receive push notifications on behalf of their child, with COPPA-compliant consent separate from the existing parental consent flow, and students receive at most one context-aware notification per day with full control to disable
+**Depends on**: Phase 16 (v1.8 complete)
+**Requirements**: NOTIF-01, NOTIF-02, NOTIF-03, NOTIF-04, NOTIF-05
+**Success Criteria** (what must be TRUE):
+  1. A parent sees a dedicated push notification opt-in prompt that is separate from the existing parental consent email flow — opting in does not affect or re-trigger account verification
+  2. After a parent opts in, the browser registers a Web Push subscription and the service worker receives and displays notifications when the app is closed
+  3. A student who has not practiced today receives at most one notification — sending multiple triggers from the backend delivers only one notification to the device
+  4. The notification message reflects the student's current state: streak at risk, XP near level-up, or daily goals waiting — not a generic reminder
+  5. A student or parent can disable notifications from the app settings page and the push subscription is unregistered from the service worker
+**Plans**: TBD
+
+### Phase 18: Streak Protection
+**Goal**: A broken streak no longer forces students to quit — the streak system uses a 36-hour grace window, earns freeze consumables as rewards, automatically uses them on missed days, offers a comeback bonus to re-engage lapsed students, and gives parents a weekend pass option
+**Depends on**: Phase 17
+**Requirements**: STRK-01, STRK-02, STRK-03, STRK-04, STRK-05
+**Success Criteria** (what must be TRUE):
+  1. A student who completes a 7-day streak sees a streak freeze item added to their inventory — the item is visible in the app
+  2. When a student misses a day but has a streak freeze, the next time they log in their streak count is unchanged and one freeze has been consumed — no streak loss occurred
+  3. A student who practices at 11pm one day and 1am the following day does not lose their streak — the grace window accepts practice within 36 hours of the previous session
+  4. A student who lost their streak sees a "2x XP" indicator on the dashboard for 3 days — completing exercises during that window awards double XP
+  5. A parent or teacher can toggle weekend mode so a student's streak does not require Saturday or Sunday practice — the streak counter does not reset over the weekend when this is enabled
+**Plans**: TBD
+
+### Phase 19: Notes Recognition Engagement
+**Goal**: The most-played game transforms from a drill into an arcade-feel experience — students feel momentum through a visible combo counter, get rewarded for speed, experience tension from a lives system, get excited by on-fire visual mode, and the game progressively challenges them as their streak grows
+**Depends on**: Phase 16 (v1.8 complete; no dependency on Phase 17 or 18)
+**Requirements**: GAME-01, GAME-02, GAME-03, GAME-04, GAME-05
+**Success Criteria** (what must be TRUE):
+  1. The Notes Recognition game shows a live combo counter that increments on every correct answer and resets on a wrong answer — the counter is visible during play, not only at the end
+  2. Answering a note within 3 seconds shows a visual speed bonus indicator and the score for that answer is higher than a slow correct answer
+  3. The game starts with 3 lives displayed as icons — a wrong answer removes one life, and when all 3 lives are gone the round ends early with a clear "no lives left" message
+  4. After 5 correct answers in a row, a visible on-fire animation or effect activates on screen — this state persists until the student answers incorrectly
+  5. After 5 correct answers in a streak, a note is silently added to the pool for the current session — students who keep a streak encounter notes they have not yet been explicitly taught in that node
+**Plans**: TBD
+
+### Phase 20: Extended Progression System
+**Goal**: The XP level system provides long-term motivation beyond the current Level 15 ceiling — students can progress through 30 levels with increasingly ambitious level names, continue into prestige tiers after Level 30, and each level milestone feels rewarding through a concrete unlock
+**Depends on**: Phase 16 (v1.8 complete; can run parallel with Phase 17-19)
+**Requirements**: PROG-01, PROG-02, PROG-03
+**Success Criteria** (what must be TRUE):
+  1. The xpSystem.js XP_LEVELS array contains 30 entries with themed names — a student currently at Level 15 sees Level 16 and beyond on their level progress bar
+  2. A student who reaches Level 30 does not see the progression bar freeze — a prestige tier (Maestro I, Maestro II, etc.) becomes the new visible goal
+  3. Each level-up event grants a specific accessory or title that is visible on the student's profile or dashboard — the reward is shown in the level-up celebration modal
+**Plans**: TBD
+
+### Phase 21: Celebration & Reporting Upgrades
+**Goal**: The dashboard gives students a richer picture of their weekly accomplishment and surfaces personal pride moments, while parents receive a weekly email summary through existing Brevo infrastructure so they can reinforce practice at home
+**Depends on**: Phase 20
+**Requirements**: PROG-04, PROG-05, PROG-06, PROG-07
+**Success Criteria** (what must be TRUE):
+  1. The student dashboard shows a weekly summary card with the number of days practiced, notes learned, and XP earned during the past 7 days — the card resets each Monday
+  2. When a student achieves a score better than any of their previous sessions on a given node, a "New personal best" message appears on the VictoryScreen — this message does not appear on subsequent completions unless the record is broken again
+  3. Each day the student opens the app, the login greeting shows a different message — across at least 10 distinct messages — so the same message does not appear two days in a row
+  4. A parent who has opted into reports receives an email via Brevo every Monday morning summarizing the child's past week — days practiced, new nodes completed, current streak — using the same email template branding as the consent email
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -307,8 +376,13 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 14. Subscription Context and Service Layer | v1.8 | 1/1 | Complete | 2026-02-28 |
 | 15. Trail Content Gating UI | v1.8 | 2/2 | Complete | 2026-03-01 |
 | 16. Parent-Facing Pages and Checkout | v1.8 | 3/3 | Complete | 2026-03-01 |
+| 17. Push Notifications | v1.9 | 0/? | Not started | - |
+| 18. Streak Protection | v1.9 | 0/? | Not started | - |
+| 19. Notes Recognition Engagement | v1.9 | 0/? | Not started | - |
+| 20. Extended Progression System | v1.9 | 0/? | Not started | - |
+| 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
 
-**Total: 38 phases across 9 milestones (all v1.0-v1.8 shipped, v1.9 not yet scoped)**
+**Total: 43 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
 
 ---
-*Last updated: 2026-03-04 — v1.7 complete (Phase 10 profiling PASS, AudioWorklet skipped); all milestones v1.0-v1.8 shipped*
+*Last updated: 2026-03-04 — v1.9 Engagement & Retention roadmap created (Phases 17-21, 22 requirements mapped)*

@@ -105,34 +105,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| NOTIF-01 | — | Pending |
-| NOTIF-02 | — | Pending |
-| NOTIF-03 | — | Pending |
-| NOTIF-04 | — | Pending |
-| NOTIF-05 | — | Pending |
-| STRK-01 | — | Pending |
-| STRK-02 | — | Pending |
-| STRK-03 | — | Pending |
-| STRK-04 | — | Pending |
-| STRK-05 | — | Pending |
-| GAME-01 | — | Pending |
-| GAME-02 | — | Pending |
-| GAME-03 | — | Pending |
-| GAME-04 | — | Pending |
-| GAME-05 | — | Pending |
-| PROG-01 | — | Pending |
-| PROG-02 | — | Pending |
-| PROG-03 | — | Pending |
-| PROG-04 | — | Pending |
-| PROG-05 | — | Pending |
-| PROG-06 | — | Pending |
-| PROG-07 | — | Pending |
+| NOTIF-01 | Phase 17 | Pending |
+| NOTIF-02 | Phase 17 | Pending |
+| NOTIF-03 | Phase 17 | Pending |
+| NOTIF-04 | Phase 17 | Pending |
+| NOTIF-05 | Phase 17 | Pending |
+| STRK-01 | Phase 18 | Pending |
+| STRK-02 | Phase 18 | Pending |
+| STRK-03 | Phase 18 | Pending |
+| STRK-04 | Phase 18 | Pending |
+| STRK-05 | Phase 18 | Pending |
+| GAME-01 | Phase 19 | Pending |
+| GAME-02 | Phase 19 | Pending |
+| GAME-03 | Phase 19 | Pending |
+| GAME-04 | Phase 19 | Pending |
+| GAME-05 | Phase 19 | Pending |
+| PROG-01 | Phase 20 | Pending |
+| PROG-02 | Phase 20 | Pending |
+| PROG-03 | Phase 20 | Pending |
+| PROG-04 | Phase 21 | Pending |
+| PROG-05 | Phase 21 | Pending |
+| PROG-06 | Phase 21 | Pending |
+| PROG-07 | Phase 21 | Pending |
 
 **Coverage:**
 - v1.9 requirements: 22 total
-- Mapped to phases: 0
-- Unmapped: 22
+- Mapped to phases: 22
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 after initial definition*
+*Last updated: 2026-03-04 — traceability complete, all 22 requirements mapped to Phases 17-21*

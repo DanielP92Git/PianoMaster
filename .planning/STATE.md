@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
-status: defining_requirements
+status: roadmap_created
 stopped_at: null
 last_updated: "2026-03-04"
-last_activity: 2026-03-04 — Milestone v1.9 started
+last_activity: 2026-03-04 — Roadmap created, Phases 17-21 defined
 progress:
-  total_phases: 0
+  total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -21,14 +21,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.9 Engagement & Retention — defining requirements
+**Current focus:** v1.9 Engagement & Retention — Phase 17 (Push Notifications) ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 17 (Push Notifications) — next to plan
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-04 — Milestone v1.9 started
+Status: Roadmap created, ready for /gsd:plan-phase 17
+Last activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
+
+```
+v1.9 Progress: [----------] 0% (0/5 phases)
+Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
+```
 
 ## Performance Metrics
 
@@ -140,10 +145,18 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - Phase 16-03: AppSettings Subscription section defaultOpen:true — high-priority info for parents visiting settings
 - Phase 16-03: TrailNodeModal paywall: Got it (gray secondary) + Ask a parent (amber primary) — reverses priority to nudge upgrade
 
+**v1.9 context (known before planning):**
+- Push notifications require a separate COPPA consent flow from the existing parental consent email — do not reuse or merge with account verification
+- NOTIF-03 (1/day max) must be enforced server-side (Edge Function or cron), not just client-side
+- Streak logic lives in the dashboard and streak service — STRK-03 (36-hour grace) changes the streak evaluation logic, not just display
+- STRK-01 streak freeze is a consumable item — needs a new column or table for inventory
+- Notes Recognition game component: src/components/games/notes-master-games/NotesRecognitionGame.jsx — add combo/lives/speed bonus without breaking existing trail session flow or exercise_progress saving
+- PROG-01/02/03: extend src/utils/xpSystem.js XP_LEVELS array (currently 15 entries) — level-up celebration modal in VictoryScreen and Dashboard must handle new tiers
+- PROG-07 parent email: use existing Brevo Edge Function pattern from v1.1 (consent email) — weekly cron trigger, same branding
+
 ### Pending Todos
 
-- Review engagement research for v1.9+ milestone planning (see `.planning/research/ENGAGEMENT_RETENTION.md`)
-- Trail content expansion needs scoping: 5 new sections (~85 nodes) identified, requires content authoring effort estimate
+- /gsd:plan-phase 17 — Push Notifications (NOTIF-01 through NOTIF-05)
 
 ### Blockers/Concerns
 
@@ -154,11 +167,11 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Defining v1.9 requirements
+Stopped at: Roadmap created for v1.9 (Phases 17-21)
 
 **Next action:**
-- Complete v1.9 requirements definition and roadmap creation
+- Run /gsd:plan-phase 17 to plan the Push Notifications phase
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-04 — Milestone v1.9 Engagement & Retention started*
+*Last updated: 2026-03-04 — v1.9 roadmap created, 5 phases (17-21), 22/22 requirements mapped*
