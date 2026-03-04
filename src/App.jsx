@@ -396,6 +396,9 @@ function App() {
         if (event.data && event.data.type === "STOP_ALARM") {
           dashboardReminderService.stopAlarm();
         }
+        if (event.data && event.data.type === "NAVIGATE" && event.data.url) {
+          window.location.href = event.data.url;
+        }
       };
 
       navigator.serviceWorker.addEventListener("message", handleMessage);

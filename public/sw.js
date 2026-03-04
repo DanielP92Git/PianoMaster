@@ -507,16 +507,28 @@ self.addEventListener("notificationclick", (event) => {
     event.notification.close();
     event.waitUntil(
       (async () => {
-        const urlToOpen = new URL("/trail", self.location.origin).href;
+        const targetPath = "/trail";
+        const urlToOpen = new URL(targetPath, self.location.origin).href;
         const allClients = await self.clients.matchAll({
           type: "window",
           includeUncontrolled: true,
         });
-        // Try to focus an existing window and navigate it to /trail
+
+        // Try to focus an existing window and navigate it
         for (const client of allClients) {
           if ("focus" in client) {
-            await client.navigate(urlToOpen);
-            return client.focus();
+            // Try navigate() first (works on controlled clients)
+            try {
+              await client.navigate(urlToOpen);
+              return client.focus();
+            } catch (e) {
+              // Uncontrolled client — use postMessage fallback
+              client.postMessage({
+                type: "NAVIGATE",
+                url: targetPath,
+              });
+              return client.focus();
+            }
           }
         }
         // No existing window — open new one
