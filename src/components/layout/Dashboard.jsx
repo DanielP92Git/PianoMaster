@@ -30,6 +30,7 @@ import Fireflies from "../ui/Fireflies";
 import iconFlameSimple from "../../assets/icons/flame-simple.png";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import XPProgressCard from "../dashboard/XPProgressCard";
+import PushOptInCard from "../dashboard/PushOptInCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { translateNodeName } from "../../utils/translateNodeName";
 import { useSubscription } from "../../contexts/SubscriptionContext";
@@ -662,6 +663,15 @@ function Dashboard() {
           <section>
             <DailyGoalsCard goals={dailyGoals} isLoading={goalsLoading} />
           </section>
+        )}
+
+        {/* Push Notification Opt-In Card (one-time, dismissible, after first week) */}
+        {isStudent && user && (
+          <PushOptInCard
+            studentId={user.id}
+            createdAt={profileData?.created_at}
+            isRTL={isRTL}
+          />
         )}
 
         {/* Stats grid (glass style like reference image) */}
