@@ -43,12 +43,18 @@ src/
 │   ├── notes-master-games/    # Memory & recognition games
 │   ├── rhythm-games/          # Rhythm/metronome training
 │   └── shared/                # UnifiedGameSettings
+├── components/settings/       # Settings components (notifications, parent gate)
 ├── features/                  # Feature hooks (auth, games, userData)
 ├── contexts/                  # Context providers
-├── hooks/                     # Custom hooks (audio, pitch detection, etc.)
+├── hooks/                     # Custom hooks (audio, pitch detection, mic presets)
 ├── services/                  # API calls and business logic
 ├── pages/                     # Routed page components
+├── utils/                     # Shared utilities (isIOSSafari, xpSystem, etc.)
+├── config/                    # App config (subscriptionConfig)
 └── locales/                   # i18n translation files (en, he)
+supabase/
+├── functions/                 # Edge Functions (send-daily-push, create-checkout, cancel-subscription)
+└── migrations/                # Database migrations with RLS policies
 ```
 
 ## VexFlow Implementation
@@ -114,6 +120,12 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 - `/rhythm-mode/*` - Rhythm training games
 - `/practice-modes` - Free practice mode selection
 - `/practice-sessions` - Recording and playback
+- `/subscribe` - Subscription purchase (Lemon Squeezy overlay checkout)
+- `/subscribe/success` - Post-purchase confirmation
+- `/parent-portal` - Subscription management (cancel, view plan)
+- `/settings` - App settings (notifications, subscription, accessibility)
+- `/legal` - Privacy/legal page
+- `/consent/verify` - **Public route** (no auth). Parent email verification for COPPA consent
 
 ## Accessibility
 
@@ -129,13 +141,15 @@ The app has comprehensive a11y support via `AccessibilityContext`:
 The app is a Progressive Web App with offline support.
 
 ### Service Worker (`public/sw.js`)
-- Cache versioning: `pianomaster-v2` (bump version to force cache refresh)
+- Cache versioning: `pianomaster-v6` (bump version to force cache refresh)
 - Caching strategies:
   - **Static assets**: Cache-first for icons, manifest, offline page
   - **Navigation**: Cache-first with offline fallback
   - **API calls**: Network-first with cache fallback
+  - **Supabase REST API** (`/rest/`): Never cached (prevents stale subscription-gate state)
   - **Accessory images**: Dedicated `pianomaster-accessories-v2` cache
 - Skips caching for Vite dev server, JS modules, and script requests
+- **Push notifications**: Handles `push` events (parses JSON payload, shows notification) and `notificationclick` events (navigates to `/trail`, `/practice`, or `/` based on notification type)
 
 ### Image Optimization Pattern
 
@@ -462,6 +476,111 @@ Common issues to check:
 1. Exercise type mismatch between node config and switch case handling
 2. State race conditions with `exercisesRemaining` calculation
 3. Ensure `location.state` carries all required fields (`nodeId`, `exerciseIndex`, `totalExercises`, `exerciseType`)
+
+## Push Notifications (Added Mar 2026)
+
+Web Push notifications to encourage daily practice. COPPA-compliant with parent gate.
+
+### Architecture
+
+- **Client opt-in**: Dashboard shows `PushOptInCard` after 7 days → navigates to `/settings`
+- **Settings toggle**: `NotificationPermissionCard` manages 6-state machine: `loading | unsupported | denied | enabled | consent_skip | default`
+- **COPPA parent gate**: `ParentGateMath` requires solving a two-digit addition problem before first opt-in. After 3 failures a hint appears. Once solved, `parent_consent_granted = true` in DB; subsequent re-enables skip the gate
+- **iOS PWA requirement**: Detects non-standalone mode, shows "install first" warning (iOS Web Push only works from home screen PWA)
+
+### Key Files
+
+| File | Role |
+|---|---|
+| `src/services/notificationService.js` | Client-side push helpers (subscribe, unsubscribe, permission checks) |
+| `src/components/dashboard/PushOptInCard.jsx` | Dashboard soft-prompt card (7-day delay, dismissible) |
+| `src/components/settings/NotificationPermissionCard.jsx` | Settings toggle with full state machine |
+| `src/components/settings/ParentGateMath.jsx` | COPPA math gate overlay |
+| `supabase/functions/send-daily-push/index.ts` | Edge Function that sends pushes (cron-triggered) |
+| `supabase/migrations/20260304000001_add_push_subscriptions.sql` | DB schema + RLS |
+
+### Database Table
+
+```sql
+push_subscriptions (
+  id UUID PRIMARY KEY,
+  student_id UUID FK → students(id) ON DELETE CASCADE,
+  subscription JSONB,            -- { endpoint, keys: { p256dh, auth } }
+  is_enabled BOOLEAN,
+  parent_consent_granted BOOLEAN,
+  parent_consent_at TIMESTAMPTZ,
+  last_notified_at TIMESTAMPTZ,  -- Server-set; enforces 1/day rate limit
+  UNIQUE (student_id)            -- one row per student
+)
+```
+
+RLS: students can SELECT/INSERT/UPDATE/DELETE their own row only. Edge Function uses service role key.
+
+### Edge Function: `send-daily-push`
+
+- `verify_jwt = false` — authenticated via `x-cron-secret` header
+- Triggered daily at 14:00 UTC via `pg_cron` + `pg_net`
+- Skip conditions per student: (a) already notified today, (b) already practiced today
+- Context-aware messages: streak at risk > near next XP level > incomplete daily goals > generic
+- On HTTP 410 (Gone): auto-disables subscription
+- Required env secrets: `CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+- Client needs `VITE_VAPID_PUBLIC_KEY` in `.env`
+
+### Edge Functions (Subscription)
+
+| Function | Purpose |
+|---|---|
+| `create-checkout` | Creates Lemon Squeezy checkout overlay URL |
+| `cancel-subscription` | Cancels subscription via Lemon Squeezy API |
+| `send-daily-push` | Sends daily practice reminder push notifications |
+
+## iOS Safari Hardening (Added Feb 2026)
+
+### Shared Utility: `src/utils/isIOSSafari.js`
+
+```javascript
+export const isIOSSafari = boolean; // iPad/iPhone detection, excludes Chrome/Firefox/Edge iOS
+```
+
+### MicErrorOverlay (`src/components/games/sight-reading-game/components/MicErrorOverlay.jsx`)
+
+Full-screen overlay for microphone errors. Props: `errorType` (`"permission_denied" | "mic_stopped" | null`), `isRetrying`, `canRetry`, `onRetry`, `onBack`.
+
+- On iOS Safari + `permission_denied`: shows 5-step guide to re-enable mic in iOS Settings
+- On other platforms: shows generic browser hint
+- i18n keys under `micError.*`
+
+### AudioInterruptedOverlay
+
+Detects iOS Safari audio context interruptions (phone calls, Siri, etc.) and shows recovery overlay.
+
+## Pitch Detection & Timing
+
+### `usePitchDetection` Hook
+
+Supports two modes:
+- **Shared analyser**: Pass `analyserNode` prop → attaches to existing `AnalyserNode`, doesn't close `AudioContext` on stop
+- **Self-created** (legacy): Creates its own `AudioContext`, closes everything on stop
+
+Uses **McLeod Pitch Method** via `pitchy` library. Clarity gate: `PITCH_CLARITY_THRESHOLD = 0.9`. Range: A2 (MIDI 45) to C6 (MIDI 84).
+
+Performance marks (`getAudioData`, `findPitch`) appear in browser DevTools User Timing.
+
+### `useTimingAnalysis` Hook (`src/components/games/sight-reading-game/hooks/useTimingAnalysis.js`)
+
+Centralizes timing window calculations for Sight Reading game:
+- `buildTimingWindows(pattern)` — BPM-adaptive early/late tolerances, prevents window overlap at high BPM
+- `evaluateTiming(timeDiffMs)` — ≤100ms perfect (1.0), ≤200ms good (0.8), ≤300ms okay (0.5), else early/late (0.3)
+- Constants in `src/components/games/sight-reading-game/constants/timingConstants.js`
+
+### Mic Input Presets (`src/hooks/micInputPresets.js`)
+
+Named presets and BPM-adaptive timing:
+```javascript
+MIC_INPUT_PRESETS.sightReading     // { rmsThreshold, tolerance, onFrames, changeFrames, offMs, minInterOnMs }
+MIC_INPUT_PRESETS.notesRecognition
+calcMicTimingFromBpm(bpm, shortestNoteDuration) // Returns { onFrames, offMs, changeFrames, minInterOnMs }
+```
 
 ## Security Hardening Guidelines
 

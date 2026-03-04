@@ -20,14 +20,16 @@
 //
 // Environment variables required:
 //   CRON_SECRET        — shared secret between Vault and this function
-//   VAPID_PUBLIC_KEY   — VAPID public key for Web Push
-//   VAPID_PRIVATE_KEY  — VAPID private key for Web Push
+//   VAPID_KEYS_JSON    — JSON string of exported VAPID keys (JWK format from @negrel/webpush)
 //   VAPID_SUBJECT      — VAPID subject, e.g. "mailto:admin@pianomaster.app"
 //   SUPABASE_URL       — auto-injected by Supabase
 //   SUPABASE_SERVICE_ROLE_KEY — auto-injected by Supabase
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import * as webpush from 'jsr:@negrel/webpush';
+import {
+  ApplicationServer,
+  importVapidKeys,
+} from 'jsr:@negrel/webpush';
 
 // ============================================================
 // XP Level thresholds (mirrors src/utils/xpSystem.js exactly)
@@ -41,6 +43,20 @@ function getXpToNextLevel(totalXp: number): number | null {
     }
   }
   return null; // Max level reached
+}
+
+// ============================================================
+// Sanitize JWK: strip whitespace from base64url coordinates
+// (Supabase secret storage can introduce spaces)
+// ============================================================
+function sanitizeJwk(jwk: Record<string, unknown>): Record<string, unknown> {
+  const cleaned = { ...jwk };
+  for (const field of ['x', 'y', 'd']) {
+    if (typeof cleaned[field] === 'string') {
+      cleaned[field] = (cleaned[field] as string).replace(/\s/g, '');
+    }
+  }
+  return cleaned;
 }
 
 // ============================================================
@@ -172,24 +188,29 @@ Deno.serve(async (req: Request) => {
   }
 
   // ── Initialize Web Push ───────────────────────────────────
-  const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY');
-  const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY');
+  const vapidKeysJson = Deno.env.get('VAPID_KEYS_JSON');
   const vapidSubject = Deno.env.get('VAPID_SUBJECT') ?? 'mailto:admin@pianomaster.app';
 
-  if (!vapidPublicKey || !vapidPrivateKey) {
-    console.error('send-daily-push: missing VAPID environment variables');
+  if (!vapidKeysJson) {
+    console.error('send-daily-push: missing VAPID_KEYS_JSON environment variable');
     return new Response(JSON.stringify({ error: 'Server configuration error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  let appServer: webpush.ApplicationServer;
+  let appServer: ApplicationServer;
   try {
-    appServer = await webpush.generateApplicationServer({
-      publicKey: vapidPublicKey,
-      privateKey: vapidPrivateKey,
-      subject: vapidSubject,
+    const exportedKeys = JSON.parse(vapidKeysJson);
+    // Sanitize JWK coordinates (strip any whitespace introduced by secret storage)
+    const sanitized = {
+      publicKey: sanitizeJwk(exportedKeys.publicKey),
+      privateKey: sanitizeJwk(exportedKeys.privateKey),
+    };
+    const vapidKeys = await importVapidKeys(sanitized);
+    appServer = await ApplicationServer.new({
+      contactInformation: vapidSubject,
+      vapidKeys,
     });
   } catch (err) {
     console.error('send-daily-push: failed to initialize VAPID application server:', err);
