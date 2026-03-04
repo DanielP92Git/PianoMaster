@@ -259,7 +259,32 @@
         "enablePushNotifications": "Enable browser notifications",
         "enablePushNotificationsDescription": "Receive notifications via browser push notifications",
         "requesting": "Requesting...",
-        "enableNotifications": "Enable Notifications"
+        "enableNotifications": "Enable Notifications",
+        "parentGate": {
+          "title": "Are you a grown-up?",
+          "subtitle": "A parent needs to verify to enable practice reminders",
+          "placeholder": "Type your answer",
+          "submit": "Verify",
+          "cancel": "Cancel",
+          "wrong": "That's not right, try again!",
+          "hint": "Hint: Use mental math to add the two numbers"
+        },
+        "pushNotifications": {
+          "enabled": "Practice reminders are on!",
+          "enabledDescription": "You'll get a daily reminder if you haven't practiced yet.",
+          "enableButton": "Turn on practice reminders",
+          "enableDescription": "Get a friendly daily reminder to practice piano.",
+          "disableButton": "Turn off",
+          "reEnableButton": "Turn back on",
+          "iosInstallRequired": "To receive notifications, install PianoMaster on your home screen first.",
+          "subscribing": "Setting up..."
+        },
+        "pushOptIn": {
+          "title": "Never miss practice time!",
+          "subtitle": "Turn on reminders to get a daily nudge when it's time to practice.",
+          "goToSettings": "Turn on",
+          "dismiss": "Not now"
+        }
       },
       "audio": {
         "audioSettingsTitle": "Audio Settings",

@@ -259,7 +259,32 @@
         "enablePushNotifications": "הפעלת התראות בעזרת התראות של הדפדפן",
         "enablePushNotificationsDescription": "קבלו התראות דרך התראות push של הדפדפן",
         "requesting": "מבוקש...",
-        "enableNotifications": "הפעלת התראות"
+        "enableNotifications": "הפעלת התראות",
+        "parentGate": {
+          "title": "האם את/ה מבוגר/ת?",
+          "subtitle": "הורה צריך לאמת כדי להפעיל תזכורות תרגול",
+          "placeholder": "הקלד/י את התשובה",
+          "submit": "אימות",
+          "cancel": "ביטול",
+          "wrong": "זה לא נכון, נסה/י שוב!",
+          "hint": "רמז: חשב/י בראש את סכום שני המספרים"
+        },
+        "pushNotifications": {
+          "enabled": "תזכורות תרגול פועלות!",
+          "enabledDescription": "תקבל/י תזכורת יומית אם עדיין לא תרגלת.",
+          "enableButton": "הפעלת תזכורות תרגול",
+          "enableDescription": "קבל/י תזכורת יומית ידידותית לתרגול פסנתר.",
+          "disableButton": "כיבוי",
+          "reEnableButton": "הפעלה מחדש",
+          "iosInstallRequired": "כדי לקבל התראות, התקן/י את PianoMaster במסך הבית שלך קודם.",
+          "subscribing": "מגדיר..."
+        },
+        "pushOptIn": {
+          "title": "אל תפספס/י זמן תרגול!",
+          "subtitle": "הפעל/י תזכורות כדי לקבל דחיפה יומית כשהגיע הזמן לתרגל.",
+          "goToSettings": "הפעלה",
+          "dismiss": "לא עכשיו"
+        }
       },
       "audio": {
         "audioSettingsTitle": "הגדרות שמע",

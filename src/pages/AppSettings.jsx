@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
+import { useUser } from "../features/authentication/useUser";
 import useGlobalAudioSettings from "../hooks/useGlobalAudioSettings";
 import SettingsSection from "../components/settings/SettingsSection";
 import ToggleSetting from "../components/settings/ToggleSetting";
@@ -46,6 +47,7 @@ function AppSettings() {
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
   const { isPremium, isLoading: subLoading } = useSubscription();
+  const { user } = useUser();
   const [installEnv, setInstallEnv] = useState({
     isReady: false,
     isIOS: false,
@@ -447,6 +449,7 @@ function AppSettings() {
           <div className="mt-4">
             <NotificationPermissionCard
               isRTL={isRTL}
+              studentId={user?.id}
               onPermissionChange={(permission) => {
                 if (permission === "granted") {
                   updatePreference("web_push_enabled", true);
