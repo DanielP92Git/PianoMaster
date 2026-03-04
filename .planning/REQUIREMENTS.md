@@ -17,11 +17,11 @@ Requirements for engagement and retention improvements. Each maps to roadmap pha
 
 ### Streak Protection
 
-- [ ] **STRK-01**: Student earns a streak freeze consumable for every 7-day streak
-- [ ] **STRK-02**: Streak freeze automatically protects one missed day
-- [ ] **STRK-03**: Streak uses 36-hour grace period instead of midnight cutoff
-- [ ] **STRK-04**: Student receives 2x XP comeback bonus for 3 days after a broken streak
-- [ ] **STRK-05**: Parent or teacher can toggle weekend pass (streaks don't require weekend practice)
+- [x] **STRK-01**: Student earns a streak freeze consumable for every 7-day streak
+- [x] **STRK-02**: Streak freeze automatically protects one missed day
+- [x] **STRK-03**: Streak uses 36-hour grace period instead of midnight cutoff
+- [x] **STRK-04**: Student receives 2x XP comeback bonus for 3 days after a broken streak
+- [x] **STRK-05**: Parent or teacher can toggle weekend pass (streaks don't require weekend practice)
 
 ### Game Engagement
 
@@ -110,11 +110,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | NOTIF-03 | Phase 17 | Complete |
 | NOTIF-04 | Phase 17 | Complete |
 | NOTIF-05 | Phase 17 | Complete |
-| STRK-01 | Phase 18 | Pending |
-| STRK-02 | Phase 18 | Pending |
-| STRK-03 | Phase 18 | Pending |
-| STRK-04 | Phase 18 | Pending |
-| STRK-05 | Phase 18 | Pending |
+| STRK-01 | Phase 18 | Complete |
+| STRK-02 | Phase 18 | Complete |
+| STRK-03 | Phase 18 | Complete |
+| STRK-04 | Phase 18 | Complete |
+| STRK-05 | Phase 18 | Complete |
 | GAME-01 | Phase 19 | Pending |
 | GAME-02 | Phase 19 | Pending |
 | GAME-03 | Phase 19 | Pending |

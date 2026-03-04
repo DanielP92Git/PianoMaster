@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
 status: "Roadmap created, ready for /gsd:plan-phase 17"
-stopped_at: Phase 18 context gathered
-last_updated: "2026-03-04T21:41:35.884Z"
+stopped_at: Completed 18-01-PLAN.md
+last_updated: "2026-03-04T22:03:40.353Z"
 last_activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
 progress:
   total_phases: 20
   completed_phases: 17
-  total_plans: 46
-  completed_plans: 43
+  total_plans: 49
+  completed_plans: 44
 ---
 
 # Project State
@@ -70,6 +70,7 @@ Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
 | 16-03 | — | — | — | 2026-03-01 |
 | Phase 17 P01 | 2 | 2 tasks | 3 files |
 | Phase 17 P02 | 4 | 2 tasks | 9 files |
+| Phase 18 P01 | 3m 11s | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -160,6 +161,9 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - [Phase 17]: Expired subscription (410 Gone) sets subscription = null AND is_enabled = false — prevents retry loop; client must re-subscribe
 - [Phase 17]: consent_skip state: parent_consent_granted=true but is_enabled=false allows re-enable without math gate — consent is permanent once granted
 - [Phase 17]: PushOptInCard DISMISSED_KEY not user-scoped — per-device UX nudge, different users dismiss independently
+- [Phase 18]: Column on current_streak (not new table) for freeze inventory — avoids joins and matches existing upsert pattern
+- [Phase 18]: All streak logic in JS service layer — no new Postgres functions, consistent with existing patterns and testable without DB
+- [Phase 18]: getStreakState() fetches current_streak + last_practiced_date in parallel with Promise.all — minimizes latency for UI consumers
 
 ### Pending Todos
 
@@ -173,8 +177,8 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-04T21:41:35.847Z
-Stopped at: Phase 18 context gathered
+Last session: 2026-03-04T22:03:40.337Z
+Stopped at: Completed 18-01-PLAN.md
 
 **Next action:**
 - Run /gsd:plan-phase 17 to plan the Push Notifications phase
