@@ -9,7 +9,8 @@
       "Bash(python3 -c *)",
       "Bash(git add:*)",
       "Bash(git commit -m *)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(xargs grep:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
