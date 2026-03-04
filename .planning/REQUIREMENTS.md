@@ -1,71 +1,88 @@
-# Requirements: PianoApp — Mic Pitch Detection Overhaul
+# Requirements: PianoApp — v1.9 Engagement & Retention
 
-**Defined:** 2026-02-17
+**Defined:** 2026-03-04
 **Core Value:** Children's data must be protected and inaccessible to unauthorized users
 
-## v1.7 Requirements
+## v1.9 Requirements
 
-Requirements for mic pitch detection overhaul. Each maps to roadmap phases.
+Requirements for engagement and retention improvements. Each maps to roadmap phases.
 
-### Bug Fix (Prerequisite)
+### Notifications
 
-- [x] **FIX-01**: Mic-restart regression fixed — "Try Again" reactivates mic correctly on second attempt (SightReadingGame.micRestart.test.jsx passes)
-- [x] **FIX-02**: Mic listening guard uses synchronous ref instead of async React state to prevent race conditions
+- [ ] **NOTIF-01**: Parent can opt-in to push notifications for their child with COPPA-compliant consent
+- [ ] **NOTIF-02**: App requests Web Push API permission and registers service worker subscription
+- [ ] **NOTIF-03**: Student receives max 1 push notification per day
+- [ ] **NOTIF-04**: Notifications include context-aware messages (streak at risk, XP near level-up, daily goals waiting)
+- [ ] **NOTIF-05**: Student or parent can disable notifications from settings
 
-### Audio Configuration
+### Streak Protection
 
-- [x] **AUDIO-01**: getUserMedia requests mic with `echoCancellation: false`, `noiseSuppression: false`, `autoGainControl: false` to prevent browser DSP from corrupting piano signal
-- [x] **AUDIO-02**: AnalyserNode `smoothingTimeConstant` set to `0.0` (was `0.8`) to eliminate ~100ms phantom latency
-- [x] **AUDIO-03**: AnalyserNode `fftSize` increased to `4096` (was `2048`) for better frequency resolution on bass clef notes
+- [ ] **STRK-01**: Student earns a streak freeze consumable for every 7-day streak
+- [ ] **STRK-02**: Streak freeze automatically protects one missed day
+- [ ] **STRK-03**: Streak uses 36-hour grace period instead of midnight cutoff
+- [ ] **STRK-04**: Student receives 2x XP comeback bonus for 3 days after a broken streak
+- [ ] **STRK-05**: Parent or teacher can toggle weekend pass (streaks don't require weekend practice)
 
-### Algorithm
+### Game Engagement
 
-- [x] **ALGO-01**: Pitch detection uses McLeod Pitch Method (via pitchy library) instead of naive autocorrelation, eliminating octave errors on piano harmonics
-- [x] **ALGO-02**: Pitch confidence threshold gates emissions — only notes with clarity above threshold are reported (prevents weak/ambiguous detections)
-- [x] **ALGO-03**: Pitch detection accurately identifies all notes in the app's trail node pools from C3 to C6
+- [ ] **GAME-01**: Notes Recognition shows combo/streak counter with multiplier (like Rhythm Trainer)
+- [ ] **GAME-02**: Student earns speed bonus for answering within 3 seconds
+- [ ] **GAME-03**: Notes Recognition uses lives system (3 lives instead of just scoring 0)
+- [ ] **GAME-04**: Visual "on fire" mode activates after 5 correct answers in a row
+- [ ] **GAME-05**: Note pool auto-grows by 1 note after 5 correct answers in a streak
 
-### Detection Pipeline
+### Progression
 
-- [x] **PIPE-01**: Dynamic `onFrames` (onset speed) scales with BPM and note duration — faster notes get faster detection
-- [x] **PIPE-02**: Dynamic `offMs` (note-off speed) scales with BPM and note duration — short notes release fast, long notes allow natural decay
-- [x] **PIPE-03**: Formal IDLE/ARMED/ACTIVE state machine in `useMicNoteInput` replaces frame-counting candidacy logic
-- [x] **PIPE-04**: Full piano frequency map covers all note pools used in trail nodes (including bass clef low notes B2, A2, etc.)
-- [x] **PIPE-05**: BPM and note duration context propagated into mic detection hooks from game components
-- [x] **PIPE-06**: Per-note debouncing in game scoring layer prevents double-scoring when detection fires twice for one played note
-
-### Architecture
-
-- [x] **ARCH-01**: Single shared `AudioContextProvider` React Context owns one AudioContext per game session (replaces 3 separate instances)
-- [x] **ARCH-02**: `usePitchDetection` accepts shared analyserNode from AudioContextProvider instead of creating its own AudioContext
-- [x] **ARCH-03**: `useAudioEngine` accepts shared AudioContext from AudioContextProvider instead of creating its own
-- [x] **ARCH-04**: `NotesRecognitionGame` inline detection code (~250 lines) replaced with shared `useMicNoteInput` hook
-- [x] **ARCH-05**: AudioContext uses `suspend()`/`resume()` between exercises instead of creating new contexts
-
-### Cross-Browser (iOS Safari)
-
-- [x] **IOS-01**: iOS Safari `"interrupted"` AudioContext state handled — full mic stream re-acquired via getUserMedia when interrupted
-- [x] **IOS-02**: AudioContext `resume()` called synchronously within user gesture call stack (before any `await`) to satisfy iOS Safari requirement
-- [x] **IOS-03**: `visibilitychange` listener recovers mic after app switch, phone call, or device lock
-- [x] **IOS-04**: Mic permission denied shows clear, persistent error message with iOS Settings instructions (not silent failure)
-
-### Performance (Conditional — Profiling-Gated)
-
-- [x] **PERF-01**: CPU profiling conducted on mid-range Android device to measure audio processing frame drop
-- [~] **PERF-02**: ~~If profiling shows >5% frame drop from audio processing, AudioWorklet migration moves pitch detection off main thread~~ — N/A (PERF-01 profiling showed no frame drop; condition not met)
-- [~] **PERF-03**: ~~If AudioWorklet built, uses ring buffer accumulation pattern (128-frame quanta to 2048 samples) for bass clef detection~~ — N/A (AudioWorklet not needed; PERF-01 PASS)
+- [ ] **PROG-01**: XP level system extended from 15 to 30 levels with new themed names
+- [ ] **PROG-02**: Prestige tiers unlock after level 30 (Maestro I, II, III...)
+- [ ] **PROG-03**: Each level grants a unique accessory or title
+- [ ] **PROG-04**: Dashboard shows weekly progress summary (days practiced, notes learned, XP earned)
+- [ ] **PROG-05**: Student sees personal bests ("New record! Fastest perfect round!")
+- [ ] **PROG-06**: Dashboard shows varied daily login messages ("Did you know? Beethoven practiced 4 hours a day!")
+- [ ] **PROG-07**: Parent receives weekly progress email report via Brevo
 
 ## Future Requirements
 
-Deferred to future release. Tracked but not in current roadmap.
+Deferred to v2.0+. Tracked but not in current roadmap.
 
-### Audio Feedback
+### Content Expansion
 
-- **FEED-01**: Cents deviation display showing how sharp/flat a note is (hooks already emit raw frequency)
-- **FEED-02**: Device calibration wizard measuring per-device mic latency offset
+- **CONT-01**: Trail Section 4: Sharps & Flats (~20 nodes)
+- **CONT-02**: Trail Section 5: Key Signatures (~15 nodes)
+- **CONT-03**: Trail Section 6: Two-Hand Basics (~20 nodes)
+- **CONT-04**: Trail Section 7: Simple Melodies (~15 nodes)
+- **CONT-05**: Trail Section 8: Advanced Rhythm (~15 nodes)
+- **CONT-06**: Procedural "Endless Practice" mode
+- **CONT-07**: Real Song Library (public domain first)
 
-### Advanced Detection
+### Daily Engagement Loops
 
-- **ADV-01**: Multi-algorithm consensus (MPM primary + secondary estimator for cross-validation)
+- **LOOP-01**: Daily challenge system (rotating unique challenges)
+- **LOOP-02**: Weekly bonus events (Double XP, themed weeks)
+- **LOOP-03**: Seasonal events framework (quarterly themed content)
+
+### Advanced Gamification
+
+- **ADV-01**: Prestige / mastery star tiers (Gold 4th, Diamond 5th)
+- **ADV-02**: Spaced repetition "Rusty Skills" system
+- **ADV-03**: Adaptive difficulty within sessions
+
+### New Game Types
+
+- **MINI-01**: Note Catcher (Guitar Hero style)
+- **MINI-02**: Melody Puzzle (drag-and-drop note ordering)
+- **MINI-03**: Rhythm Battle (pattern matching)
+- **MINI-04**: Interval Training (higher/lower identification)
+
+### Social & Competitive
+
+- **SOCL-01**: Classroom challenges (teacher-set, anonymous)
+- **SOCL-02**: Classroom leaderboard enhancements
+
+### Narrative
+
+- **NARR-01**: Story campaign wrapper
+- **NARR-02**: Accessory system expansion
 
 ## Out of Scope
 
@@ -73,14 +90,14 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Polyphonic detection | Children play one note at a time; 10-100x compute overhead for zero user benefit |
-| CREPE neural network | 7MB model, TensorFlow.js dependency, CDN fetch = COPPA violation, 100-300ms mobile latency |
-| ml5.js pitch detection | External CDN model fetch violates COPPA; 2MB+ bundle size |
-| essentia.js | 2MB WASM overkill for monophonic detection |
-| Raw Hz frequency display | Children don't understand Hz; adds UI clutter with no learning value |
-| Always-on mic on non-game screens | COPPA privacy concern; battery drain; mic indicator stays lit |
-| Noise suppression via ML | Massive compute overhead; introduces non-linear distortion breaking pitch detection |
-| UX/visual changes to mic mode | Scope is detection engine only; UX improvements deferred |
+| New trail content (nodes/sections) | Content authoring is v2.0 scope; v1.9 is engagement infrastructure only |
+| New mini-game types | High effort per game; v2.1 scope |
+| Spaced repetition algorithm | Needs accuracy tracking infrastructure; v2.0 scope |
+| Seasonal events | Requires event framework + calendar system; v2.2 scope |
+| Classroom challenges | Requires teacher UI expansion; v2.2 scope |
+| Story campaign | Requires illustration assets + narrative design; v2.0 scope |
+| Adaptive difficulty | Algorithm research needed; v2.1 scope |
+| In-app currency | COPPA dark pattern risk; earn-only accessories preferred |
 
 ## Traceability
 
@@ -88,39 +105,34 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 06 | Complete |
-| FIX-02 | Phase 06 | Complete |
-| AUDIO-01 | Phase 07 | Complete |
-| AUDIO-02 | Phase 07 | Complete |
-| AUDIO-03 | Phase 07 | Complete |
-| ALGO-01 | Phase 07 | Complete |
-| ALGO-02 | Phase 07 | Complete |
-| ALGO-03 | Phase 07 | Complete |
-| ARCH-01 | Phase 07 | Complete |
-| ARCH-02 | Phase 07 | Complete |
-| ARCH-03 | Phase 07 | Complete |
-| ARCH-04 | Phase 07 | Complete |
-| ARCH-05 | Phase 07 | Complete |
-| PIPE-01 | Phase 08 | Complete |
-| PIPE-02 | Phase 08 | Complete |
-| PIPE-03 | Phase 08 | Complete |
-| PIPE-04 | Phase 08 | Complete |
-| PIPE-05 | Phase 08 | Complete |
-| PIPE-06 | Phase 08 | Complete |
-| IOS-01 | Phase 09 | Complete |
-| IOS-02 | Phase 09 | Complete |
-| IOS-03 | Phase 09 | Complete |
-| IOS-04 | Phase 09 | Complete |
-| PERF-01 | Phase 10 | Complete |
-| PERF-02 | Phase 10 | N/A (profiling PASS) |
-| PERF-03 | Phase 10 | N/A (profiling PASS) |
+| NOTIF-01 | — | Pending |
+| NOTIF-02 | — | Pending |
+| NOTIF-03 | — | Pending |
+| NOTIF-04 | — | Pending |
+| NOTIF-05 | — | Pending |
+| STRK-01 | — | Pending |
+| STRK-02 | — | Pending |
+| STRK-03 | — | Pending |
+| STRK-04 | — | Pending |
+| STRK-05 | — | Pending |
+| GAME-01 | — | Pending |
+| GAME-02 | — | Pending |
+| GAME-03 | — | Pending |
+| GAME-04 | — | Pending |
+| GAME-05 | — | Pending |
+| PROG-01 | — | Pending |
+| PROG-02 | — | Pending |
+| PROG-03 | — | Pending |
+| PROG-04 | — | Pending |
+| PROG-05 | — | Pending |
+| PROG-06 | — | Pending |
+| PROG-07 | — | Pending |
 
 **Coverage:**
-- v1.7 requirements: 26 total
-- Mapped to phases: 26
-- Complete: 24
-- N/A (conditional skip): 2 (PERF-02, PERF-03 — profiling gate PASS)
+- v1.9 requirements: 22 total
+- Mapped to phases: 0
+- Unmapped: 22
 
 ---
-*Requirements defined: 2026-02-17*
-*Last updated: 2026-03-04 — FIX, AUDIO, ALGO, ARCH requirements marked complete (Phases 06-07 shipped)*
+*Requirements defined: 2026-03-04*
+*Last updated: 2026-03-04 after initial definition*
