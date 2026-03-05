@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Coins, Clock3, Loader2 } from "lucide-react";
+import { Coins, Clock3, Loader2, Heart } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
@@ -419,6 +419,17 @@ const ProgressBar = ({ current, total }) => {
   );
 };
 
+// === Engagement constants (outside component to avoid re-creation) ===
+const COMBO_TIERS = [
+  { min: 0, multiplier: 1 },
+  { min: 3, multiplier: 2 },
+  { min: 8, multiplier: 3 },
+];
+const SPEED_BONUS_THRESHOLD_MS = 3000;
+const SPEED_BONUS_POINTS = 5;
+const BASE_SCORE = 10;
+const INITIAL_LIVES = 3;
+
 export function NotesRecognitionGame() {
   const { soft, snappy, fade, reduce } = useMotionTokens();
   const navigate = useNavigate();
@@ -649,6 +660,16 @@ export function NotesRecognitionGame() {
   const baseNotesRegionRef = useRef(null);
   const variantPopoverRef = useRef(null);
 
+  // === Engagement: Combo, Lives, Speed ===
+  const [combo, setCombo] = useState(0);
+  const comboRef = useRef(0);
+  const [lives, setLives] = useState(INITIAL_LIVES);
+  const livesRef = useRef(INITIAL_LIVES);
+  const [speedBonusKey, setSpeedBonusKey] = useState(0);
+  const [showSpeedBonus, setShowSpeedBonus] = useState(false);
+  const [comboShake, setComboShake] = useState(false);
+  const questionStartTimeRef = useRef(null);
+
   // Timer implementation
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -788,12 +809,13 @@ export function NotesRecognitionGame() {
 
     // Only consider time running out as a loss condition if in timed mode
     const timeRanOut = settings.timedMode && timeRemaining <= 0;
-    const isLost = scorePercentage < 50 || timeRanOut;
+    const livesLost = livesRef.current <= 0;
+    const isLost = scorePercentage < 50 || timeRanOut || livesLost;
 
     // Note: Score saving is handled by useGameProgress.finishGame()
     // Switch UI immediately (don't wait for async score save) so we don't render an extra note
     // after the final answer.
-    updateProgress({ isFinished: true, isLost, timeRanOut });
+    updateProgress({ isFinished: true, isLost, timeRanOut, livesLost });
 
     // Allow the piano note to play briefly before stopping it for victory/game over sound
     setTimeout(() => {
@@ -971,6 +993,14 @@ export function NotesRecognitionGame() {
     resetProgress();
     setGameOver(false);
     isGameEndingRef.current = false;
+
+    // Reset engagement state
+    comboRef.current = 0;
+    setCombo(0);
+    livesRef.current = INITIAL_LIVES;
+    setLives(INITIAL_LIVES);
+    setShowSpeedBonus(false);
+    setComboShake(false);
 
     const timeLimit = updatedSettings.timeLimit || 45;
     pauseGameTimer();
@@ -1468,10 +1498,54 @@ export function NotesRecognitionGame() {
 
       if (!curNote || isGameEndingRef.current) return;
 
-      const isCorrect = handleAnswer(selectedAnswer, curNote.note);
+      const isCorrect = selectedAnswer === curNote.note;
       const questionLimit = settings.timedMode ? 10 : 20;
       // `curTotalQuestions` here is the count *before* this answer; `handleAnswer` increments it.
       const willEndGame = curTotalQuestions + 1 >= questionLimit;
+
+      // === Engagement: Combo, Speed, Lives ===
+      let earnedScore = 0;
+
+      if (isCorrect) {
+        // Increment combo (use ref to avoid stale closure)
+        comboRef.current += 1;
+        // Determine multiplier tier
+        const tier = [...COMBO_TIERS].reverse().find((t) => comboRef.current >= t.min);
+        const multiplier = tier?.multiplier ?? 1;
+        // Check speed bonus
+        const elapsed = performance.now() - (questionStartTimeRef.current ?? performance.now());
+        const isSpeedBonus = elapsed <= SPEED_BONUS_THRESHOLD_MS;
+        // Compute score
+        earnedScore = BASE_SCORE * multiplier + (isSpeedBonus ? SPEED_BONUS_POINTS : 0);
+        // Update combo state
+        setCombo(comboRef.current);
+        // Show speed bonus flash
+        if (isSpeedBonus) {
+          setSpeedBonusKey((prev) => prev + 1);
+          setShowSpeedBonus(true);
+          setTimeout(() => setShowSpeedBonus(false), 800);
+        }
+      } else {
+        // Wrong answer: shake combo, reset, deduct life
+        if (comboRef.current > 0) {
+          setComboShake(true);
+          setTimeout(() => setComboShake(false), 300);
+        }
+        comboRef.current = 0;
+        setCombo(0);
+        livesRef.current -= 1;
+        setLives(livesRef.current);
+        earnedScore = 0;
+        // If no lives left, mark game ending immediately (prevents next note flash)
+        if (livesRef.current <= 0) {
+          isGameEndingRef.current = true;
+        }
+      }
+
+      // Call handleAnswer with scoreOverride for multiplied+speed score
+      handleAnswer(selectedAnswer, curNote.note, isCorrect ? earnedScore : undefined);
+
+      const willEndByLives = livesRef.current <= 0;
 
       // Set feedback state to highlight the buttons
       setAnswerFeedback({
@@ -1481,6 +1555,12 @@ export function NotesRecognitionGame() {
       });
 
       playSound(isCorrect, curNote);
+
+      // Trigger lives-depletion game over
+      if (willEndByLives) {
+        setTimeout(() => handleGameOver(), 50);
+        return;
+      }
 
       // Game completion check is now handled by useEffect below
       // This ensures state updates are complete before checking
@@ -1515,6 +1595,7 @@ export function NotesRecognitionGame() {
     },
     [
       handleAnswer,
+      handleGameOver,
       getRandomNote,
       playSound,
       settings.timedMode,
@@ -1541,6 +1622,13 @@ export function NotesRecognitionGame() {
     progress.currentNote?.englishName,
     progress.currentNote?.note,
   ]);
+
+  // Reset question start time whenever a new note appears (for speed bonus measurement)
+  useEffect(() => {
+    if (progress.currentNote && progress.isStarted) {
+      questionStartTimeRef.current = performance.now();
+    }
+  }, [progress.currentNote, progress.isStarted]);
 
   useEffect(() => {
     if (!variantModal) return;
@@ -1903,6 +1991,8 @@ export function NotesRecognitionGame() {
             score={progress.score}
             totalQuestions={progress.totalQuestions}
             timeRanOut={progress.timeRanOut}
+            livesLost={progress.livesLost}
+            correctAnswers={progress.correctAnswers}
             onReset={() => {
               resetProgress();
               resetSettings();
