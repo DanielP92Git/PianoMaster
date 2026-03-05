@@ -2036,20 +2036,78 @@ export function NotesRecognitionGame() {
                     label={t("games.score")}
                     value={progress.score}
                   />
+
+                  {/* Combo counter pill */}
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={combo}
+                      animate={
+                        comboShake
+                          ? { x: [0, -6, 6, -4, 4, 0] }
+                          : combo > 0
+                            ? { scale: [1, 1.18, 1] }
+                            : undefined
+                      }
+                      transition={reduce ? undefined : { type: "tween", duration: 0.22, ease: "easeInOut" }}
+                      className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md"
+                    >
+                      <span className="font-mono text-sm font-bold tracking-wide text-white sm:text-base">
+                        x{combo}
+                      </span>
+                      {(() => {
+                        const tier = [...COMBO_TIERS].reverse().find((t) => combo >= t.min);
+                        return tier && tier.multiplier > 1 ? (
+                          <span className="rounded-md bg-amber-400/20 px-1.5 py-0.5 text-xs font-bold text-amber-300">
+                            {tier.multiplier}x
+                          </span>
+                        ) : null;
+                      })()}
+                    </motion.div>
+                  </AnimatePresence>
+
                   {settings.timedMode ? (
                     <TimerDisplay formattedTime={formattedTime} />
                   ) : null}
                 </div>
 
                 {!progress.isFinished && (
-                  <button
-                    onClick={handlePauseGame}
-                    className="flex-shrink-0 touch-manipulation rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md transition-all duration-200 hover:bg-white/20 active:scale-[0.98] motion-reduce:transition-none sm:text-sm"
-                  >
-                    {settings.timedMode
-                      ? t("games.actions.pause")
-                      : t("pages.settings.title")}
-                  </button>
+                  <div className="flex flex-shrink-0 items-center gap-2">
+                    {/* Lives hearts */}
+                    <div className="flex items-center gap-0.5">
+                      {Array.from({ length: INITIAL_LIVES }).map((_, i) => (
+                        <AnimatePresence key={i} mode="wait">
+                          {i < lives ? (
+                            <motion.div
+                              key={`heart-${i}-alive`}
+                              initial={false}
+                              exit={reduce ? undefined : { scale: [1, 1.4, 0], opacity: [1, 1, 0] }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              <Heart className="h-5 w-5 fill-red-400 text-red-400 sm:h-6 sm:w-6" />
+                            </motion.div>
+                          ) : (
+                            <motion.div
+                              key={`heart-${i}-dead`}
+                              initial={reduce ? undefined : { scale: 0, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 0.3 }}
+                              transition={{ duration: 0.2 }}
+                            >
+                              <Heart className="h-5 w-5 text-white/30 sm:h-6 sm:w-6" />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={handlePauseGame}
+                      className="touch-manipulation rounded-full border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md transition-all duration-200 hover:bg-white/20 active:scale-[0.98] motion-reduce:transition-none sm:text-sm"
+                    >
+                      {settings.timedMode
+                        ? t("games.actions.pause")
+                        : t("pages.settings.title")}
+                    </button>
+                  </div>
                 )}
               </div>
             </StageCard>
@@ -2063,6 +2121,24 @@ export function NotesRecognitionGame() {
                 total={settings.timedMode ? 10 : 20} // Set higher goal for non-timed mode
               />
             </div>
+
+            {/* Speed bonus flash */}
+            <AnimatePresence>
+              {showSpeedBonus && (
+                <motion.div
+                  key={speedBonusKey}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="pointer-events-none absolute left-1/2 top-20 z-50 -translate-x-1/2"
+                >
+                  <span className="rounded-full bg-amber-400/20 px-4 py-1.5 text-sm font-bold text-amber-300 backdrop-blur-sm sm:text-base">
+                    {t("games.engagement.fast")}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Audio Input Status */}
             {isListening && (

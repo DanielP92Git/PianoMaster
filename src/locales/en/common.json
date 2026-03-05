@@ -478,7 +478,15 @@
       "timeUpMessage": "You answered {count} out of 10 questions",
       "scoreTooLowMessage": "You need at least 50% correct answers to win",
       "tryAgain": "Try Again",
-      "exit": "Exit"
+      "exit": "Exit",
+      "livesLost": "No lives left!",
+      "livesLostMessage": "Great try! You got {{count}} right!"
+    },
+    "engagement": {
+      "combo": "Combo",
+      "fast": "FAST!",
+      "lives": "Lives",
+      "newNote": "New note unlocked!"
     },
     "difficulties": {
       "easy": "Easy",

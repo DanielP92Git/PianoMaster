@@ -1,13 +1,23 @@
 import React from "react";
 import { FaClock, FaExclamationTriangle } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
-import { MoveDownLeftIcon, TrendingDownIcon } from "lucide-react";
+import { MoveDownLeftIcon, TrendingDownIcon, Heart } from "lucide-react";
 
-const GameOverScreen = ({ score, totalQuestions, timeRanOut, onReset }) => {
+const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctAnswers, onReset }) => {
   const { t } = useTranslation("common");
-  const reason = timeRanOut
-    ? t("games.gameOver.timeUp")
-    : t("games.gameOver.scoreTooLow");
+
+  // Priority order: livesLost > timeRanOut > scoreTooLow
+  const reason = livesLost
+    ? t("games.gameOver.livesLost")
+    : timeRanOut
+      ? t("games.gameOver.timeUp")
+      : t("games.gameOver.scoreTooLow");
+
+  const reasonMessage = livesLost
+    ? t("games.gameOver.livesLostMessage", { count: correctAnswers || 0 })
+    : timeRanOut
+      ? t("games.gameOver.timeUpMessage", { count: totalQuestions })
+      : t("games.gameOver.scoreTooLowMessage");
 
   return (
     <div className="fixed inset-0 flex items-center justify-center overflow-hidden p-3 sm:p-4">
@@ -37,7 +47,9 @@ const GameOverScreen = ({ score, totalQuestions, timeRanOut, onReset }) => {
           {/* Reason message */}
           <div className="rounded-xl border border-red-200 bg-gradient-to-r from-red-50 via-orange-50 to-red-50 px-4 py-3 shadow-sm">
             <div className="flex items-center justify-center gap-2 text-base font-bold text-red-700 sm:text-lg">
-              {timeRanOut ? (
+              {livesLost ? (
+                <Heart className="flex-shrink-0 text-lg text-red-700 sm:text-xl" />
+              ) : timeRanOut ? (
                 <FaClock className="flex-shrink-0 text-lg text-red-700 sm:text-xl" />
               ) : (
                 <TrendingDownIcon className="flex-shrink-0 text-lg text-red-700 sm:text-xl" />
@@ -45,9 +57,7 @@ const GameOverScreen = ({ score, totalQuestions, timeRanOut, onReset }) => {
               <span>{reason}</span>
             </div>
             <p className="mt-1.5 text-sm text-gray-600 sm:text-base">
-              {timeRanOut
-                ? t("games.gameOver.timeUpMessage", { count: totalQuestions })
-                : t("games.gameOver.scoreTooLowMessage")}
+              {reasonMessage}
             </p>
           </div>
 
