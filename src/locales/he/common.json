@@ -27,9 +27,11 @@
     "points": "נקודות",
     "loading": "טוען...",
     "next": "הבא",
-    "toGamesMode": "למסך המשחקים",  
+    "toGamesMode": "למסך המשחקים",
     "dashboard": "למסך הבית",
-    "playAgain": "שחק שוב"
+    "playAgain": "שחק שוב",
+    "enabled": "פועל",
+    "disabled": "כבוי"
   },
   "auth": {
     "logIn": "התחבר",
@@ -463,9 +465,9 @@
     "actions": {
       "start": "התחל משחק",
       "pause": "עצור",
-      "listen": "האזינו",
+      "listen": "נגנו על הפסנתר",
       "stop": "עצור",
-      "stopListening": "הפסיקו האזנה"
+      "stopListening": "הפסק האזנה"
     },
     "labels": {
       "practiceMode": "מצב תרגול"
@@ -479,14 +481,18 @@
       "scoreTooLowMessage": "נדרש לפחות 50% תשובות נכונות כדי לנצח",
       "tryAgain": "נסו שוב",
       "exit": "יציאה",
-      "livesLost": "!נגמרו החיים",
+      "livesLost": "!נגמרו הלבבות",
       "livesLostMessage": "ניסיון מצוין! ענית נכון על {{count}}!"
     },
     "engagement": {
       "combo": "קומבו",
       "fast": "!מהיר",
       "lives": "חיים",
-      "newNote": "!צליל חדש נפתח"
+      "newNote": "!צליל חדש נפתח",
+      "tierUp": "!כוח עולה",
+      "doublePoints": "!נקודות פי 2",
+      "triplePoints": "!נקודות פי 3",
+      "onFire": "!על האש"
     },
     "difficulties": {
       "easy": "קל",
@@ -614,7 +620,12 @@
       "title": "ההתקדמות שלי"
     },
     "toasts": {
-      "migrationSuccess": "ברוכים הבאים למערכת השביל החדשה! {{nodesCreated}} מסלולים ו-{{xpAwarded}} XP הועברו מההתקדמות הקודמת שלך."
+      "reminderCancelled": "התזכורת בוטלה",
+      "permissionRequired": "אנא אפשרו התראות כדי להפעיל תזכורות",
+      "requestFailed": "בקשת ההרשאה נכשלה",
+      "notificationsBlocked": "התראות חסומות. הפעילו אותן בהגדרות הדפדפן.",
+      "reminderScheduled": "התזכורת נשמרה בהצלחה!",
+      "futureTimeRequired": "בחרו תאריך ושעה עתידיים"
     },
     "assignments": {
       "title": "משימות",
@@ -710,14 +721,6 @@
       "dateLabel": "תאריך",
       "timeLabel": "שעה"
     },
-    "toasts": {
-      "reminderCancelled": "התזכורת בוטלה",
-      "permissionRequired": "אנא אפשרו התראות כדי להפעיל תזכורות",
-      "requestFailed": "בקשת ההרשאה נכשלה",
-      "notificationsBlocked": "התראות חסומות. הפעילו אותן בהגדרות הדפדפן.",
-      "reminderScheduled": "התזכורת נשמרה בהצלחה!",
-      "futureTimeRequired": "בחרו תאריך ושעה עתידיים"
-    },
     "recording": {
       "title": "הקליטו אימון",
       "startRecording": "התחילו להקליט",
@@ -800,6 +803,14 @@
         "description": "אגדת פסנתר",
         "next": null
       }
+    },
+    "xpProgress": {
+      "title": "ההתקדמות שלך",
+      "maxLevel": "רמה מקסימלית",
+      "levelLabel": "רמה {{level}}",
+      "maxXP": "{{xp}} XP",
+      "currentXP": "{{current}} / {{total}} XP",
+      "xpToNext": "{{xp}} XP לרמה {{nextLevel}}"
     }
   },
   "errors": {
@@ -906,7 +917,8 @@
         "clef": "בחרו מפתח",
         "notes": "בחרו תווים",
         "gameMode": "מצב משחק",
-        "gridSize": "בחרו גודל לוח"
+        "gridSize": "בחרו גודל לוח",
+        "barsPerExercise": "תיבות לתרגיל"
       }
     },
     "buttons": {
@@ -916,7 +928,8 @@
       "startGame": "התחל משחק",
       "saveSettings": "שמור הגדרות",
       "cancel": "בטל",
-      "gotIt": "הבנתי"
+      "gotIt": "הבנתי",
+      "exitGame": "יציאה מהמשחק"
     },
     "difficulty": {
       "levels": {
@@ -949,7 +962,9 @@
       "selectedCount_two": "נבחרו {{count}} תווים",
       "selectedCount_other": "נבחרו {{count}} תווים",
       "minNotesTitle": "בחרו לפחות {{count}} תווים",
-      "minNotesDescription": "עליכם לבחור לפחות {{count}} תווים או יותר כדי לתרגל"
+      "minNotesDescription": "עליכם לבחור לפחות {{count}} תווים או יותר כדי לתרגל",
+      "selectAllShort": "הכל",
+      "deselectAllShort": "נקה"
     },
     "rhythmSettings": {
       "title": "הגדרות קצב",
@@ -999,6 +1014,11 @@
         "label": "שניהם",
         "alt": "מפתח סול ומפתח פה"
       }
+    },
+    "barsPerExercise": {
+      "title": "כמה תיבות?",
+      "subtitle": "בחרו כמה תיבות לנגן בכל תרגיל.",
+      "comingSoon": "בקרוב"
     }
   },
   "streak": {
@@ -1199,5 +1219,25 @@
     "retrying": "מחבר מיקרופון...",
     "success": "המיקרופון מוכן!",
     "noMoreRetries": "המיקרופון לא מגיב. בקש מגדול לבדוק את הגדרות הדפדפן."
+  },
+  "sightReading": {
+    "exercise": "תרגיל {{current}} / {{total}}",
+    "startPlaying": "התחילו לנגן",
+    "listenCountIn": "הקשיבו לספירה",
+    "nextExercise": "התרגיל הבא",
+    "tryAgain": "נסו שוב",
+    "changeSettings": "שנו הגדרות",
+    "backToMenu": "חזרה לתפריט",
+    "finalScore": "ציון סופי",
+    "encouragement": "כל ניסיון בונה ביטחון ודיוק. קחו נשימה, התאפסו, ונסו שוב - הניסיון הבא יכול להיות המנצח!",
+    "feedback": {
+      "excellent": "מצוין!",
+      "goodJob": "כל הכבוד!",
+      "keepPracticing": "המשיכו לתרגל!",
+      "tryAgain": "נסו שוב!"
+    }
+  },
+  "noteRecognition": {
+    "questionProgress": "שאלה {{current}} מתוך {{total}}"
   }
 }

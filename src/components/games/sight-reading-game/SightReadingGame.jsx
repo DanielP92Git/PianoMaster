@@ -47,6 +47,7 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { isIOSSafari } from "../../../utils/isIOSSafari.js";
+import { useTranslation } from "react-i18next";
 
 // #region agent log (debug-mode instrumentation)
 // Network logging is disabled by default. Enable by setting
@@ -158,6 +159,7 @@ const { DEFAULT_MAX_SCORE_PER_EXERCISE: SESSION_MAX_EXERCISE_SCORE } =
 export function SightReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation("common");
   const queryClient = useQueryClient();
 
   // Android PWA: fullscreen + orientation lock
@@ -3194,7 +3196,7 @@ export function SightReadingGame() {
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
-            <p className="text-lg font-medium text-white/80">Loading...</p>
+            <p className="text-lg font-medium text-white/80">{t('common.loading')}</p>
           </div>
         </div>
       );
@@ -3262,7 +3264,7 @@ export function SightReadingGame() {
                 </span>
               </p>
               <p className="text-sm font-semibold uppercase tracking-widest text-purple-400">
-                Final Score
+                {t('sightReading.finalScore')}
               </p>
               <p className="text-sm text-gray-600">
                 {sessionScoreSummary} total points &bull; Aim for 70% (700/1000)
@@ -3271,8 +3273,7 @@ export function SightReadingGame() {
             </div>
 
             <p className="text-sm text-gray-600 sm:text-base">
-              Each attempt builds confidence and accuracy. Take a breath, reset,
-              and try again - your next run could be the winning one!
+              {t('sightReading.encouragement')}
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -3280,19 +3281,19 @@ export function SightReadingGame() {
                 onClick={handleStartNewSession}
                 className="flex-1 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 py-3 font-semibold text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-[1.01]"
               >
-                Try Again
+                {t('sightReading.tryAgain')}
               </button>
               <button
                 onClick={returnToSetup}
                 className="flex-1 rounded-2xl border border-indigo-200 bg-white py-3 font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
               >
-                Change Settings
+                {t('sightReading.changeSettings')}
               </button>
               <button
                 onClick={() => navigate("/practice-modes")}
                 className="flex-1 rounded-2xl border border-transparent py-3 font-semibold text-indigo-700 hover:text-indigo-900"
               >
-                Back to Menu
+                {t('sightReading.backToMenu')}
               </button>
             </div>
           </div>
@@ -3343,8 +3344,7 @@ export function SightReadingGame() {
         <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
           <div className="mb-1 flex items-center justify-between text-xs font-semibold">
             <span className="truncate">
-              Exercise {Math.min(currentExerciseNumber, sessionTotalExercises)}{" "}
-              / {sessionTotalExercises}
+              {t('sightReading.exercise', { current: Math.min(currentExerciseNumber, sessionTotalExercises), total: sessionTotalExercises })}
             </span>
             <span
               className={`ml-2 text-[10px] sm:text-xs ${
@@ -3450,13 +3450,13 @@ export function SightReadingGame() {
           disabled={!currentPattern}
           className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
         >
-          Start Playing
+          {t('sightReading.startPlaying')}
         </button>
       </div>
     ) : gamePhase === GAME_PHASES.COUNT_IN ? (
       <div className="my-2 flex-shrink-0 text-center">
         <p className="text-sm font-semibold text-gray-700 sm:text-base">
-          Listen to the count-in
+          {t('sightReading.listenCountIn')}
         </p>
       </div>
     ) : null;
@@ -3503,7 +3503,7 @@ export function SightReadingGame() {
         summaryStats={summaryStats}
         onTryAgain={replayPattern}
         onNextPattern={handleNextExercise}
-        nextButtonLabel={`Next Exercise`}
+        nextButtonLabel={t('sightReading.nextExercise')}
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
       />
@@ -3726,7 +3726,7 @@ export function SightReadingGame() {
               onClick={handlePenaltyTryAgain}
               className="w-full flex-shrink-0 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2.5 font-semibold text-white shadow-lg transition-transform hover:scale-[1.01]"
             >
-              Try Again
+              {t('sightReading.tryAgain')}
             </button>
             <p className="flex-shrink-0 text-xs text-gray-400">
               Tap &quot;Start Playing&quot; after resetting to begin the

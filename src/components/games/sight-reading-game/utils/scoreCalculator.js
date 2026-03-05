@@ -57,15 +57,15 @@ export function calculateOverallScore(pitchAccuracy, rhythmAccuracy) {
  */
 export function getPerformanceRating(score) {
   if (score >= 90) {
-    return { stars: 3, label: "Excellent!" };
+    return { stars: 3, labelKey: "sightReading.feedback.excellent", label: "Excellent!" };
   }
   if (score >= 75) {
-    return { stars: 2, label: "Good Job!" };
+    return { stars: 2, labelKey: "sightReading.feedback.goodJob", label: "Good Job!" };
   }
   if (score >= 60) {
-    return { stars: 1, label: "Keep Practicing!" };
+    return { stars: 1, labelKey: "sightReading.feedback.keepPracticing", label: "Keep Practicing!" };
   }
-  return { stars: 0, label: "Try Again!" };
+  return { stars: 0, labelKey: "sightReading.feedback.tryAgain", label: "Try Again!" };
 }
 
 /**

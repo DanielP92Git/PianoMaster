@@ -686,7 +686,7 @@ function Dashboard() {
 
         {/* Comeback bonus banner (shown when 2x XP is active after streak break) */}
         {isStudent && comebackBonus?.active && (
-          <section>
+          <section className="mb-4">
             <div className="w-full rounded-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/30 px-4 py-3 text-center">
               <p className="text-sm font-bold text-amber-300">
                 {t('streak.comebackBanner', { days: comebackBonus.daysLeft })}
@@ -699,7 +699,7 @@ function Dashboard() {
         )}
 
         {/* Stats grid (glass style like reference image) */}
-        <section className="relative z-30 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="relative z-30 mt-16 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {/* Daily Streak Card */}
           <div className="group relative flex min-h-[150px] transform flex-col items-center justify-between rounded-3xl border border-white/10 bg-white/10 p-2 pt-16 shadow-xl backdrop-blur-md transition-transform duration-300 hover:-translate-y-1">
             <div className="pointer-events-none absolute -top-12 left-1/2 z-50 flex h-24 w-24 -translate-x-1/2 items-center justify-center drop-shadow-[0_12px_28px_rgba(0,0,0,0.35)]">
@@ -943,12 +943,8 @@ function Dashboard() {
                 <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.06),0_0_24px_rgba(168,85,247,0.20)] backdrop-blur-md">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent" />
                   <div className="relative">
-                    <div
-                      className={`mb-4 flex items-center justify-between ${
-                        isRTL ? "flex-row-reverse" : ""
-                      }`}
-                    >
-                      <h4 className="text-sm font-semibold text-white/90">
+                    <div className="mb-4">
+                      <h4 className={`text-sm font-semibold text-white/90 ${isRTL ? "text-right" : ""}`}>
                         {t("dashboard.assignments.title", {
                           defaultValue: "Assignments",
                         })}
@@ -956,9 +952,7 @@ function Dashboard() {
                     </div>
 
                     <div
-                      className={`flex flex-wrap gap-3 ${
-                        isRTL ? "justify-end" : ""
-                      }`}
+                      className="flex flex-col gap-3 items-start"
                     >
                       <span className="rounded-xl border border-white/10 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/85 shadow-[0_0_16px_rgba(59,130,246,0.18)]">
                         {t("dashboard.assignments.noPending", {
@@ -973,7 +967,7 @@ function Dashboard() {
                       </span>
                     </div>
 
-                    <div className="mt-6 text-center text-xs italic text-white/70">
+                    <div className={`mt-6 text-xs italic text-white/70 ${isRTL ? "text-right" : "text-center"}`}>
                       {t("dashboard.assignments.allCaughtUp", {
                         defaultValue: "You're all caught up!",
                       })}

@@ -1222,7 +1222,7 @@ export function MetronomeTrainer() {
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
-            <p className="text-lg font-medium text-white/80">Loading...</p>
+            <p className="text-lg font-medium text-white/80">{t('common.loading')}</p>
           </div>
         </div>
       );
