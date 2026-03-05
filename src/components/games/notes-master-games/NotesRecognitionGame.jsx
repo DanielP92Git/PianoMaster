@@ -27,6 +27,7 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
+import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 
 // Use comprehensive note definitions from Sight Reading game
@@ -435,6 +436,7 @@ const GROW_INTERVAL = 5; // Add a note every 5 streak
 
 export function NotesRecognitionGame() {
   const { soft, snappy, fade, reduce } = useMotionTokens();
+  const { reducedMotion: appReducedMotion } = useAccessibility();
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
@@ -908,16 +910,14 @@ export function NotesRecognitionGame() {
     }, 1000);
   }, [progress.isStarted, handleGameOver, settings.timedMode]);
 
-  // Helper: finds next pedagogically appropriate note from the next trail node
+  // Helper: finds next pedagogically appropriate note from subsequent trail nodes
+  // Walks forward through the category until it finds a node with a new note
   // Returns a note object from trebleNotes/bassNotes, or null if none available
   const getNextPedagogicalNote = useCallback((currentNodeId, extraNotes) => {
     if (!currentNodeId) return null;
 
     const currentNode = getNodeById(currentNodeId);
     if (!currentNode) return null;
-
-    const nextNode = getNextNodeInCategory(currentNodeId);
-    if (!nextNode || !nextNode.noteConfig?.notePool) return null;
 
     // Build set of all notes already in the pool
     const currentPool = currentNode.noteConfig?.notePool || [];
@@ -926,14 +926,22 @@ export function NotesRecognitionGame() {
       ...extraNotes.map(n => n.pitch || n.englishName),
     ]);
 
-    // Find the first note in next node's pool that we don't already have
-    const candidatePitch = nextNode.noteConfig.notePool.find(p => !alreadyKnown.has(p));
-    if (!candidatePitch) return null;
+    // Walk forward through subsequent nodes until we find a new note
+    let searchNodeId = currentNodeId;
+    for (let i = 0; i < 10; i++) { // Limit search to 10 nodes ahead
+      const nextNode = getNextNodeInCategory(searchNodeId);
+      if (!nextNode || !nextNode.noteConfig?.notePool) break;
 
-    // Find the matching note object from trebleNotes/bassNotes
-    const clefKey = String(settings.clef || "Treble").toLowerCase();
-    const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
-    return allNotes.find(n => n.pitch === candidatePitch || n.englishName === candidatePitch) ?? null;
+      const candidatePitch = nextNode.noteConfig.notePool.find(p => !alreadyKnown.has(p));
+      if (candidatePitch) {
+        const clefKey = String(settings.clef || "Treble").toLowerCase();
+        const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
+        return allNotes.find(n => n.pitch === candidatePitch || n.englishName === candidatePitch) ?? null;
+      }
+      searchNodeId = nextNode.id;
+    }
+
+    return null;
   }, [settings.clef]);
 
   // Get random note based on current settings
@@ -2056,7 +2064,7 @@ export function NotesRecognitionGame() {
 
       {/* On-fire warm glow overlay (full motion) */}
       <AnimatePresence>
-        {isOnFire && !reduce && (
+        {isOnFire && !reduce && !appReducedMotion && (
           <motion.div
             key="fire-glow"
             initial={{ opacity: 0 }}
@@ -2065,23 +2073,21 @@ export function NotesRecognitionGame() {
             transition={{ duration: 0.5 }}
             className="pointer-events-none absolute inset-0 z-10"
             style={{
-              background: 'radial-gradient(ellipse at center, rgba(251,146,60,0.12) 0%, rgba(239,68,68,0.06) 40%, transparent 70%)'
+              background: 'radial-gradient(ellipse at center, rgba(251,146,60,0.28) 0%, rgba(239,68,68,0.14) 40%, transparent 70%)'
             }}
           >
             {/* Floating ember particles */}
             {Array.from({ length: 6 }).map((_, i) => (
               <motion.div
                 key={`ember-${i}`}
-                className="absolute h-1.5 w-1.5 rounded-full bg-amber-400/40"
+                className="absolute h-2.5 w-2.5 rounded-full bg-amber-400/70"
                 initial={{
-                  x: `${20 + Math.random() * 60}%`,
-                  y: '100%',
+                  y: '90%',
                   opacity: 0,
                 }}
                 animate={{
-                  y: `${-10 - Math.random() * 30}%`,
-                  opacity: [0, 0.6, 0],
-                  x: `${20 + Math.random() * 60}%`,
+                  y: `${30 + Math.random() * 30}%`,
+                  opacity: [0, 0.8, 0],
                 }}
                 transition={{
                   duration: 3 + Math.random() * 2,
@@ -2097,7 +2103,7 @@ export function NotesRecognitionGame() {
       </AnimatePresence>
 
       {/* On-fire reduced motion: static amber border + badge */}
-      {isOnFire && reduce && (
+      {isOnFire && (reduce || appReducedMotion) && (
         <div className="pointer-events-none absolute inset-0 z-10 rounded-xl ring-2 ring-amber-400/30">
           <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-amber-400/20 px-3 py-1 text-xs font-bold text-amber-300">
             ON FIRE
