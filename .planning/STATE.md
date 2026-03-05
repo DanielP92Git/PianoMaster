@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
 status: "Roadmap created, ready for /gsd:plan-phase 17"
-stopped_at: Phase 19 context updated
-last_updated: "2026-03-05T00:05:19.764Z"
+stopped_at: Completed 19-01-PLAN.md
+last_updated: "2026-03-05T02:55:40.159Z"
 last_activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
 progress:
   total_phases: 20
   completed_phases: 17
-  total_plans: 47
-  completed_plans: 44
+  total_plans: 49
+  completed_plans: 45
 ---
 
 # Project State
@@ -73,6 +73,7 @@ Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
 | Phase 18 P01 | 3m 11s | 2 tasks | 2 files |
 | Phase 18 P02 | 3m 46s | 2 tasks | 7 files |
 | Phase 18-streak-protection P03 | 15 | 2 tasks | 6 files |
+| Phase 19 P01 | 6m | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,9 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - [Phase 18-streak-protection]: Phase 18-03: ParentGateMath reused for weekend pass — parent_consent_granted on push_subscriptions serves dual COPPA purpose
 - [Phase 18-streak-protection]: Phase 18-03: Shield terminology replaces Freeze in UI/i18n for child-friendliness; internal code keeps freeze for DB consistency
 - [Phase 18-streak-protection]: Phase 18-03: StreakDisplay text colors changed from -500 to -300/-400 variants for glassmorphism dark-bg readability
+- [Phase 19]: COMBO_TIERS constants at module level to avoid useCallback dep churn in NotesRecognitionGame
+- [Phase 19]: scoreOverride in useGameProgress.handleAnswer defaults to +10 — backward compatible with all other game modes
+- [Phase 19]: isGameEndingRef.current=true set immediately on livesRef<=0 inside handleAnswerSelect to prevent next-note flash before 50ms timeout
 
 ### Pending Todos
 
@@ -185,8 +189,8 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-05T00:05:19.738Z
-Stopped at: Phase 19 context updated
+Last session: 2026-03-05T02:55:40.148Z
+Stopped at: Completed 19-01-PLAN.md
 
 **Next action:**
 - Run /gsd:plan-phase 17 to plan the Push Notifications phase
