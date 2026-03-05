@@ -31,12 +31,15 @@ export function useGameProgress() {
     setProgress((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  const handleAnswer = useCallback((selectedAnswer, correctAnswer) => {
+  const handleAnswer = useCallback((selectedAnswer, correctAnswer, scoreOverride) => {
     const isCorrect = selectedAnswer === correctAnswer;
+    const scoreGain = isCorrect
+      ? (scoreOverride != null ? scoreOverride : 10)
+      : 0;
 
     setProgress((prev) => ({
       ...prev,
-      score: isCorrect ? prev.score + 10 : prev.score,
+      score: prev.score + scoreGain,
       totalQuestions: prev.totalQuestions + 1,
       correctAnswers: isCorrect ? prev.correctAnswers + 1 : prev.correctAnswers,
       feedbackMessage: {
