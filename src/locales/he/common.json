@@ -478,7 +478,15 @@
       "timeUpMessage": "עניתם על {count} מתוך 10 שאלות",
       "scoreTooLowMessage": "נדרש לפחות 50% תשובות נכונות כדי לנצח",
       "tryAgain": "נסו שוב",
-      "exit": "יציאה"
+      "exit": "יציאה",
+      "livesLost": "!נגמרו החיים",
+      "livesLostMessage": "ניסיון מצוין! ענית נכון על {{count}}!"
+    },
+    "engagement": {
+      "combo": "קומבו",
+      "fast": "!מהיר",
+      "lives": "חיים",
+      "newNote": "!צליל חדש נפתח"
     },
     "difficulties": {
       "easy": "קל",
