@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
-status: "Roadmap created, ready for /gsd:plan-phase 17"
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-03-05T02:55:40.159Z"
-last_activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
+status: "Phase 19 complete — Notes Recognition Engagement delivered"
+stopped_at: Completed 19-02-PLAN.md
+last_updated: "2026-03-05T03:10:00.000Z"
+last_activity: 2026-03-05 — Phase 19 complete (on-fire mode, auto-grow note pool, full arcade engagement)
 progress:
   total_phases: 20
-  completed_phases: 17
+  completed_phases: 19
   total_plans: 49
-  completed_plans: 45
+  completed_plans: 47
 ---
 
 # Project State
@@ -20,24 +20,24 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v1.9 Engagement & Retention — Phase 17 (Push Notifications) ready to plan
+**Current focus:** v1.9 Engagement & Retention — Phase 19 complete, Phase 20 next
 
 ## Current Position
 
-Phase: 17 (Push Notifications) — next to plan
-Plan: —
-Status: Roadmap created, ready for /gsd:plan-phase 17
-Last activity: 2026-03-04 — Roadmap created, Phases 17-21 defined, 22/22 requirements mapped
+Phase: 19 (Notes Recognition Engagement) — COMPLETE
+Plan: 02 (complete)
+Status: Phase 19 complete — all 5 GAME requirements delivered
+Last activity: 2026-03-05 — Phase 19 complete (on-fire mode, auto-grow note pool)
 
 ```
-v1.9 Progress: [----------] 0% (0/5 phases)
-Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
+v1.9 Progress: [######----] 60% (3/5 phases)
+Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 ░ Phase 21 ░
 ```
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 92 (1 skipped: Plan 10-02 AudioWorklet, profiling gate PASS)
+- Total plans completed: 94 (1 skipped: Plan 10-02 AudioWorklet, profiling gate PASS)
 - 9 milestones shipped in 33 days (2026-01-31 to 2026-03-04)
 - ~68,298 lines JavaScript/JSX/CSS
 
@@ -74,6 +74,7 @@ Phase 17 ░ Phase 18 ░ Phase 19 ░ Phase 20 ░ Phase 21 ░
 | Phase 18 P02 | 3m 46s | 2 tasks | 7 files |
 | Phase 18-streak-protection P03 | 15 | 2 tasks | 6 files |
 | Phase 19 P01 | 6m | 2 tasks | 5 files |
+| Phase 19 P02 | 8m | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -176,10 +177,16 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - [Phase 19]: COMBO_TIERS constants at module level to avoid useCallback dep churn in NotesRecognitionGame
 - [Phase 19]: scoreOverride in useGameProgress.handleAnswer defaults to +10 — backward compatible with all other game modes
 - [Phase 19]: isGameEndingRef.current=true set immediately on livesRef<=0 inside handleAnswerSelect to prevent next-note flash before 50ms timeout
+- [Phase 19-02]: playFireSound uses standalone Web Audio oscillator (not useSounds) — avoids mutual-pause conflict with game sounds
+- [Phase 19-02]: isOnFireRef mirrors isOnFire state for stale-closure-safe reads inside handleAnswerSelect
+- [Phase 19-02]: sessionExtraNotesRef read inside getRandomNote (avoids stale closure), sessionExtraNotes state in availableNotes useMemo (triggers re-render)
+- [Phase 19-02]: getNextPedagogicalNote searches up to 10 subsequent nodes — adjacent nodes often share notePool
+- [Phase 19-02]: On-fire glow 28%/14% opacity with h-2.5 particles — original 12%/6% too pale against purple gradient
+- [Phase 19-02]: Dual reduced-motion check: framer-motion useReducedMotion (OS) AND AccessibilityContext.reducedMotion (app)
 
 ### Pending Todos
 
-- /gsd:plan-phase 17 — Push Notifications (NOTIF-01 through NOTIF-05)
+- /gsd:plan-phase 20 — Extended Progression System (PROG-01 through PROG-07)
 
 ### Blockers/Concerns
 
@@ -189,12 +196,12 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-05T02:55:40.148Z
-Stopped at: Completed 19-01-PLAN.md
+Last session: 2026-03-05T03:10:00.000Z
+Stopped at: Completed 19-02-PLAN.md (Phase 19 complete)
 
 **Next action:**
-- Run /gsd:plan-phase 17 to plan the Push Notifications phase
+- Run /gsd:plan-phase 20 to plan Extended Progression System
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-04 — v1.9 roadmap created, 5 phases (17-21), 22/22 requirements mapped*
+*Last updated: 2026-03-05 — Phase 19 complete, 3/5 v1.9 phases shipped*

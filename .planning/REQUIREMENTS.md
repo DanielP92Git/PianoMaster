@@ -28,8 +28,8 @@ Requirements for engagement and retention improvements. Each maps to roadmap pha
 - [x] **GAME-01**: Notes Recognition shows combo/streak counter with multiplier (like Rhythm Trainer)
 - [x] **GAME-02**: Student earns speed bonus for answering within 3 seconds
 - [x] **GAME-03**: Notes Recognition uses lives system (3 lives instead of just scoring 0)
-- [ ] **GAME-04**: Visual "on fire" mode activates after 5 correct answers in a row
-- [ ] **GAME-05**: Note pool auto-grows by 1 note after 5 correct answers in a streak
+- [x] **GAME-04**: Visual "on fire" mode activates after 5 correct answers in a row
+- [x] **GAME-05**: Note pool auto-grows by 1 note after 5 correct answers in a streak
 
 ### Progression
 
@@ -118,8 +118,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GAME-01 | Phase 19 | Complete |
 | GAME-02 | Phase 19 | Complete |
 | GAME-03 | Phase 19 | Complete |
-| GAME-04 | Phase 19 | Pending |
-| GAME-05 | Phase 19 | Pending |
+| GAME-04 | Phase 19 | Complete |
+| GAME-05 | Phase 19 | Complete |
 | PROG-01 | Phase 20 | Pending |
 | PROG-02 | Phase 20 | Pending |
 | PROG-03 | Phase 20 | Pending |
