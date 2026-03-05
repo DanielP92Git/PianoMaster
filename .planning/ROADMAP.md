@@ -316,7 +316,10 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   3. The game starts with 3 lives displayed as icons — a wrong answer removes one life, and when all 3 lives are gone the round ends early with a clear "no lives left" message
   4. After 5 correct answers in a row, a visible on-fire animation or effect activates on screen — this state persists until the student answers incorrectly
   5. After 5 correct answers in a streak, a note is silently added to the pool for the current session — students who keep a streak encounter notes they have not yet been explicitly taught in that node
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 19-01-PLAN.md -- Combo counter with multiplier tiers, speed bonus, lives system, GameOverScreen variant, i18n
+- [ ] 19-02-PLAN.md -- On-fire visual mode with particles, auto-grow note pool, fire sound, human verification
 
 ### Phase 20: Extended Progression System
 **Goal**: The XP level system provides long-term motivation beyond the current Level 15 ceiling — students can progress through 30 levels with increasingly ambitious level names, continue into prestige tiers after Level 30, and each level milestone feels rewarding through a concrete unlock
@@ -326,7 +329,10 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   1. The xpSystem.js XP_LEVELS array contains 30 entries with themed names — a student currently at Level 15 sees Level 16 and beyond on their level progress bar
   2. A student who reaches Level 30 does not see the progression bar freeze — a prestige tier (Maestro I, Maestro II, etc.) becomes the new visible goal
   3. Each level-up event grants a specific accessory or title that is visible on the student's profile or dashboard — the reward is shown in the level-up celebration modal
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 19-01-PLAN.md -- Combo counter with multiplier tiers, speed bonus, lives system, GameOverScreen variant, i18n
+- [ ] 19-02-PLAN.md -- On-fire visual mode with particles, auto-grow note pool, fire sound, human verification
 
 ### Phase 21: Celebration & Reporting Upgrades
 **Goal**: The dashboard gives students a richer picture of their weekly accomplishment and surfaces personal pride moments, while parents receive a weekly email summary through existing Brevo infrastructure so they can reinforce practice at home
@@ -337,7 +343,10 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
   2. When a student achieves a score better than any of their previous sessions on a given node, a "New personal best" message appears on the VictoryScreen — this message does not appear on subsequent completions unless the record is broken again
   3. Each day the student opens the app, the login greeting shows a different message — across at least 10 distinct messages — so the same message does not appear two days in a row
   4. A parent who has opted into reports receives an email via Brevo every Monday morning summarizing the child's past week — days practiced, new nodes completed, current streak — using the same email template branding as the consent email
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 19-01-PLAN.md -- Combo counter with multiplier tiers, speed bonus, lives system, GameOverScreen variant, i18n
+- [ ] 19-02-PLAN.md -- On-fire visual mode with particles, auto-grow note pool, fire sound, human verification
 
 ## Progress
 
@@ -383,7 +392,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 | 16. Parent-Facing Pages and Checkout | v1.8 | 3/3 | Complete | 2026-03-01 |
 | 17. Push Notifications | v1.9 | 0/2 | Planned | - |
 | 18. Streak Protection | v1.9 | 0/3 | Planned | - |
-| 19. Notes Recognition Engagement | v1.9 | 0/? | Not started | - |
+| 19. Notes Recognition Engagement | v1.9 | 0/2 | Planned | - |
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
 
