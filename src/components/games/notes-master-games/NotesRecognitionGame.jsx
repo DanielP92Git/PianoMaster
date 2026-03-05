@@ -19,7 +19,7 @@ import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
 import { useTranslation } from "react-i18next";
 import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
-import { getNodeById } from "../../../data/skillTrail";
+import { getNodeById, getNextNodeInCategory } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
@@ -429,6 +429,9 @@ const SPEED_BONUS_THRESHOLD_MS = 3000;
 const SPEED_BONUS_POINTS = 5;
 const BASE_SCORE = 10;
 const INITIAL_LIVES = 3;
+const ON_FIRE_THRESHOLD = 5;
+const MAX_EXTRA_NOTES = 3;
+const GROW_INTERVAL = 5; // Add a note every 5 streak
 
 export function NotesRecognitionGame() {
   const { soft, snappy, fade, reduce } = useMotionTokens();
@@ -670,6 +673,36 @@ export function NotesRecognitionGame() {
   const [comboShake, setComboShake] = useState(false);
   const questionStartTimeRef = useRef(null);
 
+  // === Engagement: On-fire mode + auto-grow note pool ===
+  const [isOnFire, setIsOnFire] = useState(false);
+  const isOnFireRef = useRef(false); // Mirror ref — read inside handleAnswerSelect to avoid stale closure
+  const [sessionExtraNotes, setSessionExtraNotes] = useState([]);
+  const sessionExtraNotesRef = useRef([]); // Read inside getRandomNote to avoid stale closure
+  const [showNewNoteBanner, setShowNewNoteBanner] = useState(false);
+  const [newNoteBannerKey, setNewNoteBannerKey] = useState(0);
+
+  // Fire activation sound — standalone Web Audio oscillator (does NOT use useSounds to avoid mutual-pause conflict)
+  const playFireSound = useCallback(() => {
+    try {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.3);
+      // Close context after sound finishes to free resources
+      setTimeout(() => audioCtx.close().catch(() => {}), 500);
+    } catch {
+      // Sound is non-critical — fail silently
+    }
+  }, []);
+
   // Timer implementation
   const [timeRemaining, setTimeRemaining] = useState(45);
   const [isTimerActive, setIsTimerActive] = useState(false);
@@ -875,6 +908,34 @@ export function NotesRecognitionGame() {
     }, 1000);
   }, [progress.isStarted, handleGameOver, settings.timedMode]);
 
+  // Helper: finds next pedagogically appropriate note from the next trail node
+  // Returns a note object from trebleNotes/bassNotes, or null if none available
+  const getNextPedagogicalNote = useCallback((currentNodeId, extraNotes) => {
+    if (!currentNodeId) return null;
+
+    const currentNode = getNodeById(currentNodeId);
+    if (!currentNode) return null;
+
+    const nextNode = getNextNodeInCategory(currentNodeId);
+    if (!nextNode || !nextNode.noteConfig?.notePool) return null;
+
+    // Build set of all notes already in the pool
+    const currentPool = currentNode.noteConfig?.notePool || [];
+    const alreadyKnown = new Set([
+      ...currentPool,
+      ...extraNotes.map(n => n.pitch || n.englishName),
+    ]);
+
+    // Find the first note in next node's pool that we don't already have
+    const candidatePitch = nextNode.noteConfig.notePool.find(p => !alreadyKnown.has(p));
+    if (!candidatePitch) return null;
+
+    // Find the matching note object from trebleNotes/bassNotes
+    const clefKey = String(settings.clef || "Treble").toLowerCase();
+    const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
+    return allNotes.find(n => n.pitch === candidatePitch || n.englishName === candidatePitch) ?? null;
+  }, [settings.clef]);
+
   // Get random note based on current settings
   const getRandomNote = useCallback(() => {
     const clefKey = String(settings.clef || "Treble").toLowerCase();
@@ -894,7 +955,7 @@ export function NotesRecognitionGame() {
         ? new Set(normalizedSelectedNotes)
         : null;
 
-    const filteredNotes = selectedSet
+    const baseFiltered = selectedSet
       ? notesArray.filter((note) => {
           const tag =
             note.__clef || getClefTypeForPitch(note.pitch || note.englishName);
@@ -912,6 +973,17 @@ export function NotesRecognitionGame() {
                 (allowAccidental && selectedSet.has(base));
         })
       : notesArray;
+
+    // Include session extra notes (auto-grow) — read from ref to avoid stale closure in mic chain
+    const filteredNotes = [...baseFiltered];
+    const extras = sessionExtraNotesRef.current;
+    if (extras.length > 0) {
+      for (const extraNote of extras) {
+        if (!filteredNotes.some(n => n.note === extraNote.note)) {
+          filteredNotes.push({ ...extraNote, __clef: extraNote.__clef || clefKey });
+        }
+      }
+    }
 
     return filteredNotes[Math.floor(Math.random() * filteredNotes.length)];
   }, [
@@ -1001,6 +1073,12 @@ export function NotesRecognitionGame() {
     setLives(INITIAL_LIVES);
     setShowSpeedBonus(false);
     setComboShake(false);
+    // Reset on-fire and auto-grow state
+    isOnFireRef.current = false;
+    setIsOnFire(false);
+    sessionExtraNotesRef.current = [];
+    setSessionExtraNotes([]);
+    setShowNewNoteBanner(false);
 
     const timeLimit = updatedSettings.timeLimit || 45;
     pauseGameTimer();
@@ -1178,12 +1256,20 @@ export function NotesRecognitionGame() {
       uniqueNotes.push(note);
     }
 
+    // Include session extra notes for answer button display (state, not ref — triggers re-render)
+    for (const extra of sessionExtraNotes) {
+      if (!extra?.note || seenNotes.has(extra.note)) continue;
+      seenNotes.add(extra.note);
+      uniqueNotes.push(extra);
+    }
+
     return uniqueNotes;
   }, [
     settings.clef,
     settings.enableFlats,
     settings.enableSharps,
     normalizedSelectedNotes,
+    sessionExtraNotes,
   ]);
 
   const { orderedNaturals, orderedAccidentals } = useMemo(() => {
@@ -1525,6 +1611,27 @@ export function NotesRecognitionGame() {
           setShowSpeedBonus(true);
           setTimeout(() => setShowSpeedBonus(false), 800);
         }
+        // On-fire activation — use ref to avoid stale closure in mic callback chain
+        if (comboRef.current >= ON_FIRE_THRESHOLD && !isOnFireRef.current) {
+          isOnFireRef.current = true;
+          setIsOnFire(true);
+          playFireSound();
+        }
+        // Auto-grow note pool (trail mode only)
+        if (nodeId && comboRef.current > 0 && comboRef.current % GROW_INTERVAL === 0) {
+          const currentExtras = sessionExtraNotesRef.current;
+          if (currentExtras.length < MAX_EXTRA_NOTES) {
+            const nextNote = getNextPedagogicalNote(nodeId, currentExtras);
+            if (nextNote) {
+              const updated = [...currentExtras, nextNote];
+              sessionExtraNotesRef.current = updated;
+              setSessionExtraNotes(updated);
+              setShowNewNoteBanner(true);
+              setNewNoteBannerKey(prev => prev + 1);
+              setTimeout(() => setShowNewNoteBanner(false), 2000);
+            }
+          }
+        }
       } else {
         // Wrong answer: shake combo, reset, deduct life
         if (comboRef.current > 0) {
@@ -1536,6 +1643,11 @@ export function NotesRecognitionGame() {
         livesRef.current -= 1;
         setLives(livesRef.current);
         earnedScore = 0;
+        // On-fire deactivation — use ref to avoid stale closure in mic callback chain
+        if (isOnFireRef.current) {
+          isOnFireRef.current = false;
+          setIsOnFire(false);
+        }
         // If no lives left, mark game ending immediately (prevents next note flash)
         if (livesRef.current <= 0) {
           isGameEndingRef.current = true;
@@ -1598,6 +1710,9 @@ export function NotesRecognitionGame() {
       handleGameOver,
       getRandomNote,
       playSound,
+      playFireSound,
+      getNextPedagogicalNote,
+      nodeId,
       settings.timedMode,
       updateProgress,
     ]
@@ -1938,6 +2053,58 @@ export function NotesRecognitionGame() {
         <div className="absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_55%)]" />
       </div>
+
+      {/* On-fire warm glow overlay (full motion) */}
+      <AnimatePresence>
+        {isOnFire && !reduce && (
+          <motion.div
+            key="fire-glow"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="pointer-events-none absolute inset-0 z-10"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(251,146,60,0.12) 0%, rgba(239,68,68,0.06) 40%, transparent 70%)'
+            }}
+          >
+            {/* Floating ember particles */}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <motion.div
+                key={`ember-${i}`}
+                className="absolute h-1.5 w-1.5 rounded-full bg-amber-400/40"
+                initial={{
+                  x: `${20 + Math.random() * 60}%`,
+                  y: '100%',
+                  opacity: 0,
+                }}
+                animate={{
+                  y: `${-10 - Math.random() * 30}%`,
+                  opacity: [0, 0.6, 0],
+                  x: `${20 + Math.random() * 60}%`,
+                }}
+                transition={{
+                  duration: 3 + Math.random() * 2,
+                  repeat: Infinity,
+                  delay: i * 0.5,
+                  ease: 'easeOut',
+                }}
+                style={{ left: `${10 + i * 15}%` }}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* On-fire reduced motion: static amber border + badge */}
+      {isOnFire && reduce && (
+        <div className="pointer-events-none absolute inset-0 z-10 rounded-xl ring-2 ring-amber-400/30">
+          <div className="absolute left-1/2 top-2 -translate-x-1/2 rounded-full bg-amber-400/20 px-3 py-1 text-xs font-bold text-amber-300">
+            ON FIRE
+          </div>
+        </div>
+      )}
+
       {progress.showFireworks && <Firework />}
 
       {/* Show loading screen when coming from trail and waiting for auto-start */}
@@ -2135,6 +2302,24 @@ export function NotesRecognitionGame() {
                 >
                   <span className="rounded-full bg-amber-400/20 px-4 py-1.5 text-sm font-bold text-amber-300 backdrop-blur-sm sm:text-base">
                     {t("games.engagement.fast")}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* New note unlocked banner (auto-grow, trail mode only) */}
+            <AnimatePresence>
+              {showNewNoteBanner && (
+                <motion.div
+                  key={newNoteBannerKey}
+                  initial={{ opacity: 0, y: -30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.4 }}
+                  className="pointer-events-none absolute left-1/2 top-12 z-50 -translate-x-1/2"
+                >
+                  <span className="rounded-full bg-emerald-400/20 px-4 py-1.5 text-sm font-bold text-emerald-300 backdrop-blur-sm sm:text-base">
+                    {t("games.engagement.newNote")}
                   </span>
                 </motion.div>
               )}

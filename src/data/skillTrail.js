@@ -271,6 +271,19 @@ export const getNodeById = (nodeId) => {
 };
 
 /**
+ * Returns the next node in the same category with a higher order.
+ * Used by auto-grow to find pedagogically-appropriate next notes.
+ */
+export const getNextNodeInCategory = (nodeId) => {
+  const currentNode = getNodeById(nodeId);
+  if (!currentNode) return null;
+
+  return SKILL_NODES
+    .filter(n => n.category === currentNode.category && n.order > currentNode.order && !n.isBoss)
+    .sort((a, b) => a.order - b.order)[0] || null;
+};
+
+/**
  * Get all boss nodes
  */
 export const getBossNodes = () => {
