@@ -29,7 +29,9 @@
     "next": "Next",
     "toGamesMode": "To Games Mode",
     "dashboard": "Dashboard",
-    "playAgain": "Play Again"
+    "playAgain": "Play Again",
+    "enabled": "On",
+    "disabled": "Off"
   },
   "auth": {
     "logIn": "Log in",
@@ -486,7 +488,11 @@
       "combo": "Combo",
       "fast": "FAST!",
       "lives": "Lives",
-      "newNote": "New note unlocked!"
+      "newNote": "New note unlocked!",
+      "tierUp": "POWER UP!",
+      "doublePoints": "DOUBLE POINTS!",
+      "triplePoints": "TRIPLE POINTS!",
+      "onFire": "ON FIRE!"
     },
     "difficulties": {
       "easy": "Easy",
@@ -614,7 +620,12 @@
       "title": "My Progress"
     },
     "toasts": {
-      "migrationSuccess": "Welcome to the new trail system! {{nodesCreated}} nodes and {{xpAwarded}} XP migrated from your previous progress."
+      "reminderCancelled": "Reminder cancelled",
+      "permissionRequired": "Please allow notifications to enable reminders",
+      "requestFailed": "Failed to request notification permission",
+      "notificationsBlocked": "Notifications are blocked. Please enable them in your browser settings.",
+      "reminderScheduled": "Reminder set successfully!",
+      "futureTimeRequired": "Please select a future date and time"
     },
     "assignments": {
       "title": "Assignments",
@@ -710,14 +721,6 @@
       "dateLabel": "Date",
       "timeLabel": "Time"
     },
-    "toasts": {
-      "reminderCancelled": "Reminder cancelled",
-      "permissionRequired": "Please allow notifications to enable reminders",
-      "requestFailed": "Failed to request notification permission",
-      "notificationsBlocked": "Notifications are blocked. Please enable them in your browser settings.",
-      "reminderScheduled": "Reminder set successfully!",
-      "futureTimeRequired": "Please select a future date and time"
-    },
     "recording": {
       "title": "Record Practice Session",
       "startRecording": "Start Recording",
@@ -798,6 +801,14 @@
         "description": "Piano legend",
         "next": null
       }
+    },
+    "xpProgress": {
+      "title": "Your Progress",
+      "maxLevel": "MAX LEVEL",
+      "levelLabel": "Level {{level}}",
+      "maxXP": "{{xp}} XP",
+      "currentXP": "{{current}} / {{total}} XP",
+      "xpToNext": "{{xp}} XP to Level {{nextLevel}}"
     }
   },
   "errors": {
@@ -904,7 +915,8 @@
         "clef": "Choose Clef",
         "notes": "Select Notes",
         "gameMode": "Game Mode",
-        "gridSize": "Choose Grid Size"
+        "gridSize": "Choose Grid Size",
+        "barsPerExercise": "Bars per Exercise"
       }
     },
     "buttons": {
@@ -914,7 +926,8 @@
       "startGame": "Start Game",
       "saveSettings": "Save Settings",
       "cancel": "Cancel",
-      "gotIt": "Got it"
+      "gotIt": "Got it",
+      "exitGame": "Exit Game"
     },
     "difficulty": {
       "levels": {
@@ -943,7 +956,9 @@
       "selectedCount_one": "Selected: {{count}} note",
       "selectedCount_other": "Selected: {{count}} notes",
       "minNotesTitle": "Select at least {{count}} notes",
-      "minNotesDescription": "Select {{count}} or more notes to practice before continuing."
+      "minNotesDescription": "Select {{count}} or more notes to practice before continuing.",
+      "selectAllShort": "All",
+      "deselectAllShort": "Clear"
     },
     "rhythmSettings": {
       "title": "Rhythm Settings",
@@ -992,6 +1007,11 @@
         "label": "Both",
         "alt": "Treble and Bass Clefs"
       }
+    },
+    "barsPerExercise": {
+      "title": "How many bars?",
+      "subtitle": "Choose how many bars to play in each exercise.",
+      "comingSoon": "Coming soon"
     }
   },
   "streak": {
@@ -1192,5 +1212,25 @@
     "retrying": "Connecting microphone...",
     "success": "Mic is ready!",
     "noMoreRetries": "The microphone isn't responding. Ask a grown-up to check your browser settings."
+  },
+  "sightReading": {
+    "exercise": "Exercise {{current}} / {{total}}",
+    "startPlaying": "Start Playing",
+    "listenCountIn": "Listen to the count-in",
+    "nextExercise": "Next Exercise",
+    "tryAgain": "Try Again",
+    "changeSettings": "Change Settings",
+    "backToMenu": "Back to Menu",
+    "finalScore": "Final Score",
+    "encouragement": "Each attempt builds confidence and accuracy. Take a breath, reset, and try again - your next run could be the winning one!",
+    "feedback": {
+      "excellent": "Excellent!",
+      "goodJob": "Good Job!",
+      "keepPracticing": "Keep Practicing!",
+      "tryAgain": "Try Again!"
+    }
+  },
+  "noteRecognition": {
+    "questionProgress": "Question {{current}} of {{total}}"
   }
 }

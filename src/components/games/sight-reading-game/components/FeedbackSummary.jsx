@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Star } from "lucide-react";
 import {
   calculatePitchAccuracy,
@@ -21,6 +22,8 @@ export function FeedbackSummary({
   nextButtonDisabled = false,
   showNextButton = true,
 }) {
+  const { t } = useTranslation("common");
+
   // Calculate scores
   const fallbackPitchAccuracy = useMemo(
     () => calculatePitchAccuracy(performanceResults),
@@ -54,7 +57,7 @@ export function FeedbackSummary({
 
           {/* Rating Title */}
           <h2 className="bg-gradient-to-r from-purple-600 via-pink-600 to-rose-500 bg-clip-text text-base font-bold text-transparent sm:text-lg">
-            {rating.label}
+            {rating.labelKey ? t(rating.labelKey, { defaultValue: rating.label }) : rating.label}
           </h2>
 
           {/* Star Rating */}
@@ -80,7 +83,7 @@ export function FeedbackSummary({
               onClick={onTryAgain}
               className="flex-1 rounded-lg bg-gradient-to-br from-green-600 to-emerald-600 px-3 py-1.5 text-[11px] font-semibold text-white transition-all duration-200 hover:from-green-700 hover:to-emerald-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 sm:px-4 sm:py-2 sm:text-xs"
             >
-              Try Again
+              {t('sightReading.tryAgain')}
             </button>
             {showNextButton && onNextPattern && (
               <button
