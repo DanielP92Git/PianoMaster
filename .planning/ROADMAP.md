@@ -398,7 +398,7 @@ Plans:
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
 | 22. Kid-Friendly Node Modal Redesign | v1.9 | 0/1 | Planned | - |
-| 23. Kid-Friendly Dashboard Redesign | 3/3 | Complete   | 2026-03-06 | - |
+| 23. Kid-Friendly Dashboard Redesign | 3/3 | Complete    | 2026-03-06 | - |
 
 **Total: 44 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
 
