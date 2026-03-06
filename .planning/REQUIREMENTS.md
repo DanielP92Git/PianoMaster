@@ -136,3 +136,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 *Requirements defined: 2026-03-04*
 *Last updated: 2026-03-04 — traceability complete, all 22 requirements mapped to Phases 17-21*
+
+### Node Modal UI
+
+- [ ] **UI-01**: TrailNodeModal shows a large centered category icon in a glowing circular badge at the top
+- [ ] **UI-02**: Skill notes render as colorful 3D bubble badges with sparkle decorations instead of flat pills
+- [ ] **UI-03**: XP reward section displays a golden star icon with large XP value in a dedicated card
+- [ ] **UI-04**: Modal layout is centered with clear title/subtitle hierarchy and spacious padding
+- [ ] **UI-05**: All existing modal functionality is preserved (exercises, progress, premium lock, boss hints, prerequisites, RTL, navigation)
