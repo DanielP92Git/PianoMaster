@@ -11,7 +11,7 @@
 - ✅ **v1.6 Auto-Rotate Landscape for Games** — Phases 01-05 (shipped 2026-02-17)
 - ✅ **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (shipped 2026-03-04)
 - ✅ **v1.8 App Monetization** — Phases 11-16 (shipped 2026-03-01)
-- 🎯 **v1.9 Engagement & Retention** — Phases 17-21 (in progress)
+- 🎯 **v1.9 Engagement & Retention** — Phases 17-23 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
@@ -110,7 +110,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 
 </details>
 
-### v1.9 Engagement & Retention (Phases 17-21)
+### v1.9 Engagement & Retention (Phases 17-23)
 
 - [x] **Phase 17: Push Notifications** — COPPA-compliant parent opt-in, service worker Web Push, 1/day rate limit, context-aware messages, disable from settings (completed 2026-03-04)
 - [x] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle (completed 2026-03-04)
@@ -118,6 +118,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [ ] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants
 - [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
 - [ ] **Phase 22: Kid-Friendly Node Modal Redesign** — Visual overhaul of TrailNodeModal with centered category icon, 3D bubble note badges, prominent XP reward card, kid-appropriate layout
+- [ ] **Phase 23: Kid-Friendly Dashboard Redesign** — Compact hero with centered avatar, PLAY NEXT gradient pill, unified stats card with XP ring, circular practice tools, simplified layout
 
 ## Phase Details
 
@@ -397,11 +398,27 @@ Plans:
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
 | 22. Kid-Friendly Node Modal Redesign | v1.9 | 0/1 | Planned | - |
+| 23. Kid-Friendly Dashboard Redesign | v1.9 | 0/2 | Planned | - |
 
 **Total: 44 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
 
+### Phase 23: Kid-Friendly Dashboard Redesign
+**Goal**: The student dashboard transforms from a data-heavy analytics layout into a visually engaging, kid-friendly home screen with a compact hero, centered avatar with level badge, large PLAY NEXT gradient pill, unified stats card with circular XP ring, refreshed daily goals, and circular glowing practice tool buttons
+**Depends on**: Phase 22
+**Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, DASH-07, DASH-08, DASH-09
+**Success Criteria** (what must be TRUE):
+  1. The dashboard hero area is compact with a centered avatar image and a "LV.X" badge pill
+  2. A large gradient "PLAY NEXT" pill button overlaps the hero bottom edge showing the next recommended node name
+  3. A single unified stats card with a gradient border (blue-to-orange) consolidates XP ring, streak count, and daily goals summary
+  4. Three circular glowing icon buttons (Reminder, Record, History) replace the current list-style Practice Tools panel
+  5. The My Progress panel and Assignments section are completely removed from the dashboard
+**Plans**: 2 plans
+Plans:
+- [ ] 23-01-PLAN.md -- Create PlayNextButton, XPRing, and UnifiedStatsCard sub-components
+- [ ] 23-02-PLAN.md -- Rewrite Dashboard.jsx layout, refresh DailyGoalsCard, circular Practice Tools, i18n, human verification
+
 ---
-*Last updated: 2026-03-06 — Phase 22 plan created (1 plan, kid-friendly node modal redesign)*
+*Last updated: 2026-03-06 — Phase 23 plan created (2 plans, kid-friendly dashboard redesign)*
 
 ### Phase 22: Kid-Friendly Node Modal Redesign
 **Goal**: The TrailNodeModal transforms from a text-heavy information panel into a visually delightful, kid-friendly modal that centers a glowing category icon, shows skill notes as colorful 3D bubbles, displays XP reward prominently with a golden star, and uses spacious layout with gradient buttons — matching the design reference screenshot

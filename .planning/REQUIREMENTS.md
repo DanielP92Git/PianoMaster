@@ -41,6 +41,26 @@ Requirements for engagement and retention improvements. Each maps to roadmap pha
 - [ ] **PROG-06**: Dashboard shows varied daily login messages ("Did you know? Beethoven practiced 4 hours a day!")
 - [ ] **PROG-07**: Parent receives weekly progress email report via Brevo
 
+### Node Modal UI
+
+- [ ] **UI-01**: TrailNodeModal shows a large centered category icon in a glowing circular badge at the top
+- [ ] **UI-02**: Skill notes render as colorful 3D bubble badges with sparkle decorations instead of flat pills
+- [ ] **UI-03**: XP reward section displays a golden star icon with large XP value in a dedicated card
+- [ ] **UI-04**: Modal layout is centered with clear title/subtitle hierarchy and spacious padding
+- [ ] **UI-05**: All existing modal functionality is preserved (exercises, progress, premium lock, boss hints, prerequisites, RTL, navigation)
+
+### Dashboard Redesign
+
+- [ ] **DASH-01**: PlayNextButton renders as a large gradient pill CTA overlapping the hero bottom edge
+- [ ] **DASH-02**: XPRing displays circular SVG progress with gold star center icon
+- [ ] **DASH-03**: UnifiedStatsCard consolidates level, XP ring, streak, and daily goals summary with gradient border
+- [ ] **DASH-04**: UnifiedStatsCard shows loading skeleton and supports RTL layout
+- [ ] **DASH-05**: Dashboard hero is compact with centered avatar and level badge
+- [ ] **DASH-06**: Old stat cards (4 floating icons), My Progress panel, and Assignments section are removed
+- [ ] **DASH-07**: Practice Tools render as 3 circular glowing icon buttons with labels below
+- [ ] **DASH-08**: DailyGoalsCard receives visual refresh (glow icons, thicker progress bars)
+- [ ] **DASH-09**: i18n keys added for new dashboard elements in English and Hebrew
+
 ## Future Requirements
 
 Deferred to v2.0+. Tracked but not in current roadmap.
@@ -127,20 +147,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROG-05 | Phase 21 | Pending |
 | PROG-06 | Phase 21 | Pending |
 | PROG-07 | Phase 21 | Pending |
+| UI-01 | Phase 22 | Pending |
+| UI-02 | Phase 22 | Pending |
+| UI-03 | Phase 22 | Pending |
+| UI-04 | Phase 22 | Pending |
+| UI-05 | Phase 22 | Pending |
+| DASH-01 | Phase 23 | Pending |
+| DASH-02 | Phase 23 | Pending |
+| DASH-03 | Phase 23 | Pending |
+| DASH-04 | Phase 23 | Pending |
+| DASH-05 | Phase 23 | Pending |
+| DASH-06 | Phase 23 | Pending |
+| DASH-07 | Phase 23 | Pending |
+| DASH-08 | Phase 23 | Pending |
+| DASH-09 | Phase 23 | Pending |
 
 **Coverage:**
-- v1.9 requirements: 22 total
-- Mapped to phases: 22
+- v1.9 requirements: 36 total
+- Mapped to phases: 36
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-04*
-*Last updated: 2026-03-04 — traceability complete, all 22 requirements mapped to Phases 17-21*
-
-### Node Modal UI
-
-- [ ] **UI-01**: TrailNodeModal shows a large centered category icon in a glowing circular badge at the top
-- [ ] **UI-02**: Skill notes render as colorful 3D bubble badges with sparkle decorations instead of flat pills
-- [ ] **UI-03**: XP reward section displays a golden star icon with large XP value in a dedicated card
-- [ ] **UI-04**: Modal layout is centered with clear title/subtitle hierarchy and spacious padding
-- [ ] **UI-05**: All existing modal functionality is preserved (exercises, progress, premium lock, boss hints, prerequisites, RTL, navigation)
+*Last updated: 2026-03-06 — added DASH-01 through DASH-09 for Phase 23, UI-01 through UI-05 for Phase 22*
