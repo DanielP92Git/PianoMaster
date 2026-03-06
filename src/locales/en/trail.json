@@ -90,7 +90,8 @@
       "continue": "Continue ({{completed}}/{{total}})",
       "gotIt": "Got it!",
       "askParent": "Ask a parent to unlock!"
-    }
+    },
+    "subtitle": "Add new notes to your collection"
   },
   "noteNames": {
     "C": "C",
@@ -136,7 +137,6 @@
     "Three Note Songs": "Three Note Songs",
     "Speed C-D-E": "Speed C-D-E",
     "First Steps Challenge": "First Steps Challenge",
-
     "Remember C-D-E": "Remember C-D-E",
     "Meet F": "Meet F",
     "C to F Journey": "C to F Journey",
@@ -146,7 +146,6 @@
     "Mix Units 1+2": "Mix Units 1+2",
     "Units 1+2": "Units 1+2",
     "Five Finger Master": "Five Finger Master",
-
     "Five Finger Warm-Up": "Five Finger Warm-Up",
     "Meet A": "Meet A",
     "F-G-A Trio": "F-G-A Trio",
@@ -156,18 +155,15 @@
     "Full Octave Songs": "Full Octave Songs",
     "Octave Memory": "Octave Memory",
     "Octave Master": "Octave Master",
-
     "C and B": "C and B",
     "Play C and B": "Play C and B",
     "Speed C-B-A": "Speed C-B-A",
     "First Bass Challenge": "First Bass Challenge",
-
     "Remember Unit 1": "Remember Unit 1",
     "Play with G": "Play with G",
     "Five Note Mix": "Five Note Mix",
     "Five Finger Songs": "Five Finger Songs",
     "Mix It Up": "Mix It Up",
-
     "Meet E": "Meet E",
     "Play with E": "Play with E",
     "Meet D": "Meet D",
@@ -176,7 +172,6 @@
     "Octave Mix": "Octave Mix",
     "Speed Octave": "Speed Octave",
     "Bass Clef Master": "Bass Clef Master",
-
     "Meet Quarter Notes": "Meet Quarter Notes",
     "Practice Quarter Notes": "Practice Quarter Notes",
     "Meet Half Notes": "Meet Half Notes",
@@ -184,7 +179,6 @@
     "Rhythm Patterns": "Rhythm Patterns",
     "Speed Challenge": "Speed Challenge",
     "Basic Beats Master": "Basic Beats Master",
-
     "Meet Whole Notes": "Meet Whole Notes",
     "Practice Whole Notes": "Practice Whole Notes",
     "Long and Short": "Long and Short",
@@ -192,14 +186,12 @@
     "Duration Mix": "Duration Mix",
     "Speed Basics": "Speed Basics",
     "Duration Master": "Duration Master",
-
     "Meet Eighth Notes": "Meet Eighth Notes",
     "Practice Eighth Notes": "Practice Eighth Notes",
     "Running and Walking": "Running and Walking",
     "Rhythm Variety": "Rhythm Variety",
     "Speed Running": "Speed Running",
     "Running Notes Master": "Running Notes Master",
-
     "Meet Quarter Rest": "Meet Quarter Rest",
     "Practice Quarter Rests": "Practice Quarter Rests",
     "Meet Half Rest": "Meet Half Rest",
@@ -207,7 +199,6 @@
     "Meet Whole Rest": "Meet Whole Rest",
     "Speed Silence": "Speed Silence",
     "Silence Master": "Silence Master",
-
     "Meet Dotted Half Notes": "Meet Dotted Half Notes",
     "Practice Dotted Halves": "Practice Dotted Halves",
     "Waltz Time (3/4)": "Waltz Time (3/4)",
@@ -215,7 +206,6 @@
     "Practice All Dotted Notes": "Practice All Dotted Notes",
     "Speed Dots": "Speed Dots",
     "Dotted Notes Master": "Dotted Notes Master",
-
     "Meet Sixteenth Notes": "Meet Sixteenth Notes",
     "Practice Sixteenth Notes": "Practice Sixteenth Notes",
     "Sixteenths and Eighths": "Sixteenths and Eighths",
@@ -232,7 +222,6 @@
     "Three Note Songs": "Add the third note to your collection",
     "Speed C-D-E": "How fast can you recognize C, D, and E?",
     "First Steps Challenge": "Complete your first unit!",
-
     "Remember C-D-E": "Review what you learned in Unit 1",
     "Meet F": "Learn note F - the fourth finger",
     "C to F Journey": "Practice reading from C to F",
@@ -242,7 +231,6 @@
     "Mix Units 1+2": "Challenge yourself with mixed practice",
     "Units 1+2": "Master Units 1+2 combined",
     "Five Finger Master": "Master the five-finger position!",
-
     "Five Finger Warm-Up": "Review the five-finger position",
     "Meet A": "Learn note A - continuing upward",
     "F-G-A Trio": "Practice F, G, and A together",
@@ -252,18 +240,15 @@
     "Full Octave Songs": "Play melodies across the full octave",
     "Octave Memory": "Celebrate the octave with a memory game",
     "Octave Master": "Master the full octave and unlock eighth notes!",
-
     "C and B": "Learn Middle C in bass clef",
     "Play C and B": "Practice reading C and B in bass clef",
     "Speed C-B-A": "How fast can you recognize C, B, and A in bass clef?",
     "First Bass Challenge": "Complete your first bass clef unit!",
-
     "Remember Unit 1": "Review what you learned in Unit 1",
     "Play with G": "Learn note G - the fourth finger",
     "Five Note Mix": "Practice reading with G",
     "Five Finger Songs": "Play melodies using all five notes",
     "Mix It Up": "Challenge yourself with mixed practice",
-
     "Meet E": "Learn note E - continuing downward",
     "Play with E": "Practice reading with E",
     "Meet D": "Learn note D - almost there!",
@@ -272,7 +257,6 @@
     "Octave Mix": "Celebrate the octave with a memory game",
     "Speed Octave": "How fast can you recognize all the notes?",
     "Bass Clef Master": "Master the full bass clef octave!",
-
     "Meet Quarter Notes": "Learn to play steady quarter notes",
     "Practice Quarter Notes": "Build confidence with steady quarter notes",
     "Meet Half Notes": "Learn to hold notes for 2 beats",
@@ -280,7 +264,6 @@
     "Rhythm Patterns": "Mix quarters and halves in fun patterns",
     "Speed Challenge": "How fast can you play quarters and halves?",
     "Basic Beats Master": "Prove your mastery of quarters and halves!",
-
     "Meet Whole Notes": "Learn to hold notes for 4 full beats",
     "Practice Whole Notes": "Build confidence holding notes for 4 beats",
     "Long and Short": "Feel the difference between long and short notes",
@@ -288,14 +271,12 @@
     "Duration Mix": "Mix all basic durations in creative patterns",
     "Speed Basics": "How fast can you play all basic durations?",
     "Duration Master": "Prove your mastery of all basic durations!",
-
     "Meet Eighth Notes": "Learn to play two notes per beat",
     "Practice Eighth Notes": "Build confidence with two notes per beat",
     "Running and Walking": "Feel the difference between walking and running",
     "Rhythm Variety": "Practice mixing quarters, halves, and eighths",
     "Speed Running": "How fast can you play running notes?",
     "Running Notes Master": "Prove your mastery of running notes!",
-
     "Meet Quarter Rest": "Learn to count silence - 1 beat of rest",
     "Practice Quarter Rests": "Build confidence counting silence",
     "Meet Half Rest": "Learn 2 beats of silence",
@@ -303,7 +284,6 @@
     "Meet Whole Rest": "Learn 4 beats of silence - a full measure of rest",
     "Speed Silence": "How fast can you count silence?",
     "Silence Master": "Prove your mastery of counting silence!",
-
     "Meet Dotted Half Notes": "Learn notes that last 3 beats",
     "Practice Dotted Halves": "Build confidence with 3-beat notes",
     "Waltz Time (3/4)": "Learn to play in 3/4 time - 3 beats per measure",
@@ -311,7 +291,6 @@
     "Practice All Dotted Notes": "Master both dotted half and dotted quarter notes",
     "Speed Dots": "How fast can you play dotted rhythms?",
     "Dotted Notes Master": "Prove your mastery of dotted notes and 3/4 time!",
-
     "Meet Sixteenth Notes": "Learn to play four notes per beat",
     "Practice Sixteenth Notes": "Groups of four - one beat at a time",
     "Sixteenths and Eighths": "Mix sixteenth notes with eighth notes",

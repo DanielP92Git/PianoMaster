@@ -90,7 +90,8 @@
       "continue": "המשיכו ({{completed}}/{{total}})",
       "gotIt": "הבנתי!",
       "askParent": "בקשו מהורה לפתוח!"
-    }
+    },
+    "subtitle": "הוסיפו תווים חדשים לאוסף שלכם"
   },
   "noteNames": {
     "C": "דו",
@@ -136,7 +137,6 @@
     "Three Note Songs": "מנגינות של שלושה תווים",
     "Speed C-D-E": "אתגר הזריזות: דו-רה-מי",
     "First Steps Challenge": "אתגר הצעדים הראשונים",
-
     "Remember C-D-E": "חזרה על דו-רה-מי",
     "Meet F": "מכירים את פה",
     "C to F Journey": "המסע מדו לפה",
@@ -146,7 +146,6 @@
     "Mix Units 1+2": "מעורבב: יחידות 1+2",
     "Units 1+2": "יחידות 1+2",
     "Five Finger Master": "מאסטר חמש האצבעות",
-
     "Five Finger Warm-Up": "חימום חמש אצבעות",
     "Meet A": "מכירים את לה",
     "F-G-A Trio": "שלישיית פה-סול-לה",
@@ -156,18 +155,15 @@
     "Full Octave Songs": "שירי אוקטבה מלאה",
     "Octave Memory": "זיכרון אוקטבה",
     "Octave Master": "מאסטר האוקטבה",
-
     "C and B": "דו וסי",
     "Play C and B": "מנגנים דו וסי",
     "Speed C-B-A": "אתגר זריזות: דו-סי-לה",
     "First Bass Challenge": "האתגר הראשון במפתח פה",
-
     "Remember Unit 1": "חזרה על דו-סי-לה",
     "Play with G": "מנגנים עם סול",
     "Five Note Mix": "מעורבב חמישה תווים",
     "Five Finger Songs": "שירי חמש האצבעות",
     "Mix It Up": "מעורבב",
-
     "Meet E": "מכירים את מי",
     "Play with E": "מנגנים עם מי",
     "Meet D": "מכירים את רה",
@@ -176,7 +172,6 @@
     "Octave Mix": "מעורבב אוקטבה",
     "Speed Octave": "אתגר הזריזות: אוקטבה",
     "Bass Clef Master": "מאסטר מפתח פה",
-
     "Meet Quarter Notes": "מכירים תווי רבע",
     "Practice Quarter Notes": "תרגול תווי רבע",
     "Meet Half Notes": "מכירים את תווי חצי",
@@ -184,7 +179,6 @@
     "Rhythm Patterns": "תבניות קצב",
     "Speed Challenge": "אתגר מהירות",
     "Basic Beats Master": "מאסטר הקצב הבסיסי",
-
     "Meet Whole Notes": "מכירים תווים שלמים",
     "Practice Whole Notes": "תרגול תווים שלמים",
     "Long and Short": "ארוך וקצר",
@@ -192,14 +186,12 @@
     "Duration Mix": "מעורבב אורכים",
     "Speed Basics": "אתגר מהירות: יסודות",
     "Duration Master": "מאסטר האורכים",
-
     "Meet Eighth Notes": "מכירים תווי שמינית",
     "Practice Eighth Notes": "תרגול תווי שמינית",
     "Running and Walking": "רצים והולכים",
     "Rhythm Variety": "מגוון קצבי",
     "Speed Running": "אתגר מהירות: ריצה",
     "Running Notes Master": "מאסטר התווים הרצים",
-
     "Meet Quarter Rest": "מכירים הפסקת רבע",
     "Practice Quarter Rests": "תרגול שתיקות רבע",
     "Meet Half Rest": "מכירים הפסקת חצי",
@@ -207,7 +199,6 @@
     "Meet Whole Rest": "מכירים הפסקת שלמה",
     "Speed Silence": "אתגר מהירות: הפסקות",
     "Silence Master": "מאסטר ההפסקות!",
-
     "Meet Dotted Half Notes": "מכירים תווי חצי מנוקדים",
     "Practice Dotted Halves": "תרגול חצאים מנוקדים",
     "Waltz Time (3/4)": "זמן ואלס (3/4)",
@@ -215,7 +206,6 @@
     "Practice All Dotted Notes": "תרגול כל התווים המנוקדים",
     "Speed Dots": "אתגר מהירות: נקודות",
     "Dotted Notes Master": "מאסטר התווים המנוקדים",
-
     "Meet Sixteenth Notes": "מכירים תווי שש-עשרה",
     "Practice Sixteenth Notes": "תרגול תווי שש-עשרה",
     "Sixteenths and Eighths": "שש-עשרה ושמיניות",
@@ -232,7 +222,6 @@
     "Three Note Songs": "הוסיפו את התו השלישי לאוסף שלכם",
     "Speed C-D-E": "כמה מהר תזהו דו, רה ומי?",
     "First Steps Challenge": "השלימו את היחידה הראשונה!",
-
     "Remember C-D-E": "חזרו על מה שלמדתם ביחידה 1",
     "Meet F": "למדו את התו פה - האצבע הרביעית",
     "C to F Journey": "תרגלו קריאה מדו עד פה",
@@ -242,7 +231,6 @@
     "Mix Units 1+2": "אתגרו את עצמכם עם תרגול מעורב",
     "Units 1+2": "שלטו ביחידות 1+2 ביחד",
     "Five Finger Master": "שלטו במצב חמש האצבעות!",
-
     "Five Finger Warm-Up": "חזרו על מצב חמש האצבעות",
     "Meet A": "למדו את התו לה - ממשיכים למעלה",
     "F-G-A Trio": "תרגלו פה, סול ולה ביחד",
@@ -252,18 +240,15 @@
     "Full Octave Songs": "נגנו מנגינות לאורך כל האוקטבה",
     "Octave Memory": "חגגו את האוקטבה עם משחק זיכרון",
     "Octave Master": "שלטו באוקטבה השלמה!",
-
     "C and B": "למדו את דו האמצעי במפתח פה",
     "Play C and B": "תרגלו קריאת דו וסי במפתח פה",
     "Speed C-B-A": "כמה מהר תזהו דו, סי ולה במפתח פה?",
     "First Bass Challenge": "השלימו את יחידת מפתח פה הראשונה!",
-
     "Remember Unit 1": "חזרו על מה שלמדתם ביחידה 1",
     "Play with G": "למדו את התו סול - האצבע הרביעית",
     "Five Note Mix": "תרגלו קריאה עם סול",
     "Five Finger Songs": "נגנו מנגינות עם כל חמשת התווים",
     "Mix It Up": "אתגרו את עצמכם עם תרגול מעורב",
-
     "Meet E": "למדו את התו מי - ממשיכים למטה",
     "Play with E": "תרגלו קריאה עם מי",
     "Meet D": "למדו את התו רה - כמעט שם!",
@@ -272,7 +257,6 @@
     "Octave Mix": "חגגו את האוקטבה עם משחק זיכרון",
     "Speed Octave": "כמה מהר תזהו את כל התווים?",
     "Bass Clef Master": "שלטו באוקטבה השלמה של מפתח פה!",
-
     "Meet Quarter Notes": "למדו לנגן תווי רבע יציבים",
     "Practice Quarter Notes": "חזקו ביטחון עם תווי רבע יציבים",
     "Meet Half Notes": "למדו להחזיק תווים ל-2 פעימות",
@@ -280,7 +264,6 @@
     "Rhythm Patterns": "ערבבו רבעים וחצאים בתבניות מהנות",
     "Speed Challenge": "כמה מהר תנגנו רבעים וחצאים?",
     "Basic Beats Master": "הוכיחו שליטה ברבעים וחצאים!",
-
     "Meet Whole Notes": "למדו להחזיק תווים ל-4 פעימות שלמות",
     "Practice Whole Notes": "חזקו ביטחון בהחזקת תווים ל-4 פעימות",
     "Long and Short": "הרגישו את ההבדל בין תווים ארוכים לקצרים",
@@ -288,14 +271,12 @@
     "Duration Mix": "ערבבו את כל האורכים הבסיסיים בתבניות יצירתיות",
     "Speed Basics": "כמה מהר תנגנו את כל האורכים הבסיסיים?",
     "Duration Master": "הוכיחו שליטה בכל האורכים הבסיסיים!",
-
     "Meet Eighth Notes": "למדו לנגן שני תווים לפעימה",
     "Practice Eighth Notes": "חזקו ביטחון עם שני תווים לפעימה",
     "Running and Walking": "הרגישו את ההבדל בין הליכה לריצה",
     "Rhythm Variety": "תרגלו ערבוב רבעים, חצאים ושמיניות",
     "Speed Running": "כמה מהר תנגנו תווים רצים?",
     "Running Notes Master": "הוכיחו שליטה בתווים הרצים!",
-
     "Meet Quarter Rest": "למדו לספור שתיקה - פעימה אחת של הפסקה",
     "Practice Quarter Rests": "חזקו ביטחון בספירת שתיקה",
     "Meet Half Rest": "למדו 2 פעימות של שתיקה",
@@ -303,7 +284,6 @@
     "Meet Whole Rest": "למדו 4 פעימות של שתיקה - תיבה שלמה של הפסקה",
     "Speed Silence": "כמה מהר תספרו שתיקה?",
     "Silence Master": "הוכיחו שליטה בספירת שתיקה!",
-
     "Meet Dotted Half Notes": "למדו תווים שנמשכים 3 פעימות",
     "Practice Dotted Halves": "חזקו ביטחון עם תווים של 3 פעימות",
     "Waltz Time (3/4)": "למדו לנגן במשקל 3/4 - 3 פעימות לתיבה",
@@ -311,7 +291,6 @@
     "Practice All Dotted Notes": "שלטו בחצאים מנוקדים וברבעים מנוקדים",
     "Speed Dots": "כמה מהר תנגנו קצבים מנוקדים?",
     "Dotted Notes Master": "הוכיחו שליטה בתווים מנוקדים ובמשקל 3/4!",
-
     "Meet Sixteenth Notes": "למדו לנגן ארבעה תווים לפעימה",
     "Practice Sixteenth Notes": "קבוצות של ארבע - פעימה אחת בכל פעם",
     "Sixteenths and Eighths": "ערבבו תווי שש-עשרה עם שמיניות",

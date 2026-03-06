@@ -3,6 +3,9 @@
  *
  * Displays detailed information about a trail node and allows starting practice.
  * Shows exercise list with completion status for sequential exercise progression.
+ *
+ * Kid-friendly centered design with glowing category icon, 3D bubble note badges,
+ * golden star XP card, and gradient action buttons.
  */
 
 import { useState, useEffect } from 'react';
@@ -33,6 +36,45 @@ const getExerciseTypeName = (type, t) => {
     default:
       return type;
   }
+};
+
+/**
+ * Color gradients for 3D bubble badges by category.
+ * Each entry has { bg, shadow } where bg is a radial-gradient string
+ * and shadow is an RGB triplet for box-shadow.
+ */
+const BUBBLE_COLORS = {
+  treble_clef: [
+    { bg: 'radial-gradient(circle at 35% 35%, #93c5fd, #3b82f6 60%, #1d4ed8)', shadow: '59,130,246' },
+    { bg: 'radial-gradient(circle at 35% 35%, #c4b5fd, #8b5cf6 60%, #6d28d9)', shadow: '139,92,246' },
+    { bg: 'radial-gradient(circle at 35% 35%, #f9a8d4, #ec4899 60%, #be185d)', shadow: '236,72,153' },
+    { bg: 'radial-gradient(circle at 35% 35%, #a5b4fc, #6366f1 60%, #4338ca)', shadow: '99,102,241' },
+    { bg: 'radial-gradient(circle at 35% 35%, #67e8f9, #06b6d4 60%, #0e7490)', shadow: '6,182,212' },
+    { bg: 'radial-gradient(circle at 35% 35%, #d8b4fe, #a855f7 60%, #7e22ce)', shadow: '168,85,247' },
+    { bg: 'radial-gradient(circle at 35% 35%, #fda4af, #f43f5e 60%, #be123c)', shadow: '244,63,94' },
+  ],
+  bass_clef: [
+    { bg: 'radial-gradient(circle at 35% 35%, #d8b4fe, #a855f7 60%, #7e22ce)', shadow: '168,85,247' },
+    { bg: 'radial-gradient(circle at 35% 35%, #a5b4fc, #6366f1 60%, #4338ca)', shadow: '99,102,241' },
+    { bg: 'radial-gradient(circle at 35% 35%, #c4b5fd, #8b5cf6 60%, #6d28d9)', shadow: '139,92,246' },
+    { bg: 'radial-gradient(circle at 35% 35%, #e9d5ff, #c084fc 60%, #9333ea)', shadow: '192,132,252' },
+    { bg: 'radial-gradient(circle at 35% 35%, #818cf8, #4f46e5 60%, #3730a3)', shadow: '79,70,229' },
+    { bg: 'radial-gradient(circle at 35% 35%, #f0abfc, #d946ef 60%, #a21caf)', shadow: '217,70,239' },
+    { bg: 'radial-gradient(circle at 35% 35%, #93c5fd, #3b82f6 60%, #1d4ed8)', shadow: '59,130,246' },
+  ],
+  rhythm: [
+    { bg: 'radial-gradient(circle at 35% 35%, #6ee7b7, #10b981 60%, #047857)', shadow: '16,185,129' },
+    { bg: 'radial-gradient(circle at 35% 35%, #5eead4, #14b8a6 60%, #0f766e)', shadow: '20,184,166' },
+    { bg: 'radial-gradient(circle at 35% 35%, #a7f3d0, #34d399 60%, #059669)', shadow: '52,211,153' },
+    { bg: 'radial-gradient(circle at 35% 35%, #99f6e4, #2dd4bf 60%, #0d9488)', shadow: '45,212,191' },
+    { bg: 'radial-gradient(circle at 35% 35%, #86efac, #22c55e 60%, #15803d)', shadow: '34,197,94' },
+    { bg: 'radial-gradient(circle at 35% 35%, #67e8f9, #06b6d4 60%, #0e7490)', shadow: '6,182,212' },
+  ],
+  boss: [
+    { bg: 'radial-gradient(circle at 35% 35%, #fde68a, #f59e0b 60%, #b45309)', shadow: '245,158,11' },
+    { bg: 'radial-gradient(circle at 35% 35%, #fcd34d, #eab308 60%, #a16207)', shadow: '234,179,8' },
+    { bg: 'radial-gradient(circle at 35% 35%, #fed7aa, #f97316 60%, #c2410c)', shadow: '249,115,22' },
+  ],
 };
 
 const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, prerequisites = [], onClose }) => {
@@ -159,17 +201,6 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         isUnlocked ? 'available' : 'locked'
       );
 
-  // Determine skill badge colors based on category (dark theme)
-  const skillBadgeColors = node.isBoss
-    ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-400/30'
-    : node.category === 'treble_clef'
-      ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30'
-      : node.category === 'bass_clef'
-        ? 'bg-purple-500/20 text-purple-300 border border-purple-400/30'
-        : node.category === 'rhythm'
-          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-400/30'
-          : 'bg-blue-500/20 text-blue-300 border border-blue-400/30';
-
   // Category-aware gradient for progress bar and CTA button
   const progressGradient = node.isBoss
     ? 'bg-gradient-to-r from-yellow-400 to-amber-500'
@@ -181,43 +212,89 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
           ? 'bg-gradient-to-r from-emerald-500 to-teal-600'
           : 'bg-gradient-to-r from-blue-500 to-indigo-600';
 
+  // Get bubble colors for the current node category
+  const bubbleCategory = node.isBoss ? 'boss' : (node.category || 'treble_clef');
+  const bubbleColorSet = BUBBLE_COLORS[bubbleCategory] || BUBBLE_COLORS.treble_clef;
+
   return (
     <div className="fixed inset-0 z-50" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="fixed inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
-      <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-slate-800/95 backdrop-blur-sm border ${headerColors.border} shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden modal-scrollbar ${isRTL ? 'text-right' : ''}`}>
+      <div className={`fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100vw-2rem)] max-w-md rounded-2xl bg-slate-800/95 backdrop-blur-sm border ${headerColors.border} shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden modal-scrollbar`}>
         {/* Category accent strip */}
         <div className={`h-1 w-full rounded-t-2xl ${headerColors.bg}`} />
 
-        <div className="p-4 sm:p-6">
-          {/* Header */}
-          <div className={`mb-3 sm:mb-4 flex items-start justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className="flex-1">
-              <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
-                {/* Node type icon with category color background + glow */}
-                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${headerColors.bg} ${headerColors.border} border ${headerColors.glow}`}>
-                  <NodeIcon size={18} className={headerColors.text} strokeWidth={2} />
-                </div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white">{translateNodeName(node.name, t, i18n)}</h2>
-              </div>
-              <p className="mt-1 text-xs sm:text-sm text-white/70">{t(`descriptions.${node.name}`, { defaultValue: node.description })}</p>
-            </div>
-            <button
-              onClick={onClose}
-              className={`rounded-lg p-1.5 sm:p-2 text-white/50 hover:bg-white/10 hover:text-white/80 flex-shrink-0 transition-colors ${isRTL ? 'mr-2' : 'ml-2'}`}
-              aria-label={t('common:actions.close', { defaultValue: 'Close' })}
+        <div className="p-5 sm:p-7">
+          {/* Large centered category icon */}
+          <div className="flex justify-center mb-4">
+            <div
+              className={`flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full ${headerColors.bg} ${headerColors.glow} ring-4 ring-white/15`}
             >
-              &#10005;
-            </button>
+              <NodeIcon size={36} className={headerColors.text} strokeWidth={2} />
+            </div>
+          </div>
+
+          {/* Centered title and subtitle */}
+          <div className="text-center mb-5">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+              {translateNodeName(node.name, t, i18n)}
+            </h2>
+            <p className="mt-1 text-sm text-white/60">
+              {t(`descriptions.${node.name}`, { defaultValue: node.description || t('modal.subtitle') })}
+            </p>
+          </div>
+
+          {/* Skills 3D bubble badges */}
+          <div className="mb-5">
+            <h3 className="text-sm font-semibold text-white/70 text-center mb-3">
+              {t('modal.skillsYoullLearn')}
+            </h3>
+            <div className="flex justify-center flex-wrap gap-3 sm:gap-4">
+              {node.skills.map((skill, index) => {
+                const noteMatch = skill.match(/^([A-Ga-g][b#]?)(\d)$/);
+                const displaySkill = noteMatch
+                  ? t(`trail:noteNames.${noteMatch[1].toUpperCase()}`, { defaultValue: noteMatch[1] })
+                  : t(`trail:skillNames.${skill}`, { defaultValue: skill.replace(/_/g, ' ') });
+                const colorIdx = index % bubbleColorSet.length;
+                const bubbleColor = bubbleColorSet[colorIdx];
+                return (
+                  <div
+                    key={index}
+                    className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white select-none"
+                    style={{
+                      background: bubbleColor.bg,
+                      boxShadow: `inset 0 -4px 8px rgba(0,0,0,0.3), 0 2px 8px rgba(${bubbleColor.shadow}, 0.4)`,
+                    }}
+                  >
+                    {displaySkill}
+                    {/* Sparkle decorations */}
+                    <span
+                      className="absolute text-[8px] text-white/80 pointer-events-none"
+                      style={{ top: '3px', right: '6px' }}
+                      aria-hidden="true"
+                    >
+                      *
+                    </span>
+                    <span
+                      className="absolute text-[6px] text-white/60 pointer-events-none"
+                      style={{ bottom: '8px', left: '5px' }}
+                      aria-hidden="true"
+                    >
+                      *
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* Progress section (if unlocked) */}
           {isUnlocked && (
-            <div className="mb-3 sm:mb-4 rounded-xl bg-white/5 border border-white/10 p-3 sm:p-4">
-              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.yourProgress')}</h3>
+            <div className="mb-4 rounded-xl bg-white/5 border border-white/10 p-3 sm:p-4">
+              <h3 className="mb-2 text-sm font-semibold text-white/80 text-center">{t('modal.yourProgress')}</h3>
 
               {/* Node Stars (only show if all exercises complete) */}
               {allExercisesComplete && (
-                <div className="mb-2 flex items-center gap-1">
+                <div className="mb-2 flex items-center justify-center gap-1">
                   {[1, 2, 3].map((starNum) => (
                     <span
                       key={starNum}
@@ -249,7 +326,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
 
               {/* Best score */}
               {bestScore > 0 && allExercisesComplete && (
-                <p className="text-xs sm:text-sm text-white/60">
+                <p className="text-xs sm:text-sm text-white/60 text-center">
                   {t('modal.bestScore')} <span className="font-bold text-white">{t('modal.bestScoreValue', { score: bestScore })}</span>
                 </p>
               )}
@@ -258,7 +335,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
 
           {/* Exercise List (if multiple exercises, hidden while loading) */}
           {isUnlocked && !isLoading && totalExercises > 1 && (
-            <div className="mb-3 sm:mb-4">
+            <div className="mb-4">
               <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.exercises')}</h3>
               <div className="space-y-1.5 sm:space-y-2">
                 {node.exercises.map((exercise, index) => {
@@ -318,7 +395,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
                             </button>
                           </>
                         ) : isNext ? (
-                          // Show "Start" button for next exercise
+                          // Show Start button for next exercise
                           <button
                             onClick={() => navigateToExercise(index)}
                             className={`rounded-md ${progressGradient} px-2 py-1 text-xs font-medium text-white hover:scale-[1.02] whitespace-nowrap transition-transform`}
@@ -334,41 +411,27 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
             </div>
           )}
 
-          {/* Skills covered */}
-          <div className="mb-3 sm:mb-4">
-            <h3 className="mb-2 text-xs sm:text-sm font-semibold text-white/80">{t('modal.skillsYoullLearn')}</h3>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {node.skills.map((skill, index) => {
-                // Translate skill: note names like "C4" → strip octave → lookup noteNames
-                // Rhythm skills like "quarter_note" → lookup skillNames
-                const noteMatch = skill.match(/^([A-Ga-g][b#]?)(\d)$/);
-                const displaySkill = noteMatch
-                  ? t(`trail:noteNames.${noteMatch[1].toUpperCase()}`, { defaultValue: noteMatch[1] })
-                  : t(`trail:skillNames.${skill}`, { defaultValue: skill.replace(/_/g, ' ') });
-                return (
-                  <span
-                    key={index}
-                    className={`rounded-full px-2.5 sm:px-3 py-0.5 sm:py-1 text-xs font-medium ${skillBadgeColors}`}
-                  >
-                    {displaySkill}
-                  </span>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* XP reward */}
-          <div className="mb-3 sm:mb-4 flex items-center justify-between rounded-lg bg-white/5 border border-white/10 p-2.5 sm:p-3">
-            <span className="text-xs sm:text-sm font-medium text-white/80">{t('modal.xpReward')}</span>
-            <span className="text-base sm:text-lg font-bold text-purple-400">
-              {t('modal.xpRewardValue', { xp: node.xpReward })}
+          {/* XP Reward card */}
+          <div className="mb-4 rounded-xl bg-white/5 border border-white/10 p-4 flex items-center justify-center gap-4">
+            <span
+              className="text-4xl select-none"
+              style={{ filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))' }}
+              aria-hidden="true"
+            >
+              &#11088;
             </span>
+            <div className="text-center">
+              <span className="text-3xl sm:text-4xl font-black text-white">
+                {node.xpReward}
+              </span>
+              <p className="text-xs text-white/50">{t('modal.xpReward')}</p>
+            </div>
           </div>
 
           {/* Accessory unlock (if applicable) */}
           {node.accessoryUnlock && (
-            <div className="mb-3 sm:mb-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30 p-2.5 sm:p-3">
-              <p className="text-xs font-medium text-yellow-300">
+            <div className="mb-4 rounded-lg bg-yellow-400/10 border border-yellow-400/30 p-2.5 sm:p-3">
+              <p className="text-xs font-medium text-yellow-300 text-center">
                 &#127873; {t('modal.unlockLabel')} <span className="font-bold">{t(`trail:accessories.${node.accessoryUnlock}`, { defaultValue: node.accessoryUnlock.replace(/_/g, ' ') })}</span>
               </p>
             </div>
@@ -376,14 +439,14 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
 
           {/* Boss unlock hint (prominent display for locked boss nodes) */}
           {!isUnlocked && !isPremiumLocked && node.isBoss && node.unlockHint && (
-            <div className="mb-3 sm:mb-4 rounded-xl bg-yellow-400/10 border-2 border-yellow-500/30 p-4 sm:p-5 shadow-lg">
-              <div className="flex items-start gap-3">
+            <div className="mb-4 rounded-xl bg-yellow-400/10 border-2 border-yellow-500/30 p-4 sm:p-5 shadow-lg">
+              <div className="flex flex-col items-center text-center gap-3">
                 <div className="flex-shrink-0">
                   <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-[0_0_20px_rgba(234,179,8,0.4)]">
                     <span className="text-3xl sm:text-4xl">&#128274;</span>
                   </div>
                 </div>
-                <div className="flex-1">
+                <div>
                   <h3
                     className="text-base sm:text-lg font-black text-yellow-400 mb-2 uppercase tracking-wide"
                     style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.3)' }}
@@ -400,8 +463,8 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
 
           {/* Prerequisites (if locked and has prerequisites) */}
           {!isUnlocked && !isPremiumLocked && prerequisites.length > 0 && (
-            <div className="mb-3 sm:mb-4 rounded-lg bg-red-500/10 border border-red-400/30 p-2.5 sm:p-3">
-              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-400">
+            <div className="mb-4 rounded-lg bg-red-500/10 border border-red-400/30 p-2.5 sm:p-3">
+              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-400 text-center">
                 &#128274; {t('modal.prerequisites')}
               </h3>
               <ul className="list-inside list-disc text-xs sm:text-sm text-red-400/80">
@@ -417,7 +480,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
 
           {/* Paywall message for premium-locked nodes */}
           {isPremiumLocked && (
-            <div className="mb-3 rounded-xl bg-amber-400/10 border border-amber-400/30 p-4 text-center">
+            <div className="mb-4 rounded-xl bg-amber-400/10 border border-amber-400/30 p-4 text-center">
               <Sparkles size={28} className="mx-auto mb-2 text-amber-400" />
               <p className="text-sm font-medium text-amber-300">
                 {t('trail:modal.premiumMessage')}
@@ -425,19 +488,19 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
             </div>
           )}
 
-          {/* Action buttons */}
+          {/* Action buttons -- pill-shaped */}
           <div className={`flex gap-2 sm:gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {isPremiumLocked ? (
               <>
                 <button
                   onClick={onClose}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-gray-100 to-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-transform hover:scale-[1.02] duration-200"
+                  className="flex-1 rounded-full bg-white/10 px-6 py-3 text-base font-semibold text-white/70 transition-colors hover:bg-white/15"
                 >
                   {t('trail:modal.button.gotIt')}
                 </button>
                 <button
                   onClick={() => { onClose(); navigate('/subscribe'); }}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-amber-400 to-yellow-500 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-amber-900 transition-transform hover:scale-[1.02] duration-200"
+                  className="flex-1 rounded-full bg-gradient-to-b from-amber-400 to-yellow-500 px-6 py-3 text-base font-bold text-amber-900 transition-transform hover:scale-[1.02] duration-200"
                 >
                   {t('trail:modal.button.askParent')}
                 </button>
@@ -446,7 +509,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
               <>
                 <button
                   onClick={onClose}
-                  className="flex-1 rounded-xl bg-gradient-to-b from-gray-100 to-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-semibold text-gray-700 transition-transform hover:scale-[1.02] duration-200"
+                  className="flex-1 rounded-full bg-white/10 px-6 py-3 text-base font-semibold text-white/70 transition-colors hover:bg-white/15"
                 >
                   {t('common:actions.cancel', { defaultValue: 'Cancel' })}
                 </button>
@@ -454,7 +517,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
                   onClick={handleStartPractice}
                   disabled={!isUnlocked || isLoading}
                   className={`
-                    flex-1 rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white shadow-lg transition-all duration-200
+                    flex-1 rounded-full px-6 py-3 text-base font-bold text-white shadow-lg transition-all duration-200
                     ${
                       !isUnlocked
                         ? 'cursor-not-allowed bg-gray-700 text-gray-500'
