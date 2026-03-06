@@ -398,7 +398,7 @@ Plans:
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
 | 22. Kid-Friendly Node Modal Redesign | v1.9 | 0/1 | Planned | - |
-| 23. Kid-Friendly Dashboard Redesign | 1/2 | In Progress|  | - |
+| 23. Kid-Friendly Dashboard Redesign | 2/3 | In Progress (gap closure) |  | - |
 
 **Total: 44 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
 
@@ -407,18 +407,19 @@ Plans:
 **Depends on**: Phase 22
 **Requirements**: DASH-01, DASH-02, DASH-03, DASH-04, DASH-05, DASH-06, DASH-07, DASH-08, DASH-09
 **Success Criteria** (what must be TRUE):
-  1. The dashboard hero area is compact with a centered avatar image and a "LV.X" badge pill
+  1. The dashboard hero area is compact with a centered avatar image and a "LEVEL X" horizontal pill badge extending from the avatar
   2. A large gradient "PLAY NEXT" pill button overlaps the hero bottom edge showing the next recommended node name
   3. A single unified stats card with a gradient border (blue-to-orange) consolidates XP ring, streak count, and daily goals summary
   4. Three circular glowing icon buttons (Reminder, Record, History) replace the current list-style Practice Tools panel
   5. The My Progress panel and Assignments section are completely removed from the dashboard
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 23-01-PLAN.md -- Create PlayNextButton, XPRing, and UnifiedStatsCard sub-components
 - [ ] 23-02-PLAN.md -- Rewrite Dashboard.jsx layout, refresh DailyGoalsCard, circular Practice Tools, i18n, human verification
+- [ ] 23-03-PLAN.md -- Gap closure: level badge horizontal pill layout, Fireflies reduced motion fix
 
 ---
-*Last updated: 2026-03-06 — Phase 23 plan created (2 plans, kid-friendly dashboard redesign)*
+*Last updated: 2026-03-06 — Phase 23 gap closure plan added (3 plans total)*
 
 ### Phase 22: Kid-Friendly Node Modal Redesign
 **Goal**: The TrailNodeModal transforms from a text-heavy information panel into a visually delightful, kid-friendly modal that centers a glowing category icon, shows skill notes as colorful 3D bubbles, displays XP reward prominently with a golden star, and uses spacious layout with gradient buttons — matching the design reference screenshot
