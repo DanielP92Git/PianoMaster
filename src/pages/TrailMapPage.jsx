@@ -4,7 +4,7 @@
  * Page wrapper for the Trail Map with clean, minimal background
  */
 
-import { Link } from 'react-router-dom';
+import BackButton from '../components/ui/BackButton';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Shield } from 'lucide-react';
@@ -88,21 +88,14 @@ const TrailMapPage = () => {
       {/* Navigation bar */}
       <div className="relative z-10 border-b border-white/10 bg-slate-900/80 backdrop-blur-sm">
         <div className={`mx-auto max-w-6xl space-y-2.5 p-4 ${isRTL ? 'text-right' : ''}`}>
-          {/* Row 1: Navigation + Title + Free Practice */}
+          {/* Row 1: Navigation + Title */}
           <div className="flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-2 text-white/70 hover:text-white transition-colors">
-              <span className="text-xl">{isRTL ? '\u2192' : '\u2190'}</span>
-              <span className="font-medium text-sm">{t('common.dashboard', { defaultValue: 'Dashboard' })}</span>
-            </Link>
+            <BackButton to="/" name="Dashboard" />
             <h1 className="text-xl font-bold text-white font-quicksand">
               {t('pageTitle', { ns: 'trail' })}
             </h1>
-            <Link
-              to="/practice-modes"
-              className="text-sm text-white/70 hover:text-white border border-white/20 rounded-lg px-2.5 py-1 hover:bg-white/10 transition-colors"
-            >
-              {t('freePracticeLink', { ns: 'trail' })}
-            </Link>
+            {/* Spacer to balance back button */}
+            <div className="w-9" />
           </div>
 
           {/* Row 2: Level badge + XP progress bar */}

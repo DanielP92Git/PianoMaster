@@ -28,8 +28,9 @@ const PlayNextButton = ({
         to={to}
         state={highlightNodeId ? { highlightNodeId } : undefined}
         className={[
-          'inline-flex flex-col items-center px-10 py-4 rounded-full',
-          'bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600',
+          'inline-flex flex-col items-center px-10 py-0.5 rounded-full',
+          'bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600',
+          'border-2 border-blue-300/50',
           'shadow-[0_4px_24px_rgba(99,102,241,0.5)]',
           'hover:shadow-[0_4px_32px_rgba(99,102,241,0.7)]',
           'transition-all duration-300 hover:scale-105',
@@ -41,13 +42,13 @@ const PlayNextButton = ({
         dir={isRTL ? 'rtl' : 'ltr'}
       >
         {/* Main label */}
-        <span className="text-lg font-black text-white tracking-wider uppercase">
+        <span className="text-xl font-bold text-white tracking-widest uppercase">
           {t('dashboard.playNext.label', { defaultValue: 'PLAY NEXT' })}
         </span>
 
         {/* Node name subtitle */}
         {nodeName && (
-          <span className="text-sm font-medium text-white/80 mt-0.5">
+          <span className="text-sm font-medium text-white/80">
             {nodeName}
             {starsDisplay}
           </span>

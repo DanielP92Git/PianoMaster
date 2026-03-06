@@ -584,10 +584,10 @@
       "welcomeBack": "ברוכ/ה השב/ה",
       "greeting": "היי, {{name}}!",
       "defaultName": "מוזיקאי/ת",
-      "subtitle": "המסע המוזיקלי שלך נמשך"
+      "subtitle": "המסע המוזיקלי שלך ממשיך"
     },
     "playNext": {
-      "label": "שחק הבא"
+      "label": "למשחק הבא"
     },
     "continueButton": {
       "title": "המשך ללמוד",
@@ -1030,10 +1030,12 @@
   },
   "streak": {
     "freezeEarned": "הרווחת מגן רצף! 🛡️",
-    "freezeConsumed": "מגן רצף הציל את הרצף שלך! 🛡️",
+    "freezeConsumed": "מגן רצף הצל את הרצף שלך! 🛡️",
     "freezeCount_one": "מגן {{count}} נשאר",
     "freezeCount_other": "{{count}} מגנים נשארו",
     "freezeUsedYesterday": "מגן בשימוש",
+    "shield": "מגן רצף",
+    "shields": "מגנים",
     "graceWarning": "תתרגל/י היום כדי לשמור על הרצף!",
     "comebackBanner": "XP כפול פעיל! עוד {{days}} ימים",
     "comebackDescription": "השלם/י תרגילים כדי להרוויח XP כפול",

@@ -470,7 +470,10 @@ export default function PracticeSessions() {
                   >
                     <div className="flex items-center gap-2 sm:gap-3">
                       {/* Selection Checkbox */}
-                      <button
+                      <div
+                        role="checkbox"
+                        tabIndex={0}
+                        aria-checked={isSessionSelected(session.id)}
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSessionSelect(
@@ -478,7 +481,17 @@ export default function PracticeSessions() {
                             !isSessionSelected(session.id)
                           );
                         }}
-                        className="text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                        onKeyDown={(e) => {
+                          if (e.key === ' ' || e.key === 'Enter') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSessionSelect(
+                              session.id,
+                              !isSessionSelected(session.id)
+                            );
+                          }
+                        }}
+                        className="text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center cursor-pointer"
                         aria-label={isSessionSelected(session.id) ? "Deselect session" : "Select session"}
                       >
                         {isSessionSelected(session.id) ? (
@@ -486,7 +499,7 @@ export default function PracticeSessions() {
                         ) : (
                           <Square className="w-5 h-5 sm:w-6 sm:h-6" />
                         )}
-                      </button>
+                      </div>
 
                       {/* Basic Info - Date, Time, Status */}
                       <div className="flex-1 min-w-0 text-left">

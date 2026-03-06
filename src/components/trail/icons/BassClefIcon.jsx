@@ -31,7 +31,7 @@ const BassClefIcon = ({
         width: '100%',
         height: '100%',
         objectFit: 'contain',
-        filter: color === 'currentColor' ? 'none' : `brightness(0) saturate(100%)`,
+        filter: color === 'currentColor' ? 'none' : color === 'white' ? 'brightness(0) invert(1)' : `brightness(0) saturate(100%)`,
         color: color
       }}
       {...props}

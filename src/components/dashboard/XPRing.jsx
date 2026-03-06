@@ -17,11 +17,19 @@ const XPRing = ({
 }) => {
   const radius = 48;
   const circumference = 2 * Math.PI * radius;
+  // 80% arc (288°) — open at bottom
+  const arcFraction = 0.8;
+  const arcLength = circumference * arcFraction;
+  const gapLength = circumference - arcLength;
   const clampedProgress = Math.max(0, Math.min(100, progressPercentage));
-  const offset = circumference * (1 - clampedProgress / 100);
+  const progressLength = arcLength * (clampedProgress / 100);
+  // Rotate so the gap is centered at the bottom (90° in SVG).
+  // Arc starts at startAngle, draws 288°, gap follows for 72°.
+  // Gap center = startAngle + 288 + 36 = startAngle + 324 = 90 + 360 → startAngle = 126°
+  const startAngle = 126;
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center">
       {/* SVG ring */}
       <svg
         width={size}
@@ -32,12 +40,20 @@ const XPRing = ({
       >
         <defs>
           <linearGradient id="xp-ring-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#60A5FA" />
-            <stop offset="100%" stopColor="#6366F1" />
+            <stop offset="0%" stopColor="#7DD3FC" />
+            <stop offset="50%" stopColor="#38BDF8" />
+            <stop offset="100%" stopColor="#60A5FA" />
           </linearGradient>
+          <filter id="xp-ring-glow">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
         </defs>
 
-        {/* Background track */}
+        {/* Background track (80% arc) */}
         <circle
           cx="60"
           cy="60"
@@ -45,6 +61,9 @@ const XPRing = ({
           fill="none"
           stroke="rgba(255,255,255,0.2)"
           strokeWidth="8"
+          strokeLinecap="round"
+          strokeDasharray={`${arcLength} ${gapLength}`}
+          transform={`rotate(${startAngle} 60 60)`}
         />
 
         {/* Progress arc */}
@@ -56,18 +75,18 @@ const XPRing = ({
           stroke="url(#xp-ring-grad)"
           strokeWidth="8"
           strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform="rotate(-90 60 60)"
+          strokeDasharray={`${progressLength} ${circumference - progressLength}`}
+          transform={`rotate(${startAngle} 60 60)`}
+          filter="url(#xp-ring-glow)"
           style={
             reducedMotion
               ? undefined
-              : { transition: 'stroke-dashoffset 1s ease-out' }
+              : { transition: 'stroke-dasharray 1s ease-out' }
           }
         />
 
-        {/* GoldStar center - positioned via foreignObject */}
-        <foreignObject x="32" y="32" width="56" height="56">
+        {/* GoldStar - upper center inside ring */}
+        <foreignObject x="32" y="22" width="56" height="46">
           <div
             xmlns="http://www.w3.org/1999/xhtml"
             className="flex h-full w-full items-center justify-center"
@@ -75,12 +94,15 @@ const XPRing = ({
             <GoldStar size={28} filled glow />
           </div>
         </foreignObject>
-      </svg>
 
-      {/* XP text below ring */}
-      <span className="text-xs font-medium text-white/70">
-        {isMaxLevel ? `${xpCurrent} XP` : `${xpCurrent}/${xpTotal} XP`}
-      </span>
+        {/* XP text inside ring - bottom area */}
+        <text x="60" y="78" textAnchor="middle" className="fill-white/80 text-[13px] font-bold">
+          {isMaxLevel ? xpCurrent : `${xpCurrent}/${xpTotal}`}
+        </text>
+        <text x="60" y="94" textAnchor="middle" className="fill-white/50 text-[13px] font-semibold">
+          XP
+        </text>
+      </svg>
     </div>
   );
 };

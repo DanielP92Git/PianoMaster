@@ -46,10 +46,9 @@ export function SightReadingLayout({
   feedbackPanel,
 }) {
   const hasDockedKeyboard = Boolean(hasKeyboard) && !isFeedbackPhase;
-  // In feedback phase, show the feedback panel in the bottom dock (where keyboard normally is)
-  const hasDockedBottom =
-    hasDockedKeyboard || (isFeedbackPhase && Boolean(feedbackPanel));
-  const bottomDockContent = isFeedbackPhase ? feedbackPanel : keyboard;
+  // Feedback panel renders inline (not docked) for consistent width with notation card
+  const hasDockedBottom = hasDockedKeyboard;
+  const bottomDockContent = keyboard;
 
   // Show guidance as an overlay to prevent it from affecting card layout
   // In DISPLAY phase: button is rendered over keyboard (see keyboard dock section)
@@ -80,9 +79,11 @@ export function SightReadingLayout({
   // Mobile and desktop need to account for keyboard/feedback dock when present
   // Mobile: subtract header (~64px) and keyboard dock height
   // Desktop: subtract header (~50px) and keyboard dock height with extra spacing
-  const cardMaxHeightClass = hasDockedBottom
-    ? "max-h-[calc(100dvh-64px-var(--sr-kb-height))] md:max-h-[calc(100vh-50px-var(--sr-kb-height))]"
-    : "max-h-[calc(100dvh-64px)] md:max-h-[calc(100vh-100px)]";
+  const cardMaxHeightClass = isFeedbackPhase
+    ? "max-h-[45dvh] md:max-h-[45vh]"
+    : hasDockedBottom
+      ? "max-h-[calc(100dvh-64px-var(--sr-kb-height))] md:max-h-[calc(100vh-50px-var(--sr-kb-height))]"
+      : "max-h-[calc(100dvh-64px)] md:max-h-[calc(100vh-100px)]";
 
   // Step 3: Grid-based vertical allocation on desktop
   // Mobile uses flex, desktop uses grid to prevent staff from dominating
@@ -125,19 +126,15 @@ export function SightReadingLayout({
           }}
         >
           <div
-            className={`flex min-h-0 w-full max-w-5xl flex-1 flex-col ${stackGap}`}
+            className={`flex min-h-0 w-full max-w-5xl ${isFeedbackPhase ? "" : "flex-1"} flex-col ${stackGap}`}
           >
-            <div className="flex min-h-0 flex-1 flex-col">
+            <div className={`flex min-h-0 ${isFeedbackPhase ? "" : "flex-1"} flex-col`}>
               {/* Card with constrained height and grid interior */}
               <div
-                className={`relative flex-1 rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm ${cardMaxHeightClass}`}
+                className={`relative ${isFeedbackPhase ? "" : "flex-1"} rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm ${cardMaxHeightClass}`}
                 data-sr-region="card"
-                // Clip vertical overflow to prevent staff notation from escaping the card boundaries.
-                // Horizontal overflow is controlled by the VexFlowStaffDisplay component based on phase.
-                // This wrapper must allow overflow to pass through via 'visible' so the inner
-                // component's overflow settings take effect properly.
                 style={{
-                  overflowX: "hidden", // Prevent card from showing horizontal scrollbar
+                  overflowX: "hidden",
                   overflowY: "hidden",
                 }}
               >
@@ -147,7 +144,7 @@ export function SightReadingLayout({
                     className="relative z-0 flex min-h-[120px] w-full flex-1 items-center justify-center px-2 py-1 sm:px-3 sm:py-2 landscape:py-1"
                     data-sr-region="staff"
                     style={{
-                      overflowX: "hidden", // Prevent staff region from showing horizontal scrollbar
+                      overflowX: "hidden",
                       overflowY: "hidden",
                     }}
                   >
@@ -156,6 +153,10 @@ export function SightReadingLayout({
                 </div>
               </div>
             </div>
+            {/* Feedback panel - inline below card, same max-w-5xl width */}
+            {isFeedbackPhase && feedbackPanel && (
+              <div className="w-full flex-shrink-0">{feedbackPanel}</div>
+            )}
           </div>
         </div>
       </div>

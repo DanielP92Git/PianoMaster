@@ -3335,7 +3335,6 @@ export function SightReadingGame() {
       <BackButton
         to={nodeId ? "/trail" : "/notes-master-mode"}
         name={nodeId ? "Trail" : "Notes Master"}
-        iconOnly={true}
         styling="text-white/80 hover:text-white p-2"
       />
 

@@ -6,7 +6,7 @@
  */
 
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -16,7 +16,6 @@ import {
   RefreshCw,
   Loader2,
   Crown,
-  ArrowLeft,
   AlertTriangle,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
@@ -24,6 +23,7 @@ import { useUser } from '../features/authentication/useUser';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { fetchSubscriptionDetail } from '../services/subscriptionService';
 import supabase from '../services/supabase';
+import BackButton from '../components/ui/BackButton';
 
 /**
  * Format amount from cents to locale-aware currency string.
@@ -170,13 +170,7 @@ export default function ParentPortalPage() {
     <div className="min-h-screen pb-8" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-lg mx-auto px-4 sm:px-6 py-6">
         {/* Back navigation */}
-        <Link
-          to="/settings"
-          className={`mb-6 inline-flex items-center gap-2 text-sm text-white/60 hover:text-white/90 transition-colors ${isRTL ? 'flex-row-reverse' : ''}`}
-        >
-          <ArrowLeft size={16} className={isRTL ? 'rotate-180' : ''} />
-          {t('parentPortal.back')}
-        </Link>
+        <BackButton to="/settings" name="Settings" styling="mb-6" />
 
         <h1 className="mb-6 text-2xl font-bold text-white">{t('parentPortal.title')}</h1>
 
