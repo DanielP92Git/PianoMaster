@@ -77,7 +77,7 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
             >
               <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 {/* Icon */}
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/15 bg-black/20">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white/20 bg-white/5 shadow-[0_0_12px_rgba(99,102,241,0.2)]">
                   {goal.completed ? (
                     <CheckCircle2 className="h-5 w-5 text-green-400" />
                   ) : iconConfig.type === 'svg' ? (
@@ -91,7 +91,7 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
                 <div className={`flex-1 ${isRTL ? 'text-right' : ''}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
-                      <div className={`text-sm font-semibold ${goal.completed ? 'text-green-300' : 'text-white/90'}`}>
+                      <div className={`text-sm font-bold ${goal.completed ? 'text-green-300' : 'text-white/90'}`}>
                         {goal.nameKey
                           ? t(`dashboard.dailyGoals.goals.${goal.nameKey}.name`)
                           : goal.name || 'Goal'}
@@ -108,7 +108,7 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
                   </div>
 
                   {/* Progress bar */}
-                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
                     <div
                       className={`h-full transition-all duration-500 ${
                         goal.completed
