@@ -121,7 +121,7 @@ export function SightReadingLayout({
           className={`flex h-full flex-col items-center px-2 sm:px-0 landscape:px-4 ${mainGap}`}
           style={{
             paddingBottom:
-              "calc(var(--sr-kb-height) + env(safe-area-inset-bottom))",
+              "calc(var(--sr-kb-height) + env(safe-area-inset-bottom) + 0.5rem)",
           }}
         >
           <div
@@ -181,13 +181,13 @@ export function SightReadingLayout({
           ) : null}
 
           <div
-            className="h-full w-full pb-[env(safe-area-inset-bottom)]"
+            className="flex h-full items-center justify-center px-2 sm:px-0 landscape:px-4 pb-[env(safe-area-inset-bottom)]"
             style={{
               paddingLeft: "env(safe-area-inset-left)",
               paddingRight: "env(safe-area-inset-right)",
             }}
           >
-            <div className="h-full w-full">{bottomDockContent}</div>
+            <div className="h-full w-full max-w-5xl">{bottomDockContent}</div>
           </div>
         </div>
       ) : null}
