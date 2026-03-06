@@ -1,5 +1,5 @@
 ---
-status: complete
+status: resolved
 phase: 23-kid-friendly-dashboard-redesign
 source: [23-01-SUMMARY.md, 23-02-SUMMARY.md]
 started: 2026-03-06T15:10:00Z
@@ -51,21 +51,30 @@ skipped: 0
 ## Gaps
 
 - truth: "Level badge shows 'Level X' text and matches reference design (avatar left, pill badge right)"
-  status: failed
+  status: resolved
   reason: "User reported: the level badge should show Level X instead, LV.X. and also it should match the design as the attached screenshot - avatar on left with pill badge extending right showing LEVEL 11"
   severity: major
   test: 1
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Dashboard.jsx lines 617 and 626 hardcode 'LV.{level}' text. Layout uses centered flex-col with absolute-positioned tiny badge on avatar corner, instead of horizontal avatar+pill design from reference."
+  artifacts:
+    - path: "src/components/layout/Dashboard.jsx"
+      issue: "Lines 617, 626: 'LV.{level}' text; Lines 581-638: centered flex-col hero layout instead of horizontal avatar+pill"
+  missing:
+    - "Change 'LV.{level}' to 'Level {level}' (or i18n equivalent) on lines 617 and 626"
+    - "Refactor hero layout from centered flex-col to horizontal: avatar circle on left, pill-shaped badge extending right with 'LEVEL X' text"
   debug_session: ""
 
 - truth: "All animations disabled when reduced motion is enabled, including progress bar fills and hero sparkles"
-  status: failed
+  status: resolved
   reason: "User reported: in stats component, the daily goal progress bar still animates the bar fill animation. also I guess the sparkles animation on hero section should be disabled"
   severity: minor
   test: 6
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "Fireflies.jsx (hero sparkles) uses framer-motion useReducedMotion() instead of app's useAccessibility() context. Amplitude is zeroed but animation loop still runs. UnifiedStatsCard progress bar was actually correct (line 153 already gates transition behind reducedMotion)."
+  artifacts:
+    - path: "src/components/ui/Fireflies.jsx"
+      issue: "Lines 32, 58-61, 87-118: uses useReducedMotion() from framer-motion (browser pref only), not useAccessibility(); animation loop runs even when amplitude is 0"
+    - path: "src/components/layout/Dashboard.jsx"
+      issue: "Line 579: renders Fireflies but doesn't pass reducedMotion prop"
+  missing:
+    - "In Fireflies.jsx: accept reducedMotion prop or use useAccessibility(); when true, render static dots (no animation) or don't render at all"
   debug_session: ""
