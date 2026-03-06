@@ -117,6 +117,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] **Phase 19: Notes Recognition Engagement** — Combo/streak counter with multiplier, speed bonus, lives system, on-fire mode, auto-grow note pool (completed 2026-03-05)
 - [ ] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants
 - [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
+- [ ] **Phase 22: Kid-Friendly Node Modal Redesign** — Visual overhaul of TrailNodeModal with centered category icon, 3D bubble note badges, prominent XP reward card, kid-appropriate layout
 
 ## Phase Details
 
@@ -395,8 +396,23 @@ Plans:
 | 19. Notes Recognition Engagement | v1.9 | 0/2 | Planned | - |
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
+| 22. Kid-Friendly Node Modal Redesign | v1.9 | 0/1 | Planned | - |
 
-**Total: 43 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
+**Total: 44 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
 
 ---
-*Last updated: 2026-03-04 — v1.9 Engagement & Retention roadmap created (Phases 17-21, 22 requirements mapped)*
+*Last updated: 2026-03-06 — Phase 22 plan created (1 plan, kid-friendly node modal redesign)*
+
+### Phase 22: Kid-Friendly Node Modal Redesign
+**Goal**: The TrailNodeModal transforms from a text-heavy information panel into a visually delightful, kid-friendly modal that centers a glowing category icon, shows skill notes as colorful 3D bubbles, displays XP reward prominently with a golden star, and uses spacious layout with gradient buttons — matching the design reference screenshot
+**Depends on**: Phase 16 (v1.8 complete; can run parallel with Phases 20-21)
+**Requirements**: UI-01, UI-02, UI-03, UI-04, UI-05
+**Success Criteria** (what must be TRUE):
+  1. The modal displays a large centered category icon (treble clef, bass clef, or rhythm) in a glowing circular badge at the top — not a small inline icon next to the title
+  2. Skill notes (C, D, E, etc.) render as colorful 3D bubble badges with sparkle decorations — each note has a distinct color matching its category gradient, not flat text pills
+  3. The XP reward section shows a large golden star icon next to the XP value in a dedicated card — visually prominent, not a small text line
+  4. The node title and subtitle are centered below the icon with clear hierarchy — title is large and bold, subtitle is smaller descriptive text
+  5. All existing functionality is preserved: exercise list, progress tracking, premium lock, boss unlock hints, prerequisites, RTL support, and navigation to games
+**Plans**: 1 plan
+Plans:
+- [ ] 22-01-PLAN.md -- Kid-friendly visual redesign with centered icon, 3D bubble badges, XP card, gradient buttons, human verification
