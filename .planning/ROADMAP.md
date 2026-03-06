@@ -118,7 +118,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [ ] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants
 - [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
 - [ ] **Phase 22: Kid-Friendly Node Modal Redesign** — Visual overhaul of TrailNodeModal with centered category icon, 3D bubble note badges, prominent XP reward card, kid-appropriate layout
-- [ ] **Phase 23: Kid-Friendly Dashboard Redesign** — Compact hero with centered avatar, PLAY NEXT gradient pill, unified stats card with XP ring, circular practice tools, simplified layout
+- [x] **Phase 23: Kid-Friendly Dashboard Redesign** — Compact hero with centered avatar, PLAY NEXT gradient pill, unified stats card with XP ring, circular practice tools, simplified layout (completed 2026-03-06)
 
 ## Phase Details
 
@@ -398,7 +398,7 @@ Plans:
 | 20. Extended Progression System | v1.9 | 0/? | Not started | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
 | 22. Kid-Friendly Node Modal Redesign | v1.9 | 0/1 | Planned | - |
-| 23. Kid-Friendly Dashboard Redesign | 2/3 | In Progress (gap closure) |  | - |
+| 23. Kid-Friendly Dashboard Redesign | 3/3 | Complete   | 2026-03-06 | - |
 
 **Total: 44 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
 
