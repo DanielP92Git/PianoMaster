@@ -582,8 +582,12 @@
   "dashboard": {
     "header": {
       "welcomeBack": "ברוכ/ה השב/ה",
+      "greeting": "היי, {{name}}!",
       "defaultName": "מוזיקאי/ת",
       "subtitle": "המסע המוזיקלי שלך נמשך"
+    },
+    "playNext": {
+      "label": "שחק הבא"
     },
     "continueButton": {
       "title": "המשך ללמוד",
@@ -704,15 +708,18 @@
       "cards": {
         "reminder": {
           "title": "הוסיפו תזכורת לתרגול",
-          "description": "שמרו על רצף אימונים קבוע"
+          "description": "שמרו על רצף אימונים קבוע",
+          "short": "תזכורת"
         },
         "recording": {
           "title": "הקליטו את האימון שלכם",
-          "description": "הקליטו לקבלת משוב מהמורה"
+          "description": "הקליטו לקבלת משוב מהמורה",
+          "short": "הקלטה"
         },
         "history": {
           "title": "צפו בתרגולים הקודמים שלכם",
-          "description": "עקבו אחר ההתקדמות שלכם"
+          "description": "עקבו אחר ההתקדמות שלכם",
+          "short": "היסטוריה"
         }
       }
     },

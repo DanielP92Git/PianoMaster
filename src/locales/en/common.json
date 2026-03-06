@@ -582,8 +582,12 @@
   "dashboard": {
     "header": {
       "welcomeBack": "Welcome back",
+      "greeting": "Hi, {{name}}!",
       "defaultName": "Musician",
       "subtitle": "Your musical journey continues"
+    },
+    "playNext": {
+      "label": "PLAY NEXT"
     },
     "continueButton": {
       "title": "Continue Learning",
@@ -704,15 +708,18 @@
       "cards": {
         "reminder": {
           "title": "Set a Practice Reminder",
-          "description": "Stay consistent with your practice"
+          "description": "Stay consistent with your practice",
+          "short": "Reminder"
         },
         "recording": {
           "title": "Record Practice Session",
-          "description": "Record your practice for feedback"
+          "description": "Record your practice for feedback",
+          "short": "Record"
         },
         "history": {
           "title": "View Practice History",
-          "description": "Review your progress and sessions"
+          "description": "Review your progress and sessions",
+          "short": "History"
         }
       }
     },
