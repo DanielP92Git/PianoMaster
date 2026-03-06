@@ -403,12 +403,22 @@ export function UnifiedGameSettings({
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.96 }}
             transition={soft}
           >
-            <div className="flex flex-1 items-center justify-center overflow-hidden p-4 landscape:p-3">
+            <div className={`flex flex-1 items-center justify-center overflow-hidden ${
+              currentStepConfig?.component === "NoteSelection"
+                ? "px-0 py-4 landscape:py-3"
+                : "p-4 landscape:p-3"
+            }`}>
               <div className="flex h-full w-full flex-col items-stretch gap-3 sm:flex-row">
                 {/* Settings Container */}
                 <div className="flex flex-1 items-center overflow-hidden">
-                  <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md landscape:p-2 sm:p-3">
-                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white landscape:mb-1 landscape:text-base sm:text-lg">
+                  <div className={`flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 backdrop-blur-md ${
+                    currentStepConfig?.component === "NoteSelection"
+                      ? "px-0 py-2.5 landscape:py-2 sm:py-3"
+                      : "p-2.5 landscape:p-2 sm:p-3"
+                  }`}>
+                    <h2 className={`mb-1.5 flex-shrink-0 text-center text-base font-bold text-white landscape:mb-1 landscape:text-base sm:text-lg ${
+                      currentStepConfig?.component === "NoteSelection" ? "px-2.5 landscape:px-2 sm:px-3" : ""
+                    }`}>
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
                         total: effectiveSteps.length,
@@ -416,7 +426,11 @@ export function UnifiedGameSettings({
                       })}
                     </h2>
                     <div
-                      className={`flex min-h-0 flex-1 flex-col overflow-x-hidden ${
+                      className={`flex min-h-0 flex-1 flex-col ${
+                        currentStepConfig?.component === "NoteSelection"
+                          ? "overflow-x-visible"
+                          : "overflow-x-hidden"
+                      } ${
                         needsScrolling
                           ? "settings-scrollbar overflow-y-auto"
                           : "overflow-y-visible"
@@ -565,11 +579,19 @@ export function UnifiedGameSettings({
   return (
     <>
       <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white supports-[height:100svh]:h-[100svh] landscape:items-center landscape:justify-center">
-        <div className="flex flex-1 items-center justify-center overflow-hidden p-2 landscape:p-3 sm:p-4">
+        <div className={`flex flex-1 items-center justify-center overflow-hidden ${
+          currentStepConfig?.component === "NoteSelection"
+            ? "px-0 py-2 landscape:py-3 sm:py-4"
+            : "p-2 landscape:p-3 sm:p-4"
+        }`}>
           <div className="flex h-full min-h-0 w-full max-w-5xl flex-col items-stretch gap-3 landscape:max-w-6xl sm:flex-row">
             {/* Settings Container - Full width on mobile */}
             <div className="flex min-h-0 flex-1 items-center overflow-hidden">
-              <div className="flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 p-2.5 backdrop-blur-md landscape:p-2 sm:p-3">
+              <div className={`flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 backdrop-blur-md ${
+                currentStepConfig?.component === "NoteSelection"
+                  ? "px-0 py-2.5 landscape:py-2 sm:py-3"
+                  : "p-2.5 landscape:p-2 sm:p-3"
+              }`}>
                 {/* Desktop: Back button, title, and NoteSelection controls in one line */}
                 {currentStepConfig?.component === "NoteSelection" ? (
                   <NoteSelectionHeader
@@ -610,7 +632,11 @@ export function UnifiedGameSettings({
                   </>
                 )}
                 <div
-                  className={`flex min-h-0 flex-1 flex-col overflow-x-hidden ${
+                  className={`flex min-h-0 flex-1 flex-col ${
+                    currentStepConfig?.component === "NoteSelection"
+                      ? "overflow-x-visible"
+                      : "overflow-x-hidden"
+                  } ${
                     needsScrolling
                       ? "settings-scrollbar overflow-y-auto"
                       : "overflow-y-visible"
@@ -620,7 +646,7 @@ export function UnifiedGameSettings({
                 </div>
 
                 {/* Mobile Navigation Buttons (inside the main card) */}
-                <div className="mt-3 flex max-w-2xl mx-auto w-full flex-shrink-0 items-center gap-2 sm:hidden sm:landscape:flex lg:landscape:hidden landscape:mt-1">
+                <div className="mt-3 flex max-w-2xl mx-auto w-full flex-shrink-0 items-center gap-2 px-2.5 sm:hidden sm:landscape:flex sm:px-3 lg:landscape:hidden landscape:mt-1">
                   {currentStep < effectiveSteps.length ? (
                     <button
                       onClick={handleNextStep}
@@ -866,20 +892,14 @@ function NoteSelectionHeader({
 
   return (
     <>
-      {/* "Desktop-like" (>=sm): wrap-aware header so narrow landscape screens don't get cramped */}
-      <div className="mb-1.5 hidden flex-shrink-0 flex-wrap items-center gap-2 sm:flex">
-        {/* Spacer for alignment */}
-        <div className="flex flex-shrink-0 max-[720px]:basis-full max-[720px]:justify-end">
-          <div className="w-[110px]" />
-        </div>
-
-        {/* Title: centered; on narrow widths it becomes its own line */}
-        <h2 className="min-w-0 flex-1 text-center text-sm font-bold text-white max-[720px]:order-2 max-[720px]:basis-full sm:text-base">
+      {/* "Desktop-like" (>=sm): title + controls row */}
+      <div className="mb-1.5 hidden flex-shrink-0 flex-col gap-1 px-2.5 sm:flex sm:px-3">
+        <h2 className="min-w-0 text-center text-sm font-bold text-white sm:text-base">
           {title}
         </h2>
 
-        {/* Controls: on narrow widths, move under the title and center them */}
-        <div className="flex flex-shrink-0 items-center gap-2 max-[720px]:order-3 max-[720px]:basis-full max-[720px]:justify-center">
+        {/* Controls: centered below title */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
           {/* Accidentals - symbols only */}
           <button
             type="button"
@@ -954,7 +974,7 @@ function NoteSelectionHeader({
       </div>
 
       {/* Mobile: Title and Controls */}
-      <div className="mb-1.5 flex flex-shrink-0 flex-col gap-1 sm:hidden">
+      <div className="mb-1.5 flex flex-shrink-0 flex-col gap-1 px-2.5 sm:hidden">
         <h2 className="text-center text-sm font-bold text-white sm:text-base">
           {title}
         </h2>
@@ -1392,7 +1412,7 @@ function NoteSelection({
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
       {/* Header (ultra-compact for mobile to maximize note card space) - hidden when controls are in title */}
       {!hideHeader && (
-        <div className="mb-1.5 flex flex-shrink-0 flex-col gap-1">
+        <div className="mb-1.5 flex flex-shrink-0 flex-col gap-1 px-2.5 sm:px-3">
           {/* Single row: Selected count + Controls */}
           <div className="flex flex-wrap items-center justify-between gap-1.5 text-[10px] text-white/80 sm:text-xs">
             {/* Selected count on left */}
@@ -1499,13 +1519,13 @@ function NoteSelection({
       )}
 
       {/* Scrollable note cards container */}
-      <div className="min-h-0 flex-1 overflow-hidden rounded-xl border border-white/20 bg-white/5 backdrop-blur-sm">
+      <div className="min-h-0 flex-1 overflow-x-visible overflow-y-hidden">
         {(() => {
           const isHebrew = i18n.language === "he";
 
           const renderRow = (rowNotes, { rowKey, rowRef }) => (
             <div
-              className={`min-h-0 flex-1 overflow-hidden ${
+              className={`min-h-0 flex-1 overflow-x-visible overflow-y-hidden ${
                 clefFilter ? "note-selection-split-row" : ""
               }`}
             >
@@ -1543,7 +1563,7 @@ function NoteSelection({
                     <button
                       key={`${rowKey}-${noteId}-${idx}`}
                       onClick={() => handleNoteToggle(noteId)}
-                      className={`${isBothClefsLayout ? "note-card-two-row" : "note-card-responsive"} relative flex snap-center flex-col items-center justify-between overflow-hidden rounded-xl transition-all duration-200 lg:rounded-2xl ${
+                      className={`${isBothClefsLayout ? "note-card-two-row" : "note-card-responsive"} relative flex flex-shrink-0 snap-center flex-col items-center justify-between overflow-hidden rounded-xl transition-all duration-200 lg:rounded-2xl ${
                         isSelected
                           ? "bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] ring-2 ring-white/50"
                           : "bg-white/10 text-white/90 hover:bg-white/20 hover:ring-1 hover:ring-white/30"
@@ -1601,6 +1621,8 @@ function NoteSelection({
                     </button>
                   );
                 })}
+                {/* End spacer to preserve scroll padding (browsers collapse flex container end-padding) */}
+                <div className="flex-shrink-0 w-1" aria-hidden="true" />
               </div>
             </div>
           );

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { getStudentAssignments } from "../services/apiStudent";
-import { useNavigate } from "react-router-dom";
+import BackButton from "../components/ui/BackButton";
+
 import {
   FaCalendarAlt as CalendarIcon,
   FaClock as ClockIcon,
   FaCheckCircle as CheckCircleIcon,
   FaExclamationTriangle as ExclamationCircleIcon,
-  FaArrowLeft as ArrowLeftIcon,
   FaFilter as FilterIcon,
   FaSort as SortIcon,
 } from "react-icons/fa";
@@ -16,7 +16,6 @@ const StudentAssignments = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all"); // all, pending, completed, overdue
   const [sortBy, setSortBy] = useState("dueDate"); // dueDate, title, status
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAssignments = async () => {
@@ -167,13 +166,7 @@ const StudentAssignments = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-white/80 hover:text-white mb-4 transition-colors"
-          >
-            <ArrowLeftIcon className="w-4 h-4" />
-            Back to Dashboard
-          </button>
+          <BackButton to="/" name="Dashboard" styling="mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">My Assignments</h1>
           <p className="text-white/80">
             View and manage all your assignments in one place

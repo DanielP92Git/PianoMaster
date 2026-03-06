@@ -31,7 +31,11 @@ import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { translateNodeName } from "../../utils/translateNodeName";
 import { useSubscription } from "../../contexts/SubscriptionContext";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
-import { getStudentXP, getLevelProgress, XP_LEVELS } from "../../utils/xpSystem";
+import {
+  getStudentXP,
+  getLevelProgress,
+  XP_LEVELS,
+} from "../../utils/xpSystem";
 import { motion } from "framer-motion";
 
 function Dashboard() {
@@ -76,10 +80,7 @@ function Dashboard() {
   }, [isStudent]);
 
   // Fetch user streak (only for students)
-  const {
-    data: currentStreak = 0,
-    isLoading: streakLoading,
-  } = useQuery({
+  const { data: currentStreak = 0, isLoading: streakLoading } = useQuery({
     queryKey: ["streak", user?.id],
     queryFn: () => streakService.getStreak(),
     enabled: !!user?.id && isStudent, // Only fetch for students
@@ -147,11 +148,19 @@ function Dashboard() {
   });
 
   // Fetch daily goals with progress (only for students)
-  const { data: dailyGoals = [], isLoading: goalsLoading, error: goalsError } = useQuery({
-    queryKey: ["daily-goals", user?.id, (() => {
-      const today = new Date();
-      return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    })()],
+  const {
+    data: dailyGoals = [],
+    isLoading: goalsLoading,
+    error: goalsError,
+  } = useQuery({
+    queryKey: [
+      "daily-goals",
+      user?.id,
+      (() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      })(),
+    ],
     queryFn: async () => {
       if (!user?.id || !isStudent) {
         return [];
@@ -166,13 +175,13 @@ function Dashboard() {
   // Log goals error if any
   useEffect(() => {
     if (goalsError) {
-      console.error('Daily goals query error:', goalsError);
+      console.error("Daily goals query error:", goalsError);
     }
   }, [goalsError]);
 
   // Fetch student XP data (previously inside XPProgressCard)
   const { data: xpData, isLoading: xpLoading } = useQuery({
-    queryKey: ['student-xp', user?.id],
+    queryKey: ["student-xp", user?.id],
     queryFn: () => getStudentXP(user.id),
     enabled: !!user?.id && isStudent,
     staleTime: 0,
@@ -183,8 +192,10 @@ function Dashboard() {
   const level = xpData?.levelData?.level || 1;
   const totalXP = xpData?.totalXP || 0;
   const progress = xpData?.progress || getLevelProgress(0);
-  const rawLevelTitle = XP_LEVELS[level - 1]?.title || 'Beginner';
-  const levelTitle = t('xpLevels.' + rawLevelTitle, { defaultValue: rawLevelTitle });
+  const rawLevelTitle = XP_LEVELS[level - 1]?.title || "Beginner";
+  const levelTitle = t("xpLevels." + rawLevelTitle, {
+    defaultValue: rawLevelTitle,
+  });
   const isMaxLevel = level >= 15;
 
   // Compute XP range values for UnifiedStatsCard
@@ -515,7 +526,9 @@ function Dashboard() {
       bgColor: "bg-amber-500/15",
       glowShadow: "shadow-[0_0_20px_rgba(245,158,11,0.25)]",
       icon: <Bell className="h-7 w-7 text-amber-300" />,
-      label: t("dashboard.practiceTools.cards.reminder.short", { defaultValue: "Reminder" }),
+      label: t("dashboard.practiceTools.cards.reminder.short", {
+        defaultValue: "Reminder",
+      }),
       hasIndicator: !!activeReminder,
     },
     {
@@ -526,7 +539,9 @@ function Dashboard() {
       bgColor: "bg-emerald-500/15",
       glowShadow: "shadow-[0_0_20px_rgba(16,185,129,0.25)]",
       icon: <Mic className="h-7 w-7 text-emerald-300" />,
-      label: t("dashboard.practiceTools.cards.recording.short", { defaultValue: "Record" }),
+      label: t("dashboard.practiceTools.cards.recording.short", {
+        defaultValue: "Record",
+      }),
       hasIndicator: false,
     },
     {
@@ -537,7 +552,9 @@ function Dashboard() {
       bgColor: "bg-blue-500/15",
       glowShadow: "shadow-[0_0_20px_rgba(59,130,246,0.25)]",
       icon: <Piano className="h-7 w-7 text-blue-300" />,
-      label: t("dashboard.practiceTools.cards.history.short", { defaultValue: "History" }),
+      label: t("dashboard.practiceTools.cards.history.short", {
+        defaultValue: "History",
+      }),
       hasIndicator: false,
     },
   ];
@@ -547,17 +564,14 @@ function Dashboard() {
   return (
     <div className="min-h-screen pb-4" dir={isRTL ? "rtl" : "ltr"}>
       {/* COMPACT HERO */}
-      <header className="group relative h-[220px] overflow-hidden shadow-2xl md:h-[260px] rounded-b-[3rem]">
+      <header className="group relative h-[220px] overflow-hidden rounded-b-[3rem] shadow-2xl md:h-[260px]">
         <picture className="absolute inset-0">
           <source
             media="(min-width: 1024px)"
             type="image/webp"
             srcSet="/images/desktop-dashboard-hero.webp"
           />
-          <source
-            type="image/webp"
-            srcSet="/images/dashboard-hero.webp"
-          />
+          <source type="image/webp" srcSet="/images/dashboard-hero.webp" />
           <source
             media="(min-width: 1024px)"
             srcSet="/images/desktop-dashboard-hero.png"
@@ -588,11 +602,13 @@ function Dashboard() {
           {isProfileLoading ? (
             <div className="mb-2 h-16 w-16 animate-pulse rounded-full bg-white/10" />
           ) : (
-            <div className={`mb-2 flex items-center ${isRTL ? "flex-row-reverse" : "flex-row"}`}>
-              {/* Avatar */}
+            <div
+              className={`mb-2 flex items-center  ${isRTL ? "flex-row-reverse" : "flex-row"}`}
+            >
+              {/* Avatar (z-10, overlaps the pill) */}
               <Link to="/avatars" className="relative z-10 shrink-0">
                 {avatarUrl ? (
-                  <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-indigo-400/60 bg-white/10">
+                  <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-sky-300/50 shadow-[0_2px_12px_rgba(56,189,248,0.4)]">
                     <img
                       className="h-full w-full object-cover"
                       src={avatarUrl}
@@ -616,19 +632,23 @@ function Dashboard() {
                     })}
                   </div>
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-indigo-400/60 bg-white/10">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/30 bg-slate-800">
                     <span className="text-2xl">🎹</span>
                   </div>
                 )}
               </Link>
-              {/* Level pill */}
+              {/* Level pill (tucks behind avatar with negative margin) */}
               <div
-                className={`flex h-8 items-center rounded-full border border-indigo-400/40 bg-indigo-600/80 backdrop-blur-sm px-4 py-1 ${
-                  isRTL ? "-mr-3" : "-ml-3"
-                }`}
+                className={`flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2 shadow-[0_2px_12px_rgba(56,189,248,0.4)] -ml-7`}
+                style={{
+                  background: "linear-gradient(to right, rgba(30,41,59,0.85), rgba(30,41,59,0.85)) padding-box, linear-gradient(to right, #38bdf8, #f97316) border-box",
+                }}
               >
-                <span className="text-xs font-bold uppercase tracking-wider text-white">
-                  {t("dashboard.header.level", { level, defaultValue: `Level ${level}` })}
+                <span className="ml-3 text-xs font-bold uppercase tracking-wider text-white">
+                  {t("dashboard.header.level", {
+                    level,
+                    defaultValue: `Level ${level}`,
+                  })}
                 </span>
               </div>
             </div>
@@ -713,7 +733,14 @@ function Dashboard() {
 
                 const toolWrapper = (children) => {
                   if (reducedMotion) {
-                    return <div key={tool.key} className="flex flex-col items-center gap-2">{children}</div>;
+                    return (
+                      <div
+                        key={tool.key}
+                        className="flex flex-col items-center gap-2"
+                      >
+                        {children}
+                      </div>
+                    );
                   }
                   return (
                     <motion.div
@@ -730,14 +757,20 @@ function Dashboard() {
 
                 if (tool.element === "link") {
                   return toolWrapper(
-                    <Link to={tool.to} className="group flex flex-col items-center gap-2">
+                    <Link
+                      to={tool.to}
+                      className="group flex flex-col items-center gap-2"
+                    >
                       {innerContent}
                     </Link>
                   );
                 }
 
                 return toolWrapper(
-                  <button onClick={tool.onClick} className="group flex flex-col items-center gap-2">
+                  <button
+                    onClick={tool.onClick}
+                    className="group flex flex-col items-center gap-2"
+                  >
                     {innerContent}
                   </button>
                 );

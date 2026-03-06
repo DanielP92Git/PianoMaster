@@ -40,16 +40,18 @@ This is a **piano learning PWA** built with React 18 + Vite. It features multipl
 src/
 ├── components/games/          # Game implementations
 │   ├── sight-reading-game/    # VexFlow-based notation reading
-│   ├── notes-master-games/    # Memory & recognition games
+│   ├── notes-master-games/    # Memory & recognition games (NotesRecognition, MemoryGame)
 │   ├── rhythm-games/          # Rhythm/metronome training
-│   └── shared/                # UnifiedGameSettings
+│   └── shared/                # UnifiedGameSettings, AudioInterruptedOverlay
+├── components/streak/         # StreakDisplay with freeze/grace/comeback UI
+├── components/orientation/    # RotatePromptOverlay for mobile landscape
 ├── components/settings/       # Settings components (notifications, parent gate)
 ├── features/                  # Feature hooks (auth, games, userData)
-├── contexts/                  # Context providers
-├── hooks/                     # Custom hooks (audio, pitch detection, mic presets)
+├── contexts/                  # Context providers (Accessibility, Settings, AudioContext, SessionTimeout)
+├── hooks/                     # Custom hooks (audio, pitch detection, mic presets, landscape lock)
 ├── services/                  # API calls and business logic
 ├── pages/                     # Routed page components
-├── utils/                     # Shared utilities (isIOSSafari, xpSystem, etc.)
+├── utils/                     # Shared utilities (isIOSSafari, xpSystem, pwaDetection, useMotionTokens)
 ├── config/                    # App config (subscriptionConfig)
 └── locales/                   # i18n translation files (en, he)
 supabase/
@@ -208,15 +210,20 @@ A Duolingo-style skill progression system for 8-year-old learners with 93 nodes 
 ### Key Files
 
 #### Data Layer
+- `src/data/constants.js` - Shared trail constants (no dependencies, avoids circular imports)
+  - `NODE_CATEGORIES` — `TREBLE_CLEF`, `BASS_CLEF`, `RHYTHM`, `BOSS`
+  - `EXERCISE_TYPES` — `NOTE_RECOGNITION`, `SIGHT_READING`, `RHYTHM`, `MEMORY_GAME`, `BOSS_CHALLENGE`
 - `src/data/skillTrail.js` - Main export for all node definitions, categories, prerequisites
+  - Re-exports `NODE_CATEGORIES` and `EXERCISE_TYPES` from `constants.js`
   - `SKILL_NODES` array (93 nodes) imported from `expandedNodes.js`
   - `getNodeById()`, `getNodesByCategory()`, `getBossNodes()`
+  - `getNextNodeInCategory(nodeId)` — next non-boss node in same category (used by auto-grow)
   - `isNodeUnlocked()`, `getUnlockedNodes()`, `getAllNodes()`
-- `src/data/expandedNodes.js` - Aggregates all unit files into single export
-- `src/data/units/` - Individual unit definition files:
-  - `trebleUnit1.js` through `trebleUnit4.js` (23 treble nodes total)
-  - `bassUnit1.js` through `bassUnit3.js` (22 bass nodes total)
-  - `rhythmUnit1.js` through `rhythmUnit6.js` (36 rhythm nodes total)
+- `src/data/expandedNodes.js` - Aggregates all redesigned unit files into single export
+- `src/data/units/` - Redesigned unit definition files (educational psychology-driven):
+  - `trebleUnit1Redesigned.js` through `trebleUnit3Redesigned.js` (23 treble nodes total)
+  - `bassUnit1Redesigned.js` through `bassUnit3Redesigned.js` (22 bass nodes total)
+  - `rhythmUnit1Redesigned.js` through `rhythmUnit6Redesigned.js` (36 rhythm nodes total)
   - Each unit file exports nodes with boss nodes marked for completion milestones
 
 #### Config
@@ -260,6 +267,8 @@ A Duolingo-style skill progression system for 8-year-old learners with 93 nodes 
 - `src/components/games/VictoryScreen.jsx` - Saves star rating, awards XP on trail completion
 - `src/components/layout/Dashboard.jsx` - "Continue Learning" button + Daily Goals card
 - `src/components/games/notes-master-games/NotesRecognitionGame.jsx` - Accepts `nodeId` prop for trail integration
+- `src/components/games/notes-master-games/MemoryGame.jsx` - Note-pair matching game, accepts trail state
+- `src/components/games/GameOverScreen.jsx` - Game over screen with lives/time/score variants
 
 ### Database Tables
 
@@ -390,12 +399,13 @@ Migration file: `supabase/migrations/20260125000001_add_exercise_progress.sql`
 
 #### Exercise Types
 
-Defined in `src/data/skillTrail.js`:
+Defined in `src/data/constants.js` (re-exported by `skillTrail.js`):
 ```javascript
 export const EXERCISE_TYPES = {
   NOTE_RECOGNITION: 'note_recognition',
   SIGHT_READING: 'sight_reading',
   RHYTHM: 'rhythm',
+  MEMORY_GAME: 'memory_game',
   BOSS_CHALLENGE: 'boss_challenge'
 };
 ```
@@ -422,10 +432,11 @@ When navigating to a game from the trail, pass this state via `location.state`:
 
 #### Game Component Integration
 
-All three game components accept trail state and auto-start:
+All four game components accept trail state and auto-start:
 - `NotesRecognitionGame.jsx` - Uses `handleNextExercise` callback
 - `SightReadingGame.jsx` - Uses `handleNextTrailExercise` callback (renamed to avoid conflict)
 - `MetronomeTrainer.jsx` - Uses `handleNextExercise` callback
+- `MemoryGame.jsx` - Uses `handleNextExercise` callback (exercise type: `memory_game`)
 
 Auto-start pattern:
 ```javascript
@@ -534,6 +545,128 @@ RLS: students can SELECT/INSERT/UPDATE/DELETE their own row only. Edge Function 
 | `cancel-subscription` | Cancels subscription via Lemon Squeezy API |
 | `send-daily-push` | Sends daily practice reminder push notifications |
 
+## Streak Protection System (Added Mar 2026)
+
+Prevents frustrating streak loss with grace windows, freezes, weekend pass, and comeback bonuses.
+
+### Architecture
+
+- **Grace Window**: 36 hours from last practice (not midnight cutoff) before streak breaks
+- **Streak Freezes**: Inventory of 0-3 freezes, earned every 7-day milestone, auto-consumed when grace expires
+- **Weekend Pass**: Parent-gated toggle in Settings; skips Friday and Saturday from streak evaluation (Israeli Shabbat pattern)
+- **Comeback Bonus**: When streak breaks, 2x XP multiplier for 3 days to encourage return
+
+### Key Files
+
+| File | Role |
+|---|---|
+| `src/services/streakService.js` | Full streak protection logic (grace, freeze, weekend pass, comeback) |
+| `src/components/streak/StreakDisplay.jsx` | Streak UI with freeze/grace/comeback states |
+| `src/pages/AppSettings.jsx` | Weekend pass toggle with parent gate |
+| `src/components/layout/Dashboard.jsx` | Comeback banner when bonus is active |
+| `src/components/games/VictoryScreen.jsx` | Comeback multiplier applied to XP awards |
+| `supabase/migrations/20260305000001_streak_protection.sql` | DB schema for streak protection columns |
+
+### Service API (`streakService`)
+
+- `getStreak()` — Returns just the streak count number (backward-compatible)
+- `getStreakState()` — Returns full state object for UI (React Query key: `["streak-state", userId]`)
+  - `{ streakCount, freezeCount, weekendPassEnabled, inGraceWindow, lastFreezeConsumedAt, comebackBonus }`
+- `recordPractice()` — Updates streak on practice completion (called from VictoryScreen)
+- `toggleWeekendPass(enabled)` — Parent-gated weekend pass toggle
+
+### Database Schema (current_streak table additions)
+
+```sql
+streak_freezes INTEGER NOT NULL DEFAULT 0,          -- 0-3 freeze inventory
+weekend_pass_enabled BOOLEAN NOT NULL DEFAULT false, -- parent-gated
+last_freeze_earned_at TIMESTAMPTZ,                   -- prevents double-earn
+comeback_bonus_start TIMESTAMPTZ,                    -- NULL when no bonus
+comeback_bonus_expires TIMESTAMPTZ,                  -- NULL when no bonus
+last_freeze_consumed_at TIMESTAMPTZ                  -- for one-time toast UI
+-- CHECK constraint: streak_freezes BETWEEN 0 AND 3
+```
+
+### Constants
+
+- `GRACE_WINDOW_HOURS = 36`
+- `MAX_FREEZE_COUNT = 3`
+- `FREEZE_EARN_INTERVAL = 7` (every 7-day streak milestone)
+- `COMEBACK_BONUS_DAYS = 3`
+
+## Notes Recognition Engagement (Added Mar 2026)
+
+Arcade-style engagement mechanics for `NotesRecognitionGame.jsx` to keep 8-year-olds motivated.
+
+### Combo System
+- Correct answers increment combo counter
+- Combo tiers with visual feedback (color/size escalation)
+- Wrong answer resets combo to 0 with shake animation
+
+### Lives System
+- 3 lives per session (`INITIAL_LIVES = 3`)
+- Wrong answer deducts a life
+- 0 lives triggers `GameOverScreen` with lives-lost variant
+- Hearts displayed in HUD
+
+### On-Fire Mode
+- Triggered at combo threshold (consecutive correct answers)
+- Visual: fire icon, glow effect on game area
+- Fire sound effect plays on activation
+- Respects app-wide reduced-motion setting
+
+### Auto-Grow Note Pool
+- During trail mode, combo milestones expand the note pool
+- Uses `getNextNodeInCategory(nodeId)` to find pedagogically-appropriate next notes
+- New notes trigger a banner notification ("New note unlocked!")
+- Growth interval tied to combo count (every N correct in a row)
+
+### GameOverScreen (`src/components/games/GameOverScreen.jsx`)
+- Three variants: `livesLost`, `timeRanOut`, `scoreTooLow`
+- Shows sad Beethoven animation, final score, reason message
+- "Try Again" and "Exit" buttons
+- Fully i18n-ized
+
+## Session Timeout (Added 2026)
+
+Automatic inactivity logout for child safety on shared devices.
+
+### Key Files
+- `src/contexts/SessionTimeoutContext.jsx` — Provider with `pauseTimer`/`resumeTimer` for games
+- `src/hooks/useInactivityTimeout.js` — Core timeout logic with role-based durations
+- `src/components/ui/InactivityWarningModal.jsx` — Warning shown 5 minutes before logout
+
+### Usage
+Games call `pauseTimer()` during active gameplay and `resumeTimer()` when idle. Stores `logoutReason: 'inactivity'` in sessionStorage for login page messaging.
+
+## Orientation & Landscape Lock
+
+### Key Files
+- `src/hooks/useLandscapeLock.js` — Android PWA: enters fullscreen + locks to landscape; no-op on iOS/desktop
+- `src/hooks/useRotatePrompt.js` — Shows rotate-to-landscape prompt on mobile portrait; permanent dismiss via localStorage
+- `src/components/orientation/RotatePromptOverlay.jsx` — Visual overlay for rotate prompt
+- `src/utils/pwaDetection.js` — `isAndroidDevice()`, `isInStandaloneMode()` platform detection
+
+All game components use both hooks. Android PWA gets API-based lock; iOS/web get a dismissible prompt overlay.
+
+## Audio Infrastructure
+
+### AudioContextProvider (`src/contexts/AudioContextProvider.jsx`)
+- Central `AudioContext` management for the entire app
+- Provides `useAudioContext()` hook
+- iOS Safari interruption detection (phone calls, Siri, etc.)
+- Used by all game components, pitch detection, and mic input
+
+### `useMicNoteInput` Hook (`src/hooks/useMicNoteInput.js`)
+- Combines pitch detection with note-on/note-off state machine
+- Used by `NotesRecognitionGame` for microphone-based note input
+- Integrates with `AudioContextProvider` for shared audio context
+
+### `useMotionTokens` Hook (`src/utils/useMotionTokens.js`)
+- Provides reduced-motion-aware animation tokens for framer-motion
+- Returns `{ reduce, snappy, soft, fade }` transition presets
+- `reduce` = true when user prefers reduced motion → all transitions become `{ duration: 0 }`
+
 ## iOS Safari Hardening (Added Feb 2026)
 
 ### Shared Utility: `src/utils/isIOSSafari.js`
@@ -550,9 +683,9 @@ Full-screen overlay for microphone errors. Props: `errorType` (`"permission_deni
 - On other platforms: shows generic browser hint
 - i18n keys under `micError.*`
 
-### AudioInterruptedOverlay
+### AudioInterruptedOverlay (`src/components/games/shared/AudioInterruptedOverlay.jsx`)
 
-Detects iOS Safari audio context interruptions (phone calls, Siri, etc.) and shows recovery overlay.
+Detects iOS Safari audio context interruptions (phone calls, Siri, etc.) and shows recovery overlay. Used by all three game components.
 
 ## Pitch Detection & Timing
 

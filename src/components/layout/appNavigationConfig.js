@@ -2,7 +2,7 @@ import {
   GraduationCap,
   Home,
   Mic,
-  Music2,
+  Gamepad2,
   Settings,
   Trophy,
 } from "lucide-react";
@@ -29,7 +29,7 @@ export const APP_NAV_ITEMS = {
     {
       id: "practiceGames",
       to: "/practice-modes",
-      icon: Music2,
+      icon: Gamepad2,
       labelKey: "navigation.links.practiceGames",
       theme: "indigo",
     },

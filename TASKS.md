@@ -4,7 +4,7 @@
 - [X] Fix dashbaord direction to portrait
 - [X] Apply auto turn to landscape when entering a game
 - [X] Refactor note selection screen UI for larger notes images
-- [ ] Fix "No Cheating" message threshold too high (appearing when user plays eighths ot sixteenth notes)
+- [X] Fix "No Cheating" message threshold too high (appearing when user plays eighths ot sixteenth notes)
 - [X] Fix mic input detection for Sight Reading Game (v1.7 Phase 07)
 - [X] Add microphone input detection for Note Recognition Game (v1.7 Phase 07-04)
 

@@ -1027,6 +1027,8 @@
     "freezeCount_one": "{{count}} shield left",
     "freezeCount_other": "{{count}} shields left",
     "freezeUsedYesterday": "Shield used",
+    "shield": "shield",
+    "shields": "shields",
     "graceWarning": "Practice today to keep your streak!",
     "comebackBanner": "2x XP Active! {{days}} day(s) left",
     "comebackDescription": "Complete exercises to earn double XP",

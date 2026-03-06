@@ -12,6 +12,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
+import GoldStar from '../ui/GoldStar';
 import { getNodeById } from '../../data/skillTrail';
 import { getExerciseProgress, getNextExerciseIndex } from '../../services/skillProgressService';
 import { useUser } from '../../features/authentication/useUser';
@@ -75,6 +76,33 @@ const BUBBLE_COLORS = {
     { bg: 'radial-gradient(circle at 35% 35%, #fcd34d, #eab308 60%, #a16207)', shadow: '234,179,8' },
     { bg: 'radial-gradient(circle at 35% 35%, #fed7aa, #f97316 60%, #c2410c)', shadow: '249,115,22' },
   ],
+};
+
+/**
+ * Category-specific icon badge styles for the modal header.
+ * Dark circle with luminous colored ring + white icon — matches design reference.
+ */
+const MODAL_ICON_STYLES = {
+  treble_clef: {
+    background: 'radial-gradient(circle at 40% 38%, #1e3a6e 0%, #0f172a 70%)',
+    ringColor: 'rgba(56, 152, 255, 0.85)',
+    glowColor: 'rgba(59, 130, 246, 0.45)',
+  },
+  bass_clef: {
+    background: 'radial-gradient(circle at 40% 38%, #3b1e6e 0%, #1a0a2e 70%)',
+    ringColor: 'rgba(168, 85, 247, 0.85)',
+    glowColor: 'rgba(168, 85, 247, 0.45)',
+  },
+  rhythm: {
+    background: 'radial-gradient(circle at 40% 38%, #0f3d2e 0%, #052e1a 70%)',
+    ringColor: 'rgba(16, 185, 129, 0.85)',
+    glowColor: 'rgba(16, 185, 129, 0.45)',
+  },
+  boss: {
+    background: 'radial-gradient(circle at 40% 38%, #5c3d0e 0%, #2a1a04 70%)',
+    ringColor: 'rgba(234, 179, 8, 0.85)',
+    glowColor: 'rgba(234, 179, 8, 0.45)',
+  },
 };
 
 const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, prerequisites = [], onClose }) => {
@@ -224,13 +252,39 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         <div className={`h-1 w-full rounded-t-2xl ${headerColors.bg}`} />
 
         <div className="p-5 sm:p-7">
-          {/* Large centered category icon */}
+          {/* Large centered category icon — dark circle with luminous ring */}
           <div className="flex justify-center mb-4">
-            <div
-              className={`flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full ${headerColors.bg} ${headerColors.glow} ring-4 ring-white/15`}
-            >
-              <NodeIcon size={36} className={headerColors.text} strokeWidth={2} />
-            </div>
+            {(() => {
+              const iconCat = isPremiumLocked ? null : (node.isBoss ? 'boss' : node.category);
+              const mStyle = iconCat && MODAL_ICON_STYLES[iconCat];
+              if (mStyle) {
+                return (
+                  <div
+                    className="flex h-18 w-18 sm:h-22 sm:w-22 items-center justify-center rounded-full"
+                    style={{
+                      background: mStyle.background,
+                      boxShadow: [
+                        `0 0 0 3px ${mStyle.ringColor}`,
+                        `0 0 18px ${mStyle.glowColor}`,
+                        `inset 0 0 12px rgba(0,0,0,0.4)`,
+                      ].join(', '),
+                      width: 80,
+                      height: 80,
+                    }}
+                  >
+                    <NodeIcon size={40} color="white" strokeWidth={2} />
+                  </div>
+                );
+              }
+              // Fallback for premium/locked/unknown — original behavior
+              return (
+                <div
+                  className={`flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full ${headerColors.bg} ${headerColors.glow} ring-4 ring-white/15`}
+                >
+                  <NodeIcon size={36} className={headerColors.text} strokeWidth={2} />
+                </div>
+              );
+            })()}
           </div>
 
           {/* Centered title and subtitle */}
@@ -287,23 +341,21 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
             </div>
           </div>
 
-          {/* Progress section (if unlocked) */}
-          {isUnlocked && (
+          {/* Progress section (if unlocked and has been played) */}
+          {isUnlocked && !isLoading && (stars > 0 || exercisesCompleted > 0) && (
             <div className="mb-4 rounded-xl bg-white/5 border border-white/10 p-3 sm:p-4">
               <h3 className="mb-2 text-sm font-semibold text-white/80 text-center">{t('modal.yourProgress')}</h3>
 
               {/* Node Stars (only show if all exercises complete) */}
               {allExercisesComplete && (
-                <div className="mb-2 flex items-center justify-center gap-1">
+                <div className="mb-2 flex items-center justify-center gap-1.5">
                   {[1, 2, 3].map((starNum) => (
-                    <span
+                    <GoldStar
                       key={starNum}
-                      className={`text-xl sm:text-2xl drop-shadow-lg ${
-                        starNum <= stars ? 'text-yellow-400' : 'text-gray-600'
-                      }`}
-                    >
-                      &#11088;
-                    </span>
+                      size={28}
+                      filled={starNum <= stars}
+                      glow={starNum <= stars}
+                    />
                   ))}
                 </div>
               )}
@@ -378,12 +430,11 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
                           <>
                             <div className="flex items-center gap-0.5">
                               {[1, 2, 3].map((s) => (
-                                <span
+                                <GoldStar
                                   key={s}
-                                  className={`text-xs sm:text-sm ${s <= epData.stars ? 'text-yellow-400' : 'text-gray-600'}`}
-                                >
-                                  &#11088;
-                                </span>
+                                  size={16}
+                                  filled={s <= epData.stars}
+                                />
                               ))}
                             </div>
                             <button
@@ -413,13 +464,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
 
           {/* XP Reward card */}
           <div className="mb-4 rounded-xl bg-white/5 border border-white/10 p-4 flex items-center justify-center gap-4">
-            <span
-              className="text-4xl select-none"
-              style={{ filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))' }}
-              aria-hidden="true"
-            >
-              &#11088;
-            </span>
+            <GoldStar size={48} filled glow />
             <div className="text-center">
               <span className="text-3xl sm:text-4xl font-black text-white">
                 {node.xpReward}
@@ -461,22 +506,6 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
             </div>
           )}
 
-          {/* Prerequisites (if locked and has prerequisites) */}
-          {!isUnlocked && !isPremiumLocked && prerequisites.length > 0 && (
-            <div className="mb-4 rounded-lg bg-red-500/10 border border-red-400/30 p-2.5 sm:p-3">
-              <h3 className="mb-2 text-xs sm:text-sm font-semibold text-red-400 text-center">
-                &#128274; {t('modal.prerequisites')}
-              </h3>
-              <ul className="list-inside list-disc text-xs sm:text-sm text-red-400/80">
-                {prerequisites.map((prereqId) => {
-                  const prereqNode = getNodeById(prereqId);
-                  return (
-                    <li key={prereqId}>{prereqNode ? translateNodeName(prereqNode.name, t, i18n) : prereqId}</li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
 
           {/* Paywall message for premium-locked nodes */}
           {isPremiumLocked && (
