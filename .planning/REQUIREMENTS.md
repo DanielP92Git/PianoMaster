@@ -51,10 +51,10 @@ Requirements for engagement and retention improvements. Each maps to roadmap pha
 
 ### Dashboard Redesign
 
-- [ ] **DASH-01**: PlayNextButton renders as a large gradient pill CTA overlapping the hero bottom edge
-- [ ] **DASH-02**: XPRing displays circular SVG progress with gold star center icon
-- [ ] **DASH-03**: UnifiedStatsCard consolidates level, XP ring, streak, and daily goals summary with gradient border
-- [ ] **DASH-04**: UnifiedStatsCard shows loading skeleton and supports RTL layout
+- [x] **DASH-01**: PlayNextButton renders as a large gradient pill CTA overlapping the hero bottom edge
+- [x] **DASH-02**: XPRing displays circular SVG progress with gold star center icon
+- [x] **DASH-03**: UnifiedStatsCard consolidates level, XP ring, streak, and daily goals summary with gradient border
+- [x] **DASH-04**: UnifiedStatsCard shows loading skeleton and supports RTL layout
 - [ ] **DASH-05**: Dashboard hero is compact with centered avatar and level badge
 - [ ] **DASH-06**: Old stat cards (4 floating icons), My Progress panel, and Assignments section are removed
 - [ ] **DASH-07**: Practice Tools render as 3 circular glowing icon buttons with labels below
@@ -152,10 +152,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UI-03 | Phase 22 | Pending |
 | UI-04 | Phase 22 | Pending |
 | UI-05 | Phase 22 | Pending |
-| DASH-01 | Phase 23 | Pending |
-| DASH-02 | Phase 23 | Pending |
-| DASH-03 | Phase 23 | Pending |
-| DASH-04 | Phase 23 | Pending |
+| DASH-01 | Phase 23 | Complete |
+| DASH-02 | Phase 23 | Complete |
+| DASH-03 | Phase 23 | Complete |
+| DASH-04 | Phase 23 | Complete |
 | DASH-05 | Phase 23 | Pending |
 | DASH-06 | Phase 23 | Pending |
 | DASH-07 | Phase 23 | Pending |
