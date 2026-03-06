@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
+import { useAccessibility } from "../../contexts/AccessibilityContext";
 
 const fireflyVariants = {
   animate: ({ dx1, dx2, dy1, dy2, duration, delay }) => ({
@@ -22,14 +23,16 @@ function clamp(n, min, max) {
  * Fireflies
  *
  * Animated fireflies overlay intended to sit above a hero background image.
+ * When reducedMotion is enabled via the app's AccessibilityContext, renders
+ * static dots (no animation loop) instead of framer-motion animated elements.
  *
  * Props:
- * - count?: number (default 10)
+ * - count?: number (default 5)
  * - positions?: Array<{ top: string, left: string }>
  * - className?: string
  */
 export default function Fireflies({ count = 5, positions, className = "" }) {
-  const prefersReducedMotion = useReducedMotion();
+  const { reducedMotion } = useAccessibility();
 
   const resolved = useMemo(() => {
     const base = [
@@ -55,8 +58,8 @@ export default function Fireflies({ count = 5, positions, className = "" }) {
 
     return finalPositions.map((pos, i) => {
       // Stagger + de-sync: vary amplitude/duration/delay slightly per firefly.
-      const amp = prefersReducedMotion ? 0 : 6 + ((i * 7) % 9); // 6..14
-      const amp2 = prefersReducedMotion ? 0 : -6 - ((i * 5) % 9); // -6..-14
+      const amp = reducedMotion ? 0 : 6 + ((i * 7) % 9); // 6..14
+      const amp2 = reducedMotion ? 0 : -6 - ((i * 5) % 9); // -6..-14
       const duration = 3.6 + ((i * 13) % 12) / 10; // 3.6..4.7
       const delay = ((i * 17) % 20) / 10; // 0..1.9
 
@@ -77,47 +80,59 @@ export default function Fireflies({ count = 5, positions, className = "" }) {
         opacityClass: i % 4 === 0 ? "opacity-100" : "opacity-90",
       };
     });
-  }, [count, positions, prefersReducedMotion]);
+  }, [count, positions, reducedMotion]);
+
+  const fireflyStyle = (f) => ({
+    top: f.pos.top,
+    left: f.pos.left,
+    // Radial gradient using background image
+    background: `radial-gradient(circle, rgba(255, 255, 200, 1) 0%, rgba(255, 255, 180, 0.8) 30%, rgba(255, 255, 160, 0.4) 60%, transparent 100%)`,
+    // Multi-layered glow effect with box-shadow
+    boxShadow: `
+      0 0 10px rgba(255, 255, 200, 1),
+      0 0 20px rgba(255, 255, 180, 0.8),
+      0 0 30px rgba(255, 255, 160, 0.6),
+      0 0 40px rgba(255, 255, 140, 0.4),
+      inset 0 0 10px rgba(255, 255, 255, 0.6)
+    `,
+    // Blur filter for soft, diffused edges
+    filter: "blur(1.5px)",
+  });
+
+  const fireflyClassName = (f) =>
+    [
+      "absolute rounded-full",
+      f.sizeClass,
+      f.opacityClass,
+      // Base color - bright white/yellow center
+      "bg-white",
+      // Mix blend for glowing effect
+      "mix-blend-screen",
+    ].join(" ");
 
   return (
     <div
       className={`pointer-events-none absolute inset-0 ${className}`}
       aria-hidden="true"
     >
-      {resolved.map((f, i) => (
-        <motion.div
-          key={`${f.pos.top}-${f.pos.left}-${i}`}
-          className={[
-            "absolute rounded-full",
-            f.sizeClass,
-            f.opacityClass,
-            // Base color - bright white/yellow center
-            "bg-white",
-            // Mix blend for glowing effect
-            "mix-blend-screen",
-          ].join(" ")}
-          style={{
-            top: f.pos.top,
-            left: f.pos.left,
-            // Radial gradient using background image
-            background: `radial-gradient(circle, rgba(255, 255, 200, 1) 0%, rgba(255, 255, 180, 0.8) 30%, rgba(255, 255, 160, 0.4) 60%, transparent 100%)`,
-            // Multi-layered glow effect with box-shadow
-            boxShadow: `
-              0 0 10px rgba(255, 255, 200, 1),
-              0 0 20px rgba(255, 255, 180, 0.8),
-              0 0 30px rgba(255, 255, 160, 0.6),
-              0 0 40px rgba(255, 255, 140, 0.4),
-              inset 0 0 10px rgba(255, 255, 255, 0.6)
-            `,
-            // Blur filter for soft, diffused edges
-            filter: "blur(1.5px)",
-          }}
-          variants={fireflyVariants}
-          animate="animate"
-          custom={f.motion}
-        />
-      ))}
+      {resolved.map((f, i) =>
+        reducedMotion ? (
+          <div
+            key={`${f.pos.top}-${f.pos.left}-${i}`}
+            className={fireflyClassName(f)}
+            style={fireflyStyle(f)}
+          />
+        ) : (
+          <motion.div
+            key={`${f.pos.top}-${f.pos.left}-${i}`}
+            className={fireflyClassName(f)}
+            style={fireflyStyle(f)}
+            variants={fireflyVariants}
+            animate="animate"
+            custom={f.motion}
+          />
+        )
+      )}
     </div>
   );
 }
-
