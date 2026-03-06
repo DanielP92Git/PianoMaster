@@ -545,9 +545,9 @@ function Dashboard() {
   const MotionOrDiv = reducedMotion ? "div" : motion.div;
 
   return (
-    <div className="min-h-screen pb-24" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen pb-4" dir={isRTL ? "rtl" : "ltr"}>
       {/* COMPACT HERO */}
-      <header className="group relative h-[220px] overflow-hidden shadow-2xl md:h-[260px]">
+      <header className="group relative h-[220px] overflow-hidden shadow-2xl md:h-[260px] rounded-b-[3rem]">
         <picture className="absolute inset-0">
           <source
             media="(min-width: 1024px)"
@@ -584,47 +584,53 @@ function Dashboard() {
             {t("app.title")}
           </span>
 
-          {/* Centered avatar with level badge */}
+          {/* Horizontal avatar + level pill */}
           {isProfileLoading ? (
             <div className="mb-2 h-16 w-16 animate-pulse rounded-full bg-white/10" />
-          ) : avatarUrl ? (
-            <Link to="/avatars" className="relative mb-2">
-              <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-indigo-400/60 bg-white/10">
-                <img
-                  className="h-full w-full object-cover"
-                  src={avatarUrl}
-                  alt={t("avatars.title", { defaultValue: "User avatar" })}
-                  loading="eager"
-                />
-                {layeredAccessories.map((item) => {
-                  const slot = item.slot || item.category || "accessory";
-                  const slotClass =
-                    ACCESSORY_SLOT_STYLES[slot] ||
-                    ACCESSORY_SLOT_STYLES.accessory;
-                  return (
-                    <img
-                      key={`${item.accessory_id || item.image_url}-${slot}`}
-                      src={item.image_url}
-                      alt=""
-                      aria-hidden="true"
-                      className={`${slotClass} pointer-events-none object-contain`}
-                    />
-                  );
-                })}
-              </div>
-              {/* Level badge */}
-              <span className="absolute -bottom-1 -right-2 rounded-full border border-indigo-400/50 bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
-                LV.{level}
-              </span>
-            </Link>
           ) : (
-            <div className="relative mb-2">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-indigo-400/60 bg-white/10">
-                <span className="text-2xl">🎹</span>
+            <div className={`mb-2 flex items-center ${isRTL ? "flex-row-reverse" : "flex-row"}`}>
+              {/* Avatar */}
+              <Link to="/avatars" className="relative z-10 shrink-0">
+                {avatarUrl ? (
+                  <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-indigo-400/60 bg-white/10">
+                    <img
+                      className="h-full w-full object-cover"
+                      src={avatarUrl}
+                      alt={t("avatars.title", { defaultValue: "User avatar" })}
+                      loading="eager"
+                    />
+                    {layeredAccessories.map((item) => {
+                      const slot = item.slot || item.category || "accessory";
+                      const slotClass =
+                        ACCESSORY_SLOT_STYLES[slot] ||
+                        ACCESSORY_SLOT_STYLES.accessory;
+                      return (
+                        <img
+                          key={`${item.accessory_id || item.image_url}-${slot}`}
+                          src={item.image_url}
+                          alt=""
+                          aria-hidden="true"
+                          className={`${slotClass} pointer-events-none object-contain`}
+                        />
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-indigo-400/60 bg-white/10">
+                    <span className="text-2xl">🎹</span>
+                  </div>
+                )}
+              </Link>
+              {/* Level pill */}
+              <div
+                className={`flex h-8 items-center rounded-full border border-indigo-400/40 bg-indigo-600/80 backdrop-blur-sm px-4 py-1 ${
+                  isRTL ? "-mr-3" : "-ml-3"
+                }`}
+              >
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
+                  {t("dashboard.header.level", { level, defaultValue: `Level ${level}` })}
+                </span>
               </div>
-              <span className="absolute -bottom-1 -right-2 rounded-full border border-indigo-400/50 bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white shadow-lg">
-                LV.{level}
-              </span>
             </div>
           )}
 
@@ -651,7 +657,7 @@ function Dashboard() {
 
       {/* MAIN CONTENT */}
       <MotionOrDiv
-        className="mx-auto max-w-2xl space-y-6 px-4 pt-6 md:px-6"
+        className="mx-auto max-w-2xl space-y-12 px-4 pt-6 md:px-6"
         {...(!reducedMotion && {
           initial: { opacity: 0 },
           animate: { opacity: 1 },
@@ -677,32 +683,6 @@ function Dashboard() {
             reducedMotion={reducedMotion}
             isLoading={streakLoading || xpLoading}
           />
-        )}
-
-        {/* COMEBACK BONUS BANNER */}
-        {isStudent && comebackBonus?.active && (
-          <div className="w-full rounded-xl border border-amber-400/30 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-4 py-3 text-center">
-            <p className="text-sm font-bold text-amber-300">
-              {t("streak.comebackBanner", { days: comebackBonus.daysLeft })}
-            </p>
-            <p className="mt-0.5 text-xs text-amber-200/70">
-              {t("streak.comebackDescription")}
-            </p>
-          </div>
-        )}
-
-        {/* PUSH OPT-IN CARD */}
-        {isStudent && user && (
-          <PushOptInCard
-            studentId={user.id}
-            createdAt={profileData?.created_at}
-            isRTL={isRTL}
-          />
-        )}
-
-        {/* DAILY GOALS CARD (refreshed) */}
-        {isStudent && (
-          <DailyGoalsCard goals={dailyGoals} isLoading={goalsLoading} />
         )}
 
         {/* PRACTICE TOOLS (3 circular buttons) */}
@@ -764,6 +744,32 @@ function Dashboard() {
               })}
             </div>
           </section>
+        )}
+
+        {/* COMEBACK BONUS BANNER */}
+        {isStudent && comebackBonus?.active && (
+          <div className="w-full rounded-xl border border-amber-400/30 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-4 py-3 text-center">
+            <p className="text-sm font-bold text-amber-300">
+              {t("streak.comebackBanner", { days: comebackBonus.daysLeft })}
+            </p>
+            <p className="mt-0.5 text-xs text-amber-200/70">
+              {t("streak.comebackDescription")}
+            </p>
+          </div>
+        )}
+
+        {/* PUSH OPT-IN CARD */}
+        {isStudent && user && (
+          <PushOptInCard
+            studentId={user.id}
+            createdAt={profileData?.created_at}
+            isRTL={isRTL}
+          />
+        )}
+
+        {/* DAILY GOALS CARD (refreshed) */}
+        {isStudent && (
+          <DailyGoalsCard goals={dailyGoals} isLoading={goalsLoading} />
         )}
       </MotionOrDiv>
 
