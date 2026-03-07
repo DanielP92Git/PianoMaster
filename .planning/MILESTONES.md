@@ -1,5 +1,14 @@
 # Project Milestones: PianoApp
 
+## v1.9 Engagement & Retention (Shipped: 2026-03-07)
+
+**Phases completed:** 25 phases, 56 plans, 6 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v1.5 Trail Page Visual Redesign (Shipped: 2026-02-12)
 
 **Delivered:** Immersive enchanted forest trail page with CSS-only backgrounds, 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and WCAG 2.2 AA accessibility compliance. Pure UI redesign with zero database changes.
@@ -260,5 +269,33 @@
 
 ---
 
-*Last updated: 2026-03-04*
+## v1.9 Engagement & Retention (Shipped: 2026-03-08)
+
+**Delivered:** Daily return hooks, arcade-style game engagement, extended progression system, and kid-friendly UI redesign — push notifications with COPPA parent gate, streak protection with freeze shields and comeback bonus, combo/lives/speed mechanics for Notes Recognition, 30-level XP system with prestige tiers, weekly progress summaries with parent email reports, and visual redesign of TrailNodeModal and Dashboard for 8-year-old learners.
+
+**Phases completed:** 17-23 (15 plans total)
+
+**Key accomplishments:**
+
+- COPPA-compliant push notifications with parent math gate, context-aware messages (streak/XP/goals), 1/day rate limit, service worker Web Push
+- Streak protection: 36-hour grace window, consumable freeze shields (earned every 7-day streak), weekend pass toggle, 2x comeback XP bonus for 3 days
+- Arcade-style Notes Recognition: combo counter with 2x/3x multipliers, speed bonus, 3-lives system, on-fire mode with glow/embers, auto-growing note pool
+- Extended XP progression from 15 to 30 levels with prestige tiers (Maestro 1, 2, 3...), per-level themed names, golden prestige badge
+- Weekly progress summaries, personal best badges on VictoryScreen, 12 rotating daily fun facts, parent weekly email via Brevo with HMAC unsubscribe
+- Kid-friendly TrailNodeModal (centered glowing icon, 3D bubble note badges, golden XP card) and Dashboard (compact hero, XP ring, unified stats card, circular practice tools)
+
+**Stats:**
+
+- 124 files created/modified
+- 15,188 lines added, 4,582 lines removed
+- 7 phases, 15 plans
+- 4 days (2026-03-04 to 2026-03-08)
+
+**Git range:** `329642d` to `abc66d7`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
+*Last updated: 2026-03-08*
 

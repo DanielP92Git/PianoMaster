@@ -109,19 +109,19 @@ These capabilities exist, are working, and have been shipped:
 - COMP-01-04: Service worker cache exclusion for subscription APIs, consent email updated
 - 25/25 requirements delivered, 13 plans across 6 phases
 
+**v1.9 Engagement & Retention (shipped 2026-03-08):**
+- NOTIF-01-05: COPPA-compliant push notifications with parent math gate, context-aware messages, 1/day rate limit
+- STRK-01-05: Streak protection with 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
+- GAME-01-05: Notes Recognition arcade mode — combo/lives/speed bonus, on-fire mode, auto-grow note pool
+- PROG-01-03: Extended XP from 15 to 30 levels with prestige tiers (Maestro 1, 2, 3...)
+- PROG-04-07: Weekly summaries, personal best badges, daily fun facts, parent weekly email via Brevo
+- UI-01-05: Kid-friendly TrailNodeModal with 3D bubble badges, glowing icon, XP card
+- DASH-01-09: Kid-friendly Dashboard with compact hero, XP ring, unified stats, circular practice tools
+- 36/36 requirements delivered, 15 plans across 7 phases
+
 ### Active
 
-## Current Milestone: v1.9 Engagement & Retention
-
-**Goal:** Improve daily return rate and session satisfaction with quick-win engagement features that leverage existing infrastructure — no new content authoring required.
-
-**Target features:**
-- PWA push notifications (parent-gated, COPPA consent, 1/day max)
-- Streak freeze / protection mechanic (earned consumable, grace period, comeback bonus)
-- Notes Recognition engagement upgrade (combo/streak, speed bonus, lives, "on fire" mode)
-- Extended level system (15 → 25-30 levels + prestige tiers)
-- Celebration upgrades (weekly summary, personal bests, varied login messages)
-- Parent progress reports (weekly email via existing Brevo infrastructure)
+Planning next milestone. Use `/gsd:new-milestone` to start.
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -145,18 +145,14 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.plannin
 - Real Song Library (public domain first, licensed later)
 
 *Daily Return Hooks:*
-- PWA push notifications (1/day, parent-gated, COPPA consent required)
-- Streak freeze / protection mechanic (earned consumable)
 - Daily challenge system (rotating unique challenges with bonus XP)
 - Weekly bonus events (Double XP, Bass Week, Speed Week, Review Week)
 
 *Progression Plateau Solutions:*
 - Prestige / mastery star tiers (Gold 4th, Diamond 5th beyond current 3-star max)
 - Spaced repetition "Rusty Skills" system (accuracy decay + review incentives)
-- Extended level system (15 → 25-30 levels + prestige tiers)
 
 *Game Variety:*
-- Notes Recognition engagement upgrade (combo/streak mechanics, speed bonuses, lives)
 - New mini-game types: Note Catcher (Guitar Hero style), Melody Puzzle, Rhythm Battle, Interval Training
 - Adaptive difficulty within sessions (flow zone management)
 
@@ -164,11 +160,9 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.plannin
 - Story campaign wrapper ("Help Beethoven restore his musical powers")
 - Seasonal events (quarterly themed content with exclusive cosmetics)
 - Accessory system expansion (avatar in gameplay, themed sets, rare items)
-- Unit completion ceremonies + weekly progress summaries + personal bests
 
 *Social & Competitive (COPPA-safe):*
 - Classroom challenges (teacher-set, anonymous collective progress)
-- Parent weekly progress email reports (via existing Brevo infrastructure)
 - Classroom leaderboard with consent (first names, weekly reset, "most improved")
 
 ### Out of Scope
@@ -194,17 +188,22 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v1.8):**
+**Current State (after v1.9):**
 - 93-node trail system with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
+- Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
+- Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
+- Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit
+- Streak protection: 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
+- Notes Recognition arcade mode: combo/lives/speed bonus, on-fire mode, auto-grow note pool
+- 30-level XP system with prestige tiers (Maestro 1, 2, 3...)
+- Weekly progress summaries, personal best badges, daily fun facts
+- Parent weekly email reports via Brevo with HMAC unsubscribe
 - Tiered celebration system (4 tiers) with accessibility-first design
 - Boss unlock events with 3-stage modal and musical confetti
 - 8 node types with unique icons and colorblind-safe colors
-- Dashboard XP card with level progression, badges, and animations
 - Build-time validation ensures node integrity on every build
 - WCAG 2.2 AA compliant trail page with RTL support
 - Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
-- Landscape-optimized CSS layouts for all 4 game modes and modals
-- VexFlow auto-resizes on orientation change via debounced ResizeObserver
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
 - McLeod Pitch Method (pitchy) for accurate mic detection across all game modes
@@ -213,8 +212,8 @@ Explicitly excluded:
 - Freemium monetization with Lemon Squeezy (dual-market ILS/USD, COPPA-safe child paywall)
 - Dual-layer content gate: React UI + database RLS enforcement
 - Parent portal with subscription management and cancel flow
-- ~68,298 lines JavaScript/JSX/CSS across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files
+- ~73,754 lines JavaScript/JSX/CSS across src/
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -314,7 +313,19 @@ Explicitly excluded:
 | useLandscapeLock before useRotatePrompt | Consistent mount order in all game components | Good |
 | ARIA live region as first child | Immediate screen reader monitoring with sr-only visual hiding | Good |
 | useMotionTokens for fade, AccessibilityContext for icon | Kept existing fade (already respects motion), added explicit control for phone icon | Good |
+| Separate COPPA consent for push notifications | Push consent separate from account verification to avoid confusion | Good |
+| Parent math gate for push + weekend pass | ParentGateMath reused for dual COPPA purpose | Good |
+| 36-hour grace window (not midnight cutoff) | Accommodates varied practice schedules for children | Good |
+| All streak logic in JS service layer | No new Postgres functions, consistent with patterns, testable | Good |
+| Combo tiers as module-level constants | Avoids useCallback dep churn in NotesRecognitionGame | Good |
+| Fire sound via standalone Web Audio oscillator | Avoids mutual-pause conflict with game sounds | Good |
+| Arabic numerals for prestige (Maestro 1, not I) | Simpler for 8-year-olds than Roman numerals | Good |
+| PRESTIGE_XP_PER_TIER = 3000 | Matches late-level XP gaps, keeps prestige achievable | Good |
+| HMAC-SHA256 for email unsubscribe tokens | Stateless, no parent login needed for one-click unsubscribe | Good |
+| XPRing uses SVG foreignObject for center icon | Clean SVG composition for gold star placement | Good |
+| UnifiedStatsCard gradient border via wrapper div | Better rounded corner support than border-image | Good |
+| Fireflies plain div when reducedMotion | Eliminates animation loop entirely for accessibility | Good |
 
 ---
 
-*Last updated: 2026-03-04 — milestone v1.9 Engagement & Retention started*
+*Last updated: 2026-03-08 after v1.9 milestone*
