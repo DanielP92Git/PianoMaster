@@ -1,82 +1,12 @@
-import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useStreakWithAchievements } from "../../hooks/useStreakWithAchievements";
-import { useTotalPoints } from "../../hooks/useTotalPoints";
-import { useAccessoriesList } from "../../hooks/useAccessories";
-import { useGamesPlayed } from "../../hooks/useGamesPlayed";
-import { useUserProfile } from "../../hooks/useUserProfile";
-import { usePointBalance } from "../../hooks/useAccessories";
-import { useAccessoryUnlockDetection } from "../../hooks/useAccessoryUnlockDetection";
-import { useUser } from "../../features/authentication/useUser";
-import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../../services/skillProgressService";
-import { awardXP, calculateSessionXP, getLevelProgress, PRESTIGE_XP_PER_TIER } from "../../utils/xpSystem";
-import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
-import { streakService } from "../../services/streakService";
-import { toast } from "react-hot-toast";
-import { useAccessibility } from "../../contexts/AccessibilityContext";
-import { determineCelebrationTier, getCelebrationConfig } from '../../utils/celebrationTiers';
-import { getCelebrationMessage } from '../../utils/celebrationMessages';
+import { useVictoryState } from "../../hooks/useVictoryState";
 import { ConfettiEffect } from '../celebrations/ConfettiEffect';
-import { calculateScorePercentile, getPercentileMessage } from '../../services/scoreComparisonService';
-import { hasLevelBeenCelebrated, markLevelCelebrated } from '../../utils/levelUpTracking';
 import { BossUnlockModal } from '../celebrations/BossUnlockModal';
-import { useBossUnlockTracking } from '../../hooks/useBossUnlockTracking';
-
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
 import { Trophy } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { translateNodeName } from "../../utils/translateNodeName";
-const SHOWN_UNLOCKS_VERSION = 2;
-
-const useCountUp = (start, end, duration = 1400, shouldAnimate = true, reducedMotion = false) => {
-  const [value, setValue] = useState(() => {
-    if (reducedMotion || !shouldAnimate) {
-      return end ?? start ?? 0;
-    }
-    return start ?? 0;
-  });
-
-  useEffect(() => {
-    if (start === undefined || end === undefined) return;
-    if (reducedMotion || !shouldAnimate || start === end) {
-      setValue(end);
-      return;
-    }
-    let frame;
-    const startTime = performance.now();
-    const change = end - start;
-
-    const runFrame = (currentTime) => {
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const easedProgress = 1 - Math.pow(1 - progress, 3);
-      setValue(Math.round(start + change * easedProgress));
-
-      if (progress < 1) {
-        frame = requestAnimationFrame(runFrame);
-      }
-    };
-
-    frame = requestAnimationFrame(runFrame);
-    return () => cancelAnimationFrame(frame);
-  }, [start, end, duration, shouldAnimate, reducedMotion]);
-
-  return value;
-};
-
-/**
- * Calculate stars based on score percentage
- * @param {number} percentage - Score percentage (0-100)
- * @returns {number} Stars earned (0-3)
- */
-const calculateStars = (percentage) => {
-  if (percentage >= 95) return 3;
-  if (percentage >= 80) return 2;
-  if (percentage >= 60) return 1;
-  return 0;
-};
+import { getNodeById } from "../../data/skillTrail";
+import { PRESTIGE_XP_PER_TIER } from "../../utils/xpSystem";
 
 const VictoryScreen = ({
   score,
@@ -92,636 +22,66 @@ const VictoryScreen = ({
   exerciseType = null, // Optional: type of exercise (e.g., 'note_recognition')
   onNextExercise = null, // Optional: callback to navigate to next exercise
 }) => {
-  const { t, i18n } = useTranslation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { user } = useUser();
-  const { reducedMotion } = useAccessibility();
-  const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } = useBossUnlockTracking(user?.id, nodeId);
-  const scorePercentage = (score / totalPossibleScore) * 100;
+  const {
+    // Core display data
+    stars,
+    celebrationData,
+    xpData,
+    animatedXPGain,
+    levelProgressData,
+    isProcessingTrail,
+    nodeComplete,
+    exercisesRemaining,
+    isPersonalBest,
+    percentileMessage,
+    showConfetti,
+    showBossModal,
+    nextNode,
+    fetchingNextNode,
+    rateLimited,
+    rateLimitResetTime,
+    comebackActive,
+    animatedTotal,
+    actualGain,
+    showUnlockModal,
+    unlockedAccessories,
+    totalPointsData,
+    timeUsed,
+    scorePercentage,
 
-  // Fetch streak state to check comeback bonus (for 2x XP display)
-  const { data: streakState } = useQuery({
-    queryKey: ["streak-state", user?.id],
-    queryFn: () => streakService.getStreakState(),
-    enabled: !!user?.id,
-    staleTime: 2 * 60 * 1000,
+    // Actions
+    handleExit,
+    handlePlayAgain,
+    handleGoToDashboard,
+    handleNavigateToTrail,
+    handleEquipAccessory,
+    navigateToNextNode,
+    handleBossModalClose,
+    setShowConfetti,
+    setShowBossModal,
+    setShowUnlockModal,
+    setRateLimited,
+    setRateLimitResetTime,
+
+    // Context values
+    user,
+    reducedMotion,
+    t,
+    i18n,
+  } = useVictoryState({
+    score,
+    totalPossibleScore,
+    onReset,
+    timedMode,
+    timeRemaining,
+    initialTime,
+    onExit,
+    nodeId,
+    exerciseIndex,
+    totalExercises,
+    exerciseType,
+    onNextExercise,
   });
-  const comebackActive = streakState?.comebackBonus?.active === true;
-  const timeUsed = timedMode ? initialTime - timeRemaining : null;
-  const updateStreakWithAchievements = useStreakWithAchievements();
-  const { data: totalPointsData } = useTotalPoints({
-    staleTime: 0,
-    refetchOnMount: "always",
-    keepPreviousData: false,
-  });
-  const [achievementBonus, setAchievementBonus] = useState(0);
-  const [shownUnlocksLoaded, setShownUnlocksLoaded] = useState(false);
-  const predictedPointsEarned = Math.max(score, 0) + achievementBonus;
-
-  const finalTotalPoints = totalPointsData?.totalPoints ?? 0;
-  const storageKey = useMemo(
-    () => (user?.id ? `shown-accessory-unlocks-${user.id}` : null),
-    [user?.id]
-  );
-  const shownUnlocksRef = useRef(new Set());
-  const cachedPreTotal =
-    user && queryClient.getQueryData(["pre-total-points", user.id]);
-
-  const basePoints = useMemo(() => {
-    if (typeof cachedPreTotal === "number") {
-      return cachedPreTotal;
-    }
-    return Math.max(finalTotalPoints - predictedPointsEarned, 0);
-  }, [cachedPreTotal, finalTotalPoints, predictedPointsEarned]);
-
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const shouldAnimate =
-    !hasAnimated &&
-    typeof cachedPreTotal === "number" &&
-    finalTotalPoints > basePoints;
-
-  useEffect(() => {
-    if (shouldAnimate) {
-      setHasAnimated(true);
-    }
-  }, [shouldAnimate]);
-
-  const pointsTarget = finalTotalPoints || basePoints;
-  const animatedTotal = useCountUp(
-    basePoints,
-    pointsTarget,
-    1400,
-    shouldAnimate,
-    reducedMotion
-  );
-
-  // Trail/XP system state (declared early because useCountUp below references xpData)
-  const [xpData, setXpData] = useState(null);
-
-  // XP count-up animation (1 second)
-  const animatedXPGain = useCountUp(0, xpData?.totalXP || 0, 1000, !!xpData?.totalXP, reducedMotion);
-
-  const actualGain = Math.max(
-    finalTotalPoints > basePoints
-      ? finalTotalPoints - basePoints
-      : predictedPointsEarned,
-    0
-  );
-
-  useEffect(() => {
-    if (
-      user &&
-      cachedPreTotal !== null &&
-      cachedPreTotal !== undefined &&
-      typeof cachedPreTotal === "number"
-    ) {
-      queryClient.setQueryData(["pre-total-points", user.id], null);
-    }
-  }, [user, cachedPreTotal, queryClient]);
-
-  const refreshPointQueries = useCallback(async () => {
-    if (!user?.id) return;
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ["student-scores", user.id] }),
-      queryClient.invalidateQueries({
-        queryKey: ["earned-achievements", user.id],
-      }),
-      queryClient.invalidateQueries({ queryKey: ["total-points", user.id] }),
-    ]);
-  }, [queryClient, user?.id]);
-
-  const handleExit = useCallback(() => {
-    refreshPointQueries();
-    if (onExit) {
-      onExit();
-    } else {
-      navigate("/practice-modes");
-    }
-  }, [refreshPointQueries, onExit, navigate]);
-
-  const handlePlayAgain = useCallback(() => {
-    refreshPointQueries();
-    onReset?.();
-  }, [refreshPointQueries, onReset]);
-
-  const handleGoToDashboard = useCallback(() => {
-    refreshPointQueries();
-    navigate("/");
-  }, [navigate, refreshPointQueries]);
-
-  // Accessory unlock detection
-  const { data: accessories } = useAccessoriesList();
-  const { data: gamesPlayedCount } = useGamesPlayed();
-  const { data: profileData } = useUserProfile();
-  const { data: pointsBalance } = usePointBalance();
-  const [showUnlockModal, setShowUnlockModal] = useState(false);
-  const [unlockedAccessories, setUnlockedAccessories] = useState([]);
-
-  // Trail/XP system state
-  const [stars, setStars] = useState(0);
-  const [nodeData, setNodeData] = useState(null);
-  const [isFirstComplete, setIsFirstComplete] = useState(false);
-  const [exercisesRemaining, setExercisesRemaining] = useState(0);
-  const [nodeComplete, setNodeComplete] = useState(false);
-  const [nextNode, setNextNode] = useState(null);
-  const [fetchingNextNode, setFetchingNextNode] = useState(false);
-  // Track if we're still processing trail completion (show loading until done)
-  const [isProcessingTrail, setIsProcessingTrail] = useState(!!nodeId);
-  const hasProcessedTrail = useRef(false);
-  const hasCalledStreakUpdate = useRef(false);
-
-  // Personal best detection state
-  const [isPersonalBest, setIsPersonalBest] = useState(false);
-
-  // Celebration system state
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [showBossModal, setShowBossModal] = useState(false);
-  const [percentileMessage, setPercentileMessage] = useState(null);
-
-  // Rate limiting state
-  const [rateLimited, setRateLimited] = useState(false);
-  const [rateLimitResetTime, setRateLimitResetTime] = useState(null);
-
-  // Check if current user is a teacher (teachers bypass rate limiting)
-  const isTeacher = user?.user_metadata?.role === 'teacher';
-
-  // Celebration tier and messaging (derived from existing state)
-  const celebrationData = useMemo(() => {
-    const node = nodeId ? getNodeById(nodeId) : null;
-    const isBoss = node?.isBoss || false;
-    const nodeType = node?.nodeType || null;
-
-    // For free play, calculate stars from score percentage
-    const effectiveStars = nodeId ? stars : calculateStars(scorePercentage);
-
-    const tier = determineCelebrationTier(
-      effectiveStars,
-      isBoss,
-      xpData?.leveledUp || false,
-      scorePercentage
-    );
-    const config = getCelebrationConfig(tier);
-    const message = getCelebrationMessage(nodeType, effectiveStars, isBoss, t);
-
-    return { tier, config, message, isBoss, nodeType, effectiveStars };
-  }, [nodeId, stars, xpData?.leveledUp, scorePercentage, t]);
-
-  // Mini XP progress bar data (after XP is awarded, shows level context)
-  const levelProgressData = useMemo(() => {
-    if (!xpData?.newTotalXP) return null;
-    return getLevelProgress(xpData.newTotalXP);
-  }, [xpData?.newTotalXP]);
-
-  // Capture initial progress state (before game completion)
-  const initialProgressRef = useRef(null);
-  const lastScoreRef = useRef(score);
-  const setBaselineProgress = useCallback((progress) => {
-    if (!progress) return;
-    initialProgressRef.current = {
-      ...progress,
-      achievements: [...(progress.achievements || [])],
-    };
-  }, []);
-
-  useEffect(() => {
-    if (lastScoreRef.current !== score) {
-      lastScoreRef.current = score;
-      initialProgressRef.current = null;
-    }
-  }, [score]);
-
-  useEffect(() => {
-    if (!storageKey || typeof window === "undefined") {
-      setShownUnlocksLoaded(true);
-      return;
-    }
-
-    try {
-      const storedPayload = window.localStorage.getItem(storageKey);
-      if (storedPayload) {
-        const parsed = JSON.parse(storedPayload);
-        if (
-          parsed &&
-          parsed.version === SHOWN_UNLOCKS_VERSION &&
-          Array.isArray(parsed.ids)
-        ) {
-          // Normalize IDs to strings to avoid type mismatch (number vs string) across sessions/builds.
-          shownUnlocksRef.current = new Set(parsed.ids.map((id) => String(id)));
-        } else {
-          window.localStorage.removeItem(storageKey);
-        }
-      }
-    } catch (err) {
-      console.warn("Failed to load shown accessory unlocks:", err);
-      shownUnlocksRef.current = new Set();
-    } finally {
-      setShownUnlocksLoaded(true);
-    }
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!initialProgressRef.current && gamesPlayedCount !== undefined) {
-      setBaselineProgress({
-        achievements: profileData?.achievements || [],
-        gamesPlayed: Math.max(0, gamesPlayedCount - 1), // Subtract the just-completed game
-        totalPoints: (pointsBalance?.earned || 0) - predictedPointsEarned,
-        currentStreak: profileData?.current_streak || 0,
-        perfectGames: profileData?.perfect_games || 0,
-        level: profileData?.level || 1,
-      });
-    }
-  }, [
-    gamesPlayedCount,
-    profileData,
-    pointsBalance,
-    predictedPointsEarned,
-    setBaselineProgress,
-  ]);
-
-  // Current progress state (after game completion)
-  const currentProgress = useMemo(() => {
-    return {
-      achievements: profileData?.achievements || [],
-      gamesPlayed: gamesPlayedCount || 0,
-      totalPoints: pointsBalance?.earned || 0,
-      currentStreak: profileData?.current_streak || 0,
-      perfectGames: profileData?.perfect_games || 0,
-      level: profileData?.level || 1,
-    };
-  }, [profileData, pointsBalance, gamesPlayedCount]);
-
-  // Detect newly unlocked accessories
-  const newlyUnlocked = useAccessoryUnlockDetection(
-    accessories,
-    initialProgressRef.current,
-    currentProgress
-  );
-
-  // Note: Query invalidation is handled by useScores mutation
-
-  useEffect(() => {
-    if (scorePercentage >= 80 && !hasCalledStreakUpdate.current) {
-      hasCalledStreakUpdate.current = true;
-      updateStreakWithAchievements.mutate(undefined, {
-        onSuccess: ({ newStreak, newAchievements }) => {
-          const bonus = newAchievements?.reduce(
-            (sum, achievement) => sum + (achievement?.points || 0),
-            0
-          );
-          if (bonus) {
-            setAchievementBonus(bonus);
-          }
-
-          // Show freeze-earned toast with a short delay so it doesn't overlap XP animation
-          if (newStreak?.freezeEarned) {
-            setTimeout(() => {
-              toast.success(t('streak.freezeEarned'));
-            }, 1500);
-          }
-        },
-      });
-    }
-  }, [scorePercentage, updateStreakWithAchievements, t]);
-
-  // Trail system: Calculate stars, update progress, and award XP
-  useEffect(() => {
-    const processTrailCompletion = async () => {
-      // Prevent multiple executions
-      if (hasProcessedTrail.current) return;
-      if (!user?.id) return;
-
-      // Calculate stars
-      const earnedStars = calculateStars(scorePercentage);
-      setStars(earnedStars);
-
-      // If this is a trail node, update progress and award XP
-      if (nodeId) {
-        hasProcessedTrail.current = true; // Mark as processed
-
-        try {
-          // Get node data
-          const node = getNodeById(nodeId);
-
-          if (node) {
-            // setNodeData(node); // Unused - kept for future features
-
-            // Teachers skip rate limiting entirely
-            const progressOptions = isTeacher ? { skipRateLimit: true } : {};
-
-            // If exerciseIndex is provided, use exercise-level progress tracking
-            if (exerciseIndex !== null && totalExercises !== null) {
-              // Fetch pre-update progress for personal best detection
-              const preUpdateProgress = await getNodeProgress(user.id, nodeId);
-              const existingExercise = preUpdateProgress?.exercise_progress?.find(
-                (ep) => ep.index === exerciseIndex
-              );
-              if (
-                existingExercise &&
-                existingExercise.bestScore > 0 &&
-                Math.round(Math.min(scorePercentage, 100)) > existingExercise.bestScore
-              ) {
-                setIsPersonalBest(true);
-              }
-
-              // Update exercise-level progress
-              const result = await updateExerciseProgress(
-                user.id,
-                nodeId,
-                exerciseIndex,
-                exerciseType || node.exercises?.[exerciseIndex]?.type || 'unknown',
-                earnedStars,
-                Math.round(Math.min(scorePercentage, 100)),
-                totalExercises,
-                progressOptions
-              );
-
-              // Check if rate limited
-              if (result.rateLimited) {
-                setRateLimited(true);
-                setRateLimitResetTime(result.resetTime);
-                // Still show stars earned but don't save progress or award XP
-                setExercisesRemaining(0);
-                setNodeComplete(false);
-                setIsProcessingTrail(false);
-                return;
-              }
-
-              setExercisesRemaining(result.exercisesRemaining);
-              setNodeComplete(result.nodeComplete);
-
-              // Check if this was first completion of this exercise
-              const isFirst = true; // For exercise-level, always treat as first for XP
-              setIsFirstComplete(isFirst);
-
-              // Only award XP when the entire node is complete
-              if (result.nodeComplete) {
-                const sessionData = {
-                  score,
-                  maxScore: totalPossibleScore,
-                  nodeId,
-                  isFirstComplete: true,
-                  comebackMultiplier: comebackActive ? 2 : 1
-                };
-                const xpBreakdown = calculateSessionXP(sessionData);
-
-                if (xpBreakdown.totalXP > 0) {
-                  const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
-                  setXpData({ ...xpBreakdown, ...xpResult });
-                  queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
-                }
-              }
-            } else {
-              // Legacy path: single exercise nodes or old behavior
-              const existingProgress = await getNodeProgress(user.id, nodeId);
-              const isFirst = !existingProgress || existingProgress.stars === 0;
-              setIsFirstComplete(isFirst);
-
-              // Personal best detection (only if not first completion)
-              if (
-                existingProgress &&
-                existingProgress.best_score > 0 &&
-                Math.round(Math.min(scorePercentage, 100)) > existingProgress.best_score
-              ) {
-                setIsPersonalBest(true);
-              }
-
-              // Update node progress (pass percentage, not raw score)
-              const result = await updateNodeProgress(
-                user.id,
-                nodeId,
-                earnedStars,
-                Math.round(Math.min(scorePercentage, 100)),
-                progressOptions
-              );
-
-              // Check if rate limited
-              if (result.rateLimited) {
-                setRateLimited(true);
-                setRateLimitResetTime(result.resetTime);
-                // Still show stars earned but don't save progress or award XP
-                setNodeComplete(false);
-                setExercisesRemaining(0);
-                setIsProcessingTrail(false);
-                return;
-              }
-
-              setNodeComplete(true);
-              setExercisesRemaining(0);
-
-              // Calculate and award XP
-              const sessionData = {
-                score,
-                maxScore: totalPossibleScore,
-                nodeId,
-                isFirstComplete: isFirst,
-                comebackMultiplier: comebackActive ? 2 : 1
-              };
-              const xpBreakdown = calculateSessionXP(sessionData);
-
-              if (xpBreakdown.totalXP > 0) {
-                const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
-                setXpData({ ...xpBreakdown, ...xpResult });
-                queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Error processing trail completion:", error);
-        } finally {
-          setIsProcessingTrail(false);
-        }
-      } else {
-        // Not a trail node, no processing needed
-        setIsProcessingTrail(false);
-      }
-    };
-
-    processTrailCompletion();
-  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType, queryClient, isTeacher, comebackActive]);
-
-  // Trigger confetti for full/epic tiers (non-blocking, after trail processing)
-  useEffect(() => {
-    if (!isProcessingTrail && celebrationData.config.confetti && !reducedMotion) {
-      setShowConfetti(true);
-    }
-  }, [isProcessingTrail, celebrationData.config.confetti, reducedMotion]);
-
-  // Level-up celebration with deduplication
-  useEffect(() => {
-    if (!xpData?.leveledUp || !user?.id) return;
-    if (reducedMotion) return;
-
-    // Check if this level was already celebrated
-    if (hasLevelBeenCelebrated(user.id, xpData.newLevel)) {
-      return;
-    }
-
-    // Show confetti for level-up (this may already be showing from the tier-based trigger)
-    setShowConfetti(true);
-
-    // Mark as celebrated so it doesn't repeat
-    markLevelCelebrated(user.id, xpData.newLevel);
-  }, [xpData?.leveledUp, xpData?.newLevel, user?.id, reducedMotion]);
-
-  // Trigger boss unlock modal (after trail processing completes)
-  useEffect(() => {
-    if (!isProcessingTrail && nodeComplete && celebrationData.isBoss && shouldShowBossModal) {
-      // Short delay to let VictoryScreen render first
-      const timer = setTimeout(() => setShowBossModal(true), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [isProcessingTrail, nodeComplete, celebrationData.isBoss, shouldShowBossModal]);
-
-  // Boss modal close handler
-  const handleBossModalClose = useCallback(() => {
-    markBossAsShown();
-    setShowBossModal(false);
-  }, [markBossAsShown]);
-
-  // Calculate percentile in background (non-blocking, never delays rendering)
-  useEffect(() => {
-    if (!nodeId || !user?.id || isProcessingTrail) return;
-
-    const loadPercentile = async () => {
-      const percentile = await calculateScorePercentile(
-        user.id,
-        Math.round(Math.min(scorePercentage, 100)),
-        nodeId
-      );
-      const message = getPercentileMessage(percentile, t);
-      setPercentileMessage(message);
-    };
-
-    loadPercentile();
-  }, [nodeId, user?.id, scorePercentage, isProcessingTrail]);
-
-  // Fetch next recommended node when current node is complete
-  useEffect(() => {
-    const fetchNextNode = async () => {
-      if (!user?.id || !nodeId || !nodeComplete) return;
-
-      setFetchingNextNode(true);
-      try {
-        const recommendedNode = await getNextNodeInPath(user.id, nodeId);
-        setNextNode(recommendedNode);
-      } catch (error) {
-        console.error("Error fetching next node:", error);
-        setNextNode(null);
-      } finally {
-        setFetchingNextNode(false);
-      }
-    };
-
-    fetchNextNode();
-  }, [user?.id, nodeId, nodeComplete]);
-
-  // Navigation helper for moving to next node
-  const navigateToNextNode = useCallback(() => {
-    console.log('[VictoryScreen] navigateToNextNode called:', { nextNode });
-
-    if (!nextNode) {
-      console.log('[VictoryScreen] No nextNode, navigating to /trail');
-      // Fallback to trail map if no next node
-      navigate('/trail');
-      return;
-    }
-
-    // Get first exercise of next node
-    const firstExercise = nextNode.exercises?.[0];
-    if (!firstExercise) {
-      console.warn("Next node has no exercises");
-      navigate('/trail');
-      return;
-    }
-
-    // Build navigation state for the next node
-    const navState = {
-      nodeId: nextNode.id,
-      nodeConfig: firstExercise.config,
-      exerciseIndex: 0,
-      totalExercises: nextNode.exercises.length,
-      exerciseType: firstExercise.type
-    };
-
-    console.log('[VictoryScreen] Navigating to next node with state:', navState);
-
-    // Route based on exercise type
-    switch (firstExercise.type) {
-      case EXERCISE_TYPES.NOTE_RECOGNITION:
-        navigate('/notes-master-mode/notes-recognition-game', { state: navState });
-        break;
-      case EXERCISE_TYPES.SIGHT_READING:
-        navigate('/notes-master-mode/sight-reading-game', { state: navState });
-        break;
-      case EXERCISE_TYPES.MEMORY_GAME:
-        navigate('/notes-master-mode/memory-game', { state: navState });
-        break;
-      case EXERCISE_TYPES.RHYTHM:
-        navigate('/rhythm-mode/metronome-trainer', { state: navState });
-        break;
-      case EXERCISE_TYPES.BOSS_CHALLENGE:
-        // Boss challenges use note recognition game with special config
-        navigate('/notes-master-mode/notes-recognition-game', { state: navState });
-        break;
-      default:
-        console.warn('Unknown exercise type:', firstExercise.type);
-        navigate('/trail');
-    }
-  }, [nextNode, navigate]);
-
-  // Check for newly unlocked accessories after stats update
-  useEffect(() => {
-    if (!shownUnlocksLoaded || !newlyUnlocked || newlyUnlocked.length === 0) {
-      return;
-    }
-
-    const unseenUnlocks = newlyUnlocked.filter((accessory) => {
-      if (!accessory?.id) return false;
-      return !shownUnlocksRef.current.has(String(accessory.id));
-    });
-
-    if (unseenUnlocks.length === 0) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setUnlockedAccessories(unseenUnlocks);
-      setShowUnlockModal(true);
-      setBaselineProgress(currentProgress);
-
-      unseenUnlocks.forEach((accessory) => {
-        shownUnlocksRef.current.add(String(accessory.id));
-      });
-
-      if (storageKey && typeof window !== "undefined") {
-        const trimmedIds = Array.from(shownUnlocksRef.current).slice(-50);
-        const payload = {
-          version: SHOWN_UNLOCKS_VERSION,
-          timestamp: Date.now(),
-          ids: trimmedIds,
-        };
-        window.localStorage.setItem(storageKey, JSON.stringify(payload));
-      }
-
-      queryClient.invalidateQueries({ queryKey: ["accessories"] });
-      if (user?.id) {
-        queryClient.invalidateQueries({
-          queryKey: ["user-accessories", user.id],
-        });
-      }
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, [
-    newlyUnlocked,
-    queryClient,
-    shownUnlocksLoaded,
-    storageKey,
-    user?.id,
-    currentProgress,
-    setBaselineProgress,
-  ]);
 
   return (
     <div className="fixed inset-0 z-[9999] flex justify-center overflow-y-auto p-2 landscape:items-center landscape:p-3 sm:p-4">
@@ -1036,7 +396,7 @@ const VictoryScreen = ({
                   </button>
                 ) : (
                   <button
-                    onClick={() => navigate('/trail')}
+                    onClick={handleNavigateToTrail}
                     className="w-full transform rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-3 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {nodeComplete ? t('victory.backToTrail') : t('victory.continueLearning')}
@@ -1050,7 +410,7 @@ const VictoryScreen = ({
                     {t("common.playAgain")}
                   </button>
                   <button
-                    onClick={() => navigate('/trail')}
+                    onClick={handleNavigateToTrail}
                     className="flex-1 transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:py-2.5"
                   >
                     {t("victory.backToTrail")}
@@ -1089,13 +449,7 @@ const VictoryScreen = ({
         <AccessoryUnlockModal
           accessories={unlockedAccessories}
           onClose={() => setShowUnlockModal(false)}
-          onEquip={() => {
-            if (user?.id) {
-              queryClient.invalidateQueries({
-                queryKey: ["user-accessories", user.id],
-              });
-            }
-          }}
+          onEquip={handleEquipAccessory}
         />
       )}
     </div>
