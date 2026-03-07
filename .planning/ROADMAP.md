@@ -174,5 +174,15 @@ See `.planning/milestones/` for archived details of each milestone.
 
 **Total: 47 phases across 10 milestones (v1.0-v1.9 all shipped)**
 
+### Phase 1: Redesign VictoryScreen for simplicity and mobile-landscape fit
+
+**Goal:** Simplify VictoryScreen content and restructure layout to fit mobile landscape viewports (280-400px height). Extract business logic to useVictoryState hook, then rebuild render layer as two-panel landscape layout showing only essentials: avatar, stars, celebration message, XP/points line, and action buttons.
+**Requirements:** [VS-EXTRACT, VS-LAYOUT, VS-CONTENT, VS-BUTTONS, VS-FREEPLAY]
+**Depends on:** None
+**Plans:** 1 plan
+
+Plans:
+- [ ] 01-01-PLAN.md — Extract useVictoryState hook + redesign render layer with two-panel landscape layout
+
 ---
-*Last updated: 2026-03-08 — v1.9 Engagement & Retention shipped*
+*Last updated: 2026-03-08 — Phase 1 planned*
