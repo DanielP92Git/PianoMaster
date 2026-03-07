@@ -816,6 +816,27 @@
       "maxXP": "{{xp}} XP",
       "currentXP": "{{current}} / {{total}} XP",
       "xpToNext": "{{xp}} XP to Level {{nextLevel}}"
+    },
+    "weeklySummary": {
+      "title": "This Week",
+      "daysPracticed": "Days",
+      "nodesCompleted": "Nodes",
+      "exercisesDone": "Exercises",
+      "perfectWeek": "Perfect week! You practiced every day!"
+    },
+    "funFacts": {
+      "0": "Did you know? Beethoven practiced 4 hours every day!",
+      "1": "Fun fact: A piano has 88 keys - 52 white and 36 black!",
+      "2": "Did you know? Mozart wrote his first piece at age 5!",
+      "3": "Fun fact: The piano was invented in Italy around 1700!",
+      "4": "Did you know? Music can help you remember things better!",
+      "5": "Fun fact: The longest piano piece ever takes over 8 hours to play!",
+      "6": "Did you know? Cats and dogs can hear music too!",
+      "7": "Fun fact: The word 'piano' is short for 'pianoforte' - meaning soft and loud!",
+      "8": "Did you know? Playing music uses both sides of your brain!",
+      "9": "Fun fact: The fastest pianist can play 20 notes per second!",
+      "10": "Did you know? Singing birds inspired the first musical instruments!",
+      "11": "Fun fact: Astronauts have played music in space!"
     }
   },
   "errors": {
@@ -1062,7 +1083,8 @@
     "continueLearning": "Continue Learning",
     "youAreNow": "You are now a {{title}}!",
     "prestigeUnlocked": "Prestige Unlocked!",
-    "prestigeEntry": "You've reached the highest level! Welcome to Maestro tier!"
+    "prestigeEntry": "You've reached the highest level! Welcome to Maestro tier!",
+    "personalBest": "New Personal Best!"
   },
   "celebration": {
     "boss.perfectVictory": "PERFECT VICTORY!",
