@@ -116,7 +116,7 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 - [x] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle (completed 2026-03-04)
 - [x] **Phase 19: Notes Recognition Engagement** — Combo/streak counter with multiplier, speed bonus, lives system, on-fire mode, auto-grow note pool (completed 2026-03-05)
 - [x] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants (completed 2026-03-07)
-- [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
+- [x] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo (completed 2026-03-07)
 - [x] **Phase 22: Kid-Friendly Node Modal Redesign** — Visual overhaul of TrailNodeModal with centered category icon, 3D bubble note badges, prominent XP reward card, kid-appropriate layout (completed 2026-03-07)
 - [x] **Phase 23: Kid-Friendly Dashboard Redesign** — Compact hero with centered avatar, PLAY NEXT gradient pill, unified stats card with XP ring, circular practice tools, simplified layout (completed 2026-03-06)
 
@@ -373,7 +373,7 @@ Plans:
 | 18. Code Cleanup | 3/3 | Complete    | 2026-03-04 | 2026-02-09 |
 | 19. CSS Foundation & Font Setup | 2/2 | Complete   | 2026-03-05 | 2026-02-10 |
 | 20. Component Integration & Tab Navigation | 2/2 | Complete    | 2026-03-07 | 2026-02-10 |
-| 21. Responsive Layout Rewrite | 1/2 | In Progress|  | 2026-02-11 |
+| 21. Responsive Layout Rewrite | 2/2 | Complete   | 2026-03-07 | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
 | 01. Hebrew Translations | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
