@@ -9,6 +9,7 @@
 
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
+import { CheckCircle2 } from 'lucide-react';
 import XPRing from './XPRing';
 import flameIcon from '../../assets/icons/flame.png';
 
@@ -153,7 +154,7 @@ const UnifiedStatsCard = ({
                 {goalsCompleted}/{goalsTotal}
               </span>
               {goalsCompleted >= goalsTotal && (
-                <span className="text-blue-400">✅</span>
+                <CheckCircle2 className="h-4 w-4 text-green-400" />
               )}
             </div>
             <div className="h-1.5 w-full rounded-full bg-white/15 overflow-hidden">

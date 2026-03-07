@@ -200,10 +200,9 @@ function Dashboard() {
     : t("xpLevels." + rawLevelTitle, { defaultValue: rawLevelTitle });
 
   // Compute XP range values for UnifiedStatsCard
-  const currentLevelXP = level > 1 ? XP_LEVELS[level - 2].xpRequired : 0;
-  const nextLevelXP = progress.nextLevelXP || 0;
-  const xpRange = nextLevelXP - currentLevelXP;
   const xpInCurrentLevel = progress.xpInCurrentLevel || 0;
+  const xpNeededForNext = progress.xpNeededForNext || 0;
+  const xpRange = xpInCurrentLevel + xpNeededForNext; // total span of current level
   const progressPercentage = progress.progressPercentage || 0;
 
   // Get first name for compact greeting
@@ -643,10 +642,10 @@ function Dashboard() {
                 className={`flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2 -ml-7`}
                 style={{
                   background: isPrestige
-                    ? "linear-gradient(to right, rgba(30,41,59,0.85), rgba(30,41,59,0.85)) padding-box, linear-gradient(to right, #fbbf24, #f59e0b, #fbbf24) border-box"
+                    ? "linear-gradient(135deg, #f59e0b, #d97706, #b45309) padding-box, linear-gradient(to right, #fbbf24, #fde68a, #fbbf24) border-box"
                     : "linear-gradient(to right, rgba(30,41,59,0.85), rgba(30,41,59,0.85)) padding-box, linear-gradient(to right, #38bdf8, #f97316) border-box",
                   boxShadow: isPrestige
-                    ? "0 2px 12px rgba(251,191,36,0.5)"
+                    ? "0 2px 12px rgba(251,191,36,0.5), inset 0 1px 0 rgba(253,230,138,0.4)"
                     : "0 2px 12px rgba(56,189,248,0.4)",
                 }}
               >
