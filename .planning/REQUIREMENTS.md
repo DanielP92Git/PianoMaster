@@ -39,7 +39,7 @@ Requirements for engagement and retention improvements. Each maps to roadmap pha
 - [ ] **PROG-04**: Dashboard shows weekly progress summary (days practiced, notes learned, XP earned)
 - [ ] **PROG-05**: Student sees personal bests ("New record! Fastest perfect round!")
 - [ ] **PROG-06**: Dashboard shows varied daily login messages ("Did you know? Beethoven practiced 4 hours a day!")
-- [ ] **PROG-07**: Parent receives weekly progress email report via Brevo
+- [x] **PROG-07**: Parent receives weekly progress email report via Brevo
 
 ### Node Modal UI
 
@@ -146,7 +146,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROG-04 | Phase 21 | Pending |
 | PROG-05 | Phase 21 | Pending |
 | PROG-06 | Phase 21 | Pending |
-| PROG-07 | Phase 21 | Pending |
+| PROG-07 | Phase 21 | Complete |
 | UI-01 | Phase 22 | Pending |
 | UI-02 | Phase 22 | Pending |
 | UI-03 | Phase 22 | Pending |
