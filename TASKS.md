@@ -13,11 +13,13 @@
 - [X] Improve glassmorphism contrast for kids
 - [ ] Add loading skeletons to practice cards
 - [ ] Create app admin panel to track user subscriptions and app interactions
+- [ ] Apply missing DB migrations: `20260201000002_add_rate_limiting.sql` (check_rate_limit) and calculate_score_percentile function — console 404 errors, graceful fallbacks in place
 
 ## 💤 CAN WAIT
 - [ ] Dark mode toggle
 - [ ] Parent analytics dashboard
 - [ ] Achievement animations polish
+- [ ] Musical trivia
 
 ## 🧠 IDEAS / PARKING LOT
 - [ ] Teacher-student specific assignments (e.g Create an assignment where the student has to practice specific notes using Notes Master Mode games)
