@@ -9,7 +9,7 @@ import supabase from '../services/supabase';
 /**
  * XP Level definitions
  * Each level requires a certain amount of total XP
- * Expanded to 15 levels to accommodate the 90-node trail system
+ * Expanded to 30 levels with infinite prestige tiers beyond level 30
  */
 export const XP_LEVELS = [
   { level: 1, xpRequired: 0, title: 'Beginner', icon: '🌱' },
@@ -26,53 +26,123 @@ export const XP_LEVELS = [
   { level: 12, xpRequired: 5000, title: 'Virtuoso', icon: '✨' },
   { level: 13, xpRequired: 6200, title: 'Maestro', icon: '🎖️' },
   { level: 14, xpRequired: 7500, title: 'Grand Master', icon: '🏆' },
-  { level: 15, xpRequired: 9000, title: 'Legend', icon: '💎' }
+  { level: 15, xpRequired: 9000, title: 'Legend', icon: '💎' },
+  { level: 16, xpRequired: 10500, title: 'Composer', icon: '📝' },
+  { level: 17, xpRequired: 12200, title: 'Conductor', icon: '🎙️' },
+  { level: 18, xpRequired: 14100, title: 'Concert Master', icon: '🎻' },
+  { level: 19, xpRequired: 16200, title: 'Prodigy', icon: '🌟' },
+  { level: 20, xpRequired: 18500, title: 'Orchestrator', icon: '🎺' },
+  { level: 21, xpRequired: 21000, title: 'Music Sage', icon: '📖' },
+  { level: 22, xpRequired: 23700, title: 'Melodist', icon: '🎤' },
+  { level: 23, xpRequired: 26500, title: 'Symphonist', icon: '🎷' },
+  { level: 24, xpRequired: 29400, title: 'Music Architect', icon: '🏛️' },
+  { level: 25, xpRequired: 32500, title: 'Philharmonic', icon: '🌈' },
+  { level: 26, xpRequired: 35800, title: 'Opus Creator', icon: '🖋️' },
+  { level: 27, xpRequired: 39300, title: 'Concerto Star', icon: '💫' },
+  { level: 28, xpRequired: 43000, title: 'Music Luminary', icon: '🔆' },
+  { level: 29, xpRequired: 46900, title: 'Grand Virtuoso', icon: '🎭' },
+  { level: 30, xpRequired: 51000, title: 'Transcendent', icon: '🏅' }
 ];
+
+/** Maximum static level before prestige tiers begin */
+export const MAX_STATIC_LEVEL = 30;
+
+/** XP required for each prestige tier beyond level 30 */
+export const PRESTIGE_XP_PER_TIER = 3000;
+
+/** XP threshold at which prestige tiers begin (level 30 xpRequired) */
+export const PRESTIGE_BASE_XP = XP_LEVELS[XP_LEVELS.length - 1].xpRequired; // 51000
 
 /**
  * Calculate current level based on total XP
  * @param {number} totalXp - Student's total XP
- * @returns {Object} Level object with level, title, and icon
+ * @returns {Object} Level object with level, title, icon, isPrestige, prestigeTier
  */
 export const calculateLevel = (totalXp) => {
-  // Find the highest level the student has reached
+  // Check for prestige tiers (beyond level 30)
+  if (totalXp >= PRESTIGE_BASE_XP) {
+    const xpBeyondMax = totalXp - PRESTIGE_BASE_XP;
+    const prestigeTier = Math.floor(xpBeyondMax / PRESTIGE_XP_PER_TIER);
+
+    if (prestigeTier > 0) {
+      return {
+        level: MAX_STATIC_LEVEL + prestigeTier,
+        xpRequired: PRESTIGE_BASE_XP + (prestigeTier * PRESTIGE_XP_PER_TIER),
+        title: `Maestro ${prestigeTier}`,
+        icon: '👑',
+        isPrestige: true,
+        prestigeTier
+      };
+    }
+
+    // At level 30 but not yet into prestige tier 1
+    return { ...XP_LEVELS[XP_LEVELS.length - 1], isPrestige: false, prestigeTier: 0 };
+  }
+
+  // Find the highest static level the student has reached
   for (let i = XP_LEVELS.length - 1; i >= 0; i--) {
     if (totalXp >= XP_LEVELS[i].xpRequired) {
-      return XP_LEVELS[i];
+      return { ...XP_LEVELS[i], isPrestige: false, prestigeTier: 0 };
     }
   }
-  return XP_LEVELS[0]; // Default to level 1
+  return { ...XP_LEVELS[0], isPrestige: false, prestigeTier: 0 }; // Default to level 1
 };
 
 /**
  * Calculate XP required for next level
  * @param {number} currentLevel - Current level number
- * @returns {number} XP required for next level (or 0 if max level)
+ * @returns {number} XP required for next level, or PRESTIGE_XP_PER_TIER for prestige levels
  */
 export const getNextLevelXP = (currentLevel) => {
-  if (currentLevel >= 15) return 0; // Max level
+  if (currentLevel >= MAX_STATIC_LEVEL) return PRESTIGE_XP_PER_TIER;
   return XP_LEVELS[currentLevel].xpRequired;
 };
 
 /**
  * Calculate progress to next level
  * @param {number} totalXp - Student's total XP
- * @returns {Object} Object with current level, next level XP, and progress percentage
+ * @returns {Object} Object with current level, next level XP, progress percentage, and isPrestige
  */
 export const getLevelProgress = (totalXp) => {
   const currentLevelData = calculateLevel(totalXp);
   const currentLevel = currentLevelData.level;
 
-  if (currentLevel >= 15) {
+  // Prestige tier progress (level 31+)
+  if (currentLevelData.isPrestige) {
+    const tierStartXP = PRESTIGE_BASE_XP + (currentLevelData.prestigeTier * PRESTIGE_XP_PER_TIER);
+    const xpInCurrentLevel = totalXp - tierStartXP;
+    const xpNeededForNext = PRESTIGE_XP_PER_TIER - xpInCurrentLevel;
+    const progressPercentage = Math.floor((xpInCurrentLevel / PRESTIGE_XP_PER_TIER) * 100);
+
     return {
       currentLevel: currentLevelData,
-      nextLevelXP: 0,
-      xpInCurrentLevel: 0,
-      xpNeededForNext: 0,
-      progressPercentage: 100
+      nextLevelXP: PRESTIGE_XP_PER_TIER,
+      xpInCurrentLevel,
+      xpNeededForNext,
+      progressPercentage,
+      isPrestige: true
     };
   }
 
+  // Level 30 (not yet prestige) — progress toward first prestige tier
+  if (currentLevel >= MAX_STATIC_LEVEL) {
+    const currentLevelXP = PRESTIGE_BASE_XP;
+    const nextTierXP = PRESTIGE_BASE_XP + PRESTIGE_XP_PER_TIER;
+    const xpInCurrentLevel = totalXp - currentLevelXP;
+    const xpNeededForNext = nextTierXP - totalXp;
+    const progressPercentage = Math.floor((xpInCurrentLevel / PRESTIGE_XP_PER_TIER) * 100);
+
+    return {
+      currentLevel: currentLevelData,
+      nextLevelXP: nextTierXP,
+      xpInCurrentLevel,
+      xpNeededForNext,
+      progressPercentage,
+      isPrestige: false
+    };
+  }
+
+  // Normal levels 1-29
   const currentLevelXP = XP_LEVELS[currentLevel - 1].xpRequired;
   const nextLevelXP = XP_LEVELS[currentLevel].xpRequired;
   const xpInCurrentLevel = totalXp - currentLevelXP;
@@ -86,7 +156,8 @@ export const getLevelProgress = (totalXp) => {
     nextLevelXP,
     xpInCurrentLevel,
     xpNeededForNext,
-    progressPercentage
+    progressPercentage,
+    isPrestige: false
   };
 };
 
@@ -315,6 +386,9 @@ export const getXPLeaderboard = async (limit = 10) => {
 
 export default {
   XP_LEVELS,
+  MAX_STATIC_LEVEL,
+  PRESTIGE_XP_PER_TIER,
+  PRESTIGE_BASE_XP,
   calculateLevel,
   getNextLevelXP,
   getLevelProgress,
