@@ -34,7 +34,7 @@ import { useAccessibility } from "../../contexts/AccessibilityContext";
 import {
   getStudentXP,
   getLevelProgress,
-  XP_LEVELS,
+  calculateLevel,
 } from "../../utils/xpSystem";
 import { motion } from "framer-motion";
 
@@ -192,11 +192,12 @@ function Dashboard() {
   const level = xpData?.levelData?.level || 1;
   const totalXP = xpData?.totalXP || 0;
   const progress = xpData?.progress || getLevelProgress(0);
-  const rawLevelTitle = XP_LEVELS[level - 1]?.title || "Beginner";
-  const levelTitle = t("xpLevels." + rawLevelTitle, {
-    defaultValue: rawLevelTitle,
-  });
-  const isMaxLevel = level >= 15;
+  const levelData = calculateLevel(totalXP);
+  const isPrestige = levelData.isPrestige;
+  const rawLevelTitle = levelData.title || "Beginner";
+  const levelTitle = isPrestige
+    ? t("xpLevels.prestigeTitle", { tier: levelData.prestigeTier })
+    : t("xpLevels." + rawLevelTitle, { defaultValue: rawLevelTitle });
 
   // Compute XP range values for UnifiedStatsCard
   const currentLevelXP = level > 1 ? XP_LEVELS[level - 2].xpRequired : 0;
@@ -639,16 +640,23 @@ function Dashboard() {
               </Link>
               {/* Level pill (tucks behind avatar with negative margin) */}
               <div
-                className={`flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2 shadow-[0_2px_12px_rgba(56,189,248,0.4)] -ml-7`}
+                className={`flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2 -ml-7`}
                 style={{
-                  background: "linear-gradient(to right, rgba(30,41,59,0.85), rgba(30,41,59,0.85)) padding-box, linear-gradient(to right, #38bdf8, #f97316) border-box",
+                  background: isPrestige
+                    ? "linear-gradient(to right, rgba(30,41,59,0.85), rgba(30,41,59,0.85)) padding-box, linear-gradient(to right, #fbbf24, #f59e0b, #fbbf24) border-box"
+                    : "linear-gradient(to right, rgba(30,41,59,0.85), rgba(30,41,59,0.85)) padding-box, linear-gradient(to right, #38bdf8, #f97316) border-box",
+                  boxShadow: isPrestige
+                    ? "0 2px 12px rgba(251,191,36,0.5)"
+                    : "0 2px 12px rgba(56,189,248,0.4)",
                 }}
               >
                 <span className="ml-3 text-xs font-bold uppercase tracking-wider text-white">
-                  {t("dashboard.header.level", {
-                    level,
-                    defaultValue: `Level ${level}`,
-                  })}
+                  {isPrestige
+                    ? t("xpLevels.prestigeTitle", { tier: levelData.prestigeTier })
+                    : t("dashboard.header.level", {
+                        level,
+                        defaultValue: `Level ${level}`,
+                      })}
                 </span>
               </div>
             </div>
@@ -689,11 +697,11 @@ function Dashboard() {
           <UnifiedStatsCard
             levelTitle={levelTitle}
             levelNumber={level}
-            progressPercentage={isMaxLevel ? 100 : progressPercentage}
+            progressPercentage={progressPercentage}
             xpCurrent={xpInCurrentLevel}
             xpTotal={xpRange}
             totalXP={totalXP}
-            isMaxLevel={isMaxLevel}
+            isPrestige={isPrestige}
             streakCount={currentStreak || 0}
             freezeCount={streakState?.freezeCount || 0}
             inGraceWindow={streakState?.inGraceWindow || false}

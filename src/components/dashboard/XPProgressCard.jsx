@@ -8,7 +8,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { useUser } from '../../features/authentication/useUser';
 import { useAccessibility } from '../../contexts/AccessibilityContext';
-import { getStudentXP, getLevelProgress, XP_LEVELS } from '../../utils/xpSystem';
+import { getStudentXP, getLevelProgress, XP_LEVELS, calculateLevel, PRESTIGE_XP_PER_TIER } from '../../utils/xpSystem';
 
 const XPProgressCard = () => {
   const { user } = useUser();
@@ -47,9 +47,12 @@ const XPProgressCard = () => {
     );
   }
 
-  const isMaxLevel = level >= 15;
-  const rawLevelTitle = XP_LEVELS[level - 1]?.title || 'Beginner';
-  const levelTitle = t(`xpLevels.${rawLevelTitle}`, { defaultValue: rawLevelTitle });
+  const levelData = calculateLevel(totalXP);
+  const isPrestige = levelData.isPrestige;
+  const rawLevelTitle = levelData.title || 'Beginner';
+  const levelTitle = isPrestige
+    ? t('xpLevels.prestigeTitle', { tier: levelData.prestigeTier })
+    : t(`xpLevels.${rawLevelTitle}`, { defaultValue: rawLevelTitle });
   const xpInCurrentLevel = progress.xpInCurrentLevel || 0;
   const xpNeededForNext = progress.xpNeededForNext || 0;
   const nextLevelXP = progress.nextLevelXP || 0;
@@ -76,8 +79,8 @@ const XPProgressCard = () => {
       {/* Level subtext */}
       <div className="text-center mb-4">
         <p className="text-sm font-medium text-white/60">
-          {isMaxLevel
-            ? t('dashboard.xpProgress.maxLevel', { defaultValue: 'MAX LEVEL' })
+          {isPrestige
+            ? t('xpLevels.prestigeTitle', { tier: levelData.prestigeTier })
             : t('dashboard.xpProgress.levelLabel', { defaultValue: 'Level {{level}}', level })}
         </p>
       </div>
@@ -85,35 +88,34 @@ const XPProgressCard = () => {
       {/* Horizontal progress bar */}
       <div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-white/20">
         <div
-          className={`h-full bg-gradient-to-r from-blue-400 to-indigo-600 ${
+          className={`h-full ${isPrestige ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500' : 'bg-gradient-to-r from-blue-400 to-indigo-600'} ${
             reducedMotion
               ? 'transition-opacity duration-100'
               : 'transition-all duration-500'
           }`}
-          style={{ width: `${isMaxLevel ? 100 : progressPercentage}%` }}
+          style={{
+            width: `${progressPercentage}%`,
+            ...(isPrestige ? { boxShadow: '0 0 8px rgba(251,191,36,0.6)' } : {}),
+          }}
         />
       </div>
 
       {/* XP stats row */}
       <div className={`flex items-center justify-between text-xs font-semibold ${isRTL ? 'flex-row-reverse' : ''}`}>
         <span className="text-white/70">
-          {isMaxLevel
-            ? t('dashboard.xpProgress.maxXP', { defaultValue: '{{xp}} XP', xp: totalXP })
-            : t('dashboard.xpProgress.currentXP', {
-                defaultValue: '{{current}} / {{total}} XP',
-                current: xpInCurrentLevel,
-                total: xpRange,
-              })}
+          {t('dashboard.xpProgress.currentXP', {
+            defaultValue: '{{current}} / {{total}} XP',
+            current: xpInCurrentLevel,
+            total: isPrestige ? PRESTIGE_XP_PER_TIER : xpRange,
+          })}
         </span>
-        {!isMaxLevel && (
-          <span className="text-blue-300">
-            {t('dashboard.xpProgress.xpToNext', {
-              defaultValue: '{{xp}} XP to Level {{nextLevel}}',
-              xp: xpNeededForNext,
-              nextLevel: level + 1,
-            })}
-          </span>
-        )}
+        <span className={isPrestige ? "text-amber-300" : "text-blue-300"}>
+          {t('dashboard.xpProgress.xpToNext', {
+            defaultValue: '{{xp}} XP to Level {{nextLevel}}',
+            xp: xpNeededForNext,
+            nextLevel: level + 1,
+          })}
+        </span>
       </div>
     </div>
   );

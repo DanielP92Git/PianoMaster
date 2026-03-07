@@ -11,7 +11,7 @@ const XPRing = ({
   progressPercentage = 0,
   xpCurrent = 0,
   xpTotal = 0,
-  isMaxLevel = false,
+  isPrestige = false,
   size = 100,
   reducedMotion = false,
 }) => {
@@ -40,14 +40,29 @@ const XPRing = ({
       >
         <defs>
           <linearGradient id="xp-ring-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#7DD3FC" />
+            <stop offset="0%" stopColor="#22D3EE" />
             <stop offset="50%" stopColor="#38BDF8" />
-            <stop offset="100%" stopColor="#60A5FA" />
+            <stop offset="100%" stopColor="#818CF8" />
+          </linearGradient>
+          <linearGradient id="xp-ring-grad-prestige" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#FBBF24" />
+            <stop offset="50%" stopColor="#F59E0B" />
+            <stop offset="100%" stopColor="#D97706" />
           </linearGradient>
           <filter id="xp-ring-glow">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feGaussianBlur stdDeviation="4" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <filter id="xp-ring-glow-prestige">
+            <feGaussianBlur stdDeviation="4" result="blur" />
+            <feFlood floodColor="#FBBF24" floodOpacity="0.6" result="color" />
+            <feComposite in="color" in2="blur" operator="in" result="glow" />
+            <feMerge>
+              <feMergeNode in="glow" />
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
@@ -72,12 +87,12 @@ const XPRing = ({
           cy="60"
           r={radius}
           fill="none"
-          stroke="url(#xp-ring-grad)"
+          stroke={isPrestige ? "url(#xp-ring-grad-prestige)" : "url(#xp-ring-grad)"}
           strokeWidth="8"
           strokeLinecap="round"
           strokeDasharray={`${progressLength} ${circumference - progressLength}`}
           transform={`rotate(${startAngle} 60 60)`}
-          filter="url(#xp-ring-glow)"
+          filter={isPrestige ? "url(#xp-ring-glow-prestige)" : "url(#xp-ring-glow)"}
           style={
             reducedMotion
               ? undefined
@@ -97,7 +112,7 @@ const XPRing = ({
 
         {/* XP text inside ring - bottom area */}
         <text x="60" y="78" textAnchor="middle" className="fill-white/80 text-[13px] font-bold">
-          {isMaxLevel ? xpCurrent : `${xpCurrent}/${xpTotal}`}
+          {`${xpCurrent}/${xpTotal}`}
         </text>
         <text x="60" y="94" textAnchor="middle" className="fill-white/50 text-[13px] font-semibold">
           XP
