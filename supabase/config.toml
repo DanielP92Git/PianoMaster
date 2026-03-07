@@ -320,6 +320,10 @@ verify_jwt = true
 # Called by pg_cron (no Supabase JWT). Security enforced via x-cron-secret header check inside the function.
 verify_jwt = false
 
+[functions.send-weekly-report]
+# Called by pg_cron (no Supabase JWT). Security enforced via x-cron-secret header check inside the function.
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
