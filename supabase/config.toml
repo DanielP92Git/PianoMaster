@@ -324,6 +324,10 @@ verify_jwt = false
 # Called by pg_cron (no Supabase JWT). Security enforced via x-cron-secret header check inside the function.
 verify_jwt = false
 
+[functions.unsubscribe-weekly-report]
+# Called by parent clicking unsubscribe link in email (no JWT). Security enforced via HMAC token verification.
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
