@@ -10,7 +10,7 @@ import { usePointBalance } from "../../hooks/useAccessories";
 import { useAccessoryUnlockDetection } from "../../hooks/useAccessoryUnlockDetection";
 import { useUser } from "../../features/authentication/useUser";
 import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../../services/skillProgressService";
-import { awardXP, calculateSessionXP, getLevelProgress } from "../../utils/xpSystem";
+import { awardXP, calculateSessionXP, getLevelProgress, PRESTIGE_XP_PER_TIER } from "../../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
 import { streakService } from "../../services/streakService";
 import { toast } from "react-hot-toast";
@@ -871,32 +871,60 @@ const VictoryScreen = ({
 
                 {/* Mini XP progress bar - shows level context */}
                 {levelProgressData && !xpData.leveledUp && (
-                  <div className="mt-2 space-y-1 rounded-lg bg-blue-50/80 p-2">
-                    <div className="flex items-center justify-between text-xs font-semibold text-blue-900">
-                      <span>{t(`xpLevels.${levelProgressData.currentLevel.title}`)}</span>
+                  <div className={`mt-2 space-y-1 rounded-lg p-2 ${levelProgressData.isPrestige ? 'bg-amber-50/80' : 'bg-blue-50/80'}`}>
+                    <div className={`flex items-center justify-between text-xs font-semibold ${levelProgressData.isPrestige ? 'text-amber-900' : 'text-blue-900'}`}>
+                      <span>
+                        {levelProgressData.currentLevel.isPrestige
+                          ? t('xpLevels.prestigeTitle', { tier: levelProgressData.currentLevel.prestigeTier })
+                          : t(`xpLevels.${levelProgressData.currentLevel.title}`)}
+                      </span>
                       <span>{t('victory.levelLabel', { level: levelProgressData.currentLevel.level })}</span>
                     </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-blue-200">
+                    <div className={`h-2 w-full overflow-hidden rounded-full ${levelProgressData.isPrestige ? 'bg-amber-200' : 'bg-blue-200'}`}>
                       <div
-                        className={`h-full bg-gradient-to-r from-blue-500 to-indigo-600 ${
+                        className={`h-full ${levelProgressData.isPrestige ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500' : 'bg-gradient-to-r from-blue-500 to-indigo-600'} ${
                           reducedMotion ? 'transition-opacity duration-100' : 'transition-all duration-1000'
                         }`}
                         style={{ width: `${levelProgressData.progressPercentage}%` }}
                       />
                     </div>
-                    <div className="text-center text-xs text-blue-700">
-                      {t('victory.xpProgress', { current: levelProgressData.xpInCurrentLevel, total: levelProgressData.nextLevelXP - levelProgressData.currentLevel.xpRequired })}
+                    <div className={`text-center text-xs ${levelProgressData.isPrestige ? 'text-amber-700' : 'text-blue-700'}`}>
+                      {t('victory.xpProgress', {
+                        current: levelProgressData.xpInCurrentLevel,
+                        total: levelProgressData.isPrestige
+                          ? PRESTIGE_XP_PER_TIER
+                          : levelProgressData.nextLevelXP - levelProgressData.currentLevel.xpRequired
+                      })}
                     </div>
                   </div>
                 )}
 
-                {/* Level up indicator - enhanced with level name */}
+                {/* Level up indicator - enhanced with level name and prestige support */}
                 {xpData.leveledUp && (
-                  <div className={`${reducedMotion ? '' : 'animate-bounce'} mt-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-2 text-center shadow-lg`}>
-                    <div className="text-xs font-semibold text-white/90">{t('victory.levelUp')}</div>
-                    <div className="text-base font-bold text-white">
-                      {levelProgressData?.currentLevel?.title ? t(`xpLevels.${levelProgressData.currentLevel.title}`) : t('victory.levelLabel', { level: xpData.newLevel })}
+                  <div className={`${reducedMotion ? '' : 'animate-bounce'} mt-2 rounded-lg px-3 py-2 text-center shadow-lg ${
+                    levelProgressData?.isPrestige || xpData.newLevel >= 30
+                      ? 'bg-gradient-to-r from-amber-500 to-yellow-500'
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                  }`}>
+                    <div className="text-xs font-semibold text-white/90">
+                      {xpData.newLevel === 30
+                        ? t('victory.prestigeUnlocked')
+                        : t('victory.levelUp')}
                     </div>
+                    <div className="text-base font-bold text-white">
+                      {levelProgressData?.currentLevel?.isPrestige
+                        ? t('xpLevels.prestigeTitle', { tier: levelProgressData.currentLevel.prestigeTier })
+                        : t('victory.youAreNow', {
+                            title: levelProgressData?.currentLevel?.title
+                              ? t(`xpLevels.${levelProgressData.currentLevel.title}`, { defaultValue: levelProgressData.currentLevel.title })
+                              : t('victory.levelLabel', { level: xpData.newLevel })
+                          })}
+                    </div>
+                    {xpData.newLevel === 30 && (
+                      <div className="mt-1 text-xs text-white/80">
+                        {t('victory.prestigeEntry')}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
