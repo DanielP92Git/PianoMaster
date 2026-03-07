@@ -5,14 +5,25 @@
  * from a pool of 12, ensuring no repeat from the previous day.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { X } from 'lucide-react';
 
 const FUN_FACT_KEYS = Array.from({ length: 12 }, (_, i) => `dashboard.funFacts.${i}`);
 const STORAGE_KEY = 'daily-fun-fact-index';
+const DISMISS_KEY = 'daily-fun-fact-dismissed';
 
 const DailyMessageBanner = () => {
   const { t } = useTranslation('common');
+
+  const [dismissed, setDismissed] = useState(() => {
+    try {
+      const stored = localStorage.getItem(DISMISS_KEY);
+      return stored === new Date().toDateString();
+    } catch {
+      return false;
+    }
+  });
 
   const messageIndex = useMemo(() => {
     const todayStr = new Date().toDateString();
@@ -32,16 +43,31 @@ const DailyMessageBanner = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: todayStr, index: newIndex }));
       return newIndex;
     } catch {
-      // If localStorage fails, just pick random
       return Math.floor(Math.random() * FUN_FACT_KEYS.length);
     }
   }, []);
 
+  if (dismissed) return null;
+
+  const handleDismiss = () => {
+    setDismissed(true);
+    try {
+      localStorage.setItem(DISMISS_KEY, new Date().toDateString());
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-2xl px-4 md:px-6">
-      <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-center text-sm italic text-white/60">
-        {t(FUN_FACT_KEYS[messageIndex])}
-      </div>
+    <div className="relative rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 pr-7 text-center text-sm italic text-white/60">
+      {t(FUN_FACT_KEYS[messageIndex])}
+      <button
+        onClick={handleDismiss}
+        className="absolute right-1.5 top-1.5 p-0.5 text-white/40 hover:text-white/70 transition-colors"
+        aria-label={t('common.actions.close', { defaultValue: 'Close' })}
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 };
