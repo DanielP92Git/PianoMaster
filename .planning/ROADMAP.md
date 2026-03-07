@@ -347,9 +347,8 @@ Plans:
   4. A parent who has opted into reports receives an email via Brevo every Monday morning summarizing the child's past week — days practiced, new nodes completed, current streak — using the same email template branding as the consent email
 **Plans**: 2 plans
 Plans:
-- [ ] 21-01-PLAN.md — To be planned
-- [ ] 21-02-PLAN.md — To be planned
-
+- [ ] 21-01-PLAN.md -- Weekly summary card, personal best badge, daily fun-fact banner, i18n keys (PROG-04, PROG-05, PROG-06)
+- [ ] 21-02-PLAN.md -- DB migration, send-weekly-report Edge Function, unsubscribe endpoint (PROG-07)
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -396,7 +395,7 @@ Plans:
 | 18. Streak Protection | v1.9 | 0/3 | Planned | - |
 | 19. Notes Recognition Engagement | v1.9 | 0/2 | Planned | - |
 | 20. Extended Progression System | v1.9 | 0/2 | Planned | - |
-| 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
+| 21. Celebration & Reporting Upgrades | v1.9 | 0/2 | Planned | - |
 | 22. Kid-Friendly Node Modal Redesign | v1.9 | 1/1 | Complete | 2026-03-07 |
 | 23. Kid-Friendly Dashboard Redesign | 3/3 | Complete    | 2026-03-06 | - |
 
@@ -419,7 +418,7 @@ Plans:
 - [ ] 23-03-PLAN.md -- Gap closure: level badge horizontal pill layout, Fireflies reduced motion fix
 
 ---
-*Last updated: 2026-03-07 — Phase 20 plans created (2 plans, 2 waves)*
+*Last updated: 2026-03-07 — Phase 21 plans created (2 plans, 1 wave)*
 
 ### Phase 22: Kid-Friendly Node Modal Redesign
 **Goal**: The TrailNodeModal transforms from a text-heavy information panel into a visually delightful, kid-friendly modal that centers a glowing category icon, shows skill notes as colorful 3D bubbles, displays XP reward prominently with a golden star, and uses spacious layout with gradient buttons — matching the design reference screenshot
