@@ -113,11 +113,11 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for v1.9 research findings.
 ### v1.9 Engagement & Retention (Phases 17-23)
 
 - [x] **Phase 17: Push Notifications** — COPPA-compliant parent opt-in, service worker Web Push, 1/day rate limit, context-aware messages, disable from settings (completed 2026-03-04)
-- [x] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle (completed 2026-03-04)
+- [x] **Phase 18: Streak Protection** — Streak freeze consumable, 36-hour grace period, comeback bonus XP, weekend pass toggle (completed 2026-03-04)
 - [x] **Phase 19: Notes Recognition Engagement** — Combo/streak counter with multiplier, speed bonus, lives system, on-fire mode, auto-grow note pool (completed 2026-03-05)
 - [ ] **Phase 20: Extended Progression System** — Levels 15 to 30, prestige tiers (Maestro I/II/III+), per-level accessory or title grants
 - [ ] **Phase 21: Celebration & Reporting Upgrades** — Weekly progress summary, personal bests, varied login messages, parent weekly email via Brevo
-- [ ] **Phase 22: Kid-Friendly Node Modal Redesign** — Visual overhaul of TrailNodeModal with centered category icon, 3D bubble note badges, prominent XP reward card, kid-appropriate layout
+- [x] **Phase 22: Kid-Friendly Node Modal Redesign** — Visual overhaul of TrailNodeModal with centered category icon, 3D bubble note badges, prominent XP reward card, kid-appropriate layout (completed 2026-03-07)
 - [x] **Phase 23: Kid-Friendly Dashboard Redesign** — Compact hero with centered avatar, PLAY NEXT gradient pill, unified stats card with XP ring, circular practice tools, simplified layout (completed 2026-03-06)
 
 ## Phase Details
@@ -333,8 +333,8 @@ Plans:
   3. Each level-up event grants a specific accessory or title that is visible on the student's profile or dashboard — the reward is shown in the level-up celebration modal
 **Plans**: 2 plans
 Plans:
-- [ ] 19-01-PLAN.md -- Combo counter with multiplier tiers, speed bonus, lives system, GameOverScreen variant, i18n
-- [ ] 19-02-PLAN.md -- On-fire visual mode with particles, auto-grow note pool, fire sound, human verification
+- [ ] 20-01-PLAN.md -- TDD xpSystem.js 30-level extension + prestige logic, Postgres migration, i18n keys
+- [ ] 20-02-PLAN.md -- UI integration: Dashboard prestige badge, golden XPRing, VictoryScreen celebration, human verification
 
 ### Phase 21: Celebration & Reporting Upgrades
 **Goal**: The dashboard gives students a richer picture of their weekly accomplishment and surfaces personal pride moments, while parents receive a weekly email summary through existing Brevo infrastructure so they can reinforce practice at home
@@ -347,8 +347,8 @@ Plans:
   4. A parent who has opted into reports receives an email via Brevo every Monday morning summarizing the child's past week — days practiced, new nodes completed, current streak — using the same email template branding as the consent email
 **Plans**: 2 plans
 Plans:
-- [ ] 19-01-PLAN.md -- Combo counter with multiplier tiers, speed bonus, lives system, GameOverScreen variant, i18n
-- [ ] 19-02-PLAN.md -- On-fire visual mode with particles, auto-grow note pool, fire sound, human verification
+- [ ] 21-01-PLAN.md — To be planned
+- [ ] 21-02-PLAN.md — To be planned
 
 ## Progress
 
@@ -395,9 +395,9 @@ Plans:
 | 17. Push Notifications | v1.9 | 0/2 | Planned | - |
 | 18. Streak Protection | v1.9 | 0/3 | Planned | - |
 | 19. Notes Recognition Engagement | v1.9 | 0/2 | Planned | - |
-| 20. Extended Progression System | v1.9 | 0/? | Not started | - |
+| 20. Extended Progression System | v1.9 | 0/2 | Planned | - |
 | 21. Celebration & Reporting Upgrades | v1.9 | 0/? | Not started | - |
-| 22. Kid-Friendly Node Modal Redesign | v1.9 | 0/1 | Planned | - |
+| 22. Kid-Friendly Node Modal Redesign | v1.9 | 1/1 | Complete | 2026-03-07 |
 | 23. Kid-Friendly Dashboard Redesign | 3/3 | Complete    | 2026-03-06 | - |
 
 **Total: 44 phases across 10 milestones (v1.0-v1.8 shipped, v1.9 in progress)**
@@ -419,7 +419,7 @@ Plans:
 - [ ] 23-03-PLAN.md -- Gap closure: level badge horizontal pill layout, Fireflies reduced motion fix
 
 ---
-*Last updated: 2026-03-06 — Phase 23 gap closure plan added (3 plans total)*
+*Last updated: 2026-03-07 — Phase 20 plans created (2 plans, 2 waves)*
 
 ### Phase 22: Kid-Friendly Node Modal Redesign
 **Goal**: The TrailNodeModal transforms from a text-heavy information panel into a visually delightful, kid-friendly modal that centers a glowing category icon, shows skill notes as colorful 3D bubbles, displays XP reward prominently with a golden star, and uses spacious layout with gradient buttons — matching the design reference screenshot
@@ -433,4 +433,4 @@ Plans:
   5. All existing functionality is preserved: exercise list, progress tracking, premium lock, boss unlock hints, prerequisites, RTL support, and navigation to games
 **Plans**: 1 plan
 Plans:
-- [ ] 22-01-PLAN.md -- Kid-friendly visual redesign with centered icon, 3D bubble badges, XP card, gradient buttons, human verification
+- [x] 22-01-PLAN.md -- Kid-friendly visual redesign with centered icon, 3D bubble badges, XP card, gradient buttons, human verification
