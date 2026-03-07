@@ -682,9 +682,6 @@ function Dashboard() {
         </div>
       </header>
 
-      {/* DAILY FUN FACT BANNER */}
-      {isStudent && <DailyMessageBanner />}
-
       {/* PLAY NEXT BUTTON (overlaps hero) */}
       {isStudent && nextNode && (
         <PlayNextButton
@@ -705,6 +702,9 @@ function Dashboard() {
           transition: { duration: 0.4 },
         })}
       >
+        {/* DAILY FUN FACT BANNER */}
+        {isStudent && <DailyMessageBanner />}
+
         {/* UNIFIED STATS CARD */}
         {isStudent && (
           <UnifiedStatsCard
