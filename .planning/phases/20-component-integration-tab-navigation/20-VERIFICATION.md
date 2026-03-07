@@ -1,20 +1,24 @@
 ---
 phase: 20-component-integration-tab-navigation
-verified: 2026-02-10T12:04:46Z
+verified: 2026-03-07T19:15:00Z
 status: passed
 score: 7/7 must-haves verified
-re_verification: false
+re_verification:
+  previous_status: passed
+  previous_score: 7/7
+  note: "Previous verification was for the OLD phase goal (tab navigation). Phase was repurposed to Extended Progression System. This is a FULL initial verification of the new goal."
+  gaps_closed: []
+  gaps_remaining: []
+  regressions: []
 ---
 
-# Phase 20: Component Integration & Tab Navigation Verification Report
+# Phase 20: Extended Progression System Verification Report
 
-**Phase Goal:** Visual enhancements applied to nodes and header, tab-based path switching functional
+**Phase Goal:** The XP level system provides long-term motivation beyond the current Level 15 ceiling -- students can progress through 30 levels with increasingly ambitious level names, continue into prestige tiers after Level 30, and each level milestone feels rewarding through a concrete unlock
 
-**Verified:** 2026-02-10T12:04:46Z
-
+**Verified:** 2026-03-07T19:15:00Z
 **Status:** passed
-
-**Re-verification:** No - initial verification
+**Re-verification:** No -- initial verification of repurposed phase (old phase 20 was tab navigation, now Extended Progression System)
 
 ## Goal Achievement
 
@@ -22,71 +26,69 @@ re_verification: false
 
 | # | Truth | Status | Evidence |
 |---|-------|--------|----------|
-| 1 | Trail nodes display 3D depth effects (radial gradients, layered box-shadows, glow rings for active nodes) | ✓ VERIFIED | trail-effects.css lines 124-245 contain node-3d-active, node-3d-locked, node-3d-completed, node-3d-available classes with radial gradients and layered box-shadows (3-layer shadows: glow ring, offset shadow, ambient glow) |
-| 2 | Node states visually distinct (active=cyan glow, locked=dark purple, completed=green with stars) | ✓ VERIFIED | Active nodes: cyan gradient with static glow ring (line 129). Locked: dark purple gradient, opacity 0.6 (line 166). Completed: green gradient with gold stars inside (TrailNode.jsx lines 111-127) |
-| 3 | Tab switcher shows Treble/Bass/Rhythm buttons with only one path visible at a time | ✓ VERIFIED | TrailMap.jsx lines 663-695 render tab buttons. Lines 703-751 show conditional rendering - only activeTab path renders |
-| 4 | Active tab persists in URL query param (?path=treble) and supports browser back button | ✓ VERIFIED | TrailMap.jsx line 405-406: useSearchParams hook with activeTab = searchParams.get('path'). Line 515: setSearchParams({ path: tabId }) updates URL |
-| 5 | Trail header displays level badge, Learning Trail title with Quicksand font, and Free Practice button | ✓ VERIFIED | TrailMapPage.jsx lines 89-139: 2-row header with Shield badge (line 113), Quicksand title (line 97), XP progress bar (line 132), subtle Free Practice link (line 103: text-white/50) |
-| 6 | Node press animation provides tactile feedback (translateY with reduced shadow on :active) | ✓ VERIFIED | trail-effects.css lines 155, 202, 240 all use transform: translateY(2px) with reduced shadow depth on :active state |
-| 7 | TrailNodeModal functionality unchanged (click node to details to start practice flow works identically) | ✓ VERIFIED | TrailMap.jsx lines 754-762 render TrailNodeModal with same props (node, progress, isUnlocked, prerequisites). TrailNode.jsx lines 34-46 handle onClick with unlocked/boss logic preserved |
+| 1 | XP_LEVELS array has 30 entries with sequential XP thresholds | VERIFIED | `src/utils/xpSystem.js` lines 14-45: 30 entries from level 1 (0 XP) to level 30 (51000 XP). Test confirms strictly increasing thresholds (xpSystem.test.js line 17-21). |
+| 2 | calculateLevel returns prestige object for XP beyond level 30 | VERIFIED | `src/utils/xpSystem.js` lines 61-89: returns `{ isPrestige: true, prestigeTier: N, title: 'Maestro N' }` for XP >= 54000. Tests at lines 101-115 confirm tier 1 at 54000 XP, tier 2 at 57000 XP. |
+| 3 | getLevelProgress returns correct progress for levels 16-30 and prestige tiers | VERIFIED | `src/utils/xpSystem.js` lines 106-162: three code paths for prestige (line 111), level 30 (line 128), normal 1-29 (line 145). All paths return `isPrestige` field. Tests at lines 118-153 cover all ranges. |
+| 4 | getNextLevelXP returns non-zero for levels 1-29 and prestige XP for 30+ | VERIFIED | `src/utils/xpSystem.js` lines 96-99: returns `PRESTIGE_XP_PER_TIER` for level >= 30, else `XP_LEVELS[currentLevel].xpRequired`. Tests confirm level 15 returns 10500 (not 0), level 30 returns 3000. |
+| 5 | Every level 1-30 has a unique non-empty title and emoji icon | VERIFIED | `src/utils/xpSystem.js` lines 14-45: all 30 entries have non-empty title and icon strings. Test at lines 23-35 validates uniqueness and non-empty. |
+| 6 | Postgres award_xp function supports 30 levels and prestige tiers | VERIFIED | `supabase/migrations/20260307000001_extend_xp_levels.sql`: 30-entry threshold array (line 23), FOR loop 1..30 (line 46), prestige calculation (lines 53-63), constraint allows levels > 30 (line 7), data fixup (lines 83-120). |
+| 7 | All 30 level titles plus prestige key exist in EN and HE locale files | VERIFIED | Both `src/locales/en/common.json` and `src/locales/he/common.json` contain all 16 new xpLevels keys (15 level names + prestigeTitle) and 3 victory keys (youAreNow, prestigeUnlocked, prestigeEntry). HE Composer = "מלחין", HE prestigeTitle = "מאסטרו {{tier}}". Total: 31 xpLevels keys each. |
 
 **Score:** 7/7 truths verified
 
+### Plan 02 Observable Truths (UI Integration)
+
+| # | Truth | Status | Evidence |
+|---|-------|--------|----------|
+| 1 | A student at level 15 sees level 16 on their progress bar, not MAX LEVEL | VERIFIED | Dashboard.jsx line 196: `isPrestige = levelData.isPrestige` (no `isMaxLevel`). Line 206: `progressPercentage = progress.progressPercentage` (no `isMaxLevel ? 100`). No `isMaxLevel`, `level >= 15`, or `MAX LEVEL` string found in any UI file. |
+| 2 | A prestige student sees a golden badge and golden progress bar on the dashboard | VERIFIED | Dashboard.jsx lines 644-649: golden gradient `linear-gradient(135deg, #f59e0b, #d97706, #b45309)` and golden box-shadow when `isPrestige`. XPProgressCard.jsx line 91: amber gradient for prestige bar. |
+| 3 | Level-up celebration in VictoryScreen shows the new title earned | VERIFIED | VictoryScreen.jsx lines 914-921: shows `t('victory.youAreNow', { title: ... })` which renders "You are now a [Title]!" with the translated level name. |
+| 4 | Prestige entry at level 30 shows golden celebration with special headline | VERIFIED | VictoryScreen.jsx lines 904-907: golden gradient `from-amber-500 to-yellow-500` when `isPrestige OR newLevel >= 30`. Lines 910-911: "Prestige Unlocked!" for level 30. Lines 923-926: prestige entry message shown. |
+| 5 | XPRing uses golden gradient for prestige players | VERIFIED | XPRing.jsx lines 47-51: `xp-ring-grad-prestige` linearGradient with amber/yellow stops. Lines 60-68: prestige glow filter. Line 90: `isPrestige ? "url(#xp-ring-grad-prestige)"`. |
+| 6 | Dashboard level pill shows prestige title (Maestro N) with golden border | VERIFIED | Dashboard.jsx lines 653-654: `isPrestige ? t('xpLevels.prestigeTitle', { tier: levelData.prestigeTier })`. Lines 644-649: golden gradient border and glow shadow for prestige. |
+| 7 | Progress bar never shows 100% / MAX LEVEL for any level including 30 | VERIFIED | No `isMaxLevel` reference exists in any UI file. `progressPercentage` is always computed dynamically from `getLevelProgress()` which handles level 30 as progress toward first prestige tier (not 100%). |
+
 ### Required Artifacts
 
-#### Plan 01 Artifacts (3D Node Styling)
+#### Plan 01 Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| src/components/trail/TrailNode.jsx | 3D-styled trail node with state-based CSS classes and tooltip | ✓ VERIFIED | Uses node-3d-active, node-3d-locked, node-3d-completed, node-3d-available classes (lines 63-68). Tooltip on locked nodes (lines 82-86). Stars inside completed nodes (lines 111-127). Lock icon on locked nodes (line 129) |
-| src/styles/trail-effects.css | CSS tooltip styles for locked nodes | ✓ VERIFIED | Locked tooltip inline Tailwind (TrailNode.jsx line 84). 3D node classes comprehensive (lines 124-245) with radial gradients, layered shadows, hover/active states |
+| `src/utils/xpSystem.js` | 30-level XP system with prestige computation | VERIFIED | 401 lines. Exports XP_LEVELS (30 entries), MAX_STATIC_LEVEL, PRESTIGE_XP_PER_TIER, PRESTIGE_BASE_XP, calculateLevel, getLevelProgress, getNextLevelXP. Prestige logic complete. |
+| `src/utils/xpSystem.test.js` | Unit tests for all 30 levels and prestige logic (min 80 lines) | VERIFIED | 176 lines. 27 tests across 5 describe blocks covering XP_LEVELS array, prestige constants, calculateLevel, getLevelProgress, getNextLevelXP. All pass. |
+| `supabase/migrations/20260307000001_extend_xp_levels.sql` | DB migration with constraint fix, 30-level award_xp, data fixup | VERIFIED | 121 lines. Contains: DROP old constraint, ADD new constraint (>= 1 only), CREATE award_xp with 30 thresholds + prestige, GRANT to authenticated, data fixup UPDATE. |
+| `src/locales/en/common.json` | English translations for 15 new level names + prestige key | VERIFIED | All 16 new xpLevels keys present (15 levels + prestigeTitle). 3 victory keys present. |
+| `src/locales/he/common.json` | Hebrew translations for 15 new level names + prestige key | VERIFIED | All 16 new xpLevels keys present with Hebrew translations. 3 victory keys present. |
 
-#### Plan 02 Artifacts (Tab Navigation)
-
-| Artifact | Expected | Status | Details |
-|----------|----------|--------|---------|
-| src/components/trail/TrailMap.jsx | Tab-based path switching with URL persistence and ARIA tablist | ✓ VERIFIED | useSearchParams (line 405), TRAIL_TABS config (lines 33-37), handleTabChange (line 514), handleTabKeyDown (lines 519-531), ARIA tablist (line 663), role=tab (line 674), aria-selected (line 676), aria-controls (line 677), tabIndex (line 678) |
-
-#### Plan 03 Artifacts (Trail Header)
+#### Plan 02 Artifacts
 
 | Artifact | Expected | Status | Details |
 |----------|----------|--------|---------|
-| src/pages/TrailMapPage.jsx | Trail header with level badge, XP bar, title, navigation | ✓ VERIFIED | Shield icon import (line 10). 2-row header layout (lines 89-139). Shield with level number (lines 112-118). Level name (lines 119-122). XP progress bar (lines 132-137). Quicksand font on title (line 97) |
+| `src/components/layout/Dashboard.jsx` | Prestige-aware level pill, isPrestige prop, no isMaxLevel | VERIFIED | Line 196: `isPrestige = levelData.isPrestige`. Lines 640-660: golden pill for prestige. Line 703: passes `isPrestige` to UnifiedStatsCard. Zero `isMaxLevel` references. |
+| `src/components/dashboard/UnifiedStatsCard.jsx` | isPrestige prop replaces isMaxLevel | VERIFIED | Line 24: `isPrestige = false` prop. Line 112: passes `isPrestige` to XPRing. Zero `isMaxLevel` references. |
+| `src/components/dashboard/XPRing.jsx` | Golden gradient SVG for prestige players | VERIFIED | Line 14: `isPrestige = false` prop. Lines 47-68: prestige gradient + glow filter. Lines 90, 95: conditional prestige stroke/filter. Zero `isMaxLevel` references. |
+| `src/components/dashboard/XPProgressCard.jsx` | Standalone XP card with prestige support, no isMaxLevel | VERIFIED | Line 51: `isPrestige = levelData.isPrestige`. Lines 82-84, 91, 98, 109, 112: prestige-aware styling. Zero `isMaxLevel` references. |
+| `src/components/games/VictoryScreen.jsx` | Enhanced level-up celebration with title and prestige golden styling | VERIFIED | Line 13: imports PRESTIGE_XP_PER_TIER. Lines 873-929: prestige-aware XP bar (amber styling) and level-up block (golden gradient, title display, prestige entry message). |
 
 ### Key Link Verification
 
-#### Plan 01 Key Links
-
 | From | To | Via | Status | Details |
 |------|----|----|--------|---------|
-| src/components/trail/TrailNode.jsx | src/styles/trail-effects.css | CSS class application | ✓ WIRED | TrailNode applies node-3d-* classes (lines 63-68) which are defined in trail-effects.css (lines 124-245) |
-
-#### Plan 02 Key Links
-
-| From | To | Via | Status | Details |
-|------|----|----|--------|---------|
-| src/components/trail/TrailMap.jsx | react-router-dom | useSearchParams hook | ✓ WIRED | Import (line 8), usage (line 405), searchParams.get('path') (line 406), setSearchParams (line 515) |
-| src/components/trail/TrailMap.jsx | src/data/skillTrail.js | getNodesByCategory, getBossNodes | ✓ WIRED | Imports (lines 16-19). trebleNodes (line 490), bassNodes (line 491), rhythmNodes (line 492), bossNodes (line 493). Boss merging into categories (lines 496-509) |
-
-#### Plan 03 Key Links
-
-| From | To | Via | Status | Details |
-|------|----|----|--------|---------|
-| src/pages/TrailMapPage.jsx | src/utils/xpSystem.js | getStudentXP query | ✓ WIRED | Import (line 12). useQuery with getStudentXP(user.id) (lines 24-29). Data consumed in header (lines 116, 121, 124-126, 135) |
-| src/pages/TrailMapPage.jsx | lucide-react | Shield icon import | ✓ WIRED | Import Shield (line 10). Rendered with fill and strokeWidth (line 113) |
+| `src/utils/xpSystem.js` | `supabase/migrations/20260307000001_extend_xp_levels.sql` | Identical XP thresholds | WIRED | All 30 thresholds match exactly between JS array and Postgres ARRAY. PRESTIGE_XP_PER_TIER = 3000 in both. Verified programmatically. |
+| `src/utils/xpSystem.js` | `src/locales/en/common.json` | Level title strings as i18n keys | WIRED | All 30 level titles appear as keys in xpLevels section. `xpLevels.Composer` exists in both EN and HE. |
+| `src/components/layout/Dashboard.jsx` | `src/utils/xpSystem.js` | calculateLevel().isPrestige for badge styling | WIRED | Dashboard line 195: `calculateLevel(totalXP)`, line 196: `levelData.isPrestige`. 6 references to `isPrestige` in Dashboard. |
+| `src/components/dashboard/XPRing.jsx` | `src/utils/xpSystem.js` | isPrestige prop triggers golden gradient | WIRED | XPRing receives `isPrestige` prop. Line 90: `isPrestige ? "url(#xp-ring-grad-prestige)"` with amber gradient defined at lines 47-51. |
+| `src/components/games/VictoryScreen.jsx` | `src/locales/en/common.json` | victory.youAreNow i18n key for level-up title | WIRED | VictoryScreen line 917: `t('victory.youAreNow', { title: ... })`. Key exists in both EN ("You are now a {{title}}!") and HE. |
 
 ### Requirements Coverage
 
-Phase 20 requirements from ROADMAP.md:
+| Requirement | Source Plan | Description | Status | Evidence |
+|-------------|------------|-------------|--------|----------|
+| PROG-01 | 20-01, 20-02 | XP level system extended from 15 to 30 levels with new themed names | SATISFIED | XP_LEVELS has 30 entries. Levels 16-30 have themed names (Composer through Transcendent). UI shows all levels correctly. |
+| PROG-02 | 20-01, 20-02 | Prestige tiers unlock after level 30 (Maestro I, II, III...) | SATISFIED | calculateLevel returns prestige objects for XP >= 54000. Postgres function handles prestige. UI displays golden styling and "Maestro N" title. Progress bar continues beyond level 30. |
+| PROG-03 | 20-01, 20-02 | Each level grants a unique accessory or title | SATISFIED | Each of 30 levels has a unique title. VictoryScreen shows "You are now a [Title]!" on every level-up (line 917). Prestige levels show "Maestro N". The "or" in the requirement is satisfied by titles. |
 
-| Requirement | Status | Supporting Evidence |
-|-------------|--------|---------------------|
-| NODE-01 (a-g): 3D node styling, state distinction, press animation, hover effects, star overlays, locked tooltips, accessibility | ✓ SATISFIED | All node styling truths verified. Radial gradients, layered shadows, press/hover animations, stars inside completed nodes, locked tooltips, CSS classes for all states |
-| NODE-02 (a-d): Node state calculation, icon rendering, current indicator, best score display | ✓ SATISFIED | TrailNode.jsx lines 22-28 (state calculation), lines 110-136 (conditional icon/star/lock rendering), lines 139-143 (current indicator), lines 152-156 (best score) |
-| TAB-01 (a-e): Tab switcher, URL persistence, ARIA pattern, keyboard navigation, progress counts | ✓ SATISFIED | All tab navigation truths verified. ARIA tablist, role=tab, aria-selected, aria-controls, tabIndex, ArrowLeft/ArrowRight handlers, progress counts (line 691) |
-| HEADER-01 (a-d): Level badge, XP bar, title font, navigation links | ✓ SATISFIED | All header truths verified. Shield badge with level number/name, XP progress bar with gradient, Quicksand font, Dashboard back link, subtle Free Practice link |
-| COMPAT-01 (a-b): No regression in TrailNodeModal, boss nodes integrated in tabs | ✓ SATISFIED | TrailNodeModal rendered with same props (truth 7). Boss nodes merged into category arrays via id prefix filtering (lines 496-509) |
-
+No orphaned requirements found -- REQUIREMENTS.md maps PROG-01, PROG-02, PROG-03 to Phase 20, and all three are addressed by the plans.
 
 ### Anti-Patterns Found
 
@@ -94,137 +96,65 @@ Phase 20 requirements from ROADMAP.md:
 |------|------|---------|----------|--------|
 | None | - | - | - | No anti-patterns detected |
 
-**Notes:**
-- No TODO/FIXME comments in modified files
-- No console.log-only implementations
-- No placeholder/stub functions
-- All implementations are substantive and wired
-- Development reset function (TrailMap.jsx lines 540-639) is intentional dev tool with user confirmation
+No TODO/FIXME comments, no placeholder implementations, no empty handlers, no console.log-only functions found in any modified file.
 
 ### Human Verification Required
 
-#### 1. Visual Node State Distinction
+#### 1. Level Pill Golden Styling for Prestige
 
-**Test:** Navigate to /trail and observe nodes in different states (locked, available, current, completed, mastered)
+**Test:** Set a student's total_xp to 54000+ in the database, load the dashboard
+**Expected:** Level pill next to avatar shows golden gradient fill with golden glow shadow and text "Maestro 1"
+**Why human:** Visual gradient quality and golden styling subtlety require subjective assessment
 
-**Expected:**
-- Locked nodes: dark purple, reduced opacity, lock icon overlay
-- Available nodes: blue gradient with subtle breathing glow
-- Current/active node: bright cyan gradient with static glow ring (no pulse)
-- Completed nodes (1-2 stars): green gradient with gold stars inside circle
-- Mastered nodes (3 stars): same green gradient, 3 gold stars inside
+#### 2. XPRing Golden Gradient for Prestige
 
-**Why human:** Visual distinction requires subjective judgment of color contrast and aesthetic appeal
+**Test:** With prestige XP (54000+), view the UnifiedStatsCard on the dashboard
+**Expected:** The circular XP ring uses amber/yellow gradient with golden glow filter instead of the default cyan/indigo
+**Why human:** SVG gradient and glow filter visual quality require display verification
 
-#### 2. Press Animation Tactile Feedback
+#### 3. VictoryScreen Level-Up Celebration with Title
 
-**Test:** Tap/click unlocked nodes on desktop and mobile
+**Test:** Set XP near a level threshold (e.g., 10490 for level 16 at 10500), complete a trail exercise earning 10+ XP
+**Expected:** Level-up block appears with "You are now a Composer!" in bouncing purple-to-pink gradient box. Confetti triggers.
+**Why human:** Animation timing, text rendering, and celebration feel are subjective
 
-**Expected:**
-- Node dips down approximately 2px with smooth translateY animation
-- Shadow depth reduces to create pressed effect
-- Animation feels responsive and tactile (not sluggish or jarring)
+#### 4. VictoryScreen Prestige Entry at Level 30
 
-**Why human:** Tactile feedback quality is subjective and varies by input device
+**Test:** Set XP to just below 51000, earn enough XP to cross the threshold
+**Expected:** Golden gradient level-up box with "Prestige Unlocked!" headline and "You've reached the highest level! Welcome to Maestro tier!" subtitle
+**Why human:** Golden celebration visual distinction and message clarity require manual assessment
 
-#### 3. Tab Switching URL Persistence
+#### 5. XP Progress Bar Never Shows MAX LEVEL
 
-**Test:**
-1. Navigate to /trail (defaults to ?path=treble)
-2. Click Bass tab - URL changes to /trail?path=bass
-3. Click browser back button - returns to /trail?path=treble
-4. Refresh page - stays on treble tab
-5. Click Rhythm tab - URL changes to /trail?path=rhythm
-6. Navigate away and return via browser history - rhythm tab still selected
+**Test:** Check progress bar at levels 15, 20, 25, 30 (various XP values within each level)
+**Expected:** Progress bar always shows incremental progress with XP counter. Never shows "MAX LEVEL" or 100% frozen state. At level 30, shows progress toward first prestige tier.
+**Why human:** Edge cases at level boundaries need manual verification across multiple states
 
-**Expected:** URL query param always reflects active tab, browser back/forward navigates between tabs
+#### 6. Hebrew Translations for New Level Names
 
-**Why human:** Browser back/forward behavior needs manual testing across browsers
-
-#### 4. Keyboard Navigation Between Tabs
-
-**Test:**
-1. Click Treble tab to focus
-2. Press ArrowRight - focus moves to Bass tab, path switches
-3. Press ArrowRight - focus moves to Rhythm tab
-4. Press ArrowLeft - focus moves back to Bass
-5. Press ArrowLeft - wraps around to Rhythm
-
-**Expected:** ArrowLeft/ArrowRight cycle through tabs with focus management and URL updates
-
-**Why human:** Keyboard focus behavior requires manual testing with screen readers and keyboard-only navigation
-
-#### 5. Locked Node Tooltip on Tap
-
-**Test:** Tap a locked node (prerequisite not complete)
-
-**Expected:**
-- Tooltip appears above node showing Complete [prerequisite name] first
-- Tooltip fades in smoothly
-- Tooltip disappears after 2 seconds
-- Multiple taps reset the 2-second timer
-
-**Why human:** Tooltip timing and fade animation quality need manual observation
-
-#### 6. Trail Header Level Badge Display
-
-**Test:** Navigate to /trail and observe header
-
-**Expected:**
-- Shield icon contains level number centered inside (e.g., 4)
-- Level name beside shield (e.g., Melody Maker)
-- XP counter shows X / Y XP format (e.g., 50 / 250 XP)
-- Progress bar width matches percentage (50/250 = 20% width)
-- Progress bar has yellow-to-amber gradient
-
-**Why human:** Visual layout and alignment need subjective assessment
-
-#### 7. Free Practice Button Subtlety
-
-**Test:** Compare visual prominence of Dashboard back link vs Free Practice link in header
-
-**Expected:**
-- Free Practice has lower opacity (text-white/50) than back link
-- Free Practice is secondary/ghost style (not a button)
-- Hover brightens to text-white/80
-
-**Why human:** Subjective judgment of visual hierarchy and subtlety
-
-#### 8. Boss Node Integration in Tabs
-
-**Test:**
-1. Switch to Treble tab
-2. Scroll through nodes - boss nodes appear within unit sections (not separate)
-3. Switch to Bass tab - bass boss nodes integrated
-4. Switch to Rhythm tab - rhythm boss nodes integrated
-
-**Expected:** No separate Boss Battles section at bottom. Boss nodes appear in their respective category tabs, sorted by order within units.
-
-**Why human:** Need to verify UI rendering of boss nodes within tab context
-
+**Test:** Switch app to Hebrew, navigate to dashboard and trigger level-up
+**Expected:** Level names appear in Hebrew (e.g., "מלחין" for Composer). Prestige shows "מאסטרו 1". RTL layout is correct.
+**Why human:** RTL rendering and translation quality require native speaker review
 
 ---
 
 ## Overall Status: PASSED
 
-All 7 observable truths verified through code inspection. All required artifacts exist and are substantive (not stubs). All key links are wired and functional. No blocker anti-patterns found.
+All 14 observable truths (7 from Plan 01 + 7 from Plan 02) verified through code inspection. All 10 required artifacts exist and are substantive. All 5 key links are wired and functional. No anti-patterns found. 27 unit tests pass. Zero `isMaxLevel` references remain in any source file. JS and Postgres XP thresholds match exactly (verified programmatically). All i18n keys present in both EN and HE.
 
 ### Summary
 
-Phase 20 successfully achieved its goal: **Visual enhancements applied to nodes and header, tab-based path switching functional**
+Phase 20 successfully achieved its goal: **Extended Progression System with 30 levels, prestige tiers, and UI integration.**
 
-**Plan 01 (3D Node Styling):** TrailNode.jsx uses node-3d-* CSS classes from trail-effects.css. Nodes display radial gradients, layered box-shadows (3 layers for depth), and state-specific colors. Completed nodes show gold stars inside the circle. Locked nodes show lock icon and tooltip on tap. Press animation uses translateY(2px) with reduced shadow. Hover scales 10% on desktop.
+**Plan 01 (Data Layer):** xpSystem.js extended from 15 to 30 levels with prestige computation. calculateLevel returns `isPrestige` and `prestigeTier` fields. getLevelProgress handles all three code paths (normal 1-29, level 30, prestige 31+). getNextLevelXP returns PRESTIGE_XP_PER_TIER for levels 30+. Postgres migration drops old CHECK constraint, creates 30-level award_xp function with prestige, and fixes existing student data. All 16 new i18n keys added to both EN and HE.
 
-**Plan 02 (Tab Navigation):** TrailMap.jsx implements tab switcher with TRAIL_TABS config. Active tab persists in URL via ?path= query param using useSearchParams hook. ARIA tablist pattern with role=tab, aria-selected, aria-controls, tabIndex. Keyboard navigation with ArrowLeft/ArrowRight. Boss nodes merged into category arrays via id prefix filtering. Only one path visible at a time. Progress counts displayed on each tab.
+**Plan 02 (UI Integration):** `isMaxLevel` concept completely removed from all UI components -- replaced by `isPrestige` from calculateLevel(). Dashboard level pill uses golden gradient for prestige. XPRing has prestige-specific SVG gradient and glow filter. XPProgressCard uses amber styling for prestige. VictoryScreen shows "You are now a [Title]!" on level-up and golden "Prestige Unlocked!" celebration at level 30. Progress bars always show incremental progress (never 100% / MAX LEVEL).
 
-**Plan 03 (Trail Header):** TrailMapPage.jsx renders 2-row header. Row 1: Dashboard back link, Learning Trail title (Quicksand font), subtle Free Practice link (text-white/50). Row 2: Shield badge with level number inside, level name beside, XP counter, progress bar with yellow-amber gradient. Data from getStudentXP query integrated.
+**Requirements:** PROG-01 (30 levels), PROG-02 (prestige tiers), PROG-03 (title per level) -- all satisfied.
 
-**No regressions:** TrailNodeModal works identically (same props, same onClick flow). Trail background effects (starfield, glow orbs) preserved.
-
-**Human verification needed:** 8 items require visual/interaction testing (node colors, press feel, URL persistence, keyboard nav, tooltip timing, header layout, button subtlety, boss integration).
+**Commits verified:** All 6 commits from both plans exist in git history (defe988, af3dc1d, e2d706e, 49aa133, 81d3aef, 988476e).
 
 ---
 
-_Verified: 2026-02-10T12:04:46Z_
-
+_Verified: 2026-03-07T19:15:00Z_
 _Verifier: Claude (gsd-verifier)_
