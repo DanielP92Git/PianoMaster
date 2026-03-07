@@ -25,6 +25,7 @@ import { useBossUnlockTracking } from '../../hooks/useBossUnlockTracking';
 
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
+import { Trophy } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { translateNodeName } from "../../utils/translateNodeName";
 const SHOWN_UNLOCKS_VERSION = 2;
@@ -230,6 +231,9 @@ const VictoryScreen = ({
   const hasProcessedTrail = useRef(false);
   const hasCalledStreakUpdate = useRef(false);
 
+  // Personal best detection state
+  const [isPersonalBest, setIsPersonalBest] = useState(false);
+
   // Celebration system state
   const [showConfetti, setShowConfetti] = useState(false);
   const [showBossModal, setShowBossModal] = useState(false);
@@ -407,6 +411,19 @@ const VictoryScreen = ({
 
             // If exerciseIndex is provided, use exercise-level progress tracking
             if (exerciseIndex !== null && totalExercises !== null) {
+              // Fetch pre-update progress for personal best detection
+              const preUpdateProgress = await getNodeProgress(user.id, nodeId);
+              const existingExercise = preUpdateProgress?.exercise_progress?.find(
+                (ep) => ep.index === exerciseIndex
+              );
+              if (
+                existingExercise &&
+                existingExercise.bestScore > 0 &&
+                Math.round(Math.min(scorePercentage, 100)) > existingExercise.bestScore
+              ) {
+                setIsPersonalBest(true);
+              }
+
               // Update exercise-level progress
               const result = await updateExerciseProgress(
                 user.id,
@@ -459,6 +476,15 @@ const VictoryScreen = ({
               const existingProgress = await getNodeProgress(user.id, nodeId);
               const isFirst = !existingProgress || existingProgress.stars === 0;
               setIsFirstComplete(isFirst);
+
+              // Personal best detection (only if not first completion)
+              if (
+                existingProgress &&
+                existingProgress.best_score > 0 &&
+                Math.round(Math.min(scorePercentage, 100)) > existingProgress.best_score
+              ) {
+                setIsPersonalBest(true);
+              }
 
               // Update node progress (pass percentage, not raw score)
               const result = await updateNodeProgress(
@@ -928,6 +954,16 @@ const VictoryScreen = ({
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* Personal best badge */}
+          {isPersonalBest && !isProcessingTrail && (
+            <div className="mt-1 inline-flex items-center gap-1.5 rounded-full border border-amber-400/40 bg-gradient-to-r from-amber-500/30 to-yellow-500/30 px-3 py-1">
+              <Trophy className="h-4 w-4 text-amber-300" />
+              <span className="text-sm font-bold text-amber-200">
+                {t('victory.personalBest')}
+              </span>
             </div>
           )}
 

@@ -24,10 +24,13 @@ import { getAvatarImageSource } from "../../utils/avatarAssets";
 import { getStudentScores } from "../../services/apiDatabase";
 import Fireflies from "../ui/Fireflies";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
+import WeeklySummaryCard from "../dashboard/WeeklySummaryCard";
+import DailyMessageBanner from "../dashboard/DailyMessageBanner";
 import PlayNextButton from "../dashboard/PlayNextButton";
 import UnifiedStatsCard from "../dashboard/UnifiedStatsCard";
 import PushOptInCard from "../dashboard/PushOptInCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
+import { getWeeklyProgress } from "../../services/weeklyProgressService";
 import { translateNodeName } from "../../utils/translateNodeName";
 import { useSubscription } from "../../contexts/SubscriptionContext";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
@@ -178,6 +181,14 @@ function Dashboard() {
       console.error("Daily goals query error:", goalsError);
     }
   }, [goalsError]);
+
+  // Fetch weekly progress summary (only for students)
+  const { data: weeklyData, isLoading: weeklyLoading } = useQuery({
+    queryKey: ["weekly-summary", user?.id],
+    queryFn: () => getWeeklyProgress(user.id),
+    enabled: !!user?.id && isStudent,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Fetch student XP data (previously inside XPProgressCard)
   const { data: xpData, isLoading: xpLoading } = useQuery({
@@ -671,6 +682,9 @@ function Dashboard() {
         </div>
       </header>
 
+      {/* DAILY FUN FACT BANNER */}
+      {isStudent && <DailyMessageBanner />}
+
       {/* PLAY NEXT BUTTON (overlaps hero) */}
       {isStudent && nextNode && (
         <PlayNextButton
@@ -810,6 +824,11 @@ function Dashboard() {
         {/* DAILY GOALS CARD (refreshed) */}
         {isStudent && (
           <DailyGoalsCard goals={dailyGoals} isLoading={goalsLoading} />
+        )}
+
+        {/* WEEKLY SUMMARY CARD */}
+        {isStudent && (
+          <WeeklySummaryCard data={weeklyData} isLoading={weeklyLoading} />
         )}
       </MotionOrDiv>
 
