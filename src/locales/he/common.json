@@ -1066,7 +1066,10 @@
     "nextExercise": "התרגיל הבא ({{count}} נותרו)",
     "continueToNode": "המשיכו ל\"{{name}}\"",
     "backToTrail": "חזרה למסלול",
-    "continueLearning": "המשיכו ללמוד"
+    "continueLearning": "המשיכו ללמוד",
+    "youAreNow": "!{{title}} עכשיו אתה",
+    "prestigeUnlocked": "!יוקרה נפתחה",
+    "prestigeEntry": "!הגעת לרמה הגבוהה ביותר! ברוכים הבאים לרמת מאסטרו"
   },
   "celebration": {
     "boss.perfectVictory": "ניצחון מושלם!",
@@ -1110,7 +1113,23 @@
     "Virtuoso": "וירטואוז",
     "Maestro": "מאסטרו",
     "Grand Master": "גרנד מאסטר",
-    "Legend": "אגדה"
+    "Legend": "אגדה",
+    "Composer": "מלחין",
+    "Conductor": "מנצח",
+    "Concert Master": "קונצרטמייסטר",
+    "Prodigy": "ילד פלא",
+    "Orchestrator": "מעבד תזמורתי",
+    "Music Sage": "חכם המוזיקה",
+    "Melodist": "מלודיסט",
+    "Symphonist": "סימפוניסט",
+    "Music Architect": "אדריכל המוזיקה",
+    "Philharmonic": "פילהרמוני",
+    "Opus Creator": "יוצר אופוס",
+    "Concerto Star": "כוכב הקונצרטו",
+    "Music Luminary": "גדול המוזיקה",
+    "Grand Virtuoso": "וירטואוז גדול",
+    "Transcendent": "נעלה",
+    "prestigeTitle": "מאסטרו {{tier}}"
   },
   "percentile": {
     "bestYet": "הציון הכי טוב שלכם! טוב יותר מ-{{percentile}}% מהניסיונות שלכם!",

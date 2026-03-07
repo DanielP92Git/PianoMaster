@@ -1059,7 +1059,10 @@
     "nextExercise": "Next Exercise ({{count}} left)",
     "continueToNode": "Continue to \"{{name}}\"",
     "backToTrail": "Back to Trail",
-    "continueLearning": "Continue Learning"
+    "continueLearning": "Continue Learning",
+    "youAreNow": "You are now a {{title}}!",
+    "prestigeUnlocked": "Prestige Unlocked!",
+    "prestigeEntry": "You've reached the highest level! Welcome to Maestro tier!"
   },
   "celebration": {
     "boss.perfectVictory": "PERFECT VICTORY!",
@@ -1103,7 +1106,23 @@
     "Virtuoso": "Virtuoso",
     "Maestro": "Maestro",
     "Grand Master": "Grand Master",
-    "Legend": "Legend"
+    "Legend": "Legend",
+    "Composer": "Composer",
+    "Conductor": "Conductor",
+    "Concert Master": "Concert Master",
+    "Prodigy": "Prodigy",
+    "Orchestrator": "Orchestrator",
+    "Music Sage": "Music Sage",
+    "Melodist": "Melodist",
+    "Symphonist": "Symphonist",
+    "Music Architect": "Music Architect",
+    "Philharmonic": "Philharmonic",
+    "Opus Creator": "Opus Creator",
+    "Concerto Star": "Concerto Star",
+    "Music Luminary": "Music Luminary",
+    "Grand Virtuoso": "Grand Virtuoso",
+    "Transcendent": "Transcendent",
+    "prestigeTitle": "Maestro {{tier}}"
   },
   "percentile": {
     "bestYet": "Your best score yet! Better than {{percentile}}% of your attempts!",
