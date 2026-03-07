@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: Engagement & Retention
 status: completed
-stopped_at: Phase 21 context gathered
-last_updated: "2026-03-07T18:27:16.042Z"
-last_activity: 2026-03-07 — Phase 20 Plan 02 (prestige UI in Dashboard, XPRing, VictoryScreen)
+stopped_at: Phase 21 Plan 02 complete (weekly parent email Edge Functions)
+last_updated: "2026-03-07T19:04:41.624Z"
+last_activity: 2026-03-07 — Phase 21 Plan 02 (weekly parent email Edge Functions)
 progress:
   total_phases: 25
   completed_phases: 21
-  total_plans: 54
-  completed_plans: 51
+  total_plans: 56
+  completed_plans: 52
 ---
 
 # Project State
@@ -20,18 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 20 Extended Progression System — Complete (2 of 2 plans done)
+**Current focus:** Phase 21 Celebration & Reporting Upgrades — Plan 02 complete (1 of 2 plans done)
 
 ## Current Position
 
-Phase: 20 (Extended Progression System)
-Plan: 02 of 02 (complete)
-Status: Phase 20 complete — 30-level XP system with prestige tiers integrated into all UI components
-Last activity: 2026-03-07 — Phase 20 Plan 02 (prestige UI in Dashboard, XPRing, VictoryScreen)
+Phase: 21 (Celebration & Reporting Upgrades)
+Plan: 02 of 02 (Plan 02 complete, Plan 01 pending)
+Status: Weekly parent report backend infrastructure complete
+Last activity: 2026-03-07 — Phase 21 Plan 02 (weekly parent email Edge Functions)
 
 ```
-v1.9 Progress: [########--] 80% (4/5 phases)
-Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 █ Phase 21 ░
+v1.9 Progress: [██████████] 95% (4/5 phases + 1 plan)
+Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 █ Phase 21 ▒
 ```
 
 ## Performance Metrics
@@ -87,6 +87,7 @@ Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 █ Phase 21 ░
 |------------|----------|-------|-------|------|
 | 20-01 | 5m | 3 tasks | 5 files | 2026-03-07 |
 | 20-02 | 8m | 3 tasks | 6 files | 2026-03-07 |
+| Phase 21 P02 | 4m | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -215,6 +216,8 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - [Phase 23]: Level pill uses i18n key dashboard.header.level with uppercase tracking-wider for LEVEL X display
 - [Phase 23]: Fireflies renders plain div (not motion.div) when reducedMotion is true to eliminate animation loop entirely
 - [Phase 23]: Shared fireflyStyle/fireflyClassName helpers extracted to avoid duplication between static and animated branches
+- [Phase 21]: HMAC-SHA256 via Web Crypto API for unsubscribe tokens -- stateless, no parent login needed
+- [Phase 21]: 6-day dedup guard on last_weekly_report_at prevents duplicate Monday sends
 
 ### Roadmap Evolution
 
@@ -238,8 +241,8 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-07T18:27:16.024Z
-Stopped at: Phase 21 context gathered
+Last session: 2026-03-07T19:04:41.594Z
+Stopped at: Phase 21 Plan 02 complete (weekly parent email Edge Functions)
 
 **Next action:**
 - Phase 20 complete. Proceed to Phase 21 or next v1.9 milestone phase
