@@ -5,7 +5,7 @@
  */
 
 import { useTranslation } from 'react-i18next';
-import { CheckCircle2, Circle } from 'lucide-react';
+import { CheckCircle2, Circle, Trophy } from 'lucide-react';
 import FlameIcon from '../../assets/icons/fire-flame-curved-solid-full.svg?react';
 import StarIcon from '../../assets/icons/star-regular-full.svg?react';
 import LightbulbIcon from '../../assets/icons/lightbulb-regular-full.svg?react';
@@ -57,7 +57,7 @@ const DailyGoalsCard = ({ goals = [], isLoading = false }) => {
             {completedCount}/{goals.length}
           </span>
           {allCompleted && (
-            <span className="text-xl">🎉</span>
+            <Trophy className="h-5 w-5 text-amber-400" />
           )}
         </div>
       </div>
