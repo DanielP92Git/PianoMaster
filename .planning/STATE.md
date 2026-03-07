@@ -20,18 +20,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-04)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 23 Kid-Friendly Dashboard Redesign — all 3 plans complete
+**Current focus:** Phase 20 Extended Progression System — Plan 01 complete
 
 ## Current Position
 
-Phase: 23 (Kid-Friendly Dashboard Redesign)
-Plan: 03 of 03 (complete)
-Status: Phase 23 complete — gap closure: level badge pill layout + Fireflies a11y
-Last activity: 2026-03-06 — Phase 23 Plan 03 (level badge refactor, Fireflies AccessibilityContext)
+Phase: 20 (Extended Progression System)
+Plan: 01 of 02 (complete)
+Status: Plan 01 complete — 30-level XP system with prestige tiers, Postgres migration, i18n keys
+Last activity: 2026-03-07 — Phase 20 Plan 01 (xpSystem 30 levels + prestige + migration + i18n)
 
 ```
 v1.9 Progress: [######----] 60% (3/5 phases)
-Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 ░ Phase 21 ░
+Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 ▓ Phase 21 ░
 ```
 
 ## Performance Metrics
@@ -81,6 +81,11 @@ Phase 17 █ Phase 18 █ Phase 19 █ Phase 20 ░ Phase 21 ░
 |------------|----------|-------|-------|------|
 | 23-01 | 3m | 2 tasks | 3 files | 2026-03-06 |
 | Phase 23 P03 | 2 | 2 tasks | 2 files |
+
+**Phase 20 execution:**
+| Phase-Plan | Duration | Tasks | Files | Date |
+|------------|----------|-------|-------|------|
+| 20-01 | 5m | 3 tasks | 5 files | 2026-03-07 |
 
 ## Accumulated Context
 
@@ -190,6 +195,12 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 - [Phase 19-02]: On-fire glow 28%/14% opacity with h-2.5 particles — original 12%/6% too pale against purple gradient
 - [Phase 19-02]: Dual reduced-motion check: framer-motion useReducedMotion (OS) AND AccessibilityContext.reducedMotion (app)
 
+**Phase 20 decisions:**
+- [Phase 20-01]: Arabic numerals (Maestro 1, Maestro 2) for prestige titles — simpler for 8-year-olds vs Roman numerals
+- [Phase 20-01]: PRESTIGE_XP_PER_TIER = 3000 — matches late-level XP gaps, keeps prestige achievable
+- [Phase 20-01]: Postgres CHECK constraint removed upper bound — prestige levels go beyond 30 indefinitely
+- [Phase 20-01]: Data fixup recalculates all student current_level from total_xp — fixes pre-existing DB(10)/JS(15) mismatch
+
 **Phase 23 decisions:**
 - [Phase 23-01]: XPRing uses SVG foreignObject for GoldStar center placement inside SVG
 - [Phase 23-01]: PlayNextButton injects CSS @keyframes via inline style tag for glow animation — component-specific, avoids Tailwind config changes
@@ -205,7 +216,7 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ### Pending Todos
 
-- /gsd:plan-phase 20 — Extended Progression System (PROG-01 through PROG-07)
+- Phase 20 Plan 02 — UI integration of extended XP system (dashboard, XPRing, VictoryScreen)
 
 ### Blockers/Concerns
 
@@ -221,11 +232,11 @@ All v1.7 and v1.8 decisions archived below. See PROJECT.md Key Decisions table f
 
 ## Session Continuity
 
-Last session: 2026-03-07T12:33:00.773Z
-Stopped at: Phase 20 context gathered
+Last session: 2026-03-07T16:11:04Z
+Stopped at: Completed 20-01-PLAN.md
 
 **Next action:**
-- Execute Phase 23 Plan 02 — Dashboard.jsx rewrite to integrate new sub-components
+- Execute Phase 20 Plan 02 — UI integration of 30-level system into Dashboard, XPRing, VictoryScreen
 
 ---
 *State initialized: 2026-01-31*
