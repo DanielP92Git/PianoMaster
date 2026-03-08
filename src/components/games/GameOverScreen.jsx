@@ -41,7 +41,7 @@ const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctA
         <div className="w-full space-y-3 rounded-2xl  px-4 pb-4 pt-6 text-center  sm:space-y-4 sm:px-6 sm:pb-5 sm:pt-8">
           {/* Score */}
           <p className="text-lg font-semibold text-white sm:text-xl">
-            {t("games.gameOver.finalScore")}: {score}/{totalQuestions * 10}
+            {t("games.gameOver.finalScore")}: {score} XP
           </p>
 
           {/* Reason message */}

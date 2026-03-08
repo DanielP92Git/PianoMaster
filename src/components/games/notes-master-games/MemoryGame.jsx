@@ -59,6 +59,8 @@ const TIME_DIFFICULTY_LIMITS = {
   Hard: 60,
 };
 
+const XP_PER_MATCH = 5;
+
 const NOTE_LABEL_FONT_STACK =
   "'Heebo', 'Assistant', 'Noto Sans Hebrew', 'Arial', sans-serif";
 
@@ -646,12 +648,12 @@ export function MemoryGame() {
         // Then clear flipped and update score after cards start disappearing
         setTimeout(() => {
           setShowMatchFirework(false);
-          setScore((prev) => prev + 10);
+          setScore((prev) => prev + XP_PER_MATCH);
           setFlippedIndexes([]);
 
           // Check if game is complete
           if (matchedIndexes.length + 2 === cards.length) {
-            updateScore({ score: score + 10, gameType: "memory" });
+            updateScore({ score: score + XP_PER_MATCH, gameType: "memory" });
             setShowFireworks(true);
             playVictorySound(); // Play victory sound when all pairs are matched
             setGameFinished(true);
@@ -826,7 +828,7 @@ export function MemoryGame() {
             )}
             <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
               <span className="text-sm text-white/70 sm:text-base md:text-lg">
-                {t("games.score")}:
+                XP:
               </span>
               <span className="font-mono">{score}</span>
             </div>
@@ -926,7 +928,7 @@ export function MemoryGame() {
         ) : (
           <VictoryScreen
             score={score}
-            totalPossibleScore={(cards.length / 2) * 10}
+            totalPossibleScore={(cards.length / 2) * XP_PER_MATCH}
             onReset={handleReset}
             onExit={() => navigate(nodeId ? "/trail" : "/notes-master-mode")}
             nodeId={nodeId}

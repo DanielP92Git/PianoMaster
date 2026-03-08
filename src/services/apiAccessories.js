@@ -42,19 +42,6 @@ async function fetchAccessoryById(accessoryId) {
   return data;
 }
 
-async function fetchLedgerDelta(userId) {
-  const { data, error } = await supabase
-    .from("student_point_transactions")
-    .select("delta")
-    .eq("student_id", userId);
-
-  if (error) {
-    throw new Error(error.message || "Failed to load point ledger");
-  }
-
-  return data?.reduce((sum, tx) => sum + (tx.delta || 0), 0) ?? 0;
-}
-
 async function syncEquippedAccessoriesCache(userId) {
   const { data, error } = await supabase
     .from("user_accessories")
@@ -133,9 +120,9 @@ export async function getEquippedAccessories(userId) {
 }
 
 export async function getUserPointBalance(userId) {
-  if (!userId) return { earned: 0, ledgerDelta: 0, available: 0 };
+  if (!userId) return { earned: 0, spent: 0, available: 0 };
 
-  const [studentData, ledgerDelta] = await Promise.all([
+  const [studentData, ownedAccessories] = await Promise.all([
     supabase
       .from("students")
       .select("total_xp")
@@ -145,14 +132,26 @@ export async function getUserPointBalance(userId) {
         if (error) throw new Error(error.message || "Failed to load student XP");
         return data;
       }),
-    fetchLedgerDelta(userId),
+    supabase
+      .from("user_accessories")
+      .select("accessory:accessories(price_points)")
+      .eq("user_id", userId)
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message || "Failed to load owned accessories");
+        return data || [];
+      }),
   ]);
 
   const totalXP = studentData?.total_xp || 0;
-  const available = totalXP + ledgerDelta;
+  // Derive spent from owned accessories' current prices (bypasses stale old-points ledger)
+  const spent = ownedAccessories.reduce(
+    (sum, item) => sum + (item.accessory?.price_points || 0),
+    0
+  );
+  const available = Math.max(0, totalXP - spent);
   return {
     earned: totalXP,
-    ledgerDelta,
+    spent,
     available,
   };
 }
@@ -181,7 +180,7 @@ export async function purchaseAccessory({ userId, accessoryId, slotOverride }) {
 
   const { available } = await getUserPointBalance(userId);
   if (available < accessory.price_points) {
-    throw new Error("Not enough points to buy this accessory");
+    throw new Error("Not enough XP to buy this accessory");
   }
 
   const slot = slotOverride || accessory.category || "auto";

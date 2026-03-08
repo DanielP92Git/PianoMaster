@@ -34,7 +34,7 @@ export function useGameProgress() {
   const handleAnswer = useCallback((selectedAnswer, correctAnswer, scoreOverride) => {
     const isCorrect = selectedAnswer === correctAnswer;
     const scoreGain = isCorrect
-      ? (scoreOverride != null ? scoreOverride : 10)
+      ? (scoreOverride != null ? scoreOverride : 5)
       : 0;
 
     setProgress((prev) => ({
@@ -74,7 +74,7 @@ export function useGameProgress() {
           ? (currentCorrectAnswers / currentTotalQuestions) * 100
           : 0;
 
-      // Only award points for successful runs (no loss, no timeout)
+      // Only award XP for successful runs (no loss, no timeout)
       const shouldAwardScore = !isLost && !timeRanOut && finalScore > 0;
 
       if (shouldAwardScore) {

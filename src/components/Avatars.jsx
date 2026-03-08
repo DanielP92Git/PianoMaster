@@ -160,9 +160,9 @@ function Avatars() {
 
   const { data: profileData } = useUserProfile();
 
-  const availableXP = pointsBalance?.available ?? 0;
-  const spentXP = Math.max(0, -(pointsBalance?.ledgerDelta ?? 0));
   const earnedXP = pointsBalance?.earned ?? 0;
+  const spentXP = pointsBalance?.spent ?? 0;
+  const availableXP = pointsBalance?.available ?? 0;
 
   // Fetch games played count from students_score table
   const { data: gamesPlayedCount, isLoading: gamesPlayedLoading } =
