@@ -35,18 +35,10 @@ export function useScores() {
     mutationFn: ({ score, gameType }) =>
       updateStudentScore(studentId, score, gameType),
     onSuccess: async () => {
-      const prevTotals =
-        queryClient.getQueryData(["total-points", studentId])?.totalPoints ??
-        null;
-      if (prevTotals !== null) {
-        queryClient.setQueryData(["pre-total-points", studentId], prevTotals);
-      }
-
       await Promise.all([
         queryClient.invalidateQueries(["scores"]),
         queryClient.invalidateQueries(["student-scores", studentId]),
         queryClient.invalidateQueries(["point-balance", studentId]),
-        queryClient.invalidateQueries(["total-points", studentId]),
         queryClient.invalidateQueries(["gamesPlayed"]),
         queryClient.invalidateQueries(["earned-achievements", studentId]),
       ]);

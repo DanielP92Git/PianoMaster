@@ -41,7 +41,6 @@ const VictoryScreen = ({
     rateLimited,
     rateLimitResetTime,
     comebackActive,
-    actualGain,
 
     // Actions
     handleExit,
@@ -207,12 +206,17 @@ const VictoryScreen = ({
             </div>
           )}
 
-          {/* Points badge (free play mode) - polished glowing badge */}
-          {!nodeId && actualGain > 0 && (
-            <div className="relative inline-flex items-center rounded-full bg-gradient-to-b from-emerald-900/90 to-slate-900/90 border-2 border-emerald-400/50 px-5 py-1.5 shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]">
-              <p className="text-lg font-bold bg-gradient-to-r from-emerald-200 to-green-200 bg-clip-text text-transparent" style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive" }}>
-                {t('victory.pointsEarnedLine', { points: actualGain.toLocaleString() })}
+          {/* XP badge (free play mode) - polished glowing badge */}
+          {!nodeId && xpData && xpData.totalXP > 0 && (
+            <div className="relative inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-indigo-900/90 to-slate-900/90 border-2 border-blue-400/50 px-5 py-1.5 shadow-[0_0_16px_rgba(96,165,250,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]">
+              <p className="text-lg font-bold bg-gradient-to-r from-blue-200 to-cyan-200 bg-clip-text text-transparent" style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive" }}>
+                {t('victory.xpEarned', { xp: animatedXPGain })}
               </p>
+              {comebackActive && (
+                <span className="inline-flex items-center rounded-full bg-amber-500/30 border border-amber-400/40 px-2 py-0.5 text-xs font-bold text-amber-300">
+                  2x
+                </span>
+              )}
             </div>
           )}
 

@@ -1390,10 +1390,9 @@ export function SightReadingGame() {
           : 0;
         await updateStudentScore(studentId, normalizedScore, "sight_reading");
 
-        // Invalidate queries to update points display
+        // Invalidate queries to update score display
         queryClient.invalidateQueries(["student-scores", studentId]);
         queryClient.invalidateQueries(["point-balance", studentId]);
-        queryClient.invalidateQueries(["total-points", studentId]);
         queryClient.invalidateQueries(["gamesPlayed"]);
 
         if (!isMounted) return;

@@ -63,9 +63,14 @@ import {
   getAchievementPointsTotal,
   getStudentScores,
 } from "../../services/apiDatabase";
-import { calculateGameplayPoints } from "../../utils/points";
-
 import { toast } from "react-hot-toast";
+
+// Inline replacement for deleted points.js — sums raw scores from game history
+// TODO: Replace with XP-based analytics in Plan 02-04
+const calculateGameplayPoints = (scores) => {
+  if (!scores || !Array.isArray(scores)) return 0;
+  return scores.reduce((sum, s) => sum + (s.score || 0), 0);
+};
 
 // Dedicated modal component for adding students with multi-step form
 const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {

@@ -74,16 +74,6 @@ export function useGameProgress() {
           ? (currentCorrectAnswers / currentTotalQuestions) * 100
           : 0;
 
-      // Capture pre-game total points from React Query cache
-      let preGameTotal = null;
-      if (user?.id) {
-        const cachedTotal = queryClient.getQueryData(["total-points", user.id]);
-        if (cachedTotal?.totalPoints !== undefined) {
-          preGameTotal = cachedTotal.totalPoints;
-          queryClient.setQueryData(["pre-total-points", user.id], preGameTotal);
-        }
-      }
-
       // Only award points for successful runs (no loss, no timeout)
       const shouldAwardScore = !isLost && !timeRanOut && finalScore > 0;
 
