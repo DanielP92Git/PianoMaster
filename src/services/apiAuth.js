@@ -1,6 +1,11 @@
 import supabase from "./supabase";
 import toast from "react-hot-toast";
 
+const isDevelopment = process.env.NODE_ENV === "development";
+const siteUrl = isDevelopment
+  ? "http://localhost:5174"
+  : "https://piano-master-nine.vercel.app";
+
 export async function login({ email, password }) {
   try {
     // Add a timeout wrapper for the login request
@@ -249,6 +254,40 @@ export async function logout() {
   if (error) throw new Error(error.message);
 }
 
+/**
+ * Sends a password reset email to the specified address.
+ * Uses Supabase's built-in resetPasswordForEmail with a redirect
+ * back to the app's /reset-password route.
+ *
+ * @param {{ email: string }} params
+ * @returns {{ data: object }}
+ * @throws {Error} If the Supabase call fails
+ */
+export async function resetPassword({ email }) {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: siteUrl + "/reset-password",
+  });
+
+  if (error) throw new Error(error.message);
+  return { data };
+}
+
+/**
+ * Updates the currently authenticated user's password.
+ * Typically called after the user clicks a reset link and lands
+ * on the /reset-password page with a valid session.
+ *
+ * @param {{ password: string }} params
+ * @returns {{ data: object }}
+ * @throws {Error} If the Supabase call fails
+ */
+export async function updatePassword({ password }) {
+  const { data, error } = await supabase.auth.updateUser({ password });
+
+  if (error) throw new Error(error.message);
+  return { data };
+}
+
 export async function socialAuth({
   provider,
   mode = "login",
@@ -261,11 +300,6 @@ export async function socialAuth({
 
   // If we already have a session, don't start a new OAuth flow
   if (session) return { session };
-
-  const isDevelopment = process.env.NODE_ENV === "development";
-  const siteUrl = isDevelopment
-    ? "http://localhost:5174"
-    : "https://piano-master-nine.vercel.app";
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
