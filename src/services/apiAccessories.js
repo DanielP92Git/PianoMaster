@@ -1,9 +1,4 @@
 import supabase from "./supabase";
-import { calculatePointsSummary } from "../utils/points";
-import {
-  getStudentScoreValues,
-  getAchievementPointsTotal,
-} from "./apiDatabase";
 
 function withTimeout(promise, ms, label) {
   let timeoutId;
@@ -140,20 +135,23 @@ export async function getEquippedAccessories(userId) {
 export async function getUserPointBalance(userId) {
   if (!userId) return { earned: 0, ledgerDelta: 0, available: 0 };
 
-  const [scores, achievementPoints, ledgerDelta] = await Promise.all([
-    getStudentScoreValues(userId),
-    getAchievementPointsTotal(userId),
+  const [studentData, ledgerDelta] = await Promise.all([
+    supabase
+      .from("students")
+      .select("total_xp")
+      .eq("id", userId)
+      .single()
+      .then(({ data, error }) => {
+        if (error) throw new Error(error.message || "Failed to load student XP");
+        return data;
+      }),
     fetchLedgerDelta(userId),
   ]);
 
-  const { totalPoints } = calculatePointsSummary({
-    scores,
-    achievementPointsOverride: achievementPoints,
-  });
-
-  const available = totalPoints + ledgerDelta;
+  const totalXP = studentData?.total_xp || 0;
+  const available = totalXP + ledgerDelta;
   return {
-    earned: totalPoints,
+    earned: totalXP,
     ledgerDelta,
     available,
   };

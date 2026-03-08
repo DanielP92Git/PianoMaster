@@ -197,7 +197,7 @@ class AchievementService {
 
       if (error) throw error;
 
-      // Award XP for achievement (replaces old updateUserPoints)
+      // Award XP for achievement
       try {
         await awardXP(studentId, achievement.points);
       } catch (xpError) {
