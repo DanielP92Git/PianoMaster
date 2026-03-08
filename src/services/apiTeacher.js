@@ -113,7 +113,7 @@ export const getTeacherStudents = async () => {
       const { data: studentsData, error: studentsError } = await supabase
         .from("students")
         .select(
-          "id, first_name, last_name, email, username, level, studying_year, created_at"
+          "id, first_name, last_name, email, username, level, studying_year, created_at, total_xp, current_level"
         )
         .in("id", studentIds);
 
@@ -135,6 +135,8 @@ export const getTeacherStudents = async () => {
           level: studentData.level || "Beginner",
           studying_year: studentData.studying_year || "N/A",
           created_at: studentData.created_at || new Date().toISOString(),
+          total_xp: studentData.total_xp || 0,
+          current_level: studentData.current_level || 1,
         };
       });
     }
@@ -155,42 +157,6 @@ export const getTeacherStudents = async () => {
 
     if (practiceError) throw practiceError;
 
-    // Get student points (preferred): RPC returns per-student totals for this teacher.
-    // This is robust against future RLS consolidations that might hide direct table reads.
-    let pointsRows = null;
-    const { data: rpcPoints, error: rpcPointsError } = await supabase.rpc(
-      "teacher_get_student_points"
-    );
-    if (rpcPointsError) {
-      console.warn(
-        "Teacher points RPC unavailable; falling back to direct table reads. Consider applying migration 20251215000001_restore_teacher_points_access.sql.",
-        rpcPointsError
-      );
-    } else {
-      pointsRows = rpcPoints || [];
-    }
-
-    // Fallback path: compute totals from students_score + student_achievements if RPC is missing.
-    // Note: This requires RLS policies to allow teachers to SELECT connected students' rows.
-    let gameScores = [];
-    let achievements = [];
-    if (!pointsRows) {
-      const { data: gameScoresData, error: gameScoresError } = await supabase
-        .from("students_score")
-        .select("student_id, score")
-        .in("student_id", studentIds);
-      if (gameScoresError) throw gameScoresError;
-      gameScores = gameScoresData || [];
-
-      const { data: achievementsData, error: achievementsError } =
-        await supabase
-          .from("student_achievements")
-          .select("student_id, points")
-          .in("student_id", studentIds);
-      if (achievementsError) throw achievementsError;
-      achievements = achievementsData || [];
-    }
-
     // Get current streaks
     const { data: streaks, error: streaksError } = await supabase
       .from("current_streak")
@@ -201,7 +167,6 @@ export const getTeacherStudents = async () => {
 
     // Create lookup maps for performance
     const practicesByStudent = {};
-    const scoresByStudent = {}; // student_id -> total points (game + achievements)
     const streaksByStudent = {};
 
     allPracticeSessions?.forEach((session) => {
@@ -210,43 +175,6 @@ export const getTeacherStudents = async () => {
       }
       practicesByStudent[session.student_id].push(session);
     });
-
-    if (pointsRows) {
-      // RPC already returns totals; use those.
-      pointsRows.forEach((row) => {
-        if (!row?.student_id) return;
-        scoresByStudent[row.student_id] = Number(row.total_points || 0);
-      });
-      if (studentIds.length > 0 && pointsRows.length === 0) {
-        console.warn(
-          "Teacher points RPC returned 0 rows despite having connected students. Check teacher_student_connections.status and RLS/auth context.",
-          { teacherId: user.id, connectedStudentCount: studentIds.length }
-        );
-      }
-    } else {
-      // Compute totals dynamically (game scores + achievement points)
-      gameScores?.forEach((score) => {
-        scoresByStudent[score.student_id] =
-          (scoresByStudent[score.student_id] || 0) + (score.score || 0);
-      });
-
-      achievements?.forEach((achievement) => {
-        scoresByStudent[achievement.student_id] =
-          (scoresByStudent[achievement.student_id] || 0) +
-          (achievement.points || 0);
-      });
-
-      if (
-        studentIds.length > 0 &&
-        gameScores.length === 0 &&
-        achievements.length === 0
-      ) {
-        console.warn(
-          "Teacher score/achievement queries returned no rows. This commonly indicates RLS blocking teacher reads. Apply migration 20251215000001_restore_teacher_points_access.sql or rely on teacher_get_student_points RPC.",
-          { teacherId: user.id, connectedStudentCount: studentIds.length }
-        );
-      }
-    }
 
     streaks?.forEach((streak) => {
       streaksByStudent[streak.student_id] = streak.streak_count;
@@ -292,7 +220,8 @@ export const getTeacherStudents = async () => {
         email: student.email,
         level: student.level || "Beginner",
         studying_year: student.studying_year || "N/A",
-        total_points: scoresByStudent[student.id] || 0,
+        total_xp: student.total_xp || 0,
+        current_level: student.current_level || 1,
         current_streak: streaksByStudent[student.id] || 0,
         total_practice_minutes: totalPracticeMinutes,
         average_accuracy: Math.round(averageAccuracy),
@@ -465,7 +394,7 @@ export const getStudentProgress = async (studentId) => {
         email: student.email,
         level: student.level || "Beginner",
         studying_year: student.studying_year || "N/A",
-        total_points: 0, // Not available in current schema
+        total_xp: 0, // Not available in current schema
         current_streak: 0, // Not available in current schema
         longest_streak: 0, // Not available in current schema
         member_since: new Date(student.created_at).toLocaleDateString(),
