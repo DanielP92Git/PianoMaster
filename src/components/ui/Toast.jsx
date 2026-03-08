@@ -286,8 +286,8 @@ if (!document.head.querySelector("[data-toast-styles]")) {
   document.head.appendChild(style);
 }
 
-// Special function for points notifications
-export const showPointsGain = (points, gameType = "game") => {
+// Special function for XP notifications
+export const showXPGain = (xp, gameType = "game") => {
   const gameEmoji =
     gameType === "note-recognition"
       ? "🎵"
@@ -300,7 +300,7 @@ export const showPointsGain = (points, gameType = "game") => {
       <div className="text-2xl">{gameEmoji}</div>
       <div>
         <div className="font-semibold text-green-600">
-          +{points} points earned!
+          +{xp} XP earned!
         </div>
         <div className="text-sm text-gray-600">
           Great job on your practice session!
@@ -322,5 +322,8 @@ export const showPointsGain = (points, gameType = "game") => {
     }
   );
 };
+
+// Backward-compatible alias
+export const showPointsGain = showXPGain;
 
 export default Toast;

@@ -24,7 +24,7 @@
     "saving": "Saving...",
     "save": "Save",
     "cancel": "Cancel",
-    "points": "Points",
+    "points": "XP",
     "loading": "Loading...",
     "next": "Next",
     "toGamesMode": "To Games Mode",
@@ -95,6 +95,8 @@
       "loading": "Loading achievements...",
       "earned": "Achievements Earned",
       "points": "Total Points",
+      "totalXP": "Total XP",
+      "xpFromAchievements": "{{xp}} XP from achievements",
       "pointsBreakdown": "{{gameplay}} game + {{achievements}} badge points",
       "completionRate": "Completion Rate",
       "description": "Track your progress and unlock badges as you practice",
@@ -107,7 +109,8 @@
         "milestone": "Milestone",
         "streak": "Streak",
         "performance": "Performance",
-        "points": "Points",
+        "points": "XP",
+        "xp": "XP",
         "skill": "Skill",
         "time": "Time"
       },
@@ -134,7 +137,7 @@
         },
         "high_scorer": {
           "title": "High Scorer",
-          "description": "Earn 1000 total points"
+          "description": "Earn 1000 total XP"
         },
         "note_master": {
           "title": "Notes Reading Master",
@@ -153,7 +156,8 @@
           "description": "Maintain 90% average accuracy over 10 sessions"
         }
       },
-      "pointsReward": "+{{points}} points"
+      "pointsReward": "+{{points}} points",
+      "xpReward": "+{{xp}} XP"
     },
     "settings": {
       "title": "Settings",
@@ -331,16 +335,18 @@
     "saving": "Saving avatar...",
     "shop": {
       "title": "Accessories Shop",
-      "subtitle": "Spend your hard-earned points to customize your avatar.",
+      "subtitle": "Spend your hard-earned XP to customize your avatar.",
       "previewTitle": "Avatar Preview",
       "previewPlaceholder": "Choose an avatar to see accessories layered on top.",
       "previewDescription": "Equipped accessories appear here instantly so you always know how you look.",
-      "balanceLabel": "Points Balance",
+      "balanceLabel": "XP Balance",
       "availableToSpend": "Available to Spend",
       "totalEarned": "Total Earned",
       "totalSpent": "Spent",
       "availablePoints": "{{points}} pts available",
+      "availableXP": "{{xp}} XP available",
       "pointsSpent": "{{points}} pts spent on accessories",
+      "xpSpent": "{{xp}} XP spent on accessories",
       "ownedTitle": "My Accessories",
       "ownedDescription": "Manage everything you've unlocked and equip it with a tap.",
       "ownedEmpty": "You haven't purchased any accessories yet.",
@@ -349,9 +355,10 @@
       "equip": "Equip",
       "unequip": "Remove",
       "equipped": "Equipped",
-      "purchase": "Buy for {{points}} pts",
+      "purchase": "Buy for {{xp}} XP",
       "purchased": "Owned",
       "notEnoughPoints": "Not enough points",
+      "notEnoughXP": "Not enough XP",
       "shopEmpty": "Accessories will appear here soon.",
       "purchaseSuccess": "Accessory added to your wardrobe!",
       "equipSuccess": "Accessory equipped",
@@ -364,6 +371,7 @@
       "achievement": "Achievement Required",
       "gamesPlayed": "Games Played",
       "pointsEarned": "Points Earned",
+      "xpEarned": "XP Earned",
       "streak": "Practice Streak",
       "perfectGames": "Perfect Games",
       "level": "Player Level",
@@ -380,9 +388,13 @@
       "gamesPlayedTipDetailed_plural": "Play {{count}} more games to unlock this accessory.",
       "gamesPlayedCompleted": "You've played {{count}} games! ✨",
       "pointsEarnedDescription": "Earn {{amount}} total points (lifetime)",
+      "xpEarnedDescription": "Earn {{amount}} total XP (lifetime)",
       "pointsEarnedShort": "{{amount}} pts total",
+      "xpEarnedShort": "{{amount}} XP total",
       "pointsEarnedTipDetailed": "Earn {{amount}} more points to unlock. This counts your total lifetime points earned, not just what's available to spend.",
+      "xpEarnedTipDetailed": "Earn {{amount}} more XP to unlock. This counts your total lifetime XP earned, not just what's available to spend.",
       "pointsEarnedCompleted": "You've earned {{amount}} total points! ✨",
+      "xpEarnedCompleted": "You've earned {{amount}} total XP! ✨",
       "streakDescription": "Maintain a {{days}}-day practice streak",
       "streakTipDetailed": "Practice for {{days}} more consecutive day to unlock this accessory.",
       "streakTipDetailed_plural": "Practice for {{days}} more consecutive days to unlock this accessory.",
@@ -490,8 +502,8 @@
       "lives": "Lives",
       "newNote": "New note unlocked!",
       "tierUp": "POWER UP!",
-      "doublePoints": "DOUBLE POINTS!",
-      "triplePoints": "TRIPLE POINTS!",
+      "doublePoints": "DOUBLE XP!",
+      "triplePoints": "TRIPLE XP!",
       "onFire": "ON FIRE!"
     },
     "difficulties": {
@@ -650,12 +662,12 @@
         "dueIn_other": "Due in {{count}} days",
         "noDueDate": "No due date"
       },
-      "pointsLabel": "{{earned}}/{{possible}} pts"
+      "pointsLabel": "{{earned}}/{{possible}} XP"
     },
     "stats": {
       "practiceTime": "Practice Time",
       "hoursAbbrev": "h",
-      "totalPoints": "Total Points",
+      "totalPoints": "Total XP",
       "dailyStreak": "Daily Streak",
       "level": "Level"
     },
@@ -675,7 +687,7 @@
       "emptyDescription": "You've completed the main achievement milestones. Keep practicing to unlock more advanced badges!",
       "viewAll": "View All Achievements",
       "cta": "View All Achievements →",
-      "points": "+{{points}} points",
+      "points": "+{{points}} XP",
       "items": {
         "firstSession": {
           "title": "Record Your First Session",
@@ -690,8 +702,8 @@
           "description": "Score 100% in a rhythm or note recognition game"
         },
         "highScorer": {
-          "title": "Reach 1000 Points",
-          "description": "Accumulate 1000 total points to become a \"High Scorer\""
+          "title": "Reach 1000 XP",
+          "description": "Accumulate 1000 total XP to become a \"High Scorer\""
         },
         "streak7": {
           "title": "Weekly Warrior",
@@ -1066,7 +1078,7 @@
     "xpEarned": "+{{xp}} XP Earned",
     "levelLabel": "Level {{level}}",
     "levelUp": "Level Up!",
-    "pointsEarnedLine": "+{{points}} points",
+    "pointsEarnedLine": "+{{points}} XP",
     "nextExercise": "Next Exercise ({{count}} left)",
     "continueToNode": "Continue to \"{{name}}\"",
     "backToTrail": "Back to Trail",

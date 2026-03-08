@@ -88,14 +88,15 @@ const UnlockRequirementModal = ({
         };
       }
 
+      case "xp_earned":
       case "points_earned": {
         const required = requirement.amount;
-        const current = userProgress.totalPoints || 0;
+        const current = userProgress.totalXP || 0;
         const remaining = Math.max(0, required - current);
         return {
           icon: <TrendingUp className="h-6 w-6 text-green-400 sm:h-7 sm:w-7" />,
-          title: t("avatars.unlockModal.pointsEarned"),
-          description: t("avatars.unlockModal.pointsEarnedDescription", {
+          title: t("avatars.unlockModal.xpEarned"),
+          description: t("avatars.unlockModal.xpEarnedDescription", {
             amount: required.toLocaleString(),
           }),
           progress: unlockStatus.progress,
@@ -103,10 +104,10 @@ const UnlockRequirementModal = ({
           required,
           tip:
             remaining > 0
-              ? t("avatars.unlockModal.pointsEarnedTipDetailed", {
+              ? t("avatars.unlockModal.xpEarnedTipDetailed", {
                   amount: remaining.toLocaleString(),
                 })
-              : t("avatars.unlockModal.pointsEarnedCompleted", {
+              : t("avatars.unlockModal.xpEarnedCompleted", {
                   amount: required.toLocaleString(),
                 }),
         };
