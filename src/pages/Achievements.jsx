@@ -11,14 +11,14 @@ import {
 import { achievementService } from "../services/achievementService";
 import { useUser } from "../features/authentication/useUser";
 import { useTranslation } from "react-i18next";
-import { getStudentScores } from "../services/apiDatabase";
-import { calculatePointsSummary } from "../utils/points";
+import supabase from "../services/supabase";
 
 const categoryIcons = {
   milestone: Trophy,
   streak: Zap,
   performance: Target,
   points: Star,
+  xp: Star,
   skill: Award,
   time: Clock,
 };
@@ -28,6 +28,7 @@ const categoryColors = {
   streak: "from-orange-500 to-red-500",
   performance: "from-purple-500 to-pink-500",
   points: "from-green-500 to-emerald-500",
+  xp: "from-green-500 to-emerald-500",
   skill: "from-yellow-500 to-amber-500",
   time: "from-indigo-500 to-blue-500",
 };
@@ -59,15 +60,24 @@ export default function Achievements() {
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
-  const { data: scoresData = [], isLoading: scoresLoading } = useQuery({
-    queryKey: ["student-scores", user?.id],
-    queryFn: () => getStudentScores(user.id),
+  // Fetch the student's total XP
+  const { data: totalXP = 0, isLoading: xpLoading } = useQuery({
+    queryKey: ["student-xp", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("students")
+        .select("total_xp")
+        .eq("id", user.id)
+        .single();
+      if (error) throw error;
+      return data?.total_xp || 0;
+    },
     enabled: !!user?.id,
     staleTime: 3 * 60 * 1000,
   });
 
   const isLoading =
-    allLoading || earnedLoading || progressLoading || scoresLoading;
+    allLoading || earnedLoading || progressLoading || xpLoading;
 
   // Create a map of earned achievements for quick lookup
   const earnedMap = new Map(
@@ -114,11 +124,11 @@ export default function Achievements() {
     return progress || null;
   };
 
-  const { totalPoints, gameplayPoints, achievementPoints } =
-    calculatePointsSummary({
-      scores: scoresData,
-      earned: earnedAchievements,
-    });
+  // Calculate total XP from achievements
+  const achievementXP = earnedAchievements.reduce((sum, earned) => {
+    const achievement = allAchievements.find((a) => a.id === earned.achievement_id);
+    return sum + (achievement?.points || 0);
+  }, 0);
 
   if (isLoading) {
     return (
@@ -167,15 +177,14 @@ export default function Achievements() {
           </div>
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6 text-center">
             <div className="text-2xl font-bold text-green-300 mb-1">
-              {totalPoints.toLocaleString()}
+              {totalXP.toLocaleString()} XP
             </div>
             <div className="text-sm text-white/70">
-              {t("pages.achievements.points")}
+              {t("pages.achievements.totalXP")}
             </div>
             <div className="text-xs text-white/60">
-              {t("pages.achievements.pointsBreakdown", {
-                gameplay: gameplayPoints.toLocaleString(),
-                achievements: achievementPoints.toLocaleString(),
+              {t("pages.achievements.xpFromAchievements", {
+                xp: achievementXP.toLocaleString(),
               })}
             </div>
           </div>
@@ -233,8 +242,8 @@ export default function Achievements() {
                       </p>
                       <div className="flex items-center gap-4 text-xs text-white/60">
                         <span>
-                          {t("pages.achievements.pointsReward", {
-                            points: achievement.points,
+                          {t("pages.achievements.xpReward", {
+                            xp: achievement.points,
                           })}
                         </span>
                         <span>
