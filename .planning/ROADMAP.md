@@ -12,6 +12,7 @@
 - ✅ **v1.7 Mic Pitch Detection Overhaul** — Phases 06-10 (shipped 2026-03-04)
 - ✅ **v1.8 App Monetization** — Phases 11-16 (shipped 2026-03-01)
 - ✅ **v1.9 Engagement & Retention** — Phases 17-23 (shipped 2026-03-08)
+- ✅ **v2.0 VictoryScreen & XP Unification** — Phases 01-02 (shipped 2026-03-08)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -171,32 +172,18 @@ See `.planning/milestones/` for archived details of each milestone.
 | 21. Celebration & Reporting Upgrades | v1.9 | 2/2 | Complete | 2026-03-07 |
 | 22. Kid-Friendly Node Modal Redesign | v1.9 | 1/1 | Complete | 2026-03-07 |
 | 23. Kid-Friendly Dashboard Redesign | v1.9 | 3/3 | Complete | 2026-03-06 |
+| 01. VictoryScreen Redesign | v2.0 | 1/1 | Complete | 2026-03-08 |
+| 02. XP Unification | v2.0 | 5/5 | Complete | 2026-03-08 |
 
-**Total: 47 phases across 10 milestones (v1.0-v1.9 all shipped)**
+**Total: 49 phases across 11 milestones (v1.0-v2.0 all shipped)**
 
-### Phase 1: Redesign VictoryScreen for simplicity and mobile-landscape fit
+<details>
+<summary>✅ v2.0 VictoryScreen & XP Unification (Phases 01-02) — SHIPPED 2026-03-08</summary>
 
-**Goal:** Simplify VictoryScreen content and restructure layout to fit mobile landscape viewports (280-400px height). Extract business logic to useVictoryState hook, then rebuild render layer as two-panel landscape layout showing only essentials: avatar, stars, celebration message, XP/points line, and action buttons.
-**Requirements:** [VS-EXTRACT, VS-LAYOUT, VS-CONTENT, VS-BUTTONS, VS-FREEPLAY]
-**Depends on:** None
-**Plans:** 1 plan
+- [x] Phase 01: Redesign VictoryScreen (1/1 plan) — completed 2026-03-08
+- [x] Phase 02: XP Unification (5/5 plans) — completed 2026-03-08
 
-Plans:
-- [x] 01-01-PLAN.md — Extract useVictoryState hook + redesign render layer with polished single-column layout
-
-### Phase 2: Refactor score vs XP - unify into XP-only scoring system
-
-**Goal:** Eliminate the parallel "points" reward system and unify all player rewards under the existing XP system. The students_score table stays (raw game data for analytics/goals), but "points" as a user-facing concept is removed. All reward signals become XP. Teacher views switch to XP-based analytics.
-**Requirements:** [XP-SERVICE, XP-ACHIEVE, XP-DEAD-CODE, XP-FREEPLAY, XP-VICTORY, XP-DASHBOARD, XP-HOOKS, XP-AVATARS, XP-ACHIEVEMENTS, XP-I18N, XP-TEACHER, XP-DB-CLEANUP]
-**Depends on:** Phase 1
-**Plans:** 5 plans
-
-Plans:
-- [x] 02-01-PLAN.md — Service layer + dead code: refactor achievementService to use awardXP, add calculateFreePlayXP, switch accessory system to XP, delete points.js/useTotalPoints.js/scoreComparisonService.js
-- [x] 02-02-PLAN.md — Core hooks + VictoryScreen: award XP for free play in useVictoryState, update VictoryScreen display, remove total-points query keys from all hooks
-- [x] 02-03-PLAN.md — UI + i18n: update Avatars, Achievements, unlock modals, and Toast to show XP; update en+he translations
-- [x] 02-04-PLAN.md — Teacher analytics + DB migration: switch teacher charts to XP, create migration to drop points columns
-- [x] 02-05-PLAN.md — Gap closure: migrate TeacherDashboard.jsx and apiTeacher.js from points to XP (student list, detail modal, filters, sort)
+</details>
 
 ---
-*Last updated: 2026-03-08 — Phase 2 complete (5/5 plans, verification passed 15/15)*
+*Last updated: 2026-03-08 — All milestones shipped (v1.0-v2.0). Phases archived to milestones/*
