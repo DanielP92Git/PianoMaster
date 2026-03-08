@@ -30,12 +30,12 @@ import {
 import { Lock } from "lucide-react";
 import UnlockRequirementModal from "./ui/UnlockRequirementModal";
 
-const POINT_FORMATTER = new Intl.NumberFormat(undefined, {
+const XP_FORMATTER = new Intl.NumberFormat(undefined, {
   maximumFractionDigits: 0,
 });
 
-const formatPoints = (value) =>
-  POINT_FORMATTER.format(Math.max(0, Math.round(value || 0)));
+const formatXP = (value) =>
+  XP_FORMATTER.format(Math.max(0, Math.round(value || 0)));
 
 function AvatarPreview({
   avatar,
@@ -160,9 +160,9 @@ function Avatars() {
 
   const { data: profileData } = useUserProfile();
 
-  const availablePoints = pointsBalance?.available ?? 0;
-  const spentPoints = Math.max(0, -(pointsBalance?.ledgerDelta ?? 0));
-  const earnedPoints = pointsBalance?.earned ?? 0;
+  const availableXP = pointsBalance?.available ?? 0;
+  const spentXP = Math.max(0, -(pointsBalance?.ledgerDelta ?? 0));
+  const earnedXP = pointsBalance?.earned ?? 0;
 
   // Fetch games played count from students_score table
   const { data: gamesPlayedCount, isLoading: gamesPlayedLoading } =
@@ -173,7 +173,7 @@ function Avatars() {
     return {
       achievements: profileData?.achievements || [],
       gamesPlayed: gamesPlayedCount || 0,
-      totalPoints: pointsBalance?.earned || 0,
+      totalXP: pointsBalance?.earned || 0,
       currentStreak: profileData?.current_streak || 0,
       perfectGames: profileData?.perfect_games || 0,
       level: profileData?.level || 1,
@@ -569,7 +569,6 @@ function Avatars() {
     setIsRefreshing(true);
     await Promise.all([
       queryClient.invalidateQueries(["point-balance", user?.id]),
-      queryClient.invalidateQueries(["total-points", user?.id]),
       queryClient.invalidateQueries(["student-scores", user?.id]),
       queryClient.invalidateQueries(["earned-achievements", user?.id]),
     ]);
@@ -820,7 +819,7 @@ function Avatars() {
                 onClick={handleRefreshPoints}
                 disabled={isRefreshing || isPointBalanceLoading}
                 className="rounded-lg p-1.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                title="Refresh points"
+                title="Refresh XP balance"
               >
                 <RefreshCw
                   className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
@@ -835,15 +834,15 @@ function Avatars() {
             ) : (
               <>
                 <p className="text-3xl font-bold text-white">
-                  {formatPoints(availablePoints)} {t("common.points")}
+                  {formatXP(availableXP)} XP
                 </p>
                 <div className="mt-2 flex flex-col gap-0.5 text-xs text-white/60">
                   <span>
                     {t("avatars.shop.totalEarned")}:{" "}
-                    {formatPoints(earnedPoints)}
+                    {formatXP(earnedXP)}
                   </span>
                   <span>
-                    {t("avatars.shop.totalSpent")}: {formatPoints(spentPoints)}
+                    {t("avatars.shop.totalSpent")}: {formatXP(spentXP)}
                   </span>
                 </div>
               </>
@@ -864,8 +863,8 @@ function Avatars() {
             </p>
           </div>
           <span className="text-sm text-white/80">
-            {t("avatars.shop.availablePoints", {
-              points: formatPoints(availablePoints),
+            {t("avatars.shop.availableXP", {
+              xp: formatXP(availableXP),
             })}
           </span>
         </div>
@@ -984,8 +983,8 @@ function Avatars() {
                         const ownedRecord = ownedAccessoryMap.get(accessory.id);
                         const isOwned = Boolean(ownedRecord);
                         const isEquipped = ownedRecord?.is_equipped;
-                        const insufficientPoints =
-                          availablePoints < accessory.price_points;
+                        const insufficientXP =
+                          availableXP < accessory.price_points;
                         const isPurchasing =
                           purchaseAccessoryMutation.isPending &&
                           purchaseAccessoryMutation.variables?.accessoryId ===
@@ -1054,8 +1053,7 @@ function Avatars() {
                             </div>
                             <div className="flex items-center justify-between text-xs text-white/80">
                               <span>
-                                {formatPoints(accessory.price_points)}{" "}
-                                {t("common.points")}
+                                {formatXP(accessory.price_points)} XP
                               </span>
                               {isOwned && (
                                 <span className="text-emerald-300">
@@ -1069,13 +1067,13 @@ function Avatars() {
                                   ? "cursor-pointer bg-amber-600/30 text-amber-200 hover:bg-amber-600/40"
                                   : isOwned
                                     ? "cursor-default bg-white/10 text-white"
-                                    : insufficientPoints
+                                    : insufficientXP
                                       ? "bg-gray-500/30 cursor-not-allowed text-gray-200"
                                       : "bg-indigo-500 text-white hover:bg-indigo-400"
                               } ${isPurchasing ? "cursor-wait opacity-70" : ""}`}
                               disabled={
                                 (!isLocked && isOwned) ||
-                                insufficientPoints ||
+                                insufficientXP ||
                                 isPurchasing
                               }
                               onClick={() =>
@@ -1088,10 +1086,10 @@ function Avatars() {
                                 ? `🔒 ${t("avatars.shop.howToUnlock")}`
                                 : isOwned
                                   ? t("avatars.shop.purchased")
-                                  : insufficientPoints
-                                    ? t("avatars.shop.notEnoughPoints")
+                                  : insufficientXP
+                                    ? t("avatars.shop.notEnoughXP")
                                     : t("avatars.shop.purchase", {
-                                        points: formatPoints(
+                                        xp: formatXP(
                                           accessory.price_points
                                         ),
                                       })}
