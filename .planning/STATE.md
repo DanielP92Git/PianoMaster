@@ -1,7 +1,7 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
+milestone: none
+milestone_name: All milestones shipped (v1.0-v2.0)
 status: completed
 stopped_at: Completed 02-05-PLAN.md (Phase 2 gap closure complete)
 last_updated: "2026-03-08T11:10:53.225Z"
