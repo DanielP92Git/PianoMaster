@@ -1,7 +1,7 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v6";
+const CACHE_NAME = "pianomaster-v7";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
@@ -204,17 +204,34 @@ self.addEventListener("fetch", (event) => {
   const isAsset = isSameOrigin && url.pathname.startsWith("/assets/");
   const isNavigate = event.request.mode === "navigate";
 
-  // Offline reload support (preview/prod): serve app shell + hashed assets cache-first
-  // Only handle navigation requests and static assets (images, CSS, etc.)
-  if (isSameOrigin && (isNavigate || isAsset)) {
+  // Static assets (CSS, images, fonts in /assets/) — cache-first is safe because
+  // Vite content-hashes filenames, so a new build = new URLs.
+  if (isSameOrigin && isAsset) {
+    event.respondWith(cacheFirst(event.request, CACHE_NAME));
+    return;
+  }
+
+  // Navigation requests — network-first so users always get the latest index.html
+  // after a deployment. Falls back to cache (offline support), then offline page.
+  if (isSameOrigin && isNavigate) {
     event.respondWith(
       (async () => {
-        const response = await cacheFirst(event.request, CACHE_NAME);
-        if (isNavigate && response && response.status === 504) {
+        try {
+          const networkResponse = await fetch(event.request);
+          // Cache the fresh HTML for offline use
+          if (networkResponse.ok) {
+            const cache = await caches.open(CACHE_NAME);
+            await cache.put(event.request, networkResponse.clone());
+          }
+          return networkResponse;
+        } catch (error) {
+          // Network failed — try cache
+          const cachedResponse = await caches.match(event.request);
+          if (cachedResponse) return cachedResponse;
+          // No cache either — show offline page
           const offline = await caches.match(OFFLINE_URL);
-          return offline || response;
+          return offline || new Response("Offline", { status: 503 });
         }
-        return response;
       })()
     );
     return;
