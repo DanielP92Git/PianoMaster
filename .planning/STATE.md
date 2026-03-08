@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-08T22:37:30.472Z"
-last_activity: 2026-03-08 — 02-05 TeacherDashboard XP gap closure (d041c10, 7aaa7e3)
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-03-08T22:58:28.126Z"
+last_activity: 2026-03-09 — 01-01 Password reset API functions and i18n translations (206ec97, ef3a351)
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Score-to-XP unification complete including teacher views; all plans delivered
+**Current focus:** Adding forgot password recovery flow to login page
 
 ## Current Position
 
-Phase: 2 — Refactor score vs XP - unify into XP-only scoring system
-Plan: 05 of 05 (all complete)
-Status: Complete
-Last activity: 2026-03-08 — 02-05 TeacherDashboard XP gap closure (d041c10, 7aaa7e3)
+Phase: 1 — Add forgot username/password recovery buttons on login
+Plan: 01 of 02 (01 complete)
+Status: In Progress
+Last activity: 2026-03-09 — 01-01 Password reset API functions and i18n translations (206ec97, ef3a351)
 
 ```
 v1.9 Engagement & Retention: SHIPPED 2026-03-08
@@ -54,6 +54,7 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 - Phase 2-03: Updated all UI components and i18n (en+he) to show XP instead of points; Avatars, Achievements, unlock modals, Toast all use XP terminology
 - Phase 2-04: Teacher chart components switched to XP with level context; DB migration drops achievement_points, student_achievements.points, calculate_score_percentile
 - Phase 2-05: TeacherDashboard.jsx and apiTeacher.js fully migrated from points to XP; simplified data fetching by reading total_xp directly from students table
+- Phase 1-01: Hoisted siteUrl to module level in apiAuth.js; generic error messages on reset to prevent email enumeration; no retry on password reset mutations
 
 ### Roadmap Evolution
 
@@ -77,15 +78,16 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 | Phase 02 P03 | 8min | 2 tasks | 7 files |
 | Phase 02 P04 | 5min | 2 tasks | 4 files |
 | Phase 02 P05 | 5min | 2 tasks | 2 files |
+| Phase 01 P01 | 3min | 2 tasks | 5 files |
 
 ## Session Continuity
 
-Last session: 2026-03-08T22:37:30.467Z
-Stopped at: Phase 1 context gathered
+Last session: 2026-03-08T22:58:28.118Z
+Stopped at: Completed 01-01-PLAN.md
 
 **Next action:**
-- Phase 2 fully complete. All 5 plans delivered (including gap closure). Apply DB migration when ready.
+- Execute Plan 02: UI components (ForgotPasswordModal, ResetPasswordPage, route registration)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-08 — 02-05 TeacherDashboard XP gap closure (Phase 2 fully complete)*
+*Last updated: 2026-03-09 — 01-01 Password reset API and i18n translations complete*
