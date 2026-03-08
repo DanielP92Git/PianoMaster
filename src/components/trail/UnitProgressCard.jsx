@@ -2,12 +2,50 @@
  * UnitProgressCard Component
  *
  * Glass-morphism card displaying unit progress as a visual chapter break.
- * Shows unit name, theme icon, completion count, and star progress.
+ * Shows unit number badge with gradient border glow, unit name, completion count, and star progress.
  * Purely informational (no click/tap interactivity).
  */
 
 import { useTranslation } from 'react-i18next';
 import { translateUnitName } from '../../utils/translateNodeName';
+
+// Color scheme per unit number — gradient borders + glow
+const UNIT_BADGE_COLORS = {
+  1: {
+    border: 'linear-gradient(135deg, #60a5fa, #3b82f6)',  // blue
+    glow: 'rgba(59, 130, 246, 0.4)',
+    text: '#93c5fd',
+  },
+  2: {
+    border: 'linear-gradient(135deg, #fbbf24, #f59e0b)',  // yellow/amber
+    glow: 'rgba(245, 158, 11, 0.4)',
+    text: '#fcd34d',
+  },
+  3: {
+    border: 'linear-gradient(135deg, #34d399, #10b981)',  // green/emerald
+    glow: 'rgba(16, 185, 129, 0.4)',
+    text: '#6ee7b7',
+  },
+  4: {
+    border: 'linear-gradient(135deg, #c084fc, #a855f7)',  // purple
+    glow: 'rgba(168, 85, 247, 0.4)',
+    text: '#d8b4fe',
+  },
+  5: {
+    border: 'linear-gradient(135deg, #f472b6, #ec4899)',  // pink
+    glow: 'rgba(236, 72, 153, 0.4)',
+    text: '#f9a8d4',
+  },
+  6: {
+    border: 'linear-gradient(135deg, #fb923c, #f97316)',  // orange
+    glow: 'rgba(249, 115, 22, 0.4)',
+    text: '#fdba74',
+  },
+};
+
+function getBadgeColors(unitOrder) {
+  return UNIT_BADGE_COLORS[unitOrder] || UNIT_BADGE_COLORS[1];
+}
 
 const UnitProgressCard = ({
   unit,
@@ -18,6 +56,8 @@ const UnitProgressCard = ({
   isUnitComplete
 }) => {
   const { t } = useTranslation('trail');
+  const unitOrder = unit?.order || 1;
+  const colors = getBadgeColors(unitOrder);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden">
@@ -47,11 +87,23 @@ const UnitProgressCard = ({
 
       {/* Content layer */}
       <div className="relative z-10 px-4 py-3 flex items-center justify-between">
-        {/* Left side: icon + unit info */}
+        {/* Left side: numbered badge + unit info */}
         <div className="flex items-center gap-3">
-          {/* Unit theme icon */}
-          <div className="text-2xl">
-            {unit?.icon || '📚'}
+          {/* Unit number badge with gradient border glow */}
+          <div
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+            style={{
+              background: `linear-gradient(135deg, rgba(15,23,42,0.9), rgba(15,23,42,0.7)) padding-box, ${colors.border} border-box`,
+              border: '2px solid transparent',
+              boxShadow: `0 0 12px ${colors.glow}, 0 0 4px ${colors.glow}`,
+            }}
+          >
+            <span
+              className="text-sm font-extrabold"
+              style={{ color: colors.text }}
+            >
+              {unitOrder}
+            </span>
           </div>
 
           {/* Unit name and completion text */}
