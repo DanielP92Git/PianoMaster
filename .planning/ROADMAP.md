@@ -185,5 +185,16 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### Phase 1: Add forgot password recovery on login
+
+**Goal:** Add a "Forgot password?" inline recovery flow to the login page and a dedicated /reset-password page, using Supabase built-in password reset with EN+HE i18n support
+**Requirements:** [PWD-RESET-API, PWD-RESET-I18N, PWD-RESET-LOGIN-UI, PWD-RESET-PAGE, PWD-RESET-ROUTE]
+**Depends on:** None
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — API functions, TanStack Query hooks, and EN+HE translations
+- [ ] 01-02-PLAN.md — LoginForm inline forgot password flow + ResetPasswordPage + route wiring
+
 ---
-*Last updated: 2026-03-08 — All milestones shipped (v1.0-v2.0). Phases archived to milestones/*
+*Last updated: 2026-03-09 — Phase 1 planned (forgot password recovery)*
