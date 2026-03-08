@@ -40,9 +40,9 @@ export function usePracticeSessionWithAchievements() {
       // Invalidate relevant queries to refresh UI
       queryClient.invalidateQueries(["earned-achievements", user?.id]);
       queryClient.invalidateQueries(["practice-sessions", user?.id]);
-      // Invalidate points-related queries (achievements give points!)
+      // Invalidate XP-related queries (achievements award XP)
       queryClient.invalidateQueries(["point-balance", user?.id]);
-      queryClient.invalidateQueries(["total-points", user?.id]);
+      queryClient.invalidateQueries(["student-xp", user?.id]);
 
       // Show achievement notifications
       if (newAchievements.length > 0) {

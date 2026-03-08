@@ -26,9 +26,9 @@ export function useStreakWithAchievements() {
       queryClient.invalidateQueries(["streak", user?.id]);
       queryClient.invalidateQueries(["streak-state", user?.id]);
       queryClient.invalidateQueries(["earned-achievements", user?.id]);
-      // Invalidate points-related queries (achievements give points!)
+      // Invalidate XP-related queries (achievements award XP)
       queryClient.invalidateQueries(["point-balance", user?.id]);
-      queryClient.invalidateQueries(["total-points", user?.id]);
+      queryClient.invalidateQueries(["student-xp", user?.id]);
 
       // Log new achievements for debugging
       if (newAchievements.length > 0) {

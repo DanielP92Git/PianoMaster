@@ -12,7 +12,6 @@ import { toast } from "react-hot-toast";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
 import { Send, Loader2 } from "lucide-react";
-import { useTotalPoints } from "../../hooks/useTotalPoints";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 import {
   dashboardReminderService,
@@ -21,7 +20,6 @@ import {
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
 import { getAvatarImageSource } from "../../utils/avatarAssets";
-import { getStudentScores } from "../../services/apiDatabase";
 import Fireflies from "../ui/Fireflies";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import WeeklySummaryCard from "../dashboard/WeeklySummaryCard";
@@ -100,43 +98,6 @@ function Dashboard() {
     refetchInterval: 5 * 60 * 1000,
   });
   const comebackBonus = streakState?.comebackBonus;
-
-  // Fetch total points and calculate trend
-  const { data: totalPointsData } = useTotalPoints({
-    staleTime: 0,
-    refetchOnMount: "always",
-    keepPreviousData: false,
-  });
-  const totalPoints = totalPointsData?.totalPoints || 0;
-
-  // Calculate points trend (simplified - using recent scores if available)
-  const calculateRecentTrend = (scores) => {
-    if (!scores || !Array.isArray(scores) || scores.length === 0) return 0;
-    const recent = scores.slice(0, 7);
-    const older = scores.slice(7, 14);
-    const recentAvg =
-      recent.reduce((sum, score) => sum + (score.score || 0), 0) /
-      recent.length;
-    const olderAvg =
-      older.length > 0
-        ? older.reduce((sum, score) => sum + (score.score || 0), 0) /
-          older.length
-        : recentAvg;
-    if (olderAvg === 0) return 0;
-    return ((recentAvg - olderAvg) / olderAvg) * 100;
-  };
-
-  const { data: scoresData } = useQuery({
-    queryKey: ["student-scores", user?.id],
-    queryFn: () => {
-      if (!user?.id || !isStudent) return [];
-      return getStudentScores(user.id);
-    },
-    enabled: !!user?.id && isStudent,
-    staleTime: 3 * 60 * 1000,
-  });
-
-  const pointsTrend = calculateRecentTrend(scoresData || []);
 
   // Fetch next recommended trail node (only for students)
   // isPremium in queryKey ensures cache invalidates when subscription status changes
