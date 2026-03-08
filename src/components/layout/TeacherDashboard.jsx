@@ -59,18 +59,8 @@ import DataExportModal from "../teacher/DataExportModal";
 import AccountDeletionModal from "../teacher/AccountDeletionModal";
 import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
 import { useUser } from "../../features/authentication/useUser";
-import {
-  getAchievementPointsTotal,
-  getStudentScores,
-} from "../../services/apiDatabase";
+import { getStudentScores } from "../../services/apiDatabase";
 import { toast } from "react-hot-toast";
-
-// Inline replacement for deleted points.js — sums raw scores from game history
-// TODO: Replace with XP-based analytics in Plan 02-04
-const calculateGameplayPoints = (scores) => {
-  if (!scores || !Array.isArray(scores)) return 0;
-  return scores.reduce((sum, s) => sum + (s.score || 0), 0);
-};
 
 // Dedicated modal component for adding students with multi-step form
 const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
@@ -1021,27 +1011,6 @@ const StudentDetailModal = ({
     refetchInterval: 2 * 60 * 1000,
   });
 
-  const gameplayPoints = useMemo(() => {
-    return calculateGameplayPoints(studentScores);
-  }, [studentScores]);
-
-  const {
-    data: studentAchievementPoints = 0,
-    isLoading: isStudentAchievementPointsLoading,
-    error: studentAchievementPointsError,
-  } = useQuery({
-    queryKey: ["teacher-student-achievement-points", studentId ?? "none"],
-    queryFn: () => getAchievementPointsTotal(studentId),
-    enabled: Boolean(isOpen && studentId),
-    staleTime: 60 * 1000,
-    refetchInterval: 2 * 60 * 1000,
-  });
-
-  const achievementPoints =
-    studentAchievementPointsError && typeof student?.total_points === "number"
-      ? Math.max((student.total_points || 0) - gameplayPoints, 0)
-      : studentAchievementPoints || 0;
-
   const normalizeGameTypeKey = useCallback((value) => {
     const raw = String(value || "").trim();
     if (!raw) return "unknown";
@@ -1159,18 +1128,14 @@ const StudentDetailModal = ({
             <div className="flex items-center gap-2">
               <Star className="h-5 w-5 text-blue-600" />
               <span className="text-sm font-medium text-blue-900">
-                Total Points
+                Total XP
               </span>
             </div>
             <p className="text-2xl font-bold text-blue-900">
-              {(student.total_points || 0).toLocaleString()}
+              {(student.total_xp || 0).toLocaleString()}
             </p>
             <p className="text-xs text-blue-800/80">
-              (
-              {isStudentAchievementPointsLoading
-                ? "…"
-                : achievementPoints.toLocaleString()}{" "}
-              achievements / {gameplayPoints.toLocaleString()} games)
+              Level {student.current_level || 1}
             </p>
           </div>
 
@@ -1489,7 +1454,7 @@ const TeacherDashboard = () => {
     activityStatus: "all",
     attendanceRange: "all",
     streakRange: "all",
-    pointsRange: "all",
+    xpRange: "all",
     level: "all",
   });
   const [sortBy, setSortBy] = useState("name");
@@ -1753,18 +1718,18 @@ const TeacherDashboard = () => {
         }
       }
 
-      // Points range filter
-      if (filters.pointsRange !== "all") {
-        const points = student.total_points || 0;
-        switch (filters.pointsRange) {
+      // XP range filter
+      if (filters.xpRange !== "all") {
+        const xp = student.total_xp || 0;
+        switch (filters.xpRange) {
           case "high":
-            if (points < 1000) return false;
+            if (xp < 1000) return false;
             break;
           case "medium":
-            if (points < 500 || points >= 1000) return false;
+            if (xp < 500 || xp >= 1000) return false;
             break;
           case "low":
-            if (points >= 500) return false;
+            if (xp >= 500) return false;
             break;
         }
       }
@@ -1786,9 +1751,9 @@ const TeacherDashboard = () => {
           aValue = a.student_name?.toLowerCase() || "";
           bValue = b.student_name?.toLowerCase() || "";
           break;
-        case "points":
-          aValue = a.total_points || 0;
-          bValue = b.total_points || 0;
+        case "xp":
+          aValue = a.total_xp || 0;
+          bValue = b.total_xp || 0;
           break;
         case "streak":
           aValue = a.current_streak || 0;
@@ -1972,7 +1937,7 @@ const TeacherDashboard = () => {
       activityStatus: "all",
       attendanceRange: "all",
       streakRange: "all",
-      pointsRange: "all",
+      xpRange: "all",
       level: "all",
     });
     setSearchTerm("");
@@ -2229,8 +2194,8 @@ const TeacherDashboard = () => {
                   >
                     <option value="name-asc">Name A-Z</option>
                     <option value="name-desc">Name Z-A</option>
-                    <option value="points-desc">Points High-Low</option>
-                    <option value="points-asc">Points Low-High</option>
+                    <option value="xp-desc">XP High-Low</option>
+                    <option value="xp-asc">XP Low-High</option>
                     <option value="streak-desc">Streak High-Low</option>
                     <option value="streak-asc">Streak Low-High</option>
                     <option value="attendance-desc">Attendance High-Low</option>
@@ -2356,19 +2321,19 @@ const TeacherDashboard = () => {
                     </select>
                   </div>
 
-                  {/* Points Range */}
+                  {/* XP Range */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Points
+                      XP
                     </label>
                     <select
-                      value={filters.pointsRange}
+                      value={filters.xpRange}
                       onChange={(e) =>
-                        handleFilterChange("pointsRange", e.target.value)
+                        handleFilterChange("xpRange", e.target.value)
                       }
                       className="w-full rounded border border-gray-600 bg-gray-700 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="all">All Points</option>
+                      <option value="all">All XP</option>
                       <option value="high">High (1000+)</option>
                       <option value="medium">Medium (500-999)</option>
                       <option value="low">Low (&lt;500)</option>
@@ -2555,9 +2520,9 @@ const TeacherDashboard = () => {
                           <div className="flex items-center gap-1 text-sm text-white">
                             <Star className="h-4 w-4 text-yellow-400" />
                             <span className="font-medium">
-                              {student.total_points || 0}
+                              {student.total_xp || 0}
                             </span>
-                            <span className="text-gray-400">pts</span>
+                            <span className="text-gray-400">XP</span>
                           </div>
                         </div>
 
