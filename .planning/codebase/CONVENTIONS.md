@@ -1,282 +1,338 @@
 # Coding Conventions
 
-**Analysis Date:** 2026-01-31
+**Analysis Date:** 2026-03-08
+
+## Language & File Extensions
+
+**Primary:** JavaScript (ES2020+) with JSX -- `.js` for utilities/services/hooks, `.jsx` for React components.
+
+No TypeScript is used. The project name references TypeScript (`vite-react-typescript-starter`) but the codebase is pure JavaScript.
 
 ## Naming Patterns
 
 **Files:**
-- Components: PascalCase (e.g., `VictoryScreen.jsx`, `NotesRecognitionGame.jsx`, `TrailNodeModal.jsx`)
-- Hooks: camelCase with `use` prefix (e.g., `usePitchDetection.js`, `useGlobalAudioSettings.js`, `useStreakWithAchievements.js`)
-- Services: camelCase with service descriptor suffix (e.g., `skillProgressService.js`, `dailyGoalsService.js`, `authService.js`)
-- Utilities: camelCase descriptive names (e.g., `xpSystem.js`, `progressMigration.js`, `accessoryUnlocks.js`)
-- Context providers: PascalCase with Context suffix (e.g., `SettingsContext.jsx`, `AccessibilityContext.jsx`)
-- Test files: Matching source filename with `.test.js` or `.spec.js` suffix (e.g., `patternBuilder.test.js`, `usePitchDetection.test.js`)
+- React components: PascalCase `.jsx` -- `VictoryScreen.jsx`, `TrailNode.jsx`, `GameOverScreen.jsx`
+- Hooks: camelCase with `use` prefix -- `useAudioEngine.js`, `usePitchDetection.js`, `useRotatePrompt.js`
+- Services: camelCase with `api` or descriptive prefix -- `apiScores.js`, `apiAuth.js`, `streakService.js`, `subscriptionService.js`
+- Utilities: camelCase -- `xpSystem.js`, `pwaDetection.js`, `isIOSSafari.js`
+- Contexts: PascalCase with `Context` suffix -- `AccessibilityContext.jsx`, `SubscriptionContext.jsx`
+- Constants/data: camelCase -- `skillTrail.js`, `constants.js`, `expandedNodes.js`
+- Test files: `{name}.test.{js,jsx}` co-located or in `__tests__/` directories
+- Locale files: lowercase `common.json`, `trail.json` inside `locales/{lang}/`
 
 **Functions:**
-- camelCase for all function names
-- Prefixed with action verb: `get`, `fetch`, `update`, `delete`, `calculate`, `award`, `render`, etc.
-- Examples: `getStudentProgress()`, `updateNodeProgress()`, `calculateStarsFromPercentage()`, `awardXP()`, `generatePatternData()`
-- Factory/generator functions: `generate*` or `create*` (e.g., `generateRhythmEvents()`, `generatePatternData()`)
-- Hook functions always begin with `use` (e.g., `useGameSettings()`, `useTotalPoints()`)
+- React components: PascalCase -- `function Dashboard()`, `function TrailNode()`
+- Hooks: camelCase with `use` prefix -- `useUser()`, `useAudioEngine()`, `useMicNoteInput()`
+- Service functions: camelCase, verb-first -- `getStudentScores()`, `updateStudentScore()`, `fetchSubscriptionStatus()`
+- Helpers/utilities: camelCase -- `getCalendarDate()`, `hoursSince()`, `computeValidSignature()`
+- Event handlers: camelCase with `handle` prefix -- `handleClick()`, `handleExit()`, `handlePlayAgain()`
 
 **Variables:**
-- camelCase for all variables and constants
-- Component state: descriptive names reflecting the state (e.g., `isListening`, `detectedNote`, `audioLevel`)
-- Database fields use snake_case (e.g., `student_id`, `total_xp`, `best_score`, `last_practiced`)
-- Constants at module level: UPPER_SNAKE_CASE (e.g., `RELEASE_THRESHOLD`, `DEFAULT_PREFERENCES`, `XP_LEVELS`)
-- Refs: descriptive camelCase with `Ref` suffix (e.g., `saveTimeoutRef`, `hasAutoStartedRef`, `pendingChangesRef`)
+- camelCase for all local variables and state: `const [isOpen, setIsOpen]`, `const nodeState`, `const bestScore`
+- Boolean state: `is` prefix -- `isLoading`, `isPlaying`, `isInitialized`, `isPremium`, `isRTL`
+- Refs: camelCase with `Ref` suffix -- `audioContextRef`, `gainNodeRef`, `hasAutoStartedRef`
+- Constants (module-level): SCREAMING_SNAKE_CASE -- `GRACE_WINDOW_HOURS`, `MAX_FREEZE_COUNT`, `FETCH_COOLDOWN_MS`
 
-**Types:**
-- No formal TypeScript in use, but JSDoc comments document parameter and return types
-- Object shape comments use `@param {Object}` with inline field descriptions
-- Arrays documented as `@returns {Promise<Array>}` or `@returns {Array<Object>}`
+**Constants Objects:**
+- Enum-like objects: SCREAMING_SNAKE_CASE keys inside SCREAMING_SNAKE_CASE object:
+  ```javascript
+  export const GOAL_TYPES = {
+    COMPLETE_EXERCISES: 'complete_exercises',
+    EARN_THREE_STARS: 'earn_three_stars',
+  };
+  ```
 
-**Database/API:**
-- Table names: lowercase snake_case (e.g., `student_skill_progress`, `students_score`, `students`)
-- Column names: lowercase snake_case (e.g., `student_id`, `node_id`, `best_score`, `exercises_completed`)
-- JSON data within columns: preserve JavaScript naming (e.g., `goals: { goalId, goalType, ... }`)
+**React Query Keys:**
+- Kebab-case strings in arrays: `["subscription", userId]`, `["streak-state", userId]`, `["scores"]`, `["user"]`
+
+## Export Patterns
+
+**Pages:** Use `export default` -- either inline (`export default function PracticeModes()`) or at bottom (`export default AppSettings;`). Mixed patterns exist but default exports are universal for pages.
+
+**Components:** Mixed pattern -- some use named export (`export function GameModeGrid()`), some use both named + default:
+```javascript
+export function SettingsSection({ ... }) { }
+export default SettingsSection;
+```
+Game components tend to use named exports: `export function NotesRecognitionGame()`, `export function MemoryGame()`.
+
+**Services:** Two patterns coexist:
+1. Named exports for individual functions (most common): `export async function fetchSubscriptionStatus()`, `export async function getStudentScores()`
+2. Object-as-default for service modules: `export const streakService = { ... }`, `export default { fetchSubscriptionStatus, ... }`
+
+**Hooks:** Always named exports: `export function useUser()`, `export const useAudioEngine = () => { }`
+
+**Contexts:** Named exports for Provider and hook: `export function SubscriptionProvider()`, `export function useAccessibility()`
+
+**Preferred pattern for new code:**
+- Pages: `export default function PageName()`
+- Components: Named export `export function ComponentName()` (add `export default` only if needed for lazy loading)
+- Services: Named exports for functions
+- Hooks: Named exports
 
 ## Code Style
 
-**Formatting:**
-- Tool: Prettier v3.6.0
-- Print width: 80 characters
-- Tab width: 2 spaces
-- Single quote: false (use double quotes)
-- Trailing comma: es5 (not in function parameters, only in objects/arrays)
-- Semi-colons: true
-- Bracket spacing: true (spaces inside object literals: `{ foo: 'bar' }`)
-- Arrow function parentheses: always (e.g., `(param) => ...` not `param => ...`)
-- Line endings: LF (Unix)
+**Formatting (Prettier):**
+- Config: `.prettierrc`
+- Semicolons: **yes** (`"semi": true`)
+- Quotes: **double** (`"singleQuote": false`)
+- Trailing commas: **ES5** (`"trailingComma": "es5"`)
+- Print width: **80**
+- Tab width: **2 spaces**
+- Arrow parens: **always** (`"arrowParens": "always"`)
+- End of line: **LF**
+- Plugin: `prettier-plugin-tailwindcss` (auto-sorts Tailwind classes)
 
-**Config file:** `.prettierrc` - applies Tailwind CSS class sorting plugin
-
-**Linting:**
-- Tool: ESLint v9.9.1
-- Parser: Built-in ES2020 with JSX support
-- Key plugins: `eslint-plugin-react`, `eslint-plugin-react-hooks`, `eslint-plugin-react-refresh`
-- Key rules disabled/warnings:
-  - `react/react-in-jsx-scope`: off (React 18 JSX transform)
-  - `react/prop-types`: off (no prop-types library)
-  - `react/jsx-uses-vars`: warn
+**Linting (ESLint):**
+- Config: `eslint.config.js` (flat config, ESLint 9)
+- Plugins: `react`, `react-hooks`, `react-refresh`
+- Key rules:
+  - `react/react-in-jsx-scope`: off (React 18 auto-import)
+  - `react/prop-types`: off (no PropTypes used)
   - `no-unused-vars`: warn
   - `no-undef`: warn
-  - `react-refresh/only-export-components`: warn (allows const exports in development)
+  - `react-refresh/only-export-components`: warn
 
-**Config file:** `eslint.config.js` - flat config format
+**Pre-commit hooks (Husky + lint-staged):**
+- `*.{js,jsx,ts,tsx}`: eslint --fix + prettier --write
+- `*.{json,css,md}`: prettier --write
 
 ## Import Organization
 
-**Order:**
-1. React and core libraries (`react`, `react-dom`, hooks like `useEffect`)
-2. React Router imports (`react-router-dom`)
-3. Third-party UI libraries (`framer-motion`, `lucide-react`, `react-icons`)
-4. State management (`@tanstack/react-query`, context imports)
-5. Feature-specific imports (from `features/`)
-6. Service imports (from `services/`)
-7. Context providers (from `contexts/`)
-8. Component imports (from `components/`)
-9. Utility imports (from `utils/`, `hooks/`)
-10. Data imports (from `data/`)
-11. Asset imports (images, sounds, styles)
+**Order (observed convention, not enforced by tool):**
+1. React core (`react`, `react-dom`)
+2. React ecosystem (`react-router-dom`, `react-i18next`, `@tanstack/react-query`)
+3. Third-party libraries (`framer-motion`, `lucide-react`, `react-hot-toast`)
+4. Internal services/utilities (`../../services/`, `../../utils/`)
+5. Internal hooks (`../../hooks/`, `../../features/`)
+6. Internal contexts (`../../contexts/`)
+7. Internal components (`../../components/`, `../`)
+8. Internal data (`../../data/`)
+9. Assets (`../../assets/`)
+10. CSS (only in `main.jsx`)
 
-**Examples:**
-- From `src/components/games/VictoryScreen.jsx`:
+**Path Aliases:** None configured. All imports use relative paths (`../../services/apiAuth`, `../../../hooks/usePitchDetection`).
+
+**Example from `Dashboard.jsx`:**
+```javascript
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useScores } from "../../features/userData/useScores";
+import { useUser } from "../../features/authentication/useUser";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { streakService } from "../../services/streakService";
+import { Bell, X, Mic, Piano } from "lucide-react";
+import DailyGoalsCard from "../dashboard/DailyGoalsCard";
+```
+
+## Component Patterns
+
+**Functional components only.** No class components anywhere.
+
+**Props destructuring:** Always destructure in function signature:
+```javascript
+const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, onClick }) => {
+```
+
+**Default props:** Use default parameter values, not `defaultProps`:
+```javascript
+const VictoryScreen = ({ score, nodeId = null, exerciseIndex = null, onNextExercise = null }) => {
+```
+
+**Component declaration styles:**
+- Arrow functions: `const TrailNode = ({ ... }) => { }` (common for internal components)
+- Function declarations: `function Dashboard() { }` (common for pages and top-level components)
+- Both are acceptable; be consistent within a file.
+
+**Hooks at top of component body.** State hooks, then derived hooks, then effects:
+```javascript
+function Dashboard() {
+  const { user, isTeacher, isStudent } = useUser();
+  const { isPremium } = useSubscription();
+  const { t, i18n } = useTranslation(["common", "trail"]);
+  const isRTL = i18n.dir() === "rtl";
+  // ...effects below
+}
+```
+
+## State Management Patterns
+
+**React Query for server state:**
+- Wrap Supabase calls in service functions (`src/services/`)
+- Create feature hooks in `src/features/` that use `useQuery`/`useMutation`
+- Standard `staleTime`: 5 minutes for auth, 3 minutes for scores, 0 for subscriptions
+- Invalidate related queries on mutation success:
   ```javascript
-  import { useEffect, useMemo, useState, useRef, useCallback } from "react";
-  import { useNavigate } from "react-router-dom";
-  import { useQueryClient } from "@tanstack/react-query";
-  import { useStreakWithAchievements } from "../../hooks/useStreakWithAchievements";
-  import { updateNodeProgress, getNodeProgress } from "../../services/skillProgressService";
-  import { awardXP, calculateSessionXP } from "../../utils/xpSystem";
-  import { getNodeById, EXERCISE_TYPES } from "../../data/skillTrail";
+  onSuccess: async () => {
+    await Promise.all([
+      queryClient.invalidateQueries(["scores"]),
+      queryClient.invalidateQueries(["point-balance", studentId]),
+    ]);
+  }
   ```
 
-**Path aliases:**
-- Absolute imports from `src/` root are standard; no alias shortcuts observed
-- All imports use relative paths (e.g., `../../services/`, `../contexts/`)
+**React Context for feature-scoped state:**
+- Pattern: Create context + reducer + provider + hook in one file
+- Export both `Provider` and `useXyz()` hook
+- Example: `AccessibilityContext.jsx`, `SubscriptionContext.jsx`
+
+**Redux Toolkit:** Only for `rhythmReducer.jsx`. Do not add new Redux slices; prefer Context or React Query.
+
+**localStorage for persistence:**
+- User preferences: `sightReadingInputMode`, `rotatePromptDismissed`
+- Migration flags: `xp_migration_complete`
+- Always namespaced per user where security matters
 
 ## Error Handling
 
-**Patterns:**
-- Try-catch wrapping for async operations in services
-- Errors logged to console with descriptive message: `console.error('Error context:', error)`
-- Errors re-thrown to propagate to caller for component-level handling
-- Toast notifications for user-facing errors (via `react-hot-toast`)
-- No custom error classes; Error objects caught and logged with context
-
-**Service example** (`src/services/skillProgressService.js`):
+**Services:** Try-catch with console.error, then re-throw with user-friendly message:
 ```javascript
-export const getStudentProgress = async (studentId) => {
+export async function getStudentScores(studentId) {
+  await verifyStudentDataAccess(studentId);  // Authorization first
   try {
-    const { data, error } = await supabase
-      .from('student_skill_progress')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('last_practiced', { ascending: false });
-
+    const { data, error } = await supabase.from("students_score").select("*")...;
     if (error) throw error;
-    return data || [];
+    return { scores: data || [] };
   } catch (error) {
-    console.error('Error fetching student progress:', error);
-    throw error;
+    console.error("Error fetching scores:", error);
+    throw new Error("Failed to fetch scores");
   }
-};
+}
 ```
 
-**Supabase response pattern:**
-- Always destructure `{ data, error }` from Supabase calls
-- Check `if (error)` and throw immediately
-- Return data with null/empty fallback (e.g., `data || []`, `data || null`)
+**Supabase calls:** Always check `error` from Supabase response before using `data`:
+```javascript
+const { data, error } = await supabase.from("table").select("*");
+if (error || !data) return fallbackValue;
+```
 
-**Component-level error handling:**
-- Wrapped in try-catch blocks for async state updates
-- Errors passed to toast notifications: `toast.error('Error message')`
-- Error state tracked in component: `const [error, setError] = useState(null)`
+**React Query error handling:** Use `onError` callback with `toast.error()`:
+```javascript
+onError: (error) => {
+  console.error(error);
+  toast.error("Failed to update score");
+}
+```
+
+**Graceful degradation:** Services return safe defaults on error rather than crashing:
+```javascript
+if (error || !data) return { isPremium: false };  // Safe default
+```
+
+**Network resilience:** Services implement cooldown/dedup for Supabase calls:
+```javascript
+const FETCH_COOLDOWN_MS = 60 * 1000;
+let lastFetchFailed = false;
+let lastFailureTS = 0;
+```
+
+## Authorization Pattern (Defense in Depth)
+
+**Always verify data access before Supabase calls:**
+```javascript
+import { verifyStudentDataAccess } from './authorizationUtils';
+
+export async function getStudentScores(studentId) {
+  await verifyStudentDataAccess(studentId);  // Throws if unauthorized
+  // ... Supabase query
+}
+```
+
+Use `verifyStudentDataAccess(studentId)` from `src/services/authorizationUtils.js` for student-scoped data. This supplements RLS policies.
+
+## i18n Conventions
+
+**Framework:** i18next + react-i18next
+**Config:** `src/i18n/index.js`
+**Languages:** English (`en`), Hebrew (`he`)
+**Namespaces:** `common` (default), `trail`
+**Locale files:** `src/locales/{lang}/{namespace}.json`
+
+**Usage in components:**
+```javascript
+const { t, i18n } = useTranslation("common");  // or useTranslation(["common", "trail"])
+const isRTL = i18n.dir() === "rtl";
+```
+
+**RTL handling:** Components accept `isRTL` prop or compute it from `i18n.dir()`. Flex direction flips with `flex-row-reverse` conditionally.
+
+**Key naming:** Dot-separated, camelCase segments: `"games.gameOver.livesLost"`, `"dailyGoals.goals.completeExercises.name"`
+
+## Tailwind CSS Conventions
+
+**Glassmorphism card pattern (primary for all inner pages):**
+```jsx
+<div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg">
+```
+
+**Nested elements:** Use `bg-white/5 border-white/10` or `bg-white/10 border-white/20`
+
+**Text colors on glass backgrounds:**
+- Primary: `text-white`
+- Secondary: `text-white/70`
+- Tertiary: `text-white/60`
+- Accent values: `-300` variants (`text-indigo-300`, `text-green-300`)
+
+**Responsive:** Mobile-first (`sm:`, `md:`, `lg:` breakpoints). Many components use `p-3 sm:p-4` or `text-lg sm:text-xl` pattern.
+
+**Animation utilities:** Custom keyframes in `tailwind.config.js` (`celebration`, `floatUp`, `shimmer`, `fadeIn`, `wiggle`). Use framer-motion for complex animations, Tailwind utilities for simple ones.
+
+**Accessibility:** `min-h-touch` (44px) / `min-w-touch` for touch targets. Use `aria-label`, `aria-expanded` on interactive elements.
 
 ## Logging
 
-**Framework:** `console` (native browser console)
+**Framework:** `console.error`, `console.warn`, `console.log` (native console)
+- `console.error`: For caught errors in services
+- `console.warn`: For non-critical warnings (e.g., failed sign-out after token error)
+- Debug logging gated by module-level constants: `const METRONOME_TIMING_DEBUG = false;`
 
-**Patterns:**
-- `console.error()` for exceptions in catch blocks
-- `console.log()` for debug information (sparse, mostly removed in production)
-- Always include context prefix in error messages: `console.error('Context: what failed', error)`
-- No log levels or formatting library; raw console methods
-
-**Examples:**
-- `console.error('Error fetching student progress:', error);`
-- `console.error('Error awarding XP:', error);`
-- `console.error('Authorization failed: user mismatch');` (in services with authorization checks)
+**User-facing notifications:** `react-hot-toast` via `toast.error()`, `toast.success()`
 
 ## Comments
 
-**When to Comment:**
-- Function purpose: JSDoc-style block comment before every exported function
-- Complex logic: Inline comments explaining "why" not "what" (code is self-documenting)
-- Workarounds: Mark with `// NOTE:` or `// HACK:` for non-obvious solutions
-- Security-related code: Always comment security implications (e.g., COPPA compliance comments in `xpSystem.js`)
-- Props documentation: JSDoc `@param` blocks for component props
-
-**JSDoc/TSDoc:**
-- Standard format: `/** description */` before functions
-- Parameters: `@param {type} name - description`
-- Returns: `@returns {type} description`
-- Typed returns: `@returns {Promise<Array>}`, `@returns {Object|null}`
-
-**Example** (from `src/utils/xpSystem.js`):
+**JSDoc on exported service functions:**
 ```javascript
 /**
- * Calculate current level based on total XP
- * @param {number} totalXp - Student's total XP
- * @returns {Object} Level object with level, title, and icon
+ * Fetch subscription status for the authenticated student.
+ * @param {string|null} studentId - The UUID of the authenticated student
+ * @returns {Promise<{ isPremium: boolean }>}
  */
-export const calculateLevel = (totalXp) => {
-  ...
-};
 ```
 
-## Function Design
-
-**Size:** 20-40 lines typical for service functions, 50+ lines for game components (due to game logic complexity)
-- Large functions broken into helper functions within same file or extracted to utils
-- Custom hooks extracted when logic is reused across components
-
-**Parameters:**
-- Positional parameters for essential data (e.g., `(studentId, nodeId, stars, score)`)
-- Configuration objects for optional/complex parameters (e.g., `{ allowRests, allowedNoteDurations, rhythmComplexity }`)
-- Destructuring for object parameters in function signature
-
-**Return Values:**
-- Single return value (not tuple destructuring)
-- Async functions return Promise with unwrapped data (e.g., `Promise<Array>` not `Promise<{ data, error }>`)
-- Handle Supabase response pattern internally and throw on error
-- Null/undefined for missing results (e.g., `null` not empty string)
-- Objects for multiple related return values (e.g., `{ newTotalXP, newLevel, leveledUp, xpAwarded }`)
-
-**Example** (from `src/utils/xpSystem.js`):
+**Section separators in large service files:**
 ```javascript
-export const getLevelProgress = (totalXp) => {
-  const currentLevelData = calculateLevel(totalXp);
-  const currentLevel = currentLevelData.level;
+// ============================================================
+// Constants
+// ============================================================
+```
 
-  if (currentLevel >= 15) {
-    return {
-      currentLevel: currentLevelData,
-      nextLevelXP: 0,
-      xpInCurrentLevel: 0,
-      xpNeededForNext: 0,
-      progressPercentage: 100
-    };
-  }
+**Inline comments for non-obvious logic:**
+```javascript
+// Active OR (cancelled + period not ended) OR (past_due + 3-day grace)
+```
 
-  // ... calculation logic
-};
+**Component docblocks:** Brief description at top of file:
+```javascript
+/**
+ * TrailNode Component
+ * Displays a single node on the skill trail map with game-like visual styling
+ * States: locked, available, in-progress, completed
+ */
 ```
 
 ## Module Design
 
-**Exports:**
-- Named exports for all public functions (no default exports from services/utils)
-- Default export at end of service files with object containing all exports (for convenience)
+**Services:** One file per domain (e.g., `streakService.js`, `subscriptionService.js`, `dailyGoalsService.js`). Export individual functions or a service object.
 
-**Barrel Files:**
-- Not used; imports are direct from source files
-- Example: `import { getNodeById, EXERCISE_TYPES } from '../data/skillTrail'` not barrel re-export
+**Hooks:** One hook per file. Prefix `use`. Keep in `src/hooks/` for app-wide hooks, in `src/features/{feature}/hooks/` for feature-scoped hooks.
 
-**Module structure** (typical service):
-1. JSDoc block describing module purpose
-2. Imports
-3. Constants and configuration
-4. Helper functions (not exported)
-5. Public functions (exported with JSDoc)
-6. Default export object (optional, at end)
+**Contexts:** One context per file in `src/contexts/`. Contains provider + consumer hook. Names: `{Feature}Context.jsx`.
 
-**Example** (`src/utils/xpSystem.js`):
-```javascript
-/**
- * XP and Leveling System
- * Manages student XP progression, level calculations, and XP rewards
- */
+**Data/Constants:** Static definitions in `src/data/`. Configuration in `src/config/`.
 
-import supabase from '../services/supabase';
-
-export const XP_LEVELS = [ ... ];
-
-export const calculateLevel = (totalXp) => { ... };
-
-export default {
-  XP_LEVELS,
-  calculateLevel,
-  // ... other exports
-};
-```
-
-## Special Patterns
-
-**Supabase Integration:**
-- All database access through `src/services/` files (not directly in components)
-- Single supabase instance: `import supabase from './supabase'`
-- RPC calls for complex operations: `supabase.rpc('function_name', { params })`
-- Row-level security (RLS) enforced at database level; client checks auth before API calls
-
-**React Context:**
-- Context files in `src/contexts/` directory
-- Provider component exports the provider and custom hook
-- Hook name: `use{ContextName}()` (e.g., `useSettings()`, `useAccessibility()`)
-- Default values always provided to Context.createContext()
-
-**Custom Hooks:**
-- File location: `src/hooks/` directory
-- Always start with `use` prefix
-- Can use contexts and other hooks internally
-- Return object with state and methods (e.g., `{ isListening, startListening, stopListening }`)
-
-**Game Components:**
-- Follow predictable structure: setup → settings → gameplay → results
-- Props document trail integration: `nodeId`, `exerciseIndex`, `totalExercises`, `exerciseType`
-- Auto-start pattern when trail props provided via `useRef` to prevent double-initialization
+**No barrel files.** Each import points to the specific file. No `index.js` re-exports.
 
 ---
 
-*Convention analysis: 2026-01-31*
+*Convention analysis: 2026-03-08*

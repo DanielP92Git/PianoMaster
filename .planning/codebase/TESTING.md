@@ -1,393 +1,37 @@
 # Testing Patterns
 
-**Analysis Date:** 2026-01-31
+**Analysis Date:** 2026-03-08
 
 ## Test Framework
 
 **Runner:**
-- Vitest v3.2.4 - Fast unit test runner built on Vite
+- Vitest 3.2.4
 - Config: `vitest.config.js`
-- Environment: JSDOM (browser simulation)
-- Global test APIs enabled (no import of `describe`, `it`, `expect` required)
+- Environment: jsdom
+- Globals: enabled (`describe`, `it`, `test`, `expect`, `vi` available without import)
+- Setup file: `src/test/setupTests.js`
 
 **Assertion Library:**
-- `@testing-library/jest-dom` v6.9.1 - DOM matchers (`.toBeVisible()`, `.toBeInTheDocument()`, etc.)
-- Native Vitest `expect()` API compatible with Jest
+- Vitest built-in `expect` (Jest-compatible)
+- `@testing-library/jest-dom` (DOM matchers like `toBeInTheDocument()`, imported in setup file)
+
+**React Testing:**
+- `@testing-library/react` 16.3.0 (`render`, `screen`, `act`, `fireEvent`, `renderHook`)
 
 **Run Commands:**
 ```bash
-npm run test              # Run in watch mode
-npm run test:run         # Single run (CI mode)
-npx vitest run src/path/to/file.test.js  # Test single file
+npm run test              # Vitest in watch mode
+npm run test:run          # Single run (CI-friendly)
+npx vitest run src/path/to/file.test.js  # Single file
 ```
 
-**Setup File:**
-- Location: `src/test/setupTests.js`
-- Loaded automatically before all tests (via `vitest.config.js` `setupFiles` option)
-- Polyfills `requestAnimationFrame` and `cancelAnimationFrame` for timing tests
+## Test Configuration
 
-## Test File Organization
-
-**Location:**
-- Co-located with source files, not in separate `__tests__` directory
-- Exception: Hook tests in `src/hooks/__tests__/` (organized by type)
-
-**Naming:**
-- Extension: `.test.js` (not `.spec.js`)
-- Examples:
-  - `src/components/games/sight-reading-game/utils/patternBuilder.test.js`
-  - `src/components/games/sight-reading-game/utils/rhythmGenerator.test.js`
-  - `src/hooks/__tests__/usePitchDetection.test.js`
-
-**Structure:**
-```
-src/
-├── utils/
-│   ├── xpSystem.js
-│   └── xpSystem.test.js          # (if tested)
-├── hooks/
-│   ├── usePitchDetection.js
-│   └── __tests__/
-│       └── usePitchDetection.test.js
-├── components/games/sight-reading-game/utils/
-│   ├── patternBuilder.js
-│   ├── patternBuilder.test.js
-│   ├── rhythmGenerator.js
-│   └── rhythmGenerator.test.js
-```
-
-## Test Structure
-
-**Suite Organization:**
+**`vitest.config.js`:**
 ```javascript
-describe("Feature or Module Name", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+import { defineConfig } from "vitest/config";
+import react from "@vitejs/plugin-react";
 
-  it("should do something specific", () => {
-    // Arrange
-    const input = ...;
-
-    // Act
-    const result = someFunction(input);
-
-    // Assert
-    expect(result).toBe(...);
-  });
-
-  it.each([...])("parameterized test %s", (param) => {
-    // Test with multiple inputs
-  });
-});
-```
-
-**Patterns from codebase** (`patternBuilder.test.js`):
-- Multiple `describe()` blocks per file for different test categories
-- `afterEach(() => { vi.restoreAllMocks(); })` to clean up spies
-- Descriptive test names: "tags the eighth after dotted-quarter (6+2) with noBeam: true"
-- Arrange-Act-Assert structure with clear comments
-
-**Example** (from `rhythmGenerator.test.js`):
-```javascript
-describe("generateRhythmEvents (rest duration constraints)", () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  it('does not generate 1/16 rests when only "8" rests are allowed (simple mode)', () => {
-    vi.spyOn(Math, "random").mockReturnValue(0);
-
-    const events = generateRhythmEvents({
-      timeSignature: "4/4",
-      measuresPerPattern: 1,
-      allowedNoteDurations: ["q", "8"],
-      allowRests: true,
-      allowedRestDurations: ["8"],
-      rhythmComplexity: "simple",
-    });
-
-    const restEvents = events.filter((e) => e.type === "rest");
-    expect(restEvents.length).toBeGreaterThan(0);
-
-    restEvents.forEach((e) => {
-      expect(e.notation).toBe("eighth");
-      expect(e.sixteenthUnits).toBe(2);
-    });
-  });
-});
-```
-
-## Mocking
-
-**Framework:** Vitest's built-in `vi` object (compatible with Jest's `jest` API)
-
-**Patterns:**
-
-**Spying on functions:**
-```javascript
-vi.spyOn(Math, "random").mockReturnValue(0.2);
-// Later:
-vi.restoreAllMocks(); // In afterEach
-```
-
-**Mock implementation:**
-```javascript
-vi.spyOn(Math, "random").mockImplementation(() => {
-  callCount++;
-  return ((seed * 13 + callCount * 7) % 100) / 100;
-});
-```
-
-**Deterministic randomness for testing:**
-```javascript
-// In test setup
-let callCount = 0;
-vi.spyOn(Math, "random").mockImplementation(() => {
-  callCount++;
-  return ((seed * 13 + callCount * 7) % 100) / 100;
-});
-```
-
-**What to Mock:**
-- External randomness (`Math.random()` in tests for deterministic behavior)
-- Time-dependent functions (use `vi.useFakeTimers()` if needed)
-- Module functions from other files (for unit testing)
-
-**What NOT to Mock:**
-- Core business logic functions being tested
-- Array methods (`map`, `filter`, `reduce`)
-- Math operations
-- Helper functions called by the function under test
-
-**Example - parameterized test with mocking** (from `rhythmGenerator.test.js`):
-```javascript
-it.each([4, 8])(
-  "%s bars in 4/4: total units == bars*16 and barIndex ranges without cross-bar multi-beat patterns",
-  (bars) => {
-    let callCount = 0;
-    vi.spyOn(Math, "random").mockImplementation(() => {
-      callCount++;
-      return (callCount % 10) / 10;
-    });
-
-    const events = generateRhythmEvents({
-      timeSignature: "4/4",
-      measuresPerPattern: bars,
-      // ... config
-    });
-
-    // Assertions
-    expect(totalUnits).toBe(bars * 16);
-
-    vi.restoreAllMocks();
-  }
-);
-```
-
-## Fixtures and Factories
-
-**Test Data:**
-- Inline test data within test functions
-- No shared fixture files (each test defines its own setup)
-- Complex objects built as function parameters
-
-**Example** (from `patternBuilder.test.js`):
-```javascript
-const result = await generatePatternData({
-  difficulty: "beginner",
-  timeSignature: "4/4",
-  tempo: 80,
-  selectedNotes: ["C4", "D4", "E4", "F4"],
-  clef: "Treble",
-  measuresPerPattern: 1,
-  rhythmSettings: {
-    allowRests: false,
-    allowedNoteDurations: ["q", "8", "16"],
-    allowedRestDurations: [],
-    enabledComplexPatterns: ["dottedQuarterEighth"],
-  },
-  rhythmComplexity: "complex",
-});
-```
-
-**No dedicated fixture location:** Test data lives within test functions for clarity and isolation
-
-## Coverage
-
-**Requirements:** No coverage enforcement in vitest.config.js
-- No `coverage` section in configuration
-- No threshold enforcement in CI pipeline
-
-**View Coverage:**
-```bash
-npx vitest run --coverage
-```
-(Requires @vitest/coverage package installation)
-
-**Current state:**
-- Limited test coverage (3 test files identified)
-- Focus on core utility functions and hooks
-- Game components have integration tests (`SightReadingGame.micRestart.test.jsx`)
-
-## Test Types
-
-**Unit Tests:**
-- Scope: Pure utility functions that have deterministic output
-- Approach: Test with multiple input variations, mock external randomness
-- Examples: `patternBuilder.test.js`, `rhythmGenerator.test.js`
-- Characteristics: Fast, no async I/O, focus on algorithm correctness
-
-**Examples:**
-- `patternBuilder.test.js` (107 lines) - Tests rhythm pattern generation with complex constraints
-- `rhythmGenerator.test.js` (873 lines) - Extensive tests for rhythm event generation across multiple scenarios
-
-**Hook Tests:**
-- Scope: Custom React hooks in isolation
-- Approach: Use `renderHook` from `@testing-library/react`
-- Example: `usePitchDetection.test.js`
-- Characteristics: Test hook state and callback availability
-
-**Integration Tests:**
-- Scope: Game components with real logic (not full game flow)
-- Approach: Mount component with mocked state
-- Example: `SightReadingGame.micRestart.test.jsx` (checks microphone restart behavior)
-- Characteristics: Slower, test component interaction and state management
-
-**E2E Tests:**
-- Framework: Not used (no Cypress, Playwright, etc. configured)
-- Rationale: PWA app tested manually or via teacher dashboard; games tested via integration tests
-
-## Common Patterns
-
-**Async Testing:**
-- Tests are marked `async` when testing async functions
-- Use `await` to resolve promises
-- Vitest automatically waits for promise resolution
-
-**Example** (from `patternBuilder.test.js`):
-```javascript
-it("tags the eighth after dotted-quarter (6+2) with noBeam: true", async () => {
-  vi.spyOn(Math, "random").mockReturnValue(0.1);
-
-  const result = await generatePatternData({
-    // ... config
-  });
-
-  // Assertions on result
-  expect(result.measuresPerPattern).toBe(1);
-});
-```
-
-**Error Testing:**
-- No explicit error testing examples in current codebase
-- Pattern would use `expect(() => func()).toThrow()`
-
-**Iteration testing with .each():**
-- Use for parameterized tests across multiple inputs
-- Format: `it.each([values])("test name %s", (param) => { ... })`
-
-**Example** (from `rhythmGenerator.test.js`):
-```javascript
-it("generates valid patterns in 3/4 time with all options enabled", () => {
-  // Run multiple iterations to catch edge cases
-  for (let seed = 0; seed < 20; seed++) {
-    let callCount = 0;
-    vi.spyOn(Math, "random").mockImplementation(() => {
-      callCount++;
-      return ((seed * 17 + callCount * 11) % 100) / 100;
-    });
-
-    const events = generateRhythmEvents({
-      timeSignature: "3/4",
-      measuresPerPattern: 1,
-      allowedNoteDurations: ["w", "h", "q", "8", "16"],
-      // ...
-    });
-
-    // Assertions that run 20 times with different random values
-    const totalUnits = events.reduce((sum, e) => sum + e.sixteenthUnits, 0);
-    expect(totalUnits).toBe(12);
-
-    vi.restoreAllMocks();
-  }
-});
-```
-
-**Property-based testing pattern:**
-- Multiple random seeds tested in loop (simulated property-based approach)
-- Each seed exercises different branches of algorithm
-- Used extensively in `rhythmGenerator.test.js` (30-50 iterations per test)
-
-**Helper functions in tests:**
-- Utility functions defined within test files for complex validation
-- Examples: `checkNoOverlaps()`, `groupEventsByBeat()`, `checkBeatMetadata()` in `rhythmGenerator.test.js`
-
-**Helper function example** (from `rhythmGenerator.test.js`):
-```javascript
-function checkNoOverlaps(events) {
-  let cursor = 0;
-  const occupiedSlots = new Set();
-
-  for (const event of events) {
-    const startPos = cursor;
-    const endPos = cursor + event.sixteenthUnits;
-
-    for (let slot = startPos; slot < endPos; slot++) {
-      if (occupiedSlots.has(slot)) {
-        return { overlaps: true, slot, event };
-      }
-      occupiedSlots.add(slot);
-    }
-    cursor += event.sixteenthUnits;
-  }
-
-  return { overlaps: false };
-}
-```
-
-## Hook Testing
-
-**Pattern:**
-- Use `renderHook()` from `@testing-library/react`
-- Access state via `result.current` after rendering
-
-**Example** (`usePitchDetection.test.js`):
-```javascript
-import { renderHook } from "@testing-library/react";
-import { usePitchDetection } from "../usePitchDetection";
-
-describe("usePitchDetection", () => {
-  test("hook initializes with default values", () => {
-    const { result } = renderHook(() => usePitchDetection());
-
-    expect(result.current.detectedNote).toBeNull();
-    expect(result.current.detectedFrequency).toBe(-1);
-    expect(result.current.audioLevel).toBe(0);
-    expect(result.current.isListening).toBe(false);
-    expect(typeof result.current.startListening).toBe("function");
-  });
-
-  test("hook accepts custom configuration", () => {
-    const mockCallback = vi.fn();
-
-    const { result } = renderHook(() =>
-      usePitchDetection({
-        isActive: false,
-        onPitchDetected: mockCallback,
-        noteFrequencies: { C4: 261.63 },
-      })
-    );
-
-    expect(result.current.isListening).toBe(false);
-  });
-});
-```
-
-## Test Configuration Details
-
-**vitest.config.js:**
-```javascript
 export default defineConfig({
   plugins: [react()],
   test: {
@@ -399,40 +43,337 @@ export default defineConfig({
 });
 ```
 
-**Key settings:**
-- `environment: "jsdom"` - Simulate browser DOM
-- `globals: true` - No need to import `describe`, `it`, `expect`
-- `setupFiles: ["src/test/setupTests.js"]` - Load setup before tests
-- `include` pattern - Finds all test files in `src/`
-
-**Setup file** (`src/test/setupTests.js`):
+**`src/test/setupTests.js`:**
 ```javascript
 import "@testing-library/jest-dom/vitest";
 
-// Polyfill requestAnimationFrame for timing tests
+// Polyfill requestAnimationFrame for fake timers
 if (typeof globalThis.requestAnimationFrame !== "function") {
   globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 16);
 }
-
 if (typeof globalThis.cancelAnimationFrame !== "function") {
   globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
 }
 ```
 
-**Rationale:**
-- RAF polyfill necessary because metronome and timeline tests rely on animation frame timing
-- Testing Library DOM matchers available via `@testing-library/jest-dom/vitest`
+Note: The setup file polyfills `requestAnimationFrame` for jsdom since many game components use RAF-based timing loops.
 
-## Testing Best Practices Observed
+## Test File Organization
 
-1. **Deterministic randomness:** Always mock `Math.random()` to ensure consistent test results across runs
-2. **Cleanup:** Always call `vi.restoreAllMocks()` in `afterEach()` to prevent test pollution
-3. **Descriptive test names:** Include expected behavior and edge case context in test description
-4. **Multiple iterations:** Loop tests 20-50 times with different random seeds to catch edge cases in algorithms
-5. **Helper functions:** Extract validation logic into named helper functions for readability
-6. **Clear assertions:** Test both happy path and constraint violations (e.g., no overlaps, correct timing)
-7. **Smoke tests for hooks:** Test that hooks initialize and accept configuration, not necessarily full functionality (which would require full React environment)
+**Location:** Mixed -- both co-located and `__tests__/` directories:
+- Co-located: `src/utils/xpSystem.test.js` alongside `src/utils/xpSystem.js`
+- Co-located: `src/components/games/sight-reading-game/utils/patternBuilder.test.js`
+- `__tests__/` dir: `src/hooks/__tests__/usePitchDetection.test.js`
+- `__tests__/` dir: `src/services/__tests__/subscriptionService.test.js`
+
+**Naming:** `{module}.test.{js,jsx}` -- matches the source file name. For specific scenarios: `SightReadingGame.micRestart.test.jsx`.
+
+**Existing test files (7 total):**
+```
+src/
+├── utils/xpSystem.test.js                                    # XP/level calculations (27 tests)
+├── hooks/__tests__/usePitchDetection.test.js                  # Hook smoke tests (5 tests, fails*)
+├── services/__tests__/subscriptionService.test.js             # Subscription status logic (8 tests)
+├── services/__tests__/webhookLogic.test.js                    # Webhook payload/signature (25 tests)
+├── components/games/sight-reading-game/
+│   ├── utils/patternBuilder.test.js                           # Music pattern generation (3 tests)
+│   ├── utils/rhythmGenerator.test.js                          # Rhythm event generation (~15 suites)
+│   └── SightReadingGame.micRestart.test.jsx                   # Component mic lifecycle (1 test, fails*)
+```
+
+*`usePitchDetection.test.js` and `SightReadingGame.micRestart.test.jsx` fail because they explicitly import `describe`/`test` from `vitest` but the config has `globals: true`. Some test files use explicit imports, others rely on globals -- the inconsistency causes failures when the vitest globals config changed.
+
+## Test Structure
+
+**Suite Organization:**
+```javascript
+// Pure utility tests -- use globals (no import needed)
+describe("XP_LEVELS array", () => {
+  it("has exactly 30 entries", () => {
+    expect(XP_LEVELS).toHaveLength(30);
+  });
+
+  it("has strictly increasing XP thresholds", () => {
+    for (let i = 1; i < XP_LEVELS.length; i++) {
+      expect(XP_LEVELS[i].xpRequired).toBeGreaterThan(XP_LEVELS[i - 1].xpRequired);
+    }
+  });
+});
+```
+
+```javascript
+// Service tests with mocks -- explicit imports
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+describe("fetchSubscriptionStatus", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Re-wire mock chain after clearAllMocks
+  });
+
+  it("returns isPremium: false for null studentId", async () => {
+    const result = await fetchSubscriptionStatus(null);
+    expect(result).toEqual({ isPremium: false });
+  });
+});
+```
+
+**Preferred pattern for new tests:** Use globals (no explicit vitest imports) since `globals: true` is configured. Only import from `vitest` if you specifically need `vi.hoisted()`.
+
+**Setup/Teardown:**
+- `beforeEach` with `vi.clearAllMocks()` for service tests with mocks
+- `afterEach` with `vi.restoreAllMocks()` for tests that spy on globals (e.g., `Math.random`)
+
+## Mocking
+
+**Framework:** Vitest's built-in `vi.mock()` and `vi.fn()`
+
+**Supabase mock pattern (service tests):**
+```javascript
+// Use vi.hoisted() so mock variables are available in vi.mock() factory
+const { mockMaybeSingle, mockEq, mockSelect, mockFrom } = vi.hoisted(() => {
+  const mockMaybeSingle = vi.fn();
+  const mockEq = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
+  const mockSelect = vi.fn(() => ({ eq: mockEq }));
+  const mockFrom = vi.fn(() => ({ select: mockSelect }));
+  return { mockMaybeSingle, mockEq, mockSelect, mockFrom };
+});
+
+vi.mock("../supabase", () => ({
+  default: { from: mockFrom },
+}));
+
+// Import module under test AFTER mock setup
+import { fetchSubscriptionStatus } from "../subscriptionService";
+```
+
+Key detail: `vi.hoisted()` is required because `vi.mock()` is hoisted to the top of the file by Vitest's transform -- without it, mock variables would not exist when the factory runs.
+
+**Component mock pattern (React component tests):**
+```javascript
+// Mock child components to stubs
+vi.mock("../../ui/BackButton", () => ({
+  default: () => null,
+}));
+
+// Mock hooks
+vi.mock("../../../features/authentication/useUser", () => ({
+  useUser: () => ({ user: null, isStudent: false }),
+}));
+
+// Mock with partial actual
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual("react-router-dom");
+  return {
+    ...actual,
+    useNavigate: () => vi.fn(),
+    useLocation: () => ({ state: null, pathname: "/" }),
+  };
+});
+```
+
+**Math.random deterministic testing:**
+```javascript
+vi.spyOn(Math, "random").mockReturnValue(0.1);
+// or for varied deterministic output:
+vi.spyOn(Math, "random").mockImplementation(() => {
+  callCount++;
+  return ((seed * 13 + callCount * 7) % 100) / 100;
+});
+```
+
+**What to Mock:**
+- Supabase client (`../supabase`) -- always mock in unit tests
+- Router hooks (`useNavigate`, `useLocation`) -- mock in component tests
+- React Query hooks (`useQueryClient`) -- mock in component tests
+- Child components not under test -- stub with `() => null` or simple JSX
+- Browser APIs (`localStorage`, `requestAnimationFrame`) -- mock as needed
+- External service calls -- mock at the module boundary
+
+**What NOT to Mock:**
+- The module under test itself
+- Pure utility functions (test them directly)
+- Data/constants (`skillTrail.js`, `xpSystem.js`)
+
+## Test Data & Fixtures
+
+**Mock payload builders:**
+```javascript
+function buildMockPayload(overrides = {}) {
+  return {
+    meta: {
+      event_name: "subscription_created",
+      custom_data: { student_id: "abc123-student-uuid" },
+      ...overrides.meta,
+    },
+    data: {
+      type: "subscriptions",
+      id: "sub_12345",
+      attributes: {
+        status: "active",
+        customer_id: 98765,
+        ...overrides.attributes,
+      },
+      ...overrides.data,
+    },
+  };
+}
+```
+
+**Helper functions within test files:**
+```javascript
+function checkNoOverlaps(events) { /* ... */ }
+function groupEventsByBeat(events, unitsPerBeat = 4) { /* ... */ }
+function containsSyncopatedMotif(events) { /* ... */ }
+```
+
+**Location:** Helpers are defined inline in test files. No shared test fixtures directory exists.
+
+## Coverage
+
+**Requirements:** None enforced. No coverage thresholds configured.
+
+**View Coverage:**
+```bash
+npx vitest run --coverage
+```
+
+## Test Types
+
+**Unit Tests (primary):**
+- Pure function tests: `xpSystem.test.js` (calculations), `patternBuilder.test.js`, `rhythmGenerator.test.js`
+- Service logic tests: `subscriptionService.test.js`, `webhookLogic.test.js`
+- Hook smoke tests: `usePitchDetection.test.js`
+
+**Component Tests (limited):**
+- `SightReadingGame.micRestart.test.jsx` -- tests mic lifecycle with fake timers and mocked dependencies
+- Pattern: Render with `MemoryRouter`, interact with `fireEvent`, assert with `screen` queries
+
+**Integration Tests:** None
+
+**E2E Tests:** None (no Playwright/Cypress setup)
+
+## Common Patterns
+
+**Async Testing:**
+```javascript
+it("returns isPremium: true for status 'active'", async () => {
+  mockMaybeSingle.mockResolvedValue({
+    data: { status: "active", current_period_end: null },
+    error: null,
+  });
+  const result = await fetchSubscriptionStatus("student-uuid-123");
+  expect(result).toEqual({ isPremium: true });
+});
+```
+
+**Error/Edge Case Testing:**
+```javascript
+it("handles null/undefined body gracefully without throwing", () => {
+  expect(() => extractPayload({})).not.toThrow();
+  expect(() => extractPayload({ meta: null, data: null })).not.toThrow();
+});
+```
+
+**Parameterized Tests (it.each):**
+```javascript
+it.each([4, 8])(
+  "preserves barIndex on notes when measuresPerPattern=%s",
+  async (bars) => {
+    // ...test body using `bars` parameter
+  }
+);
+```
+
+**Fuzz-style iteration (seeded random):**
+```javascript
+for (let seed = 0; seed < 30; seed++) {
+  let callCount = 0;
+  vi.spyOn(Math, "random").mockImplementation(() => {
+    callCount++;
+    return ((seed * 13 + callCount * 7) % 100) / 100;
+  });
+  const events = generateRhythmEvents({ /* ... */ });
+  const totalUnits = events.reduce((sum, e) => sum + e.sixteenthUnits, 0);
+  expect(totalUnits).toBe(16);
+  vi.restoreAllMocks();
+}
+```
+
+**Fake timers for game components:**
+```javascript
+vi.useFakeTimers();
+vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
+
+// Advance through count-in and performance
+await act(async () => {
+  await vi.advanceTimersByTimeAsync(6000);
+});
+```
+
+**Hook testing with renderHook:**
+```javascript
+import { renderHook } from "@testing-library/react";
+
+test("hook initializes with default values", () => {
+  const { result } = renderHook(() => usePitchDetection());
+  expect(result.current.detectedNote).toBeNull();
+  expect(result.current.isListening).toBe(false);
+});
+```
+
+**Node-compatible re-implementations for Deno code testing:**
+```javascript
+// The real implementation uses deno.land/std which doesn't resolve in Node
+// This validates the HMAC-SHA256 logic is correct
+async function verifySignatureNode(rawBody, receivedHex, secret) {
+  const key = await crypto.subtle.importKey(/*...*/);
+  // ...
+}
+```
+
+## Validation Scripts (Non-Vitest)
+
+**Pattern verifier:** `npm run verify:patterns` -- runs `scripts/patternVerifier.mjs`, validates music pattern definitions
+
+**Trail validator:** `npm run verify:trail` -- runs `scripts/validateTrail.mjs`, validates trail node data integrity. Also runs as pre-build hook (`prebuild` script in `package.json`).
+
+## Writing New Tests
+
+**For a pure utility/service function:**
+1. Create `{name}.test.js` co-located with the source file
+2. Use globals (`describe`, `it`, `expect`) -- no vitest import needed
+3. Mock Supabase using `vi.hoisted()` + `vi.mock()` pattern shown above
+4. Test happy path, error cases, edge cases, null/undefined inputs
+
+**For a React component:**
+1. Create `{ComponentName}.test.jsx` co-located or in `__tests__/`
+2. Mock all external dependencies (router, query, services, child components)
+3. Render with `<MemoryRouter>` wrapper
+4. Use `screen.getByRole()` / `screen.getByText()` for assertions
+5. Use `act()` + `fireEvent` for interactions
+6. Use `vi.useFakeTimers()` for time-dependent behavior
+
+**For a custom hook:**
+1. Create in `__tests__/{hookName}.test.js`
+2. Use `renderHook()` from `@testing-library/react`
+3. Test initial state, configuration acceptance, exposed API shape
+4. Mock browser APIs (AudioContext, MediaStream) as needed
+
+## Known Issues
+
+1. **Failing tests:** `usePitchDetection.test.js` and `SightReadingGame.micRestart.test.jsx` fail because they have explicit `describe`/`test` imports that conflict with the `globals: true` config in `vitest.config.js`. The usePitchDetection test imports from `@testing-library/react` but not from vitest (it uses `describe`/`test` as globals), while the SightReadingGame test uses `vi.mock()` as a global but `describe`/`test` are not defined because the test file relies on implicit globals that may not be available.
+
+2. **Low coverage:** Only 7 test files covering utilities, services, and one component. No tests for:
+   - Most React components (Dashboard, TrailMap, settings, etc.)
+   - Context providers
+   - Most hooks
+   - Game flow integration
+   - i18n behavior
+   - Accessibility features
+
+3. **No coverage enforcement:** No coverage thresholds in config. No CI pipeline enforcing test passage.
 
 ---
 
-*Testing analysis: 2026-01-31*
+*Testing analysis: 2026-03-08*
