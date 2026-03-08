@@ -182,7 +182,7 @@ See `.planning/milestones/` for archived details of each milestone.
 **Plans:** 1 plan
 
 Plans:
-- [ ] 01-01-PLAN.md — Extract useVictoryState hook + redesign render layer with two-panel landscape layout
+- [x] 01-01-PLAN.md — Extract useVictoryState hook + redesign render layer with polished single-column layout
 
 ### Phase 2: Refactor score vs XP - unify into XP-only scoring system
 
