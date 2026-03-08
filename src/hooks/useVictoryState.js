@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useStreakWithAchievements } from "./useStreakWithAchievements";
-import { useTotalPoints } from "./useTotalPoints";
 import { useAccessoriesList } from "./useAccessories";
 import { useGamesPlayed } from "./useGamesPlayed";
 import { useUserProfile } from "./useUserProfile";
@@ -10,14 +9,13 @@ import { usePointBalance } from "./useAccessories";
 import { useAccessoryUnlockDetection } from "./useAccessoryUnlockDetection";
 import { useUser } from "../features/authentication/useUser";
 import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../services/skillProgressService";
-import { awardXP, calculateSessionXP, getLevelProgress, PRESTIGE_XP_PER_TIER } from "../utils/xpSystem";
+import { awardXP, calculateSessionXP, calculateFreePlayXP, getLevelProgress, PRESTIGE_XP_PER_TIER } from "../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../data/skillTrail";
 import { streakService } from "../services/streakService";
 import { toast } from "react-hot-toast";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import { determineCelebrationTier, getCelebrationConfig } from '../utils/celebrationTiers';
 import { getCelebrationMessage } from '../utils/celebrationMessages';
-import { calculateScorePercentile, getPercentileMessage } from '../services/scoreComparisonService';
 import { hasLevelBeenCelebrated, markLevelCelebrated } from '../utils/levelUpTracking';
 import { useBossUnlockTracking } from './useBossUnlockTracking';
 import { useTranslation } from "react-i18next";
@@ -109,51 +107,13 @@ export function useVictoryState({
   const comebackActive = streakState?.comebackBonus?.active === true;
   const timeUsed = timedMode ? initialTime - timeRemaining : null;
   const updateStreakWithAchievements = useStreakWithAchievements();
-  const { data: totalPointsData } = useTotalPoints({
-    staleTime: 0,
-    refetchOnMount: "always",
-    keepPreviousData: false,
-  });
-  const [achievementBonus, setAchievementBonus] = useState(0);
   const [shownUnlocksLoaded, setShownUnlocksLoaded] = useState(false);
-  const predictedPointsEarned = Math.max(score, 0) + achievementBonus;
 
-  const finalTotalPoints = totalPointsData?.totalPoints ?? 0;
   const storageKey = useMemo(
     () => (user?.id ? `shown-accessory-unlocks-${user.id}` : null),
     [user?.id]
   );
   const shownUnlocksRef = useRef(new Set());
-  const cachedPreTotal =
-    user && queryClient.getQueryData(["pre-total-points", user.id]);
-
-  const basePoints = useMemo(() => {
-    if (typeof cachedPreTotal === "number") {
-      return cachedPreTotal;
-    }
-    return Math.max(finalTotalPoints - predictedPointsEarned, 0);
-  }, [cachedPreTotal, finalTotalPoints, predictedPointsEarned]);
-
-  const [hasAnimated, setHasAnimated] = useState(false);
-  const shouldAnimate =
-    !hasAnimated &&
-    typeof cachedPreTotal === "number" &&
-    finalTotalPoints > basePoints;
-
-  useEffect(() => {
-    if (shouldAnimate) {
-      setHasAnimated(true);
-    }
-  }, [shouldAnimate]);
-
-  const pointsTarget = finalTotalPoints || basePoints;
-  const animatedTotal = useCountUp(
-    basePoints,
-    pointsTarget,
-    1400,
-    shouldAnimate,
-    reducedMotion
-  );
 
   // Trail/XP system state (declared early because useCountUp below references xpData)
   const [xpData, setXpData] = useState(null);
@@ -161,53 +121,34 @@ export function useVictoryState({
   // XP count-up animation (1 second)
   const animatedXPGain = useCountUp(0, xpData?.totalXP || 0, 1000, !!xpData?.totalXP, reducedMotion);
 
-  const actualGain = Math.max(
-    finalTotalPoints > basePoints
-      ? finalTotalPoints - basePoints
-      : predictedPointsEarned,
-    0
-  );
-
-  useEffect(() => {
-    if (
-      user &&
-      cachedPreTotal !== null &&
-      cachedPreTotal !== undefined &&
-      typeof cachedPreTotal === "number"
-    ) {
-      queryClient.setQueryData(["pre-total-points", user.id], null);
-    }
-  }, [user, cachedPreTotal, queryClient]);
-
-  const refreshPointQueries = useCallback(async () => {
+  const refreshQueries = useCallback(async () => {
     if (!user?.id) return;
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["student-scores", user.id] }),
       queryClient.invalidateQueries({
         queryKey: ["earned-achievements", user.id],
       }),
-      queryClient.invalidateQueries({ queryKey: ["total-points", user.id] }),
     ]);
   }, [queryClient, user?.id]);
 
   const handleExit = useCallback(() => {
-    refreshPointQueries();
+    refreshQueries();
     if (onExit) {
       onExit();
     } else {
       navigate("/practice-modes");
     }
-  }, [refreshPointQueries, onExit, navigate]);
+  }, [refreshQueries, onExit, navigate]);
 
   const handlePlayAgain = useCallback(() => {
-    refreshPointQueries();
+    refreshQueries();
     onReset?.();
-  }, [refreshPointQueries, onReset]);
+  }, [refreshQueries, onReset]);
 
   const handleGoToDashboard = useCallback(() => {
-    refreshPointQueries();
+    refreshQueries();
     navigate("/");
-  }, [navigate, refreshPointQueries]);
+  }, [navigate, refreshQueries]);
 
   const handleNavigateToTrail = useCallback(() => {
     navigate('/trail');
@@ -237,8 +178,8 @@ export function useVictoryState({
   const [nodeComplete, setNodeComplete] = useState(false);
   const [nextNode, setNextNode] = useState(null);
   const [fetchingNextNode, setFetchingNextNode] = useState(false);
-  // Track if we're still processing trail completion (show loading until done)
-  const [isProcessingTrail, setIsProcessingTrail] = useState(!!nodeId);
+  // Track if we're still processing completion (show loading until done)
+  const [isProcessingTrail, setIsProcessingTrail] = useState(true);
   const hasProcessedTrail = useRef(false);
   const hasCalledStreakUpdate = useRef(false);
 
@@ -248,8 +189,6 @@ export function useVictoryState({
   // Celebration system state
   const [showConfetti, setShowConfetti] = useState(false);
   const [showBossModal, setShowBossModal] = useState(false);
-  const [percentileMessage, setPercentileMessage] = useState(null);
-
   // Rate limiting state
   const [rateLimited, setRateLimited] = useState(false);
   const [rateLimitResetTime, setRateLimitResetTime] = useState(null);
@@ -336,7 +275,7 @@ export function useVictoryState({
       setBaselineProgress({
         achievements: profileData?.achievements || [],
         gamesPlayed: Math.max(0, gamesPlayedCount - 1), // Subtract the just-completed game
-        totalPoints: (pointsBalance?.earned || 0) - predictedPointsEarned,
+        totalXP: pointsBalance?.earned || 0,
         currentStreak: profileData?.current_streak || 0,
         perfectGames: profileData?.perfect_games || 0,
         level: profileData?.level || 1,
@@ -346,7 +285,6 @@ export function useVictoryState({
     gamesPlayedCount,
     profileData,
     pointsBalance,
-    predictedPointsEarned,
     setBaselineProgress,
   ]);
 
@@ -355,7 +293,7 @@ export function useVictoryState({
     return {
       achievements: profileData?.achievements || [],
       gamesPlayed: gamesPlayedCount || 0,
-      totalPoints: pointsBalance?.earned || 0,
+      totalXP: pointsBalance?.earned || 0,
       currentStreak: profileData?.current_streak || 0,
       perfectGames: profileData?.perfect_games || 0,
       level: profileData?.level || 1,
@@ -375,15 +313,7 @@ export function useVictoryState({
     if (scorePercentage >= 80 && !hasCalledStreakUpdate.current) {
       hasCalledStreakUpdate.current = true;
       updateStreakWithAchievements.mutate(undefined, {
-        onSuccess: ({ newStreak, newAchievements }) => {
-          const bonus = newAchievements?.reduce(
-            (sum, achievement) => sum + (achievement?.points || 0),
-            0
-          );
-          if (bonus) {
-            setAchievementBonus(bonus);
-          }
-
+        onSuccess: ({ newStreak }) => {
           // Show freeze-earned toast with a short delay so it doesn't overlap XP animation
           if (newStreak?.freezeEarned) {
             setTimeout(() => {
@@ -543,7 +473,19 @@ export function useVictoryState({
           setIsProcessingTrail(false);
         }
       } else {
-        // Not a trail node, no processing needed
+        // Free play: award XP based on score
+        if (user?.id && scorePercentage > 0) {
+          try {
+            const freePlayXP = calculateFreePlayXP(scorePercentage, comebackActive ? 2 : 1);
+            if (freePlayXP > 0) {
+              const xpResult = await awardXP(user.id, freePlayXP);
+              setXpData({ totalXP: freePlayXP, ...xpResult });
+              queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+            }
+          } catch (error) {
+            console.error("Error awarding free play XP:", error);
+          }
+        }
         setIsProcessingTrail(false);
       }
     };
@@ -589,23 +531,6 @@ export function useVictoryState({
     markBossAsShown();
     setShowBossModal(false);
   }, [markBossAsShown]);
-
-  // Calculate percentile in background (non-blocking, never delays rendering)
-  useEffect(() => {
-    if (!nodeId || !user?.id || isProcessingTrail) return;
-
-    const loadPercentile = async () => {
-      const percentile = await calculateScorePercentile(
-        user.id,
-        Math.round(Math.min(scorePercentage, 100)),
-        nodeId
-      );
-      const message = getPercentileMessage(percentile, t);
-      setPercentileMessage(message);
-    };
-
-    loadPercentile();
-  }, [nodeId, user?.id, scorePercentage, isProcessingTrail]);
 
   // Fetch next recommended node when current node is complete
   useEffect(() => {
@@ -746,7 +671,6 @@ export function useVictoryState({
     nodeComplete,
     exercisesRemaining,
     isPersonalBest,
-    percentileMessage,
     showConfetti,
     showBossModal,
     nextNode,
@@ -754,12 +678,9 @@ export function useVictoryState({
     rateLimited,
     rateLimitResetTime,
     comebackActive,
-    animatedTotal,
-    actualGain,
     showUnlockModal,
     unlockedAccessories,
     nodeData,
-    totalPointsData,
     timeUsed,
 
     // Actions
