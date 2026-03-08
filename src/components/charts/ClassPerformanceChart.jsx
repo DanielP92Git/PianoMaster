@@ -15,7 +15,7 @@ const ClassPerformanceChart = ({ students, selectedMetric = "all" }) => {
   const chartData =
     students?.map((student) => ({
       name: student.student_name || "Unknown",
-      points: student.total_points || 0,
+      xp: student.total_xp || 0,
       attendance: student.attendance_rate || 0,
       accuracy: student.average_accuracy || 0,
       practiceTime: Math.round(student.total_practice_minutes || 0), // Already in minutes
@@ -44,9 +44,9 @@ const ClassPerformanceChart = ({ students, selectedMetric = "all" }) => {
 
   const getChartConfig = () => {
     switch (selectedMetric) {
-      case "points":
+      case "xp":
         return {
-          bars: [{ dataKey: "points", fill: "#3b82f6", name: "Points" }],
+          bars: [{ dataKey: "xp", fill: "#3b82f6", name: "XP" }],
         };
       case "attendance":
         return {
@@ -77,7 +77,7 @@ const ClassPerformanceChart = ({ students, selectedMetric = "all" }) => {
       default:
         return {
           bars: [
-            { dataKey: "points", fill: "#3b82f6", name: "Points" },
+            { dataKey: "xp", fill: "#3b82f6", name: "XP" },
             { dataKey: "attendance", fill: "#10b981", name: "Attendance %" },
             { dataKey: "accuracy", fill: "#f59e0b", name: "Accuracy %" },
           ],

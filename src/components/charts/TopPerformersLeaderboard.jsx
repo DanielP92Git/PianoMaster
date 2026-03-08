@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Trophy, Star, Target, Clock, Award, TrendingUp } from "lucide-react";
+import { calculateLevel } from "../../utils/xpSystem";
 
 const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
-  const [selectedMetric, setSelectedMetric] = useState("points");
+  const [selectedMetric, setSelectedMetric] = useState("xp");
 
   const metrics = [
-    { key: "points", label: "Points", icon: Star, color: "text-yellow-500" },
+    { key: "xp", label: "XP", icon: Star, color: "text-yellow-500" },
     {
       key: "attendance",
       label: "Attendance",
@@ -34,9 +35,9 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
       let aValue, bValue;
 
       switch (selectedMetric) {
-        case "points":
-          aValue = a.total_points || 0;
-          bValue = b.total_points || 0;
+        case "xp":
+          aValue = a.total_xp || 0;
+          bValue = b.total_xp || 0;
           break;
         case "attendance":
           aValue = a.attendance_rate || 0;
@@ -55,8 +56,8 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
           bValue = b.total_practice_minutes || 0;
           break;
         default:
-          aValue = a.total_points || 0;
-          bValue = b.total_points || 0;
+          aValue = a.total_xp || 0;
+          bValue = b.total_xp || 0;
       }
 
       return bValue - aValue;
@@ -71,8 +72,11 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
 
   const getStudentValue = (student, metric) => {
     switch (metric) {
-      case "points":
-        return student.total_points || 0;
+      case "xp": {
+        const xp = student.total_xp || 0;
+        const levelData = calculateLevel(xp);
+        return `${xp.toLocaleString()} XP (Lv. ${levelData.level})`;
+      }
       case "attendance":
         return `${student.attendance_rate || 0}%`;
       case "accuracy":
