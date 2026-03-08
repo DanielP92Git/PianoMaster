@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-stopped_at: Phase 2 context gathered
-last_updated: "2026-03-08T00:26:40.173Z"
-last_activity: 2026-03-08 — 01-01 Tasks 1-2 executed (ed48905, 213d666)
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-08T00:58:44.396Z"
+last_activity: 2026-03-08 — 02-01 Service layer XP unification (2cb9ceb, 6809620)
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_plans: 19
+  completed_plans: 16
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** VictoryScreen redesign - awaiting visual verification
+**Current focus:** Score-to-XP unification — service layer complete, hooks+UI next
 
 ## Current Position
 
-Phase: 1 — Redesign VictoryScreen for simplicity and mobile-landscape fit
-Plan: 01 (Tasks 1-2 complete, Task 3 checkpoint pending)
-Status: Awaiting human verification of VictoryScreen redesign
-Last activity: 2026-03-08 — 01-01 Tasks 1-2 executed (ed48905, 213d666)
+Phase: 2 — Refactor score vs XP - unify into XP-only scoring system
+Plan: 02 (Plan 01 complete, Plan 02 next)
+Status: In progress
+Last activity: 2026-03-08 — 02-01 Service layer XP unification (2cb9ceb, 6809620)
 
 ```
 v1.9 Engagement & Retention: SHIPPED 2026-03-08
@@ -48,6 +48,8 @@ v1.9 Engagement & Retention: SHIPPED 2026-03-08
 All decisions archived in PROJECT.md Key Decisions table and `.planning/milestones/v1.9-ROADMAP.md`.
 
 - Phase 1-01: Extracted 792-line useVictoryState hook; rebuilt VictoryScreen with two-panel landscape layout and simplified content (327 lines, 70% reduction)
+- Phase 2-01: Replaced points with XP as sole reward currency; calculateFreePlayXP for free play, awardXP for achievements, total_xp for accessories; deleted points.js, useTotalPoints.js, scoreComparisonService.js
+- [Phase 02]: Free play XP formula: 10 + floor(score% * 0.4) giving 10-50 XP range, less than trail nodes
 
 ### Roadmap Evolution
 
@@ -65,16 +67,17 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 1 | Fix Sight Reading feedback panel spacing and width to match notation card | 2026-03-06 | 54a19b4 | [1-fix-sight-reading-feedback-panel-spacing](./quick/1-fix-sight-reading-feedback-panel-spacing/) |
+| Phase 02 P01 | 3min | 2 tasks | 7 files |
 
 ## Session Continuity
 
-Last session: 2026-03-08T00:26:40.167Z
-Stopped at: Phase 2 context gathered
+Last session: 2026-03-08T00:58:36.169Z
+Stopped at: Completed 02-01-PLAN.md
 
 **Next action:**
-- Verify VictoryScreen visually on mobile landscape viewport
-- After approval, plan will be marked complete
+- Execute 02-02-PLAN.md (Core hooks + VictoryScreen XP integration)
+- Phase 1-01 checkpoint (VictoryScreen visual verification) still pending
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-08 — 01-01 Tasks 1-2 executed*
+*Last updated: 2026-03-08 — 02-01 Service layer XP unification*
