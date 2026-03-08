@@ -345,6 +345,25 @@ export const calculateSessionXP = (session) => {
 };
 
 /**
+ * Calculate XP reward for free play (non-trail) game sessions.
+ * Ensures free play always gives some XP to keep engagement, but less than trail nodes.
+ *
+ * Formula: base XP = 10 + Math.floor(scorePercentage * 0.4)
+ *   - 100% score → 50 XP
+ *   - 50% score  → 30 XP
+ *   - 0% score   → 10 XP
+ *
+ * @param {number} scorePercentage - Score as percentage (0-100)
+ * @param {number} comebackMultiplier - Comeback bonus multiplier (default 1)
+ * @returns {number} XP to award
+ */
+export const calculateFreePlayXP = (scorePercentage, comebackMultiplier = 1) => {
+  const clampedScore = Math.max(0, Math.min(100, scorePercentage));
+  const baseXP = 10 + Math.floor(clampedScore * 0.4);
+  return Math.floor(baseXP * comebackMultiplier);
+};
+
+/**
  * Get XP leaderboard (top students)
  * Anonymizes usernames for COPPA compliance - only the current user sees their own username
  * @param {number} limit - Number of students to return
@@ -393,6 +412,7 @@ export default {
   getNextLevelXP,
   getLevelProgress,
   calculateNodeXP,
+  calculateFreePlayXP,
   awardXP,
   getStudentXP,
   calculateSessionXP,

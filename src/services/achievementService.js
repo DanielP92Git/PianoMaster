@@ -4,6 +4,7 @@ import {
   getPracticeSessionStats,
 } from "./apiDatabase";
 import { streakService } from "./streakService";
+import { awardXP } from "../utils/xpSystem";
 
 // Define all available achievements
 const ACHIEVEMENTS = {
@@ -55,11 +56,11 @@ const ACHIEVEMENTS = {
   HIGH_SCORER: {
     id: "high_scorer",
     title: "High Scorer",
-    description: "Earn 1000 total points",
+    description: "Earn 1000 total XP",
     icon: "💎",
-    category: "points",
+    category: "xp",
     points: 250,
-    condition: "total_points >= 1000",
+    condition: "total_xp >= 1000",
   },
   NOTE_MASTER: {
     id: "note_master",
@@ -196,46 +197,17 @@ class AchievementService {
 
       if (error) throw error;
 
-      // Update user's total points
-      await this.updateUserPoints(studentId, achievement.points);
+      // Award XP for achievement (replaces old updateUserPoints)
+      try {
+        await awardXP(studentId, achievement.points);
+      } catch (xpError) {
+        // XP award failure is non-critical — achievement is still recorded
+        console.error("Error awarding achievement XP:", xpError);
+      }
 
       return data;
     } catch (error) {
       console.error("Error awarding achievement:", error);
-      return null;
-    }
-  }
-
-  // Update user's total points
-  async updateUserPoints(studentId, pointsToAdd) {
-    try {
-      // Get current points
-      const { data: currentData, error: fetchError } = await supabase
-        .from("student_profiles")
-        .select("achievement_points")
-        .eq("student_id", studentId)
-        .maybeSingle();
-
-      if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
-
-      const currentPoints = currentData?.achievement_points || 0;
-      const newPoints = currentPoints + pointsToAdd;
-
-      // Update points
-      const { error: updateError } = await supabase
-        .from("student_profiles")
-        .upsert([
-          {
-            student_id: studentId,
-            achievement_points: newPoints,
-            updated_at: new Date().toISOString(),
-          },
-        ]);
-
-      if (updateError) throw updateError;
-      return newPoints;
-    } catch (error) {
-      console.error("Error updating user points:", error);
       return null;
     }
   }
@@ -303,7 +275,7 @@ class AchievementService {
 
     const stats = {
       sessions: normalizedScores.length + normalizedSessions.length,
-      total_points: normalizedScores.reduce(
+      total_xp: normalizedScores.reduce(
         (sum, score) => sum + (score.score || 0),
         0
       ),
@@ -351,9 +323,9 @@ class AchievementService {
       return stats.streak >= required;
     }
 
-    if (condition.includes("total_points >= ")) {
-      const required = parseInt(condition.split("total_points >= ")[1]);
-      return stats.total_points >= required;
+    if (condition.includes("total_xp >= ")) {
+      const required = parseInt(condition.split("total_xp >= ")[1]);
+      return stats.total_xp >= required;
     }
 
     if (condition.includes("correct_notes >= ")) {
@@ -392,9 +364,9 @@ class AchievementService {
       return Math.min(stats.streak / required, 1);
     }
 
-    if (condition.includes("total_points >= ")) {
-      const required = parseInt(condition.split("total_points >= ")[1]);
-      return Math.min(stats.total_points / required, 1);
+    if (condition.includes("total_xp >= ")) {
+      const required = parseInt(condition.split("total_xp >= ")[1]);
+      return Math.min(stats.total_xp / required, 1);
     }
 
     if (condition.includes("correct_notes >= ")) {
