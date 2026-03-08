@@ -22,6 +22,7 @@ import Login from "./components/auth/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
 import ConsentVerifyPage from "./pages/ConsentVerifyPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ParentalConsentPending from "./components/auth/ParentalConsentPending";
 import { useAccountStatus } from "./hooks/useAccountStatus";
 import { MemoryGame } from "./components/games/notes-master-games/MemoryGame";
@@ -329,6 +330,8 @@ function AppRoutes() {
           {/* TODO: Add new rhythm game routes here */}
         </Route>
         <Route path="/login" element={<Login />} />
+        {/* Public route for password reset (no auth required - user clicks email link) */}
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         {/* Public route for parental consent verification (no auth required) */}
         <Route path="/consent/verify" element={<ConsentVerifyPage />} />
       </Routes>
