@@ -24,7 +24,7 @@
     "saving": "שומר...",
     "save": "שמירה",
     "cancel": "בטל",
-    "points": "נקודות",
+    "points": "XP",
     "loading": "טוען...",
     "next": "הבא",
     "toGamesMode": "למסך המשחקים",
@@ -95,6 +95,8 @@
       "loading": "טוען הישגים...",
       "earned": "הישג שקיבלתם",
       "points": "סך כל הנקודות",
+      "totalXP": "סה\"כ XP",
+      "xpFromAchievements": "{{xp}} XP מהישגים",
       "pointsBreakdown": "{{gameplay}} נקודות משחק + {{achievements}} נקודות הישגים",
       "completionRate": "מידת השלמה",
       "description": "עקבו אחרי התקדמותכם ופתחו תגי הישגים",
@@ -107,7 +109,8 @@
         "milestone": "צעדים משמעותיים ראשונים",
         "streak": "רצף",
         "performance": "ביצועים",
-        "points": "נקודות",
+        "points": "XP",
+        "xp": "XP",
         "skill": "מיומנות",
         "time": "זמן"
       },
@@ -134,7 +137,7 @@
         },
         "high_scorer": {
           "title": "שוברי שיאים",
-          "description": "הגיעו ל-1000 נקודות בסך הכול"
+          "description": "צברו 1000 XP בסך הכול"
         },
         "note_master": {
           "title": "מאסטר קריאת תווים",
@@ -153,7 +156,8 @@
           "description": "שמרו על ממוצע דיוק של 90% לאורך 10 אימונים"
         }
       },
-      "pointsReward": "+{{points}} נקודות"
+      "pointsReward": "+{{points}} נקודות",
+      "xpReward": "+{{xp}} XP"
     },
     "settings": {
       "title": "הגדרות",
@@ -330,16 +334,18 @@
     "saving": "שומר את הדמות...",
     "shop": {
       "title": "חנות אביזרים",
-      "subtitle": "השתמשו בנקודות שהרווחתם כדי להלביש את האווטאר שלכם.",
+      "subtitle": "השתמשו ב-XP שהרווחתם כדי להלביש את האווטאר שלכם.",
       "previewTitle": "תצוגה מקדימה",
       "previewPlaceholder": "בחרו אווטאר כדי לראות כאן את האביזרים.",
       "previewDescription": "האביזרים הפעילים מוצגים כאן בזמן אמת.",
-      "balanceLabel": "יתרת נקודות",
+      "balanceLabel": "יתרת XP",
       "availableToSpend": "זמין להוצאה",
       "totalEarned": "סה\"כ נצבר",
       "totalSpent": "הוצאו",
       "availablePoints": "{{points}} נק׳ זמינות",
+      "availableXP": "{{xp}} XP זמינים",
       "pointsSpent": "{{points}} נק׳ הושקעו באביזרים",
+      "xpSpent": "{{xp}} XP הושקעו באביזרים",
       "ownedTitle": "האביזרים שלי",
       "ownedDescription": "נהלו את מה שרכשתם והלבישו אותו על הדמות.",
       "ownedEmpty": "עדיין לא רכשתם אביזרים.",
@@ -348,9 +354,10 @@
       "equip": "ללבוש",
       "unequip": "להוריד",
       "equipped": "פעיל",
-      "purchase": "קנו ב-{{points}} נק׳",
+      "purchase": "קנו ב-{{xp}} XP",
       "purchased": "נרכש",
       "notEnoughPoints": "אין מספיק נקודות",
+      "notEnoughXP": "אין מספיק XP",
       "shopEmpty": "אביזרים חדשים יופיעו כאן בקרוב.",
       "purchaseSuccess": "האביזר נוסף לארון שלכם!",
       "equipSuccess": "האביזר נלבש",
@@ -363,6 +370,7 @@
       "achievement": "דרוש הישג",
       "gamesPlayed": "משחקים ששוחקו",
       "pointsEarned": "נקודות שנצברו",
+      "xpEarned": "XP שנצבר",
       "streak": "רצף תרגול",
       "perfectGames": "משחקים מושלמים",
       "level": "רמת שחקן",
@@ -379,9 +387,13 @@
       "gamesPlayedTipDetailed_plural": "שחקו עוד {{count}} משחקים כדי לפתוח אביזר זה.",
       "gamesPlayedCompleted": "שיחקתם {{count}} משחקים! ✨",
       "pointsEarnedDescription": "צברו {{amount}} נקודות סה\"כ (לכל החיים)",
+      "xpEarnedDescription": "צברו {{amount}} XP סה\"כ (לכל החיים)",
       "pointsEarnedShort": "{{amount}} סה\"כ נק׳",
+      "xpEarnedShort": "{{amount}} XP סה\"כ",
       "pointsEarnedTipDetailed": "צברו עוד {{amount}} נקודות כדי לפתוח. זה סופר את כל הנקודות שצברתם מאז ההתחלה, לא רק את הזמין להוצאה.",
+      "xpEarnedTipDetailed": "צברו עוד {{amount}} XP כדי לפתוח. זה סופר את כל ה-XP שצברתם מאז ההתחלה, לא רק את הזמין להוצאה.",
       "pointsEarnedCompleted": "צברתם {{amount}} נקודות סה\"כ! ✨",
+      "xpEarnedCompleted": "צברתם {{amount}} XP סה\"כ! ✨",
       "streakDescription": "שמרו על רצף תרגול של {{days}} ימים",
       "streakTipDetailed": "תרגלו עוד יום אחד רצוף כדי לפתוח אביזר זה.",
       "streakTipDetailed_plural": "תרגלו עוד {{days}} ימים רצופים כדי לפתוח אביזר זה.",
@@ -490,8 +502,8 @@
       "lives": "חיים",
       "newNote": "!צליל חדש נפתח",
       "tierUp": "!כוח עולה",
-      "doublePoints": "!נקודות פי 2",
-      "triplePoints": "!נקודות פי 3",
+      "doublePoints": "!XP כפול",
+      "triplePoints": "!XP משולש",
       "onFire": "!על האש"
     },
     "difficulties": {
@@ -650,12 +662,12 @@
         "dueIn_other": "להגשה בעוד {{count}} ימים",
         "noDueDate": "ללא תאריך יעד"
       },
-      "pointsLabel": "{{earned}}/{{possible}} נק׳"
+      "pointsLabel": "{{earned}}/{{possible}} XP"
     },
     "stats": {
       "practiceTime": "זמן תרגול",
       "hoursAbbrev": "ש׳",
-      "totalPoints": "סך-הכל נקודות",
+      "totalPoints": "סה\"כ XP",
       "dailyStreak": "רצף יומי",
       "level": "רמה"
     },
@@ -675,7 +687,7 @@
       "emptyDescription": "השלמתם את הצעדים העיקריים. המשיכו לתרגל כדי לקבל הישגים מתקדמים!",
       "viewAll": "צפו בכל ההישגים",
       "cta": "צפו בכל ההישגים →",
-      "points": "+{{points}} נקודות",
+      "points": "+{{points}} XP",
       "items": {
         "firstSession": {
           "title": "הקליטו את האימון הראשון שלכם",
@@ -690,8 +702,8 @@
           "description": "השיגו 100% במשחק קצב או זיהוי תווים"
         },
         "highScorer": {
-          "title": "הגיעו ל-1000 נקודות",
-          "description": "צברו 1000 נקודות בסך הכול כדי להפוך ל\"שוברי שיאים\""
+          "title": "הגיעו ל-1000 XP",
+          "description": "צברו 1000 XP בסך הכול כדי להפוך ל\"שוברי שיאים\""
         },
         "streak7": {
           "title": "לוחם שבועי",
@@ -1073,7 +1085,7 @@
     "xpEarned": "+{{xp}} XP הושגו",
     "levelLabel": "רמה {{level}}",
     "levelUp": "עליית רמה!",
-    "pointsEarnedLine": "+{{points}} נקודות",
+    "pointsEarnedLine": "+{{points}} XP",
     "nextExercise": "התרגיל הבא ({{count}} נותרו)",
     "continueToNode": "המשיכו ל\"{{name}}\"",
     "backToTrail": "חזרה למסלול",

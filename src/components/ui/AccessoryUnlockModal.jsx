@@ -333,8 +333,9 @@ function formatRequirementChip(requirement, t) {
       return t("avatars.unlockModal.gamesPlayedDescription", {
         count: requirement.count || 0,
       });
+    case "xp_earned":
     case "points_earned":
-      return t("avatars.unlockModal.pointsEarnedShort", {
+      return t("avatars.unlockModal.xpEarnedShort", {
         amount: formatNumber(requirement.amount || 0),
       });
     case "streak":
