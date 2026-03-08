@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: idle
-stopped_at: Completed 02-04-PLAN.md (Phase 2 complete)
-last_updated: "2026-03-08T01:18:10Z"
-last_activity: 2026-03-08 — 02-04 Teacher analytics + DB migration (a3987dc, 7877447)
+stopped_at: Completed 02-05-PLAN.md (Phase 2 gap closure complete)
+last_updated: "2026-03-08T11:04:23Z"
+last_activity: 2026-03-08 — 02-05 TeacherDashboard XP gap closure (d041c10, 7aaa7e3)
 progress:
   total_phases: 6
   completed_phases: 6
-  total_plans: 19
-  completed_plans: 19
+  total_plans: 20
+  completed_plans: 20
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-08)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Score-to-XP unification complete; all plans delivered
+**Current focus:** Score-to-XP unification complete including teacher views; all plans delivered
 
 ## Current Position
 
 Phase: 2 — Refactor score vs XP - unify into XP-only scoring system
-Plan: 04 of 04 (all complete)
+Plan: 05 of 05 (all complete)
 Status: Complete
-Last activity: 2026-03-08 — 02-04 Teacher analytics + DB migration (a3987dc, 7877447)
+Last activity: 2026-03-08 — 02-05 TeacherDashboard XP gap closure (d041c10, 7aaa7e3)
 
 ```
 v1.9 Engagement & Retention: SHIPPED 2026-03-08
@@ -53,6 +53,7 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 - Phase 2-02: Free play games now award XP via calculateFreePlayXP; VictoryScreen shows XP badge for both trail and free play; all total-points React Query references removed from 9 files
 - Phase 2-03: Updated all UI components and i18n (en+he) to show XP instead of points; Avatars, Achievements, unlock modals, Toast all use XP terminology
 - Phase 2-04: Teacher chart components switched to XP with level context; DB migration drops achievement_points, student_achievements.points, calculate_score_percentile
+- Phase 2-05: TeacherDashboard.jsx and apiTeacher.js fully migrated from points to XP; simplified data fetching by reading total_xp directly from students table
 
 ### Roadmap Evolution
 
@@ -74,15 +75,16 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 | Phase 02 P02 | 8min | 2 tasks | 9 files |
 | Phase 02 P03 | 8min | 2 tasks | 7 files |
 | Phase 02 P04 | 5min | 2 tasks | 4 files |
+| Phase 02 P05 | 5min | 2 tasks | 2 files |
 
 ## Session Continuity
 
-Last session: 2026-03-08T01:18:10Z
-Stopped at: Completed 02-04-PLAN.md (Phase 2 complete)
+Last session: 2026-03-08T11:04:23Z
+Stopped at: Completed 02-05-PLAN.md (Phase 2 gap closure complete)
 
 **Next action:**
-- Phase 2 complete. All 4 plans delivered. Apply DB migration when ready.
+- Phase 2 fully complete. All 5 plans delivered (including gap closure). Apply DB migration when ready.
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-08 — 02-04 Teacher analytics + DB migration (Phase 2 complete)*
+*Last updated: 2026-03-08 — 02-05 TeacherDashboard XP gap closure (Phase 2 fully complete)*
