@@ -3,7 +3,7 @@ import { Loader2, Music2, Drum } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { getGamesCategories } from "../services/apiGamesLibrary";
 import { useQuery } from "@tanstack/react-query";
-import StreakDisplay from "../components/streak/StreakDisplay";
+
 import { useStreakWithAchievements } from "../hooks/useStreakWithAchievements";
 
 export default function PracticeModes({ practiceModesSectionRef }) {
@@ -100,10 +100,6 @@ export default function PracticeModes({ practiceModesSectionRef }) {
 
   return (
     <div ref={practiceModesSectionRef} className="p-4 lg:p-6 md:max-w-4xl lg:max-w-5xl xl:max-w-7xl mx-auto">
-      <div className="flex items-center justify-start mb-4">
-        <StreakDisplay />
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 lg:gap-4">
         {enhancedGameModes.map((mode) => (
           <div
