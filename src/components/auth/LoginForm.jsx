@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLogin } from "../../features/authentication/useLogin";
+import { useResetPassword } from "../../features/authentication/useResetPassword";
 import {
   Loader2,
   Eye,
   EyeOff,
+  ArrowLeft,
+  CheckCircle2,
+  Mail,
 } from "lucide-react";
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
@@ -18,9 +22,18 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isSignup, setIsSignup] = useState(false);
   const [logoutMessage, setLogoutMessage] = useState(null);
+  const [view, setView] = useState("login"); // 'login' | 'forgotPassword' | 'resetSent'
+  const [resetEmail, setResetEmail] = useState("");
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const navigate = useNavigate();
   const { login, isPending } = useLogin();
   const { t } = useTranslation("common");
+  const {
+    resetPassword,
+    isPending: isResetPending,
+    isSuccess: isResetSuccess,
+    reset: resetMutation,
+  } = useResetPassword();
 
   useEffect(() => {
     lockOrientation("portrait-primary");
@@ -35,10 +48,39 @@ function LoginForm() {
     }
   }, [t]);
 
+  // Cooldown timer
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
+
+  // When reset email is sent successfully, switch to success view and start cooldown
+  useEffect(() => {
+    if (isResetSuccess) {
+      setView("resetSent");
+      setCooldownSeconds(60);
+    }
+  }, [isResetSuccess]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!email || !password || isPending) return;
     login({ email, password });
+  };
+
+  const handleResetSubmit = (e) => {
+    e.preventDefault();
+    if (!resetEmail || isResetPending || cooldownSeconds > 0) return;
+    resetPassword({ email: resetEmail });
   };
 
   return (
@@ -58,6 +100,96 @@ function LoginForm() {
 
           {isSignup ? (
             <SignupForm onBackToLogin={() => setIsSignup(false)} />
+          ) : view === "forgotPassword" || view === "resetSent" ? (
+            <div className="p-3 md:p-4 lg:p-5 relative z-10 h-full flex flex-col items-center justify-center">
+              {view === "forgotPassword" ? (
+                /* Forgot Password Email Form */
+                <div className="w-full max-w-sm">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setView("login");
+                      resetMutation();
+                    }}
+                    className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5 mb-4"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {t("auth.forgotPassword.backToLogin")}
+                  </button>
+
+                  <h2 className="text-lg font-semibold text-white mb-1">
+                    {t("auth.forgotPassword.title")}
+                  </h2>
+
+                  <form onSubmit={handleResetSubmit} className="mt-4 space-y-3">
+                    <div className="group">
+                      <label
+                        htmlFor="reset-email"
+                        className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
+                      >
+                        {t("auth.forgotPassword.emailLabel")}
+                      </label>
+                      <input
+                        type="email"
+                        id="reset-email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        disabled={isResetPending}
+                        className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
+                        placeholder={t("auth.forgotPassword.emailPlaceholder")}
+                        required
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isResetPending || cooldownSeconds > 0 || !resetEmail}
+                      className="w-full h-9 md:h-10 flex items-center justify-center px-4 text-xs md:text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isResetPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        t("auth.forgotPassword.submitButton")
+                      )}
+                    </button>
+
+                    {cooldownSeconds > 0 && (
+                      <p className="text-white/50 text-xs text-center">
+                        {t("auth.forgotPassword.cooldownMessage", { seconds: cooldownSeconds })}
+                      </p>
+                    )}
+                  </form>
+                </div>
+              ) : (
+                /* Reset Sent Success State */
+                <div className="w-full max-w-sm flex flex-col items-center text-center">
+                  <CheckCircle2 className="w-12 h-12 text-green-400 mx-auto mb-3" />
+                  <h2 className="text-lg font-semibold text-white text-center">
+                    {t("auth.forgotPassword.successTitle")}
+                  </h2>
+                  <p className="text-white/70 text-sm text-center max-w-sm mx-auto mt-2">
+                    {t("auth.forgotPassword.successMessage")}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setView("login");
+                      resetMutation();
+                    }}
+                    className="mt-4 text-indigo-300 hover:text-indigo-200 text-sm font-medium transition-colors"
+                  >
+                    {t("auth.forgotPassword.backToLogin")}
+                  </button>
+
+                  {cooldownSeconds > 0 && (
+                    <p className="mt-2 text-white/50 text-xs">
+                      {t("auth.forgotPassword.cooldownMessage", { seconds: cooldownSeconds })}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
             <div className="p-3 md:p-4 lg:p-5 relative z-10 h-full flex flex-col">
               {/* Inactivity logout message */}
@@ -142,6 +274,21 @@ function LoginForm() {
                                 </button>
                               </div>
                             </div>
+                          </div>
+
+                          {/* Forgot password link - right-aligned, subtle */}
+                          <div className="flex justify-end mt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setView("forgotPassword");
+                                setResetEmail(email);
+                                resetMutation();
+                              }}
+                              className="text-xs text-white/60 hover:text-white/90 transition-colors"
+                            >
+                              {t("auth.forgotPassword.link")}
+                            </button>
                           </div>
                         </form>
                       </div>
