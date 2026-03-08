@@ -6,6 +6,8 @@ import RateLimitBanner from "../ui/RateLimitBanner";
 import { Trophy } from "lucide-react";
 import { translateNodeName } from "../../utils/translateNodeName";
 import { getNodeById } from "../../data/skillTrail";
+import GoldStar from "../ui/GoldStar";
+import victoryBg from "../../assets/images/victory-background.webp";
 
 const VictoryScreen = ({
   score,
@@ -90,7 +92,8 @@ const VictoryScreen = ({
   const isPrestige = levelProgressData?.isPrestige || (xpData?.newLevel >= 30);
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-2 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-indigo-950 p-2 sm:p-4" style={{ backgroundImage: `url(${victoryBg})`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
+
       {/* Confetti overlay for full/epic celebrations */}
       {showConfetti && (
         <ConfettiEffect
@@ -114,51 +117,8 @@ const VictoryScreen = ({
         />
       )}
 
-      {/* Two-panel layout in landscape, single column in portrait */}
-      <div className="flex w-full max-w-md flex-col items-center my-auto landscape:max-w-3xl landscape:flex-row landscape:items-center landscape:gap-6">
-
-        {/* LEFT PANEL: Avatar + Stars */}
-        <div className="flex flex-col items-center gap-2 landscape:w-2/5 landscape:gap-3">
-          {/* Video avatar */}
-          <div className="overflow-hidden rounded-2xl bg-white shadow-xl h-24 w-24 landscape:h-16 landscape:w-16">
-            <video
-              src="/avatars/mozart_happy.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              className="h-full w-full object-cover"
-              aria-label="Mozart celebration animation"
-            />
-          </div>
-
-          {/* Star rating display - shown for both trail and free play */}
-          {displayStars > 0 && (
-            <div className="flex items-center justify-center gap-1">
-              {[1, 2, 3].map((starNum) => (
-                <span
-                  key={starNum}
-                  className={`text-3xl landscape:text-2xl ${
-                    starNum <= displayStars
-                      ? reducedMotion
-                        ? 'text-yellow-400 drop-shadow-lg'
-                        : 'animate-bounce text-yellow-400 drop-shadow-lg'
-                      : 'text-gray-400/30'
-                  } ${!reducedMotion ? 'transition-all duration-300' : 'transition-opacity duration-100'}`}
-                  style={reducedMotion ? {} : {
-                    animationDelay: `${starNum * 100}ms`,
-                    animationDuration: '600ms'
-                  }}
-                >
-                  &#11088;
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* RIGHT PANEL: Message + XP/Points + Badges + Buttons */}
-        <div className="flex w-full flex-col items-center gap-1.5 pt-3 landscape:w-3/5 landscape:items-start landscape:gap-2 landscape:pt-0">
+      {/* Single centered column layout */}
+      <div className="flex w-full max-w-md flex-col items-center my-auto landscape:max-w-lg gap-2">
           {/* Rate limit banner */}
           {rateLimited && rateLimitResetTime && (
             <div className="w-full mb-1">
@@ -172,26 +132,71 @@ const VictoryScreen = ({
             </div>
           )}
 
-          {/* Victory title */}
-          <h2 className="w-full bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 bg-clip-text text-xl font-bold text-transparent text-center landscape:text-left sm:text-2xl">
-            {rateLimited
-              ? t('victory.greatPractice')
-              : isProcessingTrail
-                ? t('victory.loading')
-                : celebrationData.message.title}
-          </h2>
+          {/* Victory title - bow/arc shaped with curved banner backdrop */}
+          <div className="w-full flex justify-center">
+            <svg viewBox="0 0 300 90" className="w-full max-w-xs sm:max-w-sm h-auto overflow-visible" aria-label={rateLimited ? t('victory.greatPractice') : isProcessingTrail ? t('victory.loading') : celebrationData.message.title}>
+              <defs>
+                <path id="victory-arc" d="M 5,70 Q 150,5 295,70" fill="none" />
+                <linearGradient id="victory-title-grad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#fde047" />
+                  <stop offset="50%" stopColor="#fbbf24" />
+                  <stop offset="100%" stopColor="#f97316" />
+                </linearGradient>
+                <linearGradient id="victory-banner-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#1e3a5f" stopOpacity="0.85" />
+                  <stop offset="100%" stopColor="#0f172a" stopOpacity="0.85" />
+                </linearGradient>
+                <filter id="banner-glow">
+                  <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#3b82f6" floodOpacity="0.4" />
+                </filter>
+              </defs>
+              {/* Curved banner that follows the text arc */}
+              <path
+                d="M 2,76 Q 150,11 298,76 L 298,46 Q 150,-19 2,46 Z"
+                fill="url(#victory-banner-grad)"
+                stroke="#3b82f6"
+                strokeWidth="1.2"
+                strokeOpacity="0.4"
+                filter="url(#banner-glow)"
+              />
+              <text
+                fill="url(#victory-title-grad)"
+                style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive", fontWeight: 700, filter: 'drop-shadow(0 2px 4px rgba(255,200,0,0.3))' }}
+                fontSize="22"
+                textAnchor="middle"
+                letterSpacing="1.5"
+              >
+                <textPath href="#victory-arc" startOffset="50%">
+                  {(rateLimited
+                    ? t('victory.greatPractice')
+                    : isProcessingTrail
+                      ? t('victory.loading')
+                      : celebrationData.message.title
+                  ).toUpperCase()}
+                </textPath>
+              </text>
+            </svg>
+          </div>
 
-          {/* Subtitle */}
-          {!isProcessingTrail && !rateLimited && celebrationData.message.subtitle && (
-            <p className="w-full text-sm text-white/80 text-center landscape:text-left">
-              {celebrationData.message.subtitle}
-            </p>
+          {/* Star rating display - below title */}
+          {displayStars > 0 && (
+            <div className="flex items-center justify-center gap-2">
+              {[1, 2, 3].map((starNum) => (
+                <GoldStar
+                  key={starNum}
+                  size={36}
+                  filled={starNum <= displayStars}
+                  glow={starNum <= displayStars}
+                  className="landscape:h-8 landscape:w-8"
+                />
+              ))}
+            </div>
           )}
 
-          {/* XP line (trail mode) - single bold line, not a card */}
+          {/* XP badge (trail mode) - polished glowing badge */}
           {nodeId && xpData && xpData.totalXP > 0 && (
-            <div className="flex items-center gap-2 text-center landscape:text-left">
-              <p className="text-lg font-bold text-blue-300">
+            <div className="relative inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-indigo-900/90 to-slate-900/90 border-2 border-blue-400/50 px-5 py-1.5 shadow-[0_0_16px_rgba(96,165,250,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]">
+              <p className="text-lg font-bold bg-gradient-to-r from-blue-200 to-cyan-200 bg-clip-text text-transparent" style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive" }}>
                 {t('victory.xpEarned', { xp: animatedXPGain })}
               </p>
               {comebackActive && (
@@ -202,11 +207,13 @@ const VictoryScreen = ({
             </div>
           )}
 
-          {/* Points line (free play mode) */}
+          {/* Points badge (free play mode) - polished glowing badge */}
           {!nodeId && actualGain > 0 && (
-            <p className="text-lg font-bold text-emerald-300 text-center landscape:text-left">
-              {t('victory.pointsEarnedLine', { points: actualGain.toLocaleString() })}
-            </p>
+            <div className="relative inline-flex items-center rounded-full bg-gradient-to-b from-emerald-900/90 to-slate-900/90 border-2 border-emerald-400/50 px-5 py-1.5 shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]">
+              <p className="text-lg font-bold bg-gradient-to-r from-emerald-200 to-green-200 bg-clip-text text-transparent" style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive" }}>
+                {t('victory.pointsEarnedLine', { points: actualGain.toLocaleString() })}
+              </p>
+            </div>
           )}
 
           {/* Level-up badge - inline pill, not bouncing card */}
@@ -224,7 +231,7 @@ const VictoryScreen = ({
 
           {/* Prestige entry text */}
           {xpData?.leveledUp && xpData.newLevel === 30 && (
-            <p className="text-xs text-white/70 text-center landscape:text-left">
+            <p className="text-xs text-white/70 text-center">
               {t('victory.prestigeEntry')}
             </p>
           )}
@@ -244,32 +251,32 @@ const VictoryScreen = ({
             {/* Trail mode buttons */}
             {nodeId ? (
               <>
-                {/* Primary action button (full-width) */}
+                {/* Primary action button (full-width, polished badge style) */}
                 {exercisesRemaining > 0 && onNextExercise ? (
                   <button
                     onClick={onNextExercise}
-                    className="w-full rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 px-4 py-2.5 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-blue-600 hover:to-purple-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 landscape:py-2"
+                    className="w-full rounded-full bg-gradient-to-b from-blue-500/90 to-indigo-900/90 border-2 border-blue-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(96,165,250,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(96,165,250,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {t('victory.nextExercise', { count: exercisesRemaining })}
                   </button>
                 ) : isProcessingTrail || fetchingNextNode ? (
                   <button
                     disabled
-                    className="w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-2.5 text-base font-bold text-white opacity-80 landscape:py-2"
+                    className="w-full rounded-full bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 border-2 border-emerald-400/50 px-5 py-2.5 text-base font-bold text-white opacity-80 shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] landscape:py-2"
                   >
                     <span className="inline-block animate-pulse">{t('victory.loading')}</span>
                   </button>
                 ) : nodeComplete && nextNode ? (
                   <button
                     onClick={navigateToNextNode}
-                    className="w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-2.5 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 landscape:py-2"
+                    className="w-full rounded-full bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 border-2 border-emerald-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(52,211,153,0.5)] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {t('victory.continueToNode', { name: translateNodeName(nextNode.name, t, i18n) })}
                   </button>
                 ) : (
                   <button
                     onClick={handleNavigateToTrail}
-                    className="w-full rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 px-4 py-2.5 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-green-600 hover:to-emerald-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-offset-2 landscape:py-2"
+                    className="w-full rounded-full bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 border-2 border-emerald-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(52,211,153,0.5)] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {nodeComplete ? t('victory.backToTrail') : t('victory.continueLearning')}
                   </button>
@@ -279,13 +286,13 @@ const VictoryScreen = ({
                 <div className="flex gap-2">
                   <button
                     onClick={handlePlayAgain}
-                    className="flex-1 rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
+                    className="flex-1 rounded-full bg-gradient-to-b from-indigo-500/80 to-indigo-900/80 border-2 border-indigo-400/40 px-3 py-2 text-sm font-bold text-white shadow-[0_0_12px_rgba(129,140,248,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(129,140,248,0.45)] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-transparent"
                   >
                     {t("common.playAgain")}
                   </button>
                   <button
                     onClick={handleNavigateToTrail}
-                    className="flex-1 rounded-xl bg-white/10 border border-white/20 px-3 py-2 text-sm font-semibold text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
+                    className="flex-1 rounded-full bg-gradient-to-b from-white/15 to-white/5 border-2 border-white/25 px-3 py-2 text-sm font-bold text-white/80 shadow-[0_0_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
                   >
                     {t("victory.backToTrail")}
                   </button>
@@ -296,20 +303,19 @@ const VictoryScreen = ({
               <>
                 <button
                   onClick={handlePlayAgain}
-                  className="w-full rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 px-4 py-2.5 text-base font-bold text-white transition-all duration-200 hover:scale-[1.02] hover:from-indigo-600 hover:to-violet-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 landscape:py-2"
+                  className="w-full rounded-full bg-gradient-to-b from-indigo-500/90 to-indigo-900/90 border-2 border-indigo-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(129,140,248,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(129,140,248,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 landscape:py-2"
                 >
                   {t("common.playAgain")}
                 </button>
                 <button
                   onClick={handleExit}
-                  className="w-full rounded-xl bg-white/10 border border-white/20 px-4 py-2 text-sm font-semibold text-white/70 transition-all duration-200 hover:bg-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
+                  className="w-full rounded-full bg-gradient-to-b from-white/15 to-white/5 border-2 border-white/25 px-4 py-2 text-sm font-bold text-white/80 shadow-[0_0_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
                 >
                   {t("common.toGamesMode")}
                 </button>
               </>
             )}
           </div>
-        </div>
       </div>
 
       {/* Accessory unlock modal */}
