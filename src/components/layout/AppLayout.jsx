@@ -45,9 +45,9 @@ export default function AppLayout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Trail page has its own full-screen background, so use neutral base
-  const backgroundClass = isTrailPage
-    ? "bg-slate-900"
+  // Trail page and game routes have their own full-screen backgrounds, so use neutral base
+  const backgroundClass = isTrailPage || isGameRoute
+    ? "bg-black"
     : "bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900";
 
   return (
@@ -89,7 +89,7 @@ export default function AppLayout() {
             : ""
         } flex-1 ${
           !isGameRoute && !isTrailPage ? "pb-20 xl:pb-0" : ""
-        } ${isGameRoute || isTrailPage ? "min-h-0 overflow-hidden" : ""} ${isTrailPage ? "w-full" : ""}`}
+        } ${isGameRoute || isTrailPage ? "min-h-0 overflow-hidden" : ""} ${isGameRoute || isTrailPage ? "w-full" : ""}`}
       >
         <Outlet />
       </main>
