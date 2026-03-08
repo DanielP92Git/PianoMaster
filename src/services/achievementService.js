@@ -399,7 +399,7 @@ class AchievementService {
           getStudentScoreStats(studentId),
           streakService.getStreak(),
           this.getEarnedAchievements(studentId),
-          this.getPracticeSessionsCount(studentId),
+          getPracticeSessionStats(studentId),
         ]);
 
       const earnedIds = earnedAchievements.map((a) => a.achievement_id);

@@ -3266,8 +3266,7 @@ export function SightReadingGame() {
                 {t('sightReading.finalScore')}
               </p>
               <p className="text-sm text-gray-600">
-                {sessionScoreSummary} total points &bull; Aim for 70% (700/1000)
-                to achieve victory.
+                {sessionScoreSummary} total XP &bull; Aim for 70% to achieve victory.
               </p>
             </div>
 
@@ -3519,7 +3518,7 @@ export function SightReadingGame() {
               {isVictory ? "Session Victory!" : "Session Complete"}
             </p>
             <p className="text-sm">
-              Final score: {sessionPercentageDisplay}% ({sessionScoreSummary})
+              Final XP: {sessionPercentageDisplay}% ({sessionScoreSummary})
             </p>
             <p className="mt-1 text-sm text-slate-600">
               {isVictory

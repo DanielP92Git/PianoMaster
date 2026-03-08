@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Coins, Clock3, Loader2, Heart, Zap } from "lucide-react";
+import { Clock3, Loader2, Heart, Zap } from "lucide-react";
 import flameIcon from "../../../assets/icons/flame.png";
 import { AnimatePresence, motion } from "framer-motion";
 import BackButton from "../../ui/BackButton";
@@ -376,8 +376,7 @@ const COMBO_TIERS = [
   { min: 8, multiplier: 3 },
 ];
 const SPEED_BONUS_THRESHOLD_MS = 3000;
-const SPEED_BONUS_POINTS = 5;
-const BASE_SCORE = 10;
+const BASE_XP = 5;
 const INITIAL_LIVES = 3;
 const ON_FIRE_THRESHOLD = 5;
 const MAX_EXTRA_NOTES = 3;
@@ -1573,8 +1572,8 @@ export function NotesRecognitionGame() {
         // Check speed bonus
         const elapsed = performance.now() - (questionStartTimeRef.current ?? performance.now());
         const isSpeedBonus = elapsed <= SPEED_BONUS_THRESHOLD_MS;
-        // Compute score
-        earnedScore = BASE_SCORE * multiplier + (isSpeedBonus ? SPEED_BONUS_POINTS : 0);
+        // Compute XP (flat per correct answer; combo + speed are visual-only engagement)
+        earnedScore = BASE_XP;
         // Update combo state
         setCombo(comboRef.current);
         // Floating score animation
@@ -2137,7 +2136,7 @@ export function NotesRecognitionGame() {
         ) : (
           <VictoryScreen
             score={progress.score}
-            totalPossibleScore={progress.totalQuestions * 10}
+            totalPossibleScore={progress.totalQuestions * BASE_XP}
             onReset={() => {
               resetProgress();
               resetSettings();
@@ -2186,9 +2185,8 @@ export function NotesRecognitionGame() {
                         <div
                           className={`flex items-center gap-2 rounded-full border ${pillBorder} ${pillBg} px-3 py-1.5 text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md transition-colors duration-300 motion-reduce:transition-none`}
                         >
-                          <Coins className="h-4 w-4 text-white/80" />
-                          <span className="hidden text-xs font-semibold text-white/80 sm:inline sm:text-sm">
-                            {t("games.score")}
+                          <span className="text-xs font-semibold text-white/80 sm:text-sm">
+                            XP
                           </span>
                           <span className="font-mono text-sm font-bold tracking-wide sm:text-base">
                             {progress.score}
@@ -2336,7 +2334,7 @@ export function NotesRecognitionGame() {
                     transition={{ duration: 0.35 }}
                     className="rounded-full bg-amber-400/20 px-4 py-1 text-sm font-bold text-amber-300 backdrop-blur-sm sm:text-base"
                   >
-                    {t("games.engagement.fast")} +{SPEED_BONUS_POINTS}
+                    {t("games.engagement.fast")}
                   </motion.span>
                 )}
               </AnimatePresence>

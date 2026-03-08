@@ -1393,7 +1393,7 @@ export function MetronomeTrainer() {
             <div className="text-lg font-bold text-green-400 sm:text-2xl">
               {sessionStats.totalScore}
             </div>
-            <div>{t("games.metronomeTrainer.stats.score")}</div>
+            <div>XP</div>
           </div>
           <div>
             <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
