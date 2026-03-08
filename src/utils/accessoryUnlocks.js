@@ -51,13 +51,15 @@ export function checkAccessoryUnlock(accessory, userProgress) {
       };
     }
 
+    case "xp_earned":
     case "points_earned": {
+      // "points_earned" kept as fallback alias for backward compatibility with existing DB records
       const required = requirement.amount;
-      const current = userProgress.totalPoints || 0;
+      const current = userProgress.totalXP || 0;
       return {
         unlocked: current >= required,
         progress: Math.min(current / required, 1),
-        requirement: `Earn ${required.toLocaleString()} total points`,
+        requirement: `Earn ${required.toLocaleString()} total XP`,
       };
     }
 
