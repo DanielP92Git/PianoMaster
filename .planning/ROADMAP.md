@@ -184,5 +184,18 @@ See `.planning/milestones/` for archived details of each milestone.
 Plans:
 - [ ] 01-01-PLAN.md — Extract useVictoryState hook + redesign render layer with two-panel landscape layout
 
+### Phase 2: Refactor score vs XP - unify into XP-only scoring system
+
+**Goal:** Eliminate the parallel "points" reward system and unify all player rewards under the existing XP system. The students_score table stays (raw game data for analytics/goals), but "points" as a user-facing concept is removed. All reward signals become XP. Teacher views switch to XP-based analytics.
+**Requirements:** [XP-SERVICE, XP-ACHIEVE, XP-DEAD-CODE, XP-FREEPLAY, XP-VICTORY, XP-DASHBOARD, XP-HOOKS, XP-AVATARS, XP-ACHIEVEMENTS, XP-I18N, XP-TEACHER, XP-DB-CLEANUP]
+**Depends on:** Phase 1
+**Plans:** 4 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Service layer + dead code: refactor achievementService to use awardXP, add calculateFreePlayXP, switch accessory system to XP, delete points.js/useTotalPoints.js/scoreComparisonService.js
+- [ ] 02-02-PLAN.md — Core hooks + VictoryScreen: award XP for free play in useVictoryState, update VictoryScreen display, remove total-points query keys from all hooks
+- [ ] 02-03-PLAN.md — UI + i18n: update Avatars, Achievements, unlock modals, and Toast to show XP; update en+he translations
+- [ ] 02-04-PLAN.md — Teacher analytics + DB migration: switch teacher charts to XP, create migration to drop points columns
+
 ---
-*Last updated: 2026-03-08 — Phase 1 planned*
+*Last updated: 2026-03-08 — Phase 2 planned*
