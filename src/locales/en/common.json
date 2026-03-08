@@ -47,6 +47,33 @@
       "orSocial": "Or continue with",
       "noAccountPrompt": "New to PianoMaster?",
       "signupLink": "Create Account"
+    },
+    "forgotPassword": {
+      "link": "Forgot password?",
+      "title": "Reset Password",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "Enter your email",
+      "submitButton": "Send Reset Link",
+      "sending": "Sending...",
+      "backToLogin": "Back to login",
+      "successTitle": "Check your email",
+      "successMessage": "We sent a password reset link to your email. Check your inbox and follow the link to set a new password.",
+      "cooldownMessage": "You can send another link in {{seconds}}s",
+      "errorGeneric": "Something went wrong. Please try again."
+    },
+    "resetPassword": {
+      "title": "Set New Password",
+      "newPasswordLabel": "New password",
+      "newPasswordPlaceholder": "Enter new password",
+      "confirmPasswordLabel": "Confirm password",
+      "confirmPasswordPlaceholder": "Enter password again",
+      "submitButton": "Update Password",
+      "updating": "Updating...",
+      "passwordMismatch": "Passwords do not match",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "successMessage": "Password updated successfully!",
+      "errorGeneric": "Failed to update password. The link may have expired. Please request a new one.",
+      "errorExpiredLink": "This reset link has expired. Please request a new one."
     }
   },
   "navigation": {
