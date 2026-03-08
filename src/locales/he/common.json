@@ -47,6 +47,33 @@
       "orSocial": "או המשיכו עם",
       "noAccountPrompt": "חדשים ב-PianoMaster?",
       "signupLink": "יצירת חשבון"
+    },
+    "forgotPassword": {
+      "link": "שכחתי סיסמה?",
+      "title": "איפוס סיסמה",
+      "emailLabel": "כתובת אימייל",
+      "emailPlaceholder": "הקלידו כתובת אימייל",
+      "submitButton": "שלח קישור לאיפוס",
+      "sending": "שולח...",
+      "backToLogin": "חזרה להתחברות",
+      "successTitle": "בדקו את האימייל",
+      "successMessage": "שלחנו קישור לאיפוס סיסמה לאימייל שלכם. בדקו את תיבת הדואר ולחצו על הקישור.",
+      "cooldownMessage": "ניתן לשלוח קישור נוסף בעוד {{seconds}} שניות",
+      "errorGeneric": "משהו השתבש. נסו שוב."
+    },
+    "resetPassword": {
+      "title": "הגדרת סיסמה חדשה",
+      "newPasswordLabel": "סיסמה חדשה",
+      "newPasswordPlaceholder": "הקלידו סיסמה חדשה",
+      "confirmPasswordLabel": "אישור סיסמה",
+      "confirmPasswordPlaceholder": "הקלידו שוב את הסיסמה",
+      "submitButton": "עדכון סיסמה",
+      "updating": "מעדכן...",
+      "passwordMismatch": "הסיסמאות אינן תואמות",
+      "passwordTooShort": "הסיסמה חייבת להכיל לפחות 6 תווים",
+      "successMessage": "הסיסמה עודכנה בהצלחה!",
+      "errorGeneric": "עדכון הסיסמה נכשל. ייתכן שהקישור פג תוקף. בקשו קישור חדש.",
+      "errorExpiredLink": "קישור האיפוס פג תוקף. בקשו קישור חדש."
     }
   },
   "navigation": {
