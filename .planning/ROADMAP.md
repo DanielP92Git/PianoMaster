@@ -193,9 +193,9 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md — Service layer + dead code: refactor achievementService to use awardXP, add calculateFreePlayXP, switch accessory system to XP, delete points.js/useTotalPoints.js/scoreComparisonService.js
-- [ ] 02-02-PLAN.md — Core hooks + VictoryScreen: award XP for free play in useVictoryState, update VictoryScreen display, remove total-points query keys from all hooks
-- [ ] 02-03-PLAN.md — UI + i18n: update Avatars, Achievements, unlock modals, and Toast to show XP; update en+he translations
+- [x] 02-02-PLAN.md — Core hooks + VictoryScreen: award XP for free play in useVictoryState, update VictoryScreen display, remove total-points query keys from all hooks
+- [x] 02-03-PLAN.md — UI + i18n: update Avatars, Achievements, unlock modals, and Toast to show XP; update en+he translations
 - [ ] 02-04-PLAN.md — Teacher analytics + DB migration: switch teacher charts to XP, create migration to drop points columns
 
 ---
-*Last updated: 2026-03-08 — Phase 2 Plan 01 complete*
+*Last updated: 2026-03-08 — Phase 2 Plans 01, 02, 03 complete*
