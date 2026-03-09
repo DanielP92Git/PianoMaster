@@ -113,7 +113,7 @@ function LoginForm() {
                     }}
                     className="text-white/70 hover:text-white transition-colors text-sm flex items-center gap-1.5 mb-4"
                   >
-                    <ArrowLeft className="w-4 h-4" />
+                    <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
                     {t("auth.forgotPassword.backToLogin")}
                   </button>
 
