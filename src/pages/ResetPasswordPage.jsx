@@ -5,7 +5,7 @@ import { useUpdatePassword } from "../features/authentication/useUpdatePassword"
 import { useTranslation } from "react-i18next";
 import supabase from "../services/supabase";
 
-const SESSION_TIMEOUT_MS = 3000;
+const SESSION_TIMEOUT_MS = 10000;
 
 function ResetPasswordPage() {
   const [password, setPassword] = useState("");
@@ -22,6 +22,23 @@ function ResetPasswordPage() {
 
   // Detect recovery session from Supabase auth
   useEffect(() => {
+    // If no auth params in URL, show expired immediately (user navigated here directly)
+    const hasAuthParams =
+      window.location.hash.includes("access_token") ||
+      window.location.hash.includes("type=recovery") ||
+      window.location.search.includes("code=");
+    if (!hasAuthParams) {
+      // Check for existing session first (page reload after token was consumed)
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setIsSessionReady(true);
+        } else {
+          setIsExpired(true);
+        }
+      });
+      return;
+    }
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
