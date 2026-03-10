@@ -174,8 +174,9 @@ See `.planning/milestones/` for archived details of each milestone.
 | 23. Kid-Friendly Dashboard Redesign | v1.9 | 3/3 | Complete | 2026-03-06 |
 | 01. VictoryScreen Redesign | v2.0 | 1/1 | Complete | 2026-03-08 |
 | 02. XP Unification | v2.0 | 5/5 | Complete | 2026-03-08 |
+| 01. Forgot Password Recovery | standalone | 2/2 | Complete | 2026-03-10 |
 
-**Total: 49 phases across 11 milestones (v1.0-v2.0 all shipped)**
+**Total: 50 phases across 11 milestones + 1 standalone (v1.0-v2.0 all shipped)**
 
 <details>
 <summary>✅ v2.0 VictoryScreen & XP Unification (Phases 01-02) — SHIPPED 2026-03-08</summary>
@@ -190,11 +191,11 @@ See `.planning/milestones/` for archived details of each milestone.
 **Goal:** Add a "Forgot password?" inline recovery flow to the login page and a dedicated /reset-password page, using Supabase built-in password reset with EN+HE i18n support
 **Requirements:** [PWD-RESET-API, PWD-RESET-I18N, PWD-RESET-LOGIN-UI, PWD-RESET-PAGE, PWD-RESET-ROUTE]
 **Depends on:** None
-**Plans:** 2 plans
+**Plans:** 2 plans -- COMPLETE
 
 Plans:
-- [ ] 01-01-PLAN.md — API functions, TanStack Query hooks, and EN+HE translations
-- [ ] 01-02-PLAN.md — LoginForm inline forgot password flow + ResetPasswordPage + route wiring
+- [x] 01-01-PLAN.md — API functions, TanStack Query hooks, and EN+HE translations (206ec97, ef3a351)
+- [x] 01-02-PLAN.md — LoginForm inline forgot password flow + ResetPasswordPage + route wiring (28818d7, 75ca47e, b3d29d5)
 
 ---
-*Last updated: 2026-03-09 — Phase 1 planned (forgot password recovery)*
+*Last updated: 2026-03-10 — Phase 1 complete (forgot password recovery)*
