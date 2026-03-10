@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-08T22:58:28.126Z"
-last_activity: 2026-03-09 — 01-01 Password reset API functions and i18n translations (206ec97, ef3a351)
+status: complete
+stopped_at: Completed 01-02-PLAN.md — Phase 01 fully complete
+last_updated: "2026-03-10T00:00:00.000Z"
+last_activity: 2026-03-10 — 01-02 Forgot password UI and reset page (28818d7, 75ca47e, b3d29d5)
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-08)
 ## Current Position
 
 Phase: 1 — Add forgot username/password recovery buttons on login
-Plan: 01 of 02 (01 complete)
-Status: In Progress
-Last activity: 2026-03-09 — 01-01 Password reset API functions and i18n translations (206ec97, ef3a351)
+Plan: 02 of 02 (all complete)
+Status: Complete
+Last activity: 2026-03-10 — 01-02 Forgot password UI and reset page (28818d7, 75ca47e, b3d29d5)
 
 ```
 v1.9 Engagement & Retention: SHIPPED 2026-03-08
@@ -55,6 +55,7 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 - Phase 2-04: Teacher chart components switched to XP with level context; DB migration drops achievement_points, student_achievements.points, calculate_score_percentile
 - Phase 2-05: TeacherDashboard.jsx and apiTeacher.js fully migrated from points to XP; simplified data fetching by reading total_xp directly from students table
 - Phase 1-01: Hoisted siteUrl to module level in apiAuth.js; generic error messages on reset to prevent email enumeration; no retry on password reset mutations
+- Phase 1-02: Inline view switching in LoginForm (not modal); RTL-aware back arrow; smart session detection via URL param sniffing; 10s timeout for legitimate reset links
 
 ### Roadmap Evolution
 
@@ -79,15 +80,16 @@ All decisions archived in PROJECT.md Key Decisions table and `.planning/mileston
 | Phase 02 P04 | 5min | 2 tasks | 4 files |
 | Phase 02 P05 | 5min | 2 tasks | 2 files |
 | Phase 01 P01 | 3min | 2 tasks | 5 files |
+| Phase 01 P02 | 5min | 2 tasks | 3 files |
 
 ## Session Continuity
 
-Last session: 2026-03-08T22:58:28.118Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-10
+Stopped at: Completed 01-02-PLAN.md — Phase 01 fully complete
 
 **Next action:**
-- Execute Plan 02: UI components (ForgotPasswordModal, ResetPasswordPage, route registration)
+- Phase 01 (forgot password recovery) is complete. All plans executed and verified.
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-09 — 01-01 Password reset API and i18n translations complete*
+*Last updated: 2026-03-10 — Phase 01 complete (forgot password recovery flow)*
