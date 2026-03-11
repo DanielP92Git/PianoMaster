@@ -20,11 +20,16 @@
  */
 
 // CORS headers for browser invocation
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+const ALLOWED_ORIGINS = ['https://piano-master-nine.vercel.app', 'http://localhost:5174'];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  };
+}
 
 /**
  * Generate child-friendly HTML email with inline CSS
@@ -169,6 +174,8 @@ function generateConsentEmailHTML(consentUrl: string, childName?: string): strin
  * Main Edge Function handler
  */
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   // Handle CORS preflight - must return 200 status for browser to accept
   if (req.method === 'OPTIONS') {
     return new Response(null, {

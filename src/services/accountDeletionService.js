@@ -159,6 +159,9 @@ export async function cancelDeletionRequest(studentId) {
  * @returns {Promise<{isPendingDeletion: boolean, deletionRequestedAt: string|null, scheduledDeletionAt: string|null, daysRemaining: number|null, canCancel: boolean}>}
  */
 export async function getAccountDeletionStatus(studentId) {
+  // SECURITY: Verify caller is authorized to view this student's data
+  await verifyStudentDataAccess(studentId);
+
   const { data, error } = await supabase
     .from('students')
     .select('account_status, deletion_requested_at, deletion_scheduled_at')
