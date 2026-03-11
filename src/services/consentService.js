@@ -281,6 +281,13 @@ export async function revokeConsent(studentId) {
  * @throws {Error} If student not found
  */
 export async function getConsentStatus(studentId) {
+  // SECURITY: Verify caller is authorized to view this student's data
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  if (user.id !== studentId) {
+    throw new Error('Unauthorized: Can only view your own consent status');
+  }
+
   const { data, error } = await supabase
     .from('students')
     .select('account_status, consent_verified_at, parent_email, is_under_13')

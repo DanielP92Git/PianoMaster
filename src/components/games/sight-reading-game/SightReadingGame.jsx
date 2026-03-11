@@ -49,24 +49,19 @@ import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 import { useTranslation } from "react-i18next";
 
-// #region agent log (debug-mode instrumentation)
-// Network logging is disabled by default. Enable by setting
-// VITE_DEBUG_SR_LOGS=\"true\" in your Vite env and running the local
-// collector on 127.0.0.1:7242.
-const __SR_LOG_ENDPOINT =
-  "http://127.0.0.1:7242/ingest/636d1c48-b2ea-491c-896a-7ce448793071";
-const __SR_LOG_ENABLED =
-  typeof import.meta !== "undefined" &&
-  import.meta.env &&
-  import.meta.env.VITE_DEBUG_SR_LOGS === "true";
-const __srLog = (payload) => {
-  if (!__SR_LOG_ENABLED) return;
-  fetch(__SR_LOG_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  }).catch(() => {});
-};
+// #region agent log (debug-mode instrumentation — dev only)
+const __srLog = import.meta.env.DEV
+  ? (payload) => {
+      if (import.meta.env.VITE_DEBUG_SR_LOGS !== "true") return;
+      const endpoint = import.meta.env.VITE_DEBUG_SR_ENDPOINT;
+      if (!endpoint) return;
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    }
+  : () => {};
 // #endregion
 
 const GAME_PHASES = {
