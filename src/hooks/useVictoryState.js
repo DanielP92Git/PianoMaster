@@ -92,7 +92,7 @@ export function useVictoryState({
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { user } = useUser();
+  const { user, isTeacher } = useUser();
   const { reducedMotion } = useAccessibility();
   const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } = useBossUnlockTracking(user?.id, nodeId);
   const scorePercentage = (score / totalPossibleScore) * 100;
@@ -193,8 +193,7 @@ export function useVictoryState({
   const [rateLimited, setRateLimited] = useState(false);
   const [rateLimitResetTime, setRateLimitResetTime] = useState(null);
 
-  // Check if current user is a teacher (teachers bypass rate limiting)
-  const isTeacher = user?.user_metadata?.role === 'teacher';
+  // isTeacher is DB-verified from useUser() above (not user_metadata, which is user-editable)
 
   // Celebration tier and messaging (derived from existing state)
   const celebrationData = useMemo(() => {

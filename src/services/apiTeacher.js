@@ -782,6 +782,18 @@ export const updatePracticeSessionReview = async (sessionId, updates) => {
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
 
+    // SECURITY: Fetch session first to verify teacher has connection to the student
+    const { data: existingSession, error: fetchError } = await supabase
+      .from("practice_sessions")
+      .select("id, student_id")
+      .eq("id", sessionId)
+      .single();
+
+    if (fetchError || !existingSession)
+      throw new Error("Practice session not found");
+
+    await verifyTeacherStudentConnection(user.id, existingSession.student_id);
+
     const reviewData = {
       ...updates,
       reviewed_at: new Date().toISOString(),
@@ -1069,6 +1081,9 @@ export const getAssignmentSubmissions = async (assignmentId) => {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) throw new Error("Not authenticated");
+
+    // SECURITY: Verify the teacher owns this assignment
+    await verifyTeacherOwnsAssignment(user.id, assignmentId);
 
     const { data: submissions, error } = await supabase
       .from("assignment_submissions")

@@ -228,6 +228,11 @@ export async function revokeConsent(studentId) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
 
+  // SECURITY: Only the student themselves can revoke their own consent
+  if (user.id !== studentId) {
+    throw new Error('Unauthorized: Can only revoke consent for your own account');
+  }
+
   // Get student info for logging
   const { data: student } = await supabase
     .from('students')
