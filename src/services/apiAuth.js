@@ -1,10 +1,7 @@
 import supabase from "./supabase";
 import toast from "react-hot-toast";
 
-const isDevelopment = process.env.NODE_ENV === "development";
-const siteUrl = isDevelopment
-  ? "http://localhost:5174"
-  : "https://piano-master-nine.vercel.app";
+const siteUrl = import.meta.env.VITE_SITE_URL || "http://localhost:5174";
 
 export async function login({ email, password }) {
   try {
@@ -242,7 +239,7 @@ export async function logout() {
     keysToRemove.forEach((key) => localStorage.removeItem(key));
 
     // Log cleanup count in development only
-    if (process.env.NODE_ENV === "development") {
+    if (import.meta.env.DEV) {
       console.log(
         `Logout: Cleared ${keysToRemove.length} user-specific localStorage keys`
       );
@@ -378,122 +375,95 @@ export async function updateUserAvatar(userId, avatarId) {
   }
 }
 
-export async function checkUserPermissions() {
-  // Only allow in development mode - prevents exposing permission info in production
-  if (process.env.NODE_ENV !== "development") {
-    console.warn("checkUserPermissions is only available in development mode");
-    return { error: "Not available in production" };
-  }
+// Debug utilities — only included in dev builds (tree-shaken from production)
+export const checkUserPermissions = import.meta.env.DEV
+  ? async function checkUserPermissions() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session) {
+          return { authenticated: false, message: "No active session" };
+        }
 
-  try {
-    // Get the current session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      return { authenticated: false, message: "No active session" };
+        const { data: readData, error: readError } = await supabase
+          .from("students")
+          .select("id")
+          .limit(1);
+
+        const testId = session.user.id;
+        const { data: writeData, error: writeError } = await supabase
+          .from("students")
+          .upsert(
+            { id: testId, last_check: new Date().toISOString() },
+            { onConflict: "id", returning: "minimal" }
+          );
+
+        return {
+          authenticated: true,
+          userId: session.user.id,
+          canRead: !readError,
+          readError: readError
+            ? {
+                code: readError.code,
+                message: readError.message,
+                details: readError.details,
+              }
+            : null,
+          canWrite: !writeError,
+          writeError: writeError
+            ? {
+                code: writeError.code,
+                message: writeError.message,
+                details: writeError.details,
+              }
+            : null,
+        };
+      } catch (error) {
+        console.error("Error checking permissions:", error);
+        return { authenticated: false, error: error.message };
+      }
     }
+  : () => ({ error: "Not available in production" });
 
-    // Check if the user can read from the students table
-    const { data: readData, error: readError } = await supabase
-      .from("students")
-      .select("id")
-      .limit(1);
+export const checkDatabaseStructure = import.meta.env.DEV
+  ? async function checkDatabaseStructure() {
+      try {
+        const { data: studentsData, error: studentsError } = await supabase
+          .from("students")
+          .select("id")
+          .limit(1);
 
-    // Check if the user can write to the students table
-    const testId = session.user.id;
-    const { data: writeData, error: writeError } = await supabase
-      .from("students")
-      .upsert(
-        { id: testId, last_check: new Date().toISOString() },
-        { onConflict: "id", returning: "minimal" }
-      );
+        const { data: avatarsData, error: avatarsError } = await supabase
+          .from("avatars")
+          .select("id")
+          .limit(1);
 
-    return {
-      authenticated: true,
-      userId: session.user.id,
-      canRead: !readError,
-      readError: readError
-        ? {
-            code: readError.code,
-            message: readError.message,
-            details: readError.details,
-          }
-        : null,
-      canWrite: !writeError,
-      writeError: writeError
-        ? {
-            code: writeError.code,
-            message: writeError.message,
-            details: writeError.details,
-          }
-        : null,
-    };
-  } catch (error) {
-    console.error("Error checking permissions:", error);
-    return {
-      authenticated: false,
-      error: error.message,
-    };
-  }
-}
+        const { data: relationData, error: relationError } = await supabase
+          .from("students")
+          .select("*, avatars(*)")
+          .limit(1);
 
-export async function checkDatabaseStructure() {
-  // Only allow in development mode - prevents exposing database structure info in production
-  if (process.env.NODE_ENV !== "development") {
-    console.warn("checkDatabaseStructure is only available in development mode");
-    return { error: "Not available in production" };
-  }
-
-  try {
-    // Check if the students table exists
-    const { data: studentsData, error: studentsError } = await supabase
-      .from("students")
-      .select("id")
-      .limit(1);
-
-    // Check if the avatars table exists
-    const { data: avatarsData, error: avatarsError } = await supabase
-      .from("avatars")
-      .select("id")
-      .limit(1);
-
-    // Check if the foreign key relationship works
-    const { data: relationData, error: relationError } = await supabase
-      .from("students")
-      .select("*, avatars(*)")
-      .limit(1);
-
-    return {
-      studentsTableExists: !studentsError,
-      studentsError: studentsError
-        ? {
-            code: studentsError.code,
-            message: studentsError.message,
-          }
-        : null,
-      avatarsTableExists: !avatarsError,
-      avatarsError: avatarsError
-        ? {
-            code: avatarsError.code,
-            message: avatarsError.message,
-          }
-        : null,
-      relationWorks: !relationError,
-      relationError: relationError
-        ? {
-            code: relationError.code,
-            message: relationError.message,
-          }
-        : null,
-      studentsData: studentsData,
-      avatarsData: avatarsData,
-      relationData: relationData,
-    };
-  } catch (error) {
-    console.error("Error checking database structure:", error);
-    return {
-      error: error.message,
-    };
-  }
-}
+        return {
+          studentsTableExists: !studentsError,
+          studentsError: studentsError
+            ? { code: studentsError.code, message: studentsError.message }
+            : null,
+          avatarsTableExists: !avatarsError,
+          avatarsError: avatarsError
+            ? { code: avatarsError.code, message: avatarsError.message }
+            : null,
+          relationWorks: !relationError,
+          relationError: relationError
+            ? { code: relationError.code, message: relationError.message }
+            : null,
+          studentsData,
+          avatarsData,
+          relationData,
+        };
+      } catch (error) {
+        console.error("Error checking database structure:", error);
+        return { error: error.message };
+      }
+    }
+  : () => ({ error: "Not available in production" });

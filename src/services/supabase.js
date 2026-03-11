@@ -8,10 +8,7 @@ if (!supabaseUrl)
 if (!supabaseKey)
   throw new Error("Missing VITE_SUPABASE_ANON_KEY environment variable");
 
-const isDevelopment = process.env.NODE_ENV === "development";
-const siteUrl = isDevelopment
-  ? "http://localhost:5174"
-  : "https://piano-master-nine.vercel.app";
+const siteUrl = import.meta.env.VITE_SITE_URL || "http://localhost:5174";
 
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {

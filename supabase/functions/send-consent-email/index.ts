@@ -20,7 +20,7 @@
  */
 
 // CORS headers for browser invocation
-const ALLOWED_ORIGINS = ['https://piano-master-nine.vercel.app', 'http://localhost:5174'];
+const ALLOWED_ORIGINS = ['https://testpianomaster.netlify.app', 'http://localhost:5174'];
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('origin') || '';
