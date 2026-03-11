@@ -113,65 +113,30 @@ export async function sendParentalConsentEmail(studentId, parentEmail) {
  * @throws {Error} If token is invalid or expired
  */
 export async function verifyParentalConsent(studentId, token) {
-  const tokenHash = await hashToken(token);
+  // Route through Edge Function which uses service role to call
+  // verify_parental_consent() SECURITY DEFINER function.
+  // This avoids client-side direct table access to parental_consent_tokens.
+  const { data, error } = await supabase.functions.invoke('verify-consent', {
+    body: { studentId, token },
+  });
 
-  // Use the database service function to verify and update
-  // Note: verify_parental_consent requires service role, so we call directly
-  // For client-side, we need to query and update manually
-
-  // Find valid token
-  const { data: consentToken, error: findError } = await supabase
-    .from('parental_consent_tokens')
-    .select('id, student_id, expires_at')
-    .eq('student_id', studentId)
-    .eq('token_hash', tokenHash)
-    .is('used_at', null)
-    .gt('expires_at', new Date().toISOString())
-    .single();
-
-  if (findError || !consentToken) {
-    throw new Error('Invalid or expired consent token');
+  if (error) {
+    // Handle Supabase function invocation errors
+    if (error instanceof FunctionsHttpError) {
+      const errorData = await error.context.json();
+      throw new Error(errorData?.error || 'Verification failed');
+    }
+    if (error instanceof FunctionsRelayError) {
+      throw new Error('Network error during verification');
+    }
+    if (error instanceof FunctionsFetchError) {
+      throw new Error('Unable to connect to verification service');
+    }
+    throw new Error(error.message || 'Verification failed');
   }
 
-  // Mark token as used
-  const { error: updateTokenError } = await supabase
-    .from('parental_consent_tokens')
-    .update({ used_at: new Date().toISOString() })
-    .eq('id', consentToken.id);
-
-  if (updateTokenError) throw updateTokenError;
-
-  // Get parent email for logging
-  const { data: student } = await supabase
-    .from('students')
-    .select('parent_email')
-    .eq('id', studentId)
-    .single();
-
-  // Activate account
-  const { error: activateError } = await supabase
-    .from('students')
-    .update({
-      account_status: 'active',
-      consent_verified_at: new Date().toISOString(),
-      consent_revoked_at: null
-    })
-    .eq('id', studentId);
-
-  if (activateError) throw activateError;
-
-  // Log verification
-  const { error: logError } = await supabase
-    .from('parental_consent_log')
-    .insert({
-      student_id: studentId,
-      parent_email: student?.parent_email || 'unknown',
-      action: 'verified'
-    });
-
-  // Don't throw on log error - verification succeeded
-  if (logError) {
-    console.warn('Failed to log consent verification:', logError);
+  if (!data?.success) {
+    throw new Error(data?.error || 'Invalid or expired consent token');
   }
 
   return { success: true };
