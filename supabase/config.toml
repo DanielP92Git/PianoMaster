@@ -328,6 +328,10 @@ verify_jwt = false
 # Called by parent clicking unsubscribe link in email (no JWT). Security enforced via HMAC token verification.
 verify_jwt = false
 
+[functions.verify-consent]
+# Called by parent clicking consent link in email (no JWT). Security enforced via hashed token + SECURITY DEFINER function.
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
