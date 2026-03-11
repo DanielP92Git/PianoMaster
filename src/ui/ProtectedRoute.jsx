@@ -22,6 +22,9 @@ function ProtectedRoute({ children }) {
   }
 
   if (isAuthenticated) return children;
+
+  // Not authenticated and not loading — navigate effect will redirect to /login
+  return null;
 }
 
 export default ProtectedRoute;
