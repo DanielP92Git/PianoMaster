@@ -382,6 +382,20 @@ const ON_FIRE_THRESHOLD = 5;
 const MAX_EXTRA_NOTES = 3;
 const GROW_INTERVAL = 5; // Add a note every 5 streak
 
+/**
+ * Filter candidate notes from auto-grow based on accidental boundary rule.
+ * Natural-only sessions cannot receive accidentals from next nodes.
+ * Accidental sessions can receive any note (naturals or more accidentals).
+ *
+ * @param {string[]} candidatePool - Array of pitch strings (e.g. ['C4', 'F#4', 'Bb4'])
+ * @param {boolean} currentPoolHasAccidentals - Whether the current session notePool has accidentals
+ * @returns {string[]} Filtered array of eligible candidate pitches
+ */
+export function filterAutoGrowCandidates(candidatePool, currentPoolHasAccidentals) {
+  if (currentPoolHasAccidentals) return candidatePool; // No filtering for accidental sessions
+  return candidatePool.filter(pitch => !/[#b]/.test(pitch));
+}
+
 export function NotesRecognitionGame() {
   const { soft, snappy, fade, reduce } = useMotionTokens();
   const { reducedMotion: appReducedMotion } = useAccessibility();
@@ -881,6 +895,13 @@ export function NotesRecognitionGame() {
     const currentNode = getNodeById(currentNodeId);
     if (!currentNode) return null;
 
+    // Determine if the current session contains accidentals.
+    // Prefer the trail flags derived from location.state (set by TrailNodeModal from notePool).
+    // Fallback to inspecting the node's own noteConfig pool for non-standard launches.
+    const currentPoolHasAccidentals =
+      trailEnableSharps || trailEnableFlats ||
+      (currentNode.noteConfig?.notePool || []).some(p => /[#b]/.test(p));
+
     // Build set of all notes already in the pool
     const currentPool = currentNode.noteConfig?.notePool || [];
     const alreadyKnown = new Set([
@@ -888,23 +909,32 @@ export function NotesRecognitionGame() {
       ...extraNotes.map(n => n.pitch || n.englishName),
     ]);
 
-    // Walk forward through subsequent nodes until we find a new note
+    // Walk forward through subsequent nodes until we find an eligible new note.
+    // Apply accidental boundary guard: natural-only sessions cannot receive accidentals.
     let searchNodeId = currentNodeId;
     for (let i = 0; i < 10; i++) { // Limit search to 10 nodes ahead
       const nextNode = getNextNodeInCategory(searchNodeId);
       if (!nextNode || !nextNode.noteConfig?.notePool) break;
 
-      const candidatePitch = nextNode.noteConfig.notePool.find(p => !alreadyKnown.has(p));
+      // Get candidates that are genuinely new (not already known)
+      const newCandidates = nextNode.noteConfig.notePool.filter(p => !alreadyKnown.has(p));
+
+      // Apply boundary guard: strip accidentals for natural-only sessions
+      const eligibleCandidates = filterAutoGrowCandidates(newCandidates, currentPoolHasAccidentals);
+
+      const candidatePitch = eligibleCandidates[0];
       if (candidatePitch) {
         const clefKey = String(settings.clef || "Treble").toLowerCase();
         const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
         return allNotes.find(n => n.pitch === candidatePitch || n.englishName === candidatePitch) ?? null;
       }
+      // All candidates were filtered out (e.g. all accidentals for natural session).
+      // Advance and try the next node in the category.
       searchNodeId = nextNode.id;
     }
 
     return null;
-  }, [settings.clef]);
+  }, [settings.clef, trailEnableSharps, trailEnableFlats]);
 
   // Get random note based on current settings
   const getRandomNote = useCallback(() => {
