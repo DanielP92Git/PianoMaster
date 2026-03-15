@@ -1,7 +1,7 @@
 import {
   DURATION_CONSTANTS as RHYTHM_DURATION_CONSTANTS,
   TIME_SIGNATURES as RHYTHM_TIME_SIGNATURES,
-} from "../../rhythm-games/RhythmPatternGenerator";
+} from "../../rhythm-games/RhythmPatternGenerator.js";
 
 /**
  * Canonical duration definitions used across sight-reading + rhythm games.

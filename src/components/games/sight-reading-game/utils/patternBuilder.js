@@ -24,9 +24,9 @@ const debugLog = (...args) => {
   }
 };
 
-const inferClefForPitch = (pitch) => {
+export const inferClefForPitch = (pitch) => {
   if (!pitch) return "treble";
-  const match = String(pitch).match(/^([A-G])(\d+)$/i);
+  const match = String(pitch).match(/^([A-G][#b]?)(\d+)$/i);
   if (!match) return "treble";
   const octave = Number(match[2]);
   return octave >= 4 ? "treble" : "bass";
@@ -56,8 +56,8 @@ const toVexFlowNote = (obj) => {
   }
 
   if (obj.pitch) {
-    // Parse pitch (e.g., "C3", "D4", "C10") - handle both single and multi-digit octaves
-    const pitchMatch = obj.pitch.match(/^([A-G])(\d+)$/);
+    // Parse pitch (e.g., "C3", "D4", "F#4", "Bb3") - handle naturals, sharps, and flats
+    const pitchMatch = obj.pitch.match(/^([A-G][#b]?)(\d+)$/);
     if (pitchMatch) {
       const [, note, octave] = pitchMatch;
       return {

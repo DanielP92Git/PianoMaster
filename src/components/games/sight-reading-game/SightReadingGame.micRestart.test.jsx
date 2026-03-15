@@ -4,6 +4,22 @@ import { MemoryRouter } from "react-router-dom";
 import { SightReadingGame } from "./SightReadingGame";
 
 // ---- Mocks (keep the test focused on mic lifecycle, not rendering/VexFlow/etc.) ----
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key) => {
+      // Map known keys to human-readable strings for test assertions
+      const translations = {
+        "sightReading.startPlaying": "Start Playing",
+        "sightReading.tryAgain": "Try Again",
+      };
+      return translations[key] ?? key;
+    },
+    i18n: { changeLanguage: vi.fn(), language: "en", dir: () => "ltr" },
+  }),
+  Trans: ({ i18nKey }) => i18nKey,
+  initReactI18next: { type: "3rdParty", init: vi.fn() },
+}));
+
 vi.mock("../../ui/BackButton", () => ({
   default: () => null,
 }));
@@ -91,6 +107,26 @@ vi.mock("../../../hooks/useMicNoteInput", () => ({
     startListening: startListeningSpy,
     stopListening: stopListeningSpy,
     debug: {},
+  }),
+}));
+
+vi.mock("../../../contexts/AudioContextProvider", () => ({
+  useAudioContext: () => ({
+    audioContextRef: { current: { state: "running", resume: vi.fn(async () => {}) } },
+    analyserRef: { current: null },
+    streamRef: { current: null },
+    isReady: true,
+    isInterrupted: false,
+    micPermission: "granted",
+    requestMic: vi.fn(async () => ({
+      analyser: null,
+      audioContext: { state: "running", sampleRate: 44100 },
+    })),
+    releaseMic: vi.fn(),
+    suspendAudio: vi.fn(async () => {}),
+    resumeAudio: vi.fn(async () => {}),
+    handleTapToResume: vi.fn(),
+    getOrCreateAudioContext: vi.fn(() => ({ state: "running" })),
   }),
 }));
 

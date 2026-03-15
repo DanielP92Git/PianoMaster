@@ -1,12 +1,12 @@
 import {
   getDurationDefinition,
   resolveTimeSignature,
-} from "../constants/durationConstants";
+} from "../constants/durationConstants.js";
 import {
   COMPLEX_EXAMPLE_PATTERNS,
   getSingleBeatComplexPatterns,
   getMultiBeatComplexPatterns,
-} from "./rhythmPatterns";
+} from "./rhythmPatterns.js";
 
 /**
  * Rhythm generator (v2 - Beat-wise)
