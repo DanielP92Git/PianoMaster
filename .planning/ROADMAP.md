@@ -147,7 +147,7 @@ See `.planning/milestones/` for archived details of each milestone.
 #### Phase Summary
 
 - [x] **Phase 01: Pre-Flight Bug Fixes** — Fix two code bugs that silently corrupt accidentals before any content can be tested (completed 2026-03-15)
-- [ ] **Phase 02: Treble Accidentals Content** — Author treble sharps unit (F#4, C#4), flats unit (Bb4, Eb4), and boss node
+- [x] **Phase 02: Treble Accidentals Content** — Author treble sharps unit (F#4, C#4), flats unit (Bb4, Eb4), and boss node (completed 2026-03-15)
 - [ ] **Phase 03: Bass Accidentals Content** — Author bass flats unit (Bb3, Eb3), sharps unit (Ab3, Db3), and boss node
 - [ ] **Phase 04: Integration, Gate, and i18n** — Wire nodes into trail, verify subscription gate, confirm mic enharmonics, add EN/HE translations
 
@@ -229,7 +229,7 @@ Plans:
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
 | 01. Hebrew Translations | 1/2 | Complete    | 2026-03-15 | 2026-02-13 |
-| 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
+| 02. Foundation - Orientation Detection & Prompt | v1.6 | Complete    | 2026-03-15 | 2026-02-13 |
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
 | 05. Accessibility & Internationalization | v1.6 | 1/1 | Complete | 2026-02-16 |
