@@ -140,7 +140,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
-### 🚧 v2.2 Sharps & Flats (In Progress)
+### v2.2 Sharps & Flats (In Progress)
 
 **Milestone Goal:** Extend the trail with accidentals (sharps and flats) across treble and bass clef paths, delivering ~20 new premium nodes for subscriber retention.
 
@@ -162,7 +162,10 @@ See `.planning/milestones/` for archived details of each milestone.
   2. A Sight Reading exercise containing "F#4" renders the correct VexFlow accidental glyph instead of falling through to a C4 fallback
   3. An arcade session on a natural-notes node at 10-combo does not inject F#4 or Bb4 from the next accidentals unit into the answer pool
   4. `npm run verify:patterns` and `npm test` both pass after the fixes
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Fix patternBuilder regex, ESM import, and pre-existing test failure (FIX-02)
+- [ ] 01-02-PLAN.md — Trail flag derivation, game flag consumption, auto-grow boundary guard (FIX-01)
 
 ### Phase 02: Treble Accidentals Content
 **Goal**: Treble clef learners can practice sharps and flats on the trail with pedagogically correct progression
@@ -249,7 +252,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01. VictoryScreen Redesign | v2.0 | 1/1 | Complete | 2026-03-08 |
 | 02. XP Unification | v2.0 | 5/5 | Complete | 2026-03-08 |
 | 01. Forgot Password Recovery | v2.1 | 2/2 | Complete | 2026-03-10 |
-| 01. Pre-Flight Bug Fixes | v2.2 | 0/TBD | Not started | - |
+| 01. Pre-Flight Bug Fixes | v2.2 | 0/2 | Not started | - |
 | 02. Treble Accidentals Content | v2.2 | 0/TBD | Not started | - |
 | 03. Bass Accidentals Content | v2.2 | 0/TBD | Not started | - |
 | 04. Integration, Gate, and i18n | v2.2 | 0/TBD | Not started | - |
@@ -257,4 +260,4 @@ See `.planning/milestones/` for archived details of each milestone.
 **Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-15 — v2.2 roadmap created*
+*Last updated: 2026-03-15 — Phase 01 planned (2 plans)*
