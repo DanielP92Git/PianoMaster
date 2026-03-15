@@ -1,19 +1,22 @@
 /**
- * Treble Clef Unit 5: "Flat Notes" (Redesigned)
+ * Treble Clef Unit 5: "Flat Notes" (Redesigned — Phase 03 replacement)
  *
- * Introduces accidentals: Bb4 and Eb4
- * - Discovery nodes introduce each flat with nearest-neighbor context
+ * Introduces 4 flats: Bb4, Eb4, Ab4, and Db4 (expanded from Phase 02's Bb4/Eb4 only)
+ * - One Discovery node per flat — nearest-neighbor naturals (e.g. A4, Bb4, B4)
  * - Regular practice nodes use NOTE_RECOGNITION ONLY (no SIGHT_READING)
- *   REASON: Mic pitch detection outputs A#4 (not Bb4) and D#4 (not Eb4).
- *   Using SIGHT_READING with flat notePools causes silent scoring failure.
- *   Fix (INTG-03) is in Phase 04. Boss nodes are inert until Phase 04 wires
- *   them into expandedNodes.js, so SIGHT_READING in boss nodes is safe to define.
- * - No F#4 or C#4 in regular node notePools (flats unit is strictly flat-only)
+ *   REASON: Mic pitch detection outputs A#4/D#4/G#4/C#4 (not Bb4/Eb4/Ab4/Db4).
+ *   Using SIGHT_READING with flat notePools causes silent scoring failure (INTG-03).
+ *   Fix is in Phase 04. Boss nodes are inert until Phase 04 wires them into
+ *   expandedNodes.js, so SIGHT_READING in boss nodes is safe to define now.
+ * - No sharps (F#4, C#4, G#4) in any regular node notePools
  * - All nodes have accidentals: true in noteConfig
- * - Accidentals boss (boss_treble_accidentals) mixes all 4 accidentals + full octave
+ * - boss_treble_accidentals mixes ALL 7 treble accidentals + full C4-C5 octave (15 notes)
  *
- * Duration: 30-35 minutes
- * Goal: Recognize Bb4 and Eb4 confidently among natural notes
+ * This file replaces the Phase 02 version (which covered only Bb4 and Eb4, 8 nodes).
+ * Phase 03 version: 10 nodes (orders 35-44), 4 Discovery nodes, 2 Boss nodes.
+ *
+ * Duration: 35-40 minutes
+ * Goal: Recognize Bb4, Eb4, Ab4, and Db4 confidently among natural notes
  * Prerequisite: boss_treble_4 (Unit 4 / sharps completion)
  */
 
@@ -23,11 +26,13 @@ import { EXERCISE_TYPES } from '../constants.js';
 const UNIT_ID = 5;
 const UNIT_NAME = 'Flat Notes';
 const CATEGORY = 'treble_clef';
-const START_ORDER = 34;  // After Unit 4 (7 nodes starting at 27, so ends at 33)
+const START_ORDER = 35;  // After Unit 4 (8 nodes starting at 27, so ends at 34)
 
 /**
- * Unit 5 Nodes
- * Key features: Bb4 Discovery → Eb4 Discovery → Practice (NR only) → Memory → Speed → Boss → Accidentals Boss
+ * Unit 5 Nodes — Phase 03 version with Ab4 and Db4 added
+ * Key features: Bb4 Discovery → Eb4 Discovery → Ab4 Discovery → Db4 Discovery
+ *               → All-flats Practice (NR only) → Flats+naturals Practice (NR only)
+ *               → Memory → Speed → Flat Boss → Accidentals Master Boss
  */
 export const trebleUnit5Nodes = [
   // ============================================
@@ -141,13 +146,12 @@ export const trebleUnit5Nodes = [
   },
 
   // ============================================
-  // NODE 3: Flats Together (Practice)
-  // NOTE: NOTE_RECOGNITION only -- mic outputs A#4/D#4, not Bb4/Eb4
+  // NODE 3: Meet A Flat (Discovery) — NEW in Phase 03
   // ============================================
   {
     id: 'treble_5_3',
-    name: 'Flats Together',
-    description: 'Play Bb and Eb side by side',
+    name: 'Meet A Flat',
+    description: 'Discover the flat note Ab',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -155,12 +159,125 @@ export const trebleUnit5Nodes = [
     orderInUnit: 3,
     prerequisites: ['treble_5_2'],
 
+    nodeType: NODE_TYPES.DISCOVERY,
+
+    noteConfig: {
+      notePool: ['G4', 'Ab4', 'A4'],
+      focusNotes: ['Ab4'],
+      contextNotes: ['G4', 'A4'],
+      clef: 'treble',
+      ledgerLines: false,
+      accidentals: true
+    },
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.SIMPLE,
+      allowedDurations: ['q'],
+      patterns: ['quarter'],
+      tempo: { min: 60, max: 70, default: 65 }
+    },
+
+    newContent: NEW_CONTENT_TYPES.NOTE,
+    newContentDescription: 'Note Ab',
+
+    exercises: [
+      {
+        // NOTE_RECOGNITION only -- mic outputs G#4 (not Ab4) for this note
+        type: EXERCISE_TYPES.NOTE_RECOGNITION,
+        config: {
+          notePool: ['G4', 'Ab4', 'A4'],
+          questionCount: 8,
+          clef: 'treble',
+          timeLimit: null
+        }
+      }
+    ],
+
+    skills: ['G4', 'Ab4', 'A4'],
+    xpReward: 45,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: []
+  },
+
+  // ============================================
+  // NODE 4: Meet D Flat (Discovery) — NEW in Phase 03
+  // ============================================
+  {
+    id: 'treble_5_4',
+    name: 'Meet D Flat',
+    description: 'Discover the flat note Db',
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 3,
+    orderInUnit: 4,
+    prerequisites: ['treble_5_3'],
+
+    nodeType: NODE_TYPES.DISCOVERY,
+
+    noteConfig: {
+      notePool: ['C4', 'Db4', 'D4'],
+      focusNotes: ['Db4'],
+      contextNotes: ['C4', 'D4'],
+      clef: 'treble',
+      ledgerLines: false,
+      accidentals: true
+    },
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.SIMPLE,
+      allowedDurations: ['q'],
+      patterns: ['quarter'],
+      tempo: { min: 60, max: 70, default: 65 }
+    },
+
+    newContent: NEW_CONTENT_TYPES.NOTE,
+    newContentDescription: 'Note Db',
+
+    exercises: [
+      {
+        // NOTE_RECOGNITION only -- mic outputs C#4 (not Db4) for this note
+        type: EXERCISE_TYPES.NOTE_RECOGNITION,
+        config: {
+          notePool: ['C4', 'Db4', 'D4'],
+          questionCount: 8,
+          clef: 'treble',
+          timeLimit: null
+        }
+      }
+    ],
+
+    skills: ['C4', 'Db4', 'D4'],
+    xpReward: 45,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: []
+  },
+
+  // ============================================
+  // NODE 5: All Four Flats (Practice)
+  // NOTE: NOTE_RECOGNITION only -- mic outputs enharmonic sharps for all 4 flats
+  // ============================================
+  {
+    id: 'treble_5_5',
+    name: 'Flats Together',
+    description: 'Play Bb, Eb, Ab, and Db side by side',
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ['treble_5_4'],
+
     nodeType: NODE_TYPES.PRACTICE,
 
     noteConfig: {
-      notePool: ['Bb4', 'Eb4'],
+      notePool: ['Bb4', 'Eb4', 'Ab4', 'Db4'],
       focusNotes: [],
-      contextNotes: ['Bb4', 'Eb4'],
+      contextNotes: ['Bb4', 'Eb4', 'Ab4', 'Db4'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -174,14 +291,14 @@ export const trebleUnit5Nodes = [
     },
 
     newContent: NEW_CONTENT_TYPES.NONE,
-    newContentDescription: 'Both flats',
+    newContentDescription: 'All four flats',
 
     exercises: [
       {
-        // NOTE_RECOGNITION (NOT sight reading -- enharmonic mic bug: mic outputs A#4/D#4)
+        // NOTE_RECOGNITION only -- enharmonic mic bug: mic outputs A#4/D#4/G#4/C#4
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['Bb4', 'Eb4'],
+          notePool: ['Bb4', 'Eb4', 'Ab4', 'Db4'],
           questionCount: 10,
           clef: 'treble',
           timeLimit: null
@@ -189,7 +306,7 @@ export const trebleUnit5Nodes = [
       }
     ],
 
-    skills: ['Bb4', 'Eb4'],
+    skills: ['Bb4', 'Eb4', 'Ab4', 'Db4'],
     xpReward: 50,
     accessoryUnlock: null,
     isBoss: false,
@@ -198,26 +315,26 @@ export const trebleUnit5Nodes = [
   },
 
   // ============================================
-  // NODE 4: Flats and Friends (Practice)
+  // NODE 6: Flats and Friends (Practice)
   // NOTE: NOTE_RECOGNITION only -- enharmonic mic bug
   // ============================================
   {
-    id: 'treble_5_4',
+    id: 'treble_5_6',
     name: 'Flats and Friends',
     description: 'Mix flats with natural notes',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 3,
-    orderInUnit: 4,
-    prerequisites: ['treble_5_3'],
+    order: START_ORDER + 5,
+    orderInUnit: 6,
+    prerequisites: ['treble_5_5'],
 
     nodeType: NODE_TYPES.PRACTICE,
 
     noteConfig: {
-      notePool: ['D4', 'Eb4', 'E4', 'A4', 'Bb4', 'B4'],
+      notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4'],
       focusNotes: [],
-      contextNotes: ['D4', 'Eb4', 'E4', 'A4', 'Bb4', 'B4'],
+      contextNotes: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -235,10 +352,10 @@ export const trebleUnit5Nodes = [
 
     exercises: [
       {
-        // NOTE_RECOGNITION (NOT sight reading -- enharmonic mic bug)
+        // NOTE_RECOGNITION only -- enharmonic mic bug for all flats
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['D4', 'Eb4', 'E4', 'A4', 'Bb4', 'B4'],
+          notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4'],
           questionCount: 12,
           clef: 'treble',
           timeLimit: null
@@ -246,7 +363,7 @@ export const trebleUnit5Nodes = [
       }
     ],
 
-    skills: ['D4', 'Eb4', 'E4', 'A4', 'Bb4', 'B4'],
+    skills: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4'],
     xpReward: 55,
     accessoryUnlock: null,
     isBoss: false,
@@ -255,25 +372,26 @@ export const trebleUnit5Nodes = [
   },
 
   // ============================================
-  // NODE 5: Flat Memory (Mix-Up - Memory Game)
+  // NODE 7: Flat Memory (Mix-Up - Memory Game)
+  // Full C4-C5 octave + all 4 flats = 12 notes
   // ============================================
   {
-    id: 'treble_5_5',
+    id: 'treble_5_7',
     name: 'Flat Memory',
     description: 'Match flat notes in a memory game',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ['treble_5_4'],
+    order: START_ORDER + 6,
+    orderInUnit: 7,
+    prerequisites: ['treble_5_6'],
 
     nodeType: NODE_TYPES.MIX_UP,
 
     noteConfig: {
-      notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      contextNotes: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -293,15 +411,15 @@ export const trebleUnit5Nodes = [
       {
         type: EXERCISE_TYPES.MEMORY_GAME,
         config: {
-          notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
-          gridSize: '4x4',     // picks 8 pairs from pool
+          notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
+          gridSize: '4x4',     // picks 8 pairs from 12-note pool
           clef: 'treble',
           timeLimit: 180       // 3 minutes
         }
       }
     ],
 
-    skills: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+    skills: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
     xpReward: 60,
     accessoryUnlock: null,
     isBoss: false,
@@ -310,25 +428,26 @@ export const trebleUnit5Nodes = [
   },
 
   // ============================================
-  // NODE 6: Flat Speed (Speed Round)
+  // NODE 8: Flat Speed (Speed Round)
+  // NOTE: NOTE_RECOGNITION only -- enharmonic mic bug
   // ============================================
   {
-    id: 'treble_5_6',
+    id: 'treble_5_8',
     name: 'Flat Speed',
     description: 'Race the clock to name flat notes',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ['treble_5_5'],
+    order: START_ORDER + 7,
+    orderInUnit: 8,
+    prerequisites: ['treble_5_7'],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
     noteConfig: {
-      notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      contextNotes: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -346,9 +465,10 @@ export const trebleUnit5Nodes = [
 
     exercises: [
       {
+        // NOTE_RECOGNITION only -- enharmonic mic bug for all flats
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+          notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
           questionCount: 20,
           clef: 'treble',
           timeLimit: 150000    // 2.5 minutes
@@ -356,7 +476,7 @@ export const trebleUnit5Nodes = [
       }
     ],
 
-    skills: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+    skills: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
     xpReward: 65,
     accessoryUnlock: null,
     isBoss: false,
@@ -365,28 +485,28 @@ export const trebleUnit5Nodes = [
   },
 
   // ============================================
-  // NODE 7: Flat Star (BOSS - boss_treble_5)
+  // NODE 9: Flat Star (BOSS — boss_treble_5)
   // NOTE: SIGHT_READING included here -- boss is inert until Phase 04 wires it
   //       into expandedNodes.js, so no runtime impact before INTG-03 is fixed
   // ============================================
   {
     id: 'boss_treble_5',
     name: 'Flat Star',
-    description: 'Master all flat notes in the ultimate challenge!',
+    description: 'Master all four flat notes in the ultimate challenge!',
     unlockHint: 'Complete all flat note lessons to unlock this challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
-    prerequisites: ['treble_5_6'],
+    order: START_ORDER + 8,
+    orderInUnit: 9,
+    prerequisites: ['treble_5_8'],
 
     nodeType: NODE_TYPES.BOSS,
 
     noteConfig: {
-      notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      contextNotes: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -406,7 +526,7 @@ export const trebleUnit5Nodes = [
       {
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+          notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
           questionCount: 15,
           clef: 'treble',
           timeLimit: null
@@ -416,7 +536,7 @@ export const trebleUnit5Nodes = [
         // SIGHT_READING safe here -- boss is inert until Phase 04 wires it in (INTG-03 fix)
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+          notePool: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
@@ -426,7 +546,7 @@ export const trebleUnit5Nodes = [
       }
     ],
 
-    skills: ['C4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+    skills: ['C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
     xpReward: 150,
     accessoryUnlock: null,
     isBoss: true,
@@ -435,30 +555,30 @@ export const trebleUnit5Nodes = [
   },
 
   // ============================================
-  // NODE 8: Accidentals Master (BOSS - boss_treble_accidentals)
-  // The cross-unit boss challenge mixing ALL 4 accidentals + full C4-C5 octave
-  // This is the ONLY node in this file with F#4 and C#4 in its notePool
-  // NOTE: Both SIGHT_READING exercises are safe -- node is inert until Phase 04
+  // NODE 10: Accidentals Master (BOSS — boss_treble_accidentals)
+  // Cross-unit boss mixing ALL 7 treble accidentals + full C4-C5 octave = 15 notes
+  // This is the ONLY node in this file with sharps (F#4, C#4, G#4) in its notePool
+  // NOTE: SIGHT_READING is safe -- node is inert until Phase 04 wires it in
   // ============================================
   {
     id: 'boss_treble_accidentals',
     name: 'Accidentals Master',
-    description: 'Face all four accidentals in one epic challenge!',
+    description: 'Face all seven accidentals in one epic challenge!',
     unlockHint: 'Beat both the Sharp Star and Flat Star to face the ultimate accidentals challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: 'Accidentals Master',   // Override UNIT_NAME for this cross-unit boss
-    order: START_ORDER + 7,
-    orderInUnit: 8,
+    order: START_ORDER + 9,
+    orderInUnit: 10,
     prerequisites: ['boss_treble_5'],
 
     nodeType: NODE_TYPES.BOSS,
 
     noteConfig: {
-      // All 4 accidentals (F#4, C#4, Bb4, Eb4) + full C4-C5 octave = 12 notes
-      notePool: ['C4', 'C#4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      // All 7 accidentals (F#4, C#4, G#4, Bb4, Eb4, Ab4, Db4) + full C4-C5 octave = 15 notes
+      notePool: ['C4', 'C#4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'C#4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+      contextNotes: ['C4', 'C#4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -478,7 +598,7 @@ export const trebleUnit5Nodes = [
       {
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['C4', 'C#4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+          notePool: ['C4', 'C#4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
           questionCount: 15,
           clef: 'treble',
           timeLimit: null
@@ -488,7 +608,7 @@ export const trebleUnit5Nodes = [
         // SIGHT_READING safe here -- boss is inert until Phase 04 wires it in (INTG-03 fix)
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'C#4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+          notePool: ['C4', 'C#4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
@@ -498,7 +618,7 @@ export const trebleUnit5Nodes = [
       }
     ],
 
-    skills: ['C4', 'C#4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'Bb4', 'B4', 'C5'],
+    skills: ['C4', 'C#4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5'],
     xpReward: 200,
     accessoryUnlock: null,
     isBoss: true,
