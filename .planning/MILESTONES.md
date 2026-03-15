@@ -1,11 +1,86 @@
 # Project Milestones: PianoApp
 
-## v1.9 Engagement & Retention (Shipped: 2026-03-07)
+## v2.1 Forgot Password Recovery (Shipped: 2026-03-10)
 
-**Phases completed:** 25 phases, 56 plans, 6 tasks
+**Delivered:** Inline forgot password flow on the login page and a dedicated /reset-password page with Supabase PKCE password reset, anti-enumeration security, RTL support, and full EN/HE i18n.
+
+**Phases completed:** 01 (2 plans total)
 
 **Key accomplishments:**
-- (none recorded)
+
+- Supabase password reset API with anti-enumeration (generic error messages only)
+- Three-state inline forgot password flow in LoginForm (login/forgotPassword/resetSent)
+- Dedicated ResetPasswordPage with glass card UI, dual password fields, PKCE session detection
+- Smart expired-link detection via URL hash param sniffing with 10s timeout fallback
+- RTL-aware back arrow and 60-second cooldown timer
+- Complete EN (23 keys) and HE (23 keys) translations
+
+**Stats:**
+
+- 11 files created/modified
+- 675 lines added, 21 lines removed
+- 1 phase, 2 plans
+- 2 days (2026-03-09 to 2026-03-10)
+
+**Git range:** `206ec97` to `b3d29d5`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
+## v2.0 VictoryScreen & XP Unification (Shipped: 2026-03-08)
+
+**Delivered:** Major refactor unifying the reward system from dual points/XP to XP-only across all views (student, teacher, database), and redesigning VictoryScreen with hook extraction and two-panel landscape layout.
+
+**Phases completed:** 01-02 (6 plans total)
+
+**Key accomplishments:**
+
+- Extracted 792-line useVictoryState hook — VictoryScreen reduced from 1105 to 327 lines (70% reduction)
+- Unified scoring from points to XP across all student and teacher views
+- Free play XP via calculateFreePlayXP formula (10-50 XP range, less than trail nodes)
+- Teacher analytics show "1,250 XP (Lv. 6)" format with calculateLevel()
+- DB migration drops achievement_points, student_achievements.points, calculate_score_percentile
+- Dead code removed: points.js, useTotalPoints.js, scoreComparisonService.js
+
+**Stats:**
+
+- 43 files created/modified
+- 2,983 lines added, 1,531 lines removed
+- 2 phases, 6 plans
+- 1 day (2026-03-08)
+
+**Git range:** `ed48905` to `7aaa7e3`
+
+**What's next:** v2.1 Forgot Password Recovery
+
+---
+
+## v1.9 Engagement & Retention (Shipped: 2026-03-08)
+
+**Delivered:** Daily return hooks, arcade-style game engagement, extended progression system, and kid-friendly UI redesign — push notifications with COPPA parent gate, streak protection with freeze shields and comeback bonus, combo/lives/speed mechanics for Notes Recognition, 30-level XP system with prestige tiers, weekly progress summaries with parent email reports, and visual redesign of TrailNodeModal and Dashboard for 8-year-old learners.
+
+**Phases completed:** 17-23 (15 plans total)
+
+**Key accomplishments:**
+
+- COPPA-compliant push notifications with parent math gate, context-aware messages (streak/XP/goals), 1/day rate limit, service worker Web Push
+- Streak protection: 36-hour grace window, consumable freeze shields (earned every 7-day streak), weekend pass toggle, 2x comeback XP bonus for 3 days
+- Arcade-style Notes Recognition: combo counter with 2x/3x multipliers, speed bonus, 3-lives system, on-fire mode with glow/embers, auto-growing note pool
+- Extended XP progression from 15 to 30 levels with prestige tiers (Maestro 1, 2, 3...), per-level themed names, golden prestige badge
+- Weekly progress summaries, personal best badges on VictoryScreen, 12 rotating daily fun facts, parent weekly email via Brevo with HMAC unsubscribe
+- Kid-friendly TrailNodeModal (centered glowing icon, 3D bubble note badges, golden XP card) and Dashboard (compact hero, XP ring, unified stats card, circular practice tools)
+
+**Stats:**
+
+- 124 files created/modified
+- 15,188 lines added, 4,582 lines removed
+- 7 phases, 15 plans
+- 4 days (2026-03-04 to 2026-03-08)
+
+**Git range:** `329642d` to `abc66d7`
+
+**What's next:** v2.0 VictoryScreen & XP Unification
 
 ---
 
@@ -297,5 +372,5 @@
 
 ---
 
-*Last updated: 2026-03-08*
+*Last updated: 2026-03-15*
 

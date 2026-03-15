@@ -13,6 +13,7 @@
 - ✅ **v1.8 App Monetization** — Phases 11-16 (shipped 2026-03-01)
 - ✅ **v1.9 Engagement & Retention** — Phases 17-23 (shipped 2026-03-08)
 - ✅ **v2.0 VictoryScreen & XP Unification** — Phases 01-02 (shipped 2026-03-08)
+- ✅ **v2.1 Forgot Password Recovery** — Phase 01 (shipped 2026-03-10)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -123,6 +124,21 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+<details>
+<summary>✅ v2.0 VictoryScreen & XP Unification (Phases 01-02) — SHIPPED 2026-03-08</summary>
+
+- [x] Phase 01: Redesign VictoryScreen (1/1 plan) — completed 2026-03-08
+- [x] Phase 02: XP Unification (5/5 plans) — completed 2026-03-08
+
+</details>
+
+<details>
+<summary>✅ v2.1 Forgot Password Recovery (Phase 01) — SHIPPED 2026-03-10</summary>
+
+- [x] Phase 01: Forgot Password Recovery (2/2 plans) — completed 2026-03-10
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -149,7 +165,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 20. Component Integration & Tab Navigation | v1.5 | 3/3 | Complete | 2026-02-10 |
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
-| 01. Hebrew Translations | 1/2 | In Progress|  | 2026-02-13 |
+| 01. Hebrew Translations | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
@@ -174,28 +190,9 @@ See `.planning/milestones/` for archived details of each milestone.
 | 23. Kid-Friendly Dashboard Redesign | v1.9 | 3/3 | Complete | 2026-03-06 |
 | 01. VictoryScreen Redesign | v2.0 | 1/1 | Complete | 2026-03-08 |
 | 02. XP Unification | v2.0 | 5/5 | Complete | 2026-03-08 |
-| 01. Forgot Password Recovery | standalone | 2/2 | Complete | 2026-03-10 |
+| 01. Forgot Password Recovery | v2.1 | 2/2 | Complete | 2026-03-10 |
 
-**Total: 50 phases across 11 milestones + 1 standalone (v1.0-v2.0 all shipped)**
-
-<details>
-<summary>✅ v2.0 VictoryScreen & XP Unification (Phases 01-02) — SHIPPED 2026-03-08</summary>
-
-- [x] Phase 01: Redesign VictoryScreen (1/1 plan) — completed 2026-03-08
-- [x] Phase 02: XP Unification (5/5 plans) — completed 2026-03-08
-
-</details>
-
-### Phase 1: Add forgot password recovery on login
-
-**Goal:** Add a "Forgot password?" inline recovery flow to the login page and a dedicated /reset-password page, using Supabase built-in password reset with EN+HE i18n support
-**Requirements:** [PWD-RESET-API, PWD-RESET-I18N, PWD-RESET-LOGIN-UI, PWD-RESET-PAGE, PWD-RESET-ROUTE]
-**Depends on:** None
-**Plans:** 2 plans -- COMPLETE
-
-Plans:
-- [x] 01-01-PLAN.md — API functions, TanStack Query hooks, and EN+HE translations (206ec97, ef3a351)
-- [x] 01-02-PLAN.md — LoginForm inline forgot password flow + ResetPasswordPage + route wiring (28818d7, 75ca47e, b3d29d5)
+**Total: 51 phases across 12 milestones (v1.0-v2.1 all shipped)**
 
 ---
-*Last updated: 2026-03-10 — Phase 1 complete (forgot password recovery)*
+*Last updated: 2026-03-15 — v2.0 and v2.1 milestones archived*
