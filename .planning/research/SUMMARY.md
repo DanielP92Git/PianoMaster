@@ -1,17 +1,17 @@
 # Project Research Summary
 
-**Project:** PianoApp2 — Mic-Based Piano Pitch Detection Overhaul
-**Domain:** Real-time browser-based audio signal processing for children's music education
-**Researched:** 2026-02-17
-**Confidence:** HIGH (codebase audit + official MDN/WebKit sources + algorithm research)
+**Project:** v2.2 Sharps & Flats Trail Content Expansion
+**Domain:** Piano learning PWA — accidentals content for beginner children (age 8)
+**Researched:** 2026-03-15
+**Confidence:** HIGH
 
 ## Executive Summary
 
-This milestone is a targeted refactor of an existing feature, not a greenfield build. The current pitch detection stack (`usePitchDetection.js` + `useMicNoteInput.js`) fails for any note shorter than a quarter note at tempos above 90 BPM. The root causes are well-understood and directly observable in the codebase: a naive autocorrelation algorithm that produces octave errors on piano's rich harmonic spectrum, a `smoothingTimeConstant = 0.8` that adds approximately 100ms of phantom latency, browser audio processing filters (`echoCancellation`, `noiseSuppression`, `autoGainControl`) actively destroying the piano signal before detection runs, and a fixed `onFrames = 4-5` stability window that is too slow to catch eighth notes at typical practice tempos. Each failure mode has a documented, implementable fix. There is also a currently-failing test (`SightReadingGame.micRestart.test.jsx`) proving an existing mic-restart regression that must be resolved before any other work is layered on top.
+The v2.2 Sharps & Flats milestone is primarily a data-authoring task, not an infrastructure build. Every capability required to teach accidentals — SVG note images for all sharps and flats, audio samples for all chromatic pitches, VexFlow `Accidental` modifier rendering, pitch detection across all 12 chromatic notes, and enharmonic normalization — already exists and is verified as working in the codebase. The core deliverable is four new unit data files (`trebleUnit4Redesigned.js`, `trebleUnit5Redesigned.js`, `bassUnit4Redesigned.js`, `bassUnit5Redesigned.js`) plus two targeted bug fixes that prevent existing code from silently discarding accidentals when games are launched via the trail routing layer.
 
-The recommended approach is a four-phase build: Phase 0 fixes the currently-failing mic-restart regression as a hard prerequisite; Phase 1 replaces the algorithm (pitchy v4.1.0 using the McLeod Pitch Method) and corrects the Web Audio configuration to achieve accurate detection for quarter through sixteenth notes; Phase 2 hardens cross-browser behavior, specifically iOS Safari's `"interrupted"` AudioContext state, synchronous user-gesture requirements, and mic permission silent failures on PWA re-launch; Phase 3 is optional performance work (AudioWorklet migration) that is only justified if CPU profiling on physical devices reveals main-thread audio pressure. The single new npm dependency is `pitchy` 4.1.0 — 5KB, ESM-only (compatible with Vite 6), zero external network calls (COPPA-compliant). The algorithm change is also accompanied by a needed architectural consolidation: the three separate AudioContext instances currently created across `usePitchDetection`, `useAudioEngine`, and an inline copy in `NotesRecognitionGame` must be unified into a single `AudioContextProvider` React context.
+The recommended approach is to separate sharps and flats into distinct units per clef (Unit 4 = sharps, Unit 5 = flats), introduce a maximum of one new accidental per Discovery node, and use the pedagogically established sequence: F#/C# for treble sharps, Bb/Eb for bass flats. This matches the Faber Piano Adventures and Alfred's Basic Piano Library order — circle-of-fifths sequence — which introduces accidentals children will encounter immediately in real beginner pieces. All new nodes are premium-only and gating works by absence from the `FREE_NODE_IDS` set — no positive gate configuration is required. The build-time validator (`npm run verify:patterns`) will automatically catch prerequisite cycles and schema violations in the new unit files.
 
-The consolidated architecture eliminates silent iOS Safari failures caused by concurrent AudioContext limits, fixes the mic-restart race condition at its root, and removes approximately 250 lines of duplicated detection code from `NotesRecognitionGame.jsx`. The build is designed to be incremental — each phase leaves the app in a working state, all existing tests remain valid, and the algorithm swap is scoped as a drop-in function replacement with the same input/output API. No routes, no game logic, no VexFlow rendering code, and no trail system changes are required.
+The two critical risks are both code bugs, not data issues. First, the trail auto-start block in `NotesRecognitionGame.jsx` hardcodes `enableSharps: false, enableFlats: false`, which silently strips all accidentals from the game pool when launched from the trail — this must be fixed before any accidentals node can be tested end-to-end. Second, `patternBuilder.js` has a regex that only matches natural-note pitch strings, causing accidental pitches in sight reading exercises to fall through to a C4 fallback — this must be fixed before adding any `SIGHT_READING` exercise types to new nodes. Both fixes are surgical (3-5 lines each), precisely located in the research files, and carry minimal regression risk.
 
 ---
 
@@ -19,112 +19,145 @@ The consolidated architecture eliminates silent iOS Safari failures caused by co
 
 ### Recommended Stack
 
-The current Web Audio API setup is topologically correct (AnalyserNode pipeline, requestAnimationFrame loop, two-layer hook separation) but misconfigured at the algorithm and parameter level. Only one new npm package is required: `pitchy` v4.1.0, providing the McLeod Pitch Method (MPM). MPM uses a normalized square difference function that produces sharp peaks at the true fundamental frequency rather than at harmonic overtones — the exact failure mode of the current autocorrelation implementation on piano audio. The rest of the stack changes are parameter updates to existing Web Audio API configuration and one new React Context file.
+No new libraries are required. All four game modes (Note Recognition, Sight Reading, Memory Game, Boss Challenge) already support accidentals at the rendering and detection layer. VexFlow's `Accidental` modifier is already imported and used in `VexFlowStaffDisplay.jsx`. The `pitchy`-based pitch detector outputs all 12 chromatic sharp-form names natively. All WAV audio samples for flat-form pitches (Db, Eb, Gb, Ab, Bb across seven octaves) are already registered in `NOTE_AUDIO_LOADERS`. The SVG note images for all accidentals in treble and bass clef octave ranges 1–6 are already imported in `gameSettings.js`.
 
-**Core technologies:**
-- **pitchy 4.1.0**: Primary pitch algorithm — McLeod Pitch Method eliminates the "first-harmonic wins" failure mode of naive autocorrelation. ~5KB, ESM-only (compatible with Vite 6 out of the box), zero external network calls, COPPA-compliant. API: `const [pitch, clarity] = detector.findPitch(float32Buffer, sampleRate)`.
-- **Web Audio API (AnalyserNode)**: Keep existing pipeline — change `fftSize: 2048 → 4096`, `smoothingTimeConstant: 0.8 → 0.0`. These two parameter changes eliminate approximately 100ms of phantom latency introduced by the smoothing filter.
-- **getUserMedia constraints**: Add `echoCancellation: false, noiseSuppression: false, autoGainControl: false` to the `getUserMedia` call. Browser defaults actively destroy piano transients (autoGainControl compresses attacks; noiseSuppression removes harmonics it misidentifies as noise). One-line change with high impact.
-- **AudioContextProvider (new React Context)**: A new `src/contexts/AudioContextProvider.jsx` owning one shared AudioContext per game session. Eliminates concurrent context creation bugs, the mic-restart regression, and the 250-line inline detection copy in `NotesRecognitionGame`.
-
-Explicitly avoid: ml5.js/CREPE (2MB+ TensorFlow model, CDN fetch, COPPA violation), essentia.js (2MB WASM overkill for monophonic detection), aubio.js (npm package abandoned since 2019), AudioWorklet in Phase 1 (iOS Safari has active bugs in 2024, Vite requires extra configuration, MessagePort overhead partially negates off-thread benefit).
+**Core technologies (all existing — zero new dependencies):**
+- **VexFlow v5**: SVG music notation — `Accidental` class already handles `#` and `b` modifiers via `note.addModifier(new Accidental('#'), 0)`; verified working in `VexFlowStaffDisplay.jsx`
+- **pitchy (McLeod Pitch Method)**: Pitch detection — `NOTE_NAMES` array includes all 12 chromatic tones; outputs sharp-form (`C#4`, `F#3`); enharmonic mapping to flat-form handled by existing `toFlatEnharmonic()` in `NotesRecognitionGame.jsx`
+- **Klavier**: Keyboard input — already handles all 88 piano keys including black keys
+- **Supabase RLS + `subscriptionConfig.js`**: Subscription gate — new nodes are premium by absence from `FREE_NODE_IDS`; `is_free_node()` Postgres function returns `FALSE` for unknown IDs by design
 
 ### Expected Features
 
-**Must have (table stakes — required for the refactor to succeed):**
-- Accurate monophonic note classification — one note played equals one note reported at the correct pitch, without octave errors. Broken today on quarter-note attacks due to autocorrelation's first-harmonic failure.
-- Onset detection within timing windows — eighth notes at 120 BPM need onset in under 62ms; current fixed 83ms (5 frames at 60fps) exceeds this and causes systematic misses.
-- Note-off detection that separates adjacent notes — current fixed 140ms merges eighth notes at typical practice tempos.
-- Correct getUserMedia audio constraints — browser DSP currently corrupts the input signal before detection runs.
-- Full piano frequency map covering all trail node note pools — the current table may be missing bass clef low notes (B2, A2) required by some trail node configs.
-- Formal IDLE/ARMED/ACTIVE state machine in `useMicNoteInput` — replaces frame-counting candidacy logic, eliminates C4/B3 pitch flicker at note transitions.
-- Dynamic `onFrames` and `offMs` scaled to BPM and note value — formula-driven (`onFrames = min(5, floor(noteDurationMs / 33))`; `offMs = max(40, noteDurationMs * 0.3)`), not static presets.
+**Must have (table stakes):**
+- Pedagogically correct accidental sequence — F# before C# in treble (circle-of-fifths order), Bb before Eb in bass; this is the Faber/Alfred/RCM standard and is non-negotiable for the target audience
+- One new accidental per Discovery node — cognitive load theory for 8-year-olds; all existing units follow this pattern
+- Natural + accidental contrast in early nodes — pair F#4 with F4 and G4 so children see the visual distinction on the staff
+- All four exercise types working with accidental note pools — Note Recognition, Sight Reading, Memory Game, Boss Challenge
+- Subscription paywall enforcement — all 20+ new nodes are premium-only; no changes to `FREE_NODE_IDS`
+- Boss nodes for each new unit — every existing unit ends with a Boss node; `boss_treble_4`, `boss_treble_5`, `boss_bass_4`, `boss_bass_5` required; must follow `boss_treble_N` ID convention
+- `expandedNodes.js` updated with all four new unit file imports
+- `npm run verify:patterns` passing before any deployment
 
-**Should have (add after core accuracy is validated):**
-- Per-note debouncing in `SightReadingGame.jsx` — a game-layer ref guard (no hook changes), specced in `SIGHT_READING_GAME_IMPROVEMENT_PLAN.md`.
-- Multi-algorithm consensus (MPM primary + secondary check) — once pitchy is stable, add a second estimator; allows `onFrames` to drop to 3 when consensus validates.
-- AudioWorklet migration for off-thread detection — eliminates rAF throttling in background tabs; defer until Phase 1 is validated on physical devices.
+**Should have (competitive advantage):**
+- Natural-vs-accidental visual contrast in Discovery nodes — showing F4 and F#4 side-by-side teaches the half-step more concretely than any other approach
+- Black key "between F and G" labeling in wrong-answer feedback — more concrete for 8-year-olds than "F sharp"
+- Enharmonic Explorer node (optional) — "same key, two names" concept after both F# and Gb are known; adds curiosity value without theory overhead
 
-**Defer to v2+:**
-- Cents deviation display — hooks already emit raw frequency; needs UI design appropriate for 8-year-olds.
-- Device calibration wizard — per-device latency measurement; only worthwhile after base accuracy is solved.
-- Polyphonic detection — children play one note at a time; CREPE is 10-100x more compute-intensive and entirely wrong for this use case.
+**Defer to v2.3+:**
+- Unit 4 Ledger Lines — pedagogically between Unit 3 (octave) and Unit 5 (accidentals), but accidentals within C4–C5 range do not require ledger lines, so the gap is acceptable for v2.2
+- Key Signatures unit — natural signs, key context; separate research and milestone
+- Remaining accidentals (Ab4, Db4, Gb4 treble; corresponding bass sharps) — 4 accidentals per unit maximum for cognitive load; extend in v2.3
+- i18n for sharp/flat labels — Hebrew terms for "sharp" (דיאז) and "flat" (במול)
 
 ### Architecture Approach
 
-The recommended architecture introduces one new React Context (`AudioContextProvider`) that wraps all game routes in `AppLayout.jsx`, owns a single `AudioContext` and `AnalyserNode`, and exposes them via `useAudioContext()`. All audio hooks consume the shared context rather than creating their own. The existing two-layer hook design (`usePitchDetection` producing raw frequency → `useMicNoteInput` producing stable noteOn/noteOff events) is architecturally correct and is preserved. The key rule: audio infrastructure (AudioContext, AnalyserNode, MediaStream, animation frame handles) lives in `useRef`, never in `useState`. Only user-visible derived values (`isListening`, `audioLevel` throttled to every fifth frame, `isReady`) go in state.
+The architecture follows a pure data-driven pattern. New unit files slot into the existing pipeline: `unitFile.js` → `expandedNodes.js` → `SKILL_NODES` → trail display and game routing. The subscription gate (React `isFreeNode()` + Postgres RLS) works by default for all new node IDs — no configuration needed. The game layer requires one fix in `NotesRecognitionGame.jsx` to derive `enableSharps`/`enableFlats` from `notePool` contents rather than hardcoding `false`. The rendering layer (`VexFlowStaffDisplay`, audio loader, note images) requires zero changes. Sharps are separated from flats into distinct unit files to avoid enharmonic confusion — the pitch detector outputs sharps only, and mixing both spellings for the same black key in one node pool creates unreachable answers via microphone.
 
-**Major components:**
-1. `AudioContextProvider` (new, `src/contexts/`) — owns single AudioContext, mic stream, analyserNode; initializes lazily on user gesture (never from `useEffect`); cleans up on game route exit.
-2. `usePitchDetection` (modified) — accepts `analyserNode` and `sampleRate` from context instead of creating its own AudioContext; replaces autocorrelation with pitchy MPM; `fftSize` 4096, `smoothingTimeConstant` 0.0.
-3. `useMicNoteInput` (minor modify) — stability layer unchanged except mic stream acquisition delegates to `AudioContextProvider.initializeMic()`.
-4. `useAudioEngine` (modified) — accepts shared `audioContextRef` instead of creating its own AudioContext on mount.
-5. `NotesRecognitionGame` (modified) — replaces approximately 250 lines of inline detection (`startAudioInput`, `detectPitch`, `frequencyToNote`, `detectLoop`) with `useMicNoteInput` + `MIC_INPUT_PRESETS.notesRecognition`.
-
-`AudioContextProvider` mounts at the game route boundary (using the existing `isGameRoute` logic in `AppLayout.jsx`), not at app root. This ensures mic permission is never requested on non-game pages (dashboard, trail, settings).
+**Major components and their v2.2 change status:**
+1. `src/data/units/trebleUnit4Redesigned.js` (NEW) — 8 treble sharps nodes, `START_ORDER = 27`
+2. `src/data/units/trebleUnit5Redesigned.js` (NEW) — 8 treble flats nodes, boss unlocks `accidental_master_badge`
+3. `src/data/units/bassUnit4Redesigned.js` (NEW) — 8 bass sharps nodes, `START_ORDER = read from bassUnit3`
+4. `src/data/units/bassUnit5Redesigned.js` (NEW) — 8 bass flats nodes, boss unlocks `bass_accidental_badge`
+5. `src/data/expandedNodes.js` (MODIFY) — 4 new imports + spreads
+6. `NotesRecognitionGame.jsx` (MODIFY) — ~3 lines in auto-start `useEffect` to derive `enableSharps`/`enableFlats` from `notePool`
+7. `patternBuilder.js` (MODIFY) — one regex change on line 60 from `/^([A-G])(\d+)$/` to `/^([A-G][#b]?)(\d+)$/`
 
 ### Critical Pitfalls
 
-1. **Mic-restart regression (currently failing test)** — `SightReadingGame.micRestart.test.jsx` is already failing. The cause is using React `useState` as the guard for "is currently listening," which is asynchronous. After "Try Again," `stopListening` sets `isListening: false` in state, but by the time `startListening` is called again the state hasn't flushed. Fix: use a synchronous `useRef` as the listening guard, not async state. This is the highest-priority item because it blocks all other work from having reliable test feedback.
+1. **Trail auto-start hardcodes `enableSharps: false, enableFlats: false`** — Located at `NotesRecognitionGame.jsx` lines 524-525. Without this fix, all accidental pitches are silently stripped from every trail-launched session. Fix: derive both flags from `notePool` contents using `.some(p => p.includes('#'))` and `.some(p => p.includes('b') && p.length > 2)`.
 
-2. **AudioContext created on every `startListening()` call** — The current pattern orphans the previous AudioContext on each game restart. Chrome hard-limits concurrent contexts to approximately 6; iOS Safari silently fails earlier. Fix: `AudioContextProvider` creates one context on mount, uses `suspend()`/`resume()` between exercises, and `close()`s only on unmount.
+2. **`patternBuilder.toVexFlowNote` drops accidentals** — Regex on line 60 matches only natural-note pitch strings; `F#4` falls through to a C4 fallback, causing sight reading to show wrong notes and score zero. Fix the regex before adding any `SIGHT_READING` exercise type to new nodes. Add `F#4`, `Bb4`, `Eb4` test cases to `patternBuilder.test.js`.
 
-3. **iOS Safari AudioContext `"interrupted"` state not handled** — iOS puts the AudioContext in `"interrupted"` (distinct from `"suspended"`) when the user receives a call, switches apps, or locks the device. `resume()` does not restore mic input in this state — the MediaStream itself is killed by iOS and must be re-acquired via `getUserMedia`. Add `statechange` and `visibilitychange` listeners with full mic restart logic.
+3. **Enharmonic mismatch in pitch detection** — Mic always outputs sharp-form (`C#4`); flat-form note pools (`Db4`) require normalization before comparison. `NotesRecognitionGame` already has `toFlatEnharmonic()` but `SightReadingGame`'s `scoreCalculator.js` `calculatePitchAccuracy()` needs verification — strict string comparison would score every correct flat-pool answer as zero via mic.
 
-4. **iOS Safari requires user gesture synchronously before any `await`** — `AudioContext.resume()` must be called in the synchronous call stack of a user gesture event handler. A single `await` before the call (even for `getUserMedia`) breaks the gesture association on iOS Safari, leaving the context permanently `"suspended"` with no error thrown. Call `resume()` synchronously at the start of the click handler, before any async work.
+4. **Auto-grow arcade mode injects accidental notes into natural-notes sessions** — When accidentals units are added to `expandedNodes.js`, the auto-grow feature walks forward into `treble_4_1` nodes during natural-notes arcade play, injecting `F#4` into a session where `enableSharps: false`. Filter accidental pitches from auto-grow candidates when both flags are false.
 
-5. **Smoothing constant adds 100ms phantom latency** — `smoothingTimeConstant: 0.8` blends 80% of the previous frame's FFT data into each new frame. Combined with `onFrames: 4`, this effectively adds up to 100ms of mandatory detection lag. Set to `0.0` in Phase 1 — this is one of the two single highest-impact parameter changes in the entire refactor.
+5. **`expandedNodes.js` not updated** — New unit files are completely invisible to the trail if the import lines are missing. No error is thrown. Trail renders unchanged at 93 nodes. This is the most common missed step when adding unit files.
 
 ---
 
 ## Implications for Roadmap
 
-The dependency graph is strict. Phase 0 must precede Phase 1 (failing test gates other work — building on it means test feedback is unreliable). Phase 1 must precede Phase 2 (iOS hardening is meaningless if the base algorithm is producing octave errors; validate core accuracy on Chrome/desktop first). Phase 3 is data-driven and only begins if profiling reveals a problem.
+Based on combined research, the milestone divides into three phases with two targeted code fixes as a mandatory prerequisite before any data authoring.
 
-### Phase 0: Pre-existing Bug Fix
-**Rationale:** The mic-restart regression is a currently-failing test that proves an existing defect in the "Try Again" flow. Any algorithm or architecture work built on top produces unreliable test feedback. The fix is small (ref guard instead of state guard in `useMicNoteInput`) but it must ship first as a hard gate for all subsequent work.
-**Delivers:** A passing test suite as a stable baseline. `SightReadingGame.micRestart.test.jsx` passes. The "Try Again" flow reactivates the mic correctly on second attempt.
-**Addresses:** Pitfall 10 (the only pitfall rated "must fix before any other work").
-**Avoids:** Building further on a broken foundation where test failures mask regressions.
-**Research flag:** No research needed. Fix pattern is documented in PITFALLS.md — synchronous ref guard, not async state. Standard patterns apply.
+### Phase 0: Pre-Flight Fixes (Foundation)
 
-### Phase 1: Algorithm Replacement and Core Configuration
-**Rationale:** All root causes of incorrect pitch detection (octave errors, onset latency, note-off merging, browser audio signal corruption, multiple AudioContext instances) are addressable in this phase. These are high-impact changes that stay within the existing hook API surface. The `AudioContextProvider` consolidation is included here because it fixes the restart regression root cause and is a prerequisite for the algorithm migration (the detector needs a stable, shared analyserNode). `NotesRecognitionGame` duplication removal is included because the algorithm fix would otherwise need to be applied twice.
-**Delivers:** Accurate detection of quarter through sixteenth notes at 60-120 BPM on desktop and Android Chrome. Single shared AudioContext with no concurrent-context bugs. `NotesRecognitionGame` using the shared detection stack (removes 250-line duplication and ensures algorithm improvements reach all games).
-**Addresses (from FEATURES.md):** All P1 features — `getUserMedia` constraints, pitchy MPM algorithm, dynamic `onFrames`/`offMs`, IDLE/ARMED/ACTIVE state machine, full note frequency map.
-**Uses (from STACK.md):** `pitchy` 4.1.0 (single npm install), Web Audio API reconfiguration, `AudioContextProvider` (new React Context file).
-**Avoids:** Pitfall 1 (autocorrelation octave errors via MPM), Pitfall 2 (AudioContext-per-startListening via shared provider), Pitfall 7 (key-release false positives via minimum note duration requirement), Pitfall 8 (permission denied silent failure via explicit error handling and persistent UI), Pitfall 9 (smoothing constant latency via `smoothingTimeConstant: 0.0`).
-**Research flag:** No additional research needed. pitchy API is fully documented on GitHub. Web Audio API parameter changes are MDN-documented. AudioContext lifecycle patterns are established. getUserMedia constraint behavior is well-sourced. Start implementation directly.
+**Rationale:** Both code bugs will silently corrupt behavior for every subsequent development and testing step. Fixing them first means all subsequent work can be tested accurately from day one. This phase contains no data authoring — only surgical code changes in three files.
 
-### Phase 2: Cross-Browser Hardening (iOS Safari)
-**Rationale:** Phase 1 delivers correct behavior on Chrome, Android, and desktop. iOS Safari introduces three separate, well-documented failure modes that require explicit handling. These cannot be verified on desktop dev environments — physical iOS device testing is mandatory. Phase 2 is its own phase because it requires a testing environment change (physical device) and involves different code paths than Phase 1.
-**Delivers:** Correct behavior on iOS Safari in standalone PWA mode. Mic resumes correctly after phone calls, Siri activation, and app switches. AudioContext created correctly from gesture handlers without suspension. Clear, parent-readable message when mic permission is denied (with iOS Settings instructions), not a silent failure.
-**Avoids:** Pitfall 3 (iOS `"interrupted"` state via `statechange` listener and full mic restart), Pitfall 4 (iOS gesture requirement via synchronous `resume()` before `await`), Pitfall 8 (permission denied silent failure via persistent error UI and `localStorage` state).
-**Research flag:** iOS Safari behavior is fully documented via the cited WebKit bug reports (237878, 237322, 198277). Implementation patterns are established (statechange listener, visibilitychange handler, gesture-first resume). No additional research needed, but physical iOS device testing is a mandatory verification step — the iOS Simulator does not accurately reproduce AudioContext suspension behavior.
+**Delivers:** A working pipeline where accidental pitches in `notePool` actually reach the game, answer buttons, and VexFlow renderer when launched from the trail. Auto-grow no longer leaks accidentals into natural-note sessions.
 
-### Phase 3: Performance Hardening (Optional, Profiling-Gated)
-**Rationale:** The `requestAnimationFrame` loop on the main thread is adequate for target devices once Phase 1 is in place (smoothing removed; pitchy MPM is O(N) vs the current O(N^2) autocorrelation). AudioWorklet migration is only justified if CPU profiling on mid-range Android (2019-era device class) or low-end iOS shows greater than 5% frame drop attributable to audio processing. Do not build this phase speculatively.
-**Prerequisite gate:** Chrome DevTools CPU profiling on a real mid-range device shows measurable frame drop caused by audio processing competing with VexFlow rendering. If this is not observed after Phase 1, skip Phase 3 entirely.
-**Delivers (if built):** Off-thread pitch detection via AudioWorklet, eliminating rAF throttling in background tabs and main-thread competition with React rendering on low-end devices.
-**Avoids (if built):** Pitfall 5 (rAF main-thread blocking) and Pitfall 6 (AudioWorklet 128-frame buffer — must use ring buffer accumulation to 2048 samples before running detection, or bass clef notes below E4 will never be detected).
-**Research flag:** Needs a dedicated research spike before planning this phase. Items to research: Vite configuration for AudioWorklet module serving (the worklet file must be served from the same origin; Vite needs specific handling); iOS Safari AudioWorklet bug status as of current iOS version (Apple Developer Forums thread confirmed active bugs in iOS 18); SharedArrayBuffer COOP/COEP header requirements; ring buffer accumulation pattern for 128-frame quanta. Do not begin Phase 3 planning without this spike.
+**Addresses:** Prerequisite for all table-stakes features in v2.2.
+
+**Avoids:**
+- Pitfall 1 (trail auto-start strips accidentals — fix in `NotesRecognitionGame.jsx` auto-start effect)
+- Pitfall 2 (patternBuilder drops accidentals — fix regex in `patternBuilder.js` line 60; add test cases)
+- Pitfall 4 (auto-grow injects accidentals into natural-note sessions — add filter at same time as Pitfall 1 fix)
+
+**Research flag:** No additional research needed. Both bug locations are identified at line-number precision with exact fix code in ARCHITECTURE.md.
+
+### Phase 1: Treble Content (Data + Integration)
+
+**Rationale:** Treble clef first — it is the more familiar clef for the target audience, SVG coverage for treble sharps/flats is most thoroughly verified, and the F#-first pedagogical sequence maps naturally to the sharp-form output of the pitch detector. Starting with treble permits full end-to-end testing before committing to the bass structure. Sharps before flats (Unit 4 before Unit 5) avoids enharmonic confusion from mixing spelling conventions within a learning sequence.
+
+**Delivers:** `trebleUnit4Redesigned.js` (8 nodes, F#4/C#4/G#4 sharps, `boss_treble_4`), `trebleUnit5Redesigned.js` (8 nodes, Bb4/Eb4/Ab4 flats, `boss_treble_5` + `accidental_master_badge` unlock).
+
+**Addresses features:** 10 treble accidentals nodes with premium gating, correct boss node IDs, badge unlock, `expandedNodes.js` wired.
+
+**Avoids:**
+- Anti-pattern: enharmonic mixing within a single node — sharps-only in Unit 4, flats-only in Unit 5
+- Anti-pattern: wrong boss ID prefix — must be `boss_treble_4`, `boss_treble_5`
+- Anti-pattern: order value collision — `START_ORDER = 27` (after `boss_treble_3` at order 26)
+- Pitfall 7: `subscriptionConfig` — verify `isFreeNode()` returns false for all new treble IDs before wiring `expandedNodes.js`
+- Pitfall 8: `expandedNodes.js` — add import line immediately after creating each unit file; verify with `getNodeById()` in browser console
+
+**Needs investigation during implementation:**
+- Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding any `SIGHT_READING` exercises — if strict string comparison is found, fix is localized to that function
+
+### Phase 2: Bass Content (Data + Integration)
+
+**Rationale:** Mirrors Phase 1 in structure. Separated because the bass `START_ORDER` must be read from `bassUnit3Redesigned.js` before authoring — this is a hard dependency, not a preference. Bass flats sequence (Bb/Eb/Ab/Db) is the standard bass clef introduction order because these flats appear in the most common beginner pieces in bass clef.
+
+**Delivers:** `bassUnit4Redesigned.js` (8 nodes, F#3/C#3/G#3 sharps, `boss_bass_4`), `bassUnit5Redesigned.js` (8 nodes, Bb3/Eb3/Ab3/Db3 flats, `boss_bass_5` + `bass_accidental_badge` unlock).
+
+**Addresses features:** 10 bass accidentals nodes, full premium paywall coverage for both clef paths.
+
+**Avoids:**
+- Pitfall 4 (order value collision): `START_ORDER` must be read from `bassUnit3Redesigned.js`, not guessed
+- Anti-pattern: wrong boss ID — must be `boss_bass_4`, `boss_bass_5` exactly
+- Anti-pattern: copy-paste from treble without updating `START_ORDER` constant
+
+### Phase 3: Verification and QA
+
+**Rationale:** Several pitfalls only surface at runtime or on specific device/locale configurations and cannot be detected by code review. A dedicated verification pass catches these before subscribers encounter them. The "Looks Done But Isn't" checklist from PITFALLS.md is the test plan.
+
+**Delivers:** Signed-off verification checklist confirming all 8 failure modes tested on real configurations.
+
+**Key verifications:**
+- VexFlow accidental glyph spacing on 375px viewport — 3+ accidentals per measure may collide; increase `FIXED_STAVE_WIDTH_PER_BAR` if needed (Pitfall 5)
+- Mic input matches flat-form pitches end-to-end — play Db4 on real piano/keyboard and verify correct answer scored (Pitfall 3)
+- Free user sees paywall modal on `treble_5_1`; paid user can submit progress without RLS 403 (Pitfall 7)
+- Hebrew locale — answer buttons for Db4 and C#4 are visually distinguishable (Pitfall 6)
+- `boss_treble_5` completion triggers 3-stage boss modal and `accidental_master_badge` unlock
+- Arcade mode on `treble_3_9` at 10-combo does not inject `F#4` from next unit (Pitfall 4 verification)
+- Existing `boss_treble_3` completions remain visible after deploy
 
 ### Phase Ordering Rationale
 
-- Phase 0 before Phase 1: The failing test is a prerequisite gate. Building new features on a broken baseline means test failures can mask new regressions introduced during algorithm migration.
-- Phase 1 before Phase 2: iOS Safari hardening addresses browser-specific edge cases. Validating the core algorithm and architecture on Chrome/desktop first isolates iOS-specific issues from algorithmic issues during debugging.
-- Algorithm change before AudioWorklet: Migrating the wrong autocorrelation algorithm to an AudioWorklet would require two migrations. Fix the algorithm first, then reconsider the threading architecture only if performance data justifies it.
-- Phase 3 is data-driven, not speculative: AudioWorklet adds iOS Safari risk (active bugs), Vite bundler complexity, and MessagePort serialization overhead. The rAF loop with pitchy MPM is adequate if Phase 1 smoothing removal is in place. Profile before planning, plan before building.
+- Phase 0 is non-negotiable first: without the two code fixes, all testing produces misleading results — nodes appear to launch but show wrong note pools, making bugs invisible during development
+- Phase 1 before Phase 2: treble is the primary learning path; verified treble pipeline reduces risk when authoring identical bass structure; bass `START_ORDER` is also a dependency that requires existing code to be stable first
+- Phase 3 last: runtime-only pitfalls (VexFlow spacing, mic enharmonics, Hebrew labels, subscription gate) cannot be verified until content exists on all four unit files
 
 ### Research Flags
 
-Phases needing deeper research during planning:
-- **Phase 3 (AudioWorklet):** If CPU profiling triggers this phase, run a research spike before planning. Specific unknowns: Vite AudioWorklet module serving configuration, current iOS 18 AudioWorklet bug status, ring buffer pattern for 128-frame quanta accumulation to 2048 samples, COOP/COEP header requirements for SharedArrayBuffer.
+Phases needing investigation during implementation (not planning):
+- **Phase 1 and 2 (scoreCalculator enharmonic):** Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding any `SIGHT_READING` exercise types. Highest-risk gap for SightReadingGame. If strict string comparison is found, fix is a targeted change to that function.
+- **Phase 2 (bass START_ORDER):** Read `bassUnit3Redesigned.js` to confirm last `order` value before setting `bassUnit4Redesigned.js` `START_ORDER`. Do not assign a value until confirmed.
 
-Phases with standard patterns (skip research-phase):
-- **Phase 0:** Fix pattern is documented in PITFALLS.md. Ref guard replacing state guard is a well-understood React pattern.
-- **Phase 1:** pitchy API is fully documented. Web Audio configuration changes are MDN-sourced. AudioContextProvider follows the single-context pattern recommended by the Web Audio API specification.
-- **Phase 2:** iOS Safari behavior is documented via cited WebKit bug reports. Implementation patterns (statechange listener, visibilitychange handler, synchronous gesture-first resume) are established in developer literature.
+Phases with standard patterns (no additional research needed):
+- **Phase 0 (code fixes):** Both bugs precisely located with confirmed fix code in ARCHITECTURE.md
+- **Phase 1 and 2 (node data):** Exact schema documented in ARCHITECTURE.md Pattern 1 with complete working example
+- **Phase 3 (subscription gate):** Gate-by-absence pattern is well-understood; new nodes are premium by default
 
 ---
 
@@ -132,51 +165,46 @@ Phases with standard patterns (skip research-phase):
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | pitchy v4.1.0 ESM compatibility verified via GitHub release page (January 2024). Web Audio API parameter changes are MDN-documented. MPM algorithm superiority backed by McLeod's 2005 paper and pitchy README. getUserMedia constraint behavior verified via MDN and developer guides (Safari partial-ignore caveat noted). |
-| Features | MEDIUM-HIGH | P1 features have clear implementation paths derived from direct codebase audit. Dynamic onFrames/offMs formulas are latency-budget-derived and internally consistent. Empirical validation against real piano audio is still required — starting parameter values will need a tuning pass. |
-| Architecture | HIGH | Based on direct codebase analysis (all hook files reviewed line-by-line). AudioContextProvider pattern follows MDN Web Audio best practices ("reuse a single AudioContext"). iOS Safari concurrent context failure mode verified via Apple Developer Forums and WebKit bug tracker. Build order (5 sequential steps) leaves app working at each step. |
-| Pitfalls | HIGH | Pitfalls 1, 2, 9, 10 are directly observable in the current codebase source code. Pitfalls 3, 4 are verified via WebKit bug reports 237878, 237322, and Apple Developer Forums. Pitfall 6 (AudioWorklet buffer size) is specified by the Web Audio API specification. All pitfalls have documented prevention strategies. |
+| Stack | HIGH | All findings verified against working code in codebase; no external sources needed; zero new libraries |
+| Features | HIGH | Codebase audit confirmed all infrastructure; pedagogy sequence from Faber/Alfred (MEDIUM confidence web sources) but sequence choice is low-risk |
+| Architecture | HIGH | Entire codebase analyzed directly; all integration points verified at line-number precision with exact fix code |
+| Pitfalls | HIGH | Bugs confirmed by direct regex/line inspection; runtime pitfalls drawn from verified code paths; all have documented prevention strategies |
 
-**Overall confidence:** HIGH
+**Overall confidence: HIGH**
 
 ### Gaps to Address
 
-- **Dynamic parameter formula validation**: The formulas (`onFrames = min(5, floor(noteDurationMs / 33))`; `offMs = max(40, noteDurationMs * 0.3)`) are derived from the latency budget analysis but are starting values. Plan for a tuning pass in Phase 1 verification against real piano audio on physical devices (acoustic piano and digital keyboard input both should be tested).
-- **rmsThreshold after disabling autoGainControl**: Disabling autoGainControl means the mic signal has more dynamic range. The recommended increase from 0.01 to 0.015 is based on reasoning, not empirical data. Verify this does not over-suppress soft notes on children's smaller/cheaper keyboards.
-- **Safari getUserMedia constraint behavior on iOS**: Disabling `echoCancellation`, `noiseSuppression`, `autoGainControl` works reliably on Chrome and Firefox. iOS Safari may partially ignore these constraints (MDN notes this is "best effort"). Verify on physical iOS device during Phase 2.
-- **Bass clef frequency table coverage audit**: FEATURES.md flags that the current `DEFAULT_NOTE_FREQUENCIES` map in `usePitchDetection.js` may be missing notes required by trail unit files. Explicitly audit `skillTrail.js` and all unit files in `src/data/units/` against the frequency table before shipping Phase 1.
-- **pitchy clarity threshold calibration**: The recommended `clarity >= 0.9` threshold follows pitchy's documentation. This may need adjustment based on testing with actual piano audio — pianos with sustain pedal pressed may have lower clarity scores due to overlapping decay.
+Three open questions require hands-on verification during Phase 1 implementation, not during planning:
+
+- **`scoreCalculator.js` enharmonic matching:** `calculatePitchAccuracy()` may use strict string comparison for pitch matching in SightReadingGame. If so, a flat-form note pool (`Eb4`) will never match mic output (`D#4`). Verify before adding SIGHT_READING exercises to any new nodes. If strict comparison is found, fix is localized to `scoreCalculator.js`.
+
+- **Bass unit order values:** Bass units 1-3 are stated to start at order 51, but the exact last order value in `bassUnit3Redesigned.js` is not confirmed in research. Read the file directly before setting `bassUnit4Redesigned.js` `START_ORDER`. Guessing causes silent duplicate-order corruption that breaks trail node traversal.
+
+- **`accidentals: true` flag runtime behavior:** Research confirms the flag is metadata-only (nothing reads it at runtime). The auto-start fix in Phase 0 reads `notePool` directly, making the flag irrelevant for correctness. However, set it accurately on all new nodes as future tooling may validate it.
 
 ---
 
 ## Sources
 
-### Primary (HIGH confidence)
-- [pitchy GitHub — ianprime0509/pitchy](https://github.com/ianprime0509/pitchy) — MPM algorithm, v4.1.0 ESM-only status, API reference (`findPitch`, `PitchDetector.forFloat32Array`)
-- [McLeod, Philip & Wyvill, Geoff: "A Smarter Way to Find Pitch" (2005)](https://www.cs.otago.ac.nz/research/publications/oucs-2008-03.pdf) — MPM algorithm foundation and normalized square difference function
-- [MDN: Web Audio API Best Practices](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices) — single AudioContext reuse recommendation
-- [MDN: AnalyserNode.smoothingTimeConstant](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode) — temporal smoothing behavior
-- [MDN: AnalyserNode.fftSize](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/fftSize) — valid sizes and default behavior
-- [MDN: getUserMedia audio constraints](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackSettings/echoCancellation) — echoCancellation, noiseSuppression, autoGainControl
-- WebKit Bug 237878 — AudioContext suspended when iOS page is backgrounded (confirmed active failure mode)
-- WebKit Bug 237322 — Web Audio muted when iOS ringer is muted
-- WebKit Bug 198277 — Audio stops when standalone web app is not in foreground
-- Codebase direct audit (2026-02-17): `src/hooks/usePitchDetection.js`, `src/hooks/useMicNoteInput.js`, `src/hooks/useAudioEngine.js`, `src/hooks/micInputPresets.js`, `src/components/games/notes-master-games/NotesRecognitionGame.jsx`, `src/components/games/sight-reading-game/SightReadingGame.micRestart.test.jsx`
+### Primary (HIGH confidence — direct codebase analysis, 2026-03-15)
+- `src/components/games/notes-master-games/NotesRecognitionGame.jsx` lines 518-536, 875-898 — auto-start block (confirmed hardcoded flags), auto-grow logic
+- `src/components/games/sight-reading-game/utils/patternBuilder.js` line 60 — confirmed accidental regex gap
+- `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` lines 446-485 — confirmed accidental rendering via `Accidental` modifier
+- `src/hooks/usePitchDetection.js` lines 25-38 — confirmed sharp-form `NOTE_NAMES` array
+- `src/components/games/sight-reading-game/constants/gameSettings.js` lines 44-225 — confirmed full accidental SVG map for treble and bass
+- `src/data/skillTrail.js` — `UNITS.TREBLE_5` and `UNITS.BASS_5` stubs confirmed present
+- `src/config/subscriptionConfig.js` — gate-by-absence pattern confirmed; no migration needed
+- `src/data/expandedNodes.js` — manual aggregation pattern confirmed
+- VexFlow v5 `Accidental` class — valid codes `'#'`, `'b'` verified against working code in codebase
 
-### Secondary (MEDIUM confidence)
-- [GitHub: apankrat/note-detector](https://github.com/apankrat/note-detector) — multi-algorithm consensus (Search/Confirm/Track) state machine pattern
-- [JUCE Forum: Lowest-latency real-time pitch detection](https://forum.juce.com/t/lowest-latency-real-time-pitch-detection/51741) — minimum latency = 2x fundamental period; YIN and MPM practical recommendations
-- [Autocorrelation vs YIN for Pitch Detection](https://pitchdetector.com/autocorrelation-vs-yin-algorithm-for-pitch-detection/) — approximately 3x fewer octave errors with YIN vs plain autocorrelation
-- [Apple Developer Forums: AudioWorklet not playing on iOS 18](https://developer.apple.com/forums/thread/768347) — confirms active iOS AudioWorklet bugs as of 2024
-- [Chrome Developer Blog: Audio Worklet design pattern](https://developer.chrome.com/blog/audio-worklet-design-pattern) — AudioWorklet vs rAF architecture, MessagePort communication pattern
-- [pitchfinder library (GitHub)](https://github.com/peterkhayes/pitchfinder) — JavaScript YIN implementation reference (alternative to pitchy if MPM-only is insufficient)
-- [getUserMedia Audio Constraints — addpipe.com](https://blog.addpipe.com/audio-constraints-getusermedia/) — echoCancellation, noiseSuppression, autoGainControl impact on music audio
-- [Onset Detection — Cycfi Research](https://www.cycfi.com/2021/01/onset-detection/) — why amplitude-only onset detection fails for soft piano notes
+### Secondary (MEDIUM confidence — web sources)
+- [Little Red Piano — Order of Sharps and Flats](https://littleredpiano.com/order-of-sharps-and-flats/) — circle-of-fifths pedagogical sequence for accidentals introduction
+- [Faber Piano Adventures Level 1](https://pianoadventures.com/piano-books/accelerated-piano-adventures/level-1/accelerated-1-qa/) — F# introduced in Level 1, confirms standard sequence
+- Alfred's Basic Piano Library — accidentals-before-key-signatures pedagogy confirmed in web research
 
-### Tertiary (LOW confidence — needs validation during implementation)
-- Dynamic `onFrames`/`offMs` parameter formulas are internally derived from latency budget analysis, not externally sourced. Treat as starting values requiring empirical calibration.
-- `sampleRate: { ideal: 44100 }` getUserMedia hint is best-effort; browser selects actual rate. Algorithm must read `context.sampleRate` dynamically (already done in current code).
+### Tertiary (LOW confidence)
+- Competitor analysis (Simply Piano, Yousician) — accidentals pedagogical order observation; not primary sources
 
 ---
-*Research completed: 2026-02-17*
+*Research completed: 2026-03-15*
 *Ready for roadmap: yes*

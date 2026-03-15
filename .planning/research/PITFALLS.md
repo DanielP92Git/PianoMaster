@@ -1,509 +1,432 @@
-# Pitfalls Research: Mic Pitch Detection Overhaul
+# Pitfalls Research: Sharps & Flats Content Expansion (v2.2)
 
-**Domain:** Refactoring browser-based piano pitch detection in an existing PWA
-**Researched:** 2026-02-17
-**Confidence:** HIGH (current codebase reviewed + official WebKit bugs + Web Audio API spec + algorithm research)
+**Domain:** Adding accidentals (sharps & flats) trail nodes to existing piano learning PWA
+**Researched:** 2026-03-15
+**Confidence:** HIGH (based on direct codebase review of all affected files + VexFlow v5 documented API)
 
 ---
 
 ## Context
 
-This research covers common mistakes when **replacing or improving** the existing `usePitchDetection` / `useMicNoteInput` hook stack in a React 18 PWA targeting iOS Safari (installed PWA), Android Chrome (installed PWA), and desktop browsers. The app serves 8-year-old learners; user experience failures (missed notes, wrong notes, latency) directly cause children to disengage and blame themselves.
+This document covers common mistakes when **adding ~20 sharps/flats trail nodes** (treble Units 4-5,
+bass Units 4-5, plus boss nodes) to the existing 93-node skill trail system. The codebase already
+ships full SVG note-image assets for accidentals, partial audio support for sharps/flats in
+`NotesRecognitionGame`, and VexFlow `Accidental` modifier usage in `VexFlowStaffDisplay`. However,
+none of those systems have been exercised through the **trail routing layer** with accidental note
+pools — all existing trail nodes have `accidentals: false` in their `noteConfig`.
 
-The current implementation uses:
-- Naive autocorrelation in `usePitchDetection.js` (`fftSize: 2048`, `smoothingTimeConstant: 0.8`)
-- Frame-stability layer in `useMicNoteInput.js` (`onFrames: 4-5`, `offMs: 140ms`)
-- `requestAnimationFrame` loop on the main thread
-- `AudioContext` created fresh on every `startListening()` call
-- There is already one failing test: `SightReadingGame.micRestart.test.jsx` (mic-flag-not-reset regression)
+Verified files:
+- `src/data/units/trebleUnit3Redesigned.js` — last treble unit, all natural notes
+- `src/data/units/bassUnit3Redesigned.js` — last bass unit, all natural notes
+- `src/data/expandedNodes.js` — aggregator, no accidental units imported yet
+- `src/data/skillTrail.js` — `UNITS.TREBLE_5` and `UNITS.BASS_5` already defined as stubs
+- `src/components/games/notes-master-games/NotesRecognitionGame.jsx` — `enableSharps: false`,
+  `enableFlats: false` are hardcoded when auto-starting from trail (line 524-525)
+- `src/components/games/sight-reading-game/utils/patternBuilder.js` — `toVexFlowNote` strips
+  accidentals silently (line 60-73: only matches `/^([A-G])(\d+)$/`, no `#` or `b`)
+- `src/config/subscriptionConfig.js` — explicit ID list, new nodes will be behind paywall by
+  default (not added to `FREE_NODE_IDS`), which is correct for v2.2
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Autocorrelation Octave Errors on Piano
+### Pitfall 1: Trail Auto-Start Hardcodes `enableSharps: false, enableFlats: false`
 
 **What goes wrong:**
-The autocorrelation algorithm in `usePitchDetection.js` detects the wrong octave — typically one octave too high (2x the true frequency) or, less commonly, one octave too low. A child plays C4 (261 Hz) and the game reports C5 (523 Hz). This is the single most common cause of "wrong note" errors on piano.
+A new accidentals trail node navigates to `NotesRecognitionGame` with `nodeConfig.notePool` containing
+e.g. `['F4', 'F#4', 'G4', 'Ab4']`. The auto-start effect on lines 518-536 builds `trailSettings`
+with `enableSharps: false, enableFlats: false`. The `normalizeSelectedNotes` call then filters out
+all accidental pitches — the game silently runs on natural notes only. The child gets an exercise
+containing only F4 and G4, which looks like a different (easier) game than intended.
 
 **Why it happens:**
-Piano tones have strong harmonic partials. When the 2nd harmonic (overtone at 2x fundamental) dominates the signal — which happens during the attack phase and for higher registers — the autocorrelation function finds the 2nd harmonic's period first and reports double the real frequency. The current implementation uses `GOOD_ENOUGH_CORRELATION = 0.9` with a first-peak-wins strategy, making it highly susceptible to sub-harmonic selection errors. This is a known 4% average error rate even in better algorithms (McLeod MPM, SNAC), and naive autocorrelation is significantly worse.
+The `enableSharps` / `enableFlats` flags were designed for the free-play settings panel. When the
+trail drives the game, there is no settings panel, so those flags stay false. The auto-start block
+that constructs `trailSettings` was written before accidentals nodes existed and never had a case
+for them.
 
-**Consequences:**
-- Child plays C4, game marks it wrong (detected as C5)
-- Child gets frustrated; thinks they played incorrectly
-- Problem is worse for notes with bright attack (C, G, high register notes)
-- The 5% frequency tolerance (`tolerance: 0.05`) was likely widened to compensate, causing cross-note false positives
-
-**Prevention:**
-Replace naive autocorrelation with the YIN algorithm or McLeod Pitch Method (MPM). Both add:
-1. Difference function instead of similarity correlation (reduces harmonic confusion)
-2. Cumulative mean normalization (eliminates the "first peak wins" problem)
-3. Parabolic interpolation (sub-sample accuracy without a bigger FFT)
-
-Validated JS implementations: `pitchfinder` npm package (includes YIN, MPM); `pitchy` npm package (MPM only, zero dependencies, ~2KB). Do NOT write YIN from scratch — the normalization step is subtle and commonly implemented incorrectly.
-
-**Warning signs:**
-- Child hits "wrong note" on the first beat of a note (attack phase), but not during sustain
-- Errors cluster on C, E, G (bright harmonic content)
-- Detected frequency is always approximately 2x or 0.5x the expected frequency
-
-**Phase to address:** Phase 1 (Algorithm Replacement)
-
----
-
-### Pitfall 2: AudioContext Created on Every startListening() Call
-
-**What goes wrong:**
-The current `startListening()` creates a new `AudioContext` and a new `MediaStreamSource` on every call. If the game is restarted (Try Again flow), a new AudioContext is created while the previous one may not be fully closed yet. This causes:
-- Orphaned AudioContext instances competing for mic resources
-- "AudioContext limit exceeded" errors on some browsers (Chrome has a hard limit of 6 concurrent AudioContext instances)
-- Memory pressure that causes audio glitches mid-session
-- The existing failing test (`micRestart.test.jsx`) directly tests this regression
-
-**Why it happens:**
-`audioContext.close()` is asynchronous. The current `stopListening()` calls `close().catch(...)` but then immediately sets `audioContext` state to null. If `startListening()` is called before close completes, two contexts coexist. React state batching makes this worse — state transitions during re-renders can cause double-invocations of the start/stop cycle.
-
-**Consequences:**
-- Mic input works on first game start, fails silently on restart
-- Chrome DevTools shows "AudioContext was not allowed to start" warnings
-- Memory grows across game sessions — important on low-end tablets used by children
-
-**Prevention:**
-1. Create one `AudioContext` per component mount (in a ref, not state), reuse across start/stop cycles
-2. Use `context.suspend()` / `context.resume()` instead of close/create when pausing between exercises
-3. Only `context.close()` on component unmount
-4. Use a ref guard: `if (audioContextRef.current && audioContextRef.current.state !== 'closed') { await audioContextRef.current.close(); }`
-5. Add a lifecycle state machine: `idle → acquiring → running → suspended → idle` to prevent concurrent starts
-
-**Warning signs:**
-- Console shows "AudioContext limit exceeded" or "The AudioContext was not allowed to start"
-- `startListening` called twice in rapid succession (React Strict Mode double-invokes effects)
-- Memory grows visibly in DevTools Memory tab across game restarts
-
-**Phase to address:** Phase 1 (AudioContext Lifecycle) — this is the current bug
-
----
-
-### Pitfall 3: iOS Safari AudioContext "interrupted" State Not Handled
-
-**What goes wrong:**
-On iOS, the AudioContext enters an `"interrupted"` state (not just `"suspended"`) when:
-- The user receives a phone call
-- The user switches apps
-- The device is locked
-- A system alert appears (permission dialog, etc.)
-
-The current code only checks for `"suspended"` and handles it with `resume()`. The `"interrupted"` state requires a different recovery strategy — the MediaStream itself is killed by iOS and must be re-acquired via `getUserMedia` again. Simply calling `resume()` on an interrupted context does not restore mic input.
-
-**Why it happens:**
-iOS Safari treats audio interruptions as a separate state from suspension. A WebKit bug (237878) confirms that AudioContext is suspended when backgrounded "even though AudioContext is not used directly for playing audio." The spec addition of the `"interrupted"` state was a late addition and many tutorials predate it. Additionally, iOS Safari PWA installed mode has different behavior from browser tab mode — mic permissions do not persist the same way.
-
-**Consequences:**
-- Child switches to Messages app mid-lesson, returns — game appears to run but no mic input is detected
-- Audio level meter shows 0 even though `isListening: true` in state
-- No error is thrown; the game silently accepts no input and the child thinks they're playing wrong
-
-**Prevention:**
-```javascript
-// Listen for the specific interrupted state
-audioContext.addEventListener('statechange', async () => {
-  if (audioContext.state === 'interrupted') {
-    // On iOS: the stream is dead. Must stop, re-acquire, and restart.
-    await fullMicRestart(); // stop tracks, close context, re-getUserMedia
-  } else if (audioContext.state === 'suspended') {
-    // On others: just resume
-    await audioContext.resume();
-  }
-});
-
-// Also handle visibilitychange for page background/foreground
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && isListening) {
-    verifyMicStreamIsAlive(); // Check track.readyState !== 'ended'
-  }
-});
+**How to avoid:**
+In the auto-start effect, derive `enableSharps` and `enableFlats` from the `nodeConfig.notePool`
+itself rather than hardcoding `false`:
+```js
+const hasSharps = (nodeConfig.notePool || []).some(p => p.includes('#'));
+const hasFlats  = (nodeConfig.notePool || []).some(p => p.includes('b') && p.length > 2);
+const trailSettings = {
+  clef: nodeConfig.clef || 'treble',
+  selectedNotes: nodeConfig.notePool || [],
+  enableSharps: hasSharps,
+  enableFlats:  hasFlats,
+  timedMode: ...,
+  timeLimit: ...,
+};
 ```
 
-Always verify `track.readyState === 'live'` after returning from background before trusting `isListening` state.
-
 **Warning signs:**
-- Mic appears active (isListening: true) but audioLevel stays at 0 after screen unlock
-- Only happens on iOS, not Android or desktop
-- Issue begins after iOS interruption events (calls, alerts)
+- Trail accidentals node launches but the note pool in the game UI only shows natural buttons.
+- `console.debug("[PatternBuilder] ✗ Filtered out invalid pitch: F#4")` appears in dev console.
+- 8-year-old completes the node easily because it only shows natural notes.
 
-**Phase to address:** Phase 2 (Cross-Browser Hardening)
+**Phase to address:** Data layer / trail node definitions phase (before any gameplay testing).
 
 ---
 
-### Pitfall 4: iOS Safari Requires User Gesture to Create/Resume AudioContext — Every Time
+### Pitfall 2: `patternBuilder.toVexFlowNote` Strips Accidentals — Sight Reading Shows Wrong Pitches
 
 **What goes wrong:**
-iOS Safari requires that `AudioContext.resume()` (or creation) be called in the synchronous stack frame of a user gesture (tap, click). If the code creates the AudioContext in a `useEffect`, a Promise chain, or any async path that does not trace back to a user gesture event handler, Safari silently keeps the context in `"suspended"` state. The context shows `state: "suspended"` with no error thrown.
+`patternBuilder.js` line 60 matches pitch with `/^([A-G])(\d+)$/` — no accidental character.
+`F#4` fails this regex and falls through to the fallback `{ keys: ["c/4"], duration: vexDuration }`.
+The sight reading game renders random C4 notes instead of the correct sharp/flat pitches. Score
+calculation then compares the player's detected pitch against C4 instead of F#4, making every
+correct answer count as wrong.
 
 **Why it happens:**
-This is a longstanding Safari security restriction (WebKit bug #790 from 2015, still enforced). Safari's gesture detector uses a strict call stack check — even a single `await` between the user event and the `resume()` call can break the gesture association. The current `startListening()` is `async` and does `await navigator.mediaDevices.getUserMedia(...)` before creating the context — this works because `getUserMedia` itself is a user gesture trigger on most platforms, but iOS handles it differently in PWA standalone mode.
+The pattern builder was written when all trail nodes had `accidentals: false`. The regex was
+intentionally simple. There is a separate `parsePitchForVexflow` function in `VexFlowStaffDisplay`
+that correctly handles accidentals (line 446-456), but `patternBuilder.toVexFlowNote` (the function
+that constructs the `easyscoreString` and `vexflowNotes` array upstream) was never updated to match.
 
-**Consequences:**
-- AudioContext is created, `state: "suspended"`, but no error is thrown
-- `detectLoop()` runs but `analyserNode.getFloatTimeDomainData()` returns all zeros
-- Detected frequency is always -1; the game accepts no input and looks broken
-- Works perfectly on Chrome/Android/desktop; only fails on iOS Safari
-
-**Prevention:**
-1. Wire the `startListening()` call directly to an `onClick` handler — never via `useEffect`
-2. Call `audioContext.resume()` synchronously at the start of the gesture handler, before any `await`:
-   ```javascript
-   const handleStartGame = async () => {
-     // Synchronous resume FIRST (while still in gesture stack)
-     if (audioContextRef.current?.state === 'suspended') {
-       audioContextRef.current.resume(); // No await here
-     }
-     // Then do async work
-     await startListening();
-   };
-   ```
-3. Add an explicit "warm-up" touch event on first app load to unlock the AudioContext early
-4. Test specifically with iOS Safari in standalone PWA mode (installed to home screen), not just in Safari tab
-
-**Warning signs:**
-- Works in Chrome, breaks in iOS Safari
-- `audioContext.state` is always `"suspended"` after creation
-- `audioLevel` stays at 0 even when mic permission is granted
-- No `NotAllowedError` thrown (context is created, just not running)
-
-**Phase to address:** Phase 2 (Cross-Browser Hardening)
-
----
-
-### Pitfall 5: requestAnimationFrame Loop Ties Pitch Detection to Frame Rate and Main Thread
-
-**What goes wrong:**
-The current `detectLoop()` uses `requestAnimationFrame` to run the autocorrelation algorithm. This means:
-- Detection rate drops from 60Hz to ~30Hz when the browser throttles rAF (background tab, low-power mode, frame budget exceeded)
-- The autocorrelation loop runs on the main thread — it blocks React rendering during the ~1ms computation
-- On slow mobile devices, frame budget pressure from VexFlow SVG rendering and pitch detection compete, causing both to glitch
-
-**Why it happens:**
-`requestAnimationFrame` is tied to display refresh rate and browser rendering budget. It is intentionally throttled by browsers in background tabs and on battery-saver mode. It was the right choice for visual animations; it is the wrong choice for continuous audio analysis.
-
-**Consequences:**
-- On iPhone SE (low-end device), eighth notes at 120 BPM (250ms each) are missed because detection rate drops to 15Hz (66ms per frame) — not enough samples to stably confirm a short note
-- When the child changes the music sheet display (React re-render), pitch detection stutters
-- Audio glitches from main thread congestion cause false `noteOff` events (silence detected mid-note)
-
-**Prevention:**
-Move pitch detection off the main thread. Two options:
-1. **AudioWorklet** (preferred): Process audio in the dedicated audio rendering thread at 128-frame quanta. The worklet thread is never throttled and has no GC pressure from main thread work.
-2. **Web Worker + SharedArrayBuffer**: Run the algorithm in a Worker, share a ring buffer with the audio graph. More complex but supported on all browsers with COOP/COEP headers.
-
-For this app's complexity level and cross-browser needs, AudioWorklet with a main-thread message fallback is the right call. Keep the existing rAF loop as the fallback for browsers without AudioWorklet support.
-
-**Warning signs:**
-- Audio level shows activity but notes are missed during heavy UI interactions
-- Frame timing logs show >16ms gaps in the detection loop
-- Problem is worse when VexFlow is re-rendering (note changes, beat markers)
-
-**Phase to address:** Phase 3 (Performance Hardening — later phase)
-
----
-
-### Pitfall 6: AudioWorklet Has a 128-Frame Fixed Buffer — Not 2048
-
-**What goes wrong:**
-Developers who migrate from `AnalyserNode` (which supports configurable `fftSize: 2048`) to `AudioWorklet` expect to control buffer size. AudioWorklet processes audio in fixed 128-sample render quanta. At 44100 Hz, that is 2.9ms per processing call. Running YIN or autocorrelation on 128 samples only gives frequency resolution down to ~344 Hz — far too coarse to detect piano notes below E4 (329 Hz). C3 (130 Hz) is completely invisible.
-
-**Why it happens:**
-The AudioWorklet spec intentionally fixes the quantum at 128 frames for low latency. Developers assume they can set it like `fftSize` on AnalyserNode. The solution is to accumulate frames into a ring buffer (circular buffer) within the AudioWorklet processor until enough samples are available for the detection window.
-
-**Consequences:**
-- Notes below E4 are never detected
-- Bass clef exercises (C3-B3) are completely broken
-- Developers assume the algorithm is broken; the real problem is buffer accumulation
-
-**Prevention:**
-Use a ring buffer pattern in the AudioWorklet processor:
-```javascript
-// In AudioWorkletProcessor
-class PitchProcessor extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    this._buffer = new Float32Array(2048); // accumulate 2048 samples
-    this._bufferIndex = 0;
-  }
-
-  process(inputs) {
-    const input = inputs[0][0]; // mono channel
-    if (!input) return true;
-
-    // Accumulate into ring buffer
-    for (let i = 0; i < input.length; i++) {
-      this._buffer[this._bufferIndex++] = input[i];
-      if (this._bufferIndex >= 2048) {
-        this.port.postMessage({ buffer: this._buffer.slice() });
-        this._bufferIndex = 0;
-      }
-    }
-    return true;
-  }
+**How to avoid:**
+Update `toVexFlowNote` in `patternBuilder.js` to match accidentals:
+```js
+const pitchMatch = obj.pitch.match(/^([A-G][#b]?)(\d+)$/);
+if (pitchMatch) {
+  const [, noteWithAcc, octave] = pitchMatch;
+  return { keys: [`${noteWithAcc.toLowerCase()}/${octave}`], duration: vexDuration };
 }
 ```
-This introduces 2048/44100 = 46ms of latency from buffering, which is acceptable for note detection (not real-time synthesis).
+The VexFlow key format accepts `f#/4` and `ab/4` — no separate `Accidental` modifier is needed
+in the EasyScore path; the modifier is only needed for the lower-level `StaveNote` path (already
+correctly handled in `buildStaveNote` via `parsePitchForVexflow`).
 
 **Warning signs:**
-- Low notes (below E4) are never detected regardless of tuning
-- Problem disappears when falling back to AnalyserNode-based approach
-- Only manifests after migrating to AudioWorklet
+- Sight reading game shows all C4 notes during an accidentals trail node.
+- Accuracy score is 0% even when player plays F# correctly.
+- `[PatternBuilder] Warning: Invalid pitch format: F#4` appears in dev console.
 
-**Phase to address:** Phase 3 (AudioWorklet Migration)
+**Phase to address:** Must be fixed before or during the sight reading integration phase. Run
+`npm run test:run` after the fix — `patternBuilder.test.js` exercises pitch parsing.
 
 ---
 
-### Pitfall 7: Piano Attack Transient Causes Pitch Detection to Fire on Key Release Noise
+### Pitfall 3: Pitch Detection Returns Sharp Equivalents — Matching Fails for Flat Note Pools
 
 **What goes wrong:**
-When a piano key is released, the key mechanism produces a percussive "thud" sound at 200-400 Hz — the same frequency range as low piano notes. The `rmsThreshold` that is set to pass the note attack also passes the key-release noise. The detector fires a false `noteOn` event for the key release, causing the next expected note to be pre-consumed.
+`usePitchDetection.js` uses `NOTE_NAMES = ["C", "C#", "D", "D#", ...]` — sharps only. When a
+student plays Db4 (same frequency as C#4), the detector returns `"C#4"`. If the trail node's
+`notePool` contains `["Db4", "Eb4", "Ab4"]` (flat spellings), the comparison `detectedNote === currentNote` fails for every correct answer.
 
 **Why it happens:**
-The key release noise has a very short duration (~30ms) and broadband frequency content, but its fundamental happens to fall in the piano note range. The current `onFrames: 4` stability requirement (at 60fps = 66ms) is supposed to filter this, but during rAF throttling or when the release noise is clean, it can survive the stability window.
+Chromatic pitch classes are represented with sharps in the detection layer. The game's answer
+comparison (in `useMicNoteInput.js` and the note-matching logic) must do enharmonic normalization.
+`NotesRecognitionGame` already has a `SHARP_TO_FLAT_MAP` and `toFlatEnharmonic` for audio lookup,
+but the primary note-matching path may not apply this map before comparing against the displayed
+question.
 
-**Consequences:**
-- Child releases a held note; the game registers a phantom note-on for the next note
-- Sequential note exercises get out of sync by one note
-- Problem is worse with acoustic pianos (louder key mechanisms) than digital piano keyboards
-
-**Prevention:**
-1. Require minimum note duration: reject `noteOn` events for candidates that resolve in under 50ms (key release noise rarely sustains)
-2. Track energy decay: if RMS drops from detection peak to below threshold in under 40ms, classify as transient noise, not a note
-3. For the `offMs` timing: 140ms is appropriate for the note sustain, but add a "holdout" after `noteOff` of 80ms before allowing the next `noteOn` — this gaps the key-release noise from counting as the next note
-4. Increase `onFrames` to 6-8 for note-recognition (less time-critical) games while keeping 4 for sight-reading
+**How to avoid:**
+Decide on one canonical spelling per pitch class for the trail node pool and stick to it. The
+existing system uses flat spellings for audio (Db4, Eb4, etc.) because the piano sound files are
+named that way. Use the same flat convention in accidentals node `notePool` entries. Additionally,
+verify that the mic-input comparison path normalizes `#` spellings to flat before comparing.
 
 **Warning signs:**
-- "Double fires" where one keypress produces two game events
-- Errors cluster at the end of held notes rather than during the note
-- Problem worse with acoustic piano, better with digital keyboard
+- Mic input always marked wrong even when the pitch meter shows the right frequency.
+- In dev tools: `detectedNote = "C#4"`, `currentNote.pitch = "Db4"` logged in the same frame.
+- Free-play with `enableFlats: true` + mic works fine because the free-play path normalizes; trail
+  path fails because it uses raw node pool pitches.
 
-**Phase to address:** Phase 1 (Detection Logic Hardening)
+**Phase to address:** Audio / pitch detection integration phase, before QA.
 
 ---
 
-### Pitfall 8: Mic Permission Denied Silently Fails on iOS PWA Re-Launch
+### Pitfall 4: Auto-Grow Note Pool Finds Accidental Notes and Injects Them Without Enabling the Flag
 
 **What goes wrong:**
-On iOS Safari (PWA standalone mode), if the user denies microphone permission, the app receives `NotAllowedError`. On subsequent launches of the PWA, iOS does not re-prompt — it silently denies. The current `startListening()` catches the error, sets `isListening: false`, and rethrows. There is no persistent UI state to tell the child "microphone access is disabled in Settings." The game appears to start (the "Start Playing" button works) but produces no detections.
+`NotesRecognitionGame` has an arcade-mode auto-grow feature: at every `GROW_INTERVAL` (5) streak,
+it walks forward from the current node via `getNextNodeInCategory()` looking for a pitch not yet in
+the pool (lines 885-898). When sharps/flats nodes exist, a player in a late natural-notes node
+(e.g., `treble_3_9`) at a 5-combo streak will have `"F#4"` injected from `treble_4_2` as an extra
+note. That pitch then gets shown as a question. But `settings.enableSharps` is still `false`, so
+the answer buttons in the UI may not include F#, making it impossible to answer correctly.
 
 **Why it happens:**
-iOS Safari does not have a browser-level permission management UI like Chrome. Permission revocation requires the user to navigate to Settings > Safari > Websites > Microphone. Children cannot do this themselves, and parents do not know to look. Additionally, unlike Chrome where `navigator.permissions.query({ name: 'microphone' })` returns the current state, iOS Safari's Permissions API has limited support.
+`getNextNodeInCategory` returns any node in the same category, including upcoming accidentals nodes.
+The auto-grow logic only checks whether the candidate pitch is absent from `alreadyKnown` — it does
+not check whether the pitch is a type of accidental the current node is supposed to support.
 
-**Consequences:**
-- Child taps "Start Playing" — nothing happens — assumes they're playing wrong
-- Teacher cannot remotely diagnose the issue
-- The COPPA-compliant scenario: parent installs the PWA, denies mic on first launch, comes back days later — permission is permanently denied with no UI indication
-
-**Prevention:**
-1. On every `startListening()` call, check permission state BEFORE attempting to open the stream:
-   ```javascript
-   // Try permission query (Chrome/Android); fall back to attempt-and-catch (iOS)
-   const checkMicPermission = async () => {
-     try {
-       const status = await navigator.permissions.query({ name: 'microphone' });
-       return status.state; // 'granted', 'denied', 'prompt'
-     } catch {
-       return 'unknown'; // iOS does not support this query
-     }
-   };
-   ```
-2. If a `NotAllowedError` is caught, show a persistent, parent-readable message with instructions for enabling mic in iOS Settings — not just a toast
-3. Store permission state in localStorage; if denied, show the instructions banner before attempting `getUserMedia` again
-4. Never silently swallow the error; at minimum log and update a `permissionState` ref
+**How to avoid:**
+In the auto-grow candidate search, filter out accidental pitches when `enableSharps` and `enableFlats`
+are both false:
+```js
+const candidatePitch = nextNode.noteConfig.notePool.find(p => {
+  if (alreadyKnown.has(p)) return false;
+  if (!settings.enableSharps && p.includes('#')) return false;
+  if (!settings.enableFlats && p.includes('b') && p.length > 2) return false;
+  return true;
+});
+```
 
 **Warning signs:**
-- `startListening` is called, `isListening` stays false, no console error visible to user
-- Regression: the error is caught but no user-visible state change occurs
-- iOS-only issue; Chrome shows a permission re-request dialog
+- During arcade play on a natural-notes treble node, a sharp note button appears in the UI after a 5-combo.
+- The child cannot answer and loses a life, which is extremely frustrating and confusing.
 
-**Phase to address:** Phase 1 (Permission Error Handling)
+**Phase to address:** Node data phase (as soon as new unit files are added to `expandedNodes.js`).
 
 ---
 
-### Pitfall 9: Smoothing Constant Obscures Rapid Note Changes (Eighth Notes)
+### Pitfall 5: VexFlow Accidental Glyph Crammed or Invisible Due to Insufficient Stave Width
 
 **What goes wrong:**
-The `AnalyserNode` is configured with `smoothingTimeConstant: 0.8`. This is a moving average filter that blends 80% of the previous frame's data into each new frame. For sustained notes (half notes, quarter notes), this improves stability. For eighth notes at 100 BPM (300ms each), the smoother causes the note's FFT data to "ramp up" over multiple frames, meaning the true peak isn't represented in the buffer until 2-3 frames in. Combined with `onFrames: 4`, this effectively adds ~100ms of latency to note detection — enough to miss an eighth note entirely.
+VexFlow's `Formatter` calculates minimum width requirements based on tickable modifiers. An
+`Accidental` modifier on a `StaveNote` adds approximately 20-30px to the note's minimum spacing.
+The current `FIXED_STAVE_WIDTH_PER_BAR = 240` in `VexFlowStaffDisplay` was calibrated for natural
+notes only. When a measure contains 4 quarter notes all with sharp/flat accidentals, the formatter
+may either:
+(a) throw a `VF.RangeError: Auto sizing voice does not have enough room` in some VexFlow builds, or
+(b) silently squish the accidental glyph so it overlaps the preceding note.
 
 **Why it happens:**
-`smoothingTimeConstant: 0.8` is the MDN-recommended default for visualization purposes. It was not designed for note detection. Autocorrelation runs on time-domain data (`getFloatTimeDomainData`), which is less affected by the smoother than frequency-domain data — but the AnalyserNode still applies a small amount of temporal blending that compounds with the stability frame requirement.
+Accidentals are rendered left of the notehead. In close spacing (4 quarter notes per bar), two
+adjacent accidentals need extra horizontal separation to avoid collision. VexFlow's automatic spacing
+handles this via `Formatter.format()` but only if enough width is allocated.
 
-**Consequences:**
-- Sight-reading game: child plays an eighth note correctly, but the note is detected 100ms late and counted as the next beat
-- The perceived latency issue ("wrong timing on eighth notes") reported as the current bug is likely this compound problem
-- Reducing `onFrames` to fix latency increases false positives (noise triggers notes)
-
-**Prevention:**
-1. Set `smoothingTimeConstant: 0` for time-domain pitch detection. The smoother is for spectral visualization; YIN/autocorrelation needs raw samples.
-2. Compensate for the loss of smoothing in the algorithm, not in the analyser — YIN's normalization step handles transient noise better than smoother-based filtering.
-3. For the stability layer in `useMicNoteInput`, use time-based accumulation (e.g., require stable detection for 60ms) rather than frame counting — frame count is unstable under rAF throttling.
+**How to avoid:**
+Increase `FIXED_STAVE_WIDTH_PER_BAR` or add an accidental-density calculation: count accidental
+modifiers in the pattern notes and add ~15px per accidental when determining stave width. The
+`buildStaveNote` function in `VexFlowStaffDisplay` already adds `Accidental` modifiers correctly;
+the width budget is the only gap.
 
 **Warning signs:**
-- Eighth notes at 120+ BPM are consistently missed or detected one slot late
-- Problem improves when the stability frame count is reduced (but then false positives appear)
-- `smoothingTimeConstant` is set to 0.8 or higher in the AnalyserNode configuration
+- Notation renders with a sharp/flat symbol visually overlapping the note stem of the previous note.
+- Console logs `VF.Formatter: Could not format due to width constraints`.
+- Only visible with 3+ accidentals per measure; single accidentals look fine.
 
-**Phase to address:** Phase 1 (Algorithm Configuration)
+**Phase to address:** VexFlow rendering phase. Test with patterns containing 4 quarter notes each
+with a flat modifier (e.g. Db4 Eb4 Gb4 Ab4 in 4/4).
 
 ---
 
-### Pitfall 10: Regression: mic-flag-not-reset After Try Again (Current Bug)
+### Pitfall 6: Hebrew Note Labels Are Ambiguous for Accidentals
 
 **What goes wrong:**
-The failing test `SightReadingGame.micRestart.test.jsx` captures an existing regression: after clicking "Try Again" and restarting a performance, `startListening` is called only once instead of twice. The mic is not re-activated on the second attempt.
+The i18n system displays solfege names in Hebrew (דו for C, רה for D, etc.). For accidentals the
+display is `${note.note}♭` or `${note.note}♯` (e.g., `דו♯`). For an 8-year-old Hebrew speaker
+learning accidentals, seeing `דו♯` without a corresponding guide on what "sharp" and "flat" mean
+creates confusion. More practically: the answer buttons in `NotesRecognitionGame` sort accidentals
+after naturals using `accidentalRank()`, which means Db4 (ranked 1) appears before C#4 (ranked 2),
+but solfege labels give no visual distinction between different accidentals on the same scale degree.
 
 **Why it happens:**
-The likely cause is an internal flag or guard in the component (or hook) that prevents `startListening` from being called when the hook's state still shows `isListening: true` from the previous session. The `stopListening` on "Try Again" sets `isListening: false` in React state, but this state update is asynchronous — by the time the user clicks "Start Playing" again, the previous state hasn't fully settled, or the flag preventing double-starts hasn't been reset.
+Solfege (do-re-mi) is a diatonic system and does not naturally accommodate chromatic alterations.
+The current label convention appends a Unicode glyph, which is technically correct but requires
+musical literacy to interpret — above the expected level of an 8-year-old in early accidentals
+lessons.
 
-This is exactly the pattern the `resetInternalState` call in `useMicNoteInput.stopListeningWrapped` is supposed to handle, but the timing between `stopListening` (async state reset) and the next `startListening` (triggered by user) is a classic race condition in React hook state management.
-
-**Consequences:**
-- After "Try Again": game starts, no mic input, child appears to play wrong notes
-- The test proves the regression exists; fixing the algorithm without fixing this will leave users on the old broken path when they retry exercises
-
-**Prevention:**
-1. Fix this regression FIRST before any algorithm changes — it is already tested and broken
-2. The fix pattern: use a `ref` (not state) for the "is currently listening" guard, so it can be read synchronously in `startListening` without waiting for a state flush
-3. Ensure `stopListening` synchronously resets the guard ref before returning, so the next `startListening` sees the cleared state
-4. The test must pass as a prerequisite gate for any further pitch detection work
+**How to avoid:**
+For accidentals nodes, prefer English note names (e.g. "F#" / "Gb") or a consistent graphic
+(a note name plus a drawn sharp/flat symbol) rather than solfege + Unicode glyph. This is a
+pedagogical decision that should be made in the design phase. If Hebrew solfege is required,
+add short inline labels like `"חֲצִי-טוֹן"` (semitone) or the accepted Israeli pedagogy terms.
 
 **Warning signs:**
-- The existing test `SightReadingGame.micRestart.test.jsx` is failing
-- `startListeningSpy` is called once instead of twice in the restart flow
-- Only happens after "Try Again", not on first start
+- QA sessions with actual 8-year-olds show confusion about which button to press when two buttons
+  show `דו♯` and `רה♭` (which are enharmonic equivalents of each other).
+- Button labels are identical for enharmonic pairs shown in the same session.
 
-**Phase to address:** Phase 0 (Pre-existing Bug — must fix before any other work)
+**Phase to address:** UX / pedagogical content phase. Decide before building any UI.
+
+---
+
+### Pitfall 7: `subscriptionConfig` Not Updated — New Nodes Silently Become Free-Tier
+
+**What goes wrong:**
+`subscriptionConfig.js` uses an explicit `FREE_NODE_IDS` Set. Any new node ID that happens to match
+a free ID is accessible without a subscription. More importantly: if the new accidentals node IDs
+are accidentally added to the free list (e.g., by copy-paste from the treble_1 unit), paying
+subscribers and free users get the same content — the paywall is bypassed silently.
+
+The inverse risk: if the database-side `is_free_node()` Postgres function is not updated to match
+the new node IDs, the RLS policy rejects premium subscribers trying to submit scores for the new
+premium nodes.
+
+**Why it happens:**
+The comment in `subscriptionConfig.js` says "Changing the free tier boundary requires editing ONLY
+this file." But that comment is only half right: the Postgres `is_free_node()` function is a second,
+independent source of truth that must stay in sync. When new nodes are all-premium (as intended for
+v2.2), they do not need to be in `FREE_NODE_IDS` but they also do not need to be in `is_free_node()`
+— as long as the DB function returns `FALSE` for any unknown node ID. Verify this is the case.
+
+**How to avoid:**
+- Do not add any new accidentals node ID to `FREE_NODE_IDS`.
+- Verify the Postgres `is_free_node()` function returns `FALSE` for unknown node IDs (audit the
+  migration file).
+- Add a build-time test: for each new node ID, assert `isFreeNode(id) === false`.
+
+**Warning signs:**
+- Free users can access `treble_5_1` without subscribing.
+- Paid users get an RLS error ("new row violates row-level security policy") when submitting scores
+  for new nodes.
+
+**Phase to address:** Data layer phase, immediately when node IDs are finalized.
+
+---
+
+### Pitfall 8: `expandedNodes.js` Aggregator Not Updated — New Nodes Invisible to Trail
+
+**What goes wrong:**
+`expandedNodes.js` imports unit files explicitly. Adding `trebleUnit4Redesigned.js` and
+`trebleUnit5Redesigned.js` without adding the corresponding import lines leaves the new nodes
+completely absent from `EXPANDED_NODES`. The trail renders as before — 93 nodes. No error is thrown.
+`getNodeById('treble_5_1')` returns `undefined`. The skill trail appears unchanged.
+
+**Why it happens:**
+This is a manual aggregation pattern with no auto-discovery. It matches how all previous units were
+added (treble/bass/rhythmUnit1-3 are each individually imported). The pattern is correct but easy to
+forget when focused on data authoring.
+
+**How to avoid:**
+The build-time validation script (`npm run verify:patterns`) should be extended to assert that every
+node file in `src/data/units/` is imported by `expandedNodes.js`. This catches the "file exists but
+not imported" case. Add this assertion to the validator alongside the existing prerequisite-cycle check.
+
+**Warning signs:**
+- `npm run verify:patterns` passes but new node IDs do not appear in the trail.
+- `getNodeById('treble_5_1')` returns `undefined` in browser devtools.
+- Trail tab shows 0 nodes for Unit 5.
+
+**Phase to address:** Data layer phase, immediately when new unit files are created.
 
 ---
 
 ## Technical Debt Patterns
 
+Shortcuts that seem reasonable but create long-term problems.
+
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Keep naive autocorrelation, tune thresholds | No algorithm change, fast fix | Octave errors persist; tuning is whack-a-mole | Never — the error is algorithmic, not parametric |
-| Keep rAF loop, reduce onFrames | Fixes latency on fast devices | Breaks on throttled rAF (low battery, background); increases false positives | Never for production; only for initial prototype |
-| Create new AudioContext on every startListening | Simpler state management | Memory leak across restarts; Chrome context limit | Never — already causing the current mic-restart bug |
-| Set smoothingTimeConstant: 0.8 for "stability" | Smoother frequency display | 100ms phantom latency for eighth note detection | Acceptable ONLY for visualization-only components |
-| Use `isListening` state as the guard for startListening | Simpler code | State batching race condition (current bug) | Never — use a ref for synchronous guards |
-| Ship without AudioWorklet, defer to later | Faster first phase | main-thread congestion on slow tablets; rAF throttle problems | Acceptable if rAF loop has explicit throttle guards |
+| Use only flat spellings in notePool (Db not C#) | Consistent with audio file naming | Confusing for learners who learn sharps first in key signature order | Acceptable for v2.2; revisit before key-signature unit |
+| Reuse existing note SVG images without dedicated accidental-in-context images | No new asset work | Same SVG shows the note in isolation — may not match staff position in sight reading | Acceptable only if NoteImageDisplay is not shown during sight reading |
+| Skip enharmonic explanation in UI | Simpler lesson design | Children who learn F# here will encounter Gb later and not recognize it as the same key | Acceptable for v2.2 (isolated accidentals); add disambiguation before key-signature unit |
+| Hardcode `accidentals: true` in noteConfig without validating the boolean in the validator | Fast data authoring | Validator never checks whether `accidentals: true` nodes have accidental pitches in notePool | Never — validator should cross-check |
+| Copy-paste a Unit 3 node file as the base for Unit 4 | Fast start | Inherits `START_ORDER` constant — if not updated, causes duplicate `order` values silently | Never — always verify order values are unique |
 
 ---
 
 ## Integration Gotchas
 
+Common mistakes when connecting to external services.
+
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| `useMicNoteInput` + `SightReadingGame` | Restart sequence does not call `stopListening` before `startListening` | Enforce explicit stop-then-start sequence; never call `startListening` when `isListeningRef.current === true` |
-| `usePitchDetection` + `useAudioEngine` | Two AudioContext instances created (one for pitch, one for metronome) | Share a single AudioContext via a context provider or pass ref down; browser limits to ~6 concurrent contexts |
-| `AudioContext.resume()` + iOS gesture | `resume()` called after an `await` in the same handler | Call `resume()` synchronously before any async work in gesture handlers |
-| `getUserMedia` + PWA reinstall | Permission state assumed from previous session | Always attempt `getUserMedia` fresh; don't cache permission state across app launches |
-| `requestAnimationFrame` + React Strict Mode | `detectLoop` fires twice on mount in dev mode | Use the `hasAutoStartedRef` pattern already in the codebase; guard rAF with a running flag ref |
-| New pitch algorithm + existing test suite | Tests mock `useMicNoteInput` — algorithm changes don't break them | Add dedicated algorithm unit tests for YIN/MPM output accuracy before replacing autocorrelation |
+| VexFlow `Accidental` modifier | Adding modifier to `StaveNote` using `addModifier(new Accidental('b'), 0)` where `'b'` is the VexFlow code for flat — but accidentally passing `'b'` for sharp or `'#'` for flat | Sharp = `'#'`, Flat = `'b'` in VexFlow — test with both before shipping |
+| Supabase RLS on `student_skill_progress` | Submitting progress for a new premium node when `is_free_node()` returns false and `has_active_subscription()` also returns false (e.g., expired subscription) results in a 403 with no UI feedback | Catch the RLS error in `skillProgressService.updateNodeProgress()` and surface a subscription-expired message |
+| `NOTE_AUDIO_LOADERS` in `NotesRecognitionGame` | Adding a node with `Gb3` in notePool — `NOTE_AUDIO_LOADERS['Gb3']` exists — but `Fb3` does not. If a theoretical accidentals node included `Fb3`, the audio would silently fail | Audit every pitch in every new notePool against `NOTE_AUDIO_LOADERS` keys before merging |
+| `getNextNodeInCategory` in auto-grow | Returns `boss_treble_5` which has `noteConfig.notePool` containing the full accidentals set — injecting a boss node's pool note into a regular node's arcade session | Auto-grow should skip boss nodes (`isBoss: true`) as note pool sources |
 
 ---
 
 ## Performance Traps
 
+Patterns that work at small scale but fail as usage grows.
+
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Autocorrelation at O(N^2) in rAF loop | Main thread blocked ~1-3ms per frame on slow devices; VexFlow renders stutter | Use YIN (O(N) with optimizations) or move to AudioWorklet; profile with Chrome DevTools Performance tab | Consistently on iPhone SE / low-end Android; intermittently on mid-range |
-| Large Float32Array allocation on every frame | GC pauses cause audio glitches every ~30 seconds (GC frequency) | Pre-allocate the analysis buffer in a ref outside the loop; never `new Float32Array` inside `detectLoop` | Immediately on any device after ~1 minute of continuous detection |
-| `setDetectedFrequency` / `setDetectedNote` called at 60Hz | 60 React state updates per second cause excessive re-renders | Debounce state updates; only update state when note changes, not every frame | Immediately visible in React DevTools Profiler; causes visible frame drops during notation rendering |
-| AudioWorklet with 128-frame quanta + no ring buffer | Low notes never detected | Accumulate to 2048 samples in ring buffer before running detection | Every bass clef note; manifests immediately in testing |
+| Importing all accidental SVG assets at module load | `gameSettings.js` already imports ~80 accidental SVGs at top level; adding more octave variants increases initial JS parse time | Do not add new SVG imports unless the specific pitch is in scope for v2.2 trail nodes | Noticeable above ~100 static SVG imports (currently at ~80) |
+| Large `notePool` arrays in boss challenge config | Boss node with all 20 accidentals notes generates a very large answer button grid in `NotesRecognitionGame`; layout breaks below 375px width | Cap boss notePool at 10-12 notes; use a curated subset, not all notes at once | Any device narrower than 390px with 15+ answer buttons |
+| Duplicate node IDs across treble accidentals and extended-range nodes | Two nodes with the same `id` cause `getNodeById` to return the first match silently; second node is unreachable | Run `verify:patterns` which catches duplicate IDs | Always — deduplication is a correctness issue not a performance issue |
 
 ---
 
 ## Security Mistakes
 
+Domain-specific security issues beyond general web security.
+
 | Mistake | Risk | Prevention |
 |---------|------|------------|
-| Caching microphone stream across page navigations | Audio continues recording when user navigates away from game (COPPA violation) | Always stop and release all MediaStream tracks in component cleanup; verify with `track.readyState === 'ended'` after cleanup |
-| Logging pitch data with user identifiers | Audio patterns could identify individuals (COPPA/GDPR-K) | Do not log raw audio data or frequency time series with student IDs; debug logging gated behind `VITE_DEBUG_MIC_LOGS` (already implemented) |
-| `getUserMedia` constraint with no echo cancellation | Mic feedback loop on devices with speakers (game feedback sounds fed back into mic) | Always request `echoCancellation: true, noiseSuppression: true` in getUserMedia constraints |
+| New accidentals node IDs accidentally added to `FREE_NODE_IDS` | Free users access premium content; revenue lost | Build-time test asserting no accidentals node IDs are in `FREE_NODE_IDS` |
+| `is_free_node()` Postgres function not audited after adding new nodes | If it uses a whitelist, unknown IDs could default to `TRUE`; paid subscribers blocked or free tier expanded | Read the current migration to confirm unknown IDs return `FALSE`; add a DB integration test |
+| Score submission for new nodes bypasses rate limiting | If the new node IDs are not in the `students_score` table's rate-limit path, a bot could farm XP by spamming new node IDs | Verify the rate-limit trigger covers `node_id` values not previously seen |
 
 ---
 
 ## UX Pitfalls
 
+Common user experience mistakes in this domain.
+
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| No mic permission UI on first load | Child taps Start and nothing works; assumes they're playing wrong | Show a "We'll need your microphone" prompt with visual before requesting permission; only request on explicit user action |
-| Mic icon shows "active" when AudioContext is suspended (iOS) | Child thinks the game is listening; plays note; nothing detected | Show mic status based on verified stream liveness (`track.readyState === 'live'`), not just `isListening` state |
-| No fallback when mic fails | Child stuck at blank game screen | Show keyboard input fallback (Klavier is already implemented) if mic fails to start within 3 seconds |
-| Pitch detection confidence not surfaced | Child plays a note that is borderline (between two frequencies); game randomly accepts/rejects | Show a visual "confidence bar" for detected note; only register note when confidence is above threshold |
-| Latency gap between note play and green flash | Child thinks they played wrong because feedback is 200ms late | Target <100ms from sound to visual confirmation; measure the pipeline end-to-end before shipping |
+| Introducing F# and Gb in the same node lesson | 8-year-olds see two different button labels for what sounds identical on the keyboard; they think they are wrong when they play the right key | Separate sharp nodes from flat nodes pedagogically: teach sharps first (black keys going right), then flats (black keys going left) in a later node |
+| Showing all 5 black-key accidentals in a single Discovery node | Cognitive overload; forgetting rate spikes | Introduce at most 1-2 new accidentals per Discovery node, mirroring how naturals were introduced one at a time |
+| No visual distinction between the sharp symbol (♯) and natural symbol (♮) in small button text | Children misread flat as natural or sharp as natural at small font sizes | Use the SVG note images (which already include the accidental symbol clearly drawn on a staff) rather than text-label buttons for accidentals questions |
+| Awarding 3 stars too easily on accidentals nodes | Dilutes the star achievement that was hard-won for naturals | Keep the same 95% threshold for 3 stars; consider adding a "first time seeing accidentals" difficulty adjustment via slightly lower tempo default |
+| Boss node requiring all 10 accidentals at 95% accuracy | Too difficult for 8-year-olds who just learned accidentals | Boss should test a focused subset (e.g., 5 most-practiced accidentals) at 80% for full stars |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Octave error fix:** Verify by playing C4 on acoustic piano (not digital) with bright attack — should detect C4, not C5. Do not rely on synthetic test tones which have clean harmonics.
-- [ ] **Mic restart regression:** `SightReadingGame.micRestart.test.jsx` must pass before claiming the restart flow is fixed.
-- [ ] **iOS Safari interruption:** Test by starting a game session, receiving a phone call (or activating Siri), then returning — mic must resume correctly.
-- [ ] **AudioContext limit:** Run 7+ consecutive game sessions in the same app session (without full page reload) — no "AudioContext limit exceeded" errors.
-- [ ] **Bass clef detection:** Play C3 and D3 on a piano — these must be detected if the app supports bass clef exercises (the current frequency table only goes down to C3).
-- [ ] **Permission denied path:** Deny microphone on first launch, relaunch the PWA — a clear "enable in Settings" message must appear, not a silent failure.
-- [ ] **Eighth note timing:** At 120 BPM, play 4 eighth notes in a row — all 4 must register, with no missed notes or timing offset.
-- [ ] **rAF throttle:** Open Chrome DevTools, CPU throttle to 4x slowdown, play notes — detection must still function (may be slower but not break).
-- [ ] **Klavier keyboard fallback:** With mic blocked, keyboard input must still work for all exercises.
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Trail auto-start:** New accidentals node loads and game starts — verify `enableSharps` or `enableFlats` is `true` in the running settings, not just in `nodeConfig`. Check via React DevTools or a `console.log` in `startGame`.
+- [ ] **VexFlow rendering:** Staff displays a note with a flat/sharp symbol — verify the accidental glyph does not overlap adjacent noteheads by zooming in on mobile viewport (375px wide).
+- [ ] **Pitch detection match:** Mic input matches Db4 correctly — verify by playing Db4 on a real piano (not just clicking the listen button) and checking the detected note in dev overlay.
+- [ ] **Auto-grow isolation:** Playing arcade mode on a natural-notes node at 10-combo does not inject accidental notes from the next unit — test with a node that is immediately before `treble_5_1` in order.
+- [ ] **Subscription gate:** Free user attempting to access `treble_5_1` sees the paywall modal, not the game — verify on a real free-tier account.
+- [ ] **Existing progress intact:** After deploying new unit files, users who completed `boss_treble_3` still show as completed — verify `EXPANDED_NODES` aggregation does not shift array indices that affect `getNodeById` lookups (it uses `find`, not array position, so this should be fine — but verify).
+- [ ] **Validator passes:** `npm run verify:patterns` passes with new unit files added and no new prerequisite cycles.
+- [ ] **Hebrew labels readable:** Answer buttons for Db4 and C#4 shown in a Hebrew-language session are distinguishable — test in the `he` locale.
+- [ ] **Boss unlock event fires:** Completing `boss_treble_5` triggers the 3-stage boss modal (boss unlock events are keyed on `isBoss: true` in VictoryScreen) — verify by navigating to the boss node and completing it.
 
 ---
 
 ## Recovery Strategies
 
+When pitfalls occur despite prevention, how to recover.
+
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Autocorrelation octave errors shipped | MEDIUM | Replace algorithm in `usePitchDetection.js` with YIN via `pitchfinder` or `pitchy`; adjust `rmsThreshold` and `tolerance` to match new algorithm's output scale; re-run all game flows |
-| AudioContext leak shipped | HIGH | Must add context reuse pattern; requires changing hook interface (creates vs. reuses context); downstream consumers need update |
-| iOS AudioContext suspension not handled | LOW-MEDIUM | Add `statechange` event listener and `visibilitychange` handler to `usePitchDetection`; no interface change needed |
-| Mic restart regression still in production | LOW | Fix the `isListening` state vs. ref guard; the test already exists — just make it pass |
-| Main-thread rAF blocking shipped | HIGH | Requires AudioWorklet migration with fallback; significant architectural change; 2-3 week effort |
+| Trail auto-start strips accidentals from pool | LOW | Hotfix: add 3 lines to derive `enableSharps`/`enableFlats` from notePool in the auto-start effect. No DB migration needed. |
+| `patternBuilder.toVexFlowNote` silently renders C4 | LOW | Hotfix: update one regex in `patternBuilder.js`. Update corresponding tests. |
+| Pitch detection enharmonic mismatch | MEDIUM | Requires auditing all note-comparison paths in the mic pipeline; may affect free-play as well as trail mode |
+| New node IDs accidentally free-tier | LOW | Hotfix in `subscriptionConfig.js`; deploy. No user data loss. |
+| `expandedNodes.js` not updated | LOW | Add 2 import lines; `npm run build` catches it immediately if verify:patterns is run as prebuild |
+| Duplicate `order` values in unit files | MEDIUM | Renumber all affected nodes; test that trail renders in correct visual order; verify no progress is lost (progress is keyed on `id`, not `order`) |
+| VexFlow accidental glyph collision | MEDIUM | Increase `FIXED_STAVE_WIDTH_PER_BAR`; re-test all existing multi-bar sight reading patterns to confirm no regression |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
+How roadmap phases should address these pitfalls.
+
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Mic-restart regression (current bug) | Phase 0 — fix before any new work | `SightReadingGame.micRestart.test.jsx` passes |
-| Autocorrelation octave errors | Phase 1 — Algorithm replacement | Play C4 on acoustic piano; detected note matches; octave error rate < 1% in manual testing |
-| AudioContext multiple instances | Phase 1 — AudioContext lifecycle | 10 game restarts with no console errors; memory stable in DevTools |
-| Permission denied silent failure | Phase 1 — Error handling | Deny mic in iOS Settings; clear message appears on next game start |
-| Smoothing constant latency | Phase 1 — Configuration | Set `smoothingTimeConstant: 0`; eighth note test at 120 BPM passes |
-| Key release noise false positives | Phase 1 — Detection tuning | Acoustic piano hold-release test; no phantom events after note release |
-| iOS AudioContext interruption | Phase 2 — Cross-browser hardening | Phone call during game session; mic resumes on return |
-| iOS gesture requirement | Phase 2 — Cross-browser hardening | Test in iOS Safari PWA standalone; no suspended context issues |
-| rAF main-thread blocking | Phase 3 — Performance (later) | Chrome 4x CPU throttle; detection still functions |
-| AudioWorklet 128-frame buffer size | Phase 3 — AudioWorklet migration | Bass clef notes C3-B3 all detected after migration |
+| Trail auto-start strips accidentals (Pitfall 1) | Phase 1: Data + Trail integration | Start an accidentals node from trail; confirm enableSharps=true in running state |
+| patternBuilder drops accidental pitches (Pitfall 2) | Phase 1: Data + Trail integration | Run `patternBuilder.test.js`; add a test case for `F#4` |
+| Enharmonic mismatch in pitch detection (Pitfall 3) | Phase 2: Game mode integration | Manual QA with real piano mic input on a flat-spelling node |
+| Auto-grow injects accidentals into natural-notes session (Pitfall 4) | Phase 1: Data + Trail integration | Trigger 5-combo in treble_3_9 arcade; confirm no accidental injected |
+| VexFlow accidental glyph collisions (Pitfall 5) | Phase 2: Game mode integration | Render a 4/4 measure of all-accidental quarter notes on a 375px viewport |
+| Hebrew label ambiguity (Pitfall 6) | Phase 0: Design / content spec | Prototype answer buttons in Hebrew locale; get feedback from target age group |
+| subscriptionConfig not updated (Pitfall 7) | Phase 1: Data + Trail integration | Assert `isFreeNode('treble_5_1') === false` in unit test |
+| expandedNodes.js aggregator not updated (Pitfall 8) | Phase 1: Data + Trail integration | `getNodeById('treble_5_1')` returns the node object in browser console |
 
 ---
 
 ## Sources
 
-- [WebKit Bug 237878: AudioContext suspended when iOS page is backgrounded](https://bugs.webkit.org/show_bug.cgi?id=237878)
-- [WebKit Bug 237322: Web Audio muted when iOS ringer is muted](https://bugs.webkit.org/show_bug.cgi?id=237322)
-- [WebKit Bug 198277: Audio stops when standalone web app is not in foreground](https://bugs.webkit.org/show_bug.cgi?id=198277)
-- [Web Audio API GitHub Issue #790: Context stuck in suspended state on iOS](https://github.com/WebAudio/web-audio-api/issues/790)
-- [AudioWorklet Design Pattern — Chrome Developers Blog](https://developer.chrome.com/blog/audio-worklet-design-pattern)
-- [AudioWorklet is a real world disaster — WebAudio Spec Issue #2632](https://github.com/WebAudio/web-audio-api/issues/2632)
-- [Garbage Collection in Web Audio — WebAudio Spec Issue #373](https://github.com/WebAudio/web-audio-api/issues/373)
-- [Autocorrelation vs YIN for Pitch Detection](https://pitchdetector.com/autocorrelation-vs-yin-algorithm-for-pitch-detection/)
-- [pitchfinder JS library — includes YIN, MPM, AMDF implementations](https://github.com/peterkhayes/pitchfinder)
-- [Microphone stops working in PWA on iOS — Apple Developer Forums](https://developer.apple.com/forums/thread/733229)
-- [Unlock Web Audio in Safari for iOS — Matt Montag](https://www.mattmontag.com/web/unlock-web-audio-in-safari-for-ios-and-macos)
-- [MDN: Web Audio API Best Practices](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices)
-- [MDN: AnalyserNode.fftSize](https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/fftSize)
-- [Exploring System Adaptations for Minimum Latency Real-Time Piano Transcription (arXiv 2509.07586)](https://arxiv.org/html/2509.07586)
-- [Current codebase: `src/hooks/usePitchDetection.js` — reviewed 2026-02-17]
-- [Current codebase: `src/hooks/useMicNoteInput.js` — reviewed 2026-02-17]
-- [Current codebase: `src/components/games/sight-reading-game/SightReadingGame.micRestart.test.jsx` — reviewed 2026-02-17]
+- Direct codebase review: `src/data/units/trebleUnit3Redesigned.js`, `src/data/units/bassUnit3Redesigned.js`
+- Direct codebase review: `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (lines 518-536, 875-900)
+- Direct codebase review: `src/components/games/sight-reading-game/utils/patternBuilder.js` (lines 60-73)
+- Direct codebase review: `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` (lines 446-485, 408)
+- Direct codebase review: `src/hooks/usePitchDetection.js` (NOTE_NAMES constant, lines 25-38)
+- Direct codebase review: `src/components/games/sight-reading-game/constants/noteDefinitions.js`
+- Direct codebase review: `src/components/games/sight-reading-game/constants/gameSettings.js` (TREBLE_IMAGE_MAP accidental entries)
+- Direct codebase review: `src/config/subscriptionConfig.js`
+- Direct codebase review: `src/data/expandedNodes.js`
+- Direct codebase review: `src/data/skillTrail.js` (UNITS.TREBLE_5, UNITS.BASS_5 stubs)
+- VexFlow v5 API: `Accidental`, `StaveNote.addModifier()`, `Formatter` width constraints — HIGH confidence (same API already used in VexFlowStaffDisplay)
+- McLeod Pitch Method sharp/flat detection — covered in existing `PITFALLS.md` (mic overhaul research); enharmonic behavior is verified in `frequencyToNote()` (NOTE_NAMES is sharps-only)
 
 ---
-*Pitfalls research for: Browser-based piano pitch detection overhaul in existing React 18 PWA*
-*Researched: 2026-02-17*
+*Pitfalls research for: Sharps & Flats content expansion (v2.2)*
+*Researched: 2026-03-15*
