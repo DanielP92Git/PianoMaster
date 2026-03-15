@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Sharps & Flats
 status: active
-stopped_at: Defining requirements
+stopped_at: Roadmap created — ready to plan Phase 01
 last_updated: "2026-03-15T00:00:00.000Z"
-last_activity: 2026-03-15 — Milestone v2.2 started
+last_activity: 2026-03-15 — Roadmap created (4 phases, 12 requirements mapped)
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v2.2 Sharps & Flats — defining requirements
+**Current focus:** v2.2 Sharps & Flats — Phase 01: Pre-Flight Bug Fixes
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-15 — Milestone v2.2 started
+Phase: 01 of 04 (Pre-Flight Bug Fixes)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-03-15 — Roadmap created
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -40,11 +42,17 @@ Last activity: 2026-03-15 — Milestone v2.2 started
 
 ### Decisions
 
-All decisions archived in PROJECT.md Key Decisions table and milestone archives.
+All prior decisions archived in PROJECT.md Key Decisions table.
 
-### Roadmap Evolution
+**v2.2 key constraints:**
+- Phase 01 is non-negotiable first: both bugs produce silent failures that make all subsequent testing misleading
+- Sharps and flats in separate units (not mixed) to avoid enharmonic confusion — mic outputs sharp-form only
+- Bass `START_ORDER` must be read from `bassUnit3Redesigned.js` before authoring Phase 03
 
-All milestones v1.0 through v2.1 shipped and archived. v2.2 defining requirements.
+### Research Flags (act on during implementation)
+
+- **Phase 02/03**: Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises — if strict string comparison found, fix is localized to that function
+- **Phase 03**: Read `bassUnit3Redesigned.js` last order value before setting `bassUnit4Redesigned.js` START_ORDER
 
 ### Blockers/Concerns
 
@@ -56,11 +64,12 @@ All milestones v1.0 through v2.1 shipped and archived. v2.2 defining requirement
 ## Session Continuity
 
 Last session: 2026-03-15
-Stopped at: Milestone v2.2 started, defining requirements
+Stopped at: Roadmap created — 4 phases mapped to all 12 requirements
+Resume file: None
 
 **Next action:**
-- Complete requirements definition and roadmap creation
+- Run `/gsd:plan-phase 1` to plan Phase 01: Pre-Flight Bug Fixes
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-15 — Milestone v2.2 started*
+*Last updated: 2026-03-15 — v2.2 roadmap created*

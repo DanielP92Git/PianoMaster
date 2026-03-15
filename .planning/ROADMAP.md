@@ -14,6 +14,7 @@
 - ✅ **v1.9 Engagement & Retention** — Phases 17-23 (shipped 2026-03-08)
 - ✅ **v2.0 VictoryScreen & XP Unification** — Phases 01-02 (shipped 2026-03-08)
 - ✅ **v2.1 Forgot Password Recovery** — Phase 01 (shipped 2026-03-10)
+- 🚧 **v2.2 Sharps & Flats** — Phases 01-04 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -139,6 +140,63 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### 🚧 v2.2 Sharps & Flats (In Progress)
+
+**Milestone Goal:** Extend the trail with accidentals (sharps and flats) across treble and bass clef paths, delivering ~20 new premium nodes for subscriber retention.
+
+#### Phase Summary
+
+- [ ] **Phase 01: Pre-Flight Bug Fixes** — Fix two code bugs that silently corrupt accidentals before any content can be tested
+- [ ] **Phase 02: Treble Accidentals Content** — Author treble sharps unit (F#4, C#4), flats unit (Bb4, Eb4), and boss node
+- [ ] **Phase 03: Bass Accidentals Content** — Author bass flats unit (Bb3, Eb3), sharps unit (Ab3, Db3), and boss node
+- [ ] **Phase 04: Integration, Gate, and i18n** — Wire nodes into trail, verify subscription gate, confirm mic enharmonics, add EN/HE translations
+
+## Phase Details
+
+### Phase 01: Pre-Flight Bug Fixes
+**Goal**: The accidentals pipeline works end-to-end so all subsequent content can be tested accurately from day one
+**Depends on**: Nothing (first phase)
+**Requirements**: FIX-01, FIX-02
+**Success Criteria** (what must be TRUE):
+  1. A trail-launched Note Recognition session with a nodePool of ["F#4", "C#4"] presents F#4 and C#4 as answer options (not natural-notes-only)
+  2. A Sight Reading exercise containing "F#4" renders the correct VexFlow accidental glyph instead of falling through to a C4 fallback
+  3. An arcade session on a natural-notes node at 10-combo does not inject F#4 or Bb4 from the next accidentals unit into the answer pool
+  4. `npm run verify:patterns` and `npm test` both pass after the fixes
+**Plans**: TBD
+
+### Phase 02: Treble Accidentals Content
+**Goal**: Treble clef learners can practice sharps and flats on the trail with pedagogically correct progression
+**Depends on**: Phase 01
+**Requirements**: TREB-01, TREB-02, TREB-03
+**Success Criteria** (what must be TRUE):
+  1. The Treble tab on the trail shows a sharps unit with Discovery, Practice, and mixed nodes introducing F#4 and C#4
+  2. The Treble tab shows a flats unit with Discovery, Practice, and mixed nodes introducing Bb4 and Eb4
+  3. A boss challenge node appears after the flats unit and covers all four treble accidentals (F#4, C#4, Bb4, Eb4)
+  4. All three new treble units display a gold lock for free users and are playable end-to-end for subscribers
+**Plans**: TBD
+
+### Phase 03: Bass Accidentals Content
+**Goal**: Bass clef learners can practice sharps and flats on the trail with pedagogically correct progression
+**Depends on**: Phase 02
+**Requirements**: BASS-01, BASS-02, BASS-03
+**Success Criteria** (what must be TRUE):
+  1. The Bass tab on the trail shows a flats unit with Discovery, Practice, and mixed nodes introducing Bb3 and Eb3
+  2. The Bass tab shows a sharps unit with Discovery, Practice, and mixed nodes introducing Ab3 and Db3
+  3. A boss challenge node appears after the sharps unit and covers all four bass accidentals (Bb3, Eb3, Ab3, Db3)
+  4. All three new bass units display a gold lock for free users and are playable end-to-end for subscribers
+**Plans**: TBD
+
+### Phase 04: Integration, Gate, and i18n
+**Goal**: All new nodes are wired into the trail, subscription-gated at both layers, mic input scores flat-form notes correctly, and all note names display in English and Hebrew
+**Depends on**: Phase 03
+**Requirements**: INTG-01, INTG-02, INTG-03, I18N-01
+**Success Criteria** (what must be TRUE):
+  1. `expandedNodes.js` includes all new unit files and `npm run verify:patterns` passes with no prerequisite or schema errors
+  2. A free user opening any new accidentals node sees the paywall modal; the Supabase RLS layer returns a 403 if the client attempts to write progress without a subscription
+  3. Playing Db4 on a real piano into the microphone during a Sight Reading exercise scores as correct when Db4 is in the note pool
+  4. All new accidental note names (F#, C#, Bb, Eb, Ab, Db) appear with correct labels in both English and Hebrew across answer buttons and VictoryScreen
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -191,8 +249,12 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01. VictoryScreen Redesign | v2.0 | 1/1 | Complete | 2026-03-08 |
 | 02. XP Unification | v2.0 | 5/5 | Complete | 2026-03-08 |
 | 01. Forgot Password Recovery | v2.1 | 2/2 | Complete | 2026-03-10 |
+| 01. Pre-Flight Bug Fixes | v2.2 | 0/TBD | Not started | - |
+| 02. Treble Accidentals Content | v2.2 | 0/TBD | Not started | - |
+| 03. Bass Accidentals Content | v2.2 | 0/TBD | Not started | - |
+| 04. Integration, Gate, and i18n | v2.2 | 0/TBD | Not started | - |
 
-**Total: 51 phases across 12 milestones (v1.0-v2.1 all shipped)**
+**Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-15 — v2.0 and v2.1 milestones archived*
+*Last updated: 2026-03-15 — v2.2 roadmap created*

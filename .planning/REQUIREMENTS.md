@@ -67,24 +67,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | — | Pending |
-| FIX-02 | — | Pending |
-| TREB-01 | — | Pending |
-| TREB-02 | — | Pending |
-| TREB-03 | — | Pending |
-| BASS-01 | — | Pending |
-| BASS-02 | — | Pending |
-| BASS-03 | — | Pending |
-| INTG-01 | — | Pending |
-| INTG-02 | — | Pending |
-| INTG-03 | — | Pending |
-| I18N-01 | — | Pending |
+| FIX-01 | Phase 01 | Pending |
+| FIX-02 | Phase 01 | Pending |
+| TREB-01 | Phase 02 | Pending |
+| TREB-02 | Phase 02 | Pending |
+| TREB-03 | Phase 02 | Pending |
+| BASS-01 | Phase 03 | Pending |
+| BASS-02 | Phase 03 | Pending |
+| BASS-03 | Phase 03 | Pending |
+| INTG-01 | Phase 04 | Pending |
+| INTG-02 | Phase 04 | Pending |
+| INTG-03 | Phase 04 | Pending |
+| I18N-01 | Phase 04 | Pending |
 
 **Coverage:**
 - v2.2 requirements: 12 total
-- Mapped to phases: 0
-- Unmapped: 12
+- Mapped to phases: 12
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 after initial definition*
+*Last updated: 2026-03-15 — traceability complete (roadmap created)*
