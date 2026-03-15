@@ -1,0 +1,90 @@
+# Requirements: PianoApp
+
+**Defined:** 2026-03-15
+**Core Value:** Children's data must be protected and inaccessible to unauthorized users
+
+## v2.2 Requirements
+
+Requirements for Sharps & Flats content expansion. Each maps to roadmap phases.
+
+### Bug Fixes
+
+- [ ] **FIX-01**: Trail auto-start passes correct `enableSharps`/`enableFlats` flags derived from node's notePool
+- [ ] **FIX-02**: patternBuilder regex handles accidental pitches (F#4, Bb4) instead of silently dropping them
+
+### Treble Clef Content
+
+- [ ] **TREB-01**: Treble sharps unit introduces F#4 and C#4 with discovery, practice, and mixed nodes
+- [ ] **TREB-02**: Treble flats unit introduces Bb4 and Eb4 with discovery, practice, and mixed nodes
+- [ ] **TREB-03**: Treble accidentals boss challenge node covering all 4 accidentals
+
+### Bass Clef Content
+
+- [ ] **BASS-01**: Bass flats unit introduces Bb3 and Eb3 with discovery, practice, and mixed nodes
+- [ ] **BASS-02**: Bass sharps unit introduces Ab3 and Db3 with discovery, practice, and mixed nodes
+- [ ] **BASS-03**: Bass accidentals boss challenge node covering all 4 accidentals
+
+### Integration
+
+- [ ] **INTG-01**: New unit files wired into expandedNodes.js with build validator passing
+- [ ] **INTG-02**: New nodes confirmed premium at both React UI (isFreeNode) and database RLS layers
+- [ ] **INTG-03**: Mic input enharmonic matching verified for sight reading exercises with flats
+
+### i18n
+
+- [ ] **I18N-01**: All new accidental note names have correct EN and HE translations
+
+## Future Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Content Expansion
+
+- **CONT-01**: Trail Section 5 — Key Signatures (~15 nodes)
+- **CONT-02**: Trail Section 6 — Two-Hand Basics (~20 nodes)
+- **CONT-03**: Trail Section 7 — Simple Melodies (~15 nodes, public domain songs)
+- **CONT-04**: Trail Section 8 — Advanced Rhythm (~15 nodes, syncopation/compound meters)
+
+### Engagement
+
+- **ENGMT-01**: Enharmonic equivalence exercises (F#=Gb teaching mode)
+- **ENGMT-02**: Auto-grow arcade filter for accidental-awareness
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Enharmonic equivalence exercises | Adds new exercise type complexity; defer to future milestone |
+| New game modes (Interval Training) | Scope creep; existing 4 modes work well for accidentals |
+| Auto-grow accidental filter | Low priority; natural-notes nodes getting occasional accidentals is acceptable |
+| Database schema changes | No new tables or columns needed for content nodes |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| FIX-01 | — | Pending |
+| FIX-02 | — | Pending |
+| TREB-01 | — | Pending |
+| TREB-02 | — | Pending |
+| TREB-03 | — | Pending |
+| BASS-01 | — | Pending |
+| BASS-02 | — | Pending |
+| BASS-03 | — | Pending |
+| INTG-01 | — | Pending |
+| INTG-02 | — | Pending |
+| INTG-03 | — | Pending |
+| I18N-01 | — | Pending |
+
+**Coverage:**
+- v2.2 requirements: 12 total
+- Mapped to phases: 0
+- Unmapped: 12
+
+---
+*Requirements defined: 2026-03-15*
+*Last updated: 2026-03-15 after initial definition*
