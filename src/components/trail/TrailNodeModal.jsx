@@ -165,13 +165,21 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
     // Close modal first
     onClose();
 
+    // Derive accidental flags from the exercise's notePool so trail sessions
+    // override user game settings (locked decision: flags come from curriculum).
+    const notePool = exercise.config?.notePool || [];
+    const enableSharps = notePool.some(n => n.includes('#'));
+    const enableFlats = notePool.some(n => n.includes('b'));
+
     // Common navigation state
     const navState = {
       nodeId: node.id,
       nodeConfig: exercise.config,
       exerciseIndex: exerciseIndex,
       totalExercises: totalExercises,
-      exerciseType: exercise.type
+      exerciseType: exercise.type,
+      enableSharps,
+      enableFlats,
     };
 
     // Navigate based on exercise type

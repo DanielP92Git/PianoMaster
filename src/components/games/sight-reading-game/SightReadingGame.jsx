@@ -169,6 +169,10 @@ export function SightReadingGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
+  // Accidental flags derived from the node's notePool in TrailNodeModal (trail sessions only).
+  // Defaults to false so free-play mode is unaffected (location.state is null).
+  const trailEnableSharps = location.state?.enableSharps ?? false;
+  const trailEnableFlats = location.state?.enableFlats ?? false;
   const { audioContextRef, requestMic, releaseMic, isInterrupted, handleTapToResume } = useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(80, { sharedAudioContext: audioContextRef.current });
@@ -290,13 +294,17 @@ export function SightReadingGame() {
 
       hasAutoConfigured.current = true;
 
-      // Build settings from node configuration
+      // Build settings from node configuration.
+      // Use accidental flags derived from the notePool (passed via location.state from TrailNodeModal).
+      // This ensures trail sessions override user game settings per curriculum intent.
       const trailSettings = {
         ...DEFAULT_SETTINGS,
         clef: nodeConfig.clef || 'treble',
         selectedNotes: nodeConfig.notePool || [],
         measuresPerPattern: nodeConfig.measuresPerPattern || 1,
-        timeSignature: nodeConfig.timeSignature || '4/4'
+        timeSignature: nodeConfig.timeSignature || '4/4',
+        enableSharps: trailEnableSharps,
+        enableFlats: trailEnableFlats,
       };
 
       setGameSettings(trailSettings);

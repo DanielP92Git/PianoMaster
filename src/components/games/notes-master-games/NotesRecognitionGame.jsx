@@ -401,6 +401,10 @@ export function NotesRecognitionGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
+  // Accidental flags derived from the node's notePool in TrailNodeModal (trail sessions only).
+  // Defaults to false so free-play mode unaffected (location.state is null).
+  const trailEnableSharps = location.state?.enableSharps ?? false;
+  const trailEnableFlats = location.state?.enableFlats ?? false;
   const isRTL = i18n.language === "he";
   const useHebrewNoteLabels = i18n.language === "he";
   const SHOW_LISTEN_BUTTON = true;
@@ -515,14 +519,16 @@ export function NotesRecognitionGame() {
 
       hasAutoStartedRef.current = true;
 
-      // Build settings from node configuration
+      // Build settings from node configuration.
+      // Use accidental flags derived from the notePool (passed via location.state from TrailNodeModal).
+      // This ensures trail sessions override user game settings per curriculum intent.
       const trailSettings = {
         clef: nodeConfig.clef || 'treble',
         selectedNotes: nodeConfig.notePool || [],
         timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
         timeLimit: nodeConfig.timeLimit || 45,
-        enableSharps: false,
-        enableFlats: false
+        enableSharps: trailEnableSharps,
+        enableFlats: trailEnableFlats,
       };
 
       // Update settings and hide settings modal
