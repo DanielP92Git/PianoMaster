@@ -20,9 +20,9 @@ Requirements for Sharps & Flats content expansion. Each maps to roadmap phases.
 
 ### Bass Clef Content
 
-- [ ] **BASS-01**: Bass flats unit introduces Bb3 and Eb3 with discovery, practice, and mixed nodes
-- [ ] **BASS-02**: Bass sharps unit introduces F#3, C#3, G#3 with discovery, practice, and mixed nodes
-- [ ] **BASS-03**: Bass accidentals boss challenge node covering all 7 bass accidentals (F#3, C#3, G#3, Bb3, Eb3, Ab3, Db3)
+- [x] **BASS-01**: Bass flats unit introduces Bb3 and Eb3 with discovery, practice, and mixed nodes
+- [x] **BASS-02**: Bass sharps unit introduces F#3, C#3, G#3 with discovery, practice, and mixed nodes
+- [x] **BASS-03**: Bass accidentals boss challenge node covering all 7 bass accidentals (F#3, C#3, G#3, Bb3, Eb3, Ab3, Db3)
 
 ### Integration
 
@@ -72,9 +72,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TREB-01 | Phase 02 | Complete |
 | TREB-02 | Phase 02 | Complete |
 | TREB-03 | Phase 02 | Complete |
-| BASS-01 | Phase 03 | Pending |
-| BASS-02 | Phase 03 | Pending |
-| BASS-03 | Phase 03 | Pending |
+| BASS-01 | Phase 03 | Complete |
+| BASS-02 | Phase 03 | Complete |
+| BASS-03 | Phase 03 | Complete |
 | INTG-01 | Phase 04 | Pending |
 | INTG-02 | Phase 04 | Pending |
 | INTG-03 | Phase 04 | Pending |

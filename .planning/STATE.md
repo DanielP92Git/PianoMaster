@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Sharps & Flats
 status: completed
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-15T18:53:24.361Z"
-last_activity: 2026-03-15 — Phase 02 Plan 01 complete
+stopped_at: Completed 03-bass-accidentals-content/03-02-PLAN.md
+last_updated: "2026-03-15T19:19:33Z"
+last_activity: 2026-03-15 — Phase 03 Plan 02 complete
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 25
+  percent: 37
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v2.2 Sharps & Flats — Phase 02: Treble Accidentals Content
+**Current focus:** v2.2 Sharps & Flats — Phase 03: Bass Accidentals Content
 
 ## Current Position
 
-Phase: 02 of 04 (Treble Accidentals Content)
-Plan: 01 of 01 (COMPLETE — all Phase 02 plans done)
-Status: Phase 02 Plan 01 complete — 15 treble accidental nodes authored
-Last activity: 2026-03-15 — Phase 02 Plan 01 complete
+Phase: 03 of 04 (Bass Accidentals Content)
+Plan: 01 of 01 (COMPLETE — all Phase 03 plans done)
+Status: Phase 03 Plan 01 complete — 18 bass accidental nodes authored (8 sharps + 10 flats/boss)
+Last activity: 2026-03-15 — Phase 03 Plan 01 complete
 
-Progress: [██░░░░░░░░] 25%
+Progress: [████░░░░░░] 37%
 
 ## Performance Metrics
 
@@ -66,10 +66,17 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - boss_treble_accidentals is the only node in flats file with sharps in notePool (cross-unit challenge)
 - Unit 4 and 5 boss nodes use category: 'boss' string literal (not CATEGORY constant)
 
+**Phase 03 decisions (2026-03-15):**
+- SIGHT_READING safe for bass sharps (F#3/C#3/G#3) — used in bass_4_4, bass_4_5, and boss_bass_4
+- SIGHT_READING excluded from regular bass flats nodes (bass_5_1 through bass_5_8) — mic outputs A#3/D#3/G#3/C#3 not Bb3/Eb3/Ab3/Db3
+- Boss nodes in bassUnit5 (boss_bass_5, boss_bass_accidentals) include SIGHT_READING as inert placeholder
+- boss_bass_accidentals placed in bassUnit5Redesigned.js with unitName:'Accidentals Master' override
+- FULL_SHARP_POOL and FULL_FLAT_POOL as module-scope constants (C3-C4 octave + accidentals) for consistency
+
 ### Research Flags (act on during implementation)
 
-- **Phase 02/03**: Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises — if strict string comparison found, fix is localized to that function
-- **Phase 03**: Read `bassUnit3Redesigned.js` last order value before setting `bassUnit4Redesigned.js` START_ORDER
+- **Phase 04**: Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises — if strict string comparison found, fix is localized to that function
+- **Phase 03**: Read `bassUnit3Redesigned.js` last order value before setting `bassUnit4Redesigned.js` START_ORDER (RESOLVED — confirmed order 75 is last bass_3 node, START_ORDER=76 correct)
 
 ### Blockers/Concerns
 
@@ -80,14 +87,13 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-15T18:53:24.357Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/milestones/v2.2-phases/03-bass-accidentals-content/03-CONTEXT.md
+Last session: 2026-03-15T19:15:41Z
+Stopped at: Completed 03-bass-accidentals-content/03-01-PLAN.md
+Resume file: .planning/milestones/v2.2-phases/03-bass-accidentals-content/03-01-SUMMARY.md
 
 **Next action:**
-- Phase 02 Plan 01 complete. Phase 02 complete. Run `/gsd:execute-phase 3` to execute Phase 03 (Bass Accidentals Content).
-- Note: Read bassUnit3Redesigned.js last order before setting bassUnit4Redesigned.js START_ORDER (research flag)
+- Phase 03 Plan 01 complete. Phase 03 complete. Run `/gsd:execute-phase 4` to execute Phase 04 (Integration — wire new units into expandedNodes.js and subscription gate).
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-15 — Phase 02 Plan 01 complete (treble accidentals content)*
+*Last updated: 2026-03-15 — Phase 03 Plan 01 complete (bass accidentals content: 18 nodes)*
