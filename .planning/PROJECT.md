@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, and shared device safeguards.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery.
 
 ## Core Value
 
@@ -119,6 +119,22 @@ These capabilities exist, are working, and have been shipped:
 - DASH-01-09: Kid-friendly Dashboard with compact hero, XP ring, unified stats, circular practice tools
 - 36/36 requirements delivered, 15 plans across 7 phases
 
+**v2.0 VictoryScreen & XP Unification (shipped 2026-03-08):**
+- VS-EXTRACT/LAYOUT/CONTENT/BUTTONS/FREEPLAY: VictoryScreen hook extraction (70% line reduction) + two-panel landscape layout
+- XP-SERVICE/ACHIEVE/DEAD-CODE: Points replaced with XP as sole reward currency, dead code deleted
+- XP-FREEPLAY/VICTORY/DASHBOARD/HOOKS: Free play XP awarding, unified display, query cleanup
+- XP-AVATARS/ACHIEVEMENTS/I18N: All UI + i18n migrated from points to XP
+- XP-TEACHER/DB-CLEANUP: Teacher analytics + DB migration dropping points columns
+- 17/17 requirements delivered, 6 plans across 2 phases
+
+**v2.1 Forgot Password Recovery (shipped 2026-03-10):**
+- PWD-RESET-API: Supabase password reset API with anti-enumeration security
+- PWD-RESET-I18N: Complete EN/HE translations (23 keys each)
+- PWD-RESET-LOGIN-UI: Inline three-state forgot password flow in LoginForm
+- PWD-RESET-PAGE: Dedicated /reset-password page with PKCE session detection
+- PWD-RESET-ROUTE: Public route outside ProtectedRoute
+- 5/5 requirements delivered, 2 plans across 1 phase
+
 ### Active
 
 Planning next milestone. Use `/gsd:new-milestone` to start.
@@ -188,14 +204,17 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v1.9):**
+**Current State (after v2.1):**
 - 93-node trail system with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
 - Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit
 - Streak protection: 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
 - Notes Recognition arcade mode: combo/lives/speed bonus, on-fire mode, auto-grow note pool
-- 30-level XP system with prestige tiers (Maestro 1, 2, 3...)
+- XP is sole reward currency: 30-level system with prestige tiers, no more "points"
+- VictoryScreen redesigned with useVictoryState hook extraction and two-panel landscape layout
+- Free play awards XP via calculateFreePlayXP (10-50 XP range)
+- Teacher analytics display "X XP (Lv. Y)" format
 - Weekly progress summaries, personal best badges, daily fun facts
 - Parent weekly email reports via Brevo with HMAC unsubscribe
 - Tiered celebration system (4 tiers) with accessibility-first design
@@ -206,6 +225,7 @@ Explicitly excluded:
 - Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
+- Password recovery: inline forgot password flow + /reset-password page with PKCE
 - McLeod Pitch Method (pitchy) for accurate mic detection across all game modes
 - Single shared AudioContextProvider with iOS Safari interruption recovery
 - BPM-adaptive detection pipeline with FSM state machine and per-note dedup
@@ -213,7 +233,7 @@ Explicitly excluded:
 - Dual-layer content gate: React UI + database RLS enforcement
 - Parent portal with subscription management and cancel flow
 - ~73,754 lines JavaScript/JSX/CSS across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -325,7 +345,13 @@ Explicitly excluded:
 | XPRing uses SVG foreignObject for center icon | Clean SVG composition for gold star placement | Good |
 | UnifiedStatsCard gradient border via wrapper div | Better rounded corner support than border-image | Good |
 | Fireflies plain div when reducedMotion | Eliminates animation loop entirely for accessibility | Good |
+| Free play XP: 10 + floor(score% * 0.4) | Less than trail nodes (10-50 vs 50-150+), keeps trail incentive | Good |
+| Hook extraction: useVictoryState | Clean separation of 792 lines business logic from render | Good |
+| Teacher XP: "X XP (Lv. Y)" format | Meaningful context for teachers instead of raw numbers | Good |
+| Inline forgot password (not modal) | Keeps UX within login card, simpler than separate page | Good |
+| Smart expired-link detection via URL params | Immediate error for missing params, 10s timeout for real links | Good |
+| Anti-enumeration: generic errors only on reset | Prevents email harvesting via password reset endpoint | Good |
 
 ---
 
-*Last updated: 2026-03-08 after v1.9 milestone*
+*Last updated: 2026-03-15 after v2.1 milestone*
