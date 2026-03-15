@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Sharps & Flats
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-03-15T12:41:07.606Z"
-last_activity: 2026-03-15 — Roadmap created
+status: in-progress
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-15T13:09:00Z"
+last_activity: 2026-03-15 — Phase 01 Plan 02 complete
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 2
+  completed_plans: 2
+  percent: 10
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 01 of 04 (Pre-Flight Bug Fixes)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-03-15 — Roadmap created
+Plan: 02 of 02 (COMPLETE — all Phase 01 plans done)
+Status: Phase 01 complete, ready for Phase 02
+Last activity: 2026-03-15 — Phase 01 Plan 02 complete
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 10%
 
 ## Performance Metrics
 
@@ -50,6 +50,13 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - Sharps and flats in separate units (not mixed) to avoid enharmonic confusion — mic outputs sharp-form only
 - Bass `START_ORDER` must be read from `bassUnit3Redesigned.js` before authoring Phase 03
 
+**Phase 01 decisions (2026-03-15):**
+- Flag derivation from notePool in TrailNodeModal (not inside games) keeps curriculum authority in one place
+- trailEnableSharps/trailEnableFlats default to false via ?? so free-play mode is unaffected
+- filterAutoGrowCandidates exported from module scope for pure-function testability
+- Auto-grow skips entire accidentals nodes for natural sessions rather than picking arbitrary note
+- inferClefForPitch exported from patternBuilder.js to fix accidental pitch handling in sight reading
+
 ### Research Flags (act on during implementation)
 
 - **Phase 02/03**: Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises — if strict string comparison found, fix is localized to that function
@@ -64,13 +71,14 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-15T12:41:07.601Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/milestones/v2.2-phases/01-pre-flight-bug-fixes/01-CONTEXT.md
+Last session: 2026-03-15T13:09:00Z
+Stopped at: Completed 01-02-PLAN.md
+Resume file: .planning/milestones/v2.2-phases/01-pre-flight-bug-fixes/01-02-SUMMARY.md
 
 **Next action:**
-- Run `/gsd:plan-phase 1` to plan Phase 01: Pre-Flight Bug Fixes
+- Phase 01 complete. Run `/gsd:plan-phase 2` to plan Phase 02.
+- Note: verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-15 — v2.2 roadmap created*
+*Last updated: 2026-03-15 — Phase 01 Plan 02 complete*

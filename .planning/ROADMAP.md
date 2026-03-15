@@ -226,7 +226,7 @@ Plans:
 | 20. Component Integration & Tab Navigation | v1.5 | 3/3 | Complete | 2026-02-10 |
 | 21. Responsive Layout Rewrite | v1.5 | 3/3 | Complete | 2026-02-11 |
 | 22. Performance Optimization & Deployment | v1.5 | 2/2 | Complete | 2026-02-11 |
-| 01. Hebrew Translations | v1.6 | 2/2 | Complete | 2026-02-13 |
+| 01. Hebrew Translations | 1/2 | In Progress|  | 2026-02-13 |
 | 02. Foundation - Orientation Detection & Prompt | v1.6 | 2/2 | Complete | 2026-02-13 |
 | 03. Game Layout Optimization | v1.6 | 3/3 | Complete | 2026-02-15 |
 | 04. Platform-Specific Android Enhancement | v1.6 | 2/2 | Complete | 2026-02-16 |
