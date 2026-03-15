@@ -137,7 +137,16 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-Planning next milestone. Use `/gsd:new-milestone` to start.
+## Current Milestone: v2.2 Sharps & Flats
+
+**Goal:** Extend the trail with accidentals (sharps and flats) across treble and bass clef paths, growing content depth for subscriber retention.
+
+**Target features:**
+- Sharps & Flats nodes for treble clef path (~10 nodes)
+- Sharps & Flats nodes for bass clef path (~10 nodes)
+- Boss challenge nodes for new content units
+- All new nodes premium-only (behind subscription paywall)
+- Same 4 game modes: note recognition, sight reading, memory game, boss challenge
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -354,4 +363,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-15 after v2.1 milestone*
+*Last updated: 2026-03-15 after v2.2 milestone start*
