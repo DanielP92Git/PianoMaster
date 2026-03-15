@@ -1,16 +1,19 @@
 /**
- * Treble Clef Unit 4: "Sharp Notes" (Redesigned)
+ * Treble Clef Unit 4: "Sharp Notes" (Redesigned — Phase 03 replacement)
  *
- * Introduces accidentals: F#4 and C#4
- * - Discovery nodes introduce each sharp with nearest-neighbor context
- * - Practice nodes use SIGHT_READING (mic outputs sharp-form F#4/C#4, so safe)
+ * Introduces 3 sharps: F#4, C#4, and G#4 (expanded from Phase 02's F#4/C#4 only)
+ * - One Discovery node per sharp — nearest-neighbor naturals (e.g. F4, F#4, G4)
+ * - Practice nodes use SIGHT_READING (mic outputs F#4/C#4/G#4 matching exactly — safe)
  * - Mix-Up uses Memory Game for variety
  * - Speed Round reinforces recognition under time pressure
  * - Boss node has 2 exercises (NOTE_RECOGNITION + SIGHT_READING)
  * - All nodes have accidentals: true in noteConfig
  *
- * Duration: 25-30 minutes
- * Goal: Recognize F#4 and C#4 confidently among natural notes
+ * This file replaces the Phase 02 version (which covered only F#4 and C#4, 7 nodes).
+ * Phase 03 version: 8 nodes (orders 27-34), 3 Discovery nodes.
+ *
+ * Duration: 30-35 minutes
+ * Goal: Recognize F#4, C#4, and G#4 confidently among natural notes
  * Prerequisite: boss_treble_3 (Unit 3 completion)
  */
 
@@ -23,8 +26,9 @@ const CATEGORY = 'treble_clef';
 const START_ORDER = 27;  // After Unit 3 (10 nodes starting at 17, so ends at 26)
 
 /**
- * Unit 4 Nodes
- * Key features: F#4 Discovery → C#4 Discovery → Practice together → Sight Reading in context → Memory → Speed → Boss
+ * Unit 4 Nodes — Phase 03 version with G#4 added
+ * Key features: F#4 Discovery → C#4 Discovery → G#4 Discovery → All-sharps Practice
+ *               → Sharps+naturals Practice → Memory → Speed → Boss
  */
 export const trebleUnit4Nodes = [
   // ============================================
@@ -138,12 +142,12 @@ export const trebleUnit4Nodes = [
   },
 
   // ============================================
-  // NODE 3: Sharps Together (Practice)
+  // NODE 3: Meet G Sharp (Discovery) — NEW in Phase 03
   // ============================================
   {
     id: 'treble_4_3',
-    name: 'Sharps Together',
-    description: 'Play F# and C# side by side',
+    name: 'Meet G Sharp',
+    description: 'Discover the sharp note G#',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -151,12 +155,68 @@ export const trebleUnit4Nodes = [
     orderInUnit: 3,
     prerequisites: ['treble_4_2'],
 
+    nodeType: NODE_TYPES.DISCOVERY,
+
+    noteConfig: {
+      notePool: ['G4', 'G#4', 'A4'],
+      focusNotes: ['G#4'],
+      contextNotes: ['G4', 'A4'],
+      clef: 'treble',
+      ledgerLines: false,
+      accidentals: true
+    },
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.SIMPLE,
+      allowedDurations: ['q'],
+      patterns: ['quarter'],
+      tempo: { min: 60, max: 70, default: 65 }
+    },
+
+    newContent: NEW_CONTENT_TYPES.NOTE,
+    newContentDescription: 'Note G#',
+
+    exercises: [
+      {
+        type: EXERCISE_TYPES.NOTE_RECOGNITION,
+        config: {
+          notePool: ['G4', 'G#4', 'A4'],
+          questionCount: 8,
+          clef: 'treble',
+          timeLimit: null
+        }
+      }
+    ],
+
+    skills: ['G4', 'G#4', 'A4'],
+    xpReward: 45,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: []
+  },
+
+  // ============================================
+  // NODE 4: All Three Sharps (Practice)
+  // SIGHT_READING safe -- mic outputs F#4/C#4/G#4 matching exactly
+  // ============================================
+  {
+    id: 'treble_4_4',
+    name: 'Sharps Together',
+    description: 'Play F#, C#, and G# side by side',
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 3,
+    orderInUnit: 4,
+    prerequisites: ['treble_4_3'],
+
     nodeType: NODE_TYPES.PRACTICE,
 
     noteConfig: {
-      notePool: ['C#4', 'F#4'],
+      notePool: ['F#4', 'C#4', 'G#4'],
       focusNotes: [],
-      contextNotes: ['C#4', 'F#4'],
+      contextNotes: ['F#4', 'C#4', 'G#4'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -170,14 +230,14 @@ export const trebleUnit4Nodes = [
     },
 
     newContent: NEW_CONTENT_TYPES.NONE,
-    newContentDescription: 'Both sharps',
+    newContentDescription: 'All three sharps',
 
     exercises: [
       {
-        // SIGHT_READING is safe for sharps -- mic outputs F#4/C#4 matching exactly
+        // SIGHT_READING is safe for sharps -- mic outputs F#4/C#4/G#4 matching exactly
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C#4', 'F#4'],
+          notePool: ['F#4', 'C#4', 'G#4'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
@@ -187,7 +247,7 @@ export const trebleUnit4Nodes = [
       }
     ],
 
-    skills: ['C#4', 'F#4'],
+    skills: ['F#4', 'C#4', 'G#4'],
     xpReward: 50,
     accessoryUnlock: null,
     isBoss: false,
@@ -196,25 +256,25 @@ export const trebleUnit4Nodes = [
   },
 
   // ============================================
-  // NODE 4: Sharps and Friends (Practice)
+  // NODE 5: Sharps and Friends (Practice)
   // ============================================
   {
-    id: 'treble_4_4',
+    id: 'treble_4_5',
     name: 'Sharps and Friends',
     description: 'Mix sharps with natural notes in melodies',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 3,
-    orderInUnit: 4,
-    prerequisites: ['treble_4_3'],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ['treble_4_4'],
 
     nodeType: NODE_TYPES.PRACTICE,
 
     noteConfig: {
-      notePool: ['C4', 'C#4', 'D4', 'F4', 'F#4', 'G4'],
+      notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
       focusNotes: [],
-      contextNotes: ['C4', 'C#4', 'D4', 'F4', 'F#4', 'G4'],
+      contextNotes: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -232,9 +292,10 @@ export const trebleUnit4Nodes = [
 
     exercises: [
       {
+        // SIGHT_READING safe for sharps -- mic outputs sharp-form only
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'C#4', 'D4', 'F4', 'F#4', 'G4'],
+          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
@@ -244,7 +305,7 @@ export const trebleUnit4Nodes = [
       }
     ],
 
-    skills: ['C4', 'C#4', 'D4', 'F4', 'F#4', 'G4'],
+    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
     xpReward: 55,
     accessoryUnlock: null,
     isBoss: false,
@@ -253,25 +314,26 @@ export const trebleUnit4Nodes = [
   },
 
   // ============================================
-  // NODE 5: Sharp Memory (Mix-Up - Memory Game)
+  // NODE 6: Sharp Memory (Mix-Up - Memory Game)
+  // Full C4-C5 octave + all 3 sharps = 11 notes
   // ============================================
   {
-    id: 'treble_4_5',
+    id: 'treble_4_6',
     name: 'Sharp Memory',
     description: 'Match sharp notes in a memory game',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ['treble_4_4'],
+    order: START_ORDER + 5,
+    orderInUnit: 6,
+    prerequisites: ['treble_4_5'],
 
     nodeType: NODE_TYPES.MIX_UP,
 
     noteConfig: {
-      notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+      notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+      contextNotes: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -291,15 +353,15 @@ export const trebleUnit4Nodes = [
       {
         type: EXERCISE_TYPES.MEMORY_GAME,
         config: {
-          notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
-          gridSize: '4x4',     // picks 8 pairs from pool
+          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
+          gridSize: '4x4',     // picks 8 pairs from 11-note pool
           clef: 'treble',
           timeLimit: 180       // 3 minutes
         }
       }
     ],
 
-    skills: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
     xpReward: 60,
     accessoryUnlock: null,
     isBoss: false,
@@ -308,25 +370,25 @@ export const trebleUnit4Nodes = [
   },
 
   // ============================================
-  // NODE 6: Sharp Speed (Speed Round)
+  // NODE 7: Sharp Speed (Speed Round)
   // ============================================
   {
-    id: 'treble_4_6',
+    id: 'treble_4_7',
     name: 'Sharp Speed',
     description: 'Race the clock to name sharp notes',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ['treble_4_5'],
+    order: START_ORDER + 6,
+    orderInUnit: 7,
+    prerequisites: ['treble_4_6'],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
     noteConfig: {
-      notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+      notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+      contextNotes: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -346,7 +408,7 @@ export const trebleUnit4Nodes = [
       {
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
           questionCount: 20,
           clef: 'treble',
           timeLimit: 150000    // 2.5 minutes
@@ -354,7 +416,7 @@ export const trebleUnit4Nodes = [
       }
     ],
 
-    skills: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
     xpReward: 65,
     accessoryUnlock: null,
     isBoss: false,
@@ -363,26 +425,26 @@ export const trebleUnit4Nodes = [
   },
 
   // ============================================
-  // NODE 7: Sharp Star (BOSS - boss_treble_4)
+  // NODE 8: Sharp Star (BOSS — boss_treble_4)
   // ============================================
   {
     id: 'boss_treble_4',
     name: 'Sharp Star',
-    description: 'Master all sharp notes in the ultimate challenge!',
+    description: 'Master all three sharp notes in the ultimate challenge!',
     unlockHint: 'Complete all sharp note lessons to unlock this challenge!',
     category: 'boss',
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
-    prerequisites: ['treble_4_6'],
+    order: START_ORDER + 7,
+    orderInUnit: 8,
+    prerequisites: ['treble_4_7'],
 
     nodeType: NODE_TYPES.BOSS,
 
     noteConfig: {
-      notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+      notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
       focusNotes: [],
-      contextNotes: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+      contextNotes: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -402,7 +464,7 @@ export const trebleUnit4Nodes = [
       {
         type: EXERCISE_TYPES.NOTE_RECOGNITION,
         config: {
-          notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
           questionCount: 15,
           clef: 'treble',
           timeLimit: null
@@ -411,7 +473,7 @@ export const trebleUnit4Nodes = [
       {
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
@@ -421,7 +483,7 @@ export const trebleUnit4Nodes = [
       }
     ],
 
-    skills: ['C4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'A4', 'B4', 'C#4', 'C5'],
+    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
     xpReward: 150,
     accessoryUnlock: null,
     isBoss: true,
