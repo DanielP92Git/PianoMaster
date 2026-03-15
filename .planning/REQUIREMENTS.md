@@ -14,9 +14,9 @@ Requirements for Sharps & Flats content expansion. Each maps to roadmap phases.
 
 ### Treble Clef Content
 
-- [ ] **TREB-01**: Treble sharps unit introduces F#4 and C#4 with discovery, practice, and mixed nodes
-- [ ] **TREB-02**: Treble flats unit introduces Bb4 and Eb4 with discovery, practice, and mixed nodes
-- [ ] **TREB-03**: Treble accidentals boss challenge node covering all 4 accidentals
+- [x] **TREB-01**: Treble sharps unit introduces F#4 and C#4 with discovery, practice, and mixed nodes
+- [x] **TREB-02**: Treble flats unit introduces Bb4 and Eb4 with discovery, practice, and mixed nodes
+- [x] **TREB-03**: Treble accidentals boss challenge node covering all 4 accidentals
 
 ### Bass Clef Content
 
@@ -69,9 +69,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | FIX-01 | Phase 01 | Complete |
 | FIX-02 | Phase 01 | Complete |
-| TREB-01 | Phase 02 | Pending |
-| TREB-02 | Phase 02 | Pending |
-| TREB-03 | Phase 02 | Pending |
+| TREB-01 | Phase 02 | Complete |
+| TREB-02 | Phase 02 | Complete |
+| TREB-03 | Phase 02 | Complete |
 | BASS-01 | Phase 03 | Pending |
 | BASS-02 | Phase 03 | Pending |
 | BASS-03 | Phase 03 | Pending |
