@@ -176,7 +176,9 @@ Plans:
   2. The Treble tab shows a flats unit with Discovery, Practice, and mixed nodes introducing Bb4 and Eb4
   3. A boss challenge node appears after the flats unit and covers all four treble accidentals (F#4, C#4, Bb4, Eb4)
   4. All three new treble units display a gold lock for free users and are playable end-to-end for subscribers
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 02-01-PLAN.md — Author treble sharps unit (F#4, C#4), flats unit (Bb4, Eb4), and accidentals boss node (TREB-01, TREB-02, TREB-03)
 
 ### Phase 03: Bass Accidentals Content
 **Goal**: Bass clef learners can practice sharps and flats on the trail with pedagogically correct progression
@@ -253,11 +255,11 @@ Plans:
 | 02. XP Unification | v2.0 | 5/5 | Complete | 2026-03-08 |
 | 01. Forgot Password Recovery | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01. Pre-Flight Bug Fixes | v2.2 | 0/2 | Not started | - |
-| 02. Treble Accidentals Content | v2.2 | 0/TBD | Not started | - |
+| 02. Treble Accidentals Content | v2.2 | 0/1 | Not started | - |
 | 03. Bass Accidentals Content | v2.2 | 0/TBD | Not started | - |
 | 04. Integration, Gate, and i18n | v2.2 | 0/TBD | Not started | - |
 
 **Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-15 — Phase 01 planned (2 plans)*
+*Last updated: 2026-03-15 — Phase 02 planned (1 plan)*
