@@ -148,7 +148,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 - [x] **Phase 01: Pre-Flight Bug Fixes** — Fix two code bugs that silently corrupt accidentals before any content can be tested (completed 2026-03-15)
 - [x] **Phase 02: Treble Accidentals Content** — Author treble sharps unit (F#4, C#4), flats unit (Bb4, Eb4), and boss node (completed 2026-03-15)
-- [ ] **Phase 03: Bass Accidentals Content** — Author bass flats unit (Bb3, Eb3), sharps unit (Ab3, Db3), and boss node
+- [ ] **Phase 03: Bass Accidentals Content** — Author bass sharps unit (F#3, C#3, G#3), flats unit (Bb3, Eb3, Ab3, Db3), boss nodes, plus treble rework with expanded accidentals
 - [ ] **Phase 04: Integration, Gate, and i18n** — Wire nodes into trail, verify subscription gate, confirm mic enharmonics, add EN/HE translations
 
 ## Phase Details
@@ -189,7 +189,10 @@ Plans:
   2. The Bass tab shows a sharps unit with Discovery, Practice, and mixed nodes introducing Ab3 and Db3
   3. A boss challenge node appears after the sharps unit and covers all four bass accidentals (Bb3, Eb3, Ab3, Db3)
   4. All three new bass units display a gold lock for free users and are playable end-to-end for subscribers
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 03-01-PLAN.md — Author bass sharps unit (F#3, C#3, G#3) and flats unit (Bb3, Eb3, Ab3, Db3) with bass accidentals boss (BASS-01, BASS-02, BASS-03)
+- [ ] 03-02-PLAN.md — Delete and re-author treble Units 4+5 with expanded accidentals (3 sharps, 4 flats, accidentals boss)
 
 ### Phase 04: Integration, Gate, and i18n
 **Goal**: All new nodes are wired into the trail, subscription-gated at both layers, mic input scores flat-form notes correctly, and all note names display in English and Hebrew
@@ -256,10 +259,10 @@ Plans:
 | 01. Forgot Password Recovery | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01. Pre-Flight Bug Fixes | v2.2 | 0/2 | Not started | - |
 | 02. Treble Accidentals Content | v2.2 | 0/1 | Not started | - |
-| 03. Bass Accidentals Content | v2.2 | 0/TBD | Not started | - |
+| 03. Bass Accidentals Content | v2.2 | 0/2 | Not started | - |
 | 04. Integration, Gate, and i18n | v2.2 | 0/TBD | Not started | - |
 
 **Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-15 — Phase 02 planned (1 plan)*
+*Last updated: 2026-03-15 — Phase 03 planned (2 plans)*
