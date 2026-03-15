@@ -56,6 +56,9 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - filterAutoGrowCandidates exported from module scope for pure-function testability
 - Auto-grow skips entire accidentals nodes for natural sessions rather than picking arbitrary note
 - inferClefForPitch exported from patternBuilder.js to fix accidental pitch handling in sight reading
+- ESM bare-Node imports require .js extensions — rhythmGenerator.js and durationConstants.js both fixed
+- AudioContextProvider mock in JSX tests must include requestMic returning {analyser, audioContext} object
+- react-i18next mock maps i18n keys to English for testing-library role queries
 
 ### Research Flags (act on during implementation)
 
@@ -71,9 +74,9 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-15T13:09:00Z
-Stopped at: Completed 01-02-PLAN.md
-Resume file: .planning/milestones/v2.2-phases/01-pre-flight-bug-fixes/01-02-SUMMARY.md
+Last session: 2026-03-15T15:11:00Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: .planning/milestones/v2.2-phases/01-pre-flight-bug-fixes/01-01-SUMMARY.md
 
 **Next action:**
 - Phase 01 complete. Run `/gsd:plan-phase 2` to plan Phase 02.
@@ -81,4 +84,4 @@ Resume file: .planning/milestones/v2.2-phases/01-pre-flight-bug-fixes/01-02-SUMM
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-15 — Phase 01 Plan 02 complete*
+*Last updated: 2026-03-15 — Phase 01 Plan 01 complete (01-01 executed after 01-02)*
