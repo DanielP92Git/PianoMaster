@@ -186,8 +186,8 @@ Plans:
 **Requirements**: BASS-01, BASS-02, BASS-03
 **Success Criteria** (what must be TRUE):
   1. The Bass tab on the trail shows a flats unit with Discovery, Practice, and mixed nodes introducing Bb3 and Eb3
-  2. The Bass tab shows a sharps unit with Discovery, Practice, and mixed nodes introducing Ab3 and Db3
-  3. A boss challenge node appears after the sharps unit and covers all four bass accidentals (Bb3, Eb3, Ab3, Db3)
+  2. The Bass tab shows a sharps unit with Discovery, Practice, and mixed nodes introducing F#3, C#3, and G#3
+  3. A boss challenge node appears after the sharps unit and covers all 7 bass accidentals (F#3, C#3, G#3, Bb3, Eb3, Ab3, Db3)
   4. All three new bass units display a gold lock for free users and are playable end-to-end for subscribers
 **Plans**: 2 plans
 Plans:
