@@ -4,7 +4,7 @@ milestone: v2.2
 milestone_name: Sharps & Flats
 status: completed
 stopped_at: Completed 03-bass-accidentals-content/03-02-PLAN.md
-last_updated: "2026-03-15T19:19:33Z"
+last_updated: "2026-03-15T19:17:55.188Z"
 last_activity: 2026-03-15 — Phase 03 Plan 02 complete
 progress:
   total_phases: 4
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 03 of 04 (Bass Accidentals Content)
-Plan: 01 of 01 (COMPLETE — all Phase 03 plans done)
-Status: Phase 03 Plan 01 complete — 18 bass accidental nodes authored (8 sharps + 10 flats/boss)
-Last activity: 2026-03-15 — Phase 03 Plan 01 complete
+Plan: 02 of 02 (COMPLETE — all Phase 03 plans done)
+Status: Phase 03 Plan 02 complete — 18 treble accidental nodes replaced (8 sharps + 10 flats/boss)
+Last activity: 2026-03-15 — Phase 03 Plan 02 complete
 
 Progress: [████░░░░░░] 37%
 
@@ -72,6 +72,9 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - Boss nodes in bassUnit5 (boss_bass_5, boss_bass_accidentals) include SIGHT_READING as inert placeholder
 - boss_bass_accidentals placed in bassUnit5Redesigned.js with unitName:'Accidentals Master' override
 - FULL_SHARP_POOL and FULL_FLAT_POOL as module-scope constants (C3-C4 octave + accidentals) for consistency
+- Treble Unit 4 expanded from 7 to 8 nodes: G#4 Discovery added, START_ORDER stays 27, ends at 34
+- Treble Unit 5 expanded from 8 to 10 nodes: Ab4/Db4 Discovery nodes added, START_ORDER 34→35 (after Unit 4 expansion)
+- boss_treble_accidentals pool expanded from 12 to 15 notes: G#4, Ab4, Db4 added to cover all 7 treble accidentals
 
 ### Research Flags (act on during implementation)
 
@@ -87,13 +90,13 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-15T19:15:41Z
-Stopped at: Completed 03-bass-accidentals-content/03-01-PLAN.md
-Resume file: .planning/milestones/v2.2-phases/03-bass-accidentals-content/03-01-SUMMARY.md
+Last session: 2026-03-15T19:17:55.181Z
+Stopped at: Completed 03-bass-accidentals-content/03-02-PLAN.md
+Resume file: None
 
 **Next action:**
-- Phase 03 Plan 01 complete. Phase 03 complete. Run `/gsd:execute-phase 4` to execute Phase 04 (Integration — wire new units into expandedNodes.js and subscription gate).
+- Phase 03 Plan 02 complete. Phase 03 complete (both plans done). Run `/gsd:execute-phase 4` to execute Phase 04 (Integration — wire new units into expandedNodes.js and subscription gate).
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-15 — Phase 03 Plan 01 complete (bass accidentals content: 18 nodes)*
+*Last updated: 2026-03-15 — Phase 03 Plan 02 complete (treble accidentals replacement: 18 nodes)*
