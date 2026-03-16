@@ -4,7 +4,7 @@ milestone: v2.2
 milestone_name: Sharps & Flats
 status: completed
 stopped_at: Phase 04 context gathered
-last_updated: "2026-03-16T16:32:12.668Z"
+last_updated: "2026-03-16T16:33:00.000Z"
 last_activity: 2026-03-15 — Phase 03 Plan 02 complete
 progress:
   total_phases: 4
@@ -76,7 +76,13 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - Treble Unit 5 expanded from 8 to 10 nodes: Ab4/Db4 Discovery nodes added, START_ORDER 34→35 (after Unit 4 expansion)
 - boss_treble_accidentals pool expanded from 12 to 15 notes: G#4, Ab4, Db4 added to cover all 7 treble accidentals
 
-**Phase 04 decisions (2026-03-16):**
+**Phase 04 Plan 01 decisions (2026-03-16):**
+- MIDI comparison (noteToMidi) used at both anti-cheat and scoring sites in SightReadingGame.jsx — both must be fixed atomically or false cheat detection remains
+- Subscription gate confirmed default-deny: no new accidental node IDs added to FREE_NODE_IDS; all 36 new nodes are premium-only
+- SEMITONE_MAP/noteToMidi duplicated in test file (not exported from game) — tests the pure logic independently
+- TDD RED phase passed immediately: noteToMidi was already correct; the bug was at usage sites (string equality not MIDI comparison)
+
+**Phase 04 Plan 02 decisions (2026-03-16):**
 - Flat noteNames keys must be uppercase (BB/EB/AB/DB) — TrailNodeModal calls .toUpperCase() on regex capture before t() lookup
 - English accidental display uses Unicode ♯/♭ symbols (not keyboard chars # and b)
 - Hebrew accidental display uses French solfege terms: דיאז (sharp) and במול (flat)

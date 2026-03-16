@@ -26,9 +26,9 @@ Requirements for Sharps & Flats content expansion. Each maps to roadmap phases.
 
 ### Integration
 
-- [ ] **INTG-01**: New unit files wired into expandedNodes.js with build validator passing
-- [ ] **INTG-02**: New nodes confirmed premium at both React UI (isFreeNode) and database RLS layers
-- [ ] **INTG-03**: Mic input enharmonic matching verified for sight reading exercises with flats
+- [x] **INTG-01**: New unit files wired into expandedNodes.js with build validator passing
+- [x] **INTG-02**: New nodes confirmed premium at both React UI (isFreeNode) and database RLS layers
+- [x] **INTG-03**: Mic input enharmonic matching verified for sight reading exercises with flats
 
 ### i18n
 
@@ -75,9 +75,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BASS-01 | Phase 03 | Complete |
 | BASS-02 | Phase 03 | Complete |
 | BASS-03 | Phase 03 | Complete |
-| INTG-01 | Phase 04 | Pending |
-| INTG-02 | Phase 04 | Pending |
-| INTG-03 | Phase 04 | Pending |
+| INTG-01 | Phase 04 | Complete |
+| INTG-02 | Phase 04 | Complete |
+| INTG-03 | Phase 04 | Complete |
 | I18N-01 | Phase 04 | Complete |
 
 **Coverage:**
