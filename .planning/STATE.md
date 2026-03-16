@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Sharps & Flats
 status: completed
-stopped_at: Completed 04-02-PLAN.md (Phase 04 Plan 02 — i18n accidental translations)
-last_updated: "2026-03-16T16:41:39.338Z"
-last_activity: 2026-03-16 — Phase 04 Plan 02 complete
+stopped_at: Completed 04-03-PLAN.md (Phase 04 Plan 03 — TrailNodeModal gap closure)
+last_updated: "2026-03-16T21:30:00Z"
+last_activity: 2026-03-16 — Phase 04 Plan 03 complete
 progress:
   total_phases: 4
   completed_phases: 0
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-03-15)
 ## Current Position
 
 Phase: 04 of 04 (Integration, Gate, and i18n)
-Plan: 02 of 02 (COMPLETE — all Phase 04 plans done)
-Status: Phase 04 Plan 02 complete — i18n translations for all 21 new accidental nodes + 7 noteNames in both EN and HE
-Last activity: 2026-03-16 — Phase 04 Plan 02 complete
+Plan: 03 of 03 (COMPLETE — all Phase 04 plans done)
+Status: Phase 04 Plan 03 complete — TrailNodeModal gap closure: focusNotes-aware bubbles, Hebrew text scaling, Unicode description fallback
+Last activity: 2026-03-16 — Phase 04 Plan 03 complete
 
 Progress: [██████████] 100%
 
@@ -87,6 +87,12 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - English accidental display uses Unicode ♯/♭ symbols (not keyboard chars # and b)
 - Hebrew accidental display uses French solfege terms: דיאז (sharp) and במול (flat)
 
+**Phase 04 Plan 03 decisions (2026-03-16):**
+- focusNotes-first logic placed inline in the .map() ternary — keeps data source visible next to usage
+- textSizeClass threshold >4 chars covers all Hebrew two-word accidental names (min 6 chars) without affecting single-letter labels
+- sanitizeAccidentals negative lookahead (?![a-z]) prevents converting compound words like "Bubble" — only note-name patterns match
+- sanitizeAccidentals defined inside component (not module scope) since used in only one JSX expression
+
 ### Research Flags (act on during implementation)
 
 - **Phase 04**: Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises — if strict string comparison found, fix is localized to that function
@@ -101,13 +107,13 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-16T16:32:00Z
-Stopped at: Completed 04-02-PLAN.md (Phase 04 Plan 02 — i18n accidental translations)
-Resume file: .planning/milestones/v2.2-phases/04-integration-gate-and-i18n/04-02-SUMMARY.md
+Last session: 2026-03-16T21:30:00Z
+Stopped at: Completed 04-03-PLAN.md (Phase 04 Plan 03 — TrailNodeModal gap closure)
+Resume file: .planning/milestones/v2.2-phases/04-integration-gate-and-i18n/04-03-SUMMARY.md
 
 **Next action:**
-- v2.2 milestone (Sharps & Flats) is COMPLETE. All 4 phases done. Run `/gsd:progress` to review final milestone status.
+- v2.2 milestone (Sharps & Flats) is COMPLETE. All 4 phases + gap closure plan done. Run `/gsd:progress` to review final milestone status. Recommend full UAT re-run to verify all 7 UAT tests pass.
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-16 — Phase 04 Plan 02 complete (i18n accidental translations — v2.2 milestone complete)*
+*Last updated: 2026-03-16 — Phase 04 Plan 03 complete (TrailNodeModal gap closure — UAT tests 3 and 4 resolved)*
