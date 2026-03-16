@@ -203,10 +203,11 @@ Plans:
   2. A free user opening any new accidentals node sees the paywall modal (default-deny via isFreeNode)
   3. Playing Db4 on a real piano into the microphone during a Sight Reading exercise scores as correct when Db4 is in the note pool
   4. All new accidental note names (F#, C#, G#, Bb, Eb, Ab, Db) appear with correct labels in both English and Hebrew across skill bubbles and node names
-**Plans**: 2 plans
+**Plans**: 3 plans
 Plans:
 - [ ] 04-01-PLAN.md — Wire expandedNodes.js, fix enharmonic matching in SightReadingGame, verify subscription gate (INTG-01, INTG-02, INTG-03)
 - [ ] 04-02-PLAN.md — Add EN/HE translations for all accidental noteNames, node names, descriptions, and unlockHints (I18N-01)
+- [ ] 04-03-PLAN.md — [GAP CLOSURE] Fix skill bubble focusNotes source, Hebrew text overflow, and Unicode description fallback (I18N-01)
 
 ## Progress
 
@@ -263,9 +264,9 @@ Plans:
 | 01. Pre-Flight Bug Fixes | v2.2 | 0/2 | Not started | - |
 | 02. Treble Accidentals Content | v2.2 | 0/1 | Not started | - |
 | 03. Bass Accidentals Content | v2.2 | 0/2 | Not started | - |
-| 04. Integration, Gate, and i18n | v2.2 | 0/2 | Not started | - |
+| 04. Integration, Gate, and i18n | v2.2 | 2/3 | In progress | - |
 
 **Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-16 — Phase 04 planned (2 plans)*
+*Last updated: 2026-03-16 — Phase 04 gap closure plan added (04-03)*
