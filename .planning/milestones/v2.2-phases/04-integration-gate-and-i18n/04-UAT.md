@@ -1,5 +1,5 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-integration-gate-and-i18n
 source: [04-01-SUMMARY.md, 04-02-SUMMARY.md]
 started: 2026-03-16T17:00:00Z
@@ -64,16 +64,25 @@ skipped: 1
   reason: "User reported: Description shows F# (keyboard char) not F♯ (Unicode). Also, Skills You'll Learn shows F, F#, G — should only show F# since F and G are already-learned natural notes."
   severity: major
   test: 3
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "TrailNodeModal.jsx:314 iterates node.skills (full array including context notes F4, G4) instead of node.noteConfig.focusNotes (which has only F#4). Description at line 304 falls back to node.description (raw ASCII F#) when i18n key lookup misses, instead of using the i18n entry which has Unicode F♯."
+  artifacts:
+    - path: "src/components/trail/TrailNodeModal.jsx"
+      issue: "Line 314 uses node.skills instead of focusNotes; line 304 description fallback shows raw ASCII"
+    - path: "src/data/units/trebleUnit4Redesigned.js"
+      issue: "skills array has ['F4', 'F#4', 'G4'] — focusNotes has ['F#4'] but is ignored by modal"
+  missing:
+    - "Use node.noteConfig.focusNotes (or filter skills to only new notes) for Skills You'll Learn"
+    - "Fix description fallback or update unit file descriptions to use Unicode ♯/♭"
   debug_session: ""
 - truth: "Hebrew skill bubble note names display correctly without overflow"
   status: failed
   reason: "User reported: The note name פה דיאז is overflowing the bubble — Hebrew two-word accidental names too long for circular skill bubbles"
   severity: cosmetic
   test: 4
-  root_cause: ""
-  artifacts: []
-  missing: []
+  root_cause: "TrailNodeModal.jsx:324 bubble has fixed size w-14 h-14 (56px) with text-xl font and no overflow handling. Hebrew two-word accidental names (e.g., 'פה דיאז' = 7 chars) don't fit the circle."
+  artifacts:
+    - path: "src/components/trail/TrailNodeModal.jsx"
+      issue: "Line 324: fixed w-14 h-14 circle, text-xl font, no overflow-hidden or font scaling for long strings"
+  missing:
+    - "Add dynamic font scaling (text-xs for strings > 4 chars) or allow text wrapping within bubble"
   debug_session: ""
