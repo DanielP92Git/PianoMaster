@@ -252,6 +252,11 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
   const bubbleCategory = node.isBoss ? 'boss' : (node.category || 'treble_clef');
   const bubbleColorSet = BUBBLE_COLORS[bubbleCategory] || BUBBLE_COLORS.treble_clef;
 
+  // Convert ASCII accidentals to Unicode symbols for display (e.g. F# → F♯, Bb → B♭)
+  // Negative lookahead (?![a-z]) ensures only note-name patterns are converted (not words like "Bubble")
+  const sanitizeAccidentals = (str) =>
+    str?.replace(/([A-G])#/g, '$1♯').replace(/([A-G])b(?![a-z])/g, '$1♭') || str;
+
   return (
     <div className="fixed inset-0 z-50" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="fixed inset-0 bg-black/70" onClick={onClose} aria-hidden="true" />
@@ -301,7 +306,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
               {translateNodeName(node.name, t, i18n)}
             </h2>
             <p className="mt-1 text-sm text-white/60">
-              {t(`descriptions.${node.name}`, { defaultValue: node.description || t('modal.subtitle') })}
+              {t(`descriptions.${node.name}`, { defaultValue: sanitizeAccidentals(node.description) || t('modal.subtitle') })}
             </p>
           </div>
 
@@ -311,17 +316,21 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
               {t('modal.skillsYoullLearn')}
             </h3>
             <div className="flex justify-center flex-wrap gap-3 sm:gap-4">
-              {node.skills.map((skill, index) => {
+              {/* Determine which skills to show: focusNotes for Discovery nodes, full skills for others */}
+              {(node.noteConfig?.focusNotes?.length > 0 ? node.noteConfig.focusNotes : node.skills).map((skill, index) => {
                 const noteMatch = skill.match(/^([A-Ga-g][b#]?)(\d)$/);
                 const displaySkill = noteMatch
                   ? t(`trail:noteNames.${noteMatch[1].toUpperCase()}`, { defaultValue: noteMatch[1] })
                   : t(`trail:skillNames.${skill}`, { defaultValue: skill.replace(/_/g, ' ') });
+                const textSizeClass = displaySkill.length > 4
+                  ? 'text-xs sm:text-sm'   // Long labels (Hebrew accidentals like "פה דיאז")
+                  : 'text-xl sm:text-2xl'; // Short labels (C, D, F♯)
                 const colorIdx = index % bubbleColorSet.length;
                 const bubbleColor = bubbleColorSet[colorIdx];
                 return (
                   <div
                     key={index}
-                    className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-xl sm:text-2xl font-bold text-white select-none"
+                    className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center ${textSizeClass} font-bold text-white select-none`}
                     style={{
                       background: bubbleColor.bg,
                       boxShadow: `inset 0 -4px 8px rgba(0,0,0,0.3), 0 2px 8px rgba(${bubbleColor.shadow}, 0.4)`,
