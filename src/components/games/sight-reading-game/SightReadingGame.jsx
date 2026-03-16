@@ -1604,8 +1604,11 @@ export function SightReadingGame() {
         }
         // Only count as a cheat attempt if the detected pitch isn't in the pattern
         // (or within 1 semitone of a pattern note for mic input — transient wobble).
-        const isExpectedPitch = pattern?.notes?.some(
-          (n) => n.pitch === detectedNote
+        // Use MIDI comparison so enharmonic equivalents (e.g., C#4 == Db4) are treated
+        // as correct — mic always reports sharp-form, notes pool may contain flat-form.
+        const detectedMidi = noteToMidi(detectedNote);
+        const isExpectedPitch = detectedMidi != null && pattern?.notes?.some(
+          (n) => noteToMidi(n.pitch) === detectedMidi
         );
         const isAdjacentToExpected = inputMode === "mic" && pattern?.notes?.some(
           (n) => isAdjacentSemitone(n.pitch, detectedNote)
@@ -1678,8 +1681,11 @@ export function SightReadingGame() {
         matchingWindow?.startMs || (matchingEvent.startTime || 0) * 1000;
       const timeDiff = elapsedTimeMs - matchedNoteStartMs;
 
-      // Check if detected note matches expected note
-      if (detectedNote === matchingEvent.pitch) {
+      // Check if detected note matches expected note using MIDI comparison so
+      // enharmonic equivalents (e.g., mic reports C#4, note pool has Db4) score correctly.
+      const detectedMidiForScore = noteToMidi(detectedNote);
+      const expectedMidiForScore = noteToMidi(matchingEvent.pitch);
+      if (detectedMidiForScore != null && expectedMidiForScore != null && detectedMidiForScore === expectedMidiForScore) {
         failedAttemptTrackerRef.current = [];
         keyboardSpamTrackerRef.current = [];
         // Calculate timing accuracy
