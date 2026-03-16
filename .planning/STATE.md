@@ -4,7 +4,7 @@ milestone: v2.2
 milestone_name: Sharps & Flats
 status: completed
 stopped_at: Phase 04 context gathered
-last_updated: "2026-03-16T11:04:56.060Z"
+last_updated: "2026-03-16T16:32:12.668Z"
 last_activity: 2026-03-15 — Phase 03 Plan 02 complete
 progress:
   total_phases: 4
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-15)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v2.2 Sharps & Flats — Phase 03: Bass Accidentals Content
+**Current focus:** v2.2 Sharps & Flats — Phase 04: Integration, Gate, and i18n — COMPLETE
 
 ## Current Position
 
-Phase: 03 of 04 (Bass Accidentals Content)
-Plan: 02 of 02 (COMPLETE — all Phase 03 plans done)
-Status: Phase 03 Plan 02 complete — 18 treble accidental nodes replaced (8 sharps + 10 flats/boss)
-Last activity: 2026-03-15 — Phase 03 Plan 02 complete
+Phase: 04 of 04 (Integration, Gate, and i18n)
+Plan: 02 of 02 (COMPLETE — all Phase 04 plans done)
+Status: Phase 04 Plan 02 complete — i18n translations for all 21 new accidental nodes + 7 noteNames in both EN and HE
+Last activity: 2026-03-16 — Phase 04 Plan 02 complete
 
-Progress: [████░░░░░░] 37%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -76,6 +76,11 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - Treble Unit 5 expanded from 8 to 10 nodes: Ab4/Db4 Discovery nodes added, START_ORDER 34→35 (after Unit 4 expansion)
 - boss_treble_accidentals pool expanded from 12 to 15 notes: G#4, Ab4, Db4 added to cover all 7 treble accidentals
 
+**Phase 04 decisions (2026-03-16):**
+- Flat noteNames keys must be uppercase (BB/EB/AB/DB) — TrailNodeModal calls .toUpperCase() on regex capture before t() lookup
+- English accidental display uses Unicode ♯/♭ symbols (not keyboard chars # and b)
+- Hebrew accidental display uses French solfege terms: דיאז (sharp) and במול (flat)
+
 ### Research Flags (act on during implementation)
 
 - **Phase 04**: Verify `calculatePitchAccuracy()` in `scoreCalculator.js` handles enharmonic equivalence before adding SIGHT_READING exercises — if strict string comparison found, fix is localized to that function
@@ -90,13 +95,13 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-16T11:04:56.055Z
-Stopped at: Phase 04 context gathered
-Resume file: .planning/milestones/v2.2-phases/04-integration-gate-and-i18n/04-CONTEXT.md
+Last session: 2026-03-16T16:32:00Z
+Stopped at: Completed 04-02-PLAN.md (Phase 04 Plan 02 — i18n accidental translations)
+Resume file: .planning/milestones/v2.2-phases/04-integration-gate-and-i18n/04-02-SUMMARY.md
 
 **Next action:**
-- Phase 03 Plan 02 complete. Phase 03 complete (both plans done). Run `/gsd:execute-phase 4` to execute Phase 04 (Integration — wire new units into expandedNodes.js and subscription gate).
+- v2.2 milestone (Sharps & Flats) is COMPLETE. All 4 phases done. Run `/gsd:progress` to review final milestone status.
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-15 — Phase 03 Plan 02 complete (treble accidentals replacement: 18 nodes)*
+*Last updated: 2026-03-16 — Phase 04 Plan 02 complete (i18n accidental translations — v2.2 milestone complete)*

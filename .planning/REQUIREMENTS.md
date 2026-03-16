@@ -32,7 +32,7 @@ Requirements for Sharps & Flats content expansion. Each maps to roadmap phases.
 
 ### i18n
 
-- [ ] **I18N-01**: All new accidental note names have correct EN and HE translations
+- [x] **I18N-01**: All new accidental note names have correct EN and HE translations
 
 ## Future Requirements
 
@@ -78,7 +78,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INTG-01 | Phase 04 | Pending |
 | INTG-02 | Phase 04 | Pending |
 | INTG-03 | Phase 04 | Pending |
-| I18N-01 | Phase 04 | Pending |
+| I18N-01 | Phase 04 | Complete |
 
 **Coverage:**
 - v2.2 requirements: 12 total
