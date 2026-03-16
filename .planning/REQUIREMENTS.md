@@ -9,7 +9,7 @@ Requirements for Sharps & Flats content expansion. Each maps to roadmap phases.
 
 ### Bug Fixes
 
-- [x] **FIX-01**: Trail auto-start passes correct `enableSharps`/`enableFlats` flags derived from node's notePool
+- [ ] **FIX-01**: Trail auto-start passes correct `enableSharps`/`enableFlats` flags derived from node's notePool
 - [x] **FIX-02**: patternBuilder regex handles accidental pitches (F#4, Bb4) instead of silently dropping them
 
 ### Treble Clef Content
@@ -67,7 +67,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FIX-01 | Phase 01 | Complete |
+| FIX-01 | Phase 01, Phase 05 | Pending |
 | FIX-02 | Phase 01 | Complete |
 | TREB-01 | Phase 02 | Complete |
 | TREB-02 | Phase 02 | Complete |
@@ -83,8 +83,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 **Coverage:**
 - v2.2 requirements: 12 total
 - Mapped to phases: 12
+- Complete: 11
+- Pending (gap closure): 1 (FIX-01 → Phase 05)
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-15*
-*Last updated: 2026-03-15 — traceability complete (roadmap created)*
+*Last updated: 2026-03-16 — FIX-01 reset to Pending for Phase 05 gap closure*

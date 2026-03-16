@@ -14,7 +14,7 @@
 - ✅ **v1.9 Engagement & Retention** — Phases 17-23 (shipped 2026-03-08)
 - ✅ **v2.0 VictoryScreen & XP Unification** — Phases 01-02 (shipped 2026-03-08)
 - ✅ **v2.1 Forgot Password Recovery** — Phase 01 (shipped 2026-03-10)
-- 🚧 **v2.2 Sharps & Flats** — Phases 01-04 (in progress)
+- 🚧 **v2.2 Sharps & Flats** — Phases 01-05 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -150,6 +150,7 @@ See `.planning/milestones/` for archived details of each milestone.
 - [x] **Phase 02: Treble Accidentals Content** — Author treble sharps unit (F#4, C#4), flats unit (Bb4, Eb4), and boss node (completed 2026-03-15)
 - [x] **Phase 03: Bass Accidentals Content** — Author bass sharps unit (F#3, C#3, G#3), flats unit (Bb3, Eb3, Ab3, Db3), boss nodes, plus treble rework with expanded accidentals (completed 2026-03-15)
 - [x] **Phase 04: Integration, Gate, and i18n** — Wire nodes into trail, verify subscription gate, confirm mic enharmonics, add EN/HE translations (completed 2026-03-16)
+- [ ] **Phase 05: Fix enableFlats Regex False-Positive** — Fix regex false-positives where natural note 'B' triggers flat detection (gap closure)
 
 ## Phase Details
 
@@ -209,6 +210,20 @@ Plans:
 - [ ] 04-02-PLAN.md — Add EN/HE translations for all accidental noteNames, node names, descriptions, and unlockHints (I18N-01)
 - [ ] 04-03-PLAN.md — [GAP CLOSURE] Fix skill bubble focusNotes source, Hebrew text overflow, and Unicode description fallback (I18N-01)
 
+### Phase 05: Fix enableFlats Regex False-Positive
+**Goal**: Sharp-only nodes containing natural note 'B' no longer falsely trigger flat mode in games
+**Depends on**: Phase 01
+**Requirements**: FIX-01
+**Gap Closure**: Closes INTG-FLATS-FALSE-POSITIVE and FLOW-FLATS-DISTRACTOR from audit
+**Success Criteria** (what must be TRUE):
+  1. Node `bass_4_6` (Sharp Memory, pool includes 'B3') launches NotesRecognitionGame with `enableFlats=false`
+  2. Node `bass_4_7` (Sharp Speed) and `boss_bass_4` (Sharp Star) also get `enableFlats=false`
+  3. `filterAutoGrowCandidates` does not include flat notes when expanding a sharps-only node's pool
+  4. Nodes with actual flat notes (e.g., `bass_3_1` with 'Bb3') still correctly get `enableFlats=true`
+**Plans**: 1 plan
+Plans:
+- [ ] 05-01-PLAN.md — Fix flat-detection regex in TrailNodeModal and NotesRecognitionGame (FIX-01)
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -265,8 +280,9 @@ Plans:
 | 02. Treble Accidentals Content | v2.2 | 0/1 | Not started | - |
 | 03. Bass Accidentals Content | v2.2 | 0/2 | Not started | - |
 | 04. Integration, Gate, and i18n | v2.2 | 2/3 | In progress | - |
+| 05. Fix enableFlats Regex False-Positive | v2.2 | 0/1 | Not started | - |
 
-**Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
+**Total: 56 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-16 — Phase 04 gap closure plan added (04-03)*
+*Last updated: 2026-03-16 — Phase 05 gap closure added (enableFlats regex fix)*
