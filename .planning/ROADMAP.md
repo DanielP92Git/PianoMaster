@@ -199,11 +199,14 @@ Plans:
 **Depends on**: Phase 03
 **Requirements**: INTG-01, INTG-02, INTG-03, I18N-01
 **Success Criteria** (what must be TRUE):
-  1. `expandedNodes.js` includes all new unit files and `npm run verify:patterns` passes with no prerequisite or schema errors
-  2. A free user opening any new accidentals node sees the paywall modal; the Supabase RLS layer returns a 403 if the client attempts to write progress without a subscription
+  1. `expandedNodes.js` includes all new unit files and `npm run verify:trail` passes with no prerequisite or schema errors
+  2. A free user opening any new accidentals node sees the paywall modal (default-deny via isFreeNode)
   3. Playing Db4 on a real piano into the microphone during a Sight Reading exercise scores as correct when Db4 is in the note pool
-  4. All new accidental note names (F#, C#, Bb, Eb, Ab, Db) appear with correct labels in both English and Hebrew across answer buttons and VictoryScreen
-**Plans**: TBD
+  4. All new accidental note names (F#, C#, G#, Bb, Eb, Ab, Db) appear with correct labels in both English and Hebrew across skill bubbles and node names
+**Plans**: 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Wire expandedNodes.js, fix enharmonic matching in SightReadingGame, verify subscription gate (INTG-01, INTG-02, INTG-03)
+- [ ] 04-02-PLAN.md — Add EN/HE translations for all accidental noteNames, node names, descriptions, and unlockHints (I18N-01)
 
 ## Progress
 
@@ -260,9 +263,9 @@ Plans:
 | 01. Pre-Flight Bug Fixes | v2.2 | 0/2 | Not started | - |
 | 02. Treble Accidentals Content | v2.2 | 0/1 | Not started | - |
 | 03. Bass Accidentals Content | v2.2 | 0/2 | Not started | - |
-| 04. Integration, Gate, and i18n | v2.2 | 0/TBD | Not started | - |
+| 04. Integration, Gate, and i18n | v2.2 | 0/2 | Not started | - |
 
 **Total: 55 phases across 13 milestones (v1.0-v2.1 shipped, v2.2 in progress)**
 
 ---
-*Last updated: 2026-03-15 — Phase 03 planned (2 plans)*
+*Last updated: 2026-03-16 — Phase 04 planned (2 plans)*
