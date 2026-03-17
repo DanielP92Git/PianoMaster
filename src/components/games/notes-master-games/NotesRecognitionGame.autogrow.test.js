@@ -59,4 +59,41 @@ describe('filterAutoGrowCandidates — auto-grow boundary guard', () => {
     expect(filterAutoGrowCandidates([], false)).toEqual([]);
     expect(filterAutoGrowCandidates([], true)).toEqual([]);
   });
+
+  // --- B3/B4 regression: natural note B must not be treated as a flat ---
+
+  it('keeps B3 in natural session — not a flat despite containing letter b', () => {
+    const result = filterAutoGrowCandidates(['B3', 'C4'], false);
+    expect(result).toEqual(['B3', 'C4']);
+  });
+
+  it('keeps B4 in natural session — not a flat despite containing letter b', () => {
+    const result = filterAutoGrowCandidates(['B4', 'D4'], false);
+    expect(result).toEqual(['B4', 'D4']);
+  });
+});
+
+describe('enableFlats derivation — anchored flat detection', () => {
+  // Tests the anchored regex pattern /^[A-G]b\d/ used in TrailNodeModal.
+  // This regex matches true flats (Bb3, Eb4, Ab3, Db3) but NOT the natural note B3 or B4.
+
+  const deriveEnableFlats = (notePool) => notePool.some(n => /^[A-G]b\d/.test(n));
+
+  const FULL_SHARP_POOL = ['C4', 'B3', 'A3', 'G3', 'F3', 'E3', 'D3', 'C3', 'F#3', 'C#3', 'G#3'];
+
+  it('FULL_SHARP_POOL (contains B3 and sharps) yields enableFlats=false', () => {
+    expect(deriveEnableFlats(FULL_SHARP_POOL)).toBe(false);
+  });
+
+  it('flat pool [Bb3, Eb3, C3] yields enableFlats=true', () => {
+    expect(deriveEnableFlats(['Bb3', 'Eb3', 'C3'])).toBe(true);
+  });
+
+  it('single natural B: [B4] yields enableFlats=false', () => {
+    expect(deriveEnableFlats(['B4'])).toBe(false);
+  });
+
+  it('single flat [Db3] yields enableFlats=true', () => {
+    expect(deriveEnableFlats(['Db3'])).toBe(true);
+  });
 });
