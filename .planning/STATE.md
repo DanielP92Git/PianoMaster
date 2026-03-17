@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.2
 milestone_name: Sharps & Flats
 status: completed
-stopped_at: Completed 04-03-PLAN.md (Phase 04 Plan 03 — TrailNodeModal gap closure)
-last_updated: "2026-03-16T19:29:39.381Z"
+stopped_at: Completed 05-01-PLAN.md (Phase 05 Plan 01 — enableFlats regex fix)
+last_updated: "2026-03-17T09:44:03.689Z"
 last_activity: 2026-03-16 — Phase 04 Plan 03 complete
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 1
+  completed_plans: 1
   percent: 100
 ---
 
@@ -92,6 +92,7 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 - textSizeClass threshold >4 chars covers all Hebrew two-word accidental names (min 6 chars) without affecting single-letter labels
 - sanitizeAccidentals negative lookahead (?![a-z]) prevents converting compound words like "Bubble" — only note-name patterns match
 - sanitizeAccidentals defined inside component (not module scope) since used in only one JSX expression
+- [Phase 05-fix-enableflats-regex]: Anchored regex /^[A-G]b\d/ used in TrailNodeModal enableFlats derivation — prevents B3/B4 false-positive; no shared utility extracted per plan spec
 
 ### Research Flags (act on during implementation)
 
@@ -107,9 +108,9 @@ All prior decisions archived in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-16T21:30:00Z
-Stopped at: Completed 04-03-PLAN.md (Phase 04 Plan 03 — TrailNodeModal gap closure)
-Resume file: .planning/milestones/v2.2-phases/04-integration-gate-and-i18n/04-03-SUMMARY.md
+Last session: 2026-03-17T09:44:03.685Z
+Stopped at: Completed 05-01-PLAN.md (Phase 05 Plan 01 — enableFlats regex fix)
+Resume file: None
 
 **Next action:**
 - v2.2 milestone (Sharps & Flats) is COMPLETE. All 4 phases + gap closure plan done. Run `/gsd:progress` to review final milestone status. Recommend full UAT re-run to verify all 7 UAT tests pass.
