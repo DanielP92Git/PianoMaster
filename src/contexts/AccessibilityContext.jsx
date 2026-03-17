@@ -345,7 +345,7 @@ export const useAccessibility = () => {
 
 // HOC for components that need accessibility props
 export const withAccessibility = (Component) => {
-  return React.forwardRef((props, ref) => {
+  const WithAccessibilityWrapper = React.forwardRef((props, ref) => {
     const accessibility = useAccessibility();
     return (
       <Component
@@ -359,6 +359,8 @@ export const withAccessibility = (Component) => {
       />
     );
   });
+  WithAccessibilityWrapper.displayName = `withAccessibility(${Component.displayName || Component.name || 'Component'})`;
+  return WithAccessibilityWrapper;
 };
 
 export default AccessibilityContext;

@@ -15,6 +15,7 @@
 - ✅ **v2.0 VictoryScreen & XP Unification** — Phases 01-02 (shipped 2026-03-08)
 - ✅ **v2.1 Forgot Password Recovery** — Phase 01 (shipped 2026-03-10)
 - ✅ **v2.2 Sharps & Flats** — Phases 01-05 (shipped 2026-03-17)
+- ✅ **v2.3 Launch Readiness** — Phases 01-06 (shipped 2026-03-17)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -151,6 +152,18 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+<details>
+<summary>✅ v2.3 Launch Readiness (Phases 01-06) — SHIPPED 2026-03-17</summary>
+
+- [x] Phase 01: Legal & Compliance — completed 2026-03-17
+- [x] Phase 02: Code Quality & Stability — completed 2026-03-17
+- [x] Phase 03: Production Observability — completed 2026-03-17
+- [x] Phase 04: Performance & Polish — completed 2026-03-17
+- [x] Phase 05: Onboarding Tour — completed 2026-03-17
+- [x] Phase 06: Daily Challenge System — completed 2026-03-17
+
+</details>
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -168,8 +181,9 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01-02. VictoryScreen & XP | v2.0 | 6/6 | Complete | 2026-03-08 |
 | 01. Forgot Password | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
+| 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 
-**Total: 13 milestones shipped (v1.0-v2.2), ~125 plans across ~56 phases**
+**Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-17 — v2.2 Sharps & Flats shipped*
+*Last updated: 2026-03-17 — v2.3 Launch Readiness shipped*

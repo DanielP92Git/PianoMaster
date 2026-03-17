@@ -227,7 +227,7 @@ class HybridPatternService {
         timeSignature
       );
       if (!durationValid) {
-        
+        console.warn("Pattern duration validation failed");
       }
       return durationValid;
     }
@@ -290,7 +290,7 @@ class HybridPatternService {
       // Allow small floating point tolerance
       const isValid = Math.abs(totalDuration - expectedLength) < 0.001;
       if (!isValid) {
-        
+        console.warn("Pattern total duration does not match expected measure length");
       }
       return isValid;
     }

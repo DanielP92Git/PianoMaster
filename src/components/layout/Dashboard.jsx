@@ -25,6 +25,9 @@ import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import WeeklySummaryCard from "../dashboard/WeeklySummaryCard";
 import DailyMessageBanner from "../dashboard/DailyMessageBanner";
 import PlayNextButton from "../dashboard/PlayNextButton";
+import DailyChallengeCard from "../dashboard/DailyChallengeCard";
+import { useOnboarding } from "../../hooks/useOnboarding";
+import OnboardingTour from "../onboarding/OnboardingTour";
 import UnifiedStatsCard from "../dashboard/UnifiedStatsCard";
 import PushOptInCard from "../dashboard/PushOptInCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
@@ -42,6 +45,7 @@ import { motion } from "framer-motion";
 function Dashboard() {
   const { user, isTeacher, isStudent, profile } = useUser();
   const { isPremium } = useSubscription();
+  const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
   const { t, i18n } = useTranslation(["common", "trail"]);
   const isRTL = i18n.dir() === "rtl";
   const queryClient = useQueryClient();
@@ -554,7 +558,7 @@ function Dashboard() {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             aria-hidden="true"
             loading="eager"
-            fetchpriority="high"
+            fetchPriority="high"
           />
         </picture>
 
@@ -642,6 +646,11 @@ function Dashboard() {
           </h1>
         </div>
       </header>
+
+      {/* ONBOARDING TOUR */}
+      {shouldShowOnboarding && (
+        <OnboardingTour onComplete={completeOnboarding} />
+      )}
 
       {/* PLAY NEXT BUTTON (overlaps hero) */}
       {isStudent && nextNode && (
@@ -781,6 +790,9 @@ function Dashboard() {
             isRTL={isRTL}
           />
         )}
+
+        {/* DAILY CHALLENGE CARD */}
+        {isStudent && <DailyChallengeCard />}
 
         {/* DAILY GOALS CARD (refreshed) */}
         {isStudent && (

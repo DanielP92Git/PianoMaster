@@ -144,7 +144,7 @@ function ConsentVerifyPage() {
             <p className="text-white/50 text-xs mb-6">
               {t('consent.verify.privacyNote', 'For full details, see our')}{' '}
               <a
-                href="/legal"
+                href="/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-indigo-400 hover:text-indigo-300 underline"

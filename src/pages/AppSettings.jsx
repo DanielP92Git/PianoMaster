@@ -13,6 +13,7 @@ import {
   Plus,
   CreditCard,
   Flame,
+  Scale,
 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "../contexts/SettingsContext";
@@ -733,6 +734,35 @@ function AppSettings() {
                 {t("pages.settings.audio.testSound")}
               </button>
             </div>
+          </div>
+        </SettingsSection>
+
+        {/* Legal Section */}
+        <SettingsSection
+          isRTL={isRTL}
+          title={t("pages.settings.legalTitle", "Legal")}
+          icon={Scale}
+          defaultOpen={false}
+        >
+          <div className="space-y-3 mt-2">
+            <Link
+              to="/privacy"
+              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
+            >
+              {t("pages.settings.privacyPolicy", "Privacy Policy")}
+            </Link>
+            <Link
+              to="/terms"
+              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
+            >
+              {t("pages.settings.termsOfService", "Terms of Service")}
+            </Link>
+            <Link
+              to="/legal"
+              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
+            >
+              {t("pages.settings.attributions", "Attributions & Licenses")}
+            </Link>
           </div>
         </SettingsSection>
 

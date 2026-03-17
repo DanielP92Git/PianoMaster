@@ -94,18 +94,6 @@ export default function AppLayout() {
         <Outlet />
       </main>
       {!isGameRoute && !isTrailPage && <MobileTabsNav />}
-      {!isGameRoute && !isTrailPage && location.pathname === "/" && (
-        <footer
-          className={`${!isGameRoute ? (direction === "rtl" ? "xl:pr-[19rem]" : "xl:pl-[19rem]") : ""} py-4 pb-24 xl:pb-4 text-center border-t border-white/10`}
-        >
-          <Link
-            to="/legal"
-            className="text-white/50 hover:text-white/80 text-sm transition-colors duration-200 underline"
-          >
-            {t("navigation.links.legal")}
-          </Link>
-        </footer>
-      )}
     </div>
   );
 }

@@ -1,21 +1,8 @@
-import React, { useRef, useEffect } from "react";
+import React, { Suspense, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
 import { useTranslation } from "react-i18next";
-import { NotesMasterMode } from "./components/games/NotesMasterMode";
-import { RhythmMasterMode } from "./components/games/RhythmMasterMode";
-import Achievements from "./pages/Achievements";
-import PracticeModes from "./pages/PracticeModes";
-import TrailMapPage from "./pages/TrailMapPage";
-import PracticeSessions from "./pages/PracticeSessions";
-import StudentAssignments from "./pages/StudentAssignments";
-import AppSettings from "./pages/AppSettings";
-import Legal from "./pages/Legal";
-import SubscribePage from "./pages/SubscribePage";
-import SubscribeSuccessPage from "./pages/SubscribeSuccessPage";
-import ParentPortalPage from "./pages/ParentPortalPage";
-import Avatars from "./components/Avatars";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Login from "./components/auth/LoginForm";
@@ -25,14 +12,10 @@ import ConsentVerifyPage from "./pages/ConsentVerifyPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import ParentalConsentPending from "./components/auth/ParentalConsentPending";
 import { useAccountStatus } from "./hooks/useAccountStatus";
-import { MemoryGame } from "./components/games/notes-master-games/MemoryGame";
-import { NotesRecognitionGame } from "./components/games/notes-master-games/NotesRecognitionGame";
-import { SightReadingGame } from "./components/games/sight-reading-game/SightReadingGame";
-import { SightReadingLayoutHarness } from "./components/games/sight-reading-game/components/SightReadingLayoutHarness";
-import MetronomeTrainer from "./components/games/rhythm-games/MetronomeTrainer";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
 import { dashboardReminderService } from "./services/dashboardReminderService";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 import { useUser } from "./features/authentication/useUser";
 import { Loader2 } from "lucide-react";
@@ -61,6 +44,39 @@ import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
 import supabase from "./services/supabase";
 import { useGlobalFullscreenOnFirstTap } from "./hooks/useGlobalFullscreenOnFirstTap";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
+
+// Lazy-loaded page components
+const TrailMapPage = React.lazy(() => import("./pages/TrailMapPage"));
+const Achievements = React.lazy(() => import("./pages/Achievements"));
+const PracticeModes = React.lazy(() => import("./pages/PracticeModes"));
+const PracticeSessions = React.lazy(() => import("./pages/PracticeSessions"));
+const StudentAssignments = React.lazy(() => import("./pages/StudentAssignments"));
+const AppSettings = React.lazy(() => import("./pages/AppSettings"));
+const Legal = React.lazy(() => import("./pages/Legal"));
+const SubscribePage = React.lazy(() => import("./pages/SubscribePage"));
+const SubscribeSuccessPage = React.lazy(() => import("./pages/SubscribeSuccessPage"));
+const ParentPortalPage = React.lazy(() => import("./pages/ParentPortalPage"));
+const Avatars = React.lazy(() => import("./components/Avatars"));
+const PrivacyPolicyPage = React.lazy(() => import("./pages/PrivacyPolicyPage"));
+const TermsOfServicePage = React.lazy(() => import("./pages/TermsOfServicePage"));
+
+// Lazy-loaded game components
+const NotesMasterMode = React.lazy(() => import("./components/games/NotesMasterMode").then(m => ({ default: m.NotesMasterMode })));
+const RhythmMasterMode = React.lazy(() => import("./components/games/RhythmMasterMode").then(m => ({ default: m.RhythmMasterMode })));
+const MemoryGame = React.lazy(() => import("./components/games/notes-master-games/MemoryGame").then(m => ({ default: m.MemoryGame })));
+const NotesRecognitionGame = React.lazy(() => import("./components/games/notes-master-games/NotesRecognitionGame").then(m => ({ default: m.NotesRecognitionGame })));
+const SightReadingGame = React.lazy(() => import("./components/games/sight-reading-game/SightReadingGame").then(m => ({ default: m.SightReadingGame })));
+const MetronomeTrainer = React.lazy(() => import("./components/games/rhythm-games/MetronomeTrainer"));
+const SightReadingLayoutHarness = React.lazy(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
+
+// Loading fallback for lazy-loaded routes
+function LoadingFallback() {
+  return (
+    <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+      <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -279,63 +295,65 @@ function AppRoutes() {
   }
 
   return (
-    <AuthenticatedWrapper>
-      <OrientationController />
-      <Routes>
-        {import.meta.env.DEV && (
+    <Suspense fallback={<LoadingFallback />}>
+      <AuthenticatedWrapper>
+        <OrientationController />
+        <Routes>
+          {import.meta.env.DEV && (
+            <Route
+              path="/debug/sight-reading-layout"
+              element={<SightReadingLayoutHarness />}
+            />
+          )}
           <Route
-            path="/debug/sight-reading-layout"
-            element={<SightReadingLayoutHarness />}
-          />
-        )}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <AppLayout onPracticeModesClick={scrollToPracticeModes} />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<TeacherRedirect />} />
-          <Route path="/trail" element={<TrailMapPage />} />
-          <Route path="/practice-modes" element={<PracticeModes />} />
-          <Route path="practice-sessions" element={<PracticeSessions />} />
-          <Route path="/assignments" element={<StudentAssignments />} />
-          <Route path="/achievements" element={<Achievements />} />
-          <Route path="/settings" element={<AppSettings />} />
-          <Route path="/legal" element={<Legal />} />
-          <Route path="/subscribe" element={<SubscribePage />} />
-          <Route path="/subscribe/success" element={<SubscribeSuccessPage />} />
-          <Route path="/parent-portal" element={<ParentPortalPage />} />
-          <Route path="/avatars" element={<Avatars />} />
-          <Route path="/teacher/*" element={<TeacherDashboard />} />
-          <Route path="/notes-master-mode" element={<NotesMasterMode />} />
-          <Route
-            path="/notes-master-mode/memory-game"
-            element={<MemoryGame />}
-          />
-          <Route
-            path="/notes-master-mode/notes-recognition-game"
-            element={<AudioContextProvider><NotesRecognitionGame /></AudioContextProvider>}
-          />
-          <Route
-            path="/notes-master-mode/sight-reading-game"
-            element={<AudioContextProvider><SightReadingGame /></AudioContextProvider>}
-          />
-          <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
-          <Route
-            path="/rhythm-mode/metronome-trainer"
-            element={<AudioContextProvider><MetronomeTrainer /></AudioContextProvider>}
-          />
-          {/* TODO: Add new rhythm game routes here */}
-        </Route>
-        <Route path="/login" element={<Login />} />
-        {/* Public route for password reset (no auth required - user clicks email link) */}
-        <Route path="/reset-password" element={<ResetPasswordPage />} />
-        {/* Public route for parental consent verification (no auth required) */}
-        <Route path="/consent/verify" element={<ConsentVerifyPage />} />
-      </Routes>
-    </AuthenticatedWrapper>
+            path="/"
+            element={
+              <ProtectedRoute>
+                <AppLayout onPracticeModesClick={scrollToPracticeModes} />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<TeacherRedirect />} />
+            <Route path="/trail" element={<TrailMapPage />} />
+            <Route path="/practice-modes" element={<PracticeModes />} />
+            <Route path="practice-sessions" element={<PracticeSessions />} />
+            <Route path="/assignments" element={<StudentAssignments />} />
+            <Route path="/achievements" element={<Achievements />} />
+            <Route path="/settings" element={<AppSettings />} />
+            <Route path="/legal" element={<Legal />} />
+            <Route path="/subscribe" element={<SubscribePage />} />
+            <Route path="/subscribe/success" element={<SubscribeSuccessPage />} />
+            <Route path="/parent-portal" element={<ParentPortalPage />} />
+            <Route path="/avatars" element={<Avatars />} />
+            <Route path="/teacher/*" element={<TeacherDashboard />} />
+            <Route path="/notes-master-mode" element={<NotesMasterMode />} />
+            <Route
+              path="/notes-master-mode/memory-game"
+              element={<MemoryGame />}
+            />
+            <Route
+              path="/notes-master-mode/notes-recognition-game"
+              element={<AudioContextProvider><NotesRecognitionGame /></AudioContextProvider>}
+            />
+            <Route
+              path="/notes-master-mode/sight-reading-game"
+              element={<AudioContextProvider><SightReadingGame /></AudioContextProvider>}
+            />
+            <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
+            <Route
+              path="/rhythm-mode/metronome-trainer"
+              element={<AudioContextProvider><MetronomeTrainer /></AudioContextProvider>}
+            />
+          </Route>
+          <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/consent/verify" element={<ConsentVerifyPage />} />
+          {/* Public routes - no auth required */}
+          <Route path="/privacy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms" element={<TermsOfServicePage />} />
+        </Routes>
+      </AuthenticatedWrapper>
+    </Suspense>
   );
 }
 
@@ -414,6 +432,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ErrorBoundary>
       <AccessibilityProvider>
         <SettingsProvider>
           <SessionTimeoutProvider>
@@ -441,6 +460,7 @@ function App() {
           </SessionTimeoutProvider>
         </SettingsProvider>
       </AccessibilityProvider>
+      </ErrorBoundary>
       <ReactQueryDevtools />
     </QueryClientProvider>
   );

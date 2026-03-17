@@ -5,6 +5,7 @@
  */
 
 import supabase from '../services/supabase';
+import { Sentry } from '../services/sentryService';
 
 /**
  * XP Level definitions
@@ -242,6 +243,7 @@ export const awardXP = async (studentId, xpAmount) => {
     };
   } catch (error) {
     console.error('Error awarding XP:', error);
+    Sentry.captureException(error, { extra: { context: 'awardXP' } });
     throw error;
   }
 };

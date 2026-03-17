@@ -103,10 +103,11 @@ const StudentAssignments = () => {
     switch (sortBy) {
       case "title":
         return a.assignment.title.localeCompare(b.assignment.title);
-      case "status":
+      case "status": {
         const statusA = getAssignmentStatus(a.status, a.daysRemaining);
         const statusB = getAssignmentStatus(b.status, b.daysRemaining);
         return statusA.localeCompare(statusB);
+      }
       case "dueDate":
       default:
         // Sort by due date, with overdue first, then by days remaining

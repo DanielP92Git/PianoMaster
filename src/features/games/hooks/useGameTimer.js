@@ -14,9 +14,9 @@ export function useGameTimer(options) {
   const debugLog = (message, data) => {
     if (DEBUG) {
       if (data !== undefined) {
-         
+        console.log(message, data);
       } else {
-         
+        console.log(message);
       }
     }
   };

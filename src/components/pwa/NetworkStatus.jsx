@@ -47,7 +47,7 @@ const NetworkStatus = () => {
               <WifiOff className="w-4 h-4" />
             </div>
             <div className="flex-1">
-              <div className="font-medium text-sm">You're Offline</div>
+              <div className="font-medium text-sm">You&apos;re Offline</div>
               <div className="text-xs text-red-100">
                 Some features may be limited
               </div>

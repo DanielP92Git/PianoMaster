@@ -1,8 +1,11 @@
 import React from "react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Link as LinkIcon } from "lucide-react";
+import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import BackButton from "../components/ui/BackButton";
 
 function Legal() {
+  const { t } = useTranslation("common");
   return (
     <div className="min-h-screen pb-8">
       <BackButton to="/" name={t("navigation.links.studentDashboard")} />
@@ -34,7 +37,7 @@ function Legal() {
               <div className="space-y-2 text-white/90">
                 <div>
                   <span className="font-semibold text-white">Title: </span>
-                  <span>"Complete Performance"</span>
+                  <span>&quot;Complete Performance&quot;</span>
                 </div>
 
                 <div>
@@ -103,6 +106,29 @@ function Legal() {
             performers and publishers who make their recordings available under
             these licenses.
           </p>
+        </div>
+
+        {/* Legal Documents */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-white mb-4">
+            Legal Documents
+          </h2>
+          <div className="space-y-3">
+            <Link
+              to="/privacy"
+              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 underline transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 underline transition-colors"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </div>

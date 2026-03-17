@@ -9,6 +9,7 @@ import { verifyStudentDataAccess } from './authorizationUtils';
 import { getNodeById, isNodeUnlocked, getUnlockedNodes, EXERCISE_TYPES } from '../data/skillTrail';
 import { checkRateLimit } from './rateLimitService';
 import { isFreeNode } from '../config/subscriptionConfig';
+import { Sentry } from './sentryService';
 
 /**
  * Calculate stars based on score percentage
@@ -137,6 +138,7 @@ export const updateNodeProgress = async (studentId, nodeId, stars, score, option
     return data;
   } catch (error) {
     console.error('Error updating node progress:', error);
+    Sentry.captureException(error, { extra: { context: 'updateNodeProgress' } });
     throw error;
   }
 };

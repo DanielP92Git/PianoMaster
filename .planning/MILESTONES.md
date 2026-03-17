@@ -1,5 +1,35 @@
 # Project Milestones: PianoApp
 
+## v2.3 Launch Readiness (Shipped: 2026-03-17)
+
+**Delivered:** Production readiness features: COPPA-compliant Privacy Policy and Terms of Service pages, all 23 ESLint errors fixed (0 remaining), React ErrorBoundary with Sentry integration, route-based code splitting (128 chunks), first-time onboarding tour (4 steps), and daily challenge system with bonus XP.
+
+**Phases completed:** 01-06
+
+**Key accomplishments:**
+
+- Privacy Policy (`/privacy`) and Terms of Service (`/terms`) public pages with glassmorphism design, cross-linked from signup, settings, legal, and consent pages
+- 23 ESLint errors resolved across 17 files (empty blocks, unescaped entities, conditional hooks, missing displayNames)
+- React ErrorBoundary class component with kid-friendly fallback UI and Sentry.captureException
+- Sentry error monitoring (production-only, COPPA-safe with sendDefaultPii: false) + source maps via @sentry/vite-plugin
+- Route-based code splitting: 17+ page/game imports converted to React.lazy() with Suspense fallback
+- 4-step onboarding tour for first-time students (Framer Motion, reduced-motion aware, localStorage persistence)
+- Daily challenge system: DB table with RLS, deterministic date-seeded generation, DailyChallengeCard on dashboard, challenge mode in NotesRecognitionGame, bonus XP via VictoryScreen
+- Full EN/HE i18n for all new features (privacy, legal, onboarding, dailyChallenge keys)
+
+**Stats:**
+
+- 44 files changed (+888 / -132), 10 new files
+- 6 phases, 1 day (2026-03-17)
+- 2 new npm dependencies (@sentry/react, @sentry/vite-plugin)
+- 127 tests passing, 0 ESLint errors
+
+**Git range:** `1c7a5e1` to (pending commit)
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
 ## v2.2 Sharps & Flats (Shipped: 2026-03-17)
 
 **Delivered:** Extended the trail with 36 new accidental nodes (18 treble + 18 bass) across sharps and flats for both clef paths, with bug fixes for accidental handling, MIDI enharmonic matching, full EN/HE i18n, subscription gating, and regex hardening.

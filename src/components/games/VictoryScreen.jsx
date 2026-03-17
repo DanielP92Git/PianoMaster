@@ -1,11 +1,13 @@
+import { useEffect, useRef } from "react";
 import { useVictoryState } from "../../hooks/useVictoryState";
 import { ConfettiEffect } from '../celebrations/ConfettiEffect';
 import { BossUnlockModal } from '../celebrations/BossUnlockModal';
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
-import { Trophy } from "lucide-react";
+import { Trophy, Zap } from "lucide-react";
 import { translateNodeName } from "../../utils/translateNodeName";
 import { getNodeById } from "../../data/skillTrail";
+import { completeDailyChallenge } from "../../services/dailyChallengeService";
 import GoldStar from "../ui/GoldStar";
 import victoryBg from "../../assets/images/victory-background.webp";
 
@@ -22,6 +24,9 @@ const VictoryScreen = ({
   totalExercises = null, // Optional: total number of exercises in node
   exerciseType = null, // Optional: type of exercise (e.g., 'note_recognition')
   onNextExercise = null, // Optional: callback to navigate to next exercise
+  challengeMode = false, // Optional: daily challenge mode
+  challengeId = null, // Optional: daily challenge ID
+  challengeXpReward = null, // Optional: bonus XP for challenge
 }) => {
   const {
     // Core display data
@@ -77,6 +82,17 @@ const VictoryScreen = ({
     exerciseType,
     onNextExercise,
   });
+
+  // Mark daily challenge as complete
+  const challengeCompletedRef = useRef(false);
+  useEffect(() => {
+    if (challengeMode && challengeId && user?.id && !challengeCompletedRef.current) {
+      challengeCompletedRef.current = true;
+      completeDailyChallenge(user.id, challengeId).catch(err =>
+        console.error("Failed to complete daily challenge:", err)
+      );
+    }
+  }, [challengeMode, challengeId, user?.id]);
 
   // Stars to display: trail uses calculated stars, free play uses effectiveStars from celebrationData
   const displayStars = celebrationData.effectiveStars;
@@ -220,6 +236,16 @@ const VictoryScreen = ({
             </div>
           )}
 
+          {/* Daily Challenge bonus XP badge */}
+          {challengeMode && challengeXpReward && (
+            <div className="relative inline-flex items-center gap-2 rounded-full bg-gradient-to-b from-amber-600/90 to-orange-900/90 border-2 border-amber-400/50 px-5 py-1.5 shadow-[0_0_16px_rgba(251,191,36,0.35),inset_0_1px_0_rgba(255,255,255,0.1)]">
+              <Zap className="w-4 h-4 text-amber-300" />
+              <p className="text-lg font-bold bg-gradient-to-r from-amber-200 to-yellow-200 bg-clip-text text-transparent" style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive" }}>
+                {t('dashboard.dailyChallenge.bonusXp', { xp: challengeXpReward, defaultValue: `Challenge Bonus: +${challengeXpReward} XP` })}
+              </p>
+            </div>
+          )}
+
           {/* Level-up badge - inline pill, not bouncing card */}
           {xpData?.leveledUp && (
             <span className={`inline-flex items-center gap-1 rounded-full px-3 py-0.5 text-sm font-semibold ${
@@ -302,6 +328,14 @@ const VictoryScreen = ({
                   </button>
                 </div>
               </>
+            ) : challengeMode ? (
+              /* Challenge mode: Back to Dashboard (primary) */
+              <button
+                onClick={handleExit}
+                className="w-full rounded-full bg-gradient-to-b from-amber-500/90 to-amber-900/90 border-2 border-amber-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(251,191,36,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(251,191,36,0.5)] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 landscape:py-2"
+              >
+                {t("common.dashboard", "Back to Dashboard")}
+              </button>
             ) : (
               /* Free play mode: 2 buttons - Play Again (primary) + Exit (secondary) */
               <>

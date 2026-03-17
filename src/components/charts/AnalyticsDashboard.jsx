@@ -122,7 +122,7 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
         <div>
           <h2 className="text-2xl text-white">Class Analytics</h2>
           <p className="text-gray-300">
-            Comprehensive insights into your students' performance and
+            Comprehensive insights into your students&apos; performance and
             engagement
           </p>
         </div>

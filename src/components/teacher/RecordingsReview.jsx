@@ -543,7 +543,7 @@ const RecordingsReview = () => {
               <div className="bg-blue-900/20 rounded-lg p-4 border border-blue-500/30 max-w-md mx-auto">
                 <p className="text-blue-300 text-sm">
                   <strong>Getting started:</strong> Add students to your class
-                  first using the "Students" tab, then they can submit practice
+                  first using the &quot;Students&quot; tab, then they can submit practice
                   recordings for you to review.
                 </p>
               </div>

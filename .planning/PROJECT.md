@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 129 nodes across 3 parallel learning paths (Treble, Bass, Rhythm) including sharps and flats accidentals, 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 129 nodes across 3 parallel learning paths (Treble, Bass, Rhythm) including sharps and flats accidentals, 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery. Production-ready with Sentry error monitoring, route-based code splitting, React ErrorBoundary, first-time onboarding tour, daily challenge system with bonus XP, and COPPA-compliant Privacy Policy and Terms of Service pages.
 
 ## Core Value
 
@@ -143,6 +143,15 @@ These capabilities exist, are working, and have been shipped:
 - I18N-01: Full EN/HE translations with Unicode symbols and Hebrew solfege terms
 - 12/12 requirements delivered, 9 plans across 5 phases
 
+**v2.3 Launch Readiness (shipped 2026-03-17):**
+- LEGAL-01/07: Privacy Policy and Terms of Service public pages with glassmorphism, cross-linked from signup/settings/legal/consent
+- QUAL-01/03: All 23 ESLint errors fixed (0 remaining), React ErrorBoundary with Sentry integration
+- OBS-01/04: Sentry error monitoring (COPPA-safe, prod-only), source maps, analytics placeholder
+- PERF-01/04: Route-based code splitting (17+ lazy imports, 128 chunks), error toasts with kid-friendly messages
+- ONBD-01/05: 4-step onboarding tour for first-time students (Framer Motion, reduced-motion, localStorage persistence)
+- CHAL-01/07: Daily challenge system with DB table, deterministic generation, dashboard card, game integration, bonus XP
+- 30/30 requirements delivered, 6 phases in 1 day
+
 ### Active
 
 No active requirements. Next milestone not yet defined — run `/gsd:new-milestone`.
@@ -264,8 +273,10 @@ Explicitly excluded:
 - Parental consent verification method needs legal review
 - Privacy policy language requires attorney review
 - State age verification laws may require Play Age Signals API
-- Pre-existing lint: 24 errors, 415 warnings (all pre-v1.4)
+- ESLint: 0 errors, ~530 warnings (errors fixed in v2.3)
 - syncPracticeSessions() stub in sw.js (zero runtime impact)
+- DB migration 20260317000001_daily_challenges.sql needs manual application
+- Sentry env vars need configuration on Netlify
 
 ## Constraints
 

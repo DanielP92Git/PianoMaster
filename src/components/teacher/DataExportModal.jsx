@@ -170,7 +170,7 @@ const DataExportModal = ({ isOpen, onClose, student }) => {
                   <p className="font-semibold">COPPA Compliance Notice</p>
                   <p className="text-blue-400/90">
                     This export contains all personal data collected for this student account,
-                    as required by the Children's Online Privacy Protection Act (COPPA).
+                    as required by the Children&apos;s Online Privacy Protection Act (COPPA).
                   </p>
                 </div>
               </div>

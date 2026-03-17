@@ -78,7 +78,7 @@ const PWAUpdateNotification = () => {
           {/* Update Features (you can customize this based on your actual updates) */}
           <div className="mb-4 p-3 bg-gray-50 rounded-xl">
             <h5 className="text-xs font-medium text-gray-700 mb-2">
-              What's New:
+              What&apos;s New:
             </h5>
             <ul className="text-xs text-gray-600 space-y-1">
               <li className="flex items-center gap-2">

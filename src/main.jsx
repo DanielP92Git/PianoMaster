@@ -59,8 +59,12 @@ import {
   initializeFullscreen,
   lockOrientation,
 } from "./utils/pwa.js";
+import { initSentry } from "./services/sentryService.js";
 import "./i18n/index.js";
 import "./index.css";
+
+// Initialize Sentry before React render
+initSentry();
 
 // Initialize fullscreen mode
 initializeFullscreen();

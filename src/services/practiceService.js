@@ -226,8 +226,6 @@ export const practiceService = {
         if (storageError) {
           console.error("Error deleting recording file:", storageError);
           // Don't throw here as the database record is already deleted
-        } else {
-          
         }
       }
 

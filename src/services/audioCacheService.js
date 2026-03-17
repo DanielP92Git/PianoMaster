@@ -233,7 +233,7 @@ class AudioCacheService {
     expiredKeys.forEach(key => this.delete(key));
     
     if (expiredKeys.length > 0) {
-      
+      console.debug("Audio cache: evicted", expiredKeys.length, "expired entries");
     }
   }
 

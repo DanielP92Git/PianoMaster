@@ -32,13 +32,8 @@ export function useStreakWithAchievements() {
 
       // Log new achievements for debugging
       if (newAchievements.length > 0) {
-
+        console.info("New achievements unlocked:", newAchievements.length);
       }
-
-      // Optionally show toast notifications for new achievements
-      newAchievements.forEach((achievement) => {
-
-      });
     },
     onError: (error) => {
       console.error("Error updating streak or checking achievements:", error);

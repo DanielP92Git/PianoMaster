@@ -305,6 +305,13 @@ function SignupForm({ onBackToLogin }) {
                   </div>
                 </div>
 
+                <p className="text-center text-[10px] text-white/50 leading-snug px-2">
+                  By signing up, you agree to our{" "}
+                  <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-indigo-300 hover:text-indigo-200 underline">Terms of Service</a>
+                  {" "}and{" "}
+                  <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-300 hover:text-indigo-200 underline">Privacy Policy</a>.
+                </p>
+
                 <div className="text-center text-xs">
                   <span className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10 inline-block">
                     Already have an account?{" "}

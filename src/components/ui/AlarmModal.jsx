@@ -58,7 +58,7 @@ function AlarmModal() {
             Time to Practice! 🎹
           </h2>
           <p className="text-white/90 text-xs sm:text-sm">
-            Your practice reminder is here. Let's make some music!
+            Your practice reminder is here. Let&apos;s make some music!
           </p>
         </div>
 

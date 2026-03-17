@@ -59,7 +59,7 @@ export default function InactivityWarningModal({ isOpen, onStayLoggedIn, getRema
 
       <ModalContent className="text-center">
         <p className="text-lg text-kidsPrimary-800 mb-2">
-          You'll be logged out in{' '}
+          You&apos;ll be logged out in{' '}
           <span className="font-bold text-kidsPrimary-600 text-2xl tabular-nums">
             {formatTime(remainingTime)}
           </span>{' '}

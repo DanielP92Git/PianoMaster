@@ -419,6 +419,11 @@ export function NotesRecognitionGame() {
   // Defaults to false so free-play mode unaffected (location.state is null).
   const trailEnableSharps = location.state?.enableSharps ?? false;
   const trailEnableFlats = location.state?.enableFlats ?? false;
+  // Daily challenge mode
+  const challengeMode = location.state?.challengeMode ?? false;
+  const challengeConfig = location.state?.challengeConfig ?? null;
+  const challengeId = location.state?.challengeId ?? null;
+  const challengeXpReward = location.state?.xpReward ?? null;
   const isRTL = i18n.language === "he";
   const useHebrewNoteLabels = i18n.language === "he";
   const SHOW_LISTEN_BUTTON = true;
@@ -555,6 +560,29 @@ export function NotesRecognitionGame() {
       }, 50);
     }
   }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
+
+  // Auto-configure and auto-start from daily challenge
+  useEffect(() => {
+    if (challengeMode && challengeConfig && !hasAutoStartedRef.current) {
+      hasAutoStartedRef.current = true;
+
+      const challengeSettings = {
+        clef: challengeConfig.clef || 'treble',
+        selectedNotes: challengeConfig.notePool || [],
+        timedMode: !!challengeConfig.timeLimit,
+        timeLimit: challengeConfig.timeLimit || 60,
+        enableSharps: false,
+        enableFlats: false,
+      };
+
+      updateSettings(challengeSettings);
+      updateProgress({ showSettingsModal: false });
+
+      setTimeout(() => {
+        startGame(challengeSettings);
+      }, 50);
+    }
+  }, [challengeMode, challengeConfig]);
 
   // Handle navigation to next exercise in the trail node
   const handleNextExercise = useCallback(() => {
@@ -2177,12 +2205,15 @@ export function NotesRecognitionGame() {
               resetProgress();
               resetSettings();
             }}
-            onExit={() => navigate("/notes-master-mode")}
+            onExit={() => navigate(challengeMode ? "/" : "/notes-master-mode")}
             nodeId={nodeId}
             exerciseIndex={trailExerciseIndex}
             totalExercises={trailTotalExercises}
             exerciseType={trailExerciseType}
             onNextExercise={handleNextExercise}
+            challengeMode={challengeMode}
+            challengeId={challengeId}
+            challengeXpReward={challengeXpReward}
           />
         )
       ) : (

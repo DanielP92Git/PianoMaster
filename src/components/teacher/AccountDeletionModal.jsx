@@ -288,7 +288,7 @@ const AccountDeletionModal = ({ isOpen, onClose, student, onDeletionRequested })
               </h3>
               <div className="rounded-lg bg-gray-800 border border-gray-700 p-4 space-y-3">
                 <p className="text-sm text-gray-400">
-                  To confirm deletion, please type the student's name exactly as shown below:
+                  To confirm deletion, please type the student&apos;s name exactly as shown below:
                 </p>
                 <p className="text-center text-lg font-bold text-white bg-gray-750 px-4 py-2 rounded border border-gray-600">
                   {student.student_name}

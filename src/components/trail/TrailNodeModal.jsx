@@ -114,12 +114,11 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
   const [nextExerciseIndex, setNextExerciseIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
-  if (!node) return null;
-
-  const totalExercises = node.exercises?.length || 0;
+  const totalExercises = node?.exercises?.length || 0;
 
   // Fetch exercise progress when modal opens
   useEffect(() => {
+    if (!node) return;
     const fetchExerciseProgress = async () => {
       if (isPremiumLocked || !user?.id || !node?.id) {
         setIsLoading(false);
@@ -143,7 +142,9 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
     };
 
     fetchExerciseProgress();
-  }, [user?.id, node?.id, totalExercises, isPremiumLocked]);
+  }, [node, user?.id, totalExercises, isPremiumLocked]);
+
+  if (!node) return null;
 
   /**
    * Get the exercise data by index from exerciseProgress array

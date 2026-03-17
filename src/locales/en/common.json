@@ -219,6 +219,10 @@
       "subscriptionFree": "Free Plan",
       "unlockFullAccess": "Unlock Full Access",
       "subscriptionLoading": "Loading...",
+      "legalTitle": "Legal",
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "attributions": "Attributions & Licenses",
       "profile": {
         "profileSettingsTitle": "Profile Settings",
         "profileSettingsDescription": "Manage your personal information",
@@ -889,6 +893,19 @@
       "9": "Fun fact: The fastest pianist can play 20 notes per second!",
       "10": "Did you know? Singing birds inspired the first musical instruments!",
       "11": "Fun fact: Astronauts have played music in space!"
+    },
+    "dailyChallenge": {
+      "title": "Daily Challenge",
+      "speedRound": "Speed Round",
+      "speedRoundDesc": "Answer {{count}} questions in {{time}} seconds!",
+      "reviewChallenge": "Review Challenge",
+      "reviewChallengeDesc": "Replay and master a previous skill node",
+      "playChallenge": "Play Challenge",
+      "completed": "Challenge Complete!",
+      "earnedXp": "+{{xp}} XP earned",
+      "nextChallenge": "Next challenge in {{time}}",
+      "bonusXp": "Challenge Bonus: +{{xp}} XP",
+      "xpReward": "+{{xp}} XP"
     }
   },
   "errors": {
@@ -1324,5 +1341,124 @@
   },
   "noteRecognition": {
     "questionProgress": "Question {{current}} of {{total}}"
+  },
+  "onboarding": {
+    "step1Title": "Welcome to PianoMaster!",
+    "step1Desc": "Your musical journey starts here. Let's show you around!",
+    "step2Title": "Follow the Learning Trail",
+    "step2Desc": "Complete skill nodes to unlock new notes and challenges. Each node builds on what you've learned.",
+    "step3Title": "Practice with Fun Games",
+    "step3Desc": "Note recognition, sight reading, memory games, and rhythm training — learn while having fun!",
+    "step4Title": "Earn Stars and XP",
+    "step4Desc": "Get up to 3 stars on each exercise. Earn XP to level up and unlock achievements!",
+    "skip": "Skip",
+    "next": "Next",
+    "letsGo": "Let's Go!"
+  },
+  "privacy": {
+    "backHome": "Back to Home",
+    "title": "Privacy Policy",
+    "subtitle": "Piano Learning App for Children",
+    "dataCollect": {
+      "title": "1. Data We Collect",
+      "dobLabel": "Date of birth",
+      "dobDesc": "used to determine age and apply COPPA protections for users under 13.",
+      "parentEmailLabel": "Parent email address",
+      "parentEmailDesc": "collected for users under 13 to obtain verifiable parental consent before account activation.",
+      "progressLabel": "Learning progress",
+      "progressDesc": "scores, exercises completed, skill levels, and star ratings across all game modes.",
+      "activityLabel": "Practice activity",
+      "activityDesc": "session timestamps, daily streaks, and practice frequency to support habit building.",
+      "localStorageLabel": "localStorage preferences",
+      "localStorageDesc": "UI settings such as theme, language, onboarding state, and dismissed prompts. These remain on the device and are never sent to our servers."
+    },
+    "dataUse": {
+      "title": "2. How We Use Your Data",
+      "personalizeLabel": "Personalize learning",
+      "personalizeDesc": "adapt difficulty, recommend next exercises, and track skill progression.",
+      "trackLabel": "Track progress",
+      "trackDesc": "display achievement badges, XP levels, daily goals, and weekly summaries.",
+      "remindersLabel": "Send practice reminders",
+      "remindersDesc": "push notifications and weekly parent reports, only with explicit consent.",
+      "subscriptionsLabel": "Process subscriptions",
+      "subscriptionsDesc": "manage premium plan billing and access to locked content."
+    },
+    "thirdParty": {
+      "title": "3. Third-Party Services",
+      "intro": "We use the following third-party services to operate PianoMaster:",
+      "supabaseDesc": "database hosting, user authentication, and real-time data sync.",
+      "brevoDesc": "transactional emails including parental consent verification and weekly progress reports.",
+      "lemonDesc": "payment processing for subscription plans. We do not store payment card details.",
+      "noSell": "We do NOT sell, rent, or share personal data with advertisers or data brokers."
+    },
+    "parentalRights": {
+      "title": "4. Parental Rights (COPPA)",
+      "intro": "PianoMaster complies with the Children's Online Privacy Protection Act (COPPA). For users under 13:",
+      "consent": "Accounts require verifiable parental consent via email before activation.",
+      "review": "Parents can review all data collected about their child at any time via the Settings page.",
+      "export": "Parents can export their child's learning data in a portable format.",
+      "deletion": "Parents can request deletion of their child's account and all associated data via Settings or by contacting us directly.",
+      "minimum": "We collect only the minimum data necessary to provide the educational service."
+    },
+    "dataRetention": {
+      "title": "5. Data Retention",
+      "active": "Data is retained for as long as the account remains active.",
+      "gracePeriod": "Upon account deletion request, data enters a 30-day grace period during which the account can be restored.",
+      "permanent": "After the grace period, all personal data is permanently deleted from our servers.",
+      "immediate": "Parents may request immediate deletion without the grace period by contacting us at the address below."
+    },
+    "cookies": {
+      "title": "6. Cookies & Local Storage",
+      "noTracking": "PianoMaster does not use tracking cookies or any third-party analytics trackers.",
+      "localStorageUse": "We use localStorage (browser storage) exclusively for UI preferences: theme, language selection, onboarding state, and dismissed prompts.",
+      "deviceOnly": "localStorage data remains on your device and is never transmitted to our servers."
+    },
+    "contact": {
+      "title": "7. Contact",
+      "desc": "If you have questions about this privacy policy, wish to exercise your parental rights, or need to request data deletion, please contact us at:"
+    },
+    "lastUpdated": "Last updated",
+    "termsLink": "Terms of Service & Legal"
+  },
+  "legal": {
+    "backToHome": "Back to Home",
+    "tosTitle": "Terms of Service",
+    "tosLastUpdated": "Last Updated: March 2026",
+    "tosPrivacyNote": "Please also review our",
+    "privacyPolicyLink": "Privacy Policy",
+    "tos": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "body": "By accessing or using PianoMaster, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the service."
+      },
+      "accounts": {
+        "title": "2. Account Requirements",
+        "body": "Users under the age of 13 require verifiable parental consent in compliance with the Children's Online Privacy Protection Act (COPPA). Parents or legal guardians are responsible for their child's use of PianoMaster and for ensuring that all account information is accurate."
+      },
+      "subscriptions": {
+        "title": "3. Subscriptions & Payments",
+        "body": "Subscriptions are managed through our payment partner, Lemon Squeezy. A free tier is available with limited content. Premium subscriptions unlock additional learning content and features. You may cancel your subscription at any time; cancellation stops automatic renewal, and you retain access to premium content until the end of the current billing period. Refunds are handled in accordance with Lemon Squeezy's refund policy."
+      },
+      "acceptableUse": {
+        "title": "4. Acceptable Use",
+        "body": "PianoMaster is intended solely for educational purposes. You agree not to share your account credentials with others, use automated tools or bots to access the service, attempt to reverse-engineer or tamper with the application, or use the service for any unlawful purpose."
+      },
+      "ip": {
+        "title": "5. Intellectual Property",
+        "body": "All content, games, exercises, music notation, graphics, and other materials available through PianoMaster are the intellectual property of PianoMaster and are protected by applicable copyright and trademark laws. You may not reproduce, distribute, or create derivative works from any content without prior written permission."
+      },
+      "liability": {
+        "title": "6. Limitation of Liability",
+        "body": "PianoMaster is provided on an \"as is\" and \"as available\" basis without warranties of any kind, whether express or implied. We do not guarantee specific learning outcomes or results. To the fullest extent permitted by law, PianoMaster shall not be liable for any indirect, incidental, special, or consequential damages arising from your use of the service."
+      },
+      "changes": {
+        "title": "7. Changes to Terms",
+        "body": "We reserve the right to update or modify these Terms of Service at any time. Changes will be posted on this page with an updated \"Last Updated\" date. Your continued use of PianoMaster after any changes constitutes acceptance of the revised terms."
+      },
+      "contact": {
+        "title": "8. Contact",
+        "body": "If you have any questions about these Terms of Service, please contact us at support@pianomaster.app."
+      }
+    }
   }
 }
