@@ -1,5 +1,33 @@
 # Project Milestones: PianoApp
 
+## v2.2 Sharps & Flats (Shipped: 2026-03-17)
+
+**Delivered:** Extended the trail with 36 new accidental nodes (18 treble + 18 bass) across sharps and flats for both clef paths, with bug fixes for accidental handling, MIDI enharmonic matching, full EN/HE i18n, subscription gating, and regex hardening.
+
+**Phases completed:** 01-05 (9 plans total)
+
+**Key accomplishments:**
+
+- Fixed patternBuilder regex and ESM imports for accidental pitch handling in VexFlow sight reading
+- Trail enableSharps/enableFlats flag derivation from notePool with auto-grow boundary guard preventing accidental injection into natural sessions
+- 18 treble accidental nodes: F#4, C#4, G#4 sharps + Bb4, Eb4, Ab4, Db4 flats with accidentals boss challenge (15-note pool)
+- 18 bass accidental nodes: F#3, C#3, G#3 sharps + Bb3, Eb3, Ab3, Db3 flats with accidentals master boss
+- MIDI-based enharmonic matching in SightReadingGame anti-cheat and scoring + full EN/HE i18n with Unicode symbols and Hebrew solfege
+- Anchored regex patterns at all 3 flat-detection sites preventing natural 'B' note from false flat detection
+
+**Stats:**
+
+- 66 files changed (+11,533 / -1,390)
+- 5 phases, 9 plans
+- 3 days (2026-03-15 to 2026-03-17)
+- 77,199 LOC JavaScript/JSX/CSS
+
+**Git range:** `0fb703b` to `8b8dd4d`
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
 ## v2.1 Forgot Password Recovery (Shipped: 2026-03-10)
 
 **Delivered:** Inline forgot password flow on the login page and a dedicated /reset-password page with Supabase PKCE password reset, anti-enumeration security, RTL support, and full EN/HE i18n.

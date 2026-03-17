@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 93 nodes across 3 parallel learning paths (Treble, Bass, Rhythm), 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 129 nodes across 3 parallel learning paths (Treble, Bass, Rhythm) including sharps and flats accidentals, 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery.
 
 ## Core Value
 
@@ -135,18 +135,17 @@ These capabilities exist, are working, and have been shipped:
 - PWD-RESET-ROUTE: Public route outside ProtectedRoute
 - 5/5 requirements delivered, 2 plans across 1 phase
 
+**v2.2 Sharps & Flats (shipped 2026-03-17):**
+- FIX-01/02: patternBuilder regex + trail flag derivation for accidental pitches
+- TREB-01/02/03: 18 treble accidental nodes (F#4, C#4, G#4 sharps + Bb4, Eb4, Ab4, Db4 flats + boss)
+- BASS-01/02/03: 18 bass accidental nodes (F#3, C#3, G#3 sharps + Bb3, Eb3, Ab3, Db3 flats + boss)
+- INTG-01/02/03: expandedNodes wiring, subscription gate default-deny, MIDI enharmonic matching
+- I18N-01: Full EN/HE translations with Unicode symbols and Hebrew solfege terms
+- 12/12 requirements delivered, 9 plans across 5 phases
+
 ### Active
 
-## Current Milestone: v2.2 Sharps & Flats
-
-**Goal:** Extend the trail with accidentals (sharps and flats) across treble and bass clef paths, growing content depth for subscriber retention.
-
-**Target features:**
-- Sharps & Flats nodes for treble clef path (~10 nodes)
-- Sharps & Flats nodes for bass clef path (~10 nodes)
-- Boss challenge nodes for new content units
-- All new nodes premium-only (behind subscription paywall)
-- Same 4 game modes: note recognition, sight reading, memory game, boss challenge
+No active requirements. Next milestone not yet defined — run `/gsd:new-milestone`.
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -161,7 +160,6 @@ These capabilities exist, are working, and have been shipped:
 See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.planning/research/PITFALLS_ENGAGEMENT.md` for pitfalls.
 
 *Content Expansion (extends trail from 2-3 months → 12+ months):*
-- Trail Section 4: Sharps & Flats (~20 nodes)
 - Trail Section 5: Key Signatures (~15 nodes)
 - Trail Section 6: Two-Hand Basics (~20 nodes)
 - Trail Section 7: Simple Melodies (~15 nodes, public domain songs)
@@ -213,8 +211,8 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.1):**
-- 93-node trail system with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
+**Current State (after v2.2):**
+- 129-node trail system (93 original + 36 accidental nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
 - Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit
@@ -241,8 +239,10 @@ Explicitly excluded:
 - Freemium monetization with Lemon Squeezy (dual-market ILS/USD, COPPA-safe child paywall)
 - Dual-layer content gate: React UI + database RLS enforcement
 - Parent portal with subscription management and cancel flow
-- ~73,754 lines JavaScript/JSX/CSS across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files
+- Accidental note handling: MIDI-based enharmonic matching in sight reading, anchored regex for flat detection
+- Full EN/HE translations for all accidental note names using Unicode symbols and Hebrew solfege
+- ~77,199 lines JavaScript/JSX/CSS across src/
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -360,7 +360,16 @@ Explicitly excluded:
 | Inline forgot password (not modal) | Keeps UX within login card, simpler than separate page | Good |
 | Smart expired-link detection via URL params | Immediate error for missing params, 10s timeout for real links | Good |
 | Anti-enumeration: generic errors only on reset | Prevents email harvesting via password reset endpoint | Good |
+| Flag derivation from notePool in TrailNodeModal | Curriculum authority in one place, games consume flags | Good |
+| Auto-grow skips accidentals nodes for natural sessions | Prevents confusing mixed-context note injection | Good |
+| SIGHT_READING excluded from flat practice nodes | Mic outputs sharp-form (A#4 not Bb4); boss nodes include as inert placeholder | Good |
+| MIDI comparison (noteToMidi) for enharmonic matching | Eliminates string equality bugs for A#4=Bb4 equivalence | Good |
+| Anchored regex `/^[A-G]b\d/` for flat detection | Prevents natural 'B' note from triggering false flat mode | Good |
+| Unicode symbols for accidental display (not ASCII) | Proper musical notation: F♯ not F#, B♭ not Bb | Good |
+| Hebrew solfege terms for accidentals | Culture-appropriate: דיאז (sharp) and במול (flat) | Good |
+| 36 new nodes all premium (default-deny) | No new IDs in FREE_NODE_IDS; subscription gate by exclusion | Good |
+| Separate sharps/flats units (not mixed) | Avoids enharmonic confusion; mic outputs sharp-form only | Good |
 
 ---
 
-*Last updated: 2026-03-15 after v2.2 milestone start*
+*Last updated: 2026-03-17 after v2.2 milestone*

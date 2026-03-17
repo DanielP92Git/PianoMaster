@@ -118,6 +118,52 @@
 
 ---
 
+## Milestone: v2.2 — Sharps & Flats
+
+**Shipped:** 2026-03-17
+**Phases:** 5 | **Plans:** 9
+
+### What Was Built
+- patternBuilder regex and ESM import fixes for accidental pitch handling in VexFlow
+- Trail enableSharps/enableFlats flag derivation from notePool with auto-grow boundary guard
+- 18 treble accidental nodes (F#4, C#4, G#4 sharps + Bb4, Eb4, Ab4, Db4 flats + 2 boss nodes)
+- 18 bass accidental nodes (F#3, C#3, G#3 sharps + Bb3, Eb3, Ab3, Db3 flats + 3 boss nodes)
+- MIDI-based enharmonic matching in SightReadingGame + subscription gate confirmation
+- Full EN/HE i18n with Unicode symbols and Hebrew solfege, skill bubble improvements
+- Anchored regex for flat detection preventing natural 'B' false-positive
+
+### What Worked
+- Bug-first Phase 01: Fixing silent accidental corruption before authoring content ensured all testing was trustworthy from day one
+- Content-then-integration ordering: Writing unit data files (Phases 02-03) before wiring (Phase 04) meant clean separation of data authoring from integration concerns
+- Audit-driven gap closure: The milestone audit caught the enableFlats regex false-positive, which became Phase 05 — the audit process prevented a bug from shipping
+- TDD for enharmonic matching: Writing failing tests first for noteToMidi revealed the bug was at usage sites, not in the conversion function itself
+- Separate sharps/flats units avoided enharmonic confusion with mic pitch detection (mic outputs sharp-form only)
+
+### What Was Inefficient
+- Phase 01-04 directories were archived to milestones/v2.2-phases/ before milestone completion — the CLI `roadmap analyze` only counted 1 phase on disk
+- SUMMARY frontmatter missing `requirements-completed` for Phases 02 and 03 (metadata-only gap, verified by VERIFICATION.md independently)
+- ROADMAP progress table got out of sync with actual phase status (showed "Not started" for completed phases)
+
+### Patterns Established
+- Anchored regex pattern (`/^[A-G]b\d/`) as standard for flat-note detection (not `includes('b')`)
+- noteToMidi MIDI comparison for enharmonic equivalence at all pitch comparison sites
+- focusNotes-first logic in TrailNodeModal for Discovery node skill bubbles
+- Dynamic text sizing in skill bubbles for Hebrew accidental labels (>4 char threshold)
+- sanitizeAccidentals with negative lookahead for safe ASCII-to-Unicode conversion
+
+### Key Lessons
+1. Run milestone audit before archiving phases — Phase 05 gap closure was critical and would have shipped as a bug without the audit
+2. Keep phase directories in `.planning/phases/` until milestone completion — early archival breaks CLI tools
+3. Content authoring milestones benefit from a strict data→integration→i18n→verification pipeline
+4. Mic enharmonic limitations (sharp-form only) should be documented as a constraint early — it shaped the entire unit structure
+
+### Cost Observations
+- Model mix: ~85% opus, ~15% sonnet
+- Sessions: ~6
+- Notable: 36 new nodes (exceeding ~20 target) in 3 days — high content velocity from established patterns
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -136,6 +182,7 @@
 | v1.9 | 7 | 15 | Engagement features — parallel execution |
 | v2.0 | 2 | 6 | XP unification — sequential dependency chain |
 | v2.1 | 1 | 2 | Password recovery — smallest milestone |
+| v2.2 | 5 | 9 | Sharps & Flats content — audit-driven gap closure |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -144,3 +191,5 @@
 3. Phase numbering needs clear milestone scoping to avoid directory collisions
 4. Always scope work to a milestone version from the start — "standalone" phases create archival debt
 5. Complete milestone archival immediately after shipping — deferred archival requires retroactive reconstruction
+6. Bug-first phases prevent cascading silent failures in content-heavy milestones
+7. Milestone audits catch real bugs — Phase 05 gap closure was audit-driven and prevented a false-positive ship
