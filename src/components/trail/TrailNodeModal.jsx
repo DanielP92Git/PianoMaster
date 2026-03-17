@@ -169,7 +169,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
     // override user game settings (locked decision: flags come from curriculum).
     const notePool = exercise.config?.notePool || [];
     const enableSharps = notePool.some(n => n.includes('#'));
-    const enableFlats = notePool.some(n => n.includes('b'));
+    const enableFlats = notePool.some(n => /^[A-G]b\d/.test(n));
 
     // Common navigation state
     const navState = {

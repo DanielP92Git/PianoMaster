@@ -393,7 +393,7 @@ const GROW_INTERVAL = 5; // Add a note every 5 streak
  */
 export function filterAutoGrowCandidates(candidatePool, currentPoolHasAccidentals) {
   if (currentPoolHasAccidentals) return candidatePool; // No filtering for accidental sessions
-  return candidatePool.filter(pitch => !/[#b]/.test(pitch));
+  return candidatePool.filter(pitch => !/[#]|[A-G]b/.test(pitch));
 }
 
 export function NotesRecognitionGame() {
@@ -900,7 +900,7 @@ export function NotesRecognitionGame() {
     // Fallback to inspecting the node's own noteConfig pool for non-standard launches.
     const currentPoolHasAccidentals =
       trailEnableSharps || trailEnableFlats ||
-      (currentNode.noteConfig?.notePool || []).some(p => /[#b]/.test(p));
+      (currentNode.noteConfig?.notePool || []).some(p => /[#]|[A-G]b/.test(p));
 
     // Build set of all notes already in the pool
     const currentPool = currentNode.noteConfig?.notePool || [];
