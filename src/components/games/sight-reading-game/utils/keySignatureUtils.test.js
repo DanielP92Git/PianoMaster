@@ -118,12 +118,17 @@ describe("filterNotesToKey", () => {
     expect(result).toEqual(["C4", "D4", "F#4", "G4"]);
   });
 
-  it("removes F4 (not in G major) while keeping F#4", () => {
+  it("keeps F4 natural in G major (F staff position is F# via key sig)", () => {
     const result = filterNotesToKey(
       ["C4", "D4", "E4", "F4", "F#4"],
       "G"
     );
-    expect(result).toEqual(["C4", "D4", "E4", "F#4"]);
+    expect(result).toEqual(["C4", "D4", "E4", "F4", "F#4"]);
+  });
+
+  it("removes Fb4 in G major (not a valid in-key accidental)", () => {
+    const result = filterNotesToKey(["F4", "Fb4", "F#4"], "G");
+    expect(result).toEqual(["F4", "F#4"]);
   });
 
   it("keeps Bb4 and Eb5 in Bb major (all in key)", () => {
@@ -146,13 +151,18 @@ describe("filterNotesToKey", () => {
     expect(result).toEqual([]);
   });
 
-  it("filters correctly for D major (removes C4, keeps C#4)", () => {
+  it("keeps C4 natural in D major (C staff position is C# via key sig)", () => {
     const result = filterNotesToKey(["C4", "C#4", "D4", "E4"], "D");
-    expect(result).toEqual(["C#4", "D4", "E4"]);
+    expect(result).toEqual(["C4", "C#4", "D4", "E4"]);
   });
 
-  it("filters correctly for Eb major (removes B4, keeps Bb4 and Eb5)", () => {
+  it("keeps B4 natural in Eb major (B staff position is Bb via key sig)", () => {
     const result = filterNotesToKey(["Bb4", "B4", "C5", "Eb5"], "Eb");
-    expect(result).toEqual(["Bb4", "C5", "Eb5"]);
+    expect(result).toEqual(["Bb4", "B4", "C5", "Eb5"]);
+  });
+
+  it("removes G#4 in G major (G# is not the in-key form)", () => {
+    const result = filterNotesToKey(["G4", "G#4"], "G");
+    expect(result).toEqual(["G4"]);
   });
 });
