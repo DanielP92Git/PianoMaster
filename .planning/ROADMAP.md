@@ -202,7 +202,10 @@ Plans:
   3. Bass clef Units 6-7 mirror the treble key progression using bass-range note pools (C3-C4 octave)
   4. `npm run verify:patterns` passes with zero errors after all new node files are added
   5. All new nodes are premium-only — none appear in FREE_NODE_IDS and locked nodes show the gold paywall overlay
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 08-01-PLAN.md — Treble key signature nodes (Unit 6: G/D major, Unit 7: A/F/Bb/Eb major + memory + boss)
+- [ ] 08-02-PLAN.md — Bass key signature nodes (Unit 6: G/D major, Unit 7: A/F/Bb/Eb major + memory + boss)
 
 ### Phase 09: Rhythm Generator Infrastructure
 **Goal**: The rhythm generator and VexFlow renderer correctly model 6/8 as 2 compound beats so timing windows and beam groupings are musically accurate
@@ -254,7 +257,7 @@ Plans:
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07. Key Sig Rendering | v2.4 | Complete    | 2026-03-18 | 2026-03-18 |
-| 08. Key Sig Node Data | v2.4 | 0/TBD | Not started | - |
+| 08. Key Sig Node Data | v2.4 | 0/2 | Not started | - |
 | 09. Rhythm Generator Fix | v2.4 | 0/TBD | Not started | - |
 | 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
 | 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
@@ -262,4 +265,4 @@ Plans:
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-18 — Phase 07 Key Signature Rendering Infrastructure complete (2/2 plans)*
+*Last updated: 2026-03-18 — Phase 08 Key Signature Node Data planned (2 plans)*
