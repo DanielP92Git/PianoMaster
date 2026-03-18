@@ -171,7 +171,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 - [x] **Phase 07: Key Signature Rendering Infrastructure** - VexFlow key signature glyph support and accidental suppression — completed 2026-03-18
 - [x] **Phase 08: Key Signature Node Data** - Treble and bass key signature trail nodes (G, D, A, F, Bb, Eb major) (completed 2026-03-18)
-- [ ] **Phase 09: Rhythm Generator Infrastructure** - Fix 6/8 compound beat model and correct beam grouping
+- [x] **Phase 09: Rhythm Generator Infrastructure** - Fix 6/8 compound beat model and correct beam grouping (completed 2026-03-18)
 - [ ] **Phase 10: Advanced Rhythm Node Data** - 6/8 compound meter and syncopation trail nodes
 - [ ] **Phase 11: Integration, Gate, and i18n** - Wire all new nodes, subscription gate, full EN/HE translations
 
@@ -261,7 +261,7 @@ Plans:
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07. Key Sig Rendering | v2.4 | Complete    | 2026-03-18 | 2026-03-18 |
 | 08. Key Sig Node Data | v2.4 | Complete    | 2026-03-18 | - |
-| 09. Rhythm Generator Fix | v2.4 | 0/2 | Not started | - |
+| 09. Rhythm Generator Fix | 2/2 | Complete   | 2026-03-18 | - |
 | 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
 | 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
 

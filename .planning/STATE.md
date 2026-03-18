@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Content Expansion
 status: completed
-stopped_at: Completed Plan 09-02 (beam group helper and 6/8 rendering fix)
-last_updated: "2026-03-18T21:03:41Z"
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-18T21:08:08.210Z"
 last_activity: 2026-03-18 — Completed Plan 09-02 (beamGroupsForTimeSignature helper + all 7 Beam.generateBeams call sites updated)
 progress:
   total_phases: 5
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
-  percent: 20
+  percent: 36
 ---
 
 # Project State
@@ -60,6 +60,9 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 - [Phase 09-02]: beamGroupsForTimeSignature returns null (not []) for simple time — beamConfig = {} leaves VexFlow defaults fully intact (zero regression)
 - [Phase 09-02]: RhythmPatternPreview received optional timeSignature prop (default "4/4") — callers can pass "6/8" for correct compound beaming in preview tiles
 - [Phase 09-02]: beamConfig computed once per renderStaff call since all bars in a pattern share the same time signature
+- [Phase 09-01]: SIX_EIGHT.beats changed from 6 to 2 with subdivisions:6 — all downstream consumers derive correct unitsPerBeat=6 via buildTimeSignatureGrid
+- [Phase 09-01]: rhythmGenerator compound-time close: single eighth allowed when it exactly fills remaining beat space (leftInBeat===eighthUnits)
+- [Phase 09-01]: MetronomeTrainer count-in: isCompound ? beats*2 : beats — 2-measure count-in for 6/8
 
 ### Research Flags (must address during planning)
 
@@ -76,9 +79,9 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 
 ## Session Continuity
 
-Last session: 2026-03-18T21:03:41Z
-Stopped at: Completed Plan 09-02 (beam group helper and 6/8 rendering fix)
-Resume file: .planning/milestones/v2.4-phases/09-rhythm-generator-infrastructure/09-02-SUMMARY.md
+Last session: 2026-03-18T21:08:08.203Z
+Stopped at: Completed 09-01-PLAN.md
+Resume file: None
 
 **Next action:**
 - Phase 09 is complete — proceed to Phase 10 (syncopation rhythm node data) or Phase 08-02 (bass clef key signature nodes)
