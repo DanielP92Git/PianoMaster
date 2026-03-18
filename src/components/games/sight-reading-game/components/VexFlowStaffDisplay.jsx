@@ -121,6 +121,7 @@ export function VexFlowStaffDisplay({
   clef = "treble",
   performanceResults = [],
   gamePhase,
+  keySignature = null,  // VexFlow key string: 'G', 'D', 'A', 'F', 'Bb', 'Eb', or null
 }) {
   // Generate unique ID for this component instance
   const uniqueId = useId();
@@ -443,6 +444,10 @@ export function VexFlowStaffDisplay({
       const STAVE_WIDTH_BASE = Math.max(canvasWidth - 100, 240);
       const formatterWidth = Math.max(STAVE_WIDTH_BASE - 140, 200);
 
+      // Active key signature: prefer explicit prop, fall back to pattern-embedded value.
+      // null or 'C' means no key signature glyphs and no applyAccidentals call.
+      const activeKeySignature = keySignature || pattern?.keySignature || null;
+
       const parsePitchForVexflow = (pitchStr) => {
         if (!pitchStr) return { key: "c/4", accidental: null };
         const raw = String(pitchStr).trim().replace(/\s+/g, "");
@@ -455,16 +460,16 @@ export function VexFlowStaffDisplay({
         return { key, accidental };
       };
 
-      const buildStaveNote = ({ pitchStr, duration, targetClef }) => {
+      const buildStaveNote = ({ pitchStr, duration, targetClef, skipManualAccidental = false }) => {
         const isRest = String(duration || "").endsWith("r");
         let cleanDuration = String(duration || "q").replace(/r$/, "");
-        
+
         // Check for dotted notes (e.g., "q.", "h.", "8.")
         const isDotted = cleanDuration && cleanDuration.endsWith(".");
         if (isDotted) {
           cleanDuration = cleanDuration.slice(0, -1); // Remove the dot: "q." -> "q"
         }
-        
+
         const parsedPitch = isRest ? null : parsePitchForVexflow(pitchStr);
         const vexflowKey = isRest
           ? targetClef === "bass"
@@ -479,7 +484,9 @@ export function VexFlowStaffDisplay({
         };
 
         const note = new StaveNote(noteConfig);
-        if (!isRest && parsedPitch?.accidental) {
+        // When key signature mode is active, skip manual accidentals — Accidental.applyAccidentals()
+        // handles suppression (in-key notes get no accidental) and natural signs (out-of-key notes).
+        if (!isRest && !skipManualAccidental && parsedPitch?.accidental) {
           // Add accidental glyph (e.g., b or #) when present in pitch string.
           note.addModifier(new Accidental(parsedPitch.accidental), 0);
         }
@@ -566,11 +573,17 @@ export function VexFlowStaffDisplay({
             const trebleStave = new Stave(xPos, yTreble, staveWidthPerBar);
             const bassStave = new Stave(xPos, yBass, staveWidthPerBar);
 
-            // Only first bar gets clef and time signature
+            // Only first bar gets clef, key signature, and time signature
             if (barIdx === 0) {
               trebleStave.addClef("treble");
+              if (activeKeySignature && activeKeySignature !== 'C') {
+                trebleStave.addKeySignature(activeKeySignature);
+              }
               trebleStave.addTimeSignature(pattern.timeSignature);
               bassStave.addClef("bass");
+              if (activeKeySignature && activeKeySignature !== 'C') {
+                bassStave.addKeySignature(activeKeySignature);
+              }
               bassStave.addTimeSignature(pattern.timeSignature);
             } else {
               // Disable beginning barline for subsequent bars (already drawn by previous bar's end)
@@ -633,6 +646,7 @@ export function VexFlowStaffDisplay({
             const trebleTickables = [];
             const bassTickables = [];
 
+            const skipAccidental = !!(activeKeySignature && activeKeySignature !== 'C');
             barEvents.forEach((event, localIdx) => {
               const globalIdx = barEventIndices[localIdx];
               const duration = durations[globalIdx] || "q";
@@ -659,6 +673,7 @@ export function VexFlowStaffDisplay({
                   pitchStr: event.pitch,
                   duration,
                   targetClef: "treble",
+                  skipManualAccidental: skipAccidental,
                 }));
                 bassTickables.push(buildSpacerRest(duration, "bass"));
               } else {
@@ -667,6 +682,7 @@ export function VexFlowStaffDisplay({
                   pitchStr: event.pitch,
                   duration,
                   targetClef: "bass",
+                  skipManualAccidental: skipAccidental,
                 }));
               }
             });
@@ -728,6 +744,13 @@ export function VexFlowStaffDisplay({
               beat_value: 4,
             }).setMode(Voice.Mode.SOFT);
             bassVoice.addTickables(bassTickables);
+
+            // Apply accidentals after all tickables are added, before formatter.
+            // applyAccidentals suppresses in-key accidentals and adds natural signs for deviations.
+            if (activeKeySignature && activeKeySignature !== 'C') {
+              Accidental.applyAccidentals([trebleVoice], activeKeySignature);
+              Accidental.applyAccidentals([bassVoice], activeKeySignature);
+            }
 
             // Calculate formatter width for this bar
             const barFormatterWidth = barIdx === 0
@@ -825,12 +848,18 @@ export function VexFlowStaffDisplay({
           // Single bar grand staff
           const trebleStave = new Stave(STAVE_X, yTreble, TOTAL_STAVE_WIDTH);
           trebleStave.addClef("treble");
+          if (activeKeySignature && activeKeySignature !== 'C') {
+            trebleStave.addKeySignature(activeKeySignature);
+          }
           trebleStave.addTimeSignature(pattern.timeSignature);
           trebleStave.setEndBarType(Barline.type.DOUBLE);
           trebleStave.setContext(context).draw();
 
           const bassStave = new Stave(STAVE_X, yBass, TOTAL_STAVE_WIDTH);
           bassStave.addClef("bass");
+          if (activeKeySignature && activeKeySignature !== 'C') {
+            bassStave.addKeySignature(activeKeySignature);
+          }
           bassStave.addTimeSignature(pattern.timeSignature);
           bassStave.setEndBarType(Barline.type.DOUBLE);
           bassStave.setContext(context).draw();
@@ -859,6 +888,7 @@ export function VexFlowStaffDisplay({
               .filter((i) => i !== null)
           );
 
+          const skipAccidentalSingleGrand = !!(activeKeySignature && activeKeySignature !== 'C');
           const trebleTickables = events.map((event, idx) => {
             const duration = durations[idx] || "q";
             const eventClef = String(event?.clef || "treble").toLowerCase();
@@ -879,6 +909,7 @@ export function VexFlowStaffDisplay({
                 duration,
                 targetClef: "treble",
                 isDotted: !!event?.isDotted,
+                skipManualAccidental: skipAccidentalSingleGrand,
               });
             }
             return buildSpacerRest(duration, "treble");
@@ -904,6 +935,7 @@ export function VexFlowStaffDisplay({
                 duration,
                 targetClef: "bass",
                 isDotted: !!event?.isDotted,
+                skipManualAccidental: skipAccidentalSingleGrand,
               });
             }
             return buildSpacerRest(duration, "bass");
@@ -957,6 +989,12 @@ export function VexFlowStaffDisplay({
             beat_value: 4,
           }).setMode(Voice.Mode.SOFT);
           bassVoice.addTickables(bassTickables);
+
+          // Apply accidentals after all tickables are added, before formatter.
+          if (activeKeySignature && activeKeySignature !== 'C') {
+            Accidental.applyAccidentals([trebleVoice], activeKeySignature);
+            Accidental.applyAccidentals([bassVoice], activeKeySignature);
+          }
 
           const isFeedback = gamePhase === "feedback" && performanceResults.length > 0;
           const wrongPitchResults = isFeedback
@@ -1079,9 +1117,12 @@ export function VexFlowStaffDisplay({
             const xPos = STAVE_X + (barIdx * staveWidthPerBar);
             const stave = new Stave(xPos, yPosition, staveWidthPerBar);
 
-            // Only first bar gets clef and time signature
+            // Only first bar gets clef, key signature, and time signature
             if (barIdx === 0) {
               stave.addClef(clef);
+              if (activeKeySignature && activeKeySignature !== 'C') {
+                stave.addKeySignature(activeKeySignature);
+              }
               stave.addTimeSignature(pattern.timeSignature);
             } else {
               // Disable beginning barline for subsequent bars
@@ -1110,6 +1151,7 @@ export function VexFlowStaffDisplay({
             const barStaveNotes = [];
             const barPitchStrings = [];
 
+            const skipAccidentalMultiBar = !!(activeKeySignature && activeKeySignature !== 'C');
             barEvents.forEach((event, localIdx) => {
               const globalIdx = barEventIndices[localIdx];
               const duration = durations[globalIdx] || "q";
@@ -1126,6 +1168,7 @@ export function VexFlowStaffDisplay({
                   pitchStr: event.pitch,
                   duration,
                   targetClef: clef,
+                  skipManualAccidental: skipAccidentalMultiBar,
                 }));
                 barPitchStrings.push(event.pitch);
               }
@@ -1159,6 +1202,11 @@ export function VexFlowStaffDisplay({
               beat_value: 4,
             }).setMode(Voice.Mode.SOFT);
             voice.addTickables(barStaveNotes);
+
+            // Apply accidentals after all tickables are added, before formatter.
+            if (activeKeySignature && activeKeySignature !== 'C') {
+              Accidental.applyAccidentals([voice], activeKeySignature);
+            }
 
             // Calculate formatter width for this bar
             const barFormatterWidth = barIdx === 0
@@ -1223,6 +1271,9 @@ export function VexFlowStaffDisplay({
           // Single bar: original behavior
           const stave = new Stave(STAVE_X, yPosition, TOTAL_STAVE_WIDTH);
           stave.addClef(clef);
+          if (activeKeySignature && activeKeySignature !== 'C') {
+            stave.addKeySignature(activeKeySignature);
+          }
           stave.addTimeSignature(pattern.timeSignature);
           stave.setEndBarType(Barline.type.DOUBLE);
           stave.setContext(context).draw();
@@ -1233,6 +1284,7 @@ export function VexFlowStaffDisplay({
               .filter((i) => i !== null)
           );
 
+          const skipAccidentalSingleBar = !!(activeKeySignature && activeKeySignature !== 'C');
           const pitchStrings = [];
           const staveNotes = events.map((event, idx) => {
             const duration = durations[idx] || "q";
@@ -1250,6 +1302,7 @@ export function VexFlowStaffDisplay({
                 pitchStr: event.pitch,
                 duration,
                 targetClef: clef,
+                skipManualAccidental: skipAccidentalSingleBar,
               });
             }
           });
@@ -1274,6 +1327,11 @@ export function VexFlowStaffDisplay({
             beat_value: 4,
           }).setMode(Voice.Mode.SOFT);
           voice.addTickables(staveNotes);
+
+          // Apply accidentals after all tickables are added, before formatter.
+          if (activeKeySignature && activeKeySignature !== 'C') {
+            Accidental.applyAccidentals([voice], activeKeySignature);
+          }
 
           // Handle wrong pitch overlay
           let wrongVoice = null;
@@ -1354,6 +1412,7 @@ export function VexFlowStaffDisplay({
     responsiveHeight,
     pattern,
     clef,
+    keySignature,
     extractNoteElements,
     gamePhase,
     performanceResults,
