@@ -327,6 +327,15 @@ export function generateRhythmEvents({
         continue;
       }
 
+      // Compound-time close: allow a single eighth when it exactly fills the remaining space.
+      // This handles 6/8 beats where quarter(4) + eighth(2) = 6 units per compound beat.
+      // The pairing constraint doesn't apply here because we're closing a beat boundary, not
+      // introducing syncopation.
+      if (hasEighth && leftInBeat === eighthUnits) {
+        filled += pushSingleEvent(nextType, "8", beatIndex, 1);
+        continue;
+      }
+
       break;
     }
 

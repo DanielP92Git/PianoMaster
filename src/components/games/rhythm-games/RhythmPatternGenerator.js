@@ -54,11 +54,12 @@ export const TIME_SIGNATURES = {
   },
   SIX_EIGHT: {
     name: "6/8",
-    beats: 6,
-    subdivision: 12, // 12 eighth notes per measure (compound time)
-    strongBeats: [0, 3], // Beats 1 and 4 are strong
+    beats: 2,           // FIXED: compound time has 2 dotted-quarter beats
+    subdivisions: 6,    // Explicit subdivision count: 6 eighth-note positions
+    subdivision: 12,    // Total sixteenth-note slots in measure
+    strongBeats: [0, 3], // Positions 0 and 3 in the 6-subdivision grid (1-indexed: 1 and 4)
     mediumBeats: [], // No medium beats in 6/8
-    weakBeats: [1, 2, 4, 5], // Other beats are weak
+    weakBeats: [1, 2, 4, 5], // Other positions are weak
     measureLength: 12,
     isCompound: true, // Compound time signature
   },
@@ -403,29 +404,37 @@ class HybridPatternService {
     const { measureLength, strongBeats, mediumBeats, weakBeats } =
       timeSignatureObj;
 
+    // Compute position multiplier: how many sixteenth units per subdivision step.
+    // For simple time (4/4, 3/4, 2/4): subdivisions is not set, falls back to beats.
+    //   4/4: measureLength(16) / beats(4) = 4  → quarter-note beat index * 4 = sixteenth position
+    // For compound time (6/8): subdivisions = 6 (eighth-note positions in the measure).
+    //   6/8: measureLength(12) / subdivisions(6) = 2 → position * 2 = sixteenth position
+    const subdivisionCount = timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
+    const positionMultiplier = measureLength / subdivisionCount;
+
     // Create empty pattern array
     const pattern = new Array(measureLength).fill(0);
 
     // Apply strong beat logic
     strongBeats.forEach((beatIndex) => {
-      const sixteenthIndex = beatIndex * 4; // Convert beat to sixteenth note position
-      if (Math.random() < rules.strongBeatProbability) {
+      const sixteenthIndex = Math.round(beatIndex * positionMultiplier);
+      if (sixteenthIndex < pattern.length && Math.random() < rules.strongBeatProbability) {
         pattern[sixteenthIndex] = 1;
       }
     });
 
     // Apply medium beat logic
     mediumBeats.forEach((beatIndex) => {
-      const sixteenthIndex = beatIndex * 4;
-      if (Math.random() < rules.strongBeatProbability * 0.7) {
+      const sixteenthIndex = Math.round(beatIndex * positionMultiplier);
+      if (sixteenthIndex < pattern.length && Math.random() < rules.strongBeatProbability * 0.7) {
         pattern[sixteenthIndex] = 1;
       }
     });
 
     // Apply weak beat logic
     weakBeats.forEach((beatIndex) => {
-      const sixteenthIndex = beatIndex * 4;
-      if (Math.random() < rules.weakBeatProbability) {
+      const sixteenthIndex = Math.round(beatIndex * positionMultiplier);
+      if (sixteenthIndex < pattern.length && Math.random() < rules.weakBeatProbability) {
         pattern[sixteenthIndex] = 1;
       }
     });
@@ -590,9 +599,9 @@ class HybridPatternService {
   convertFractionalToBinary(fractionalPattern, timeSignatureObj) {
     const binaryPattern = new Array(timeSignatureObj.measureLength).fill(0);
 
-    // For 4/4 time, fractional patterns typically represent 4 beat positions
-    // Each position can have a fractional duration value
-    const beatsPerMeasure = timeSignatureObj.beats;
+    // For 4/4 time, fractional patterns typically represent 4 beat positions.
+    // For 6/8, fractional patterns represent 6 eighth-note positions (use subdivisions, not beats).
+    const beatsPerMeasure = timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
     const sixteenthsPerBeat = timeSignatureObj.measureLength / beatsPerMeasure;
 
     fractionalPattern.forEach((value, beatIndex) => {
@@ -691,9 +700,14 @@ export async function getPattern(
 
     // Create appropriate fallback pattern for the time signature
     const fallbackPattern = new Array(timeSignatureObj.measureLength).fill(0);
-    // Add quarter note beats
-    for (let i = 0; i < timeSignatureObj.beats; i++) {
-      fallbackPattern[i * 4] = 1; // Quarter note on each beat
+    // Add notes at each subdivision position using the compound-aware multiplier
+    const fallbackSubdivisionCount = timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
+    const fallbackMultiplier = timeSignatureObj.measureLength / fallbackSubdivisionCount;
+    for (let i = 0; i < fallbackSubdivisionCount; i++) {
+      const pos = Math.round(i * fallbackMultiplier);
+      if (pos < fallbackPattern.length) {
+        fallbackPattern[pos] = 1;
+      }
     }
 
     result = {

@@ -107,7 +107,9 @@ export async function generatePatternData({
   const totalBeats = beatsPerMeasure * (measuresPerPattern ?? 1);
   const unitsPerBeat = resolvedSignature.unitsPerBeat || 4;
   const beatDurationSeconds = 60 / Math.max(tempo, 1);
-  const secondsPerSixteenth = beatDurationSeconds / 4;
+  // For compound time (6/8): unitsPerBeat=6, so secondsPerSixteenth = beatDuration/6
+  // For simple time (4/4): unitsPerBeat=4, so secondsPerSixteenth = beatDuration/4 (unchanged)
+  const secondsPerSixteenth = beatDurationSeconds / unitsPerBeat;
 
   const activeRhythmSettings = rhythmSettings || {};
   const allowedNoteDurations = Array.isArray(
