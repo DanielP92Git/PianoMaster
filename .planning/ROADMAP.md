@@ -215,7 +215,10 @@ Plans:
   1. An existing MetronomeTrainer 6/8 exercise shows eighth notes beamed in 3+3 groups (not 2+2+2), matching correct musical notation for compound time
   2. The tap scoring window for a note on beat 2 of 6/8 (the compound beat, not the 4th eighth note) correctly registers a tap slightly early or late without false-negative rejection
   3. Existing 4/4, 3/4, and 2/4 rhythm exercises are unaffected — no timing regressions on any natural-time nodes
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 09-01-PLAN.md — Fix 6/8 beat model (SIX_EIGHT constant, patternBuilder timing, MetronomeTrainer cascade)
+- [ ] 09-02-PLAN.md — Beam grouping helper and VexFlow rendering path threading
 
 ### Phase 10: Advanced Rhythm Node Data
 **Goal**: Players can practice 6/8 compound meter and syncopation patterns through a dedicated rhythm trail section
@@ -258,11 +261,11 @@ Plans:
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07. Key Sig Rendering | v2.4 | Complete    | 2026-03-18 | 2026-03-18 |
 | 08. Key Sig Node Data | v2.4 | Complete    | 2026-03-18 | - |
-| 09. Rhythm Generator Fix | v2.4 | 0/TBD | Not started | - |
+| 09. Rhythm Generator Fix | v2.4 | 0/2 | Not started | - |
 | 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
 | 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
 
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-18 — Phase 08 Key Signature Node Data planned (2 plans)*
+*Last updated: 2026-03-18 — Phase 09 Rhythm Generator Infrastructure planned (2 plans)*
