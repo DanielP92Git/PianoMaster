@@ -386,6 +386,13 @@ export function MetronomeTrainer() {
       const beatsPerMeasure = currentTimeSignature.beats;
       metronomeStartTimeRef.current = startTime;
 
+      // For compound time (6/8), track 6 subdivision positions visually (not just 2 compound beats).
+      // Each compound beat has 3 eighth-note subdivisions, so subdivisionDur = beatDur/3.
+      // For simple time, one tick per beat.
+      const isCompound = !!currentTimeSignature.isCompound;
+      const visualSubdivisions = currentTimeSignature.subdivisions ?? beatsPerMeasure;
+      const subdivisionDur = isCompound ? beatDur / 3 : beatDur;
+
       // Clear any existing metronome
       if (continuousMetronomeRef.current) {
         clearInterval(continuousMetronomeRef.current);
@@ -399,39 +406,74 @@ export function MetronomeTrainer() {
 
       // Schedule continuous metronome beats
       const scheduleMetronomeBeats = (currentTime) => {
-        // Calculate how many beats have passed since start
         const timeSinceStart = currentTime - startTime;
-        const totalBeatsFloat = timeSinceStart / beatDur;
-        const totalBeatsCompleted = Math.floor(totalBeatsFloat);
 
-        // Schedule the next few beats
-        for (let i = 0; i < 3; i++) {
-          const beatNumber = totalBeatsCompleted + i;
-          const beatTime = startTime + beatNumber * beatDur;
+        if (isCompound) {
+          // Compound time: schedule clicks at subdivision intervals (3 per compound beat)
+          const totalSubdivisionsFloat = timeSinceStart / subdivisionDur;
+          const totalSubdivisionsCompleted = Math.floor(totalSubdivisionsFloat);
 
-          if (beatTime > currentTime + 0.05) {
-            // Only schedule if more than 50ms away
-            const isDownbeat = beatNumber % beatsPerMeasure === 0;
-            const beatInMeasure = (beatNumber % beatsPerMeasure) + 1; // 1-based beat number
+          for (let i = 0; i < 9; i++) {
+            const subdivisionNumber = totalSubdivisionsCompleted + i;
+            const subdivisionTime = startTime + subdivisionNumber * subdivisionDur;
 
-            // Beat scheduling (logging removed for cleaner console)
+            if (subdivisionTime > currentTime + 0.05) {
+              const subdivisionInMeasure = subdivisionNumber % visualSubdivisions;
+              const isCompoundDownbeat =
+                subdivisionInMeasure === 0 || subdivisionInMeasure === 3;
 
-            // Different volumes based on game phase
-            let volume = 0.1;
-            let frequency = isDownbeat ? 700 : 550;
+              let volume;
+              let frequency;
+              if (gamePhase === GAME_PHASES.COUNT_IN) {
+                volume = isCompoundDownbeat ? 0.15 : 0.08;
+                frequency = isCompoundDownbeat ? 900 : 600;
+              } else if (
+                gamePhase === GAME_PHASES.PATTERN_PLAYBACK ||
+                gamePhase === GAME_PHASES.GET_READY
+              ) {
+                volume = isCompoundDownbeat ? 0.06 : 0.03;
+                frequency = isCompoundDownbeat ? 600 : 450;
+              } else {
+                volume = isCompoundDownbeat ? 0.1 : 0.05;
+                frequency = isCompoundDownbeat ? 700 : 500;
+              }
 
-            if (gamePhase === GAME_PHASES.COUNT_IN) {
-              volume = 0.15;
-              frequency = isDownbeat ? 900 : 700;
-            } else if (
-              gamePhase === GAME_PHASES.PATTERN_PLAYBACK ||
-              gamePhase === GAME_PHASES.GET_READY
-            ) {
-              volume = 0.06;
-              frequency = isDownbeat ? 600 : 500;
+              createCustomMetronomeSound(subdivisionTime, frequency, volume);
             }
+          }
+        } else {
+          // Simple time: schedule one click per beat (unchanged behavior)
+          const totalBeatsFloat = timeSinceStart / beatDur;
+          const totalBeatsCompleted = Math.floor(totalBeatsFloat);
 
-            createCustomMetronomeSound(beatTime, frequency, volume);
+          // Schedule the next few beats
+          for (let i = 0; i < 3; i++) {
+            const beatNumber = totalBeatsCompleted + i;
+            const beatTime = startTime + beatNumber * beatDur;
+
+            if (beatTime > currentTime + 0.05) {
+              // Only schedule if more than 50ms away
+              const isDownbeat = beatNumber % beatsPerMeasure === 0;
+
+              // Beat scheduling (logging removed for cleaner console)
+
+              // Different volumes based on game phase
+              let volume = 0.1;
+              let frequency = isDownbeat ? 700 : 550;
+
+              if (gamePhase === GAME_PHASES.COUNT_IN) {
+                volume = 0.15;
+                frequency = isDownbeat ? 900 : 700;
+              } else if (
+                gamePhase === GAME_PHASES.PATTERN_PLAYBACK ||
+                gamePhase === GAME_PHASES.GET_READY
+              ) {
+                volume = 0.06;
+                frequency = isDownbeat ? 600 : 500;
+              }
+
+              createCustomMetronomeSound(beatTime, frequency, volume);
+            }
           }
         }
       };
@@ -447,13 +489,23 @@ export function MetronomeTrainer() {
             const updateVisualBeat = () => {
               const currentTime = audioEngine.getCurrentTime();
               const timeSinceStart = currentTime - startTime;
-              const totalBeatsFloat = timeSinceStart / beatDur;
-              const totalBeatsCompleted = Math.floor(totalBeatsFloat);
-              const beatInMeasure = (totalBeatsCompleted % beatsPerMeasure) + 1;
+
+              let beatInDisplay;
+              if (isCompound) {
+                // Track subdivision position (1–6 for 6/8)
+                const totalSubdivisionsFloat = timeSinceStart / subdivisionDur;
+                const totalSubdivisionsCompleted = Math.floor(totalSubdivisionsFloat);
+                beatInDisplay = (totalSubdivisionsCompleted % visualSubdivisions) + 1;
+              } else {
+                // Track beat position (1–N for simple time)
+                const totalBeatsFloat = timeSinceStart / beatDur;
+                const totalBeatsCompleted = Math.floor(totalBeatsFloat);
+                beatInDisplay = (totalBeatsCompleted % beatsPerMeasure) + 1;
+              }
 
               // Visual metronome beat tracking
 
-              setCurrentBeat(beatInMeasure);
+              setCurrentBeat(beatInDisplay);
             };
 
             // Initial beat
@@ -650,7 +702,11 @@ export function MetronomeTrainer() {
       const beatDur = beatDuration.current;
       const currentTimeSignature =
         timeSignatureOverride || gameSettings.timeSignature;
-      const beatsInCountIn = currentTimeSignature.beats;
+      // Compound time (6/8) gets 2 measures of count-in (4 compound beats) so the student
+      // can feel the full dotted-quarter pulse before playing. Simple time stays at 1 measure.
+      const beatsInCountIn = currentTimeSignature.isCompound
+        ? currentTimeSignature.beats * 2   // 2 compound beats × 2 measures = 4 for 6/8
+        : currentTimeSignature.beats;       // 1 measure for simple time (4/4=4, 3/4=3, 2/4=2)
 
       // Calculate precise timing for pattern start (immediately after count-in)
       const patternStartTime = countInStartTime + beatsInCountIn * beatDur;
@@ -796,12 +852,15 @@ export function MetronomeTrainer() {
     const { pattern } = patternInfoRef.current;
     const currentBeatDur = beatDuration.current;
     const beatsPerMeasure = gameSettings.timeSignature.beats;
+    // For compound time (6/8): measureLength=12, beats=2 → unitsPerBeat=6
+    // For simple time (4/4): measureLength=16, beats=4 → unitsPerBeat=4
+    const unitsPerBeat = gameSettings.timeSignature.measureLength / gameSettings.timeSignature.beats;
 
     // Calculate expected tap positions within the measure (in beats, not seconds)
     const expectedBeatPositions = [];
     pattern.forEach((beat, index) => {
       if (beat === 1) {
-        const beatPosition = index / 4; // Convert sixteenth note index to beat position
+        const beatPosition = index / unitsPerBeat; // Convert sixteenth note index to beat position
         expectedBeatPositions.push(beatPosition);
       }
     });
@@ -1066,6 +1125,9 @@ export function MetronomeTrainer() {
       const { pattern } = patternInfoRef.current;
       const currentBeatDur = beatDuration.current;
       const beatsPerMeasure = gameSettings.timeSignature.beats;
+      // For compound time (6/8): measureLength=12, beats=2 → unitsPerBeat=6
+      // For simple time (4/4): measureLength=16, beats=4 → unitsPerBeat=4
+      const unitsPerBeat = gameSettings.timeSignature.measureLength / gameSettings.timeSignature.beats;
 
       // Convert user tap to beat position
       const userBeatPos = (relativeTime / currentBeatDur) % beatsPerMeasure;
@@ -1074,7 +1136,7 @@ export function MetronomeTrainer() {
       const expectedBeatPositions = [];
       pattern.forEach((beat, index) => {
         if (beat === 1) {
-          const beatPosition = index / 4;
+          const beatPosition = index / unitsPerBeat;
           expectedBeatPositions.push(beatPosition);
         }
       });

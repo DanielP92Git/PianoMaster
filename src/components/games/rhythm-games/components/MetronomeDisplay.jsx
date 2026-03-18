@@ -4,6 +4,9 @@ import { Volume2 } from "lucide-react";
 /**
  * Metronome visual display component
  * Shows the current beat and time signature visually - Compact horizontal layout
+ *
+ * For compound time (6/8): renders `subdivisions` circles (6) with beats 1 and 4 accented.
+ * For simple time (4/4, 3/4, 2/4): renders `beats` circles with beat 1 accented.
  */
 export function MetronomeDisplay({
   currentBeat = 1,
@@ -13,24 +16,44 @@ export function MetronomeDisplay({
 }) {
   if (!isActive) return null;
 
+  // For compound time (6/8), use subdivisions count for display (6 circles, not 2).
+  // For simple time, display one circle per beat.
+  const displayCount = timeSignature.subdivisions ?? timeSignature.beats;
+
+  // Build a Set of 1-indexed accented positions from strongBeats (0-indexed).
+  // For 6/8: strongBeats=[0,3] → accented positions {1, 4}
+  // For 4/4: strongBeats=[0] → accented position {1}
+  const accentedPositions = new Set(
+    (timeSignature.strongBeats ?? [0]).map((pos) => pos + 1)
+  );
+
   return (
     <div className="flex justify-center gap-2" dir="ltr">
-      {Array.from({ length: timeSignature.beats }, (_, i) => i + 1).map(
-        (beat) => (
+      {Array.from({ length: displayCount }, (_, i) => i + 1).map((beat) => {
+        const isAccented = accentedPositions.has(beat);
+        const isCurrentBeat = beat === currentBeat;
+
+        return (
           <div
             key={beat}
-            className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-base font-bold transition-all duration-150 sm:h-14 sm:w-14 sm:text-lg ${
-              beat === currentBeat
+            className={`flex items-center justify-center rounded-full border-2 font-bold transition-all duration-150 ${
+              isAccented
+                ? "h-12 w-12 text-base sm:h-14 sm:w-14 sm:text-lg"
+                : "h-9 w-9 text-xs sm:h-10 sm:w-10 sm:text-sm"
+            } ${
+              isCurrentBeat
                 ? isCountIn
                   ? "scale-125 animate-pulse border-yellow-500 bg-yellow-500 text-black shadow-xl"
                   : "scale-110 border-blue-500 bg-blue-500 text-white shadow-lg"
-                : "border-white/30 bg-white/10 text-white/80"
+                : isAccented
+                  ? "border-white/50 bg-white/15 text-white"
+                  : "border-white/20 bg-white/5 text-white/60"
             }`}
           >
             {beat}
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 }
