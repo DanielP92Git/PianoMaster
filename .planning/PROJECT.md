@@ -154,7 +154,13 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-No active requirements. Next milestone not yet defined — run `/gsd:new-milestone`.
+## Current Milestone: v2.4 Content Expansion
+
+**Goal:** Extend the trail with Key Signatures and Advanced Rhythm sections to push content from 2-3 months to 4-5 months of daily practice.
+
+**Target features:**
+- Trail Section 5: Key Signatures (~15 nodes) — major/minor key context for existing note reading
+- Trail Section 8: Advanced Rhythm (~15 nodes) — syncopation, compound meters, extending current rhythm path
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -383,4 +389,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-17 after v2.2 milestone*
+*Last updated: 2026-03-18 after v2.4 milestone start*

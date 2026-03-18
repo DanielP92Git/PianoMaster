@@ -1,34 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.3
-milestone_name: Launch Readiness
-status: archived
-stopped_at: Milestone v2.3 archived
-last_updated: "2026-03-17T20:00:00.000Z"
-last_activity: 2026-03-17 — v2.3 milestone archived
+milestone: v2.4
+milestone_name: Content Expansion
+status: defining-requirements
+stopped_at: Milestone v2.4 started
+last_updated: "2026-03-18T00:00:00.000Z"
+last_activity: 2026-03-18 — Milestone v2.4 started
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 6
-  completed_plans: 6
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-17)
+See: .planning/PROJECT.md (updated 2026-03-18)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Planning next milestone — run `/gsd:new-milestone`
+**Current focus:** v2.4 Content Expansion — Key Signatures + Advanced Rhythm
 
 ## Current Position
 
-Milestone v2.3 Launch Readiness — ARCHIVED
-All 6 phases complete and shipped.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-18 — Milestone v2.4 started
 
-Progress: [██████████] 100%
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -53,13 +55,13 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 
 ## Session Continuity
 
-Last session: 2026-03-17
-Stopped at: Milestone v2.3 archived
+Last session: 2026-03-18
+Stopped at: Milestone v2.4 started — defining requirements
 Resume file: None
 
 **Next action:**
-- Run `/gsd:new-milestone` to start next milestone cycle (questioning → research → requirements → roadmap)
+- Complete requirements definition and roadmap creation for v2.4
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-17 — v2.3 Launch Readiness archived*
+*Last updated: 2026-03-18 — Milestone v2.4 Content Expansion started*
