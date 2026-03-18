@@ -253,7 +253,7 @@ Plans:
 | 01. Forgot Password | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
-| 07. Key Sig Rendering | v2.4 | 2/2 | Complete | 2026-03-18 |
+| 07. Key Sig Rendering | v2.4 | Complete    | 2026-03-18 | 2026-03-18 |
 | 08. Key Sig Node Data | v2.4 | 0/TBD | Not started | - |
 | 09. Rhythm Generator Fix | v2.4 | 0/TBD | Not started | - |
 | 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
