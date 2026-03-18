@@ -16,6 +16,7 @@
 - ✅ **v2.1 Forgot Password Recovery** — Phase 01 (shipped 2026-03-10)
 - ✅ **v2.2 Sharps & Flats** — Phases 01-05 (shipped 2026-03-17)
 - ✅ **v2.3 Launch Readiness** — Phases 01-06 (shipped 2026-03-17)
+- 🚧 **v2.4 Content Expansion** — Phases 07-11 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -164,6 +165,73 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### 🚧 v2.4 Content Expansion (In Progress)
+
+**Milestone Goal:** Extend the trail with Key Signatures (~14 treble + bass nodes each) and Advanced Rhythm (6/8 compound meter + syncopation) to push content from 2-3 months to 4-5 months of daily practice.
+
+- [ ] **Phase 07: Key Signature Rendering Infrastructure** - VexFlow key signature glyph support and accidental suppression
+- [ ] **Phase 08: Key Signature Node Data** - Treble and bass key signature trail nodes (G, D, A, F, Bb, Eb major)
+- [ ] **Phase 09: Rhythm Generator Infrastructure** - Fix 6/8 compound beat model and correct beam grouping
+- [ ] **Phase 10: Advanced Rhythm Node Data** - 6/8 compound meter and syncopation trail nodes
+- [ ] **Phase 11: Integration, Gate, and i18n** - Wire all new nodes, subscription gate, full EN/HE translations
+
+## Phase Details
+
+### Phase 07: Key Signature Rendering Infrastructure
+**Goal**: VexFlow renders key signature glyphs and suppresses redundant accidentals so key-signature-mode sight reading is visually correct
+**Depends on**: Phase 06 (v2.3 shipped)
+**Requirements**: RENDER-01, RENDER-02, RENDER-03
+**Success Criteria** (what must be TRUE):
+  1. A G major key signature glyph (one sharp on F line) appears at the start of the staff in free-play sight reading when key is set to G major
+  2. Notes covered by the active key signature render without redundant accidental symbols on the note head
+  3. A natural sign appears on an F♮ note played in a G major key context
+  4. The `keySignature` config value passes from trail node config through to VexFlow without being dropped
+  5. Existing sight reading exercises (no key signature) render identically to before — no visual regression
+**Plans**: TBD
+
+### Phase 08: Key Signature Node Data
+**Goal**: Players can practice reading music in all 6 key signatures (G, D, A major; F, Bb, Eb major) on both treble and bass clef trails
+**Depends on**: Phase 07
+**Requirements**: TREB-01, TREB-02, TREB-03, TREB-04, TREB-05, TREB-06, TREB-07, BASS-01, BASS-02, BASS-03, BASS-04, BASS-05, BASS-06, BASS-07
+**Success Criteria** (what must be TRUE):
+  1. A student completing Unit 6 treble can navigate and play through G major and D major key signature nodes, with a Discovery node first that explains "the sharp/flat symbol at the start means every matching note is sharp/flat throughout"
+  2. A student completing Unit 7 treble can practice A major, F major, Bb major, Eb major, and unlock a boss challenge that mixes all 6 keys
+  3. Bass clef Units 6-7 mirror the treble key progression using bass-range note pools (C3-C4 octave)
+  4. `npm run verify:patterns` passes with zero errors after all new node files are added
+  5. All new nodes are premium-only — none appear in FREE_NODE_IDS and locked nodes show the gold paywall overlay
+**Plans**: TBD
+
+### Phase 09: Rhythm Generator Infrastructure
+**Goal**: The rhythm generator and VexFlow renderer correctly model 6/8 as 2 compound beats so timing windows and beam groupings are musically accurate
+**Depends on**: Phase 06 (v2.3 shipped) — independent of key signature track
+**Requirements**: RFIX-01, RFIX-02
+**Success Criteria** (what must be TRUE):
+  1. An existing MetronomeTrainer 6/8 exercise shows eighth notes beamed in 3+3 groups (not 2+2+2), matching correct musical notation for compound time
+  2. The tap scoring window for a note on beat 2 of 6/8 (the compound beat, not the 4th eighth note) correctly registers a tap slightly early or late without false-negative rejection
+  3. Existing 4/4, 3/4, and 2/4 rhythm exercises are unaffected — no timing regressions on any natural-time nodes
+**Plans**: TBD
+
+### Phase 10: Advanced Rhythm Node Data
+**Goal**: Players can practice 6/8 compound meter and syncopation patterns through a dedicated rhythm trail section
+**Depends on**: Phase 09
+**Requirements**: RADV-01, RADV-02, RADV-03, RADV-04
+**Success Criteria** (what must be TRUE):
+  1. A student entering Rhythm Unit 7 encounters a Discovery node that teaches the "feel two big beats, each worth three eighth notes" concept before any performance exercises
+  2. A student can complete graduated 6/8 practice nodes progressing from basic dotted-quarter patterns to intermediate mixed rhythms
+  3. A student can practice syncopation patterns (eighth-quarter-eighth, dotted quarter-eighth) in 4/4 context within Rhythm Unit 8
+  4. A boss challenge node at the end of the advanced rhythm section accepts correct taps for both 6/8 compound and 4/4 syncopation patterns
+**Plans**: TBD
+
+### Phase 11: Integration, Gate, and i18n
+**Goal**: All new key signature and advanced rhythm nodes are wired into the trail, subscription-gated, and fully translated in English and Hebrew
+**Depends on**: Phase 08, Phase 10
+**Requirements**: INTG-01, INTG-02, INTG-03
+**Success Criteria** (what must be TRUE):
+  1. `expandedNodes.js` imports all new unit files and `npm run build` passes with zero errors — new nodes appear in the trail UI and are navigable
+  2. No new node IDs appear in `FREE_NODE_IDS` — attempting to play a new node without a subscription triggers the gold paywall overlay
+  3. All new node names, descriptions, and any new UI text appear correctly in both English and Hebrew, with Hebrew displaying in RTL layout
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -182,8 +250,13 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01. Forgot Password | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
+| 07. Key Sig Rendering | v2.4 | 0/TBD | Not started | - |
+| 08. Key Sig Node Data | v2.4 | 0/TBD | Not started | - |
+| 09. Rhythm Generator Fix | v2.4 | 0/TBD | Not started | - |
+| 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
+| 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
 
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-17 — v2.3 Launch Readiness shipped*
+*Last updated: 2026-03-18 — v2.4 Content Expansion roadmap created*

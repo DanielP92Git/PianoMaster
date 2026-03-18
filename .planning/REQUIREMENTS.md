@@ -95,38 +95,38 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RENDER-01 | — | Pending |
-| RENDER-02 | — | Pending |
-| RENDER-03 | — | Pending |
-| TREB-01 | — | Pending |
-| TREB-02 | — | Pending |
-| TREB-03 | — | Pending |
-| TREB-04 | — | Pending |
-| TREB-05 | — | Pending |
-| TREB-06 | — | Pending |
-| TREB-07 | — | Pending |
-| BASS-01 | — | Pending |
-| BASS-02 | — | Pending |
-| BASS-03 | — | Pending |
-| BASS-04 | — | Pending |
-| BASS-05 | — | Pending |
-| BASS-06 | — | Pending |
-| BASS-07 | — | Pending |
-| RFIX-01 | — | Pending |
-| RFIX-02 | — | Pending |
-| RADV-01 | — | Pending |
-| RADV-02 | — | Pending |
-| RADV-03 | — | Pending |
-| RADV-04 | — | Pending |
-| INTG-01 | — | Pending |
-| INTG-02 | — | Pending |
-| INTG-03 | — | Pending |
+| RENDER-01 | Phase 07 | Pending |
+| RENDER-02 | Phase 07 | Pending |
+| RENDER-03 | Phase 07 | Pending |
+| TREB-01 | Phase 08 | Pending |
+| TREB-02 | Phase 08 | Pending |
+| TREB-03 | Phase 08 | Pending |
+| TREB-04 | Phase 08 | Pending |
+| TREB-05 | Phase 08 | Pending |
+| TREB-06 | Phase 08 | Pending |
+| TREB-07 | Phase 08 | Pending |
+| BASS-01 | Phase 08 | Pending |
+| BASS-02 | Phase 08 | Pending |
+| BASS-03 | Phase 08 | Pending |
+| BASS-04 | Phase 08 | Pending |
+| BASS-05 | Phase 08 | Pending |
+| BASS-06 | Phase 08 | Pending |
+| BASS-07 | Phase 08 | Pending |
+| RFIX-01 | Phase 09 | Pending |
+| RFIX-02 | Phase 09 | Pending |
+| RADV-01 | Phase 10 | Pending |
+| RADV-02 | Phase 10 | Pending |
+| RADV-03 | Phase 10 | Pending |
+| RADV-04 | Phase 10 | Pending |
+| INTG-01 | Phase 11 | Pending |
+| INTG-02 | Phase 11 | Pending |
+| INTG-03 | Phase 11 | Pending |
 
 **Coverage:**
 - v2.4 requirements: 26 total
-- Mapped to phases: 0
-- Unmapped: 26 (pending roadmap)
+- Mapped to phases: 26
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-18*
-*Last updated: 2026-03-18 after initial definition*
+*Last updated: 2026-03-18 — traceability filled after roadmap creation*
