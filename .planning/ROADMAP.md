@@ -169,7 +169,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 **Milestone Goal:** Extend the trail with Key Signatures (~14 treble + bass nodes each) and Advanced Rhythm (6/8 compound meter + syncopation) to push content from 2-3 months to 4-5 months of daily practice.
 
-- [ ] **Phase 07: Key Signature Rendering Infrastructure** - VexFlow key signature glyph support and accidental suppression
+- [x] **Phase 07: Key Signature Rendering Infrastructure** - VexFlow key signature glyph support and accidental suppression — completed 2026-03-18
 - [ ] **Phase 08: Key Signature Node Data** - Treble and bass key signature trail nodes (G, D, A, F, Bb, Eb major)
 - [ ] **Phase 09: Rhythm Generator Infrastructure** - Fix 6/8 compound beat model and correct beam grouping
 - [ ] **Phase 10: Advanced Rhythm Node Data** - 6/8 compound meter and syncopation trail nodes
@@ -189,8 +189,8 @@ See `.planning/milestones/` for archived details of each milestone.
   5. Existing sight reading exercises (no key signature) render identically to before — no visual regression
 **Plans**: 2 plans
 Plans:
-- [ ] 07-01-PLAN.md — Key signature constants, note-filtering utility, KeySignatureSelection UI, i18n
-- [ ] 07-02-PLAN.md — VexFlow glyph rendering, accidental suppression, config pipeline threading
+- [x] 07-01-PLAN.md — Key signature constants, note-filtering utility, KeySignatureSelection UI, i18n — completed 2026-03-18
+- [x] 07-02-PLAN.md — VexFlow glyph rendering, accidental suppression, config pipeline threading — completed 2026-03-18
 
 ### Phase 08: Key Signature Node Data
 **Goal**: Players can practice reading music in all 6 key signatures (G, D, A major; F, Bb, Eb major) on both treble and bass clef trails
@@ -253,7 +253,7 @@ Plans:
 | 01. Forgot Password | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
-| 07. Key Sig Rendering | v2.4 | 0/2 | Planned | - |
+| 07. Key Sig Rendering | v2.4 | 2/2 | Complete | 2026-03-18 |
 | 08. Key Sig Node Data | v2.4 | 0/TBD | Not started | - |
 | 09. Rhythm Generator Fix | v2.4 | 0/TBD | Not started | - |
 | 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
@@ -262,4 +262,4 @@ Plans:
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-18 — v2.4 Content Expansion roadmap created*
+*Last updated: 2026-03-18 — Phase 07 Key Signature Rendering Infrastructure complete (2/2 plans)*

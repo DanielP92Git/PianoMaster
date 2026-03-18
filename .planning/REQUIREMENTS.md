@@ -9,8 +9,8 @@ Requirements for Key Signatures (6 keys, treble + bass) and Advanced Rhythm (6/8
 
 ### Rendering Infrastructure
 
-- [ ] **RENDER-01**: VexFlow renders key signature glyphs on staff via `stave.addKeySignature()`
-- [ ] **RENDER-02**: Accidentals suppressed for notes covered by active key signature via `Accidental.applyAccidentals()`
+- [x] **RENDER-01**: VexFlow renders key signature glyphs on staff via `stave.addKeySignature()`
+- [x] **RENDER-02**: Accidentals suppressed for notes covered by active key signature via `Accidental.applyAccidentals()`
 - [x] **RENDER-03**: Key signature config passes through trail node → game component pipeline
 
 ### Treble Key Signatures
@@ -95,8 +95,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RENDER-01 | Phase 07 | Pending |
-| RENDER-02 | Phase 07 | Pending |
+| RENDER-01 | Phase 07 | Complete |
+| RENDER-02 | Phase 07 | Complete |
 | RENDER-03 | Phase 07 | Complete |
 | TREB-01 | Phase 08 | Pending |
 | TREB-02 | Phase 08 | Pending |
