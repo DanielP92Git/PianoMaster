@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { filterNotesToKey } from "./keySignatureUtils";
+import { filterNotesToKey, mapNoteToKey } from "./keySignatureUtils";
 import {
   KEY_NOTE_LETTERS,
   KEY_SIGNATURE_OPTIONS,
@@ -164,5 +164,49 @@ describe("filterNotesToKey", () => {
   it("removes G#4 in G major (G# is not the in-key form)", () => {
     const result = filterNotesToKey(["G4", "G#4"], "G");
     expect(result).toEqual(["G4"]);
+  });
+});
+
+describe("mapNoteToKey", () => {
+  it("maps F4 to F#4 in G major", () => {
+    expect(mapNoteToKey("F4", "G")).toBe("F#4");
+  });
+
+  it("maps F4 to F#4 and C4 to C#4 in D major", () => {
+    expect(mapNoteToKey("F4", "D")).toBe("F#4");
+    expect(mapNoteToKey("C4", "D")).toBe("C#4");
+  });
+
+  it("maps B4 to Bb4 in F major", () => {
+    expect(mapNoteToKey("B4", "F")).toBe("Bb4");
+  });
+
+  it("maps B3 to Bb3 and E3 to Eb3 in Bb major", () => {
+    expect(mapNoteToKey("B3", "Bb")).toBe("Bb3");
+    expect(mapNoteToKey("E3", "Bb")).toBe("Eb3");
+  });
+
+  it("maps B5 to Bb5, E5 to Eb5, A5 to Ab5 in Eb major", () => {
+    expect(mapNoteToKey("B5", "Eb")).toBe("Bb5");
+    expect(mapNoteToKey("E5", "Eb")).toBe("Eb5");
+    expect(mapNoteToKey("A5", "Eb")).toBe("Ab5");
+  });
+
+  it("leaves naturals unchanged in C major", () => {
+    expect(mapNoteToKey("F4", "C")).toBe("F4");
+  });
+
+  it("leaves naturals unchanged when key is null", () => {
+    expect(mapNoteToKey("F4", null)).toBe("F4");
+  });
+
+  it("does not transform accidental notes (already explicit)", () => {
+    expect(mapNoteToKey("F#4", "G")).toBe("F#4");
+    expect(mapNoteToKey("Bb3", "F")).toBe("Bb3");
+  });
+
+  it("leaves notes with no key alteration unchanged", () => {
+    expect(mapNoteToKey("G4", "G")).toBe("G4");
+    expect(mapNoteToKey("C4", "G")).toBe("C4");
   });
 });

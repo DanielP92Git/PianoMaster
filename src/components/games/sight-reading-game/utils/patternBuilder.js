@@ -11,7 +11,7 @@ import {
   resolveTimeSignature,
 } from "../constants/durationConstants.js";
 import { generateRhythmEvents } from "./rhythmGenerator.js";
-import { filterNotesToKey } from "./keySignatureUtils.js";
+import { filterNotesToKey, mapNoteToKey } from "./keySignatureUtils.js";
 
 const isDebugEnabled =
   (typeof import.meta !== "undefined" &&
@@ -282,15 +282,20 @@ export async function generatePatternData({
     debugLog("⚠ Using fallback notes:", fallbackNotes);
   }
 
-  // When a key signature is active, filter available notes to in-key pitches only.
-  // This ensures generated patterns contain only notes that belong to the selected key.
-  // (Locked decision: keySignature takes precedence over enableSharps/enableFlats.)
+  // When a key signature is active, filter to in-key staff positions then map
+  // natural notes to their in-key accidental forms (e.g. F4 → F#4 in G major).
+  // This ensures VexFlow renders notes without redundant accidentals and the
+  // expected pitch for answer evaluation matches the key signature.
   if (keySignature && keySignature !== 'C') {
     const filteredByKey = filterNotesToKey(availableNotes, keySignature);
     if (filteredByKey.length > 0) {
+      // Map naturals to in-key forms (e.g. F4 → F#4 in G major)
+      const mapped = filteredByKey.map((p) => mapNoteToKey(p, keySignature));
+      // Deduplicate (F4 and F#4 both map to F#4 in G major)
+      const unique = [...new Set(mapped)];
       availableNotes.length = 0;
-      availableNotes.push(...filteredByKey);
-      debugLog("Key signature filter:", keySignature, "→", availableNotes.length, "notes");
+      availableNotes.push(...unique);
+      debugLog("Key signature filter+map:", keySignature, "→", availableNotes.length, "notes");
     } else {
       debugLog("⚠ Key signature filter yielded 0 notes — keeping original set");
     }

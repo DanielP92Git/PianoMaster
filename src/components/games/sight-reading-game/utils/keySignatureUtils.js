@@ -1,5 +1,48 @@
 import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig";
 
+// Build a lookup: for each key signature, map base letter → in-key form.
+// e.g. G major: { F: 'F#', C: 'C', D: 'D', ... }
+const KEY_LETTER_MAP = Object.freeze(
+  Object.fromEntries(
+    Object.entries(KEY_NOTE_LETTERS).map(([key, letters]) => [
+      key,
+      Object.freeze(
+        Object.fromEntries(letters.map((l) => [l[0], l]))
+      ),
+    ])
+  )
+);
+
+/**
+ * Maps a pitch string to its in-key equivalent for a given key signature.
+ * Natural notes are transformed to the key's accidental form.
+ * e.g. mapNoteToKey('F4', 'G') → 'F#4' (F is F# in G major)
+ *      mapNoteToKey('C4', 'G') → 'C4'  (C is natural in G major)
+ *      mapNoteToKey('F#4', 'G') → 'F#4' (already correct)
+ *
+ * @param {string} pitch - Pitch string (e.g. 'F4', 'Bb3')
+ * @param {string|null} keySignature - VexFlow key string or null/'C'
+ * @returns {string} The in-key pitch string
+ */
+export function mapNoteToKey(pitch, keySignature) {
+  if (!keySignature || keySignature === "C") return pitch;
+
+  const match = String(pitch).match(/^([A-G])([#b]?)(\d+)$/);
+  if (!match) return pitch;
+
+  const [, baseLetter, accidental, octave] = match;
+  const letterMap = KEY_LETTER_MAP[keySignature];
+  if (!letterMap) return pitch;
+
+  // Only transform natural notes — accidental notes are already explicit
+  if (accidental) return pitch;
+
+  const inKeyForm = letterMap[baseLetter];
+  if (!inKeyForm) return pitch;
+
+  return inKeyForm + octave;
+}
+
 /**
  * Filters a pitch array to only include notes whose staff position exists
  * in the given key signature.
