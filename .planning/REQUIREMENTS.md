@@ -36,7 +36,7 @@ Requirements for Key Signatures (6 keys, treble + bass) and Advanced Rhythm (6/8
 ### Rhythm Infrastructure
 
 - [ ] **RFIX-01**: Fix 6/8 beat model (beats:6 → beats:2 compound grouping)
-- [ ] **RFIX-02**: Compound beaming uses correct 3+3 eighth-note grouping for 6/8
+- [x] **RFIX-02**: Compound beaming uses correct 3+3 eighth-note grouping for 6/8
 
 ### Advanced Rhythm
 
@@ -113,7 +113,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BASS-06 | Phase 08 | Complete |
 | BASS-07 | Phase 08 | Complete |
 | RFIX-01 | Phase 09 | Pending |
-| RFIX-02 | Phase 09 | Pending |
+| RFIX-02 | Phase 09 | Complete |
 | RADV-01 | Phase 10 | Pending |
 | RADV-02 | Phase 10 | Pending |
 | RADV-03 | Phase 10 | Pending |
