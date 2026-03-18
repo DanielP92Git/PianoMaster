@@ -9,6 +9,7 @@ import {
   Dot,
   Stem,
 } from "vexflow";
+import { beamGroupsForTimeSignature } from "../utils/beamGroupUtils";
 
 /**
  * RhythmPatternPreview Component
@@ -29,6 +30,7 @@ export function RhythmPatternPreview({
   className = "",
   ariaLabel = "Rhythm pattern",
   noteColor = "#ffffff",
+  timeSignature = "4/4",
 }) {
   const uniqueId = useId();
   const containerId = `rhythm-preview-${uniqueId.replace(/:/g, "-")}`;
@@ -123,8 +125,11 @@ export function RhythmPatternPreview({
       // According to VexFlow Beam API (https://www.vexflow.com/build/docs/beam.html):
       // - Using stem_direction in config forces the direction for all beamed notes
       // - When notes are beamed, flags are automatically removed (replaced by beams)
+      // For compound time signatures (6/8, 9/8, 12/8), add explicit groups for 3+3 beaming.
+      const beamGroups = beamGroupsForTimeSignature(timeSignature);
       const beams = Beam.generateBeams(staveNotes, {
         stem_direction: Stem.UP,
+        ...(beamGroups ? { groups: beamGroups } : {}),
       });
 
       // Force stem direction UP on each beam object directly.
@@ -254,7 +259,7 @@ export function RhythmPatternPreview({
         container.innerHTML = "";
       }
     };
-  }, [events, width, height, containerId, noteColor]);
+  }, [events, width, height, containerId, noteColor, timeSignature]);
 
   return (
     <div

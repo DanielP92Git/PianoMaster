@@ -29,6 +29,7 @@ import {
   getDurationDefinition,
   resolveTimeSignature,
 } from "../constants/durationConstants";
+import { beamGroupsForTimeSignature } from "../utils/beamGroupUtils";
 
 // Local helper: convert enriched notation objects into an EasyScore string.
 // (We build tickables manually in many paths, but this is still used for padding + legacy parsing.)
@@ -333,6 +334,12 @@ export function VexFlowStaffDisplay({
       // Calculate expected beats based on time signature
       const [beatsPerMeasure] = pattern.timeSignature.split("/").map(Number);
       const totalBars = Math.max(1, Number(pattern.measuresPerPattern || 1));
+
+      // Compute beam groups for the current time signature once per render.
+      // Compound time signatures (6/8, 9/8, 12/8) need explicit 3+3 grouping;
+      // simple time signatures (4/4, 3/4, 2/4) use VexFlow defaults (beamConfig = {}).
+      const beamGroups = beamGroupsForTimeSignature(pattern.timeSignature);
+      const beamConfig = beamGroups ? { groups: beamGroups } : {};
 
       // Render the FULL pattern for performance/display/count-in so bar 2+ exists.
       // The viewport reveal is handled by translateX in the wrapper (continuous scroll).
@@ -710,8 +717,8 @@ export function VexFlowStaffDisplay({
               return event?.type === "note" && eventClef === "bass" && !noBeamIndicesForBar.has(idx);
             });
 
-            const trebleBeams = Beam.generateBeams(trebleNotesOnly);
-            const bassBeams = Beam.generateBeams(bassNotesOnly);
+            const trebleBeams = Beam.generateBeams(trebleNotesOnly, beamConfig);
+            const bassBeams = Beam.generateBeams(bassNotesOnly, beamConfig);
 
             // Set stem direction for non-beamed notes
             const beamedTrebleNotes = new Set(trebleBeams.flatMap((b) => b.getNotes()));
@@ -957,8 +964,8 @@ export function VexFlowStaffDisplay({
             return event?.type === "note" && eventClef === "bass" && !noBeamIndices.has(idx);
           });
 
-          const trebleBeams = Beam.generateBeams(trebleNotesOnly);
-          const bassBeams = Beam.generateBeams(bassNotesOnly);
+          const trebleBeams = Beam.generateBeams(trebleNotesOnly, beamConfig);
+          const bassBeams = Beam.generateBeams(bassNotesOnly, beamConfig);
 
           const beamedTrebleNotes = new Set(trebleBeams.flatMap((b) => b.getNotes()));
           const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
@@ -1189,7 +1196,7 @@ export function VexFlowStaffDisplay({
             const autoBeamNotes = barStaveNotes.filter(
               (note, idx) => !noBeamIndicesForBar.has(idx) && barEvents[idx]?.type === "note"
             );
-            const barBeams = Beam.generateBeams(autoBeamNotes);
+            const barBeams = Beam.generateBeams(autoBeamNotes, beamConfig);
 
             // Set stem direction for non-beamed notes
             const beamedNotes = new Set(barBeams.flatMap((b) => b.getNotes()));
@@ -1315,7 +1322,7 @@ export function VexFlowStaffDisplay({
           const autoBeamNotes = staveNotes.filter(
             (note, idx) => !noBeamIndices.has(idx) && events[idx]?.type === "note"
           );
-          const beams = Beam.generateBeams(autoBeamNotes);
+          const beams = Beam.generateBeams(autoBeamNotes, beamConfig);
 
           // Set stem direction for non-beamed notes
           const beamedNotes = new Set(beams.flatMap((b) => b.getNotes()));
