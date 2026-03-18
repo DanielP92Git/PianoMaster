@@ -905,7 +905,7 @@
       "playChallenge": "שחק אתגר",
       "completed": "!האתגר הושלם",
       "earnedXp": "XP {{xp}}+ הרווחת",
-      "nextChallenge": "האתגר הבא בעוד {{time}}",
+      "comeBackTomorrow": "אתגר חדש מחר!",
       "bonusXp": "בונוס אתגר: +{{xp}} XP",
       "xpReward": "+{{xp}} XP"
     }
@@ -1015,8 +1015,25 @@
         "notes": "בחרו תווים",
         "gameMode": "מצב משחק",
         "gridSize": "בחרו גודל לוח",
-        "barsPerExercise": "תיבות לתרגיל"
+        "barsPerExercise": "תיבות לתרגיל",
+        "keySignature": "בחר סולם"
       }
+    },
+    "keySignature": {
+      "cMajor": "דו מז'ור",
+      "gMajor": "סול מז'ור",
+      "dMajor": "רה מז'ור",
+      "aMajor": "לה מז'ור",
+      "fMajor": "פה מז'ור",
+      "bbMajor": "סי\u266d מז'ור",
+      "ebMajor": "מי\u266d מז'ור",
+      "noAccidentals": "ללא סימנים",
+      "oneSharp": "דיאז 1",
+      "twoSharps": "2 דיאזים",
+      "threeSharps": "3 דיאזים",
+      "oneFlat": "במול 1",
+      "twoFlats": "2 במולים",
+      "threeFlats": "3 במולים"
     },
     "buttons": {
       "back": "חזרה",
@@ -1363,7 +1380,7 @@
     "letsGo": "!בואו נתחיל"
   },
   "privacy": {
-    "backHome": "חזרה לדף הבית",
+    "backHome": "חזרה להגדרות",
     "title": "מדיניות פרטיות",
     "subtitle": "אפליקציית לימוד פסנתר לילדים",
     "dataCollect": {
@@ -1428,7 +1445,7 @@
     "termsLink": "תנאי שימוש ומידע משפטי"
   },
   "legal": {
-    "backToHome": "חזרה לדף הבית",
+    "backToHome": "חזרה להגדרות",
     "tosTitle": "תנאי שימוש",
     "tosLastUpdated": "עדכון אחרון: מרץ 2026",
     "tosPrivacyNote": "אנא עיינו גם ב",

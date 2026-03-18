@@ -15,6 +15,7 @@ import trebleClefImage from "../../../assets/noteImages/treble/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass/bass-clef.svg";
 import VictoryScreen from "../VictoryScreen";
 import { RhythmPatternPreview } from "../sight-reading-game/components/RhythmPatternPreview";
+import { KeySignatureSelection } from "../sight-reading-game/components/KeySignatureSelection";
 import {
   SIMPLE_NOTE_PATTERNS,
   SIMPLE_REST_PATTERNS,
@@ -334,6 +335,14 @@ export function UnifiedGameSettings({
             settings={settings}
             updateSetting={updateSetting}
             config={config}
+          />
+        );
+
+      case "KeySignatureSelection":
+        return (
+          <KeySignatureSelection
+            settings={settings}
+            updateSetting={updateSetting}
           />
         );
 

@@ -903,7 +903,7 @@
       "playChallenge": "Play Challenge",
       "completed": "Challenge Complete!",
       "earnedXp": "+{{xp}} XP earned",
-      "nextChallenge": "Next challenge in {{time}}",
+      "comeBackTomorrow": "New challenge tomorrow!",
       "bonusXp": "Challenge Bonus: +{{xp}} XP",
       "xpReward": "+{{xp}} XP"
     }
@@ -1013,8 +1013,25 @@
         "notes": "Select Notes",
         "gameMode": "Game Mode",
         "gridSize": "Choose Grid Size",
-        "barsPerExercise": "Bars per Exercise"
+        "barsPerExercise": "Bars per Exercise",
+        "keySignature": "Choose Key"
       }
+    },
+    "keySignature": {
+      "cMajor": "C major",
+      "gMajor": "G major",
+      "dMajor": "D major",
+      "aMajor": "A major",
+      "fMajor": "F major",
+      "bbMajor": "B\u266d major",
+      "ebMajor": "E\u266d major",
+      "noAccidentals": "no accidentals",
+      "oneSharp": "1 sharp",
+      "twoSharps": "2 sharps",
+      "threeSharps": "3 sharps",
+      "oneFlat": "1 flat",
+      "twoFlats": "2 flats",
+      "threeFlats": "3 flats"
     },
     "buttons": {
       "back": "Back",
@@ -1356,7 +1373,7 @@
     "letsGo": "Let's Go!"
   },
   "privacy": {
-    "backHome": "Back to Home",
+    "backHome": "Back to Settings",
     "title": "Privacy Policy",
     "subtitle": "Piano Learning App for Children",
     "dataCollect": {
@@ -1421,7 +1438,7 @@
     "termsLink": "Terms of Service & Legal"
   },
   "legal": {
-    "backToHome": "Back to Home",
+    "backToHome": "Back to Settings",
     "tosTitle": "Terms of Service",
     "tosLastUpdated": "Last Updated: March 2026",
     "tosPrivacyNote": "Please also review our",

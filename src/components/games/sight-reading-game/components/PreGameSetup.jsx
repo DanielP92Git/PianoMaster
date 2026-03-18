@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Mic, MicOff } from "lucide-react";
 import { UnifiedGameSettings } from "../../shared/UnifiedGameSettings";
 import { TREBLE_NOTES, BASS_NOTES } from "../constants/gameSettings";
 import { TIME_SIGNATURES } from "../../rhythm-games/RhythmPatternGenerator";
 import { normalizeSelectedNotes } from "../../shared/noteSelectionUtils";
 import { getAllComplexPatternIds } from "../utils/rhythmPatterns";
+import { filterNotesToKey } from "../utils/keySignatureUtils";
 
 //
 export function PreGameSetup({
@@ -59,6 +60,24 @@ export function PreGameSetup({
     ]
   );
 
+  // Auto-filter selectedNotes to in-key pitches when the user changes keySignature.
+  // Only filters when switching to a non-C key; preserves notes on C/null (no-op).
+  const prevKeyRef = useRef(settings.keySignature);
+  useEffect(() => {
+    if (settings.keySignature !== prevKeyRef.current) {
+      prevKeyRef.current = settings.keySignature;
+      if (settings.keySignature && settings.keySignature !== "C") {
+        const filtered = filterNotesToKey(
+          settings.selectedNotes,
+          settings.keySignature
+        );
+        if (filtered.length !== settings.selectedNotes.length) {
+          onUpdateSettings({ ...settings, selectedNotes: filtered });
+        }
+      }
+    }
+  }, [settings.keySignature]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Rhythm defaults (v1): straight values only (w/h/q/8/16), no rests by default.
   // All complex patterns are enabled by default for complex rhythm mode.
   const defaultRhythmSettings = {
@@ -81,6 +100,11 @@ export function PreGameSetup({
         id: "clef",
         title: "gameSettings.steps.labels.clef",
         component: "ClefSelection",
+      },
+      {
+        id: "keySignature",
+        title: "gameSettings.steps.labels.keySignature",
+        component: "KeySignatureSelection",
       },
       {
         id: "notes",
