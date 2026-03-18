@@ -1,501 +1,480 @@
 # Architecture Research
 
-**Domain:** Piano learning PWA — Sharps & Flats trail content expansion
-**Researched:** 2026-03-15
-**Confidence:** HIGH (entire codebase analyzed directly)
+**Domain:** Key Signatures and Advanced Rhythm (v2.4 Content Expansion)
+**Researched:** 2026-03-18
+**Confidence:** HIGH — based on direct codebase inspection + VexFlow v5 type definitions
 
 ---
 
-## System Overview
+## Standard Architecture
 
-This is not a greenfield architecture question. The Sharps & Flats milestone slots new data files into an existing, fully-wired system. The existing system already supports accidentals end-to-end: SVG note images exist, VexFlow renders them via the `Accidental` modifier, pitch detection outputs sharp names (`C#4`, `Gb3`), and `NotesRecognitionGame` already separates natural and accidental answer buttons. The main work is **content definition** (new unit files) with one targeted bug fix where the trail auto-start path hard-codes `enableSharps: false, enableFlats: false`.
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                       DATA LAYER (build-time)                        │
-│  trebleUnit4.js  trebleUnit5.js  bassUnit4.js  bassUnit5.js          │
-│  (new files)     (new files)     (new files)   (new files)           │
-│           │                           │                              │
-│           └─────────────────────────→ expandedNodes.js              │
-│                (add imports + spreads)                               │
-│                          │                                           │
-│                       skillTrail.js (SKILL_NODES — unchanged)        │
-│                          │                                           │
-│                   validateTrail.mjs  (unchanged)                     │
-└─────────────────────────────────────────────────────────────────────┘
-            │
-┌───────────┼──────────────────────────────────────────────────────────┐
-│           │              GATE LAYER                                   │
-│   subscriptionConfig.js  ←  all new nodes: premium by absence        │
-│   Postgres is_free_node()    (no changes to FREE_NODE_IDS)           │
-└───────────┼──────────────────────────────────────────────────────────┘
-            │
-┌───────────┼──────────────────────────────────────────────────────────┐
-│           │              GAME LAYER (one fix required)                │
-│                                                                       │
-│  NotesRecognitionGame.jsx  ← auto-start block forces                 │
-│    enableSharps:false / enableFlats:false regardless of node config  │
-│    FIX: derive from notePool contents                                │
-│                                                                       │
-│  SightReadingGame.jsx  ← patternBuilder uses notePool as-is;         │
-│    accidentals already render via VexFlow Accidental modifier         │
-│    No changes needed                                                  │
-│                                                                       │
-│  MemoryGame.jsx  ← uses notePool directly; no changes needed         │
-└──────────────────────────────────────────────────────────────────────┘
-            │
-┌───────────┼──────────────────────────────────────────────────────────┐
-│           │              RENDERING LAYER (no changes needed)          │
-│                                                                       │
-│  VexFlowStaffDisplay.jsx  ← parsePitchForVexflow() already handles   │
-│    Eb4 → key:"e/4" + Accidental("b")                                 │
-│    F#3 → key:"f/3" + Accidental("#")                                 │
-│                                                                       │
-│  NoteImageDisplay.jsx  ← renders ImageComponent from note object;    │
-│    SVG assets already exist for all sharps/flats in octave range     │
-│                                                                       │
-│  usePitchDetection.js  ← outputs sharp names natively                │
-│    NOTE_NAMES = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"]│
-└──────────────────────────────────────────────────────────────────────┘
+Trail Data Layer (src/data/)
+  ┌──────────────────────────────────────────────────────────────┐
+  │  units/trebleUnit6Redesigned.js  (Key Signatures - treble)   │
+  │  units/trebleUnit7Redesigned.js  (Key Signatures - treble)   │
+  │  units/bassUnit6Redesigned.js    (Key Signatures - bass)     │
+  │  units/bassUnit7Redesigned.js    (Key Signatures - bass)     │
+  │  units/rhythmUnit7Redesigned.js  (Advanced Rhythm)           │
+  │  units/rhythmUnit8Redesigned.js  (Compound Meters / 6/8)     │
+  └───────────────────────────┬──────────────────────────────────┘
+                              │ import + spread
+                              ▼
+  expandedNodes.js  ── aggregates EXPANDED_NODES array
+                              │
+                              ▼
+  skillTrail.js  ── getNodeById(), isNodeUnlocked(), etc.
+```
+
+```
+Game Execution Pipeline
+  Trail → VictoryScreen → location.state
+    { nodeId, nodeConfig, exerciseIndex, totalExercises, exerciseType }
+                              │
+              ┌───────────────┴───────────────────┐
+              ▼                                   ▼
+  SightReadingGame.jsx                 MetronomeTrainer.jsx
+  (Key Signatures: noteConfig.keySignature)  (Advanced Rhythm: rhythmConfig.timeSignature)
+              │                                   │
+              ▼                                   ▼
+  generatePatternData()                generateRhythmEvents()
+  (patternBuilder.js)                  (rhythmGenerator.js)
+              │                                   │
+              ▼                                   ▼
+  VexFlowStaffDisplay.jsx              MetronomeDisplay.jsx + TapArea.jsx
+  stave.addKeySignature(key)           stave.addTimeSignature("6/8")
+  Accidental.applyAccidentals()        Beam.generateBeams() with compound groups
 ```
 
 ---
 
 ## Component Responsibilities
 
-| Component | Role | Change for v2.2 |
-|-----------|------|-----------------|
-| `trebleUnit4Redesigned.js` (new) | Node definitions for treble sharps | NEW FILE |
-| `trebleUnit5Redesigned.js` (new) | Node definitions for treble flats | NEW FILE |
-| `bassUnit4Redesigned.js` (new) | Node definitions for bass sharps | NEW FILE |
-| `bassUnit5Redesigned.js` (new) | Node definitions for bass flats | NEW FILE |
-| `expandedNodes.js` | Aggregates all unit node arrays | ADD 4 imports + spreads |
-| `subscriptionConfig.js` | Declares free node IDs | No changes — new nodes are premium by absence |
-| `validateTrail.mjs` | Build-time prerequisite/type/XP checks | No changes needed |
-| `skillTrail.js` UNITS object | Unit metadata | Optional: add TREBLE_4/5, BASS_4/5 entries |
-| `NotesRecognitionGame.jsx` | Trail auto-start injects settings | MODIFY auto-start block only (~3 lines) |
-| `SightReadingGame.jsx` | Pattern generation + VexFlow rendering | No changes needed |
-| `MemoryGame.jsx` | Memory card pairs from notePool | No changes needed |
-| `VexFlowStaffDisplay.jsx` | SVG music notation rendering | No changes needed |
-| `patternBuilder.js` | Generates note sequences from notePool | No changes needed |
-| `noteDefinitions.js` | Note data including accidentals | No changes needed |
-| `gameSettings.js` | Image map lookup for note SVGs | No changes needed (SVGs already present) |
+| Component | Responsibility | New vs Modified |
+|-----------|----------------|-----------------|
+| `units/trebleUnit6-7Redesigned.js` | Key signature node definitions (treble path) | NEW |
+| `units/bassUnit6-7Redesigned.js` | Key signature node definitions (bass path) | NEW |
+| `units/rhythmUnit7-8Redesigned.js` | Advanced rhythm + compound meter node defs | NEW |
+| `expandedNodes.js` | Aggregates all unit arrays into EXPANDED_NODES | MODIFIED (add 5 imports + spreads) |
+| `VexFlowStaffDisplay.jsx` | VexFlow rendering; must call `stave.addKeySignature()` and `Accidental.applyAccidentals()` | MODIFIED |
+| `patternBuilder.js` | `generatePatternData()` must accept and forward `keySignature` param | MODIFIED |
+| `rhythmGenerator.js` | Must handle 6/8 dotted-quarter beat unit (3 eighth-units per beat) | MODIFIED |
+| `durationConstants.js` / `RhythmPatternGenerator.js` | 6/8 entry already exists in TIME_SIGNATURES (SIX_EIGHT) but `unitsPerBeat` needs verification for compound grouping | VERIFY |
+| `rhythmPatterns.js` | Must add compound meter patterns (dotted quarter + three-eighths groups) | MODIFIED |
+| `gameSettings.js` | DEFAULT_SETTINGS.timeSignature is single object; no change needed — node config drives it | NO CHANGE |
+| `subscriptionConfig.js` | All new nodes are premium (no new FREE_NODE_IDS entries) | NO CHANGE |
+| Postgres `is_free_node()` | Mirrors subscriptionConfig; no new free IDs means no migration needed | NO CHANGE |
 
 ---
 
-## Recommended File Structure
+## Recommended Project Structure
 
-New files are all in `src/data/units/`. Nothing outside that directory needs new files.
+The new unit files slot into the existing pattern:
 
 ```
 src/data/units/
-├── trebleUnit1Redesigned.js    (existing)
-├── trebleUnit2Redesigned.js    (existing)
-├── trebleUnit3Redesigned.js    (existing)
-├── trebleUnit4Redesigned.js    NEW: Unit 4, sharps (treble) — START_ORDER = 27
-├── trebleUnit5Redesigned.js    NEW: Unit 5, flats (treble) — START_ORDER = 27 + len(unit4)
-├── bassUnit1Redesigned.js      (existing)
-├── bassUnit2Redesigned.js      (existing)
-├── bassUnit3Redesigned.js      (existing)
-├── bassUnit4Redesigned.js      NEW: Unit 4, sharps (bass) — START_ORDER = lastBassOrder + 1
-├── bassUnit5Redesigned.js      NEW: Unit 5, flats (bass) — START_ORDER = lastBassUnit4Order + 1
-└── (rhythm units untouched)
-
-src/data/
-├── expandedNodes.js            MODIFY: add 4 imports and 4 spreads
-├── skillTrail.js               (unchanged)
-├── constants.js                (unchanged)
-├── nodeTypes.js                (unchanged, all NODE_TYPES already sufficient)
-
-src/components/games/notes-master-games/
-└── NotesRecognitionGame.jsx    MODIFY: auto-start useEffect block only
+  trebleUnit1Redesigned.js   (existing)
+  trebleUnit2Redesigned.js   (existing)
+  trebleUnit3Redesigned.js   (existing)
+  trebleUnit4Redesigned.js   (existing — sharps)
+  trebleUnit5Redesigned.js   (existing — flats + boss)
+  trebleUnit6Redesigned.js   <- NEW: G major, D major, A major key sigs
+  trebleUnit7Redesigned.js   <- NEW: F major, Bb major, Eb major key sigs
+  bassUnit1Redesigned.js     (existing)
+  ...
+  bassUnit5Redesigned.js     (existing)
+  bassUnit6Redesigned.js     <- NEW: bass key signatures (mirrors treble Unit 6)
+  bassUnit7Redesigned.js     <- NEW: bass key signatures (mirrors treble Unit 7)
+  rhythmUnit1Redesigned.js   (existing)
+  ...
+  rhythmUnit6Redesigned.js   (existing — sixteenth notes, ends at order 141)
+  rhythmUnit7Redesigned.js   <- NEW: syncopation (dotted quarter, complex patterns)
+  rhythmUnit8Redesigned.js   <- NEW: compound meters (6/8, 9/8 optional)
 ```
+
+### Order Space Allocation
+
+Current rhythm units end at order 141 (rhythmUnit6 START_ORDER=135 + 6 nodes = 141).
+New rhythm units:
+- `rhythmUnit7`: START_ORDER = 142
+- `rhythmUnit8`: START_ORDER = 149 (7 nodes in unit 7)
+
+Current treble units end at approximately order ~52 (trebleUnit5 last node).
+New treble units:
+- `trebleUnit6`: START_ORDER = 53 (or next available)
+- `trebleUnit7`: START_ORDER = 60 (or next available)
+
+Bass units mirror treble ordering (START_ORDER = 51 + treble offset).
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: Accidentals-in-notePool
+### Pattern 1: Key Signature Flow — Node Config to VexFlow
 
-**What:** Put accidental pitches directly in `noteConfig.notePool` and `exercises[].config.notePool` using the existing format (`'Eb4'`, `'F#3'`). Set `noteConfig.accidentals: true`.
+**What:** The node config carries a `keySignature` string that flows from trail data through `generatePatternData()` into `VexFlowStaffDisplay.jsx`, where it is applied via `stave.addKeySignature(key)` and `Accidental.applyAccidentals(voices, key)`.
 
-**When to use:** This is the correct approach for all new nodes. The entire rendering and detection pipeline already handles these pitch formats natively. No new abstraction is needed.
+**When to use:** All Key Signature trail nodes. The `keySignature` field is optional — absence means C major (no accidentals, current behavior), so existing nodes are unaffected.
 
-**Trade-offs:** Simple and consistent. The `accidentals: true/false` flag on `noteConfig` is currently metadata-only (nothing reads it at runtime), but setting it correctly is good practice and prepares for future filtering logic.
+**VexFlow API (verified from type definitions in `node_modules/vexflow/build/types/src/`):**
 
-**Example (treble Unit 4, first accidental discovery node):**
 ```javascript
+// stave.d.ts — addKeySignature signature:
+// addKeySignature(keySpec: string, cancelKeySpec?: string, position?: number): this
+//
+// Valid key names (from VexFlow tables.ts, verified):
+// Major: "C","G","D","A","E","B","F#","C#","F","Bb","Eb","Ab","Db","Gb","Cb"
+// Minor: "Am","Em","Bm","F#m","C#m","G#m","D#m","Dm","Gm","Cm","Fm","Bbm","Ebm","Abm"
+stave.addClef("treble")
+     .addKeySignature("G")
+     .addTimeSignature("4/4");
+
+// accidental.d.ts — applyAccidentals signature:
+// static applyAccidentals(voices: Voice[], keySignature: string): void
+// Automatically adds cautionary accidentals and suppresses redundant ones based on key.
+Accidental.applyAccidentals([voice], "G");
+```
+
+**Data flow changes:**
+
+```javascript
+// In trail node definition (noteConfig):
+noteConfig: {
+  notePool: ['F#4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5'],
+  clef: 'treble',
+  keySignature: 'G'   // NEW optional field — defaults absent to 'C'
+}
+
+// In exercises config:
+config: {
+  notePool: ['F#4', 'G4', 'A4', 'B4'],
+  clef: 'treble',
+  keySignature: 'G'   // Propagated to generatePatternData
+}
+
+// patternBuilder.js — add keySignature param:
+export async function generatePatternData({
+  // ...existing params...
+  keySignature = 'C',  // new optional param
+}) {
+  // ...existing logic unchanged...
+  return {
+    notes: enrichedNotation,
+    // ...existing fields...
+    keySignature,      // new return field
+  };
+}
+
+// VexFlowStaffDisplay.jsx — use pattern.keySignature:
+const activeKeySignature = pattern.keySignature ?? 'C';
+if (activeKeySignature !== 'C') {
+  stave.addKeySignature(activeKeySignature);
+}
+// After all voices are built:
+Accidental.applyAccidentals([voice], activeKeySignature);
+```
+
+**Trade-offs:**
+- Using `Accidental.applyAccidentals()` is the correct VexFlow approach — it handles courtesy accidentals, suppresses redundant ones, and is context-aware across the measure.
+- Key signatures affect visual rendering only in VexFlow. Pitch detection (mic/keyboard) already uses absolute pitch strings (`F#4`), so no audio pipeline changes are needed.
+- The `notePool` in the node config must contain absolute pitches (`F#4`, not `F4` for G major). The key signature is display-only: it tells VexFlow to render the F# symbol in the key signature area and suppress per-note accidentals.
+
+### Pattern 2: 6/8 Compound Meter — Beat Unit is Dotted Quarter
+
+**What:** In 6/8 time, the felt beat is a dotted quarter (3 eighth-note subdivisions), not a quarter note. The rhythm generator's `unitsPerBeat` contract changes for compound meters.
+
+**Current state (verified in RhythmPatternGenerator.js):**
+
+```javascript
+SIX_EIGHT: {
+  name: "6/8",
+  beats: 6,           // 6 eighth-note counts per measure
+  subdivision: 12,    // 12 eighth-note slots per measure
+  strongBeats: [0, 3],
+  measureLength: 12,
+  isCompound: true,
+}
+```
+
+The existing `SIX_EIGHT` entry treats each eighth note as 1 beat count, which is rhythmically correct for beginning compound meter exposure. `durationConstants.js` imports `TIME_SIGNATURES` and builds a grid where `unitsPerBeat` is computed as `measureLength / beats = 12 / 6 = 2` (2 sixteenth-units per eighth-note beat).
+
+**Two valid models for 6/8 trail nodes:**
+
+Option A — "Simple 6/8" (6 eighth-note counts): Matches current generator; correct for beginner compound meter nodes. `unitsPerBeat: 2`. Use for Unit 7 introduction nodes.
+
+Option B — "Felt 6/8" (2 dotted-quarter beats): Requires a new config where `beats: 2` and `unitsPerBeat: 6`. Better for challenge nodes showing syncopation across the dotted-quarter pulse. Avoid naming it `"6/8"` internally (see Anti-Pattern 2).
+
+**Recommendation:** Use Option A (existing SIX_EIGHT) for Unit 7-8 introduction nodes. Add Option B only if advanced challenge nodes need felt-beat syncopation. Both use `isCompound: true`.
+
+### Pattern 3: Syncopation Patterns — Extending rhythmPatterns.js
+
+**What:** `COMPLEX_EXAMPLE_PATTERNS` in `rhythmPatterns.js` already contains `eighthQuarterEighth` (the canonical syncopation pattern, `beatsSpan: 2`). Advanced rhythm Unit 7 needs additional syncopation archetypes.
+
+**Patterns to add to COMPLEX_EXAMPLE_PATTERNS:**
+
+```javascript
+// Compound 6/8 primary group: dotted-quarter + eighth (half a 6/8 measure)
 {
-  id: 'treble_4_1',
-  name: 'Meet F-Sharp',
-  category: 'treble_clef',
-  unit: 4,
-  unitName: 'Sharps World',
-  order: 27,          // After boss_treble_3 which is at order 26
-  prerequisites: ['boss_treble_3'],
-
-  nodeType: NODE_TYPES.DISCOVERY,
-
-  noteConfig: {
-    notePool: ['F4', 'G4', 'F#4'],   // Context naturals + new accidental
-    focusNotes: ['F#4'],
-    contextNotes: ['F4', 'G4'],
-    clef: 'treble',
-    ledgerLines: false,
-    accidentals: true              // Informational flag; pipeline reads notePool directly
-  },
-
-  exercises: [
-    {
-      type: EXERCISE_TYPES.NOTE_RECOGNITION,
-      config: {
-        notePool: ['F4', 'G4', 'F#4'],
-        questionCount: 8,
-        clef: 'treble',
-        timeLimit: null
-      }
-    }
+  id: "compound68HalfBar",
+  label: "6/8 half-bar group",
+  events: [
+    { type: "note", duration: "q", dotted: true },  // 6 sixteenth-units
+    { type: "note", duration: "8" },                 // 2 sixteenth-units (total: 8)
   ],
-
-  skills: ['F#4'],
-  xpReward: 60,
-  isBoss: false
+  totalUnits: 8,
+  beatsSpan: 4,   // 4 eighth-note beats (based on SIX_EIGHT unitsPerBeat=2)
 }
 ```
 
-### Pattern 2: Auto-Start Accidentals Fix in NotesRecognitionGame
+Note: `beatsSpan` is interpreted relative to the active time signature's `unitsPerBeat`. For 6/8 with `unitsPerBeat: 2`, a pattern with `totalUnits: 8` spans 4 "beats" (eighth-note counts). This means compound patterns should be gated by the `isCompound` flag or only used when `timeSignature === "6/8"` in node config.
 
-**What:** The trail auto-start block at lines ~518-536 currently injects `enableSharps: false, enableFlats: false` regardless of the node being played. This prevents accidental answer buttons from appearing, making any sharps/flats node unplayable via the trail.
+### Pattern 4: Key Signature Node Exercise Type Progression
 
-**When to use:** Required change before any accidentals node can function end-to-end.
+**What:** Key signature learning requires a specific pedagogical sequence. The student must connect the visual key signature to the expected pitch alteration.
 
-**Fix (surgical change to one block):**
-```javascript
-// In NotesRecognitionGame.jsx, inside the useEffect that fires when nodeConfig exists:
+**Recommended exercise sequence per unit:**
+- Discovery nodes: `NOTE_RECOGNITION` with `keySignature` set — one note at a time, student names the note while seeing the key context
+- Practice nodes: `NOTE_RECOGNITION` with expanded pool — multiple notes from the key
+- Mix-Up/Challenge nodes: `SIGHT_READING` with `keySignature` set — reads melodic passages in key context
+- Boss nodes: `SIGHT_READING` multi-measure with fuller key coverage
 
-const notePool = nodeConfig.notePool || [];
-const hasSharps = notePool.some(p => /[A-G]#\d/.test(String(p)));
-const hasFlats  = notePool.some(p => /[A-G]b\d/.test(String(p)));
-
-const trailSettings = {
-  clef: nodeConfig.clef || 'treble',
-  selectedNotes: notePool,
-  timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
-  timeLimit: nodeConfig.timeLimit || 45,
-  enableSharps: hasSharps,
-  enableFlats: hasFlats,
-};
-```
-
-**Trade-offs:** Regex-based detection is more robust than checking `accidentals: true` flag alone — defensive against unit files that might forget the flag. The change is limited to the auto-start block and does not affect free-play or manual settings paths.
-
-### Pattern 3: Boss Node ID Naming Convention
-
-**What:** Boss nodes use the ID prefix `boss_treble_N` or `boss_bass_N`. The TrailMap component assigns boss nodes to tabs by prefix: `node.id.startsWith('boss_treble_')` maps to the Treble tab.
-
-**When to use:** All boss nodes in new treble/bass units must follow this convention exactly.
-
-**Example:**
-```javascript
-{
-  id: 'boss_treble_4',    // Not 'treble_boss_4' or 'treble_4_boss'
-  category: 'boss',       // Required, not 'treble_clef'
-  isBoss: true,
-  accessoryUnlock: 'accidental_master_badge'  // Matches UNITS.TREBLE_5 in skillTrail.js
-}
-```
-
-**Anti-example:** `'treble_4_boss'` silently causes the node to disappear from the Treble tab.
-
-### Pattern 4: Order Numbering
-
-**What:** `order` determines visual position and "next node" traversal via `getNextNodeInCategory()`. Collisions cause unpredictable sort; gaps cause auto-grow note pool to skip nodes.
-
-**Current state:**
-- Treble units 1-3: orders 1-26 (unit 3 starts at 17, has 10 nodes, boss at order 26)
-- Bass units 1-3: start at order 51 — read `bassUnit3Redesigned.js` to find the last order before setting bass unit 4's `START_ORDER`
-
-**Convention:** Use a named `START_ORDER` constant at the top of each unit file. Example:
-```javascript
-const START_ORDER = 27;  // After boss_treble_3 (order 26)
-```
-
-### Pattern 5: Separate Sharps Unit from Flats Unit
-
-**What:** Introduce sharps in one unit (Unit 4) and flats in a separate unit (Unit 5) for each clef.
-
-**Why:** Sharps and flats that are enharmonically equivalent (F#4 and Gb4 sound identical) cannot coexist in a single node's notePool when using microphone input — the detector outputs one spelling only. Pedagogically, 8-year-olds need to learn one symbol family before encountering the other.
-
-**Suggested pitch sets:**
-- Treble sharps (Unit 4): F#4, C#4, G#4, D#4 (the 4 most common sharps in 1-4 sharp key signatures)
-- Treble flats (Unit 5): Bb4, Eb4, Ab4, Db4 (the 4 most common flats in 1-4 flat key signatures)
-- Bass sharps (Unit 4): F#3, C#3, G#3, D#3
-- Bass flats (Unit 5): Bb3, Eb3, Ab3, Db3
+No new exercise types are needed. Existing `NOTE_RECOGNITION` and `SIGHT_READING` accept `keySignature` via `config` passthrough.
 
 ---
 
 ## Data Flow
 
-### Trail Game Launch (Sharps/Flats Node) — After Fix
+### Key Signature Request Flow
 
 ```
-User taps node on TrailMap
-    |
-    v
-TrailNodeModal reads node from SKILL_NODES (via getNodeById)
-    |
-    v
-Navigate to game route with location.state:
-  { nodeId, nodeConfig: {notePool: ['F4','F#4','G4'], clef:'treble', ...},
-    exerciseIndex, totalExercises, exerciseType }
-    |
-    v
-NotesRecognitionGame mounts → useEffect detects nodeConfig
-    |
-    v
-Regex derives: hasSharps=true, hasFlats=false
-trailSettings = { ..., enableSharps: true, enableFlats: false }
-    |
-    v
-normalizeSelectedNotes({ selectedNotes: ['F4','F#4','G4'], enableSharps: true })
-  Filters to natural notes for the base pool; sharps are tracked separately
-    |
-    v
-useGameSettings tracks enableSharps = true
-    |
-    v
-availableNotes useMemo includes F#4 alongside F4, G4
-    |
-    v
-Answer buttons: naturals panel (F4, G4) + accidentals panel (F#4)
-    |
-    v
-User plays F# on keyboard/mic → detected as "F#4" → correct answer
-    |
-    v
-VictoryScreen → updateExerciseProgress() → DB write
+Trail node clicked
+    ↓
+TrailNodeModal → location.state
+  { nodeId, nodeConfig, exerciseType, exerciseIndex, totalExercises }
+    ↓
+SightReadingGame.jsx
+  settings.keySignature = nodeConfig.keySignature || 'C'
+    ↓
+generatePatternData({ keySignature: 'G', notePool: ['G4', 'A4', 'B4', ...] })
+  → rhythmGenerator produces events (unchanged)
+  → note assignment picks from notePool (unchanged, absolute pitches)
+  → returns { ...pattern, keySignature: 'G' }
+    ↓
+VexFlowStaffDisplay.jsx receives pattern.keySignature
+  → stave.addKeySignature('G')     [visual: adds F# glyph to key sig area]
+  → Accidental.applyAccidentals(voices, 'G')
+      [suppresses redundant # on F#4 notes; adds courtesy natural on F4]
+    ↓
+Pitch detection (mic/keyboard) uses pattern.notes[i].pitch ('F#4')
+  → No change — detection already works with absolute pitch strings
 ```
 
-### Sight Reading Accidental Rendering (No Change Needed)
+### Advanced Rhythm (6/8) Request Flow
 
 ```
-nodeConfig.notePool = ['Bb4', 'A4', 'G4']
-    |
-    v
-patternBuilder.generatePatternData({ selectedNotes: ['Bb4','A4','G4'], clef: 'treble' })
-  Randomly selects pitches including 'Bb4'
-  notationObject: { pitch: 'Bb4', notation: 'q', ... }
-    |
-    v
-VexFlowStaffDisplay renders:
-  parsePitchForVexflow('Bb4') → { key: 'b/4', accidental: 'b' }
-  new StaveNote({ keys: ['b/4'], duration: 'q' })
-  note.addModifier(new Accidental('b'), 0)   ← flat symbol on staff
-    |
-    v
-Mic detects frequency → frequencyToNote → "A#4"
-  → enharmonic check: toFlatEnharmonic("A#4") = "Bb4" ← correct
-```
-
-### Subscription Gate (No Change Needed)
-
-```
-User taps new premium node (e.g., treble_4_1)
-    |
-    v
-isFreeNode('treble_4_1')
-  → FREE_NODE_IDS.has('treble_4_1') = false  ← not in the set
-  → returns false → show paywall modal
-    |
-    v
-DB RLS (if bypassed somehow):
-  is_free_node('treble_4_1') = FALSE  ← hardcoded list in Postgres
-  has_active_subscription(auth.uid()) = FALSE (no sub)
-  → row write blocked at database level
+Trail node clicked (rhythmUnit7 or rhythmUnit8 node)
+    ↓
+MetronomeTrainer.jsx
+  timeSignature = nodeConfig.timeSignature || '6/8'
+    ↓
+getPattern('6/8', difficulty) in RhythmPatternGenerator.js
+  → TIME_SIGNATURES.SIX_EIGHT exists; compound-aware generation
+    ↓
+generateRhythmEvents({ timeSignature: resolved6_8, ... })
+  → resolveTimeSignature('6/8') returns SIX_EIGHT entry
+  → fillBeatSimple/fillBeatComplex operates on 2-unit (eighth-note) beats
+  → returns events array with isCompound flag available
+    ↓
+MetronomeDisplay.jsx / VexFlowStaffDisplay.jsx
+  → stave.addTimeSignature('6/8')
+  → Beam.generateBeams(notes, { groups: [new Fraction(3, 8)] })
+      [forces 3-eighth beaming for compound grouping]
 ```
 
 ---
 
 ## Integration Points
 
-### New Content to Existing Infrastructure
+### Modified Files (surgical changes)
 
-| Integration Point | What Connects | Notes |
-|-------------------|---------------|-------|
-| `expandedNodes.js` imports | New unit files → SKILL_NODES | Must import and spread all 4 new files |
-| `subscriptionConfig.js` | New node IDs absent = premium | No action needed |
-| `validateTrail.mjs` | Runs on `npm run build` | Automatically validates new nodes; no changes needed |
-| `skillTrail.js` UNITS object | Unit metadata for display | Optional: add TREBLE_4, TREBLE_5, BASS_4, BASS_5 entries |
-| `NotesRecognitionGame.jsx` auto-start | `enableSharps`/`enableFlats` injection | Single required fix — ~3 lines |
-| `SightReadingGame.jsx` | `notePool` passed to `patternBuilder` | Works as-is |
-| `MemoryGame.jsx` | `notePool` passed to card generation | Works as-is |
+| File | Change Required | Risk |
+|------|-----------------|------|
+| `src/data/expandedNodes.js` | Add 6 import statements + 6 array spreads into EXPANDED_NODES | LOW — pure addition |
+| `src/components/games/sight-reading-game/utils/patternBuilder.js` | Add `keySignature` param to `generatePatternData()`; include in return value | LOW — backward-compatible default `'C'` |
+| `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` | Call `stave.addKeySignature()` when `pattern.keySignature` is set; call `Accidental.applyAccidentals()` after voice construction; do NOT add manual Accidental modifiers when key sig is active | MEDIUM — VexFlow rendering is complex; test with multiple key signatures |
+| `src/components/games/sight-reading-game/utils/rhythmPatterns.js` | Add compound 6/8 patterns to `COMPLEX_EXAMPLE_PATTERNS` | LOW — additive |
+| `src/components/games/rhythm-games/RhythmPatternGenerator.js` | Verify `SIX_EIGHT.measureLength = 12` for beaming; optionally add `SIX_EIGHT_COMPOUND` for felt-2 model | LOW-MEDIUM |
 
-### Pitch Detection Compatibility
+### New Files (zero risk to existing nodes)
 
-`usePitchDetection.js` always outputs sharp-form names (`C#4`, `F#3`) using `NOTE_NAMES = ["C","C#","D",...]`. When a node uses flat-form pitches (e.g., `Eb4`), the existing `toFlatEnharmonic()` function in `NotesRecognitionGame.jsx` and the `SHARP_TO_FLAT_MAP` handle conversion: detected `D#4` maps to `Eb4` before comparison. This path is already wired and runs for trail-launched sessions.
+| File | Contents |
+|------|----------|
+| `src/data/units/trebleUnit6Redesigned.js` | ~7 nodes: G major, D major key signature introduction and practice |
+| `src/data/units/trebleUnit7Redesigned.js` | ~8 nodes: A major, F major, Bb major + key signature boss |
+| `src/data/units/bassUnit6Redesigned.js` | Mirrors trebleUnit6 for bass clef |
+| `src/data/units/bassUnit7Redesigned.js` | Mirrors trebleUnit7 for bass clef + boss |
+| `src/data/units/rhythmUnit7Redesigned.js` | ~7 nodes: advanced syncopation in 4/4 and 3/4 |
+| `src/data/units/rhythmUnit8Redesigned.js` | ~8 nodes: 6/8 compound meter introduction and boss |
 
-**Verify during implementation:** The `calculatePitchAccuracy` function in `scoreCalculator.js` (used by SightReadingGame) needs checking for enharmonic equivalence. If it does strict string comparison, a flat-form pattern note (e.g., `Eb4`) will never match the mic input (`D#4`). This is the highest-risk gap for SightReadingGame exercises.
+### Confirmed Unchanged
 
-### Note Image Coverage
-
-All required accidental SVGs are already imported in `gameSettings.js`. The treble image map covers: Cb/Db/Eb/Fb/Gb/Ab/Bb flats and C#/D#/E#/F#/G#/A#/B# sharps across octaves 3-6. The bass image map covers equivalent sets for octaves 1-4. No new image assets are needed for the pitch ranges used in Units 4-5 (F#3-D#4 for bass, F#4-D#5 for treble).
-
----
-
-## Anti-Patterns
-
-### Anti-Pattern 1: Using Flags Without Putting Pitches in notePool
-
-**What people do:** Add `accidentals: true` to the node but leave only natural pitches in `notePool`, expecting the game to automatically include sharps/flats.
-
-**Why it's wrong:** `notePool` is the source of truth for which pitches appear as questions. `enableSharps`/`enableFlats` only control which answer buttons are shown. Without the accidental pitch in `notePool`, it is never selected as a question even with the flag set.
-
-**Do this instead:** Always put the actual accidental pitches (`'F#4'`, `'Eb4'`) in `notePool` directly. The fix in Pattern 2 derives the flags automatically from pool contents.
-
-### Anti-Pattern 2: Sharps and Enharmonic Flats in the Same Node
-
-**What people do:** Put both `F#4` and `Gb4` (enharmonically identical) in a single node's `notePool`.
-
-**Why it's wrong:** The microphone outputs one spelling only (sharp-form). Having both means one answer is always unreachable via mic. For 8-year-olds it also creates pedagogical confusion — they need to understand one symbol before encountering its enharmonic twin.
-
-**Do this instead:** Sharps-only nodes in Unit 4, flats-only nodes in Unit 5. Never mix enharmonic spellings within a single node.
-
-### Anti-Pattern 3: Wrong Boss Node ID Prefix
-
-**What people do:** Name the boss node `'treble_4_boss'`, `'treble_boss_4'`, or `'boss_4_treble'`.
-
-**Why it's wrong:** The TrailMap component assigns boss nodes to tabs via `node.id.startsWith('boss_treble_')`. Any other prefix causes the node to be excluded from the Treble tab with no error.
-
-**Do this instead:** Follow the convention: `boss_treble_4`, `boss_treble_5`, `boss_bass_4`, `boss_bass_5`.
-
-### Anti-Pattern 4: Order Value Collisions
-
-**What people do:** Start a new unit at `order: 1` or use the same `START_ORDER` as an existing unit.
-
-**Why it's wrong:** `getNextNodeInCategory()` sorts by `order` to find the next node. Collisions cause unpredictable ordering and break the auto-grow note pool feature in NotesRecognitionGame's arcade mode.
-
-**Do this instead:** Read the last `order` value from the preceding unit file before authoring the new one. Use a named `START_ORDER` constant.
-
-### Anti-Pattern 5: Teaching Naturals-Only Sight Reading With Accidental notePool
-
-**What people do:** Use `EXERCISE_TYPES.SIGHT_READING` for early accidentals nodes without setting appropriate `rhythmConfig` — creating confusingly complex rhythms when the learner is focused on a new symbol.
-
-**Why it's wrong:** Cognitive load theory: new note symbols already demand attention. Complex rhythms simultaneously are overwhelming for 8-year-olds.
-
-**Do this instead:** For DISCOVERY nodes with accidentals, use `RHYTHM_COMPLEXITY.SIMPLE` (quarter notes only) and limit `notePool` to 2-3 pitches including context naturals. Match the pattern from trebleUnit1_1 (first node) where new content = 1 thing only.
+| System | Reason |
+|--------|--------|
+| Pitch detection (mic / pitchy) | Works on absolute pitch strings; `F#4` detected correctly whether in G major or not |
+| `NotesRecognitionGame.jsx` | Does not render VexFlow staves; key signature is irrelevant to note image display |
+| `MemoryGame.jsx` | Does not render VexFlow staves |
+| `MetronomeTrainer.jsx` | Already accepts `timeSignature` from node config; `'6/8'` passes through to `getPattern()` unchanged |
+| `subscriptionConfig.js` + Postgres `is_free_node()` | No new free nodes; all new content is premium by exclusion |
+| `students_score` + `student_skill_progress` tables | Generic `node_id TEXT` columns; no schema change needed |
+| Build-time validation script | Validates prerequisite chains and exercise types; new nodes use existing `EXERCISE_TYPES` values |
 
 ---
 
-## Build Order (Recommended)
+## Key Signature — Accidental Handling Contract
 
-Each step leaves the app in a working state and is independently testable.
+This is the most nuanced integration point and must be implemented carefully.
 
-### Step 1: Treble Sharps Unit (trebleUnit4Redesigned.js)
+**Problem:** When rendering a note in G major (one sharp: F#), VexFlow must:
+1. Show the F# accidental glyph in the key signature area at the start of the stave
+2. Suppress the per-note `#` modifier on all F#4 notes within the measure
+3. Render a courtesy natural (F♮) on any F♮ note within the measure
 
-Safest first step. Treble clef is more familiar and SVG coverage is confirmed for treble sharps.
+**Solution (VexFlow built-in):**
+`Accidental.applyAccidentals(voices, keySignature)` handles all three steps automatically when called after voice construction.
 
-**Deliverables:**
-- `src/data/units/trebleUnit4Redesigned.js` — 8 nodes, sharps focus, `START_ORDER = 27`
-- `src/data/expandedNodes.js` — add import and spread
+**Critical constraint:** The current `buildStaveNote()` in `VexFlowStaffDisplay.jsx` (line ~482-485) manually calls `note.addModifier(new Accidental(parsedPitch.accidental))` for notes with `#` or `b` in their pitch string. When `Accidental.applyAccidentals()` is used, these manual modifiers must NOT be added — or doubled accidentals will render.
 
-**Node sequence (model on existing units):**
-1. REVIEW — Review all treble naturals (prerequisite: `boss_treble_3`)
-2. DISCOVERY — Meet F-Sharp (`F4`, `G4`, `F#4` in pool)
-3. PRACTICE — Sight reading with F#4
-4. DISCOVERY — Meet C-Sharp (`C4`, `D4`, `C#4`)
-5. MIX_UP — Memory Game with F#4, C#4
-6. DISCOVERY — Meet G-Sharp (`G4`, `A4`, `G#4`)
-7. CHALLENGE — Sharp Mix (F#4, C#4, G#4 interleaved)
-8. MINI_BOSS — `boss_treble_4` (note recognition + sight reading, all 3 sharps)
+The code must be branched:
 
-Run `npm run verify:trail` after adding each unit file.
+```
+if (pattern.keySignature is set AND keySignature !== 'C'):
+  → in buildStaveNote(): do NOT add Accidental modifiers
+  → after voice construction: call Accidental.applyAccidentals()
+else:
+  → current behavior: add Accidental modifiers manually per note
+```
 
-### Step 2: NotesRecognitionGame Auto-Start Fix
+This is a conditional branch, not a rewrite. The `buildStaveNote()` function needs an `omitAccidentals` option flag, and the render loop calls `Accidental.applyAccidentals()` as a post-step.
 
-**Deliverables:**
-- `src/components/games/notes-master-games/NotesRecognitionGame.jsx` — modify auto-start `useEffect` block (~lines 518-536, ~3 line change)
+---
 
-**Test:** Launch treble_4_2 (Meet F-Sharp) from the trail. The F#4 answer button must appear in the accidentals panel.
+## 6/8 Beaming — Compound Meter Requirement
 
-### Step 3: Bass Sharps Unit (bassUnit4Redesigned.js)
+**Problem (confirmed from community reports):** `Beam.generateBeams()` defaults to grouping by 2 in simple time. In 6/8, the correct grouping is 3 eighths per beam (two groups of 3 per measure), not 3 groups of 2.
 
-Mirrors treble unit 4 in structure, uses bass clef pitches (F#3, C#3, G#3).
+**Solution:** VexFlow's `Beam.generateBeams()` accepts an options object with a `groups` array:
 
-**Prerequisite for authoring:** Read `bassUnit3Redesigned.js` to find the last `order` value before setting `START_ORDER`.
+```javascript
+import { Fraction } from 'vexflow';
 
-**Deliverables:**
-- `src/data/units/bassUnit4Redesigned.js`
-- `src/data/expandedNodes.js` — add import and spread
+// For 6/8: force groups of 3 eighth notes = one dotted-quarter beat
+const beams = Beam.generateBeams(notes, {
+  groups: [new Fraction(3, 8)]
+});
+```
 
-### Step 4: Treble Flats Unit (trebleUnit5Redesigned.js)
+This conditional beaming call must be applied in `VexFlowStaffDisplay.jsx` and (if the MetronomeDisplay renders staves) in `MetronomeDisplay.jsx` when `pattern.timeSignature === '6/8'` or when the resolved time signature has `isCompound: true`.
 
-Separate unit from sharps to avoid enharmonic confusion. Introduce Bb4, Eb4, Ab4, Db4 progressively.
+---
 
-**Deliverables:**
-- `src/data/units/trebleUnit5Redesigned.js` — 8 nodes, flats focus
-- `src/data/expandedNodes.js` — add import and spread
+## Anti-Patterns to Avoid
 
-**Boss node:** `boss_treble_5`, `accessoryUnlock: 'accidental_master_badge'` (matches existing `UNITS.TREBLE_5` definition in `skillTrail.js`)
+### Anti-Pattern 1: Relative Pitch Names in Node Config
 
-### Step 5: Bass Flats Unit (bassUnit5Redesigned.js)
+**What people do:** Store relative note names in `notePool` (e.g., `['F', 'G', 'A']` implying F# via key) and try to derive the actual pitch from the key signature at runtime.
 
-**Deliverables:**
-- `src/data/units/bassUnit5Redesigned.js`
-- `src/data/expandedNodes.js` — final import + spread
+**Why it's wrong:** Pitch detection, note comparison, score tracking, and MIDI matching all use absolute pitches (`F#4`). Mixing relative naming creates divergence between what is displayed and what is detected.
 
-**Boss node:** `boss_bass_5`, `accessoryUnlock: 'bass_accidental_badge'` (matches `UNITS.BASS_5`)
+**Do this instead:** Always store absolute pitches in `notePool` (e.g., `['F#4', 'G4', 'A4']`). The key signature is a rendering hint only — the audio/detection pipeline is untouched.
 
-### Step 6: Subscription Gate Verification
+### Anti-Pattern 2: Duplicate Time Signature Names in TIME_SIGNATURES
 
-Run the app in development without a subscription. Attempt to access the new nodes. Verify:
-1. React UI shows gold lock (paywall modal)
-2. Direct DB progress writes fail under RLS
+**What people do:** Add a `SIX_EIGHT_COMPOUND` entry to `RhythmPatternGenerator.js` with `name: "6/8"` — the same `name` as the existing `SIX_EIGHT` entry.
 
-No code changes expected. This is a verification-only step.
+**Why it's wrong:** `buildTimeSignatureGrid()` in `durationConstants.js` iterates `Object.values(TIME_SIGNATURES)` and keys the grid by `signature.name`. Duplicate names cause silent overwrite; `resolveTimeSignature('6/8')` returns whichever entry is last in the object.
 
-### Step 7: XP Economy Validation
+**Do this instead:** Use a unique internal key (`SIX_EIGHT_COMPOUND`) and gate the compound-beat model via the node config (e.g., a `compoundBeat: true` flag in `rhythmConfig`). Keep `name: "6/8"` for display. Alternatively, extend the existing `SIX_EIGHT` entry with the `unitsPerBeat` needed for compound beaming.
 
-Run `npm run verify:trail`. The XP variance check warns at >10% between paths. Adding ~20 nodes to treble and bass (not rhythm) will shift balance. Target xpReward values in the 55-150 XP range, matching the existing treble/bass distribution from units 1-3.
+### Anti-Pattern 3: Using SIGHT_READING for Initial Key Signature Discovery
+
+**What people do:** Set `type: EXERCISE_TYPES.SIGHT_READING` for the very first key signature nodes ("Meet G Major").
+
+**Why it's wrong:** Sight reading requires recognizing multiple notes while tracking rhythm. First exposure to key context must use `NOTE_RECOGNITION` — one note at a time — so the learner can focus entirely on understanding that the F♯ symbol in the key signature means all Fs are sharp.
+
+**Do this instead:** Discovery and first Practice nodes use `NOTE_RECOGNITION` with `keySignature` set. Only Challenge and Boss nodes use `SIGHT_READING` with an active key signature.
+
+### Anti-Pattern 4: Forgetting expandedNodes.js Registration
+
+**What people do:** Create the unit file with valid node definitions, but forget to add the import and spread into `EXPANDED_NODES` in `expandedNodes.js`.
+
+**Why it's wrong:** The build-time validator and all runtime trail logic reads only from `EXPANDED_NODES`. Nodes not in that array are invisible to the trail system.
+
+**Do this instead:** Treat the import + spread in `expandedNodes.js` as the registration step. Run `npm run verify:patterns` immediately after adding the import to confirm node counts and prerequisites are valid.
+
+### Anti-Pattern 5: Doubled Accidentals from Manual + applyAccidentals
+
+**What people do:** Call `Accidental.applyAccidentals()` after building voices but leave the existing manual `note.addModifier(new Accidental('#'))` calls in `buildStaveNote()` active.
+
+**Why it's wrong:** `Accidental.applyAccidentals()` adds its own accidental modifiers to notes that need them. The pre-existing manual modifiers plus the auto-applied ones produce doubled accidental glyphs on the rendered staff.
+
+**Do this instead:** Add an `omitAccidentals` flag to `buildStaveNote()`. When key signature mode is active, pass `omitAccidentals: true` so the function skips adding Accidental modifiers. Then call `Accidental.applyAccidentals()` as a post-step.
+
+---
+
+## Build Order (Dependencies Drive Sequence)
+
+Each phase depends on the previous one completing cleanly.
+
+**Phase 1: Trail Data Layer**
+Create all 6 new unit files. These are pure data with no imports from game components. Verify prerequisite chains (last node of trebleUnit5 → first node of trebleUnit6). Wire all 6 imports into `expandedNodes.js`. Run `npm run verify:patterns` to confirm no broken prerequisites or invalid exercise types.
+
+**Phase 2: VexFlow Key Signature Rendering**
+Modify `patternBuilder.js` to accept and return `keySignature`. Add `omitAccidentals` option to `buildStaveNote()` in `VexFlowStaffDisplay.jsx`. Add `stave.addKeySignature()` and `Accidental.applyAccidentals()` calls. Test with free-play SightReadingGame by manually passing a key signature before trail wiring.
+
+**Phase 3: Key Signature Trail Integration**
+Wire `keySignature` from trail node config through `location.state` → game `settings` → `generatePatternData()`. Verify `NotesRecognitionGame` handles key-aware note pools correctly (display only — detection uses absolute pitch strings unchanged). Confirm the node modal displays the key signature name.
+
+**Phase 4: Advanced Rhythm Data + Generator**
+Add syncopation and compound meter patterns to `rhythmPatterns.js`. Verify `resolveTimeSignature('6/8')` returns correct `unitsPerBeat`. Add conditional 6/8 beaming (groups of 3) in `VexFlowStaffDisplay.jsx`.
+
+**Phase 5: Compound Meter Trail Integration**
+Wire 6/8 nodes through MetronomeTrainer. Verify audio engine beat timing is correct for the dotted-quarter pulse (6/8 at ~60 BPM felt = 180 eighth-note BPM). Test progression from rhythmUnit6 boss to rhythmUnit7. Run full regression to confirm all 129 existing nodes are unaffected.
 
 ---
 
 ## Scaling Considerations
 
-This milestone adds ~20 nodes to a 93-node trail. No scaling concerns exist at this size. `SKILL_NODES` grows from 93 to ~113; all lookups are O(n) linear scans over a trivially small dataset.
-
-The SVG import bundle for note images is unchanged. All accidental SVGs are already imported in `gameSettings.js`. No new image assets are needed for the octave ranges in scope. No bundle size increase from new nodes.
-
----
-
-## Gaps Requiring Verification During Implementation
-
-The following were identified by code review as requiring hands-on validation:
-
-1. **Enharmonic matching in SightReadingGame scoreCalculator**: The mic detects `D#4`; the pattern contains `Eb4`. Check `scoreCalculator.js` `calculatePitchAccuracy()` for enharmonic equivalence logic. If it uses strict string comparison, flat-form sight reading exercises will always score zero via mic. This is the highest-risk gap.
-
-2. **Memory Game card matching with accidentals**: `MemoryGame.jsx` generates card pairs from `notePool`. If it matches cards by pitch string equality and both `Eb4` and `D#4` somehow appear, they would be treated as different notes. Confirm the matching logic is consistent within a single notePool (no enharmonic mixing per anti-pattern 2 should prevent this in practice).
-
-3. **Order values for bass units 4 and 5**: Bass units 1-3 start at order 51. Read `bassUnit3Redesigned.js` to confirm the last node's order before setting bass unit 4's `START_ORDER`. Do not guess.
-
-4. **`accidentals: true` flag not read at runtime**: The flag exists in `noteConfig` as metadata but nothing in the game pipeline reads it. The auto-start fix in Step 2 correctly bypasses the flag and reads `notePool` contents directly. The flag remains useful for future tooling or validation scripts.
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 30 new trail nodes | No performance impact — node array size is irrelevant at runtime |
+| Key sig rendering per pattern | `Accidental.applyAccidentals()` runs once per render cycle — no perf concern |
+| 6/8 generator at scale | Beat-wise loop unchanged; compound beaming is post-processing on pre-built arrays — no perf concern |
+| Additional key signatures later | Adding more key sig units is identical to trebleUnit6-7; no architecture change needed |
 
 ---
 
 ## Sources
 
-All findings are from direct codebase analysis (2026-03-15).
-
-- `src/data/units/trebleUnit{1,2,3}Redesigned.js` — node structure, conventions, order values
-- `src/data/expandedNodes.js` — aggregation pattern, import convention
-- `src/data/skillTrail.js` — UNITS metadata, helper functions, boss tab prefix logic
-- `src/config/subscriptionConfig.js` — gate by absence pattern confirmed
-- `src/components/games/sight-reading-game/constants/gameSettings.js` — full accidentals SVG map confirmed (treble + bass, sharps + flats)
-- `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` — `parsePitchForVexflow()` + `Accidental` modifier confirmed
-- `src/components/games/notes-master-games/NotesRecognitionGame.jsx` — auto-start block (lines ~518-536), accidentals layout confirmed, enharmonic mapping confirmed
-- `src/components/games/shared/noteSelectionUtils.js` — `normalizeSelectedNotes` behavior with accidentals confirmed
-- `src/hooks/usePitchDetection.js` — sharp-form NOTE_NAMES output confirmed
-- `scripts/validateTrail.mjs` — validation rules confirmed (no accidentals-specific validation)
+- VexFlow v5 type definitions (verified directly from installed package):
+  - `node_modules/vexflow/build/types/src/keysignature.d.ts` — `KeySignature` class, `setKeySig()`
+  - `node_modules/vexflow/build/types/src/stave.d.ts` line 111 — `addKeySignature(keySpec, cancelKeySpec?, position?)`
+  - `node_modules/vexflow/build/types/src/accidental.d.ts` line 45 — `Accidental.applyAccidentals(voices, keySignature)`
+- VexFlow tables.ts (fetched from GitHub) — valid key names: `C,G,D,A,E,B,F#,C#,F,Bb,Eb,Ab,Db,Gb,Cb` (major) and minor equivalents
+- [VexFlow compound beaming community issue](https://groups.google.com/g/vexflow/c/Mw1e41jzTe8)
+- [VexFlow official API docs](https://0xfe.github.io/vexflow/api/)
+- Direct codebase inspection (all HIGH confidence):
+  - `src/components/games/sight-reading-game/utils/patternBuilder.js`
+  - `src/components/games/sight-reading-game/utils/rhythmGenerator.js`
+  - `src/components/games/sight-reading-game/utils/rhythmPatterns.js`
+  - `src/components/games/sight-reading-game/constants/durationConstants.js`
+  - `src/components/games/rhythm-games/RhythmPatternGenerator.js`
+  - `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx`
+  - `src/data/expandedNodes.js`
+  - `src/data/units/rhythmUnit1Redesigned.js` and `rhythmUnit6Redesigned.js`
+  - `src/config/subscriptionConfig.js`
 
 ---
-*Architecture research for: Sharps & Flats trail content expansion (v2.2)*
-*Researched: 2026-03-15*
+*Architecture research for: Key Signatures and Advanced Rhythm (v2.4 Content Expansion)*
+*Researched: 2026-03-18*

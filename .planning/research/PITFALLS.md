@@ -1,432 +1,492 @@
-# Pitfalls Research: Sharps & Flats Content Expansion (v2.2)
+# Pitfalls Research: Key Signatures & Advanced Rhythm (v2.4)
 
-**Domain:** Adding accidentals (sharps & flats) trail nodes to existing piano learning PWA
-**Researched:** 2026-03-15
-**Confidence:** HIGH (based on direct codebase review of all affected files + VexFlow v5 documented API)
+**Domain:** Adding Key Signatures (~15 nodes) and Advanced Rhythm (~15 nodes) to existing piano learning PWA
+**Researched:** 2026-03-18
+**Confidence:** HIGH (direct codebase review + VexFlow GitHub issues + music pedagogy sources)
 
 ---
 
 ## Context
 
-This document covers common mistakes when **adding ~20 sharps/flats trail nodes** (treble Units 4-5,
-bass Units 4-5, plus boss nodes) to the existing 93-node skill trail system. The codebase already
-ships full SVG note-image assets for accidentals, partial audio support for sharps/flats in
-`NotesRecognitionGame`, and VexFlow `Accidental` modifier usage in `VexFlowStaffDisplay`. However,
-none of those systems have been exercised through the **trail routing layer** with accidental note
-pools — all existing trail nodes have `accidentals: false` in their `noteConfig`.
+This document covers common mistakes when **adding ~30 new trail nodes** (Key Signature section and
+Advanced Rhythm section) to the existing 129-node skill trail. The codebase currently:
 
-Verified files:
-- `src/data/units/trebleUnit3Redesigned.js` — last treble unit, all natural notes
-- `src/data/units/bassUnit3Redesigned.js` — last bass unit, all natural notes
-- `src/data/expandedNodes.js` — aggregator, no accidental units imported yet
-- `src/data/skillTrail.js` — `UNITS.TREBLE_5` and `UNITS.BASS_5` already defined as stubs
-- `src/components/games/notes-master-games/NotesRecognitionGame.jsx` — `enableSharps: false`,
-  `enableFlats: false` are hardcoded when auto-starting from trail (line 524-525)
-- `src/components/games/sight-reading-game/utils/patternBuilder.js` — `toVexFlowNote` strips
-  accidentals silently (line 60-73: only matches `/^([A-G])(\d+)$/`, no `#` or `b`)
-- `src/config/subscriptionConfig.js` — explicit ID list, new nodes will be behind paywall by
-  default (not added to `FREE_NODE_IDS`), which is correct for v2.2
+- Has no key signature rendering anywhere (`addKeySignature` never called in `VexFlowStaffDisplay`)
+- Uses `sixteenth-note`-as-beat unit counting throughout `rhythmGenerator.js`
+- Has `SIX_EIGHT` defined in `RhythmPatternGenerator.js` but no trail nodes use it
+- Has `Beam.generateBeams()` called without a `groups` parameter (defaults to 4/4 grouping)
+- Timing windows in `useTimingAnalysis` use absolute ms thresholds calibrated for simple-meter beats
+
+Verified files at time of research:
+- `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx`
+- `src/components/games/sight-reading-game/utils/rhythmGenerator.js`
+- `src/components/games/sight-reading-game/utils/patternBuilder.js`
+- `src/components/games/sight-reading-game/constants/durationConstants.js`
+- `src/components/games/rhythm-games/RhythmPatternGenerator.js`
+- `src/data/units/rhythmUnit6Redesigned.js`
+- `src/config/subscriptionConfig.js`
 
 ---
 
 ## Critical Pitfalls
 
-### Pitfall 1: Trail Auto-Start Hardcodes `enableSharps: false, enableFlats: false`
+### Pitfall 1: Key Signature Width Breaks VexFlow Layout Without Manual Compensation
 
 **What goes wrong:**
-A new accidentals trail node navigates to `NotesRecognitionGame` with `nodeConfig.notePool` containing
-e.g. `['F4', 'F#4', 'G4', 'Ab4']`. The auto-start effect on lines 518-536 builds `trailSettings`
-with `enableSharps: false, enableFlats: false`. The `normalizeSelectedNotes` call then filters out
-all accidental pitches — the game silently runs on natural notes only. The child gets an exercise
-containing only F4 and G4, which looks like a different (easier) game than intended.
+`VexFlowStaffDisplay` currently calculates staff width and `noteStartX` without any key signature
+modifier. When `stave.addKeySignature('G')` is called, the key signature glyph (one sharp) consumes
+~20-30px of horizontal space. For keys with 4-5 sharps/flats (E major, Bb major), that grows to
+~60-80px. The `Formatter.format()` call uses the stave's `noteStartX` as the origin; if that is
+not updated to account for the key signature modifier width, notes will overlap the key signature
+glyphs or be clipped on the left edge.
+
+The existing code in `vexflowHelpers.js` uses a fixed `baseWidth = 500` and `pixelsPerBeat = 90`
+that does not account for any extra left-margin introduced by a key signature.
 
 **Why it happens:**
-The `enableSharps` / `enableFlats` flags were designed for the free-play settings panel. When the
-trail drives the game, there is no settings panel, so those flags stay false. The auto-start block
-that constructs `trailSettings` was written before accidentals nodes existed and never had a case
-for them.
+VexFlow's Stave tracks modifier widths separately from the rendering coordinate. `stave.getNoteStartX()`
+returns the correct x-offset only after `stave.draw()` has been called. Developers who call
+`Formatter.format(voice, width - noteStartX)` before `stave.draw()` get the pre-modifier value
+and produce overlapping layout. The VexFlow maintainer's own recommended fix (GitHub issue #340)
+is to use the `System` class, which handles cross-stave alignment automatically — but the existing
+code uses manual `Stave` construction, not `System`.
 
 **How to avoid:**
-In the auto-start effect, derive `enableSharps` and `enableFlats` from the `nodeConfig.notePool`
-itself rather than hardcoding `false`:
-```js
-const hasSharps = (nodeConfig.notePool || []).some(p => p.includes('#'));
-const hasFlats  = (nodeConfig.notePool || []).some(p => p.includes('b') && p.length > 2);
-const trailSettings = {
-  clef: nodeConfig.clef || 'treble',
-  selectedNotes: nodeConfig.notePool || [],
-  enableSharps: hasSharps,
-  enableFlats:  hasFlats,
-  timedMode: ...,
-  timeLimit: ...,
-};
-```
+- After calling `stave.addKeySignature(keyName)` and before calling `Formatter.format()`, call
+  `stave.draw()` first, then fetch `stave.getNoteStartX()` and use that as the offset.
+- Alternatively, compute a per-key padding constant (C: 0px, G/F: +22px, D/Bb: +40px, A/Eb: +58px,
+  E/Ab: +76px) and add it to `calculateOptimalWidth()` output.
+- For multi-measure patterns with a key signature on only the first measure (correct notation
+  practice), ensure subsequent stave instances receive `stave.setKeySignature('none')` or simply
+  omit `addKeySignature` on bars 2+.
 
 **Warning signs:**
-- Trail accidentals node launches but the note pool in the game UI only shows natural buttons.
-- `console.debug("[PatternBuilder] ✗ Filtered out invalid pitch: F#4")` appears in dev console.
-- 8-year-old completes the node easily because it only shows natural notes.
+- Key signature glyph and first note head visually overlap in SVG output.
+- `vexContainerRef.current.querySelector('.vf-keysignature')` returns an element but notes appear
+  to start at x=100 regardless of key width.
+- Console warning from VexFlow: "Ticket context is unset" on formatter calls.
 
-**Phase to address:** Data layer / trail node definitions phase (before any gameplay testing).
+**Phase to address:** Key Signatures node data phase (before rendering). Implement key signature
+rendering in `VexFlowStaffDisplay` with a `keySignature` prop; calculate layout after draw.
 
 ---
 
-### Pitfall 2: `patternBuilder.toVexFlowNote` Strips Accidentals — Sight Reading Shows Wrong Pitches
+### Pitfall 2: Automatic Accidental Suppression Not Applied — Double-Marking Key Notes
 
 **What goes wrong:**
-`patternBuilder.js` line 60 matches pitch with `/^([A-G])(\d+)$/` — no accidental character.
-`F#4` fails this regex and falls through to the fallback `{ keys: ["c/4"], duration: vexDuration }`.
-The sight reading game renders random C4 notes instead of the correct sharp/flat pitches. Score
-calculation then compares the player's detected pitch against C4 instead of F#4, making every
-correct answer count as wrong.
+In the key of G major, every F is automatically F#. If the sight-reading game displays an F# note
+with an explicit `#` accidental symbol next to it (because the existing accidental-rendering code
+from v2.2 always adds `#` when it sees `F#4` in the note pool), the notation is wrong. Standard
+music notation never shows an explicit accidental for a note already covered by the active key
+signature — only a natural sign would appear if you wanted to cancel it.
+
+The current `VexFlowStaffDisplay` applies `Accidental` modifiers based on pitch name (e.g. always
+renders `#` for any `F#4`). There is no `KeyManager` or `Accidental.applyAccidentals()` call in
+the existing code that would suppress the redundant accidental when a key signature is active.
 
 **Why it happens:**
-The pattern builder was written when all trail nodes had `accidentals: false`. The regex was
-intentionally simple. There is a separate `parsePitchForVexflow` function in `VexFlowStaffDisplay`
-that correctly handles accidentals (line 446-456), but `patternBuilder.toVexFlowNote` (the function
-that constructs the `easyscoreString` and `vexflowNotes` array upstream) was never updated to match.
+The v2.2 accidentals implementation was designed for nodes with *no key signature* — sharps/flats
+were taught as explicit one-note-at-a-time accidentals. Key Signatures are a different concept:
+the key signature handles all occurrences of those notes implicitly. Reusing the v2.2 accidental
+path unchanged produces redundant `#` symbols that confuse children and violate standard notation.
 
 **How to avoid:**
-Update `toVexFlowNote` in `patternBuilder.js` to match accidentals:
-```js
-const pitchMatch = obj.pitch.match(/^([A-G][#b]?)(\d+)$/);
-if (pitchMatch) {
-  const [, noteWithAcc, octave] = pitchMatch;
-  return { keys: [`${noteWithAcc.toLowerCase()}/${octave}`], duration: vexDuration };
-}
-```
-The VexFlow key format accepts `f#/4` and `ab/4` — no separate `Accidental` modifier is needed
-in the EasyScore path; the modifier is only needed for the lower-level `StaveNote` path (already
-correctly handled in `buildStaveNote` via `parsePitchForVexflow`).
+- Pass a `keySignature` prop into `VexFlowStaffDisplay` alongside `pattern`.
+- Before rendering accidentals on each `StaveNote`, check whether the note's accidental is implied
+  by the active key signature. Use VexFlow's `Accidental.applyAccidentals(voices, keySignature)`
+  static helper, which internally uses `KeyManager` to suppress redundant symbols.
+- Key signature trail nodes should NOT include explicit `accidentals: true` in their `noteConfig`.
+  They need a new `keySignature: 'G'` (or similar) field that is threaded through to the renderer.
 
 **Warning signs:**
-- Sight reading game shows all C4 notes during an accidentals trail node.
-- Accuracy score is 0% even when player plays F# correctly.
-- `[PatternBuilder] Warning: Invalid pitch format: F#4` appears in dev console.
+- F# notes in key-of-G exercises show an explicit `#` glyph beside the note head.
+- C# notes in key-of-A show explicit `#` even when key signature already covers them.
+- "Looks wrong" comparison: check any published piano sheet music in G major — F sharps have no
+  accidental symbol.
 
-**Phase to address:** Must be fixed before or during the sight reading integration phase. Run
-`npm run test:run` after the fix — `patternBuilder.test.js` exercises pitch parsing.
+**Phase to address:** Key Signature rendering phase. Must be the first thing tested before any
+Key Signature node data is authored.
 
 ---
 
-### Pitfall 3: Pitch Detection Returns Sharp Equivalents — Matching Fails for Flat Note Pools
+### Pitfall 3: Compound Meter Beat Unit Mismatch — 6/8 Counting as 6 Beats Instead of 2
 
 **What goes wrong:**
-`usePitchDetection.js` uses `NOTE_NAMES = ["C", "C#", "D", "D#", ...]` — sharps only. When a
-student plays Db4 (same frequency as C#4), the detector returns `"C#4"`. If the trail node's
-`notePool` contains `["Db4", "Eb4", "Ab4"]` (flat spellings), the comparison `detectedNote === currentNote` fails for every correct answer.
+The `rhythmGenerator.js` beat loop iterates one `beat` at a time: `while (beat < totalBeats)`.
+For 6/8, `RhythmPatternGenerator.js` defines `beats: 6` and `measureLength: 12` (12 eighth-note
+units). If this is imported into `durationConstants.js` (which it is — `resolveTimeSignature`
+delegates to `RHYTHM_TIME_SIGNATURES`), then `totalBeats = 6` for a one-measure 6/8 pattern.
+
+The generator would then fill 6 individual "beats" using `unitsPerBeat = 12/6 = 2` (2 eighth-note
+units per beat), treating each eighth note as a beat. This is technically a valid implementation
+of "fill 12 units" but it produces **6 independent eighth-note-sized beat slots** rather than
+**2 dotted-quarter beats subdivided into 3 eighths each**. The beat-boundary logic for complex
+patterns and syncopation checks will fire at wrong positions, and the measure-padding fallback
+will produce wrong rest/note types.
+
+The correct musical interpretation: 6/8 has **2 compound beats**, each subdivided into 3 eighths.
+The `beats` value in the TIME_SIGNATURES definition should be 2 (the felt pulse count), with
+`unitsPerBeat = 6` (three eighth notes = one dotted quarter beat = 6 sixteenth units).
 
 **Why it happens:**
-Chromatic pitch classes are represented with sharps in the detection layer. The game's answer
-comparison (in `useMicNoteInput.js` and the note-matching logic) must do enharmonic normalization.
-`NotesRecognitionGame` already has a `SHARP_TO_FLAT_MAP` and `toFlatEnharmonic` for audio lookup,
-but the primary note-matching path may not apply this map before comparing against the displayed
-question.
+`RhythmPatternGenerator.js` was defined with `beats: 6` for 6/8 (counting the printed numerator),
+not `beats: 2` (counting the felt pulse). This was never exercised in trail nodes since all existing
+rhythm nodes use 4/4, 3/4, or 2/4. The mismatch is latent until compound meter nodes are added.
 
 **How to avoid:**
-Decide on one canonical spelling per pitch class for the trail node pool and stick to it. The
-existing system uses flat spellings for audio (Db4, Eb4, etc.) because the piano sound files are
-named that way. Use the same flat convention in accidentals node `notePool` entries. Additionally,
-verify that the mic-input comparison path normalizes `#` spellings to flat before comparing.
+- Before authoring any 6/8 trail nodes, fix the `SIX_EIGHT` constant in `RhythmPatternGenerator.js`
+  to `beats: 2, unitsPerBeat: 6, measureLength: 12`.
+- Update `durationConstants.js`'s `buildTimeSignatureGrid()` accordingly, since it derives
+  `unitsPerBeat` from `measureLength / beats`.
+- Verify with the existing test: `generateRhythmEvents` for 6/8 should produce exactly 12 total
+  sixteenth units per measure regardless of how many events.
+- Add a unit test that generates 6/8 patterns and asserts: total sixteenth units = 12, and that
+  at least some patterns group notes as 3+3 (dotted-quarter pairs).
 
 **Warning signs:**
-- Mic input always marked wrong even when the pitch meter shows the right frequency.
-- In dev tools: `detectedNote = "C#4"`, `currentNote.pitch = "Db4"` logged in the same frame.
-- Free-play with `enableFlats: true` + mic works fine because the free-play path normalizes; trail
-  path fails because it uses raw node pool pitches.
+- 6/8 pattern generation produces 6 quarter rests where a whole-measure rest should be.
+- Patterns look like "6 separate quarter notes" instead of "two triplet groups of three eighths."
+- The `validateTrail.mjs` prebuild script passes but in-game the metronome click timing sounds
+  like 6 equal clicks rather than a 2-beat compound feel.
 
-**Phase to address:** Audio / pitch detection integration phase, before QA.
+**Phase to address:** Advanced Rhythm data/generator phase — fix before writing any 6/8 node files.
 
 ---
 
-### Pitfall 4: Auto-Grow Note Pool Finds Accidental Notes and Injects Them Without Enabling the Flag
+### Pitfall 4: Beam Grouping in 6/8 Defaults to 4/4 Grouping — Wrong Visual Notation
 
 **What goes wrong:**
-`NotesRecognitionGame` has an arcade-mode auto-grow feature: at every `GROW_INTERVAL` (5) streak,
-it walks forward from the current node via `getNextNodeInCategory()` looking for a pitch not yet in
-the pool (lines 885-898). When sharps/flats nodes exist, a player in a late natural-notes node
-(e.g., `treble_3_9`) at a 5-combo streak will have `"F#4"` injected from `treble_4_2` as an extra
-note. That pitch then gets shown as a question. But `settings.enableSharps` is still `false`, so
-the answer buttons in the UI may not include F#, making it impossible to answer correctly.
+`VexFlowStaffDisplay` calls `Beam.generateBeams(notes)` without a `groups` parameter. VexFlow's
+default beam grouping is quarter-note based (groups of 2 eighths per beat in 4/4). In 6/8 time,
+the correct grouping is two beamed groups of three eighth notes per measure (3+3). Without passing
+`groups: [new Fraction(3, 8)]` to `generateBeams`, VexFlow will beam the 6 eighth notes as 3 pairs
+of 2 (the 4/4 default), which is musically incorrect for compound time and visually confuses the
+learner about where the dotted-quarter beats are.
+
+This is a confirmed historical VexFlow issue (GitHub issue #164: "Make auto beaming time-signature
+aware") — the automatic grouping does not read the time signature of the stave.
 
 **Why it happens:**
-`getNextNodeInCategory` returns any node in the same category, including upcoming accidentals nodes.
-The auto-grow logic only checks whether the candidate pitch is absent from `alreadyKnown` — it does
-not check whether the pitch is a type of accidental the current node is supposed to support.
+The current code path was built for 4/4, 3/4, and 2/4 where VexFlow's default beam groups happen
+to be correct. The issue only surfaces when compound time is added.
 
 **How to avoid:**
-In the auto-grow candidate search, filter out accidental pitches when `enableSharps` and `enableFlats`
-are both false:
-```js
-const candidatePitch = nextNode.noteConfig.notePool.find(p => {
-  if (alreadyKnown.has(p)) return false;
-  if (!settings.enableSharps && p.includes('#')) return false;
-  if (!settings.enableFlats && p.includes('b') && p.length > 2) return false;
-  return true;
-});
-```
+- Pass the resolved time signature into `VexFlowStaffDisplay` and use it to compute the `groups`
+  parameter for `Beam.generateBeams()`:
+  - 4/4, 2/4: `[new Fraction(1, 4)]` (one quarter note per beam group) — current default, correct
+  - 3/4: `[new Fraction(1, 4)]` — same, correct
+  - 6/8: `[new Fraction(3, 8)]` — two groups of three eighths
+  - 9/8: `[new Fraction(3, 8)]` — three groups of three eighths
+- Use `Beam.getDefaultBeamGroups(timeSig)` which returns the correct Fraction array for common
+  time signatures including compound meters.
 
 **Warning signs:**
-- During arcade play on a natural-notes treble node, a sharp note button appears in the UI after a 5-combo.
-- The child cannot answer and loses a life, which is extremely frustrating and confusing.
+- 6/8 exercises show eighth notes beamed in pairs (2+2+2) instead of triplet groups (3+3).
+- The visual grouping suggests 4/4 feel even though the time signature shown is 6/8.
+- Students tap along in 4/4 because the visual beaming implies quarter-note beats.
 
-**Phase to address:** Node data phase (as soon as new unit files are added to `expandedNodes.js`).
+**Phase to address:** Advanced Rhythm rendering phase — same phase as beam grouping fix. Affects
+`VexFlowStaffDisplay` which is shared by Key Signatures too (use `timeSignature` prop already
+present in pattern data).
 
 ---
 
-### Pitfall 5: VexFlow Accidental Glyph Crammed or Invisible Due to Insufficient Stave Width
+### Pitfall 5: Timing Windows Calibrated for Simple-Meter Beats Break in Compound Time
 
 **What goes wrong:**
-VexFlow's `Formatter` calculates minimum width requirements based on tickable modifiers. An
-`Accidental` modifier on a `StaveNote` adds approximately 20-30px to the note's minimum spacing.
-The current `FIXED_STAVE_WIDTH_PER_BAR = 240` in `VexFlowStaffDisplay` was calibrated for natural
-notes only. When a measure contains 4 quarter notes all with sharp/flat accidentals, the formatter
-may either:
-(a) throw a `VF.RangeError: Auto sizing voice does not have enough room` in some VexFlow builds, or
-(b) silently squish the accidental glyph so it overlaps the preceding note.
+`useTimingAnalysis` uses `beatDurationMs = (60 / bpm) * 1000` where `bpm` is the user-facing
+tempo. For 4/4 at 80 BPM, a beat = 750ms. The timing tolerance is `NOTE_LATE_MS = 300ms` and
+`earlyAllowance` scales to `durationMs * 0.5`.
+
+In 6/8 at the same "80 BPM" setting, the intent is usually 80 dotted-quarter beats per minute.
+One dotted quarter = 1.5 beat durations. If the generator fills `beats: 2` compound beats but
+the tempo store says `bpm: 80`, the beat duration will be correct. However, if the compound beats
+are accidentally modeled as 6 simple beats at 80 BPM (see Pitfall 3), each "beat" window is
+(60/80)*1000 = 750ms, but the actual eighth notes at 240 BPM subdivision are only 250ms each.
+The late window (300ms) would span >1 note duration, causing the FSM to accept notes that are
+an entire subdivision late.
+
+Even with Pitfall 3 fixed, the onset-detection pipeline (`useMicNoteInput` FSM) uses a debounce
+calibrated to `shortestNoteDurationMsRef` from the pattern. In 6/8 at 60 BPM, the shortest note
+(an eighth) is 333ms. The BPM-adaptive debounce should handle this, but only if `shortestNoteDurationMsRef`
+is correctly computed from the compound-time pattern.
 
 **Why it happens:**
-Accidentals are rendered left of the notehead. In close spacing (4 quarter notes per bar), two
-adjacent accidentals need extra horizontal separation to avoid collision. VexFlow's automatic spacing
-handles this via `Formatter.format()` but only if enough width is allocated.
+The timing system was designed and tested exclusively with simple meters. The `resolveTimeSignature`
+output's `beats` and `unitsPerBeat` values feed directly into timing window construction, so fixing
+Pitfall 3 is a precondition for correct timing behavior. If Pitfall 3 is unfixed, timing bugs in
+compound meter will be impossible to debug independently.
 
 **How to avoid:**
-Increase `FIXED_STAVE_WIDTH_PER_BAR` or add an accidental-density calculation: count accidental
-modifiers in the pattern notes and add ~15px per accidental when determining stave width. The
-`buildStaveNote` function in `VexFlowStaffDisplay` already adds `Accidental` modifiers correctly;
-the width budget is the only gap.
+- Fix Pitfall 3 first (correct beat model for 6/8).
+- After fixing, run the sight-reading game with 6/8 patterns at various tempos (50-80 BPM) and
+  verify the acceptance window makes musical sense: a student should be able to play an eighth
+  note on the correct subdivision and get "Perfect" or "Good", not "Late".
+- Add a test in `rhythmGenerator.test.js` asserting that 6/8 pattern `startTime`/`endTime` values
+  correspond to correct note durations for a given BPM.
+- For syncopation specifically (off-beat note placement), the timing window must be wide enough
+  that notes played on weak beats are still detected but not so wide they accept wrong-beat hits.
+  The existing `durationMs * 0.5` early window should remain correct for this.
 
 **Warning signs:**
-- Notation renders with a sharp/flat symbol visually overlapping the note stem of the previous note.
-- Console logs `VF.Formatter: Could not format due to width constraints`.
-- Only visible with 3+ accidentals per measure; single accidentals look fine.
+- In 6/8 mode, correct notes played on beat 2 (dotted quarter 2) are scored as "Early."
+- The combo counter resets unexpectedly when playing correct off-beat notes.
+- `shortestNoteDurationMsRef` shows 750ms for a 6/8 pattern where the shortest note is an eighth.
 
-**Phase to address:** VexFlow rendering phase. Test with patterns containing 4 quarter notes each
-with a flat modifier (e.g. Db4 Eb4 Gb4 Ab4 in 4/4).
+**Phase to address:** Advanced Rhythm integration phase — after generator fix, before trail node
+data is authored for 6/8 nodes.
 
 ---
 
-### Pitfall 6: Hebrew Note Labels Are Ambiguous for Accidentals
+### Pitfall 6: Key Signature Nodes Teach Rules Before Context — 8-Year-Old Cognitive Overload
 
 **What goes wrong:**
-The i18n system displays solfege names in Hebrew (דו for C, רה for D, etc.). For accidentals the
-display is `${note.note}♭` or `${note.note}♯` (e.g., `דו♯`). For an 8-year-old Hebrew speaker
-learning accidentals, seeing `דו♯` without a corresponding guide on what "sharp" and "flat" mean
-creates confusion. More practically: the answer buttons in `NotesRecognitionGame` sort accidentals
-after naturals using `accidentalRank()`, which means Db4 (ranked 1) appears before C#4 (ranked 2),
-but solfege labels give no visual distinction between different accidentals on the same scale degree.
+An 8-year-old who has learned individual sharps/flats (F#4, C#4 etc. from v2.2) has a mental model
+of "sharp = explicit symbol on the note." When Key Signatures are introduced, the paradigm inverts:
+the symbol moves to the beginning of the staff and applies silently to all occurrences. If the
+first Key Signature node immediately presents F# notes *without* an explicit `#` symbol and without
+pedagogical scaffolding, the child will see an "F" on line 1 of the treble staff and read it as F
+natural — because that's what they've been trained to do since v2.2.
+
+This is the most common failure mode identified in piano pedagogy research for this age group:
+introducing key signatures too early relative to accumulated sharp/flat experience, or presenting
+key signature exercises identically to accidental exercises with just the visual changed.
 
 **Why it happens:**
-Solfege (do-re-mi) is a diatonic system and does not naturally accommodate chromatic alterations.
-The current label convention appends a Unicode glyph, which is technically correct but requires
-musical literacy to interpret — above the expected level of an 8-year-old in early accidentals
-lessons.
+It is tempting to author key signature nodes as "same note pool as accidental nodes, just add
+`keySignature: 'G'` to the config." This misses the conceptual bridge: the child needs to learn
+what the key signature symbol *means* before they can play exercises that rely on understanding it.
 
 **How to avoid:**
-For accidentals nodes, prefer English note names (e.g. "F#" / "Gb") or a consistent graphic
-(a note name plus a drawn sharp/flat symbol) rather than solfege + Unicode glyph. This is a
-pedagogical decision that should be made in the design phase. If Hebrew solfege is required,
-add short inline labels like `"חֲצִי-טוֹן"` (semitone) or the accepted Israeli pedagogy terms.
+- The first Key Signature nodes must be Discovery-type nodes (not Practice) with explicit explanation
+  text: "The # at the start means every F is F# all through the song."
+- Use only 1-sharp keys (G major) and 1-flat keys (F major) in the first unit. Do not introduce
+  2+ accidental key signatures until mastery of single-accidental keys is demonstrated.
+- Consider a "hybrid" approach: first few exercises show both the key signature AND a highlight
+  indicator on the affected note, gradually withdrawing the reminder over subsequent nodes.
+- The TrailNodeModal's "newContentDescription" field should explicitly state the mental model shift:
+  "Key Signature: plays F# every time — no # symbol needed!"
+- Do not sequence key signature nodes as prerequisites of advanced rhythm nodes. Keep the two
+  sections parallel and unlinked. An 8-year-old struggling with 6/8 does not need to also manage
+  key signature context simultaneously.
 
 **Warning signs:**
-- QA sessions with actual 8-year-olds show confusion about which button to press when two buttons
-  show `דו♯` and `רה♭` (which are enharmonic equivalents of each other).
-- Button labels are identical for enharmonic pairs shown in the same session.
+- Playtest: child plays F natural on F-line notes in key-of-G exercises → systematic key signature
+  misunderstanding.
+- Low completion rate (< 40%) on first key signature node despite child having mastered F#4 in v2.2.
+- Child asks "where did the sharp go?" — means the Discovery scaffolding is insufficient.
 
-**Phase to address:** UX / pedagogical content phase. Decide before building any UI.
+**Phase to address:** Key Signature pedagogy design phase — before authoring any node data. The
+learning sequence within the Key Signatures section must be explicitly reviewed for pedagogical order.
 
 ---
 
-### Pitfall 7: `subscriptionConfig` Not Updated — New Nodes Silently Become Free-Tier
+### Pitfall 7: Syncopation Exercises Break Tap-Rhythm Detection — Off-Beat Events Not Registered
 
 **What goes wrong:**
-`subscriptionConfig.js` uses an explicit `FREE_NODE_IDS` Set. Any new node ID that happens to match
-a free ID is accessible without a subscription. More importantly: if the new accidentals node IDs
-are accidentally added to the free list (e.g., by copy-paste from the treble_1 unit), paying
-subscribers and free users get the same content — the paywall is bypassed silently.
+The `MetronomeTrainer` tap detection uses the metronome clock as the reference for beat windows.
+Syncopated patterns place note attacks on weak beats or between beats (e.g. the 8-q-8 "Charleston"
+pattern from `COMPLEX_EXAMPLE_PATTERNS`). If the tap window logic aligns windows strictly to
+beat boundaries, an off-beat tap (on the "and" of beat 2) may fall between two windows and be
+rejected. The current FSM state machine in `useMicNoteInput` has a `NOTE_LATE_MS = 300ms` late
+window and the `earlyAllowance` from `useTimingAnalysis`, but these were validated only for
+on-beat note attacks.
 
-The inverse risk: if the database-side `is_free_node()` Postgres function is not updated to match
-the new node IDs, the RLS policy rejects premium subscribers trying to submit scores for the new
-premium nodes.
+For syncopation-specific nodes in the rhythm trail (where tapping is the input, not pitch), the
+question is whether the timing windows in `buildTimingWindows` correctly produce a window centered
+on each event's `startTime` (including off-beat events) or whether they are clamped to beat
+boundaries. Reviewing `patternBuilder.js`: each event gets `startTime = currentSixteenth * secondsPerSixteenth`
+which is correct for off-beat positions. The window is `[startMs - earlyAllowance, endMs + scaledLate]`.
+This should handle off-beat events correctly for sight-reading.
+
+However, the `MetronomeTrainer` rhythm game uses its own tap-comparison logic that may not directly
+use `useTimingAnalysis`. This must be verified before authoring syncopation nodes for the rhythm path.
 
 **Why it happens:**
-The comment in `subscriptionConfig.js` says "Changing the free tier boundary requires editing ONLY
-this file." But that comment is only half right: the Postgres `is_free_node()` function is a second,
-independent source of truth that must stay in sync. When new nodes are all-premium (as intended for
-v2.2), they do not need to be in `FREE_NODE_IDS` but they also do not need to be in `is_free_node()`
-— as long as the DB function returns `FALSE` for any unknown node ID. Verify this is the case.
+Syncopation was added to the *sight-reading* game's complex mode as a visual/audio display feature,
+but it has never been used as the target rhythm for the *MetronomeTrainer* tap exercise. The two
+game modes have independent timing paths.
 
 **How to avoid:**
-- Do not add any new accidentals node ID to `FREE_NODE_IDS`.
-- Verify the Postgres `is_free_node()` function returns `FALSE` for unknown node IDs (audit the
-  migration file).
-- Add a build-time test: for each new node ID, assert `isFreeNode(id) === false`.
+- Before authoring syncopation trail nodes for the rhythm path, verify that `MetronomeTrainer`'s
+  tap evaluation function uses event-level timing windows (not beat-boundary windows).
+- If `MetronomeTrainer` uses beat-boundary comparison, add event-level window comparison as a
+  fallback for off-beat events.
+- Add a test: generate a syncopated 8-q-8 pattern, simulate a tap at the off-beat position, and
+  verify the score evaluator returns "Perfect" or "Good."
 
 **Warning signs:**
-- Free users can access `treble_5_1` without subscribing.
-- Paid users get an RLS error ("new row violates row-level security policy") when submitting scores
-  for new nodes.
+- Tapping the "and" of beat 1 in an 8-q-8 pattern always scores "Miss" even when the timing is correct.
+- The rhythm game progress bar never advances on syncopation exercises.
+- Students completing syncopation sight-reading nodes (no issues) but failing rhythm tap nodes.
 
-**Phase to address:** Data layer phase, immediately when node IDs are finalized.
+**Phase to address:** Advanced Rhythm integration phase — verify MetronomeTrainer timing before
+authoring syncopation rhythm nodes.
 
 ---
 
-### Pitfall 8: `expandedNodes.js` Aggregator Not Updated — New Nodes Invisible to Trail
+### Pitfall 8: Subscription Gate Requires Manual Sync After New Nodes — Easy to Miss
 
 **What goes wrong:**
-`expandedNodes.js` imports unit files explicitly. Adding `trebleUnit4Redesigned.js` and
-`trebleUnit5Redesigned.js` without adding the corresponding import lines leaves the new nodes
-completely absent from `EXPANDED_NODES`. The trail renders as before — 93 nodes. No error is thrown.
-`getNodeById('treble_5_1')` returns `undefined`. The skill trail appears unchanged.
+All new Key Signature and Advanced Rhythm nodes will be premium by default (as established in v2.2:
+"36 new nodes all premium — default-deny"). But `subscriptionConfig.js` states explicitly: "Changing
+the free tier boundary requires editing ONLY this file." If the free tier is ever extended to include
+introductory Key Signature or Advanced Rhythm nodes (e.g. first 2 nodes free), both `FREE_NODE_IDS`
+in `subscriptionConfig.js` AND the Postgres `is_free_node()` function must be updated atomically.
+
+The risk is not that new nodes are incorrectly gated (they will be premium by default since they
+won't appear in `FREE_NODE_IDS`), but rather that if a business decision is made to make some new
+nodes free *after initial release*, only one of the two sync points gets updated.
 
 **Why it happens:**
-This is a manual aggregation pattern with no auto-discovery. It matches how all previous units were
-added (treble/bass/rhythmUnit1-3 are each individually imported). The pattern is correct but easy to
-forget when focused on data authoring.
+The dual-layer gate design (React UI + DB RLS) is intentional security-in-depth, but it creates
+a two-location sync obligation. v2.2's "default-deny by exclusion" approach means adding nodes
+without touching `subscriptionConfig.js` is safe for *premium* nodes. But it means the config
+file's comment ("Verification date: 2026-02-25") will become outdated, and future developers may
+assume it's still the complete record.
 
 **How to avoid:**
-The build-time validation script (`npm run verify:patterns`) should be extended to assert that every
-node file in `src/data/units/` is imported by `expandedNodes.js`. This catches the "file exists but
-not imported" case. Add this assertion to the validator alongside the existing prerequisite-cycle check.
+- Document in the phase plan: "All v2.4 nodes are premium by default. No changes to
+  `subscriptionConfig.js` are required unless a free-tier extension is explicitly planned."
+- After authoring all new node IDs, run `npm run build` to confirm `validateTrail.mjs` passes
+  (catches missing prerequisites, duplicate IDs, invalid node types).
+- If free nodes are later added, update both `FREE_NODE_IDS` and the Postgres migration atomically.
+  Never update one without the other.
 
 **Warning signs:**
-- `npm run verify:patterns` passes but new node IDs do not appear in the trail.
-- `getNodeById('treble_5_1')` returns `undefined` in browser devtools.
-- Trail tab shows 0 nodes for Unit 5.
+- `FREE_TIER_SUMMARY.total` doesn't match manual count of `FREE_NODE_IDS`.
+- UI shows content gate on a node that the Postgres `is_free_node()` returns true for (or vice versa).
+- Build passes but in-game a free node shows a locked paywall state.
 
-**Phase to address:** Data layer phase, immediately when new unit files are created.
+**Phase to address:** Node data authoring phase — include a verification checklist item: "New node
+IDs not in FREE_NODE_IDS → all premium. Verify gate parity if any are added to free tier."
 
 ---
 
 ## Technical Debt Patterns
 
-Shortcuts that seem reasonable but create long-term problems.
-
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Use only flat spellings in notePool (Db not C#) | Consistent with audio file naming | Confusing for learners who learn sharps first in key signature order | Acceptable for v2.2; revisit before key-signature unit |
-| Reuse existing note SVG images without dedicated accidental-in-context images | No new asset work | Same SVG shows the note in isolation — may not match staff position in sight reading | Acceptable only if NoteImageDisplay is not shown during sight reading |
-| Skip enharmonic explanation in UI | Simpler lesson design | Children who learn F# here will encounter Gb later and not recognize it as the same key | Acceptable for v2.2 (isolated accidentals); add disambiguation before key-signature unit |
-| Hardcode `accidentals: true` in noteConfig without validating the boolean in the validator | Fast data authoring | Validator never checks whether `accidentals: true` nodes have accidental pitches in notePool | Never — validator should cross-check |
-| Copy-paste a Unit 3 node file as the base for Unit 4 | Fast start | Inherits `START_ORDER` constant — if not updated, causes duplicate `order` values silently | Never — always verify order values are unique |
+| Hardcode key signature width offset (e.g. +22px for G major) | Avoids complex layout refactor | Wrong layout for keys with 3-5 accidentals; brittle if VexFlow version changes | Never — compute from `stave.getNoteStartX()` after draw |
+| Reuse v2.2 accidental rendering path for key sig nodes | Zero renderer changes | Notes in key signature always show explicit `#`/`b` symbols → pedagogically wrong | Never |
+| Model 6/8 as `beats: 6` in TIME_SIGNATURES | Matches printed time sig numerator | Produces 6 simple beats instead of 2 compound beats; timing pipeline misbehaves | Never |
+| Skip `Beam.generateBeams groups` param for 6/8 | No code change needed | 6/8 eighth notes beamed as 4/4 pairs (wrong notation) | Never |
+| Put key signature and compound meter in same trail unit | Fewer units to design | Cognitive overload for 8-year-olds; each is a separate conceptual shift | Never |
+| Author syncopation nodes without MetronomeTrainer timing verification | Faster node authoring | Syncopation tap exercises impossible to complete correctly | Never |
+| Use same `notePool` arrays for key-sig nodes as accidental nodes | Reuses existing data | Key-sig nodes must use natural note names (F not F#); the key handles the accidental | Never |
 
 ---
 
 ## Integration Gotchas
 
-Common mistakes when connecting to external services.
-
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| VexFlow `Accidental` modifier | Adding modifier to `StaveNote` using `addModifier(new Accidental('b'), 0)` where `'b'` is the VexFlow code for flat — but accidentally passing `'b'` for sharp or `'#'` for flat | Sharp = `'#'`, Flat = `'b'` in VexFlow — test with both before shipping |
-| Supabase RLS on `student_skill_progress` | Submitting progress for a new premium node when `is_free_node()` returns false and `has_active_subscription()` also returns false (e.g., expired subscription) results in a 403 with no UI feedback | Catch the RLS error in `skillProgressService.updateNodeProgress()` and surface a subscription-expired message |
-| `NOTE_AUDIO_LOADERS` in `NotesRecognitionGame` | Adding a node with `Gb3` in notePool — `NOTE_AUDIO_LOADERS['Gb3']` exists — but `Fb3` does not. If a theoretical accidentals node included `Fb3`, the audio would silently fail | Audit every pitch in every new notePool against `NOTE_AUDIO_LOADERS` keys before merging |
-| `getNextNodeInCategory` in auto-grow | Returns `boss_treble_5` which has `noteConfig.notePool` containing the full accidentals set — injecting a boss node's pool note into a regular node's arcade session | Auto-grow should skip boss nodes (`isBoss: true`) as note pool sources |
+| `VexFlowStaffDisplay` + key signature | Call `addKeySignature` but forget to re-fetch `noteStartX` after draw | Call `stave.draw()` first; use `stave.getNoteStartX()` for formatter width |
+| `Accidental.applyAccidentals` | Calling it without passing the key signature string | Pass `keySignature` argument: `Accidental.applyAccidentals([voice], keySignature)` |
+| `Beam.generateBeams` in 6/8 | No `groups` parameter → defaults to 4/4 beaming | Pass `{ groups: Beam.getDefaultBeamGroups('6/8') }` |
+| `resolveTimeSignature('6/8')` | Returns `unitsPerBeat: 2` if `beats: 6` in source constant | Fix source constant: `beats: 2, measureLength: 12` gives `unitsPerBeat: 6` |
+| Trail node `notePool` in key-sig context | Using `['F#4', 'G4', 'A4']` — F# explicit | Use `['F4', 'G4', 'A4']` with `keySignature: 'G'` — key handles the sharp |
+| `validateTrail.mjs` prebuild | New node IDs with typos pass JS syntax but fail prerequisite check | Run `npm run build` after every batch of new node files; fix before committing |
+| `patternBuilder.js` with key signature | `inferClefForPitch` may misread natural note names (F4 vs F#4) | Key-sig nodes should use natural pitch strings; no change needed in clef inference |
+| `subscriptionConfig.js` + DB `is_free_node()` | Updating config but not Postgres function | Any free-tier boundary change requires both: config update + migration |
 
 ---
 
 ## Performance Traps
 
-Patterns that work at small scale but fail as usage grows.
-
 | Trap | Symptoms | Prevention | When It Breaks |
 |------|----------|------------|----------------|
-| Importing all accidental SVG assets at module load | `gameSettings.js` already imports ~80 accidental SVGs at top level; adding more octave variants increases initial JS parse time | Do not add new SVG imports unless the specific pitch is in scope for v2.2 trail nodes | Noticeable above ~100 static SVG imports (currently at ~80) |
-| Large `notePool` arrays in boss challenge config | Boss node with all 20 accidentals notes generates a very large answer button grid in `NotesRecognitionGame`; layout breaks below 375px width | Cap boss notePool at 10-12 notes; use a curated subset, not all notes at once | Any device narrower than 390px with 15+ answer buttons |
-| Duplicate node IDs across treble accidentals and extended-range nodes | Two nodes with the same `id` cause `getNodeById` to return the first match silently; second node is unreachable | Run `verify:patterns` which catches duplicate IDs | Always — deduplication is a correctness issue not a performance issue |
-
----
-
-## Security Mistakes
-
-Domain-specific security issues beyond general web security.
-
-| Mistake | Risk | Prevention |
-|---------|------|------------|
-| New accidentals node IDs accidentally added to `FREE_NODE_IDS` | Free users access premium content; revenue lost | Build-time test asserting no accidentals node IDs are in `FREE_NODE_IDS` |
-| `is_free_node()` Postgres function not audited after adding new nodes | If it uses a whitelist, unknown IDs could default to `TRUE`; paid subscribers blocked or free tier expanded | Read the current migration to confirm unknown IDs return `FALSE`; add a DB integration test |
-| Score submission for new nodes bypasses rate limiting | If the new node IDs are not in the `students_score` table's rate-limit path, a bot could farm XP by spamming new node IDs | Verify the rate-limit trigger covers `node_id` values not previously seen |
+| Re-rendering VexFlow SVG on every key signature change | Jank during exercise transitions | Pattern object is memoized by identity; only re-render when `pattern` ref changes | Already handled by `prevPatternRef` guard in `VexFlowStaffDisplay` |
+| Key signature glyph forces SVG reflow on every measure | Layout shifts in multi-bar patterns | Batch all stave modifiers before calling `stave.draw()`; call `fitSvgViewBoxToContent` once after all staves drawn | At 4+ measures per pattern with key signature |
+| Generating 6/8 patterns generates 50% more events than 4/4 for same measure count | Pattern generation is slower | 6/8 at 2 beats/measure has fewer beat iterations than 4/4 at 4 beats — actually faster | Not a real trap; document correctly |
+| Adding 30 new nodes increases `SKILL_NODES` array to ~159 nodes | `validateTrail.mjs` DFS takes longer | DFS is O(N+E) — 159 nodes is trivial; no performance risk | Never at this scale |
 
 ---
 
 ## UX Pitfalls
 
-Common user experience mistakes in this domain.
-
 | Pitfall | User Impact | Better Approach |
 |---------|-------------|-----------------|
-| Introducing F# and Gb in the same node lesson | 8-year-olds see two different button labels for what sounds identical on the keyboard; they think they are wrong when they play the right key | Separate sharp nodes from flat nodes pedagogically: teach sharps first (black keys going right), then flats (black keys going left) in a later node |
-| Showing all 5 black-key accidentals in a single Discovery node | Cognitive overload; forgetting rate spikes | Introduce at most 1-2 new accidentals per Discovery node, mirroring how naturals were introduced one at a time |
-| No visual distinction between the sharp symbol (♯) and natural symbol (♮) in small button text | Children misread flat as natural or sharp as natural at small font sizes | Use the SVG note images (which already include the accidental symbol clearly drawn on a staff) rather than text-label buttons for accidentals questions |
-| Awarding 3 stars too easily on accidentals nodes | Dilutes the star achievement that was hard-won for naturals | Keep the same 95% threshold for 3 stars; consider adding a "first time seeing accidentals" difficulty adjustment via slightly lower tempo default |
-| Boss node requiring all 10 accidentals at 95% accuracy | Too difficult for 8-year-olds who just learned accidentals | Boss should test a focused subset (e.g., 5 most-practiced accidentals) at 80% for full stars |
+| Show key signature in new exercise without explanation | Child sees unfamiliar `#` glyphs at staff start, doesn't know what they mean | Discovery node must include a callout: "The # here means every F is F# — no symbol needed!" |
+| Introduce both key sig AND compound meter in same session | Child overwhelmed, abandons both | Keep Key Signatures section and Advanced Rhythm section as independent trail tabs; no cross-prerequisites |
+| Show 6/8 exercises without explaining the "1-2-3, 1-2-3" feel | Child counts 6 separate beats and taps too fast | First 6/8 node should have a "listen and feel" exercise before any performance mode |
+| Use the same "3 stars on this note pool" goal for key-sig nodes as accidental nodes | Key-sig nodes have harder cognitive load (implicit accidentals) than explicit accidental nodes | Reduce exercise count per node for the first 2 key-sig nodes (7 exercises instead of 10) |
+| Require mic input for key-sig nodes at the same note pool size as C-major nodes | Key-sig context adds cognitive load on top of pitch identification | Start key-sig nodes with keyboard input only; mic mode unlocked at practice nodes, not discovery nodes |
+| Display sharp/flat Unicode symbols in node names for key-sig nodes (e.g. "G♯ Major") | Unicode glyph too small at 8px trail node label size | Use text: "Key of G" not "G Major (1♯)" in trail node short names |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-Things that appear complete but are missing critical pieces.
-
-- [ ] **Trail auto-start:** New accidentals node loads and game starts — verify `enableSharps` or `enableFlats` is `true` in the running settings, not just in `nodeConfig`. Check via React DevTools or a `console.log` in `startGame`.
-- [ ] **VexFlow rendering:** Staff displays a note with a flat/sharp symbol — verify the accidental glyph does not overlap adjacent noteheads by zooming in on mobile viewport (375px wide).
-- [ ] **Pitch detection match:** Mic input matches Db4 correctly — verify by playing Db4 on a real piano (not just clicking the listen button) and checking the detected note in dev overlay.
-- [ ] **Auto-grow isolation:** Playing arcade mode on a natural-notes node at 10-combo does not inject accidental notes from the next unit — test with a node that is immediately before `treble_5_1` in order.
-- [ ] **Subscription gate:** Free user attempting to access `treble_5_1` sees the paywall modal, not the game — verify on a real free-tier account.
-- [ ] **Existing progress intact:** After deploying new unit files, users who completed `boss_treble_3` still show as completed — verify `EXPANDED_NODES` aggregation does not shift array indices that affect `getNodeById` lookups (it uses `find`, not array position, so this should be fine — but verify).
-- [ ] **Validator passes:** `npm run verify:patterns` passes with new unit files added and no new prerequisite cycles.
-- [ ] **Hebrew labels readable:** Answer buttons for Db4 and C#4 shown in a Hebrew-language session are distinguishable — test in the `he` locale.
-- [ ] **Boss unlock event fires:** Completing `boss_treble_5` triggers the 3-stage boss modal (boss unlock events are keyed on `isBoss: true` in VictoryScreen) — verify by navigating to the boss node and completing it.
+- [ ] **Key signature rendering:** VexFlow displays correct key signature AND notes are uncluttered
+  (no explicit `#`/`b` on notes covered by key sig) — verify with `Accidental.applyAccidentals`.
+- [ ] **Beam grouping in 6/8:** Six consecutive eighth notes in 6/8 beam as `3+3`, not `2+2+2`
+  — check SVG output visually and confirm `Beam.getDefaultBeamGroups` is called.
+- [ ] **6/8 total units:** `generateRhythmEvents` for 1-measure 6/8 produces exactly 12 total
+  sixteenth units — verify with existing `actualTotal !== expectedTotal` guard log.
+- [ ] **Timing windows in 6/8:** Correct note played on beat 2 (offset 6 sixteenth units) scores
+  "Good" or better — not "Miss" or "Early."
+- [ ] **MetronomeTrainer syncopation:** Tapping on the "and" of beat 1 in an 8-q-8 pattern at
+  80 BPM scores as a hit — confirm `MetronomeTrainer` tap window uses event-level startTime.
+- [ ] **Subscription gate:** All new v2.4 node IDs are absent from `FREE_NODE_IDS` — run
+  `src/config/subscriptionConfig.js` grep to confirm zero new IDs listed there.
+- [ ] **validateTrail.mjs passes:** `npm run build` exits 0 after all new unit files are wired
+  into `expandedNodes.js` and `skillTrail.js`.
+- [ ] **notePool uses natural names:** Key-sig nodes use `['F4', 'G4', 'A4']` (not `['F#4']`)
+  — key signature handles the accidental implicitly.
+- [ ] **RhythmNotationRenderer (Canvas):** The canvas-based rhythm display in `MetronomeTrainer`
+  uses its own drawing code — it does not call `VexFlowStaffDisplay` and must be separately updated
+  to display 6/8 time signatures and compound beam groups if used for advanced rhythm nodes.
+- [ ] **i18n keys added:** All new node names and descriptions have Hebrew translations in
+  `src/locales/he/common.json` if they appear in i18n-translated surfaces.
 
 ---
 
 ## Recovery Strategies
 
-When pitfalls occur despite prevention, how to recover.
-
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Trail auto-start strips accidentals from pool | LOW | Hotfix: add 3 lines to derive `enableSharps`/`enableFlats` from notePool in the auto-start effect. No DB migration needed. |
-| `patternBuilder.toVexFlowNote` silently renders C4 | LOW | Hotfix: update one regex in `patternBuilder.js`. Update corresponding tests. |
-| Pitch detection enharmonic mismatch | MEDIUM | Requires auditing all note-comparison paths in the mic pipeline; may affect free-play as well as trail mode |
-| New node IDs accidentally free-tier | LOW | Hotfix in `subscriptionConfig.js`; deploy. No user data loss. |
-| `expandedNodes.js` not updated | LOW | Add 2 import lines; `npm run build` catches it immediately if verify:patterns is run as prebuild |
-| Duplicate `order` values in unit files | MEDIUM | Renumber all affected nodes; test that trail renders in correct visual order; verify no progress is lost (progress is keyed on `id`, not `order`) |
-| VexFlow accidental glyph collision | MEDIUM | Increase `FIXED_STAVE_WIDTH_PER_BAR`; re-test all existing multi-bar sight reading patterns to confirm no regression |
+| Key sig width breaks layout (Pitfall 1) | MEDIUM | Add `keySignature` prop to `VexFlowStaffDisplay`; call `stave.draw()` before formatter; update `calculateOptimalWidth` to accept `keySignature` param |
+| Double-marked accidentals (Pitfall 2) | LOW | Add `Accidental.applyAccidentals([voice], keySignature)` call after voice creation; remove manual accidental application on key-sig note pools |
+| 6/8 beat model wrong (Pitfall 3) | LOW (1 constant change) | Change `RhythmPatternGenerator.js SIX_EIGHT.beats` from 6 to 2; re-run tests; verify `unitsPerBeat: 6` flows through to generator |
+| Wrong beam grouping (Pitfall 4) | LOW | Pass `{ groups: Beam.getDefaultBeamGroups(timeSig) }` to `Beam.generateBeams()` in VexFlowStaffDisplay |
+| Timing window mismatch in 6/8 (Pitfall 5) | LOW (depends on Pitfall 3 fix) | Fix Pitfall 3 first; retest timing at 50/60/70/80 BPM in 6/8 |
+| Pedagogical failure (Pitfall 6) | HIGH (requires node redesign) | Redesign first 2-3 key-sig nodes with explicit scaffolding; add callout text to TrailNodeModal for Discovery nodes |
+| Syncopation tap detection broken (Pitfall 7) | MEDIUM | Audit `MetronomeTrainer` tap comparison path; add event-level window support if missing |
+| Subscription gate sync missed (Pitfall 8) | LOW | Update `subscriptionConfig.js` + apply DB migration atomically; run build to confirm |
 
 ---
 
 ## Pitfall-to-Phase Mapping
 
-How roadmap phases should address these pitfalls.
-
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| Trail auto-start strips accidentals (Pitfall 1) | Phase 1: Data + Trail integration | Start an accidentals node from trail; confirm enableSharps=true in running state |
-| patternBuilder drops accidental pitches (Pitfall 2) | Phase 1: Data + Trail integration | Run `patternBuilder.test.js`; add a test case for `F#4` |
-| Enharmonic mismatch in pitch detection (Pitfall 3) | Phase 2: Game mode integration | Manual QA with real piano mic input on a flat-spelling node |
-| Auto-grow injects accidentals into natural-notes session (Pitfall 4) | Phase 1: Data + Trail integration | Trigger 5-combo in treble_3_9 arcade; confirm no accidental injected |
-| VexFlow accidental glyph collisions (Pitfall 5) | Phase 2: Game mode integration | Render a 4/4 measure of all-accidental quarter notes on a 375px viewport |
-| Hebrew label ambiguity (Pitfall 6) | Phase 0: Design / content spec | Prototype answer buttons in Hebrew locale; get feedback from target age group |
-| subscriptionConfig not updated (Pitfall 7) | Phase 1: Data + Trail integration | Assert `isFreeNode('treble_5_1') === false` in unit test |
-| expandedNodes.js aggregator not updated (Pitfall 8) | Phase 1: Data + Trail integration | `getNodeById('treble_5_1')` returns the node object in browser console |
+| Pitfall 1: Key sig width layout | Key Signatures rendering (Phase 1) | Visual inspection: no note/key-sig overlap in SVG |
+| Pitfall 2: Double-marked accidentals | Key Signatures rendering (Phase 1) | Notes in key-sig nodes show no explicit `#`/`b` symbols |
+| Pitfall 3: 6/8 beat model | Advanced Rhythm generator (Phase 3) | Unit test: 6/8 produces 12 units, felt as 2 beats |
+| Pitfall 4: Wrong beam grouping | Advanced Rhythm rendering (Phase 3) | Visual check: 6 eighths beam as 3+3 in 6/8 |
+| Pitfall 5: Compound meter timing | Advanced Rhythm integration (Phase 3) | Timing test: correct off-beat hit scores "Good" |
+| Pitfall 6: Cognitive overload 8-yr-olds | Key Signatures pedagogy design (Phase 2) | Playtest: first discovery node has explicit scaffolding; completion rate > 60% |
+| Pitfall 7: Syncopation tap detection | Advanced Rhythm tap verification (Phase 4) | Manual test: 8-q-8 tap at correct off-beat → hit |
+| Pitfall 8: Subscription gate sync | Node data wiring (all phases) | Build passes + DB `is_free_node()` agrees with config |
 
 ---
 
 ## Sources
 
-- Direct codebase review: `src/data/units/trebleUnit3Redesigned.js`, `src/data/units/bassUnit3Redesigned.js`
-- Direct codebase review: `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (lines 518-536, 875-900)
-- Direct codebase review: `src/components/games/sight-reading-game/utils/patternBuilder.js` (lines 60-73)
-- Direct codebase review: `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` (lines 446-485, 408)
-- Direct codebase review: `src/hooks/usePitchDetection.js` (NOTE_NAMES constant, lines 25-38)
-- Direct codebase review: `src/components/games/sight-reading-game/constants/noteDefinitions.js`
-- Direct codebase review: `src/components/games/sight-reading-game/constants/gameSettings.js` (TREBLE_IMAGE_MAP accidental entries)
-- Direct codebase review: `src/config/subscriptionConfig.js`
-- Direct codebase review: `src/data/expandedNodes.js`
-- Direct codebase review: `src/data/skillTrail.js` (UNITS.TREBLE_5, UNITS.BASS_5 stubs)
-- VexFlow v5 API: `Accidental`, `StaveNote.addModifier()`, `Formatter` width constraints — HIGH confidence (same API already used in VexFlowStaffDisplay)
-- McLeod Pitch Method sharp/flat detection — covered in existing `PITFALLS.md` (mic overhaul research); enharmonic behavior is verified in `frequencyToNote()` (NOTE_NAMES is sharps-only)
+- VexFlow GitHub issue #340 — Key signature width and noteStartX positioning: https://github.com/0xfe/vexflow/issues/340
+- VexFlow GitHub issue #164 — Make auto beaming time-signature aware: https://github.com/0xfe/vexflow/issues/164
+- VexFlow GitHub issue #108 — Beaming of eighth notes in 6/8 time: https://github.com/0xfe/vexflow/issues/108
+- VexFlow Development Gotchas wiki: https://github.com/0xfe/vexflow/wiki/Development-Gotchas
+- VexFlow Automatic Beaming wiki: https://github.com/0xfe/vexflow/wiki/Automatic-Beaming
+- VexFlow accidental.js docs: http://www.vexflow.com/build/docs/accidental.html
+- VexFlow keysignature.js docs: http://www.vexflow.com/build/docs/keysignature.html
+- Teach Piano Today — Key signatures for young students: https://www.teachpianotoday.com/2015/12/09/what-to-do-if-key-signatures-are-scary-for-your-piano-students/
+- Magic of Music Ed — How to teach key signatures (2025): https://magicofmusiced.com/2025/03/02/how-to-teach-key-signatures/
+- Open Music Theory — Compound meters and time signatures: https://viva.pressbooks.pub/openmusictheory/chapter/compound-meters-and-time-signatures/
+- Direct codebase review: `VexFlowStaffDisplay.jsx`, `rhythmGenerator.js`, `patternBuilder.js`, `durationConstants.js`, `RhythmPatternGenerator.js`, `useTimingAnalysis.js`
 
 ---
-*Pitfalls research for: Sharps & Flats content expansion (v2.2)*
-*Researched: 2026-03-15*
+
+*Pitfalls research for: Key Signatures & Advanced Rhythm content expansion (v2.4)*
+*Researched: 2026-03-18*
