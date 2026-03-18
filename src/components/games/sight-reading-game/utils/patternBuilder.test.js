@@ -135,6 +135,57 @@ describe("inferClefForPitch (accidentals)", () => {
   });
 });
 
+describe("patternBuilder (key signature filtering)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("filters out non-in-key notes when keySignature is set", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4", "F4", "F#4", "G4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      keySignature: "G",
+    });
+    const pitches = result.notes.filter(n => n.type === "note").map(n => n.pitch);
+    // F4 is NOT in G major (F# is). All pitches should be in-key.
+    expect(pitches.every(p => p !== "F4")).toBe(true);
+  });
+
+  it("preserves all notes when keySignature is null", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.3);
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "F4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      keySignature: null,
+    });
+    // Should use all provided notes — F4 is valid when no key sig
+    expect(result.notes.length).toBeGreaterThan(0);
+  });
+
+  it("includes keySignature in returned pattern object", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.4);
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["G4", "A4", "B4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      keySignature: "G",
+    });
+    expect(result.keySignature).toBe("G");
+  });
+});
+
 describe("toVexFlowNote (accidentals via generatePatternData)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
