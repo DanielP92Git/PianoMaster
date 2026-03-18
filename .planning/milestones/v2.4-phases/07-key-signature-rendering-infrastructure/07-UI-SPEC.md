@@ -44,7 +44,7 @@ Declared values (all multiples of 4, sourced from `docs/DESIGN_SYSTEM.md` and `t
 
 **Exceptions:**
 - Touch targets: minimum 44px height/width (`min-h-touch` / `min-w-touch` tokens from `tailwind.config.js`). All key selector buttons must meet this minimum.
-- The key signature step card follows the same `p-2.5 landscape:p-2 sm:p-3` pattern as all other settings steps in `UnifiedGameSettings.jsx`.
+- The new step inherits the existing `UnifiedGameSettings` card padding pattern unchanged. Padding values for the inherited container are governed by the existing component and are not re-specified in this phase's spacing contract.
 
 ---
 
@@ -56,7 +56,7 @@ All sizes are from the existing token set in `tailwind.config.js`. This phase in
 |------|------|--------|-------------|----------------|-------|
 | Body | 16px (1rem) | 400 (regular) | 1.7 | `text-base` | Key option labels, helper descriptions |
 | Label | 14px (0.875rem) | 600 (semibold) | 1.6 | `text-sm font-semibold` | Step header, accidental count badge |
-| Heading | 18px (1.125rem) | 700 (bold) | 1.7 | `text-lg font-bold` | Step title within `UnifiedGameSettings` wizard |
+| Heading | 18px (1.125rem) | 600 (semibold) | 1.7 | `text-lg font-semibold` | Step title within `UnifiedGameSettings` wizard |
 | Display | not used in this phase | — | — | — | — |
 
 **Font family:** `font-rounded` (Nunito) for all settings UI, consistent with existing steps.
