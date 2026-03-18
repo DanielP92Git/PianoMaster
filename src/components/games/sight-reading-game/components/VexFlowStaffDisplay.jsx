@@ -454,9 +454,14 @@ export function VexFlowStaffDisplay({
         const match = raw.match(/^([A-Ga-g])([#b]?)(\d)$/);
         if (!match) return { key: "c/4", accidental: null };
         const [, letterRaw, accidentalRaw, octaveRaw] = match;
-        const key = `${letterRaw.toLowerCase()}/${octaveRaw}`;
         const accidental =
           accidentalRaw === "#" ? "#" : accidentalRaw === "b" ? "b" : null;
+        // Include accidental in VexFlow key (e.g. "f#/4", "bb/3") so VexFlow
+        // knows the actual pitch. applyAccidentals uses this to decide whether
+        // to show/hide accidental symbols based on the key signature.
+        const key = accidental
+          ? `${letterRaw.toLowerCase()}${accidental}/${octaveRaw}`
+          : `${letterRaw.toLowerCase()}/${octaveRaw}`;
         return { key, accidental };
       };
 
