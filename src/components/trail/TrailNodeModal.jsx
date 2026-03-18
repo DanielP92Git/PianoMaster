@@ -181,6 +181,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
       exerciseType: exercise.type,
       enableSharps,
       enableFlats,
+      keySignature: exercise.config?.keySignature ?? null,
     };
 
     // Navigate based on exercise type

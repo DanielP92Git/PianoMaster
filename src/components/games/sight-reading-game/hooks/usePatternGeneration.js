@@ -11,7 +11,8 @@ export function usePatternGeneration() {
       clef = "Treble",
       measuresPerPattern = 1,
       rhythmSettings,
-      rhythmComplexity = "simple"
+      rhythmComplexity = "simple",
+      keySignature = null
     ) =>
       generatePatternData({
         difficulty,
@@ -22,6 +23,7 @@ export function usePatternGeneration() {
         measuresPerPattern,
         rhythmSettings,
         rhythmComplexity,
+        keySignature,
       }),
     []
   );

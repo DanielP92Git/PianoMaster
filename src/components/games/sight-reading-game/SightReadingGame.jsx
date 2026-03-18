@@ -173,6 +173,7 @@ export function SightReadingGame() {
   // Defaults to false so free-play mode is unaffected (location.state is null).
   const trailEnableSharps = location.state?.enableSharps ?? false;
   const trailEnableFlats = location.state?.enableFlats ?? false;
+  const trailKeySignature = location.state?.keySignature ?? null;
   const { audioContextRef, requestMic, releaseMic, isInterrupted, handleTapToResume } = useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(80, { sharedAudioContext: audioContextRef.current });
@@ -305,6 +306,7 @@ export function SightReadingGame() {
         timeSignature: nodeConfig.timeSignature || '4/4',
         enableSharps: trailEnableSharps,
         enableFlats: trailEnableFlats,
+        keySignature: trailKeySignature,
       };
 
       setGameSettings(trailSettings);
@@ -2123,7 +2125,8 @@ export function SightReadingGame() {
           gameSettings.clef,
           gameSettings.measuresPerPattern || 1,
           gameSettings.rhythmSettings,
-          gameSettings.rhythmComplexity
+          gameSettings.rhythmComplexity,
+          gameSettings.keySignature || null
         );
 
         setCurrentPattern(pattern);
@@ -3056,7 +3059,8 @@ export function SightReadingGame() {
           currentSettings.clef,
           currentSettings.measuresPerPattern || 1,
           currentSettings.rhythmSettings,
-          currentSettings.rhythmComplexity
+          currentSettings.rhythmComplexity,
+          currentSettings.keySignature || null
         );
 
         // Use flushSync to ensure pattern state updates complete BEFORE phase transition
@@ -3104,7 +3108,8 @@ export function SightReadingGame() {
       clef: nodeConfig?.clef || 'treble',
       selectedNotes: nodeConfig?.notePool || [],
       measuresPerPattern: nodeConfig?.measuresPerPattern || 1,
-      timeSignature: nodeConfig?.timeSignature || '4/4'
+      timeSignature: nodeConfig?.timeSignature || '4/4',
+      keySignature: trailKeySignature,
     };
     setGameSettings(trailSettings);
     setTimeout(() => startGame(trailSettings), 50);
@@ -3496,6 +3501,7 @@ export function SightReadingGame() {
         performanceResults={performanceResults}
         gamePhase={gamePhase}
         scrollProgress={gamePhase === GAME_PHASES.PERFORMANCE ? staffScrollProgress : 0}
+        keySignature={gameSettings.keySignature || null}
       />
     </div>
   ) : null;

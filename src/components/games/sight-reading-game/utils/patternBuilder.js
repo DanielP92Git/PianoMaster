@@ -11,6 +11,7 @@ import {
   resolveTimeSignature,
 } from "../constants/durationConstants.js";
 import { generateRhythmEvents } from "./rhythmGenerator.js";
+import { filterNotesToKey } from "./keySignatureUtils.js";
 
 const isDebugEnabled =
   (typeof import.meta !== "undefined" &&
@@ -98,6 +99,7 @@ export async function generatePatternData({
   measuresPerPattern = 1,
   rhythmSettings,
   rhythmComplexity = "simple",
+  keySignature = null,
 }) {
   const clefKey = String(clef || "Treble").toLowerCase();
   const resolvedSignature = resolveTimeSignature(timeSignature);
@@ -278,6 +280,20 @@ export async function generatePatternData({
     const fallbackNotes = allNotes.slice(0, 5).map((n) => n.pitch);
     availableNotes.push(...fallbackNotes);
     debugLog("⚠ Using fallback notes:", fallbackNotes);
+  }
+
+  // When a key signature is active, filter available notes to in-key pitches only.
+  // This ensures generated patterns contain only notes that belong to the selected key.
+  // (Locked decision: keySignature takes precedence over enableSharps/enableFlats.)
+  if (keySignature && keySignature !== 'C') {
+    const filteredByKey = filterNotesToKey(availableNotes, keySignature);
+    if (filteredByKey.length > 0) {
+      availableNotes.length = 0;
+      availableNotes.push(...filteredByKey);
+      debugLog("Key signature filter:", keySignature, "→", availableNotes.length, "notes");
+    } else {
+      debugLog("⚠ Key signature filter yielded 0 notes — keeping original set");
+    }
   }
 
   // Sort availableNotes by frequency to maintain musical order
@@ -466,5 +482,6 @@ export async function generatePatternData({
     tempo,
     easyscoreString,
     vexflowNotes,
+    keySignature,  // pass through for VexFlowStaffDisplay
   };
 }
