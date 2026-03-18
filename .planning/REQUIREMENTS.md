@@ -25,13 +25,13 @@ Requirements for Key Signatures (6 keys, treble + bass) and Advanced Rhythm (6/8
 
 ### Bass Key Signatures
 
-- [ ] **BASS-01**: G major (1 sharp) bass nodes
-- [ ] **BASS-02**: D major (2 sharps) bass nodes
-- [ ] **BASS-03**: A major (3 sharps) bass nodes
-- [ ] **BASS-04**: F major (1 flat) bass nodes
-- [ ] **BASS-05**: Bb major (2 flats) bass nodes
-- [ ] **BASS-06**: Eb major (3 flats) bass nodes
-- [ ] **BASS-07**: Bass key signatures boss challenge (all 6 keys mixed)
+- [x] **BASS-01**: G major (1 sharp) bass nodes
+- [x] **BASS-02**: D major (2 sharps) bass nodes
+- [x] **BASS-03**: A major (3 sharps) bass nodes
+- [x] **BASS-04**: F major (1 flat) bass nodes
+- [x] **BASS-05**: Bb major (2 flats) bass nodes
+- [x] **BASS-06**: Eb major (3 flats) bass nodes
+- [x] **BASS-07**: Bass key signatures boss challenge (all 6 keys mixed)
 
 ### Rhythm Infrastructure
 
@@ -105,13 +105,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TREB-05 | Phase 08 | Pending |
 | TREB-06 | Phase 08 | Pending |
 | TREB-07 | Phase 08 | Pending |
-| BASS-01 | Phase 08 | Pending |
-| BASS-02 | Phase 08 | Pending |
-| BASS-03 | Phase 08 | Pending |
-| BASS-04 | Phase 08 | Pending |
-| BASS-05 | Phase 08 | Pending |
-| BASS-06 | Phase 08 | Pending |
-| BASS-07 | Phase 08 | Pending |
+| BASS-01 | Phase 08 | Complete |
+| BASS-02 | Phase 08 | Complete |
+| BASS-03 | Phase 08 | Complete |
+| BASS-04 | Phase 08 | Complete |
+| BASS-05 | Phase 08 | Complete |
+| BASS-06 | Phase 08 | Complete |
+| BASS-07 | Phase 08 | Complete |
 | RFIX-01 | Phase 09 | Pending |
 | RFIX-02 | Phase 09 | Pending |
 | RADV-01 | Phase 10 | Pending |
