@@ -15,13 +15,13 @@ Requirements for Key Signatures (6 keys, treble + bass) and Advanced Rhythm (6/8
 
 ### Treble Key Signatures
 
-- [ ] **TREB-01**: G major (1 sharp) treble nodes with discovery scaffolding explaining key signature concept
-- [ ] **TREB-02**: D major (2 sharps) treble nodes
-- [ ] **TREB-03**: A major (3 sharps) treble nodes
-- [ ] **TREB-04**: F major (1 flat) treble nodes
-- [ ] **TREB-05**: Bb major (2 flats) treble nodes
-- [ ] **TREB-06**: Eb major (3 flats) treble nodes
-- [ ] **TREB-07**: Treble key signatures boss challenge (all 6 keys mixed)
+- [x] **TREB-01**: G major (1 sharp) treble nodes with discovery scaffolding explaining key signature concept
+- [x] **TREB-02**: D major (2 sharps) treble nodes
+- [x] **TREB-03**: A major (3 sharps) treble nodes
+- [x] **TREB-04**: F major (1 flat) treble nodes
+- [x] **TREB-05**: Bb major (2 flats) treble nodes
+- [x] **TREB-06**: Eb major (3 flats) treble nodes
+- [x] **TREB-07**: Treble key signatures boss challenge (all 6 keys mixed)
 
 ### Bass Key Signatures
 
@@ -98,13 +98,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RENDER-01 | Phase 07 | Complete |
 | RENDER-02 | Phase 07 | Complete |
 | RENDER-03 | Phase 07 | Complete |
-| TREB-01 | Phase 08 | Pending |
-| TREB-02 | Phase 08 | Pending |
-| TREB-03 | Phase 08 | Pending |
-| TREB-04 | Phase 08 | Pending |
-| TREB-05 | Phase 08 | Pending |
-| TREB-06 | Phase 08 | Pending |
-| TREB-07 | Phase 08 | Pending |
+| TREB-01 | Phase 08 | Complete |
+| TREB-02 | Phase 08 | Complete |
+| TREB-03 | Phase 08 | Complete |
+| TREB-04 | Phase 08 | Complete |
+| TREB-05 | Phase 08 | Complete |
+| TREB-06 | Phase 08 | Complete |
+| TREB-07 | Phase 08 | Complete |
 | BASS-01 | Phase 08 | Complete |
 | BASS-02 | Phase 08 | Complete |
 | BASS-03 | Phase 08 | Complete |
