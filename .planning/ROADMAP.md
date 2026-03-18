@@ -187,7 +187,10 @@ See `.planning/milestones/` for archived details of each milestone.
   3. A natural sign appears on an F♮ note played in a G major key context
   4. The `keySignature` config value passes from trail node config through to VexFlow without being dropped
   5. Existing sight reading exercises (no key signature) render identically to before — no visual regression
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — Key signature constants, note-filtering utility, KeySignatureSelection UI, i18n
+- [ ] 07-02-PLAN.md — VexFlow glyph rendering, accidental suppression, config pipeline threading
 
 ### Phase 08: Key Signature Node Data
 **Goal**: Players can practice reading music in all 6 key signatures (G, D, A major; F, Bb, Eb major) on both treble and bass clef trails
@@ -250,7 +253,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01. Forgot Password | v2.1 | 2/2 | Complete | 2026-03-10 |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
-| 07. Key Sig Rendering | v2.4 | 0/TBD | Not started | - |
+| 07. Key Sig Rendering | v2.4 | 0/2 | Planned | - |
 | 08. Key Sig Node Data | v2.4 | 0/TBD | Not started | - |
 | 09. Rhythm Generator Fix | v2.4 | 0/TBD | Not started | - |
 | 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
