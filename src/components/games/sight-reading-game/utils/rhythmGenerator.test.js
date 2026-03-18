@@ -761,6 +761,66 @@ describe("generateRhythmEvents (beat-contained patterns)", () => {
   });
 });
 
+describe("generateRhythmEvents (6/8 compound time)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("6/8 generates events with exactly 12 total sixteenth units per measure", () => {
+    for (let seed = 0; seed < 10; seed++) {
+      let callCount = 0;
+      vi.spyOn(Math, "random").mockImplementation(() => {
+        callCount++;
+        return ((seed * 13 + callCount * 7) % 100) / 100;
+      });
+
+      const events = generateRhythmEvents({
+        timeSignature: "6/8",
+        measuresPerPattern: 1,
+        allowedNoteDurations: ["q", "8"],
+        allowRests: false,
+        allowedRestDurations: [],
+        rhythmComplexity: "simple",
+      });
+
+      const totalUnits = events.reduce((sum, e) => sum + e.sixteenthUnits, 0);
+      expect(totalUnits).toBe(12);
+
+      vi.restoreAllMocks();
+    }
+  });
+
+  it("6/8 generates events spanning 2 compound beats (not 6)", () => {
+    let callCount = 0;
+    vi.spyOn(Math, "random").mockImplementation(() => {
+      callCount++;
+      return ((callCount * 7) % 100) / 100;
+    });
+
+    const events = generateRhythmEvents({
+      timeSignature: "6/8",
+      measuresPerPattern: 1,
+      allowedNoteDurations: ["q", "8"],
+      allowRests: false,
+      allowedRestDurations: [],
+      rhythmComplexity: "simple",
+    });
+
+    // With beats=2 and unitsPerBeat=6, all beatIndex values should be 0 or 1
+    const beatIndices = events.map((e) => e.beatIndex);
+    const maxBeatIndex = Math.max(...beatIndices);
+    expect(maxBeatIndex).toBeLessThanOrEqual(1);
+  });
+
+  it("6/8 resolves to beats=2 and unitsPerBeat=6 via resolveTimeSignature", () => {
+    // Import resolveTimeSignature and verify 6/8 grid entry
+    const { resolveTimeSignature } = require("../constants/durationConstants.js");
+    const sig = resolveTimeSignature("6/8");
+    expect(sig.beats).toBe(2);
+    expect(sig.unitsPerBeat).toBe(6);
+  });
+});
+
 describe("generateRhythmEvents (multi-bar metadata + boundaries)", () => {
   afterEach(() => {
     vi.restoreAllMocks();

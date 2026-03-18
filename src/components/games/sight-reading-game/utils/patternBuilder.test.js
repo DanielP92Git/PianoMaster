@@ -186,6 +186,93 @@ describe("patternBuilder (key signature filtering)", () => {
   });
 });
 
+describe("patternBuilder (6/8 compound timing)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("6/8 at 60 BPM produces correct secondsPerSixteenth (~0.1667, not 0.25)", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "6/8",
+      tempo: 60,
+      selectedNotes: ["C4", "D4", "E4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    // For 6/8 at 60 BPM: beatDuration = 60/60 = 1.0s, unitsPerBeat = 6
+    // secondsPerSixteenth = 1.0/6 = 0.1667
+    // A quarter note = 4 sixteenth units. startTime of first = 0, endTime = 4 * (1/6) = 0.6667
+    const notes = result.notes || [];
+    expect(notes.length).toBeGreaterThan(0);
+    const firstNote = notes[0];
+    expect(firstNote.startTime).toBeCloseTo(0, 5);
+    // endTime should be ~0.6667 (dotted-quarter beat / 1.5)
+    // Actually with quarter=4 units, endTime = 4 * (1/6) ≈ 0.6667
+    expect(firstNote.endTime).toBeCloseTo(4 / 6, 4);
+  });
+
+  it("4/4 at 80 BPM timing unchanged (regression): quarter note duration = 0.75s", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    // For 4/4 at 80 BPM: beatDuration = 60/80 = 0.75s, unitsPerBeat = 4
+    // secondsPerSixteenth = 0.75/4 = 0.1875
+    // Quarter note = 4 units: endTime = 4 * 0.1875 = 0.75
+    const notes = result.notes || [];
+    expect(notes.length).toBeGreaterThan(0);
+    const firstNote = notes[0];
+    expect(firstNote.startTime).toBeCloseTo(0, 5);
+    expect(firstNote.endTime).toBeCloseTo(0.75, 4);
+  });
+
+  it("6/8 generates total sixteenth units = 12 for one measure", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.3);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "6/8",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q", "8"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    const notes = result.notes || [];
+    const totalUnits = notes.reduce((sum, n) => sum + (n.sixteenthUnits || 0), 0);
+    expect(totalUnits).toBe(12);
+  });
+});
+
 describe("toVexFlowNote (accidentals via generatePatternData)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
