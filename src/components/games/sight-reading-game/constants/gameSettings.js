@@ -303,4 +303,5 @@ export const DEFAULT_SETTINGS = {
   tempo: 80,
   measuresPerPattern: 1, // Number of measures to display
   includeRests: true, // Whether to include rests in patterns
+  keySignature: null, // null = C major (no key signature glyph)
 };
