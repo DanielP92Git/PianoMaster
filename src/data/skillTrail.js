@@ -90,6 +90,36 @@ export const UNITS = {
   },
 
   // ============================================
+  // KEY SIGNATURE UNITS (TREBLE)
+  // ============================================
+  TREBLE_6: {
+    id: 'treble_unit_6',
+    category: NODE_CATEGORIES.TREBLE_CLEF,
+    name: 'Key Signatures: Sharps',
+    description: 'Read music in G major and D major',
+    order: 6,
+    theme: 'Sharp Keys',
+    reward: {
+      type: 'accessory',
+      id: 'treble_keysig_sharps_badge',
+      name: 'Sharp Keys Badge'
+    }
+  },
+  TREBLE_7: {
+    id: 'treble_unit_7',
+    category: NODE_CATEGORIES.TREBLE_CLEF,
+    name: 'Key Signatures: Mixed',
+    description: 'Master all six major key signatures',
+    order: 7,
+    theme: 'Key Mastery',
+    reward: {
+      type: 'accessory',
+      id: 'treble_keysig_master_badge',
+      name: 'Key Signature Master Badge'
+    }
+  },
+
+  // ============================================
   // BASS CLEF UNITS
   // ============================================
   BASS_1: {
@@ -164,6 +194,36 @@ export const UNITS = {
   },
 
   // ============================================
+  // KEY SIGNATURE UNITS (BASS)
+  // ============================================
+  BASS_6: {
+    id: 'bass_unit_6',
+    category: NODE_CATEGORIES.BASS_CLEF,
+    name: 'Key Signatures: Sharps',
+    description: 'Read bass clef music in G major and D major',
+    order: 6,
+    theme: 'Bass Sharp Keys',
+    reward: {
+      type: 'accessory',
+      id: 'bass_keysig_sharps_badge',
+      name: 'Bass Sharp Keys Badge'
+    }
+  },
+  BASS_7: {
+    id: 'bass_unit_7',
+    category: NODE_CATEGORIES.BASS_CLEF,
+    name: 'Key Signatures: Mixed',
+    description: 'Master all six major key signatures in bass clef',
+    order: 7,
+    theme: 'Bass Key Mastery',
+    reward: {
+      type: 'accessory',
+      id: 'bass_keysig_master_badge',
+      name: 'Bass Key Signature Master Badge'
+    }
+  },
+
+  // ============================================
   // RHYTHM UNITS
   // ============================================
   RHYTHM_1: {
@@ -221,7 +281,59 @@ export const UNITS = {
       id: 'syncopation_badge',
       name: 'Syncopation Badge'
     }
-  }
+  },
+  RHYTHM_5: {
+    id: 'rhythm_unit_5',
+    category: NODE_CATEGORIES.RHYTHM,
+    name: 'Magic Dots',
+    description: 'Dotted notes and 3/4 time',
+    order: 5,
+    theme: 'The Power of the Dot',
+    reward: {
+      type: 'accessory',
+      id: 'rhythm_badge_5',
+      name: 'Rhythm Badge V'
+    }
+  },
+  RHYTHM_6: {
+    id: 'rhythm_unit_6',
+    category: NODE_CATEGORIES.RHYTHM,
+    name: 'Speed Champions',
+    description: 'Master sixteenth notes — the fastest duration',
+    order: 6,
+    theme: 'Speed Mastery',
+    reward: {
+      type: 'accessory',
+      id: 'rhythm_champion_badge',
+      name: 'Rhythm Champion Badge'
+    }
+  },
+  RHYTHM_7: {
+    id: 'rhythm_unit_7',
+    category: NODE_CATEGORIES.RHYTHM,
+    name: 'Six-Eight Time',
+    description: 'Feel two big beats — each worth three eighth notes',
+    order: 7,
+    theme: 'Compound Meter',
+    reward: {
+      type: 'accessory',
+      id: 'compound_badge',
+      name: 'Compound Meter Badge'
+    }
+  },
+  RHYTHM_8: {
+    id: 'rhythm_unit_8',
+    category: NODE_CATEGORIES.RHYTHM,
+    name: 'Off-Beat Magic',
+    description: 'Master syncopation and off-beat patterns',
+    order: 8,
+    theme: 'Syncopation',
+    reward: {
+      type: 'accessory',
+      id: 'advanced_rhythm_badge',
+      name: 'Advanced Rhythm Badge'
+    }
+  },
 };
 
 /**
