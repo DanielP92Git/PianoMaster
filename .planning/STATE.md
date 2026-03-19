@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
-status: idle
-stopped_at: v2.4 Content Expansion milestone archived
-last_updated: "2026-03-19T16:00:00.000Z"
-last_activity: 2026-03-19 — v2.4 milestone archived, 15 milestones shipped total
+milestone: v2.5
+milestone_name: Launch Prep
+status: defining_requirements
+stopped_at: Milestone v2.5 started — defining requirements
+last_updated: "2026-03-19T17:00:00.000Z"
+last_activity: 2026-03-19 — Milestone v2.5 Launch Prep started
 progress:
   total_phases: 0
   completed_phases: 0
@@ -21,15 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-19)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Planning next milestone
+**Current focus:** v2.5 Launch Prep — production readiness
 
 ## Current Position
 
-No active milestone. Run `/gsd:new-milestone` to start the next one.
-
-Last milestone: v2.4 Content Expansion (shipped 2026-03-19)
-- 5 phases, 10 plans, 26/26 requirements satisfied
-- 42 new trail nodes (28 key sig + 14 rhythm), total trail now 171 nodes
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-19 — Milestone v2.5 started
 
 ## Performance Metrics
 
@@ -45,10 +44,10 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ### Blockers/Concerns
 
-**Outstanding items (non-blocking, carried from v2.3):**
+**Outstanding items (carried from v2.3/v2.4):**
 - Supabase migration `20260317000001_daily_challenges.sql` needs manual application
-- Sentry env vars not yet configured on Netlify
-- Plausible analytics script commented out, awaiting service configuration
+- Sentry env vars configured on Netlify (confirmed 2026-03-19)
+- Plausible replaced with Umami for analytics (confirmed 2026-03-19)
 
 **Tech debt from v2.4:**
 - `verify:patterns` script broken (missing `.js` extension on keySignatureConfig import)
@@ -57,14 +56,14 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-19T16:00:00Z
-Stopped at: v2.4 Content Expansion milestone archived
+Last session: 2026-03-19T17:00:00Z
+Stopped at: Milestone v2.5 started — defining requirements
 Resume file: N/A
 
 **Next action:**
-- `/gsd:new-milestone` to start next milestone
-- Consider: deploy to Netlify, apply pending Supabase migration
+- Define requirements for v2.5 Launch Prep
+- Then create roadmap
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-19 — v2.4 Content Expansion milestone archived*
+*Last updated: 2026-03-19 — Milestone v2.5 Launch Prep started*

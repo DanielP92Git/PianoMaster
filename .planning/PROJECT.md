@@ -163,7 +163,17 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-No active milestone. Next milestone via `/gsd:new-milestone`.
+## Current Milestone: v2.5 Launch Prep
+
+**Goal:** Close production-readiness gaps so the app can be tested with real users and promoted with confidence.
+
+**Target features:**
+- Hard delete Edge Function for COPPA account deletion after 30-day grace period
+- Fix broken `verify:patterns` build-time validation script
+- Apply pending `daily_challenges.sql` Supabase migration
+- ESLint warnings cleanup (~530 warnings)
+- Structured production testing checklist across all game modes and flows
+- Legal documentation package for attorney review (Privacy Policy, COPPA verification)
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -402,4 +412,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-19 after v2.4 milestone*
+*Last updated: 2026-03-19 after v2.5 milestone started*
