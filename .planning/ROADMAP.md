@@ -229,7 +229,10 @@ Plans:
   2. A student can complete graduated 6/8 practice nodes progressing from basic dotted-quarter patterns to intermediate mixed rhythms
   3. A student can practice syncopation patterns (eighth-quarter-eighth, dotted quarter-eighth) in 4/4 context within Rhythm Unit 8
   4. A boss challenge node at the end of the advanced rhythm section accepts correct taps for both 6/8 compound and 4/4 syncopation patterns
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 10-01-PLAN.md — Rhythm Unit 7: 6/8 compound meter nodes (discovery, practice, mix-up, speed, mini-boss)
+- [ ] 10-02-PLAN.md — Rhythm Unit 8: syncopation nodes + true boss (6/8 + 4/4 mixed challenge)
 
 ### Phase 11: Integration, Gate, and i18n
 **Goal**: All new key signature and advanced rhythm nodes are wired into the trail, subscription-gated, and fully translated in English and Hebrew
@@ -262,10 +265,10 @@ Plans:
 | 07. Key Sig Rendering | v2.4 | Complete    | 2026-03-18 | 2026-03-18 |
 | 08. Key Sig Node Data | v2.4 | Complete    | 2026-03-18 | - |
 | 09. Rhythm Generator Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 10. Advanced Rhythm Nodes | v2.4 | 0/TBD | Not started | - |
+| 10. Advanced Rhythm Nodes | v2.4 | 0/2 | Planned | - |
 | 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
 
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-18 — Phase 09 Rhythm Generator Infrastructure planned (2 plans)*
+*Last updated: 2026-03-19 — Phase 10 Advanced Rhythm Node Data planned (2 plans)*
