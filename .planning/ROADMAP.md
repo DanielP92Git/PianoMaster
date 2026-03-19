@@ -165,7 +165,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
-### 🚧 v2.4 Content Expansion (In Progress)
+### v2.4 Content Expansion (In Progress)
 
 **Milestone Goal:** Extend the trail with Key Signatures (~14 treble + bass nodes each) and Advanced Rhythm (6/8 compound meter + syncopation) to push content from 2-3 months to 4-5 months of daily practice.
 
@@ -184,7 +184,7 @@ See `.planning/milestones/` for archived details of each milestone.
 **Success Criteria** (what must be TRUE):
   1. A G major key signature glyph (one sharp on F line) appears at the start of the staff in free-play sight reading when key is set to G major
   2. Notes covered by the active key signature render without redundant accidental symbols on the note head
-  3. A natural sign appears on an F♮ note played in a G major key context
+  3. A natural sign appears on an F note played in a G major key context
   4. The `keySignature` config value passes from trail node config through to VexFlow without being dropped
   5. Existing sight reading exercises (no key signature) render identically to before — no visual regression
 **Plans**: 2 plans
@@ -242,7 +242,10 @@ Plans:
   1. `expandedNodes.js` imports all new unit files and `npm run build` passes with zero errors — new nodes appear in the trail UI and are navigable
   2. No new node IDs appear in `FREE_NODE_IDS` — attempting to play a new node without a subscription triggers the gold paywall overlay
   3. All new node names, descriptions, and any new UI text appear correctly in both English and Hebrew, with Hebrew displaying in RTL layout
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 11-01-PLAN.md — Wire expandedNodes.js imports + skillTrail.js UNITS metadata (6 new imports, 8 UNITS entries)
+- [ ] 11-02-PLAN.md — Full EN/HE trail.json translations (28 node names, 8 unit names, 5 skills, 6 accessories)
 
 ## Progress
 
@@ -266,9 +269,9 @@ Plans:
 | 08. Key Sig Node Data | v2.4 | Complete    | 2026-03-18 | - |
 | 09. Rhythm Generator Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 10. Advanced Rhythm Nodes | 2/2 | Complete    | 2026-03-19 | - |
-| 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
+| 11. Integration & i18n | v2.4 | 0/2 | Planned | - |
 
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 
 ---
-*Last updated: 2026-03-19 — Phase 10 Advanced Rhythm Node Data planned (2 plans)*
+*Last updated: 2026-03-19 — Phase 11 Integration, Gate, and i18n planned (2 plans)*
