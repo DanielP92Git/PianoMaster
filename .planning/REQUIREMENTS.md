@@ -47,8 +47,8 @@ Requirements for Key Signatures (6 keys, treble + bass) and Advanced Rhythm (6/8
 
 ### Integration
 
-- [ ] **INTG-01**: All new unit files wired in expandedNodes.js with build-time validation passing
-- [ ] **INTG-02**: New nodes use default-deny subscription gate (no additions to FREE_NODE_IDS)
+- [x] **INTG-01**: All new unit files wired in expandedNodes.js with build-time validation passing
+- [x] **INTG-02**: New nodes use default-deny subscription gate (no additions to FREE_NODE_IDS)
 - [ ] **INTG-03**: Full EN/HE i18n translations for all new node names, descriptions, and UI text
 
 ## Future Requirements
@@ -118,8 +118,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RADV-02 | Phase 10 | Complete |
 | RADV-03 | Phase 10 | Complete |
 | RADV-04 | Phase 10 | Complete |
-| INTG-01 | Phase 11 | Pending |
-| INTG-02 | Phase 11 | Pending |
+| INTG-01 | Phase 11 | Complete |
+| INTG-02 | Phase 11 | Complete |
 | INTG-03 | Phase 11 | Pending |
 
 **Coverage:**

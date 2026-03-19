@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Content Expansion
-status: completed
-stopped_at: Phase 11 context gathered
-last_updated: "2026-03-19T10:46:15.597Z"
-last_activity: 2026-03-19 — Completed Plan 10-01 (rhythmUnit7Redesigned.js — 7 nodes, 6/8 compound meter, orders 142-148, 15 tests passing)
+status: in-progress
+stopped_at: Phase 11 Plan 01 complete
+last_updated: "2026-03-19T12:37:00Z"
+last_activity: 2026-03-19 — Completed Plan 11-01 (expandedNodes.js + skillTrail.js — 6 new unit files wired, 8 UNITS entries added, build passes)
 progress:
-  total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 45
+  total_phases: 11
+  completed_phases: 10
+  total_plans: 2
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 
 ## Current Position
 
-Phase: 10 of 11 (Advanced Rhythm Node Data)
+Phase: 11 of 11 (Integration, Gate, and i18n)
 Plan: 01 of 02 — COMPLETE
-Status: Plan 10-01 complete (rhythmUnit7Redesigned.js — 7 nodes for 6/8 compound meter, orders 142-148, all 15 tests passing)
-Last activity: 2026-03-19 — Completed Plan 10-01 (rhythmUnit7Redesigned.js — 7 nodes, 6/8 compound meter, orders 142-148, 15 tests passing)
+Status: Plan 11-01 complete (expandedNodes.js + skillTrail.js — 6 new unit files wired into 4 arrays, 8 UNITS metadata entries added, build passes, subscriptionConfig.js unchanged)
+Last activity: 2026-03-19 — Completed Plan 11-01 (6 new unit imports wired, 8 UNITS entries added, verify:trail 171 nodes, build clean)
 
-Progress: [█████░░░░░] 45% (Phases 07, 08 (partial), 09, 10 done)
+Progress: [█████░░░░░] 50% (Phases 07-11 Plan 01 done)
 
 ## Performance Metrics
 
@@ -69,6 +69,9 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 - [Phase 10-01]: Mini-boss sets isBoss:false — only true BOSS nodes (like boss_rhythm_6) set isBoss:true
 - [Phase 10-01]: Unit 7 discovery node uses RHYTHM_COMPLEXITY.SIMPLE with dotted-quarter-only at 55-60 BPM — establishes compound beat feel before subdivisions
 - [Phase 10-01]: Node 3 is a second DISCOVERY (not PRACTICE) because quarter notes in 6/8 require new conceptual understanding
+- [Phase 11-01]: subscriptionConfig.js left untouched — default-deny gate satisfies INTG-02 without any code change (new nodes are premium by default)
+- [Phase 11-01]: RHYTHM_7.name = 'Six-Eight Time' in UNITS metadata; node-level unitName in rhythmUnit7Redesigned.js remains 'Big Beats' — intentional harmless divergence per CONTEXT.md
+- [Phase 11-01]: RHYTHM_5 and RHYTHM_6 backfilled to UNITS object (were missing gap between RHYTHM_4 and new RHYTHM_7/8)
 
 ### Research Flags (must address during planning)
 
@@ -85,13 +88,13 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 
 ## Session Continuity
 
-Last session: 2026-03-19T10:46:15.592Z
-Stopped at: Phase 11 context gathered
-Resume file: .planning/milestones/v2.4-phases/11-integration-gate-and-i18n/11-CONTEXT.md
+Last session: 2026-03-19T12:37:00Z
+Stopped at: Completed Phase 11 Plan 01 (11-01-PLAN.md)
+Resume file: .planning/milestones/v2.4-phases/11-integration-gate-and-i18n/11-02-PLAN.md
 
 **Next action:**
-- Phase 10 Plan 01 complete — proceed to Plan 10-02 (syncopation/Unit 8 nodes) or Phase 08 remaining plans
+- Phase 11 Plan 01 complete — proceed to Plan 11-02 (subscription gate verification + i18n stub)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-19 — Phase 10 Plan 01 complete (rhythmUnit7Redesigned.js)*
+*Last updated: 2026-03-19 — Phase 11 Plan 01 complete (expandedNodes.js + skillTrail.js wired)*
