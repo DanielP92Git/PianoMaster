@@ -1,36 +1,28 @@
 # Stack Research
 
-**Domain:** Piano learning PWA — v2.4 Key Signatures + Advanced Rhythm content expansion
-**Researched:** 2026-03-18
-**Confidence:** HIGH (all VexFlow claims verified against installed vexflow@5.0.0)
+**Domain:** Piano learning PWA — v2.5 Launch Prep
+**Researched:** 2026-03-19
+**Confidence:** HIGH (all claims verified against installed packages and codebase)
 
 > This is an **additive** research document. The existing validated stack (React 18, Vite 6,
-> Supabase, VexFlow v5, pitchy, Web Audio API, Tailwind, i18next) is unchanged.
-> This file answers only: **what is needed for v2.4 Key Signatures and Advanced Rhythm?**
+> Supabase, VexFlow v5, pitchy, Tailwind, i18next, Sentry, Brevo) is unchanged.
+> This file answers only: **what is needed for v2.5 hard delete Edge Function, ESLint cleanup,
+> production QA framework, and legal documentation packaging?**
 
 ---
 
-## Summary Answer: No New Dependencies Required
+## Summary Answer: Zero New Runtime Dependencies
 
-All capabilities needed for v2.4 are present in `vexflow@5.0.0` (already installed at that
-exact version). The work is **configuration and logic changes inside existing files**, not
-new packages.
+All four v2.5 feature areas require no new npm packages. Each maps cleanly to existing
+infrastructure with configuration adjustments or plain authoring:
 
-Verified against installed build at `node_modules/vexflow/build/cjs/vexflow.js`:
-
-| Capability | VexFlow API | Verified |
+| Feature | Approach | New Dependency? |
 |---|---|---|
-| Key signature display on stave | `Stave.addKeySignature(key)` | YES |
-| All 15 major key signatures | `new KeySignature('G')`, `'Bb'`, `'F#'`, `'Cb'` etc. | YES |
-| Minor key signatures | `new KeySignature('Am')`, `'Em'`, `'Bm'`, `'F#m'` | YES |
-| Compound time signatures (6/8, 9/8, 12/8) | `Stave.addTimeSignature('6/8')` | YES |
-| Key-context accidental suppression | `Accidental.applyAccidentals(voices, key)` | YES |
-| Key-aware per-note logic | `KeyManager('G').selectNote('f#')` → `{ change: false }` | YES |
-| Compound beam groups (3 eighth notes) | `Beam.generateBeams(notes, { groups: [new Fraction(3,8)] })` | YES (Fraction class present) |
-| Dotted notes as beat unit in 6/8 | `Dot.buildAndAttach([note], { all: true })` | Already used in codebase |
-| Syncopation ties | `StaveTie({ first_note, last_note, first_indices, last_indices })` | YES (already imported) |
-| Triplet bracket | `new Tuplet(notes, { num_notes: 3, beats_occupied: 2 })` | YES |
-| Cancel previous key signature | `stave.addKeySignature(newKey, prevKey)` | YES |
+| Hard delete Edge Function | Deno + existing `@supabase/supabase-js@2` (already used in other functions) | No |
+| ESLint warnings cleanup | Fix globals config + vitest env override in existing `eslint.config.js` | No |
+| `verify:patterns` fix | Add `.js` extension to one bare import in `keySignatureUtils.js` | No |
+| Production testing checklist | Static markdown document, no tooling | No |
+| Legal documentation package | Copy existing pages + export to PDF | No |
 
 ---
 
@@ -38,175 +30,208 @@ Verified against installed build at `node_modules/vexflow/build/cjs/vexflow.js`:
 
 ### Core Technologies (existing — no changes)
 
-| Technology | Version | Purpose | v2.4 Impact |
+| Technology | Version | Purpose | v2.5 Impact |
 |---|---|---|---|
-| vexflow | 5.0.0 | SVG music notation | Already installed; all needed APIs confirmed present |
-| React 18 | 18.3.1 | UI rendering | No change needed |
-| Vite 6 | 6.3.5 | Build tooling | No change needed |
-| i18next | 25.7.0 | EN/HE translations | New key name translations needed (e.g. `"G major"`, `"מי מינור"`) |
-| pitchy | 4.1.0 | McLeod pitch detection | Unchanged — key sigs affect display, not pitch detection |
-| @supabase/supabase-js | 2.48.1 | Database + auth | No schema changes — `node_id TEXT` handles new node IDs |
+| `@supabase/supabase-js` | 2.48.1 | Admin client in Edge Functions | Hard delete function uses `createClient` with `service_role` key — identical pattern to `lemon-squeezy-webhook` |
+| Deno (Supabase Edge runtime) | Supabase-managed | Server-side TypeScript execution | Hard delete is a new `Deno.serve()` function following existing patterns |
+| ESLint | 9.9.1 | JS linting | Config changes only — no upgrade needed |
+| `eslint-plugin-react-hooks` | 5.1.0-rc.0 | React hooks rules | Already installed; stable RC is fine for warnings-only cleanup |
+| Vitest | 3.2.4 | Test runner | Globals fix targets Vitest's `environment` config, not version |
 
-### VexFlow APIs Needed for v2.4 (subset of existing vexflow@5.0.0)
+### No New Supporting Libraries
 
-These APIs are in the installed package but **not yet imported** in `VexFlowStaffDisplay.jsx`:
+The ESLint warnings break down as follows (574 total, verified by running `npm run lint`):
 
-| API | Import | Purpose |
-|---|---|---|
-| `KeySignature` | `import { KeySignature } from 'vexflow'` | Render key sig accidentals on stave |
-| `Fraction` | `import { Fraction } from 'vexflow'` | Beam group config for compound time |
-| `Tuplet` | `import { Tuplet } from 'vexflow'` | Triplet visual bracket (advanced rhythm) |
+| Warning Rule | Count | Root Cause | Fix Approach |
+|---|---|---|---|
+| `no-undef` | 330 | Test globals (`vi`, `expect`, `it`, `describe`, `afterEach`) not in scope + `process`/`module` in CJS config files | Add `vitest` globals to ESLint config for test files; add `node` env for config files |
+| `no-unused-vars` | 183 | Legitimate unused variables in production code | Case-by-case: remove, rename to `_prefix`, or add `// eslint-disable-next-line` for intentional stubs |
+| `react-hooks/exhaustive-deps` | 41 | Missing/extra deps in `useEffect`/`useCallback` arrays | Case-by-case: stabilize with `useRef`/`useCallback` wrappers or disable with justification comment |
+| `react-refresh/only-export-components` | 18 | Non-component exports in component files | Move constants to separate files OR disable for files that intentionally export utilities |
 
-Already imported in `VexFlowStaffDisplay.jsx` and usable without changes:
-- `Accidental` — `Accidental.applyAccidentals(voices, key)` is a static method, already available
-- `StaveTie` — already imported, needs usage in syncopation render path
-- `Beam` — `Beam.generateBeams` already used; just needs `groups` config for compound time
-- `Dot` — already imported and used
+The largest bucket (330 `no-undef` warnings) is a **config fix**, not code changes:
 
-`KeyManager` is used internally by `Accidental.applyAccidentals` — no direct import needed.
+```js
+// eslint.config.js — add vitest env to test files
+import { defineConfig } from 'vitest/config'; // NOT needed in eslint.config.js — see below
 
----
-
-## Supporting Libraries
-
-### No New Libraries
-
-| Existing Library | v2.4 Role | Notes |
-|---|---|---|
-| `pitchy` 4.1.0 | Unchanged | Key signatures are display-only; McLeod detects raw pitch regardless of key context |
-| `i18next` 25.7.0 | Add `keySignature.*` namespace | Additive translations only — e.g. `"G major"`, `"D major"`, `"F major"`, Hebrew solfege equivalents |
-| `@supabase/supabase-js` 2.48.1 | No changes | New nodes use same `student_skill_progress` schema; `node_id TEXT` is flexible by design |
-
----
-
-## Development Tools
-
-### No New Tools
-
-| Tool | v2.4 Impact |
-|---|---|
-| `scripts/validateTrail.mjs` | Automatically validates new nodes at prebuild — no script changes needed |
-| Vitest 3.2.4 | New unit tests for `rhythmGenerator` compound/syncopation extensions use existing test infrastructure |
-
----
-
-## Integration Points
-
-### 1. Key Signatures in VexFlowStaffDisplay.jsx
-
-**What changes:** Add optional `keySignature` prop (e.g. `'G'`, `'F'`, `'Bb'`, `'F#'`).
-
-When `keySignature` is provided:
-1. `stave.addKeySignature(keySignature)` on the first stave renders the key sig symbols
-2. After all `StaveNote` objects are created and added to voices, call
-   `Accidental.applyAccidentals(voices, keySignature)` — this walks the notes and
-   suppresses accidental symbols for notes already covered by the key signature, and
-   adds natural signs where a note deviates from the key
-
-**What does NOT change:** Note data format. Notes in `notePool` remain as `'F#4'`, `'Bb4'`
-etc. The key signature only determines which accidental symbols VexFlow renders on-screen.
-`patternBuilder.js` already handles accidental pitch strings correctly (fixed in v2.2).
-
-**Key signature cancel** (for exercises that modulate): `stave.addKeySignature(newKey, prevKey)`
-renders cancellation naturals. For v2.4, each exercise is self-contained so this can be
-omitted — worth noting for future multi-key exercises.
-
-**Verified:** `Accidental.applyAccidentals` source confirmed to accept `(voices, keyString)`
-where `keyString` is the same format used by `addKeySignature` (e.g. `'G'`, `'F#m'`).
-
-### 2. Compound Time in rhythmGenerator.js + durationConstants.js
-
-`RhythmPatternGenerator.js` already defines `SIX_EIGHT` with `isCompound: true` and
-`measureLength: 12`. The data structure is ready. What needs attention:
-
-**Beat unit problem:** `rhythmGenerator.js` uses `unitsPerBeat = measureLength / beats`.
-For 6/8 as currently defined (`beats: 6`, `measureLength: 12`), `unitsPerBeat = 2`
-(one eighth note per "beat"). This treats 6/8 as 6 individual eighth note beats, which
-is metrically wrong for pedagogy — 6/8 has 2 compound beats of 3 eighths each.
-
-Two options:
-- **Option A (recommended):** Add `compoundBeats` and `unitsPerCompoundBeat` to compound
-  time signature definitions. The generator fills measures in compound-beat groups (3 eighths
-  = one beat unit). This keeps the existing simple-time logic clean.
-- **Option B:** Change `beats: 6` to `beats: 2` for 6/8 in `RhythmPatternGenerator.js`
-  and adjust `measureLength` math. Risk: touches shared code used by existing rhythm games.
-
-Option A is safer — additive change, no risk to existing 4/4/3/4/2/4 nodes.
-
-**Beam groups:** `Beam.generateBeams(notes, { groups: [new Fraction(3, 8)] })` produces
-correct 3-eighth-note beaming for 6/8. Fraction is confirmed available. The existing
-`Beam.generateBeams` call in `VexFlowStaffDisplay.jsx` needs to pass this config when
-`isCompound: true` in the resolved time signature.
-
-**9/8 and 12/8:** Same `Fraction(3, 8)` group works — 9/8 gets 3 groups of 3, 12/8 gets
-4 groups of 3. The generator fills by groups of 3 eighths, display beams by groups of 3.
-
-### 3. Syncopation Pattern Generation in rhythmGenerator.js
-
-Syncopation = note attack on a weak beat with duration crossing a strong beat boundary.
-This requires no new VexFlow APIs. The existing `rhythmPatterns.js` complex pattern
-system (with `beatsSpan`) already supports cross-beat events conceptually.
-
-**What's missing:**
-- New complex pattern definitions in `rhythmPatterns.js` for classic syncopation archetypes:
-  - Off-beat eighth + tied quarter (beat 4-and into beat 1)
-  - Dotted-quarter/eighth alternation in 4/4 (creates off-beat emphasis)
-  - Anticipation figure (quarter on beat 4-and, tied into next measure)
-- Tie rendering: `VexFlowStaffDisplay.jsx` builds notes per-measure and already imports
-  `StaveTie`. The render path needs to detect paired tied-note events (where `event.tiedTo`
-  references the next note) and create `StaveTie` objects. This is a localized change to
-  the per-measure render loop.
-
-**Cross-measure ties** (anticipation): `StaveTie` accepts `first_note` from stave N and
-`last_note` from stave N+1. The component already renders multi-measure patterns with
-a `measures` array, so tie references can be tracked across the measure loop.
-
-### 4. Node Data Files (new units)
-
-New unit files follow the exact pattern of existing `rhythmUnit*.js` and `trebleUnit*.js`.
-No structural changes to the schema. Two new config fields needed:
-
-```javascript
-// Key signature nodes — extend noteConfig
-noteConfig: {
-  notePool: ['C4', 'D4', 'E4', 'F#4', 'G4', 'A4', 'B4'],
-  keySignature: 'G',        // NEW: key for stave display + Accidental.applyAccidentals
-  clef: 'treble',
-  accidentals: true,        // Already supported
-}
-
-// Compound time rhythm nodes — extend rhythmConfig
-rhythmConfig: {
-  timeSignature: '6/8',     // Already in TIME_SIGNATURES with isCompound: true
-  durations: ['8', 'q.'],   // Dotted quarter = compound beat unit
-  isCompound: true,         // NEW: signals compound beat-group logic in generator
-  pitch: 'C4',
-}
+// In eslint.config.js, add a second config block:
+{
+  files: ['**/*.test.{js,jsx}', '**/test/**/*.{js,jsx}', 'src/test/**'],
+  languageOptions: {
+    globals: {
+      ...globals.browser,
+      vi: 'readonly',
+      expect: 'readonly',
+      it: 'readonly',
+      test: 'readonly',
+      describe: 'readonly',
+      afterEach: 'readonly',
+      beforeEach: 'readonly',
+    },
+  },
+},
+// For CJS config files (tailwind.config.js, vite.config.js):
+{
+  files: ['tailwind.config.js', 'vite.config.js', 'postcss.config.js', 'scripts/**'],
+  languageOptions: {
+    globals: { ...globals.node, process: 'readonly', module: 'readonly', require: 'readonly' },
+  },
+},
 ```
 
-### 5. expandedNodes.js + subscriptionConfig.js
+This one config change eliminates ~330 of 574 warnings (57%) instantly without touching any source files.
 
-Same wiring pattern as v2.2 accidental nodes. All new nodes are premium by default —
-not added to `FREE_NODE_IDS`. No Postgres migration needed (exclusion-by-default pattern).
+### Development Tools
+
+| Tool | Purpose | v2.5 Notes |
+|---|---|---|
+| `eslint . --fix` | Auto-fixes 2 warnings flagged as fixable | Run first; safe, zero manual review needed |
+| `npm run lint 2>&1 \| grep "warning" \| sort` | Warning triage | Run after config fix to see remaining ~244 warnings categorized |
+
+---
+
+## Feature-Specific Integration Points
+
+### 1. Hard Delete Edge Function
+
+**Pattern to follow:** `supabase/functions/cancel-subscription/index.ts`
+
+The hard delete function needs `service_role` key access to delete from `auth.users` (which bypasses RLS). This is the same pattern already used in `lemon-squeezy-webhook`.
+
+**Database schema already supports this** (from `20260201000001_coppa_schema.sql`):
+- `students.deletion_requested_at` — set when parent requests deletion
+- `students.deletion_scheduled_at` — 30 days after request
+- `students.account_status = 'suspended_deletion'` — blocks login during grace period
+
+**Function trigger:** Supabase cron (same mechanism as `send-daily-push` and `send-weekly-report`).
+- Cron expression: `0 2 * * *` (daily 02:00 UTC — low traffic window)
+- Query: `SELECT * FROM students WHERE deletion_scheduled_at <= NOW() AND account_status = 'suspended_deletion'`
+
+**Deletion sequence** (must be this order to respect foreign keys):
+1. Delete from `push_subscriptions` (FK to students)
+2. Delete from `parental_consent_log` (FK to students, ON DELETE CASCADE handles this)
+3. Delete from `parental_consent_tokens` (FK to students, ON DELETE CASCADE handles this)
+4. Delete from `student_skill_progress` (FK to students)
+5. Delete from `student_daily_goals` (FK to students)
+6. Delete from `parent_subscriptions` (FK to students)
+7. Delete from `students` row
+8. Call `supabase.auth.admin.deleteUser(student_id)` — removes from `auth.users`
+
+Steps 2-3 are covered by `ON DELETE CASCADE` already in the schema. Verify all other FKs for cascade behavior before coding.
+
+**Environment variables needed** (same as other cron functions):
+- `SUPABASE_URL` — already set
+- `SUPABASE_SERVICE_ROLE_KEY` — already set (used by webhook function)
+- `CRON_SECRET` — already set (used by push/weekly-report functions)
+
+**Security model:**
+```typescript
+// Verify cron secret to prevent unauthorized invocation
+const cronSecret = req.headers.get('x-cron-secret');
+if (cronSecret !== Deno.env.get('CRON_SECRET')) {
+  return new Response('Unauthorized', { status: 401 });
+}
+
+// Use service_role for auth.admin access
+const supabase = createClient(
+  Deno.env.get('SUPABASE_URL')!,
+  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);
+```
+
+**Import** (identical to cancel-subscription):
+```typescript
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+```
+
+### 2. verify:patterns Fix
+
+**Root cause confirmed:** `keySignatureUtils.js` line 1 imports `"../constants/keySignatureConfig"` (no `.js` extension). Vite resolves this fine. Node ESM (`patternVerifier.mjs` uses `node --experimental-vm-modules`) requires explicit `.js` extension.
+
+**Fix:** One-line change in `src/components/games/sight-reading-game/utils/keySignatureUtils.js`:
+```js
+// Before:
+import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig";
+// After:
+import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig.js";
+```
+
+Same fix needed in `keySignatureUtils.test.js` line 1 (same bare import).
+
+Verify with `npm run verify:patterns` after applying.
+
+### 3. ESLint Warnings Cleanup
+
+**Cleanup order for least disruption:**
+
+1. **Config fix first** (eliminates ~330 warnings, zero source code changes):
+   - Add `vitest` globals block for test files in `eslint.config.js`
+   - Add `node` globals block for config files in `eslint.config.js`
+
+2. **Auto-fix** (eliminates 2 more):
+   - `npm run lint:fix` handles only 2 auto-fixable warnings
+
+3. **Mechanical removals** (~183 `no-unused-vars` in production code):
+   - Destructured but unused variables: rename to `_varName` or remove
+   - Unused imports: remove the import
+   - Assigned-but-never-read vars: remove the assignment
+   - Dead `const` at module scope: remove
+   - Exception: `// eslint-disable-next-line no-unused-vars` for intentional stubs with comments
+
+4. **Hook dependency warnings** (~41 `react-hooks/exhaustive-deps`):
+   - Missing stable deps: wrap with `useCallback` or `useRef` as appropriate
+   - Functions created inside components causing churn: either move inside callback or stabilize with `useCallback`
+   - Genuinely intentional omissions (e.g. `queryClient` ref): disable with `// eslint-disable-next-line react-hooks/exhaustive-deps` and a comment explaining why
+   - Do NOT add all deps blindly — several (e.g. `audioEngine`) cause infinite re-render loops if added
+
+5. **react-refresh violations** (~18 warnings):
+   - Files exporting both a component and constants/utilities: either split into two files OR add `/* eslint-disable react-refresh/only-export-components */` at top with a justification comment
+
+**Target:** 0 errors, 0 warnings. Achievable without any logic changes.
+
+### 4. Production Testing Checklist
+
+No tooling needed. A structured markdown document covering:
+
+- Authentication flows (signup, login, logout, password reset, session timeout)
+- COPPA flows (age gate, consent email, consent verify, data export, deletion request)
+- Subscription flows (paywall, checkout, cancel, webhook, subscription gate enforcement)
+- All 4 game modes in all input modes (keyboard, mic) with trail and free play
+- Trail system (unlock progression, star updates, XP award, prestige calculation)
+- Dashboard (daily goals, streak, XP ring, push opt-in)
+- Streak protection (grace window, freeze consumption, weekend pass, comeback bonus)
+- i18n (EN/HE switch, RTL layout on trail and dashboard)
+- PWA (install, offline behavior, service worker cache)
+- Mobile (rotate prompt iOS, landscape lock Android, touch targets)
+- Accessibility (keyboard nav, reduced motion, high contrast)
+
+This document belongs in `.planning/milestones/v2.5-phases/` not in the codebase.
+
+### 5. Legal Documentation Package
+
+**Existing assets:**
+- `src/pages/PrivacyPolicyPage.jsx` — COPPA-compliant privacy policy (live at `/legal/privacy`)
+- `src/pages/TermsOfServicePage.jsx` — Terms of service (live at `/legal/terms`)
+- `supabase/migrations/20260201000001_coppa_schema.sql` — Data architecture documentation
+- `supabase/functions/send-consent-email/index.ts` — Consent email content
+
+**Package assembly approach** (no new tools needed):
+- Print `/legal/privacy` and `/legal/terms` from browser to PDF (Chrome print → Save as PDF)
+- Export consent email HTML from `send-consent-email/index.ts` for review
+- Summarize data flows: what is collected, where stored, retention periods, deletion mechanics
+- Reference `SECURITY_GUIDELINES.md` for attorney context on COPPA implementation
+
+**No PDF generation library needed** — the attorney needs to review content, not the app. Browser print-to-PDF produces a clean readable document.
 
 ---
 
 ## Installation
 
 ```bash
-# No new dependencies to install.
-# vexflow@5.0.0 already installed contains all required APIs.
-```
-
-Add to existing vexflow imports in `VexFlowStaffDisplay.jsx`:
-
-```javascript
-import {
-  // ... existing imports ...
-  KeySignature,  // render key sig on stave
-  Fraction,      // compound time beam groups
-  Tuplet,        // triplet visual bracket (advanced rhythm)
-} from 'vexflow';
+# No new dependencies required for v2.5.
+# All changes are: configuration, one import path fix, new Edge Function (Deno/TypeScript), and documentation.
 ```
 
 ---
@@ -215,11 +240,11 @@ import {
 
 | Recommended | Alternative | Why Not |
 |---|---|---|
-| `Accidental.applyAccidentals(voices, key)` for key-context accidentals | Manually track key state with `KeyManager.selectNote()` per note | `applyAccidentals` is the intended batch API; manual tracking duplicates VexFlow internal logic and is error-prone across multi-note patterns |
-| `Beam.generateBeams(notes, { groups: [new Fraction(3,8)] })` for compound beaming | Manual `new Beam(noteGroup)` for each group of 3 | Auto-beaming handles edge cases (rests, stem direction) correctly; manual beaming requires duplicating that logic |
-| `StaveTie` for syncopation ties | CSS visual-only pseudo-arc | `StaveTie` is semantic, renders correctly across measure boundaries, survives resize; CSS workaround breaks under SVG redraws |
-| Extend `rhythmPatterns.js` with compound/syncopation archetypes | Separate generator for advanced rhythm | Single generator with compound-aware mode is simpler; the existing beat-wise loop architecture in `rhythmGenerator.js` supports it cleanly |
-| `vexflow@5.0.0` (stay) | Upgrade to hypothetical vexflow@5.x | The 80KB `VexFlowStaffDisplay.jsx` is production-tested; unnecessary upgrade risks regression in a heavily customized component |
+| ESLint config globals block for test files | `eslint-plugin-vitest` (separate plugin) | Plugin adds 30+ vitest-specific rules that are not needed — the problem is purely missing globals, not rule coverage. Config-only fix eliminates the warnings without adding a dependency. |
+| Supabase cron for hard delete trigger | Client-side scheduled check on login | Client cannot be trusted for COPPA deletion (user could never log in). Server-side cron is authoritative. Same pattern already used by `send-daily-push`. |
+| `service_role` key in Edge Function for `auth.admin.deleteUser` | Postgres trigger via `pg_cron` | pg_cron cannot call `auth.users` deletions. Only the Admin API (via service_role) can delete from `auth.users`. Edge Function is the correct layer. |
+| Manually add `.js` extension to fix `verify:patterns` | Replace `patternVerifier.mjs` with a Vite-aware test | Vite test would require running the full dev server. The one-line import fix is the minimal correct solution. |
+| Browser print-to-PDF for legal docs | `puppeteer` or `playwright` for PDF generation | Attorney review needs the content, not automation. The pages are already styled correctly. No engineering value in adding a headless browser dependency. |
 
 ---
 
@@ -227,43 +252,36 @@ import {
 
 | Avoid | Why | Use Instead |
 |---|---|---|
-| EasyScore API for key signature context | EasyScore string format does not pass key context to `Accidental.applyAccidentals`; key accidentals won't be suppressed | Direct `Stave.addKeySignature()` + `Accidental.applyAccidentals(voices, key)` |
-| Triplet duration code `'8t'` | Not valid in VexFlow v5 — throws `RuntimeError: The provided duration is not valid: t` (verified) | Three standard `StaveNote`s with `'q'` duration wrapped in `new Tuplet(notes, { num_notes: 3, beats_occupied: 2 })` |
-| `new StaveNote({ duration: 'q.' })` | Throws `RuntimeError: Invalid note initialization object` in VexFlow v5 (verified — dotted duration strings not accepted in note constructor) | `new StaveNote({ duration: 'q' })` then `Dot.buildAndAttach([note], { all: true })` — already the pattern in codebase |
-| New npm package for music theory (tonal.js, teoria) | Overkill for key signature display; `KeyManager` (bundled in vexflow) handles the one thing needed: which accidentals a key implies | `KeyManager` from installed vexflow package, or `Accidental.applyAccidentals` which wraps it |
-| Web Audio API changes for key context | Key signatures are notation/display only; pitch detection (pitchy/McLeod) correctly identifies absolute pitch regardless of key | No audio changes needed for key signatures |
+| `eslint-plugin-vitest` | Solves a problem that is purely a globals config issue; adds 30+ rules and a dependency | Add `vitest` globals to `eslint.config.js` test file block |
+| `@supabase/supabase-js` client in hard delete function | Anon/user-level client cannot call `auth.admin.deleteUser` | `createClient` with `SUPABASE_SERVICE_ROLE_KEY` — already the pattern in `lemon-squeezy-webhook` |
+| Batch `eslint --fix` with `--rule` overrides to suppress all warnings | Suppression masks real bugs; `no-unused-vars` warnings often reveal dead code worth removing | Fix root causes: config for test globals, code cleanup for unused vars, `useCallback` stabilization for hook deps |
+| New migration to add `deleted_at` soft-delete column | Schema already has `deletion_scheduled_at` and `account_status = 'suspended_deletion'` — the 30-day grace is already modeled | Use existing columns; hard delete function queries `deletion_scheduled_at <= NOW()` |
+| `pg_cron` extension for deletion scheduling | Cannot delete from `auth.users` (requires Admin API, not SQL); also adds Supabase extension management complexity | Supabase Edge Function with `CRON_SECRET` — already established pattern in this codebase |
 
 ---
 
 ## Stack Patterns by Variant
 
-**Key signature nodes (note recognition):**
-- `noteConfig.keySignature = 'G'` in the node definition
-- `VexFlowStaffDisplay` receives `keySignature` prop from game settings
-- `stave.addKeySignature(key)` renders the key signature symbols at stave start
-- `Accidental.applyAccidentals(voices, key)` after voice creation handles per-note display
-- Pitch detection unchanged — McLeod outputs absolute chromatic pitch; MIDI equality check
-  (already `noteToMidi`-based from v2.2) handles enharmonic equivalence correctly
+**Hard delete Edge Function structure:**
+- Uses `Deno.serve()` — same as all existing functions
+- Authenticated via `x-cron-secret` header check (no JWT needed — cron jobs don't have user JWTs)
+- Uses `service_role` Supabase client — same as `lemon-squeezy-webhook`
+- Returns `{ deleted: N, errors: M }` for monitoring/logging
+- Logs each deletion attempt to console for Supabase Edge Function logs (no separate audit table needed — `parental_consent_log` already records the deletion request event)
 
-**Key signature nodes (sight reading):**
-- Same `keySignature` prop flow
-- `patternBuilder.js` already accepts accidental pitch strings (fixed v2.2)
-- For G major, notes in `selectedNotes` include `'F#4'`; VexFlow renders it without a `#` symbol
-  because `Accidental.applyAccidentals` sees it's implied by the key
-- Natural notes that deviate from key (e.g. F♮ in G major context) automatically get `♮` symbol
-
-**Compound time rhythm (6/8):**
-- `rhythmConfig.timeSignature = '6/8'` and `isCompound: true`
-- `rhythmGenerator.js` fills measures in groups of 3 eighths (compound beat unit)
-- `VexFlowStaffDisplay.jsx` passes `{ groups: [new Fraction(3, 8)] }` to `Beam.generateBeams`
-- The dotted quarter (`q.`) is the visual beat unit — expressed as `StaveNote({ duration: 'q' })`
-  + `Dot.buildAndAttach` per existing codebase pattern
-
-**Syncopation in simple time (4/4):**
-- No time signature change
-- New pattern archetypes in `rhythmPatterns.js` with `isDotted` and multi-event beatsSpan
-- `StaveTie` objects created in the measure render loop for tied-note pairs
-- No new VexFlow APIs; localized change to the measure rendering loop in `VexFlowStaffDisplay.jsx`
+**ESLint config file structure after fix:**
+```js
+// eslint.config.js — three targeted blocks
+export default [
+  { ignores: ["dist"] },
+  // 1. Production source files
+  { files: ["src/**/*.{js,jsx}"], /* existing rules */ },
+  // 2. Test files — add vitest globals
+  { files: ["**/*.test.{js,jsx}", "src/test/**"], languageOptions: { globals: vitestGlobals } },
+  // 3. Node config files
+  { files: ["*.config.js", "scripts/**"], languageOptions: { globals: globals.node } },
+];
+```
 
 ---
 
@@ -271,30 +289,23 @@ import {
 
 | Package | Compatible With | Notes |
 |---|---|---|
-| vexflow@5.0.0 | React 18.3.1, Vite 6.3.5 | Already in production with zero issues |
-| vexflow@5.0.0 | `KeySignature`, `Fraction`, `Tuplet` APIs documented here | Verified by direct inspection of installed build |
-| i18next@25.7.0 | New `keySignature.*` translation keys | Additive; no breaking changes |
+| `@supabase/supabase-js@2` (via esm.sh) | Deno Edge runtime | Pattern already used by `cancel-subscription`, `lemon-squeezy-webhook` — confirmed working |
+| `eslint@9.9.1` | Flat config format (used by this project) | Globals config approach is the flat config pattern; no `env` property (that's legacy config format) |
+| `vitest@3.2.4` | Requires explicit globals config in ESLint | Vitest does NOT inject globals into ESLint scope automatically; must declare manually |
 
 ---
 
 ## Sources
 
-- `node_modules/vexflow/build/cjs/vexflow.js` (installed) — Direct runtime API inspection:
-  `KeySignature`, `TimeSignature`, `KeyManager`, `Fraction`, `Tuplet`, `Accidental.applyAccidentals`,
-  `Stave.addKeySignature`, `Stave.addTimeSignature`, `StaveTie` all confirmed present and
-  functional (HIGH confidence)
-- `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` — Existing
-  imports, rendering architecture, Dot/Beam/StaveTie usage patterns confirmed (HIGH confidence)
-- `src/components/games/sight-reading-game/constants/durationConstants.js` — Dotted durations
-  already defined; `6/8` with `isCompound: true` already in TIME_SIGNATURES (HIGH confidence)
-- `src/components/games/rhythm-games/RhythmPatternGenerator.js` — `SIX_EIGHT` time signature
-  with `isCompound: true` already defined; compound beat unit issue identified (HIGH confidence)
-- `src/components/games/sight-reading-game/utils/rhythmPatterns.js` — Complex pattern
-  architecture confirmed; syncopation archetypes are additive to existing structure (HIGH confidence)
-- `docs/vexflow-notation/vexflow-guidelines.md` — Project-specific VexFlow conventions and
-  `Beam.generateBeams` groups documentation (HIGH confidence)
-- `package.json` — vexflow@5.0.0 confirmed as installed version (HIGH confidence)
+- `C:/Development/PianoApp2/package.json` — Installed versions confirmed (HIGH confidence)
+- `C:/Development/PianoApp2/eslint.config.js` — Current config structure; globals approach derived from ESLint flat config documentation (HIGH confidence)
+- `npm run lint` output — 574 warnings categorized by rule: `no-undef` 330, `no-unused-vars` 183, `react-hooks/exhaustive-deps` 41, `react-refresh/only-export-components` 18 (HIGH confidence — direct measurement)
+- `supabase/functions/cancel-subscription/index.ts` — service_role pattern, CORS structure, Deno.serve pattern (HIGH confidence)
+- `supabase/functions/send-daily-push/index.ts` — cron secret pattern, cron scheduling (HIGH confidence)
+- `supabase/migrations/20260201000001_coppa_schema.sql` — deletion_scheduled_at, account_status schema (HIGH confidence)
+- `src/components/games/sight-reading-game/utils/keySignatureUtils.js` line 1 — bare import confirmed as root cause of verify:patterns breakage (HIGH confidence — reproduction confirmed via `npm run verify:patterns`)
+- `src/components/games/sight-reading-game/constants/keySignatureConfig.js` — file EXISTS, confirming the issue is the missing `.js` extension, not a missing file (HIGH confidence)
 
 ---
-*Stack research for: v2.4 Key Signatures and Advanced Rhythm content expansion*
-*Researched: 2026-03-18*
+*Stack research for: v2.5 Launch Prep — hard delete, ESLint cleanup, QA framework, legal docs*
+*Researched: 2026-03-19*
