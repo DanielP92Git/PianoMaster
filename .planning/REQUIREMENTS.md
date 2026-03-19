@@ -1,0 +1,108 @@
+# Requirements: PianoApp v2.5 Launch Prep
+
+**Defined:** 2026-03-20
+**Core Value:** Children's data must be protected and inaccessible to unauthorized users
+
+## v2.5 Requirements
+
+Requirements for launch readiness. Each maps to roadmap phases.
+
+### Build Tooling
+
+- [ ] **BUILD-01**: `verify:patterns` script runs successfully with correct `.js` extension on keySignatureConfig import
+- [ ] **BUILD-02**: `daily_challenges.sql` migration applied to production Supabase
+
+### Code Quality
+
+- [ ] **LINT-01**: ESLint config includes vitest globals for test files (eliminates ~320 `no-undef` warnings)
+- [ ] **LINT-02**: `no-unused-vars` warnings resolved by removing dead imports/variables (~200 warnings)
+- [ ] **LINT-03**: `react-hooks/exhaustive-deps` warnings resolved with correct dependency arrays (~43 warnings)
+- [ ] **LINT-04**: Remaining ESLint warnings (react-refresh, other) resolved or explicitly suppressed with justification
+
+### COPPA Hard Delete
+
+- [ ] **DEL-01**: Cron-triggered Edge Function identifies accounts past 30-day grace period
+- [ ] **DEL-02**: Edge Function cascades deletion across all student data tables (scores, progress, goals, challenges, push subscriptions)
+- [ ] **DEL-03**: Edge Function removes `auth.users` entry so credentials cannot be reused
+- [ ] **DEL-04**: Edge Function cancels active Lemon Squeezy subscription before deletion (if exists)
+- [ ] **DEL-05**: Parent receives confirmation email via Brevo after successful permanent deletion
+- [ ] **DEL-06**: `parent_subscriptions` and `push_subscriptions` included in data deletion scope (verify FK cascade or explicit delete)
+- [ ] **DEL-07**: Hard delete is idempotent — re-running on same account produces no errors
+
+### Quality Assurance
+
+- [ ] **QA-01**: Written QA checklist covers auth flows (signup, login, logout, password reset, COPPA consent)
+- [ ] **QA-02**: QA checklist covers all 4 game modes (note recognition, sight reading, rhythm, memory) in trail and free play
+- [ ] **QA-03**: QA checklist covers payment flows (subscribe, cancel, content gate enforcement)
+- [ ] **QA-04**: QA checklist covers trail system (progression, unlocking, XP, stars, daily goals, daily challenge)
+- [ ] **QA-05**: QA checklist covers push notifications, streak system, and PWA behavior (install, offline, orientation)
+- [ ] **QA-06**: QA checklist covers i18n (English + Hebrew) and RTL layout
+- [ ] **QA-07**: All critical-path checklist items pass on production deployment
+
+## Future Requirements
+
+Deferred to subsequent milestone.
+
+### Legal Documentation
+
+- **LEGAL-01**: Data flow inventory documenting what is collected, where stored, who processes it
+- **LEGAL-02**: Attorney review package with Privacy Policy + Terms + COPPA verification method
+- **LEGAL-03**: Privacy policy language updated per attorney recommendations
+
+### App Store Distribution
+
+- **DIST-01**: Google Play Store listing and review
+- **DIST-02**: Apple App Store listing and review
+
+### Landing Page
+
+- **LAND-01**: Connect Lovable landing page to custom domain linked to app URL
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| New trail content (Two-Hand, Melodies) | Feature work — validate product-market fit first |
+| New game modes (Note Catcher, Interval Training) | Feature work — not launch-blocking |
+| Avatar/cosmetic system | Engagement feature — defer until retention data exists |
+| Classroom/social features | COPPA complexity — defer until core product validated |
+| Landing page deployment | Deferred — handle separately from code readiness |
+| Attorney review execution | External dependency — prep materials only |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| BUILD-01 | — | Pending |
+| BUILD-02 | — | Pending |
+| LINT-01 | — | Pending |
+| LINT-02 | — | Pending |
+| LINT-03 | — | Pending |
+| LINT-04 | — | Pending |
+| DEL-01 | — | Pending |
+| DEL-02 | — | Pending |
+| DEL-03 | — | Pending |
+| DEL-04 | — | Pending |
+| DEL-05 | — | Pending |
+| DEL-06 | — | Pending |
+| DEL-07 | — | Pending |
+| QA-01 | — | Pending |
+| QA-02 | — | Pending |
+| QA-03 | — | Pending |
+| QA-04 | — | Pending |
+| QA-05 | — | Pending |
+| QA-06 | — | Pending |
+| QA-07 | — | Pending |
+
+**Coverage:**
+- v2.5 requirements: 20 total
+- Mapped to phases: 0
+- Unmapped: 20
+
+---
+*Requirements defined: 2026-03-20*
+*Last updated: 2026-03-20 after initial definition*
