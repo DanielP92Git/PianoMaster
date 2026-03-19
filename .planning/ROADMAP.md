@@ -173,7 +173,7 @@ See `.planning/milestones/` for archived details of each milestone.
 - [x] **Phase 08: Key Signature Node Data** - Treble and bass key signature trail nodes (G, D, A, F, Bb, Eb major) (completed 2026-03-18)
 - [x] **Phase 09: Rhythm Generator Infrastructure** - Fix 6/8 compound beat model and correct beam grouping (completed 2026-03-18)
 - [x] **Phase 10: Advanced Rhythm Node Data** - 6/8 compound meter and syncopation trail nodes (completed 2026-03-19)
-- [ ] **Phase 11: Integration, Gate, and i18n** - Wire all new nodes, subscription gate, full EN/HE translations
+- [x] **Phase 11: Integration, Gate, and i18n** - Wire all new nodes, subscription gate, full EN/HE translations (completed 2026-03-19)
 
 ## Phase Details
 
@@ -269,7 +269,7 @@ Plans:
 | 08. Key Sig Node Data | v2.4 | Complete    | 2026-03-18 | - |
 | 09. Rhythm Generator Fix | 2/2 | Complete    | 2026-03-18 | - |
 | 10. Advanced Rhythm Nodes | 2/2 | Complete    | 2026-03-19 | - |
-| 11. Integration & i18n | 1/2 | In Progress|  | - |
+| 11. Integration & i18n | 2/2 | Complete   | 2026-03-19 | - |
 
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.4
 milestone_name: Content Expansion
-status: in-progress
-stopped_at: Phase 11 Plan 01 complete
-last_updated: "2026-03-19T12:37:00Z"
-last_activity: 2026-03-19 — Completed Plan 11-01 (expandedNodes.js + skillTrail.js — 6 new unit files wired, 8 UNITS entries added, build passes)
+status: complete
+stopped_at: Completed Phase 11 Plan 02 (11-02-PLAN.md)
+last_updated: "2026-03-19T12:48:00Z"
+last_activity: "2026-03-19 — Completed Plan 11-02 (EN + HE trail.json — 28 node names, 6 unit names, 5 skills, 6 accessories, 28 descriptions, 3 unlock hints in both locales)"
 progress:
-  total_phases: 11
-  completed_phases: 10
-  total_plans: 2
-  completed_plans: 1
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
   percent: 50
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-03-18)
 ## Current Position
 
 Phase: 11 of 11 (Integration, Gate, and i18n)
-Plan: 01 of 02 — COMPLETE
-Status: Plan 11-01 complete (expandedNodes.js + skillTrail.js — 6 new unit files wired into 4 arrays, 8 UNITS metadata entries added, build passes, subscriptionConfig.js unchanged)
-Last activity: 2026-03-19 — Completed Plan 11-01 (6 new unit imports wired, 8 UNITS entries added, verify:trail 171 nodes, build clean)
+Plan: 02 of 02 — COMPLETE (PHASE COMPLETE)
+Status: Plan 11-02 complete (EN + HE trail.json — full translation coverage for all Phase 08-10 content, build passes)
+Last activity: 2026-03-19 — Completed Plan 11-02 (28 node names + 6 unit names + 5 skills + 6 accessories in both EN and HE locales)
 
-Progress: [█████░░░░░] 50% (Phases 07-11 Plan 01 done)
+Progress: [██████████] 100% (All 11 phases of v2.4 complete)
 
 ## Performance Metrics
 
@@ -72,6 +72,9 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 - [Phase 11-01]: subscriptionConfig.js left untouched — default-deny gate satisfies INTG-02 without any code change (new nodes are premium by default)
 - [Phase 11-01]: RHYTHM_7.name = 'Six-Eight Time' in UNITS metadata; node-level unitName in rhythmUnit7Redesigned.js remains 'Big Beats' — intentional harmless divergence per CONTEXT.md
 - [Phase 11-01]: RHYTHM_5 and RHYTHM_6 backfilled to UNITS object (were missing gap between RHYTHM_4 and new RHYTHM_7/8)
+- [Phase 11-02]: Node name keys in EN trail.json use ASCII flat/sharp (Meet Bb Major) to match source files; display values use Unicode ♭ symbol
+- [Phase 11-02]: Hebrew discovery nodes use הכירו את prefix; practice nodes use תרגול prefix per CONTEXT.md locked decision
+- [Phase 11-02]: Hebrew terminology locked: מז'ור (Mazhor), משקל מורכב (compound meter), סינקופה (syncopation)
 
 ### Research Flags (must address during planning)
 
@@ -88,13 +91,14 @@ All v2.3 decisions archived in `.planning/milestones/v2.3-ROADMAP.md` Key Decisi
 
 ## Session Continuity
 
-Last session: 2026-03-19T12:37:00Z
-Stopped at: Completed Phase 11 Plan 01 (11-01-PLAN.md)
-Resume file: .planning/milestones/v2.4-phases/11-integration-gate-and-i18n/11-02-PLAN.md
+Last session: 2026-03-19T12:48:00Z
+Stopped at: Completed Phase 11 Plan 02 (11-02-PLAN.md) — v2.4 milestone COMPLETE
+Resume file: N/A — v2.4 Content Expansion milestone complete
 
 **Next action:**
-- Phase 11 Plan 01 complete — proceed to Plan 11-02 (subscription gate verification + i18n stub)
+- v2.4 milestone complete — all 11 phases done
+- Consider: deploy to Netlify, apply pending Supabase migration (20260317000001_daily_challenges.sql)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-19 — Phase 11 Plan 01 complete (expandedNodes.js + skillTrail.js wired)*
+*Last updated: 2026-03-19 — Phase 11 Plan 02 complete (EN + HE trail.json i18n) — v2.4 milestone COMPLETE*
