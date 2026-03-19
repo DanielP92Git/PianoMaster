@@ -71,6 +71,8 @@ export function translateUnitName(unitName, t) {
   if (!unitName || !t) return unitName || "";
 
   // Try to find translation in units.names, fallback to original
-  const translatedName = t(`units.names.${unitName}`, { ns: 'trail', defaultValue: unitName });
+  // nsSeparator: false prevents i18next from treating ':' in unit names
+  // (e.g., "Key Signatures: Sharps") as a namespace separator
+  const translatedName = t(`units.names.${unitName}`, { ns: 'trail', nsSeparator: false, defaultValue: unitName });
   return translatedName;
 }
