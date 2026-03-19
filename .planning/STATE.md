@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Launch Prep
-status: defining_requirements
-stopped_at: Milestone v2.5 started — defining requirements
-last_updated: "2026-03-19T17:00:00.000Z"
-last_activity: 2026-03-19 — Milestone v2.5 Launch Prep started
+status: ready_to_plan
+stopped_at: Roadmap created — Phase 12 ready to plan
+last_updated: "2026-03-20T00:00:00.000Z"
+last_activity: 2026-03-20 — v2.5 roadmap created, 4 phases defined
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -18,22 +18,24 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-19)
+See: .planning/PROJECT.md (updated 2026-03-20)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v2.5 Launch Prep — production readiness
+**Current focus:** v2.5 Launch Prep — Phase 12: Build Tooling Fixes
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-19 — Milestone v2.5 started
+Phase: 12 of 15 (Build Tooling Fixes)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-03-20 — Roadmap created, Phase 12 ready to plan
+
+Progress: [░░░░░░░░░░] 0% (0/4 phases complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: ~141 (across all milestones)
+- Total plans completed: ~141 (across all shipped milestones)
 - 15 milestones shipped in 48 days (2026-01-31 to 2026-03-19)
 
 ## Accumulated Context
@@ -42,28 +44,36 @@ Last activity: 2026-03-19 — Milestone v2.5 started
 
 All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
+**v2.5 phase ordering rationale:**
+- Phase 12 before Phase 14: Production DB state must be confirmed before the hard-delete pre-implementation schema audit is meaningful
+- Phase 13 before Phase 14: ESLint cleanup touching auth/security files during COPPA compliance work creates unnecessary regression risk
+- Phase 14 before Phase 15: QA checklist must include the full COPPA deletion flow end-to-end
+- Phase 15 last: Validates all preceding phases against a documented pass/fail spec
+
 ### Blockers/Concerns
 
-**Outstanding items (carried from v2.3/v2.4):**
-- Supabase migration `20260317000001_daily_challenges.sql` needs manual application
-- Sentry env vars configured on Netlify (confirmed 2026-03-19)
-- Plausible replaced with Umami for analytics (confirmed 2026-03-19)
+**Phase 12 pre-checks (required before coding):**
+- Run `SELECT to_regclass('public.student_daily_challenges')` to check if table already exists in production before `supabase db push` — migration lacks IF NOT EXISTS guards
 
-**Tech debt from v2.4:**
-- `verify:patterns` script broken (missing `.js` extension on keySignatureConfig import)
-- Phase 10 planning files in wrong archive dir (v1.7-phases instead of v2.4-phases)
-- Nyquist validation incomplete across all 5 v2.4 phases
+**Phase 13 risk:**
+- Process `react-hooks/exhaustive-deps` warnings last and one file at a time — audio-heavy game components (SightReadingGame, NotesRecognitionGame) have intentional dep omissions; bulk fix risks infinite render loops
+
+**Phase 14 pre-checks (required before coding):**
+- Run `SELECT conname, confdeltype FROM pg_constraint WHERE confrelid = 'students'::regclass` in Supabase SQL Editor to confirm parent_subscriptions FK cascade status
+- `dataExportService.js` STUDENT_DATA_TABLES does not include `parent_subscriptions` or `push_subscriptions` — must add as part of Phase 14
+- Brevo parent email must be read and stored in a local variable BEFORE any row deletion begins
+
+**COPPA deadline:** April 22, 2026 — Phase 14 is time-critical
 
 ## Session Continuity
 
-Last session: 2026-03-19T17:00:00Z
-Stopped at: Milestone v2.5 started — defining requirements
-Resume file: N/A
+Last session: 2026-03-20
+Stopped at: Roadmap created — Phase 12 ready to plan
+Resume file: None
 
 **Next action:**
-- Define requirements for v2.5 Launch Prep
-- Then create roadmap
+- Run `/gsd:plan-phase 12` to plan Phase 12: Build Tooling Fixes
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-19 — Milestone v2.5 Launch Prep started*
+*Last updated: 2026-03-20 — v2.5 roadmap created*

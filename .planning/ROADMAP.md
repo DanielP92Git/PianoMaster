@@ -17,6 +17,7 @@
 - ✅ **v2.2 Sharps & Flats** — Phases 01-05 (shipped 2026-03-17)
 - ✅ **v2.3 Launch Readiness** — Phases 01-06 (shipped 2026-03-17)
 - ✅ **v2.4 Content Expansion** — Phases 07-11 (shipped 2026-03-19)
+- 🚧 **v2.5 Launch Prep** — Phases 12-15 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -176,6 +177,63 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### 🚧 v2.5 Launch Prep (In Progress)
+
+**Milestone Goal:** Close production-readiness gaps so the app can be tested with real users and promoted with confidence. Deliver COPPA hard-delete compliance before the April 22, 2026 deadline.
+
+- [ ] **Phase 12: Build Tooling Fixes** — Restore build integrity by fixing verify:patterns and applying the pending DB migration
+- [ ] **Phase 13: ESLint Cleanup** — Eliminate all ~530 warnings to surface genuine bugs before real-user traffic
+- [ ] **Phase 14: COPPA Hard Delete** — Deploy cron-triggered Edge Function that permanently deletes accounts past their 30-day grace period
+- [ ] **Phase 15: Production QA** — Execute a documented pass/fail checklist across all flows before promoting to real users
+
+## Phase Details
+
+### Phase 12: Build Tooling Fixes
+**Goal**: The build pipeline is clean and production-safe — verify:patterns passes on every deploy and the daily challenge feature works in production
+**Depends on**: Nothing (first phase of v2.5)
+**Requirements**: BUILD-01, BUILD-02
+**Success Criteria** (what must be TRUE):
+  1. `npm run verify:patterns` exits 0 with no import errors
+  2. `npm run build` completes successfully after the verify:patterns fix
+  3. The `student_daily_challenges` table exists in production Supabase with RLS confirmed active
+  4. `DailyChallengeCard` on the dashboard returns real challenge data (not empty/error state)
+**Plans**: TBD
+
+### Phase 13: ESLint Cleanup
+**Goal**: ESLint warning count reaches 0 (or every remaining warning has an explicit suppression with written justification), making genuine bugs visible before real users arrive
+**Depends on**: Phase 12
+**Requirements**: LINT-01, LINT-02, LINT-03, LINT-04
+**Success Criteria** (what must be TRUE):
+  1. `npm run lint` reports 0 warnings and 0 errors
+  2. `npm run test:run` passes with no regressions after all source file changes
+  3. `npm run build` passes after all lint fixes are applied
+  4. Any intentionally suppressed warning has an `eslint-disable-next-line` comment with a written rationale
+**Plans**: TBD
+
+### Phase 14: COPPA Hard Delete
+**Goal**: Accounts past their 30-day deletion grace period are permanently and completely removed — no recoverable credentials, no orphan billing records, and parents receive confirmation — meeting the April 22, 2026 COPPA deadline
+**Depends on**: Phase 12
+**Requirements**: DEL-01, DEL-02, DEL-03, DEL-04, DEL-05, DEL-06, DEL-07
+**Success Criteria** (what must be TRUE):
+  1. Running the Edge Function in dry-run mode against a test account with `deletion_scheduled_at` in the past logs the correct accounts without deleting anything
+  2. Running the Edge Function in live mode against a test account removes all student data rows, the `auth.users` entry (login credentials no longer work), and any active Lemon Squeezy subscription
+  3. Parent receives a Brevo confirmation email after successful deletion
+  4. Re-running the Edge Function against an already-deleted account produces no errors (idempotent)
+  5. Accounts where `deletion_scheduled_at` is still in the future (within 30-day grace) are not touched
+**Plans**: TBD
+
+### Phase 15: Production QA
+**Goal**: Every critical user flow has a documented pass/fail result verified on the production deployment — no flow can be assumed working without explicit confirmation
+**Depends on**: Phase 14
+**Requirements**: QA-01, QA-02, QA-03, QA-04, QA-05, QA-06, QA-07
+**Success Criteria** (what must be TRUE):
+  1. A written QA checklist document exists covering auth, all 4 game modes, payments, trail progression, push notifications, streak, PWA behavior, and i18n
+  2. Every critical-path item in the checklist has a pass/fail result recorded against the production deployment
+  3. The full COPPA deletion flow (request → grace period → hard delete → confirmation email) is tested end-to-end with a real test account and marked pass
+  4. All game modes (note recognition, sight reading, rhythm, memory) pass in both trail mode and free play, with both keyboard and mic input
+  5. Hebrew RTL layout is verified working across dashboard, trail, and at least one game mode
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -195,8 +253,12 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
+| 12. Build Tooling Fixes | v2.5 | 0/TBD | Not started | - |
+| 13. ESLint Cleanup | v2.5 | 0/TBD | Not started | - |
+| 14. COPPA Hard Delete | v2.5 | 0/TBD | Not started | - |
+| 15. Production QA | v2.5 | 0/TBD | Not started | - |
 
-**Total: 15 milestones shipped (v1.0-v2.4), ~141 plans across ~67 phases**
+**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~141 plans across ~67 phases (shipped) + 4 phases planned**
 
 ---
-*Last updated: 2026-03-19 — v2.4 Content Expansion milestone completed*
+*Last updated: 2026-03-20 — v2.5 Launch Prep roadmap created*

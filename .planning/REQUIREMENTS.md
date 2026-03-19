@@ -77,32 +77,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | — | Pending |
-| BUILD-02 | — | Pending |
-| LINT-01 | — | Pending |
-| LINT-02 | — | Pending |
-| LINT-03 | — | Pending |
-| LINT-04 | — | Pending |
-| DEL-01 | — | Pending |
-| DEL-02 | — | Pending |
-| DEL-03 | — | Pending |
-| DEL-04 | — | Pending |
-| DEL-05 | — | Pending |
-| DEL-06 | — | Pending |
-| DEL-07 | — | Pending |
-| QA-01 | — | Pending |
-| QA-02 | — | Pending |
-| QA-03 | — | Pending |
-| QA-04 | — | Pending |
-| QA-05 | — | Pending |
-| QA-06 | — | Pending |
-| QA-07 | — | Pending |
+| BUILD-01 | Phase 12 | Pending |
+| BUILD-02 | Phase 12 | Pending |
+| LINT-01 | Phase 13 | Pending |
+| LINT-02 | Phase 13 | Pending |
+| LINT-03 | Phase 13 | Pending |
+| LINT-04 | Phase 13 | Pending |
+| DEL-01 | Phase 14 | Pending |
+| DEL-02 | Phase 14 | Pending |
+| DEL-03 | Phase 14 | Pending |
+| DEL-04 | Phase 14 | Pending |
+| DEL-05 | Phase 14 | Pending |
+| DEL-06 | Phase 14 | Pending |
+| DEL-07 | Phase 14 | Pending |
+| QA-01 | Phase 15 | Pending |
+| QA-02 | Phase 15 | Pending |
+| QA-03 | Phase 15 | Pending |
+| QA-04 | Phase 15 | Pending |
+| QA-05 | Phase 15 | Pending |
+| QA-06 | Phase 15 | Pending |
+| QA-07 | Phase 15 | Pending |
 
 **Coverage:**
 - v2.5 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-20*
-*Last updated: 2026-03-20 after initial definition*
+*Last updated: 2026-03-20 — Traceability filled after roadmap creation*
