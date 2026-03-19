@@ -35,15 +35,15 @@ Requirements for Key Signatures (6 keys, treble + bass) and Advanced Rhythm (6/8
 
 ### Rhythm Infrastructure
 
-- [ ] **RFIX-01**: Fix 6/8 beat model (beats:6 → beats:2 compound grouping)
+- [x] **RFIX-01**: Fix 6/8 beat model (beats:6 → beats:2 compound grouping)
 - [x] **RFIX-02**: Compound beaming uses correct 3+3 eighth-note grouping for 6/8
 
 ### Advanced Rhythm
 
-- [ ] **RADV-01**: 6/8 compound meter discovery nodes with scaffolding
-- [ ] **RADV-02**: 6/8 compound meter practice nodes (basic → intermediate → advanced)
-- [ ] **RADV-03**: Syncopation pattern nodes (eighth-quarter-eighth, dotted quarter-eighth)
-- [ ] **RADV-04**: Advanced rhythm boss challenge (6/8 + syncopation mixed)
+- [x] **RADV-01**: 6/8 compound meter discovery nodes with scaffolding
+- [x] **RADV-02**: 6/8 compound meter practice nodes (basic → intermediate → advanced)
+- [x] **RADV-03**: Syncopation pattern nodes (eighth-quarter-eighth, dotted quarter-eighth)
+- [x] **RADV-04**: Advanced rhythm boss challenge (6/8 + syncopation mixed)
 
 ### Integration
 
@@ -112,12 +112,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BASS-05 | Phase 08 | Complete |
 | BASS-06 | Phase 08 | Complete |
 | BASS-07 | Phase 08 | Complete |
-| RFIX-01 | Phase 09 | Pending |
+| RFIX-01 | Phase 09 | Complete |
 | RFIX-02 | Phase 09 | Complete |
-| RADV-01 | Phase 10 | Pending |
-| RADV-02 | Phase 10 | Pending |
-| RADV-03 | Phase 10 | Pending |
-| RADV-04 | Phase 10 | Pending |
+| RADV-01 | Phase 10 | Complete |
+| RADV-02 | Phase 10 | Complete |
+| RADV-03 | Phase 10 | Complete |
+| RADV-04 | Phase 10 | Complete |
 | INTG-01 | Phase 11 | Pending |
 | INTG-02 | Phase 11 | Pending |
 | INTG-03 | Phase 11 | Pending |
