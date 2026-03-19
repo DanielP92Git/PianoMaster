@@ -265,7 +265,7 @@ Plans:
 | 07. Key Sig Rendering | v2.4 | Complete    | 2026-03-18 | 2026-03-18 |
 | 08. Key Sig Node Data | v2.4 | Complete    | 2026-03-18 | - |
 | 09. Rhythm Generator Fix | 2/2 | Complete    | 2026-03-18 | - |
-| 10. Advanced Rhythm Nodes | 2/2 | Complete   | 2026-03-19 | - |
+| 10. Advanced Rhythm Nodes | 2/2 | Complete    | 2026-03-19 | - |
 | 11. Integration & i18n | v2.4 | 0/TBD | Not started | - |
 
 **Total: 14 milestones shipped (v1.0-v2.3), ~131 plans across ~62 phases**
