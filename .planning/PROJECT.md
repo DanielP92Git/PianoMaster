@@ -143,6 +143,15 @@ These capabilities exist, are working, and have been shipped:
 - I18N-01: Full EN/HE translations with Unicode symbols and Hebrew solfege terms
 - 12/12 requirements delivered, 9 plans across 5 phases
 
+**v2.4 Content Expansion (shipped 2026-03-19):**
+- RENDER-01/02/03: VexFlow key signature glyph rendering, accidental suppression, config pipeline threading
+- TREB-01-07: 14 treble key signature nodes (G, D, A, F, Bb, Eb major + memory + boss)
+- BASS-01-07: 14 bass key signature nodes mirroring treble with C3-C4 range
+- RFIX-01/02: Fixed 6/8 compound beat model (beats:2 not 6), correct 3+3 beam grouping
+- RADV-01-04: 14 advanced rhythm nodes (6/8 compound meter + syncopation + dual-concept boss)
+- INTG-01/02/03: expandedNodes wiring, default-deny subscription gate, full EN/HE i18n
+- 26/26 requirements delivered, 10 plans across 5 phases
+
 **v2.3 Launch Readiness (shipped 2026-03-17):**
 - LEGAL-01/07: Privacy Policy and Terms of Service public pages with glassmorphism, cross-linked from signup/settings/legal/consent
 - QUAL-01/03: All 23 ESLint errors fixed (0 remaining), React ErrorBoundary with Sentry integration
@@ -154,13 +163,7 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-## Current Milestone: v2.4 Content Expansion
-
-**Goal:** Extend the trail with Key Signatures and Advanced Rhythm sections to push content from 2-3 months to 4-5 months of daily practice.
-
-**Target features:**
-- Trail Section 5: Key Signatures (~15 nodes) — major/minor key context for existing note reading
-- Trail Section 8: Advanced Rhythm (~15 nodes) — syncopation, compound meters, extending current rhythm path
+No active milestone. Next milestone via `/gsd:new-milestone`.
 
 **Future candidates (deferred):**
 - Hard delete Edge Function for accounts past 30-day grace period
@@ -226,8 +229,8 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.2):**
-- 129-node trail system (93 original + 36 accidental nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
+**Current State (after v2.4):**
+- 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
 - Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit
@@ -256,8 +259,11 @@ Explicitly excluded:
 - Parent portal with subscription management and cancel flow
 - Accidental note handling: MIDI-based enharmonic matching in sight reading, anchored regex for flat detection
 - Full EN/HE translations for all accidental note names using Unicode symbols and Hebrew solfege
-- ~77,199 lines JavaScript/JSX/CSS across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files
+- VexFlow key signature glyph rendering with accidental suppression for 7 keys (C, G, D, A, F, Bb, Eb major)
+- Fixed 6/8 compound beat model with correct 3+3 beam grouping and compound-aware MetronomeTrainer
+- 28 key signature trail nodes (14 treble + 14 bass) and 14 advanced rhythm nodes (6/8 + syncopation)
+- ~86,381 lines JavaScript/JSX/CSS/JSON across src/
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files | v2.4: 149 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -386,7 +392,14 @@ Explicitly excluded:
 | Hebrew solfege terms for accidentals | Culture-appropriate: דיאז (sharp) and במול (flat) | Good |
 | 36 new nodes all premium (default-deny) | No new IDs in FREE_NODE_IDS; subscription gate by exclusion | Good |
 | Separate sharps/flats units (not mixed) | Avoids enharmonic confusion; mic outputs sharp-form only | Good |
+| filterNotesToKey static KEY_NOTE_LETTERS map | Not VexFlow KeyManager; testable and deterministic | Good |
+| skipManualAccidental flag on buildStaveNote | Prevents double accidental when applyAccidentals active | Good |
+| SIX_EIGHT.beats = 2 with subdivisions: 6 | Compound time modeled as 2 dotted-quarter beats, not 6 eighths | Good |
+| beamGroupsForTimeSignature returns null for simple time | beamConfig = {} leaves VexFlow defaults fully intact | Good |
+| Mini-boss nodes: isBoss:false, category:'boss' | Distinct from true BOSS nodes; boss naming convention preserved | Good |
+| Default-deny gate for 42 new nodes | subscriptionConfig.js untouched; new nodes premium by default | Good |
+| RHYTHM_5/6 backfilled to UNITS object | Closed metadata gap between RHYTHM_4 and new RHYTHM_7/8 | Good |
 
 ---
 
-*Last updated: 2026-03-18 after v2.4 milestone start*
+*Last updated: 2026-03-19 after v2.4 milestone*

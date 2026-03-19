@@ -164,6 +164,85 @@
 
 ---
 
+## Milestone: v2.3 — Launch Readiness
+
+**Shipped:** 2026-03-17
+**Phases:** 6 | **Plans:** 6
+
+### What Was Built
+- COPPA-compliant Privacy Policy and Terms of Service pages with glassmorphism
+- ESLint errors reduced to 0, React ErrorBoundary with Sentry integration
+- Route-based code splitting (17+ lazy imports, 128 chunks)
+- First-time onboarding tour (4 steps, Framer Motion, reduced-motion)
+- Daily challenge system with deterministic generation and bonus XP
+
+### What Worked
+- Single-day execution of 6 phases — small, focused phases with minimal dependencies
+- Established patterns (glass cards, i18n, lazy imports) made each phase quick
+- Daily challenge system reused existing game infrastructure (NotesRecognitionGame challenge mode)
+
+### What Was Inefficient
+- Sentry and Plausible env vars not configured on Netlify — monitoring partially active
+- DB migration for daily challenges not auto-applied — manual step still pending
+
+### Patterns Established
+- React.lazy() with Suspense for all page-level components
+- ErrorBoundary class component pattern with kid-friendly fallback
+- Date-seeded deterministic daily content generation
+
+### Key Lessons
+1. Production readiness features (monitoring, splitting, legal pages) can ship in a single focused day
+2. Daily challenge generation using date seed + modular arithmetic provides deterministic variety without storage
+
+### Cost Observations
+- Model mix: ~85% opus, ~15% sonnet
+- Notable: 6 phases in 1 day — fastest milestone by phase count
+
+---
+
+## Milestone: v2.4 — Content Expansion
+
+**Shipped:** 2026-03-19
+**Phases:** 5 | **Plans:** 10
+
+### What Was Built
+- VexFlow key signature glyph rendering with accidental suppression across 4 rendering paths
+- 28 key signature trail nodes (14 treble + 14 bass) covering 6 major keys
+- Fixed 6/8 compound beat model and correct 3+3 beam grouping
+- 14 advanced rhythm nodes (6/8 compound meter + syncopation + dual-concept boss)
+- All 42 new nodes wired, subscription-gated, fully translated EN/HE
+
+### What Worked
+- Dual-track parallelism: key sig (07-08) and rhythm (09-10) tracks were independent, enabling fast execution
+- Infrastructure-first ordering: rendering/generator fixes (07, 09) before content authoring (08, 10) prevented data-before-infrastructure bugs
+- Default-deny gate pattern: zero code changes to subscriptionConfig.js — all new nodes are premium by exclusion
+- Milestone audit caught tech debt items (verify:patterns bug, directory mislocation) before archival
+
+### What Was Inefficient
+- Phase 10 files committed to wrong archive directory (v1.7-phases instead of v2.4-phases) — CLI tools couldn't find them
+- SUMMARY.md files missing `one_liner` field — summary-extract tool returned null for all 10 files
+- roadmap analyze reported 0 phases/plans because dirs were already in milestones/ before milestone completion
+
+### Patterns Established
+- Key signature config pipeline: trail node config → navState → game component → VexFlow rendering
+- beamGroupsForTimeSignature null-return for simple time (VexFlow defaults preserved)
+- Compound time model: beats=2, subdivisions=6 instead of beats=6
+- UNITS metadata backfilling for naming gaps in skillTrail.js
+- Hebrew music terminology conventions: מז'ור, משקל מורכב, סינקופה
+
+### Key Lessons
+1. Keep phase directories in `.planning/phases/` (not milestones/) until milestone completion — early archival breaks CLI phase counting
+2. SUMMARY.md should include `one_liner` field for automated accomplishment extraction
+3. Content-heavy milestones (42 nodes) benefit from infrastructure→content→integration pipeline per track
+4. Compound time modeling should use musical reality (2 compound beats) not notation shorthand (6 eighth notes)
+
+### Cost Observations
+- Model mix: ~80% opus, ~20% sonnet
+- Sessions: ~4
+- Notable: 42 new trail nodes + infrastructure fixes in 2 days — highest content velocity milestone
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -183,6 +262,8 @@
 | v2.0 | 2 | 6 | XP unification — sequential dependency chain |
 | v2.1 | 1 | 2 | Password recovery — smallest milestone |
 | v2.2 | 5 | 9 | Sharps & Flats content — audit-driven gap closure |
+| v2.3 | 6 | 6 | Launch readiness — production features in 1 day |
+| v2.4 | 5 | 10 | Content expansion — dual-track infrastructure + content |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -193,3 +274,5 @@
 5. Complete milestone archival immediately after shipping — deferred archival requires retroactive reconstruction
 6. Bug-first phases prevent cascading silent failures in content-heavy milestones
 7. Milestone audits catch real bugs — Phase 05 gap closure was audit-driven and prevented a false-positive ship
+8. Infrastructure-first ordering (rendering/generator fixes before content) prevents data-before-infrastructure bugs
+9. Keep phase directories in .planning/phases/ until milestone completion — early archival breaks CLI tools

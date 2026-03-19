@@ -1,5 +1,36 @@
 # Project Milestones: PianoApp
 
+## v2.4 Content Expansion (Shipped: 2026-03-19)
+
+**Delivered:** Extended the trail with 42 new nodes — 28 key signature nodes (14 treble + 14 bass covering G, D, A, F, Bb, Eb major) and 14 advanced rhythm nodes (6/8 compound meter + syncopation). Fixed 6/8 compound beat model and beam grouping. All nodes subscription-gated and fully translated EN/HE.
+
+**Phases completed:** 07-11 (10 plans total)
+
+**Key accomplishments:**
+
+- VexFlow key signature glyph rendering with `stave.addKeySignature()` and `Accidental.applyAccidentals()` for in-key accidental suppression across all 4 rendering paths
+- 28 key signature trail nodes across Units 6-7 for both treble and bass clefs (G, D, A, F, Bb, Eb major) with discovery scaffolding, memory mix-up, and boss challenges
+- Fixed 6/8 compound beat model: `SIX_EIGHT.beats` changed from 6 to 2 with `subdivisions:6`, correct 3+3 beam grouping via `beamGroupsForTimeSignature` helper
+- 14 advanced rhythm nodes across Units 7-8: 6/8 compound meter discovery and practice, 4/4 syncopation patterns, and dual-concept boss challenge (250 XP capstone)
+- All 42 new nodes wired into trail via `expandedNodes.js`, default-deny subscription gate (no `FREE_NODE_IDS` additions), full EN/HE translations (28 node names, 8 unit names, 5 skills, 6 accessories)
+- Compound-aware MetronomeTrainer: 4-beat count-in for 6/8, compound tap evaluation, 6 subdivision circles with beat 1/4 accents
+
+**Stats:**
+
+- 149 files changed (+19,969 / -1,567)
+- 5 phases, 10 plans, 77 commits
+- 2 days (2026-03-18 to 2026-03-19)
+- 86,381 LOC JavaScript/JSX/CSS/JSON
+- 26/26 requirements satisfied, 0 audit gaps
+
+**Git range:** `e19debf` to `a8a4b09`
+
+**Tech debt carried:** `verify:patterns` script broken (missing `.js` extension); Phase 10 files in wrong archive dir; Nyquist validation incomplete
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
 ## v2.3 Launch Readiness (Shipped: 2026-03-17)
 
 **Delivered:** Production readiness features: COPPA-compliant Privacy Policy and Terms of Service pages, all 23 ESLint errors fixed (0 remaining), React ErrorBoundary with Sentry integration, route-based code splitting (128 chunks), first-time onboarding tour (4 steps), and daily challenge system with bonus XP.
