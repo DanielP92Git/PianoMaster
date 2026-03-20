@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { KEY_SIGNATURE_OPTIONS } from "../constants/keySignatureConfig";
+import { KEY_SIGNATURE_OPTIONS } from "../constants/keySignatureConfig.js";
 
 /**
  * Key signature selection step for the UnifiedGameSettings wizard.

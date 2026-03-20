@@ -3,7 +3,7 @@ import { filterNotesToKey, mapNoteToKey } from "./keySignatureUtils";
 import {
   KEY_NOTE_LETTERS,
   KEY_SIGNATURE_OPTIONS,
-} from "../constants/keySignatureConfig";
+} from "../constants/keySignatureConfig.js";
 
 describe("KEY_NOTE_LETTERS", () => {
   it("C major contains exactly C D E F G A B", () => {

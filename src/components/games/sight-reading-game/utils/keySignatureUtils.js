@@ -1,4 +1,4 @@
-import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig";
+import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig.js";
 
 // Build a lookup: for each key signature, map base letter → in-key form.
 // e.g. G major: { F: 'F#', C: 'C', D: 'D', ... }
