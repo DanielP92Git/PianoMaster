@@ -177,12 +177,12 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
-### 🚧 v2.5 Launch Prep (In Progress)
+### v2.5 Launch Prep (In Progress)
 
 **Milestone Goal:** Close production-readiness gaps so the app can be tested with real users and promoted with confidence. Deliver COPPA hard-delete compliance before the April 22, 2026 deadline.
 
 - [x] **Phase 12: Build Tooling Fixes** — Restore build integrity by fixing verify:patterns and applying the pending DB migration (completed 2026-03-20)
-- [ ] **Phase 13: ESLint Cleanup** — Eliminate all ~530 warnings to surface genuine bugs before real-user traffic
+- [ ] **Phase 13: ESLint Cleanup** — Eliminate all ~574 warnings to surface genuine bugs before real-user traffic
 - [ ] **Phase 14: COPPA Hard Delete** — Deploy cron-triggered Edge Function that permanently deletes accounts past their 30-day grace period
 - [ ] **Phase 15: Production QA** — Execute a documented pass/fail checklist across all flows before promoting to real users
 
@@ -211,7 +211,11 @@ Plans:
   2. `npm run test:run` passes with no regressions after all source file changes
   3. `npm run build` passes after all lint fixes are applied
   4. Any intentionally suppressed warning has an `eslint-disable-next-line` comment with a written rationale
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 13-01-PLAN.md — ESLint config updates (test globals, node globals, unused-vars patterns) and react-refresh suppressions
+- [ ] 13-02-PLAN.md — Remove all unused variables and dead imports across 73 files
+- [ ] 13-03-PLAN.md — Fix react-hooks/exhaustive-deps warnings across 17 game and hook files
 
 ### Phase 14: COPPA Hard Delete
 **Goal**: Accounts past their 30-day deletion grace period are permanently and completely removed — no recoverable credentials, no orphan billing records, and parents receive confirmation — meeting the April 22, 2026 COPPA deadline
@@ -256,12 +260,12 @@ Plans:
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
-| 12. Build Tooling Fixes | 2/2 | Complete    | 2026-03-20 | - |
-| 13. ESLint Cleanup | v2.5 | 0/TBD | Not started | - |
+| 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
+| 13. ESLint Cleanup | v2.5 | 0/3 | Not started | - |
 | 14. COPPA Hard Delete | v2.5 | 0/TBD | Not started | - |
 | 15. Production QA | v2.5 | 0/TBD | Not started | - |
 
 **Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~141 plans across ~67 phases (shipped) + 4 phases planned**
 
 ---
-*Last updated: 2026-03-20 — Phase 12 plans created*
+*Last updated: 2026-03-20 — Phase 13 plans created*
