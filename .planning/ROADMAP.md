@@ -197,7 +197,10 @@ See `.planning/milestones/` for archived details of each milestone.
   2. `npm run build` completes successfully after the verify:patterns fix
   3. The `student_daily_challenges` table exists in production Supabase with RLS confirmed active
   4. `DailyChallengeCard` on the dashboard returns real challenge data (not empty/error state)
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 12-01-PLAN.md — Fix verify:patterns by adding .js extension to keySignatureConfig imports
+- [ ] 12-02-PLAN.md — Repair Supabase migration history and push daily_challenges to production
 
 ### Phase 13: ESLint Cleanup
 **Goal**: ESLint warning count reaches 0 (or every remaining warning has an explicit suppression with written justification), making genuine bugs visible before real users arrive
@@ -253,7 +256,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
-| 12. Build Tooling Fixes | v2.5 | 0/TBD | Not started | - |
+| 12. Build Tooling Fixes | v2.5 | 0/2 | Not started | - |
 | 13. ESLint Cleanup | v2.5 | 0/TBD | Not started | - |
 | 14. COPPA Hard Delete | v2.5 | 0/TBD | Not started | - |
 | 15. Production QA | v2.5 | 0/TBD | Not started | - |
@@ -261,4 +264,4 @@ See `.planning/milestones/` for archived details of each milestone.
 **Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~141 plans across ~67 phases (shipped) + 4 phases planned**
 
 ---
-*Last updated: 2026-03-20 — v2.5 Launch Prep roadmap created*
+*Last updated: 2026-03-20 — Phase 12 plans created*
