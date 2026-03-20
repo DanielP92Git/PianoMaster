@@ -332,6 +332,10 @@ verify_jwt = false
 # Called by parent clicking consent link in email (no JWT). Security enforced via hashed token + SECURITY DEFINER function.
 verify_jwt = false
 
+[functions.process-account-deletions]
+# Called by pg_cron (no Supabase JWT). Security enforced via x-cron-secret header check inside the function.
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
