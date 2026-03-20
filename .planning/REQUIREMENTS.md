@@ -16,7 +16,7 @@ Requirements for launch readiness. Each maps to roadmap phases.
 
 - [x] **LINT-01**: ESLint config includes vitest globals for test files (eliminates ~320 `no-undef` warnings)
 - [x] **LINT-02**: `no-unused-vars` warnings resolved by removing dead imports/variables (~200 warnings)
-- [ ] **LINT-03**: `react-hooks/exhaustive-deps` warnings resolved with correct dependency arrays (~43 warnings)
+- [x] **LINT-03**: `react-hooks/exhaustive-deps` warnings resolved with correct dependency arrays (~43 warnings)
 - [x] **LINT-04**: Remaining ESLint warnings (react-refresh, other) resolved or explicitly suppressed with justification
 
 ### COPPA Hard Delete
@@ -81,7 +81,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | BUILD-02 | Phase 12 | Pending |
 | LINT-01 | Phase 13 | Complete |
 | LINT-02 | Phase 13 | Complete |
-| LINT-03 | Phase 13 | Pending |
+| LINT-03 | Phase 13 | Complete |
 | LINT-04 | Phase 13 | Complete |
 | DEL-01 | Phase 14 | Pending |
 | DEL-02 | Phase 14 | Pending |

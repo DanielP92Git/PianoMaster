@@ -182,7 +182,7 @@ See `.planning/milestones/` for archived details of each milestone.
 **Milestone Goal:** Close production-readiness gaps so the app can be tested with real users and promoted with confidence. Deliver COPPA hard-delete compliance before the April 22, 2026 deadline.
 
 - [x] **Phase 12: Build Tooling Fixes** — Restore build integrity by fixing verify:patterns and applying the pending DB migration (completed 2026-03-20)
-- [ ] **Phase 13: ESLint Cleanup** — Eliminate all ~574 warnings to surface genuine bugs before real-user traffic
+- [x] **Phase 13: ESLint Cleanup** — Eliminate all ~574 warnings to surface genuine bugs before real-user traffic (completed 2026-03-20)
 - [ ] **Phase 14: COPPA Hard Delete** — Deploy cron-triggered Edge Function that permanently deletes accounts past their 30-day grace period
 - [ ] **Phase 15: Production QA** — Execute a documented pass/fail checklist across all flows before promoting to real users
 
@@ -261,7 +261,7 @@ Plans:
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
-| 13. ESLint Cleanup | 2/3 | In Progress|  | - |
+| 13. ESLint Cleanup | 3/3 | Complete   | 2026-03-20 | - |
 | 14. COPPA Hard Delete | v2.5 | 0/TBD | Not started | - |
 | 15. Production QA | v2.5 | 0/TBD | Not started | - |
 

@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Launch Prep
 status: unknown
-stopped_at: Completed 13-eslint-cleanup-02-PLAN.md
-last_updated: "2026-03-20T17:22:16.981Z"
+stopped_at: Completed 13-eslint-cleanup-03-PLAN.md
+last_updated: "2026-03-20T17:46:58.779Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -51,6 +51,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 - [Phase 13-eslint-cleanup]: Used eslint-disable-next-line (not block-level) for all react-refresh suppressions to keep lint granular; each includes written rationale after --
 - [Phase 13-eslint-cleanup]: Removed dead handleResetProgress (~100 lines) from TrailMap.jsx — contained direct Supabase call bypassing RLS, unsuitable for production
 - [Phase 13-eslint-cleanup]: Used underscore-prefix for legacy backward-compat params in usePitchDetection (noteFrequencies, tolerance) rather than removing — preserves API compatibility for callers
+- [Phase 13]: react-hooks/exhaustive-deps: audioEngine from useAudioEngine returns new object each render -- suppress with rationale rather than adding as dep
+- [Phase 13]: react-hooks/exhaustive-deps: debugLog moved to module scope in useGameTimer (stable ref, no suppression needed)
 
 ### Blockers/Concerns
 
@@ -72,8 +74,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-20T17:22:11.741Z
-Stopped at: Completed 13-eslint-cleanup-02-PLAN.md
+Last session: 2026-03-20T17:46:58.775Z
+Stopped at: Completed 13-eslint-cleanup-03-PLAN.md
 Resume file: None
 
 **Next action:**
