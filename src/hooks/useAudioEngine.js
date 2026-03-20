@@ -105,6 +105,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
       console.error("❌ Error stack:", err.stack);
       return false;
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadPianoSoundAsync and loadTapSoundAsync are defined after this callback; they are fire-and-forget wrappers that only use refs and loadPianoSound/loadTapSound (proper useCallbacks); circular dependency would cause infinite invalidation
   }, [sharedAudioContext]); // sharedAudioContext is the only external dep
 
   /**

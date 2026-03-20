@@ -560,6 +560,7 @@ export function NotesRecognitionGame() {
         startGame(trailSettings);
       }, 50);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; startGame, updateSettings, updateProgress, audioContextProviderRef, trailEnableFlats, trailEnableSharps intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
 
   // Auto-configure and auto-start from daily challenge
@@ -583,6 +584,7 @@ export function NotesRecognitionGame() {
         startGame(challengeSettings);
       }, 50);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; startGame, updateSettings, updateProgress intentionally omitted; only challengeMode/challengeConfig changes should re-evaluate
   }, [challengeMode, challengeConfig]);
 
   // Handle navigation to next exercise in the trail node
@@ -1069,6 +1071,7 @@ export function NotesRecognitionGame() {
   };
 
   // Start the game with current or new settings
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- startGame is a plain function that cannot be wrapped in useCallback without listing many state deps (risks infinite loops); handleGestureStart useCallback intentionally includes startGame to avoid stale closure
   const startGame = (gameSettings = settings) => {
     const resolvedSelectedNotes = normalizeSelectedNotes({
       selectedNotes: gameSettings.selectedNotes,

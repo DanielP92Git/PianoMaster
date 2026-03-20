@@ -264,6 +264,7 @@ export function MemoryGame() {
   // Fix the initial cards creation to use the proper grid size
   const initialCards = useMemo(() => {
     return createCards(clef, DIFFICULTIES["Easy"], selectedNotes, enableSharps, enableFlats);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; including it would cause infinite re-creation; actual deps drive recalculation correctly
   }, [clef, selectedNotes, enableSharps, enableFlats]);
 
   const [cards, setCards] = useState(initialCards);
@@ -330,6 +331,7 @@ export function MemoryGame() {
       // Apply settings and start the game
       applySettingsAndRestart(trailSettings, { closeModal: false });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; applySettingsAndRestart is intentionally omitted to prevent re-triggering on every render
   }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
 
   // Handle navigation to next exercise in the trail node
@@ -520,6 +522,7 @@ export function MemoryGame() {
       resetTimer(newTimeLimit);
 
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; including it would cause infinite callback invalidation; game restart is explicitly triggered by user action or trail navigation
     [
       clef,
       selectedNotes,
@@ -764,6 +767,7 @@ export function MemoryGame() {
 
     // Update ref to current gridSize
     prevGridSizeRef.current = gridSize;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; actual state deps drive re-execution correctly; including createCards would cause infinite loops
   }, [gridSize, clef, gameStarted, selectedNotes, enableSharps, enableFlats]);
 
   useEffect(() => {
@@ -774,6 +778,7 @@ export function MemoryGame() {
       const refreshedCards = createCards(clef, gridSize, selectedNotes, enableSharps, enableFlats);
       setCards(refreshedCards);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; actual state deps drive re-execution correctly; including createCards would cause infinite loops
   }, [gameStarted, gridSize, cards.length, clef, selectedNotes, enableSharps, enableFlats]);
 
   return (

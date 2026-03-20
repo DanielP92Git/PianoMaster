@@ -115,6 +115,7 @@ export default function AudioRecorder({
         console.warn("Audio visualization setup failed:", error);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- drawVisualization is defined below this callback; adding it would create a circular dependency; it's a self-referencing animation loop that only depends on refs
     [showVisualization]
   );
 
@@ -277,13 +278,14 @@ export default function AudioRecorder({
       cleanup();
     }
   }, [
+    cleanup,
     defaultQuality,
     disabled,
     maxDuration,
     onRecordingComplete,
     qualityPreset,
-    recordingDuration,
     setupVisualization,
+    stopRecording,
     t,
   ]);
 
@@ -323,7 +325,7 @@ export default function AudioRecorder({
 
       toast.success(t("audioRecorder.toasts.resumed"));
     }
-  }, [maxDuration, t]);
+  }, [maxDuration, stopRecording, t]);
 
   // Stop recording
   const stopRecording = useCallback(() => {
@@ -344,7 +346,7 @@ export default function AudioRecorder({
     setRecordingBlob(null);
     onRecordingCancel?.();
     toast.success(t("audioRecorder.toasts.cancelled"));
-  }, [onRecordingCancel, t]);
+  }, [cleanup, onRecordingCancel, t]);
 
   // Format duration
   const formatDuration = useCallback((seconds) => {

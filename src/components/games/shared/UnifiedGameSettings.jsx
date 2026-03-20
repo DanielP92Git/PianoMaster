@@ -828,8 +828,11 @@ function NoteSelectionHeader({
   }, [bassNotesList, clefKey, isBothClefs, trebleNotesList]);
 
   const selectedCount = settings.selectedNotes?.length || 0;
-  const getNoteId = (note) =>
-    noteIdField === "note" ? note.note || note.pitch : note.pitch || note.note;
+  const getNoteId = useCallback(
+    (note) =>
+      noteIdField === "note" ? note.note || note.pitch : note.pitch || note.note,
+    [noteIdField]
+  );
 
   const getAllNoteIds = useCallback(() => {
     if (clefFilter === "treble") {

@@ -195,6 +195,7 @@ export function MetronomeTrainer() {
         startGame(trailSettings);
       }, 100);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, getTimeSignatureObject, startGame intentionally omitted to prevent re-triggering; only nodeConfig changes should re-evaluate
   }, [nodeConfig]);
 
   // Handle navigation to next exercise in the trail node
@@ -975,7 +976,6 @@ export function MetronomeTrainer() {
     exerciseProgress.totalExercises,
     playVictorySound,
     playWrongSound,
-    audioEngine,
   ]);
 
   /**

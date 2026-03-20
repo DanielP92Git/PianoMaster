@@ -316,6 +316,7 @@ export function SightReadingGame() {
         startGame(trailSettings);
       }, 100);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, trailEnableFlats, trailEnableSharps, trailKeySignature intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
@@ -623,6 +624,7 @@ export function SightReadingGame() {
     // Fallback: wall-clock baseline.
     if (!wallClockStartTimeRef.current) return 0;
     return Math.max(0, Date.now() - wallClockStartTimeRef.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render (returned from useAudioEngine); adding it would invalidate this callback on every render; audioEngine.getCurrentTime() accesses an internal AudioContext ref that is stable
   }, []);
 
   const [, setTimingFeedback] = useState(null); // { message, color, timestamp }
@@ -887,6 +889,7 @@ export function SightReadingGame() {
     }
     lastScoredRef.current = { pitch: event.pitch, time: now };
     handleNoteDetectedRef.current(event.pitch, event.frequency ?? 440);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this hot-path callback on every render
   }, [micTiming]);
 
   // Dev-only mic debug overlay toggle:
@@ -1415,7 +1418,7 @@ export function SightReadingGame() {
     return () => {
       isMounted = false;
     };
-  }, [summaryStats, gamePhase, isStudent, studentId, scoreSubmitted]);
+  }, [summaryStats, gamePhase, isStudent, studentId, scoreSubmitted, queryClient]);
 
   const recordPerformanceResult = useCallback((newResult) => {
     setPerformanceResults((prev) => {
@@ -1851,6 +1854,7 @@ export function SightReadingGame() {
         ]);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render (non-stable); shortestNoteDurationMsRef is a stable ref (ref.current accessed inside); both intentionally omitted to prevent excessive callback invalidation
     [
       evaluateTiming,
       showTimingFeedback,
@@ -1858,6 +1862,7 @@ export function SightReadingGame() {
       canScoreNow,
       getElapsedMsFromPerformanceStart,
       trackFailedAttemptForAntiCheat,
+      inputMode,
     ]
   );
 
@@ -2089,6 +2094,7 @@ export function SightReadingGame() {
     };
 
     performanceTimelineRafRef.current = requestAnimationFrame(tick);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this RAF-loop callback on every render
   }, [
     completePerformance,
     getElapsedMsFromPerformanceStart,
@@ -2707,6 +2713,7 @@ export function SightReadingGame() {
   }, [
     audioEngine,
     inputMode,
+    pauseTimer,
     startListeningSync,
     schedulePerformanceTimeline,
     stopCountInVisualization,
@@ -3006,6 +3013,8 @@ export function SightReadingGame() {
     audioEngine,
     ensureAudioContextRunning,
     handleCountInComplete,
+    inputMode,
+    setTimingStateSync,
     waitForStableAudioClock,
     verifyAudioClockProgressFast,
     startCountInVisualization,
@@ -3100,7 +3109,7 @@ export function SightReadingGame() {
     };
     setGameSettings(trailSettings);
     setTimeout(() => startGame(trailSettings), 50);
-  }, [audioContextRef, nodeConfig, startGame]);
+  }, [audioContextRef, nodeConfig, startGame, trailKeySignature]);
 
   // IOS-01/03: Freeze session timer when AudioContext is interrupted
   useEffect(() => {
@@ -3117,7 +3126,6 @@ export function SightReadingGame() {
   // that may not reflect the latest value within the same render cycle. The ref is
   // updated synchronously by startListeningSync/stopListeningSync at call time,
   // eliminating the race window between calling stop and checking the state.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     // Only enforce mic behavior if mic input mode is selected
     if (inputMode !== "mic") {

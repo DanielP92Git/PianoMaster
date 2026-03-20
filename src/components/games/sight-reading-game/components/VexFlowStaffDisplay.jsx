@@ -1477,7 +1477,7 @@ export function VexFlowStaffDisplay({
         animate: false,
       }; // Yellow/Orange - timing issue
     },
-    [currentNoteIndex, performanceResults, gamePhase]
+    [performanceResults, gamePhase]
   );
 
   /**

@@ -348,7 +348,6 @@ export function usePitchDetection({
         throw error;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [analyserNode, sampleRate, clarityThreshold, initDetector, onLevelChange, onPitchDetected]
   );
 

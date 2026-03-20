@@ -124,6 +124,7 @@ export default function PracticeSessionPlayer({
     if (!audioUrl && session?.recording_url) {
       getAudioUrl();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally triggers only on recording_url change; adding audioUrl would create an infinite loop (effect calls getAudioUrl which sets audioUrl which re-triggers effect); URL refresh on play is handled by the separate effect below
   }, [session?.recording_url]); // Only run when recording_url changes
 
   // Auto-refresh URL when needed
