@@ -227,7 +227,10 @@ Plans:
   3. Parent receives a Brevo confirmation email after successful deletion
   4. Re-running the Edge Function against an already-deleted account produces no errors (idempotent)
   5. Accounts where `deletion_scheduled_at` is still in the future (within 30-day grace) are not touched
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 14-01-PLAN.md — Create audit log migration, config.toml entry, and complete Edge Function implementation
+- [ ] 14-02-PLAN.md — Deploy to Supabase, register pg_cron, and verify all 5 success criteria end-to-end
 
 ### Phase 15: Production QA
 **Goal**: Every critical user flow has a documented pass/fail result verified on the production deployment — no flow can be assumed working without explicit confirmation
@@ -261,11 +264,11 @@ Plans:
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
-| 13. ESLint Cleanup | 3/3 | Complete    | 2026-03-20 | - |
-| 14. COPPA Hard Delete | v2.5 | 0/TBD | Not started | - |
+| 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
+| 14. COPPA Hard Delete | v2.5 | 0/2 | Not started | - |
 | 15. Production QA | v2.5 | 0/TBD | Not started | - |
 
-**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~141 plans across ~67 phases (shipped) + 4 phases planned**
+**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~143 plans across ~67 phases (shipped) + 4 phases planned**
 
 ---
-*Last updated: 2026-03-20 — Phase 13 plans created*
+*Last updated: 2026-03-21 — Phase 14 plans created*
