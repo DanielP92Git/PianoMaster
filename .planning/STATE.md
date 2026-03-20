@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Launch Prep
 status: unknown
-stopped_at: Completed 13-eslint-cleanup-01-PLAN.md
-last_updated: "2026-03-20T16:39:19.395Z"
+stopped_at: Completed 13-eslint-cleanup-02-PLAN.md
+last_updated: "2026-03-20T17:22:16.981Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 13 (eslint-cleanup) — EXECUTING
-Plan: 2 of 3 (Plan 01 complete)
+Plan: 3 of 3 (Plans 01-02 complete)
 
 ## Performance Metrics
 
@@ -49,6 +49,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 - [Phase 12-build-tooling-fixes]: Used `migration repair --status applied` instead of `db push` — all migrations had been applied via dashboard. Renamed duplicate timestamp file 20260127000003 → 20260127100000
 - [Phase 13-eslint-cleanup]: Added node globals to vitest test file override because rhythmGenerator.test.js uses require() (CJS Node global not in vitest globals)
 - [Phase 13-eslint-cleanup]: Used eslint-disable-next-line (not block-level) for all react-refresh suppressions to keep lint granular; each includes written rationale after --
+- [Phase 13-eslint-cleanup]: Removed dead handleResetProgress (~100 lines) from TrailMap.jsx — contained direct Supabase call bypassing RLS, unsuitable for production
+- [Phase 13-eslint-cleanup]: Used underscore-prefix for legacy backward-compat params in usePitchDetection (noteFrequencies, tolerance) rather than removing — preserves API compatibility for callers
 
 ### Blockers/Concerns
 
@@ -70,13 +72,13 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-20T16:39:19.388Z
-Stopped at: Completed 13-eslint-cleanup-01-PLAN.md
+Last session: 2026-03-20T17:22:11.741Z
+Stopped at: Completed 13-eslint-cleanup-02-PLAN.md
 Resume file: None
 
 **Next action:**
 
-- Execute Plan 02: no-unused-vars cleanup (underscore-prefix patterns now configured)
+- Execute Plan 03: react-hooks/exhaustive-deps cleanup (one file at a time; audio game components last)
 
 ---
 *State initialized: 2026-01-31*
