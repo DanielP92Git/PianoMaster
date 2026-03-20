@@ -256,7 +256,7 @@ Plans:
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
-| 12. Build Tooling Fixes | v2.5 | 0/2 | Not started | - |
+| 12. Build Tooling Fixes | 1/2 | In Progress|  | - |
 | 13. ESLint Cleanup | v2.5 | 0/TBD | Not started | - |
 | 14. COPPA Hard Delete | v2.5 | 0/TBD | Not started | - |
 | 15. Production QA | v2.5 | 0/TBD | Not started | - |

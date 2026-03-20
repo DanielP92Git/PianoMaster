@@ -9,7 +9,7 @@ Requirements for launch readiness. Each maps to roadmap phases.
 
 ### Build Tooling
 
-- [ ] **BUILD-01**: `verify:patterns` script runs successfully with correct `.js` extension on keySignatureConfig import
+- [x] **BUILD-01**: `verify:patterns` script runs successfully with correct `.js` extension on keySignatureConfig import
 - [ ] **BUILD-02**: `daily_challenges.sql` migration applied to production Supabase
 
 ### Code Quality
@@ -77,7 +77,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BUILD-01 | Phase 12 | Pending |
+| BUILD-01 | Phase 12 | Complete |
 | BUILD-02 | Phase 12 | Pending |
 | LINT-01 | Phase 13 | Pending |
 | LINT-02 | Phase 13 | Pending |
