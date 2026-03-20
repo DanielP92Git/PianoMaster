@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Launch Prep
 status: unknown
-stopped_at: Completed 13-eslint-cleanup-03-PLAN.md
-last_updated: "2026-03-20T17:52:30.102Z"
+stopped_at: Phase 14 context gathered
+last_updated: "2026-03-20T19:03:17.602Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -74,9 +74,9 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-20T17:46:58.775Z
-Stopped at: Completed 13-eslint-cleanup-03-PLAN.md
-Resume file: None
+Last session: 2026-03-20T19:03:17.593Z
+Stopped at: Phase 14 context gathered
+Resume file: .planning/milestones/v2.5-phases/14-coppa-hard-delete/14-CONTEXT.md
 
 **Next action:**
 
