@@ -21,13 +21,13 @@ Requirements for launch readiness. Each maps to roadmap phases.
 
 ### COPPA Hard Delete
 
-- [ ] **DEL-01**: Cron-triggered Edge Function identifies accounts past 30-day grace period
-- [ ] **DEL-02**: Edge Function cascades deletion across all student data tables (scores, progress, goals, challenges, push subscriptions)
-- [ ] **DEL-03**: Edge Function removes `auth.users` entry so credentials cannot be reused
-- [ ] **DEL-04**: Edge Function cancels active Lemon Squeezy subscription before deletion (if exists)
-- [ ] **DEL-05**: Parent receives confirmation email via Brevo after successful permanent deletion
-- [ ] **DEL-06**: `parent_subscriptions` and `push_subscriptions` included in data deletion scope (verify FK cascade or explicit delete)
-- [ ] **DEL-07**: Hard delete is idempotent — re-running on same account produces no errors
+- [x] **DEL-01**: Cron-triggered Edge Function identifies accounts past 30-day grace period
+- [x] **DEL-02**: Edge Function cascades deletion across all student data tables (scores, progress, goals, challenges, push subscriptions)
+- [x] **DEL-03**: Edge Function removes `auth.users` entry so credentials cannot be reused
+- [x] **DEL-04**: Edge Function cancels active Lemon Squeezy subscription before deletion (if exists)
+- [x] **DEL-05**: Parent receives confirmation email via Brevo after successful permanent deletion
+- [x] **DEL-06**: `parent_subscriptions` and `push_subscriptions` included in data deletion scope (verify FK cascade or explicit delete)
+- [x] **DEL-07**: Hard delete is idempotent — re-running on same account produces no errors
 
 ### Quality Assurance
 
@@ -83,13 +83,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LINT-02 | Phase 13 | Complete |
 | LINT-03 | Phase 13 | Complete |
 | LINT-04 | Phase 13 | Complete |
-| DEL-01 | Phase 14 | Pending |
-| DEL-02 | Phase 14 | Pending |
-| DEL-03 | Phase 14 | Pending |
-| DEL-04 | Phase 14 | Pending |
-| DEL-05 | Phase 14 | Pending |
-| DEL-06 | Phase 14 | Pending |
-| DEL-07 | Phase 14 | Pending |
+| DEL-01 | Phase 14 | Complete |
+| DEL-02 | Phase 14 | Complete |
+| DEL-03 | Phase 14 | Complete |
+| DEL-04 | Phase 14 | Complete |
+| DEL-05 | Phase 14 | Complete |
+| DEL-06 | Phase 14 | Complete |
+| DEL-07 | Phase 14 | Complete |
 | QA-01 | Phase 15 | Pending |
 | QA-02 | Phase 15 | Pending |
 | QA-03 | Phase 15 | Pending |
