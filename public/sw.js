@@ -92,7 +92,7 @@ async function cacheFirst(request, cacheName = CACHE_NAME) {
     const fallbackCached = await cache.match(request);
     if (fallbackCached) return fallbackCached;
     return networkResponse;
-  } catch (error) {
+  } catch (_error) {
     const fallbackCached = await cache.match(request);
     if (fallbackCached) return fallbackCached;
     return new Response("", { status: 504, statusText: "Gateway Timeout" });
@@ -224,7 +224,7 @@ self.addEventListener("fetch", (event) => {
             await cache.put(event.request, networkResponse.clone());
           }
           return networkResponse;
-        } catch (error) {
+        } catch (_error) {
           // Network failed — try cache
           const cachedResponse = await caches.match(event.request);
           if (cachedResponse) return cachedResponse;
@@ -538,7 +538,7 @@ self.addEventListener("notificationclick", (event) => {
             try {
               await client.navigate(urlToOpen);
               return client.focus();
-            } catch (e) {
+            } catch (_e) {
               // Uncontrolled client — use postMessage fallback
               client.postMessage({
                 type: "NAVIGATE",

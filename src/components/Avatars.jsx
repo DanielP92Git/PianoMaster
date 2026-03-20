@@ -7,7 +7,6 @@ import BackButton from "./ui/BackButton";
 import { useUser } from "../features/authentication/useUser";
 import { updateUserAvatar } from "../services/apiAuth";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
 import AnimatedAvatar, { ACCESSORY_SLOT_STYLES } from "./ui/AnimatedAvatar";
 import {
   useAccessoriesList,
@@ -97,7 +96,6 @@ function AvatarPreview({
 function Avatars() {
   const { t } = useTranslation("common");
   const { user } = useUser();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedAvatar, setSelectedAvatar] = useState(null);
   const [currentlyAnimatingId, setCurrentlyAnimatingId] = useState(null);
@@ -165,7 +163,7 @@ function Avatars() {
   const availableXP = pointsBalance?.available ?? 0;
 
   // Fetch games played count from students_score table
-  const { data: gamesPlayedCount, isLoading: gamesPlayedLoading } =
+  const { data: gamesPlayedCount } =
     useGamesPlayed();
 
   // Calculate user progress for unlock requirements

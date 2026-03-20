@@ -9,7 +9,7 @@
 import { useRef } from 'react';
 import { useVisibleNodes } from '../../hooks/useVisibleNodes';
 
-const PathConnector = ({ startX, startY, endX, endY, isCompleted, isLocked }) => {
+const PathConnector = ({ startX, startY, endX, endY, isCompleted, isLocked: _isLocked }) => {
   const groupRef = useRef(null);
   const isVisible = useVisibleNodes(groupRef);
 

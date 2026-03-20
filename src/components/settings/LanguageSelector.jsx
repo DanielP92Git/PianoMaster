@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Languages, ChevronDown, Check } from "lucide-react";
+import { Languages, Check } from "lucide-react";
 
 const LANGUAGE_OPTIONS = [
   { value: "en", label: "English", flag: "🇬🇧" },
@@ -10,17 +10,6 @@ export default function LanguageSelector() {
   const { i18n, t } = useTranslation("common");
   const currentLanguage = i18n.resolvedLanguage || i18n.language || "en";
   const isRTL = i18n.dir() === "rtl";
-
-  const handleChange = (event) => {
-    const nextLang = event.target.value;
-    if (nextLang !== currentLanguage) {
-      i18n.changeLanguage(nextLang);
-    }
-  };
-
-  const currentOption = LANGUAGE_OPTIONS.find(
-    (opt) => opt.value === currentLanguage
-  );
 
   return (
     <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg overflow-hidden">

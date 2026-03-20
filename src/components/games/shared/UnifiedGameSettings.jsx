@@ -13,7 +13,6 @@ import { useTranslation } from "react-i18next";
 import { useIsMobile } from "../../../hooks/useIsMobile";
 import trebleClefImage from "../../../assets/noteImages/treble/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass/bass-clef.svg";
-import VictoryScreen from "../VictoryScreen";
 import { RhythmPatternPreview } from "../sight-reading-game/components/RhythmPatternPreview";
 import { KeySignatureSelection } from "../sight-reading-game/components/KeySignatureSelection";
 import {
@@ -774,17 +773,16 @@ export function UnifiedGameSettings({
 
 // NoteSelection Header Component (for inline rendering in title row)
 function NoteSelectionHeader({
-  currentStep,
+  currentStep: _currentStep,
   settings,
   updateSetting,
   noteData,
   config,
-  gameType,
-  backRoute,
+  gameType: _gameType,
+  backRoute: _backRoute,
   title,
   t,
 }) {
-  const { i18n } = useTranslation("common");
   const { noteIdField = "pitch", clefFilter } = config || {};
   const clefKey = String(settings.clef || "Treble").toLowerCase();
   const isBothClefs = clefKey === "both";
@@ -1128,13 +1126,12 @@ function NoteSelection({
   updateSetting,
   noteData,
   config,
-  gameType,
+  gameType: _gameType,
   hideHeader = false,
 }) {
   const { t, i18n } = useTranslation("common");
   const {
     showImages = false,
-    minNotes = 2,
     noteIdField = "pitch",
     selectAllByDefault = false,
     clefFilter,
@@ -1373,21 +1370,8 @@ function NoteSelection({
     }
   };
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
+  // Note: rows calculation was removed (dead code — rows were computed but never consumed)
 
-    const rows = noteCards.map((note, index) => {
-      const id = getNoteId(note);
-      return {
-        index,
-        hebrew: note.note,
-        english: note.englishName,
-        pitch: note.pitch,
-        id,
-        isSelected: settings.selectedNotes?.includes(id) || false,
-      };
-    });
-  }, [gameType, settings.clef, settings.selectedNotes, noteIdField, noteCards]);
 
   const totalSelectableNotes = useMemo(
     () => getAllNoteIds().length,

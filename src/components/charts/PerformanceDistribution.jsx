@@ -5,7 +5,6 @@ import {
   Cell,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import { Target, Award, TrendingUp, Users } from "lucide-react";
 
@@ -144,7 +143,7 @@ const PerformanceDistribution = ({ students }) => {
     midAngle,
     innerRadius,
     outerRadius,
-    value,
+    _value,
     percentage,
   }) => {
     const RADIAN = Math.PI / 180;

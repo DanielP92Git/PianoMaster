@@ -5,7 +5,7 @@ import { Loader2, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 function AuthButton({ className = "" }) {
-  const { isAuthenticated, user } = useUser();
+  const { isAuthenticated } = useUser();
   const { logout, isPending } = useLogout();
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet, useLocation, Link } from "react-router-dom";  
+import { Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import Sidebar from "./Sidebar";  
 import Header from "./Header";  
@@ -46,9 +46,11 @@ export default function AppLayout() {
   };
 
   // Trail page and game routes have their own full-screen backgrounds, so use neutral base
-  const backgroundClass = isTrailPage || isGameRoute
-    ? "bg-black"
-    : "bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900";
+  const backgroundClass = isTrailPage
+    ? "bg-[#1a1040]"
+    : isGameRoute
+      ? "bg-black"
+      : "bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900";
 
   return (
     <div

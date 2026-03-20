@@ -13,7 +13,7 @@ import UnitProgressCard from './UnitProgressCard';
 import TrailNode from './TrailNode';
 
 const ZigzagTrailLayout = ({
-  nodes,
+  nodes: _nodes,
   completedNodeIds,
   unlockedNodes,
   premiumLockedNodeIds = new Set(),

@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, useLocation } from "react-router-dom";
-import { Menu, X, ChevronDown, Home } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
 import Button from "./Button";
 import Badge from "./Badge";
 
@@ -13,7 +13,7 @@ const NavigationBar = React.forwardRef(
       actions,
       variant = "default",
       position = "static",
-      blur = true,
+      blur: _blur = true,
       highContrast = false,
       className = "",
       onMenuToggle,

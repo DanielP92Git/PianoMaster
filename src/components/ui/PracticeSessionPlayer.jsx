@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from "react";
-import { Play, Pause, Loader2, AlertCircle, Download } from "lucide-react";
+import React, { useState, useCallback, useEffect } from "react";
+import { Loader2, AlertCircle, Download } from "lucide-react";
 import AudioPlayer from "./AudioPlayer";
 import { practiceService } from "../../services/practiceService";
 import audioCacheService from "../../services/audioCacheService";
@@ -19,7 +19,6 @@ export default function PracticeSessionPlayer({
   const [isLoadingUrl, setIsLoadingUrl] = useState(false);
   const [urlError, setUrlError] = useState(null);
   const [urlExpiry, setUrlExpiry] = useState(null);
-  const audioPlayerRef = useRef(null);
 
   // Get signed URL for the audio file with caching
   const getAudioUrl = useCallback(async () => {

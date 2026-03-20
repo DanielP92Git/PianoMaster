@@ -15,7 +15,7 @@ import TrailNode from './TrailNode';
 import { translateNodeName } from '../../utils/translateNodeName';
 
 const HorizontalTrailLayout = ({
-  nodes,
+  nodes: _nodes,
   completedNodeIds,
   unlockedNodes,
   onNodeClick,

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { streakService } from "../../services/streakService";
 import { getNextRecommendedNode } from "../../services/skillProgressService";
 import { useModal } from "../../contexts/ModalContext";
@@ -15,7 +15,6 @@ import { Send, Loader2 } from "lucide-react";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
 import {
   dashboardReminderService,
-  formatTimeRemaining,
 } from "../../services/dashboardReminderService";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
@@ -48,7 +47,6 @@ function Dashboard() {
   const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
   const { t, i18n } = useTranslation(["common", "trail"]);
   const isRTL = i18n.dir() === "rtl";
-  const queryClient = useQueryClient();
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
   const { reducedMotion } = useAccessibility();
   const avatarUrl = getAvatarImageSource(
@@ -60,7 +58,7 @@ function Dashboard() {
     : [];
 
   // Only load student-specific data if user is a student (Performance optimization for teachers)
-  const { scores, isLoading } = useScores(); // Already has isStudent check internally
+  const { isLoading } = useScores(); // Already has isStudent check internally
   const { openModal, closeModal } = useModal();
   const [activeReminder, setActiveReminder] = useState(null);
 

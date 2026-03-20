@@ -50,13 +50,6 @@ export default function PracticeSessions() {
     }
   }, [user?.id, clearFeedbackNotifications]);
 
-  // Get the latest recording timestamp
-  const latestRecordingTime = sessions?.[0]?.submitted_at;
-  const isNewRecording = (submittedAt) => {
-    if (!latestRecordingTime) return false;
-    return submittedAt === latestRecordingTime;
-  };
-
   // Update notes mutation
   const updateNotesMutation = useMutation({
     mutationFn: ({ sessionId, notes }) =>
@@ -82,7 +75,7 @@ export default function PracticeSessions() {
 
       return { previousSessions };
     },
-    onError: (error, { sessionId }, context) => {
+    onError: (error, { sessionId: _sessionId }, context) => {
       // Revert to the previous sessions on error
       queryClient.setQueryData(
         ["practice-sessions", user?.id],

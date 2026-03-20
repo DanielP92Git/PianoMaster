@@ -208,7 +208,7 @@ export function getAllComplexPatternIds() {
  * @param {number} unitsPerBeat - Sixteenth units per beat (default 4 for simple time)
  * @returns {Array} - Filtered patterns
  */
-export function getComplexPatternsByBeatsSpan(maxBeats, unitsPerBeat = 4) {
+export function getComplexPatternsByBeatsSpan(maxBeats, _unitsPerBeat = 4) {
   return COMPLEX_EXAMPLE_PATTERNS.filter((p) => p.beatsSpan <= maxBeats);
 }
 

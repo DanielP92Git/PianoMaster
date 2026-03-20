@@ -65,7 +65,7 @@ const VictoryScreen = ({
 
     // Context values
     user,
-    reducedMotion,
+    reducedMotion: _reducedMotion,
     t,
     i18n,
   } = useVictoryState({

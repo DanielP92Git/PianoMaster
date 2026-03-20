@@ -24,7 +24,7 @@ export const initializeVexFlow = (containerId, width, height) => {
  * @param {string} timeSignature - Time signature (e.g., "4/4")
  * @returns {number} Calculated width in pixels
  */
-export const calculateOptimalWidth = (totalDuration, timeSignature) => {
+export const calculateOptimalWidth = (totalDuration, _timeSignature) => {
   const baseWidth = 500; // Minimum width (clef + time sig + margins)
   const pixelsPerBeat = 90; // Spacing per quarter note
   
@@ -59,7 +59,7 @@ export const applyNoteHighlight = (noteElement, isActive) => {
  * @param {Array} notationObjects - Array of notation objects
  * @returns {string} EasyScore format string
  */
-export const convertToEasyScoreFormat = (notationObjects) => {
+export const convertToEasyScoreFormat = (_notationObjects) => {
   // TODO: Implement in Phase 2
   return '';
 };

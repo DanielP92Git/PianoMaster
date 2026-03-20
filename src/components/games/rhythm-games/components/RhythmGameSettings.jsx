@@ -4,7 +4,6 @@ import { Modal } from "../../../ui/Modal";
 import Button from "../../../ui/Button";
 import {
   DIFFICULTY_LEVELS,
-  TIME_SIGNATURES,
   getAvailableDifficulties,
   getTimeSignatures,
 } from "../RhythmPatternGenerator";

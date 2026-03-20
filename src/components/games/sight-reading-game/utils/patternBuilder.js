@@ -202,15 +202,6 @@ export async function generatePatternData({
   const validPitches = new Set(allNotes.map((n) => n.pitch));
   debugLog("Valid pitches for clef:", Array.from(validPitches).sort());
 
-  // Check if selectedNotes contains clef-qualified IDs (e.g., "treble:C4", "bass:C4")
-  const hasClefQualifiedFormat =
-    clefKey === "both" &&
-    selectedNotes.some(
-      (n) =>
-        typeof n === "string" &&
-        (n.startsWith("treble:") || n.startsWith("bass:"))
-    );
-
   // Check if selectedNotes contains direct pitches (new format) or Hebrew names (old format)
   const hasPitchFormat = selectedNotes.some((n) => validPitches.has(n));
 

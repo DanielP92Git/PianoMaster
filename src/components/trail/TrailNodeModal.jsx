@@ -13,7 +13,6 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Sparkles } from 'lucide-react';
 import GoldStar from '../ui/GoldStar';
-import { getNodeById } from '../../data/skillTrail';
 import { getExerciseProgress, getNextExerciseIndex } from '../../services/skillProgressService';
 import { useUser } from '../../features/authentication/useUser';
 import { translateNodeName } from '../../utils/translateNodeName';
@@ -105,7 +104,7 @@ const MODAL_ICON_STYLES = {
   },
 };
 
-const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, prerequisites = [], onClose }) => {
+const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, prerequisites: _prerequisites = [], onClose }) => {
   const navigate = useNavigate();
   const { user } = useUser();
   const { t, i18n } = useTranslation(['trail', 'common']);

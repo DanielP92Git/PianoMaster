@@ -25,29 +25,7 @@ import {
   Barline,
   Stem,
 } from "vexflow";
-import {
-  getDurationDefinition,
-  resolveTimeSignature,
-} from "../constants/durationConstants";
 import { beamGroupsForTimeSignature } from "../utils/beamGroupUtils";
-
-// Local helper: convert enriched notation objects into an EasyScore string.
-// (We build tickables manually in many paths, but this is still used for padding + legacy parsing.)
-const buildCompleteEasyScore = (enrichedNotation) =>
-  (Array.isArray(enrichedNotation) ? enrichedNotation : [])
-    .map((obj) => {
-      const durationInfo = getDurationDefinition(obj?.notation);
-      const duration = durationInfo?.vexflowCode || "q";
-
-      if (obj?.type === "rest") {
-        return `B4/${duration}/r`;
-      }
-      if (obj?.pitch) {
-        return `${obj.pitch}/${duration}`;
-      }
-      return `C4/${duration}`;
-    })
-    .join(", ");
 
 const NOTE_TO_SEMITONE = {
   C: 0,
@@ -350,13 +328,6 @@ export function VexFlowStaffDisplay({
 
       // DEBUG: Log pattern details
 
-      // Check if pattern needs padding (should rarely happen now that generator fills measures)
-      const allNotesForScore = Array.isArray(pattern.notes) ? pattern.notes : [];
-      const renderNotesForScore = shouldRenderSingleBar
-        ? allNotesForScore.filter((n) => Number(n?.barIndex ?? 0) === currentBarIndex)
-        : allNotesForScore;
-
-      let easyscoreString = buildCompleteEasyScore(renderNotesForScore);
       const durationDiff = expectedDuration - (shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration);
 
       // More lenient epsilon for floating point comparison
@@ -515,7 +486,7 @@ export function VexFlowStaffDisplay({
         return note;
       };
 
-      const buildSpacerRest = (duration, targetClef) => {
+      const buildSpacerRest = (duration, _targetClef) => {
         let cleanDuration = String(duration || "q").replace(/r$/, "");
 
         // Check for dotted durations (e.g., "q.", "h.", "8.")
@@ -1516,7 +1487,7 @@ export function VexFlowStaffDisplay({
    * During feedback phase, notes are colored based on performance results.
    */
   const highlightNote = useCallback(
-    (noteIndex) => {
+    (_noteIndex) => {
       if (!notesRef.current || notesRef.current.length === 0) {
         return;
       }

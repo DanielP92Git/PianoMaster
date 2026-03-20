@@ -16,17 +16,17 @@ import flameIcon from '../../assets/icons/flame.png';
 const UnifiedStatsCard = ({
   // XP data
   levelTitle = '',
-  levelNumber = 1,
+  levelNumber: _levelNumber = 1,
   progressPercentage = 0,
   xpCurrent = 0,
   xpTotal = 0,
-  totalXP = 0,
+  totalXP: _totalXP = 0,
   isPrestige = false,
 
   // Streak data
   streakCount = 0,
   freezeCount = 0,
-  inGraceWindow = false,
+  inGraceWindow: _inGraceWindow = false,
 
   // Daily goals summary
   goalsCompleted = 0,

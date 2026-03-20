@@ -10,7 +10,7 @@ import bassClefSvg from '../../../assets/noteImages/bass/bass-clef.svg';
 const BassClefIcon = ({
   size = 24,
   color = 'currentColor',
-  strokeWidth = 2,
+  strokeWidth: _strokeWidth = 2,
   className = '',
   ...props
 }) => (

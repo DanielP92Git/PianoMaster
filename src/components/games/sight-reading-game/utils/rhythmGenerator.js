@@ -3,7 +3,6 @@ import {
   resolveTimeSignature,
 } from "../constants/durationConstants.js";
 import {
-  COMPLEX_EXAMPLE_PATTERNS,
   getSingleBeatComplexPatterns,
   getMultiBeatComplexPatterns,
 } from "./rhythmPatterns.js";
@@ -360,7 +359,7 @@ export function generateRhythmEvents({
       );
       if (fittingPatterns.length > 0) {
         const picked = pickRandom(fittingPatterns);
-        const beatsUsed = pushComplexPattern(picked, beatIndex);
+        pushComplexPattern(picked, beatIndex);
         filled += picked.totalUnits;
         return filled;
       }

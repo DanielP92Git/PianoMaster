@@ -62,8 +62,8 @@ export function normalizeSelectedNotes({
   trebleNotes = [],
   bassNotes = [],
   targetField = "pitch",
-  enableSharps = false,
-  enableFlats = false,
+  enableSharps: _enableSharps = false,
+  enableFlats: _enableFlats = false,
 } = {}) {
   const clefKey = String(clef || "Treble").toLowerCase();
   const isBothClefs = clefKey === "both";

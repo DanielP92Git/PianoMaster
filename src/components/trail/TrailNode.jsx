@@ -15,7 +15,7 @@ import { getNodeById } from '../../data/skillTrail';
 
 const TrailNode = ({ node, progress, isUnlocked, isCompleted, isCurrent, isFirstNode, isPremiumLocked = false, onClick }) => {
   const { t, i18n } = useTranslation('trail');
-  const { reducedMotion } = useAccessibility();
+  const { reducedMotion: _reducedMotion } = useAccessibility();
   const [showTooltip, setShowTooltip] = useState(false);
 
   // Determine node state

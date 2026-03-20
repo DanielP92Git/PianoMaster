@@ -6,7 +6,6 @@ import {
   Pause,
   Loader2,
   X,
-  Volume2,
   Settings,
 } from "lucide-react";
 import AudioCompressionService, {

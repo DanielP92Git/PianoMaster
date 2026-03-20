@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { useLogin } from "../../features/authentication/useLogin";
 import { useResetPassword } from "../../features/authentication/useResetPassword";
 import {
@@ -8,7 +7,6 @@ import {
   EyeOff,
   ArrowLeft,
   CheckCircle2,
-  Mail,
 } from "lucide-react";
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
@@ -25,7 +23,6 @@ function LoginForm() {
   const [view, setView] = useState("login"); // 'login' | 'forgotPassword' | 'resetSent'
   const [resetEmail, setResetEmail] = useState("");
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
-  const navigate = useNavigate();
   const { login, isPending } = useLogin();
   const { t } = useTranslation("common");
   const {

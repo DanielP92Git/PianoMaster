@@ -183,7 +183,7 @@ export function RhythmNotationRenderer({
  */
 export function InlineNotationDisplay({
   pattern = [],
-  timeSignature = { name: "4/4", beats: 4 },
+  timeSignature: _timeSignature = { name: "4/4", beats: 4 },
   currentBeat = -1,
   isPlaying = false,
   width = 400,

@@ -10,7 +10,7 @@ import metronomeSvg from '../../../assets/icons/metronome.svg';
 const MetronomeIcon = ({
   size = 24,
   color = 'currentColor',
-  strokeWidth = 2,
+  strokeWidth: _strokeWidth = 2,
   className = '',
   ...props
 }) => (

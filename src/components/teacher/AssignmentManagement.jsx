@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Plus,
-  Edit3,
   Trash2,
   Calendar,
   Users,
@@ -10,14 +9,10 @@ import {
   Clock,
   AlertCircle,
   Search,
-  Filter,
   BookOpen,
   FileText,
   Target,
-  Award,
   Eye,
-  Send,
-  X,
 } from "lucide-react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
@@ -27,10 +22,8 @@ import { toast } from "react-hot-toast";
 import {
   getTeacherAssignments,
   createAssignment,
-  updateAssignment,
   deleteAssignment,
   getAssignmentSubmissions,
-  updateSubmissionGrade,
 } from "../../services/apiTeacher";
 
 // Create Assignment Modal

@@ -1,7 +1,7 @@
 import React from "react";
-import { FaClock, FaExclamationTriangle } from "react-icons/fa";
+import { FaClock } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
-import { MoveDownLeftIcon, TrendingDownIcon, Heart } from "lucide-react";
+import { TrendingDownIcon, Heart } from "lucide-react";
 
 const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctAnswers, onReset }) => {
   const { t } = useTranslation("common");

@@ -20,31 +20,6 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/Card";
-import { Trophy, RotateCcw, Home } from "lucide-react";
-
-// Progress bar component to track completed exercises
-const ProgressBar = ({ current, total }) => {
-  const { t } = useTranslation("common");
-  const progressPercent = Math.min(100, (current / total) * 100);
-  return (
-    <div className="mb-2 h-3 w-full overflow-hidden rounded-full bg-white/20 shadow-inner">
-      <div
-        className="flex h-3 items-center justify-end rounded-full bg-indigo-500 pr-2 transition-all duration-300 ease-out"
-        style={{ width: `${progressPercent}%` }}
-      >
-        {progressPercent > 15 && (
-          <span className="text-xs font-medium text-white">
-            {current}/{total}
-          </span>
-        )}
-      </div>
-      <div className="mt-1 text-center text-xs font-medium text-white">
-        {t("games.metronomeTrainer.progressLabel", { current, total })}
-      </div>
-    </div>
-  );
-};
 
 // Game phases
 const GAME_PHASES = {
@@ -118,10 +93,8 @@ export function MetronomeTrainer() {
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(120, { sharedAudioContext: audioContextRef.current });
   const {
-    playCorrectSound,
     playWrongSound,
     playVictorySound,
-    playDrumStickSound,
   } = useSounds();
 
   // Game state
@@ -268,9 +241,9 @@ export function MetronomeTrainer() {
   }, [navigate, nodeId, trailExerciseIndex, trailTotalExercises]);
 
   const [currentBeat, setCurrentBeat] = useState(0);
-  const [currentPattern, setCurrentPattern] = useState(null);
-  const [expectedTaps, setExpectedTaps] = useState([]);
-  const [userTaps, setUserTaps] = useState([]);
+  const [_currentPattern, setCurrentPattern] = useState(null);
+  const [_expectedTaps, setExpectedTaps] = useState([]);
+  const [_userTaps, setUserTaps] = useState([]);
   const [feedback, setFeedback] = useState(null);
 
   // Session tracking
@@ -307,7 +280,7 @@ export function MetronomeTrainer() {
   const userTapsRef = useRef([]); // Track user taps in real-time for evaluation
   const scheduledOscillatorsRef = useRef([]); // Track scheduled oscillators for manual stopping
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
-  const [countdownToStart, setCountdownToStart] = useState(null); // Countdown until user should start tapping
+  const [_countdownToStart, setCountdownToStart] = useState(null); // Countdown until user should start tapping
 
   // Calculate beat duration from tempo
   useEffect(() => {
@@ -563,7 +536,7 @@ export function MetronomeTrainer() {
         if (info.oscillator && info.oscillator.stop) {
           info.oscillator.stop(currentTime);
         }
-      } catch (error) {
+      } catch (_error) {
         // Oscillator might already be stopped, ignore
       }
     });
@@ -877,7 +850,6 @@ export function MetronomeTrainer() {
     expectedBeatPositions.forEach((expectedBeatPos) => {
       // Find the user tap that best matches this expected beat position
       let bestAccuracy = "MISS";
-      let bestUserTap = null;
 
       currentUserTaps.forEach((userTap) => {
         // Convert user tap relative time to beat position within the measure
@@ -908,7 +880,6 @@ export function MetronomeTrainer() {
         const accuracyRank = { PERFECT: 4, GOOD: 3, FAIR: 2, MISS: 1 };
         if (accuracyRank[accuracy] > accuracyRank[bestAccuracy]) {
           bestAccuracy = accuracy;
-          bestUserTap = userTap;
         }
       });
 
@@ -976,11 +947,6 @@ export function MetronomeTrainer() {
 
     // Check if this is the last exercise
     if (newExerciseNumber >= exerciseProgress.totalExercises) {
-      // Calculate final score percentage
-      const finalScorePercentage =
-        newExerciseScores.reduce((sum, score) => sum + score, 0) /
-        newExerciseScores.length;
-
       // Play victory sound for successful session completion
       playVictorySound();
 
@@ -1048,7 +1014,6 @@ export function MetronomeTrainer() {
 
       const nearestBeat1Time =
         prevError < nextError ? prevBeat1Time : nextBeat1Time;
-      const nearestMeasure = prevError < nextError ? prevMeasure : nextMeasure;
       const timingError = Math.min(prevError, nextError);
 
       // Very generous tolerance - allow up to 1.2 beats worth of error

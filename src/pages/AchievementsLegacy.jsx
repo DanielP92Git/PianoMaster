@@ -34,7 +34,7 @@ const categoryColors = {
 
 export default function AchievementsLegacy() {
   const { user } = useUser();
-  const { t, i18n } = useTranslation();
+  const { t, i18n: _i18n } = useTranslation();
 
   // Fetch all available achievements
   const { data: allAchievements = [], isLoading: allLoading } = useQuery({

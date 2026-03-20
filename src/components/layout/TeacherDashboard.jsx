@@ -10,7 +10,6 @@ import {
 import {
   getTeacherStudents,
   addStudentToTeacher,
-  getStudentProgress,
   sendStudentMessage,
   removeStudentFromTeacher,
   removeMultipleStudentsFromTeacher,
@@ -31,14 +30,10 @@ import {
   Clock,
   BarChart3,
   Target,
-  Award,
   AlertTriangle,
   Users,
-  PieChart,
   Headphones,
   Filter,
-  SortAsc,
-  SortDesc,
   Eye,
   X,
   ChevronDown,
@@ -1920,15 +1915,6 @@ const TeacherDashboard = () => {
       ...prev,
       [filterType]: value,
     }));
-  };
-
-  const handleSortChange = (newSortBy) => {
-    if (newSortBy === sortBy) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortBy(newSortBy);
-      setSortOrder("asc");
-    }
   };
 
   const clearAllFilters = () => {

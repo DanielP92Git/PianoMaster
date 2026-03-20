@@ -38,7 +38,7 @@ export function SightReadingLayout({
   isFeedbackPhase,
   isCompactLandscape,
   isTallStaffLayout,
-  isMultiBar = false,
+  isMultiBar: _isMultiBar = false,
   headerControls,
   staff,
   guidance,

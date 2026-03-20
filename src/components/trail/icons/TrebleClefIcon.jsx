@@ -10,7 +10,7 @@ import trebleClefSvg from '../../../assets/musicSymbols/treble-clef.svg';
 const TrebleClefIcon = ({
   size = 24,
   color = 'currentColor',
-  strokeWidth = 2,
+  strokeWidth: _strokeWidth = 2,
   className = '',
   ...props
 }) => (

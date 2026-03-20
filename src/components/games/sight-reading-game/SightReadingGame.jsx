@@ -144,7 +144,7 @@ const logMetronomeTiming = (label, payload = {}) => {
     ...payload,
   });
 };
-const logFirstNoteDebug = (label, payload = {}) => {
+const logFirstNoteDebug = (_label, _payload = {}) => {
   if (!FIRST_NOTE_DEBUG) return;
 };
 
@@ -174,7 +174,7 @@ export function SightReadingGame() {
   const trailEnableSharps = location.state?.enableSharps ?? false;
   const trailEnableFlats = location.state?.enableFlats ?? false;
   const trailKeySignature = location.state?.keySignature ?? null;
-  const { audioContextRef, requestMic, releaseMic, isInterrupted, handleTapToResume } = useAudioContext();
+  const { audioContextRef, requestMic, isInterrupted, handleTapToResume } = useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(80, { sharedAudioContext: audioContextRef.current });
   const { generatePattern } = usePatternGeneration();
@@ -191,7 +191,7 @@ export function SightReadingGame() {
     percentage: sessionPercentage,
     totalScore: sessionTotalScore,
     maxPossibleScore: sessionMaxScore,
-    status: sessionStatus,
+    status: _sessionStatus,
     startSession,
     resetSession,
     recordExerciseResult: recordSessionExercise,
@@ -577,7 +577,6 @@ export function SightReadingGame() {
 
   // Performance tracking
   const [performanceResults, setPerformanceResults] = useState([]);
-  const [, setExpectedNoteStartTime] = useState(null);
   const [, setDetectedPitches] = useState([]);
 
   // Mic error overlay state (replaces old showMicPermissionPrompt)
@@ -1805,18 +1804,6 @@ export function SightReadingGame() {
         });
         // #endregion
         // Record wrong pitch (per PRD: show RED feedback)
-        const result = {
-          noteIndex: matchingNoteIndex,
-          expected: matchingEvent.pitch,
-          detected: detectedNote,
-          frequency,
-          timeDiff,
-          timingStatus: "wrong_pitch",
-          isCorrect: false,
-          timestamp: now,
-          phase,
-        };
-
         console.debug("[NoteDetection]", {
           wrong: true,
           noteIndex: matchingNoteIndex + 1,
@@ -2749,7 +2736,7 @@ export function SightReadingGame() {
       micEarlyWindowStartRequestedRef.current = false;
       pendingMicLatencyMsRef.current = null;
       // Resume audio context (required after user interaction)
-      const resumed = await audioEngine.resumeAudioContext();
+      await audioEngine.resumeAudioContext();
 
       if (!audioEngine.isReady()) {
         throw new Error(
@@ -3042,7 +3029,7 @@ export function SightReadingGame() {
 
       try {
         // Resume audio context (required after user interaction)
-        const resumed = await audioEngine.resumeAudioContext();
+        await audioEngine.resumeAudioContext();
 
         if (!audioEngine.isReady()) {
           throw new Error(

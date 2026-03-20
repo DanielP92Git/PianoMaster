@@ -1,5 +1,5 @@
 import React from "react";
-import { ExternalLink, Link as LinkIcon } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import BackButton from "../components/ui/BackButton";
@@ -8,7 +8,7 @@ function Legal() {
   const { t } = useTranslation("common");
   return (
     <div className="min-h-screen pb-8">
-      <BackButton to="/" name={t("navigation.links.studentDashboard")} />
+      <BackButton to="/settings" name={t("navigation.links.settings")} />
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         {/* Header */}

@@ -7,14 +7,12 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Drum, Target } from 'lucide-react';
+import { Target } from 'lucide-react';
+import MusicLoader from '../ui/MusicLoader';
 import { useTranslation } from 'react-i18next';
-import { useQueryClient } from '@tanstack/react-query';
 import { useUser } from '../../features/authentication/useUser';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { isFreeNode } from '../../config/subscriptionConfig';
-import trebleClefIcon from '../../assets/noteImages/treble/treble-clef.svg';
-import bassClefIcon from '../../assets/noteImages/bass/bass-clef.svg';
 import {
   getNodesByCategory,
   getBossNodes,
@@ -25,11 +23,9 @@ import {
   getStudentProgress,
   getCompletedNodeIds,
   getCurrentUnitForCategory,
-  resetStudentProgress
 } from '../../services/skillProgressService';
 import ZigzagTrailLayout from './ZigzagTrailLayout';
 import TrailNodeModal from './TrailNodeModal';
-import supabase from '../../services/supabase';
 
 /**
  * useMediaQuery Hook
@@ -63,7 +59,6 @@ const TRAIL_TABS = [
 const TrailMap = () => {
   const { user } = useUser();
   const { isPremium } = useSubscription();
-  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('path') || 'treble'; // Default to treble
   const [progress, setProgress] = useState([]);
@@ -71,7 +66,7 @@ const TrailMap = () => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [unlockedNodes, setUnlockedNodes] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const [currentUnits, setCurrentUnits] = useState({
+  const [_currentUnits, setCurrentUnits] = useState({
     treble: 1,
     bass: 1,
     rhythm: 1
@@ -151,19 +146,6 @@ const TrailMap = () => {
   };
 
   // Find the current (next to complete) node in a category
-  const findCurrentNode = (nodes) => {
-    for (const node of nodes) {
-      const isUnlocked = unlockedNodes.has(node.id);
-      const isCompleted = completedNodeIds.includes(node.id);
-      if (isUnlocked && !isCompleted) {
-        return node;
-      }
-    }
-    // If all completed, return the last one for replay
-    const lastCompleted = [...nodes].reverse().find(n => completedNodeIds.includes(n.id));
-    return lastCompleted || nodes[0];
-  };
-
   // Get nodes by category
   const trebleNodes = getNodesByCategory(NODE_CATEGORIES.TREBLE_CLEF);
   const bassNodes = getNodesByCategory(NODE_CATEGORIES.BASS_CLEF);
@@ -262,123 +244,10 @@ const TrailMap = () => {
     return `${completed}/${nodes.length}`;
   };
 
-  // Development: Reset all trail progress
-  const handleResetProgress = async () => {
-    if (!user?.id) return;
-
-    const confirmed = window.confirm(
-      '🚨 DEV MODE: Reset ALL trail progress?\n\nThis will:\n- Delete all node progress\n- Delete all unit progress\n- Reset XP to 0\n- Delete all scores\n- Cannot be undone!\n\nContinue?'
-    );
-
-    if (!confirmed) return;
-
-    try {
-      setLoading(true);
-      console.log('🗑️ Resetting all trail progress for user:', user.id);
-
-      // 1. Delete all skill progress
-      const { data: deletedSkills, error: skillError, count: skillCount } = await supabase
-        .from('student_skill_progress')
-        .delete()
-        .eq('student_id', user.id)
-        .select();
-
-      if (skillError) throw skillError;
-      console.log(`✓ Deleted ${deletedSkills?.length || 0} student_skill_progress records`);
-
-      // 2. Delete all unit progress
-      const { data: deletedUnits, error: unitError } = await supabase
-        .from('student_unit_progress')
-        .delete()
-        .eq('student_id', user.id)
-        .select();
-
-      if (unitError) throw unitError;
-      console.log(`✓ Deleted ${deletedUnits?.length || 0} student_unit_progress records`);
-
-      // 3. Delete all scores (prevents migration from restoring progress)
-      const { data: deletedScores, error: scoreError } = await supabase
-        .from('students_score')
-        .delete()
-        .eq('student_id', user.id)
-        .select();
-
-      if (scoreError) throw scoreError;
-      console.log(`✓ Deleted ${deletedScores?.length || 0} students_score records`);
-
-      // 4. Reset XP to 0
-      const { data: updatedStudent, error: xpError } = await supabase
-        .from('students')
-        .update({ total_xp: 0, current_level: 1 })
-        .eq('id', user.id)
-        .select();
-
-      if (xpError) throw xpError;
-      console.log('✓ Reset XP and level:', updatedStudent);
-
-      // 5. Clear ALL localStorage keys related to progress
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && (
-          key.includes(user.id) ||
-          key.startsWith('trail_') ||
-          key.startsWith('progress_') ||
-          key.startsWith('xp_') ||
-          key.includes('migration')
-        )) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      console.log('✓ Cleared localStorage keys:', keysToRemove);
-
-      // 6. Invalidate ALL React Query caches
-      await queryClient.invalidateQueries();
-      queryClient.clear();
-      console.log('✓ Cleared React Query cache');
-
-      // 7. Update local state immediately
-      setProgress([]);
-      setCompletedNodeIds([]);
-      setUnlockedNodes(new Set());
-      setCurrentUnits({ treble: 1, bass: 1, rhythm: 1 });
-      console.log('✓ Reset local state');
-
-      // 8. Verify deletion by fetching fresh data
-      console.log('🔍 Verifying deletion...');
-      const { data: verifyProgress } = await supabase
-        .from('student_skill_progress')
-        .select('*')
-        .eq('student_id', user.id);
-
-      console.log('Remaining progress records:', verifyProgress?.length || 0);
-
-      if (verifyProgress && verifyProgress.length > 0) {
-        console.error('⚠️ WARNING: Progress records still exist!', verifyProgress);
-      }
-
-      console.log('✅ Reset complete! Reloading in 1 second...');
-
-      // Wait longer for database changes to propagate, then hard reload
-      setTimeout(() => {
-        window.location.href = window.location.pathname + '?reset=' + Date.now();
-      }, 1000);
-
-    } catch (error) {
-      console.error('❌ Error resetting progress:', error);
-      alert(`❌ Error: ${error.message}\n\nCheck console for details.`);
-      setLoading(false);
-    }
-  };
-
   if (loading) {
     return (
-      <div className="flex h-96 items-center justify-center">
-        <div className="text-center">
-          <div className="mb-4 text-5xl animate-bounce">&#127925;</div>
-          <p className="text-lg text-white/70">{t('loading', { ns: 'trail' })}</p>
-        </div>
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <MusicLoader size="md" text={t('loading', { ns: 'trail' })} />
       </div>
     );
   }

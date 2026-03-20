@@ -542,33 +542,6 @@ export function MemoryGame() {
     applySettingsAndRestart(settings, { initial: true });
   };
 
-  const handleStartGame = (
-    currentClef = clef,
-    newTimeLimit = timeLimit,
-    newGridSize = gridSize,
-    currentSelectedNotes = selectedNotes
-  ) => {
-    setGameStarted(true);
-    setGameFinished(false);
-    setIsLost(false);
-    setFlippedIndexes([]);
-    setMatchedIndexes([]);
-    setScore(0);
-    setShowFireworks(false);
-
-    const newCards = createCards(
-      currentClef,
-      newGridSize,
-      currentSelectedNotes,
-      enableSharps,
-      enableFlats
-    );
-    setCards(newCards);
-
-    pauseTimer();
-    resetTimer(newTimeLimit);
-  };
-
   const handlePauseGame = () => {
     if (timedMode) {
       pauseTimer();

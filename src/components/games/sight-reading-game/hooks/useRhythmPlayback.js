@@ -6,7 +6,7 @@ const RHYTHM_DEBUG = true;
  * Hook for rhythm playback with proper timing and duration
  * Schedules notes to play at their correct rhythmic positions
  */
-export function useRhythmPlayback({ audioEngine, tempo }) {
+export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
   const scheduledNotesRef = useRef([]);
   const playbackTimerRef = useRef(null);
   const startTimeRef = useRef(null);
@@ -76,14 +76,12 @@ export function useRhythmPlayback({ audioEngine, tempo }) {
           startTime: noteStartTime,
           endTime,
           frequency,
-          duration,
         } = notationObj;
 
         // Only play notes, not rests
         if (type === "note" && frequency) {
           const absoluteStartTime = startTime + noteStartTime;
           const absoluteEndTime = startTime + endTime;
-          const noteDuration = absoluteEndTime - absoluteStartTime;
 
           // Create oscillator for this note
           const oscillator = context.createOscillator();

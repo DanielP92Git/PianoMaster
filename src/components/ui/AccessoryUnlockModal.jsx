@@ -5,19 +5,12 @@ import toast from "react-hot-toast";
 import { useEquipAccessory } from "../../hooks/useAccessories";
 
 const AccessoryUnlockModal = ({ accessories, onClose, onEquip }) => {
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [animationStage, setAnimationStage] = useState("chest"); // chest, reveal, complete
   const equipAccessory = useEquipAccessory();
 
   const currentAccessory = accessories?.[currentIndex];
-  const isHebrew = useMemo(
-    () => i18n.language?.startsWith("he"),
-    [i18n.language]
-  );
-  const hebrewFontStack =
-    "'Heebo','Assistant','Noto Sans Hebrew','Open Sans','Arial',sans-serif";
-  const textFontStyle = isHebrew ? { fontFamily: hebrewFontStack } : undefined;
   const requirementChipText = formatRequirementChip(
     currentAccessory?.unlock_requirement,
     t

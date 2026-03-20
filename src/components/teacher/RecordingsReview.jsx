@@ -19,7 +19,6 @@ import {
   AlertCircle,
   Star,
   Search,
-  ChevronDown,
   Trash2,
   Square,
   CheckSquare,
@@ -65,11 +64,6 @@ const ReviewModal = ({
     setFeedback(recording?.teacher_feedback || "");
     setStatus(recording?.status || "pending_review");
     onClose();
-  };
-
-  const getStatusColor = (statusValue) => {
-    const statusObj = REVIEW_STATUSES.find((s) => s.value === statusValue);
-    return statusObj?.color || "gray";
   };
 
   return (
@@ -216,8 +210,8 @@ const RecordingsReview = () => {
     },
     refetchInterval: 180000, // Refresh every 3 minutes (reduced from 30 seconds)
     staleTime: 120000, // Consider data fresh for 2 minutes
-    onSuccess: (data) => {
-      // 
+    onSuccess: (_data) => {
+      //
     },
     onError: (error) => {
       console.error("❌ RecordingsReview - Error fetching recordings:", error);
@@ -228,13 +222,13 @@ const RecordingsReview = () => {
   const { data: students = [] } = useQuery({
     queryKey: ["teacher-students-for-recordings"],
     queryFn: () => {
-      // 
+      //
       return getTeacherStudents();
     },
     staleTime: 300000, // Consider data fresh for 5 minutes
     refetchInterval: false, // No polling for dropdown data
-    onSuccess: (data) => {
-      // 
+    onSuccess: (_data) => {
+      //
     },
     onError: (error) => {
       console.error("❌ RecordingsReview - Error fetching students:", error);

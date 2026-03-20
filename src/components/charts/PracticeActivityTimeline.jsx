@@ -116,7 +116,7 @@ const PracticeActivityTimeline = ({ students }) => {
 
   const timelineData = generateTimelineData();
 
-  const CustomTooltip = ({ active, payload, label }) => {
+  const CustomTooltip = ({ active, payload, label: _label }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (

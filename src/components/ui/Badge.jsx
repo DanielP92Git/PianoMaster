@@ -11,7 +11,7 @@ const Badge = React.forwardRef(
       dot = false,
       count,
       maxCount = 99,
-      position = "top-right",
+      position: _position = "top-right",
       highContrast = false,
       className = "",
       ...props

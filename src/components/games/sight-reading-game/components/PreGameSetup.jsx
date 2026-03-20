@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Mic, MicOff } from "lucide-react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { UnifiedGameSettings } from "../../shared/UnifiedGameSettings";
 import { TREBLE_NOTES, BASS_NOTES } from "../constants/gameSettings";
 import { TIME_SIGNATURES } from "../../rhythm-games/RhythmPatternGenerator";
@@ -14,33 +13,6 @@ export function PreGameSetup({
   onStart,
   micStatus,
 }) {
-  // Mic test mode: 'not_checked' | 'testing' | 'tested' | 'error'
-  const [micMode, setMicMode] = useState("not_checked");
-  const [micError, setMicError] = useState(null);
-
-  const handleTestMic = async () => {
-    setMicError(null);
-    setMicMode("testing");
-    try {
-      await micStatus.startListening();
-    } catch (error) {
-      console.error("❌ Microphone test failed:", error);
-      setMicError(error.message || "Microphone access denied");
-      setMicMode("error");
-    }
-  };
-
-  const handleStopTest = () => {
-    micStatus.stopListening();
-    setMicMode("tested");
-  };
-
-  const getMicStatusLabel = () => {
-    if (micMode === "error") return "Permission denied";
-    if (micStatus.isListening) return "Testing...";
-    if (micMode === "tested") return "Ready";
-    return "Not checked";
-  };
   const normalizedSelectedNotes = useMemo(
     () =>
       normalizeSelectedNotes({
@@ -147,9 +119,6 @@ export function PreGameSetup({
       if (micStatus.isListening) {
         micStatus.stopListening();
       }
-      // Reset test mode
-      setMicMode("not_checked");
-      setMicError(null);
 
       const preparedSettings = {
         ...finalSettings,

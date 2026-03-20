@@ -134,9 +134,7 @@ describe("generateRhythmEvents (all rhythms + rests scenario)", () => {
 
   it("handles dotted durations correctly in complex patterns", () => {
     // Force the generator to pick dottedQuarterEighth pattern
-    let callCount = 0;
     vi.spyOn(Math, "random").mockImplementation(() => {
-      callCount++;
       // Return 0.1 to trigger complex pattern insertion (< 0.35 threshold)
       // and consistently pick the first fitting pattern
       return 0.1;
@@ -202,9 +200,7 @@ describe("generateRhythmEvents (all rhythms + rests scenario)", () => {
   });
 
   it("correctly handles dottedEighthSixteenth pattern (3+1=4 units)", () => {
-    let callCount = 0;
     vi.spyOn(Math, "random").mockImplementation(() => {
-      callCount++;
       return 0.1; // Trigger complex pattern insertion
     });
 
@@ -310,8 +306,7 @@ describe("generateRhythmEvents (syncopation constraints)", () => {
       // - A combination that sums to 4 (e.g., half note spans 2 beats, so partial beats are OK)
       // But NO beat should have an isolated eighth that doesn't pair within the same beat.
 
-      for (const { beat, durations } of beatGroups) {
-        const sum = durations.reduce((a, b) => a + b, 0);
+      for (const { beat: _beat, durations } of beatGroups) {
         const hasIsolatedEighth =
           durations.filter((d) => d === 2).length === 1 && durations.length > 1;
 
@@ -406,7 +401,7 @@ describe("generateRhythmEvents (syncopation constraints)", () => {
       // - The beat must contain exactly two eighth-sized events (notes or rests)
       // - The pair must start at the beat boundary (first event at position % 4 === 0)
       // - Valid combinations: rest+rest, rest+note, note+rest
-      for (const { beat, events: beatEvents } of beatGroups) {
+      for (const { beat: _beat, events: beatEvents } of beatGroups) {
         const eighthRests = beatEvents.filter(
           (e) => e.type === "rest" && e.sixteenthUnits === 2
         );
@@ -746,7 +741,7 @@ describe("generateRhythmEvents (beat-contained patterns)", () => {
         patternGroups.get(event.patternId).push(event);
       }
 
-      for (const [patternId, patternEvents] of patternGroups) {
+      for (const [_patternId, patternEvents] of patternGroups) {
         const totalUnits = patternEvents.reduce((sum, e) => sum + e.sixteenthUnits, 0);
         const beatSpan = patternEvents[0].beatSpan;
 
