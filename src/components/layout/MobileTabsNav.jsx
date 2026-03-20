@@ -14,13 +14,14 @@ export default function MobileTabsNav() {
     isStudent ? user?.id : null
   );
 
-  const tabIds = isStudent
-    ? ["studentDashboard", "practiceGames", "recordings", "achievements", "settings"]
-    : isTeacher
-      ? ["teacherDashboard", "settings"]
-      : ["settings"];
-
   const items = useMemo(() => {
+    // tabIds computed inside useMemo to avoid unstable reference causing deps to change on every render
+    const tabIds = isStudent
+      ? ["studentDashboard", "practiceGames", "recordings", "achievements", "settings"]
+      : isTeacher
+        ? ["teacherDashboard", "settings"]
+        : ["settings"];
+
     const sidebarItems = getSidebarNavItems({
       isStudent,
       isTeacher,
@@ -45,7 +46,7 @@ export default function MobileTabsNav() {
           badgePosition: isRTL ? "top-left" : "top-right",
         };
       });
-  }, [isStudent, isTeacher, isRTL, newFeedbackCount, tabIds, t]);
+  }, [isStudent, isTeacher, isRTL, newFeedbackCount, t]);
 
   return (
     <BottomNavigation

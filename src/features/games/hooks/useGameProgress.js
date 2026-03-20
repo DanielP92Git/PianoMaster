@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import { useScores } from "../../../features/userData/useScores";
 import { createPracticeSession } from "../../../services/apiDatabase";
 import { useUser } from "../../authentication/useUser";
@@ -23,7 +22,6 @@ export function useGameProgress() {
     progressRef.current = progress;
   }, [progress]);
 
-  const queryClient = useQueryClient();
   const { updateScoreAsync: updateUserScoreAsync } = useScores();
   const { user } = useUser();
 
@@ -123,7 +121,7 @@ export function useGameProgress() {
         });
       }
     },
-    [queryClient, updateUserScoreAsync, user]
+    [updateUserScoreAsync, user]
   );
 
   const resetProgress = useCallback(() => {

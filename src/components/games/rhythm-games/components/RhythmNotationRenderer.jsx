@@ -23,7 +23,7 @@ export function RhythmNotationRenderer({
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    
+
     // Set canvas size
     canvas.width = width;
     canvas.height = height;
@@ -35,6 +35,7 @@ export function RhythmNotationRenderer({
     ctx.lineWidth = 2;
 
     drawNotation(ctx, pattern, timeSignature, currentBeat, isPlaying);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- drawNotation receives all required values as explicit arguments; it does not close over component state beyond what is already listed in deps
   }, [pattern, timeSignature, currentBeat, isPlaying, width, height]);
 
   /**

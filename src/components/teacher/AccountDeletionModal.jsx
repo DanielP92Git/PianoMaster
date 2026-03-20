@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -18,14 +18,7 @@ const AccountDeletionModal = ({ isOpen, onClose, student, onDeletionRequested })
   const [error, setError] = useState(null);
   const [confirmationName, setConfirmationName] = useState('');
 
-  useEffect(() => {
-    if (isOpen && student?.student_id) {
-      loadDeletionStatus();
-      setConfirmationName(''); // Reset confirmation input
-    }
-  }, [isOpen, student]);
-
-  const loadDeletionStatus = async () => {
+  const loadDeletionStatus = useCallback(async () => {
     setIsLoadingStatus(true);
     setError(null);
     try {
@@ -38,7 +31,14 @@ const AccountDeletionModal = ({ isOpen, onClose, student, onDeletionRequested })
     } finally {
       setIsLoadingStatus(false);
     }
-  };
+  }, [student]);
+
+  useEffect(() => {
+    if (isOpen && student?.student_id) {
+      loadDeletionStatus();
+      setConfirmationName(''); // Reset confirmation input
+    }
+  }, [isOpen, student, loadDeletionStatus]);
 
   const handleRequestDeletion = async () => {
     if (!student?.student_id || !confirmationName.trim()) return;

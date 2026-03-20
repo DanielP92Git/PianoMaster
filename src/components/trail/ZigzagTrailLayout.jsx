@@ -135,7 +135,7 @@ const ZigzagTrailLayout = ({
     });
 
     return pos;
-  }, [layoutItems, CARD_HEIGHT, CARD_SPACING, NODE_SPACING, LEFT_PERCENT, RIGHT_PERCENT, VARIATION_AMP]);
+  }, [layoutItems, CARD_HEIGHT, CARD_SPACING, NODE_SPACING, LEFT_PERCENT, RIGHT_PERCENT, VARIATION_AMP, isRTL]);
 
   // Calculate total height
   const totalHeight = positions.length > 0

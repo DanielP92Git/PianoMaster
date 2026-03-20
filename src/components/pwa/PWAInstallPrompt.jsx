@@ -73,6 +73,7 @@ const PWAInstallPrompt = () => {
     return () => {
       // Cleanup if needed
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- shouldSuppressPrompt reads localStorage; this effect runs once on mount to register the PWA install event listener; re-running on every render would re-create the PWAInstaller instance
   }, []);
 
   useEffect(() => {
@@ -120,6 +121,7 @@ const PWAInstallPrompt = () => {
     if (shouldSuppressPrompt()) {
       setShowPrompt(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- shouldSuppressPrompt reads localStorage; this effect runs once on mount to apply initial suppression state based on dismissal history
   }, []);
 
   if (!showPrompt) {

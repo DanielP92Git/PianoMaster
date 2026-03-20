@@ -1,25 +1,25 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
+// Debug mode - set to false to disable most logs
+const DEBUG = false;
+
+// Module-level logging utility: stable reference, no deps needed
+const debugLog = (message, data) => {
+  if (DEBUG) {
+    if (data !== undefined) {
+      console.log(message, data);
+    } else {
+      console.log(message);
+    }
+  }
+};
+
 export function useGameTimer(options) {
   // Extract options with defaults
   const initialTime = options?.initialTime || 45;
   const onTimeUp = options?.onTimeUp;
   const isTimedMode =
     options?.isTimedMode !== undefined ? Boolean(options.isTimedMode) : true;
-
-  // Debug mode - set to false to disable most logs
-  const DEBUG = false;
-
-  // Only log if debug mode is enabled
-  const debugLog = (message, data) => {
-    if (DEBUG) {
-      if (data !== undefined) {
-        console.log(message, data);
-      } else {
-        console.log(message);
-      }
-    }
-  };
 
   debugLog("useGameTimer initialized with:", { initialTime, isTimedMode });
 

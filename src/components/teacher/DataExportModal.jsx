@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import { Download, FileText, Info } from 'lucide-react';
@@ -11,13 +11,7 @@ const DataExportModal = ({ isOpen, onClose, student }) => {
   const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (isOpen && student?.student_id) {
-      loadDataSummary();
-    }
-  }, [isOpen, student]);
-
-  const loadDataSummary = async () => {
+  const loadDataSummary = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -30,7 +24,13 @@ const DataExportModal = ({ isOpen, onClose, student }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [student]);
+
+  useEffect(() => {
+    if (isOpen && student?.student_id) {
+      loadDataSummary();
+    }
+  }, [isOpen, student, loadDataSummary]);
 
   const handleExport = async () => {
     if (!student?.student_id) return;
