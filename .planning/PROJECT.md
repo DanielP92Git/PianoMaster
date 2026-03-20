@@ -239,7 +239,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.4):**
+**Current State (after v2.5 Phase 13):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
@@ -257,6 +257,7 @@ Explicitly excluded:
 - 8 node types with unique icons and colorblind-safe colors
 - Build-time validation ensures node integrity on every build
 - WCAG 2.2 AA compliant trail page with RTL support
+- ESLint: 0 warnings (574 eliminated in Phase 13 — config fixes, dead code removal, exhaustive-deps fixes)
 - Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
@@ -412,4 +413,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-19 after v2.5 milestone started*
+*Last updated: 2026-03-20 after Phase 13 (ESLint cleanup) complete*
