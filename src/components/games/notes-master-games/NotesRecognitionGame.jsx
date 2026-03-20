@@ -391,6 +391,7 @@ const GROW_INTERVAL = 5; // Add a note every 5 streak
  * @param {boolean} currentPoolHasAccidentals - Whether the current session notePool has accidentals
  * @returns {string[]} Filtered array of eligible candidate pitches
  */
+// eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
 export function filterAutoGrowCandidates(candidatePool, currentPoolHasAccidentals) {
   if (currentPoolHasAccidentals) return candidatePool; // No filtering for accidental sessions
   return candidatePool.filter(pitch => !/[#]|[A-G]b/.test(pitch));

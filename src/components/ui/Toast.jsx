@@ -169,6 +169,7 @@ const Toast = ({
 };
 
 // Hook for managing multiple toasts
+// eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
 export const useToast = () => {
   const [toasts, setToasts] = React.useState([]);
 
@@ -287,6 +288,7 @@ if (!document.head.querySelector("[data-toast-styles]")) {
 }
 
 // Special function for XP notifications
+// eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
 export const showXPGain = (xp, gameType = "game") => {
   const gameEmoji =
     gameType === "note-recognition"
@@ -324,6 +326,7 @@ export const showXPGain = (xp, gameType = "game") => {
 };
 
 // Backward-compatible alias
+// eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
 export const showPointsGain = showXPGain;
 
 export default Toast;

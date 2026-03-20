@@ -333,6 +333,7 @@ export const AccessibilityProvider = ({ children }) => {
 };
 
 // Custom hook to use accessibility context
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export const useAccessibility = () => {
   const context = useContext(AccessibilityContext);
   if (!context) {
@@ -344,6 +345,7 @@ export const useAccessibility = () => {
 };
 
 // HOC for components that need accessibility props
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export const withAccessibility = (Component) => {
   const WithAccessibilityWrapper = React.forwardRef((props, ref) => {
     const accessibility = useAccessibility();

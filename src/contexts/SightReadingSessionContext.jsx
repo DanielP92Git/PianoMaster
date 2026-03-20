@@ -136,6 +136,7 @@ export function SightReadingSessionProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export function useSightReadingSession() {
   const context = useContext(SightReadingSessionContext);
   if (!context) {
@@ -146,6 +147,7 @@ export function useSightReadingSession() {
   return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export const SIGHT_READING_SESSION_CONSTANTS = {
   TOTAL_EXERCISES_PER_SESSION,
   DEFAULT_MAX_SCORE_PER_EXERCISE,

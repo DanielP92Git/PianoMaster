@@ -10,6 +10,7 @@ const initialState = {
   composition: Array(4).fill([]),
 };
 
+// eslint-disable-next-line react-refresh/only-export-components -- reducer and action constants are co-located by Redux convention; HMR-only concern
 export const rhythmReducer = (state = initialState, action) => {
   switch (action.type) {
     case "SET_SELECTED_RHYTHMS":
@@ -66,6 +67,7 @@ export function RhythmProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- reducer and action constants are co-located by Redux convention; HMR-only concern
 export function useRhythm() {
   const context = useContext(RhythmContext);
   if (context === undefined) {
@@ -74,6 +76,7 @@ export function useRhythm() {
   return context;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- reducer and action constants are co-located by Redux convention; HMR-only concern
 export function useRhythmDispatch() {
   const context = useContext(RhythmDispatchContext);
   if (context === undefined) {

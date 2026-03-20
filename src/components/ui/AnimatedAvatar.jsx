@@ -5,6 +5,7 @@ import { getAvatarImageSource } from "../../utils/avatarAssets";
  * AnimatedAvatar component that supports image-to-video-to-image transitions
  * Supports multiple composer animations with global control
  */
+// eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
 export const ACCESSORY_SLOT_STYLES = {
   hat: {
     className: "absolute -top-4 left-1/2 w-5/6 h-auto z-10",

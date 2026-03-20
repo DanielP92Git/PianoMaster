@@ -89,6 +89,7 @@ export function SubscriptionProvider({ children }) {
  * @returns {{ isPremium: boolean, isLoading: boolean }}
  * @throws {Error} if used outside of SubscriptionProvider
  */
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export function useSubscription() {
   const context = useContext(SubscriptionContext);
   if (!context) {

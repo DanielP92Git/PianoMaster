@@ -77,6 +77,7 @@ export function SessionTimeoutProvider({ children }) {
  *
  * @returns {{ pauseTimer: Function, resumeTimer: Function, isTimerActive: boolean }}
  */
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export function useSessionTimeout() {
   const context = useContext(SessionTimeoutContext);
   if (!context) {

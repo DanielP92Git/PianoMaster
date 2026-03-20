@@ -29,6 +29,7 @@ export function ModalProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export function useModal() {
   const context = useContext(ModalContext);
   if (!context) {

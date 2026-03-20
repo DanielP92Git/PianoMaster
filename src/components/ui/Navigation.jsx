@@ -408,6 +408,7 @@ const Breadcrumb = React.forwardRef(
 Breadcrumb.displayName = "Breadcrumb";
 
 // Navigation Hook for managing mobile menu state
+// eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
 export const useNavigation = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 

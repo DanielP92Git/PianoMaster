@@ -346,6 +346,7 @@ export function AudioContextProvider({ children }) {
  * Hook to consume the AudioContextProvider value.
  * Must be used inside an AudioContextProvider.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export function useAudioContext() {
   const ctx = useContext(AudioCtx);
   if (!ctx) {

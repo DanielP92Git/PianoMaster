@@ -237,6 +237,7 @@ export const SettingsProvider = ({ children }) => {
 /**
  * Hook to use settings context
  */
+// eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export const useSettings = () => {
   const context = useContext(SettingsContext);
   if (!context) {
