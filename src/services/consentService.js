@@ -50,7 +50,7 @@ export async function sendParentalConsentEmail(studentId, parentEmail) {
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
   // Use the database service function to store token and log request
-  const { data, error } = await supabase.rpc('request_parental_consent', {
+  const { data: _data, error } = await supabase.rpc('request_parental_consent', {
     p_student_id: studentId,
     p_parent_email: parentEmail,
     p_token_hash: tokenHash,
@@ -64,7 +64,7 @@ export async function sendParentalConsentEmail(studentId, parentEmail) {
 
   // Send email via Edge Function
   try {
-    const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-consent-email', {
+    const { data: _emailResult, error: emailError } = await supabase.functions.invoke('send-consent-email', {
       body: {
         parentEmail,
         consentUrl,

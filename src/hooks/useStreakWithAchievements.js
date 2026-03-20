@@ -21,7 +21,7 @@ export function useStreakWithAchievements() {
 
       return { newStreak: streakResult, newAchievements };
     },
-    onSuccess: ({ newStreak, newAchievements }) => {
+    onSuccess: ({ newStreak: _newStreak, newAchievements }) => {
       // Invalidate relevant queries to refresh UI
       queryClient.invalidateQueries(["streak", user?.id]);
       queryClient.invalidateQueries(["streak-state", user?.id]);

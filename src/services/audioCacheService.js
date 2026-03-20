@@ -101,7 +101,7 @@ class AudioCacheService {
    */
   clear() {
     // Revoke all object URLs
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [_key, entry] of this.cache.entries()) {
       if (entry.url.startsWith('blob:')) {
         try {
           URL.revokeObjectURL(entry.url);
@@ -123,7 +123,7 @@ class AudioCacheService {
     let totalSize = 0;
     let expiredCount = 0;
     
-    for (const [key, entry] of this.cache.entries()) {
+    for (const [_key, entry] of this.cache.entries()) {
       totalSize += entry.size;
       if (now - entry.timestamp >= this.maxAge) {
         expiredCount++;

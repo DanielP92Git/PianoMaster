@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { rhythmUnit8Nodes } from './rhythmUnit8Redesigned.js';
-import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.js';
+import { NODE_TYPES, NEW_CONTENT_TYPES } from '../nodeTypes.js';
 import { EXERCISE_TYPES } from '../constants.js';
 
 describe('Rhythm Unit 8 — Syncopation', () => {

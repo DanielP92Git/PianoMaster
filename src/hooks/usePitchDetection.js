@@ -103,9 +103,9 @@ export function usePitchDetection({
   onPitchDetected = null,
   onLevelChange = null,
   // Legacy params kept for backward compat — ignored by pitchy path
-  noteFrequencies,
+  noteFrequencies: _noteFrequencies,
   rmsThreshold = 0.01,
-  tolerance = 0.05,
+  tolerance: _tolerance = 0.05,
   // NEW: shared analyser from AudioContextProvider (ARCH-02)
   analyserNode = null,
   sampleRate = null,

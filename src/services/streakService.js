@@ -114,7 +114,7 @@ function allIntermediateDaysAreWeekend(lastPractice, today) {
  * @param {boolean} weekendPassEnabled
  * @returns {number}
  */
-function effectiveDayGap(lastPractice, today, weekendPassEnabled) {
+function _effectiveDayGap(lastPractice, today, weekendPassEnabled) {
   const lastMidnight = new Date(
     lastPractice.getFullYear(),
     lastPractice.getMonth(),
@@ -461,7 +461,7 @@ export const streakService = {
     const lastFreezeEarnedAt = streakRow?.last_freeze_earned_at
       ? new Date(streakRow.last_freeze_earned_at)
       : null;
-    const existingComebackStart = streakRow?.comeback_bonus_start || null;
+    const _existingComebackStart = streakRow?.comeback_bonus_start || null;
     const existingComebackExpires = streakRow?.comeback_bonus_expires || null;
 
     // Result flags

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { rhythmUnit7Nodes } from './rhythmUnit7Redesigned.js';
-import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.js';
+import { NODE_TYPES } from '../nodeTypes.js';
 import { EXERCISE_TYPES } from '../constants.js';
 
 describe('Rhythm Unit 7 — 6/8 Compound Meter', () => {

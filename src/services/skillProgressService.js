@@ -6,7 +6,7 @@
 
 import supabase from './supabase';
 import { verifyStudentDataAccess } from './authorizationUtils';
-import { getNodeById, isNodeUnlocked, getUnlockedNodes, EXERCISE_TYPES } from '../data/skillTrail';
+import { isNodeUnlocked, getUnlockedNodes } from '../data/skillTrail';
 import { checkRateLimit } from './rateLimitService';
 import { isFreeNode } from '../config/subscriptionConfig';
 import { Sentry } from './sentryService';
@@ -16,7 +16,7 @@ import { Sentry } from './sentryService';
  * @param {number} percentage - Score percentage (0-100)
  * @returns {number} Stars earned (0-3)
  */
-const calculateStarsFromPercentage = (percentage) => {
+const _calculateStarsFromPercentage = (percentage) => {
   if (percentage >= 95) return 3;
   if (percentage >= 80) return 2;
   if (percentage >= 60) return 1;

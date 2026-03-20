@@ -89,7 +89,7 @@ export function useMicNoteInput({
     lastAudioLevel: 0,
   });
 
-  const resetInternalState = useCallback((reason) => {
+  const resetInternalState = useCallback((_reason) => {
     const s = stateRef.current;
     s.fsmState = FSM.IDLE;
     s.currentNote = null;

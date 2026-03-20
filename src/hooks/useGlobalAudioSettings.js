@@ -41,7 +41,7 @@ export const useGlobalAudioSettings = () => {
    * Can be extended to support per-type volumes in the future
    */
   const getVolumeForType = useCallback(
-    (type = "default") => {
+    (_type = "default") => {
       if (!isSoundEnabled) return 0;
 
       // For now, all types use the same volume

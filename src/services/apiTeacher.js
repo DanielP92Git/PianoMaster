@@ -57,7 +57,7 @@ export const getTeacherStudents = async () => {
     if (!user) throw new Error("Not authenticated");
 
     // First, ensure teacher profile exists
-    let { data: teacher, error: teacherError } = await supabase
+    let { data: _teacher, error: teacherError } = await supabase
       .from("teachers")
       .select("*")
       .eq("id", user.id)
@@ -85,7 +85,7 @@ export const getTeacherStudents = async () => {
         .single();
 
       if (createError) throw createError;
-      teacher = newTeacher;
+      _teacher = newTeacher;
     } else if (teacherError) {
       throw teacherError;
     }
@@ -563,7 +563,7 @@ export const updateStudentDetails = async (studentId, updates) => {
     if (!user) throw new Error("Not authenticated");
 
     // Verify that this teacher has a connection to the student
-    const { data: connection, error: connectionError } = await supabase
+    const { data: _connection, error: connectionError } = await supabase
       .from("teacher_student_connections")
       .select("id")
       .eq("teacher_id", user.id)

@@ -73,7 +73,7 @@ export function useSounds() {
             audio.load();
             ref.current = audio;
             break;
-          } catch (e) {
+          } catch (_e) {
             // Continue to the next path if this one failed
           }
         }
@@ -102,7 +102,7 @@ export function useSounds() {
           try {
             ref.current.pause();
             ref.current.src = "";
-          } catch (e) {
+          } catch (_e) {
             // Ignore errors during cleanup
           }
         }

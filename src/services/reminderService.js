@@ -101,7 +101,7 @@ class ReminderService {
     }
 
     // Fallback to regular notification (without actions, which aren't supported)
-    const { actions, ...regularNotificationOptions } = defaultOptions;
+    const { actions: _actions, ...regularNotificationOptions } = defaultOptions;
     return new Notification(title, regularNotificationOptions);
   }
 

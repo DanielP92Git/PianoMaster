@@ -1,5 +1,4 @@
 import supabase from "./supabase";
-import toast from "react-hot-toast";
 
 const siteUrl = import.meta.env.VITE_SITE_URL || "http://localhost:5174";
 
@@ -286,7 +285,7 @@ export async function updatePassword({ password }) {
 }
 
 export async function socialAuth({
-  provider,
+  provider: _provider,
   mode = "login",
   role = "student",
 }) {
@@ -370,7 +369,7 @@ export async function updateUserAvatar(userId, avatarId) {
     }
 
     return data;
-  } catch (error) {
+  } catch (_error) {
     throw new Error("Failed to update avatar");
   }
 }
@@ -386,13 +385,13 @@ export const checkUserPermissions = import.meta.env.DEV
           return { authenticated: false, message: "No active session" };
         }
 
-        const { data: readData, error: readError } = await supabase
+        const { data: _readData, error: readError } = await supabase
           .from("students")
           .select("id")
           .limit(1);
 
         const testId = session.user.id;
-        const { data: writeData, error: writeError } = await supabase
+        const { data: _writeData, error: writeError } = await supabase
           .from("students")
           .upsert(
             { id: testId, last_check: new Date().toISOString() },

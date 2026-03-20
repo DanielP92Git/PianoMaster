@@ -113,7 +113,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
   const loadPianoSoundAsync = async () => {
     try {
       await loadPianoSound();
-    } catch (err) {
+    } catch (_err) {
       // Silently fall back to synthesizer
     }
   };
@@ -124,7 +124,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
   const loadTapSoundAsync = async () => {
     try {
       await loadTapSound();
-    } catch (err) {
+    } catch (_err) {
       // Silently fall back to synthesizer
     }
   };
@@ -756,7 +756,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
    * @returns {number} Current time in seconds with performance timing
    */
   const getPreciseCurrentTime = useCallback(() => {
-    const performanceTime = performance.now() / 1000;
+    const _performanceTime = performance.now() / 1000;
     const audioTime = audioContextRef.current?.currentTime || 0;
 
     // Use both timing sources for better accuracy
@@ -916,7 +916,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
   /**
    * Process scheduled events that need to be executed
    */
-  const processScheduledEvents = useCallback(() => {
+  const _processScheduledEvents = useCallback(() => {
     if (!audioContextRef.current) return;
 
     const currentTime = audioContextRef.current.currentTime;

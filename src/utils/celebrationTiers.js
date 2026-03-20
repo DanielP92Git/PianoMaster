@@ -19,7 +19,7 @@
  * @param {number} scorePercentage - Score percentage (0-100)
  * @returns {'epic' | 'full' | 'standard' | 'minimal'} Celebration tier
  */
-export function determineCelebrationTier(stars, isBoss, leveledUp, scorePercentage) {
+export function determineCelebrationTier(stars, isBoss, leveledUp, _scorePercentage) {
   // Epic tier: Boss node with at least 1 star
   if (isBoss && stars >= 1) {
     return 'epic';

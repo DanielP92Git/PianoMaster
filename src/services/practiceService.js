@@ -49,7 +49,7 @@ export const practiceService = {
       const fileName = `${studentId}/${timestamp}.${format.extension}`;
 
       // Upload with retry logic
-      const uploadResult = await this._uploadWithRetry(
+      const _uploadResult = await this._uploadWithRetry(
         compressionResult.blob,
         fileName,
         format.mimeType,

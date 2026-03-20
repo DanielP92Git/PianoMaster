@@ -172,8 +172,8 @@ export function useVictoryState({
 
   // Trail/XP system state
   const [stars, setStars] = useState(0);
-  const [nodeData, setNodeData] = useState(null);
-  const [isFirstComplete, setIsFirstComplete] = useState(false);
+  const [nodeData, _setNodeData] = useState(null);
+  const [_isFirstComplete, setIsFirstComplete] = useState(false);
   const [exercisesRemaining, setExercisesRemaining] = useState(0);
   const [nodeComplete, setNodeComplete] = useState(false);
   const [nextNode, setNextNode] = useState(null);

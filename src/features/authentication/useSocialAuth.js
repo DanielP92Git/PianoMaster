@@ -9,7 +9,7 @@ export function useSocialAuth() {
   const { mutate: socialAuthMutation, isPending } = useMutation({
     mutationFn: ({ provider, mode, role }) =>
       socialAuth({ provider, mode, role }),
-    onSuccess: (user) => {
+    onSuccess: (_user) => {
       toast.success("Successfully authenticated!");
       navigate("/");
     },

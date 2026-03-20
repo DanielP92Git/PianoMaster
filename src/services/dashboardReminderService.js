@@ -122,7 +122,7 @@ class DashboardReminderService {
     this.stopIntervalCheck();
 
     const isAppVisible = document.visibilityState === "visible";
-    const isStandalonePWA =
+    const _isStandalonePWA =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true;
 
