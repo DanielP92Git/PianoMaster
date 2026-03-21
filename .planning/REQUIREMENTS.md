@@ -31,12 +31,12 @@ Requirements for launch readiness. Each maps to roadmap phases.
 
 ### Quality Assurance
 
-- [ ] **QA-01**: Written QA checklist covers auth flows (signup, login, logout, password reset, COPPA consent)
-- [ ] **QA-02**: QA checklist covers all 4 game modes (note recognition, sight reading, rhythm, memory) in trail and free play
-- [ ] **QA-03**: QA checklist covers payment flows (subscribe, cancel, content gate enforcement)
-- [ ] **QA-04**: QA checklist covers trail system (progression, unlocking, XP, stars, daily goals, daily challenge)
-- [ ] **QA-05**: QA checklist covers push notifications, streak system, and PWA behavior (install, offline, orientation)
-- [ ] **QA-06**: QA checklist covers i18n (English + Hebrew) and RTL layout
+- [x] **QA-01**: Written QA checklist covers auth flows (signup, login, logout, password reset, COPPA consent)
+- [x] **QA-02**: QA checklist covers all 4 game modes (note recognition, sight reading, rhythm, memory) in trail and free play
+- [x] **QA-03**: QA checklist covers payment flows (subscribe, cancel, content gate enforcement)
+- [x] **QA-04**: QA checklist covers trail system (progression, unlocking, XP, stars, daily goals, daily challenge)
+- [x] **QA-05**: QA checklist covers push notifications, streak system, and PWA behavior (install, offline, orientation)
+- [x] **QA-06**: QA checklist covers i18n (English + Hebrew) and RTL layout
 - [ ] **QA-07**: All critical-path checklist items pass on production deployment
 
 ## Future Requirements
@@ -90,12 +90,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DEL-05 | Phase 14 | Complete |
 | DEL-06 | Phase 14 | Complete |
 | DEL-07 | Phase 14 | Complete |
-| QA-01 | Phase 15 | Pending |
-| QA-02 | Phase 15 | Pending |
-| QA-03 | Phase 15 | Pending |
-| QA-04 | Phase 15 | Pending |
-| QA-05 | Phase 15 | Pending |
-| QA-06 | Phase 15 | Pending |
+| QA-01 | Phase 15 | Complete |
+| QA-02 | Phase 15 | Complete |
+| QA-03 | Phase 15 | Complete |
+| QA-04 | Phase 15 | Complete |
+| QA-05 | Phase 15 | Complete |
+| QA-06 | Phase 15 | Complete |
 | QA-07 | Phase 15 | Pending |
 
 **Coverage:**
