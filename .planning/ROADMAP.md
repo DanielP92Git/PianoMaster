@@ -242,7 +242,10 @@ Plans:
   3. The full COPPA deletion flow (request → grace period → hard delete → confirmation email) is tested end-to-end with a real test account and marked pass
   4. All game modes (note recognition, sight reading, rhythm, memory) pass in both trail mode and free play, with both keyboard and mic input
   5. Hebrew RTL layout is verified working across dashboard, trail, and at least one game mode
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 15-01-PLAN.md — Create QA checklist document and run automated pre-flight checks
+- [ ] 15-02-PLAN.md — Execute QA checklist on production across 3 device targets and record results
 
 ## Progress
 
@@ -265,10 +268,10 @@ Plans:
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
-| 14. COPPA Hard Delete | 2/2 | Complete    | 2026-03-21 | - |
-| 15. Production QA | v2.5 | 0/TBD | Not started | - |
+| 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
+| 15. Production QA | v2.5 | 0/2 | Not started | - |
 
-**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~143 plans across ~67 phases (shipped) + 4 phases planned**
+**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~145 plans across ~67 phases (shipped) + 4 phases planned**
 
 ---
-*Last updated: 2026-03-21 — Phase 14 plans created*
+*Last updated: 2026-03-21 — Phase 15 plans created*
