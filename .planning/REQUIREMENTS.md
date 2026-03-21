@@ -37,7 +37,7 @@ Requirements for launch readiness. Each maps to roadmap phases.
 - [x] **QA-04**: QA checklist covers trail system (progression, unlocking, XP, stars, daily goals, daily challenge)
 - [x] **QA-05**: QA checklist covers push notifications, streak system, and PWA behavior (install, offline, orientation)
 - [x] **QA-06**: QA checklist covers i18n (English + Hebrew) and RTL layout
-- [ ] **QA-07**: All critical-path checklist items pass on production deployment
+- [x] **QA-07**: All critical-path checklist items pass on production deployment
 
 ## Future Requirements
 
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QA-04 | Phase 15 | Complete |
 | QA-05 | Phase 15 | Complete |
 | QA-06 | Phase 15 | Complete |
-| QA-07 | Phase 15 | Pending |
+| QA-07 | Phase 15 | Complete |
 
 **Coverage:**
 - v2.5 requirements: 20 total

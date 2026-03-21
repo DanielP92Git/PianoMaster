@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Launch Prep
 status: unknown
-stopped_at: Completed 15-01-PLAN.md
-last_updated: "2026-03-21T15:50:54.073Z"
+stopped_at: Completed 15-03-PLAN.md
+last_updated: "2026-03-21T23:16:38.201Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 15 (production-qa) — EXECUTING
-Plan: 2 of 2
+Plan: 2 of 4
 
 ## Performance Metrics
 
@@ -57,6 +57,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 - [Phase 14-coppa-hard-delete]: LS cancel failure blocks deletion and increments failed counter — orphan billing prevention
 - [Phase 14-coppa-hard-delete]: Email failure does not block deletion — confirmation is a courtesy, data is already gone
 - [Phase 15-production-qa]: All 4 automated pre-flight checks passed cleanly (build/lint/test/verify:patterns) — production baseline is green before manual testing
+- [Phase 15]: SW: Replace blanket JS skip with isDevRequest in fetch handler — production /assets/*.js now cached for offline PWA
+- [Phase 15]: B-02: Reuse parentConsentGranted from push_subscriptions for delete flow gate — no new DB columns; separate showDeleteParentGate state keeps flows independent
 
 ### Blockers/Concerns
 
@@ -78,8 +80,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-21T15:50:54.068Z
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-03-21T23:16:38.196Z
+Stopped at: Completed 15-03-PLAN.md
 Resume file: None
 
 **Next action:**

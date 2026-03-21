@@ -246,7 +246,7 @@ Plans:
 Plans:
 - [x] 15-01-PLAN.md — Create QA checklist document and run automated pre-flight checks
 - [x] 15-02-PLAN.md — Execute QA checklist on production across 3 device targets and record results
-- [ ] 15-03-PLAN.md — Fix B-02 (student deletion UI) and B-03 (PWA offline JS caching)
+- [x] 15-03-PLAN.md — Fix B-02 (student deletion UI) and B-03 (PWA offline JS caching)
 - [ ] 15-04-PLAN.md — Fix B-01 (consent email env vars), update QA checklist, verify all fixes on production
 
 ## Progress
@@ -271,7 +271,7 @@ Plans:
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
 | 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
-| 15. Production QA | v2.5 | 2/4 | Gap Closure | — |
+| 15. Production QA | v2.5 | 3/4 | In Progress|  |
 
 **Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~147 plans across ~67 phases (shipped) + 4 phases planned**
 
