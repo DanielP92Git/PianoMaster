@@ -14,7 +14,9 @@ import {
   CreditCard,
   Flame,
   Scale,
+  Trash2,
 } from "lucide-react";
+import AccountDeletionModal from "../components/teacher/AccountDeletionModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -58,6 +60,8 @@ function AppSettings() {
   const queryClient = useQueryClient();
   const [showParentGate, setShowParentGate] = useState(false);
   const [pendingToggleValue, setPendingToggleValue] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteParentGate, setShowDeleteParentGate] = useState(false);
 
   // Fetch streak state for weekend pass toggle
   const { data: streakState } = useQuery({
@@ -76,6 +80,11 @@ function AppSettings() {
   });
 
   const parentConsentGranted = pushStatus?.parent_consent_granted === true;
+
+  // Build student object for AccountDeletionModal (expects { student_id, student_name })
+  const studentDisplayName = user
+    ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.user_metadata?.username || user.email || ''
+    : '';
 
   const handleWeekendPassToggle = async (newValue) => {
     if (parentConsentGranted) {
@@ -126,6 +135,41 @@ function AppSettings() {
   const handleParentGateCancel = () => {
     setShowParentGate(false);
     setPendingToggleValue(null);
+  };
+
+  const handleDeleteAccountClick = () => {
+    if (parentConsentGranted) {
+      setShowDeleteModal(true);
+    } else {
+      setShowDeleteParentGate(true);
+    }
+  };
+
+  const handleDeleteParentConsentGranted = async () => {
+    setShowDeleteParentGate(false);
+    try {
+      if (user?.id) {
+        await supabase
+          .from("push_subscriptions")
+          .upsert(
+            {
+              student_id: user.id,
+              parent_consent_granted: true,
+              parent_consent_at: new Date().toISOString(),
+              is_enabled: false,
+            },
+            { onConflict: "student_id" }
+          );
+      }
+      queryClient.invalidateQueries({ queryKey: ["push-subscription-status", user?.id] });
+      setShowDeleteModal(true);
+    } catch {
+      toast.error(t("common.saving"));
+    }
+  };
+
+  const handleDeleteParentGateCancel = () => {
+    setShowDeleteParentGate(false);
   };
 
   const [installEnv, setInstallEnv] = useState({
@@ -234,6 +278,13 @@ function AppSettings() {
         <ParentGateMath
           onConsent={handleParentConsentGranted}
           onCancel={handleParentGateCancel}
+          isRTL={isRTL}
+        />
+      )}
+      {showDeleteParentGate && (
+        <ParentGateMath
+          onConsent={handleDeleteParentConsentGranted}
+          onCancel={handleDeleteParentGateCancel}
           isRTL={isRTL}
         />
       )}
@@ -737,6 +788,27 @@ function AppSettings() {
           </div>
         </SettingsSection>
 
+        {/* Account Deletion (COPPA) */}
+        <SettingsSection
+          isRTL={isRTL}
+          title={t("pages.settings.accountDeletionTitle")}
+          icon={Trash2}
+          defaultOpen={false}
+        >
+          <div className="space-y-3 mt-2">
+            <p className="text-white/70 text-sm">
+              {t("pages.settings.deleteAccountDescription")}
+            </p>
+            <button
+              onClick={handleDeleteAccountClick}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600/20 border border-red-500/30 text-red-300 hover:bg-red-600/30 hover:text-red-200 transition-all duration-200 text-sm font-medium"
+            >
+              <Trash2 className="w-4 h-4" />
+              {t("pages.settings.deleteAccountButton")}
+            </button>
+          </div>
+        </SettingsSection>
+
         {/* Legal Section */}
         <SettingsSection
           isRTL={isRTL}
@@ -773,6 +845,16 @@ function AppSettings() {
           </div>
         </div>
       </div>
+
+      <AccountDeletionModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        student={user ? { student_id: user.id, student_name: studentDisplayName } : null}
+        onDeletionRequested={() => {
+          setShowDeleteModal(false);
+          // Account was deleted -- signOut already called by accountDeletionService
+        }}
+      />
     </div>
   );
 }

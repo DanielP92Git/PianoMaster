@@ -223,6 +223,9 @@
       "privacyPolicy": "Privacy Policy",
       "termsOfService": "Terms of Service",
       "attributions": "Attributions & Licenses",
+      "accountDeletionTitle": "Account",
+      "deleteAccountButton": "Delete My Account",
+      "deleteAccountDescription": "Permanently delete your account and all data. This requires parent verification.",
       "profile": {
         "profileSettingsTitle": "Profile Settings",
         "profileSettingsDescription": "Manage your personal information",

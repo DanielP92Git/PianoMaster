@@ -223,6 +223,9 @@
       "privacyPolicy": "מדיניות פרטיות",
       "termsOfService": "תנאי שימוש",
       "attributions": "ייחוסים ורישיונות",
+      "accountDeletionTitle": "חשבון",
+      "deleteAccountButton": "מחק את החשבון שלי",
+      "deleteAccountDescription": "מחיקת החשבון שלך וכל המידע לצמיתות. נדרש אימות הורה.",
       "profile": {
         "profileSettingsTitle": "הגדרות פרופיל",
         "profileSettingsDescription": "ניהול פרטי הפרופיל שלכם",
