@@ -26,7 +26,7 @@ function PrivacyPolicyPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Back to home link */}
         <Link
-          to="/"
+          to="/settings"
           className="inline-flex items-center gap-2 text-white/70 hover:text-white transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -179,10 +179,10 @@ function PrivacyPolicyPage() {
                 {t('privacy.contact.desc')}
               </p>
               <a
-                href="mailto:privacy@pianomaster.app"
+                href="mailto:support@pianomaster.app"
                 className="inline-block mt-2 text-indigo-300 hover:text-indigo-200 underline text-sm transition-colors"
               >
-                privacy@pianomaster.app
+                support@pianomaster.app
               </a>
             </section>
 

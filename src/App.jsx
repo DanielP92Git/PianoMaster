@@ -17,8 +17,9 @@ import { reminderService } from "./services/reminderService";
 import { dashboardReminderService } from "./services/dashboardReminderService";
 import ErrorBoundary from "./components/ErrorBoundary";
 
+
 import { useUser } from "./features/authentication/useUser";
-import { Loader2 } from "lucide-react";
+import MusicLoader from "./components/ui/MusicLoader";
 import { ModalProvider } from "./contexts/ModalContext";
 import {
   AccessibilityProvider,
@@ -47,6 +48,8 @@ import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 // Lazy-loaded page components
 const TrailMapPage = React.lazy(() => import("./pages/TrailMapPage"));
+// Prefetch trail module so Suspense fallback never shows on navigation
+import("./pages/TrailMapPage");
 const Achievements = React.lazy(() => import("./pages/Achievements"));
 const PracticeModes = React.lazy(() => import("./pages/PracticeModes"));
 const PracticeSessions = React.lazy(() => import("./pages/PracticeSessions"));
@@ -73,7 +76,7 @@ const SightReadingLayoutHarness = React.lazy(() => import("./components/games/si
 function LoadingFallback() {
   return (
     <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-      <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+      <MusicLoader size="lg" />
     </div>
   );
 }
@@ -126,7 +129,7 @@ function AuthenticatedWrapper({ children }) {
   if (user && isStudent && statusLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <MusicLoader size="lg" />
       </div>
     );
   }
@@ -289,7 +292,7 @@ function AppRoutes() {
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
+        <MusicLoader size="lg" />
       </div>
     );
   }
@@ -452,6 +455,7 @@ function App() {
 
                       {/* Alarm Modal */}
                       <AlarmModal />
+
                     </div>
                   </SubscriptionProvider>
                 </SightReadingSessionProvider>

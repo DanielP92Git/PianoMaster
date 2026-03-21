@@ -163,21 +163,8 @@ export const generateChallenge = async (date, studentId) => {
   }
 };
 
-/**
- * Get milliseconds until the next daily challenge (midnight UTC)
- * @returns {number} Milliseconds until midnight UTC
- */
-export const getTimeUntilNextChallenge = () => {
-  const now = new Date();
-  const tomorrow = new Date(now);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  tomorrow.setUTCHours(0, 0, 0, 0);
-  return tomorrow - now;
-};
-
 export default {
   getTodaysChallenge,
   completeDailyChallenge,
   generateChallenge,
-  getTimeUntilNextChallenge
 };

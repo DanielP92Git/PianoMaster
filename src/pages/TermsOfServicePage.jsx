@@ -26,7 +26,7 @@ function TermsOfServicePage() {
       <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-2xl p-6 md:p-8 my-8">
         {/* Back to home link */}
         <Link
-          to="/"
+          to="/settings"
           className="inline-flex items-center gap-1.5 text-sm text-indigo-300 hover:text-indigo-200 transition-colors mb-6"
         >
           <ArrowLeft className="w-4 h-4" />

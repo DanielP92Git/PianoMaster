@@ -4,24 +4,18 @@
  * Displays today's daily challenge with play CTA or completion status
  */
 
-import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Zap, Clock, CheckCircle, Trophy } from 'lucide-react';
+import { Zap, CheckCircle, Trophy } from 'lucide-react';
 import { useUser } from '../../features/authentication/useUser';
-import {
-  getTodaysChallenge,
-  getTimeUntilNextChallenge,
-} from '../../services/dailyChallengeService';
+import { getTodaysChallenge } from '../../services/dailyChallengeService';
 
 const DailyChallengeCard = () => {
   const { t, i18n } = useTranslation('common');
   const isRTL = i18n.dir() === 'rtl';
   const navigate = useNavigate();
   const { user } = useUser();
-  const [countdown, setCountdown] = useState('');
-
   const dateString = new Date().toISOString().split('T')[0];
 
   const { data: challenge, isLoading } = useQuery({
@@ -31,23 +25,6 @@ const DailyChallengeCard = () => {
   });
 
   const isCompleted = challenge?.completed;
-
-  // Update countdown every 60 seconds when challenge is completed
-  useEffect(() => {
-    if (!isCompleted) return;
-
-    const updateCountdown = () => {
-      const { hours, minutes } = getTimeUntilNextChallenge();
-      setCountdown(
-        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
-      );
-    };
-
-    updateCountdown();
-    const interval = setInterval(updateCountdown, 60000);
-
-    return () => clearInterval(interval);
-  }, [isCompleted]);
 
   const getChallengeIcon = (type) => {
     switch (type) {
@@ -74,10 +51,12 @@ const DailyChallengeCard = () => {
   const getChallengeDescription = (type) => {
     switch (type) {
       case 'speed_round':
-        return t(
-          'dashboard.dailyChallenge.speedRoundDesc',
-          'Answer as many notes as you can before time runs out!'
-        );
+        return t('dashboard.dailyChallenge.speedRoundDesc', {
+          defaultValue:
+            'Answer {{count}} questions in {{time}} seconds!',
+          count: challenge.challenge_config?.questionCount ?? 20,
+          time: challenge.challenge_config?.timeLimit ?? 60,
+        });
       case 'review_challenge':
         return t(
           'dashboard.dailyChallenge.reviewChallengeDesc',
@@ -151,20 +130,17 @@ const DailyChallengeCard = () => {
             </div>
           </div>
 
-          {/* Countdown to next challenge */}
-          {countdown && (
-            <div
-              className={`mt-2 flex items-center gap-1.5 text-xs text-white/60 ${isRTL ? 'flex-row-reverse' : ''}`}
-            >
-              <Clock className="h-3.5 w-3.5" />
-              <span>
-                {t('dashboard.dailyChallenge.nextIn', {
-                  defaultValue: 'Next challenge in {{time}}',
-                  time: countdown,
-                })}
-              </span>
-            </div>
-          )}
+          {/* Come back tomorrow message */}
+          <div
+            className={`mt-2 flex items-center gap-1.5 text-xs text-white/60 ${isRTL ? 'flex-row-reverse' : ''}`}
+          >
+            <Trophy className="h-3.5 w-3.5 text-amber-400/70" />
+            <span>
+              {t('dashboard.dailyChallenge.comeBackTomorrow',
+                'New challenge tomorrow!'
+              )}
+            </span>
+          </div>
         </div>
       </div>
     );
