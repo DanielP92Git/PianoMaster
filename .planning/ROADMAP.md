@@ -183,7 +183,7 @@ See `.planning/milestones/` for archived details of each milestone.
 
 - [x] **Phase 12: Build Tooling Fixes** — Restore build integrity by fixing verify:patterns and applying the pending DB migration (completed 2026-03-20)
 - [x] **Phase 13: ESLint Cleanup** — Eliminate all ~574 warnings to surface genuine bugs before real-user traffic (completed 2026-03-20)
-- [ ] **Phase 14: COPPA Hard Delete** — Deploy cron-triggered Edge Function that permanently deletes accounts past their 30-day grace period
+- [x] **Phase 14: COPPA Hard Delete** — Deploy cron-triggered Edge Function that permanently deletes accounts past their 30-day grace period (completed 2026-03-21)
 - [ ] **Phase 15: Production QA** — Execute a documented pass/fail checklist across all flows before promoting to real users
 
 ## Phase Details
@@ -265,7 +265,7 @@ Plans:
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
-| 14. COPPA Hard Delete | 1/2 | In Progress|  | - |
+| 14. COPPA Hard Delete | 2/2 | Complete    | 2026-03-21 | - |
 | 15. Production QA | v2.5 | 0/TBD | Not started | - |
 
 **Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~143 plans across ~67 phases (shipped) + 4 phases planned**
