@@ -184,7 +184,7 @@ See `.planning/milestones/` for archived details of each milestone.
 - [x] **Phase 12: Build Tooling Fixes** — Restore build integrity by fixing verify:patterns and applying the pending DB migration (completed 2026-03-20)
 - [x] **Phase 13: ESLint Cleanup** — Eliminate all ~574 warnings to surface genuine bugs before real-user traffic (completed 2026-03-20)
 - [x] **Phase 14: COPPA Hard Delete** — Deploy cron-triggered Edge Function that permanently deletes accounts past their 30-day grace period (completed 2026-03-21)
-- [ ] **Phase 15: Production QA** — Execute a documented pass/fail checklist across all flows before promoting to real users
+- [ ] **Phase 15: Production QA** — Execute a documented pass/fail checklist across all flows before promoting to real users (gap closure: 3 blockers found, fixing)
 
 ## Phase Details
 
@@ -242,10 +242,12 @@ Plans:
   3. The full COPPA deletion flow (request → grace period → hard delete → confirmation email) is tested end-to-end with a real test account and marked pass
   4. All game modes (note recognition, sight reading, rhythm, memory) pass in both trail mode and free play, with both keyboard and mic input
   5. Hebrew RTL layout is verified working across dashboard, trail, and at least one game mode
-**Plans**: 2 plans
+**Plans**: 4 plans
 Plans:
 - [x] 15-01-PLAN.md — Create QA checklist document and run automated pre-flight checks
-- [ ] 15-02-PLAN.md — Execute QA checklist on production across 3 device targets and record results
+- [x] 15-02-PLAN.md — Execute QA checklist on production across 3 device targets and record results
+- [ ] 15-03-PLAN.md — Fix B-02 (student deletion UI) and B-03 (PWA offline JS caching)
+- [ ] 15-04-PLAN.md — Fix B-01 (consent email env vars), update QA checklist, verify all fixes on production
 
 ## Progress
 
@@ -269,9 +271,9 @@ Plans:
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
 | 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
-| 15. Production QA | v2.5 | 1/2 | In Progress|  |
+| 15. Production QA | v2.5 | 2/4 | Gap Closure | — |
 
-**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~145 plans across ~67 phases (shipped) + 4 phases planned**
+**Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~147 plans across ~67 phases (shipped) + 4 phases planned**
 
 ---
-*Last updated: 2026-03-21 — Phase 15 plans created*
+*Last updated: 2026-03-22 — Phase 15 gap closure plans created*
