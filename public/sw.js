@@ -1,7 +1,7 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v7";
+const CACHE_NAME = "pianomaster-v8";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
@@ -173,9 +173,9 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Skip Vite dev server HMR and module requests
-  // Also skip all JavaScript module requests to prevent MIME type errors
+  // Production /assets/*.js bundles are content-hashed by Vite and ARE cached below.
   const url = new URL(event.request.url);
-  if (
+  const isDevRequest =
     url.pathname.includes("@vite") ||
     url.pathname.includes("@react-refresh") ||
     url.pathname.includes("@id") ||
@@ -183,12 +183,9 @@ self.addEventListener("fetch", (event) => {
     url.searchParams.has("t") || // Vite timestamp query param
     url.pathname.endsWith(".jsx") ||
     url.pathname.endsWith(".tsx") ||
-    url.pathname.endsWith(".ts") ||
-    url.pathname.endsWith(".js") || // Skip all JS files - let browser handle them
-    event.request.destination === "script" || // Skip script requests
-    event.request.destination === "module" // Skip module requests
-  ) {
-    return; // Let browser handle these requests directly
+    url.pathname.endsWith(".ts");
+  if (isDevRequest) {
+    return; // Let browser handle dev server requests directly
   }
 
   const isAccessoryAsset =
