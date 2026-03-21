@@ -176,7 +176,7 @@ These capabilities exist, are working, and have been shipped:
 - Legal documentation package for attorney review (Privacy Policy, COPPA verification)
 
 **Future candidates (deferred):**
-- Hard delete Edge Function for accounts past 30-day grace period
+- ~~Hard delete Edge Function for accounts past 30-day grace period~~ (delivered in Phase 14)
 - Production deployment to Google Play / Apple App Store
 - Celebration sound effects with volume control (requires classroom A/B testing)
 - Streak/unit/path completion celebrations
@@ -261,6 +261,7 @@ Explicitly excluded:
 - Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
+- COPPA hard-delete Edge Function: cron-triggered permanent deletion after 30-day grace period (Phase 14, completed 2026-03-21)
 - Password recovery: inline forgot password flow + /reset-password page with PKCE
 - McLeod Pitch Method (pitchy) for accurate mic detection across all game modes
 - Single shared AudioContextProvider with iOS Safari interruption recovery
