@@ -170,7 +170,16 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-(No active milestone — v2.5 shipped, next milestone TBD via `/gsd:new-milestone`)
+## Current Milestone: v2.6 User Feedback
+
+**Goal:** Add a parent-gated contact/feedback form in Settings so users can report bugs, suggest improvements, and request features before broader promotion.
+
+**Target features:**
+- Contact/feedback form in Settings page (parent-gated for COPPA)
+- 3 categories: Bug / Suggestion / Other + free text message
+- Supabase Edge Function sends submissions via Brevo to dedicated support Gmail
+- Shared support email replaces current Brevo sender (one inbox for outbound + inbound)
+- Full EN/HE i18n
 
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
@@ -413,4 +422,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-22 after v2.5 Launch Prep milestone*
+*Last updated: 2026-03-22 after v2.6 User Feedback milestone started*
