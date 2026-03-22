@@ -18,6 +18,7 @@
 - ✅ **v2.3 Launch Readiness** — Phases 01-06 (shipped 2026-03-17)
 - ✅ **v2.4 Content Expansion** — Phases 07-11 (shipped 2026-03-19)
 - ✅ **v2.5 Launch Prep** — Phases 12-15 (shipped 2026-03-22)
+- **v2.6 User Feedback** — Phases 16-17 (active)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -187,6 +188,37 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### v2.6 User Feedback (Phases 16-17) — ACTIVE
+
+- [ ] **Phase 16: Backend & Email Infrastructure** - Edge Function, Brevo sender update, DB rate limiting, server-side validation
+- [ ] **Phase 17: Feedback Form UI** - Settings form, parent gate, honeypot, client cooldown, full EN/HE i18n
+
+## Phase Details
+
+### Phase 16: Backend & Email Infrastructure
+**Goal**: The feedback submission pipeline exists and enforces all server-side protections before any frontend form is wired up
+**Depends on**: Phase 15 (v2.5 complete — production baseline stable)
+**Requirements**: BACK-01, BACK-02, MAIL-01, MAIL-02, SPAM-01, SPAM-02, SPAM-04
+**Success Criteria** (what must be TRUE):
+  1. A `POST` to the `send-feedback` Edge Function with a valid Supabase JWT and well-formed body delivers an email to the support inbox via Brevo
+  2. A `POST` with no JWT (unauthenticated) is rejected with a 401 before any Brevo call is made
+  3. A `POST` with a message shorter than 10 chars or longer than 1000 chars, or an invalid type enum, is rejected with a 400 error
+  4. A user who submits more than 3 times within one hour is rejected with a 429 rate limit error (enforced via DB row count)
+  5. All existing transactional emails (consent, weekly report) continue to arrive from the new shared support Gmail sender address
+**Plans**: TBD
+
+### Phase 17: Feedback Form UI
+**Goal**: Parents can discover, complete, and submit the feedback form from within the Settings page, with the full anti-spam client layer and both EN/HE languages working
+**Depends on**: Phase 16 (Edge Function must exist to receive submissions)
+**Requirements**: FORM-01, FORM-02, FORM-03, FORM-04, FORM-05, SPAM-03, SPAM-05, I18N-01
+**Success Criteria** (what must be TRUE):
+  1. Parent navigates to Settings, passes the ParentGateMath challenge, and sees the feedback form section
+  2. Parent selects Bug / Suggestion / Other from a dropdown, types a message (required, max 1000 chars), and submits — a success confirmation appears with a countdown showing the 5-minute cooldown
+  3. If the Edge Function returns a rate-limit (429) or server error (5xx), a clear error message is shown without crashing the settings page
+  4. During the 5-minute cooldown after a successful submission the submit button is disabled and the remaining time is visible
+  5. All form labels, placeholders, dropdown options, success text, error text, and rate-limit messages display correctly in both English and Hebrew (including RTL layout)
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -209,9 +241,11 @@ See `.planning/milestones/` for archived details of each milestone.
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
 | 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
-| 15. Production QA | v2.5 | 4/4 | Complete    | 2026-03-22 |
+| 15. Production QA | v2.5 | 4/4 | Complete | 2026-03-22 |
+| 16. Backend & Email Infrastructure | v2.6 | 0/? | Not started | - |
+| 17. Feedback Form UI | v2.6 | 0/? | Not started | - |
 
-**Total: 16 milestones shipped (v1.0-v2.5) — ~158 plans across ~71 phases**
+**Total: 16 milestones shipped (v1.0-v2.5) + v2.6 active — ~158 plans across ~73 phases**
 
 ---
-*Last updated: 2026-03-22 — v2.5 Launch Prep shipped*
+*Last updated: 2026-03-22 — v2.6 User Feedback roadmap created*

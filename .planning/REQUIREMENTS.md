@@ -60,27 +60,27 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FORM-01 | — | Pending |
-| FORM-02 | — | Pending |
-| FORM-03 | — | Pending |
-| FORM-04 | — | Pending |
-| FORM-05 | — | Pending |
-| SPAM-01 | — | Pending |
-| SPAM-02 | — | Pending |
-| SPAM-03 | — | Pending |
-| SPAM-04 | — | Pending |
-| SPAM-05 | — | Pending |
-| BACK-01 | — | Pending |
-| BACK-02 | — | Pending |
-| MAIL-01 | — | Pending |
-| MAIL-02 | — | Pending |
-| I18N-01 | — | Pending |
+| FORM-01 | Phase 17 | Pending |
+| FORM-02 | Phase 17 | Pending |
+| FORM-03 | Phase 17 | Pending |
+| FORM-04 | Phase 17 | Pending |
+| FORM-05 | Phase 17 | Pending |
+| SPAM-01 | Phase 16 | Pending |
+| SPAM-02 | Phase 16 | Pending |
+| SPAM-03 | Phase 17 | Pending |
+| SPAM-04 | Phase 16 | Pending |
+| SPAM-05 | Phase 17 | Pending |
+| BACK-01 | Phase 16 | Pending |
+| BACK-02 | Phase 16 | Pending |
+| MAIL-01 | Phase 16 | Pending |
+| MAIL-02 | Phase 16 | Pending |
+| I18N-01 | Phase 17 | Pending |
 
 **Coverage:**
 - v2.6 requirements: 15 total
-- Mapped to phases: 0
-- Unmapped: 15 ⚠️
+- Mapped to phases: 15
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 — traceability complete after roadmap creation*
