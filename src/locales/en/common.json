@@ -347,6 +347,30 @@
         "masterVolume": "Master Volume",
         "masterVolumeDescription": "Adjust the master volume for the app",
         "testSound": "Test Sound"
+      },
+      "feedback": {
+        "sendFeedback": "Send Feedback",
+        "sectionTitle": "Share Your Feedback",
+        "sectionSubtitle": "Let us know how we can improve PianoMaster",
+        "typeLabel": "Feedback Type",
+        "typePlaceholder": "Select a type",
+        "typeBug": "Bug Report",
+        "typeSuggestion": "Suggestion",
+        "typeOther": "Other",
+        "messageLabel": "Your Message",
+        "messagePlaceholder": "Describe the bug, suggestion, or question... (min 10 characters)",
+        "charCount": "{{count}} / 1000",
+        "submit": "Submit Feedback",
+        "submitting": "Sending...",
+        "waitCooldown": "Wait {{time}}",
+        "successTitle": "Thank you for your feedback!",
+        "successSubtitle": "We read every message and use it to improve the app.",
+        "cooldownMessage": "You can send another message in {{time}}",
+        "errorRateLimit": "You've sent several messages recently. Please wait a little before trying again.",
+        "errorServer": "Something went wrong on our end. Please try again in a few minutes.",
+        "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
+        "retry": "Retry",
+        "dismiss": "Dismiss"
       }
     }
   },

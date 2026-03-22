@@ -347,6 +347,30 @@
         "masterVolume": "עוצמת שמע",
         "masterVolumeDescription": "עוצמת שמע עיקרית של האפליקציה (0-100%)",
         "testSound": "בדיקת שמע"
+      },
+      "feedback": {
+        "sendFeedback": "שלח משוב",
+        "sectionTitle": "שתף אותנו",
+        "sectionSubtitle": "ספר לנו כיצד נוכל לשפר את PianoMaster",
+        "typeLabel": "סוג משוב",
+        "typePlaceholder": "בחר סוג",
+        "typeBug": "דיווח על תקלה",
+        "typeSuggestion": "הצעה לשיפור",
+        "typeOther": "אחר",
+        "messageLabel": "ההודעה שלך",
+        "messagePlaceholder": "תאר את התקלה, ההצעה, או השאלה... (לפחות 10 תווים)",
+        "charCount": "{{count}} / 1000",
+        "submit": "שלח משוב",
+        "submitting": "שולח...",
+        "waitCooldown": "המתן {{time}}",
+        "successTitle": "תודה על המשוב!",
+        "successSubtitle": "אנחנו קוראים כל הודעה ומשתמשים בה לשיפור האפליקציה.",
+        "cooldownMessage": "תוכל לשלוח הודעה נוספת בעוד {{time}}",
+        "errorRateLimit": "שלחת כמה הודעות לאחרונה. אנא המתן זמן קצר לפני שתנסה שוב.",
+        "errorServer": "משהו השתבש אצלנו. נסה שוב בעוד מספר דקות.",
+        "errorNetwork": "לא ניתן להגיע לשרת. בדוק את החיבור ונסה שוב.",
+        "retry": "נסה שוב",
+        "dismiss": "סגור"
       }
     }
   },
