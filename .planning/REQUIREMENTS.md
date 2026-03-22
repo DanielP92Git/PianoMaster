@@ -9,19 +9,19 @@ Requirements for User Feedback milestone. Each maps to roadmap phases.
 
 ### Feedback Form
 
-- [ ] **FORM-01**: Parent can access feedback form from Settings page (behind ParentGateMath)
-- [ ] **FORM-02**: Parent can select feedback type: Bug / Suggestion / Other
-- [ ] **FORM-03**: Parent can enter a free-text message (required, max 1000 chars)
-- [ ] **FORM-04**: Form shows success confirmation after submission with cooldown timer
-- [ ] **FORM-05**: Form shows error state if submission fails (rate limit, network, server)
+- [x] **FORM-01**: Parent can access feedback form from Settings page (behind ParentGateMath)
+- [x] **FORM-02**: Parent can select feedback type: Bug / Suggestion / Other
+- [x] **FORM-03**: Parent can enter a free-text message (required, max 1000 chars)
+- [x] **FORM-04**: Form shows success confirmation after submission with cooldown timer
+- [x] **FORM-05**: Form shows error state if submission fails (rate limit, network, server)
 
 ### Anti-Spam
 
 - [x] **SPAM-01**: Edge Function requires valid Supabase JWT (rejects unauthenticated requests)
 - [x] **SPAM-02**: Rate limiting enforced at database level (max 3 submissions per hour per user)
-- [ ] **SPAM-03**: Honeypot hidden field rejects bot submissions silently
+- [x] **SPAM-03**: Honeypot hidden field rejects bot submissions silently
 - [x] **SPAM-04**: Server-side input validation (min 10 chars, max 1000 chars, type must be valid enum)
-- [ ] **SPAM-05**: Cooldown enforced client-side (disable form for 5 min after successful submission)
+- [x] **SPAM-05**: Cooldown enforced client-side (disable form for 5 min after successful submission)
 
 ### Backend
 
@@ -35,7 +35,7 @@ Requirements for User Feedback milestone. Each maps to roadmap phases.
 
 ### i18n
 
-- [ ] **I18N-01**: Full EN/HE translations for all form labels, placeholders, success/error/rate-limit messages
+- [x] **I18N-01**: Full EN/HE translations for all form labels, placeholders, success/error/rate-limit messages
 
 ## Future Requirements
 
@@ -60,21 +60,21 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FORM-01 | Phase 17 | Pending |
-| FORM-02 | Phase 17 | Pending |
-| FORM-03 | Phase 17 | Pending |
-| FORM-04 | Phase 17 | Pending |
-| FORM-05 | Phase 17 | Pending |
+| FORM-01 | Phase 17 | Complete |
+| FORM-02 | Phase 17 | Complete |
+| FORM-03 | Phase 17 | Complete |
+| FORM-04 | Phase 17 | Complete |
+| FORM-05 | Phase 17 | Complete |
 | SPAM-01 | Phase 16 | Complete |
 | SPAM-02 | Phase 16 | Complete |
-| SPAM-03 | Phase 17 | Pending |
+| SPAM-03 | Phase 17 | Complete |
 | SPAM-04 | Phase 16 | Complete |
-| SPAM-05 | Phase 17 | Pending |
+| SPAM-05 | Phase 17 | Complete |
 | BACK-01 | Phase 16 | Complete |
 | BACK-02 | Phase 16 | Complete |
 | MAIL-01 | Phase 16 | Pending |
 | MAIL-02 | Phase 16 | Pending |
-| I18N-01 | Phase 17 | Pending |
+| I18N-01 | Phase 17 | Complete |
 
 **Coverage:**
 - v2.6 requirements: 15 total

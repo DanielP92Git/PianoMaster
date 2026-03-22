@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.6
 milestone_name: User Feedback
 status: unknown
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-22T22:48:18.438Z"
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-03-22T23:49:21.344Z"
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 16 — backend-email-infrastructure
+**Current focus:** Phase 17 — feedback-form-ui
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
+Phase: 17 (feedback-form-ui) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ All v2.5 decisions archived in `.planning/milestones/v2.5-ROADMAP.md`.
 - [Phase 16]: Service role client for rate-check COUNT (no SELECT RLS policy on feedback_submissions per D-10)
 - [Phase 16]: Message content not stored in DB — Brevo email is ground truth for v1 (COPPA-safe per D-07)
 - [Phase 16]: rate_limit string error code in 429 response for client-side detection in Phase 17 UI
+- [Phase 17]: FeedbackForm uses onClick on submit button (not form onSubmit) to support retry button calling handleSubmit directly
 
 ### Blockers/Concerns
 
@@ -72,8 +73,8 @@ All v2.5 decisions archived in `.planning/milestones/v2.5-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-22T21:55:41.742Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-22T23:49:21.335Z
+Stopped at: Completed 17-01-PLAN.md
 Resume file: None
 
 **Next action:**

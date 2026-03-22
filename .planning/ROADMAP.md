@@ -191,7 +191,7 @@ See `.planning/milestones/` for archived details of each milestone.
 ### v2.6 User Feedback (Phases 16-17) — ACTIVE
 
 - [x] **Phase 16: Backend & Email Infrastructure** - Edge Function, Brevo sender update, DB rate limiting, server-side validation (completed 2026-03-22)
-- [ ] **Phase 17: Feedback Form UI** - Settings form, parent gate, honeypot, client cooldown, full EN/HE i18n
+- [x] **Phase 17: Feedback Form UI** - Settings form, parent gate, honeypot, client cooldown, full EN/HE i18n (completed 2026-03-22)
 
 ## Phase Details
 
@@ -220,9 +220,9 @@ Plans:
   3. If the Edge Function returns a rate-limit (429) or server error (5xx), a clear error message is shown without crashing the settings page
   4. During the 5-minute cooldown after a successful submission the submit button is disabled and the remaining time is visible
   5. All form labels, placeholders, dropdown options, success text, error text, and rate-limit messages display correctly in both English and Hebrew (including RTL layout)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 17-01-PLAN.md — FeedbackForm component, AppSettings integration, i18n, unit tests (FORM-01, FORM-02, FORM-03, FORM-04, FORM-05, SPAM-03, SPAM-05, I18N-01)
+- [x] 17-01-PLAN.md — FeedbackForm component, AppSettings integration, i18n, unit tests (FORM-01, FORM-02, FORM-03, FORM-04, FORM-05, SPAM-03, SPAM-05, I18N-01)
 
 ## Progress
 
@@ -248,7 +248,7 @@ Plans:
 | 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
 | 15. Production QA | v2.5 | 4/4 | Complete | 2026-03-22 |
 | 16. Backend & Email Infrastructure | v2.6 | 2/2 | Complete    | 2026-03-22 |
-| 17. Feedback Form UI | v2.6 | 0/1 | Not started | - |
+| 17. Feedback Form UI | v2.6 | 1/1 | Complete   | 2026-03-22 |
 
 **Total: 16 milestones shipped (v1.0-v2.5) + v2.6 active — ~159 plans across ~73 phases**
 
