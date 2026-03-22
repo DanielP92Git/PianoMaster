@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.5
 milestone_name: Launch Prep
 status: unknown
-stopped_at: Completed 15-03-PLAN.md
-last_updated: "2026-03-21T23:16:38.201Z"
+stopped_at: Completed 15-04-PLAN.md
+last_updated: "2026-03-22T09:16:34.402Z"
 progress:
   total_phases: 4
   completed_phases: 0
@@ -24,7 +24,7 @@ See: .planning/PROJECT.md (updated 2026-03-20)
 ## Current Position
 
 Phase: 15 (production-qa) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 
 ## Performance Metrics
 
@@ -59,6 +59,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 - [Phase 15-production-qa]: All 4 automated pre-flight checks passed cleanly (build/lint/test/verify:patterns) — production baseline is green before manual testing
 - [Phase 15]: SW: Replace blanket JS skip with isDevRequest in fetch handler — production /assets/*.js now cached for offline PWA
 - [Phase 15]: B-02: Reuse parentConsentGranted from push_subscriptions for delete flow gate — no new DB columns; separate showDeleteParentGate state keeps flows independent
+- [Phase 15]: B-01 root cause was expired/invalidated Brevo API key -- user regenerated key and updated Supabase secret
+- [Phase 15]: AccountDeletionModal text visibility (light text on white background) classified as Known Issue KI-10 -- cosmetic, not a COPPA blocker
 
 ### Blockers/Concerns
 
@@ -80,8 +82,8 @@ All v2.4 decisions archived in `.planning/milestones/v2.4-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-21T23:16:38.196Z
-Stopped at: Completed 15-03-PLAN.md
+Last session: 2026-03-22T09:16:34.396Z
+Stopped at: Completed 15-04-PLAN.md
 Resume file: None
 
 **Next action:**
