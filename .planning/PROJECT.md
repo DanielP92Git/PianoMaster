@@ -422,4 +422,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-22 after v2.6 User Feedback milestone started*
+*Last updated: 2026-03-23 — Phase 16 complete: send-feedback Edge Function with rate limiting, Brevo delivery, and sender consolidation. Phase 17 (Feedback Form UI) next.*
