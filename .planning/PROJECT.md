@@ -422,4 +422,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-23 — Phase 16 complete: send-feedback Edge Function with rate limiting, Brevo delivery, and sender consolidation. Phase 17 (Feedback Form UI) next.*
+*Last updated: 2026-03-23 — Phase 17 complete: Feedback Form UI with four-state machine (idle/gated/form/success), parent gate, honeypot anti-spam, 5-minute cooldown, inline error banners, and full EN/HE i18n. v2.6 User Feedback milestone complete.*
