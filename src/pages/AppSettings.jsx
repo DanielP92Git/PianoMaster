@@ -16,6 +16,7 @@ import {
   Scale,
   Trash2,
 } from "lucide-react";
+import FeedbackForm from "../components/settings/FeedbackForm";
 import AccountDeletionModal from "../components/teacher/AccountDeletionModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "../contexts/SettingsContext";
@@ -844,6 +845,9 @@ function AppSettings() {
             <AuthButton />
           </div>
         </div>
+
+        {/* Feedback Form - per D-04: standalone centered button below Logout */}
+        <FeedbackForm isRTL={isRTL} />
       </div>
 
       <AccountDeletionModal
