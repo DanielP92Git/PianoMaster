@@ -55,12 +55,12 @@ Exceptions:
 
 | Role | Size | Weight | Line Height | Tailwind class |
 |------|------|--------|-------------|----------------|
-| Body / form labels | 14px (0.875rem) | 500 (medium) | 1.6 | `text-sm font-medium` |
+| Body / form labels | 14px (0.875rem) | 400 (regular) | 1.6 | `text-sm font-normal` |
 | Form input text | 16px (1rem) | 400 (regular) | 1.7 | `text-base font-normal` |
 | Section heading | 18px (1.125rem) | 700 (bold) | 1.7 | `text-lg font-bold` |
 | Meta / counter / cooldown | 12px (0.75rem) | 400 (regular) | 1.5 | `text-xs` |
 
-**Weights used:** regular (400) and bold (700). Medium (500) only for label elements.
+**Weights used:** regular (400) and bold (700).
 
 **Source:** `tailwind.config.js` fontSize scale, `SettingsSection.jsx` heading uses `text-lg font-bold text-white`
 
@@ -101,7 +101,7 @@ All components are built from Tailwind utilities. No shadcn or Radix primitives 
 Self-contained four-state component in `src/components/settings/`:
 
 **State: `idle`**
-- Centered trigger button: `inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 hover:text-white transition-all duration-200 text-sm font-medium`
+- Centered trigger button: `inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 hover:text-white transition-all duration-200 text-sm font-normal`
 - `MessageSquare` icon (w-4 h-4) + label text
 - Wrapped in `div.pt-6.pb-8.flex.justify-center`
 - Placed after the Logout `border-t border-white/20` div
@@ -116,7 +116,7 @@ Self-contained four-state component in `src/components/settings/`:
 - Header: `MessageSquare` icon (w-5 h-5 text-indigo-300) + heading `text-lg font-bold text-white` + subtitle `text-sm text-white/70`
 - Error banner (conditional, see below): renders above form fields
 - Feedback type select: `w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-colors`
-- Label: `block text-sm font-medium text-white/80 mb-1.5`
+- Label: `block text-sm font-normal text-white/80 mb-1.5`
 - Textarea: same base classes as select, min-height 120px, resize-none, max 1000 chars
 - Character counter: `text-xs text-white/40` at rest; `text-amber-300` when trimmed length >= 900; `text-red-300` when trimmed length >= 980
 - Submit button: `w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px]`
@@ -134,7 +134,7 @@ Self-contained four-state component in `src/components/settings/`:
 - Container: `rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 flex items-start gap-3`
 - `AlertTriangle` icon: `w-4 h-4 text-red-300 flex-shrink-0 mt-0.5`
 - Text: `flex-1 text-sm text-red-200`
-- Dismiss button: `X` icon `w-4 h-4 text-red-400 hover:text-red-200`
+- Dismiss button: `X` icon `w-4 h-4 text-red-400 hover:text-red-200` with `aria-label={t('pages.settings.feedback.dismiss')}`
 - Retry button (network error only): `ml-2 underline hover:no-underline text-red-300` inline after error text
 
 ### Animations
@@ -202,7 +202,7 @@ All text is delivered via `react-i18next` `useTranslation('common')`. Keys live 
 | Error: rate limit | "You've sent several messages recently. Please wait a little before trying again." | "שלחת כמה הודעות לאחרונה. אנא המתן זמן קצר לפני שתנסה שוב." |
 | Error: server | "Something went wrong on our end. Please try again in a few minutes." | "משהו השתבש אצלנו. נסה שוב בעוד מספר דקות." |
 | Error: network | "Couldn't reach the server. Check your connection and try again." | "לא ניתן להגיע לשרת. בדוק את החיבור ונסה שוב." |
-| Retry button | "Retry" | "נסה שוב" |
+| Retry button | "Retry Sending" | "נסה שוב" |
 | Dismiss button | "Dismiss" | "סגור" |
 
 **Primary CTA:** "Submit Feedback" (submit button in form state) / "Send Feedback" (trigger button in idle state)
@@ -212,7 +212,7 @@ All text is delivered via `react-i18next` `useTranslation('common')`. Keys live 
 **Error states:**
 - Rate limit (429): friendly copy, no raw error code, no retry button
 - Server error (5xx): friendly copy, no retry button (not retriable)
-- Network failure: friendly copy + inline "Retry" button within error banner
+- Network failure: friendly copy + inline "Retry Sending" button within error banner
 
 **Destructive actions in this phase:** None. The feedback form has no destructive actions. No confirmation dialogs needed.
 
