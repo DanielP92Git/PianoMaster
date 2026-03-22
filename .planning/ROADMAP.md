@@ -271,7 +271,7 @@ Plans:
 | 12. Build Tooling Fixes | v2.5 | 2/2 | Complete | 2026-03-20 |
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
 | 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
-| 15. Production QA | v2.5 | 4/4 | Complete   | 2026-03-22 |
+| 15. Production QA | v2.5 | 4/4 | Complete    | 2026-03-22 |
 
 **Total: 15 milestones shipped (v1.0-v2.4), v2.5 in progress — ~147 plans across ~67 phases (shipped) + 4 phases planned**
 
