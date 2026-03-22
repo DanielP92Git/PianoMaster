@@ -143,6 +143,13 @@ These capabilities exist, are working, and have been shipped:
 - I18N-01: Full EN/HE translations with Unicode symbols and Hebrew solfege terms
 - 12/12 requirements delivered, 9 plans across 5 phases
 
+**v2.5 Launch Prep (shipped 2026-03-22):**
+- BUILD-01/02: Fixed verify:patterns (.js extension), synchronized Supabase migration history
+- LINT-01-04: All 574 ESLint warnings eliminated (config fixes, dead code removal, justified suppressions)
+- DEL-01-07: COPPA hard-delete Edge Function — cron-triggered permanent deletion after 30-day grace, CASCADE across all tables, LS cancel, Brevo confirmation email, HMAC audit log
+- QA-01-07: 89-item production QA checklist executed, 3 blockers found and resolved (consent email, deletion UI, PWA offline)
+- 20/20 requirements delivered, 11 plans across 4 phases
+
 **v2.4 Content Expansion (shipped 2026-03-19):**
 - RENDER-01/02/03: VexFlow key signature glyph rendering, accidental suppression, config pipeline threading
 - TREB-01-07: 14 treble key signature nodes (G, D, A, F, Bb, Eb major + memory + boss)
@@ -163,20 +170,9 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-## Current Milestone: v2.5 Launch Prep
+(No active milestone — v2.5 shipped, next milestone TBD via `/gsd:new-milestone`)
 
-**Goal:** Close production-readiness gaps so the app can be tested with real users and promoted with confidence.
-
-**Target features:**
-- Hard delete Edge Function for COPPA account deletion after 30-day grace period
-- Fix broken `verify:patterns` build-time validation script
-- Apply pending `daily_challenges.sql` Supabase migration
-- ESLint warnings cleanup (~530 warnings)
-- Structured production testing checklist across all game modes and flows
-- Legal documentation package for attorney review (Privacy Policy, COPPA verification)
-
-**Future candidates (deferred):**
-- ~~Hard delete Edge Function for accounts past 30-day grace period~~ (delivered in Phase 14)
+**Future candidates:**
 - Production deployment to Google Play / Apple App Store
 - Celebration sound effects with volume control (requires classroom A/B testing)
 - Streak/unit/path completion celebrations
@@ -239,7 +235,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.5 Phase 13):**
+**Current State (after v2.5 shipped 2026-03-22):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
@@ -257,7 +253,11 @@ Explicitly excluded:
 - 8 node types with unique icons and colorblind-safe colors
 - Build-time validation ensures node integrity on every build
 - WCAG 2.2 AA compliant trail page with RTL support
-- ESLint: 0 warnings (574 eliminated in Phase 13 — config fixes, dead code removal, exhaustive-deps fixes)
+- ESLint: 0 warnings, 0 errors (574 eliminated in v2.5 Phase 13)
+- COPPA hard-delete: cron-triggered Edge Function permanently deletes accounts past 30-day grace period (v2.5 Phase 14)
+- Production QA: 89-item checklist executed, all critical flows pass (v2.5 Phase 15)
+- PWA offline: service worker v8 caches production JS bundles (v2.5 Phase 15)
+- Student account deletion UI: Delete Account button in settings behind parent gate (v2.5 Phase 15)
 - Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
 - COPPA consent flow fully operational with Brevo email delivery
@@ -297,10 +297,9 @@ Explicitly excluded:
 - Parental consent verification method needs legal review
 - Privacy policy language requires attorney review
 - State age verification laws may require Play Age Signals API
-- ESLint: 0 errors, ~530 warnings (errors fixed in v2.3)
 - syncPracticeSessions() stub in sw.js (zero runtime impact)
-- DB migration 20260317000001_daily_challenges.sql needs manual application
 - Sentry env vars need configuration on Netlify
+- 9 QA known issues accepted for launch (documented in QA-CHECKLIST.md)
 
 ## Constraints
 
@@ -414,4 +413,4 @@ Explicitly excluded:
 
 ---
 
-*Last updated: 2026-03-20 after Phase 13 (ESLint cleanup) complete*
+*Last updated: 2026-03-22 after v2.5 Launch Prep milestone*

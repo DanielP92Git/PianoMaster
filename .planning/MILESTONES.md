@@ -1,5 +1,15 @@
 # Project Milestones: PianoApp
 
+## v2.5 Launch Prep (Shipped: 2026-03-22)
+
+**Phases completed:** 0 phases, 0 plans, 0 tasks
+
+**Key accomplishments:**
+
+- (none recorded)
+
+---
+
 ## v2.4 Content Expansion (Shipped: 2026-03-19)
 
 **Delivered:** Extended the trail with 42 new nodes — 28 key signature nodes (14 treble + 14 bass covering G, D, A, F, Bb, Eb major) and 14 advanced rhythm nodes (6/8 compound meter + syncopation). Fixed 6/8 compound beat model and beam grouping. All nodes subscription-gated and fully translated EN/HE.
@@ -462,4 +472,3 @@
 ---
 
 *Last updated: 2026-03-15*
-
