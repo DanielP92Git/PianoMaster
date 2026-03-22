@@ -336,6 +336,10 @@ verify_jwt = false
 # Called by pg_cron (no Supabase JWT). Security enforced via x-cron-secret header check inside the function.
 verify_jwt = false
 
+[functions.send-feedback]
+# Called by authenticated browser clients — Supabase verifies the JWT automatically.
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

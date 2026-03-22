@@ -3,8 +3,13 @@ import react from "@vitejs/plugin-react";
 import svgr from "vite-plugin-svgr";
 import { visualizer } from "rollup-plugin-visualizer";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { readFileSync } from "fs";
+const pkg = JSON.parse(readFileSync("./package.json", "utf8"));
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   build: {
     sourcemap: true,
   },
