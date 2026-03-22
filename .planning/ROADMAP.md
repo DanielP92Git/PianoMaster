@@ -205,7 +205,10 @@ See `.planning/milestones/` for archived details of each milestone.
   3. A `POST` with a message shorter than 10 chars or longer than 1000 chars, or an invalid type enum, is rejected with a 400 error
   4. A user who submits more than 3 times within one hour is rejected with a 429 rate limit error (enforced via DB row count)
   5. All existing transactional emails (consent, weekly report) continue to arrive from the new shared support Gmail sender address
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 16-01-PLAN.md — Migration, config, Edge Function (BACK-01, BACK-02, SPAM-01, SPAM-02, SPAM-04)
+- [ ] 16-02-PLAN.md — Brevo sender update and smoke testing (MAIL-01, MAIL-02)
 
 ### Phase 17: Feedback Form UI
 **Goal**: Parents can discover, complete, and submit the feedback form from within the Settings page, with the full anti-spam client layer and both EN/HE languages working
@@ -242,10 +245,10 @@ See `.planning/milestones/` for archived details of each milestone.
 | 13. ESLint Cleanup | v2.5 | 3/3 | Complete | 2026-03-20 |
 | 14. COPPA Hard Delete | v2.5 | 2/2 | Complete | 2026-03-21 |
 | 15. Production QA | v2.5 | 4/4 | Complete | 2026-03-22 |
-| 16. Backend & Email Infrastructure | v2.6 | 0/? | Not started | - |
+| 16. Backend & Email Infrastructure | v2.6 | 0/2 | Not started | - |
 | 17. Feedback Form UI | v2.6 | 0/? | Not started | - |
 
 **Total: 16 milestones shipped (v1.0-v2.5) + v2.6 active — ~158 plans across ~73 phases**
 
 ---
-*Last updated: 2026-03-22 — v2.6 User Feedback roadmap created*
+*Last updated: 2026-03-22 — Phase 16 plans created*
