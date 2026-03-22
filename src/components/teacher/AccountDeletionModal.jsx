@@ -117,7 +117,7 @@ const AccountDeletionModal = ({ isOpen, onClose, student, onDeletionRequested })
         onClose={onClose}
         title="Deletion Pending"
         size="default"
-        className="bg-gray-900 text-white border-gray-700"
+        className="!bg-gray-900 !text-white !border-gray-700"
       >
         <div className="space-y-6">
           {/* Warning Banner */}
@@ -217,7 +217,7 @@ const AccountDeletionModal = ({ isOpen, onClose, student, onDeletionRequested })
       onClose={onClose}
       title="Delete Student Account"
       size="large"
-      className="bg-gray-900 text-white border-gray-700"
+      className="!bg-gray-900 !text-white !border-gray-700"
     >
       <div className="space-y-6">
         {/* Critical Warning */}
@@ -298,8 +298,7 @@ const AccountDeletionModal = ({ isOpen, onClose, student, onDeletionRequested })
                   placeholder="Type student name to confirm"
                   value={confirmationName}
                   onChange={(e) => setConfirmationName(e.target.value)}
-                  variant="solid"
-                  className="w-full bg-gray-750 border-gray-600 text-white"
+                  className="w-full"
                   error={confirmationName && !isConfirmationValid() ? 'Name does not match' : null}
                 />
               </div>
