@@ -17,16 +17,16 @@ Requirements for User Feedback milestone. Each maps to roadmap phases.
 
 ### Anti-Spam
 
-- [ ] **SPAM-01**: Edge Function requires valid Supabase JWT (rejects unauthenticated requests)
-- [ ] **SPAM-02**: Rate limiting enforced at database level (max 3 submissions per hour per user)
+- [x] **SPAM-01**: Edge Function requires valid Supabase JWT (rejects unauthenticated requests)
+- [x] **SPAM-02**: Rate limiting enforced at database level (max 3 submissions per hour per user)
 - [ ] **SPAM-03**: Honeypot hidden field rejects bot submissions silently
-- [ ] **SPAM-04**: Server-side input validation (min 10 chars, max 1000 chars, type must be valid enum)
+- [x] **SPAM-04**: Server-side input validation (min 10 chars, max 1000 chars, type must be valid enum)
 - [ ] **SPAM-05**: Cooldown enforced client-side (disable form for 5 min after successful submission)
 
 ### Backend
 
-- [ ] **BACK-01**: Supabase Edge Function receives form submissions and sends via Brevo API
-- [ ] **BACK-02**: Email includes feedback type, message, student ID (anonymized), and app version
+- [x] **BACK-01**: Supabase Edge Function receives form submissions and sends via Brevo API
+- [x] **BACK-02**: Email includes feedback type, message, student ID (anonymized), and app version
 
 ### Email Setup
 
@@ -65,13 +65,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FORM-03 | Phase 17 | Pending |
 | FORM-04 | Phase 17 | Pending |
 | FORM-05 | Phase 17 | Pending |
-| SPAM-01 | Phase 16 | Pending |
-| SPAM-02 | Phase 16 | Pending |
+| SPAM-01 | Phase 16 | Complete |
+| SPAM-02 | Phase 16 | Complete |
 | SPAM-03 | Phase 17 | Pending |
-| SPAM-04 | Phase 16 | Pending |
+| SPAM-04 | Phase 16 | Complete |
 | SPAM-05 | Phase 17 | Pending |
-| BACK-01 | Phase 16 | Pending |
-| BACK-02 | Phase 16 | Pending |
+| BACK-01 | Phase 16 | Complete |
+| BACK-02 | Phase 16 | Complete |
 | MAIL-01 | Phase 16 | Pending |
 | MAIL-02 | Phase 16 | Pending |
 | I18N-01 | Phase 17 | Pending |

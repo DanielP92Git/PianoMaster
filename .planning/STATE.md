@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: active
-milestone_name: v2.6 User Feedback
-status: roadmap_created
-stopped_at: Phase 16 not started
-last_updated: "2026-03-22T14:30:00.000Z"
+milestone: v2.6
+milestone_name: User Feedback
+status: unknown
+stopped_at: Completed 16-01-PLAN.md
+last_updated: "2026-03-22T21:55:41.749Z"
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -19,16 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v2.6 User Feedback — Phase 16: Backend & Email Infrastructure
+**Current focus:** Phase 16 — backend-email-infrastructure
 
 ## Current Position
 
-Phase: 16 — Backend & Email Infrastructure
-Plan: Not started
-Status: Roadmap created, ready to plan Phase 16
-Last activity: 2026-03-22 — Roadmap created for v2.6
-
-Progress bar: [----------] 0% (0/2 phases)
+Phase: 16 (backend-email-infrastructure) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -58,9 +54,13 @@ All v2.5 decisions archived in `.planning/milestones/v2.5-ROADMAP.md`.
 - Honeypot: Silent rejection (bot gets 200-like response, no error feedback to avoid tipping off scrapers)
 
 **Phase structure decision:**
+
 - Phase 16 first: Edge Function + Brevo sender update + DB rate limiting table + server-side validation
 - Phase 17 second: Settings form UI + parent gate integration + honeypot field + cooldown + i18n
 - Rationale: Backend must exist before frontend can submit; also decouples testable API from UI work
+- [Phase 16]: Service role client for rate-check COUNT (no SELECT RLS policy on feedback_submissions per D-10)
+- [Phase 16]: Message content not stored in DB — Brevo email is ground truth for v1 (COPPA-safe per D-07)
+- [Phase 16]: rate_limit string error code in 429 response for client-side detection in Phase 17 UI
 
 ### Blockers/Concerns
 
@@ -72,8 +72,8 @@ All v2.5 decisions archived in `.planning/milestones/v2.5-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-22
-Stopped at: Roadmap created — ready to plan Phase 16
+Last session: 2026-03-22T21:55:41.742Z
+Stopped at: Completed 16-01-PLAN.md
 Resume file: None
 
 **Next action:**
