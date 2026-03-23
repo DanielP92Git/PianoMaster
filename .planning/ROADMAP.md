@@ -232,7 +232,11 @@ Plans:
   3. Student earns 25 XP for the first practice log of each day; tapping again does not award XP a second time
   4. Student whose weekend pass is enabled does not lose their practice streak for not logging on Friday or Saturday
   5. Database enforces one practice log per student per day and cascades deletion on COPPA hard-delete
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md -- DB migration + dateUtils + practiceLogService + practiceStreakService (Wave 1)
+- [ ] 02-02-PLAN.md -- PracticeLogCard UI + Dashboard wiring + i18n translations (Wave 2)
 **UI hint**: yes
 
 ### Phase 3: Push Notification Integration
@@ -297,7 +301,7 @@ Plans:
 | 16. Backend & Email Infrastructure | v2.6 | 2/2 | Complete | 2026-03-22 |
 | 17. Feedback Form UI | v2.6 | 1/1 | Complete | 2026-03-22 |
 | 1. Signup Flow Redesign | v2.7* | 4/4 | Complete | 2026-03-24 |
-| 2. Data Foundation and Core Logging | v2.7 | 0/? | Not started | - |
+| 2. Data Foundation and Core Logging | v2.7 | 0/2 | Planned | - |
 | 3. Push Notification Integration | v2.7 | 0/? | Not started | - |
 | 4. Parent Calendar Heatmap | v2.7 | 0/? | Not started | - |
 | 5. Milestone Celebrations | v2.7 | 0/? | Not started | - |
