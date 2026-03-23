@@ -1,12 +1,12 @@
 ---
 gsd_state_version: 1.0
-milestone: null
-milestone_name: null
+milestone: v1.0
+milestone_name: milestone
 status: between_milestones
-stopped_at: v2.6 milestone completed
-last_updated: "2026-03-23"
+stopped_at: Phase 1 context gathered
+last_updated: "2026-03-23T19:57:23.367Z"
 progress:
-  total_phases: 0
+  total_phases: 1
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -39,15 +39,19 @@ Plan: N/A
 
 All v2.6 decisions archived in `.planning/milestones/v2.6-ROADMAP.md`.
 
+### Roadmap Evolution
+
+- Phase 1 added: Signup Flow Redesign — role-first signup, birth year only, no account suspension for under-13
+
 ### Blockers/Concerns
 
 **COPPA deadline:** April 22, 2026
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: v2.6 milestone completed
-Resume file: None
+Last session: 2026-03-23T19:57:23.339Z
+Stopped at: Phase 1 context gathered
+Resume file: .planning/phases/01-signup-flow-redesign/01-CONTEXT.md
 
 **Next action:**
 
