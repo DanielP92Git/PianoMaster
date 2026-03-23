@@ -1,311 +1,365 @@
 # Stack Research
 
-**Domain:** Piano learning PWA — v2.5 Launch Prep
-**Researched:** 2026-03-19
-**Confidence:** HIGH (all claims verified against installed packages and codebase)
-
-> This is an **additive** research document. The existing validated stack (React 18, Vite 6,
-> Supabase, VexFlow v5, pitchy, Tailwind, i18next, Sentry, Brevo) is unchanged.
-> This file answers only: **what is needed for v2.5 hard delete Edge Function, ESLint cleanup,
-> production QA framework, and legal documentation packaging?**
+**Domain:** Instrument practice tracking — daily yes/no logging, dedicated streak, XP rewards, interactive push notification action buttons, parent calendar heatmap
+**Researched:** 2026-03-23
+**Confidence:** HIGH (push action button iOS limitations verified via multiple sources; heatmap library verified via GitHub releases; all other decisions follow existing patterns)
 
 ---
 
-## Summary Answer: Zero New Runtime Dependencies
+## Context: What Already Exists (Do Not Re-research)
 
-All four v2.5 feature areas require no new npm packages. Each maps cleanly to existing
-infrastructure with configuration adjustments or plain authoring:
+The following are in production and require NO new packages:
 
-| Feature | Approach | New Dependency? |
-|---|---|---|
-| Hard delete Edge Function | Deno + existing `@supabase/supabase-js@2` (already used in other functions) | No |
-| ESLint warnings cleanup | Fix globals config + vitest env override in existing `eslint.config.js` | No |
-| `verify:patterns` fix | Add `.js` extension to one bare import in `keySignatureUtils.js` | No |
-| Production testing checklist | Static markdown document, no tooling | No |
-| Legal documentation package | Copy existing pages + export to PDF | No |
+- React 18 + Vite 6 + React Router v7
+- Supabase (auth, database, real-time, Edge Functions)
+- TanStack React Query v5
+- Tailwind CSS 3 + glassmorphism design system
+- Web Push notifications (VAPID, `@negrel/webpush` in Edge Functions, service worker `push`/`notificationclick` handlers in `public/sw.js`)
+- `streakService.js` — app-usage streak with 36-hour grace, freeze shields, weekend pass, comeback bonus
+- `xpSystem.js` — 30-level + prestige XP system
+- `send-weekly-report` Edge Function — Brevo HTML emails, HMAC unsubscribe
+- `lucide-react`, `framer-motion`, `recharts`, `react-confetti`, `react-hot-toast`
+- i18next with EN/HE
 
----
-
-## Recommended Stack
-
-### Core Technologies (existing — no changes)
-
-| Technology | Version | Purpose | v2.5 Impact |
-|---|---|---|---|
-| `@supabase/supabase-js` | 2.48.1 | Admin client in Edge Functions | Hard delete function uses `createClient` with `service_role` key — identical pattern to `lemon-squeezy-webhook` |
-| Deno (Supabase Edge runtime) | Supabase-managed | Server-side TypeScript execution | Hard delete is a new `Deno.serve()` function following existing patterns |
-| ESLint | 9.9.1 | JS linting | Config changes only — no upgrade needed |
-| `eslint-plugin-react-hooks` | 5.1.0-rc.0 | React hooks rules | Already installed; stable RC is fine for warnings-only cleanup |
-| Vitest | 3.2.4 | Test runner | Globals fix targets Vitest's `environment` config, not version |
-
-### No New Supporting Libraries
-
-The ESLint warnings break down as follows (574 total, verified by running `npm run lint`):
-
-| Warning Rule | Count | Root Cause | Fix Approach |
-|---|---|---|---|
-| `no-undef` | 330 | Test globals (`vi`, `expect`, `it`, `describe`, `afterEach`) not in scope + `process`/`module` in CJS config files | Add `vitest` globals to ESLint config for test files; add `node` env for config files |
-| `no-unused-vars` | 183 | Legitimate unused variables in production code | Case-by-case: remove, rename to `_prefix`, or add `// eslint-disable-next-line` for intentional stubs |
-| `react-hooks/exhaustive-deps` | 41 | Missing/extra deps in `useEffect`/`useCallback` arrays | Case-by-case: stabilize with `useRef`/`useCallback` wrappers or disable with justification comment |
-| `react-refresh/only-export-components` | 18 | Non-component exports in component files | Move constants to separate files OR disable for files that intentionally export utilities |
-
-The largest bucket (330 `no-undef` warnings) is a **config fix**, not code changes:
-
-```js
-// eslint.config.js — add vitest env to test files
-import { defineConfig } from 'vitest/config'; // NOT needed in eslint.config.js — see below
-
-// In eslint.config.js, add a second config block:
-{
-  files: ['**/*.test.{js,jsx}', '**/test/**/*.{js,jsx}', 'src/test/**'],
-  languageOptions: {
-    globals: {
-      ...globals.browser,
-      vi: 'readonly',
-      expect: 'readonly',
-      it: 'readonly',
-      test: 'readonly',
-      describe: 'readonly',
-      afterEach: 'readonly',
-      beforeEach: 'readonly',
-    },
-  },
-},
-// For CJS config files (tailwind.config.js, vite.config.js):
-{
-  files: ['tailwind.config.js', 'vite.config.js', 'postcss.config.js', 'scripts/**'],
-  languageOptions: {
-    globals: { ...globals.node, process: 'readonly', module: 'readonly', require: 'readonly' },
-  },
-},
-```
-
-This one config change eliminates ~330 of 574 warnings (57%) instantly without touching any source files.
-
-### Development Tools
-
-| Tool | Purpose | v2.5 Notes |
-|---|---|---|
-| `eslint . --fix` | Auto-fixes 2 warnings flagged as fixable | Run first; safe, zero manual review needed |
-| `npm run lint 2>&1 \| grep "warning" \| sort` | Warning triage | Run after config fix to see remaining ~244 warnings categorized |
+This milestone adds ONE new npm package and two to three new database tables. Everything else is pure extension of existing patterns.
 
 ---
 
-## Feature-Specific Integration Points
+## Recommended Stack — New Additions Only
 
-### 1. Hard Delete Edge Function
+### New npm Package
 
-**Pattern to follow:** `supabase/functions/cancel-subscription/index.ts`
+| Library | Version | Purpose | Why |
+|---------|---------|---------|-----|
+| `react-activity-calendar` | `^3.1.1` | GitHub-style calendar heatmap for parent practice view | Active maintenance (v3.0 released November 15, 2025; v3.1.1 published March 2026), pure ESM, TypeScript, React 18 peer dep only, Floating UI tooltips (headless, no external dep), supports custom colors per level, dark/light mode, localization. ~87 kB minified (reduced ~33% in v3 from v2). Better maintained than `react-calendar-heatmap` (stale since 2022) and more feature-complete than `@uiw/react-heat-map`. |
 
-The hard delete function needs `service_role` key access to delete from `auth.users` (which bypasses RLS). This is the same pattern already used in `lemon-squeezy-webhook`.
-
-**Database schema already supports this** (from `20260201000001_coppa_schema.sql`):
-- `students.deletion_requested_at` — set when parent requests deletion
-- `students.deletion_scheduled_at` — 30 days after request
-- `students.account_status = 'suspended_deletion'` — blocks login during grace period
-
-**Function trigger:** Supabase cron (same mechanism as `send-daily-push` and `send-weekly-report`).
-- Cron expression: `0 2 * * *` (daily 02:00 UTC — low traffic window)
-- Query: `SELECT * FROM students WHERE deletion_scheduled_at <= NOW() AND account_status = 'suspended_deletion'`
-
-**Deletion sequence** (must be this order to respect foreign keys):
-1. Delete from `push_subscriptions` (FK to students)
-2. Delete from `parental_consent_log` (FK to students, ON DELETE CASCADE handles this)
-3. Delete from `parental_consent_tokens` (FK to students, ON DELETE CASCADE handles this)
-4. Delete from `student_skill_progress` (FK to students)
-5. Delete from `student_daily_goals` (FK to students)
-6. Delete from `parent_subscriptions` (FK to students)
-7. Delete from `students` row
-8. Call `supabase.auth.admin.deleteUser(student_id)` — removes from `auth.users`
-
-Steps 2-3 are covered by `ON DELETE CASCADE` already in the schema. Verify all other FKs for cascade behavior before coding.
-
-**Environment variables needed** (same as other cron functions):
-- `SUPABASE_URL` — already set
-- `SUPABASE_SERVICE_ROLE_KEY` — already set (used by webhook function)
-- `CRON_SECRET` — already set (used by push/weekly-report functions)
-
-**Security model:**
-```typescript
-// Verify cron secret to prevent unauthorized invocation
-const cronSecret = req.headers.get('x-cron-secret');
-if (cronSecret !== Deno.env.get('CRON_SECRET')) {
-  return new Response('Unauthorized', { status: 401 });
-}
-
-// Use service_role for auth.admin access
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL')!,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-  { auth: { autoRefreshToken: false, persistSession: false } }
-);
-```
-
-**Import** (identical to cancel-subscription):
-```typescript
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-```
-
-### 2. verify:patterns Fix
-
-**Root cause confirmed:** `keySignatureUtils.js` line 1 imports `"../constants/keySignatureConfig"` (no `.js` extension). Vite resolves this fine. Node ESM (`patternVerifier.mjs` uses `node --experimental-vm-modules`) requires explicit `.js` extension.
-
-**Fix:** One-line change in `src/components/games/sight-reading-game/utils/keySignatureUtils.js`:
-```js
-// Before:
-import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig";
-// After:
-import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig.js";
-```
-
-Same fix needed in `keySignatureUtils.test.js` line 1 (same bare import).
-
-Verify with `npm run verify:patterns` after applying.
-
-### 3. ESLint Warnings Cleanup
-
-**Cleanup order for least disruption:**
-
-1. **Config fix first** (eliminates ~330 warnings, zero source code changes):
-   - Add `vitest` globals block for test files in `eslint.config.js`
-   - Add `node` globals block for config files in `eslint.config.js`
-
-2. **Auto-fix** (eliminates 2 more):
-   - `npm run lint:fix` handles only 2 auto-fixable warnings
-
-3. **Mechanical removals** (~183 `no-unused-vars` in production code):
-   - Destructured but unused variables: rename to `_varName` or remove
-   - Unused imports: remove the import
-   - Assigned-but-never-read vars: remove the assignment
-   - Dead `const` at module scope: remove
-   - Exception: `// eslint-disable-next-line no-unused-vars` for intentional stubs with comments
-
-4. **Hook dependency warnings** (~41 `react-hooks/exhaustive-deps`):
-   - Missing stable deps: wrap with `useCallback` or `useRef` as appropriate
-   - Functions created inside components causing churn: either move inside callback or stabilize with `useCallback`
-   - Genuinely intentional omissions (e.g. `queryClient` ref): disable with `// eslint-disable-next-line react-hooks/exhaustive-deps` and a comment explaining why
-   - Do NOT add all deps blindly — several (e.g. `audioEngine`) cause infinite re-render loops if added
-
-5. **react-refresh violations** (~18 warnings):
-   - Files exporting both a component and constants/utilities: either split into two files OR add `/* eslint-disable react-refresh/only-export-components */` at top with a justification comment
-
-**Target:** 0 errors, 0 warnings. Achievable without any logic changes.
-
-### 4. Production Testing Checklist
-
-No tooling needed. A structured markdown document covering:
-
-- Authentication flows (signup, login, logout, password reset, session timeout)
-- COPPA flows (age gate, consent email, consent verify, data export, deletion request)
-- Subscription flows (paywall, checkout, cancel, webhook, subscription gate enforcement)
-- All 4 game modes in all input modes (keyboard, mic) with trail and free play
-- Trail system (unlock progression, star updates, XP award, prestige calculation)
-- Dashboard (daily goals, streak, XP ring, push opt-in)
-- Streak protection (grace window, freeze consumption, weekend pass, comeback bonus)
-- i18n (EN/HE switch, RTL layout on trail and dashboard)
-- PWA (install, offline behavior, service worker cache)
-- Mobile (rotate prompt iOS, landscape lock Android, touch targets)
-- Accessibility (keyboard nav, reduced motion, high contrast)
-
-This document belongs in `.planning/milestones/v2.5-phases/` not in the codebase.
-
-### 5. Legal Documentation Package
-
-**Existing assets:**
-- `src/pages/PrivacyPolicyPage.jsx` — COPPA-compliant privacy policy (live at `/legal/privacy`)
-- `src/pages/TermsOfServicePage.jsx` — Terms of service (live at `/legal/terms`)
-- `supabase/migrations/20260201000001_coppa_schema.sql` — Data architecture documentation
-- `supabase/functions/send-consent-email/index.ts` — Consent email content
-
-**Package assembly approach** (no new tools needed):
-- Print `/legal/privacy` and `/legal/terms` from browser to PDF (Chrome print → Save as PDF)
-- Export consent email HTML from `send-consent-email/index.ts` for review
-- Summarize data flows: what is collected, where stored, retention periods, deletion mechanics
-- Reference `SECURITY_GUIDELINES.md` for attorney context on COPPA implementation
-
-**No PDF generation library needed** — the attorney needs to review content, not the app. Browser print-to-PDF produces a clean readable document.
-
----
-
-## Installation
-
+**Install:**
 ```bash
-# No new dependencies required for v2.5.
-# All changes are: configuration, one import path fix, new Edge Function (Deno/TypeScript), and documentation.
+npm install react-activity-calendar@^3.1.1
 ```
+
+### Data Format and Integration
+
+`react-activity-calendar` v3 uses a named export (breaking change from v2 which had a default export):
+
+```javascript
+import { ActivityCalendar } from 'react-activity-calendar';
+
+// Binary practice data: level 0 = missed, level 4 = practiced
+// count is required but can be 0 or 1 for yes/no tracking
+const practiceData = [
+  { date: '2026-01-01', count: 0, level: 0 }, // missed
+  { date: '2026-01-02', count: 1, level: 4 }, // practiced
+  // Must include an entry for every date in the range
+];
+
+<ActivityCalendar
+  data={practiceData}
+  maxLevel={4}
+  colorScheme="dark"
+  theme={{
+    dark: [
+      'rgba(255,255,255,0.08)', // level 0: missed — glass-like background
+      '#4338ca',                // level 1 (unused for binary, but required)
+      '#4f46e5',
+      '#6366f1',
+      '#818cf8',               // level 4: practiced — indigo-400
+    ],
+  }}
+  weekStart={0}               // Sunday start (adjust for HE locale if needed)
+  showColorLegend={false}     // binary = no legend needed
+  showMonthLabels={true}
+  showTotalCount={false}      // parent doesn't need total count display
+  hideTotalCount={false}      // v3 uses showTotalCount prop (not hideTotalCount)
+/>
+```
+
+Color choices align with existing indigo-400/indigo-600 design tokens and glass background.
 
 ---
 
 ## Alternatives Considered
 
 | Recommended | Alternative | Why Not |
-|---|---|---|
-| ESLint config globals block for test files | `eslint-plugin-vitest` (separate plugin) | Plugin adds 30+ vitest-specific rules that are not needed — the problem is purely missing globals, not rule coverage. Config-only fix eliminates the warnings without adding a dependency. |
-| Supabase cron for hard delete trigger | Client-side scheduled check on login | Client cannot be trusted for COPPA deletion (user could never log in). Server-side cron is authoritative. Same pattern already used by `send-daily-push`. |
-| `service_role` key in Edge Function for `auth.admin.deleteUser` | Postgres trigger via `pg_cron` | pg_cron cannot call `auth.users` deletions. Only the Admin API (via service_role) can delete from `auth.users`. Edge Function is the correct layer. |
-| Manually add `.js` extension to fix `verify:patterns` | Replace `patternVerifier.mjs` with a Vite-aware test | Vite test would require running the full dev server. The one-line import fix is the minimal correct solution. |
-| Browser print-to-PDF for legal docs | `puppeteer` or `playwright` for PDF generation | Attorney review needs the content, not automation. The pages are already styled correctly. No engineering value in adding a headless browser dependency. |
+|-------------|-------------|---------|
+| `react-activity-calendar@3.1.1` | `react-calendar-heatmap` (kevinsqi/hackclub fork) | Last published 2022; no TypeScript types; abandoned by original author |
+| `react-activity-calendar@3.1.1` | `@uiw/react-heat-map` | Works but weaker built-in dark mode and tooltip API; less actively maintained; react-activity-calendar has more GitHub stars and recent releases |
+| `react-activity-calendar@3.1.1` | Build from scratch (SVG + Tailwind + date math) | Date math edge cases (leap years, week-start locale, 53-week years) add implementation risk; a vetted library eliminates this; the component is parent-facing so perfection on edge cases matters |
+| `react-activity-calendar@3.1.1` | recharts (already installed) | recharts has no calendar/heatmap chart type; would require a custom renderer anyway |
 
 ---
 
-## What NOT to Use
+## New Database Tables
+
+No new npm packages required — all follows Supabase/Postgres patterns already established in the codebase.
+
+### Table 1: `instrument_practice_logs`
+
+Source of truth for the heatmap and streak. One row per student per calendar day.
+
+```sql
+CREATE TABLE instrument_practice_logs (
+  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  student_id     uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  practiced_on   date NOT NULL,                      -- calendar date (client-determined local tz)
+  logged_at      timestamptz NOT NULL DEFAULT now(),  -- server timestamp
+  is_retroactive boolean NOT NULL DEFAULT false,      -- true when logging yesterday
+  source         text NOT NULL DEFAULT 'dashboard',   -- 'dashboard' | 'notification_action'
+  UNIQUE (student_id, practiced_on)                  -- one entry per student per day
+);
+
+ALTER TABLE instrument_practice_logs ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "student own rows" ON instrument_practice_logs
+  USING (student_id = auth.uid())
+  WITH CHECK (student_id = auth.uid());
+
+CREATE INDEX idx_ipl_student_date ON instrument_practice_logs (student_id, practiced_on);
+```
+
+Heatmap query: `SELECT practiced_on FROM instrument_practice_logs WHERE student_id = $1 AND practiced_on >= $2 ORDER BY practiced_on`.
+
+### Table 2: `instrument_practice_streak`
+
+Separate from `current_streak` (which tracks app-usage). Instrument practice streak is a distinct concept.
+
+```sql
+CREATE TABLE instrument_practice_streak (
+  student_id    uuid PRIMARY KEY REFERENCES students(id) ON DELETE CASCADE,
+  streak_count  integer NOT NULL DEFAULT 0,
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE instrument_practice_streak ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "student own rows" ON instrument_practice_streak
+  USING (student_id = auth.uid())
+  WITH CHECK (student_id = auth.uid());
+```
+
+Weekend pass for instrument streak reuses the `weekend_pass_enabled` column from `current_streak` (same parent toggle controls both) rather than duplicating the column. This is a roadmap phase decision.
+
+---
+
+## Interactive Push Notification Action Buttons
+
+### Implementation Pattern
+
+The existing service worker (`public/sw.js`) already has `push` and `notificationclick` event listeners. The action button pattern requires:
+
+1. Include `actions` array in the `showNotification()` call inside the `push` listener
+2. Check `event.action` in the `notificationclick` listener
+3. Call back to Supabase to log the practice (via postMessage to app window or URL navigation)
+
+```javascript
+// In push listener (sw.js) — new practice-checkin notification type
+self.addEventListener('push', (event) => {
+  const data = event.data ? JSON.parse(event.data.text()) : {};
+
+  if (data.type === 'practice-checkin') {
+    const options = {
+      body: data.body,
+      tag: 'practice-checkin',  // distinct from existing 'daily-practice' tag
+      actions: [
+        { action: 'yes', title: 'Yes, I practiced!' },
+        { action: 'no',  title: 'Not yet' },
+      ],
+      data: { url: '/', type: 'practice-checkin' },
+    };
+    event.waitUntil(
+      self.registration.showNotification(data.title, options)
+    );
+    return;
+  }
+
+  // ... existing daily-practice handler unchanged
+});
+
+// In notificationclick listener (sw.js) — extend existing handler
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  if (event.notification.tag === 'practice-checkin') {
+    if (event.action === 'yes') {
+      // Open app at special URL that triggers log-on-mount
+      event.waitUntil(
+        clients.openWindow('/?log_practice=1&source=notification_action')
+      );
+    } else {
+      // 'no' action or plain tap — just open the app
+      event.waitUntil(clients.openWindow('/'));
+    }
+    return;
+  }
+
+  // ... existing daily-practice click handler unchanged
+});
+```
+
+**Authentication approach for logging from notification:** The service worker does not have the Supabase JWT. Rather than embedding tokens in notification payloads (security risk), the chosen pattern is to open the app at a URL with a `?log_practice=1` query param. The app's dashboard (or a lightweight route handler) detects this param on mount, verifies the user session is active, and calls the log API. This is the simplest correct approach — no new auth patterns, no token management.
+
+### Cross-Platform Reality (Verified)
+
+| Platform | Action Buttons Render | Notes |
+|----------|----------------------|-------|
+| Chrome/Android PWA | YES — full support | Primary platform for this app's users; works as expected |
+| Chrome Desktop | YES — full support | |
+| Firefox Desktop | YES — full support | |
+| Edge Desktop | YES — full support | |
+| Safari macOS 14+ | YES — works | macOS push fully supported |
+| **iOS Safari PWA (16.4+)** | **NO — actions silently dropped** | Confirmed via Apple Developer Forums (thread 726793) and independent developer testing: the `actions` array is accepted without error but action buttons never render on iOS. The notification appears, `notificationclick` fires on tap, but iOS exposes no action UI. |
+| iOS Safari in EU | NO — push not supported | EU regulatory restriction (browser choice screen); push only works for home screen installs outside EU |
+
+**iOS fallback:** The "Did you practice?" notification fires without action buttons on iOS. Tapping the notification (no action) opens the app to the dashboard where the manual log button handles the logging. This is acceptable — iOS is a secondary platform for 8-year-old learners (Android PWA is primary). No polyfill needed.
+
+**Safari iOS 18.4 Declarative Web Push:** Apple shipped a new "Declarative Web Push" format in iOS/iPadOS 18.4 (currently in beta as of March 2026) that removes the service worker requirement for basic notifications. It does not add action button support. Not relevant to this milestone.
+
+---
+
+## New Edge Functions
+
+### `log-instrument-practice`
+
+New authenticated Edge Function (NOT a cron — requires user JWT):
+
+```
+POST /functions/v1/log-instrument-practice
+Authorization: Bearer <supabase_jwt>
+Body: { "practiced_on": "2026-03-23", "is_retroactive": false, "source": "dashboard" }
+```
+
+Responsibilities:
+1. Validate JWT (standard Supabase auth, `verify_jwt = true`)
+2. Parse `practiced_on` date; reject future dates; allow yesterday only for retroactive
+3. Upsert into `instrument_practice_logs` (idempotent — safe to call twice)
+4. Update `instrument_practice_streak.streak_count` using same weekend-pass logic as `streakService.js`
+5. Award XP via existing `award_xp()` Postgres function (amount TBD by roadmap phase)
+6. Return `{ logged: boolean, streak: number, xpAwarded: number, alreadyLoggedToday: boolean }`
+
+Follows the pattern of `create-checkout` and `send-consent-email` (authenticated Edge Functions, not cron).
+
+### `send-practice-checkin-push`
+
+New cron Edge Function, separate from `send-daily-push`:
+
+- Cron trigger: different time from app-usage reminder (e.g., 18:00 UTC = 8-9pm Israel time)
+- Skips students who already have an `instrument_practice_logs` entry for today
+- Skips students whose `last_practice_asked_at` is already today (dedup)
+- Sends notification with `type: 'practice-checkin'`, `tag: 'practice-checkin'`
+- Reuses `@negrel/webpush` + VAPID pattern from `send-daily-push` verbatim
+- Tracks `last_practice_asked_at` on `push_subscriptions` (new column) or a new slim table
+
+---
+
+## Weekly Email Integration
+
+Extend `send-weekly-report` Edge Function (no new Edge Function needed):
+
+```typescript
+// Add to WeeklyReportParams interface
+interface WeeklyReportParams {
+  // ...existing fields...
+  daysPracticedInstrument: number;  // new: 0-7 days
+}
+
+// Add to generateWeeklyReportHTML() — new row in the stats table
+// "Days practiced at home: X / 7"
+```
+
+Query to add to the existing weekly report loop:
+```sql
+SELECT COUNT(*) FROM instrument_practice_logs
+WHERE student_id = $1
+  AND practiced_on >= NOW() - INTERVAL '7 days'
+```
+
+---
+
+## No New Packages Needed For
+
+| Capability | Why No New Package Needed |
+|-----------|--------------------------|
+| Instrument practice streak logic | Pure JS, mirrors `streakService.js` — new `instrumentPracticeStreakService.js` |
+| XP award for logging | Existing `award_xp()` Postgres function |
+| Dashboard practice card | React + Tailwind glassmorphism pattern, TanStack Query data fetching |
+| Weekly email practice summary | Extend existing `send-weekly-report` Edge Function |
+| Retroactive yesterday logging | Date math only, no library needed |
+| Streak display icons | Existing `lucide-react` (flame, shield icons already used) |
+| Log confirmation animation | Existing `framer-motion` (already in `package.json`) |
+| XP award toast | Existing `react-hot-toast` (already in `package.json`) |
+| Practice logging UI | Plain React + Tailwind — a button and a status indicator |
+
+**Explicitly avoid:**
 
 | Avoid | Why | Use Instead |
-|---|---|---|
-| `eslint-plugin-vitest` | Solves a problem that is purely a globals config issue; adds 30+ rules and a dependency | Add `vitest` globals to `eslint.config.js` test file block |
-| `@supabase/supabase-js` client in hard delete function | Anon/user-level client cannot call `auth.admin.deleteUser` | `createClient` with `SUPABASE_SERVICE_ROLE_KEY` — already the pattern in `lemon-squeezy-webhook` |
-| Batch `eslint --fix` with `--rule` overrides to suppress all warnings | Suppression masks real bugs; `no-unused-vars` warnings often reveal dead code worth removing | Fix root causes: config for test globals, code cleanup for unused vars, `useCallback` stabilization for hook deps |
-| New migration to add `deleted_at` soft-delete column | Schema already has `deletion_scheduled_at` and `account_status = 'suspended_deletion'` — the 30-day grace is already modeled | Use existing columns; hard delete function queries `deletion_scheduled_at <= NOW()` |
-| `pg_cron` extension for deletion scheduling | Cannot delete from `auth.users` (requires Admin API, not SQL); also adds Supabase extension management complexity | Supabase Edge Function with `CRON_SECRET` — already established pattern in this codebase |
+|-------|-----|-------------|
+| `date-fns` or `dayjs` | `getCalendarDate()` helper in `streakService.js` handles all needed date math; adding a date library for 3 lines of code is over-engineering | Inline date formatting (same pattern as `streakService.js`) |
+| Embedding auth tokens in push notification payload | Security risk — tokens in push payload can be captured by malicious service workers or logged | Open `/?log_practice=1` URL and authenticate via existing session on app mount |
+| Modifying `current_streak` table for instrument tracking | App-usage streak and instrument practice streak must remain independent | Separate `instrument_practice_streak` table |
+| Modifying `send-daily-push` to add practice checkin | Two different notifications with different triggers and skip conditions must not share one cron job | New `send-practice-checkin-push` Edge Function with its own cron schedule |
+| `recharts` for the heatmap | No calendar chart type in recharts | `react-activity-calendar` |
 
 ---
 
-## Stack Patterns by Variant
+## Integration Points with Existing Infrastructure
 
-**Hard delete Edge Function structure:**
-- Uses `Deno.serve()` — same as all existing functions
-- Authenticated via `x-cron-secret` header check (no JWT needed — cron jobs don't have user JWTs)
-- Uses `service_role` Supabase client — same as `lemon-squeezy-webhook`
-- Returns `{ deleted: N, errors: M }` for monitoring/logging
-- Logs each deletion attempt to console for Supabase Edge Function logs (no separate audit table needed — `parental_consent_log` already records the deletion request event)
-
-**ESLint config file structure after fix:**
-```js
-// eslint.config.js — three targeted blocks
-export default [
-  { ignores: ["dist"] },
-  // 1. Production source files
-  { files: ["src/**/*.{js,jsx}"], /* existing rules */ },
-  // 2. Test files — add vitest globals
-  { files: ["**/*.test.{js,jsx}", "src/test/**"], languageOptions: { globals: vitestGlobals } },
-  // 3. Node config files
-  { files: ["*.config.js", "scripts/**"], languageOptions: { globals: globals.node } },
-];
-```
+| Existing System | How v2.7 Integrates |
+|-----------------|---------------------|
+| `streakService.js` | New `instrumentPracticeStreakService.js` mirrors its JS structure. Does NOT touch app-usage streak logic. |
+| `current_streak` table | Read-only: `weekend_pass_enabled` column may be read by instrument streak logic. Not written. |
+| `push_subscriptions` table | New `last_practice_asked_at` column added (or separate tracking table). Existing columns unchanged. |
+| `send-daily-push` Edge Function | NOT modified. New cron function is fully independent. |
+| `send-weekly-report` Edge Function | Extended with one additional stat (days practiced instrument). HTML template updated. |
+| `award_xp()` Postgres function | Called from `log-instrument-practice` Edge Function after successful log. |
+| `xpSystem.js` / `students.total_xp` | XP flows into existing level display automatically. No UI changes needed. |
+| TanStack Query cache | New query keys: `["instrument-practice-today", userId]`, `["instrument-practice-streak", userId]`, `["instrument-practice-calendar", userId, year]`. Invalidate after log. |
+| Service worker `notificationclick` handler | Extended with `practice-checkin` tag branch. Existing `daily-practice` branch unchanged. |
+| Dashboard layout | New practice card component inserted into dashboard grid. Follows glass card pattern. |
 
 ---
 
 ## Version Compatibility
 
-| Package | Compatible With | Notes |
-|---|---|---|
-| `@supabase/supabase-js@2` (via esm.sh) | Deno Edge runtime | Pattern already used by `cancel-subscription`, `lemon-squeezy-webhook` — confirmed working |
-| `eslint@9.9.1` | Flat config format (used by this project) | Globals config approach is the flat config pattern; no `env` property (that's legacy config format) |
-| `vitest@3.2.4` | Requires explicit globals config in ESLint | Vitest does NOT inject globals into ESLint scope automatically; must declare manually |
+| Package | Version | Compatible With | Notes |
+|---------|---------|----------------|-------|
+| `react-activity-calendar` | `^3.1.1` (new) | React `^18.3.1` (peer dep) | Matches existing React 18 install. Pure ESM — matches project `"type": "module"`. |
+
+`react-activity-calendar` v3 dropped the default export. Import as `import { ActivityCalendar } from 'react-activity-calendar'`. No other breaking changes affect this use case.
 
 ---
 
 ## Sources
 
-- `C:/Development/PianoApp2/package.json` — Installed versions confirmed (HIGH confidence)
-- `C:/Development/PianoApp2/eslint.config.js` — Current config structure; globals approach derived from ESLint flat config documentation (HIGH confidence)
-- `npm run lint` output — 574 warnings categorized by rule: `no-undef` 330, `no-unused-vars` 183, `react-hooks/exhaustive-deps` 41, `react-refresh/only-export-components` 18 (HIGH confidence — direct measurement)
-- `supabase/functions/cancel-subscription/index.ts` — service_role pattern, CORS structure, Deno.serve pattern (HIGH confidence)
-- `supabase/functions/send-daily-push/index.ts` — cron secret pattern, cron scheduling (HIGH confidence)
-- `supabase/migrations/20260201000001_coppa_schema.sql` — deletion_scheduled_at, account_status schema (HIGH confidence)
-- `src/components/games/sight-reading-game/utils/keySignatureUtils.js` line 1 — bare import confirmed as root cause of verify:patterns breakage (HIGH confidence — reproduction confirmed via `npm run verify:patterns`)
-- `src/components/games/sight-reading-game/constants/keySignatureConfig.js` — file EXISTS, confirming the issue is the missing `.js` extension, not a missing file (HIGH confidence)
+- [react-activity-calendar GitHub](https://github.com/grubersjoe/react-activity-calendar) — confirmed active maintenance, v3.0 November 2025 (MEDIUM confidence — GitHub scrape)
+- [react-activity-calendar Releases](https://github.com/grubersjoe/react-activity-calendar/releases) — v3.1.1 latest, published March 2026 (MEDIUM confidence — GitHub releases page)
+- [react-activity-calendar README](https://github.com/grubersjoe/react-activity-calendar/blob/main/README.md) — data format `{ date, count, level }`, named import, available props (HIGH confidence — official repo README)
+- [web.dev: Push Notifications Notification Behavior](https://web.dev/push-notifications-notification-behaviour/) — `actions` array structure, `notificationclick` event.action pattern (HIGH confidence — official Google web.dev documentation)
+- [MDN: NotificationEvent.action](https://developer.mozilla.org/en-US/docs/Web/API/NotificationEvent/action) — `event.action` property confirmed (HIGH confidence — MDN official)
+- [MDN: ServiceWorkerRegistration.showNotification()](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification) — actions options confirmed (HIGH confidence — MDN official)
+- [Apple Developer Forums thread 726793: Notification Actions on iOS 16.4](https://developer.apple.com/forums/thread/726793) — iOS action button support status questioned; actions appear to be silently dropped (MEDIUM confidence — Apple Developer Forums, Apple engineers involved)
+- [WebVentures: Web Push iOS One Year Anniversary (2024)](https://webventures.rejh.nl/blog/2024/web-push-ios-one-year/) — real-world iOS push limitations; actions array silently ignored (MEDIUM confidence — independent developer blog with empirical testing)
+- [mdn/browser-compat-data Issue #22959](https://github.com/mdn/browser-compat-data/issues/22959) — notificationclick confirmed firing on iOS but automated tests may have incorrectly marked features as supported (MEDIUM confidence — MDN compat data tracking issue)
+- [Push Notifications in Safari iOS PWAs (April 2024)](https://iwritecodesometimes.net/2024/04/23/push-notifications-in-safari-progressive-web-apps/) — confirms actions array defined in code works in some configurations (MEDIUM confidence — blog, April 2024; may be outdated)
+- [WebKit: Meet Declarative Web Push](https://webkit.org/blog/16535/meet-declarative-web-push/) — iOS 18.4 Declarative Web Push beta; does not address action buttons (HIGH confidence — official WebKit blog)
+- [iOS PWA Push Notifications 2026 (webscraft.org)](https://webscraft.org/blog/pwa-pushspovischennya-na-ios-u-2026-scho-realno-pratsyuye?lang=en) — iOS limitations including no action buttons confirmed (MEDIUM confidence — blog, March 2026)
+- `C:/Development/PianoApp2/package.json` — installed dependencies confirmed (HIGH confidence — direct read)
+- `C:/Development/PianoApp2/public/sw.js` — existing push/notificationclick handler structure confirmed (HIGH confidence — direct read)
+- `C:/Development/PianoApp2/supabase/functions/send-daily-push/index.ts` — cron pattern, VAPID pattern, skip-if-practiced logic confirmed (HIGH confidence — direct read)
+- `C:/Development/PianoApp2/src/services/streakService.js` — streak logic pattern for `instrumentPracticeStreakService.js` to mirror (HIGH confidence — direct read)
 
 ---
-*Stack research for: v2.5 Launch Prep — hard delete, ESLint cleanup, QA framework, legal docs*
-*Researched: 2026-03-19*
+
+## Confidence Assessment
+
+| Area | Confidence | Notes |
+|------|-----------|-------|
+| Heatmap library (`react-activity-calendar`) | HIGH | Active, recent releases; correct peer deps; data format verified from README |
+| Push action buttons (Android/Chrome) | HIGH | Fully supported standard Web API; documented on MDN and web.dev |
+| Push action buttons (iOS PWA) | MEDIUM | Multiple developer sources confirm actions are silently dropped; Apple's official docs don't explicitly document this limitation but consistent community evidence supports it. The URL-navigation fallback is designed around this. |
+| Database schema design | HIGH | Follows established `current_streak` / `last_practiced_date` patterns exactly |
+| Edge Function patterns | HIGH | Mirrors `send-daily-push` (cron) and `create-checkout` (authenticated) patterns verbatim |
+| Weekly email extension | HIGH | Extends existing function; same Brevo pattern |
+| No new packages beyond heatmap | HIGH | All capabilities verified present in installed package set |
+
+---
+
+*Stack research for: v2.7 Instrument Practice Tracking — PianoApp2*
+*Researched: 2026-03-23*

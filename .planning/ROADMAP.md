@@ -211,7 +211,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 11-16. App Monetization | v1.8 | 13/13 | Complete | 2026-03-01 |
 | 17-23. Engagement & Retention | v1.9 | 15/15 | Complete | 2026-03-08 |
 | 01-02. VictoryScreen & XP | v2.0 | 6/6 | Complete | 2026-03-08 |
-| 01. Forgot Password | v2.1 | 2/2 | Complete | 2026-03-10 |
+| 01. Forgot Password | v2.1 | 0/4 | Planned    |  |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
@@ -229,7 +229,7 @@ See `.planning/milestones/` for archived details of each milestone.
 **Goal:** Reorder signup to role-first (student/teacher), simplify age collection to birth year only, remove account suspension for under-13 (account immediately active), keep parent email as optional for notifications/reports. Teacher path skips age gate. Back navigation between steps. Google OAuth shown after role selection.
 **Requirements**: D-01 through D-15 (from 01-CONTEXT.md)
 **Depends on:** v2.6
-**Plans:** 4 plans
+**Plans:** 0/4 plans executed
 
 Plans:
 - [ ] 01-00-PLAN.md -- Wave 0: Test scaffolds for SignupForm, ParentEmailStep, useSignup (Wave 0)

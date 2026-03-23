@@ -10,7 +10,8 @@
       "Bash(git add:*)",
       "Bash(git commit -m *)",
       "WebSearch",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Skill(gsd:new-milestone)"
     ]
   },
   "enableAllProjectMcpServers": true,

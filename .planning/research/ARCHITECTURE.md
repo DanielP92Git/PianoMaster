@@ -1,636 +1,578 @@
 # Architecture Research
 
-**Domain:** Piano learning PWA — launch prep (v2.5)
-**Researched:** 2026-03-19
-**Confidence:** HIGH (all findings from direct codebase inspection, no training-data assertions)
+**Domain:** Piano learning PWA — instrument practice tracking integration (v2.7)
+**Researched:** 2026-03-23
+**Confidence:** HIGH (all findings from direct codebase inspection + verified against MDN and official docs)
+
+## Context: What Is Being Added
+
+This milestone adds a **separate instrument practice tracking system** that runs parallel to
+the existing app-usage streak (`current_streak` table). The key distinction:
+
+- **Existing streak** = did the student open the app and play a game today?
+- **Instrument practice streak** = did the student physically practice their instrument today?
+
+These are deliberately separate: a student can practice piano at home without opening the app,
+and the app should reward both behaviors. The two streaks display side-by-side on the Dashboard.
+
+---
 
 ## Standard Architecture
 
 ### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                    React 18 + Vite 6 (PWA)                      │
-│  ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌───────────┐ │
-│  │  Game UI   │  │  Dashboard │  │ Trail Map  │  │  Settings │ │
-│  │ (4 modes)  │  │  (cards)   │  │ (overlay)  │  │  /Legal   │ │
-│  └─────┬──────┘  └──────┬─────┘  └──────┬─────┘  └─────┬─────┘ │
-│        │                │               │              │        │
-│  ┌─────┴────────────────┴───────────────┴──────────────┴──────┐ │
-│  │          React Query v5 + Context (feature-scoped)         │ │
-│  └─────────────────────────────┬───────────────────────────── ┘ │
-└────────────────────────────────│────────────────────────────────┘
-                                 │ supabase-js client
-┌────────────────────────────────▼────────────────────────────────┐
-│                         Supabase Platform                        │
-│  ┌────────────────┐  ┌──────────────┐  ┌───────────────────────┐ │
-│  │  Auth (JWT)    │  │  PostgREST   │  │  Realtime (WS)        │ │
-│  └────────────────┘  └──────┬───────┘  └────────────────────── ┘ │
-│                             │ RLS on every table                  │
-│  ┌──────────────────────────▼──────────────────────────────────┐ │
-│  │                    PostgreSQL (17)                           │ │
-│  │  students · students_score · student_skill_progress         │ │
-│  │  student_daily_goals · student_daily_challenges             │ │
-│  │  push_subscriptions · parent_subscriptions                  │ │
-│  │  parental_consent_log · parental_consent_tokens             │ │
-│  │  current_streak · teacher_student_connections               │ │
-│  └──────────────────────────────────────────────────────────── ┘ │
-│  ┌─────────────────────────────────────────────────────────────┐ │
-│  │          Edge Functions (Deno, TypeScript)                   │ │
-│  │  send-daily-push  send-weekly-report  verify-consent        │ │
-│  │  create-checkout  cancel-subscription  lemon-squeezy-webhook │ │
-│  │  unsubscribe-weekly-report  send-consent-email              │ │
-│  │  [NEW] hard-delete-accounts  (pg_cron daily trigger)        │ │
-│  └──────────────────────────────────────────────────────────── ┘ │
-│  ┌──────────────────┐                                            │
-│  │  Storage         │  Bucket: practice-recordings              │
-│  │  (audio blobs)   │  Files at: {student_id}/{timestamp}.ext   │
-│  └──────────────────┘                                            │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────┐
+│                    React 18 + Vite 6 (PWA)                        │
+│                                                                   │
+│  ┌──────────────────────────────────────────────────────────────┐ │
+│  │                      Dashboard.jsx                           │ │
+│  │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────┐  │ │
+│  │  │ UnifiedStatsCard│  │ PracticeLogCard  │  │ (existing   │ │ │
+│  │  │ (MODIFIED:      │  │ (NEW dashboard   │  │  cards)     │  │ │
+│  │  │  add practice   │  │  card)           │  └─────────────┘  │ │
+│  │  │  streak to      │  └────────┬─────────┘                   │ │
+│  │  │  right side)    │           │ usePracticeLog()             │ │
+│  │  └─────────────────┘           │ (React Query)                │ │
+│  └──────────────────────────────┬─┴─────────────────────────────┘ │
+│                                 │                                  │
+│  ┌──────────────────────────────▼─────────────────────────────┐   │
+│  │         Parent Portal / ParentHeatmapCard (NEW page)        │   │
+│  │  ┌─────────────────────────────────────────────────────┐   │   │
+│  │  │  PracticeCalendarHeatmap (NEW — SVG, no deps)        │   │   │
+│  │  └─────────────────────────────────────────────────────┘   │   │
+│  └─────────────────────────────────────────────────────────── ┘   │
+│                                                                    │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │               Service Layer                                 │   │
+│  │  ┌──────────────────────┐  ┌──────────────────────────┐   │   │
+│  │  │ practiceLogService.js│  │ streakService.js          │   │   │
+│  │  │  (NEW — standalone)  │  │  (UNCHANGED — app usage)  │   │   │
+│  │  └──────────┬───────────┘  └──────────────────────────┘   │   │
+│  └─────────────┴──────────────────────────────────────────────┘   │
+│                │ supabase-js (RLS, auth.uid())                     │
+└────────────────┼──────────────────────────────────────────────────┘
+                 │
+┌────────────────▼──────────────────────────────────────────────────┐
+│                      Supabase Platform                             │
+│  ┌────────────────────────┐  ┌────────────────────────────────┐   │
+│  │  instrument_practice_log│  │  instrument_practice_streak    │   │
+│  │  (NEW table)            │  │  (NEW table — mirrors          │   │
+│  │  - student_id           │  │   current_streak structure)    │   │
+│  │  - practice_date (DATE) │  │  - streak_count                │   │
+│  │  - logged_at            │  │  - weekend_pass_enabled        │   │
+│  │  - xp_awarded           │  │  - last_practiced_date         │   │
+│  └────────────────────────┘  └────────────────────────────────┘   │
+│                                                                    │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │                 Edge Functions                              │   │
+│  │  ┌──────────────────────────┐  ┌───────────────────────┐   │   │
+│  │  │ send-practice-check-push │  │  send-weekly-report   │   │   │
+│  │  │  (NEW Edge Function)     │  │  (MODIFIED: add        │   │   │
+│  │  │  cron-triggered daily    │  │  practice_days_logged) │   │   │
+│  │  └──────────────────────────┘  └───────────────────────┘   │   │
+│  └────────────────────────────────────────────────────────────┘   │
+│                                                                    │
+│  ┌────────────────────────────────────────────────────────────┐   │
+│  │                Service Worker (public/sw.js)                │   │
+│  │  MODIFIED: add "did-you-practice" notification type        │   │
+│  │  Action buttons: "yes-practiced" | "no-not-yet"            │   │
+│  │  - "yes-practiced" action: fetch POST to log-practice Edge │   │
+│  │    Function (no auth token — handled via JWT workaround)   │   │
+│  │  OR: postMessage to React app to trigger log               │   │
+│  └────────────────────────────────────────────────────────────┘   │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Component Responsibilities
 
-| Component | Responsibility | Typical Implementation |
-|-----------|----------------|------------------------|
-| Edge Function (cron) | Server-side scheduled jobs needing service_role | `verify_jwt = false`, `x-cron-secret` header, `SUPABASE_SERVICE_ROLE_KEY` |
-| Edge Function (user-triggered) | Privileged ops a user can trigger (checkout, cancel) | `verify_jwt = true`, anon key on client side |
-| RLS policies | Ground-truth data access control | `auth.uid()` checks, SECURITY DEFINER functions for cross-table |
-| React Query | Client-side data cache + invalidation | `staleTime`, invalidation via Realtime subscriptions |
-| accountDeletionService.js | Soft delete (client-side) | Sets `account_status = 'suspended_deletion'`, `deletion_scheduled_at = NOW() + 30d` |
+| Component | Responsibility | New or Modified |
+|-----------|---------------|-----------------|
+| `practiceLogService.js` | logPractice(), getPracticeStreak(), getPracticeHistory(), getPracticeCalendar() | NEW |
+| `instrument_practice_log` table | Append-only log of practice dates per student | NEW |
+| `instrument_practice_streak` table | Current practice streak count + weekend pass state | NEW |
+| `PracticeLogCard.jsx` | Dashboard card: today's status + log button + practice streak | NEW |
+| `PracticeCalendarHeatmap.jsx` | GitHub-style 365-day SVG heatmap for parent portal | NEW |
+| `send-practice-check-push` Edge Function | Daily "Did you practice?" push notification (cron) | NEW |
+| `send-weekly-report` Edge Function | Add practice_days_logged stat to email body | MODIFIED |
+| `public/sw.js` | Handle "did-you-practice" notification type + action buttons | MODIFIED |
+| `streakService.js` | App-usage streak (unchanged) | UNCHANGED |
+| `UnifiedStatsCard.jsx` | Optionally surface practice streak alongside app streak | MODIFIED (minor) |
 
 ---
 
-## v2.5 Feature Integration Points
+## Recommended Project Structure
 
-### Feature 1: Hard Delete Edge Function
-
-**What it does:** Daily cron job that permanently erases student accounts where
-`account_status = 'suspended_deletion'` AND `deletion_scheduled_at < NOW()`.
-
-**Integration surface (NEW vs MODIFIED):**
-
-| Artifact | New or Modified | Notes |
-|---|---|---|
-| `supabase/functions/hard-delete-accounts/index.ts` | NEW | Full Edge Function implementation |
-| `supabase/config.toml` | MODIFIED | Add `[functions.hard-delete-accounts]` block with `verify_jwt = false` |
-| pg_cron schedule (SQL Editor manual step) | NEW | `cron.schedule()` call, per existing pattern from `send-daily-push` |
-
-**Delete cascade order (CRITICAL — do NOT rely solely on Postgres CASCADE):**
-
-The function must handle two layers of deletion:
+New files to create:
 
 ```
-Layer 1 — Storage (no CASCADE, must be explicit):
-  supabase.storage.from('practice-recordings').list(student_id + '/')
-  supabase.storage.from('practice-recordings').remove(all files)
+src/
+├── services/
+│   └── practiceLogService.js        # logPractice(), getPracticeStreak(),
+│                                    # getPracticeHistory(), getPracticeCalendar()
+├── components/
+│   ├── dashboard/
+│   │   └── PracticeLogCard.jsx      # Dashboard card with log button + streak
+│   └── parent/
+│       └── PracticeCalendarHeatmap.jsx  # SVG heatmap, no external deps
 
-Layer 2 — Database CASCADE (automatic once students row is deleted):
-  students row DELETE triggers cascade to:
-    student_skill_progress          ON DELETE CASCADE (confirmed in migrations)
-    student_daily_goals             ON DELETE CASCADE (confirmed)
-    student_daily_challenges        ON DELETE CASCADE (confirmed)
-    push_subscriptions              ON DELETE CASCADE (confirmed)
-    parental_consent_log            ON DELETE CASCADE (confirmed)
-    parental_consent_tokens         ON DELETE CASCADE (confirmed)
-    teacher_student_connections     ON DELETE CASCADE (confirmed)
-    rate_limit_violations           ON DELETE CASCADE (20260201000002)
-    unit_tracking                   ON DELETE CASCADE (20260129000002)
+supabase/
+├── migrations/
+│   └── 20260323000001_instrument_practice_tracking.sql
+└── functions/
+    └── send-practice-check-push/
+        └── index.ts                 # New Edge Function
 
-Layer 3 — Auth (no CASCADE to auth.users, must be explicit):
-  supabase.auth.admin.deleteUser(student_id)
+public/
+└── sw.js                            # Modified (add did-you-practice handler)
 ```
 
-**parent_subscriptions caveat:** This table's FK definition was not found in the local migration
-files (likely exists only in remote schema). Before implementing, run this query in the Supabase
-SQL Editor to confirm whether `parent_subscriptions.student_id` has `ON DELETE CASCADE`:
+### Structure Rationale
+
+- **`practiceLogService.js` is standalone:** Not merged into `streakService.js`. The instrument
+  practice streak has different semantics (yes/no daily log vs. automatic app-session detection).
+  Separate service keeps both services testable in isolation and prevents coupling.
+- **`PracticeCalendarHeatmap.jsx` in `components/parent/`:** This view is parent-facing, not
+  student-facing. Keeps parent portal components grouped together.
+- **Heatmap built without npm package:** The glass-morphism design system uses custom SVG
+  already (XPRing uses SVG foreignObject). A bespoke heatmap of ~80 lines SVG + Tailwind avoids
+  a 30-50kb dependency and integrates with the app's purple palette naturally.
+
+---
+
+## Data Model
+
+### New Table: `instrument_practice_log`
 
 ```sql
-SELECT pg_get_constraintdef(c.oid)
-FROM pg_constraint c
-JOIN pg_class t ON t.oid = c.conrelid
-WHERE t.relname = 'parent_subscriptions'
-  AND c.contype = 'f';
-```
+CREATE TABLE instrument_practice_log (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  student_id    UUID        NOT NULL REFERENCES students(id) ON DELETE CASCADE,
+  practice_date DATE        NOT NULL,          -- local date (client sends YYYY-MM-DD)
+  logged_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+  xp_awarded    INTEGER     NOT NULL DEFAULT 0, -- XP given for this log entry
+  source        TEXT        NOT NULL DEFAULT 'dashboard', -- 'dashboard' | 'notification_action'
 
-If no CASCADE exists, delete it explicitly before deleting the `students` row.
-
-**Implementation pattern (mirrors send-daily-push):**
-
-```typescript
-// Security: CRON_SECRET header, verify_jwt = false in config.toml
-// Client: service_role key (bypasses RLS)
-// Schedule: daily at 02:00 UTC (off-peak)
-
-const { data: targets } = await supabase
-  .from('students')
-  .select('id')
-  .eq('account_status', 'suspended_deletion')
-  .lt('deletion_scheduled_at', new Date().toISOString());
-
-for (const student of targets) {
-  try {
-    // 1. Delete storage files (no CASCADE)
-    const { data: files } = await supabase.storage
-      .from('practice-recordings')
-      .list(student.id);
-    if (files?.length) {
-      await supabase.storage
-        .from('practice-recordings')
-        .remove(files.map(f => `${student.id}/${f.name}`));
-    }
-
-    // 2. Delete parent_subscriptions explicitly (confirm CASCADE first)
-    await supabase.from('parent_subscriptions').delete().eq('student_id', student.id);
-
-    // 3. Delete students row (triggers CASCADE for all child tables)
-    await supabase.from('students').delete().eq('id', student.id);
-
-    // 4. Delete auth.users (no CASCADE from students to auth)
-    await supabaseAdmin.auth.admin.deleteUser(student.id);
-
-    deleted++;
-  } catch (err) {
-    console.error(`hard-delete-accounts: failed for ${student.id}:`, err);
-    failed++;
-  }
-}
-```
-
-**pg_cron schedule setup (manual SQL Editor step — do NOT put in migration file):**
-
-```sql
-SELECT cron.schedule(
-  'hard-delete-accounts',
-  '0 2 * * *',
-  $$
-  SELECT net.http_post(
-    url := 'https://<project-ref>.supabase.co/functions/v1/hard-delete-accounts',
-    headers := '{"Content-Type":"application/json","x-cron-secret":"<CRON_SECRET>"}',
-    body := '{}'::jsonb
-  );
-  $$
+  UNIQUE (student_id, practice_date)           -- one entry per day per student
 );
 ```
 
-**Env vars required:**
-- `CRON_SECRET` (already exists — reuse from send-daily-push)
-- `SUPABASE_URL` (auto-injected)
-- `SUPABASE_SERVICE_ROLE_KEY` (auto-injected)
+RLS: `auth.uid() = student_id` for SELECT/INSERT. No UPDATE/DELETE (append-only integrity).
+Parent access: JOIN through `teacher_student_connections` for calendar view.
 
----
+### New Table: `instrument_practice_streak`
 
-### Feature 2: verify:patterns Fix (ESM Import Extension)
-
-**Root cause:** `patternVerifier.mjs` imports `patternBuilder.js` which imports `keySignatureUtils.js`
-which imports `../constants/keySignatureConfig` without the `.js` extension. Node 22 ESM resolver
-requires explicit `.js` extensions for relative imports. Vite's bundler resolves them automatically
-(why it works in browser but fails with `node`).
-
-**The broken import chain:**
-
-```
-scripts/patternVerifier.mjs
-  imports patternBuilder.js                    (.js present — OK)
-    imports keySignatureUtils.js               (.js present — OK)
-      imports ../constants/keySignatureConfig  <- MISSING .js extension
+```sql
+CREATE TABLE instrument_practice_streak (
+  student_id              UUID        PRIMARY KEY REFERENCES students(id) ON DELETE CASCADE,
+  streak_count            INTEGER     NOT NULL DEFAULT 0,
+  last_practiced_date     DATE,                -- the last date a practice was logged
+  weekend_pass_enabled    BOOLEAN     NOT NULL DEFAULT false,
+  updated_at              TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 ```
 
-**File to modify:**
+RLS: mirrors `current_streak` table — `auth.uid() = student_id` for SELECT/UPDATE (upsert).
+No freeze mechanic for v2.7 (simpler than app streak — can be added later).
 
-| File | Change | Type |
-|------|--------|------|
-| `src/components/games/sight-reading-game/utils/keySignatureUtils.js` | Add `.js` to import on line 1 | MODIFIED |
-
-**The fix (line 1):**
-
-```js
-// Before:
-import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig";
-
-// After:
-import { KEY_NOTE_LETTERS } from "../constants/keySignatureConfig.js";
-```
-
-**Verification:** `npm run verify:patterns` must exit 0 after the fix.
-
-**Risk:** Zero. Vite ignores the `.js` extension in browser context; Node requires it. The extension
-is valid for both environments.
-
----
-
-### Feature 3: ESLint Warnings Cleanup (~576 warnings across 97 files)
-
-**Warning inventory (from codebase inspection, 2026-03-19):**
-
-| Rule | Count | Root Cause |
-|------|-------|------------|
-| `no-undef` (vitest globals) | ~320 | Test files not recognized as vitest environment; `expect`, `vi`, `describe`, `it`, `test`, `afterEach`, `beforeEach` reported undefined |
-| `no-unused-vars` | ~183 | Unused imports, dead variables, destructured-but-ignored params |
-| `react-hooks/exhaustive-deps` | ~43 | Missing hook deps; some intentional, some genuine bugs |
-| `react-refresh/only-export-components` | ~18 | Constants co-exported from component files |
-| `no-undef` (process, module, require) | ~10 | Config files use Node.js globals but ESLint treats them as browser context |
-
-**Recommended batch fix order (highest yield, lowest risk first):**
-
-**Step 1 — ESLint config: add test file override** (fixes ~320 warnings in one change):
-
-```js
-// eslint.config.js — add after existing base config object
-{
-  files: ['**/*.test.{js,jsx}', '**/*.spec.{js,jsx}', '**/__tests__/**/*.{js,jsx}'],
-  languageOptions: {
-    globals: {
-      ...globals.browser,
-      describe: 'readonly',
-      it: 'readonly',
-      test: 'readonly',
-      expect: 'readonly',
-      vi: 'readonly',
-      beforeEach: 'readonly',
-      afterEach: 'readonly',
-      beforeAll: 'readonly',
-      afterAll: 'readonly',
-    },
-  },
-},
-```
-
-Note: `globals.vitest` may not exist in the installed `globals` package version — declare each
-global explicitly as shown above to be safe.
-
-**Step 2 — ESLint config: add node globals override for config/scripts** (fixes ~10 warnings):
-
-```js
-{
-  files: ['*.config.{js,mjs}', 'scripts/**/*.{js,mjs}'],
-  languageOptions: {
-    globals: { ...globals.node },
-  },
-},
-```
-
-This covers `process` in `vite.config.js`, `module` in `tailwind.config.js`, and `require` in
-`scripts/`.
-
-**Step 3 — Run `npm run lint:fix`** — auto-fixes trivially auto-fixable issues (whitespace, some
-unused vars that ESLint can detect as removable).
-
-**Step 4 — Manual pass on `no-unused-vars`** (~183 after Step 3). High-density files to
-prioritize: `SightReadingGame.jsx`, `MetronomeTrainer.jsx`, `NotesRecognitionGame.jsx`,
-`VictoryScreen.jsx`. Pattern: either remove the unused variable or rename to `_varName` convention
-to indicate intentional non-use.
-
-**Step 5 — Manual pass on `react-hooks/exhaustive-deps`** (~43). Each case requires judgment:
-- Stable refs (e.g., `audioEngine` is a ref) — can safely add to deps or suppress with comment
-- Intentional omissions (e.g., `debugLog` is a stable function) — add `// eslint-disable-next-line react-hooks/exhaustive-deps` with a comment explaining why
-
-**Step 6 — Manual pass on `react-refresh/only-export-components`** (~18). Either:
-- Move constants to a sibling `constants.js` file (preferred)
-- Or suppress with `// eslint-disable-next-line react-refresh/only-export-components`
-
-**Files to modify:**
-
-| File | Change Type |
-|------|------------|
-| `eslint.config.js` | MODIFIED — add test override block + config file override |
-| ~97 source files | MODIFIED — remove unused vars, fix or suppress hook deps |
-
-No new files required for ESLint cleanup.
-
----
-
-### Feature 4: Pending DB Migration (daily_challenges.sql)
-
-**What:** `supabase/migrations/20260317000001_daily_challenges.sql` creates the
-`student_daily_challenges` table with RLS. Already written; never applied to remote Supabase.
-
-**Integration:**
-
-| Artifact | New or Modified | Action |
-|---|---|---|
-| Remote Supabase database | MODIFIED | Apply via `supabase db push` or paste into SQL Editor |
-| Nothing in `src/` | — | Table already wired in `dailyChallengeService.js` and `DailyChallengeCard.jsx` |
-
-**Risk:** Zero. The app already queries this table — until migrated, all daily challenge queries
-return empty results silently. Migration is additive (no existing rows, no schema conflicts).
-
----
-
-### Feature 5: Production QA Strategy
-
-**Scope:** Structured test checklist across all flows before promoting to real users. No code
-changes — produces a signed-off QA document.
-
-**Integration boundaries that must be covered:**
-
-```
-Auth flows:
-  signup → COPPA consent email → parent verifies → account active
-  login → role detection → dashboard
-  forgot password → reset email → /reset-password (PKCE) → new password set
-
-Game flows (4 modes, trail + free play):
-  trail: nodeId in location.state → auto-start → game → VictoryScreen
-         → updateExerciseProgress() / updateNodeProgress()
-  free play: no nodeId → VictoryScreen → calculateFreePlayXP() → awardXP()
-
-Payment flow:
-  locked node tapped → child paywall modal (no prices) → parent portal
-  → Lemon Squeezy overlay checkout → payment complete → webhook POST
-  → parent_subscriptions UPSERT → Realtime invalidates SubscriptionContext
-  → locked node becomes accessible
-
-COPPA deletion flow:
-  request deletion → account_status = 'suspended_deletion' → sign out
-  → 30-day grace → hard delete Edge Function runs (new in v2.5)
-
-Streak / push notification:
-  practice recorded → streak updated → push notification skipped (practiced today)
-```
-
-**Test matrix dimensions:**
-
-| Dimension | Values |
-|---|---|
-| Device | iOS Safari PWA, Android Chrome PWA, Desktop Chrome |
-| Language | English (LTR), Hebrew (RTL) |
-| Account type | Student (free tier), Student (subscribed), Teacher |
-| Game mode | NotesRecognition, SightReading (mic + keyboard), MetronomeTrainer, MemoryGame |
-| Input method | Keyboard (Klavier), Microphone |
+**Why two separate tables instead of adding columns to `current_streak`?**
+The instrument practice streak is independently queryable for the heatmap, has different
+update semantics (client logs a date, not a timestamp), and adding 5+ columns to `current_streak`
+would make a core table harder to reason about. Clean boundary.
 
 ---
 
 ## Architectural Patterns
 
-### Pattern 1: CRON Edge Function (extend for hard-delete)
+### Pattern 1: Separate Service, Parallel to streakService
 
-**What:** Scheduled Edge Function invoked by pg_cron via HTTP POST with `x-cron-secret` header.
-Uses service_role client (bypasses RLS). Returns summary JSON.
+**What:** `practiceLogService.js` follows the exact same module-level cooldown + in-flight
+dedup pattern as `streakService.js`. It is not a subclass or composition of streakService.
 
-**When to use:** Any scheduled background job requiring DB writes without a user JWT.
+**When to use:** When a new domain concept (instrument practice) has its own data lifecycle
+and would otherwise require awkward parameter threading through the existing service.
 
-**Example structure:**
+**Trade-offs:**
+- Pro: streakService.js stays unchanged (no regression risk)
+- Pro: practiceLogService.js is independently testable
+- Con: Two similar-looking modules (acceptable — code duplication is preferable to wrong coupling)
 
-```typescript
-// config.toml: verify_jwt = false
-// Env: CRON_SECRET (manual), SUPABASE_SERVICE_ROLE_KEY (auto-injected)
+**Key functions:**
+```javascript
+// practiceLogService.js
+export const practiceLogService = {
+  // Log today's (or yesterday's) practice. Idempotent via unique constraint.
+  async logPractice(dateStr),          // dateStr: 'YYYY-MM-DD' in local time
 
-Deno.serve(async (req) => {
-  if (req.headers.get('x-cron-secret') !== Deno.env.get('CRON_SECRET')) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
-  // ... do work ...
-  return new Response(JSON.stringify({ processed, failed }), { status: 200 });
-});
+  // Returns { streakCount, weekendPassEnabled, lastPracticedDate, loggedToday }
+  async getPracticeState(),
+
+  // Returns array of { practice_date } for calendar heatmap rendering
+  // Fetches up to 365 days of history. Cached generously (staleTime 10min).
+  async getPracticeCalendar(studentId),
+
+  // Award XP for logging practice (calls awardXP from xpSystem.js)
+  async awardPracticeXP(studentId),
+};
 ```
 
-**Trade-offs:** Simple, no OAuth token management. Secret must match between Supabase Vault (used
-by pg_cron) and Edge Function secrets (set via `supabase secrets set`).
+### Pattern 2: Notification Action Button Flow (postMessage, not fetch from SW)
 
----
+**What:** The "Did you practice?" push notification includes two action buttons. Tapping
+an action button fires `notificationclick` in the service worker. The recommended approach
+for this app is to **route the action through postMessage to the React app** rather than
+making a direct Supabase REST call from the service worker.
 
-### Pattern 2: Defense-in-Depth Deletion
+**Why postMessage over direct fetch:**
+- The service worker has no auth token. The Supabase client in `sw.js` does not have a
+  live session; using `fetch` directly to the REST API would fail RLS (`auth.uid()` returns
+  null without a JWT in the Authorization header).
+- Storing the JWT in the service worker scope is a security risk (persistent across sessions).
+- The React app already has a valid Supabase session; routing through postMessage delegates
+  the authenticated operation to the right context.
 
-**What:** Three-layer deletion sequence for complete student data removal.
-
-**Sequence:**
-
+**The flow:**
 ```
-1. Storage files     (no Postgres FK — must be explicit)
-2. Tables without CASCADE (parent_subscriptions — confirm FK)
-3. students row      (triggers ON DELETE CASCADE for all child tables)
-4. auth.users        (admin API — no FK cascade from students to auth)
-```
-
-**Why this order matters:** Postgres `ON DELETE CASCADE` only fires when the FK parent row is
-deleted. `students.id` is the parent, so it must be deleted last among DB tables. Storage and
-`auth.users` are entirely outside the Postgres FK graph.
-
----
-
-### Pattern 3: ESLint Flat Config Layering (ESLint v9)
-
-**What:** Multiple config objects in the `eslint.config.js` array. Later objects override earlier
-ones for matching file patterns.
-
-**When to use:** Applying different rule sets to test files vs. source files vs. config files.
-
-**Example:**
-
-```js
-export default [
-  { ignores: ['dist'] },
-  { files: ['**/*.{js,jsx}'], /* base rules */ },
-  { files: ['**/*.test.{js,jsx}', '**/__tests__/**'], languageOptions: { globals: { ...vitestGlobals } } },
-  { files: ['*.config.{js,mjs}', 'scripts/**'], languageOptions: { globals: globals.node } },
-];
+User taps "Yes, I practiced!" action button on notification
+    ↓
+notificationclick fires in sw.js (event.action === 'log-practiced')
+    ↓
+sw.js calls self.clients.matchAll() to find open app windows
+    ↓ (if app is open)
+client.postMessage({ type: 'LOG_INSTRUMENT_PRACTICE', date: 'YYYY-MM-DD' })
+    ↓
+React app listens via navigator.serviceWorker.addEventListener('message', ...)
+    ↓
+practiceLogService.logPractice(date) — authenticated, goes through RLS
+    ↓
+React Query invalidation of ['practice-state', userId] and ['student-xp', userId]
+    ↓
+Dashboard updates immediately (PracticeLogCard shows "Logged!")
 ```
 
-**Trade-offs:** Single point of configuration change rather than per-file suppressions. The
-`globals.vitest` named set may not exist in the installed `globals` version — fall back to manual
-declaration (shown in Feature 3 section).
+**When app is NOT open (notification tapped with no window):**
+```
+notificationclick fires (event.action === 'log-practiced')
+    ↓
+sw.js opens new window: self.clients.openWindow('/?practice_logged=YYYY-MM-DD')
+    ↓
+React app on load reads URL param, calls practiceLogService.logPractice()
+    ↓
+URL param removed via history.replaceState (no bookmark pollution)
+```
+
+**Platform caveat (HIGH confidence):** iOS Safari does NOT support notification action buttons
+at all. On iOS, only the main notification body tap is handled. The service worker must
+gracefully fall back: the main notification body tap (no action) opens the app to the dashboard,
+where the PracticeLogCard provides the manual log button.
+
+**When to use:** Any time a notification action needs to mutate authenticated data.
+
+**Trade-offs:**
+- Pro: No auth token leakage into service worker scope
+- Pro: Consistent with existing SECURITY guidelines (auth endpoints never cached)
+- Con: Requires the app to be resumable on specific URL params
+
+### Pattern 3: Calendar Heatmap — Bespoke SVG, No External Package
+
+**What:** Build a 52-week × 7-day SVG grid directly in React, colored by `instrument_practice_log`
+entries. No `react-calendar-heatmap` or `@uiw/react-heat-map` npm package needed.
+
+**Why bespoke:**
+- The app's design system uses glassmorphism + purple palette. npm heatmap packages ship
+  their own CSS/color systems that fight Tailwind and require override effort.
+- The data shape is binary (practiced/not practiced) — far simpler than GitHub's 4-level
+  intensity model that these packages are optimized for.
+- Estimated ~100 lines of JSX. Dependency adds 30–50kb. Not worth it.
+- Consistent with existing SVG patterns (XPRing in `XPRing.jsx` uses SVG directly).
+
+**Caching:** `staleTime: 10 * 60 * 1000` — calendar history rarely changes mid-session.
+Initial fetch loads 365 days of `instrument_practice_log` rows for the student. The parent
+portal fetches via teacher's service role join (practiceLogService surfaces this).
+
+**When to use:** When the data is simple binary and the UI design system would require heavy
+overrides of an external package.
+
+### Pattern 4: XP Award on Practice Log
+
+**What:** When a student logs instrument practice, award a fixed XP amount (25 XP recommended
+— more than daily_streak bonus of 25 but less than completing a trail node at 50+).
+
+**Flow:**
+```javascript
+// practiceLogService.logPractice()
+const { data, error } = await supabase
+  .from('instrument_practice_log')
+  .insert({ student_id, practice_date, source })
+  .select('id')
+  .single();
+
+if (!error) {
+  // Update practice streak
+  await updatePracticeStreak(studentId, practice_date);
+
+  // Award XP (reuses existing awardXP from xpSystem.js)
+  await awardXP(studentId, PRACTICE_LOG_XP);  // 25 XP
+}
+```
+
+Idempotency: The UNIQUE constraint on `(student_id, practice_date)` means double-tapping
+the log button returns a constraint violation that the service catches and ignores silently
+(already logged today = no error shown to user, no double XP).
+
+**When to use:** Every practice log event, once per date per student.
 
 ---
 
 ## Data Flow
 
-### Hard Delete Flow
+### Critical Flow: Notification Tap → Practice Log → Streak Update → XP Award
 
 ```
-pg_cron (02:00 UTC daily)
-    |
-    | POST /functions/v1/hard-delete-accounts
-    | x-cron-secret header
-    v
-Edge Function: hard-delete-accounts
-    |
-    | service_role client
-    v
-SELECT students
-  WHERE account_status = 'suspended_deletion'
-    AND deletion_scheduled_at < NOW()
-    |
-    | for each student:
-    v
-  1. storage.list(student_id) + storage.remove(files)
-  2. from('parent_subscriptions').delete()  [if no CASCADE]
-  3. from('students').delete()  --> CASCADE fires for child tables
-  4. auth.admin.deleteUser(id)
-    |
-    v
-return { deleted, failed, skipped }
+[pg_cron: 16:00 UTC daily]
+    ↓
+send-practice-check-push Edge Function
+    - Queries push_subscriptions WHERE is_enabled = true
+    - Skips students who already logged practice today (instrument_practice_log)
+    - Skips students already notified today via this function (new last_practice_notified_at col)
+    - Sends push notification with actions: ['log-practiced', 'remind-later']
+    - Payload: { type: 'did-you-practice', date: 'YYYY-MM-DD' (today local? use UTC), ... }
+    ↓
+[Service Worker: notificationclick event]
+    - event.action === 'log-practiced':
+        IF app window open → postMessage({ type: 'LOG_INSTRUMENT_PRACTICE', date })
+        IF no window → openWindow('/?practice_logged=' + date)
+    - event.action === 'remind-later' or no action:
+        Close notification, open app to '/'
+    ↓
+[React App: message listener in practiceLogService OR URL param on mount]
+    - Calls practiceLogService.logPractice(date)
+    - supabase INSERT into instrument_practice_log (unique constraint deduplication)
+    - supabase UPSERT into instrument_practice_streak (streak count update)
+    - awardXP(studentId, 25) via existing xpSystem.js
+    ↓
+[React Query invalidation]
+    - queryClient.invalidateQueries(['practice-state', userId])
+    - queryClient.invalidateQueries(['student-xp', userId])
+    ↓
+[UI update]
+    - PracticeLogCard shows "Logged today!" with checkmark
+    - UnifiedStatsCard XP ring animates to reflect new XP
 ```
 
-### verify:patterns Fix Flow
+### Dashboard Manual Log Flow
 
 ```
-npm run verify:patterns
-    |
-    v
-node scripts/patternVerifier.mjs
-    |
-    v
-import patternBuilder.js (ESM, Node 22)
-    |
-    v
-patternBuilder.js imports keySignatureUtils.js
-    |
-    v
-keySignatureUtils.js imports keySignatureConfig.js  <- .js extension added
-    |
-    v
-pattern generation runs, stats printed, exits 0
+[Student opens app, sees PracticeLogCard]
+    ↓
+PracticeLogCard fetches ['practice-state', userId] via useQuery
+    ↓ (renders one of three states)
+State A: logged_today = true → show checkmark, streak count, "Great job!"
+State B: logged_today = false, is_yesterday = possible → show "Log today" + "Log yesterday" buttons
+State C: loading → skeleton
+    ↓
+Student taps "Log today"
+    ↓
+practiceLogService.logPractice(todayDateStr)
+    ↓ (same as notification flow from "React App" step above)
 ```
 
-### ESLint Fix Flow
+### Parent Heatmap Data Flow
 
 ```
-eslint.config.js (modified)
-    |
-    +-- test file override: vitest globals declared  --> fixes ~320 no-undef
-    +-- config file override: node globals declared  --> fixes ~10 no-undef (process, module)
-    |
-npm run lint:fix  --> auto-fixes trivial issues
-    |
-manual no-unused-vars sweep (~183 remaining)
-    |
-manual react-hooks/exhaustive-deps sweep (~43)
-    |
-target: 0 warnings
+Parent navigates to /parent-portal
+    ↓
+ParentHeatmapCard fetches ['practice-calendar', studentId] via useQuery
+    - staleTime: 10 minutes
+    - queryFn: practiceLogService.getPracticeCalendar(studentId)
+    - Returns: Set<YYYY-MM-DD> of all logged dates
+    ↓
+PracticeCalendarHeatmap receives practicedDates prop
+    - Renders 52-week × 7-day SVG grid
+    - Green cell = date in practicedDates Set
+    - Gray cell = date not in Set (future dates: no fill)
+    - Today marker: orange dot
 ```
 
----
-
-## Integration Summary: New vs Modified
-
-### New Artifacts
-
-| Artifact | Purpose |
-|---|---|
-| `supabase/functions/hard-delete-accounts/index.ts` | COPPA hard delete cron job |
-| pg_cron schedule SQL (manual SQL Editor step, not a migration) | Triggers hard-delete daily at 02:00 UTC |
-
-### Modified Artifacts
-
-| Artifact | Change |
-|---|---|
-| `supabase/config.toml` | Add `[functions.hard-delete-accounts]` block with `verify_jwt = false` |
-| `src/components/games/sight-reading-game/utils/keySignatureUtils.js` | Add `.js` extension to `keySignatureConfig` import on line 1 |
-| `eslint.config.js` | Add test file globals override + config file globals override |
-| ~97 source files | Remove unused vars, fix or suppress hook deps (ESLint cleanup) |
-
-### Applied (not code changes)
-
-| Artifact | Action |
-|---|---|
-| `supabase/migrations/20260317000001_daily_challenges.sql` | Apply to remote via `supabase db push` or SQL Editor |
-
----
-
-## Build Order Recommendation
-
-Dependencies between features determine this order:
+### Weekly Email Data Flow
 
 ```
-1. DB migration (daily_challenges.sql) [zero code change, lowest risk]
-   Prerequisite for valid QA of DailyChallengeCard. Apply first.
-
-2. verify:patterns fix (1-line change)
-   Isolated, zero risk. Restores broken build validation.
-   Run: npm run verify:patterns to confirm.
-
-3. ESLint config fix (eslint.config.js change)
-   Fixes ~330 warnings in one commit before touching source files.
-   Run: npm run lint to confirm warning count drops.
-
-4. ESLint source file cleanup (~97 files, can be split into commits)
-   No functional impact. Safe to do in parallel with hard delete work.
-
-5. Hard delete Edge Function
-   Requires:
-     a. FK audit on parent_subscriptions (SQL Editor query)
-     b. New function file + config.toml entry
-     c. Deploy: supabase functions deploy hard-delete-accounts
-     d. pg_cron schedule (manual SQL Editor step for production only)
-     e. Test with a dummy suspended account before enabling cron
-
-6. Production QA (final step)
-   Validates all of 1-5 plus all existing features.
-   Test matrix: 3 devices x 2 languages x 3 account types x 4 game modes.
+send-weekly-report Edge Function (MODIFIED)
+    ↓
+For each student, add one additional query:
+    SELECT COUNT(*) FROM instrument_practice_log
+    WHERE student_id = $1
+    AND practice_date >= $2  -- sevenDaysAgo
+    ↓
+Pass practice_days_logged to generateWeeklyReportHTML()
+    ↓
+Email shows new row: "🎹 Days Practiced at Home: 4/7 days"
+    (distinct from existing "Days in App" row which comes from students_score)
 ```
 
 ---
 
 ## Scaling Considerations
 
-| Scale | Architecture Impact |
-|-------|---------------------|
-| Current (beta, <100 users) | Hard delete cron is O(n) per student; no batching needed |
-| 1k users | Fine — hard delete targets only accounts past 30-day grace, which is rare |
-| 10k+ users | Add batch size cap in hard-delete loop; add delay between `auth.admin.deleteUser()` calls to avoid rate-limiting Supabase admin API |
+| Scale | Architecture Adjustments |
+|-------|--------------------------|
+| 0-1k users | Current approach is fine. `instrument_practice_log` rows grow at 1/day max per student. |
+| 1k-10k users | Add index on `(student_id, practice_date DESC)` for calendar queries. Already planned. |
+| 10k+ users | Calendar query (365 rows per student) is negligible. The send-practice-check-push loop is O(n students). Consider batching or pg_cron parallelism if >10k push subscriptions. |
+
+### Scaling Priorities
+
+1. **First bottleneck:** `send-practice-check-push` loop making 3 DB queries per student.
+   Mitigation: consolidate into a single JOIN query like `send-daily-push` already does.
+2. **Second bottleneck:** Calendar heatmap fetching 365 rows. At scale, a date-aggregation
+   function on the DB (returning an array of practiced dates) is more efficient than
+   returning individual row objects.
 
 ---
 
 ## Anti-Patterns
 
-### Anti-Pattern 1: Relying Solely on Postgres CASCADE for Hard Delete
+### Anti-Pattern 1: Merging Instrument Streak Into `current_streak`
 
-**What people do:** DELETE from `students` and assume all user data is gone.
+**What people do:** Add `instrument_streak_count`, `instrument_last_practiced` columns to
+the existing `current_streak` table to avoid a new migration.
 
-**Why it's wrong:** Supabase Storage files (`practice-recordings` bucket) are not in Postgres and
-have no FK — they will not cascade. `auth.users` also requires an explicit admin API call.
-Orphaned storage files and auth records persist indefinitely.
+**Why it's wrong:** `current_streak` is already queried on every Dashboard render and
+every app-usage event. Adding instrument-practice columns conflates two distinct concepts.
+The weekend pass logic in `streakService.js` would need to be branched for each streak type.
+Debugging "why did my streak break?" becomes ambiguous.
 
-**Do this instead:** Explicit three-layer sequence: storage files, then students row (triggers
-cascade), then `auth.admin.deleteUser()`.
+**Do this instead:** New `instrument_practice_streak` table with the same student_id PRIMARY KEY
+pattern. Two clean rows for one student = one per streak type.
+
+### Anti-Pattern 2: Making Direct Supabase Calls From Service Worker notificationclick
+
+**What people do:** Import `supabase-js` into `sw.js`, create a client with the anon key,
+and call `supabase.from('instrument_practice_log').insert(...)` directly.
+
+**Why it's wrong:** The service worker has no user session. `auth.uid()` returns NULL in
+that context, so RLS blocks the INSERT. Storing the JWT in IndexedDB within the SW scope
+creates session persistence security risks (violates the existing security guidelines that
+say "Auth endpoints must NEVER be cached").
+
+**Do this instead:** postMessage to the React app window, which has a valid authenticated
+session, or open a new window with a URL parameter that triggers the log on mount.
+
+### Anti-Pattern 3: Reusing `last_practiced_date` Table For Instrument Practice
+
+**What people do:** Store instrument practice in the existing `last_practiced_date` table
+(which tracks app-usage practice) to avoid a migration.
+
+**Why it's wrong:** `last_practiced_date.practiced_at` is an ISO timestamp updated by
+`streakService.updateStreak()` on every game session. Overloading it with instrument practice
+logs destroys the existing streak semantics. The `streakService.getLastPracticeDate()` function
+reads from that table and expects it to reflect app game sessions only.
+
+**Do this instead:** New `instrument_practice_log` table with a `practice_date` DATE column
+(not timestamp — instrument practice is a daily yes/no, not a session timestamp).
+
+### Anti-Pattern 4: Fetching 365 Rows On Every Dashboard Render
+
+**What people do:** Add the calendar heatmap to the main student Dashboard and fetch history
+on every Dashboard mount.
+
+**Why it's wrong:** The Dashboard already makes 6+ parallel queries (streak, goals, XP, weekly
+summary, next node, push subscription). Adding a 365-row history fetch increases the mount
+waterfall with data only parents care about.
+
+**Do this instead:** Calendar heatmap lives in `/parent-portal` only. The student Dashboard
+shows only the `instrument_practice_streak` row (2 columns — cheap). History is parent-only.
 
 ---
 
-### Anti-Pattern 2: Using eslint-disable to Silence Warning Volume
+## Integration Points
 
-**What people do:** Add `// eslint-disable-next-line no-undef` to every test file to silence
-vitest globals.
+### Existing Services That Must Stay Unchanged
 
-**Why it's wrong:** 300+ inline suppressions are noise, obscure real problems, and do not survive
-adding new test files.
+| Service | Why Unchanged |
+|---------|---------------|
+| `streakService.js` | App-usage streak completely independent of instrument practice |
+| `streakService.updateStreak()` | Called by game VictoryScreen — no instrument practice involved |
+| `awardXP()` in `xpSystem.js` | Reused as-is for practice log XP award |
+| `send-daily-push` Edge Function | Unchanged — separate "practice reminder" vs "did you practice?" |
 
-**Do this instead:** Add a single test file override in `eslint.config.js` that declares vitest
-globals once for all `*.test.*` files.
+### Modified Integration Points
+
+| Component/Service | Change Required |
+|-------------------|----------------|
+| `public/sw.js` | Add `did-you-practice` notification type handler (new `if` block in `notificationclick`) |
+| `send-weekly-report` Edge Function | Add one extra query + one email row for `practice_days_logged` |
+| `Dashboard.jsx` | Import + render new `PracticeLogCard` in the card grid |
+| `UnifiedStatsCard.jsx` (optional) | Surface `instrumentStreakCount` prop alongside app streak |
+| `/parent-portal` page | Add `ParentHeatmapCard` section containing `PracticeCalendarHeatmap` |
+
+### External Boundaries
+
+| Boundary | Communication | Notes |
+|----------|---------------|-------|
+| SW notificationclick → React app | postMessage (window messaging) | Standard Web API |
+| React app → `instrument_practice_log` | supabase-js REST via RLS | auth.uid() = student_id |
+| `send-practice-check-push` → DB | service_role client | Bypasses RLS intentionally |
+| `send-practice-check-push` → VAPID | VAPID push (same @negrel/webpush pattern) | Copy from send-daily-push |
 
 ---
 
-### Anti-Pattern 3: Putting pg_cron Schedule in a Migration File
+## Build Order Recommendation
 
-**What people do:** Add `SELECT cron.schedule(...)` directly to a migration SQL file.
+Dependencies drive this order:
 
-**Why it's wrong:** Migration files run on every `supabase db push`. If the cron job already
-exists, the schedule call fails or creates duplicate jobs. The existing project pattern
-(send-daily-push, send-weekly-report) explicitly puts cron schedules as commented-out instructions
-in migration file comments, to be run once manually in the SQL Editor.
+1. **Migration first** — `instrument_practice_log` + `instrument_practice_streak` tables with RLS.
+   Nothing else can be built until the tables exist.
 
-**Do this instead:** Document the `cron.schedule()` call in a comment block in the migration or
-function header (per existing project pattern), and execute it once manually in the Supabase SQL
-Editor for production. Never automate the schedule creation in a migration.
+2. **`practiceLogService.js`** — Core service used by all subsequent components. Build and
+   unit-test in isolation (Vitest, no DOM required).
+
+3. **`PracticeLogCard.jsx`** — Dashboard card with manual log button. Integration testable
+   with the service in place.
+
+4. **`Dashboard.jsx` integration** — Import PracticeLogCard into the existing card grid.
+   Confirm it renders without breaking existing queries.
+
+5. **Service worker modifications** — Add `did-you-practice` notificationclick handler
+   (postMessage + URL param fallback). Can be done in parallel with step 3-4.
+
+6. **`send-practice-check-push` Edge Function** — New cron-triggered push function. Requires
+   VAPID config (already exists), instrument_practice_log table (step 1), and push_subscriptions
+   table (already exists).
+
+7. **`PracticeCalendarHeatmap.jsx` + parent portal integration** — SVG heatmap component +
+   parent portal page section. Depends on `getPracticeCalendar()` from step 2.
+
+8. **`send-weekly-report` modification** — Add practice_days_logged query + email section.
+   Low risk isolated change; can be done at any point after step 1.
+
+---
+
+## Key Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| Separate `instrument_practice_streak` table | Clean boundary; different semantics from app-usage streak |
+| postMessage (not SW fetch) for notification action | No auth token in SW scope; consistent with security guidelines |
+| URL param fallback when no window open | Notification action must work even if app is closed |
+| Append-only log with UNIQUE constraint | Idempotency for double-tap; full audit trail for parent heatmap |
+| Bespoke SVG heatmap (no npm package) | Binary data model; design system integration; 0kb extra deps |
+| 25 XP for practice log | Between daily_streak (25) and basic node completion (50); feels fair |
+| `practice_date` as DATE not TIMESTAMPTZ | Instrument practice is a daily yes/no; local date semantics |
+| New Edge Function `send-practice-check-push` | Separate from `send-daily-push`; different trigger logic and content |
+| Retroactive log for yesterday only | Cap complexity; prevents gaming the streak with old dates |
+| iOS notification action graceful fallback | iOS Safari does not support action buttons at all; dashboard card is primary path |
 
 ---
 
 ## Sources
 
-- Direct codebase inspection (all HIGH confidence):
-  - `supabase/migrations/` (full history — CASCADE relationships confirmed)
-  - `supabase/functions/send-daily-push/index.ts` (CRON pattern reference)
-  - `supabase/config.toml` (function registration pattern)
-  - `src/services/accountDeletionService.js` (soft delete contract)
-  - `src/services/practiceService.js` (storage bucket name: `practice-recordings`)
-  - `scripts/patternVerifier.mjs` + `src/.../utils/keySignatureUtils.js` (import chain)
-  - `eslint.config.js` + live ESLint run (warning breakdown)
-  - `package.json` (script definitions)
+- MDN: [ServiceWorkerGlobalScope: notificationclick event](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/notificationclick_event) — MEDIUM confidence (action buttons have limited cross-browser support; iOS has no support)
+- Chrome Developers: [Notification Actions in Chrome 48](https://developer.chrome.com/blog/notification-actions) — action button baseline support established
+- [PWA iOS Limitations and Safari Support 2026](https://www.magicbell.com/blog/pwa-ios-limitations-safari-support-complete-guide) — iOS push works but action buttons NOT supported on iOS
+- Direct codebase inspection: `streakService.js`, `public/sw.js`, `supabase/migrations/`, `send-daily-push/index.ts`, `send-weekly-report/index.ts`, `Dashboard.jsx` — HIGH confidence
+- [react-activity-calendar](https://github.com/grubersjoe/react-activity-calendar) and [@uiw/react-heat-map](https://github.com/uiwjs/react-heat-map) — surveyed as alternatives, rejected in favor of bespoke SVG
 
 ---
-*Architecture research for: PianoApp2 v2.5 Launch Prep*
-*Researched: 2026-03-19*
+*Architecture research for: Instrument Practice Tracking integration (v2.7)*
+*Researched: 2026-03-23*
