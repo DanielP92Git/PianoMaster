@@ -224,5 +224,17 @@ See `.planning/milestones/` for archived details of each milestone.
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
 
+### Phase 1: Signup Flow Redesign
+
+**Goal:** Reorder signup to role-first (student/teacher), simplify age collection to birth year only, remove account suspension for under-13 (account immediately active), keep parent email as optional for notifications/reports. Teacher path skips age gate. Back navigation between steps. Google OAuth shown after role selection.
+**Requirements**: D-01 through D-15 (from 01-CONTEXT.md)
+**Depends on:** v2.6
+**Plans:** 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md -- Consent cleanup + useSignup hook update + migration (Wave 1)
+- [ ] 01-02-PLAN.md -- AgeGate simplification + ParentEmailStep update (Wave 1)
+- [ ] 01-03-PLAN.md -- SignupForm wizard rewrite + visual verification (Wave 2)
+
 ---
-*Last updated: 2026-03-23 — v2.6 User Feedback shipped*
+*Last updated: 2026-03-23 — Phase 1 planned (3 plans)*
