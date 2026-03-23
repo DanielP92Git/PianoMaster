@@ -370,7 +370,8 @@
         "errorServer": "Something went wrong on our end. Please try again in a few minutes.",
         "errorNetwork": "Couldn't reach the server. Check your connection and try again.",
         "retry": "Retry",
-        "dismiss": "Dismiss"
+        "dismiss": "Dismiss",
+        "cancel": "Cancel"
       }
     }
   },

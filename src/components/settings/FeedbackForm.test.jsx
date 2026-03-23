@@ -355,4 +355,19 @@ describe("FeedbackForm", () => {
       screen.queryByText("pages.settings.feedback.errorRateLimit")
     ).not.toBeInTheDocument();
   });
+
+  it("cancel button in form header returns to idle", async () => {
+    await openForm();
+    // Form should be visible
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+
+    // Click the cancel (X) button in header
+    const cancelBtn = screen.getByLabelText("pages.settings.feedback.cancel");
+    fireEvent.click(cancelBtn);
+
+    // Should return to idle — trigger button visible again
+    expect(
+      screen.getByText("pages.settings.feedback.sendFeedback")
+    ).toBeInTheDocument();
+  });
 });

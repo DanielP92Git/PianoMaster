@@ -176,7 +176,7 @@ export function FeedbackForm({ isRTL = false }) {
             className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
           >
             <MessageSquare className="w-5 h-5 text-indigo-300 flex-shrink-0" />
-            <div>
+            <div className={`flex-1 ${isRTL ? "text-right" : "text-left"}`}>
               <h3 className="text-lg font-bold text-white">
                 {t("pages.settings.feedback.sectionTitle")}
               </h3>
@@ -184,6 +184,18 @@ export function FeedbackForm({ isRTL = false }) {
                 {t("pages.settings.feedback.sectionSubtitle")}
               </p>
             </div>
+            <button
+              onClick={() => {
+                setStatus("idle");
+                setError(null);
+                setMessage("");
+                setFeedbackType("bug");
+              }}
+              aria-label={t("pages.settings.feedback.cancel")}
+              className="text-white/40 hover:text-white/80 transition-colors flex-shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Inline error banner (per D-13, D-14, D-15) */}
@@ -248,11 +260,11 @@ export function FeedbackForm({ isRTL = false }) {
               onChange={(e) => setFeedbackType(e.target.value)}
               className="w-full bg-white/5 border border-white/20 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400/50 focus:border-indigo-400/50 transition-colors"
             >
-              <option value="bug">{t("pages.settings.feedback.typeBug")}</option>
-              <option value="suggestion">
+              <option value="bug" className="bg-gray-800 text-white">{t("pages.settings.feedback.typeBug")}</option>
+              <option value="suggestion" className="bg-gray-800 text-white">
                 {t("pages.settings.feedback.typeSuggestion")}
               </option>
-              <option value="other">
+              <option value="other" className="bg-gray-800 text-white">
                 {t("pages.settings.feedback.typeOther")}
               </option>
             </select>
