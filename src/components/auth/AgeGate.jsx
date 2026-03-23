@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 /**
  * Birth year collection step (simplified from full DOB for COPPA).
@@ -41,6 +42,18 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          disabled={disabled}
+          className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back
+        </button>
+      )}
+
       <div className="text-center mb-2">
         <p className="text-white/90 text-sm">What year were you born?</p>
       </div>
@@ -70,16 +83,6 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
       </div>
 
       <div className="flex gap-2">
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={disabled}
-            className="flex-1 py-2 text-sm text-white/80 hover:text-white border-2 border-white/20 rounded-lg transition-colors"
-          >
-            Back
-          </button>
-        )}
         <button
           type="submit"
           disabled={disabled}

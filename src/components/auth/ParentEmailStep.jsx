@@ -42,6 +42,16 @@ export function ParentEmailStep({ onSubmit, onSkip, onBack, disabled = false }) 
 
   return (
     <div className="space-y-4">
+      <button
+        type="button"
+        onClick={onBack}
+        disabled={disabled}
+        className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" />
+        Back
+      </button>
+
       {/* Info banner — purpose-driven messaging per D-06/D-14 */}
       <div className="p-3 bg-indigo-500/20 border border-indigo-400/30 rounded-lg">
         <div className="flex gap-2">
@@ -85,15 +95,6 @@ export function ParentEmailStep({ onSubmit, onSkip, onBack, disabled = false }) 
         </div>
 
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={disabled}
-            className="flex items-center justify-center gap-1 px-3 py-2 text-sm text-white/80 hover:text-white border-2 border-white/20 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back
-          </button>
           <button
             type="button"
             onClick={onSkip}

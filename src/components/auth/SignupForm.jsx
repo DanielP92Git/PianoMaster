@@ -280,7 +280,7 @@ function SignupForm({ onBackToLogin }) {
                     <button
                       type="button"
                       onClick={handleBackFromCredentials}
-                      className="flex items-center gap-1 text-xs text-white/70 hover:text-white transition-colors mb-2"
+                      className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors mb-2"
                     >
                       <ArrowLeft className="w-3.5 h-3.5" />
                       Back

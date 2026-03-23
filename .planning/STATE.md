@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Roadmap created — Phase 2 not started
-stopped_at: Roadmap written (Phases 2-5 defined)
-last_updated: "2026-03-24T00:00:00.000Z"
+status: Ready to plan
+stopped_at: Roadmap creation for v2.7 Instrument Practice Tracking
+last_updated: "2026-03-23T22:48:13.791Z"
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 5
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 
 ## Current Position
 
-Phase: 2 (Data Foundation and Core Logging) — NOT STARTED
-Plan: None started yet
+Phase: 2
+Plan: Not started
 
 Progress: [----------] 0/4 phases complete
 
@@ -42,6 +42,7 @@ Progress: [----------] 0/4 phases complete
 All v2.6 decisions archived in `.planning/milestones/v2.6-ROADMAP.md`.
 
 Phase 1 (Signup Flow Redesign) decisions:
+
 - [Phase 01-signup-flow-redesign / Plan 00]: Real test for SignupForm checks current age step (not future role step) to avoid false failure before redesign
 - [Phase 01-signup-flow-redesign / Plan 00]: useSignup.test.js has no real test — hook requires QueryClientProvider/Router context deferred to Plan 01
 - [Phase 01-signup-flow-redesign / Plan 01]: birthYear integer stored as YYYY-01-01 (D-10 convention), account_status always active at signup (D-13)
@@ -52,6 +53,7 @@ Phase 1 (Signup Flow Redesign) decisions:
 - [Phase 01-signup-flow-redesign]: Removed misleading email confirmation toast — accounts are immediately active (D-13)
 
 v2.7 roadmap decisions:
+
 - Phase 2 is the root dependency: both new DB tables must exist before any UI, notification, or heatmap work begins
 - instrument_practice_streak is a separate table from current_streak — merging them would entangle two distinct behavioral domains
 - local_date DATE column (not UTC timestamp derivation) is mandatory in Phase 2 schema — cannot be backfilled accurately after launch
@@ -69,6 +71,7 @@ v2.7 roadmap decisions:
 ### Blockers/Concerns
 
 **COPPA deadline:** April 22, 2026
+
 - Both new tables need ON DELETE CASCADE before launch — this is in Phase 2 schema and must not be deferred
 
 ## Session Continuity
