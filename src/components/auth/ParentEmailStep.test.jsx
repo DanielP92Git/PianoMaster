@@ -11,7 +11,7 @@ describe("ParentEmailStep", () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("parent@example.com")).toBeInTheDocument();
   });
 
   // Current behavior stubs (before Plan 02 updates)

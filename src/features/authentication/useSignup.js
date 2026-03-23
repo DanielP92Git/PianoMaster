@@ -143,7 +143,7 @@ export function useSignup() {
       const { role } = variables;
       queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success(
-        `${role === "teacher" ? "Teacher" : "Student"} account created successfully! Please check your email to confirm your account.`
+        `${role === "teacher" ? "Teacher" : "Student"} account created successfully!`
       );
       navigate("/");
     },
