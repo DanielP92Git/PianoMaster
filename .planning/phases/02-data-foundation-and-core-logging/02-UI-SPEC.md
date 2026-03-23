@@ -49,7 +49,7 @@ Declared values (multiples of 4):
 
 Exceptions:
 - Touch targets: 44px minimum height for the log button (existing `min-h-touch` token from tailwind.config.js)
-- Streak row: 2px gap between piano icon and streak number (tighter than xs for inline text alignment)
+- Streak row: 4px gap (xs token, Tailwind `gap-1`) between piano icon and streak number
 
 ---
 
@@ -62,9 +62,9 @@ All sizes use the Nunito (`font-rounded`) font family, matching existing dashboa
 | Body | 14px (text-sm) | 400 (regular) | 1.6 (from tailwind fontSize config) |
 | Label | 12px (text-xs) | 700 (bold) | 1.5 |
 | Heading | 14px (text-sm) | 700 (bold) | 1.6 |
-| Button text | 14px (text-sm) | 500 (medium) | 1 (single line) |
+| Button text | 14px (text-sm) | 700 (bold) | 1 (single line) |
 
-**Rationale:** Matches DailyChallengeCard.jsx exactly: `text-sm font-bold text-white` for headings, `text-xs text-white/60` for body, `text-sm font-medium` for buttons. Audience is 8-year-olds — no smaller than 12px (text-xs).
+**Rationale:** Matches DailyChallengeCard.jsx headings: `text-sm font-bold text-white`. Button text uses the same bold weight for visual consistency and legibility on the dark gradient background. Audience is 8-year-olds — no smaller than 12px (text-xs). Two declared weights: 400 (regular) and 700 (bold).
 
 ---
 
@@ -122,12 +122,12 @@ Card: rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-
   │     Title: text-sm font-bold text-white  →  "Practice Instrument"
   ├── Content area (rounded-lg border border-white/10 bg-white/5 p-3 mt-3):
   │     Prompt: text-xs text-white/70  →  "Did you practice today?"
-  │     Streak row (mt-2, flex items-center gap-1.5):
+  │     Streak row (mt-2, flex items-center gap-1):
   │         Piano icon: h-3.5 w-3.5 text-emerald-400
   │         Count: text-sm font-bold text-green-300  →  "5"
   │         Label: text-xs text-white/60  →  "day practice streak"
   └── Log button (mt-3, w-full):
-        rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white
+        rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white
         hover:bg-emerald-700 transition-colors
         min-h-touch (44px)
         label: "Yes, I practiced!"
@@ -136,7 +136,7 @@ Card: rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-
 #### State 3: Logging in progress (button tap, 2s hold)
 ```
 Button transitions to:
-  rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-medium text-white
+  rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white
   Inline content (flex items-center justify-center gap-2):
     CheckCircle icon: h-4 w-4 text-white animate-[scale-in_150ms_ease-out]
     Text: "Logged!"
@@ -155,7 +155,7 @@ Card: rounded-xl border border-emerald-400/30 bg-white/10 p-4 shadow-lg backdrop
             Text:
                 Primary: text-sm font-semibold text-green-300  →  "Practiced today!"
                 Secondary: text-xs text-green-300/70  →  "+25 XP earned"
-        Streak row (mt-2, flex items-center gap-1.5):
+        Streak row (mt-2, flex items-center gap-1):
             Piano icon: h-3.5 w-3.5 text-emerald-400
             Count + label: text-xs text-white/60  →  "6-day practice streak"
 ```
