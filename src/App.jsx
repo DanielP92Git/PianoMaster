@@ -10,7 +10,6 @@ import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
 import ConsentVerifyPage from "./pages/ConsentVerifyPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-import ParentalConsentPending from "./components/auth/ParentalConsentPending";
 import { useAccountStatus } from "./hooks/useAccountStatus";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
@@ -106,13 +105,11 @@ function AuthenticatedWrapper({ children }) {
   // Public routes that should bypass suspension checks
   const isPublicRoute = location.pathname === '/consent/verify' || location.pathname === '/login';
 
-  // Check account status for students (suspended for consent/deletion)
+  // Check account status for students (suspended for deletion)
   const {
     isSuspended,
     suspensionReason,
-    parentEmail,
     loading: statusLoading,
-    refetch: refetchStatus
   } = useAccountStatus(user?.id);
 
   // Preload avatar image for instant display
@@ -135,18 +132,6 @@ function AuthenticatedWrapper({ children }) {
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
         <MusicLoader size="lg" />
       </div>
-    );
-  }
-
-  // If student account is suspended pending parental consent, show waiting UI
-  // Skip for public routes like /consent/verify so parents can complete verification
-  if (user && isStudent && isSuspended && suspensionReason === 'consent' && !isPublicRoute) {
-    return (
-      <ParentalConsentPending
-        parentEmail={parentEmail}
-        studentId={user.id}
-        onRefresh={refetchStatus}
-      />
     );
   }
 
