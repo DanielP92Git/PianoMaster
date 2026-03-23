@@ -1,68 +1,39 @@
 import { useState } from "react";
-import {
-  dobPartsToDate,
-  isUnder13,
-  isValidDOB,
-} from "../../utils/ageUtils";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
 
 /**
- * Age Gate component for COPPA-compliant DOB collection.
- * Displays neutral month/day/year dropdowns (not "Are you 13?" checkbox).
- * Calculates age and returns both DOB and isUnder13 flag.
+ * Birth year collection step (simplified from full DOB for COPPA).
+ * Renders a single year dropdown. Calls onSubmit with an integer year.
  *
  * @param {Object} props
- * @param {Function} props.onSubmit - Called with { dob: Date, isUnder13: boolean }
- * @param {Function} props.onBack - Optional back button handler
+ * @param {Function} props.onSubmit - Called with integer birth year (e.g. 2014)
+ * @param {Function} props.onBack - Back button handler
  * @param {boolean} props.disabled - Disable inputs during submission
  */
 export function AgeGate({ onSubmit, onBack, disabled = false }) {
-  const [month, setMonth] = useState("");
-  const [day, setDay] = useState("");
   const [year, setYear] = useState("");
   const [error, setError] = useState(null);
 
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError(null);
 
-    const dob = {
-      month: parseInt(month, 10),
-      day: parseInt(day, 10),
-      year: parseInt(year, 10),
-    };
-
-    if (!isValidDOB(dob)) {
-      setError("Please enter a valid date of birth");
+    if (!year) {
+      setError("Please select your birth year");
       return;
     }
 
-    const birthDate = dobPartsToDate(dob);
-    onSubmit({
-      dob: birthDate,
-      isUnder13: isUnder13(birthDate),
-    });
+    const parsedYear = parseInt(year, 10);
+    if (isNaN(parsedYear) || parsedYear > currentYear || parsedYear < currentYear - 100) {
+      setError("Please select a valid birth year");
+      return;
+    }
+
+    onSubmit(parsedYear);
   };
 
-  // Base select classes matching SignupForm.jsx input styling
   const selectClass = `w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2
     border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25
     focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50
@@ -71,7 +42,7 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="text-center mb-2">
-        <p className="text-white/90 text-sm">When is your birthday?</p>
+        <p className="text-white/90 text-sm">What year were you born?</p>
       </div>
 
       {error && (
@@ -80,39 +51,7 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2">
-        <select
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          className={selectClass}
-          disabled={disabled}
-          required
-          aria-label="Birth month"
-        >
-          <option value="" className="text-gray-900">Month</option>
-          {MONTHS.map((m, i) => (
-            <option key={m} value={i + 1} className="text-gray-900">
-              {m}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={day}
-          onChange={(e) => setDay(e.target.value)}
-          className={selectClass}
-          disabled={disabled}
-          required
-          aria-label="Birth day"
-        >
-          <option value="" className="text-gray-900">Day</option>
-          {days.map((d) => (
-            <option key={d} value={d} className="text-gray-900">
-              {d}
-            </option>
-          ))}
-        </select>
-
+      <div className="max-w-[200px] mx-auto">
         <select
           value={year}
           onChange={(e) => setYear(e.target.value)}
@@ -121,7 +60,7 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           required
           aria-label="Birth year"
         >
-          <option value="" className="text-gray-900">Year</option>
+          <option value="" className="text-gray-900">Select year</option>
           {years.map((y) => (
             <option key={y} value={y} className="text-gray-900">
               {y}
