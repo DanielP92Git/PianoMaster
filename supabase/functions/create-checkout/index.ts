@@ -19,7 +19,7 @@
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const ALLOWED_ORIGINS = ['https://testpianomaster.netlify.app', 'http://localhost:5174'];
+const ALLOWED_ORIGINS = ['https://my-pianomaster.netlify.app', 'http://localhost:5174'];
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get('origin') || '';

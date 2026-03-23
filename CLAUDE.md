@@ -5,17 +5,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & Development Commands
 
 ```bash
-npm run dev          # Start dev server on port 5174
-npm run build        # Production build
-npm run lint         # ESLint check
-npm run lint:fix     # ESLint with auto-fix
-npm run format       # Prettier format all files
-npm run test         # Vitest in watch mode
-npm run test:run     # Vitest single run
-npm run verify:patterns  # Validate pattern definitions
+npm run dev              # Start dev server on port 5174
+npm run build            # Production build (runs trail validation as prebuild hook)
+npm run lint             # ESLint check
+npm run lint:fix         # ESLint with auto-fix
+npm run format           # Prettier format all files
+npm run format:check     # Prettier check (no write)
+npm run preview          # Preview production build locally
+npm run test             # Vitest in watch mode
+npm run test:run         # Vitest single run
+npm run verify:patterns  # Validate sight-reading pattern definitions
+npm run verify:trail     # Validate trail node data (prereqs, cycles, XP, types)
 ```
 
 **Testing a single file:** `npx vitest run src/path/to/file.test.js`
+
+### Pre-commit & Build Hooks
+- **Husky + lint-staged**: Pre-commit hook runs ESLint + Prettier on staged files
+- **prebuild**: `npm run build` automatically runs `scripts/validateTrail.mjs` first — build fails if trail data has errors (broken prereqs, cycles, duplicate IDs, invalid XP)
 
 ## Architecture Overview
 
@@ -27,8 +34,14 @@ This is a **piano learning PWA** built with React 18 + Vite for 8-year-old learn
 - **Backend:** Supabase (auth, database, real-time subscriptions)
 - **Music Notation:** VexFlow v5 for SVG-based sheet music rendering
 - **Audio:** Klavier library for keyboard input, Web Audio API for pitch detection
-- **Styling:** Tailwind CSS with custom design system (see `docs/DESIGN_SYSTEM.md`)
+- **Styling:** Tailwind CSS 3 with custom design system (see `docs/DESIGN_SYSTEM.md`)
 - **i18n:** i18next with English and Hebrew (RTL) support
+- **Monitoring:** Sentry (error tracking), Umami (analytics)
+
+### Build Conventions
+- **SVG imports:** Use `import Icon from './icon.svg?react'` (via vite-plugin-svgr) — the `?react` suffix is required
+- **App version:** `__APP_VERSION__` global is injected from package.json at build time via Vite `define`
+- **Source maps:** Enabled in production builds (for Sentry)
 
 ### Key Directory Structure
 ```
@@ -147,9 +160,9 @@ A Duolingo-style skill progression with 93 nodes across three parallel learning 
 - `src/data/units/` — trebleUnit1-3Redesigned.js, bassUnit1-3Redesigned.js, rhythmUnit1-6Redesigned.js
 
 ### Services
-- `src/services/skillProgressService.js` — CRUD for student progress: `getStudentProgress()`, `getNodeProgress()`, `updateNodeProgress()`, `getNextRecommendedNode()`, `getCompletedNodeIds()`, `checkNodeUnlocked()`, `getExerciseProgress()`, `getNextExerciseIndex()`, `updateExerciseProgress()`, `isExerciseCompleted()`
-- `src/services/dailyGoalsService.js` — `getTodaysGoals()`, `getDailyGoalsWithProgress()`, `calculateDailyProgress()`
-- `src/utils/xpSystem.js` — `XP_LEVELS` (30 levels), `MAX_STATIC_LEVEL`, `PRESTIGE_XP_PER_TIER` (3000), `calculateLevel()`, `calculateXPReward()`, `awardXP()`
+- `src/services/skillProgressService.js` — CRUD for student node/exercise progress, unlock checks, recommendations
+- `src/services/dailyGoalsService.js` — Daily goal generation and progress calculation
+- `src/utils/xpSystem.js` — XP levels (30 static + infinite prestige tiers at 3000 XP each), level calculation, XP awards
 
 ### Config
 - `src/config/subscriptionConfig.js` — `FREE_NODE_IDS` Set (19 IDs), `isFreeNode()`, must sync with Postgres `is_free_node()`
@@ -187,29 +200,12 @@ All four game components accept trail state and auto-start via `hasAutoStartedRe
 - Only awards XP when entire node is complete
 - Applies comeback multiplier when streak bonus is active
 
-### Database Tables
-
-```sql
-student_skill_progress (student_id UUID, node_id TEXT, stars INT 0-3, best_score INT 0-100,
-  exercises_completed INT, last_practiced TIMESTAMP, exercise_progress JSONB DEFAULT '[]')
-
-student_daily_goals (student_id UUID, goal_date DATE, goals JSONB, completed_goals JSONB)
-
-students.total_xp INTEGER, students.current_level INTEGER (1-30+)
-
-subscription_plans (id TEXT PK, name, billing_period, currency, amount_cents, lemon_squeezy_variant_id, is_active)
-
-parent_subscriptions (student_id UUID FK, ls_subscription_id, ls_customer_id, ls_variant_id,
-  plan_id FK, status TEXT, current_period_end TIMESTAMP, parent_email TEXT)
--- status: on_trial|active|paused|past_due|unpaid|cancelled|expired
-
-students_score.node_id TEXT  -- NULL for non-trail games (always allowed)
-```
-
-### Postgres Helper Functions
-- `is_free_node(p_node_id TEXT) → BOOLEAN` — IMMUTABLE, mirrors `FREE_NODE_IDS` in subscriptionConfig
-- `has_active_subscription(p_student_id UUID) → BOOLEAN` — STABLE, SECURITY DEFINER, with grace periods
-- `award_xp(p_student_id UUID, p_xp_amount INTEGER)` — SECURITY DEFINER with `auth.uid()` check, handles 30 levels + prestige
+### Key Database Concepts
+- **`student_skill_progress`**: Per-node stars (0-3), best score, `exercise_progress` JSONB array
+- **`parent_subscriptions`**: Status enum: `on_trial|active|paused|past_due|unpaid|cancelled|expired`
+- **`students_score.node_id`**: `NULL` for non-trail games (always allowed by RLS)
+- **Postgres helpers**: `is_free_node()` (mirrors JS `FREE_NODE_IDS`), `has_active_subscription()` (with grace periods), `award_xp()` (30 levels + prestige)
+- Full schemas in `supabase/migrations/`
 
 ## Push Notifications
 
@@ -220,40 +216,13 @@ Web Push notifications to encourage daily practice. COPPA-compliant with parent 
 - **COPPA gate**: `ParentGateMath` — two-digit addition problem, hint after 3 failures, `parent_consent_granted = true` in DB
 - **iOS PWA**: Detects non-standalone mode, shows "install first" warning
 
-### Key Files
-| File | Role |
-|---|---|
-| `src/services/notificationService.js` | Client-side push helpers |
-| `src/components/settings/NotificationPermissionCard.jsx` | Settings toggle with state machine |
-| `src/components/settings/ParentGateMath.jsx` | COPPA math gate overlay |
-| `supabase/functions/send-daily-push/index.ts` | Edge Function (cron 14:00 UTC, context-aware messages) |
-
-### Database
-```sql
-push_subscriptions (id UUID PK, student_id UUID UNIQUE FK, subscription JSONB,
-  is_enabled BOOLEAN, parent_consent_granted BOOLEAN, parent_consent_at TIMESTAMPTZ,
-  last_notified_at TIMESTAMPTZ, weekly_report_opted_out BOOLEAN, last_weekly_report_at TIMESTAMPTZ)
-```
-
-Required env: `CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, client needs `VITE_VAPID_PUBLIC_KEY`
+### Environment Variables
+- **Edge Functions**: `CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
+- **Client**: `VITE_VAPID_PUBLIC_KEY`
 
 ## Weekly Parent Progress Reports
 
-HTML-formatted weekly emails summarizing student progress, sent Mondays at 08:00 UTC.
-
-### Key Files
-| File | Role |
-|---|---|
-| `supabase/functions/send-weekly-report/index.ts` | Generates and sends weekly report emails via Brevo |
-| `supabase/functions/unsubscribe-weekly-report/index.ts` | HMAC-SHA256 signed unsubscribe handler |
-
-### Features
-- 7-day stats: days practiced, streak count, nodes completed, current level
-- Parent-gated opt-in with parental consent requirement
-- HMAC-SHA256 signed unsubscribe links (tamper-proof)
-- Brevo transactional email API
-- 6-day dedup guard via `last_weekly_report_at` column
-- Branded HTML email matching consent email template (purple gradient header)
+HTML-formatted weekly emails via Brevo, sent Mondays at 08:00 UTC. HMAC-SHA256 signed unsubscribe links. 6-day dedup guard.
 
 Required env: `CRON_SECRET`, `BREVO_API_KEY`, `SENDER_EMAIL`, `SENDER_NAME`, `WEEKLY_REPORT_HMAC_SECRET`
 
@@ -266,22 +235,7 @@ Prevents frustrating streak loss with grace windows, freezes, weekend pass, and 
 - **Streak Freezes**: 0-3 inventory, earned every 7-day milestone, auto-consumed when grace expires
 - **Weekend Pass**: Parent-gated toggle in Settings; skips Friday/Saturday (Israeli Shabbat)
 - **Comeback Bonus**: When streak breaks, 2x XP multiplier for 3 days
-
-### Key Files
-| File | Role |
-|---|---|
-| `src/services/streakService.js` | Full streak protection logic |
-| `src/components/streak/StreakDisplay.jsx` | Streak UI with freeze/grace/comeback states |
-| `supabase/migrations/20260305000001_streak_protection.sql` | DB schema |
-
-### Service API
-- `getStreak()` — Streak count (backward-compatible)
-- `getStreakState()` — Full state object (React Query key: `["streak-state", userId]`)
-- `recordPractice()` — Updates streak on practice completion
-- `toggleWeekendPass(enabled)` — Parent-gated toggle
-
-### Constants
-`GRACE_WINDOW_HOURS = 36`, `MAX_FREEZE_COUNT = 3`, `FREEZE_EARN_INTERVAL = 7`, `COMEBACK_BONUS_DAYS = 3`
+- **Core logic**: `src/services/streakService.js` — React Query key: `["streak-state", userId]`
 
 ## Notes Recognition Engagement
 
@@ -291,52 +245,16 @@ Arcade-style mechanics for `NotesRecognitionGame.jsx`:
 - **On-Fire Mode**: Triggered at combo threshold; fire icon + glow effect; respects reduced-motion
 - **Auto-Grow Note Pool**: Trail mode combo milestones expand note pool using `getNextNodeInCategory()`; banner notification for new notes
 
-## Achievements System
-
-### Key Files
-- `src/pages/Achievements.jsx` — Thin wrapper importing `AchievementsRedesign`
-- `src/pages/AchievementsRedesign.jsx` — Animated redesign with Framer Motion, category grouping, neon glow rings for recent unlocks, relative timestamps
-- `src/pages/AchievementsLegacy.jsx` — Original display (retained for rollback)
-- `src/services/achievementService.js` — Achievement data + icon mappings
-
-## Dashboard Components
-
-- `DailyGoalsCard.jsx` — 3 daily goals with progress bars (refetch every 60s)
-- `WeeklySummaryCard.jsx` — Rolling 7-day summary (days practiced, nodes, exercises); golden border for perfect weeks
-- `DailyMessageBanner.jsx` — Rotating pool of 12 music fun facts; no repeat from previous day; dismissible via localStorage
-- `PlayNextButton.jsx` — "Continue Learning" with next recommended node
-- `PushOptInCard.jsx` — Soft notification prompt (7-day delay)
-- `XPProgressCard.jsx` + `XPRing.jsx` — XP level display with ring visualization
-- `UnifiedStatsCard.jsx` — Combined stats display
-
 ## Session Timeout
 
-Automatic inactivity logout for child safety on shared devices.
-- `src/contexts/SessionTimeoutContext.jsx` — Provider with `pauseTimer`/`resumeTimer` for games
-- `src/hooks/useInactivityTimeout.js` — Core timeout logic with role-based durations
-- `src/components/ui/InactivityWarningModal.jsx` — Warning 5 minutes before logout
-- Games call `pauseTimer()` during gameplay, `resumeTimer()` when idle
-
-## Orientation & Landscape Lock
-
-- `src/hooks/useLandscapeLock.js` — Android PWA: fullscreen + landscape lock; no-op on iOS/desktop
-- `src/hooks/useRotatePrompt.js` — Shows rotate prompt on mobile portrait; permanent dismiss via localStorage
-- `src/components/orientation/RotatePromptOverlay.jsx` — Visual overlay
-- `src/utils/pwaDetection.js` — `isAndroidDevice()`, `isInStandaloneMode()`
+Automatic inactivity logout for child safety on shared devices. Games must call `pauseTimer()` during gameplay and `resumeTimer()` when idle (from `SessionTimeoutContext`). Role-based durations (students shorter than teachers).
 
 ## Audio Infrastructure
 
-- `src/contexts/AudioContextProvider.jsx` — Central `AudioContext` management; iOS Safari interruption detection; provides `useAudioContext()` hook
-- `src/hooks/useMicNoteInput.js` — Pitch detection + note-on/off state machine for mic input
-- `src/hooks/usePitchDetection.js` — McLeod Pitch Method via `pitchy`; clarity gate 0.9; range A2-C6
-- `src/hooks/micInputPresets.js` — Named presets (`sightReading`, `notesRecognition`) + `calcMicTimingFromBpm()`
-- `src/components/games/sight-reading-game/hooks/useTimingAnalysis.js` — BPM-adaptive timing windows
-- `src/utils/useMotionTokens.js` — Reduced-motion-aware animation tokens for framer-motion
-
-### iOS Safari Hardening
-- `src/utils/isIOSSafari.js` — iPad/iPhone detection (excludes Chrome/Firefox/Edge iOS)
-- `src/components/games/sight-reading-game/components/MicErrorOverlay.jsx` — Mic error overlay with iOS-specific re-enable guide
-- `src/components/games/shared/AudioInterruptedOverlay.jsx` — iOS audio context interruption recovery
+- Central `AudioContext` via `AudioContextProvider` — all audio goes through `useAudioContext()` hook
+- Pitch detection: McLeod Pitch Method via `pitchy` (clarity gate 0.9, range A2-C6)
+- Mic input: `useMicNoteInput.js` state machine with named presets in `micInputPresets.js`
+- **iOS Safari**: Requires special handling for audio context interruptions (`AudioInterruptedOverlay`), mic errors, and standalone PWA detection. See `src/utils/isIOSSafari.js`
 
 ## PWA & Service Worker
 
@@ -358,24 +276,18 @@ Via `AccessibilityContext`: high contrast, reduced motion, screen reader optimiz
 
 ## Testing
 
-Vitest with JSDOM. Setup: `src/test/setupTests.js`. Key test files:
-- `src/components/games/sight-reading-game/utils/patternBuilder.test.js`
-- `src/components/games/sight-reading-game/utils/rhythmGenerator.test.js`
+Vitest with JSDOM. Setup: `src/test/setupTests.js`.
+
+### Conventions
+- Test files live either as `*.test.{js,jsx}` siblings or in `__tests__/` directories next to source
+- Uses `@testing-library/react` + `@testing-library/jest-dom` for component tests
+- Utility/service tests are plain Vitest (no DOM needed)
 
 ## Security
 
-See `docs/SECURITY_GUIDELINES.md` for comprehensive security patterns including:
-- Authorization patterns (user ID verification, relationship-based access)
-- Database security (RLS policies, SECURITY DEFINER functions)
-- Authentication & JWT handling (DB-based roles, secure logout)
-- Service worker security (auth endpoint exclusion)
-- Child data protection (COPPA/GDPR-K, PII minimization)
-- Defense in depth patterns
-- Security implementation checklist
-
-### Key Security Files
-- `public/sw.js` — Auth exclusion patterns
-- `src/services/authService.js` — Secure logout with localStorage cleanup
-- `src/services/scoreService.js` — Authorization checks
-- `src/services/teacherService.js` — Relationship verification
-- `src/config/subscriptionConfig.js` — Free tier boundary (syncs with Postgres `is_free_node()`)
+See `docs/SECURITY_GUIDELINES.md` for comprehensive security patterns. Key principles:
+- **COPPA/GDPR-K**: PII minimization, parent consent gate for notifications/emails
+- **RLS everywhere**: All Supabase tables use Row Level Security; `auth.uid()` verification in service functions
+- **Defense in depth**: Content gates enforced in both React UI (`isFreeNode()`) and database RLS
+- **Service worker**: Auth endpoints and Supabase REST API are never cached (`public/sw.js`)
+- **Roles**: DB-based (not JWT claims) — teacher/student differentiation via `students.role`

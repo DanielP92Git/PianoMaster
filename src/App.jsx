@@ -41,36 +41,40 @@ import { AudioContextProvider } from "./contexts/AudioContextProvider";
 import { lockOrientation } from "./utils/pwa";
 import { resolveProfileAvatarSource } from "./utils/avatarAssets";
 import { isIOSDevice, isInStandaloneMode } from "./utils/pwaDetection";
+import { lazyWithRetry } from "./utils/lazyWithRetry";
 import IOSLandscapeTipModal from "./components/pwa/IOSLandscapeTipModal";
 import supabase from "./services/supabase";
 import { useGlobalFullscreenOnFirstTap } from "./hooks/useGlobalFullscreenOnFirstTap";
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
-// Lazy-loaded page components
-const TrailMapPage = React.lazy(() => import("./pages/TrailMapPage"));
+// Lazy-loaded page components (lazyWithRetry auto-reloads on stale chunks after deploy)
+const TrailMapPage = lazyWithRetry(() => import("./pages/TrailMapPage"));
 // Prefetch trail module so Suspense fallback never shows on navigation
 import("./pages/TrailMapPage");
-const Achievements = React.lazy(() => import("./pages/Achievements"));
-const PracticeModes = React.lazy(() => import("./pages/PracticeModes"));
-const PracticeSessions = React.lazy(() => import("./pages/PracticeSessions"));
-const StudentAssignments = React.lazy(() => import("./pages/StudentAssignments"));
-const AppSettings = React.lazy(() => import("./pages/AppSettings"));
-const Legal = React.lazy(() => import("./pages/Legal"));
-const SubscribePage = React.lazy(() => import("./pages/SubscribePage"));
-const SubscribeSuccessPage = React.lazy(() => import("./pages/SubscribeSuccessPage"));
-const ParentPortalPage = React.lazy(() => import("./pages/ParentPortalPage"));
-const Avatars = React.lazy(() => import("./components/Avatars"));
-const PrivacyPolicyPage = React.lazy(() => import("./pages/PrivacyPolicyPage"));
-const TermsOfServicePage = React.lazy(() => import("./pages/TermsOfServicePage"));
+const Achievements = lazyWithRetry(() => import("./pages/Achievements"));
+const PracticeModes = lazyWithRetry(() => import("./pages/PracticeModes"));
+const PracticeSessions = lazyWithRetry(() => import("./pages/PracticeSessions"));
+const StudentAssignments = lazyWithRetry(() => import("./pages/StudentAssignments"));
+const AppSettings = lazyWithRetry(() => import("./pages/AppSettings"));
+const Legal = lazyWithRetry(() => import("./pages/Legal"));
+const SubscribePage = lazyWithRetry(() => import("./pages/SubscribePage"));
+const SubscribeSuccessPage = lazyWithRetry(() => import("./pages/SubscribeSuccessPage"));
+const ParentPortalPage = lazyWithRetry(() => import("./pages/ParentPortalPage"));
+const Avatars = lazyWithRetry(() => import("./components/Avatars"));
+const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/PrivacyPolicyPage"));
+const TermsOfServicePage = lazyWithRetry(() => import("./pages/TermsOfServicePage"));
 
 // Lazy-loaded game components
-const NotesMasterMode = React.lazy(() => import("./components/games/NotesMasterMode").then(m => ({ default: m.NotesMasterMode })));
-const RhythmMasterMode = React.lazy(() => import("./components/games/RhythmMasterMode").then(m => ({ default: m.RhythmMasterMode })));
-const MemoryGame = React.lazy(() => import("./components/games/notes-master-games/MemoryGame").then(m => ({ default: m.MemoryGame })));
-const NotesRecognitionGame = React.lazy(() => import("./components/games/notes-master-games/NotesRecognitionGame").then(m => ({ default: m.NotesRecognitionGame })));
-const SightReadingGame = React.lazy(() => import("./components/games/sight-reading-game/SightReadingGame").then(m => ({ default: m.SightReadingGame })));
-const MetronomeTrainer = React.lazy(() => import("./components/games/rhythm-games/MetronomeTrainer"));
-const SightReadingLayoutHarness = React.lazy(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
+const NotesMasterMode = lazyWithRetry(() => import("./components/games/NotesMasterMode").then(m => ({ default: m.NotesMasterMode })));
+const RhythmMasterMode = lazyWithRetry(() => import("./components/games/RhythmMasterMode").then(m => ({ default: m.RhythmMasterMode })));
+const MemoryGame = lazyWithRetry(() => import("./components/games/notes-master-games/MemoryGame").then(m => ({ default: m.MemoryGame })));
+const NotesRecognitionGame = lazyWithRetry(() => import("./components/games/notes-master-games/NotesRecognitionGame").then(m => ({ default: m.NotesRecognitionGame })));
+const SightReadingGame = lazyWithRetry(() => import("./components/games/sight-reading-game/SightReadingGame").then(m => ({ default: m.SightReadingGame })));
+const MetronomeTrainer = lazyWithRetry(() => import("./components/games/rhythm-games/MetronomeTrainer"));
+const SightReadingLayoutHarness = lazyWithRetry(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
+
+// Clear stale-chunk reload flag on successful app load
+sessionStorage.removeItem("chunk-reload");
 
 // Loading fallback for lazy-loaded routes
 function LoadingFallback() {
@@ -465,7 +469,7 @@ function App() {
         </SettingsProvider>
       </AccessibilityProvider>
       </ErrorBoundary>
-      <ReactQueryDevtools />
+      {import.meta.env.DEV && <ReactQueryDevtools />}
     </QueryClientProvider>
   );
 }
