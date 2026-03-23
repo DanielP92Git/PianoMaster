@@ -178,6 +178,20 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
+**Current Milestone: v2.7 Instrument Practice Tracking**
+
+Goal: Add a daily yes/no instrument practice tracker with its own streak, XP rewards, push notification check-ins, and parent-facing calendar heatmap — distinct from app-usage tracking.
+
+Target features:
+- Daily practice logging via interactive push notification action buttons + dashboard fallback
+- Retroactive logging for yesterday only
+- Dedicated practice streak with weekend freezes (Shabbat pass), separate from app streak
+- XP reward for logging practice (feeds into existing XP/level system)
+- Dashboard practice card showing current instrument practice streak + today's status
+- Parent calendar heatmap (GitHub-style) showing practice days vs missed
+- "Did you practice?" daily push notification — separate from existing timer reminder
+- Instrument practice summary added to existing parent weekly email report
+
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
 - Celebration sound effects with volume control (requires classroom A/B testing)
@@ -426,6 +440,23 @@ Explicitly excluded:
 | onClick handler (not form onSubmit) | Supports retry button calling handleSubmit directly | Good |
 | Unified support Gmail for all emails | One inbox for support + feedback; simplifies sender management | Good |
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
 
-*Last updated: 2026-03-23 after v2.6 milestone*
+*Last updated: 2026-03-23 after v2.7 milestone started*
