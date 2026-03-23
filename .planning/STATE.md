@@ -41,9 +41,12 @@ Last activity: 2026-03-23 — Milestone v2.7 started
 
 All v2.6 decisions archived in `.planning/milestones/v2.6-ROADMAP.md`.
 
+- [Phase 01-signup-flow-redesign / Plan 01]: birthYear integer stored as YYYY-01-01 (D-10 convention), account_status always active at signup (D-13)
+- [Phase 01-signup-flow-redesign / Plan 01]: Removed unused parentEmail and refetchStatus from useAccountStatus destructure after consent block removed
+
 ### Roadmap Evolution
 
-- Phase 1 (Signup Flow Redesign) running in parallel worktree
+- Phase 1 (Signup Flow Redesign) running in parallel worktree — Plan 01 complete
 - Milestone v2.7 started: Instrument Practice Tracking
 
 ### Blockers/Concerns
@@ -53,13 +56,13 @@ All v2.6 decisions archived in `.planning/milestones/v2.6-ROADMAP.md`.
 ## Session Continuity
 
 Last session: 2026-03-23
-Stopped at: Milestone v2.7 requirements definition
+Stopped at: Completed 01-signup-flow-redesign 01-01-PLAN.md
 Resume file: N/A
 
 **Next action:**
 
-- Define requirements for v2.7
+- Execute Phase 01 Plan 02 (sub-component updates)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-23 — Milestone v2.7 Instrument Practice Tracking started*
+*Last updated: 2026-03-23 — Phase 01 Plan 01 complete (consent gate removed from signup)*
