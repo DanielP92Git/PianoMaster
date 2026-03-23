@@ -172,11 +172,9 @@ export function FeedbackForm({ isRTL = false }) {
           dir={isRTL ? "rtl" : "ltr"}
         >
           {/* Header */}
-          <div
-            className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
-          >
+          <div className="flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-indigo-300 flex-shrink-0" />
-            <div className={`flex-1 ${isRTL ? "text-right" : "text-left"}`}>
+            <div className="flex-1">
               <h3 className="text-lg font-bold text-white">
                 {t("pages.settings.feedback.sectionTitle")}
               </h3>
