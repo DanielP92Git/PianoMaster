@@ -229,13 +229,13 @@ See `.planning/milestones/` for archived details of each milestone.
 **Goal:** Reorder signup to role-first (student/teacher), simplify age collection to birth year only, remove account suspension for under-13 (account immediately active), keep parent email as optional for notifications/reports. Teacher path skips age gate. Back navigation between steps. Google OAuth shown after role selection.
 **Requirements**: D-01 through D-15 (from 01-CONTEXT.md)
 **Depends on:** v2.6
-**Plans:** 0/4 plans executed
+**Plans:** 4/4 plans executed -- COMPLETE
 
 Plans:
-- [ ] 01-00-PLAN.md -- Wave 0: Test scaffolds for SignupForm, ParentEmailStep, useSignup (Wave 0)
-- [ ] 01-01-PLAN.md -- Consent cleanup + useSignup hook update + migration (Wave 1)
-- [ ] 01-02-PLAN.md -- AgeGate simplification + ParentEmailStep update (Wave 1)
-- [ ] 01-03-PLAN.md -- SignupForm wizard rewrite + visual verification (Wave 2)
+- [x] 01-00-PLAN.md -- Wave 0: Test scaffolds for SignupForm, ParentEmailStep, useSignup (Wave 0)
+- [x] 01-01-PLAN.md -- Consent cleanup + useSignup hook update + migration (Wave 1)
+- [x] 01-02-PLAN.md -- AgeGate simplification + ParentEmailStep update (Wave 1)
+- [x] 01-03-PLAN.md -- SignupForm wizard rewrite + visual verification (Wave 2)
 
 ---
-*Last updated: 2026-03-23 — Phase 1 revised (4 plans, added Wave 0 test scaffolds)*
+*Last updated: 2026-03-24 — Phase 1 complete (4/4 plans, all waves)*
