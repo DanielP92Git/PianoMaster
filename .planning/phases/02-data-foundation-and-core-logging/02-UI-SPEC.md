@@ -39,8 +39,9 @@ Declared values (multiples of 4):
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| xs | 4px | Icon gaps, inline XP badge padding |
-| sm | 8px | Internal card element spacing, gap between icon and label |
+| xs | 4px | Icon gaps, inline XP badge padding (`py-1`, `px-2`) |
+| sm | 8px | Internal card element spacing, gap between icon and label (`gap-2`, `mt-2`) |
+| sm-md | 12px | Inner content area padding and vertical rhythm (`p-3`, `mt-3`) |
 | md | 16px | Card internal padding (`p-4`) |
 | lg | 24px | Section padding within card content areas |
 | xl | 32px | Layout gaps between dashboard cards |
@@ -64,7 +65,7 @@ All sizes use the Nunito (`font-rounded`) font family, matching existing dashboa
 | Heading | 14px (text-sm) | 700 (bold) | 1.6 |
 | Button text | 14px (text-sm) | 700 (bold) | 1 (single line) |
 
-**Rationale:** Matches DailyChallengeCard.jsx headings: `text-sm font-bold text-white`. Button text uses the same bold weight for visual consistency and legibility on the dark gradient background. Audience is 8-year-olds — no smaller than 12px (text-xs). Two declared weights: 400 (regular) and 700 (bold).
+**Rationale:** Matches DailyChallengeCard.jsx headings: `text-sm font-bold text-white`. Button text uses the same bold weight for visual consistency and legibility on the dark gradient background. Audience is 8-year-olds — no smaller than 12px (text-xs). Two declared weights: 400 (regular) and 700 (bold). No intermediate weights (`font-medium`, `font-semibold`) are used anywhere in this phase.
 
 ---
 
@@ -127,7 +128,7 @@ Card: rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-
   │         Count: text-sm font-bold text-green-300  →  "5"
   │         Label: text-xs text-white/60  →  "day practice streak"
   └── Log button (mt-3, w-full):
-        rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white
+        rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white
         hover:bg-emerald-700 transition-colors
         min-h-touch (44px)
         label: "Yes, I practiced!"
@@ -136,11 +137,11 @@ Card: rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-
 #### State 3: Logging in progress (button tap, 2s hold)
 ```
 Button transitions to:
-  rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white
+  rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold text-white
   Inline content (flex items-center justify-center gap-2):
     CheckCircle icon: h-4 w-4 text-white animate-[scale-in_150ms_ease-out]
     Text: "Logged!"
-    XP badge: rounded-full bg-emerald-400/20 px-2 py-0.5 text-xs font-bold text-emerald-300
+    XP badge: rounded-full bg-emerald-400/20 px-2 py-1 text-xs font-bold text-emerald-300
               content: "+25 XP"
   disabled=true, cursor-default
 ```
@@ -153,8 +154,8 @@ Card: rounded-xl border border-emerald-400/30 bg-white/10 p-4 shadow-lg backdrop
         Row (flex items-center gap-2):
             CheckCircle: h-5 w-5 shrink-0 text-green-400
             Text:
-                Primary: text-sm font-semibold text-green-300  →  "Practiced today!"
-                Secondary: text-xs text-green-300/70  →  "+25 XP earned"
+                Primary: text-sm font-bold text-green-300  →  "Practiced today!"
+                Secondary: text-xs text-white/60  →  "+25 XP earned"
         Streak row (mt-2, flex items-center gap-1):
             Piano icon: h-3.5 w-3.5 text-emerald-400
             Count + label: text-xs text-white/60  →  "6-day practice streak"
