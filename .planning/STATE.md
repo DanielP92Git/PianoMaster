@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to plan
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-03-23T23:19:04.222Z"
+status: Ready to execute
+stopped_at: Completed 02-data-foundation-and-core-logging-01-PLAN.md
+last_updated: "2026-03-23T23:59:08.610Z"
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 4
+  total_plans: 6
   completed_plans: 4
 ---
 
@@ -19,14 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v2.7 Instrument Practice Tracking — Phase 2 (Data Foundation and Core Logging) is next
+**Current focus:** Phase 02 — data-foundation-and-core-logging
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
-
-Progress: [----------] 0/4 phases complete
+Phase: 02 (data-foundation-and-core-logging) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -62,6 +60,9 @@ v2.7 roadmap decisions:
 - Phase 3 notification architecture decision (extend send-daily-push vs. new cron) must be resolved as an explicit ADR before implementation
 - Phase 4 heatmap library vs. bespoke SVG decision should be recorded as ADR in phase spec; react-activity-calendar recommended for date-math reliability
 - iOS action button support does not exist in 2026; URL param fallback (?practice_checkin=1) is the primary path, not the fallback
+- [Phase 02-data-foundation-and-core-logging]: practiced_on is DATE not TIMESTAMPTZ — prevents UTC drift bug in local calendar day tracking
+- [Phase 02-data-foundation-and-core-logging]: instrument_practice_streak is SEPARATE from current_streak — independent instrument streak per D-12
+- [Phase 02-data-foundation-and-core-logging]: XP award failure is non-blocking — practice log recorded even if awardXP throws
 
 ### Roadmap Evolution
 
@@ -76,9 +77,9 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-23T23:19:04.212Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-data-foundation-and-core-logging/02-UI-SPEC.md
+Last session: 2026-03-23T23:59:08.597Z
+Stopped at: Completed 02-data-foundation-and-core-logging-01-PLAN.md
+Resume file: None
 
 **Next action:**
 
