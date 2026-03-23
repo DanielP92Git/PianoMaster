@@ -1988,6 +1988,8 @@ export function NotesRecognitionGame() {
     if (note && cur &&
         (note === cur.pitch || note === cur.englishName)) {
       handleAnswerSelect(cur.note);
+    } else if (note && cur) {
+      handleAnswerSelect(note); // Wrong note — triggers life deduction, combo reset, etc.
     }
   }, [handleAnswerSelect, micTiming]);
 
