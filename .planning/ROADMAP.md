@@ -196,6 +196,81 @@ See `.planning/milestones/` for archived details of each milestone.
 
 </details>
 
+### Phase 1: Signup Flow Redesign
+
+**Goal:** Reorder signup to role-first (student/teacher), simplify age collection to birth year only, remove account suspension for under-13 (account immediately active), keep parent email as optional for notifications/reports. Teacher path skips age gate. Back navigation between steps. Google OAuth shown after role selection.
+**Requirements**: D-01 through D-15 (from 01-CONTEXT.md)
+**Depends on:** v2.6
+**Plans:** 4/4 plans executed -- COMPLETE
+
+Plans:
+- [x] 01-00-PLAN.md -- Wave 0: Test scaffolds for SignupForm, ParentEmailStep, useSignup (Wave 0)
+- [x] 01-01-PLAN.md -- Consent cleanup + useSignup hook update + migration (Wave 1)
+- [x] 01-02-PLAN.md -- AgeGate simplification + ParentEmailStep update (Wave 1)
+- [x] 01-03-PLAN.md -- SignupForm wizard rewrite + visual verification (Wave 2)
+
+---
+
+### v2.7 Instrument Practice Tracking
+
+- [ ] **Phase 2: Data Foundation and Core Logging** - DB migration, practice service, dashboard card, and practice streak
+- [ ] **Phase 3: Push Notification Integration** - "Did you practice?" cron notification with iOS fallback and dedup
+- [ ] **Phase 4: Parent Calendar Heatmap** - 52-week practice history heatmap in parent portal
+- [ ] **Phase 5: Milestone Celebrations** - Streak milestone celebrations at 5, 10, 21, and 30 days
+
+---
+
+## Phase Details
+
+### Phase 2: Data Foundation and Core Logging
+**Goal**: Students can log daily instrument practice from the dashboard, earn XP for logging, and see a dedicated practice streak counter
+**Depends on**: Phase 1 (Signup Flow Redesign)
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05, LOG-01, LOG-02, LOG-03, STRK-01, STRK-02, STRK-03
+**Success Criteria** (what must be TRUE):
+  1. Student taps a button on the dashboard and their practice is recorded for today (button state changes to "logged" immediately)
+  2. Student sees a practice streak counter with a piano/music icon that is visually distinct from the existing fire-icon app-usage streak
+  3. Student earns 25 XP for the first practice log of each day; tapping again does not award XP a second time
+  4. Student whose weekend pass is enabled does not lose their practice streak for not logging on Friday or Saturday
+  5. Database enforces one practice log per student per day and cascades deletion on COPPA hard-delete
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 3: Push Notification Integration
+**Goal**: Students receive a daily "Did you practice?" push notification that skips those who already logged, without doubling up with the existing app-usage reminder
+**Depends on**: Phase 2
+**Requirements**: PUSH-01, PUSH-02, PUSH-03, PUSH-04, PUSH-05
+**Success Criteria** (what must be TRUE):
+  1. Student who has not logged practice receives a "Did you practice today?" push notification once per day via cron trigger
+  2. Student who already logged practice for the day does not receive the check-in notification
+  3. A student never receives two push notifications on the same day (practice check-in and app-usage reminder are coordinated)
+  4. On Android/desktop, the notification shows "Yes, I practiced!" and "Not yet" action buttons that log or dismiss without opening the app
+  5. On iOS, tapping the notification opens the app and the dashboard surfaces an immediate practice log prompt (URL param detection)
+**Plans**: TBD
+
+### Phase 4: Parent Calendar Heatmap
+**Goal**: Parents can see a 52-week rolling calendar of their child's instrument practice history in the parent portal
+**Depends on**: Phase 2
+**Requirements**: PARENT-01, PARENT-02
+**Success Criteria** (what must be TRUE):
+  1. Parent visits the parent portal and sees a calendar heatmap spanning the past 52 weeks of their child's practice activity
+  2. Days the child practiced are shown in a distinct color (indigo); days not yet practiced use a neutral gray — no red is used for missed days
+  3. The heatmap renders correctly for Hebrew locale (most recent week is rightmost, RTL direction respected)
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 5: Milestone Celebrations
+**Goal**: Students see a celebration moment when their instrument practice streak reaches a meaningful milestone
+**Depends on**: Phase 2
+**Requirements**: LOG-04
+**Success Criteria** (what must be TRUE):
+  1. Student who logs their 5th, 10th, 21st, or 30th consecutive practice day sees a milestone celebration (reuses existing VictoryScreen celebration system)
+  2. Milestone celebration is skippable and respects reduced-motion preferences
+  3. Each milestone triggers at most once per streak (celebrating the 10-day milestone again on day 11 does not repeat)
+**Plans**: TBD
+**UI hint**: yes
+
+---
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -211,7 +286,7 @@ See `.planning/milestones/` for archived details of each milestone.
 | 11-16. App Monetization | v1.8 | 13/13 | Complete | 2026-03-01 |
 | 17-23. Engagement & Retention | v1.9 | 15/15 | Complete | 2026-03-08 |
 | 01-02. VictoryScreen & XP | v2.0 | 6/6 | Complete | 2026-03-08 |
-| 01. Forgot Password | v2.1 | 0/4 | Planned    |  |
+| 01. Forgot Password | v2.1 | 0/4 | Planned | |
 | 01-05. Sharps & Flats | v2.2 | 9/9 | Complete | 2026-03-17 |
 | 01-06. Launch Readiness | v2.3 | 6/6 | Complete | 2026-03-17 |
 | 07-11. Content Expansion | v2.4 | 10/10 | Complete | 2026-03-19 |
@@ -221,21 +296,15 @@ See `.planning/milestones/` for archived details of each milestone.
 | 15. Production QA | v2.5 | 4/4 | Complete | 2026-03-22 |
 | 16. Backend & Email Infrastructure | v2.6 | 2/2 | Complete | 2026-03-22 |
 | 17. Feedback Form UI | v2.6 | 1/1 | Complete | 2026-03-22 |
+| 1. Signup Flow Redesign | v2.7* | 4/4 | Complete | 2026-03-24 |
+| 2. Data Foundation and Core Logging | v2.7 | 0/? | Not started | - |
+| 3. Push Notification Integration | v2.7 | 0/? | Not started | - |
+| 4. Parent Calendar Heatmap | v2.7 | 0/? | Not started | - |
+| 5. Milestone Celebrations | v2.7 | 0/? | Not started | - |
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
 
-### Phase 1: Signup Flow Redesign
-
-**Goal:** Reorder signup to role-first (student/teacher), simplify age collection to birth year only, remove account suspension for under-13 (account immediately active), keep parent email as optional for notifications/reports. Teacher path skips age gate. Back navigation between steps. Google OAuth shown after role selection.
-**Requirements**: D-01 through D-15 (from 01-CONTEXT.md)
-**Depends on:** v2.6
-**Plans:** 4/4 plans executed -- COMPLETE
-
-Plans:
-- [x] 01-00-PLAN.md -- Wave 0: Test scaffolds for SignupForm, ParentEmailStep, useSignup (Wave 0)
-- [x] 01-01-PLAN.md -- Consent cleanup + useSignup hook update + migration (Wave 1)
-- [x] 01-02-PLAN.md -- AgeGate simplification + ParentEmailStep update (Wave 1)
-- [x] 01-03-PLAN.md -- SignupForm wizard rewrite + visual verification (Wave 2)
+*Phase 1 (Signup Flow Redesign) runs in a parallel worktree and is shared across milestones.
 
 ---
-*Last updated: 2026-03-24 — Phase 1 complete (4/4 plans, all waves)*
+*Last updated: 2026-03-24 — v2.7 roadmap added (Phases 2-5)*

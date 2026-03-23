@@ -80,31 +80,31 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOG-01 | TBD | Pending |
-| LOG-02 | TBD | Pending |
-| LOG-03 | TBD | Pending |
-| LOG-04 | TBD | Pending |
-| STRK-01 | TBD | Pending |
-| STRK-02 | TBD | Pending |
-| STRK-03 | TBD | Pending |
-| PUSH-01 | TBD | Pending |
-| PUSH-02 | TBD | Pending |
-| PUSH-03 | TBD | Pending |
-| PUSH-04 | TBD | Pending |
-| PUSH-05 | TBD | Pending |
-| PARENT-01 | TBD | Pending |
-| PARENT-02 | TBD | Pending |
-| INFRA-01 | TBD | Pending |
-| INFRA-02 | TBD | Pending |
-| INFRA-03 | TBD | Pending |
-| INFRA-04 | TBD | Pending |
-| INFRA-05 | TBD | Pending |
+| LOG-01 | Phase 2 | Pending |
+| LOG-02 | Phase 2 | Pending |
+| LOG-03 | Phase 2 | Pending |
+| LOG-04 | Phase 5 | Pending |
+| STRK-01 | Phase 2 | Pending |
+| STRK-02 | Phase 2 | Pending |
+| STRK-03 | Phase 2 | Pending |
+| PUSH-01 | Phase 3 | Pending |
+| PUSH-02 | Phase 3 | Pending |
+| PUSH-03 | Phase 3 | Pending |
+| PUSH-04 | Phase 3 | Pending |
+| PUSH-05 | Phase 3 | Pending |
+| PARENT-01 | Phase 4 | Pending |
+| PARENT-02 | Phase 4 | Pending |
+| INFRA-01 | Phase 2 | Pending |
+| INFRA-02 | Phase 2 | Pending |
+| INFRA-03 | Phase 2 | Pending |
+| INFRA-04 | Phase 2 | Pending |
+| INFRA-05 | Phase 2 | Pending |
 
 **Coverage:**
 - v2.7 requirements: 19 total
-- Mapped to phases: 0
-- Unmapped: 19
+- Mapped to phases: 19
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 — traceability table completed*
