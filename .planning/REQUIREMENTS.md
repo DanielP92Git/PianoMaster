@@ -30,8 +30,8 @@ Requirements for User Feedback milestone. Each maps to roadmap phases.
 
 ### Email Setup
 
-- [ ] **MAIL-01**: Brevo SENDER_EMAIL updated to new shared support Gmail
-- [ ] **MAIL-02**: Existing transactional emails (consent, weekly report) continue working with new sender
+- [x] **MAIL-01**: Brevo SENDER_EMAIL updated to new shared support Gmail
+- [x] **MAIL-02**: Existing transactional emails (consent, weekly report) continue working with new sender
 
 ### i18n
 
@@ -72,8 +72,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SPAM-05 | Phase 17 | Complete |
 | BACK-01 | Phase 16 | Complete |
 | BACK-02 | Phase 16 | Complete |
-| MAIL-01 | Phase 16 | Pending |
-| MAIL-02 | Phase 16 | Pending |
+| MAIL-01 | Phase 16 | Complete |
+| MAIL-02 | Phase 16 | Complete |
 | I18N-01 | Phase 17 | Complete |
 
 **Coverage:**
@@ -83,4 +83,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 — traceability complete after roadmap creation*
+*Last updated: 2026-03-23 — MAIL-01/MAIL-02 confirmed by human, all 15/15 complete*
