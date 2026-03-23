@@ -243,6 +243,85 @@
 
 ---
 
+## Milestone: v2.5 — Launch Prep
+
+**Shipped:** 2026-03-22
+**Phases:** 4 | **Plans:** 11
+
+### What Was Built
+- Fixed verify:patterns script (.js extension) and synchronized Supabase migration history
+- All 574 ESLint warnings eliminated (config fixes, dead code removal, justified suppressions)
+- COPPA hard-delete Edge Function: cron-triggered permanent deletion after 30-day grace, CASCADE across all tables
+- 89-item production QA checklist executed, 3 blockers found and resolved
+
+### What Worked
+- ESLint cleanup used systematic approach: fix configs, then auto-fixable, then manual, then justified suppressions
+- Hard-delete function reused established Edge Function patterns (cron secret, service role, Brevo email)
+- Production QA checklist caught real issues (consent email, deletion UI, PWA offline) before launch
+
+### What Was Inefficient
+- Missing MILESTONES.md entry for v2.5 — CLI created placeholder with 0 phases/plans
+- Build tooling fixes should have been caught earlier by CI
+
+### Patterns Established
+- Systematic ESLint approach: config > auto-fix > manual > suppress with justification
+- Production QA checklist as formal gate before milestone close
+- Hard-delete cron with HMAC audit log for COPPA compliance
+
+### Key Lessons
+1. Production QA checklists catch issues that automated tests miss (e.g., PWA offline caching)
+2. ESLint zero-warning policy is achievable with a systematic 3-day approach
+3. COPPA hard-delete needs end-to-end testing with real account lifecycle
+
+### Cost Observations
+- Model mix: ~80% opus, ~20% sonnet
+- Notable: 11 plans in 3 days — production hardening milestone
+
+---
+
+## Milestone: v2.6 — User Feedback
+
+**Shipped:** 2026-03-23
+**Phases:** 2 | **Plans:** 3
+
+### What Was Built
+- send-feedback Edge Function with JWT auth, input validation, DB rate limiting (3/hr), Brevo plain-text delivery
+- feedback_submissions table with INSERT-only RLS (no SELECT for authenticated users)
+- Four-state FeedbackForm component (idle/gated/form/success) with ParentGateMath COPPA gate
+- Honeypot anti-spam with silent rejection, 5-minute client cooldown, inline error banners
+- Full EN/HE i18n (17 keys each) with RTL layout support
+- Unified support Gmail sender for all transactional emails
+
+### What Worked
+- Backend-first phase ordering: Edge Function existed and was smoke-tested before UI work began
+- Reusing established patterns: ParentGateMath (from v1.9), Edge Function patterns (from v1.8/v2.5), Brevo email (from v1.1)
+- Four-state machine design: clean state transitions with no intermediate bugs
+- Honeypot + rate limiting + parent gate + JWT = no CAPTCHA needed (simpler UX)
+- Human UAT cycle caught RTL alignment issues that automated tests missed
+
+### What Was Inefficient
+- MAIL-01/MAIL-02 needed human confirmation (Brevo dashboard + live email) — audit flagged as "partial" until manually verified
+- Dead-code branch in FeedbackForm (data?.success check) shipped — unreachable due to Supabase client throwing on non-2xx
+- SPAM-05 test case was mislabeled (tested min-length, not cooldown) — actual cooldown covered by FORM-04 tests
+
+### Patterns Established
+- INSERT-only RLS + service role COUNT for rate limiting tables (no SELECT policy needed)
+- Silent honeypot rejection (fake 200 response to avoid tipping off bots)
+- onClick handler on submit button (not form onSubmit) for retry button compatibility
+- Recursive setTimeout cooldown with cleanup on unmount
+
+### Key Lessons
+1. External service verification (Brevo sender, email delivery) should be marked as human-checkpoint from the start, not discovered during audit
+2. Supabase functions-js client throws FunctionsHttpError for non-2xx — data?.success response parsing is unreachable dead code
+3. 2-phase milestones ship fast when patterns are well-established — 28 files in 2 days
+
+### Cost Observations
+- Model mix: ~80% opus, ~20% sonnet
+- Sessions: ~3
+- Notable: Smallest content milestone (2 phases, 3 plans) — fast turnaround from established patterns
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -264,6 +343,8 @@
 | v2.2 | 5 | 9 | Sharps & Flats content — audit-driven gap closure |
 | v2.3 | 6 | 6 | Launch readiness — production features in 1 day |
 | v2.4 | 5 | 10 | Content expansion — dual-track infrastructure + content |
+| v2.5 | 4 | 11 | Launch prep — ESLint zero-warning, COPPA hard-delete, QA checklist |
+| v2.6 | 2 | 3 | User feedback — backend-first, pattern reuse, 2-day turnaround |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -276,3 +357,4 @@
 7. Milestone audits catch real bugs — Phase 05 gap closure was audit-driven and prevented a false-positive ship
 8. Infrastructure-first ordering (rendering/generator fixes before content) prevents data-before-infrastructure bugs
 9. Keep phase directories in .planning/phases/ until milestone completion — early archival breaks CLI tools
+10. External service verification (email delivery, sender changes) should be explicit human-checkpoint tasks from planning, not discovered during audit

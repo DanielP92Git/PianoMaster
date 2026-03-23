@@ -1,12 +1,50 @@
 # Project Milestones: PianoApp
 
-## v2.5 Launch Prep (Shipped: 2026-03-22)
+## v2.6 User Feedback (Shipped: 2026-03-23)
 
-**Phases completed:** 0 phases, 0 plans, 0 tasks
+**Delivered:** Parent-gated feedback form in Settings with COPPA-compliant anti-spam (honeypot, rate limiting, cooldown), Supabase Edge Function delivering plain-text email to dedicated support inbox via Brevo, and unified support Gmail sender for all transactional emails.
+
+**Phases completed:** 16-17 (3 plans total)
 
 **Key accomplishments:**
 
-- (none recorded)
+- send-feedback Edge Function with JWT auth, input validation (type enum + 10-1000 chars), DB rate limiting (3/hr per user), and Brevo plain-text delivery
+- feedback_submissions table with INSERT-only RLS and service role COUNT for rate checks (message not stored in DB — COPPA-safe)
+- Four-state FeedbackForm component (idle/gated/form/success) with ParentGateMath COPPA gate
+- Honeypot anti-spam with silent rejection, 5-minute client cooldown timer, inline error banners for rate-limit/server/network errors
+- Full EN/HE i18n (17 keys each) with RTL layout support
+- Unified support Gmail sender for all transactional emails (consent, weekly report, account deletion, feedback)
+
+**Stats:**
+
+- 28 files changed (+4,737 / -57)
+- 2 phases, 3 plans, 29 commits
+- 2 days (2026-03-22 to 2026-03-23)
+- 86,905 LOC JavaScript/JSX/CSS/JSON
+- 15/15 requirements satisfied, 0 critical gaps
+- 228 tests passing (17 new)
+
+**Git range:** `843a5ed` to `328ef12`
+
+**Tech debt carried:** Dead-code branch in FeedbackForm.jsx (unreachable data?.success check); SPAM-05 test label mismatch (tests min-length not cooldown)
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
+## v2.5 Launch Prep (Shipped: 2026-03-22)
+
+**Delivered:** Build tooling fixes, ESLint zero-warning cleanup, COPPA hard-delete Edge Function for permanent account deletion after 30-day grace period, and 89-item production QA checklist execution.
+
+**Phases completed:** 12-15 (11 plans total)
+
+**Key accomplishments:**
+
+- Fixed verify:patterns script (.js extension) and synchronized Supabase migration history
+- All 574 ESLint warnings eliminated (config fixes, dead code removal, justified suppressions)
+- COPPA hard-delete Edge Function: cron-triggered permanent deletion after 30-day grace, CASCADE across all tables, LS cancel, Brevo confirmation email, HMAC audit log
+- 89-item production QA checklist executed, 3 blockers found and resolved (consent email, deletion UI, PWA offline)
+- 20/20 requirements delivered, 11 plans across 4 phases
 
 ---
 

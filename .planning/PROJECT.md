@@ -168,18 +168,15 @@ These capabilities exist, are working, and have been shipped:
 - CHAL-01/07: Daily challenge system with DB table, deterministic generation, dashboard card, game integration, bonus XP
 - 30/30 requirements delivered, 6 phases in 1 day
 
+**v2.6 User Feedback (shipped 2026-03-23):**
+- BACK-01/02: send-feedback Edge Function with JWT auth, input validation, Brevo plain-text delivery
+- SPAM-01-05: JWT gate, DB rate limiting (3/hr), honeypot silent rejection, server-side validation, 5-minute client cooldown
+- FORM-01-05: Four-state FeedbackForm (idle/gated/form/success) with ParentGateMath, type dropdown, character counter, inline error banners
+- MAIL-01/02: Unified support Gmail sender for all transactional emails
+- I18N-01: Full EN/HE translations (17 keys each) with RTL layout
+- 15/15 requirements delivered, 3 plans across 2 phases
+
 ### Active
-
-## Current Milestone: v2.6 User Feedback
-
-**Goal:** Add a parent-gated contact/feedback form in Settings so users can report bugs, suggest improvements, and request features before broader promotion.
-
-**Target features:**
-- Contact/feedback form in Settings page (parent-gated for COPPA)
-- 3 categories: Bug / Suggestion / Other + free text message
-- Supabase Edge Function sends submissions via Brevo to dedicated support Gmail
-- Shared support email replaces current Brevo sender (one inbox for outbound + inbound)
-- Full EN/HE i18n
 
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
@@ -244,7 +241,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.5 shipped 2026-03-22):**
+**Current State (after v2.6 shipped 2026-03-23):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
@@ -283,8 +280,11 @@ Explicitly excluded:
 - VexFlow key signature glyph rendering with accidental suppression for 7 keys (C, G, D, A, F, Bb, Eb major)
 - Fixed 6/8 compound beat model with correct 3+3 beam grouping and compound-aware MetronomeTrainer
 - 28 key signature trail nodes (14 treble + 14 bass) and 14 advanced rhythm nodes (6/8 + syncopation)
-- ~86,381 lines JavaScript/JSX/CSS/JSON across src/
-- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files | v2.4: 149 files
+- Parent-gated feedback form in Settings: four-state component (idle/gated/form/success), honeypot anti-spam, 5-minute cooldown, inline error banners
+- send-feedback Edge Function: JWT auth, input validation, DB rate limiting (3/hr), Brevo plain-text delivery
+- Unified support Gmail sender for all transactional emails (consent, weekly report, deletion, feedback)
+- ~86,905 lines JavaScript/JSX/CSS/JSON across src/
+- v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files | v2.4: 149 files | v2.6: 28 files
 
 **Tech Stack:**
 - Frontend: React 18, Vite 6, React Router v7
@@ -419,7 +419,13 @@ Explicitly excluded:
 | Mini-boss nodes: isBoss:false, category:'boss' | Distinct from true BOSS nodes; boss naming convention preserved | Good |
 | Default-deny gate for 42 new nodes | subscriptionConfig.js untouched; new nodes premium by default | Good |
 | RHYTHM_5/6 backfilled to UNITS object | Closed metadata gap between RHYTHM_4 and new RHYTHM_7/8 | Good |
+| Feedback form in Settings (not standalone page) | Parent-gated section matches existing parent-gated patterns | Good |
+| Brevo email only (no DB message storage) | COPPA-safe: no PII accumulation; email is ground truth for v1 | Good |
+| Service role for rate-check COUNT | No SELECT RLS on feedback_submissions; service role bypasses safely | Good |
+| Honeypot silent rejection (fake 200) | Avoids tipping off scrapers; bot thinks submission succeeded | Good |
+| onClick handler (not form onSubmit) | Supports retry button calling handleSubmit directly | Good |
+| Unified support Gmail for all emails | One inbox for support + feedback; simplifies sender management | Good |
 
 ---
 
-*Last updated: 2026-03-23 — Phase 17 complete: Feedback Form UI with four-state machine (idle/gated/form/success), parent gate, honeypot anti-spam, 5-minute cooldown, inline error banners, and full EN/HE i18n. v2.6 User Feedback milestone complete.*
+*Last updated: 2026-03-23 after v2.6 milestone*
