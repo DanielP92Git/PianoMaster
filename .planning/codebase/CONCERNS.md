@@ -1,199 +1,234 @@
 # Codebase Concerns
 
-**Analysis Date:** 2026-03-08
+**Analysis Date:** 2026-03-23
 
 ## Tech Debt
 
-**No Code Splitting (Critical Bundle Size):**
-- Issue: The entire application is eagerly imported in `src/App.jsx` with zero `React.lazy()` or dynamic `import()` usage. All 30+ routes, all 4 game components, teacher dashboard, and all services are bundled into a single chunk.
-- Files: `src/App.jsx` (lines 1-62, all static imports)
-- Impact: Main JS bundle is **3,946 KB** (1,291 KB gzipped). Vite warns about chunks >500 KB. First-load performance is severely degraded, especially on mobile devices (the primary target: 8-year-olds on tablets).
-- Fix approach: Add `React.lazy()` + `Suspense` for route-level code splitting. Minimum viable split:
-  - Game components: `SightReadingGame`, `NotesRecognitionGame`, `MetronomeTrainer`, `MemoryGame`
-  - Teacher dashboard: `TeacherDashboard`
-  - Secondary pages: `Achievements`, `PracticeSessions`, `Avatars`, `SubscribePage`, `ParentPortalPage`
-  - Trail page: `TrailMapPage`
+**God Components (SightReadingGame, NotesRecognitionGame, TeacherDashboard):**
+- Issue: Multiple components exceed 1,500 lines with excessive hook usage. `SightReadingGame.jsx` has 24 `useState`, 39 `useRef`, 46 `useCallback`, and 27 `useEffect` calls in a single component. `NotesRecognitionGame.jsx` has 26 `useState`, 19 `useRef`, and 20 `useEffect` calls.
+- Files:
+  - `src/components/games/sight-reading-game/SightReadingGame.jsx` (3,748 lines)
+  - `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (2,828 lines)
+  - `src/components/layout/TeacherDashboard.jsx` (2,700 lines)
+  - `src/components/games/shared/UnifiedGameSettings.jsx` (2,289 lines)
+  - `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` (1,772 lines)
+  - `src/components/games/rhythm-games/MetronomeTrainer.jsx` (~1,400 lines)
+- Impact: Extremely difficult to maintain, test, or review. The 41+ `exhaustive-deps` warnings indicate stale closures may already exist. Implicit state machines (setup -> playing -> feedback -> victory) are scattered across dozens of hooks with no centralized state transition logic.
+- Fix approach: Extract custom hooks for each game phase (setup, gameplay, scoring, feedback). Move state machines into dedicated hooks or use a state machine library (e.g., XState). Each game component should ideally be under 500 lines orchestrating extracted hooks. The `useVictoryState` hook (713 lines at `src/hooks/useVictoryState.js`) was successfully extracted from VictoryScreen and serves as a pattern for similar extractions.
 
 **Massive Piano Sound Assets in Source Tree:**
-- Issue: 90 WAV files totaling **433 MB** are committed to git under `src/assets/sounds/piano/`. Individual files range from 1-6 MB each. These are imported via dynamic `import()` in `NotesRecognitionGame.jsx` (lines 42-80+) which creates ~90 tiny wrapper JS chunks in the build output.
-- Files: `src/assets/sounds/piano/*.wav` (90 files, 433 MB), `src/components/games/notes-master-games/NotesRecognitionGame.jsx`
-- Impact: Git clone is enormous. Build output (`dist/`) is **275 MB**. Deployment bandwidth is wasted. Not gitignored.
-- Fix approach: Move WAV files to Supabase Storage or a CDN. Load on demand via URL rather than bundling. Use compressed formats (OGG/MP3) instead of WAV.
+- Issue: ~90 WAV files totaling ~433 MB are committed to git under `src/assets/sounds/piano/`. These are imported via dynamic `import()` in `NotesRecognitionGame.jsx` (lines 42-80+) creating ~90 tiny wrapper JS chunks in the build output.
+- Files: `src/assets/sounds/piano/*.wav`, `src/components/games/notes-master-games/NotesRecognitionGame.jsx`
+- Impact: Git clone is enormous. Build output is inflated. Deployment bandwidth is wasted.
+- Fix approach: Move WAV files to Supabase Storage or a CDN. Convert WAV to OGG/MP3 for 5-10x size reduction. Lazy-load only the octave range needed for each exercise.
 
-**God Components (SightReadingGame, NotesRecognitionGame):**
-- Issue: `SightReadingGame.jsx` is **3,737 lines** with 26 `useState` calls and 40 `useRef` calls. `NotesRecognitionGame.jsx` is **2,756 lines** with 91 hook calls. These files are extremely difficult to maintain, test, or review.
+**Duplicate `noteNameToMidi` Function:**
+- Issue: The `noteNameToMidi` function (converts note name like "C4" to MIDI number) is implemented independently in three files with slightly different signatures:
+  - `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` (line 45): accepts `pitch` string, uses local `NOTE_TO_SEMITONE` map
+  - `src/components/games/sight-reading-game/components/KlavierKeyboard.jsx` (line 22): accepts `note` string, uses inline semitone map
+  - `src/hooks/useAudioEngine.js` (line 448): uses `SEMITONE_MAP` inside `useCallback`
+- Impact: Bug fixes or enhancements to note parsing must be applied in three places. Inconsistencies between implementations could cause subtle pitch detection bugs.
+- Fix approach: Create a single `noteNameToMidi` utility in `src/utils/musicUtils.js` and import in all three locations.
+
+**Duplicate `verifyStudentDataAccess` Function:**
+- Issue: The authorization helper function is implemented in two files: the canonical version in `authorizationUtils.js` and a duplicate local copy in `apiDatabase.js`.
 - Files:
-  - `src/components/games/sight-reading-game/SightReadingGame.jsx` (3,737 lines)
-  - `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (2,756 lines)
-  - `src/components/layout/TeacherDashboard.jsx` (2,713 lines)
-  - `src/components/games/shared/UnifiedGameSettings.jsx` (2,292 lines)
-  - `src/components/games/sight-reading-game/components/VexFlowStaffDisplay.jsx` (1,729 lines)
-  - `src/components/games/rhythm-games/MetronomeTrainer.jsx` (1,437 lines)
-- Impact: Hard to isolate bugs, high risk of regressions, contributes to 41 `react-hooks/exhaustive-deps` warnings. The `useVictoryState` hook (713 lines at `src/hooks/useVictoryState.js`) was extracted from VictoryScreen but similar extraction has not been done for game components.
-- Fix approach: Extract custom hooks for each game phase (setup, gameplay, scoring, feedback). Move state machines into dedicated hooks. Each game component should ideally be <500 lines orchestrating extracted hooks.
-
-**ESLint: 23 Errors + 442 Warnings (465 total):**
-- Issue: Lint health has degraded from the known pre-v1.4 baseline (24 errors, 415 warnings) to 23 errors and 442 warnings. The warning count has increased by 27.
-- Files: Spread across the codebase. Breakdown:
-  - **177 `no-unused-vars`** warnings (unused imports, destructured variables) — across most files
-  - **41 `react-hooks/exhaustive-deps`** warnings — concentrated in game components
-  - **~150 `no-undef`** warnings in test files (`vi`, `expect`, `it`, `describe` not recognized — missing ESLint test environment config)
-  - **17 `react-refresh/only-export-components`** — files mixing component and non-component exports
-  - **5 `no-empty`** errors — empty catch/if blocks in `src/features/games/hooks/useGameTimer.js`, `src/hooks/useStreakWithAchievements.js`, `src/services/audioCacheService.js`, `src/services/practiceService.js`
-- Impact: Real bugs hide among noise. The `exhaustive-deps` warnings in game components may cause stale closure bugs.
-- Fix approach:
-  1. Add Vitest globals to ESLint config to eliminate ~150 test `no-undef` warnings
-  2. Run `eslint --fix` to auto-fix the 1 fixable error and 2 fixable warnings
-  3. Batch-remove unused imports (177 warnings)
-  4. Audit and fix `exhaustive-deps` warnings in game components (some are intentional suppression, some are real issues)
+  - `src/services/authorizationUtils.js` (line 19): Exported, returns `{ userId, isOwner, isTeacher }`, uses `.maybeSingle()`
+  - `src/services/apiDatabase.js` (line 14): Local/private, returns `true`, uses `.single()` (will throw on no match instead of returning null)
+- Impact: The `apiDatabase.js` version has subtly different error behavior (uses `.single()` which throws `PGRST116` vs `.maybeSingle()` which returns null). Six other service files correctly import from `authorizationUtils.js`.
+- Fix approach: Delete the duplicate in `apiDatabase.js` and import from `authorizationUtils.js` instead.
 
 **Duplicate Star Calculation Functions:**
-- Issue: The `calculateStars(percentage)` function (95%=3, 80%=2, 60%=1, 0=0) is duplicated in multiple files with identical logic.
+- Issue: The `calculateStars(percentage)` function (95%=3, 80%=2, 60%=1, 0=0) is duplicated with identical logic.
 - Files:
-  - `src/hooks/useVictoryState.js` (line 66, as `calculateStars`)
-  - `src/services/skillProgressService.js` (line 18, as `calculateStarsFromPercentage`)
-- Impact: If star thresholds change, both must be updated. Easy to miss one.
-- Fix approach: Create a single `calculateStars` utility in `src/utils/` and import it in both locations.
+  - `src/hooks/useVictoryState.js` (as `calculateStars`)
+  - `src/services/skillProgressService.js` (line 19, as `_calculateStarsFromPercentage`)
+- Impact: If star thresholds change, both must be updated.
+- Fix approach: Create a single `calculateStars` utility in `src/utils/` and import in both locations.
 
-**Debug Instrumentation Left in Production Code:**
-- Issue: `SightReadingGame.jsx` contains a debug logging system that sends data to a hardcoded localhost endpoint (`http://127.0.0.1:7242/ingest/636d1c48-b2ea-491c-896a-7ce448793071`). While gated behind `VITE_DEBUG_SR_LOGS`, the endpoint URL and UUID are baked into the production bundle.
-- Files: `src/components/games/sight-reading-game/SightReadingGame.jsx` (lines 52-70)
-- Impact: Leaks internal tooling details in production JS. The fetch calls silently fail but still execute.
-- Fix approach: Wrap the entire debug block in `if (import.meta.env.DEV)` so it is tree-shaken from production builds.
+**TeacherDashboard Eagerly Imported:**
+- Issue: `TeacherDashboard` (2,700 lines) is statically imported in `src/App.jsx` (line 30) instead of using `React.lazy()`. This loads the entire teacher UI for all users, including students who never see it.
+- Files: `src/App.jsx` (line 30)
+- Impact: Adds significant weight to the initial bundle for student users. All other heavy components (games, pages) have already been converted to `React.lazy()`.
+- Fix approach: Convert to `const TeacherDashboard = React.lazy(() => import("./components/layout/TeacherDashboard"))`.
 
-**Empty Function Bodies in Error Handlers:**
-- Issue: Several catch blocks and callbacks are empty, silently swallowing errors or leaving debug stubs.
+**Legacy CSS Card Classes:**
+- Issue: Both inline Tailwind glass card patterns and CSS utility classes coexist. The `index.css` defines `.card` (white/opaque, for light backgrounds), `.card-glass` (white/opaque), `.card-glass-legacy` (glassmorphism), `.card-compact`, and their hover variants. Most components use inline Tailwind classes like `bg-white/10 backdrop-blur-md border border-white/20 rounded-xl` instead of these CSS classes. The `.card` and `.card-glass` classes use opaque white backgrounds inappropriate for the app's purple gradient background.
 - Files:
-  - `src/features/games/hooks/useGameTimer.js` (lines 16-18): Empty `if`/`else` blocks in debug logger
-  - `src/hooks/useStreakWithAchievements.js` (lines 34-41): Empty bodies in achievement notification callbacks (no toast shown despite comment "Optionally show toast")
-  - `src/services/audioCacheService.js` (line 235): Empty catch block
-  - `src/services/practiceService.js` (line 229): Empty catch block
-- Impact: Errors are silently swallowed. Achievement notifications are not shown to users despite being fetched.
-- Fix approach: Either implement the intended behavior or add explicit `// intentionally empty` comments. For `useStreakWithAchievements`, implement the toast notifications.
+  - `src/index.css` (lines 387-418): CSS class definitions
+  - `src/components/streak/StreakDisplay.jsx` (lines 141, 217): Uses `card-compact`
+  - `src/components/layout/Dashboard.jsx` (lines 811, 828): Uses `card-hover`
+- Impact: Confusion about which pattern to use. Only 4 usages of CSS card classes vs. hundreds of inline Tailwind classes.
+- Fix approach: Either migrate all inline patterns to CSS classes, or remove the legacy CSS classes and standardize on inline Tailwind. The glass card pattern (`bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg`) is the correct pattern for the purple gradient background.
+
+**AchievementsLegacy Dead Code:**
+- Issue: `src/pages/AchievementsLegacy.jsx` is no longer imported by any file. The `Achievements.jsx` wrapper unconditionally renders `AchievementsRedesign` with a comment "To rollback: swap this import to AchievementsLegacy".
+- Files: `src/pages/AchievementsLegacy.jsx` (~350 lines), `src/pages/Achievements.jsx` (5 lines)
+- Impact: Dead code in the bundle. The rollback comment suggests it should have been deleted after the redesign was confirmed stable.
+- Fix approach: Delete `AchievementsLegacy.jsx` and remove the rollback comment.
+
+**Debug Instrumentation in SightReadingGame:**
+- Issue: `SightReadingGame.jsx` contains a `__srLog` system (23 call sites) sending JSON payloads to an endpoint, plus `console.debug` calls (11 occurrences) for `[NoteDetection]`, `[MetronomeTiming]`, and `[ScoreSyncStatus]`. The `__srLog` system is correctly gated behind `import.meta.env.DEV` (tree-shaken in production). However, the `console.debug` calls are NOT behind env guards and ship to production.
+- Files: `src/components/games/sight-reading-game/SightReadingGame.jsx` (lines 123-148 for debug constants, 23 `__srLog` calls, 11 `console.debug` calls)
+- Impact: Production users see debug output in browser console. Minor performance overhead from debug logging during gameplay.
+- Fix approach: Gate the `console.debug` calls behind the same env-var pattern, or replace with a no-op logger in production.
+
+**Excessive `console.*` Statements:**
+- Issue: 366 `console.log/error/warn/debug` calls across 90 source files. While some are appropriate error logging, many are development-time debug statements that shipped to production.
+- Files: Spread across the codebase (see Grep results). Top offenders: `src/services/apiTeacher.js` (30), `src/components/games/sight-reading-game/SightReadingGame.jsx` (19), `src/services/skillProgressService.js` (17), `src/hooks/useAudioEngine.js` (16), `src/services/practiceService.js` (13)
+- Impact: Noisy browser console in production. Potential information leakage (error details, internal state).
+- Fix approach: Introduce a structured logger utility (or use Sentry breadcrumbs) that is silent in production. Replace `console.*` calls with the logger. Keep `console.error` only for truly unexpected errors.
+
+**Overly Broad Supabase Queries (`select('*')`):**
+- Issue: 36 instances of `.select('*')` across 14 service files. This fetches all columns from database tables even when only 1-2 columns are needed.
+- Files: `src/services/apiDatabase.js` (11 occurrences), `src/services/apiAuth.js` (5), `src/services/apiTeacher.js` (4), `src/services/apiAccessories.js` (3), plus 10 other service files
+- Impact: Increased network transfer, slower query execution, and unnecessary data exposure. Particularly impactful for tables with JSONB columns or large text fields.
+- Fix approach: Replace `select('*')` with explicit column lists (e.g., `.select('id, student_name, total_xp')`). Start with high-traffic queries like `getStudentProgress`, `getStudentScores`.
 
 ## Known Bugs
 
-**React Hook Called Conditionally (TrailNodeModal):**
-- Symptoms: ESLint `react-hooks/rules-of-hooks` error. The component has `if (!node) return null;` on line 117 followed by `useEffect` on line 122. This violates React's rules of hooks.
-- Files: `src/components/trail/TrailNodeModal.jsx` (lines 117, 122)
-- Trigger: When `node` prop is null/undefined, the early return skips the `useEffect` call, causing hooks to be called in different order across renders.
-- Workaround: Currently works because the modal is typically only rendered when `node` is truthy, but this is a ticking time bomb.
-- Fix: Move the early return below all hook calls, or guard inside the `useEffect` body instead.
-
 **Failing Test: SightReadingGame.micRestart.test.jsx:**
-- Symptoms: Test suite has 1 failing test (89/90 passing). Error: "useAudioContext must be used inside AudioContextProvider" at line 177 of `SightReadingGame.jsx`.
+- Symptoms: Test suite has 1 failing test. Error: "useAudioContext must be used inside AudioContextProvider".
 - Files: `src/components/games/sight-reading-game/SightReadingGame.micRestart.test.jsx`
 - Trigger: The test renders `SightReadingGame` without wrapping it in `AudioContextProvider`.
-- Workaround: None — this test fails on every run.
+- Workaround: None -- this test fails on every run.
 - Fix: Add `AudioContextProvider` to the test's render wrapper, or mock `useAudioContext`.
 
-**fetchpriority Attribute Casing:**
-- Symptoms: ESLint error: "Unknown property 'fetchpriority' found, use 'fetchPriority' instead".
-- Files: `src/components/layout/Dashboard.jsx` (line 557)
-- Trigger: React expects `fetchPriority` (camelCase) but the code uses lowercase `fetchpriority`.
-- Fix: Change to `fetchPriority="high"`.
+**TODO Stub: `convertToEasyScoreFormat`:**
+- Symptoms: Function returns empty string, marked "TODO: Implement in Phase 2".
+- Files: `src/components/games/sight-reading-game/utils/vexflowHelpers.js` (line 63)
+- Trigger: If called, returns `''` instead of a valid EasyScore format string.
+- Workaround: The function is not currently called in production paths -- the VexFlow rendering uses direct StaveNote construction instead.
 
 ## Security Considerations
 
 **syncPracticeSessions Stub in Service Worker:**
-- Risk: The `sync` event handler at `public/sw.js` (line 320-326) calls `syncPracticeSessions()` which is a no-op stub (lines 580-588). If background sync is triggered, practice session data accumulated offline is lost.
-- Files: `public/sw.js` (lines 320-326, 580-588)
+- Risk: The `sync` event handler in `public/sw.js` calls `syncPracticeSessions()` which is a no-op stub. Practice data accumulated offline is silently lost.
+- Files: `public/sw.js`
 - Current mitigation: Background sync is rarely triggered since the app primarily works online.
 - Recommendations: Either implement proper offline sync with IndexedDB queueing, or remove the sync event listener to avoid false expectations.
 
-**OrientationController Falls Back to user_metadata:**
-- Risk: `src/App.jsx` `OrientationController` component (lines 186-192) falls through to `user?.user_metadata?.role` and `user?.app_metadata?.role` when deriving role. While this is only used for orientation locking (not authorization), it sets a bad pattern.
-- Files: `src/App.jsx` (lines 186-192)
-- Current mitigation: The derived role from `useUser()` is checked first and typically available. The metadata fallback is for edge cases during loading.
-- Recommendations: Remove the metadata fallback chain. Rely only on `derivedRole` from `useUser()` which verifies role from database.
-
 **Non-Migration Files in Migrations Directory:**
-- Risk: Debug and test SQL files are committed to `supabase/migrations/`:
-  - `DEBUG_check_teacher_status.sql`
-  - `TEST_direct_insert.sql`
-  - `README_USER_PREFERENCES.md`
-- Files: `supabase/migrations/DEBUG_check_teacher_status.sql`, `supabase/migrations/TEST_direct_insert.sql`
-- Current mitigation: These are not timestamped, so Supabase CLI may skip them.
-- Recommendations: Move or delete these files. They could confuse automated migration tooling and may contain debug queries not suitable for production.
+- Risk: Debug, test, and documentation files are committed to `supabase/migrations/`:
+  - `DEBUG_check_teacher_status.sql` -- contains diagnostic queries
+  - `TEST_direct_insert.sql` -- contains test INSERT statements
+  - `README_USER_PREFERENCES.md` -- markdown documentation
+- Files: `supabase/migrations/DEBUG_check_teacher_status.sql`, `supabase/migrations/TEST_direct_insert.sql`, `supabase/migrations/README_USER_PREFERENCES.md`
+- Current mitigation: Non-timestamped files are skipped by Supabase CLI.
+- Recommendations: Move or delete these files. They could confuse automated migration tooling.
 
 **Achievement Definitions Not i18n-ized:**
-- Risk: Achievement titles and descriptions in `src/services/achievementService.js` (lines 9-101) are hardcoded in English (e.g., "First Steps", "Building Habits"). Hebrew-language users see English text for achievements.
-- Files: `src/services/achievementService.js` (lines 9-101)
-- Current mitigation: None — this is a gap.
+- Risk: Achievement titles and descriptions in `src/services/achievementService.js` are hardcoded in English. Hebrew-language users see English text for achievements.
+- Files: `src/services/achievementService.js`
+- Current mitigation: None.
 - Recommendations: Replace string literals with i18n keys, similar to how `dailyGoalsService.js` uses `nameKey`/`descriptionKey`.
+
+**TeacherDashboard Entirely in English:**
+- Risk: The entire `TeacherDashboard.jsx` (2,700 lines) has zero `useTranslation` calls. All UI text is hardcoded in English. Teacher users who set Hebrew as their language still see an English dashboard.
+- Files: `src/components/layout/TeacherDashboard.jsx` (61+ hardcoded English strings)
+- Current mitigation: Teachers are assumed to be English-speaking, but this breaks the app's i18n contract.
+- Recommendations: Add `useTranslation` and move all strings to locale files.
+
+**Hardcoded Hebrew in NotesRecognitionGame:**
+- Risk: Three Hebrew string literals are embedded directly in JSX instead of using the i18n system:
+  - Line 1543: `בחר ${group.baseLabel}, ${group.baseLabel} דיאז או ${group.baseLabel} במול` (accessibility label)
+  - Line 2473: `מאזין לנגינה` ("Listening to playing" -- microphone status)
+  - Line 2686: `בחר גרסה עבור ${variantModal.baseLabel}` (variant picker label)
+- Files: `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (lines 1543, 2473, 2686)
+- Current mitigation: These are aria-labels and status text, so visual impact is limited.
+- Recommendations: Move to i18n keys for proper localization.
+
+**Hardcoded English in SightReadingGame UI Elements:**
+- Risk: Several SightReadingGame UI strings bypass the i18n system:
+  - Line 3617: "Choose Input Mode" modal title
+  - Line 3619: "Select how you want to play the notes:"
+  - Line 3725: "No Cheating, Maestro!" anti-cheat modal
+  - Line 3728: "Rapid key presses were detected..."
+- Files: `src/components/games/sight-reading-game/SightReadingGame.jsx` (lines 3617-3740)
+- Recommendations: Move to i18n keys.
+
+**Sentry sendDefaultPii: false (Good):**
+- PII is not sent to Sentry. The initialization at `src/services/sentryService.js` correctly sets `sendDefaultPii: false`. Only 4 files use `Sentry.captureException`: `src/services/skillProgressService.js`, `src/utils/xpSystem.js`, `src/utils/errorNotification.js`, `src/components/ErrorBoundary.jsx`. Error reporting is production-only and COPPA-conscious.
 
 ## Performance Bottlenecks
 
-**Single-Chunk Bundle (No Code Splitting):**
-- Problem: 3.9 MB single JS chunk means every user downloads all game code, teacher dashboard, subscription pages, etc. even if they only visit the dashboard.
-- Files: `src/App.jsx` (all eager imports), `vite.config.js` (no `manualChunks` config)
-- Cause: All routes are statically imported. No `React.lazy()`, no `manualChunks` in Vite config.
-- Improvement path: Route-based code splitting with `React.lazy()`. Consider also vendor chunking (VexFlow ~400KB, recharts, framer-motion as separate chunks).
-
-**433 MB WAV Files Bundled via Vite:**
-- Problem: Piano sound assets inflate the build to 275 MB and each WAV file gets a tiny JS wrapper chunk. This creates ~90 extra chunk files in `dist/assets/`.
-- Files: `src/assets/sounds/piano/` (90 WAV files), `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (dynamic imports)
-- Cause: WAV files are imported via `import()` which Vite processes as assets. No compression, no CDN.
+**Piano Sound Assets Bundled via Vite:**
+- Problem: ~90 WAV piano sound files inflate the build output. Each WAV file gets a tiny JS wrapper chunk. No compression, no CDN.
+- Files: `src/assets/sounds/piano/` (~90 WAV files), `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (dynamic imports)
+- Cause: WAV files are imported via `import()` which Vite processes as assets.
 - Improvement path: Host audio files externally (Supabase Storage, CDN). Convert WAV to OGG/MP3 for 5-10x size reduction. Lazy-load only the octave range needed for each exercise.
 
-**99 Database Migrations:**
-- Problem: The `supabase/migrations/` directory contains 99 SQL files. Many are iterative fixes (e.g., 5 files on the same day fixing teacher-student RLS). This slows migration runs and makes schema history hard to follow.
-- Files: `supabase/migrations/` (99 files)
+**TeacherDashboard in Main Bundle:**
+- Problem: `TeacherDashboard` (2,700 lines, with recharts and heavy teacher-only imports) is eagerly imported in `App.jsx`, adding to the initial bundle for all users including students.
+- Files: `src/App.jsx` (line 30)
+- Cause: Was not included in the code-splitting migration that converted game components and pages to `React.lazy()`.
+- Improvement path: Convert to `React.lazy()`.
+
+**100+ Database Migrations:**
+- Problem: The `supabase/migrations/` directory contains 100+ SQL files. Many are iterative fixes (e.g., 5 files on the same day fixing teacher-student RLS, files named `nuclear_security_fix.sql`, `ultimate_security_fix.sql`). Machine-name suffixes appear in filenames (e.g., `DESKTOP-8I4D76J`).
+- Files: `supabase/migrations/` (100+ files)
 - Cause: Rapid iterative development with fix-on-fix migration pattern.
-- Improvement path: Consolidate migrations into a squashed baseline migration for production. Keep individual files for development history.
+- Improvement path: Consolidate migrations into a squashed baseline migration for production. Keep individual files for development history only.
+
+**Multiple Polling Intervals:**
+- Problem: 16 different `refetchInterval` configurations across the app, ranging from 30 seconds to 5 minutes. Components on the dashboard poll at different rates creating a steady stream of network requests.
+- Files:
+  - `src/components/teacher/NotificationCenter.jsx`: 30 seconds
+  - `src/components/teacher/AssignmentManagement.jsx`: 30 seconds
+  - `src/components/dashboard/XPProgressCard.jsx`: 1 minute
+  - `src/components/layout/Dashboard.jsx`: 1 minute and 5 minutes (multiple queries)
+  - `src/components/layout/TeacherDashboard.jsx`: 2 minutes
+  - `src/components/teacher/RecordingsReview.jsx`: 3 minutes
+  - Various: 5 minutes
+- Cause: Each component independently chose its polling interval without coordination.
+- Improvement path: Standardize on 2-3 polling tiers (real-time: 30s for notifications; active: 2min for dashboards; background: 5min for scores). Consider Supabase real-time subscriptions for teacher notifications instead of polling.
 
 ## Fragile Areas
 
 **Game Component State Machines:**
 - Files:
-  - `src/components/games/sight-reading-game/SightReadingGame.jsx` (3,737 lines)
-  - `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (2,756 lines)
-  - `src/components/games/rhythm-games/MetronomeTrainer.jsx` (1,437 lines)
-- Why fragile: Each game has an implicit state machine (setup -> playing -> feedback -> victory) managed by 20-40 `useState`/`useRef` variables. State transitions are scattered across multiple `useEffect` and `useCallback` hooks. The 41 `exhaustive-deps` warnings indicate stale closures may already exist. Adding new features (e.g., a new game phase) requires modifying deeply nested callback chains.
+  - `src/components/games/sight-reading-game/SightReadingGame.jsx` (3,748 lines)
+  - `src/components/games/notes-master-games/NotesRecognitionGame.jsx` (2,828 lines)
+  - `src/components/games/rhythm-games/MetronomeTrainer.jsx` (~1,400 lines)
+- Why fragile: Each game has an implicit state machine (setup -> playing -> feedback -> victory) managed by 20-40 `useState`/`useRef` variables. State transitions are scattered across multiple `useEffect` and `useCallback` hooks. Adding new features (e.g., a new game phase) requires modifying deeply nested callback chains.
 - Safe modification: For any game change, verify the complete lifecycle: trail entry -> auto-start -> play -> victory -> next exercise -> back to trail. Test both timed and untimed modes, both keyboard and mic input.
-- Test coverage: Only `SightReadingGame.micRestart.test.jsx` exists for game components, and it fails. No unit tests for game state transitions, scoring logic, or exercise progression.
-
-**TrailNodeModal Conditional Hook:**
-- Files: `src/components/trail/TrailNodeModal.jsx` (lines 108-140)
-- Why fragile: The `if (!node) return null` on line 117 before `useEffect` on line 122 violates React hooks rules. Any change to the hook ordering or addition of new hooks above line 117 can cause a crash.
-- Safe modification: Move the guard inside effects, not before them.
-- Test coverage: No tests exist for `TrailNodeModal`.
+- Test coverage: `SightReadingGame.micRestart.test.jsx` exists but fails. `NotesRecognitionGame.autogrow.test.js` tests auto-grow note pool only. No tests for game state transitions, scoring logic, or exercise progression.
 
 **VictoryScreen + useVictoryState Chain:**
 - Files: `src/hooks/useVictoryState.js` (713 lines), `src/components/games/VictoryScreen.jsx`
-- Why fragile: The victory flow involves streak updates, achievement checks, XP awards, exercise progress updates, boss unlock detection, and node completion — all in sequence. Failure in any step can leave data inconsistent (e.g., XP awarded but progress not saved).
+- Why fragile: The victory flow involves streak updates, achievement checks, XP awards, exercise progress updates, boss unlock detection, and node completion -- all in sequence. Failure in any step can leave data inconsistent (e.g., XP awarded but progress not saved).
 - Safe modification: Add error boundaries around individual save operations. Ensure idempotency of `updateExerciseProgress` and `awardXP`.
 - Test coverage: No tests for `useVictoryState`.
 
 **Streak Service Module-Level State:**
 - Files: `src/services/streakService.js` (lines 9-20)
-- Why fragile: Uses module-level variables (`lastPracticeFetchInFlight`, `streakFetchFailed`, etc.) for deduplication/cooldown. These persist across component re-renders but reset on page reload. If a fetch fails, the 60-second cooldown can cause streak data to show 0 for a full minute.
+- Why fragile: Uses 9 module-level mutable variables (`lastPracticeFetchInFlight`, `streakFetchFailed`, `streakFetchInFlight`, etc.) for deduplication/cooldown. These persist across component re-renders but reset on page reload. If a fetch fails, the 60-second cooldown can cause streak data to show 0 for a full minute.
 - Safe modification: Any change to fetch logic must account for the cooldown/dedup state. Consider moving to React Query's built-in retry/dedup.
 - Test coverage: No tests.
 
+**Audio Infrastructure (iOS Safari):**
+- Files: `src/contexts/AudioContextProvider.jsx`, `src/hooks/useAudioEngine.js` (480+ lines), `src/hooks/useMicNoteInput.js`, `src/hooks/micInputPresets.js`, `src/utils/isIOSSafari.js`
+- Why fragile: iOS Safari requires special handling for AudioContext resumption, microphone access in standalone PWA mode, and audio interruption recovery. The `AudioInterruptedOverlay` component handles mid-session iOS audio context suspension. Multiple `.catch(() => {})` swallow errors in audio paths (`src/components/games/sight-reading-game/SightReadingGame.jsx` line 62, 2927; `src/utils/fanfareSound.js` line 71).
+- Safe modification: Never modify audio initialization without testing on an actual iOS device in both Safari and standalone PWA mode.
+
 ## Scaling Limits
 
-**Single JS Bundle:**
-- Current capacity: 3.9 MB (1.3 MB gzip), acceptable on broadband but slow on 3G mobile.
-- Limit: As features are added, the bundle will continue growing linearly since nothing is split.
-- Scaling path: Code splitting (see Performance section).
-
 **Supabase RLS Policy Complexity:**
-- Current capacity: 99 migrations, many with overlapping/superseding RLS policies.
+- Current capacity: 100+ migrations, many with overlapping/superseding RLS policies.
 - Limit: RLS policy evaluation becomes slower as more policies are added. Complex `has_active_subscription()` calls on every INSERT add latency.
 - Scaling path: Audit and consolidate RLS policies. Use composite indexes for commonly-queried patterns.
 
 ## Dependencies at Risk
 
 **Dual Icon Libraries (lucide-react + react-icons):**
-- Risk: Two icon libraries are bundled. `lucide-react` is used in 85 import lines, `react-icons` in only 4.
-- Impact: `react-icons` adds bundle weight for minimal usage (Google icon, microphone icons, clock/warning icons).
-- Migration plan: Replace 4 `react-icons` imports with Lucide equivalents and remove `react-icons` from `package.json`.
+- Risk: Two icon libraries are bundled. `lucide-react` is used extensively, `react-icons` in only ~4 import sites (`FaMicrophone`, `FaMicrophoneSlash`, etc.).
+- Impact: `react-icons` adds bundle weight for minimal usage.
+- Migration plan: Replace the 4 `react-icons` imports with Lucide equivalents and remove `react-icons` from `package.json`.
 
 **VexFlow v5 (Large Library):**
-- Risk: VexFlow is a substantial library (~400 KB) used only in sight-reading game. It is loaded for every user regardless of whether they play sight-reading.
-- Impact: Contributes significantly to the monolithic bundle size.
-- Migration plan: Dynamically import VexFlow only when entering sight-reading routes.
+- Risk: VexFlow is a substantial library (~400 KB) used only in sight-reading game components. It is now lazy-loaded via `React.lazy()` (was previously eager).
+- Impact: No longer affects initial bundle for non-sight-reading users. Still a large dependency for sight-reading routes.
+- Migration plan: Already mitigated by code splitting. Further optimization: dynamic import of VexFlow at the component level rather than at the route level.
 
 ## Missing Critical Features
 
@@ -202,13 +237,13 @@
 - Blocks: True offline-first PWA experience. Students on unreliable connections (school WiFi) may lose progress.
 
 **No Bundle Analysis CI Gate:**
-- Problem: No automated check prevents the bundle from growing. The bundle grew from 0 to 3.9 MB with no alarm.
+- Problem: No automated check prevents the bundle from growing. Code splitting was added but no budget enforcement exists.
 - Blocks: Performance budget enforcement.
 
 ## Test Coverage Gaps
 
 **Game Components (Critical Gap):**
-- What's not tested: All 4 game components have no meaningful test coverage. The sole test (`SightReadingGame.micRestart.test.jsx`) is broken.
+- What's not tested: All 4 game components have minimal or broken test coverage. The sole integration test (`SightReadingGame.micRestart.test.jsx`) fails due to missing provider wrapper.
 - Files: `src/components/games/sight-reading-game/SightReadingGame.jsx`, `src/components/games/notes-master-games/NotesRecognitionGame.jsx`, `src/components/games/rhythm-games/MetronomeTrainer.jsx`, `src/components/games/notes-master-games/MemoryGame.jsx`
 - Risk: Game logic changes (scoring, timing, exercise flow) cannot be validated automatically. Regressions are only caught by manual testing.
 - Priority: High
@@ -216,7 +251,7 @@
 **Services Layer:**
 - What's not tested: Most service files have no tests. Only `subscriptionService` and `webhookLogic` have test files.
 - Files: `src/services/streakService.js`, `src/services/skillProgressService.js`, `src/services/dailyGoalsService.js`, `src/services/achievementService.js`, `src/services/practiceService.js`, `src/services/rateLimitService.js`
-- Risk: Business logic changes (streak calculation, XP awards, rate limiting) are untested. The streak service has complex calendar math (grace windows, weekend pass) that is particularly error-prone.
+- Risk: Business logic changes (streak calculation, XP awards, rate limiting) are untested. The streak service has complex calendar math (grace windows, weekend pass, freeze logic) that is particularly error-prone.
 - Priority: High
 
 **VictoryScreen Flow:**
@@ -226,11 +261,12 @@
 - Priority: Medium
 
 **Overall Coverage Stats:**
-- 7 test files covering ~254 source files (2.7% file coverage)
-- 89 passing tests, 1 failing
+- 14 test files covering ~254 source files (5.5% file coverage) -- improved from 7 test files at last audit
+- New test files since last audit: `beamGroupUtils.test.js`, `patternBuilder.test.js`, `keySignatureUtils.test.js`, `rhythmGenerator.test.js`, `rhythmUnit7Redesigned.test.js`, `rhythmUnit8Redesigned.test.js`, `FeedbackForm.test.jsx`
+- 1 failing test (SightReadingGame.micRestart.test.jsx)
 - No coverage reporting configured (no `coverage` script or threshold)
-- Priority: Medium — add coverage reporting before adding tests so progress is measurable
+- Priority: Medium -- add coverage reporting before adding tests so progress is measurable
 
 ---
 
-*Concerns audit: 2026-03-08*
+*Concerns audit: 2026-03-23*
