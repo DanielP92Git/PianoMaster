@@ -1512,5 +1512,20 @@
         "body": "אם יש לכם שאלות בנוגע לתנאי שימוש אלה, אנא פנו אלינו בכתובת support@pianomaster.app."
       }
     }
+  },
+  "practice": {
+    "card": {
+      "title": "תרגול כלי נגינה",
+      "prompt": "תרגלת היום?",
+      "logButton": "!כן, תרגלתי",
+      "loggingText": "!נרשם",
+      "xpBadge": "XP 25+",
+      "completedHeading": "!תרגלת היום",
+      "xpEarned": "XP {{xp}}+ הרווחת"
+    },
+    "streak": {
+      "dayLabel": "ימי רצף תרגול",
+      "dayLabel_plural": "ימי רצף תרגול"
+    }
   }
 }

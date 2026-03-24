@@ -1505,5 +1505,20 @@
         "body": "If you have any questions about these Terms of Service, please contact us at support@pianomaster.app."
       }
     }
+  },
+  "practice": {
+    "card": {
+      "title": "Practice Instrument",
+      "prompt": "Did you practice today?",
+      "logButton": "Yes, I practiced!",
+      "loggingText": "Logged!",
+      "xpBadge": "+25 XP",
+      "completedHeading": "Practiced today!",
+      "xpEarned": "+{{xp}} XP earned"
+    },
+    "streak": {
+      "dayLabel": "day practice streak",
+      "dayLabel_plural": "day practice streak"
+    }
   }
 }
