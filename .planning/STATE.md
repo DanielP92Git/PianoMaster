@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to execute
-stopped_at: Completed 03-push-notification-integration/03-01-PLAN.md
-last_updated: "2026-03-24T13:30:42.105Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 03-push-notification-integration/03-02-PLAN.md
+last_updated: "2026-03-24"
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 8
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: .planning/PROJECT.md (updated 2026-03-23)
 
 ## Current Position
 
-Phase: 03 (push-notification-integration) — EXECUTING
-Plan: 2 of 2
+Phase: 03 (push-notification-integration) — COMPLETE
+Plan: 2 of 2 (all plans complete)
 
 ## Performance Metrics
 
@@ -77,6 +77,9 @@ v2.7 roadmap decisions:
 - [Phase 02-data-foundation-and-core-logging]: logState FSM (idle/logging/settled) prevents double-tap and manages 2-second hold (D-06, D-07)
 - [Phase 03-push-notification-integration]: Practice check-in priority: instrument_practice_logs queried before students_score so students without a practice log get check-in notification instead of app-usage reminder
 - [Phase 03-push-notification-integration]: last_notified_at updated in both practice check-in and app-usage branches, enforcing 1 notification/day invariant (D-05)
+- [Phase 03-push-notification-integration / Plan 02]: action string is 'yes-practiced' (not 'yes') to match UI-SPEC and avoid collision with generic 'open' action
+- [Phase 03-push-notification-integration / Plan 02]: replaceState before async logPractice() call — prevents URL param re-triggering on React re-renders
+- [Phase 03-push-notification-integration / Plan 02]: snoozed notification tag 'practice-checkin-snoozed' with data.snoozed:true prevents recursive snooze chain
 
 ### Roadmap Evolution
 
@@ -91,15 +94,15 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:30:42.097Z
-Stopped at: Completed 03-push-notification-integration/03-01-PLAN.md
+Last session: 2026-03-24
+Stopped at: Completed 03-push-notification-integration/03-02-PLAN.md (phase complete)
 Resume file: None
 
 **Next action:**
 
-- Phase 2 Plan 02 (PracticeLogCard UI + Dashboard wiring + i18n) is next to execute
-- Phase 3 context already gathered — ready for `/gsd:plan-phase 3` after Phase 2 completes
+- Phase 03 complete — all 2 plans executed (03-01 Edge Function + 03-02 SW + Dashboard)
+- Phase 04 (parent heatmap) or Phase 05 (production deployment) can proceed next
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-24 — auth i18n + language toggle shipped, Phase 2 Plan 01 complete*
+*Last updated: 2026-03-24 — Phase 03 push-notification-integration complete (both plans)*

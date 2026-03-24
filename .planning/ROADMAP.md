@@ -214,7 +214,7 @@ Plans:
 ### v2.7 Instrument Practice Tracking
 
 - [ ] **Phase 2: Data Foundation and Core Logging** - DB migration, practice service, dashboard card, and practice streak
-- [ ] **Phase 3: Push Notification Integration** - "Did you practice?" cron notification with iOS fallback and dedup
+- [x] **Phase 3: Push Notification Integration** - "Did you practice?" cron notification with iOS fallback and dedup (completed 2026-03-24)
 - [ ] **Phase 4: Parent Calendar Heatmap** - 52-week practice history heatmap in parent portal
 - [ ] **Phase 5: Milestone Celebrations** - Streak milestone celebrations at 5, 10, 21, and 30 days
 
@@ -253,7 +253,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md -- Edge Function practice check-in priority branch (Wave 1)
-- [ ] 03-02-PLAN.md -- SW notification handlers + Dashboard URL param auto-log + i18n (Wave 1)
+- [x] 03-02-PLAN.md -- SW notification handlers + Dashboard URL param auto-log + i18n (Wave 1)
 
 ### Phase 4: Parent Calendar Heatmap
 **Goal**: Parents can see a 52-week rolling calendar of their child's instrument practice history in the parent portal
@@ -306,7 +306,7 @@ Plans:
 | 17. Feedback Form UI | v2.6 | 1/1 | Complete | 2026-03-22 |
 | 1. Signup Flow Redesign | v2.7* | 4/4 | Complete | 2026-03-24 |
 | 2. Data Foundation and Core Logging | v2.7 | 0/2 | Planned | - |
-| 3. Push Notification Integration | v2.7 | 0/2 | Planned | - |
+| 3. Push Notification Integration | v2.7 | 2/2 | Complete   | 2026-03-24 |
 | 4. Parent Calendar Heatmap | v2.7 | 0/? | Not started | - |
 | 5. Milestone Celebrations | v2.7 | 0/? | Not started | - |
 
@@ -322,7 +322,7 @@ Plans:
 
 **Goal:** First trail treble node (middle C only) needs a more engaging game than basic note recognition with a single note. Ideas: (1) "Which of these notes is middle C?" quiz-style with visual note options, (2) Speed card game where note cards switch at a set speed — user taps only when middle C appears, wrong taps flash red but no punishment, just next card. Duolingo-kids style. Could expand to bass clef and rhythm first-nodes too.
 **Requirements:** TBD
-**Plans:** 0 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
