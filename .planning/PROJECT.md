@@ -255,7 +255,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.6 shipped 2026-03-23):**
+**Current State (after v2.7 Phase 4 — 2026-03-24):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
@@ -266,6 +266,9 @@ Explicitly excluded:
 - VictoryScreen redesigned with useVictoryState hook extraction and two-panel landscape layout
 - Free play awards XP via calculateFreePlayXP (10-50 XP range)
 - Teacher analytics display "X XP (Lv. Y)" format
+- Instrument practice tracking: daily log button, dedicated practice streak, 25 XP/day reward
+- Push notification check-in: "Did you practice?" cron notification with iOS URL param fallback
+- Parent calendar heatmap: 52-week react-activity-calendar grid in parent portal, emerald/gray binary coloring, RTL support
 - Weekly progress summaries, personal best badges, daily fun facts
 - Parent weekly email reports via Brevo with HMAC unsubscribe
 - Tiered celebration system (4 tiers) with accessibility-first design
@@ -459,4 +462,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-24 after Phase 3 (Push Notification Integration) complete*
+*Last updated: 2026-03-24 after Phase 4 (Parent Calendar Heatmap) complete*
