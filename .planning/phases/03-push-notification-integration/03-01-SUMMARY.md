@@ -98,6 +98,13 @@ None - no external service configuration required beyond what exists. The Edge F
 - Plan 02 (`03-02-PLAN.md`) can now add `practice-checkin` type handler to `sw.js` (notificationclick + action buttons + snooze)
 - Dashboard.jsx URL param detection (`?practice_checkin=1`) is the next integration point after sw.js
 
+## Self-Check: PASSED
+
+- FOUND: `.planning/phases/03-push-notification-integration/03-01-SUMMARY.md`
+- FOUND: commit `c8491ae` (feat task commit in worktree)
+- FOUND: commit `aa3f7ca` (docs metadata commit on main)
+- FOUND: `supabase/functions/send-daily-push/index.ts` with instrument_practice_logs query, practice-checkin tag/type, and practice_checkin=1 URL
+
 ---
 *Phase: 03-push-notification-integration*
 *Completed: 2026-03-24*
