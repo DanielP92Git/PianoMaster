@@ -9,16 +9,16 @@ Requirements for v2.7 milestone. Each maps to roadmap phases.
 
 ### Practice Logging
 
-- [ ] **LOG-01**: Student can log daily instrument practice via a button on the dashboard
-- [ ] **LOG-02**: Dashboard practice card shows today's log status (logged / not-yet / loading)
-- [ ] **LOG-03**: Student receives 25 XP for logging daily practice, once per day (idempotent via DB constraint)
+- [x] **LOG-01**: Student can log daily instrument practice via a button on the dashboard
+- [x] **LOG-02**: Dashboard practice card shows today's log status (logged / not-yet / loading)
+- [x] **LOG-03**: Student receives 25 XP for logging daily practice, once per day (idempotent via DB constraint)
 - [ ] **LOG-04**: Student sees practice milestone celebrations at 5, 10, 21, and 30 day streak milestones
 
 ### Practice Streak
 
-- [ ] **STRK-01**: Student has a dedicated instrument practice streak counter on the dashboard, visually distinct from app-usage streak (piano/music icon, not fire)
-- [ ] **STRK-02**: Instrument practice streak respects weekend freeze (Shabbat pass) matching existing behavior
-- [ ] **STRK-03**: Practice streak uses independent DB table and service (not merged with app-usage streak)
+- [x] **STRK-01**: Student has a dedicated instrument practice streak counter on the dashboard, visually distinct from app-usage streak (piano/music icon, not fire)
+- [x] **STRK-02**: Instrument practice streak respects weekend freeze (Shabbat pass) matching existing behavior
+- [x] **STRK-03**: Practice streak uses independent DB table and service (not merged with app-usage streak)
 
 ### Push Notifications
 
@@ -35,11 +35,11 @@ Requirements for v2.7 milestone. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Database migration creates `instrument_practice_logs` and `instrument_practice_streak` tables with RLS
-- [ ] **INFRA-02**: New tables include `ON DELETE CASCADE` for COPPA hard-delete compliance
-- [ ] **INFRA-03**: Practice log enforces one entry per student per day via UNIQUE constraint
-- [ ] **INFRA-04**: Practice log stores `local_date` (client timezone) to prevent timezone mismatch on streak/heatmap calculations
-- [ ] **INFRA-05**: Full EN/HE translations for all new UI elements
+- [x] **INFRA-01**: Database migration creates `instrument_practice_logs` and `instrument_practice_streak` tables with RLS
+- [x] **INFRA-02**: New tables include `ON DELETE CASCADE` for COPPA hard-delete compliance
+- [x] **INFRA-03**: Practice log enforces one entry per student per day via UNIQUE constraint
+- [x] **INFRA-04**: Practice log stores `local_date` (client timezone) to prevent timezone mismatch on streak/heatmap calculations
+- [x] **INFRA-05**: Full EN/HE translations for all new UI elements
 
 ## Future Requirements
 
@@ -80,13 +80,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LOG-01 | Phase 2 | Pending |
-| LOG-02 | Phase 2 | Pending |
-| LOG-03 | Phase 2 | Pending |
+| LOG-01 | Phase 2 | Complete |
+| LOG-02 | Phase 2 | Complete |
+| LOG-03 | Phase 2 | Complete |
 | LOG-04 | Phase 5 | Pending |
-| STRK-01 | Phase 2 | Pending |
-| STRK-02 | Phase 2 | Pending |
-| STRK-03 | Phase 2 | Pending |
+| STRK-01 | Phase 2 | Complete |
+| STRK-02 | Phase 2 | Complete |
+| STRK-03 | Phase 2 | Complete |
 | PUSH-01 | Phase 3 | Pending |
 | PUSH-02 | Phase 3 | Pending |
 | PUSH-03 | Phase 3 | Pending |
@@ -94,11 +94,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PUSH-05 | Phase 3 | Pending |
 | PARENT-01 | Phase 4 | Pending |
 | PARENT-02 | Phase 4 | Pending |
-| INFRA-01 | Phase 2 | Pending |
-| INFRA-02 | Phase 2 | Pending |
-| INFRA-03 | Phase 2 | Pending |
-| INFRA-04 | Phase 2 | Pending |
-| INFRA-05 | Phase 2 | Pending |
+| INFRA-01 | Phase 2 | Complete |
+| INFRA-02 | Phase 2 | Complete |
+| INFRA-03 | Phase 2 | Complete |
+| INFRA-04 | Phase 2 | Complete |
+| INFRA-05 | Phase 2 | Complete |
 
 **Coverage:**
 - v2.7 requirements: 19 total

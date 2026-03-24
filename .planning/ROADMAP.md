@@ -235,7 +235,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- DB migration + dateUtils + practiceLogService + practiceStreakService (Wave 1)
+- [x] 02-01-PLAN.md -- DB migration + dateUtils + practiceLogService + practiceStreakService (Wave 1)
 - [ ] 02-02-PLAN.md -- PracticeLogCard UI + Dashboard wiring + i18n translations (Wave 2)
 **UI hint**: yes
 
