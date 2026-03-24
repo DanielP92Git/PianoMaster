@@ -56,13 +56,13 @@ Source: `tailwind.config.js` `fontSize` scale. Game uses the glassmorphism dark 
 | Role | Size | Tailwind class | Weight | Line Height | Usage |
 |------|------|----------------|--------|-------------|-------|
 | Body / instruction | 16px | `text-base` | 400 (normal) | 1.7 | Tap instruction hint below conveyor |
-| Label / HUD pill | 14px | `text-sm` | 600 (semibold) | 1.6 | Score, combo counter, speed indicator |
+| Label / HUD pill | 14px | `text-sm` | 700 (bold) | 1.6 | Score, combo counter, speed indicator |
 | Heading / target note label | 20px | `text-xl` | 700 (bold) | 1.8 | "Catch Middle C!" headline above conveyor |
 | Display / combo burst | 28px | `text-3xl` (30px, nearest step) | 700 (bold) | 1.9 | Combo milestone celebration number |
 
 **Font stack for this component:** `font-rounded` (Nunito) for all text. `font-playful` (Fredoka One) reserved for combo burst number only — matches the arcade feel from CONTEXT.md's Duolingo-kids reference.
 
-**Weight rule:** Only 2 weights used — 400 (normal) and 700 (bold). Semibold (600) applied only via Tailwind's `font-semibold` for HUD labels.
+**Weight rule:** Only 2 weights used — 400 (normal) and 700 (bold). The visual difference between semibold and bold at 14px on a glass surface with white text against purple is negligible; bold is sufficient and consistent with the heading weight.
 
 ---
 
