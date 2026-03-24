@@ -6,7 +6,9 @@ import {
   Eye,
   EyeOff,
   ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { SocialLogin } from "./SocialLogin";
 import { useSignup } from "../../features/authentication/useSignup";
 import { AgeGate } from "./AgeGate";
@@ -43,6 +45,9 @@ function StepDots({ step, role }) {
 }
 
 function SignupForm({ onBackToLogin }) {
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
+
   // Step state: 'role' | 'birth-year' | 'parent-email' | 'credentials'
   const [step, setStep] = useState("role");
 
@@ -133,33 +138,15 @@ function SignupForm({ onBackToLogin }) {
   };
 
   // --- Title and subtitle per step ---
-  const getTitle = () => {
-    switch (step) {
-      case "role":
-        return "Join PianoMaster!";
-      case "birth-year":
-        return "Let's Get Started";
-      case "parent-email":
-        return "Almost There!";
-      case "credentials":
-      default:
-        return "Create Account";
-    }
+  const STEP_KEYS = {
+    "role": "role",
+    "birth-year": "birthYear",
+    "parent-email": "parentEmail",
+    "credentials": "credentials",
   };
-
-  const getSubtitle = () => {
-    switch (step) {
-      case "role":
-        return "How will you use PianoMaster?";
-      case "birth-year":
-        return "Tell us a bit about yourself";
-      case "parent-email":
-        return "One more optional step";
-      case "credentials":
-      default:
-        return "Join the musical journey!";
-    }
-  };
+  const stepKey = STEP_KEYS[step] || "credentials";
+  const title = t(`auth.signup.titles.${stepKey}`);
+  const subtitle = t(`auth.signup.subtitles.${stepKey}`);
 
   return (
     <div className="p-3 md:p-4 lg:p-5 relative z-10">
@@ -169,9 +156,9 @@ function SignupForm({ onBackToLogin }) {
       {/* Title + Subtitle */}
       <div className="text-center mb-3 md:mb-4">
         <h1 className="text-xl md:text-2xl lg:text-2xl font-bold bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient mb-0.5">
-          {getTitle()}
+          {title}
         </h1>
-        <p className="text-white/90 text-xs">{getSubtitle()}</p>
+        <p className="text-white/90 text-xs">{subtitle}</p>
       </div>
 
       {/* Step-based rendering */}
@@ -183,7 +170,7 @@ function SignupForm({ onBackToLogin }) {
               <button
                 type="button"
                 onClick={() => handleRoleSelect("student")}
-                className="w-full p-3 md:p-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-indigo-400/50 transition-all duration-300 text-left"
+                className="w-full p-3 md:p-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-indigo-400/50 transition-all duration-300 text-start"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-indigo-500/20">
@@ -191,10 +178,10 @@ function SignupForm({ onBackToLogin }) {
                   </div>
                   <div>
                     <span className="font-medium text-sm text-white block">
-                      Student
+                      {t("auth.signup.role.student")}
                     </span>
                     <span className="text-xs text-white/60">
-                      Learn and practice piano
+                      {t("auth.signup.role.studentDesc")}
                     </span>
                   </div>
                 </div>
@@ -202,7 +189,7 @@ function SignupForm({ onBackToLogin }) {
               <button
                 type="button"
                 onClick={() => handleRoleSelect("teacher")}
-                className="w-full p-3 md:p-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-purple-400/50 transition-all duration-300 text-left"
+                className="w-full p-3 md:p-4 rounded-xl border-2 border-white/20 bg-white/5 hover:bg-white/10 hover:border-purple-400/50 transition-all duration-300 text-start"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-purple-500/20">
@@ -210,10 +197,10 @@ function SignupForm({ onBackToLogin }) {
                   </div>
                   <div>
                     <span className="font-medium text-sm text-white block">
-                      Teacher
+                      {t("auth.signup.role.teacher")}
                     </span>
                     <span className="text-xs text-white/60">
-                      Teach and track students
+                      {t("auth.signup.role.teacherDesc")}
                     </span>
                   </div>
                 </div>
@@ -222,13 +209,13 @@ function SignupForm({ onBackToLogin }) {
 
             <div className="text-center text-xs">
               <span className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10 inline-block">
-                Already have an account?{" "}
+                {t("auth.signup.alreadyHaveAccount")}{" "}
                 <button
                   type="button"
                   onClick={onBackToLogin}
                   className="font-medium text-indigo-300 hover:text-indigo-200 transition-colors"
                 >
-                  Log in
+                  {t("auth.signup.logIn")}
                 </button>
               </span>
             </div>
@@ -282,8 +269,8 @@ function SignupForm({ onBackToLogin }) {
                       onClick={handleBackFromCredentials}
                       className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors mb-2"
                     >
-                      <ArrowLeft className="w-3.5 h-3.5" />
-                      Back
+                      {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+                      {t("auth.signup.back")}
                     </button>
 
                     <div className="space-y-2 md:space-y-2.5">
@@ -293,7 +280,7 @@ function SignupForm({ onBackToLogin }) {
                             htmlFor="signup-firstName"
                             className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
                           >
-                            First Name
+                            {t("auth.signup.credentials.firstName")}
                           </label>
                           <input
                             type="text"
@@ -302,7 +289,7 @@ function SignupForm({ onBackToLogin }) {
                             onChange={(e) => setFirstName(e.target.value)}
                             disabled={isPending}
                             className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                            placeholder="First name"
+                            placeholder={t("auth.signup.credentials.firstNamePlaceholder")}
                             required
                           />
                         </div>
@@ -311,7 +298,7 @@ function SignupForm({ onBackToLogin }) {
                             htmlFor="signup-lastName"
                             className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
                           >
-                            Last Name
+                            {t("auth.signup.credentials.lastName")}
                           </label>
                           <input
                             type="text"
@@ -320,7 +307,7 @@ function SignupForm({ onBackToLogin }) {
                             onChange={(e) => setLastName(e.target.value)}
                             disabled={isPending}
                             className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                            placeholder="Last name"
+                            placeholder={t("auth.signup.credentials.lastNamePlaceholder")}
                           />
                         </div>
                       </div>
@@ -329,7 +316,7 @@ function SignupForm({ onBackToLogin }) {
                           htmlFor="signup-email"
                           className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
                         >
-                          Email
+                          {t("auth.signup.credentials.email")}
                         </label>
                         <input
                           type="email"
@@ -338,7 +325,7 @@ function SignupForm({ onBackToLogin }) {
                           onChange={(e) => setEmail(e.target.value)}
                           disabled={isPending}
                           className="w-full px-2.5 md:px-3 py-1.5 md:py-2 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                          placeholder="Enter your email"
+                          placeholder={t("auth.signup.credentials.emailPlaceholder")}
                           required
                         />
                       </div>
@@ -347,7 +334,7 @@ function SignupForm({ onBackToLogin }) {
                           htmlFor="signup-password"
                           className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
                         >
-                          Password
+                          {t("auth.signup.credentials.password")}
                         </label>
                         <div className="relative">
                           <input
@@ -357,7 +344,7 @@ function SignupForm({ onBackToLogin }) {
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={isPending}
                             className="w-full px-2.5 md:px-3 py-1.5 md:py-2 pr-9 md:pr-10 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                            placeholder="Create a password"
+                            placeholder={t("auth.signup.credentials.passwordPlaceholder")}
                             required
                           />
                           <button
@@ -390,7 +377,7 @@ function SignupForm({ onBackToLogin }) {
                   {isPending ? (
                     <Loader2 className="h-4 w-4 md:h-5 md:w-5 animate-spin" />
                   ) : (
-                    `Create ${role === "teacher" ? "Teacher" : "Student"} Account`
+                    t(role === "teacher" ? "auth.signup.credentials.submitTeacher" : "auth.signup.credentials.submitStudent")
                   )}
                 </button>
 
@@ -402,7 +389,7 @@ function SignupForm({ onBackToLogin }) {
                     </div>
                     <div className="relative flex justify-center text-xs">
                       <span className="px-2.5 py-0.5 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10">
-                        Or join with
+                        {t("auth.signup.social.divider")}
                       </span>
                     </div>
                   </div>
@@ -412,37 +399,15 @@ function SignupForm({ onBackToLogin }) {
                   </div>
                 </div>
 
-                <p className="text-center text-[10px] text-white/50 leading-snug px-2">
-                  By signing up, you agree to our{" "}
-                  <a
-                    href="/terms"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-300 hover:text-indigo-200 underline"
-                  >
-                    Terms of Service
-                  </a>{" "}
-                  and{" "}
-                  <a
-                    href="/privacy"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-300 hover:text-indigo-200 underline"
-                  >
-                    Privacy Policy
-                  </a>
-                  .
-                </p>
-
                 <div className="text-center text-xs">
                   <span className="px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/80 border border-white/10 inline-block">
-                    Already have an account?{" "}
+                    {t("auth.signup.alreadyHaveAccount")}{" "}
                     <button
                       type="button"
                       onClick={onBackToLogin}
                       className="font-medium text-indigo-300 hover:text-indigo-200 transition-colors"
                     >
-                      Log in
+                      {t("auth.signup.logIn")}
                     </button>
                   </span>
                 </div>

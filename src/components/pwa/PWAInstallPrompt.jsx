@@ -12,7 +12,7 @@ const PWAInstallPrompt = () => {
   const [installer, setInstaller] = useState(null);
   const [isInstalling, setIsInstalling] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 
   const hasPermanentDismissal = () => {
     if (typeof window === "undefined") return false;
@@ -129,7 +129,7 @@ const PWAInstallPrompt = () => {
   }
 
   return (
-    <div className="install-prompt fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm">
+    <div className="install-prompt fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:max-w-sm" dir={i18n.dir()}>
       <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden animate-slide-up">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-3 text-white">
@@ -139,9 +139,9 @@ const PWAInstallPrompt = () => {
                 <span className="text-lg">🎹</span>
               </div>
               <div>
-                <h3 className="font-semibold text-sm">Install PianoMaster</h3>
+                <h3 className="font-semibold text-sm">{t("install.prompt.headerTitle")}</h3>
                 <p className="text-xs text-white/80">
-                  Get the full app experience
+                  {t("install.prompt.headerSubtitle")}
                 </p>
               </div>
             </div>
@@ -163,11 +163,10 @@ const PWAInstallPrompt = () => {
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-gray-900 mb-1">
-                Add to Home Screen
+                {t("install.prompt.addToHome")}
               </h4>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Install PianoMaster for quick access, offline practice, and a
-                native app experience.
+                {t("install.prompt.description")}
               </p>
             </div>
           </div>
@@ -178,25 +177,25 @@ const PWAInstallPrompt = () => {
               <div className="w-4 h-4 bg-green-100 rounded-full flex items-center justify-center">
                 <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               </div>
-              <span>Offline Practice</span>
+              <span>{t("install.prompt.offlinePractice")}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center">
                 <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               </div>
-              <span>Quick Access</span>
+              <span>{t("install.prompt.quickAccess")}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <div className="w-4 h-4 bg-purple-100 rounded-full flex items-center justify-center">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
               </div>
-              <span>Push Notifications</span>
+              <span>{t("install.prompt.pushNotifications")}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <div className="w-4 h-4 bg-orange-100 rounded-full flex items-center justify-center">
                 <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
               </div>
-              <span>No App Store</span>
+              <span>{t("install.prompt.noAppStore")}</span>
             </div>
           </div>
 
@@ -204,12 +203,12 @@ const PWAInstallPrompt = () => {
           <div className="flex items-center justify-center gap-4 mb-4 py-2">
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <Smartphone className="w-4 h-4" />
-              <span>Mobile</span>
+              <span>{t("install.prompt.mobile")}</span>
             </div>
             <div className="w-px h-4 bg-gray-300"></div>
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <Monitor className="w-4 h-4" />
-              <span>Desktop</span>
+              <span>{t("install.prompt.desktop")}</span>
             </div>
           </div>
 
@@ -229,12 +228,12 @@ const PWAInstallPrompt = () => {
               {isInstalling ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Installing...
+                  {t("install.prompt.installing")}
                 </>
               ) : (
                 <>
                   <Download className="w-4 h-4" />
-                  Install
+                  {t("install.prompt.installButton")}
                 </>
               )}
             </button>

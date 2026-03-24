@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
+import { AuthLanguageToggle } from "./AuthLanguageToggle";
 import { lockOrientation } from "../../utils/pwa";
 import { useTranslation } from "react-i18next";
 // import Spinner from "../ui/Spinner";
@@ -24,7 +25,9 @@ function LoginForm() {
   const [resetEmail, setResetEmail] = useState("");
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const { login, isPending } = useLogin();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
+  const isHebrew = i18n.language === "he";
   const {
     resetPassword,
     isPending: isResetPending,
@@ -81,7 +84,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className={`h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4 relative overflow-hidden ${isHebrew ? "font-hebrew" : ""}`} dir={i18n.dir()} lang={i18n.language}>
+      {/* Language toggle */}
+      <div className={`absolute top-4 z-20 ${isRTL ? "left-4" : "right-4"}`}>
+        <AuthLanguageToggle />
+      </div>
+
       <div className="w-full max-w-5xl h-full flex items-center justify-center relative py-4">
         <div
           className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-md md:max-w-2xl lg:max-w-5xl relative overflow-hidden h-[64vh] md:h-[66vh] lg:h-[70vh] max-h-[820px] min-h-[520px]"
@@ -346,23 +354,27 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Terms text pinned to bottom of screen on signup only */}
+      {/* Terms text pinned near bottom of screen on signup only */}
       {isSignup && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center px-4">
           <div className="pointer-events-auto max-w-xl text-center text-[11px] md:text-xs text-white/80 bg-white/10 backdrop-blur-sm border border-white/15 rounded-full px-3 py-1">
-            By joining, you agree to our{" "}
+            {t("auth.signup.terms.text")}{" "}
             <a
-              href="#"
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
               className="underline hover:text-indigo-300 transition-colors"
             >
-              Terms of Service
+              {t("auth.signup.terms.termsLink")}
             </a>{" "}
-            and{" "}
+            {t("auth.signup.terms.and")}{" "}
             <a
-              href="#"
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
               className="underline hover:text-indigo-300 transition-colors"
             >
-              Privacy Policy
+              {t("auth.signup.terms.privacyLink")}
             </a>
           </div>
         </div>

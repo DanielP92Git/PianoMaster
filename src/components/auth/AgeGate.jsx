@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Birth year collection step (simplified from full DOB for COPPA).
@@ -11,6 +12,8 @@ import { ArrowLeft } from "lucide-react";
  * @param {boolean} props.disabled - Disable inputs during submission
  */
 export function AgeGate({ onSubmit, onBack, disabled = false }) {
+  const { t, i18n } = useTranslation("common");
+  const isRTL = i18n.dir() === "rtl";
   const [year, setYear] = useState("");
   const [error, setError] = useState(null);
 
@@ -22,13 +25,13 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
     setError(null);
 
     if (!year) {
-      setError("Please select your birth year");
+      setError(t("auth.signup.ageGate.errorRequired"));
       return;
     }
 
     const parsedYear = parseInt(year, 10);
     if (isNaN(parsedYear) || parsedYear > currentYear || parsedYear < currentYear - 100) {
-      setError("Please select a valid birth year");
+      setError(t("auth.signup.ageGate.errorInvalid"));
       return;
     }
 
@@ -49,13 +52,13 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           disabled={disabled}
           className="flex items-center gap-1 text-sm text-white/70 hover:text-white transition-colors"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          Back
+          {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
+          {t("auth.signup.back")}
         </button>
       )}
 
       <div className="text-center mb-2">
-        <p className="text-white/90 text-sm">What year were you born?</p>
+        <p className="text-white/90 text-sm">{t("auth.signup.ageGate.question")}</p>
       </div>
 
       {error && (
@@ -73,7 +76,7 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           required
           aria-label="Birth year"
         >
-          <option value="" className="text-gray-900">Select year</option>
+          <option value="" className="text-gray-900">{t("auth.signup.ageGate.selectYear")}</option>
           {years.map((y) => (
             <option key={y} value={y} className="text-gray-900">
               {y}
@@ -88,7 +91,7 @@ export function AgeGate({ onSubmit, onBack, disabled = false }) {
           disabled={disabled}
           className="flex-1 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
-          Continue
+          {t("auth.signup.ageGate.continue")}
         </button>
       </div>
     </form>
