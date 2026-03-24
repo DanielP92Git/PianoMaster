@@ -266,7 +266,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 04-01-PLAN.md -- Data layer: getHistoricalLogs + buildHeatmapData + computeLongestStreak + tests (Wave 1)
+- [x] 04-01-PLAN.md -- Data layer: getHistoricalLogs + buildHeatmapData + computeLongestStreak + tests (Wave 1)
 - [ ] 04-02-PLAN.md -- PracticeHeatmapCard UI + ParentPortalPage wiring + i18n + visual verification (Wave 2)
 **UI hint**: yes
 

@@ -30,8 +30,8 @@ Requirements for v2.7 milestone. Each maps to roadmap phases.
 
 ### Parent Features
 
-- [ ] **PARENT-01**: Parent portal shows a calendar heatmap of the child's instrument practice history
-- [ ] **PARENT-02**: Calendar heatmap covers 52-week rolling window with child-appropriate coloring (no red for missed days)
+- [x] **PARENT-01**: Parent portal shows a calendar heatmap of the child's instrument practice history
+- [x] **PARENT-02**: Calendar heatmap covers 52-week rolling window with child-appropriate coloring (no red for missed days)
 
 ### Infrastructure
 
@@ -92,8 +92,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PUSH-03 | Phase 3 | Complete |
 | PUSH-04 | Phase 3 | Complete |
 | PUSH-05 | Phase 3 | Complete |
-| PARENT-01 | Phase 4 | Pending |
-| PARENT-02 | Phase 4 | Pending |
+| PARENT-01 | Phase 4 | Complete |
+| PARENT-02 | Phase 4 | Complete |
 | INFRA-01 | Phase 2 | Complete |
 | INFRA-02 | Phase 2 | Complete |
 | INFRA-03 | Phase 2 | Complete |

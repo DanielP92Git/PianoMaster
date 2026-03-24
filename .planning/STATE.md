@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to plan
-stopped_at: Phase 4 context gathered
-last_updated: "2026-03-24T14:11:05.073Z"
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md (data layer for parent calendar heatmap)
+last_updated: "2026-03-24T17:45:57.112Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 8
-  completed_plans: 8
+  total_plans: 10
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 03 — push-notification-integration
+**Current focus:** Phase 04 — parent-calendar-heatmap
 
 ## Current Position
 
-Phase: 999.1
-Plan: Not started
+Phase: 04 (parent-calendar-heatmap) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -80,6 +80,8 @@ v2.7 roadmap decisions:
 - [Phase 03-push-notification-integration / Plan 02]: action string is 'yes-practiced' (not 'yes') to match UI-SPEC and avoid collision with generic 'open' action
 - [Phase 03-push-notification-integration / Plan 02]: replaceState before async logPractice() call — prevents URL param re-triggering on React re-renders
 - [Phase 03-push-notification-integration / Plan 02]: snoozed notification tag 'practice-checkin-snoozed' with data.snoozed:true prevents recursive snooze chain
+- [Phase 04-parent-calendar-heatmap]: getHistoricalLogs uses session.user.id (not passed studentId) — enforces RLS; studentId prop on UI component is for TanStack Query key only
+- [Phase 04-parent-calendar-heatmap]: buildHeatmapData and computeLongestStreak are named exports (not on service object) — pure functions directly testable without Supabase mock
 
 ### Roadmap Evolution
 
@@ -94,9 +96,9 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-24T14:11:05.062Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-parent-calendar-heatmap/04-CONTEXT.md
+Last session: 2026-03-24T17:45:57.099Z
+Stopped at: Completed 04-01-PLAN.md (data layer for parent calendar heatmap)
+Resume file: None
 
 **Next action:**
 
