@@ -268,7 +268,8 @@ Explicitly excluded:
 - Teacher analytics display "X XP (Lv. Y)" format
 - Instrument practice tracking: daily log button, dedicated practice streak, 25 XP/day reward
 - Push notification check-in: "Did you practice?" cron notification with iOS URL param fallback
-- Parent calendar heatmap: 52-week react-activity-calendar grid in parent portal, emerald/gray binary coloring, RTL support
+- Parent calendar heatmap: monthly calendar grid in parent portal, emerald/gray binary coloring, RTL support
+- Milestone celebrations: emerald-themed modal with confetti at 5/10/21/30-day practice streaks, once-per-streak tracking
 - Weekly progress summaries, personal best badges, daily fun facts
 - Parent weekly email reports via Brevo with HMAC unsubscribe
 - Tiered celebration system (4 tiers) with accessibility-first design
@@ -462,4 +463,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-24 after Phase 4 (Parent Calendar Heatmap) complete*
+*Last updated: 2026-03-25 after Phase 5 (Milestone Celebrations) complete*
