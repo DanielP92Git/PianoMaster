@@ -24,6 +24,10 @@ import { practiceLogService } from '../../services/practiceLogService';
 import { practiceStreakService } from '../../services/practiceStreakService';
 import { getCalendarDate } from '../../utils/dateUtils';
 import { useMotionTokens } from '../../utils/useMotionTokens';
+import { MilestoneCelebrationModal } from '../celebrations/MilestoneCelebrationModal';
+
+// Milestone thresholds — module-level constant (never changes, avoids dep churn)
+const MILESTONES = [5, 10, 21, 30];
 
 const PracticeLogCard = () => {
   const { t, i18n } = useTranslation('common');
@@ -35,6 +39,9 @@ const PracticeLogCard = () => {
   // Local state for button/card transition (per D-06, D-07)
   // 'idle' -> 'logging' -> 'settled'
   const [logState, setLogState] = useState('idle');
+
+  // Celebration state — set when a milestone streak is reached (D-01, D-02)
+  const [celebrationMilestone, setCelebrationMilestone] = useState(null);
 
   const localDate = getCalendarDate();
 
@@ -79,9 +86,22 @@ const PracticeLogCard = () => {
           // Update practice streak when a new log was inserted
           const weekendPass = queryClient.getQueryData(['streak-state', user?.id]);
           const wpEnabled = weekendPass?.weekendPassEnabled ?? false;
-          await practiceStreakService.updatePracticeStreak(localDate, wpEnabled);
+          const streakResult = await practiceStreakService.updatePracticeStreak(localDate, wpEnabled);
           queryClient.invalidateQueries({ queryKey: ['practice-streak', user?.id] });
           queryClient.invalidateQueries({ queryKey: ['xp'] }); // refresh XP display
+
+          // Milestone detection (D-01, D-02, D-07)
+          // CRITICAL: use streakResult (fresh return value), NOT streakData (stale cache) — Pitfall 3
+          const { streakCount: newStreakCount, lastMilestoneCelebrated } = streakResult;
+          const eligible = MILESTONES.filter(
+            (m) => newStreakCount >= m && m > (lastMilestoneCelebrated ?? 0)
+          );
+          if (eligible.length > 0) {
+            const milestone = eligible.at(-1); // largest eligible milestone (D-07: >= not ===)
+            setCelebrationMilestone(milestone);
+            // Fire-and-forget: update DB so milestone won't re-trigger (D-14, Pitfall 4)
+            practiceStreakService.updateLastMilestoneCelebrated(milestone).catch(() => {});
+          }
         }
         // Instant cache update — prevents loading flash when navigating back (D-08)
         queryClient.setQueryData(['practice-log-today', user?.id, localDate], { logged: true });
@@ -96,13 +116,25 @@ const PracticeLogCard = () => {
     });
   }, [logState, localDate, user?.id, logMutation, queryClient]);
 
+  const handleDismissCelebration = useCallback(() => {
+    setCelebrationMilestone(null);
+  }, []);
+
   // ─── State 1: Loading skeleton ───────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-md">
-        <div className="mb-3 h-4 w-24 animate-pulse rounded bg-white/10" />
-        <div className="h-10 animate-pulse rounded-lg bg-white/5" />
-      </div>
+      <>
+        <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-md">
+          <div className="mb-3 h-4 w-24 animate-pulse rounded bg-white/10" />
+          <div className="h-10 animate-pulse rounded-lg bg-white/5" />
+        </div>
+        {celebrationMilestone && (
+          <MilestoneCelebrationModal
+            milestone={celebrationMilestone}
+            onClose={handleDismissCelebration}
+          />
+        )}
+      </>
     );
   }
 
@@ -112,102 +144,118 @@ const PracticeLogCard = () => {
   // ─── State 4: Completed (practiced today) ────────────────────────────────────
   if (isCompleted) {
     return (
-      <div className="rounded-xl border border-emerald-400/30 bg-white/10 p-4 shadow-lg backdrop-blur-md">
+      <>
+        <div className="rounded-xl border border-emerald-400/30 bg-white/10 p-4 shadow-lg backdrop-blur-md">
+          {/* Header */}
+          <div className="flex items-center gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
+            <Piano className="h-4 w-4 text-emerald-400" aria-hidden="true" />
+            <h3 className="text-sm font-bold text-white">{t('practice.card.title')}</h3>
+          </div>
+
+          {/* Completed content area */}
+          <div className="mt-3 rounded-lg border border-green-400/30 bg-green-500/10 p-3">
+            <div className="flex items-center gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
+              <CheckCircle className="h-5 w-5 shrink-0 text-green-400" aria-hidden="true" />
+              <div>
+                <div className="text-sm font-bold text-green-300">
+                  {t('practice.card.completedHeading')}
+                </div>
+                <div className="text-xs text-white/60">
+                  {t('practice.card.xpEarned', { xp: 25 })}
+                </div>
+              </div>
+            </div>
+
+            {/* Streak row — only visible when streak >= 1 */}
+            {streakCount > 0 && (
+              <div className="mt-2 flex items-center gap-1" dir={isRTL ? 'rtl' : 'ltr'}>
+                <Piano className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+                <span className="text-xs text-white/60">
+                  {streakCount} {t('practice.streak.dayLabel', { count: streakCount })}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+        {celebrationMilestone && (
+          <MilestoneCelebrationModal
+            milestone={celebrationMilestone}
+            onClose={handleDismissCelebration}
+          />
+        )}
+      </>
+    );
+  }
+
+  // ─── State 2 + 3: Active prompt / Logging in progress ────────────────────────
+  return (
+    <>
+      <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-md">
         {/* Header */}
         <div className="flex items-center gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
           <Piano className="h-4 w-4 text-emerald-400" aria-hidden="true" />
           <h3 className="text-sm font-bold text-white">{t('practice.card.title')}</h3>
         </div>
 
-        {/* Completed content area */}
-        <div className="mt-3 rounded-lg border border-green-400/30 bg-green-500/10 p-3">
-          <div className="flex items-center gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
-            <CheckCircle className="h-5 w-5 shrink-0 text-green-400" aria-hidden="true" />
-            <div>
-              <div className="text-sm font-bold text-green-300">
-                {t('practice.card.completedHeading')}
-              </div>
-              <div className="text-xs text-white/60">
-                {t('practice.card.xpEarned', { xp: 25 })}
-              </div>
-            </div>
-          </div>
+        {/* Content area */}
+        <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3">
+          <p className="text-xs text-white/70">{t('practice.card.prompt')}</p>
 
           {/* Streak row — only visible when streak >= 1 */}
           {streakCount > 0 && (
             <div className="mt-2 flex items-center gap-1" dir={isRTL ? 'rtl' : 'ltr'}>
               <Piano className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+              <span className="text-sm font-bold text-green-300">{streakCount}</span>
               <span className="text-xs text-white/60">
-                {streakCount} {t('practice.streak.dayLabel', { count: streakCount })}
+                {t('practice.streak.dayLabel', { count: streakCount })}
               </span>
             </div>
           )}
         </div>
-      </div>
-    );
-  }
 
-  // ─── State 2 + 3: Active prompt / Logging in progress ────────────────────────
-  return (
-    <div className="rounded-xl border border-white/20 bg-white/10 p-4 shadow-lg backdrop-blur-md">
-      {/* Header */}
-      <div className="flex items-center gap-2" dir={isRTL ? 'rtl' : 'ltr'}>
-        <Piano className="h-4 w-4 text-emerald-400" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-white">{t('practice.card.title')}</h3>
-      </div>
-
-      {/* Content area */}
-      <div className="mt-3 rounded-lg border border-white/10 bg-white/5 p-3">
-        <p className="text-xs text-white/70">{t('practice.card.prompt')}</p>
-
-        {/* Streak row — only visible when streak >= 1 */}
-        {streakCount > 0 && (
-          <div className="mt-2 flex items-center gap-1" dir={isRTL ? 'rtl' : 'ltr'}>
-            <Piano className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
-            <span className="text-sm font-bold text-green-300">{streakCount}</span>
-            <span className="text-xs text-white/60">
-              {t('practice.streak.dayLabel', { count: streakCount })}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Log button */}
-      <button
-        className={`mt-3 w-full min-h-[44px] rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors ${
-          isLogging
-            ? 'cursor-default bg-emerald-700'
-            : 'bg-emerald-600 hover:bg-emerald-700'
-        }`}
-        onClick={handleLog}
-        disabled={isLogging}
-        aria-disabled={isLogging}
-      >
-        {isLogging ? (
-          <span className="flex items-center justify-center gap-2">
-            {/* CheckCircle with scale-in animation (skipped for reduced-motion) */}
-            {reduce ? (
-              <CheckCircle className="h-4 w-4 text-white" aria-hidden="true" />
-            ) : (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.15, ease: 'easeOut' }}
-                style={{ display: 'inline-flex' }}
-              >
+        {/* Log button */}
+        <button
+          className={`mt-3 w-full min-h-[44px] rounded-lg px-4 py-2 text-sm font-bold text-white transition-colors ${
+            isLogging
+              ? 'cursor-default bg-emerald-700'
+              : 'bg-emerald-600 hover:bg-emerald-700'
+          }`}
+          onClick={handleLog}
+          disabled={isLogging}
+          aria-disabled={isLogging}
+        >
+          {isLogging ? (
+            <span className="flex items-center justify-center gap-2">
+              {/* CheckCircle with scale-in animation (skipped for reduced-motion) */}
+              {reduce ? (
                 <CheckCircle className="h-4 w-4 text-white" aria-hidden="true" />
-              </motion.span>
-            )}
-            {t('practice.card.loggingText')}
-            <span className="rounded-full bg-emerald-400/20 px-2 py-1 text-xs font-bold text-emerald-300">
-              {t('practice.card.xpBadge')}
+              ) : (
+                <motion.span
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.15, ease: 'easeOut' }}
+                  style={{ display: 'inline-flex' }}
+                >
+                  <CheckCircle className="h-4 w-4 text-white" aria-hidden="true" />
+                </motion.span>
+              )}
+              {t('practice.card.loggingText')}
+              <span className="rounded-full bg-emerald-400/20 px-2 py-1 text-xs font-bold text-emerald-300">
+                {t('practice.card.xpBadge')}
+              </span>
             </span>
-          </span>
-        ) : (
-          t('practice.card.logButton')
-        )}
-      </button>
-    </div>
+          ) : (
+            t('practice.card.logButton')
+          )}
+        </button>
+      </div>
+      {celebrationMilestone && (
+        <MilestoneCelebrationModal
+          milestone={celebrationMilestone}
+          onClose={handleDismissCelebration}
+        />
+      )}
+    </>
   );
 };
 
