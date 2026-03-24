@@ -261,9 +261,13 @@ Plans:
 **Requirements**: PARENT-01, PARENT-02
 **Success Criteria** (what must be TRUE):
   1. Parent visits the parent portal and sees a calendar heatmap spanning the past 52 weeks of their child's practice activity
-  2. Days the child practiced are shown in a distinct color (indigo); days not yet practiced use a neutral gray — no red is used for missed days
+  2. Days the child practiced are shown in emerald green; days not yet practiced use a neutral gray — no red is used for missed days
   3. The heatmap renders correctly for Hebrew locale (most recent week is rightmost, RTL direction respected)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 04-01-PLAN.md -- Data layer: getHistoricalLogs + buildHeatmapData + computeLongestStreak + tests (Wave 1)
+- [ ] 04-02-PLAN.md -- PracticeHeatmapCard UI + ParentPortalPage wiring + i18n + visual verification (Wave 2)
 **UI hint**: yes
 
 ### Phase 5: Milestone Celebrations
@@ -307,7 +311,7 @@ Plans:
 | 1. Signup Flow Redesign | v2.7* | 4/4 | Complete | 2026-03-24 |
 | 2. Data Foundation and Core Logging | v2.7 | 0/2 | Planned | - |
 | 3. Push Notification Integration | v2.7 | 2/2 | Complete   | 2026-03-24 |
-| 4. Parent Calendar Heatmap | v2.7 | 0/? | Not started | - |
+| 4. Parent Calendar Heatmap | v2.7 | 0/2 | Planned | - |
 | 5. Milestone Celebrations | v2.7 | 0/? | Not started | - |
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
@@ -328,4 +332,4 @@ Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
 
 ---
-*Last updated: 2026-03-24 — Phase 3 planned (2 plans)*
+*Last updated: 2026-03-24 — Phase 4 planned (2 plans)*
