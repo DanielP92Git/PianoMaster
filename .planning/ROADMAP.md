@@ -275,10 +275,14 @@ Plans:
 **Depends on**: Phase 2
 **Requirements**: LOG-04
 **Success Criteria** (what must be TRUE):
-  1. Student who logs their 5th, 10th, 21st, or 30th consecutive practice day sees a milestone celebration (reuses existing VictoryScreen celebration system)
+  1. Student who logs their 5th, 10th, 21st, or 30th consecutive practice day sees a milestone celebration (lightweight modal overlay with ConfettiEffect)
   2. Milestone celebration is skippable and respects reduced-motion preferences
   3. Each milestone triggers at most once per streak (celebrating the 10-day milestone again on day 11 does not repeat)
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+- [ ] 05-01-PLAN.md -- Migration + service extension + i18n keys (Wave 1)
+- [ ] 05-02-PLAN.md -- MilestoneCelebrationModal + PracticeLogCard wiring + visual verification (Wave 2)
 **UI hint**: yes
 
 ---
@@ -312,7 +316,7 @@ Plans:
 | 2. Data Foundation and Core Logging | v2.7 | 0/2 | Planned | - |
 | 3. Push Notification Integration | v2.7 | 2/2 | Complete   | 2026-03-24 |
 | 4. Parent Calendar Heatmap | v2.7 | 2/2 | Complete   | 2026-03-24 |
-| 5. Milestone Celebrations | v2.7 | 0/? | Not started | - |
+| 5. Milestone Celebrations | v2.7 | 0/2 | Planned | - |
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
 
@@ -332,4 +336,4 @@ Plans:
 - [ ] TBD (promote with /gsd:review-backlog when ready)
 
 ---
-*Last updated: 2026-03-24 — Phase 4 planned (2 plans)*
+*Last updated: 2026-03-24 — Phase 5 planned (2 plans)*
