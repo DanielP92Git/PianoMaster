@@ -1417,9 +1417,11 @@
       "statDayPlural": "days",
       "emptyHeading": "No practice logged yet",
       "emptyBody": "Practice days will appear here as your child logs practice each day.",
-      "ariaLabel": "52-week practice calendar",
+      "ariaLabel": "Monthly practice calendar",
       "loadingLabel": "Loading practice history",
-      "errorMessage": "Could not load practice history. Pull to refresh or try again later."
+      "errorMessage": "Could not load practice history. Pull to refresh or try again later.",
+      "prevMonth": "Previous month",
+      "nextMonth": "Next month"
     }
   },
   "micInterrupted": {

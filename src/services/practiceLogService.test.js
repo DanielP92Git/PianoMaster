@@ -17,7 +17,7 @@ vi.mock('../utils/xpSystem', () => ({
 
 import supabase from './supabase';
 import { awardXP } from '../utils/xpSystem';
-import { practiceLogService, buildHeatmapData, computeLongestStreak } from './practiceLogService';
+import { practiceLogService, computeLongestStreak } from './practiceLogService';
 
 describe('practiceLogService', () => {
   beforeEach(() => {
@@ -262,75 +262,6 @@ describe('practiceLogService', () => {
       await expect(
         practiceLogService.getHistoricalLogs('2025-03-24', '2026-03-24')
       ).rejects.toMatchObject({ code: '42P01' });
-    });
-  });
-
-  // ============================================================
-  // buildHeatmapData() tests
-  // ============================================================
-
-  describe('buildHeatmapData()', () => {
-    // Use a fixed end date for deterministic tests
-    const FIXED_END = new Date(2026, 2, 24); // 2026-03-24
-
-    it('returns exactly 364 entries for a 52-week window', () => {
-      const result = buildHeatmapData([], FIXED_END);
-      expect(result).toHaveLength(364);
-    });
-
-    it('first entry date is 363 days before endDate, last entry is endDate', () => {
-      const result = buildHeatmapData([], FIXED_END);
-      expect(result[0].date).toBe('2025-03-26'); // 363 days before 2026-03-24
-      expect(result[363].date).toBe('2026-03-24');
-    });
-
-    it('practiced dates have count=1, level=1 and non-practiced have count=0, level=0', () => {
-      const practicedDates = [{ practiced_on: '2026-03-24' }, { practiced_on: '2026-03-20' }];
-      const result = buildHeatmapData(practicedDates, FIXED_END);
-
-      const lastEntry = result[result.length - 1];
-      expect(lastEntry.date).toBe('2026-03-24');
-      expect(lastEntry.count).toBe(1);
-      expect(lastEntry.level).toBe(1);
-
-      const march20 = result.find((e) => e.date === '2026-03-20');
-      expect(march20.count).toBe(1);
-      expect(march20.level).toBe(1);
-
-      const march23 = result.find((e) => e.date === '2026-03-23');
-      expect(march23.count).toBe(0);
-      expect(march23.level).toBe(0);
-    });
-
-    it('empty input returns 364 entries all at level=0', () => {
-      const result = buildHeatmapData([], FIXED_END);
-      expect(result.every((e) => e.level === 0)).toBe(true);
-      expect(result.every((e) => e.count === 0)).toBe(true);
-    });
-
-    it('all entries have date in YYYY-MM-DD format', () => {
-      const result = buildHeatmapData([], FIXED_END);
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      expect(result.every((e) => dateRegex.test(e.date))).toBe(true);
-    });
-
-    it('entries are sorted ascending by date', () => {
-      const result = buildHeatmapData([], FIXED_END);
-      for (let i = 1; i < result.length; i++) {
-        expect(result[i].date > result[i - 1].date).toBe(true);
-      }
-    });
-
-    it('duplicate practiced_on values in input are deduped via Set', () => {
-      const practicedDates = [
-        { practiced_on: '2026-03-24' },
-        { practiced_on: '2026-03-24' }, // duplicate
-        { practiced_on: '2026-03-24' }, // duplicate
-      ];
-      const result = buildHeatmapData(practicedDates, FIXED_END);
-      const march24 = result.filter((e) => e.date === '2026-03-24');
-      expect(march24).toHaveLength(1);
-      expect(march24[0].level).toBe(1);
     });
   });
 

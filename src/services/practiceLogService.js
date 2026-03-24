@@ -129,40 +129,6 @@ export const practiceLogService = {
 };
 
 /**
- * Transform a list of practiced dates into the full 364-day array required
- * by react-activity-calendar v3.
- *
- * The library requires ALL days in the range (no gaps). Non-practiced days
- * get { count: 0, level: 0 }; practiced days get { count: 1, level: 1 }.
- *
- * @param {Array<{ practiced_on: string } | string>} practicedDates
- *   Array of DB rows ({ practiced_on: "YYYY-MM-DD" }) or plain "YYYY-MM-DD" strings.
- * @param {Date} [endDate=new Date()] - Last day of the 52-week window (local timezone).
- * @returns {Array<{ date: string, count: number, level: number }>} Exactly 364 entries, sorted ascending.
- */
-export function buildHeatmapData(practicedDates, endDate = new Date()) {
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
-  const end = new Date(endDate);
-  const start = new Date(end.getTime() - 363 * MS_PER_DAY);
-
-  const practicedSet = new Set(
-    practicedDates.map((r) => (typeof r === 'string' ? r : r.practiced_on))
-  );
-
-  const result = [];
-  for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
-    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const practiced = practicedSet.has(dateStr);
-    result.push({
-      date: dateStr,
-      count: practiced ? 1 : 0,
-      level: practiced ? 1 : 0,
-    });
-  }
-  return result;
-}
-
-/**
  * Compute the longest consecutive-day practice chain from a list of practiced dates.
  *
  * Handles: duplicates (via Set dedup in sort), month boundaries, unsorted input.
