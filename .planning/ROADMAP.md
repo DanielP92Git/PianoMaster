@@ -282,7 +282,7 @@ Plans:
 
 Plans:
 - [x] 05-01-PLAN.md -- Migration + service extension + i18n keys (Wave 1)
-- [ ] 05-02-PLAN.md -- MilestoneCelebrationModal + PracticeLogCard wiring + visual verification (Wave 2)
+- [x] 05-02-PLAN.md -- MilestoneCelebrationModal + PracticeLogCard wiring + visual verification (Wave 2)
 **UI hint**: yes
 
 ---

@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to execute
-stopped_at: Completed 05-01-PLAN.md (milestone celebrations data foundation)
-last_updated: "2026-03-24T21:16:59.702Z"
+status: Phase complete — ready for verification
+stopped_at: "Completed 05-02-PLAN.md (milestone celebration modal + PracticeLogCard wiring) — Task 3 checkpoint:human-verify pending"
+last_updated: "2026-03-24T21:26:26.476Z"
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -86,6 +86,7 @@ v2.7 roadmap decisions:
 - [Phase 04]: showMonthLabels=false in RTL mode to avoid SVG text double-mirror — heatmap functional without month labels in v1 RTL (PARENT-F02 deferred)
 - [Phase 05-milestone-celebrations]: Omit last_milestone_celebrated from upsert on streak increment — Supabase only updates columns you include, preserving existing value without extra read
 - [Phase 05-milestone-celebrations]: Return lastMilestoneCelebrated: 0 directly from reset path — value is deterministic after streak break, no DB re-read needed
+- [Phase 05-milestone-celebrations]: MILESTONES constant at module level avoids dep churn; handleClose clears auto-timer before calling onClose (Pitfall 6); ConfettiEffect as fragment sibling not nested
 
 ### Roadmap Evolution
 
@@ -100,8 +101,8 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-24T21:16:59.695Z
-Stopped at: Completed 05-01-PLAN.md (milestone celebrations data foundation)
+Last session: 2026-03-24T21:26:26.469Z
+Stopped at: Completed 05-02-PLAN.md (milestone celebration modal + PracticeLogCard wiring) — Task 3 checkpoint:human-verify pending
 Resume file: None
 
 **Next action:**
