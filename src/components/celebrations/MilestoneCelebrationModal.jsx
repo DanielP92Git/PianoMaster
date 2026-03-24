@@ -15,6 +15,7 @@
  */
 
 import { useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { Trophy } from 'lucide-react';
@@ -57,7 +58,7 @@ export function MilestoneCelebrationModal({ milestone, onClose }) {
   // Confetti tier: 'epic' for 30-day (D-12 discretion), 'full' for others
   const confettiTier = milestone === 30 ? 'epic' : 'full';
 
-  return (
+  return createPortal(
     <>
       {/* Confetti — rendered as sibling, NOT nested inside modal card (anti-pattern per RESEARCH.md) */}
       <ConfettiEffect tier={confettiTier} />
@@ -103,13 +104,13 @@ export function MilestoneCelebrationModal({ milestone, onClose }) {
           <button
             className="min-h-[48px] w-full rounded-full bg-emerald-500 px-6 py-3 text-base font-bold text-white shadow-lg hover:bg-emerald-600"
             onClick={handleClose}
-            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           >
             {t('practice.milestone.dismiss')}
           </button>
         </motion.div>
       </motion.div>
-    </>
+    </>,
+    document.body
   );
 }
