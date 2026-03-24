@@ -213,10 +213,10 @@ Plans:
 
 ### v2.7 Instrument Practice Tracking
 
-- [ ] **Phase 2: Data Foundation and Core Logging** - DB migration, practice service, dashboard card, and practice streak
+- [x] **Phase 2: Data Foundation and Core Logging** - DB migration, practice service, dashboard card, and practice streak (completed 2026-03-24)
 - [x] **Phase 3: Push Notification Integration** - "Did you practice?" cron notification with iOS fallback and dedup (completed 2026-03-24)
 - [x] **Phase 4: Parent Calendar Heatmap** - 52-week practice history heatmap in parent portal (completed 2026-03-24)
-- [ ] **Phase 5: Milestone Celebrations** - Streak milestone celebrations at 5, 10, 21, and 30 days
+- [x] **Phase 5: Milestone Celebrations** - Streak milestone celebrations at 5, 10, 21, and 30 days (completed 2026-03-25)
 
 ### v2.8 Introductory Single-Note Game
 
@@ -240,7 +240,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md -- DB migration + dateUtils + practiceLogService + practiceStreakService (Wave 1)
-- [ ] 02-02-PLAN.md -- PracticeLogCard UI + Dashboard wiring + i18n translations (Wave 2)
+- [x] 02-02-PLAN.md -- PracticeLogCard UI + Dashboard wiring + i18n translations (Wave 2)
 **UI hint**: yes
 
 ### Phase 3: Push Notification Integration
@@ -324,10 +324,10 @@ Plans:
 | 16. Backend & Email Infrastructure | v2.6 | 2/2 | Complete | 2026-03-22 |
 | 17. Feedback Form UI | v2.6 | 1/1 | Complete | 2026-03-22 |
 | 1. Signup Flow Redesign | v2.7* | 4/4 | Complete | 2026-03-24 |
-| 2. Data Foundation and Core Logging | v2.7 | 0/2 | Planned | - |
+| 2. Data Foundation and Core Logging | v2.7 | 2/2 | Complete | 2026-03-24 |
 | 3. Push Notification Integration | v2.7 | 2/2 | Complete   | 2026-03-24 |
 | 4. Parent Calendar Heatmap | v2.7 | 2/2 | Complete   | 2026-03-24 |
-| 5. Milestone Celebrations | v2.7 | 0/2 | Planned | - |
+| 5. Milestone Celebrations | v2.7 | 2/2 | Complete | 2026-03-25 |
 | 1. Introductory Single-Note Game | v2.8 | 0/? | Not started | - |
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
