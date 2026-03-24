@@ -22,9 +22,9 @@ Requirements for v2.7 milestone. Each maps to roadmap phases.
 
 ### Push Notifications
 
-- [ ] **PUSH-01**: Student receives a daily "Did you practice today?" push notification (cron-triggered, separate from existing timer reminder)
-- [ ] **PUSH-02**: Practice check-in notification skips students who already logged for the day
-- [ ] **PUSH-03**: Notification coordinates with existing push system to prevent multiple notifications on the same day
+- [x] **PUSH-01**: Student receives a daily "Did you practice today?" push notification (cron-triggered, separate from existing timer reminder)
+- [x] **PUSH-02**: Practice check-in notification skips students who already logged for the day
+- [x] **PUSH-03**: Notification coordinates with existing push system to prevent multiple notifications on the same day
 - [ ] **PUSH-04**: On Android/desktop, notification shows interactive action buttons ("Yes, I practiced!" / "Not yet")
 - [ ] **PUSH-05**: On iOS, tapping the notification opens the app with a practice log prompt (URL param fallback as primary path)
 
@@ -87,9 +87,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRK-01 | Phase 2 | Complete |
 | STRK-02 | Phase 2 | Complete |
 | STRK-03 | Phase 2 | Complete |
-| PUSH-01 | Phase 3 | Pending |
-| PUSH-02 | Phase 3 | Pending |
-| PUSH-03 | Phase 3 | Pending |
+| PUSH-01 | Phase 3 | Complete |
+| PUSH-02 | Phase 3 | Complete |
+| PUSH-03 | Phase 3 | Complete |
 | PUSH-04 | Phase 3 | Pending |
 | PUSH-05 | Phase 3 | Pending |
 | PARENT-01 | Phase 4 | Pending |

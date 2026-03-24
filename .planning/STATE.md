@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to plan
-stopped_at: Phase 3 context gathered
-last_updated: "2026-03-24T12:38:59.547Z"
+status: Ready to execute
+stopped_at: Completed 03-push-notification-integration/03-01-PLAN.md
+last_updated: "2026-03-24T13:30:42.105Z"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 8
+  completed_plans: 7
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 02 — data-foundation-and-core-logging
+**Current focus:** Phase 03 — push-notification-integration
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (push-notification-integration) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -50,6 +50,17 @@ Phase 1 (Signup Flow Redesign) decisions:
 - [Phase 01-signup-flow-redesign / Plan 03]: Role selection is Step 1; STUDENT_STEPS/TEACHER_STEPS drive StepDots + back-navigation; isUnder13 derived at render time from birthYear integer
 - [Phase 01-signup-flow-redesign]: Removed misleading email confirmation toast — accounts are immediately active (D-13)
 
+Auth i18n & language toggle (2026-03-24, post-Phase 1):
+
+- LoginForm.jsx now sets `dir`, `lang`, and Hebrew font on root div — RTL works on auth pages
+- Created AuthLanguageToggle component (EN/HE pill, top-right corner of login/signup)
+- SignupForm.jsx, AgeGate.jsx, ParentEmailStep.jsx: all hardcoded English strings replaced with `t()` calls
+- Full Hebrew translations added under `auth.signup.*` keys in both locale files
+- RTL fixes: role cards use `text-start`, back arrows swap ArrowLeft/ArrowRight by direction
+- PWAInstallPrompt.jsx: all 12 hardcoded strings translated under `install.prompt.*` keys
+- Terms line (LoginForm bottom) now uses translation keys and proper link targets (/terms, /privacy)
+- SignupForm.test.jsx: added `import "../../i18n"` so tests work with translated strings (11/11 pass)
+
 v2.7 roadmap decisions:
 
 - Phase 2 is the root dependency: both new DB tables must exist before any UI, notification, or heatmap work begins
@@ -64,6 +75,8 @@ v2.7 roadmap decisions:
 - [Phase 02-data-foundation-and-core-logging]: instrument_practice_streak is SEPARATE from current_streak — independent instrument streak per D-12
 - [Phase 02-data-foundation-and-core-logging]: XP award failure is non-blocking — practice log recorded even if awardXP throws
 - [Phase 02-data-foundation-and-core-logging]: logState FSM (idle/logging/settled) prevents double-tap and manages 2-second hold (D-06, D-07)
+- [Phase 03-push-notification-integration]: Practice check-in priority: instrument_practice_logs queried before students_score so students without a practice log get check-in notification instead of app-usage reminder
+- [Phase 03-push-notification-integration]: last_notified_at updated in both practice check-in and app-usage branches, enforcing 1 notification/day invariant (D-05)
 
 ### Roadmap Evolution
 
@@ -78,16 +91,15 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-24T12:38:59.533Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-push-notification-integration/03-CONTEXT.md
+Last session: 2026-03-24T13:30:42.097Z
+Stopped at: Completed 03-push-notification-integration/03-01-PLAN.md
+Resume file: None
 
 **Next action:**
 
-- Run `/gsd:plan-phase 2` to plan Phase 2: Data Foundation and Core Logging
-- Phase 2 covers: INFRA-01 through INFRA-05 (DB migration + RLS), LOG-01/02/03 (service + card + XP), STRK-01/02/03 (streak counter + weekend freeze + separate table)
-- Research flag resolved: all Phase 2 patterns mirror existing codebase directly (streakService.js, award_xp, RLS conventions)
+- Phase 2 Plan 02 (PracticeLogCard UI + Dashboard wiring + i18n) is next to execute
+- Phase 3 context already gathered — ready for `/gsd:plan-phase 3` after Phase 2 completes
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-24 — v2.7 roadmap created, Phases 2-5 defined*
+*Last updated: 2026-03-24 — auth i18n + language toggle shipped, Phase 2 Plan 01 complete*
