@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to execute
-stopped_at: Completed 04-01-PLAN.md (data layer for parent calendar heatmap)
-last_updated: "2026-03-24T17:45:57.112Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 04-02 Task 1 — awaiting human verification at checkpoint (Task 2)
+last_updated: "2026-03-24T17:53:57.859Z"
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
 ---
 
 # Project State
@@ -82,6 +82,8 @@ v2.7 roadmap decisions:
 - [Phase 03-push-notification-integration / Plan 02]: snoozed notification tag 'practice-checkin-snoozed' with data.snoozed:true prevents recursive snooze chain
 - [Phase 04-parent-calendar-heatmap]: getHistoricalLogs uses session.user.id (not passed studentId) — enforces RLS; studentId prop on UI component is for TanStack Query key only
 - [Phase 04-parent-calendar-heatmap]: buildHeatmapData and computeLongestStreak are named exports (not on service object) — pure functions directly testable without Supabase mock
+- [Phase 04]: v3 prop names used: showColorLegend={false} and showTotalCount={false} — RESEARCH.md corrections applied to UI-SPEC's incorrect v2 names
+- [Phase 04]: showMonthLabels=false in RTL mode to avoid SVG text double-mirror — heatmap functional without month labels in v1 RTL (PARENT-F02 deferred)
 
 ### Roadmap Evolution
 
@@ -96,8 +98,8 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-24T17:45:57.099Z
-Stopped at: Completed 04-01-PLAN.md (data layer for parent calendar heatmap)
+Last session: 2026-03-24T17:53:57.848Z
+Stopped at: Completed 04-02 Task 1 — awaiting human verification at checkpoint (Task 2)
 Resume file: None
 
 **Next action:**

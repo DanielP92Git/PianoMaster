@@ -215,7 +215,7 @@ Plans:
 
 - [ ] **Phase 2: Data Foundation and Core Logging** - DB migration, practice service, dashboard card, and practice streak
 - [x] **Phase 3: Push Notification Integration** - "Did you practice?" cron notification with iOS fallback and dedup (completed 2026-03-24)
-- [ ] **Phase 4: Parent Calendar Heatmap** - 52-week practice history heatmap in parent portal
+- [x] **Phase 4: Parent Calendar Heatmap** - 52-week practice history heatmap in parent portal (completed 2026-03-24)
 - [ ] **Phase 5: Milestone Celebrations** - Streak milestone celebrations at 5, 10, 21, and 30 days
 
 ---
@@ -267,7 +267,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md -- Data layer: getHistoricalLogs + buildHeatmapData + computeLongestStreak + tests (Wave 1)
-- [ ] 04-02-PLAN.md -- PracticeHeatmapCard UI + ParentPortalPage wiring + i18n + visual verification (Wave 2)
+- [x] 04-02-PLAN.md -- PracticeHeatmapCard UI + ParentPortalPage wiring + i18n + visual verification (Wave 2)
 **UI hint**: yes
 
 ### Phase 5: Milestone Celebrations
@@ -311,7 +311,7 @@ Plans:
 | 1. Signup Flow Redesign | v2.7* | 4/4 | Complete | 2026-03-24 |
 | 2. Data Foundation and Core Logging | v2.7 | 0/2 | Planned | - |
 | 3. Push Notification Integration | v2.7 | 2/2 | Complete   | 2026-03-24 |
-| 4. Parent Calendar Heatmap | v2.7 | 0/2 | Planned | - |
+| 4. Parent Calendar Heatmap | v2.7 | 2/2 | Complete   | 2026-03-24 |
 | 5. Milestone Celebrations | v2.7 | 0/? | Not started | - |
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
