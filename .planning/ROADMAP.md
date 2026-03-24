@@ -52,10 +52,15 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 ## Phase Details
 
 ### Phase 1: Introductory Single-Note Game (v2.8)
-**Goal**: First trail treble node (middle C only) needs a more engaging game than basic note recognition with a single note. Ideas: (1) "Which of these notes is middle C?" quiz-style with visual note options, (2) Speed card game where note cards switch at a set speed — user taps only when middle C appears, wrong taps flash red but no punishment, just next card. Duolingo-kids style. Could expand to bass clef and rhythm first-nodes too.
+**Goal**: Build a speed card game for single-note trail nodes (treble_1_1 and bass_1_1) where note cards slide across a staff and the child taps to catch the target note. Replaces the trivially-easy note_recognition exercise with an engaging, Duolingo-kids-style arcade experience.
 **Depends on**: v2.7 completion
-**Requirements**: TBD
-**Plans**: TBD
+**Requirements**: REQ-01 through REQ-09 (see 01-RESEARCH.md)
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Wire NOTE_CATCH exercise type through trail system (constants, node data, routing, i18n)
+- [ ] 01-02-PLAN.md — Build NoteSpeedCards game component with conveyor animation and VictoryScreen integration
+
 **UI hint**: yes
 
 ---
@@ -65,9 +70,9 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-5. Instrument Practice Tracking | v2.7 | 12/12 | Complete | 2026-03-25 |
-| 1. Introductory Single-Note Game | v2.8 | 0/? | Not started | - |
+| 1. Introductory Single-Note Game | v2.8 | 0/2 | In Progress | - |
 
 **Total: 18 milestones shipped (v1.0-v2.7) — ~174 plans across ~80 phases**
 
 ---
-*Last updated: 2026-03-25 — v2.7 milestone archived*
+*Last updated: 2026-03-25 — Phase 1 plans created*
