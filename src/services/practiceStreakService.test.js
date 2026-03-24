@@ -118,19 +118,43 @@ describe('practiceStreakService', () => {
 
       const result = await practiceStreakService.getPracticeStreak();
 
-      expect(result).toEqual({ streakCount: 0, lastPracticedOn: null });
+      expect(result).toEqual({ streakCount: 0, lastPracticedOn: null, lastMilestoneCelebrated: 0 });
     });
 
     it('returns streak data from existing row', async () => {
       mockAuthSession();
       mockGetChain({
-        data: { streak_count: 5, last_practiced_on: '2026-03-23' },
+        data: { streak_count: 5, last_practiced_on: '2026-03-23', last_milestone_celebrated: 0 },
         error: null,
       });
 
       const result = await practiceStreakService.getPracticeStreak();
 
-      expect(result).toEqual({ streakCount: 5, lastPracticedOn: '2026-03-23' });
+      expect(result).toEqual({ streakCount: 5, lastPracticedOn: '2026-03-23', lastMilestoneCelebrated: 0 });
+    });
+
+    it('returns lastMilestoneCelebrated: 10 when DB row has last_milestone_celebrated: 10', async () => {
+      mockAuthSession();
+      mockGetChain({
+        data: { streak_count: 12, last_practiced_on: '2026-03-23', last_milestone_celebrated: 10 },
+        error: null,
+      });
+
+      const result = await practiceStreakService.getPracticeStreak();
+
+      expect(result.lastMilestoneCelebrated).toBe(10);
+    });
+
+    it('returns lastMilestoneCelebrated: 0 when DB row has null last_milestone_celebrated', async () => {
+      mockAuthSession();
+      mockGetChain({
+        data: { streak_count: 3, last_practiced_on: '2026-03-23', last_milestone_celebrated: null },
+        error: null,
+      });
+
+      const result = await practiceStreakService.getPracticeStreak();
+
+      expect(result.lastMilestoneCelebrated).toBe(0);
     });
   });
 
@@ -161,7 +185,7 @@ describe('practiceStreakService', () => {
     it('increments streak from 5 to 6 on consecutive day', async () => {
       mockAuthSession();
       mockUpdateFlow(
-        { data: { streak_count: 5, last_practiced_on: '2026-03-23' }, error: null },
+        { data: { streak_count: 5, last_practiced_on: '2026-03-23', last_milestone_celebrated: 5 }, error: null },
       );
 
       const result = await practiceStreakService.updatePracticeStreak('2026-03-24', false);
@@ -173,7 +197,7 @@ describe('practiceStreakService', () => {
       mockAuthSession();
       // Last practice was March 20, today is March 24 — 4-day gap
       mockUpdateFlow(
-        { data: { streak_count: 5, last_practiced_on: '2026-03-20' }, error: null },
+        { data: { streak_count: 5, last_practiced_on: '2026-03-20', last_milestone_celebrated: 5 }, error: null },
       );
 
       const result = await practiceStreakService.updatePracticeStreak('2026-03-24', false);
@@ -184,7 +208,7 @@ describe('practiceStreakService', () => {
     it('returns unchanged streakCount when same day (no-op)', async () => {
       mockAuthSession();
       mockUpdateFlow(
-        { data: { streak_count: 5, last_practiced_on: '2026-03-24' }, error: null },
+        { data: { streak_count: 5, last_practiced_on: '2026-03-24', last_milestone_celebrated: 5 }, error: null },
       );
 
       const result = await practiceStreakService.updatePracticeStreak('2026-03-24', false);
@@ -198,7 +222,7 @@ describe('practiceStreakService', () => {
       // Last practice: Thu March 19, Today: Sun March 22
       // Intermediate days: Fri(20) + Sat(21) — all weekend, so gap = 1 under weekendPass
       mockUpdateFlow(
-        { data: { streak_count: 3, last_practiced_on: '2026-03-19' }, error: null },
+        { data: { streak_count: 3, last_practiced_on: '2026-03-19', last_milestone_celebrated: 0 }, error: null },
       );
 
       const result = await practiceStreakService.updatePracticeStreak('2026-03-22', true);
@@ -211,7 +235,7 @@ describe('practiceStreakService', () => {
       // Last practice: Thu March 19, Today: Mon March 23
       // Intermediate days include Sunday (dayOfWeek=0) — NOT bridged
       mockUpdateFlow(
-        { data: { streak_count: 3, last_practiced_on: '2026-03-19' }, error: null },
+        { data: { streak_count: 3, last_practiced_on: '2026-03-19', last_milestone_celebrated: 0 }, error: null },
       );
 
       const result = await practiceStreakService.updatePracticeStreak('2026-03-23', true);
@@ -226,6 +250,113 @@ describe('practiceStreakService', () => {
       const result = await practiceStreakService.updatePracticeStreak('2026-03-24', false);
 
       expect(result.streakCount).toBe(1);
+    });
+
+    it('resets last_milestone_celebrated to 0 in upsert payload when streak breaks (gap > 1)', async () => {
+      mockAuthSession();
+      let upsertPayload = null;
+      let callCount = 0;
+      supabase.from.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          const maybeSingleMock = vi.fn().mockResolvedValue({
+            data: { streak_count: 5, last_practiced_on: '2026-03-20', last_milestone_celebrated: 5 },
+            error: null,
+          });
+          const eqMock = vi.fn().mockReturnValue({ maybeSingle: maybeSingleMock });
+          const selectMock = vi.fn().mockReturnValue({ eq: eqMock });
+          return { select: selectMock };
+        } else {
+          const upsertMock = vi.fn().mockImplementation((payload) => {
+            upsertPayload = payload;
+            return Promise.resolve({ error: null });
+          });
+          return { upsert: upsertMock };
+        }
+      });
+
+      await practiceStreakService.updatePracticeStreak('2026-03-24', false);
+
+      expect(upsertPayload).toMatchObject({ last_milestone_celebrated: 0 });
+    });
+
+    it('does NOT include last_milestone_celebrated in upsert when streak increments (gap === 1)', async () => {
+      mockAuthSession();
+      let upsertPayload = null;
+      let callCount = 0;
+      supabase.from.mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) {
+          const maybeSingleMock = vi.fn().mockResolvedValue({
+            data: { streak_count: 5, last_practiced_on: '2026-03-23', last_milestone_celebrated: 5 },
+            error: null,
+          });
+          const eqMock = vi.fn().mockReturnValue({ maybeSingle: maybeSingleMock });
+          const selectMock = vi.fn().mockReturnValue({ eq: eqMock });
+          return { select: selectMock };
+        } else {
+          const upsertMock = vi.fn().mockImplementation((payload) => {
+            upsertPayload = payload;
+            return Promise.resolve({ error: null });
+          });
+          return { upsert: upsertMock };
+        }
+      });
+
+      await practiceStreakService.updatePracticeStreak('2026-03-24', false);
+
+      expect(upsertPayload).not.toHaveProperty('last_milestone_celebrated');
+    });
+
+    it('returns lastMilestoneCelebrated from DB when streak increments', async () => {
+      mockAuthSession();
+      mockUpdateFlow(
+        { data: { streak_count: 10, last_practiced_on: '2026-03-23', last_milestone_celebrated: 10 }, error: null },
+      );
+
+      const result = await practiceStreakService.updatePracticeStreak('2026-03-24', false);
+
+      expect(result.lastMilestoneCelebrated).toBe(10);
+    });
+
+    it('returns lastMilestoneCelebrated: 0 when streak resets', async () => {
+      mockAuthSession();
+      mockUpdateFlow(
+        { data: { streak_count: 5, last_practiced_on: '2026-03-20', last_milestone_celebrated: 5 }, error: null },
+      );
+
+      const result = await practiceStreakService.updatePracticeStreak('2026-03-24', false);
+
+      expect(result.lastMilestoneCelebrated).toBe(0);
+    });
+  });
+
+  // ============================================================
+  // updateLastMilestoneCelebrated() tests
+  // ============================================================
+
+  describe('updateLastMilestoneCelebrated()', () => {
+    it('calls supabase.update with last_milestone_celebrated and updated_at', async () => {
+      mockAuthSession();
+      const eqMock = vi.fn().mockResolvedValue({ error: null });
+      const updateMock = vi.fn().mockReturnValue({ eq: eqMock });
+      supabase.from.mockReturnValue({ update: updateMock });
+
+      await practiceStreakService.updateLastMilestoneCelebrated(21);
+
+      expect(supabase.from).toHaveBeenCalledWith('instrument_practice_streak');
+      expect(updateMock).toHaveBeenCalledWith(
+        expect.objectContaining({ last_milestone_celebrated: 21 })
+      );
+      expect(eqMock).toHaveBeenCalledWith('student_id', 'test-user-id');
+    });
+
+    it('throws "Not authenticated" when no session', async () => {
+      supabase.auth.getSession.mockResolvedValue({ data: { session: null } });
+
+      await expect(
+        practiceStreakService.updateLastMilestoneCelebrated(21)
+      ).rejects.toThrow('Not authenticated');
     });
   });
 });
