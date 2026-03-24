@@ -459,4 +459,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-23 after v2.7 milestone started*
+*Last updated: 2026-03-24 after Phase 3 (Push Notification Integration) complete*
