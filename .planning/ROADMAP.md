@@ -218,6 +218,10 @@ Plans:
 - [x] **Phase 4: Parent Calendar Heatmap** - 52-week practice history heatmap in parent portal (completed 2026-03-24)
 - [ ] **Phase 5: Milestone Celebrations** - Streak milestone celebrations at 5, 10, 21, and 30 days
 
+### v2.8 Introductory Single-Note Game
+
+- [ ] **Phase 1: Introductory Single-Note Game** - Engaging first-encounter game for trail nodes with only one note (e.g., middle C)
+
 ---
 
 ## Phase Details
@@ -285,6 +289,13 @@ Plans:
 - [x] 05-02-PLAN.md -- MilestoneCelebrationModal + PracticeLogCard wiring + visual verification (Wave 2)
 **UI hint**: yes
 
+### Phase 1: Introductory Single-Note Game (v2.8)
+**Goal**: First trail treble node (middle C only) needs a more engaging game than basic note recognition with a single note. Ideas: (1) "Which of these notes is middle C?" quiz-style with visual note options, (2) Speed card game where note cards switch at a set speed — user taps only when middle C appears, wrong taps flash red but no punishment, just next card. Duolingo-kids style. Could expand to bass clef and rhythm first-nodes too.
+**Depends on**: v2.7 completion
+**Requirements**: TBD
+**Plans**: TBD
+**UI hint**: yes
+
 ---
 
 ## Progress
@@ -317,6 +328,7 @@ Plans:
 | 3. Push Notification Integration | v2.7 | 2/2 | Complete   | 2026-03-24 |
 | 4. Parent Calendar Heatmap | v2.7 | 2/2 | Complete   | 2026-03-24 |
 | 5. Milestone Celebrations | v2.7 | 0/2 | Planned | - |
+| 1. Introductory Single-Note Game | v2.8 | 0/? | Not started | - |
 
 **Total: 17 milestones shipped (v1.0-v2.6) — ~162 plans across ~75 phases**
 
@@ -324,16 +336,5 @@ Plans:
 
 ---
 
-## Backlog
-
-### Phase 999.1: Introductory Single-Note Game (BACKLOG)
-
-**Goal:** First trail treble node (middle C only) needs a more engaging game than basic note recognition with a single note. Ideas: (1) "Which of these notes is middle C?" quiz-style with visual note options, (2) Speed card game where note cards switch at a set speed — user taps only when middle C appears, wrong taps flash red but no punishment, just next card. Duolingo-kids style. Could expand to bass clef and rhythm first-nodes too.
-**Requirements:** TBD
-**Plans:** 2/2 plans complete
-
-Plans:
-- [ ] TBD (promote with /gsd:review-backlog when ready)
-
 ---
-*Last updated: 2026-03-24 — Phase 5 planned (2 plans)*
+*Last updated: 2026-03-25 — promoted backlog 999.1 to v2.8 Phase 1*
