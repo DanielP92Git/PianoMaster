@@ -1611,6 +1611,27 @@
       "dayLabel": "day practice streak",
       "dayLabel_plural": "day practice streak"
     },
+    "milestone": {
+      "5": {
+        "title": "5-Day Streak!",
+        "message": "You practiced 5 days in a row! Keep it up!"
+      },
+      "10": {
+        "title": "10-Day Streak!",
+        "message": "Amazing! 10 days of practice - you're building great habits!"
+      },
+      "21": {
+        "title": "21-Day Streak!",
+        "message": "Incredible! 21 days - you've made practice a habit!"
+      },
+      "30": {
+        "title": "30-Day Champion!",
+        "message": "WOW! 30 days straight! You are a piano superstar!"
+      },
+      "dismiss": "Woohoo!",
+      "daysLabel": "days",
+      "ariaLabel": "Practice milestone celebration"
+    },
     "toast": {
       "autoLogged": "Practice logged! +25 XP",
       "alreadyLogged": "You already logged today's practice!",
