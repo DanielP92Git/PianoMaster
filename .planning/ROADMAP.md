@@ -311,4 +311,17 @@ Plans:
 *Phase 1 (Signup Flow Redesign) runs in a parallel worktree and is shared across milestones.
 
 ---
+
+## Backlog
+
+### Phase 999.1: Introductory Single-Note Game (BACKLOG)
+
+**Goal:** First trail treble node (middle C only) needs a more engaging game than basic note recognition with a single note. Ideas: (1) "Which of these notes is middle C?" quiz-style with visual note options, (2) Speed card game where note cards switch at a set speed — user taps only when middle C appears, wrong taps flash red but no punishment, just next card. Duolingo-kids style. Could expand to bass clef and rhythm first-nodes too.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd:review-backlog when ready)
+
+---
 *Last updated: 2026-03-24 — v2.7 roadmap added (Phases 2-5)*
