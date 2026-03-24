@@ -382,18 +382,15 @@ self.addEventListener("push", (event) => {
       dateOfArrival: Date.now(),
       clickAction: notificationData.data.url || "/",
     },
-    actions: [
-      {
-        action: "open",
-        title: "Open",
-        icon: "/icons/favicon_96x96.png",
-      },
-      {
-        action: "close",
-        title: "Dismiss",
-        icon: "/icons/favicon_96x96.png",
-      },
-    ],
+    actions: notificationData.tag === 'practice-checkin'
+      ? [
+          { action: 'yes-practiced', title: 'Yes, I practiced!', icon: '/icons/favicon_96x96.png' },
+          { action: 'not-yet', title: 'Not yet', icon: '/icons/favicon_96x96.png' },
+        ]
+      : [
+          { action: 'open', title: 'Open', icon: '/icons/favicon_96x96.png' },
+          { action: 'close', title: 'Dismiss', icon: '/icons/favicon_96x96.png' },
+        ],
   };
 
   event.waitUntil(
@@ -514,6 +511,92 @@ self.addEventListener("notificationclick", (event) => {
       );
       return;
     }
+  }
+
+  // Handle practice check-in notification clicks (from server-sent practice-checkin push)
+  // PUSH-04: action buttons on Android/desktop; PUSH-05: body tap on iOS
+  if (notificationType === 'practice-checkin') {
+    event.notification.close();
+
+    const isSnoozed = event.notification.data?.snoozed === true;
+
+    // "Yes, I practiced!" button (Android/desktop) OR notification body tap (iOS — no action)
+    if (action === 'yes-practiced' || !action) {
+      const urlToOpen = new URL('/?practice_checkin=1', self.location.origin).href;
+      event.waitUntil(
+        (async () => {
+          const allClients = await self.clients.matchAll({
+            type: 'window',
+            includeUncontrolled: true,
+          });
+
+          // Try to focus an existing window and navigate it
+          for (const client of allClients) {
+            if ('focus' in client) {
+              try {
+                await client.navigate(urlToOpen);
+                return client.focus();
+              } catch (_e) {
+                // Uncontrolled client — use postMessage fallback
+                client.postMessage({
+                  type: 'NAVIGATE',
+                  url: '/?practice_checkin=1',
+                });
+                return client.focus();
+              }
+            }
+          }
+          // No existing window — open new one
+          if (self.clients.openWindow) {
+            return self.clients.openWindow(urlToOpen);
+          }
+        })()
+      );
+      return;
+    }
+
+    // "Not yet" button (D-08, D-09)
+    if (action === 'not-yet') {
+      if (isSnoozed) {
+        // D-09: snoozed notification's "Not yet" — just dismiss, no further snooze chain
+        return;
+      }
+
+      // Schedule one-shot snoozed follow-up in 2 hours (D-08, D-19: setTimeout in waitUntil)
+      // Note: Best-effort — browser may kill SW before 2hr timer on backgrounded mobile.
+      event.waitUntil(
+        new Promise((resolve) => {
+          setTimeout(async () => {
+            try {
+              await self.registration.showNotification('Still time to practice! \u{1F3B9}', {
+                body: 'Did you get a chance to play your instrument?',
+                icon: '/icons/favicon_192x192.png',
+                badge: '/icons/favicon_96x96.png',
+                vibrate: [100, 50, 100],
+                tag: 'practice-checkin-snoozed',
+                requireInteraction: false,
+                data: {
+                  type: 'practice-checkin',
+                  url: '/?practice_checkin=1',
+                  snoozed: true,
+                },
+                actions: [
+                  { action: 'yes-practiced', title: 'Yes, I practiced!', icon: '/icons/favicon_96x96.png' },
+                  { action: 'not-yet', title: 'Not yet', icon: '/icons/favicon_96x96.png' },
+                ],
+              });
+            } catch (err) {
+              console.error('sw: snooze showNotification failed:', err);
+            }
+            resolve();
+          }, 2 * 60 * 60 * 1000); // 2 hours
+        })
+      );
+      return;
+    }
+
+    // Any other action — just close (defensive)
+    return;
   }
 
   // Handle daily push notification clicks (from server-sent Web Push via send-daily-push Edge Function)
