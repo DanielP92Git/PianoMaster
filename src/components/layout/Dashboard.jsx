@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streakService } from "../../services/streakService";
 import { getNextRecommendedNode } from "../../services/skillProgressService";
 import { useModal } from "../../contexts/ModalContext";
@@ -30,6 +30,7 @@ import OnboardingTour from "../onboarding/OnboardingTour";
 import UnifiedStatsCard from "../dashboard/UnifiedStatsCard";
 import PushOptInCard from "../dashboard/PushOptInCard";
 import PracticeLogCard from "../dashboard/PracticeLogCard";
+import { practiceLogService } from "../../services/practiceLogService";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { getWeeklyProgress } from "../../services/weeklyProgressService";
 import { translateNodeName } from "../../utils/translateNodeName";
@@ -50,6 +51,11 @@ function Dashboard() {
   const isRTL = i18n.dir() === "rtl";
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
   const { reducedMotion } = useAccessibility();
+
+  // URL param detection for practice check-in notification (PUSH-05, D-11, D-12)
+  const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
+
   const avatarUrl = getAvatarImageSource(
     profileData?.avatars || profileData?.avatar_url,
     profileData?.avatar_url
@@ -101,6 +107,37 @@ function Dashboard() {
     refetchInterval: 5 * 60 * 1000,
   });
   const comebackBonus = streakState?.comebackBonus;
+
+  // Auto-log practice from notification tap (PUSH-05, D-11, D-12)
+  const hasPracticeCheckin = searchParams.get('practice_checkin') === '1';
+
+  useEffect(() => {
+    if (!hasPracticeCheckin || !user?.id || !isStudent) return;
+
+    // Clean URL synchronously before async work — prevents re-trigger on re-render (D-18)
+    window.history.replaceState({}, '', '/');
+
+    const localDate = practiceLogService.getCalendarDate();
+
+    practiceLogService.logPractice(localDate)
+      .then(({ inserted }) => {
+        if (inserted) {
+          // D-11: Triggers PracticeLogCard settled state via React Query cache invalidation
+          queryClient.invalidateQueries({ queryKey: ['practice-log-today', user.id, localDate] });
+          queryClient.invalidateQueries({ queryKey: ['practice-streak', user.id] });
+          queryClient.invalidateQueries({ queryKey: ['student-xp', user.id] });
+          toast.success(t('practice.toast.autoLogged'));
+        } else {
+          // D-12: Already logged — show friendly neutral toast
+          toast(t('practice.toast.alreadyLogged'));
+        }
+      })
+      .catch((err) => {
+        console.error('[Dashboard] practice_checkin auto-log failed:', err);
+        toast.error(t('practice.toast.autoLogError'));
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasPracticeCheckin, user?.id, isStudent]);
 
   // Fetch next recommended trail node (only for students)
   // isPremium in queryKey ensures cache invalidates when subscription status changes

@@ -1519,6 +1519,11 @@
     "streak": {
       "dayLabel": "day practice streak",
       "dayLabel_plural": "day practice streak"
+    },
+    "toast": {
+      "autoLogged": "Practice logged! +25 XP",
+      "alreadyLogged": "You already logged today's practice!",
+      "autoLogError": "Couldn't log your practice. Tap the button on your dashboard."
     }
   }
 }
