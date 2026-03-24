@@ -4,8 +4,11 @@
 // Responsibilities:
 //   1. Authenticate incoming request via x-cron-secret header (401 on mismatch)
 //   2. Query push_subscriptions for enabled students with non-null subscription JSON
-//   3. Skip students who already practiced today (students_score entry for today UTC)
-//   4. Skip students already notified today (last_notified_at = today UTC)
+//   3. Skip students already notified today (last_notified_at = today UTC)
+//   3a. If student has NOT logged instrument practice today → send practice check-in notification
+//       and continue (skip app-usage reminder — never both in one day). (PUSH-01, PUSH-02)
+//   3b. If student HAS logged instrument practice today → fall through to app-usage reminder logic
+//   4. Skip students who already practiced today (students_score entry for today UTC)
 //   5. Gather per-student context: streak, XP level proximity, daily goals progress
 //   6. Select context-aware notification message by priority: streak > XP > goals > generic
 //   7. Send Web Push via @negrel/webpush using VAPID keys from environment
@@ -274,6 +277,56 @@ Deno.serve(async (req: Request) => {
           continue;
         }
       }
+
+      // ── Check if student logged instrument practice today (PUSH-02, D-04) ──
+      const { count: instrumentPracticeCount, error: instrumentPracticeError } = await supabase
+        .from('instrument_practice_logs')
+        .select('id', { count: 'exact', head: true })
+        .eq('student_id', studentId)
+        .eq('practiced_on', todayUtc);
+
+      if (instrumentPracticeError) {
+        console.error(`send-daily-push: error checking instrument practice for ${studentId}:`, instrumentPracticeError);
+        failed++;
+        continue;
+      }
+
+      if (!instrumentPracticeCount || instrumentPracticeCount === 0) {
+        // BRANCH A: Practice check-in notification (PUSH-01, D-02 priority)
+        const checkinVariants = [
+          { title: 'Time to practice! \u{1F3B9}', body: 'Did you practice your instrument today?' },
+          { title: 'Piano check-in \u{1F3B5}', body: "How was today's practice?" },
+          { title: 'Daily practice \u{1F3BC}', body: 'Have you played your instrument today?' },
+        ];
+        const checkin = checkinVariants[Math.floor(Math.random() * checkinVariants.length)];
+
+        const subscriber = appServer.subscribe(row.subscription);
+        await subscriber.pushTextMessage(
+          JSON.stringify({
+            title: checkin.title,
+            body: checkin.body,
+            tag: 'practice-checkin',
+            data: { url: '/?practice_checkin=1', type: 'practice-checkin' },
+          }),
+          {},
+        );
+
+        // Update last_notified_at (D-05: 1 notification cycle per day)
+        const { error: updateError } = await supabase
+          .from('push_subscriptions')
+          .update({ last_notified_at: now.toISOString() })
+          .eq('student_id', studentId);
+
+        if (updateError) {
+          console.error(`send-daily-push: failed to update last_notified_at for ${studentId}:`, updateError);
+        }
+
+        console.log(`send-daily-push: sent practice check-in to student ${studentId}`);
+        sent++;
+        continue; // D-02: never both practice check-in AND app-usage reminder
+      }
+
+      // BRANCH B: Student HAS logged instrument practice — fall through to app-usage reminder
 
       // ── Skip if student already practiced today ───────────
       const { count: practiceCount, error: practiceError } = await supabase
