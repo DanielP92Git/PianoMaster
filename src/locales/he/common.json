@@ -40,11 +40,11 @@
     "login": {
       "subtitle": "התחילו את המסע המוזיקלי שלכם!",
       "emailLabel": "אימייל",
-      "emailPlaceholder": "הקלידו כתובת אימייל",
+      "emailPlaceholder": "הקלד כתובת אימייל",
       "passwordLabel": "סיסמה",
-      "passwordPlaceholder": "הקלידו סיסמה",
+      "passwordPlaceholder": "הקלד סיסמה",
       "submit": "התחבר",
-      "orSocial": "או המשיכו עם",
+      "orSocial": "או המשך עם",
       "noAccountPrompt": "חדשים ב-PianoMaster?",
       "signupLink": "יצירת חשבון"
     },
@@ -52,7 +52,7 @@
       "link": "שכחתי סיסמה?",
       "title": "איפוס סיסמה",
       "emailLabel": "כתובת אימייל",
-      "emailPlaceholder": "הקלידו כתובת אימייל",
+      "emailPlaceholder": "הקלד כתובת אימייל",
       "submitButton": "שלח קישור לאיפוס",
       "sending": "שולח...",
       "backToLogin": "חזרה להתחברות",
@@ -64,9 +64,9 @@
     "resetPassword": {
       "title": "הגדרת סיסמה חדשה",
       "newPasswordLabel": "סיסמה חדשה",
-      "newPasswordPlaceholder": "הקלידו סיסמה חדשה",
+      "newPasswordPlaceholder": "הקלד סיסמה חדשה",
       "confirmPasswordLabel": "אישור סיסמה",
-      "confirmPasswordPlaceholder": "הקלידו שוב את הסיסמה",
+      "confirmPasswordPlaceholder": "הקלד שוב את הסיסמה",
       "submitButton": "עדכון סיסמה",
       "updating": "מעדכן...",
       "passwordMismatch": "הסיסמאות אינן תואמות",
@@ -74,6 +74,68 @@
       "successMessage": "הסיסמה עודכנה בהצלחה!",
       "errorGeneric": "עדכון הסיסמה נכשל. ייתכן שהקישור פג תוקף. בקשו קישור חדש.",
       "errorExpiredLink": "קישור האיפוס פג תוקף. בקשו קישור חדש."
+    },
+    "signup": {
+      "titles": {
+        "role": "הצטרפו ל-PianoMaster!",
+        "birthYear": "בואו נתחיל",
+        "parentEmail": "כמעט סיימנו!",
+        "credentials": "יצירת חשבון"
+      },
+      "subtitles": {
+        "role": "איך תשתמשו ב-PianoMaster?",
+        "birthYear": "ספרו לנו קצת על עצמכם",
+        "parentEmail": "עוד צעד אחד (לא חובה)",
+        "credentials": "הצטרפו למסע המוזיקלי!"
+      },
+      "role": {
+        "student": "תלמיד/ה",
+        "studentDesc": "ללמוד ולתרגל פסנתר",
+        "teacher": "מורה",
+        "teacherDesc": "ללמד ולעקוב אחרי תלמידים"
+      },
+      "ageGate": {
+        "question": "באיזו שנה נולדת?",
+        "selectYear": "בחרו שנה",
+        "continue": "המשך",
+        "errorRequired": "אנא בחרו שנת לידה",
+        "errorInvalid": "אנא בחרו שנת לידה תקינה"
+      },
+      "parentEmail": {
+        "title": "רוצים לשתף הורה?",
+        "description": "הוסיפו אימייל של הורה או מבוגר אחראי כדי לקבל דוחות התקדמות שבועיים ותזכורות תרגול. לא חובה!",
+        "label": "אימייל הורה/מבוגר אחראי",
+        "placeholder": "parent@example.com",
+        "skip": "דלג",
+        "continue": "המשך",
+        "errorRequired": "אנא הקלד כתובת אימייל או דלג על שלב זה",
+        "errorInvalid": "אנא הקלד כתובת אימייל תקינה"
+      },
+      "credentials": {
+        "firstName": "שם פרטי",
+        "firstNamePlaceholder": "שם פרטי",
+        "lastName": "שם משפחה",
+        "lastNamePlaceholder": "שם משפחה",
+        "email": "אימייל",
+        "emailPlaceholder": "הקלד כתובת אימייל",
+        "password": "סיסמה",
+        "passwordPlaceholder": "צרו סיסמה",
+        "submitStudent": "יצירת חשבון תלמיד/ה",
+        "submitTeacher": "יצירת חשבון מורה"
+      },
+      "social": {
+        "divider": "או הצטרפו עם"
+      },
+      "back": "חזרה",
+      "alreadyHaveAccount": "כבר יש לכם חשבון?",
+      "logIn": "התחברו",
+      "terms": {
+        "text": "בהצטרפות, אתם מסכימים ל",
+        "termsLink": "תנאי השימוש",
+        "privacyLink": "מדיניות הפרטיות",
+        "and": "ול"
+      },
+      "inactivityLogout": "התנתקתם עקב חוסר פעילות"
     }
   },
   "navigation": {
@@ -230,19 +292,19 @@
         "profileSettingsTitle": "הגדרות פרופיל",
         "profileSettingsDescription": "ניהול פרטי הפרופיל שלכם",
         "firstName": "שם פרטי",
-        "firstNamePlaceholder": "הקלידו שם פרטי",
+        "firstNamePlaceholder": "הקלד שם פרט",
         "lastName": "שם משפחה",
-        "lastNamePlaceholder": "הקלידו שם משפחה",
+        "lastNamePlaceholder": "הקלד שם משפחה",
         "username": "שם משתמש",
-        "usernamePlaceholder": "הקלידו שם משתמש",
+        "usernamePlaceholder": "הקלד שם משתמש",
         "usernameDescription": "שם משתמש 3-20 תווים (אותיות, מספרים, - ו _ בלבד)",
         "clickToEditUsername": "לחצו כדי לערוך את שם המשתמש",
         "email": "אימייל",
-        "emailPlaceholder": "הקלידו אימייל",
+        "emailPlaceholder": "הקלד אימייל",
         "emailDescription": "האימייל שלכם ישמש לצורך חיבור למערכת",
         "level": "רמה",
         "levelDescription": "רמתכם תסומן על ידי המורה שלכם",
-        "levelPlaceholder": "הקלידו רמה"
+        "levelPlaceholder": "הקלד רמה"
       },
       "accessibility": {
         "accessibilitySettingsTitle": "הגדרות נגישות",
@@ -397,7 +459,21 @@
       "installStep2": "בחרו \"הוסף למסך הבית\"",
       "installStep3": "לחץו על \"הוסף\" כדי לאשר"
     },
-    "unavailableToast": "אפשרות ההתקנה לא זמינה כרגע. באנדרואיד: פתחו את תפריט כרום (⋮) ובחרו \"הוסף למסך הבית\", ואז רעננו."
+    "unavailableToast": "אפשרות ההתקנה לא זמינה כרגע. באנדרואיד: פתחו את תפריט כרום (⋮) ובחרו \"הוסף למסך הבית\", ואז רעננו.",
+    "prompt": {
+      "headerTitle": "התקינו את PianoMaster",
+      "headerSubtitle": "חוויית אפליקציה מלאה",
+      "addToHome": "הוספה למסך הבית",
+      "description": "התקינו את PianoMaster לגישה מהירה, תרגול אופליין וחוויית אפליקציה מלאה.",
+      "offlinePractice": "תרגול אופליין",
+      "quickAccess": "גישה מהירה",
+      "pushNotifications": "התראות",
+      "noAppStore": "ללא חנות אפליקציות",
+      "mobile": "נייד",
+      "desktop": "מחשב",
+      "installButton": "התקנה",
+      "installing": "מתקין..."
+    }
   },
   "avatars": {
     "title": "בחרו את הדמות שלכם",
@@ -1517,10 +1593,10 @@
     "card": {
       "title": "תרגול כלי נגינה",
       "prompt": "תרגלת היום?",
-      "logButton": "!כן, תרגלתי",
-      "loggingText": "!נרשם",
+      "logButton": "כן, תרגלתי!",
+      "loggingText": "נרשם!",
       "xpBadge": "XP 25+",
-      "completedHeading": "!תרגלת היום",
+      "completedHeading": "תרגלת היום!",
       "xpEarned": "XP {{xp}}+ הרווחת"
     },
     "streak": {
