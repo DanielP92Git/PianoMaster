@@ -29,6 +29,7 @@ import { useOnboarding } from "../../hooks/useOnboarding";
 import OnboardingTour from "../onboarding/OnboardingTour";
 import UnifiedStatsCard from "../dashboard/UnifiedStatsCard";
 import PushOptInCard from "../dashboard/PushOptInCard";
+import PracticeLogCard from "../dashboard/PracticeLogCard";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { getWeeklyProgress } from "../../services/weeklyProgressService";
 import { translateNodeName } from "../../utils/translateNodeName";
@@ -693,6 +694,9 @@ function Dashboard() {
             isLoading={streakLoading || xpLoading}
           />
         )}
+
+        {/* PRACTICE LOG CARD — Phase 2 */}
+        {isStudent && <PracticeLogCard />}
 
         {/* PRACTICE TOOLS (3 circular buttons) */}
         {isStudent && (
