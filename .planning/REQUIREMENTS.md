@@ -12,7 +12,7 @@ Requirements for v2.7 milestone. Each maps to roadmap phases.
 - [x] **LOG-01**: Student can log daily instrument practice via a button on the dashboard
 - [x] **LOG-02**: Dashboard practice card shows today's log status (logged / not-yet / loading)
 - [x] **LOG-03**: Student receives 25 XP for logging daily practice, once per day (idempotent via DB constraint)
-- [ ] **LOG-04**: Student sees practice milestone celebrations at 5, 10, 21, and 30 day streak milestones
+- [x] **LOG-04**: Student sees practice milestone celebrations at 5, 10, 21, and 30 day streak milestones
 
 ### Practice Streak
 
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | LOG-01 | Phase 2 | Complete |
 | LOG-02 | Phase 2 | Complete |
 | LOG-03 | Phase 2 | Complete |
-| LOG-04 | Phase 5 | Pending |
+| LOG-04 | Phase 5 | Complete |
 | STRK-01 | Phase 2 | Complete |
 | STRK-02 | Phase 2 | Complete |
 | STRK-03 | Phase 2 | Complete |

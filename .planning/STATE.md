@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.7
 milestone_name: Instrument Practice Tracking
-status: Ready to plan
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-24T20:48:19.014Z"
+status: Ready to execute
+stopped_at: Completed 05-01-PLAN.md (milestone celebrations data foundation)
+last_updated: "2026-03-24T21:16:59.702Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 12
+  completed_plans: 11
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-23)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 04 — parent-calendar-heatmap
+**Current focus:** Phase 05 — milestone-celebrations
 
 ## Current Position
 
-Phase: 999.1
-Plan: Not started
+Phase: 05 (milestone-celebrations) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -84,6 +84,8 @@ v2.7 roadmap decisions:
 - [Phase 04-parent-calendar-heatmap]: buildHeatmapData and computeLongestStreak are named exports (not on service object) — pure functions directly testable without Supabase mock
 - [Phase 04]: v3 prop names used: showColorLegend={false} and showTotalCount={false} — RESEARCH.md corrections applied to UI-SPEC's incorrect v2 names
 - [Phase 04]: showMonthLabels=false in RTL mode to avoid SVG text double-mirror — heatmap functional without month labels in v1 RTL (PARENT-F02 deferred)
+- [Phase 05-milestone-celebrations]: Omit last_milestone_celebrated from upsert on streak increment — Supabase only updates columns you include, preserving existing value without extra read
+- [Phase 05-milestone-celebrations]: Return lastMilestoneCelebrated: 0 directly from reset path — value is deterministic after streak break, no DB re-read needed
 
 ### Roadmap Evolution
 
@@ -98,9 +100,9 @@ v2.7 roadmap decisions:
 
 ## Session Continuity
 
-Last session: 2026-03-24T20:48:19.004Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-milestone-celebrations/05-CONTEXT.md
+Last session: 2026-03-24T21:16:59.695Z
+Stopped at: Completed 05-01-PLAN.md (milestone celebrations data foundation)
+Resume file: None
 
 **Next action:**
 
