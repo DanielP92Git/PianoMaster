@@ -17,7 +17,7 @@ vi.mock('../utils/xpSystem', () => ({
 
 import supabase from './supabase';
 import { awardXP } from '../utils/xpSystem';
-import { practiceLogService } from './practiceLogService';
+import { practiceLogService, buildHeatmapData, computeLongestStreak } from './practiceLogService';
 
 describe('practiceLogService', () => {
   beforeEach(() => {
@@ -179,6 +179,210 @@ describe('practiceLogService', () => {
       mockNoSession();
 
       await expect(practiceLogService.getTodayStatus('2026-03-24')).rejects.toThrow('Not authenticated');
+    });
+  });
+
+  // ============================================================
+  // PRACTICE_XP_REWARD constant test
+  // ============================================================
+
+  it('PRACTICE_XP_REWARD is 25', () => {
+    expect(practiceLogService.PRACTICE_XP_REWARD).toBe(25);
+  });
+
+  // ============================================================
+  // getHistoricalLogs() tests
+  // ============================================================
+
+  describe('getHistoricalLogs()', () => {
+    // Helper: chain supabase.from().select().eq().gte().lte().order()
+    const mockHistoricalQuery = (resolvedValue) => {
+      const orderMock = vi.fn().mockResolvedValue(resolvedValue);
+      const lteMock = vi.fn().mockReturnValue({ order: orderMock });
+      const gteMock = vi.fn().mockReturnValue({ lte: lteMock });
+      const eqMock = vi.fn().mockReturnValue({ gte: gteMock });
+      const selectMock = vi.fn().mockReturnValue({ eq: eqMock });
+      supabase.from.mockReturnValue({ select: selectMock });
+      return { selectMock, eqMock, gteMock, lteMock, orderMock };
+    };
+
+    it('calls supabase with correct table, select, eq, gte, lte, order', async () => {
+      mockAuthSession('user-123');
+      const { selectMock, eqMock, gteMock, lteMock, orderMock } = mockHistoricalQuery({
+        data: [{ practiced_on: '2026-01-15' }],
+        error: null,
+      });
+
+      await practiceLogService.getHistoricalLogs('2025-03-24', '2026-03-24');
+
+      expect(supabase.from).toHaveBeenCalledWith('instrument_practice_logs');
+      expect(selectMock).toHaveBeenCalledWith('practiced_on');
+      expect(eqMock).toHaveBeenCalledWith('student_id', 'user-123');
+      expect(gteMock).toHaveBeenCalledWith('practiced_on', '2025-03-24');
+      expect(lteMock).toHaveBeenCalledWith('practiced_on', '2026-03-24');
+      expect(orderMock).toHaveBeenCalledWith('practiced_on', { ascending: true });
+    });
+
+    it('returns data array on success', async () => {
+      mockAuthSession('user-123');
+      mockHistoricalQuery({
+        data: [{ practiced_on: '2026-01-15' }, { practiced_on: '2026-01-16' }],
+        error: null,
+      });
+
+      const result = await practiceLogService.getHistoricalLogs('2025-03-24', '2026-03-24');
+
+      expect(result).toEqual([{ practiced_on: '2026-01-15' }, { practiced_on: '2026-01-16' }]);
+    });
+
+    it('returns empty array when data is null (coalesces to [])', async () => {
+      mockAuthSession('user-123');
+      mockHistoricalQuery({ data: null, error: null });
+
+      const result = await practiceLogService.getHistoricalLogs('2025-03-24', '2026-03-24');
+
+      expect(result).toEqual([]);
+    });
+
+    it('throws "Not authenticated" when session is null', async () => {
+      mockNoSession();
+
+      await expect(
+        practiceLogService.getHistoricalLogs('2025-03-24', '2026-03-24')
+      ).rejects.toThrow('Not authenticated');
+    });
+
+    it('throws on non-null Supabase error', async () => {
+      mockAuthSession('user-123');
+      mockHistoricalQuery({
+        data: null,
+        error: { code: '42P01', message: 'relation does not exist' },
+      });
+
+      await expect(
+        practiceLogService.getHistoricalLogs('2025-03-24', '2026-03-24')
+      ).rejects.toMatchObject({ code: '42P01' });
+    });
+  });
+
+  // ============================================================
+  // buildHeatmapData() tests
+  // ============================================================
+
+  describe('buildHeatmapData()', () => {
+    // Use a fixed end date for deterministic tests
+    const FIXED_END = new Date(2026, 2, 24); // 2026-03-24
+
+    it('returns exactly 364 entries for a 52-week window', () => {
+      const result = buildHeatmapData([], FIXED_END);
+      expect(result).toHaveLength(364);
+    });
+
+    it('first entry date is 363 days before endDate, last entry is endDate', () => {
+      const result = buildHeatmapData([], FIXED_END);
+      expect(result[0].date).toBe('2025-03-26'); // 363 days before 2026-03-24
+      expect(result[363].date).toBe('2026-03-24');
+    });
+
+    it('practiced dates have count=1, level=1 and non-practiced have count=0, level=0', () => {
+      const practicedDates = [{ practiced_on: '2026-03-24' }, { practiced_on: '2026-03-20' }];
+      const result = buildHeatmapData(practicedDates, FIXED_END);
+
+      const lastEntry = result[result.length - 1];
+      expect(lastEntry.date).toBe('2026-03-24');
+      expect(lastEntry.count).toBe(1);
+      expect(lastEntry.level).toBe(1);
+
+      const march20 = result.find((e) => e.date === '2026-03-20');
+      expect(march20.count).toBe(1);
+      expect(march20.level).toBe(1);
+
+      const march23 = result.find((e) => e.date === '2026-03-23');
+      expect(march23.count).toBe(0);
+      expect(march23.level).toBe(0);
+    });
+
+    it('empty input returns 364 entries all at level=0', () => {
+      const result = buildHeatmapData([], FIXED_END);
+      expect(result.every((e) => e.level === 0)).toBe(true);
+      expect(result.every((e) => e.count === 0)).toBe(true);
+    });
+
+    it('all entries have date in YYYY-MM-DD format', () => {
+      const result = buildHeatmapData([], FIXED_END);
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      expect(result.every((e) => dateRegex.test(e.date))).toBe(true);
+    });
+
+    it('entries are sorted ascending by date', () => {
+      const result = buildHeatmapData([], FIXED_END);
+      for (let i = 1; i < result.length; i++) {
+        expect(result[i].date > result[i - 1].date).toBe(true);
+      }
+    });
+
+    it('duplicate practiced_on values in input are deduped via Set', () => {
+      const practicedDates = [
+        { practiced_on: '2026-03-24' },
+        { practiced_on: '2026-03-24' }, // duplicate
+        { practiced_on: '2026-03-24' }, // duplicate
+      ];
+      const result = buildHeatmapData(practicedDates, FIXED_END);
+      const march24 = result.filter((e) => e.date === '2026-03-24');
+      expect(march24).toHaveLength(1);
+      expect(march24[0].level).toBe(1);
+    });
+  });
+
+  // ============================================================
+  // computeLongestStreak() tests
+  // ============================================================
+
+  describe('computeLongestStreak()', () => {
+    it('returns 0 for empty array', () => {
+      expect(computeLongestStreak([])).toBe(0);
+    });
+
+    it('returns 1 for single date', () => {
+      expect(computeLongestStreak([{ practiced_on: '2026-03-24' }])).toBe(1);
+    });
+
+    it('returns correct streak for consecutive dates', () => {
+      const dates = [
+        { practiced_on: '2026-03-22' },
+        { practiced_on: '2026-03-23' },
+        { practiced_on: '2026-03-24' },
+      ];
+      expect(computeLongestStreak(dates)).toBe(3);
+    });
+
+    it('returns longest streak when there are gaps', () => {
+      const dates = [
+        { practiced_on: '2026-01-01' },
+        { practiced_on: '2026-01-02' },
+        { practiced_on: '2026-01-03' },
+        { practiced_on: '2026-01-10' },
+        { practiced_on: '2026-01-11' },
+      ];
+      expect(computeLongestStreak(dates)).toBe(3);
+    });
+
+    it('returns 1 when no consecutive days exist', () => {
+      const dates = [
+        { practiced_on: '2026-03-01' },
+        { practiced_on: '2026-03-05' },
+        { practiced_on: '2026-03-10' },
+      ];
+      expect(computeLongestStreak(dates)).toBe(1);
+    });
+
+    it('handles dates across month boundaries', () => {
+      const dates = [
+        { practiced_on: '2026-01-30' },
+        { practiced_on: '2026-01-31' },
+        { practiced_on: '2026-02-01' },
+      ];
+      expect(computeLongestStreak(dates)).toBe(3);
     });
   });
 });

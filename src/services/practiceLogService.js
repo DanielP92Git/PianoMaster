@@ -95,4 +95,102 @@ export const practiceLogService = {
 
   /** Re-export getCalendarDate for component convenience */
   getCalendarDate,
+
+  /**
+   * Fetch 52 weeks of instrument practice logs for the authenticated student.
+   *
+   * Uses session.user.id (not passed studentId) to enforce RLS — students
+   * can only query their own logs. The studentId param on the UI component
+   * is used for the TanStack Query key only.
+   *
+   * @param {string} startDate - "YYYY-MM-DD" (363 days before endDate)
+   * @param {string} endDate - "YYYY-MM-DD" (today in local timezone)
+   * @returns {Promise<Array<{ practiced_on: string }>>}
+   * @throws {Error} 'Not authenticated' if no session
+   * @throws {Error} Supabase error if query fails
+   */
+  async getHistoricalLogs(startDate, endDate) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('instrument_practice_logs')
+      .select('practiced_on')
+      .eq('student_id', session.user.id)
+      .gte('practiced_on', startDate)
+      .lte('practiced_on', endDate)
+      .order('practiced_on', { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  },
 };
+
+/**
+ * Transform a list of practiced dates into the full 364-day array required
+ * by react-activity-calendar v3.
+ *
+ * The library requires ALL days in the range (no gaps). Non-practiced days
+ * get { count: 0, level: 0 }; practiced days get { count: 1, level: 1 }.
+ *
+ * @param {Array<{ practiced_on: string } | string>} practicedDates
+ *   Array of DB rows ({ practiced_on: "YYYY-MM-DD" }) or plain "YYYY-MM-DD" strings.
+ * @param {Date} [endDate=new Date()] - Last day of the 52-week window (local timezone).
+ * @returns {Array<{ date: string, count: number, level: number }>} Exactly 364 entries, sorted ascending.
+ */
+export function buildHeatmapData(practicedDates, endDate = new Date()) {
+  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  const end = new Date(endDate);
+  const start = new Date(end.getTime() - 363 * MS_PER_DAY);
+
+  const practicedSet = new Set(
+    practicedDates.map((r) => (typeof r === 'string' ? r : r.practiced_on))
+  );
+
+  const result = [];
+  for (let d = new Date(start); d <= end; d = new Date(d.getTime() + MS_PER_DAY)) {
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const practiced = practicedSet.has(dateStr);
+    result.push({
+      date: dateStr,
+      count: practiced ? 1 : 0,
+      level: practiced ? 1 : 0,
+    });
+  }
+  return result;
+}
+
+/**
+ * Compute the longest consecutive-day practice chain from a list of practiced dates.
+ *
+ * Handles: duplicates (via Set dedup in sort), month boundaries, unsorted input.
+ *
+ * @param {Array<{ practiced_on: string } | string>} practicedDates
+ *   Array of DB rows or plain date strings.
+ * @returns {number} Length of the longest consecutive-day streak, or 0 if empty.
+ */
+export function computeLongestStreak(practicedDates) {
+  if (!practicedDates || practicedDates.length === 0) return 0;
+
+  const sorted = [...practicedDates]
+    .map((r) => (typeof r === 'string' ? r : r.practiced_on))
+    .sort();
+
+  let longest = 1;
+  let current = 1;
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = new Date(sorted[i - 1] + 'T00:00:00');
+    const curr = new Date(sorted[i] + 'T00:00:00');
+    const diffDays = Math.round((curr - prev) / 86400000);
+    if (diffDays === 1) {
+      current++;
+      longest = Math.max(longest, current);
+    } else if (diffDays > 1) {
+      current = 1;
+    }
+    // diffDays === 0 means duplicate date — skip, don't reset
+  }
+  return longest;
+}
