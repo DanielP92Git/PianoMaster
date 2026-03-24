@@ -1,115 +1,64 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.7
-milestone_name: Instrument Practice Tracking
-status: Ready to plan
-stopped_at: "Completed 05-02-PLAN.md (milestone celebration modal + PracticeLogCard wiring) — Task 3 checkpoint:human-verify pending"
-last_updated: "2026-03-24T22:35:26.483Z"
+milestone: v2.8
+milestone_name: Introductory Single-Note Game
+status: Not started
+stopped_at: "v2.7 milestone archived — ready for next milestone"
+last_updated: "2026-03-25"
 progress:
-  total_phases: 6
-  completed_phases: 5
-  total_plans: 12
-  completed_plans: 12
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-23)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 05 — milestone-celebrations
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 999.1
+Phase: 1 (Introductory Single-Note Game)
 Plan: Not started
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: ~170 (across all shipped milestones)
-- 17 milestones shipped in 52 days (2026-01-31 to 2026-03-24)
+- Total plans completed: ~174 (across all shipped milestones)
+- 18 milestones shipped in 53 days (2026-01-31 to 2026-03-25)
 
 ## Accumulated Context
 
 ### Decisions
 
-All v2.6 decisions archived in `.planning/milestones/v2.6-ROADMAP.md`.
-
-Phase 1 (Signup Flow Redesign) decisions:
-
-- [Phase 01-signup-flow-redesign / Plan 00]: Real test for SignupForm checks current age step (not future role step) to avoid false failure before redesign
-- [Phase 01-signup-flow-redesign / Plan 00]: useSignup.test.js has no real test — hook requires QueryClientProvider/Router context deferred to Plan 01
-- [Phase 01-signup-flow-redesign / Plan 01]: birthYear integer stored as YYYY-01-01 (D-10 convention), account_status always active at signup (D-13)
-- [Phase 01-signup-flow-redesign / Plan 01]: Removed unused parentEmail and refetchStatus from useAccountStatus destructure after consent block removed
-- [Phase 01-signup-flow-redesign / Plan 02]: AgeGate calls onSubmit(parsedYear integer) — Plan 03 derives under-13 status from year
-- [Phase 01-signup-flow-redesign / Plan 02]: ParentEmailStep is optional with Skip button — email collection is opt-in not required
-- [Phase 01-signup-flow-redesign / Plan 03]: Role selection is Step 1; STUDENT_STEPS/TEACHER_STEPS drive StepDots + back-navigation; isUnder13 derived at render time from birthYear integer
-- [Phase 01-signup-flow-redesign]: Removed misleading email confirmation toast — accounts are immediately active (D-13)
-
-Auth i18n & language toggle (2026-03-24, post-Phase 1):
-
-- LoginForm.jsx now sets `dir`, `lang`, and Hebrew font on root div — RTL works on auth pages
-- Created AuthLanguageToggle component (EN/HE pill, top-right corner of login/signup)
-- SignupForm.jsx, AgeGate.jsx, ParentEmailStep.jsx: all hardcoded English strings replaced with `t()` calls
-- Full Hebrew translations added under `auth.signup.*` keys in both locale files
-- RTL fixes: role cards use `text-start`, back arrows swap ArrowLeft/ArrowRight by direction
-- PWAInstallPrompt.jsx: all 12 hardcoded strings translated under `install.prompt.*` keys
-- Terms line (LoginForm bottom) now uses translation keys and proper link targets (/terms, /privacy)
-- SignupForm.test.jsx: added `import "../../i18n"` so tests work with translated strings (11/11 pass)
-
-v2.7 roadmap decisions:
-
-- Phase 2 is the root dependency: both new DB tables must exist before any UI, notification, or heatmap work begins
-- instrument_practice_streak is a separate table from current_streak — merging them would entangle two distinct behavioral domains
-- local_date DATE column (not UTC timestamp derivation) is mandatory in Phase 2 schema — cannot be backfilled accurately after launch
-- UNIQUE constraint on (student_id, practiced_on) + award_xp only when count === 1 prevents XP double-award
-- ON DELETE CASCADE on both new tables required for COPPA hard-delete compliance (April 2026 deadline)
-- Phase 3 notification architecture decision (extend send-daily-push vs. new cron) must be resolved as an explicit ADR before implementation
-- Phase 4 heatmap library vs. bespoke SVG decision should be recorded as ADR in phase spec; react-activity-calendar recommended for date-math reliability
-- iOS action button support does not exist in 2026; URL param fallback (?practice_checkin=1) is the primary path, not the fallback
-- [Phase 02-data-foundation-and-core-logging]: practiced_on is DATE not TIMESTAMPTZ — prevents UTC drift bug in local calendar day tracking
-- [Phase 02-data-foundation-and-core-logging]: instrument_practice_streak is SEPARATE from current_streak — independent instrument streak per D-12
-- [Phase 02-data-foundation-and-core-logging]: XP award failure is non-blocking — practice log recorded even if awardXP throws
-- [Phase 02-data-foundation-and-core-logging]: logState FSM (idle/logging/settled) prevents double-tap and manages 2-second hold (D-06, D-07)
-- [Phase 03-push-notification-integration]: Practice check-in priority: instrument_practice_logs queried before students_score so students without a practice log get check-in notification instead of app-usage reminder
-- [Phase 03-push-notification-integration]: last_notified_at updated in both practice check-in and app-usage branches, enforcing 1 notification/day invariant (D-05)
-- [Phase 03-push-notification-integration / Plan 02]: action string is 'yes-practiced' (not 'yes') to match UI-SPEC and avoid collision with generic 'open' action
-- [Phase 03-push-notification-integration / Plan 02]: replaceState before async logPractice() call — prevents URL param re-triggering on React re-renders
-- [Phase 03-push-notification-integration / Plan 02]: snoozed notification tag 'practice-checkin-snoozed' with data.snoozed:true prevents recursive snooze chain
-- [Phase 04-parent-calendar-heatmap]: getHistoricalLogs uses session.user.id (not passed studentId) — enforces RLS; studentId prop on UI component is for TanStack Query key only
-- [Phase 04-parent-calendar-heatmap]: buildHeatmapData and computeLongestStreak are named exports (not on service object) — pure functions directly testable without Supabase mock
-- [Phase 04]: v3 prop names used: showColorLegend={false} and showTotalCount={false} — RESEARCH.md corrections applied to UI-SPEC's incorrect v2 names
-- [Phase 04]: showMonthLabels=false in RTL mode to avoid SVG text double-mirror — heatmap functional without month labels in v1 RTL (PARENT-F02 deferred)
-- [Phase 05-milestone-celebrations]: Omit last_milestone_celebrated from upsert on streak increment — Supabase only updates columns you include, preserving existing value without extra read
-- [Phase 05-milestone-celebrations]: Return lastMilestoneCelebrated: 0 directly from reset path — value is deterministic after streak break, no DB re-read needed
-- [Phase 05-milestone-celebrations]: MILESTONES constant at module level avoids dep churn; handleClose clears auto-timer before calling onClose (Pitfall 6); ConfettiEffect as fragment sibling not nested
+All v2.7 decisions archived in `.planning/milestones/v2.7-ROADMAP.md`.
 
 ### Roadmap Evolution
 
-- Phase 1 (Signup Flow Redesign) — COMPLETE (4/4 plans, all waves), running in parallel worktree
-- Milestone v2.7 roadmap defined: Phases 2-5 (Instrument Practice Tracking)
+- v2.7 (Instrument Practice Tracking) complete and archived
+- v2.8 Phase 1 (Introductory Single-Note Game) promoted from backlog
 
 ### Blockers/Concerns
 
 **COPPA deadline:** April 22, 2026
 
-- Both new tables need ON DELETE CASCADE before launch — this is in Phase 2 schema and must not be deferred
-
 ## Session Continuity
 
-Last session: 2026-03-24T21:26:26.469Z
-Stopped at: Completed 05-02-PLAN.md (milestone celebration modal + PracticeLogCard wiring) — Task 3 checkpoint:human-verify pending
+Last session: 2026-03-25
+Stopped at: v2.7 milestone archived — ready for next milestone
 Resume file: None
 
 **Next action:**
 
-- Phase 03 complete — all 2 plans executed (03-01 Edge Function + 03-02 SW + Dashboard)
-- Phase 04 (parent heatmap) or Phase 05 (production deployment) can proceed next
+- `/gsd:new-milestone` to define v2.8 requirements and roadmap
+- Or `/gsd:discuss-phase` to start Phase 1 directly (requirements already in ROADMAP.md)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-24 — Phase 03 push-notification-integration complete (both plans)*
+*Last updated: 2026-03-25 — v2.7 milestone archived*

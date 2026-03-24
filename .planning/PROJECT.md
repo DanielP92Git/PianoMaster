@@ -176,21 +176,19 @@ These capabilities exist, are working, and have been shipped:
 - I18N-01: Full EN/HE translations (17 keys each) with RTL layout
 - 15/15 requirements delivered, 3 plans across 2 phases
 
+**v2.7 Instrument Practice Tracking (shipped 2026-03-25):**
+- LOG-01/02/03: Daily practice logging via dashboard PracticeLogCard with FSM state, 25 XP/day reward
+- LOG-04: Practice streak milestone celebrations at 5/10/21/30 days with emerald confetti modal
+- STRK-01/02/03: Dedicated instrument practice streak counter (piano icon), weekend pass, independent DB table
+- PUSH-01-05: "Did you practice?" push notification check-in with priority branching, SW action buttons, iOS URL param fallback
+- PARENT-01/02: 52-week practice calendar heatmap in parent portal with emerald/gray coloring, RTL mirror
+- INFRA-01-05: DB migration with RLS + CASCADE, UNIQUE constraint, local_date column, full EN/HE i18n
+- Signup flow redesigned: role-first wizard with back navigation, birth year simplification, optional parent email
+- 19/19 requirements delivered, 12 plans across 5 phases
+
 ### Active
 
-**Current Milestone: v2.7 Instrument Practice Tracking**
-
-Goal: Add a daily yes/no instrument practice tracker with its own streak, XP rewards, push notification check-ins, and parent-facing calendar heatmap — distinct from app-usage tracking.
-
-Target features:
-- Daily practice logging via interactive push notification action buttons + dashboard fallback
-- Retroactive logging for yesterday only
-- Dedicated practice streak with weekend freezes (Shabbat pass), separate from app streak
-- XP reward for logging practice (feeds into existing XP/level system)
-- Dashboard practice card showing current instrument practice streak + today's status
-- Parent calendar heatmap (GitHub-style) showing practice days vs missed
-- "Did you practice?" daily push notification — separate from existing timer reminder
-- Instrument practice summary added to existing parent weekly email report
+**Next milestone: TBD (use `/gsd:new-milestone`)**
 
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
@@ -255,21 +253,23 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.7 Phase 4 — 2026-03-24):**
+**Current State (after v2.7 — shipped 2026-03-25):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
-- Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools
+- Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools, PracticeLogCard
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
-- Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit
+- Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit, practice check-in priority
 - Streak protection: 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
+- Instrument practice streak: dedicated tracker with piano icon, independent from app-usage streak
 - Notes Recognition arcade mode: combo/lives/speed bonus, on-fire mode, auto-grow note pool
 - XP is sole reward currency: 30-level system with prestige tiers, no more "points"
 - VictoryScreen redesigned with useVictoryState hook extraction and two-panel landscape layout
 - Free play awards XP via calculateFreePlayXP (10-50 XP range)
 - Teacher analytics display "X XP (Lv. Y)" format
-- Instrument practice tracking: daily log button, dedicated practice streak, 25 XP/day reward
-- Push notification check-in: "Did you practice?" cron notification with iOS URL param fallback
-- Parent calendar heatmap: monthly calendar grid in parent portal, emerald/gray binary coloring, RTL support
+- Instrument practice tracking: daily log button, dedicated practice streak, 25 XP/day reward, FSM dashboard card
+- Push notification check-in: "Did you practice?" cron notification with SW action buttons, iOS URL param fallback
+- Parent calendar heatmap: 52-week rolling grid in parent portal, emerald/gray binary coloring, RTL CSS mirror
 - Milestone celebrations: emerald-themed modal with confetti at 5/10/21/30-day practice streaks, once-per-streak tracking
+- Role-first signup wizard: 4-step student / 2-step teacher, birth year simplification, optional parent email
 - Weekly progress summaries, personal best badges, daily fun facts
 - Parent weekly email reports via Brevo with HMAC unsubscribe
 - Tiered celebration system (4 tiers) with accessibility-first design
@@ -443,6 +443,16 @@ Explicitly excluded:
 | Honeypot silent rejection (fake 200) | Avoids tipping off scrapers; bot thinks submission succeeded | Good |
 | onClick handler (not form onSubmit) | Supports retry button calling handleSubmit directly | Good |
 | Unified support Gmail for all emails | One inbox for support + feedback; simplifies sender management | Good |
+| Separate instrument_practice_streak table | Two distinct behavioral domains; merging entangles app-usage and practice | Good |
+| local_date DATE column (not UTC timestamp) | Prevents timezone drift in streak/heatmap calculations | Good |
+| logState FSM (idle/logging/settled) | Prevents double-tap and manages 2-second hold state | Good |
+| Practice check-in priority in push cron | Practice check-in checked before app-usage; continue prevents double-notification | Good |
+| iOS URL param fallback (?practice_checkin=1) | iOS has no notification action buttons; URL param is primary path not fallback | Good |
+| react-activity-calendar v3 for heatmap | Date-math reliability, proven component vs bespoke SVG | Good |
+| showMonthLabels=false in RTL mode | Avoids SVG text double-mirror; functional heatmap in RTL v1 | Good |
+| Module-level MILESTONES constant | Avoids useCallback dep churn (same pattern as COMBO_TIERS) | Good |
+| Role-first signup wizard | Role selection as step 1; STUDENT_STEPS/TEACHER_STEPS drive wizard flow | Good |
+| Birth year integer (not full DOB) | Simpler age collection; stored as YYYY-01-01 convention | Good |
 
 ## Evolution
 
@@ -463,4 +473,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-25 after Phase 5 (Milestone Celebrations) complete*
+*Last updated: 2026-03-25 after v2.7 milestone complete*

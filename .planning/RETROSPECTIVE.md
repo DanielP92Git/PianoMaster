@@ -322,6 +322,50 @@
 
 ---
 
+## Milestone: v2.7 — Instrument Practice Tracking
+
+**Shipped:** 2026-03-25
+**Phases:** 5 | **Plans:** 12
+
+### What Was Built
+- Role-first signup wizard with 4-step student / 2-step teacher flow, birth year simplification, optional parent email
+- Daily instrument practice logging via dashboard PracticeLogCard with FSM state machine, dedicated practice streak, 25 XP/day
+- "Did you practice?" push notification check-in with priority branching in Edge Function, SW action buttons, iOS URL param fallback
+- 52-week practice calendar heatmap in parent portal using react-activity-calendar v3, emerald/gray binary coloring, RTL CSS mirror
+- Practice streak milestone celebrations at 5/10/21/30 days with emerald MilestoneCelebrationModal and confetti
+
+### What Worked
+- Signup flow redesign in parallel worktree: zero merge conflicts, shipped alongside practice tracking
+- TDD for service layers: practiceLogService, practiceStreakService, and dateUtils all had tests before UI work
+- Extending existing Edge Function (send-daily-push) instead of creating a new one — simpler cron management
+- react-activity-calendar v3 over bespoke SVG — saved significant time on date math and mobile responsiveness
+- UI-SPEC + RESEARCH phase before implementation prevented several API mismatches (v2 vs v3 prop names)
+
+### What Was Inefficient
+- CLI `roadmap analyze` only counted Phase 1 because Phases 2-5 used a different ROADMAP heading format — required manual archive fixup
+- Phase 4 initial implementation used react-activity-calendar heatmap which was later replaced with a monthly calendar grid — re-work cost
+- one_liner fields empty in some SUMMARY.md files — automated extraction returned blank
+
+### Patterns Established
+- FSM logState (idle/logging/settled) for dashboard action cards with optimistic cache updates
+- Practice check-in priority branching in push notification cron (instrument practice > app-usage)
+- Monthly calendar heatmap pattern with CSS scaleX(-1) for RTL support
+- Module-level MILESTONES constant to avoid useCallback dependency churn in celebration modals
+- fire-and-forget DB write-back for non-critical metadata (milestone celebrated tracking)
+
+### Key Lessons
+1. Research phase saves implementation time: v3 prop name corrections from RESEARCH.md prevented API misuse
+2. Extending existing Edge Functions (instead of creating new ones) simplifies cron management and dedup
+3. RTL heatmap/calendar support needs RTL-specific testing — CSS mirror approach works but needs label suppression
+4. Parallel worktree workflow continues to prove reliable for isolated features shipping alongside main work
+
+### Cost Observations
+- Model mix: ~75% opus, ~25% sonnet (more sonnet for routine coding tasks)
+- Sessions: ~4
+- Notable: 5 phases in 3 days with signup redesign running in parallel — efficient execution from established patterns
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -345,6 +389,7 @@
 | v2.4 | 5 | 10 | Content expansion — dual-track infrastructure + content |
 | v2.5 | 4 | 11 | Launch prep — ESLint zero-warning, COPPA hard-delete, QA checklist |
 | v2.6 | 2 | 3 | User feedback — backend-first, pattern reuse, 2-day turnaround |
+| v2.7 | 5 | 12 | Practice tracking — parallel worktree, TDD services, Edge Function extension |
 
 ### Top Lessons (Verified Across Milestones)
 

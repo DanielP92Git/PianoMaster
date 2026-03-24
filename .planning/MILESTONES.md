@@ -1,5 +1,32 @@
 # Project Milestones: PianoApp
 
+## v2.7 Instrument Practice Tracking (Shipped: 2026-03-25)
+
+**Delivered:** Daily instrument practice tracker with dedicated streak, push notification check-ins, parent calendar heatmap, and streak milestone celebrations — plus a signup flow redesign.
+
+**Phases completed:** 1-5 (12 plans total)
+
+**Key accomplishments:**
+
+- Role-first signup wizard with 4-step student flow (role, birth-year, parent-email, credentials) and 2-step teacher flow, with back navigation and Google OAuth
+- Daily instrument practice logging via dashboard card with FSM state (idle/logging/settled), dedicated practice streak counter, and 25 XP/day reward
+- "Did you practice?" push notification check-in with priority branching in Edge Function, SW action buttons, iOS URL param fallback, and 1/day coordination
+- 52-week practice calendar heatmap in parent portal with react-activity-calendar v3, emerald/gray binary coloring, RTL CSS mirror, and summary stats
+- Practice streak milestone celebrations at 5/10/21/30 days with emerald-themed MilestoneCelebrationModal, confetti, auto-dismiss, and once-per-streak tracking
+
+**Stats:**
+
+- 185 files changed (+23,095 / -6,379)
+- 5 phases, 12 plans, ~114 commits
+- 3 days (2026-03-23 to 2026-03-25)
+- 19/19 requirements satisfied, 0 gaps
+
+**Tech debt carried:** syncPracticeSessions() stub in sw.js; showMonthLabels=false in RTL mode (PARENT-F02 deferred)
+
+**What's next:** Next milestone planning via `/gsd:new-milestone`
+
+---
+
 ## v2.6 User Feedback (Shipped: 2026-03-23)
 
 **Delivered:** Parent-gated feedback form in Settings with COPPA-compliant anti-spam (honeypot, rate limiting, cooldown), Supabase Edge Function delivering plain-text email to dedicated support inbox via Brevo, and unified support Gmail sender for all transactional emails.
