@@ -1414,7 +1414,20 @@
     "resubscribe": "להירשם מחדש",
     "noSubscription": "אין מנוי פעיל",
     "unlockAccess": "פתחו גישה מלאה",
-    "back": "חזרה"
+    "back": "חזרה",
+    "practiceCalendar": {
+      "title": "יומן תרגול",
+      "statTotalLabel": "ימי תרגול",
+      "statStreakLabel": "רצף נוכחי",
+      "statLongestLabel": "רצף שיא",
+      "statDaySingular": "יום",
+      "statDayPlural": "ימים",
+      "emptyHeading": "עדיין לא תועד תרגול",
+      "emptyBody": "ימי תרגול יופיעו כאן כשהילד/ה ירשמו תרגול בכל יום.",
+      "ariaLabel": "יומן תרגול 52 שבועות",
+      "loadingLabel": "טוען היסטוריית תרגול",
+      "errorMessage": "לא ניתן לטעון את היסטוריית התרגול. משכו לרענון או נסו שוב מאוחר יותר."
+    }
   },
   "micInterrupted": {
     "ariaLabel": "המשחק מושהה",

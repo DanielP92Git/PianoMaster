@@ -18,6 +18,7 @@ import {
   Crown,
   AlertTriangle,
 } from 'lucide-react';
+import PracticeHeatmapCard from '../components/parent/PracticeHeatmapCard';
 import { toast } from 'react-hot-toast';
 import { useUser } from '../features/authentication/useUser';
 import { useSubscription } from '../contexts/SubscriptionContext';
@@ -273,6 +274,11 @@ export default function ParentPortalPage() {
             )}
           </div>
         )}
+
+        {/* Practice Heatmap — always visible per D-02 */}
+        <div className="mt-6" data-section="practice-heatmap">
+          <PracticeHeatmapCard studentId={user?.id} />
+        </div>
       </div>
 
       {/* Cancel Confirmation Dialog */}
