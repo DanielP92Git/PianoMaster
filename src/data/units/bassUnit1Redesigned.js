@@ -71,8 +71,8 @@ export const bassUnit1Nodes = [
           notePool: ['C4'],
           targetNote: 'C4',
           distractorNotes: ['B3', 'A3', 'G3', 'F3', 'E3'],
-          totalCards: 20,
-          targetCount: 5,
+          totalCards: 30,
+          targetCount: 8,
           clef: 'bass',
         }
       }

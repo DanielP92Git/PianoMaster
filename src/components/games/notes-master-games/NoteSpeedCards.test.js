@@ -48,27 +48,27 @@ describe('generateCardSequence', () => {
 });
 
 describe('getSpeedForCard', () => {
-  it('returns 2000 for cards 0-4 (learning tier)', () => {
-    for (let i = 0; i < 5; i++) {
+  it('returns 2500 for cards 0-7 (learning tier)', () => {
+    for (let i = 0; i < 8; i++) {
+      expect(getSpeedForCard(i)).toBe(2500);
+    }
+  });
+
+  it('returns 2000 for cards 8-15 (warming up tier)', () => {
+    for (let i = 8; i < 16; i++) {
       expect(getSpeedForCard(i)).toBe(2000);
     }
   });
 
-  it('returns 1500 for cards 5-9 (warming up tier)', () => {
-    for (let i = 5; i < 10; i++) {
-      expect(getSpeedForCard(i)).toBe(1500);
+  it('returns 1700 for cards 16-23 (challenge tier)', () => {
+    for (let i = 16; i < 24; i++) {
+      expect(getSpeedForCard(i)).toBe(1700);
     }
   });
 
-  it('returns 1200 for cards 10-14 (challenge tier)', () => {
-    for (let i = 10; i < 15; i++) {
-      expect(getSpeedForCard(i)).toBe(1200);
-    }
-  });
-
-  it('returns 1000 for cards 15-19 (fast tier)', () => {
-    for (let i = 15; i < 20; i++) {
-      expect(getSpeedForCard(i)).toBe(1000);
+  it('returns 1400 for cards 24-29 (fast tier)', () => {
+    for (let i = 24; i < 30; i++) {
+      expect(getSpeedForCard(i)).toBe(1400);
     }
   });
 });

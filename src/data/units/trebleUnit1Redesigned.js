@@ -71,8 +71,8 @@ export const trebleUnit1Nodes = [
           notePool: ['C4'],
           targetNote: 'C4',
           distractorNotes: ['D4', 'E4', 'F4', 'G4', 'A4'],
-          totalCards: 20,
-          targetCount: 5,
+          totalCards: 30,
+          targetCount: 8,
           clef: 'treble',
         }
       }

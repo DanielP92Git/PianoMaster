@@ -641,18 +641,18 @@
       "scoreTooLowMessage": "נדרש לפחות 50% תשובות נכונות כדי לנצח",
       "tryAgain": "נסו שוב",
       "exit": "יציאה",
-      "livesLost": "!נגמרו הלבבות",
+      "livesLost": "נגמרו הלבבות!",
       "livesLostMessage": "ניסיון מצוין! ענית נכון על {{count}}!"
     },
     "engagement": {
       "combo": "קומבו",
-      "fast": "!מהיר",
+      "fast": "מהיר!",
       "lives": "חיים",
-      "newNote": "!צליל חדש נפתח",
-      "tierUp": "!כוח עולה",
-      "doublePoints": "!XP כפול",
-      "triplePoints": "!XP משולש",
-      "onFire": "!על האש"
+      "newNote": "צליל חדש נפתח!",
+      "tierUp": "כוח עולה!",
+      "doublePoints": "XP כפול!",
+      "triplePoints": "XP משולש!",
+      "onFire": "מדהים!"
     },
     "difficulties": {
       "easy": "קל",
@@ -1646,19 +1646,20 @@
     }
   },
   "noteSpeedCards": {
-    "headline": "!תפסו את דו האמצעי",
+    "headline": "תפסו את {{noteName}}!",
     "subheadline": ".הקישו על המסך כשאתם רואים את דו האמצעי על החמשה",
     "startButton": "!יאללה",
-    "tapHint": "!הקישו כשאתם רואים",
+    "tapHint": "הקש כשאתה רואה את {{noteName}}!",
     "scoreLabel": "נתפסו",
     "comboLabel": "רצף",
     "speedLabel": {
       "learning": "לומדים",
       "warmingUp": "מתחממים",
       "challenge": "אתגר",
-      "fast": "!מהר"
+      "fast": "מהר!"
     },
-    "missedBanner": "!פספסתם",
-    "cardProgress": "קלף {{current}} מתוך {{total}}"
+    "missedBanner": "פספסת!",
+    "cardProgress": "קלף {{current}} מתוך {{total}}",
+    "catchResult": "תפסת {{caught}} מתוך {{total}} דו אמצעי!"
   }
 }

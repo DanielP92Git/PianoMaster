@@ -27,6 +27,7 @@ const VictoryScreen = ({
   challengeMode = false, // Optional: daily challenge mode
   challengeId = null, // Optional: daily challenge ID
   challengeXpReward = null, // Optional: bonus XP for challenge
+  subtitle = null, // Optional: custom subtitle text (e.g., "You caught 5 out of 8 Middle C!")
 }) => {
   const {
     // Core display data
@@ -206,6 +207,13 @@ const VictoryScreen = ({
                 />
               ))}
             </div>
+          )}
+
+          {/* Custom subtitle (e.g., catch count for speed cards) */}
+          {subtitle && (
+            <p className="text-center text-base font-semibold text-white/90">
+              {subtitle}
+            </p>
           )}
 
           {/* XP badge (trail mode) - polished glowing badge */}

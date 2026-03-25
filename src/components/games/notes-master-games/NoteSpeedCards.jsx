@@ -9,10 +9,11 @@ import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { Zap } from "lucide-react";
+import { Zap, Heart } from "lucide-react";
 import flameIcon from "../../../assets/icons/flame.png";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
+import GameOverScreen from "../GameOverScreen";
 import { NoteImageDisplay } from "./NoteImageDisplay";
 import {
   TREBLE_NOTES,
@@ -78,10 +79,10 @@ export function generateCardSequence(totalCards, targetCount, targetPitch, distr
  * @returns {number} Duration in milliseconds
  */
 export function getSpeedForCard(cardIndex) {
-  if (cardIndex < 5) return 2000;
-  if (cardIndex < 10) return 1500;
-  if (cardIndex < 15) return 1200;
-  return 1000;
+  if (cardIndex < 8) return 2500;
+  if (cardIndex < 16) return 2000;
+  if (cardIndex < 24) return 1700;
+  return 1400;
 }
 
 /**
@@ -95,6 +96,8 @@ export function calculateScore(caught, total) {
   if (total === 0) return 0;
   return Math.round((caught / total) * 100);
 }
+
+const INITIAL_LIVES = 3;
 
 // ============================================================
 // Game Component
@@ -140,17 +143,19 @@ export function NoteSpeedCards() {
   // Derived config (defaults for standalone/free-play mode)
   const targetNote = nodeConfig?.targetNote || "C4";
   const distractorNotes = nodeConfig?.distractorNotes || ["D4", "E4", "G4", "A4"];
-  const totalCards = nodeConfig?.totalCards || 20;
-  const totalTargets = nodeConfig?.targetCount || 5;
+  const totalCards = nodeConfig?.totalCards || 30;
+  const totalTargets = nodeConfig?.targetCount || 8;
   const clef = nodeConfig?.clef || "treble";
 
   // ── Game state ────────────────────────────────────────────────────────────
-  const [gameState, setGameState] = useState("idle"); // 'idle' | 'in-progress' | 'complete'
+  const [gameState, setGameState] = useState("idle"); // 'idle' | 'countdown' | 'in-progress' | 'complete' | 'game-over'
+  const [countdownValue, setCountdownValue] = useState(null);
   const [cardSequence, setCardSequence] = useState([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [correctCatches, setCorrectCatches] = useState(0);
   const [wrongTaps, setWrongTaps] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [lives, setLives] = useState(INITIAL_LIVES);
   const [feedbackState, setFeedbackState] = useState(null); // 'correct' | 'wrong' | 'missed' | null
   const [feedbackKey, setFeedbackKey] = useState(0); // force re-mount to re-animate
 
@@ -161,6 +166,8 @@ export function NoteSpeedCards() {
   const correctCatchesRef = useRef(0);
   const currentSpeedRef = useRef(2000);
   const tappedThisCard = useRef(false);
+  const livesRef = useRef(INITIAL_LIVES);
+  const isTransitioning = useRef(false);
   const hasAutoStartedRef = useRef(false);
 
   // Keep refs in sync with state
@@ -206,19 +213,20 @@ export function NoteSpeedCards() {
   // ── Speed tier label ──────────────────────────────────────────────────────
   const getSpeedLabel = useCallback(
     (cardIndex) => {
-      if (cardIndex < 5) return t("noteSpeedCards.speedLabel.learning");
-      if (cardIndex < 10) return t("noteSpeedCards.speedLabel.warmingUp");
-      if (cardIndex < 15) return t("noteSpeedCards.speedLabel.challenge");
+      if (cardIndex < 8) return t("noteSpeedCards.speedLabel.learning");
+      if (cardIndex < 16) return t("noteSpeedCards.speedLabel.warmingUp");
+      if (cardIndex < 24) return t("noteSpeedCards.speedLabel.challenge");
       return t("noteSpeedCards.speedLabel.fast");
     },
     [t],
   );
 
   // ── Target headline (from i18n or node name) ──────────────────────────────
-  const headline = t("noteSpeedCards.headline");
-  const subheadline = t("noteSpeedCards.subheadline");
+  const noteName = t(`trail:noteNames.${targetNote.replace(/[0-9]/g, "")}`, { defaultValue: targetNote });
+  const headline = t("noteSpeedCards.headline", { noteName });
+  const subheadline = t("noteSpeedCards.subheadline", { noteName });
 
-  // ── Start game ────────────────────────────────────────────────────────────
+  // ── Start game (with countdown) ─────────────────────────────────────────
   const startGame = useCallback(() => {
     const sequence = generateCardSequence(totalCards, totalTargets, targetNote, distractorNotes);
     setCardSequence(sequence);
@@ -231,8 +239,22 @@ export function NoteSpeedCards() {
     comboRef.current = 0;
     currentCardIndexRef.current = 0;
     tappedThisCard.current = false;
-    setGameState("in-progress");
+    setLives(INITIAL_LIVES);
+    livesRef.current = INITIAL_LIVES;
+    setCountdownValue(3);
+    setGameState("countdown");
   }, [totalCards, totalTargets, targetNote, distractorNotes]);
+
+  // ── Countdown timer ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (gameState !== "countdown") return;
+    if (countdownValue <= 0) {
+      setGameState("in-progress");
+      return;
+    }
+    const id = setTimeout(() => setCountdownValue((prev) => prev - 1), 800);
+    return () => clearTimeout(id);
+  }, [gameState, countdownValue]);
 
   // ── Reset game ────────────────────────────────────────────────────────────
   const handleReset = useCallback(() => {
@@ -290,10 +312,17 @@ export function NoteSpeedCards() {
     }
 
     tappedThisCard.current = false;
+    setFeedbackState(null);
+
+    // Block taps during card transition animation (~400ms)
+    isTransitioning.current = true;
+    const transitionId = setTimeout(() => {
+      isTransitioning.current = false;
+    }, 400);
 
     // Calculate speed with bonus reduction (-100ms per correct catch, floor 700ms)
     const baseSpeed = getSpeedForCard(currentCardIndex);
-    const adjustedSpeed = Math.max(700, baseSpeed - correctCatchesRef.current * 100);
+    const adjustedSpeed = Math.max(1000, baseSpeed - correctCatchesRef.current * 50);
     currentSpeedRef.current = adjustedSpeed;
 
     const id = setTimeout(() => {
@@ -306,7 +335,10 @@ export function NoteSpeedCards() {
       setCurrentCardIndex((prev) => prev + 1);
     }, adjustedSpeed);
 
-    return () => clearTimeout(id);
+    return () => {
+      clearTimeout(id);
+      clearTimeout(transitionId);
+    };
   }, [currentCardIndex, gameState, cardSequence, handleMissedTarget]);
 
   // ── Tap handler ───────────────────────────────────────────────────────────
@@ -316,6 +348,7 @@ export function NoteSpeedCards() {
       if (e?.cancelable) e.preventDefault();
 
       if (gameState !== "in-progress") return;
+      if (isTransitioning.current) return; // ignore taps during card transition
       if (tappedThisCard.current) return; // prevent double-tap
       tappedThisCard.current = true;
 
@@ -331,12 +364,20 @@ export function NoteSpeedCards() {
         comboRef.current += 1;
         setFeedbackState("correct");
       } else {
-        // Wrong tap — no lives lost, just combo reset
+        // Wrong tap — combo reset + lose a life
         playWrongSound();
         setCombo(0);
         comboRef.current = 0;
         setWrongTaps((prev) => prev + 1);
         setFeedbackState("wrong");
+
+        livesRef.current -= 1;
+        setLives(livesRef.current);
+        if (livesRef.current <= 0) {
+          setGameState("game-over");
+          isGameActiveRef.current = false;
+          return; // don't advance card
+        }
       }
       setFeedbackKey((prev) => prev + 1);
       // Advance card shortly after tap feedback
@@ -352,6 +393,18 @@ export function NoteSpeedCards() {
     },
     [handleTap],
   );
+
+  // Spacebar handler for desktop/laptop play
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === "Space") {
+        e.preventDefault();
+        handleTap();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleTap]);
 
   // ── handleNextExercise (trail navigation) ─────────────────────────────────
   const handleNextExercise = useCallback(() => {
@@ -421,6 +474,19 @@ export function NoteSpeedCards() {
   const cardEnter = isRTL ? { x: "-100%" } : { x: "100%" };
   const cardExit = isRTL ? { x: "100%" } : { x: "-100%" };
 
+  // ── Render: Game over state ──────────────────────────────────────────────
+  if (gameState === "game-over") {
+    return (
+      <GameOverScreen
+        score={correctCatches}
+        totalQuestions={totalCards}
+        livesLost={true}
+        correctAnswers={correctCatches}
+        onReset={handleReset}
+      />
+    );
+  }
+
   // ── Render: Complete state ────────────────────────────────────────────────
   if (gameState === "complete") {
     return (
@@ -434,6 +500,7 @@ export function NoteSpeedCards() {
         totalExercises={trailTotalExercises}
         exerciseType="note_catch"
         onNextExercise={handleNextExercise}
+        subtitle={t("noteSpeedCards.catchResult", { caught: correctCatches, total: totalTargets })}
       />
     );
   }
@@ -470,6 +537,27 @@ export function NoteSpeedCards() {
             {t("noteSpeedCards.startButton")}
           </button>
         </div>
+      </div>
+    );
+  }
+
+  // ── Render: Countdown state ──────────────────────────────────────────────
+  if (gameState === "countdown") {
+    return (
+      <div className="relative flex h-[100svh] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={countdownValue}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.5, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="text-8xl font-bold text-white"
+            style={{ fontFamily: "'Fredoka One', 'Fredoka', cursive" }}
+          >
+            {countdownValue}
+          </motion.div>
+        </AnimatePresence>
       </div>
     );
   }
@@ -520,6 +608,32 @@ export function NoteSpeedCards() {
             <span>×{combo}</span>
           </div>
         )}
+
+        {/* Hearts */}
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: INITIAL_LIVES }).map((_, i) => (
+            <AnimatePresence key={i} mode="wait">
+              {i < lives ? (
+                <motion.div
+                  key="filled"
+                  exit={{ scale: [1, 1.4, 0], opacity: [1, 1, 0] }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Heart className="h-5 w-5 fill-red-400 text-red-400" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="empty"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1, opacity: 0.3 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Heart className="h-5 w-5 text-white/30" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          ))}
+        </div>
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -598,7 +712,7 @@ export function NoteSpeedCards() {
       <div className="shrink-0 px-4 pb-6 pt-3">
         {/* Tap hint */}
         <p className={`mb-3 text-center text-base ${secondaryText}`}>
-          {t("noteSpeedCards.tapHint")}
+          {t("noteSpeedCards.tapHint", { noteName: t(`trail:noteNames.${targetNote.replace(/[0-9]/g, "")}`, { defaultValue: targetNote }) })}
         </p>
 
         {/* Speed progress bar */}

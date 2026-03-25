@@ -20,7 +20,7 @@ const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctA
       : t("games.gameOver.scoreTooLowMessage");
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-hidden p-3 sm:p-4">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-3 sm:p-4">
       <div className="flex w-full max-w-md flex-col items-center">
         {/* Sad Beethoven Animation */}
         <div className="relative z-10 -mb-3 flex-shrink-0 sm:-mb-4">

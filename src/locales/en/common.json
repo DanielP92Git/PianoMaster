@@ -1639,10 +1639,10 @@
     }
   },
   "noteSpeedCards": {
-    "headline": "Catch Middle C!",
-    "subheadline": "Tap the screen when you see Middle C on the staff.",
+    "headline": "Catch {{noteName}}!",
+    "subheadline": "Tap the screen when you see {{noteName}} on the staff.",
     "startButton": "Let's Go!",
-    "tapHint": "Tap when you see it!",
+    "tapHint": "Tap when you see {{noteName}}!",
     "scoreLabel": "Caught",
     "comboLabel": "Combo",
     "speedLabel": {
@@ -1652,6 +1652,7 @@
       "fast": "Fast!"
     },
     "missedBanner": "Missed!",
-    "cardProgress": "Card {{current}} of {{total}}"
+    "cardProgress": "Card {{current}} of {{total}}",
+    "catchResult": "You caught {{caught}} out of {{total}} Middle C!"
   }
 }

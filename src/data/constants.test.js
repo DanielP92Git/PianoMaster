@@ -22,8 +22,8 @@ describe('First trail nodes use note_catch exercise type (REQ-05)', () => {
     const config = treble11.exercises[0].config;
     expect(config.targetNote).toBe('C4');
     expect(config.distractorNotes).toEqual(expect.arrayContaining(['D4', 'E4']));
-    expect(config.totalCards).toBe(20);
-    expect(config.targetCount).toBe(5);
+    expect(config.totalCards).toBe(30);
+    expect(config.targetCount).toBe(8);
   });
 
   it('bass_1_1 first exercise is note_catch', () => {
