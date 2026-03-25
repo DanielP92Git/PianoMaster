@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.8
 milestone_name: Introductory Single-Note Game
 status: Milestone complete
-stopped_at: Phase 6 context gathered
-last_updated: "2026-03-25T17:57:04.654Z"
+stopped_at: Phase 6 UI-SPEC approved
+last_updated: "2026-03-25T18:09:53.196Z"
 progress:
   total_phases: 2
   completed_phases: 1
@@ -55,9 +55,9 @@ All v2.7 decisions archived in `.planning/milestones/v2.7-ROADMAP.md`.
 
 ## Session Continuity
 
-Last session: 2026-03-25T17:57:04.647Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-dedicated-parent-portal-with-math-gate/06-CONTEXT.md
+Last session: 2026-03-25T18:09:53.190Z
+Stopped at: Phase 6 UI-SPEC approved
+Resume file: .planning/phases/06-dedicated-parent-portal-with-math-gate/06-UI-SPEC.md
 
 **Next action:**
 
