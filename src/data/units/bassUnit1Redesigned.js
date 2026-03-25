@@ -66,12 +66,14 @@ export const bassUnit1Nodes = [
     // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.NOTE_RECOGNITION,
+        type: EXERCISE_TYPES.NOTE_CATCH,
         config: {
           notePool: ['C4'],
-          questionCount: 6,        // Short first session
+          targetNote: 'C4',
+          distractorNotes: ['B3', 'A3', 'G3', 'F3', 'E3'],
+          totalCards: 20,
+          targetCount: 5,
           clef: 'bass',
-          timeLimit: null
         }
       }
     ],

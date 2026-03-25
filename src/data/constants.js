@@ -23,5 +23,6 @@ export const EXERCISE_TYPES = {
   SIGHT_READING: 'sight_reading',
   RHYTHM: 'rhythm',
   MEMORY_GAME: 'memory_game',
-  BOSS_CHALLENGE: 'boss_challenge'
+  BOSS_CHALLENGE: 'boss_challenge',
+  NOTE_CATCH: 'note_catch'
 };

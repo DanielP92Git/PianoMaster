@@ -66,12 +66,14 @@ export const trebleUnit1Nodes = [
     // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.NOTE_RECOGNITION,
+        type: EXERCISE_TYPES.NOTE_CATCH,
         config: {
           notePool: ['C4'],
-          questionCount: 6,        // Short first session
+          targetNote: 'C4',
+          distractorNotes: ['D4', 'E4', 'F4', 'G4', 'A4'],
+          totalCards: 20,
+          targetCount: 5,
           clef: 'treble',
-          timeLimit: null
         }
       }
     ],

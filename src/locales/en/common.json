@@ -1637,5 +1637,21 @@
       "alreadyLogged": "You already logged today's practice!",
       "autoLogError": "Couldn't log your practice. Tap the button on your dashboard."
     }
+  },
+  "noteSpeedCards": {
+    "headline": "Catch Middle C!",
+    "subheadline": "Tap the screen when you see Middle C on the staff.",
+    "startButton": "Let's Go!",
+    "tapHint": "Tap when you see it!",
+    "scoreLabel": "Caught",
+    "comboLabel": "Combo",
+    "speedLabel": {
+      "learning": "Learning",
+      "warmingUp": "Warming Up",
+      "challenge": "Challenge",
+      "fast": "Fast!"
+    },
+    "missedBanner": "Missed!",
+    "cardProgress": "Card {{current}} of {{total}}"
   }
 }

@@ -1644,5 +1644,21 @@
       "alreadyLogged": "כבר תיעדת את האימון של היום!",
       "autoLogError": "לא הצלחנו לתעד את האימון. לחץ על הכפתור בדף הבית."
     }
+  },
+  "noteSpeedCards": {
+    "headline": "!תפסו את דו האמצעי",
+    "subheadline": ".הקישו על המסך כשאתם רואים את דו האמצעי על החמשה",
+    "startButton": "!יאללה",
+    "tapHint": "!הקישו כשאתם רואים",
+    "scoreLabel": "נתפסו",
+    "comboLabel": "רצף",
+    "speedLabel": {
+      "learning": "לומדים",
+      "warmingUp": "מתחממים",
+      "challenge": "אתגר",
+      "fast": "!מהר"
+    },
+    "missedBanner": "!פספסתם",
+    "cardProgress": "קלף {{current}} מתוך {{total}}"
   }
 }
