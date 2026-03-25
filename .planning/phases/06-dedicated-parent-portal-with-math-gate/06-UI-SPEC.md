@@ -46,7 +46,7 @@ Declared values from `src/index.css` CSS custom properties:
 Exceptions:
 - Touch targets (buttons, toggles): minimum 44px height (`min-h-touch` Tailwind token)
 - Math gate overlay input field: minimum 48px height for easy touch input (`min-h-touch-lg`)
-- Quick stats card grid gap: 12px (between sibling stat cards, tighter than md)
+- Quick stats card grid gap: 16px (`gap-4`) — standard md spacing between sibling stat cards
 
 ---
 
@@ -57,13 +57,13 @@ All type is rendered on the AppLayout dark purple gradient background. Use white
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 14px (text-sm) | 400 (regular) | 1.6 | Subscription detail rows, setting descriptions, dates |
-| Label | 16px (text-base) | 600 (semibold) | 1.7 | Card section labels, toggle labels, stat value labels |
-| Heading | 20px (text-xl) | 700 (bold) | 1.8 | Section headings (Quick Stats, Practice Heatmap, etc.) |
-| Display | 28px (text-3xl approx) | 900 (black) | 1.9 | Math problem expression in gate overlay (`text-4xl font-black` per existing `ParentGateMath`) |
+| Label | 16px (text-base) | 400 (regular) | 1.7 | Card section labels, toggle labels, stat value labels |
+| Heading | 20px (text-xl) | 700 (bold) | 1.8 | Section headings (Quick Stats, Practice Heatmap, etc.), CTAs |
+| Display | 36px (text-4xl) | 700 (bold) | 1.2 | Math problem expression in gate overlay — sole display-tier size |
 
 **Source:** `tailwind.config.js` fontSize scale + existing `ParentPortalPage.jsx` and `ParentGateMath.jsx` patterns.
 
-Note: The math problem display uses `text-4xl font-black` (36px/900) — this intentionally breaks the 3-size limit because it is a single decorative element in the gate overlay, not body content.
+Note: The math problem display uses `text-4xl font-bold` (36px/700). This is the sole display-tier size in this phase; the 28px tier has been eliminated. Label text uses regular weight (400) to stay within the 2-weight limit; visual hierarchy is achieved through size alone.
 
 ---
 
@@ -93,6 +93,19 @@ Secondary semantic colors (non-destructive):
 - `text-white/50` — muted text (gate cancel link, hint text)
 
 **Source:** `ParentPortalPage.jsx` StatusBadge + card patterns, `ParentGateMath.jsx` overlay.
+
+---
+
+## Visuals
+
+### Focal Points
+
+| View | Focal Point | Implementation |
+|------|-------------|----------------|
+| Gate overlay | Math problem expression | `text-4xl font-bold text-white` centered in card, 48px vertical margin above input |
+| Portal (post-gate) | Quick Stats grid | First visible section after BackButton + heading; 4 equal glass cards in 2×2 grid |
+
+The gate focal point draws the parent's eye to the problem to solve before any interaction is possible. The portal focal point surfaces the child's progress snapshot immediately on entry — the primary reason a parent opens the portal.
 
 ---
 
@@ -127,9 +140,9 @@ Secondary semantic colors (non-destructive):
 ParentPortalPage (max-w-lg mx-auto px-4 sm:px-6 py-6 pb-16)
 ├── BackButton (mb-6)
 ├── Page heading h1 (text-2xl font-bold text-white mb-6)
-├── Section 1: Quick Stats Grid
+├── Section 1: Quick Stats Grid  ← focal point
 │   ├── Section heading h2 (text-xl font-bold text-white mb-4)
-│   └── 2×2 grid gap-3: [Level+XP] [Stars] [Nodes] [Streak]
+│   └── 2×2 grid gap-4: [Level+XP] [Stars] [Nodes] [Streak]
 │       └── Each: glass card p-4 rounded-xl flex-col items-center
 ├── Section 2: Practice Heatmap (mt-8)
 │   └── PracticeHeatmapCard (existing, unchanged)
@@ -144,13 +157,14 @@ ParentPortalPage (max-w-lg mx-auto px-4 sm:px-6 py-6 pb-16)
 ### Gate overlay (on every visit)
 - Renders on top of everything: `fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm`
 - Card: `w-full max-w-sm bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl p-6`
+- Math problem: `text-4xl font-bold text-white text-center my-12` — focal point of the overlay
 - Gate is dismissed on correct answer → `setGateOpen(false)` → portal content becomes visible with `animate-fadeIn` (0.3s ease-in-out, respects prefers-reduced-motion)
 
 ### Settings page modification
 - `ParentZoneEntryCard` placed as FIRST element in AppSettings, before all sections
 - Card uses: `bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 mb-6 flex items-center gap-4 hover:bg-white/15 transition-colors cursor-pointer`
 - Left icon: ShieldCheck (24px, `text-amber-400`)
-- Title: "Parent Zone" (`text-base font-semibold text-white`)
+- Title: "Parent Zone" (`text-base font-bold text-white`)
 - Subtitle: "Manage subscription, settings & progress" (`text-sm text-white/60`)
 - Right: ChevronRight icon (`text-white/40`, 16px)
 
@@ -190,7 +204,7 @@ ParentPortalPage (max-w-lg mx-auto px-4 sm:px-6 py-6 pb-16)
 
 | Element | Copy |
 |---------|------|
-| Primary CTA (gate submit) | "Confirm" (i18n key reuse from existing gate: `parentGate.submit`) |
+| Primary CTA (gate submit) | "Check Answer" (i18n key: `parentGate.submit`) |
 | Primary CTA (unlock) | "Unlock Full Access" (navigates to `/subscribe`) |
 | Primary CTA (re-subscribe) | "Re-subscribe" (existing i18n key: `parentPortal.resubscribe`) |
 | Page heading | "Parent Zone" (new i18n key: `parentPortal.parentZoneTitle`) |
