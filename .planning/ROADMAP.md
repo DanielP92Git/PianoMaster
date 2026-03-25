@@ -71,8 +71,8 @@ Plans:
 
 Plans:
 - [x] 06-01-PLAN.md — Navigation entry points, i18n keys, ParentZoneEntryCard component
-- [ ] 06-02-PLAN.md — Refactor ParentPortalPage with gate-first shell, QuickStatsGrid, and 4 content sections
-- [ ] 06-03-PLAN.md — Clean up AppSettings (remove moved sections, add entry card)
+- [x] 06-02-PLAN.md — Refactor ParentPortalPage with gate-first shell, QuickStatsGrid, and 4 content sections
+- [x] 06-03-PLAN.md — Clean up AppSettings (remove moved sections, add entry card)
 
 ---
 
