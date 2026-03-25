@@ -128,6 +128,16 @@ Each task was committed atomically:
 - Pure functions fully implemented and tested
 - Plan 02 only needs to implement the NoteSpeedCards component body — replace the placeholder with the full game UI
 
+## Self-Check: PASSED
+
+- FOUND: src/data/constants.test.js
+- FOUND: src/components/games/notes-master-games/NoteSpeedCards.test.js
+- FOUND: src/components/games/notes-master-games/NoteSpeedCards.jsx
+- FOUND: .planning/phases/01-introductory-single-note-game/01-01-SUMMARY.md
+- FOUND: commit 4ea4d59 (test scaffolds)
+- FOUND: commit 63abcc4 (constants + nodes + i18n)
+- FOUND: commit c58e663 (routing + App.jsx + stub)
+
 ---
 *Phase: 01-introductory-single-note-game*
 *Completed: 2026-03-25*

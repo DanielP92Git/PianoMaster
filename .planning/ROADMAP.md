@@ -59,7 +59,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 Plans:
 - [x] 01-01-PLAN.md — Wire NOTE_CATCH exercise type through trail system (constants, node data, routing, i18n)
-- [ ] 01-02-PLAN.md — Build NoteSpeedCards game component with conveyor animation and VictoryScreen integration
+- [x] 01-02-PLAN.md — Build NoteSpeedCards game component with conveyor animation and VictoryScreen integration
 
 **UI hint**: yes
 
