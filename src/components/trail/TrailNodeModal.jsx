@@ -33,6 +33,8 @@ const getExerciseTypeName = (type, t) => {
       return t('trail:exerciseTypes.boss_challenge');
     case 'memory_game':
       return t('trail:exerciseTypes.memory_game');
+    case 'note_catch':
+      return t('trail:exerciseTypes.note_catch');
     default:
       return type;
   }
@@ -201,6 +203,9 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         navigate('/notes-master-mode/sight-reading-game', {
           state: { ...navState, isBoss: true }
         });
+        break;
+      case 'note_catch':
+        navigate('/notes-master-mode/note-speed-cards', { state: navState });
         break;
       default:
         console.error('Unknown exercise type:', exercise.type);

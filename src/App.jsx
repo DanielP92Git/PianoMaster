@@ -69,6 +69,7 @@ const RhythmMasterMode = lazyWithRetry(() => import("./components/games/RhythmMa
 const MemoryGame = lazyWithRetry(() => import("./components/games/notes-master-games/MemoryGame").then(m => ({ default: m.MemoryGame })));
 const NotesRecognitionGame = lazyWithRetry(() => import("./components/games/notes-master-games/NotesRecognitionGame").then(m => ({ default: m.NotesRecognitionGame })));
 const SightReadingGame = lazyWithRetry(() => import("./components/games/sight-reading-game/SightReadingGame").then(m => ({ default: m.SightReadingGame })));
+const NoteSpeedCards = lazyWithRetry(() => import("./components/games/notes-master-games/NoteSpeedCards").then(m => ({ default: m.NoteSpeedCards })));
 const MetronomeTrainer = lazyWithRetry(() => import("./components/games/rhythm-games/MetronomeTrainer"));
 const SightReadingLayoutHarness = lazyWithRetry(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
 
@@ -185,6 +186,7 @@ function OrientationController() {
     "/notes-master-mode/memory-game",
     "/notes-master-mode/sight-reading-game",
     "/rhythm-mode/metronome-trainer",
+    "/notes-master-mode/note-speed-cards",
   ];
 
   const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
@@ -322,6 +324,10 @@ function AppRoutes() {
             <Route
               path="/notes-master-mode/memory-game"
               element={<MemoryGame />}
+            />
+            <Route
+              path="/notes-master-mode/note-speed-cards"
+              element={<NoteSpeedCards />}
             />
             <Route
               path="/notes-master-mode/notes-recognition-game"
