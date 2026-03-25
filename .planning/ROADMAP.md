@@ -67,10 +67,10 @@ Plans:
 **Goal:** Redesign /parent-portal as a dedicated, math-gate-guarded parent area consolidating subscription management, practice heatmap, progress stats, and parent settings (notification consent, weekend pass) behind a single COPPA-compliant gate. Add discoverable entry points in sidebar (desktop) and Settings (mobile). Remove individual ParentGateMath gates from Settings sections that move into the portal.
 **Requirements**: D-01 through D-14, REQ-01 through REQ-10 (see 06-RESEARCH.md)
 **Depends on:** None (standalone phase)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 06-01-PLAN.md — Navigation entry points, i18n keys, ParentZoneEntryCard component
+- [x] 06-01-PLAN.md — Navigation entry points, i18n keys, ParentZoneEntryCard component
 - [ ] 06-02-PLAN.md — Refactor ParentPortalPage with gate-first shell, QuickStatsGrid, and 4 content sections
 - [ ] 06-03-PLAN.md — Clean up AppSettings (remove moved sections, add entry card)
 
@@ -82,7 +82,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1-5. Instrument Practice Tracking | v2.7 | 12/12 | Complete | 2026-03-25 |
 | 1. Introductory Single-Note Game | v2.8 | 1/2 | In Progress|  |
-| 6. Dedicated Parent Portal | v2.7 | 0/3 | Planned | |
+| 6. Dedicated Parent Portal | v2.7 | 1/3 | In Progress|  |
 
 **Total: 18 milestones shipped (v1.0-v2.7) — ~174 plans across ~80 phases**
 
