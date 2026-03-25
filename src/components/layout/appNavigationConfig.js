@@ -4,6 +4,7 @@ import {
   Mic,
   Gamepad2,
   Settings,
+  ShieldCheck,
   Trophy,
 } from "lucide-react";
 
@@ -46,6 +47,13 @@ export const APP_NAV_ITEMS = {
       to: "/achievements",
       icon: Trophy,
       labelKey: "navigation.links.achievements",
+      theme: "indigo",
+    },
+    {
+      id: "parentZone",
+      to: "/parent-portal",
+      icon: ShieldCheck,
+      labelKey: "navigation.links.parentZone",
       theme: "indigo",
     },
   ],

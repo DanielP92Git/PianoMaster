@@ -34,6 +34,7 @@ export default function AppLayout() {
     if (location.pathname === "/practice-sessions") return "pages.practiceSessions.title";
     if (location.pathname === "/achievements") return "pages.achievements.title";
     if (location.pathname === "/settings") return "pages.settings.title";
+    if (location.pathname === "/parent-portal") return "parentPortal.parentZoneTitle";
     // Add other routes as needed
     return null; // Default: show PianoMaster logo
   };

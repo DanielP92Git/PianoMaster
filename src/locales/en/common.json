@@ -149,7 +149,8 @@
       "achievements": "Achievements",
       "settings": "Settings",
       "legal": "Legal & Attributions",
-      "trail": "Trail"
+      "trail": "Trail",
+      "parentZone": "Parent Zone"
     }
   },
   "pages": {
@@ -1408,6 +1409,16 @@
     "noSubscription": "No active subscription",
     "unlockAccess": "Unlock Full Access",
     "back": "Back",
+    "parentZoneTitle": "Parent Zone",
+    "entryCardSubtitle": "Manage subscription, settings & progress",
+    "quickStatsHeading": "Your Child's Progress",
+    "parentSettingsHeading": "Parent Settings",
+    "statLevel": "Level",
+    "statStars": "Stars Earned",
+    "statNodes": "Nodes Done",
+    "statStreak": "Day Streak",
+    "noSubscriptionHeading": "No active subscription",
+    "noSubscriptionBody": "Unlock the full trail to keep the learning going.",
     "practiceCalendar": {
       "title": "Practice Calendar",
       "statTotalLabel": "days practiced",
