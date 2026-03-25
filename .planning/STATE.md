@@ -47,6 +47,7 @@ All v2.7 decisions archived in `.planning/milestones/v2.7-ROADMAP.md`.
 
 - v2.7 (Instrument Practice Tracking) complete and archived
 - v2.8 Phase 1 (Introductory Single-Note Game) promoted from backlog
+- Phase 6 added to v2.7: Dedicated Parent Portal with Math Gate
 
 ### Blockers/Concerns
 
