@@ -55,10 +55,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Goal**: Build a speed card game for single-note trail nodes (treble_1_1 and bass_1_1) where note cards slide across a staff and the child taps to catch the target note. Replaces the trivially-easy note_recognition exercise with an engaging, Duolingo-kids-style arcade experience.
 **Depends on**: v2.7 completion
 **Requirements**: REQ-01 through REQ-09 (see 01-RESEARCH.md)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Wire NOTE_CATCH exercise type through trail system (constants, node data, routing, i18n)
+- [x] 01-01-PLAN.md — Wire NOTE_CATCH exercise type through trail system (constants, node data, routing, i18n)
 - [ ] 01-02-PLAN.md — Build NoteSpeedCards game component with conveyor animation and VictoryScreen integration
 
 **UI hint**: yes
@@ -70,7 +70,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-5. Instrument Practice Tracking | v2.7 | 12/12 | Complete | 2026-03-25 |
-| 1. Introductory Single-Note Game | v2.8 | 0/2 | In Progress | - |
+| 1. Introductory Single-Note Game | v2.8 | 1/2 | In Progress|  |
 
 **Total: 18 milestones shipped (v1.0-v2.7) — ~174 plans across ~80 phases**
 
