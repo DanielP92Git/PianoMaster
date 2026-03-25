@@ -11,14 +11,12 @@ import {
   Download,
   Share,
   Plus,
-  CreditCard,
-  Flame,
   Scale,
   Trash2,
 } from "lucide-react";
 import FeedbackForm from "../components/settings/FeedbackForm";
 import AccountDeletionModal from "../components/teacher/AccountDeletionModal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import { useUser } from "../features/authentication/useUser";
@@ -28,9 +26,9 @@ import ToggleSetting from "../components/settings/ToggleSetting";
 import SliderSetting from "../components/settings/SliderSetting";
 import TimePicker from "../components/settings/TimePicker";
 import ProfileForm from "../components/settings/ProfileForm";
-import NotificationPermissionCard from "../components/settings/NotificationPermissionCard";
 import ParentGateMath from "../components/settings/ParentGateMath";
 import LanguageSelector from "../components/settings/LanguageSelector";
+import ParentZoneEntryCard from "../components/settings/ParentZoneEntryCard";
 import { toast } from "react-hot-toast";
 import {
   isAndroidDevice,
@@ -41,9 +39,6 @@ import {
 } from "../utils/pwaDetection";
 import { useTranslation } from "react-i18next";
 import AuthButton from "../components/auth/AuthButton";
-import { useSubscription } from "../contexts/SubscriptionContext";
-import { streakService } from "../services/streakService";
-import { getPushSubscriptionStatus } from "../services/notificationService";
 import supabase from "../services/supabase";
 
 function AppSettings() {
@@ -56,94 +51,18 @@ function AppSettings() {
     useSettings();
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
-  const { isPremium, isLoading: subLoading } = useSubscription();
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const [showParentGate, setShowParentGate] = useState(false);
-  const [pendingToggleValue, setPendingToggleValue] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteParentGate, setShowDeleteParentGate] = useState(false);
-
-  // Fetch streak state for weekend pass toggle
-  const { data: streakState } = useQuery({
-    queryKey: ["streak-state", user?.id],
-    queryFn: () => streakService.getStreakState(),
-    enabled: !!user?.id,
-    staleTime: 60 * 1000,
-  });
-
-  // Fetch push subscription consent status (reuse as global COPPA consent flag)
-  const { data: pushStatus } = useQuery({
-    queryKey: ["push-subscription-status", user?.id],
-    queryFn: () => getPushSubscriptionStatus(user.id),
-    enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const parentConsentGranted = pushStatus?.parent_consent_granted === true;
 
   // Build student object for AccountDeletionModal (expects { student_id, student_name })
   const studentDisplayName = user
     ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.user_metadata?.username || user.email || ''
     : '';
 
-  const handleWeekendPassToggle = async (newValue) => {
-    if (parentConsentGranted) {
-      // Consent already granted — toggle directly
-      try {
-        await streakService.setWeekendPass(newValue);
-        queryClient.invalidateQueries({ queryKey: ["streak-state", user?.id] });
-      } catch {
-        toast.error(t("common.saving"));
-      }
-    } else {
-      // First time — show parent gate
-      setPendingToggleValue(newValue);
-      setShowParentGate(true);
-    }
-  };
-
-  const handleParentConsentGranted = async () => {
-    setShowParentGate(false);
-    try {
-      // Mark parent_consent_granted in push_subscriptions (upsert pattern)
-      if (user?.id) {
-        await supabase
-          .from("push_subscriptions")
-          .upsert(
-            {
-              student_id: user.id,
-              parent_consent_granted: true,
-              parent_consent_at: new Date().toISOString(),
-              is_enabled: false,
-            },
-            { onConflict: "student_id" }
-          );
-      }
-      // Apply the pending toggle
-      if (pendingToggleValue !== null) {
-        await streakService.setWeekendPass(pendingToggleValue);
-      }
-      queryClient.invalidateQueries({ queryKey: ["streak-state", user?.id] });
-      queryClient.invalidateQueries({ queryKey: ["push-subscription-status", user?.id] });
-    } catch {
-      toast.error(t("common.saving"));
-    } finally {
-      setPendingToggleValue(null);
-    }
-  };
-
-  const handleParentGateCancel = () => {
-    setShowParentGate(false);
-    setPendingToggleValue(null);
-  };
-
   const handleDeleteAccountClick = () => {
-    if (parentConsentGranted) {
-      setShowDeleteModal(true);
-    } else {
-      setShowDeleteParentGate(true);
-    }
+    setShowDeleteParentGate(true);
   };
 
   const handleDeleteParentConsentGranted = async () => {
@@ -274,14 +193,6 @@ function AppSettings() {
 
   return (
     <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
-      {/* Parent Gate Overlay (COPPA) */}
-      {showParentGate && (
-        <ParentGateMath
-          onConsent={handleParentConsentGranted}
-          onCancel={handleParentGateCancel}
-          isRTL={isRTL}
-        />
-      )}
       {showDeleteParentGate && (
         <ParentGateMath
           onConsent={handleDeleteParentConsentGranted}
@@ -291,6 +202,9 @@ function AppSettings() {
       )}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 flex flex-col min-h-[calc(100vh-200px)]">
         <LanguageSelector />
+
+        {/* Parent Zone Entry Card — mobile entry to /parent-portal (D-02) */}
+        <ParentZoneEntryCard />
 
         {/* Avatar Selection Link */}
         <Link
@@ -311,69 +225,6 @@ function AppSettings() {
             </p>
           </div>
         </Link>
-        {/* Subscription Section */}
-        <SettingsSection
-          isRTL={isRTL}
-          title={t("pages.settings.subscriptionTitle")}
-          icon={CreditCard}
-          defaultOpen={true}
-        >
-          <div className="space-y-3">
-            {subLoading ? (
-              <div className={`flex items-center gap-2 text-white/60 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Loader2 size={16} className="animate-spin" />
-                <span>{t("pages.settings.subscriptionLoading")}</span>
-              </div>
-            ) : isPremium ? (
-              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-green-400/20 border border-green-400/30 px-3 py-1 text-sm font-medium text-green-300">
-                  {t("pages.settings.subscriptionActive")}
-                </span>
-                <Link
-                  to="/parent-portal"
-                  className="text-sm font-medium text-indigo-300 hover:text-indigo-200 underline underline-offset-2"
-                >
-                  {t("pages.settings.manageSubscription")}
-                </Link>
-              </div>
-            ) : (
-              <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <span className="text-white/70 text-sm">{t("pages.settings.subscriptionFree")}</span>
-                <Link
-                  to="/subscribe"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-400 to-yellow-400 px-4 py-2 text-sm font-bold text-amber-900 hover:from-amber-300 hover:to-yellow-300 transition-all duration-200"
-                >
-                  {t("pages.settings.unlockFullAccess")}
-                </Link>
-              </div>
-            )}
-          </div>
-        </SettingsSection>
-
-        {/* Streak Settings */}
-        <SettingsSection
-          isRTL={isRTL}
-          title={t("streak.streakSettingsTitle")}
-          description={t("streak.streakSettingsDescription")}
-          icon={Flame}
-          defaultOpen={false}
-        >
-          <div className="mt-4">
-            <ToggleSetting
-              isRTL={isRTL}
-              label={t("streak.weekendPassLabel")}
-              description={t("streak.weekendPassDescription")}
-              value={streakState?.weekendPassEnabled || false}
-              onChange={handleWeekendPassToggle}
-            />
-            {streakState?.weekendPassEnabled && (
-              <p className="text-xs text-green-300 mt-2">
-                {t("streak.weekendPassEnabled")}
-              </p>
-            )}
-          </div>
-        </SettingsSection>
-
         <SettingsSection
           isRTL={isRTL}
           title={t("pages.settings.installTitle")}
@@ -609,21 +460,6 @@ function AppSettings() {
           icon={Bell}
           defaultOpen={false}
         >
-          {/* Web Push Permission */}
-          <div className="mt-4">
-            <NotificationPermissionCard
-              isRTL={isRTL}
-              studentId={user?.id}
-              onPermissionChange={(permission) => {
-                if (permission === "granted") {
-                  updatePreference("web_push_enabled", true);
-                } else {
-                  updatePreference("web_push_enabled", false);
-                }
-              }}
-            />
-          </div>
-
           {/* Master Toggle */}
           <div className="mt-4">
             <ToggleSetting
