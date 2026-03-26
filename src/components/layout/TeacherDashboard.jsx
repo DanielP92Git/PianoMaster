@@ -2390,24 +2390,21 @@ const TeacherDashboard = () => {
                           )}
                         </button>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-start justify-between">
-                            <div className="min-w-0 flex-1">
-                              <h3 className="break-words font-semibold text-white">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h3 className="truncate font-semibold text-white">
                                 {student.student_name}
                               </h3>
-                              <div className="mt-1 flex items-center gap-2">
-                                <div
-                                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
-                                >
-                                  <Target className="h-3 w-3" />
-                                  {getPerformanceLevel(student).level}
-                                </div>
-                                <span className="text-xs text-gray-400">
-                                  {student.studying_year || "N/A"}
-                                </span>
+                              <div
+                                className={`flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
+                              >
+                                {getPerformanceLevel(student).level}
                               </div>
+                              <span className="flex-shrink-0 text-xs text-gray-400">
+                                {student.studying_year || "N/A"}
+                              </span>
                             </div>
-                            <div className="ml-2 flex items-center gap-1">
+                            <div className="flex-shrink-0 flex items-center gap-1">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
