@@ -196,7 +196,17 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-**Next milestone: TBD (use `/gsd:new-milestone`)**
+## Current Milestone: v2.9 Game Variety & Ear Training
+
+**Goal:** Diversify the rhythm trail with multiple game types and add an ear training path to expand musical learning beyond notation reading.
+
+**Target features:**
+- 3 new rhythm game components (Rhythm Reading/tap-along, Rhythm Dictation/hear-and-pick, Arcade-style rhythm game)
+- Remap existing 36 rhythm trail nodes to use a mix of all rhythm games (including MetronomeTrainer)
+- New Ear Training trail path (~12-15 nodes) with progressive difficulty
+- Ear training games: note comparison (higher/lower), instrument recognition, interval identification
+- Dashboard skill progress indicators (2-3 suggested paths based on weakest areas)
+- Trail map updated with Ear Training as a new tab/path
 
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
@@ -205,6 +215,9 @@ These capabilities exist, are working, and have been shipped:
 - i18n for celebration messages
 - Grand Staff integration (cross-clef learning)
 - Adaptive difficulty system (algorithm research needed)
+- Music Discovery section (card-based composer/history/instrument learning with collector system)
+- Music Theory Master
+- Classical compositions recognition
 
 **Future candidates — Engagement & Retention (researched 2026-02-25):**
 See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.planning/research/PITFALLS_ENGAGEMENT.md` for pitfalls.
@@ -491,4 +504,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-26 after v2.8 milestone complete*
+*Last updated: 2026-03-26 after v2.9 milestone started*
