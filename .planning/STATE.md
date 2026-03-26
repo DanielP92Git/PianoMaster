@@ -4,7 +4,7 @@ milestone: v2.9
 milestone_name: Game Variety & Ear Training
 status: Defining requirements
 stopped_at: Requirements definition
-last_updated: "2026-03-26T12:00:00.000Z"
+last_updated: "2026-03-26T21:42:22Z"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -56,11 +56,12 @@ All v2.8 decisions archived in `.planning/milestones/v2.8-ROADMAP.md`.
 | 260326-mrm | Add Install App button to settings install card for PWA install prompt | 2026-03-26 | 3ecd77c | [260326-mrm-add-install-app-button-to-settings-insta](./quick/260326-mrm-add-install-app-button-to-settings-insta/) |
 | 260326-s6x | Fix sight-reading pattern generation for sharp practice nodes | 2026-03-26 | 7ab6fe0 | [260326-s6x-fix-sight-reading-pattern-generation-for](./quick/260326-s6x-fix-sight-reading-pattern-generation-for/) |
 | 260326-td5 | Add keySignature 'A' to Unit 4 SIGHT_READING exercises (key sig pipeline for sharps) | 2026-03-26 | 1eb3814 | [260326-td5-fix-sight-reading-sharp-pattern-generati](./quick/260326-td5-fix-sight-reading-sharp-pattern-generati/) |
+| 260326-wo7 | Add note staff image and mini keyboard to TrailNodeModal for Discovery nodes | 2026-03-26 | 4c8bf2d | [260326-wo7-add-note-staff-image-and-mini-keyboard-i](./quick/260326-wo7-add-note-staff-image-and-mini-keyboard-i/) |
 
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: Milestone v2.9 requirements definition
+Stopped at: Completed quick-260326-wo7 (NotePreview + MiniKeyboard in TrailNodeModal)
 Resume file: None
 
 **Next action:**
