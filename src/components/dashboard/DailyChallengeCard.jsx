@@ -194,7 +194,7 @@ const DailyChallengeCard = () => {
           onClick={handlePlayChallenge}
           className="mt-3 w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
         >
-          {t('dashboard.dailyChallenge.play', 'Play Challenge')}
+          {t('dashboard.dailyChallenge.playChallenge', 'Play Challenge')}
         </button>
       </div>
     </div>

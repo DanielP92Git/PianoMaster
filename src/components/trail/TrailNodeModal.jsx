@@ -364,6 +364,24 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
             </div>
           </div>
 
+          {/* Loading skeleton — reserves space while exercise progress loads to prevent layout shift */}
+          {isUnlocked && isLoading && (
+            <div className="mb-4 space-y-2 animate-pulse">
+              {(stars > 0) && (
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                  <div className="h-3 bg-white/10 rounded w-1/3 mx-auto mb-2" />
+                  <div className="h-2 bg-white/10 rounded-full" />
+                </div>
+              )}
+              {totalExercises > 1 && node.exercises.map((_, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                  <div className="h-5 w-5 rounded-full bg-white/10 flex-shrink-0" />
+                  <div className="h-3 bg-white/10 rounded w-24" />
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Progress section (if unlocked and has been played) */}
           {isUnlocked && !isLoading && (stars > 0 || exercisesCompleted > 0) && (
             <div className="mb-4 rounded-xl bg-white/5 border border-white/10 p-3 sm:p-4">

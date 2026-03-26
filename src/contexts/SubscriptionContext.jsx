@@ -64,9 +64,11 @@ export function SubscriptionProvider({ children }) {
   // Toast de-duplication guard (Pitfall 2):
   // Only show toast when isPremium transitions from false -> true.
   // Do NOT show toast in the Realtime callback — reconnect can re-deliver events.
+  // Skip while data is undefined (loading) to avoid false→true on initial load for existing subscribers.
   const prevIsPremiumRef = useRef(null);
 
   useEffect(() => {
+    if (data === undefined) return;
     if (prevIsPremiumRef.current === false && data?.isPremium === true) {
       toast.success("Premium unlocked!", { duration: 4000 });
     }

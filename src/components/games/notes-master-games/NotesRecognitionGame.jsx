@@ -20,7 +20,7 @@ import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
 import { useTranslation } from "react-i18next";
 import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
-import { getNodeById, getNextNodeInCategory } from "../../../data/skillTrail";
+import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
@@ -380,21 +380,34 @@ const BASE_XP = 5;
 const INITIAL_LIVES = 3;
 const ON_FIRE_THRESHOLD = 5;
 const MAX_EXTRA_NOTES = 3;
-const GROW_INTERVAL = 5; // Add a note every 5 streak
+const GROW_INTERVAL = 3; // Reveal next hidden note every 3-combo
 
 /**
- * Filter candidate notes from auto-grow based on accidental boundary rule.
- * Natural-only sessions cannot receive accidentals from next nodes.
- * Accidental sessions can receive any note (naturals or more accidentals).
+ * Build the initial visible note pool and hidden notes queue for trail auto-grow.
+ * Discovery nodes (has focusNotes + contextNotes): start with contextNotes visible,
+ * focusNotes hidden and revealed via combo milestones.
+ * Practice nodes (empty focusNotes) or first-ever nodes (empty contextNotes):
+ * start with full notePool, nothing hidden.
  *
- * @param {string[]} candidatePool - Array of pitch strings (e.g. ['C4', 'F#4', 'Bb4'])
- * @param {boolean} currentPoolHasAccidentals - Whether the current session notePool has accidentals
- * @returns {string[]} Filtered array of eligible candidate pitches
+ * @param {string} nodeId - Trail node ID
+ * @returns {{ initialNotes: string[], hiddenNotes: string[] }}
  */
 // eslint-disable-next-line react-refresh/only-export-components -- component and helper exports are co-located intentionally; HMR-only dev concern
-export function filterAutoGrowCandidates(candidatePool, currentPoolHasAccidentals) {
-  if (currentPoolHasAccidentals) return candidatePool; // No filtering for accidental sessions
-  return candidatePool.filter(pitch => !/[#]|[A-G]b/.test(pitch));
+export function buildInitialTrailPool(nodeId) {
+  if (!nodeId) return { initialNotes: [], hiddenNotes: [] };
+
+  const node = getNodeById(nodeId);
+  if (!node?.noteConfig) return { initialNotes: [], hiddenNotes: [] };
+
+  const { notePool = [], focusNotes = [], contextNotes = [] } = node.noteConfig;
+
+  // Discovery nodes with both focus and context: start small, reveal new notes
+  if (focusNotes.length > 0 && contextNotes.length > 0) {
+    return { initialNotes: [...contextNotes], hiddenNotes: [...focusNotes] };
+  }
+
+  // Practice nodes or first-ever nodes: full pool, nothing to reveal
+  return { initialNotes: [...notePool], hiddenNotes: [] };
 }
 
 export function NotesRecognitionGame() {
@@ -539,12 +552,14 @@ export function NotesRecognitionGame() {
 
       hasAutoStartedRef.current = true;
 
-      // Build settings from node configuration.
-      // Use accidental flags derived from the notePool (passed via location.state from TrailNodeModal).
-      // This ensures trail sessions override user game settings per curriculum intent.
+      // Build initial pool: discovery nodes start with context notes visible,
+      // focus notes hidden and revealed progressively via combo milestones.
+      const { initialNotes, hiddenNotes } = buildInitialTrailPool(nodeId);
+      hiddenNodeNotesRef.current = hiddenNotes;
+
       const trailSettings = {
         clef: nodeConfig.clef || 'treble',
-        selectedNotes: nodeConfig.notePool || [],
+        selectedNotes: initialNotes.length > 0 ? initialNotes : (nodeConfig.notePool || []),
         timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
         timeLimit: nodeConfig.timeLimit || 45,
         enableSharps: trailEnableSharps,
@@ -687,6 +702,7 @@ export function NotesRecognitionGame() {
   const [showFireSplash, setShowFireSplash] = useState(false);
   const [sessionExtraNotes, setSessionExtraNotes] = useState([]);
   const sessionExtraNotesRef = useRef([]); // Read inside getRandomNote to avoid stale closure
+  const hiddenNodeNotesRef = useRef([]); // Notes from current node's notePool not yet revealed
   const [showNewNoteBanner, setShowNewNoteBanner] = useState(false);
   const [newNoteBannerKey, setNewNoteBannerKey] = useState(0);
 
@@ -917,55 +933,17 @@ export function NotesRecognitionGame() {
     }, 1000);
   }, [progress.isStarted, handleGameOver, settings.timedMode]);
 
-  // Helper: finds next pedagogically appropriate note from subsequent trail nodes
-  // Walks forward through the category until it finds a node with a new note
-  // Returns a note object from trebleNotes/bassNotes, or null if none available
-  const getNextPedagogicalNote = useCallback((currentNodeId, extraNotes) => {
-    if (!currentNodeId) return null;
+  // Helper: returns the next hidden note from the current node's pool.
+  // Returns a note object from trebleNotes/bassNotes, or null if nothing left to reveal.
+  const getNextHiddenNote = useCallback(() => {
+    const hidden = hiddenNodeNotesRef.current;
+    if (hidden.length === 0) return null;
 
-    const currentNode = getNodeById(currentNodeId);
-    if (!currentNode) return null;
-
-    // Determine if the current session contains accidentals.
-    // Prefer the trail flags derived from location.state (set by TrailNodeModal from notePool).
-    // Fallback to inspecting the node's own noteConfig pool for non-standard launches.
-    const currentPoolHasAccidentals =
-      trailEnableSharps || trailEnableFlats ||
-      (currentNode.noteConfig?.notePool || []).some(p => /[#]|[A-G]b/.test(p));
-
-    // Build set of all notes already in the pool
-    const currentPool = currentNode.noteConfig?.notePool || [];
-    const alreadyKnown = new Set([
-      ...currentPool,
-      ...extraNotes.map(n => n.pitch || n.englishName),
-    ]);
-
-    // Walk forward through subsequent nodes until we find an eligible new note.
-    // Apply accidental boundary guard: natural-only sessions cannot receive accidentals.
-    let searchNodeId = currentNodeId;
-    for (let i = 0; i < 10; i++) { // Limit search to 10 nodes ahead
-      const nextNode = getNextNodeInCategory(searchNodeId);
-      if (!nextNode || !nextNode.noteConfig?.notePool) break;
-
-      // Get candidates that are genuinely new (not already known)
-      const newCandidates = nextNode.noteConfig.notePool.filter(p => !alreadyKnown.has(p));
-
-      // Apply boundary guard: strip accidentals for natural-only sessions
-      const eligibleCandidates = filterAutoGrowCandidates(newCandidates, currentPoolHasAccidentals);
-
-      const candidatePitch = eligibleCandidates[0];
-      if (candidatePitch) {
-        const clefKey = String(settings.clef || "Treble").toLowerCase();
-        const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
-        return allNotes.find(n => n.pitch === candidatePitch || n.englishName === candidatePitch) ?? null;
-      }
-      // All candidates were filtered out (e.g. all accidentals for natural session).
-      // Advance and try the next node in the category.
-      searchNodeId = nextNode.id;
-    }
-
-    return null;
-  }, [settings.clef, trailEnableSharps, trailEnableFlats]);
+    const nextPitch = hidden[0];
+    const clefKey = String(settings.clef || 'Treble').toLowerCase();
+    const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
+    return allNotes.find(n => n.pitch === nextPitch || n.englishName === nextPitch) ?? null;
+  }, [settings.clef]);
 
   // Get random note based on current settings
   const getRandomNote = useCallback(() => {
@@ -1117,6 +1095,8 @@ export function NotesRecognitionGame() {
     setShowFireSplash(false);
     sessionExtraNotesRef.current = [];
     setSessionExtraNotes([]);
+    // Note: hiddenNodeNotesRef is NOT reset here — it's set by the auto-start
+    // paths (trail auto-start / iOS gesture start) before startGame is called.
     setShowNewNoteBanner(false);
 
     const timeLimit = updatedSettings.timeLimit || 45;
@@ -1210,13 +1190,18 @@ export function NotesRecognitionGame() {
     }
     setNeedsGestureToStart(false);
     hasAutoStartedRef.current = true;
+
+    // Build initial pool same as main auto-start path
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool(nodeId);
+    hiddenNodeNotesRef.current = hiddenNotes;
+
     const trailSettings = {
       clef: nodeConfig?.clef || 'treble',
-      selectedNotes: nodeConfig?.notePool || [],
+      selectedNotes: initialNotes.length > 0 ? initialNotes : (nodeConfig?.notePool || []),
       timedMode: nodeConfig?.timeLimit !== null && nodeConfig?.timeLimit !== undefined,
       timeLimit: nodeConfig?.timeLimit || 45,
-      enableSharps: false,
-      enableFlats: false
+      enableSharps: trailEnableSharps,
+      enableFlats: trailEnableFlats,
     };
     updateSettings(trailSettings);
     updateProgress({ showSettingsModal: false });
@@ -1678,18 +1663,27 @@ export function NotesRecognitionGame() {
           setShowFireSplash(true);
           setTimeout(() => setShowFireSplash(false), 1500);
         }
-        // Auto-grow note pool (trail mode only)
-        if (nodeId && comboRef.current > 0 && comboRef.current % GROW_INTERVAL === 0) {
-          const currentExtras = sessionExtraNotesRef.current;
-          if (currentExtras.length < MAX_EXTRA_NOTES) {
-            const nextNote = getNextPedagogicalNote(nodeId, currentExtras);
-            if (nextNote) {
-              const updated = [...currentExtras, nextNote];
-              sessionExtraNotesRef.current = updated;
-              setSessionExtraNotes(updated);
-              setShowNewNoteBanner(true);
-              setNewNoteBannerKey(prev => prev + 1);
-              setTimeout(() => setShowNewNoteBanner(false), 2000);
+        // Auto-grow note pool (trail mode only — reveals hidden notes from current node's pool)
+        if (nodeId && comboRef.current > 0 && hiddenNodeNotesRef.current.length > 0) {
+          // Adaptive timing: reveal after 1 correct when only 1 note visible (avoids boring repetition),
+          // otherwise use standard GROW_INTERVAL
+          const visiblePoolSize = (normalizedSelectedNotes?.length || 0) + sessionExtraNotesRef.current.length;
+          const shouldReveal = visiblePoolSize <= 1 || comboRef.current % GROW_INTERVAL === 0;
+
+          if (shouldReveal) {
+            const currentExtras = sessionExtraNotesRef.current;
+            if (currentExtras.length < MAX_EXTRA_NOTES) {
+              const nextNote = getNextHiddenNote();
+              if (nextNote) {
+                // Consume the revealed note from the hidden queue
+                hiddenNodeNotesRef.current = hiddenNodeNotesRef.current.slice(1);
+                const updated = [...currentExtras, nextNote];
+                sessionExtraNotesRef.current = updated;
+                setSessionExtraNotes(updated);
+                setShowNewNoteBanner(true);
+                setNewNoteBannerKey(prev => prev + 1);
+                setTimeout(() => setShowNewNoteBanner(false), 2000);
+              }
             }
           }
         }
@@ -1773,7 +1767,7 @@ export function NotesRecognitionGame() {
       getRandomNote,
       playSound,
       playFireSound,
-      getNextPedagogicalNote,
+      getNextHiddenNote,
       nodeId,
       settings.timedMode,
       updateProgress,

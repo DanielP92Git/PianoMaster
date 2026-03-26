@@ -1,75 +1,61 @@
 /**
- * Unit tests for filterAutoGrowCandidates — the auto-grow boundary guard.
+ * Unit tests for buildInitialTrailPool — within-node auto-grow setup.
  *
- * Rule: Natural-only sessions (currentPoolHasAccidentals=false) cannot receive
- * accidental notes from subsequent trail nodes via auto-grow.
- * Accidental sessions (currentPoolHasAccidentals=true) can receive any note.
+ * Discovery nodes start with contextNotes visible, focusNotes hidden.
+ * Practice nodes and first-ever nodes use full notePool with nothing hidden.
  */
 import { describe, it, expect } from 'vitest';
-import { filterAutoGrowCandidates } from './NotesRecognitionGame.jsx';
+import { buildInitialTrailPool } from './NotesRecognitionGame.jsx';
 
-describe('filterAutoGrowCandidates — auto-grow boundary guard', () => {
-  // --- Natural session (currentPoolHasAccidentals = false) ---
+describe('buildInitialTrailPool — within-node auto-grow setup', () => {
+  // --- Discovery nodes: start with contextNotes, hide focusNotes ---
 
-  it('filters out F#4 from a mixed pool when session is natural-only', () => {
-    const result = filterAutoGrowCandidates(['C4', 'D4', 'F#4'], false);
-    expect(result).toEqual(['C4', 'D4']);
+  it('treble_1_2 (C4,D4; focus D4, context C4): starts C4, hides D4', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool('treble_1_2');
+    expect(initialNotes).toEqual(['C4']);
+    expect(hiddenNotes).toEqual(['D4']);
   });
 
-  it('returns empty array when all candidates are accidentals in a natural session', () => {
-    const result = filterAutoGrowCandidates(['F#4', 'C#4'], false);
-    expect(result).toEqual([]);
+  it('treble_1_5 (C4,D4,E4; focus E4, context C4,D4): starts C4,D4, hides E4', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool('treble_1_5');
+    expect(initialNotes).toEqual(['C4', 'D4']);
+    expect(hiddenNotes).toEqual(['E4']);
   });
 
-  it('returns all notes unchanged when pool has no accidentals in a natural session', () => {
-    const result = filterAutoGrowCandidates(['C4', 'D4', 'E4'], false);
-    expect(result).toEqual(['C4', 'D4', 'E4']);
+  it('bass_1_2 (C4,B3; focus B3, context C4): starts C4, hides B3', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool('bass_1_2');
+    expect(initialNotes).toEqual(['C4']);
+    expect(hiddenNotes).toEqual(['B3']);
   });
 
-  it('filters out flat notes (Bb4) in a natural session', () => {
-    const result = filterAutoGrowCandidates(['Bb4', 'C4'], false);
-    expect(result).toEqual(['C4']);
+  // --- First-ever node: contextNotes is empty, use full pool ---
+
+  it('treble_1_1 (pool C4; focus C4, no context): full pool, nothing hidden', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool('treble_1_1');
+    expect(initialNotes).toEqual(['C4']);
+    expect(hiddenNotes).toEqual([]);
   });
 
-  it('filters out both sharps and flats in a natural session', () => {
-    const result = filterAutoGrowCandidates(['F#4', 'Bb4', 'C4'], false);
-    expect(result).toEqual(['C4']);
-  });
+  // --- Practice nodes: focusNotes is empty, use full pool ---
 
-  // --- Accidental session (currentPoolHasAccidentals = true) ---
-
-  it('keeps all candidates (including accidentals) when session has accidentals', () => {
-    const result = filterAutoGrowCandidates(['F#4', 'C#4'], true);
-    expect(result).toEqual(['F#4', 'C#4']);
-  });
-
-  it('keeps natural notes when session has accidentals', () => {
-    const result = filterAutoGrowCandidates(['C4', 'D4'], true);
-    expect(result).toEqual(['C4', 'D4']);
-  });
-
-  it('keeps mixed pool (flats + naturals) when session has accidentals', () => {
-    const result = filterAutoGrowCandidates(['Bb4', 'Eb4', 'C4'], true);
-    expect(result).toEqual(['Bb4', 'Eb4', 'C4']);
+  it('treble_1_3 (pool C4,D4; no focus, all context): full pool, nothing hidden', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool('treble_1_3');
+    expect(initialNotes).toEqual(['C4', 'D4']);
+    expect(hiddenNotes).toEqual([]);
   });
 
   // --- Edge cases ---
 
-  it('returns empty array unchanged when input is empty', () => {
-    expect(filterAutoGrowCandidates([], false)).toEqual([]);
-    expect(filterAutoGrowCandidates([], true)).toEqual([]);
+  it('returns empty arrays for null nodeId', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool(null);
+    expect(initialNotes).toEqual([]);
+    expect(hiddenNotes).toEqual([]);
   });
 
-  // --- B3/B4 regression: natural note B must not be treated as a flat ---
-
-  it('keeps B3 in natural session — not a flat despite containing letter b', () => {
-    const result = filterAutoGrowCandidates(['B3', 'C4'], false);
-    expect(result).toEqual(['B3', 'C4']);
-  });
-
-  it('keeps B4 in natural session — not a flat despite containing letter b', () => {
-    const result = filterAutoGrowCandidates(['B4', 'D4'], false);
-    expect(result).toEqual(['B4', 'D4']);
+  it('returns empty arrays for unknown nodeId', () => {
+    const { initialNotes, hiddenNotes } = buildInitialTrailPool('nonexistent');
+    expect(initialNotes).toEqual([]);
+    expect(hiddenNotes).toEqual([]);
   });
 });
 
