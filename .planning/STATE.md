@@ -47,10 +47,16 @@ All v2.8 decisions archived in `.planning/milestones/v2.8-ROADMAP.md`.
 
 **COPPA deadline:** April 22, 2026
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260326-mrm | Add Install App button to settings install card for PWA install prompt | 2026-03-26 | 3ecd77c | [260326-mrm-add-install-app-button-to-settings-insta](./quick/260326-mrm-add-install-app-button-to-settings-insta/) |
+
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: v2.8 milestone archived
+Stopped at: Completed quick task 260326-mrm
 Resume file: None
 
 **Next action:**
@@ -59,4 +65,4 @@ Resume file: None
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-26 — v2.8 milestone archived*
+*Last updated: 2026-03-26 — quick task 260326-mrm completed*
