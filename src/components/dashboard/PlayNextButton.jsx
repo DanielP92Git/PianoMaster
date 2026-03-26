@@ -12,6 +12,7 @@ import { useAccessibility } from '../../contexts/AccessibilityContext';
 const PlayNextButton = ({
   to = '/trail',
   highlightNodeId,
+  hasStarted = false,
   isRTL = false,
 }) => {
   const { t } = useTranslation('common');
@@ -37,7 +38,9 @@ const PlayNextButton = ({
         dir={isRTL ? 'rtl' : 'ltr'}
       >
         <span className="text-xl font-bold text-white tracking-widest uppercase">
-          {t('dashboard.playNext.label', { defaultValue: 'CONTINUE JOURNEY' })}
+          {hasStarted
+            ? t('dashboard.playNext.continue', { defaultValue: 'CONTINUE JOURNEY' })
+            : t('dashboard.playNext.begin', { defaultValue: 'BEGIN JOURNEY' })}
         </span>
       </Link>
 

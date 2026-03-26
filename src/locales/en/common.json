@@ -760,7 +760,8 @@
       "subtitle": "Your musical journey continues"
     },
     "playNext": {
-      "label": "CONTINUE JOURNEY"
+      "continue": "CONTINUE JOURNEY",
+      "begin": "BEGIN JOURNEY"
     },
     "continueButton": {
       "title": "Continue Learning",

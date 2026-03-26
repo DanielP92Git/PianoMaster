@@ -692,6 +692,7 @@ function Dashboard() {
         <PlayNextButton
           to="/trail"
           highlightNodeId={nextNode.id}
+          hasStarted={!!(nextNode.progress || nextNode.prerequisites?.length)}
           isRTL={isRTL}
         />
       )}
