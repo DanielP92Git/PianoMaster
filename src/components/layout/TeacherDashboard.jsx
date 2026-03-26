@@ -30,7 +30,6 @@ import {
   Clock,
   BarChart3,
   Target,
-  AlertTriangle,
   Users,
   Headphones,
   Filter,
@@ -51,7 +50,6 @@ import RecordingsReview from "../teacher/RecordingsReview";
 import AssignmentManagement from "../teacher/AssignmentManagement";
 import NotificationCenter from "../teacher/NotificationCenter";
 import DataExportModal from "../teacher/DataExportModal";
-import AccountDeletionModal from "../teacher/AccountDeletionModal";
 import { useTeacherRecordingNotifications } from "../../hooks/useTeacherRecordingNotifications";
 import { useUser } from "../../features/authentication/useUser";
 import { getStudentScores } from "../../services/apiDatabase";
@@ -883,10 +881,10 @@ const DeleteConfirmationModal = ({
             <Trash2 className="h-6 w-6 text-red-600" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-xl font-semibold text-white">
               {isMultiple ? "Delete Students" : "Delete Student"}
             </h3>
-            <p className="text-sm font-medium text-gray-600">
+            <p className="text-sm font-medium text-gray-400">
               This action cannot be undone
             </p>
           </div>
@@ -1417,9 +1415,7 @@ const TeacherDashboard = () => {
   const [studentToEdit, setStudentToEdit] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showAccountDeletionModal, setShowAccountDeletionModal] = useState(false);
   const [studentForExport, setStudentForExport] = useState(null);
-  const [studentForAccountDeletion, setStudentForAccountDeletion] = useState(null);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -1916,17 +1912,6 @@ const TeacherDashboard = () => {
     setShowExportModal(true);
   };
 
-  const handleAccountDeletion = (student) => {
-    setStudentForAccountDeletion(student);
-    setShowAccountDeletionModal(true);
-  };
-
-  const handleDeletionRequested = () => {
-    // Refresh student list after deletion initiated
-    queryClient.invalidateQueries(['teacher-students']);
-    setShowAccountDeletionModal(false);
-  };
-
   const handleFilterChange = (filterType, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -1994,21 +1979,6 @@ const TeacherDashboard = () => {
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-3xl font-bold text-white">Teacher Dashboard</h1>
-          {selectedStudents.length > 0 && activeTab === "students" && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-300">
-                {selectedStudents.length} selected
-              </span>
-              <Button
-                variant="error"
-                size="small"
-                onClick={handleDeleteSelectedStudents}
-                icon={Trash2}
-              >
-                Delete Selected
-              </Button>
-            </div>
-          )}
         </div>
         {activeTab === "students" && (
           <Button
@@ -2049,18 +2019,7 @@ const TeacherDashboard = () => {
       {/* Tab Content */}
       <Routes>
         <Route path="/" element={<Navigate to="/teacher/students" replace />} />
-        <Route
-          path="/students"
-          element={
-            <div>
-              <p className="text-xl text-white">Students Tab Content</p>
-              <p className="text-gray-300">
-                This is the students route working! The students content will be
-                moved here.
-              </p>
-            </div>
-          }
-        />
+        <Route path="/students" element={null} />
         <Route
           path="/analytics"
           element={
@@ -2152,6 +2111,21 @@ const TeacherDashboard = () => {
                 <h2 className="text-xl font-semibold text-white">
                   My Students
                 </h2>
+                {selectedStudents.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-300">
+                      {selectedStudents.length} selected
+                    </span>
+                    <Button
+                      variant="error"
+                      size="small"
+                      onClick={handleDeleteSelectedStudents}
+                      icon={Trash2}
+                    >
+                      Delete Selected
+                    </Button>
+                  </div>
+                )}
                 {filteredStudents.length > 0 && (
                   <div className="flex items-center gap-2">
                     <button
@@ -2481,16 +2455,6 @@ const TeacherDashboard = () => {
                                 >
                                   <Download className="h-3.5 w-3.5" />
                                 </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAccountDeletion(student);
-                                  }}
-                                  className="min-w-0 rounded-lg p-1.5 text-orange-400 transition-colors hover:bg-orange-500/20 hover:text-orange-300"
-                                  title="Delete Account (COPPA)"
-                                >
-                                  <AlertTriangle className="h-3.5 w-3.5" />
-                                </button>
                               </div>
                               <button
                                 onClick={(e) => {
@@ -2703,12 +2667,6 @@ const TeacherDashboard = () => {
         student={studentForExport}
       />
 
-      <AccountDeletionModal
-        isOpen={showAccountDeletionModal}
-        onClose={() => setShowAccountDeletionModal(false)}
-        student={studentForAccountDeletion}
-        onDeletionRequested={handleDeletionRequested}
-      />
     </div>
   );
 };
