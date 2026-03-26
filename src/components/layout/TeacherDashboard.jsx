@@ -2390,21 +2390,12 @@ const TeacherDashboard = () => {
                           )}
                         </button>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <h3 className="truncate font-semibold text-white">
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="whitespace-nowrap font-semibold text-white">
                                 {student.student_name}
                               </h3>
-                              <div
-                                className={`flex-shrink-0 flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
-                              >
-                                {getPerformanceLevel(student).level}
-                              </div>
-                              <span className="flex-shrink-0 text-xs text-gray-400">
-                                {student.studying_year || "N/A"}
-                              </span>
-                            </div>
-                            <div className="flex-shrink-0 flex items-center gap-1">
+                              <div className="flex-shrink-0 flex items-center gap-1">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -2435,6 +2426,17 @@ const TeacherDashboard = () => {
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
+                            </div>
+                          </div>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
+                              >
+                                {getPerformanceLevel(student).level}
+                              </div>
+                              <span className="text-xs text-gray-400">
+                                {student.studying_year || "N/A"}
+                              </span>
                             </div>
                           </div>
                         </div>
