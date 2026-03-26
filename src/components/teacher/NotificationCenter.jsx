@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   CheckCircle,
+  CheckSquare,
+  Square,
   Trophy,
   MessageCircle,
   Clock,
@@ -24,6 +26,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
   deleteNotification,
+  deleteMultipleNotifications,
   archiveNotification,
   sendNotificationToStudent,
 } from "../../services/apiTeacher";
@@ -281,6 +284,7 @@ const NotificationCenter = ({ students = [] }) => {
   const [showSendModal, setShowSendModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   const queryClient = useQueryClient();
 
@@ -329,6 +333,41 @@ const NotificationCenter = ({ students = [] }) => {
       toast.success("Notification archived");
     },
   });
+
+  // Delete multiple notifications mutation
+  const deleteMultipleMutation = useMutation({
+    mutationFn: deleteMultipleNotifications,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["teacherNotifications"] });
+      setSelectedIds(new Set());
+      toast.success(`${data.count} notification(s) deleted`);
+    },
+    onError: () => {
+      toast.error("Failed to delete notifications");
+    },
+  });
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredNotifications.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredNotifications.map((n) => n.id)));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (selectedIds.size === 0) return;
+    deleteMultipleMutation.mutate([...selectedIds]);
+  };
 
   // Send notification mutation
   const sendNotificationMutation = useMutation({
@@ -501,9 +540,37 @@ const NotificationCenter = ({ students = [] }) => {
 
       {/* Notifications List */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">
-          Notifications ({filteredNotifications.length})
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-white">
+              Notifications ({filteredNotifications.length})
+            </h3>
+            {filteredNotifications.length > 0 && (
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
+              >
+                {selectedIds.size === filteredNotifications.length ? (
+                  <CheckSquare className="h-4 w-4 text-blue-500" />
+                ) : (
+                  <Square className="h-4 w-4" />
+                )}
+                Select All
+              </button>
+            )}
+          </div>
+          {selectedIds.size > 0 && (
+            <Button
+              variant="error"
+              size="small"
+              onClick={handleDeleteSelected}
+              icon={Trash2}
+              loading={deleteMultipleMutation.isPending}
+            >
+              Delete {selectedIds.size} Selected
+            </Button>
+          )}
+        </div>
 
         {isLoading ? (
           <div className="text-center py-8">
@@ -533,6 +600,19 @@ const NotificationCenter = ({ students = [] }) => {
                 onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(notification.id);
+                    }}
+                    className="mt-0.5 flex-shrink-0 text-gray-400 hover:text-blue-400 transition-colors"
+                  >
+                    {selectedIds.has(notification.id) ? (
+                      <CheckSquare className="h-4 w-4 text-blue-500" />
+                    ) : (
+                      <Square className="h-4 w-4" />
+                    )}
+                  </button>
                   {getNotificationIcon(notification.type)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

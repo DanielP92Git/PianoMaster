@@ -1269,6 +1269,28 @@ export const deleteNotification = async (notificationId) => {
 };
 
 // Archive notification
+export const deleteMultipleNotifications = async (notificationIds) => {
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) throw new Error("Not authenticated");
+
+    const { error } = await supabase
+      .from("notifications")
+      .delete()
+      .in("id", notificationIds)
+      .or(`recipient_id.eq.${user.id},sender_id.eq.${user.id}`);
+
+    if (error) throw error;
+
+    return { success: true, count: notificationIds.length };
+  } catch (error) {
+    console.error("Error deleting notifications:", error);
+    throw error;
+  }
+};
+
 export const archiveNotification = async (notificationId) => {
   try {
     const {

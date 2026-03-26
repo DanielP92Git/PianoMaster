@@ -18,14 +18,12 @@ import {
 import {
   Search,
   UserPlus,
-  MessageCircle,
   TrendingUp,
   Trash2,
   CheckSquare,
   Square,
   Edit3,
   Star,
-  Calendar,
   Zap,
   Clock,
   BarChart3,
@@ -36,7 +34,6 @@ import {
   Eye,
   X,
   ChevronDown,
-  Download,
   FileText,
   Bell,
   Gamepad2,
@@ -1830,7 +1827,8 @@ const TeacherDashboard = () => {
     setShowAddStudentModal(true);
   };
 
-  const handleSendMessage = (student) => {
+  // TODO: Re-expose Send Message from student detail modal
+  const _handleSendMessage = (student) => {
     setSelectedStudent(student);
     setShowSendMessageModal(true);
   };
@@ -1907,7 +1905,8 @@ const TeacherDashboard = () => {
     setShowDetailModal(true);
   };
 
-  const handleExportData = (student) => {
+  // TODO: Re-expose Export Data from student detail modal
+  const _handleExportData = (student) => {
     setStudentForExport(student);
     setShowExportModal(true);
   };
@@ -2391,78 +2390,51 @@ const TeacherDashboard = () => {
                           )}
                         </button>
                         <div className="min-w-0 flex-1">
-                          <div className="flex flex-col gap-2">
-                            <div className="flex items-start justify-between">
-                              <div className="min-w-0 flex-1">
-                                <h3 className="break-words font-semibold text-white">
-                                  {student.student_name}
-                                </h3>
-                                <p className="break-words text-sm text-gray-300">
-                                  {student.email}
-                                </p>
-                              </div>
-                              <div
-                                className={`ml-2 flex-shrink-0 rounded-full px-2 py-1 text-xs font-medium ${
-                                  student.is_active !== false
-                                    ? "bg-green-500/20 text-green-300"
-                                    : "bg-red-500/20 text-red-300"
-                                }`}
-                              >
-                                {student.is_active !== false
-                                  ? "Active"
-                                  : "Archived"}
+                          <div className="flex items-start justify-between">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="break-words font-semibold text-white">
+                                {student.student_name}
+                              </h3>
+                              <div className="mt-1 flex items-center gap-2">
+                                <div
+                                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
+                                >
+                                  <Target className="h-3 w-3" />
+                                  {getPerformanceLevel(student).level}
+                                </div>
+                                <span className="text-xs text-gray-400">
+                                  {student.studying_year || "N/A"}
+                                </span>
                               </div>
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewStudent(student);
-                                  }}
-                                  className="min-w-0 rounded-lg p-1.5 text-purple-400 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
-                                  title="View Details"
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleSendMessage(student);
-                                  }}
-                                  className="min-w-0 rounded-lg p-1.5 text-green-400 transition-colors hover:bg-green-500/20 hover:text-green-300"
-                                  title="Send Message"
-                                >
-                                  <MessageCircle className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditStudent(student);
-                                  }}
-                                  className="min-w-0 rounded-lg p-1.5 text-blue-400 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
-                                  title="Edit Student"
-                                >
-                                  <Edit3 className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleExportData(student);
-                                  }}
-                                  className="min-w-0 rounded-lg p-1.5 text-cyan-400 transition-colors hover:bg-cyan-500/20 hover:text-cyan-300"
-                                  title="Export Data"
-                                >
-                                  <Download className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
+                            <div className="ml-2 flex items-center gap-1">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewStudent(student);
+                                }}
+                                className="rounded-lg p-1.5 text-purple-400 transition-colors hover:bg-purple-500/20 hover:text-purple-300"
+                                title="View Details"
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditStudent(student);
+                                }}
+                                className="rounded-lg p-1.5 text-blue-400 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
+                                title="Edit Student"
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </button>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleDeleteStudent(student);
                                 }}
-                                className="min-w-0 rounded-lg p-1.5 text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
-                                title="Delete Student"
+                                className="rounded-lg p-1.5 text-red-400 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                                title="Remove Student"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>
@@ -2471,142 +2443,48 @@ const TeacherDashboard = () => {
                         </div>
                       </div>
 
-                      <div
-                        className={`space-y-3 ${
-                          isMobileView ? "hidden md:block" : ""
-                        }`}
-                      >
-                        {/* Top Performance Indicator */}
-                        <div className="flex items-center justify-between">
-                          <div
-                            className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getPerformanceLevel(student).bgColor} ${getPerformanceLevel(student).color}`}
-                          >
-                            <Target className="h-3 w-3" />
-                            {getPerformanceLevel(student).level}
-                          </div>
-                          <div className="flex items-center gap-1 text-sm text-white">
-                            <Star className="h-4 w-4 text-yellow-400" />
-                            <span className="font-medium">
-                              {student.total_xp || 0}
-                            </span>
-                            <span className="text-gray-400">XP</span>
-                          </div>
+                      {/* Key Metrics */}
+                      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Streak:</span>
+                          <span className="flex items-center gap-1 font-medium text-white">
+                            <Zap className="h-3 w-3 text-orange-400" />
+                            {student.current_streak || 0}d
+                          </span>
                         </div>
-
-                        {/* Core Metrics Grid */}
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="space-y-1">
-                            <div className="flex justify-between">
-                              <span className="text-gray-300">Level:</span>
-                              <span className="font-medium text-white">
-                                {student.level || "Beginner"}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-300">Year:</span>
-                              <span className="font-medium text-white">
-                                {student.studying_year || "N/A"}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-300">Practice:</span>
-                              <span className="font-medium text-white">
-                                {Math.floor(
-                                  (student.total_practice_minutes || 0) / 60
-                                )}
-                                h {(student.total_practice_minutes || 0) % 60}m
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <div className="flex justify-between">
-                              <span className="text-gray-300">Streak:</span>
-                              <span className="flex items-center gap-1 font-medium text-white">
-                                <Zap className="h-3 w-3 text-orange-400" />
-                                {student.current_streak || 0} days
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-300">Accuracy:</span>
-                              <span className="font-medium text-white">
-                                {student.average_accuracy || 0}%
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-300">Started:</span>
-                              <span className="text-xs font-medium text-white">
-                                {student.member_since ? new Date(student.member_since).toLocaleDateString("en-GB") : "N/A"}
-                              </span>
-                            </div>
-                          </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Attendance:</span>
+                          <span className="font-medium text-white">
+                            {calculateAttendanceRate(student)}%
+                          </span>
                         </div>
+                      </div>
 
-                        {/* Attendance Progress Bar */}
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1 text-sm text-gray-300">
-                              <Calendar className="h-3 w-3" />
-                              Attendance (30d)
-                            </div>
-                            <span className="text-sm font-medium text-white">
-                              {calculateAttendanceRate(student)}%
-                            </span>
-                          </div>
-                          <div className="h-2 w-full rounded-full bg-gray-700">
-                            <div
-                              className={`h-2 rounded-full transition-all duration-500 ${
-                                calculateAttendanceRate(student) >= 80
-                                  ? "bg-green-500"
-                                  : calculateAttendanceRate(student) >= 60
-                                    ? "bg-blue-500"
-                                    : calculateAttendanceRate(student) >= 40
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
-                              }`}
-                              style={{
-                                width: `${calculateAttendanceRate(student)}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
+                      {/* Attendance Bar */}
+                      <div className="mt-2 h-1.5 w-full rounded-full bg-gray-700">
+                        <div
+                          className={`h-1.5 rounded-full transition-all duration-500 ${
+                            calculateAttendanceRate(student) >= 80
+                              ? "bg-green-500"
+                              : calculateAttendanceRate(student) >= 60
+                                ? "bg-blue-500"
+                                : calculateAttendanceRate(student) >= 40
+                                  ? "bg-yellow-500"
+                                  : "bg-red-500"
+                          }`}
+                          style={{
+                            width: `${calculateAttendanceRate(student)}%`,
+                          }}
+                        />
+                      </div>
 
-                        {/* Recent Activity */}
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-1 text-sm text-gray-300">
-                            <Zap className="h-3 w-3" />
-                            Recent Activity
-                          </div>
-                          <div className="space-y-1">
-                            <p
-                              className={`text-xs font-medium ${getRecentActivitySummary(student).color}`}
-                            >
-                              {getRecentActivitySummary(student).text}
-                            </p>
-                            {student.recent_practices &&
-                              student.recent_practices.length > 0 && (
-                                <div className="text-xs text-gray-400">
-                                  Last session:{" "}
-                                  {Math.round(
-                                    student.recent_practices[0].duration || 0
-                                  )}
-                                  min
-                                  {student.recent_practices[0]
-                                    .analysis_score && (
-                                    <span>
-                                      {" "}
-                                      •{" "}
-                                      {Math.round(
-                                        student.recent_practices[0]
-                                          .analysis_score
-                                      )}
-                                      % accuracy
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                          </div>
-                        </div>
+                      {/* Recent Activity */}
+                      <div className="mt-2">
+                        <p
+                          className={`text-xs font-medium ${getRecentActivitySummary(student).color}`}
+                        >
+                          {getRecentActivitySummary(student).text}
+                        </p>
                       </div>
                     </Card>
                   );
