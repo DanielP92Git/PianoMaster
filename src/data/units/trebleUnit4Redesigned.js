@@ -236,21 +236,21 @@ export const trebleUnit4Nodes = [
     exercises: [
       {
         // SIGHT_READING is safe for sharps -- mic outputs F#4/C#4/G#4 matching exactly
-        // keySignature 'A' ensures only in-key notes (F#, C#, G#) appear -- no F/C/G naturals
+        // Pool excludes naturals of sharped notes (no F4/C4/G4) — follows key-based logic
+        // Accidentals render next to notes (no key signature) with bar-level carry-through
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
+          notePool: ['C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
           rhythmPatterns: ['quarter'],
-          tempo: 65,
-          keySignature: 'A'
+          tempo: 65
         }
       }
     ],
 
-    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
+    skills: ['C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4'],
     xpReward: 50,
     accessoryUnlock: null,
     isBoss: false,
@@ -296,21 +296,20 @@ export const trebleUnit4Nodes = [
     exercises: [
       {
         // SIGHT_READING safe for sharps -- mic outputs sharp-form only
-        // keySignature 'A' ensures only in-key notes (F#, C#, G#) appear -- no F/C/G naturals
+        // Pool excludes naturals of sharped notes — accidentals render next to notes
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
+          notePool: ['C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
           rhythmPatterns: ['quarter', 'half'],
-          tempo: 70,
-          keySignature: 'A'
+          tempo: 70
         }
       }
     ],
 
-    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
+    skills: ['C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4'],
     xpReward: 55,
     accessoryUnlock: null,
     isBoss: false,
@@ -476,16 +475,15 @@ export const trebleUnit4Nodes = [
         }
       },
       {
-        // keySignature 'A' ensures only in-key notes (F#, C#, G#) appear -- no F/C/G naturals
+        // Pool excludes naturals of sharped notes — accidentals render next to notes
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'B4', 'C5'],
+          notePool: ['C#4', 'D4', 'E4', 'F#4', 'G#4', 'A4', 'B4'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
           rhythmPatterns: ['quarter', 'half'],
-          tempo: 70,
-          keySignature: 'A'
+          tempo: 70
         }
       }
     ],

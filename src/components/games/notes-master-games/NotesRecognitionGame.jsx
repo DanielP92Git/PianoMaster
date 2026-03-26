@@ -433,6 +433,12 @@ export function NotesRecognitionGame() {
   // Defaults to false so free-play mode unaffected (location.state is null).
   const trailEnableSharps = location.state?.enableSharps ?? false;
   const trailEnableFlats = location.state?.enableFlats ?? false;
+  // In trail mode, restrict accidentals to only those explicitly in the exercise's notePool.
+  // Prevents enableSharps from leaking in unlearned notes (e.g. G#4 in "Meet F Sharp").
+  const trailNotePoolSet = useMemo(() => {
+    if (!nodeConfig?.notePool) return null;
+    return new Set(nodeConfig.notePool);
+  }, [nodeConfig]);
   // Daily challenge mode
   const challengeMode = location.state?.challengeMode ?? false;
   const challengeConfig = location.state?.challengeConfig ?? null;
@@ -974,12 +980,14 @@ export function NotesRecognitionGame() {
             isAccidentalPitch(notePitch) &&
             ((notePitch.includes("#") && settings.enableSharps) ||
               (notePitch.includes("b") && settings.enableFlats));
+          // Trail guard: accidentals must be in the exercise's notePool
+          const trailAllowed = !trailNotePoolSet || !isAccidentalPitch(notePitch) || trailNotePoolSet.has(notePitch);
 
-          return clefKey === "both"
+          return trailAllowed && (clefKey === "both"
             ? selectedSet.has(`${tag}:${notePitch}`) ||
                 (allowAccidental && selectedSet.has(`${tag}:${base}`))
             : selectedSet.has(notePitch) ||
-                (allowAccidental && selectedSet.has(base));
+                (allowAccidental && selectedSet.has(base)));
         })
       : notesArray;
 
@@ -1000,6 +1008,7 @@ export function NotesRecognitionGame() {
     settings.clef,
     settings.enableFlats,
     settings.enableSharps,
+    trailNotePoolSet,
   ]);
 
   // Handle game settings from the GameSettings component
@@ -1262,12 +1271,14 @@ export function NotesRecognitionGame() {
                 isAccidentalPitch(notePitch) &&
                 ((notePitch.includes("#") && settings.enableSharps) ||
                   (notePitch.includes("b") && settings.enableFlats));
+              // Trail guard: accidentals must be in the exercise's notePool
+              const trailAllowed = !trailNotePoolSet || !isAccidentalPitch(notePitch) || trailNotePoolSet.has(notePitch);
 
-              return clefKey === "both"
+              return trailAllowed && (clefKey === "both"
                 ? selectedSet.has(`${tag}:${notePitch}`) ||
                     (allowAccidental && selectedSet.has(`${tag}:${base}`))
                 : selectedSet.has(notePitch) ||
-                    (allowAccidental && selectedSet.has(base));
+                    (allowAccidental && selectedSet.has(base)));
             });
           })()
         : allNotes;
@@ -1294,6 +1305,7 @@ export function NotesRecognitionGame() {
     settings.enableSharps,
     normalizedSelectedNotes,
     sessionExtraNotes,
+    trailNotePoolSet,
   ]);
 
   const { orderedNaturals, orderedAccidentals } = useMemo(() => {

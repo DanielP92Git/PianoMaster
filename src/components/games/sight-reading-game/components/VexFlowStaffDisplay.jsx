@@ -629,7 +629,7 @@ export function VexFlowStaffDisplay({
             const trebleTickables = [];
             const bassTickables = [];
 
-            const skipAccidental = !!(activeKeySignature && activeKeySignature !== 'C');
+            // Always let applyAccidentals handle accidental rendering (bar-level carry-through)
             barEvents.forEach((event, localIdx) => {
               const globalIdx = barEventIndices[localIdx];
               const duration = durations[globalIdx] || "q";
@@ -656,7 +656,7 @@ export function VexFlowStaffDisplay({
                   pitchStr: event.pitch,
                   duration,
                   targetClef: "treble",
-                  skipManualAccidental: skipAccidental,
+                  skipManualAccidental: true,
                 }));
                 bassTickables.push(buildSpacerRest(duration, "bass"));
               } else {
@@ -665,7 +665,7 @@ export function VexFlowStaffDisplay({
                   pitchStr: event.pitch,
                   duration,
                   targetClef: "bass",
-                  skipManualAccidental: skipAccidental,
+                  skipManualAccidental: true,
                 }));
               }
             });
@@ -729,11 +729,10 @@ export function VexFlowStaffDisplay({
             bassVoice.addTickables(bassTickables);
 
             // Apply accidentals after all tickables are added, before formatter.
-            // applyAccidentals suppresses in-key accidentals and adds natural signs for deviations.
-            if (activeKeySignature && activeKeySignature !== 'C') {
-              Accidental.applyAccidentals([trebleVoice], activeKeySignature);
-              Accidental.applyAccidentals([bassVoice], activeKeySignature);
-            }
+            // Uses key signature when set, otherwise 'C' for bar-level carry-through
+            // (first sharp in bar shows #, subsequent same-note sharps suppressed).
+            Accidental.applyAccidentals([trebleVoice], activeKeySignature || 'C');
+            Accidental.applyAccidentals([bassVoice], activeKeySignature || 'C');
 
             // Calculate formatter width for this bar
             const barFormatterWidth = barIdx === 0
@@ -871,7 +870,7 @@ export function VexFlowStaffDisplay({
               .filter((i) => i !== null)
           );
 
-          const skipAccidentalSingleGrand = !!(activeKeySignature && activeKeySignature !== 'C');
+          // Always let applyAccidentals handle accidental rendering (bar-level carry-through)
           const trebleTickables = events.map((event, idx) => {
             const duration = durations[idx] || "q";
             const eventClef = String(event?.clef || "treble").toLowerCase();
@@ -892,7 +891,7 @@ export function VexFlowStaffDisplay({
                 duration,
                 targetClef: "treble",
                 isDotted: !!event?.isDotted,
-                skipManualAccidental: skipAccidentalSingleGrand,
+                skipManualAccidental: true,
               });
             }
             return buildSpacerRest(duration, "treble");
@@ -918,7 +917,7 @@ export function VexFlowStaffDisplay({
                 duration,
                 targetClef: "bass",
                 isDotted: !!event?.isDotted,
-                skipManualAccidental: skipAccidentalSingleGrand,
+                skipManualAccidental: true,
               });
             }
             return buildSpacerRest(duration, "bass");
@@ -974,10 +973,8 @@ export function VexFlowStaffDisplay({
           bassVoice.addTickables(bassTickables);
 
           // Apply accidentals after all tickables are added, before formatter.
-          if (activeKeySignature && activeKeySignature !== 'C') {
-            Accidental.applyAccidentals([trebleVoice], activeKeySignature);
-            Accidental.applyAccidentals([bassVoice], activeKeySignature);
-          }
+          Accidental.applyAccidentals([trebleVoice], activeKeySignature || 'C');
+          Accidental.applyAccidentals([bassVoice], activeKeySignature || 'C');
 
           const isFeedback = gamePhase === "feedback" && performanceResults.length > 0;
           const wrongPitchResults = isFeedback
@@ -1134,7 +1131,7 @@ export function VexFlowStaffDisplay({
             const barStaveNotes = [];
             const barPitchStrings = [];
 
-            const skipAccidentalMultiBar = !!(activeKeySignature && activeKeySignature !== 'C');
+            // Always let applyAccidentals handle accidental rendering (bar-level carry-through)
             barEvents.forEach((event, localIdx) => {
               const globalIdx = barEventIndices[localIdx];
               const duration = durations[globalIdx] || "q";
@@ -1151,7 +1148,7 @@ export function VexFlowStaffDisplay({
                   pitchStr: event.pitch,
                   duration,
                   targetClef: clef,
-                  skipManualAccidental: skipAccidentalMultiBar,
+                  skipManualAccidental: true,
                 }));
                 barPitchStrings.push(event.pitch);
               }
@@ -1187,9 +1184,7 @@ export function VexFlowStaffDisplay({
             voice.addTickables(barStaveNotes);
 
             // Apply accidentals after all tickables are added, before formatter.
-            if (activeKeySignature && activeKeySignature !== 'C') {
-              Accidental.applyAccidentals([voice], activeKeySignature);
-            }
+            Accidental.applyAccidentals([voice], activeKeySignature || 'C');
 
             // Calculate formatter width for this bar
             const barFormatterWidth = barIdx === 0
@@ -1267,7 +1262,7 @@ export function VexFlowStaffDisplay({
               .filter((i) => i !== null)
           );
 
-          const skipAccidentalSingleBar = !!(activeKeySignature && activeKeySignature !== 'C');
+          // Always let applyAccidentals handle accidental rendering (bar-level carry-through)
           const pitchStrings = [];
           const staveNotes = events.map((event, idx) => {
             const duration = durations[idx] || "q";
@@ -1285,7 +1280,7 @@ export function VexFlowStaffDisplay({
                 pitchStr: event.pitch,
                 duration,
                 targetClef: clef,
-                skipManualAccidental: skipAccidentalSingleBar,
+                skipManualAccidental: true,
               });
             }
           });
@@ -1312,9 +1307,7 @@ export function VexFlowStaffDisplay({
           voice.addTickables(staveNotes);
 
           // Apply accidentals after all tickables are added, before formatter.
-          if (activeKeySignature && activeKeySignature !== 'C') {
-            Accidental.applyAccidentals([voice], activeKeySignature);
-          }
+          Accidental.applyAccidentals([voice], activeKeySignature || 'C');
 
           // Handle wrong pitch overlay
           let wrongVoice = null;
