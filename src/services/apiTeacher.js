@@ -1180,7 +1180,7 @@ export const getTeacherNotifications = async () => {
     const { data: notifications, error } = await supabase
       .from("notifications")
       .select("*")
-      .eq("recipient_id", user.id)
+      .or(`recipient_id.eq.${user.id},sender_id.eq.${user.id}`)
       .eq("is_archived", false)
       .order("created_at", { ascending: false });
 

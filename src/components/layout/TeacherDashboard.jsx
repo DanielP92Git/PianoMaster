@@ -69,6 +69,21 @@ const AddStudentModal = ({ isOpen, onClose, onAddStudent, isLoading }) => {
     startDate: "",
   });
 
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        level: "",
+        studyingYear: "",
+        startDate: "",
+      });
+    }
+  }, [isOpen]);
+
   const isValidDate = (dateString) => {
     const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
     const match = dateString.match(regex);

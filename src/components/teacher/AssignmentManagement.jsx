@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Award,
@@ -48,6 +48,26 @@ const CreateAssignmentModal = ({
       practiceMode: "any",
     },
   });
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        title: "",
+        description: "",
+        instructions: "",
+        assignmentType: "practice",
+        dueDate: "",
+        pointsPossible: 100,
+        requirements: {
+          minPracticeSessions: 1,
+          minPracticeTime: 30,
+          targetAccuracy: 80,
+          practiceMode: "any",
+        },
+      });
+    }
+  }, [isOpen]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
