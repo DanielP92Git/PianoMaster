@@ -1,349 +1,236 @@
-# Stack Research
+# Technology Stack: v2.9 Game Variety & Ear Training
 
-**Domain:** Instrument practice tracking — daily yes/no logging, dedicated streak, XP rewards, interactive push notification action buttons, parent calendar heatmap
-**Researched:** 2026-03-23
-**Confidence:** HIGH (push action button iOS limitations verified via multiple sources; heatmap library verified via GitHub releases; all other decisions follow existing patterns)
-
----
-
-## Context: What Already Exists (Do Not Re-research)
-
-The following are in production and require NO new packages:
-
-- React 18 + Vite 6 + React Router v7
-- Supabase (auth, database, real-time, Edge Functions)
-- TanStack React Query v5
-- Tailwind CSS 3 + glassmorphism design system
-- Web Push notifications (VAPID, `@negrel/webpush` in Edge Functions, service worker `push`/`notificationclick` handlers in `public/sw.js`)
-- `streakService.js` — app-usage streak with 36-hour grace, freeze shields, weekend pass, comeback bonus
-- `xpSystem.js` — 30-level + prestige XP system
-- `send-weekly-report` Edge Function — Brevo HTML emails, HMAC unsubscribe
-- `lucide-react`, `framer-motion`, `recharts`, `react-confetti`, `react-hot-toast`
-- i18next with EN/HE
-
-This milestone adds ONE new npm package and two to three new database tables. Everything else is pure extension of existing patterns.
+**Project:** PianoApp2 (PianoMaster)
+**Researched:** 2026-03-26
+**Milestone:** v2.9 — Rhythm game variants (tap-along, dictation, arcade) + Ear Training trail path
+**Overall confidence:** MEDIUM-HIGH
 
 ---
 
-## Recommended Stack — New Additions Only
+## What This Document Covers
 
-### New npm Package
+Only NEW capabilities required by v2.9. The following are confirmed working and must NOT be re-researched or re-added:
 
-| Library | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| `react-activity-calendar` | `^3.1.1` | GitHub-style calendar heatmap for parent practice view | Active maintenance (v3.0 released November 15, 2025; v3.1.1 published March 2026), pure ESM, TypeScript, React 18 peer dep only, Floating UI tooltips (headless, no external dep), supports custom colors per level, dark/light mode, localization. ~87 kB minified (reduced ~33% in v3 from v2). Better maintained than `react-calendar-heatmap` (stale since 2022) and more feature-complete than `@uiw/react-heat-map`. |
+- React 18, Vite 6, React Router v7
+- Web Audio API (AudioContext, OscillatorNode, AudioBufferSourceNode, AnalyserNode)
+- `useAudioEngine` — metronome, lookahead beat scheduler, piano pitch-shift from G4.mp3 via playbackRate
+- `AudioContextProvider` — singleton shared AudioContext, iOS interruption recovery (`isInterrupted` state), suspend/resume lifecycle
+- `useSounds` — one-shot game sounds (correct.mp3, wrong.mp3, drum-stick.mp3)
+- `pitchy` — McLeod pitch detection for mic input
+- `klavier` — keyboard input
+- `framer-motion` v12 (currently imported as `framer-motion`)
+- VexFlow v5 — SVG music notation with `RhythmPatternGenerator.js`
+- Tailwind CSS 3, `lucide-react`, `react-confetti`, `react-hot-toast`
+- `MetronomeTrainer` timing model (`BASE_TIMING_THRESHOLDS`, `calculateTimingThresholds`, `SCORING`)
 
-**Install:**
+---
+
+## Recommended Stack Additions
+
+### 1. Instrument Samples: `smplr`
+
+**Install:** `npm install smplr`
+**Version:** `^0.16.4` (latest as of March 2026; published approximately 1 month prior)
+**Confidence:** MEDIUM — API confirmed via npm docs and GitHub README; AudioContext pass-through confirmed; exact gzipped JS bundle size not independently verified.
+
+**Why smplr:**
+
+The app needs realistic multi-instrument playback for ear training (note comparison, instrument recognition, interval identification) and rhythm dictation (play the pattern the student must notate or identify). The existing `useAudioEngine` can only play the G4.mp3 piano sample with pitch-shift via `playbackRate` — adequate for rhythm games, but insufficient for multi-instrument ear training.
+
+Three options were evaluated:
+
+**Tone.js** (v15.1.22, last published 10 months ago) is the most powerful Web Audio framework but creates its own AudioContext on module load. `Tone.setContext(ctx)` exists but must be called before any Tone.js nodes are created; nodes created before the context is set cannot connect to nodes created after (confirmed via Tone.js GitHub Issues #701, #1298). This creates a fragile initialization order dependency with `AudioContextProvider`. Tone.js also ships ~100KB gzipped for features (Transport, Synth, Effects chain, Sequencer) that this app does not need.
+
+**Howler.js** (v2.x, 7KB gzipped) is lightweight and reliable for one-shot sound effects. It creates its own AudioContext. The app's `AudioContextProvider` handles iOS interruption recovery at the AudioContext level — a second AudioContext would bypass that recovery, creating a state divergence. Howler also has no built-in multi-octave pitch interpolation; each note would require its own pre-recorded file.
+
+**smplr** (v0.16.4) is explicitly designed as the modern replacement for `soundfont-player` (by the same author, danigb). Its constructor signature is `new Instrument(audioContext, options)` — it accepts an existing `AudioContext` directly. The singleton from `AudioContextProvider` can be passed in and smplr will use it as-is, inheriting all iOS recovery and lifecycle management for free. smplr provides:
+- `SplendidGrandPiano` — Steinway-quality multi-sampled piano (every note sampled, CDN-hosted)
+- `Soundfont` — 128 General MIDI instruments (MusyngKite or FluidR3_GM) including violin, acoustic guitar, flute, trumpet
+- `DrumMachine` — not needed for v2.9
+
+Audio samples are CDN-streamed (not bundled), so the npm install cost is JS-only and small. Samples are cached via CacheStorage on second load.
+
+**Use cases in v2.9:**
+
+| Game | smplr Use |
+|------|-----------|
+| Rhythm tap-along | Not needed — existing `drum-stick.mp3` + `createMetronomeClick` covers tap feedback |
+| Rhythm dictation | `SplendidGrandPiano` plays the rhythm pattern at pitch C4 (or a fixed pitch) |
+| Ear training: note comparison (higher/lower) | `SplendidGrandPiano` plays two notes in sequence |
+| Ear training: instrument recognition | `Soundfont` plays a single note across 4 instrument options |
+| Ear training: interval identification | `SplendidGrandPiano` plays two notes as a harmonic or melodic interval |
+
+**Integration pattern:**
+
+```javascript
+import { SplendidGrandPiano, Soundfont } from 'smplr';
+import { useAudioContext } from '../contexts/AudioContextProvider';
+
+// Inside a game component:
+const { audioContextRef } = useAudioContext();
+const pianoRef = useRef(null);
+
+useEffect(() => {
+  if (!audioContextRef.current) return;
+  const piano = new SplendidGrandPiano(audioContextRef.current);
+  piano.load().then(() => { pianoRef.current = piano; });
+  return () => piano.stop?.();
+}, []); // mount once; audioContextRef.current is stable after AudioContextProvider init
+
+// Play a note (after load):
+pianoRef.current?.start({ note: 'C4', velocity: 80 });
+pianoRef.current?.stop({ note: 'C4', time: audioContextRef.current.currentTime + 1.5 });
+```
+
+**iOS note:** smplr uses the passed AudioContext, so `AudioContextProvider`'s `onstatechange` handler (covering iOS `interrupted` state) applies automatically. The `AudioInterruptedOverlay` pattern already in the app covers the user-gesture resume flow.
+
+---
+
+### 2. Timing: Extend `useAudioEngine` — No New Library
+
+**Decision: add `scheduleBeatSequence` helper to existing `useAudioEngine`. Do not add WAAClock, Dilla, or Tone.js Transport.**
+
+`useAudioEngine` already implements the canonical Web Audio lookahead scheduler (the "A Tale of Two Clocks" pattern from web.dev/audio-scheduling). It has:
+- `audioContextRef.current.currentTime` for hardware-accurate timestamps
+- `nextBeatTimeRef`, `schedulerIdRef` for beat sequencing
+- `createMetronomeClick`, `createPatternSound`, `createPianoSound` with pitch control
+- BPM-adaptive onset timing with `lookaheadTime` and `scheduleAheadTime`
+
+What the new rhythm games need beyond this is a `scheduleBeatSequence(pattern, tempo, onBeat)` function: take a duration array, schedule audio events at each beat time via the existing scheduler, and fire a JS callback at each beat for UI state sync (highlight active beat, advance progress indicator). This is approximately 30 lines of code, not a new library.
+
+The `MetronomeTrainer` timing model (`BASE_TIMING_THRESHOLDS`, `calculateTimingThresholds`, `SCORING`) is already the right pattern for tap scoring. Copy it into new game components; do not abstract until three or more games use identical logic.
+
+**Why not Tone.js Transport:** Creates its own AudioContext (see rationale above). The Transport is excellent but not compatible with `AudioContextProvider`.
+
+**Why not WAAClock:** Unmaintained (last GitHub commit 2018). Not an active npm package.
+
+**Confidence:** HIGH — `useAudioEngine.js` source code is fully readable and the lookahead scheduler is textbook Web Audio API as documented by MDN and web.dev.
+
+---
+
+### 3. Arcade Rhythm Game Animation: CSS `transform` + `requestAnimationFrame` — No New Library
+
+**Decision: Use Tailwind CSS `transform` classes on GPU-promoted elements, driven by a `requestAnimationFrame` game loop via `useRef`. Do NOT use framer-motion for the falling-note highway.**
+
+The arcade rhythm game requires a continuous "note highway" — a vertical or horizontal lane where note tiles appear at the top and fall toward a tap zone. This is a frame-rate-sensitive continuous animation driven by elapsed time, not by React state transitions.
+
+framer-motion (already installed) is the wrong tool for this specific animation:
+- framer-motion animates React state/prop changes. A note highway requires frame-by-frame positional updates driven by a game clock, not React re-renders.
+- Animating dozens of tiles through React state creates re-render overhead that can push frame timing past the 16ms budget, introducing jank visible in a rhythm game context.
+- The app's performance benchmark from v1.7 was "85-95fps on Pixel 6" using direct Web Audio API. The same principle applies here: the game loop must not be mediated by React's render cycle.
+
+The correct pattern is direct DOM mutation via refs within a `requestAnimationFrame` loop:
+
+```javascript
+const frameRef = useRef(null);
+const noteTilesRef = useRef([]); // array of { el: DOMNode, spawnTime, targetTime }
+
+const gameLoop = useCallback((timestamp) => {
+  noteTilesRef.current.forEach((tile) => {
+    const elapsed = timestamp - tile.spawnTime;
+    const y = elapsed * FALL_SPEED_PX_PER_MS;
+    tile.el.style.transform = `translateY(${y}px)`;
+    // check hit zone vs audio time for scoring
+  });
+  frameRef.current = requestAnimationFrame(gameLoop);
+}, []);
+
+useEffect(() => {
+  frameRef.current = requestAnimationFrame(gameLoop);
+  return () => cancelAnimationFrame(frameRef.current);
+}, [gameLoop]);
+```
+
+CSS `transform: translateY()` on elements with `will-change: transform` runs on the GPU compositor thread — the fastest animation path available in browsers, independent of JavaScript thread load. This is the same technique used by Guitar Hero web clones and the canonical approach per MDN's performance documentation.
+
+**framer-motion is still used** for discrete event animations within the arcade game: score popup flyouts, combo burst effect, "on fire" badge entry/exit, game-over overlay — all React state-driven, not continuous.
+
+**Confidence:** HIGH — `requestAnimationFrame` with direct DOM mutation via refs is standard web game loop technique per MDN game anatomy documentation. CSS compositor thread animation is well-established per MDN performance guides.
+
+---
+
+### 4. Rhythm Notation Display: VexFlow v5 (already installed) — No New Library
+
+**Decision: Reuse VexFlow v5. Create a new `RhythmStaveRenderer` component for rhythm-only display.**
+
+Rhythm dictation (hear-and-pick) needs to show 2-4 rhythm pattern choices as notation for the student to select from. The existing `SightReadingGame` already renders full staves with VexFlow; `RhythmPatternGenerator.js` already produces duration arrays compatible with VexFlow duration codes.
+
+The only new capability needed is a **rhythm-only stave** (no pitch — all notes on middle line, stems forced UP). CLAUDE.md already documents this:
+> "For rhythm-only displays, force `Stem.UP`; for pitch-based, let VexFlow calculate"
+
+`RhythmStaveRenderer` is a thin component that maps a `RhythmPatternGenerator` output to VexFlow `StaveNote` objects with forced stem direction and a single pitch value. No new library needed.
+
+**Confidence:** HIGH — VexFlow v5 source and guidelines are in the codebase.
+
+---
+
+### 5. Ear Training Audio Analysis: None Required
+
+**Decision: No audio analysis library. Ear training games are listen-and-click, not microphone-analysis.**
+
+All v2.9 ear training games follow a listen-and-respond model:
+- Note comparison: two notes play sequentially; student taps "higher" or "lower" button
+- Instrument recognition: one note plays; student picks the instrument name from four choices
+- Interval identification: two notes play; student picks the interval name from choices
+
+There is no microphone input in any ear training game. The student responds by tapping a button. This eliminates any need for Meyda, Essentia.js, TensorFlow.js, or any audio analysis library.
+
+Frequency arithmetic for interval generation is pure math already implemented in `useAudioEngine.parseNoteToMidi` (MIDI note → frequency via `440 * 2^((midi - 69) / 12)`). Interval calculations are simple semitone arithmetic: a major third is +4 semitones, a perfect fifth is +7, etc.
+
+**Confidence:** HIGH — game designs are confirmed listen-and-pick, requiring only audio playback and UI interaction.
+
+---
+
+## What NOT to Add
+
+| Library | Reason to Exclude |
+|---------|------------------|
+| `tone` (Tone.js) | Creates its own AudioContext on import; `Tone.setContext()` has ordering constraints that conflict with `AudioContextProvider` singleton; 100+ KB gzipped for features not needed |
+| `howler` | Creates its own AudioContext; bypasses iOS interruption recovery in `AudioContextProvider`; no multi-octave pitch interpolation |
+| `@tonejs/piano` | Requires Tone.js as peer dep; last published 2023 (stale); same AudioContext conflict as Tone.js |
+| `webaudiofont` | Wavetable approach adds complexity over smplr's sample approach; maintenance status unclear vs. smplr's recent 0.16.4 release |
+| `soundfont-player` | Deprecated; smplr is the stated modern replacement by the same author (danigb) |
+| `react-spring` | App already has framer-motion; two animation libraries is unnecessary bundle bloat |
+| `WAAClock` / `Dilla` | Unmaintained; `useAudioEngine` already implements the identical lookahead scheduler pattern |
+| `meyda` / `essentia.js` | Ear training games are listen-and-click; heavyweight DSP/ML not justified |
+| `motion` (npm package) | `framer-motion` v12 is installed and working; migration to `motion/react` is a rename-only refactor with no v2.9 feature benefit |
+
+---
+
+## Summary of New Dependencies
+
+| Package | Version | Purpose | Bundle Impact |
+|---------|---------|---------|---------------|
+| `smplr` | `^0.16.4` | Multi-instrument sample playback (SplendidGrandPiano, Soundfont with violin/guitar/flute/trumpet) | JS: small (library code only); audio samples are CDN-streamed, not bundled |
+
+**Everything else is built using the existing stack.**
+
+---
+
+## Installation
+
 ```bash
-npm install react-activity-calendar@^3.1.1
-```
-
-### Data Format and Integration
-
-`react-activity-calendar` v3 uses a named export (breaking change from v2 which had a default export):
-
-```javascript
-import { ActivityCalendar } from 'react-activity-calendar';
-
-// Binary practice data: level 0 = missed, level 4 = practiced
-// count is required but can be 0 or 1 for yes/no tracking
-const practiceData = [
-  { date: '2026-01-01', count: 0, level: 0 }, // missed
-  { date: '2026-01-02', count: 1, level: 4 }, // practiced
-  // Must include an entry for every date in the range
-];
-
-<ActivityCalendar
-  data={practiceData}
-  maxLevel={4}
-  colorScheme="dark"
-  theme={{
-    dark: [
-      'rgba(255,255,255,0.08)', // level 0: missed — glass-like background
-      '#4338ca',                // level 1 (unused for binary, but required)
-      '#4f46e5',
-      '#6366f1',
-      '#818cf8',               // level 4: practiced — indigo-400
-    ],
-  }}
-  weekStart={0}               // Sunday start (adjust for HE locale if needed)
-  showColorLegend={false}     // binary = no legend needed
-  showMonthLabels={true}
-  showTotalCount={false}      // parent doesn't need total count display
-  hideTotalCount={false}      // v3 uses showTotalCount prop (not hideTotalCount)
-/>
-```
-
-Color choices align with existing indigo-400/indigo-600 design tokens and glass background.
-
----
-
-## Alternatives Considered
-
-| Recommended | Alternative | Why Not |
-|-------------|-------------|---------|
-| `react-activity-calendar@3.1.1` | `react-calendar-heatmap` (kevinsqi/hackclub fork) | Last published 2022; no TypeScript types; abandoned by original author |
-| `react-activity-calendar@3.1.1` | `@uiw/react-heat-map` | Works but weaker built-in dark mode and tooltip API; less actively maintained; react-activity-calendar has more GitHub stars and recent releases |
-| `react-activity-calendar@3.1.1` | Build from scratch (SVG + Tailwind + date math) | Date math edge cases (leap years, week-start locale, 53-week years) add implementation risk; a vetted library eliminates this; the component is parent-facing so perfection on edge cases matters |
-| `react-activity-calendar@3.1.1` | recharts (already installed) | recharts has no calendar/heatmap chart type; would require a custom renderer anyway |
-
----
-
-## New Database Tables
-
-No new npm packages required — all follows Supabase/Postgres patterns already established in the codebase.
-
-### Table 1: `instrument_practice_logs`
-
-Source of truth for the heatmap and streak. One row per student per calendar day.
-
-```sql
-CREATE TABLE instrument_practice_logs (
-  id             uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  student_id     uuid NOT NULL REFERENCES students(id) ON DELETE CASCADE,
-  practiced_on   date NOT NULL,                      -- calendar date (client-determined local tz)
-  logged_at      timestamptz NOT NULL DEFAULT now(),  -- server timestamp
-  is_retroactive boolean NOT NULL DEFAULT false,      -- true when logging yesterday
-  source         text NOT NULL DEFAULT 'dashboard',   -- 'dashboard' | 'notification_action'
-  UNIQUE (student_id, practiced_on)                  -- one entry per student per day
-);
-
-ALTER TABLE instrument_practice_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "student own rows" ON instrument_practice_logs
-  USING (student_id = auth.uid())
-  WITH CHECK (student_id = auth.uid());
-
-CREATE INDEX idx_ipl_student_date ON instrument_practice_logs (student_id, practiced_on);
-```
-
-Heatmap query: `SELECT practiced_on FROM instrument_practice_logs WHERE student_id = $1 AND practiced_on >= $2 ORDER BY practiced_on`.
-
-### Table 2: `instrument_practice_streak`
-
-Separate from `current_streak` (which tracks app-usage). Instrument practice streak is a distinct concept.
-
-```sql
-CREATE TABLE instrument_practice_streak (
-  student_id    uuid PRIMARY KEY REFERENCES students(id) ON DELETE CASCADE,
-  streak_count  integer NOT NULL DEFAULT 0,
-  updated_at    timestamptz NOT NULL DEFAULT now()
-);
-
-ALTER TABLE instrument_practice_streak ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "student own rows" ON instrument_practice_streak
-  USING (student_id = auth.uid())
-  WITH CHECK (student_id = auth.uid());
-```
-
-Weekend pass for instrument streak reuses the `weekend_pass_enabled` column from `current_streak` (same parent toggle controls both) rather than duplicating the column. This is a roadmap phase decision.
-
----
-
-## Interactive Push Notification Action Buttons
-
-### Implementation Pattern
-
-The existing service worker (`public/sw.js`) already has `push` and `notificationclick` event listeners. The action button pattern requires:
-
-1. Include `actions` array in the `showNotification()` call inside the `push` listener
-2. Check `event.action` in the `notificationclick` listener
-3. Call back to Supabase to log the practice (via postMessage to app window or URL navigation)
-
-```javascript
-// In push listener (sw.js) — new practice-checkin notification type
-self.addEventListener('push', (event) => {
-  const data = event.data ? JSON.parse(event.data.text()) : {};
-
-  if (data.type === 'practice-checkin') {
-    const options = {
-      body: data.body,
-      tag: 'practice-checkin',  // distinct from existing 'daily-practice' tag
-      actions: [
-        { action: 'yes', title: 'Yes, I practiced!' },
-        { action: 'no',  title: 'Not yet' },
-      ],
-      data: { url: '/', type: 'practice-checkin' },
-    };
-    event.waitUntil(
-      self.registration.showNotification(data.title, options)
-    );
-    return;
-  }
-
-  // ... existing daily-practice handler unchanged
-});
-
-// In notificationclick listener (sw.js) — extend existing handler
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  if (event.notification.tag === 'practice-checkin') {
-    if (event.action === 'yes') {
-      // Open app at special URL that triggers log-on-mount
-      event.waitUntil(
-        clients.openWindow('/?log_practice=1&source=notification_action')
-      );
-    } else {
-      // 'no' action or plain tap — just open the app
-      event.waitUntil(clients.openWindow('/'));
-    }
-    return;
-  }
-
-  // ... existing daily-practice click handler unchanged
-});
-```
-
-**Authentication approach for logging from notification:** The service worker does not have the Supabase JWT. Rather than embedding tokens in notification payloads (security risk), the chosen pattern is to open the app at a URL with a `?log_practice=1` query param. The app's dashboard (or a lightweight route handler) detects this param on mount, verifies the user session is active, and calls the log API. This is the simplest correct approach — no new auth patterns, no token management.
-
-### Cross-Platform Reality (Verified)
-
-| Platform | Action Buttons Render | Notes |
-|----------|----------------------|-------|
-| Chrome/Android PWA | YES — full support | Primary platform for this app's users; works as expected |
-| Chrome Desktop | YES — full support | |
-| Firefox Desktop | YES — full support | |
-| Edge Desktop | YES — full support | |
-| Safari macOS 14+ | YES — works | macOS push fully supported |
-| **iOS Safari PWA (16.4+)** | **NO — actions silently dropped** | Confirmed via Apple Developer Forums (thread 726793) and independent developer testing: the `actions` array is accepted without error but action buttons never render on iOS. The notification appears, `notificationclick` fires on tap, but iOS exposes no action UI. |
-| iOS Safari in EU | NO — push not supported | EU regulatory restriction (browser choice screen); push only works for home screen installs outside EU |
-
-**iOS fallback:** The "Did you practice?" notification fires without action buttons on iOS. Tapping the notification (no action) opens the app to the dashboard where the manual log button handles the logging. This is acceptable — iOS is a secondary platform for 8-year-old learners (Android PWA is primary). No polyfill needed.
-
-**Safari iOS 18.4 Declarative Web Push:** Apple shipped a new "Declarative Web Push" format in iOS/iPadOS 18.4 (currently in beta as of March 2026) that removes the service worker requirement for basic notifications. It does not add action button support. Not relevant to this milestone.
-
----
-
-## New Edge Functions
-
-### `log-instrument-practice`
-
-New authenticated Edge Function (NOT a cron — requires user JWT):
-
-```
-POST /functions/v1/log-instrument-practice
-Authorization: Bearer <supabase_jwt>
-Body: { "practiced_on": "2026-03-23", "is_retroactive": false, "source": "dashboard" }
-```
-
-Responsibilities:
-1. Validate JWT (standard Supabase auth, `verify_jwt = true`)
-2. Parse `practiced_on` date; reject future dates; allow yesterday only for retroactive
-3. Upsert into `instrument_practice_logs` (idempotent — safe to call twice)
-4. Update `instrument_practice_streak.streak_count` using same weekend-pass logic as `streakService.js`
-5. Award XP via existing `award_xp()` Postgres function (amount TBD by roadmap phase)
-6. Return `{ logged: boolean, streak: number, xpAwarded: number, alreadyLoggedToday: boolean }`
-
-Follows the pattern of `create-checkout` and `send-consent-email` (authenticated Edge Functions, not cron).
-
-### `send-practice-checkin-push`
-
-New cron Edge Function, separate from `send-daily-push`:
-
-- Cron trigger: different time from app-usage reminder (e.g., 18:00 UTC = 8-9pm Israel time)
-- Skips students who already have an `instrument_practice_logs` entry for today
-- Skips students whose `last_practice_asked_at` is already today (dedup)
-- Sends notification with `type: 'practice-checkin'`, `tag: 'practice-checkin'`
-- Reuses `@negrel/webpush` + VAPID pattern from `send-daily-push` verbatim
-- Tracks `last_practice_asked_at` on `push_subscriptions` (new column) or a new slim table
-
----
-
-## Weekly Email Integration
-
-Extend `send-weekly-report` Edge Function (no new Edge Function needed):
-
-```typescript
-// Add to WeeklyReportParams interface
-interface WeeklyReportParams {
-  // ...existing fields...
-  daysPracticedInstrument: number;  // new: 0-7 days
-}
-
-// Add to generateWeeklyReportHTML() — new row in the stats table
-// "Days practiced at home: X / 7"
-```
-
-Query to add to the existing weekly report loop:
-```sql
-SELECT COUNT(*) FROM instrument_practice_logs
-WHERE student_id = $1
-  AND practiced_on >= NOW() - INTERVAL '7 days'
+npm install smplr
 ```
 
 ---
 
-## No New Packages Needed For
+## Integration Points with Existing Architecture
 
-| Capability | Why No New Package Needed |
-|-----------|--------------------------|
-| Instrument practice streak logic | Pure JS, mirrors `streakService.js` — new `instrumentPracticeStreakService.js` |
-| XP award for logging | Existing `award_xp()` Postgres function |
-| Dashboard practice card | React + Tailwind glassmorphism pattern, TanStack Query data fetching |
-| Weekly email practice summary | Extend existing `send-weekly-report` Edge Function |
-| Retroactive yesterday logging | Date math only, no library needed |
-| Streak display icons | Existing `lucide-react` (flame, shield icons already used) |
-| Log confirmation animation | Existing `framer-motion` (already in `package.json`) |
-| XP award toast | Existing `react-hot-toast` (already in `package.json`) |
-| Practice logging UI | Plain React + Tailwind — a button and a status indicator |
+### AudioContextProvider
+All smplr instruments receive `audioContextRef.current` directly from `useAudioContext()`. The singleton guarantee, iOS `interrupted` state handler, and suspend/resume lifecycle apply without any modification to `AudioContextProvider`.
 
-**Explicitly avoid:**
+### useAudioEngine
+Add `scheduleBeatSequence(pattern, tempo, onBeat)` for rhythm tap-along and dictation games. Existing `createPianoSound`, `createMetronomeClick`, and `createPatternSound` remain unchanged and are reused for tap/click feedback.
 
-| Avoid | Why | Use Instead |
-|-------|-----|-------------|
-| `date-fns` or `dayjs` | `getCalendarDate()` helper in `streakService.js` handles all needed date math; adding a date library for 3 lines of code is over-engineering | Inline date formatting (same pattern as `streakService.js`) |
-| Embedding auth tokens in push notification payload | Security risk — tokens in push payload can be captured by malicious service workers or logged | Open `/?log_practice=1` URL and authenticate via existing session on app mount |
-| Modifying `current_streak` table for instrument tracking | App-usage streak and instrument practice streak must remain independent | Separate `instrument_practice_streak` table |
-| Modifying `send-daily-push` to add practice checkin | Two different notifications with different triggers and skip conditions must not share one cron job | New `send-practice-checkin-push` Edge Function with its own cron schedule |
-| `recharts` for the heatmap | No calendar chart type in recharts | `react-activity-calendar` |
+### VexFlow
+Create `RhythmStaveRenderer` component using existing `DURATION_CONSTANTS` and `TIME_SIGNATURES` from `RhythmPatternGenerator.js`. Pattern: map duration array to VexFlow `StaveNote` objects with `Stem.UP` and a fixed pitch (e.g., `'b/4'` for middle-line display in treble clef).
 
----
+### framer-motion
+Use for discrete event animations in arcade game (score popups, combo bursts, on-fire badge). Do NOT use for the continuous note-highway falling animation — use `requestAnimationFrame` + `ref.style.transform` for that.
 
-## Integration Points with Existing Infrastructure
-
-| Existing System | How v2.7 Integrates |
-|-----------------|---------------------|
-| `streakService.js` | New `instrumentPracticeStreakService.js` mirrors its JS structure. Does NOT touch app-usage streak logic. |
-| `current_streak` table | Read-only: `weekend_pass_enabled` column may be read by instrument streak logic. Not written. |
-| `push_subscriptions` table | New `last_practice_asked_at` column added (or separate tracking table). Existing columns unchanged. |
-| `send-daily-push` Edge Function | NOT modified. New cron function is fully independent. |
-| `send-weekly-report` Edge Function | Extended with one additional stat (days practiced instrument). HTML template updated. |
-| `award_xp()` Postgres function | Called from `log-instrument-practice` Edge Function after successful log. |
-| `xpSystem.js` / `students.total_xp` | XP flows into existing level display automatically. No UI changes needed. |
-| TanStack Query cache | New query keys: `["instrument-practice-today", userId]`, `["instrument-practice-streak", userId]`, `["instrument-practice-calendar", userId, year]`. Invalidate after log. |
-| Service worker `notificationclick` handler | Extended with `practice-checkin` tag branch. Existing `daily-practice` branch unchanged. |
-| Dashboard layout | New practice card component inserted into dashboard grid. Follows glass card pattern. |
-
----
-
-## Version Compatibility
-
-| Package | Version | Compatible With | Notes |
-|---------|---------|----------------|-------|
-| `react-activity-calendar` | `^3.1.1` (new) | React `^18.3.1` (peer dep) | Matches existing React 18 install. Pure ESM — matches project `"type": "module"`. |
-
-`react-activity-calendar` v3 dropped the default export. Import as `import { ActivityCalendar } from 'react-activity-calendar'`. No other breaking changes affect this use case.
-
----
-
-## Sources
-
-- [react-activity-calendar GitHub](https://github.com/grubersjoe/react-activity-calendar) — confirmed active maintenance, v3.0 November 2025 (MEDIUM confidence — GitHub scrape)
-- [react-activity-calendar Releases](https://github.com/grubersjoe/react-activity-calendar/releases) — v3.1.1 latest, published March 2026 (MEDIUM confidence — GitHub releases page)
-- [react-activity-calendar README](https://github.com/grubersjoe/react-activity-calendar/blob/main/README.md) — data format `{ date, count, level }`, named import, available props (HIGH confidence — official repo README)
-- [web.dev: Push Notifications Notification Behavior](https://web.dev/push-notifications-notification-behaviour/) — `actions` array structure, `notificationclick` event.action pattern (HIGH confidence — official Google web.dev documentation)
-- [MDN: NotificationEvent.action](https://developer.mozilla.org/en-US/docs/Web/API/NotificationEvent/action) — `event.action` property confirmed (HIGH confidence — MDN official)
-- [MDN: ServiceWorkerRegistration.showNotification()](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerRegistration/showNotification) — actions options confirmed (HIGH confidence — MDN official)
-- [Apple Developer Forums thread 726793: Notification Actions on iOS 16.4](https://developer.apple.com/forums/thread/726793) — iOS action button support status questioned; actions appear to be silently dropped (MEDIUM confidence — Apple Developer Forums, Apple engineers involved)
-- [WebVentures: Web Push iOS One Year Anniversary (2024)](https://webventures.rejh.nl/blog/2024/web-push-ios-one-year/) — real-world iOS push limitations; actions array silently ignored (MEDIUM confidence — independent developer blog with empirical testing)
-- [mdn/browser-compat-data Issue #22959](https://github.com/mdn/browser-compat-data/issues/22959) — notificationclick confirmed firing on iOS but automated tests may have incorrectly marked features as supported (MEDIUM confidence — MDN compat data tracking issue)
-- [Push Notifications in Safari iOS PWAs (April 2024)](https://iwritecodesometimes.net/2024/04/23/push-notifications-in-safari-progressive-web-apps/) — confirms actions array defined in code works in some configurations (MEDIUM confidence — blog, April 2024; may be outdated)
-- [WebKit: Meet Declarative Web Push](https://webkit.org/blog/16535/meet-declarative-web-push/) — iOS 18.4 Declarative Web Push beta; does not address action buttons (HIGH confidence — official WebKit blog)
-- [iOS PWA Push Notifications 2026 (webscraft.org)](https://webscraft.org/blog/pwa-pushspovischennya-na-ios-u-2026-scho-realno-pratsyuye?lang=en) — iOS limitations including no action buttons confirmed (MEDIUM confidence — blog, March 2026)
-- `C:/Development/PianoApp2/package.json` — installed dependencies confirmed (HIGH confidence — direct read)
-- `C:/Development/PianoApp2/public/sw.js` — existing push/notificationclick handler structure confirmed (HIGH confidence — direct read)
-- `C:/Development/PianoApp2/supabase/functions/send-daily-push/index.ts` — cron pattern, VAPID pattern, skip-if-practiced logic confirmed (HIGH confidence — direct read)
-- `C:/Development/PianoApp2/src/services/streakService.js` — streak logic pattern for `instrumentPracticeStreakService.js` to mirror (HIGH confidence — direct read)
+### Trail System
+New exercise types (`RHYTHM_READING`, `RHYTHM_DICTATION`, `RHYTHM_ARCADE`, `EAR_NOTE_COMPARISON`, `EAR_INSTRUMENT_RECOGNITION`, `EAR_INTERVAL_ID`) follow the existing `EXERCISE_TYPES` constant pattern in `src/data/constants.js`. New game components accept trail state via `location.state` and follow the `hasAutoStartedRef` auto-start pattern established in `MetronomeTrainer`, `SightReadingGame`, and `MemoryGame`.
 
 ---
 
@@ -351,15 +238,35 @@ WHERE student_id = $1
 
 | Area | Confidence | Notes |
 |------|-----------|-------|
-| Heatmap library (`react-activity-calendar`) | HIGH | Active, recent releases; correct peer deps; data format verified from README |
-| Push action buttons (Android/Chrome) | HIGH | Fully supported standard Web API; documented on MDN and web.dev |
-| Push action buttons (iOS PWA) | MEDIUM | Multiple developer sources confirm actions are silently dropped; Apple's official docs don't explicitly document this limitation but consistent community evidence supports it. The URL-navigation fallback is designed around this. |
-| Database schema design | HIGH | Follows established `current_streak` / `last_practiced_date` patterns exactly |
-| Edge Function patterns | HIGH | Mirrors `send-daily-push` (cron) and `create-checkout` (authenticated) patterns verbatim |
-| Weekly email extension | HIGH | Extends existing function; same Brevo pattern |
-| No new packages beyond heatmap | HIGH | All capabilities verified present in installed package set |
+| smplr AudioContext pass-through API | MEDIUM | Confirmed from npm README and GitHub docs; not independently tested in this codebase |
+| Lookahead scheduler extension | HIGH | `useAudioEngine.js` source fully readable; pattern is textbook Web Audio |
+| requestAnimationFrame arcade loop | HIGH | Standard web game technique per MDN; no library dependency |
+| VexFlow rhythm-only stave | HIGH | VexFlow v5 in codebase; CLAUDE.md documents the `Stem.UP` pattern |
+| No audio analysis needed | HIGH | Game designs confirmed as listen-and-click |
+| smplr instrument availability | MEDIUM | GM instrument names confirmed from soundfont-player INSTRUMENTS.md (same sample library); smplr's Soundfont class confirmed to support them |
 
 ---
 
-*Stack research for: v2.7 Instrument Practice Tracking — PianoApp2*
-*Researched: 2026-03-23*
+## Sources
+
+- [smplr npm package](https://www.npmjs.com/package/smplr) — v0.16.4, AudioContext constructor pattern
+- [smplr GitHub (danigb/smplr)](https://github.com/danigb/smplr) — API: `new Instrument(context, options)`, `start({ note, velocity })`, instruments list
+- [Tone.js AudioContext Wiki](https://github.com/Tonejs/Tone.js/wiki/AudioContext) — `setContext()` ordering constraint
+- [Tone.js GitHub Issue #701](https://github.com/Tonejs/Tone.js/issues/701) — `setContext` not updating `Tone.context` reliably
+- [A Tale of Two Clocks (web.dev)](https://web.dev/articles/audio-scheduling) — authoritative lookahead scheduler pattern
+- [MDN Web Audio API Best Practices](https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API/Best_practices) — iOS autoplay/resume requirements
+- [MDN requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) — game loop timing
+- [MDN CSS and JavaScript animation performance](https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/CSS_JavaScript_animation_performance) — `will-change: transform` compositor thread
+- [Motion upgrade guide](https://motion.dev/docs/react-upgrade-guide) — framer-motion → motion/react rename
+- [Howler.js](https://howlerjs.com/) — 7KB, confirmed creates own AudioContext
+- [Tone.js npm](https://www.npmjs.com/package/tone) — v15.1.22, last published 10 months ago
+- [soundfont-player INSTRUMENTS.md](https://github.com/danigb/soundfont-player/blob/master/INSTRUMENTS.md) — GM instrument names available in MusyngKite/FluidR3_GM
+- `C:/Development/PianoApp2/package.json` — installed dependencies (HIGH confidence — direct read)
+- `C:/Development/PianoApp2/src/hooks/useAudioEngine.js` — scheduler, pitch-shift, `createPianoSound` (HIGH confidence — direct read)
+- `C:/Development/PianoApp2/src/contexts/AudioContextProvider.jsx` — singleton pattern, iOS interruption handling (HIGH confidence — direct read)
+- `C:/Development/PianoApp2/src/features/games/hooks/useSounds.js` — existing one-shot sound pattern (HIGH confidence — direct read)
+
+---
+
+*Stack research for: v2.9 Game Variety & Ear Training — PianoApp2*
+*Researched: 2026-03-26*

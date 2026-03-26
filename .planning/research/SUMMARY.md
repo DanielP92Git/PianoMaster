@@ -1,240 +1,226 @@
 # Project Research Summary
 
-**Project:** PianoApp2 — v2.7 Instrument Practice Tracking
-**Domain:** Gamified habit tracking layer for children's piano learning PWA
-**Researched:** 2026-03-23
-**Confidence:** HIGH
+**Project:** PianoApp2 — v2.9 Game Variety & Ear Training
+**Domain:** Children's piano learning PWA — rhythm game expansion + new ear training trail path
+**Researched:** 2026-03-26
+**Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-Milestone v2.7 adds a distinct instrument practice tracking system running parallel to the existing app-usage streak. The core distinction is behavioral: the existing streak measures in-app game activity, while the new system measures whether the child actually practiced their instrument at home. Every major competitor (Modacity, Tonara, Simply Piano, Duolingo) conflates "used the app" with "practiced" — this milestone closes that gap, which is the primary differentiator. The recommended approach is a minimal data model (two new tables, one new Edge Function, one existing function extended) built entirely on established codebase patterns. One new npm package (`react-activity-calendar@^3.1.1`) handles the parent calendar heatmap; all other UI and logic follows patterns already in production.
+v2.9 adds significant game variety to an existing, live production app with real users and stored progress. The research confirms this milestone is feasible using almost entirely the existing tech stack — the only new dependency is `smplr ^0.16.4` for multi-instrument sample playback in the Instrument Recognition game, which integrates cleanly with the existing `AudioContextProvider` singleton. All other capabilities (timing, notation, animation, trail integration, audio playback) are built from the existing stack. The six new game types — Rhythm Reading/tap-along, Rhythm Dictation/hear-and-pick, Arcade Rhythm/falling-notes, Note Comparison/higher-lower, Instrument Recognition/timbre, Interval Identification/step-skip-leap — each map to clear interaction patterns from competitor apps and music education research, with well-established implementation paths from the existing codebase.
 
-The critical architectural decision is separating all instrument practice data from the existing `current_streak` system. This is non-negotiable: merging them would entangle two distinct behavioral domains and make both streak systems harder to reason about and test. The notification architecture is similarly constrained — iOS Safari does not render custom notification action buttons at all, so the app-open URL-param fallback is the primary design path and action buttons are a Chrome/Android enhancement only. The service worker must never attempt direct Supabase calls due to the absence of an auth session in SW scope; the postMessage-to-React-app pattern is the correct and secure approach.
+The recommended approach is to front-load all data-layer changes before building any game component: add new `EXERCISE_TYPES` constants, extend `validateTrail.mjs`, update `TrailNodeModal` routing, refactor TrailMap to be data-driven, and write the DB migration that resets existing rhythm node progress before any node remapping ships. This sequence prevents the two most destructive pitfalls: silent route misses when new exercise types are tapped on the trail, and invalidated progress records for live users when exercise arrays change. The TrailMap refactor (removing hardcoded 3-tab if/else logic) must precede all EAR_TRAINING node authoring — this is a hard dependency, not optional cleanup.
 
-The seven critical pitfalls identified (iOS action button silence, duplicate notifications, indistinguishable streak UIs, timezone mismatch, XP double-award, retroactive log abuse, COPPA cascade gap) all have clear prevention strategies rooted in the codebase's existing conventions. Five of the seven must be addressed in Phase 1 at the database and Edge Function architecture level — they cannot be retrofitted cheaply after launch. The two remaining (heatmap accessibility, weekly email differentiation) belong to later phases and carry lower recovery costs if they slip.
-
----
+The primary risk factors are audio timing accuracy (using `audioContext.currentTime` throughout, not `Date.now()`), iOS AudioContext lifecycle for new sample-based games (resume before every `bufferSource.start()`), subscription gate desync (Postgres `is_free_node()` must be updated in the same PR as `subscriptionConfig.js`), and audio asset size management (runtime-loaded MP3s in `public/`, not Vite-bundled). Instrument Recognition has the largest new asset footprint of any game type and the only unresolved external dependency (sourcing audio clips per instrument) — it belongs in the final phase. For piano note playback in ear training and rhythm dictation, the existing chromatic WAV library at `src/assets/sounds/piano/` is sufficient via a new `usePianoSampler` hook, avoiding a dependency on `smplr` for those game types.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The milestone adds exactly one new npm package and two to three new database tables. All other capabilities (XP system, push notifications, streak logic, glassmorphism UI, weekly email) are already in production and require no new dependencies.
+The existing stack handles everything except multi-instrument timbre samples. `smplr ^0.16.4` accepts an existing `AudioContext` via its constructor, so the singleton from `AudioContextProvider` is passed in directly and all iOS lifecycle handling applies automatically — it is the right choice over Tone.js (creates its own AudioContext, conflicts with `AudioContextProvider`) and Howler.js (same problem). However, the codebase already has a complete chromatic piano WAV library at `src/assets/sounds/piano/` (A1-G7, confirmed present), making `smplr` unnecessary for piano note playback in ear training and rhythm dictation. A `usePianoSampler` hook that runtime-fetches WAV files from `public/sounds/piano-samples/` covers those game types; `smplr` (or self-hosted MP3s) is only needed for Instrument Recognition's non-piano instrument clips.
+
+For the arcade rhythm game's falling-note animation, `requestAnimationFrame` with direct DOM mutation via `ref.style.transform` on GPU-promoted elements is the correct approach. framer-motion is wrong for continuous frame-rate-sensitive animation but remains correct for discrete event animations (score popups, combo bursts). The `useAudioEngine` lookahead scheduler needs only a `scheduleBeatSequence` helper (~30 lines) rather than any new library — WAAClock is unmaintained, Tone.js Transport conflicts with `AudioContextProvider`.
 
 **Core technologies:**
-- `react-activity-calendar@^3.1.1` (new): GitHub-style calendar heatmap for the parent portal. Selected over `react-calendar-heatmap` (abandoned since 2022) and `@uiw/react-heat-map` (weaker dark mode API). Active maintenance, v3.1.1 released March 2026, React 18 peer dep only, named import `{ ActivityCalendar }`. Note: ARCHITECTURE.md argues for a bespoke SVG heatmap (~100 lines); STACK.md argues for the library to avoid date-math edge cases. Both are defensible — the library is the lower-risk choice for the parent-facing view where accuracy on edge cases (leap years, 53-week years, locale week starts) matters.
-- `supabase-js` (existing): `instrument_practice_logs` table (one row per student per day, UNIQUE constraint on `(student_id, practiced_on)`), `instrument_practice_streak` table (mirrors `current_streak` structure). RLS policies follow established codebase patterns.
-- `@negrel/webpush` in Edge Functions (existing): New `send-practice-checkin-push` cron function reuses the VAPID push pattern verbatim from `send-daily-push`. OR extend `send-daily-push` with a new message priority tier to prevent duplicate notifications (see Pitfalls — this is the preferred architecture).
-- TanStack React Query v5 (existing): New query keys `["instrument-practice-today", userId]`, `["instrument-practice-streak", userId]`, `["instrument-practice-calendar", userId, year]`; invalidated after each log write.
-- `framer-motion`, `react-hot-toast`, `lucide-react` (existing): Log confirmation animation, XP toast, streak icons — no new packages.
-
-**Explicitly avoided:**
-- `date-fns` / `dayjs` — inline date formatting matches existing `streakService.js` pattern.
-- Supabase calls from service worker — auth session unavailable; use postMessage or URL param fallback.
-- Columns added to `current_streak` — instrument streak must live in its own table.
+- `smplr ^0.16.4` (new, scoped to Instrument Recognition): Multi-instrument GM sample playback — passes existing `AudioContext` directly, avoiding iOS lifecycle conflicts
+- `usePianoSampler` hook (new): Runtime-fetches existing WAV library from `public/sounds/piano-samples/`; covers ear training and rhythm dictation note playback without new npm dependency
+- `requestAnimationFrame` + `ref.style.transform` (no library): Arcade rhythm game falling-tile loop — GPU compositor animation, lowest possible frame jank
+- VexFlow v5 (existing): Rhythm notation display for tap-along and dictation games — `RhythmStaveRenderer` with `Stem.UP` and fixed pitch for rhythm-only display
+- `useAudioEngine` + `scheduleBeatSequence` helper (existing, extended): Beat sequencing for tap-along and arcade games using established lookahead scheduler pattern
 
 ### Expected Features
 
-**Must have (table stakes — v2.7 core):**
-- `instrument_practice_logs` DB table with RLS — root dependency for all other features.
-- Daily yes/no practice log button on dashboard — primary logging surface, three states: logged / not-yet / loading.
-- Dedicated practice streak counter on dashboard — separate from app-usage streak, distinct icon (piano/music note, not fire).
-- XP reward for daily practice log — 25 XP via existing `award_xp()`, once per day, idempotency via UNIQUE constraint.
-- Weekend freeze for practice streak — reuse `weekend_pass_enabled` flag from existing streak system.
-- Parent calendar heatmap in parent portal — 52-week rolling window, indigo/gray color scheme (no red for missed days).
-- Practice summary in weekly parent email — extend `send-weekly-report` Edge Function with a distinct `instrumentDaysPracticed` stat.
-- "Did you practice today?" push notification — new cron trigger, separate from app-usage reminder, coordinated to prevent dual notifications on same day.
+**Must have (table stakes — all 6 game types):**
+- Trail integration (nodeId, exerciseIndex → VictoryScreen + XP awards) — without this, nodes have no completion state
+- Landscape orientation lock + rotate prompt — all rhythm/ear games require horizontal space
+- `AudioInterruptedOverlay` handling — iOS audio interruption recovery for every audio-producing game
+- SessionTimeout pause/resume during gameplay — child safety on shared devices
+- Replay button before answering — 8-year-olds need multiple listens; one-shot audio is a failure mode
+- i18n EN + HE keys for all UI text — Hebrew RTL is a production requirement
 
-**Should have (differentiators — v2.7.x after validation):**
-- Interactive push notification action buttons ("Yes, I practiced!" / "Not yet") — Chrome/Android enhancement; iOS fallback (tap-to-app with `?log_practice=1`) is the primary path.
-- Retroactive yesterday-only logging — grace feature capped at 24 hours, enforced at RLS layer not just UI.
-- Practice milestone celebrations (5, 10, 21, 30 days) — reuse existing VictoryScreen milestone system.
-- Practice card on dashboard with distinct icon (dedicated "Home Practice" card, visually separated from app streak).
+**Must have per game type:**
+- Rhythm Reading: VexFlow notation display, count-in before start, PERFECT/GOOD/MISS per-tap feedback, timing windows scaled to tempo via existing `calculateTimingThresholds`
+- Rhythm Dictation: Audio-first (hear before seeing options), 2-4 VexFlow notation choices, correct/wrong reveal with replay, tap-to-hear gate (not useEffect autoplay)
+- Arcade Rhythm: Falling tiles synchronized to audio, hit zone with judgment display, 3-lives system, score/combo counter, landscape only
+- Note Comparison: Binary HIGHER/LOWER buttons, progressive narrowing of interval distance, animated direction reveal after answer
+- Instrument Recognition: Real sampled audio (not synthesis), illustrated instrument choices, correct instrument name revealed after wrong answer, start with instrument families
+- Interval Identification: Step/Skip/Leap vocabulary (age-appropriate for 8-year-olds), ascending before descending, reference song hints on wrong answer
 
-**Defer to v3+:**
-- Teacher view of all students' practice heatmaps.
-- Duration logging (minutes) — adult feature, adds friction for 8-year-olds.
-- Mic-verified practice detection (COPPA risk, complexity).
-- Streak repair / XP buy-back (no spendable XP economy yet).
-- Social practice leaderboards (COPPA prohibition on social comparison without parental consent).
+**Should have (competitive differentiators):**
+- Scrolling cursor on notation advancing with music (Rhythm Reading) — connects written note to expected tap moment
+- "Watch notation play along" reveal mode after answering (Rhythm Dictation) — highest educational value of any differentiator
+- Combo multiplier with on-fire animation (Arcade Rhythm, Tap-Along) — proven engagement pattern from existing NotesRecognitionGame
+- Piano keyboard SVG showing played notes after answer (Note Comparison, Interval ID) — connects sound to visual keyboard position
+- "New game type" badge on trail node first play — signals variety and curiosity
+- Cross-path XP bonus for practicing multiple paths in one day — incentivizes path variety
 
-**Anti-features (confirmed not to build):**
-- Quality rating (1-5 stars) — developmentally inappropriate for 8-year-olds.
-- Push notification reply text input — unsupported on iOS, COPPA data burden.
-- Notification frequency escalation — uninstall trigger for parents.
-- Never-breaking streak (removes the motivating signal).
+**Defer (post-v2.9):**
+- Microphone ear training (sing back intervals) — COPPA voice recording compliance adds significant complexity
+- Song-based gameplay with licensed music — licensing complexity, explicit out-of-scope
+- Latency calibration UI — children cannot use calibration tools; pre-tune via `useAudioEngine`'s existing latency offset
+- Instrument animation SVG (instrument being played) — high complexity, low priority
+- Teacher view of all students' ear training progress — future milestone scope
+
+**Rhythm trail remapping distribution (36 nodes across units 2-8):**
+- MetronomeTrainer (existing): ~40% of rhythm nodes (discovery and practice types)
+- Rhythm Reading/Tap-Along: ~30% (practice and mix-up nodes)
+- Rhythm Dictation/Hear-and-Pick: ~20% (mix-up and boss lead-up nodes)
+- Arcade Rhythm: ~10% (speed round and mini-boss nodes only)
+
+**Ear Training trail:** 12-15 nodes across 2-3 units, order values starting at 300+. Unit 1 "Sound Detectives" (7 nodes): Note Comparison higher/lower discrimination, wide to narrow intervals, plus Instrument Recognition at family level. Unit 2 "Interval Explorers" (7 nodes + 1 boss): Interval Identification step/skip/leap ascending then descending then harmonic, plus harder timbre discrimination.
 
 ### Architecture Approach
 
-The architecture is additive and isolated: a new `practiceLogService.js` (standalone, mirrors `streakService.js` structure), two new database tables, one new Edge Function, one modified Edge Function, one modified service worker branch, and two new UI components. Nothing in the existing streak, XP, or game systems changes. The notification action flow uses postMessage from the service worker to the React app window (which holds the valid Supabase session), with URL param fallback when no window is open. The heatmap lives exclusively in `/parent-portal` — not on the student dashboard — to avoid adding a 365-row history query to the already query-heavy dashboard mount.
+All 6 new game components follow the `MetronomeTrainer`/`NoteSpeedCards` established pattern: read trail state from `location.state`, call `useLandscapeLock()` + `useRotatePrompt()`, call `useSessionTimeout()` pause/resume, access the shared AudioContext via `useAudioContext()` (never create a new `AudioContext` inside a component), use the `hasAutoStartedRef` auto-start guard, and pass all trail fields to `VictoryScreen`. TrailNodeModal gets a `case` for each new exercise type in the same commit that adds the constant. App.jsx gets a lazy route + `LANDSCAPE_ROUTES` entry per game. Piano samples are fetched at runtime from `public/sounds/piano-samples/` (not bundled through Vite) using the new `usePianoSampler` hook, caching `AudioBuffer` objects in a `useRef` Map. Instrument recognition samples use the HTML `Audio` element (not Web Audio API) since timing precision is not required for identification games. The TrailMap must be refactored to a data-driven `TRAIL_TAB_CONFIGS` array before any EAR_TRAINING nodes are authored — the current hardcoded if/else chains encode a 3-tab assumption in 8+ separate places.
 
 **Major components:**
-1. `practiceLogService.js` — logPractice(), getPracticeState(), getPracticeCalendar(); standalone, not merged into streakService.
-2. `PracticeLogCard.jsx` — Dashboard card showing today's status, log button, practice streak count. Distinct visual identity from app-usage streak card.
-3. `PracticeCalendarHeatmap.jsx` — SVG or `react-activity-calendar`-based heatmap in parent portal only; 52-week window; binary coloring (practiced / not yet).
-4. `instrument_practice_logs` table — append-only, UNIQUE(student_id, practiced_on), `local_date DATE` column (not UTC timestamp derivation) to prevent timezone mismatch.
-5. `instrument_practice_streak` table — separate from `current_streak`; mirrors its structure for weekend pass compatibility.
-6. `send-practice-checkin-push` Edge Function (or extended `send-daily-push`) — cron-triggered, skips already-logged students, enforces one-notification-per-student-per-day.
-7. `send-weekly-report` modification — adds `instrumentDaysPracticed` stat row distinct from existing game-session days row.
-8. `public/sw.js` modification — new `practice-checkin` notification tag branch in notificationclick handler; postMessage path + URL param fallback; iOS graceful degradation.
-
-**Build order (driven by dependencies):**
-1. Migration (tables + RLS) — blocks everything else.
-2. `practiceLogService.js` — blocks all UI and notification components.
-3. `PracticeLogCard.jsx` + dashboard integration.
-4. Service worker modification.
-5. `send-practice-checkin-push` Edge Function.
-6. `PracticeCalendarHeatmap.jsx` + parent portal integration.
-7. `send-weekly-report` modification.
+1. `RhythmReadingGame` — VexFlow notation + tap capture using `audioContext.currentTime`, timing eval via extracted `calculateTimingThresholds`, count-in before start
+2. `RhythmDictationGame` — Tap-to-hear gate at exercise entry (no useEffect autoplay), VexFlow multiple-choice cards, distractor generation from `RhythmPatternGenerator`
+3. `ArcadeRhythmGame` — `requestAnimationFrame` game loop with `ref.style.transform` tiles, beat scheduling via `scheduleBeatSequence` in `useAudioEngine`, lives + combo systems extracted from `NotesRecognitionGame`
+4. `NoteComparisonGame` — `usePianoSampler` plays two notes sequentially, binary HIGHER/LOWER buttons, optional piano keyboard SVG reveal
+5. `InstrumentRecogGame` — HTML `Audio` element for instrument MP3 clips from `public/sounds/instruments/`, illustrated choice cards (MemoryGame card UI pattern)
+6. `IntervalGame` — `usePianoSampler` plays melodic interval, Step/Skip/Leap category buttons, piano keyboard SVG shared with `NoteComparisonGame`
+7. `usePianoSampler` hook — runtime fetch + `decodeAudioData` + `Map<noteId, AudioBuffer>` cache using shared AudioContext from `useAudioContext()`
+8. `TrailMap` refactor — data-driven `TRAIL_TAB_CONFIGS` array replacing hardcoded if/else chains, enabling 4th Ear tab without further structural changes
+9. `SkillPathProgress` dashboard card — 3 mini path summaries using `getNextRecommendedNode()`, mounted below `XPProgressCard`
 
 ### Critical Pitfalls
 
-1. **iOS PWA silently drops notification action buttons** — Design with the fallback as the primary path. The notification body tap (no action, `event.action === ''`) must navigate to `/?practice_checkin=1`. The dashboard detects this param on mount and presents an immediate yes/no prompt. Action buttons are an Android-only enhancement, not the baseline.
+1. **Remapping rhythm node exercises invalidates existing user progress** — positional `exercise_progress` JSONB records become stale when exercise arrays change index, count, or order. Prevention: write a DB migration clearing `exercise_progress`/`stars` for affected rhythm node IDs before the data file changes deploy; never insert exercises at index 0 or mid-array of a live node.
 
-2. **Two push notifications reach the same child on the same day** — Either extend `send-daily-push` to include practice check-in as its highest-priority message tier (one notification, one cron, one `last_notified_at` write), or add a `last_practice_notified_at` column and enforce total-notifications-per-day <= 1 across all types. This architecture decision must be made before any notification code is written.
+2. **New `EXERCISE_TYPES` without matching `TrailNodeModal` switch cases cause silent blank-screen failures** — the `default: console.error` branch fires, modal closes, nothing navigates. Prevention: add the constant and the `case` in the same commit; extend `validateTrail.mjs` to verify all exercise type strings have route mappings.
 
-3. **Timezone mismatch breaks "practiced today" logic** — Store both `logged_at TIMESTAMPTZ` (UTC) and `local_date DATE` (client-sent YYYY-MM-DD in user's local timezone) in the practice log table. Edge Functions and weekly report query `local_date` exclusively. Never derive local date from a UTC timestamp split on the server. This is a Phase 1 schema decision that cannot be backfilled accurately.
+3. **Audio timing drift when using `Date.now()` for tap capture** — AudioContext clock and wall-clock diverge by 15-50ms under main-thread load, turning correct taps into MISSes. Prevention: capture `audioContext.currentTime` as the first line of every `touchstart`/`pointerdown` handler; compare tap time to scheduled beat time both in AudioContext seconds.
 
-4. **XP awarded twice on double-tap or retry** — Use the UNIQUE constraint on `(student_id, practiced_on)` with `ignoreDuplicates: true` upsert. Award XP only when `count === 1` (first insert, not duplicate). Never call `award_xp()` unconditionally.
+4. **iOS AudioContext suspension silences sample-based games with no error** — `decodeAudioData` succeeds but `bufferSource.start()` produces no sound if context is suspended. Prevention: call `await audioContext.resume()` before every `bufferSource.start()`; use MP3 format only for all instrument samples (iOS Safari does not support OGG).
 
-5. **COPPA hard-delete does not cascade to new tables** — Add `REFERENCES students(id) ON DELETE CASCADE` to both new tables' FK constraints. Also add explicit DELETE statements to the deletion Edge Function as an auditable belt-and-suspenders. Both must be in the initial migration — cannot be remediated after the April 2026 COPPA compliance deadline.
+5. **TrailMap hardcoded 3-tab logic breaks silently when 4th tab is added** — `premiumLockedNodeIds`, progress fetching, and boss node filtering all encode a 3-category assumption in 8+ separate if/else chains. Prevention: refactor TrailMap to data-driven `TRAIL_TAB_CONFIGS` before authoring any `EAR_TRAINING` nodes.
 
-6. **Retroactive log abuse (backdating streak inflation)** — Add a date-range constraint to the RLS INSERT policy: `AND local_date >= CURRENT_DATE - INTERVAL '1 day' AND local_date <= CURRENT_DATE`. UI-only enforcement is insufficient.
-
-7. **Two streak counters are visually indistinguishable** — Use a piano/music note icon (not the existing fire icon) for the instrument streak. The instrument streak lives in its own dedicated card. Do not render both in the same card with the same icon. Do not show a "0 day streak" counter on first visit — show a call-to-action card until at least one practice is logged.
-
----
+6. **Subscription gate desync — Postgres `is_free_node()` not updated with new ear node IDs** — free users can play but progress saves silently fail (RLS returns null, not an error), causing infinite replay loops for 8-year-olds. Prevention: DB migration updating `is_free_node()` must ship in the same PR as `subscriptionConfig.js` changes.
 
 ## Implications for Roadmap
 
-Based on combined research, the natural phase structure follows strict dependency order: schema first (everything depends on it), core logging service and UI second, notifications third, parent-facing features fourth.
+Based on combined research, the natural phase structure follows strict dependency ordering: data layer constants + routing foundation first; audio infrastructure second; simpler games before complex; trail data after game components are routable; coordinated deploy for node remapping.
 
-### Phase 1: Data Foundation and Core Logging
+### Phase 1: Data Foundation + TrailMap Refactor
 
-**Rationale:** The practice log table is the root dependency for every other feature. Timezone correctness, COPPA cascade, RLS date enforcement, and XP idempotency are all structural decisions that must be made here — they cannot be cheaply retrofitted. Nothing else can be meaningfully developed until the table and service exist.
+**Rationale:** Everything else depends on this. New `EXERCISE_TYPES` constants block node data files from being authored. TrailNodeModal routing blocks game navigation. TrailMap refactor must precede EAR_TRAINING node authoring. `validateTrail.mjs` extension prevents silent typo failures at build time. Doing this first eliminates the most catastrophic failure modes for all subsequent phases.
+**Delivers:** All 5 new `EXERCISE_TYPES` + `EAR_TRAINING` category in `constants.js`; `TrailNodeModal` with all 6 new `case` entries + `getExerciseTypeName` labels; `validateTrail.mjs` extended to validate exercise type strings; TrailMap refactored to data-driven `TRAIL_TAB_CONFIGS` (4-tab capable); i18n stub keys for all new exercise types in `en/trail.json` + `he/trail.json`.
+**Addresses:** Foundation for all 6 game types' trail integration; FEATURES.md landscape lock and session timeout dependencies
+**Avoids:** Critical Pitfall 2 (silent route misses), Critical Pitfall 5 (hardcoded TrailMap tabs), Minor Pitfall 4 (validateTrail type validation), Minor Pitfall 1 (missing i18n keys), Minor Pitfall 5 (boss node prefix filtering)
+**Research flag:** Standard patterns — direct codebase changes with no external dependencies. HIGH confidence.
 
-**Delivers:** Database migration with both new tables and correct RLS policies; `practiceLogService.js` with logPractice(), getPracticeState(), and idempotent XP award; `PracticeLogCard.jsx` on the dashboard with today's status and log button; practice streak counter on dashboard with distinct visual identity.
+### Phase 2: Audio Infrastructure + Rhythm Games (Reading + Dictation)
 
-**Addresses:** practice_logs DB table, dashboard log button, practice streak counter, XP reward, weekend freeze.
+**Rationale:** `usePianoSampler` hook unblocks all ear training games and rhythm dictation. Rhythm Reading and Rhythm Dictation have the lowest implementation complexity of the new games and reuse the most existing infrastructure (MetronomeTrainer timing, RhythmPatternGenerator, MemoryGame card UI). Building them before Arcade Rhythm validates the tap-timing pattern at lower complexity before the game loop adds risk. Service worker cache version must bump when new audio assets are introduced.
+**Delivers:** `usePianoSampler.js` hook with `AudioBuffer` cache; `public/sounds/piano-samples/` C3-C6 WAVs copied from existing library; `RhythmReadingGame` with `audioContext.currentTime` tap capture; `RhythmDictationGame` with tap-to-hear gate; `calculateTimingThresholds` extracted to shared util; App.jsx routes + LANDSCAPE_ROUTES for both games; service worker bumped to `pianomaster-v9`.
+**Uses:** Existing `useAudioEngine`, existing `RhythmPatternGenerator.js`, existing `RhythmNotationRenderer.jsx`, existing `TapArea.jsx`
+**Avoids:** Critical Pitfall 3 (timing drift — `audioContext.currentTime` in tap handler), Critical Pitfall 4 (iOS suspension — resume before playback), Moderate Pitfall 1 (touch latency — defer setState to rAF), Moderate Pitfall 2 (bundle size — runtime fetch not Vite import), Moderate Pitfall 5 (audio before user gesture in dictation), Minor Pitfall 3 (SW cache version)
+**Research flag:** iOS audio testing requires physical iPad (silent switch behavior, `onstatechange` events). Confirm test device availability before starting. Otherwise standard patterns.
 
-**Avoids (critical):** Timezone mismatch (local_date column), XP double-award (UNIQUE constraint + conditional award), COPPA hard-delete gap (ON DELETE CASCADE in migration), retroactive log abuse (RLS date constraint), streak table conflation (separate new table).
+### Phase 3: Ear Training Games (Note Comparison + Interval ID)
 
-**Research flag:** Standard patterns — no additional research needed. All patterns verified against live codebase.
+**Rationale:** Note Comparison is the simplest new game mechanic (binary button choice, no new assets beyond piano samples from Phase 2). Interval ID builds directly on Note Comparison and shares the piano keyboard SVG component. Together they cover the pedagogically foundational "pitch discrimination" content. Instrument Recognition deferred to Phase 6 due to audio sample asset sourcing complexity — it is the only game with an unresolved external dependency.
+**Delivers:** `NoteComparisonGame` with HIGHER/LOWER buttons + animated reveal; `IntervalGame` with Step/Skip/Leap buttons + piano keyboard SVG; shared piano keyboard SVG component; App.jsx routes; `earUnit1Redesigned.js` + `earUnit2Redesigned.js` node files; `expandedNodes.js` updated; `subscriptionConfig.js` with `FREE_EAR_NODE_IDS`; DB migration updating `is_free_node()`.
+**Uses:** `usePianoSampler` from Phase 2; note frequency arithmetic reused from existing `usePitchDetection.js` utilities
+**Avoids:** Critical Pitfall 6 (subscription gate desync — DB migration in same PR), Moderate Pitfall 3 (daily goals — audit `dailyGoalsService.js` for category hardcoding), Moderate Pitfall 4 (PlayNext ignoring ear training), Minor Pitfall 2 (order numbers — use 300+ range)
+**Research flag:** Audit `dailyGoalsService.js` for hardcoded category lists before this phase ships. Standard implementation patterns otherwise.
 
----
+### Phase 4: Ear Training Trail Data + Trail Tab
 
-### Phase 2: Push Notification Integration
+**Rationale:** Trail unit files and the TrailMap Ear tab can only be finalized after Phase 1 constants and Phase 3 game components are both routed and tested end-to-end. Boss node category convention must be confirmed before authoring boss nodes (use `category: 'boss'` + `isBoss: true` per existing pattern for all boss nodes).
+**Delivers:** TrailMap with 4th "Ear" tab rendered; BUBBLE_COLORS + MODAL_ICON_STYLES entries for `ear_training` (amber/teal palette distinct from existing blue/purple/green/gold); earUnit1/2 node data wired end-to-end through VictoryScreen and XP; boss ear nodes with correct category; `skillTrail.js` UNITS metadata for EAR_TRAINING.
+**Avoids:** Minor Pitfall 5 (boss node prefix filtering resolved by category-based approach from Phase 1 refactor)
+**Research flag:** Standard patterns — follows established trail node authoring. Verify boss node category convention in existing data files before authoring.
 
-**Rationale:** Notifications depend on Phase 1 (need the practice log table for skip-if-already-practiced logic). Notification architecture must be decided before writing any notification code. This phase has the highest platform complexity due to iOS limitations.
+### Phase 5: Arcade Rhythm Game + Rhythm Node Remapping
 
-**Delivers:** "Did you practice today?" push notification (cron-triggered, skips students who already logged, respects one-notification-per-day limit); service worker `notificationclick` handler extended with `practice-checkin` tag; iOS fallback via `/?practice_checkin=1` URL param; dashboard `useEffect` detecting the URL param and surfacing the log prompt.
+**Rationale:** Arcade Rhythm is the highest-complexity game (requestAnimationFrame game loop, latency compensation, falling-tile DOM management with direct mutation) — best built after simpler games validate all integration patterns. Rhythm node remapping is a coordinated deploy: DB migration clearing progress must run before the data file changes reach production users.
+**Delivers:** `ArcadeRhythmGame` with rAF loop, `will-change: transform` tiles, `scheduleBeatSequence` helper in `useAudioEngine`, lives system and on-fire mode extracted from `NotesRecognitionGame`; rhythm nodes in units 2-8 remapped to mixed exercise type distribution (~40/30/20/10 MetronomeTrainer/Reading/Dictation/Arcade); DB migration clearing `exercise_progress` + `stars` for remapped nodes with "node refreshed" UI banner.
+**Avoids:** Critical Pitfall 1 (progress desync — migration runs before data file changes in production), FEATURES.md anti-pattern of all-same-game-type per unit
+**Research flag:** Deploy sequencing is the key risk. Verify the DB migration runs before the data file changes in the Netlify build pipeline. Staging validation: complete a rhythm node to 3 stars, deploy branch, confirm migration cleared progress correctly before merge.
 
-**Addresses:** "Did you practice?" push notification, interactive action buttons (Android enhancement), notification deduplication.
+### Phase 6: Instrument Recognition + Dashboard SkillPathProgress
 
-**Avoids (critical):** iOS action button silence (fallback as primary path), dual notification on same day (extend send-daily-push OR add per-type last_notified_at coordination).
-
-**Research flag:** Notification architecture decision (extend `send-daily-push` vs. new independent cron function) must be an explicit ADR in this phase's spec. PITFALLS.md recommends extending the existing function to share `last_notified_at`; STACK.md recommends a new separate function. These are reconcilable but the choice must be recorded before implementation starts.
-
----
-
-### Phase 3: Parent Calendar Heatmap
-
-**Rationale:** Parent-facing features can be deferred until the core student-facing loop (log + streak + XP + notification) is working and validated. The heatmap is the highest-value parent deliverable of this milestone. Keeping it in its own phase prevents the history query from being added to the dashboard mount waterfall.
-
-**Delivers:** `PracticeCalendarHeatmap.jsx` component in `/parent-portal`; 52-week rolling window; indigo/gray binary color scheme; RTL support for Hebrew locale; accessibility (color not the sole signal, icon for practiced days).
-
-**Addresses:** Parent calendar heatmap, heatmap in parent portal, RTL direction, colorblind accessibility.
-
-**Avoids:** Color-only encoding (WCAG 1.4.1 violation), RTL heatmap direction reversal (most recent week rightmost in Hebrew mode), fetching history on every dashboard mount.
-
-**Research flag:** Library vs. bespoke SVG decision should be recorded as an explicit ADR. Recommendation: use `react-activity-calendar` for date-math correctness on edge cases (leap years, week-start locale, 53-week years). If glassmorphism CSS integration requires heavy overrides, bespoke SVG (~100 lines) is the fallback.
-
----
-
-### Phase 4: Weekly Email Integration and Polish
-
-**Rationale:** Lowest coupling — extends an existing Edge Function with one additional DB query and one additional email stat row. Can be done at any point after Phase 1. P2 features (milestone celebrations, retroactive yesterday logging) fit here as incremental additions to the working system.
-
-**Delivers:** `send-weekly-report` modified with a distinct `instrumentDaysPracticed` stat row (separate from existing game-session days row); practice milestone celebrations (5, 10, 21, 30 day triggers via existing VictoryScreen system); retroactive yesterday-only logging with RLS enforcement.
-
-**Addresses:** Practice summary in weekly email, milestone celebrations, retroactive logging.
-
-**Avoids:** Weekly email conflating two "days practiced" metrics (distinct labels required), milestone XP overclaim (award XP only on first log of each milestone day).
-
-**Research flag:** Standard patterns. Weekly email extension is low risk and directly precedented in the codebase.
-
----
+**Rationale:** Instrument Recognition has the only unresolved external dependency (instrument audio clip sourcing) — deferring it lets all other v2.9 content ship without blocking on asset production. `SkillPathProgress` dashboard card is independent of all other phases and fits here as low-complexity polish.
+**Delivers:** `InstrumentRecogGame` with HTML `Audio` element playback; `public/sounds/instruments/` MP3 library (piano, violin, trumpet, drum, flute, cello — ~150-200KB each at 128kbps, 3-4 seconds); `earUnit3Redesigned.js` instrument recognition nodes; `SkillPathProgress` dashboard card in `Dashboard.jsx` with 3 mini path summaries.
+**Uses:** HTML `Audio` element (not Web Audio API — timing precision not required for identification games); MemoryGame card UI pattern for instrument choice cards; `getNextRecommendedNode()` from `skillProgressService.js` for dashboard card
+**Avoids:** Critical Pitfall 4 (iOS — MP3 only, no OGG), Moderate Pitfall 2 (bundle size — HTML Audio element, not Vite-bundled static import)
+**Research flag:** Audio asset sourcing is outside standard development workflow and must be resolved before this phase begins. Instrument MP3 clips must be licensed (freesound.org CC0, Splice, or direct recording). Target: 3-4 second characteristic phrases per instrument, ~150-200KB at 128kbps MP3. This is the only external blocking unknown in the milestone.
 
 ### Phase Ordering Rationale
 
-- **Schema-first ordering is mandatory:** Every UI component, Edge Function, and notification flow depends on `instrument_practice_logs` and `instrument_practice_streak` existing with correct constraints and RLS.
-- **Core student loop before parent features:** Parents subscribe to see the child's engagement. An empty or broken heatmap because the logging flow isn't solid yet is worse than delaying the heatmap.
-- **Notifications in Phase 2, not Phase 1:** The notification architecture decision (extend vs. new cron) requires the schema to exist first so skip-logic can be verified. Decoupling it from Phase 1 also reduces the blast radius if the iOS fallback requires iteration.
-- **Email and polish last:** Lowest regression risk, highest independence from other phases. Retroactive logging is a P2 feature — the core practice tracking must work before introducing that UX complexity.
-
----
+- Constants and routing must precede all game development — silent failure modes (Critical Pitfall 2) are catastrophic for a live app with real users and cannot be discovered by users as "works but is a bit rough"
+- Infrastructure before games prevents rework — Phase 2's `usePianoSampler` is a dependency of Phase 3; Phase 1's TrailMap refactor is a dependency of Phase 4
+- Simpler games before complex validates integration patterns at lower cost — timing model confirmed in Phase 2 before the more demanding rAF game loop in Phase 5
+- Ear training game components before trail data files — games must be routable before nodes can be tested end-to-end in the trail system
+- DB migration before data file changes is a hard deploy constraint for Phase 5 — not a preference, a correctness requirement for live user progress
+- Instrument Recognition last — the only phase with an external asset dependency that could block other work if it shipped earlier
 
 ### Research Flags
 
-Phases needing additional decisions before implementation:
+Phases needing attention during planning:
+- **Phase 2:** iOS physical device testing required before signing off. Silent switch + AudioContext `onstatechange` behavior is not replicable in simulator.
+- **Phase 3:** Audit `dailyGoalsService.js` for hardcoded category arrays before writing phase spec — if categories are hardcoded, the fix must be in Phase 3 scope.
+- **Phase 5:** Explicit deploy sequencing plan required. Confirm that Netlify runs the Supabase migration before serving the updated JS. Document as a deployment checklist item in the phase spec.
+- **Phase 6:** Instrument audio clip sourcing must be resolved before this phase begins. Identify source (freesound.org, recording, or commission) and confirm licensing during phase planning.
 
-- **Phase 2:** Notification architecture decision (extend `send-daily-push` vs. new cron + shared deduplication) must be explicit in the phase spec before writing any Edge Function code.
-- **Phase 3:** Library vs. bespoke SVG heatmap decision should be recorded as an ADR in the phase spec.
-
-Phases with standard, well-documented patterns (no additional research needed):
-- **Phase 1:** All patterns mirror existing codebase code directly. Confidence HIGH.
-- **Phase 4:** Weekly email extension follows the exact same pattern as existing `send-weekly-report` additions. VictoryScreen milestone system is already implemented.
-
----
+Phases with standard patterns (no additional research needed):
+- **Phase 1:** Pure codebase changes. All patterns verified by direct source inspection. HIGH confidence.
+- **Phase 4:** Trail node authoring follows exact same pattern as existing unit files. Tab addition is a one-object array addition after Phase 1 refactor.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | One new package verified against GitHub releases and README. All other stack decisions derived from existing production codebase via direct file inspection. |
-| Features | MEDIUM-HIGH | Table stakes and anti-features grounded in competitor analysis and child psychology sources. P2 features have clear implementation paths but require iOS device testing to validate the action button fallback. |
-| Architecture | HIGH | All architectural decisions verified against live codebase (streakService.js, sw.js, send-daily-push, send-weekly-report, current_streak schema). Anti-patterns identified from direct codebase inspection. |
-| Pitfalls | HIGH | Seven critical pitfalls have codebase-verified prevention strategies. iOS action button limitation confirmed via Apple Developer Forums and multiple independent developer sources. COPPA compliance risk tied to April 2026 deadline. |
+| Stack | MEDIUM-HIGH | `smplr` AudioContext pass-through API confirmed from npm/GitHub docs but not tested in this codebase; `usePianoSampler` from existing WAVs is HIGH (direct file inspection confirmed library present A1-G7); all other decisions HIGH from direct codebase inspection |
+| Features | MEDIUM-HIGH | Game mechanics verified across multiple competitor apps and music education research; age-appropriateness cross-referenced with child development literature; implementation complexity estimates from codebase inspection |
+| Architecture | HIGH | All integration points derived from direct codebase inspection; precedent from NoteSpeedCards (v2.8) and MetronomeTrainer confirmed; anti-patterns identified from live code review |
+| Pitfalls | HIGH | All critical pitfalls identified from direct codebase inspection of live data structures, service worker, subscription gate, and TrailMap; supplemented by Web Audio timing and iOS audio research |
 
-**Overall confidence:** HIGH
+**Overall confidence:** MEDIUM-HIGH
 
 ### Gaps to Address
 
-- **Notification architecture decision:** STACK.md and PITFALLS.md give slightly different recommendations (new Edge Function vs. extending existing). The Phase 2 spec must resolve this with an explicit ADR.
-- **Heatmap library vs. bespoke SVG:** STACK.md recommends `react-activity-calendar`; ARCHITECTURE.md recommends bespoke SVG. Library recommended here for date-math reliability. If glassmorphism CSS integration proves painful, bespoke SVG is the fallback.
-- **iOS action button behavior in 2026:** iOS 18.4 Declarative Web Push (in beta March 2026) does not add action button support. Fallback-first design remains correct. If Apple ships action button support in a future release, the Chrome/Android enhancement path already in place will cover it.
-- **XP amount for practice log (25 XP proposed):** Review against existing XP economy before finalizing. Goal is meaningful without being more rewarding than trail node completion (50-150 XP).
-
----
+- **smplr vs. self-hosted MP3s for Instrument Recognition:** Architecture research found the existing WAV library sufficient for piano notes (`usePianoSampler`), but Instrument Recognition still needs non-piano instrument clips. Options are: (a) `smplr Soundfont` for GM instrument samples via CDN, (b) self-hosted MP3s in `public/sounds/instruments/`. Decision should be made at Phase 6 planning based on whether CDN delivery is acceptable for the app's offline use case. Self-hosted MP3s give full offline support; `smplr Soundfont` requires network on first load with CacheStorage on subsequent loads.
+- **Instrument audio clip sourcing:** No specific source identified for instrument recognition clips. Must be resolved before Phase 6. Options: freesound.org (CC0 license), Splice, or direct recording. Target: 3-4 second characteristic phrases per instrument, 128kbps MP3, ~150-200KB each, 6 instruments minimum.
+- **iOS physical device testing:** Critical Pitfall 4 (silent switch, `onstatechange` behavior) and OGG format validation require physical iPad — iOS Simulator does not replicate these behaviors. Confirm test device availability before Phase 2 begins.
+- **`dailyGoalsService.js` category hardcoding:** Not fully audited in this research. Must be checked before Phase 3 ships to confirm ear training exercises credit daily goals.
 
 ## Sources
 
-### Primary (HIGH confidence)
-- `C:/Development/PianoApp2/src/services/streakService.js` — streak service pattern verified
-- `C:/Development/PianoApp2/public/sw.js` — push/notificationclick handler structure verified
-- `C:/Development/PianoApp2/supabase/functions/send-daily-push/index.ts` — cron pattern, VAPID, skip logic verified
-- `C:/Development/PianoApp2/supabase/functions/send-weekly-report/index.ts` — email extension pattern verified
-- MDN: ServiceWorkerRegistration.showNotification() — actions array structure confirmed
-- MDN: NotificationEvent.action — event.action property confirmed
-- web.dev: Push Notifications Notification Behavior — notificationclick patterns confirmed
-- W3C WCAG 2.1 Understanding 1.4.1 Use of Color — accessibility requirement confirmed
-- react-activity-calendar README (official repo) — data format `{ date, count, level }`, named import, props verified
+### Primary (HIGH confidence — direct codebase inspection)
+- `src/data/constants.js` — existing EXERCISE_TYPES, NODE_CATEGORIES
+- `src/components/trail/TrailNodeModal.jsx` — navigateToExercise switch-case, hardcoded 3-tab if/else chains
+- `src/components/trail/TrailMap.jsx` — TRAIL_TABS array, hardcoded 3-tab logic in 8+ locations
+- `src/hooks/useAudioEngine.js` — lookahead scheduler, createPianoSound, timing thresholds
+- `src/contexts/AudioContextProvider.jsx` — singleton pattern, iOS interruption handling
+- `src/components/games/rhythm-games/MetronomeTrainer.jsx` — auto-start pattern, timing model, handleNextExercise pattern
+- `src/assets/sounds/piano/` — complete chromatic WAV library A1-G7 confirmed present
+- `src/services/skillProgressService.js` — exercise_progress JSONB positional index schema
+- `src/config/subscriptionConfig.js` — FREE_NODE_IDS Set, is_free_node() manual sync requirement
+- `public/sw.js` — cache-first on `/assets/*`, no audio file exclusion, current version `pianomaster-v7`
+- `scripts/validateTrail.mjs` — exercise type validation gap confirmed
 
-### Secondary (MEDIUM confidence)
-- Apple Developer Forums thread 726793 — iOS action button support status (silently dropped)
-- WebVentures: Web Push iOS One Year Anniversary 2024 — real-world iOS push limitations
-- MagicBell: PWA iOS Limitations and Safari Support 2026 — iOS action button not supported confirmed
-- react-activity-calendar GitHub Releases — v3.1.1 published March 2026 confirmed
-- Duolingo blog: How Duolingo streak builds habit — streak psychology and milestone design
-- caniuse.com Notification.maxActions — no Safari/iOS support confirmed
-- Appbot: Push Notification Best Practices 2026 — dual-notification uninstall risk rates
-- Reteno: Push Notification Best Practices 2026 — notification frequency guidance
+### Secondary (MEDIUM confidence — official docs + npm packages)
+- [smplr npm v0.16.4](https://www.npmjs.com/package/smplr) — AudioContext constructor API, SplendidGrandPiano + Soundfont classes
+- [smplr GitHub (danigb/smplr)](https://github.com/danigb/smplr) — instrument list, start/stop API, CDN sample hosting
+- [web.dev/audio-scheduling](https://web.dev/articles/audio-scheduling) — authoritative lookahead scheduler pattern
+- [MDN requestAnimationFrame](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame) — game loop timing
+- [MDN CSS animation performance](https://developer.mozilla.org/en-US/docs/Web/Performance/Guides/CSS_JavaScript_animation_performance) — will-change: transform compositor thread
+- [Rhythmic Village app mechanics](https://www.classplash.de/en/rhythmicvillage/) — rhythm dictation and ear training competitor analysis
+- [Theta Music Trainer game catalog](https://trainer.thetamusic.com/en/content/music-games) — ear training interaction patterns
+- [EarMaster interval game mechanics](https://www.earmaster.com/) — interval identification patterns
+- [Step/Skip/Leap interval teaching](https://www.fundamentalsofmusic.com/melody-melodic-intervals-of-step-skip-leap.html) — age-appropriate vocabulary for 8-year-olds
+- [Pitch perception in children 8-10 (PMC)](https://pmc.ncbi.nlm.nih.gov/articles/PMC11789513/) — developmental appropriateness validation
 
-### Tertiary (MEDIUM-LOW confidence)
-- Child psychology / habit formation sources — 8-year-old milestone preferences (5/10/21/30 days), positive framing, no-red-for-missed-days recommendation
-- COPPA 2025 amended rule sources — April 2026 compliance deadline, behavioral log data retention requirements
+### Tertiary (MEDIUM confidence — supplementary)
+- [FTC COPPA guidance on voice recording (Fenwick)](https://www.fenwick.com/insights/publications/ftcs-new-coppa-guidance-on-recording-childrens-voices-five-tips-for-app-developers-and-toymakers-to-comply) — voice recording COPPA classification (relevant to any future mic ear training)
+- [Rhythm Quest Devlog 10 — Latency Calibration](https://ddrkirbyisq.medium.com/rhythm-quest-devlog-10-latency-calibration-fb6f1a56395c) — tap latency decomposition
+- [Adactio — Web Audio weirdness on iOS](https://adactio.com/journal/17709) — iOS silent switch AudioContext behavior
+- [Apple Developer — iOS audio format support](https://developer.apple.com/library/archive/documentation/AudioVideo/Conceptual/Using_HTML5_Audio_Video/PlayingandSynthesizingSounds/PlayingandSynthesizingSounds.html) — MP3/AAC/WAV only, OGG not supported
+- [PWA audio cache test (daffinm/audio-cache-test)](https://github.com/daffinm/audio-cache-test) — runtime cache strategy for audio assets in service workers
 
 ---
-
-*Research completed: 2026-03-23*
+*Research completed: 2026-03-26*
 *Ready for roadmap: yes*
