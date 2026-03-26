@@ -235,6 +235,7 @@ export const bassUnit4Nodes = [
     exercises: [
       {
         // SIGHT_READING is safe for sharps — mic outputs F#3/C#3/G#3 matching exactly
+        // keySignature 'A' ensures only in-key notes (F#, C#, G#) appear -- no F/C/G naturals
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
           notePool: ['C3', 'C#3', 'D3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3'],
@@ -242,7 +243,8 @@ export const bassUnit4Nodes = [
           clef: 'bass',
           timeSignature: '4/4',
           rhythmPatterns: ['quarter'],
-          tempo: 65
+          tempo: 65,
+          keySignature: 'A'
         }
       }
     ],
@@ -292,6 +294,7 @@ export const bassUnit4Nodes = [
 
     exercises: [
       {
+        // keySignature 'A' ensures only in-key notes (F#, C#, G#) appear -- no F/C/G naturals
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
           notePool: ['B3', 'C4', 'A3', 'F#3', 'C#3', 'G#3'],
@@ -299,7 +302,8 @@ export const bassUnit4Nodes = [
           clef: 'bass',
           timeSignature: '4/4',
           rhythmPatterns: ['quarter', 'half'],
-          tempo: 70
+          tempo: 70,
+          keySignature: 'A'
         }
       }
     ],
@@ -469,6 +473,7 @@ export const bassUnit4Nodes = [
         }
       },
       {
+        // keySignature 'A' ensures only in-key notes (F#, C#, G#) appear -- no F/C/G naturals
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
           notePool: FULL_SHARP_POOL,
@@ -476,7 +481,8 @@ export const bassUnit4Nodes = [
           clef: 'bass',
           timeSignature: '4/4',
           rhythmPatterns: ['quarter', 'half'],
-          tempo: 70
+          tempo: 70,
+          keySignature: 'A'
         }
       }
     ],

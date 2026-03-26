@@ -353,6 +353,104 @@ describe("patternBuilder (accidental sorting)", () => {
   });
 });
 
+describe("patternBuilder (A major key signature for sharp practice)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("keySignature 'A' maps natural F/C/G to their sharp forms", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 65,
+      selectedNotes: ["C4", "D4", "E4", "F4", "G4", "A4"],
+      clef: "Treble",
+      measuresPerPattern: 2,
+      keySignature: "A",
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    const pitches = result.notes
+      .filter((n) => n.type === "note")
+      .map((n) => n.pitch);
+
+    // A major has F#, C#, G# — so F4, C4, G4 naturals must NOT appear
+    expect(pitches.every((p) => p !== "F4")).toBe(true);
+    expect(pitches.every((p) => p !== "C4")).toBe(true);
+    expect(pitches.every((p) => p !== "G4")).toBe(true);
+
+    // Output should only contain in-key notes
+    const allowedPitches = new Set(["C#4", "D4", "E4", "F#4", "G#4", "A4"]);
+    pitches.forEach((p) => {
+      expect(allowedPitches.has(p)).toBe(true);
+    });
+  });
+
+  it("keySignature 'A' deduplicates when pool has both natural and sharp", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 65,
+      selectedNotes: ["C4", "C#4", "D4", "E4", "F4", "F#4", "G4", "G#4", "A4"],
+      clef: "Treble",
+      measuresPerPattern: 2,
+      keySignature: "A",
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    const pitches = result.notes
+      .filter((n) => n.type === "note")
+      .map((n) => n.pitch);
+
+    // No naturals for altered notes — only their sharp forms should appear
+    expect(pitches.every((p) => p !== "F4")).toBe(true);
+    expect(pitches.every((p) => p !== "C4")).toBe(true);
+    expect(pitches.every((p) => p !== "G4")).toBe(true);
+
+    // All pitches must be from the in-key subset
+    const inKeyPitches = new Set(["C#4", "D4", "E4", "F#4", "G#4", "A4", "B4"]);
+    pitches.forEach((p) => {
+      expect(inKeyPitches.has(p)).toBe(true);
+    });
+  });
+
+  it("passes keySignature 'A' through to result object", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 65,
+      selectedNotes: ["C#4", "D4", "E4", "F#4", "G#4", "A4"],
+      clef: "Treble",
+      measuresPerPattern: 2,
+      keySignature: "A",
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    expect(result.keySignature).toBe("A");
+  });
+});
+
 describe("toVexFlowNote (accidentals via generatePatternData)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
