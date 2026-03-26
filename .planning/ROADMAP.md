@@ -21,6 +21,7 @@
 - ✅ **v2.6 User Feedback** — Phases 16-17 (shipped 2026-03-23)
 - ✅ **v2.7 Instrument Practice Tracking** — Phases 1-5 (shipped 2026-03-25)
 - ✅ **v2.8 Introductory Single-Note Game** — Phases 1, 6 (shipped 2026-03-26)
+- **v2.9 Game Variety & Ear Training** — Phases 7-11 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -41,6 +42,79 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
+### v2.9 Game Variety & Ear Training
+
+- [ ] **Phase 7: Data Foundation + TrailMap Refactor** — New EXERCISE_TYPES constants, EAR_TRAINING category, TrailNodeModal routing, data-driven TrailMap, validateTrail extension
+- [ ] **Phase 8: Audio Infrastructure + Rhythm Games** — usePianoSampler hook, RhythmReadingGame, RhythmDictationGame, i18n for all new game types
+- [ ] **Phase 9: Ear Training Games** — NoteComparisonGame, IntervalGame, shared piano keyboard SVG, subscriptionConfig for ear nodes
+- [ ] **Phase 10: Ear Training Trail Data + Trail Tab** — 12-15 ear training nodes across 2 units, Ear tab on TrailMap, boss nodes, DB subscription gate sync
+- [ ] **Phase 11: Arcade Rhythm Game + Rhythm Node Remapping** — ArcadeRhythmGame, 36 rhythm nodes remapped to mixed exercise types, DB migration clearing stale progress
+
+---
+
+## Phase Details
+
+### Phase 7: Data Foundation + TrailMap Refactor
+**Goal**: The routing and data infrastructure required by all new game types is in place and validated at build time
+**Depends on**: Nothing (first v2.9 phase)
+**Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, INFRA-05
+**Success Criteria** (what must be TRUE):
+  1. Adding any new exercise type to a trail node data file causes validateTrail.mjs to emit an error if the type string is not in EXERCISE_TYPES
+  2. Tapping a trail node with any of the 5 new exercise types opens the correct game screen (no blank screen, no console error)
+  3. TrailMap displays a 4th tab for Ear Training without code changes to tab layout logic (driven entirely by a data array)
+  4. Build succeeds with all 5 new EXERCISE_TYPES and EAR_TRAINING category constants present in constants.js
+**Plans**: TBD
+
+### Phase 8: Audio Infrastructure + Rhythm Games
+**Goal**: Children can tap along with rhythm notation and identify rhythms by ear, with correct piano sample playback powering all new audio-dependent games
+**Depends on**: Phase 7
+**Requirements**: INFRA-06, INFRA-07, INFRA-08, RTAP-01, RTAP-02, RTAP-03, RTAP-04, RTAP-05, RDICT-01, RDICT-02, RDICT-03, RDICT-04, RDICT-05, RDICT-06
+**Success Criteria** (what must be TRUE):
+  1. A child can tap the screen in time with a displayed VexFlow rhythm pattern and receive PERFECT/GOOD/MISS feedback on each tap, with a scrolling cursor tracking position
+  2. A child can hear a rhythm played audio-only, replay it as many times as needed, then select the correct notation card from 2-4 VexFlow choices
+  3. Both rhythm games complete through VictoryScreen with star rating and XP award after a full session
+  4. Piano note playback works on iOS without silence (AudioContext resumed before every bufferSource.start())
+  5. All Rhythm Reading and Rhythm Dictation UI text appears in both English and Hebrew with correct RTL layout
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 9: Ear Training Games
+**Goal**: Children can distinguish higher from lower pitches and categorize melodic intervals by ear using age-appropriate vocabulary
+**Depends on**: Phase 8
+**Requirements**: PITCH-01, PITCH-02, PITCH-03, PITCH-04, PITCH-05, INTV-01, INTV-02, INTV-03, INTV-04, INTV-05
+**Success Criteria** (what must be TRUE):
+  1. A child hears two piano notes played in sequence and can tap HIGHER or LOWER to correctly identify the second note's direction
+  2. Interval distance narrows progressively across a Note Comparison session (starting with wide intervals, ending with close ones)
+  3. A child hears a two-note melody and identifies it as Step, Skip, or Leap — ascending intervals are presented before descending intervals
+  4. After answering an interval question, a piano keyboard SVG highlights the two played notes so the child can see where they fell
+  5. Both ear training games complete through VictoryScreen with star rating and XP award
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 10: Ear Training Trail Data + Trail Tab
+**Goal**: The Ear Training learning path is live on the trail with progression nodes, a distinct visual identity, correct subscription gating, and a boss challenge
+**Depends on**: Phase 9
+**Requirements**: EAR-01, EAR-02, EAR-03, EAR-04, EAR-05
+**Success Criteria** (what must be TRUE):
+  1. A child on the TrailMap sees an "Ear" tab with a distinct color palette separate from Treble, Bass, and Rhythm
+  2. Tapping into the Ear tab reveals 12-15 progressive nodes across 2 units with appropriate prerequisite locks
+  3. Free tier children can access the defined free ear training nodes and are shown a paywall for premium nodes — no silent RLS failures
+  4. A boss node combining ear training skills is present and completable end-to-end through VictoryScreen
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 11: Arcade Rhythm Game + Rhythm Node Remapping
+**Goal**: An arcade-style falling-tile rhythm game is playable, and all 36 existing rhythm nodes are remapped to a mixed distribution of exercise types that reflects the full new game variety
+**Depends on**: Phase 8
+**Requirements**: ARCR-01, ARCR-02, ARCR-03, ARCR-04, ARCR-05, RMAP-01, RMAP-02, RMAP-03
+**Success Criteria** (what must be TRUE):
+  1. Falling tiles descend in sync with the beat schedule; a child can tap the hit zone and see PERFECT/GOOD/MISS judgments with a combo counter
+  2. Missing enough tiles depletes 3 lives and triggers GameOverScreen; hitting a streak triggers on-fire mode
+  3. A DB migration has cleared exercise_progress and stars for all remapped rhythm nodes before the new node data deploys to production
+  4. All 36 rhythm nodes are playable end-to-end through VictoryScreen with their new exercise type (MetronomeTrainer, Rhythm Reading, Dictation, or Arcade)
+**Plans**: TBD
+**UI hint**: yes
+
 ---
 
 ## Progress
@@ -49,8 +123,13 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 |-------|-----------|----------------|--------|-----------|
 | 1. Introductory Single-Note Game | v2.8 | 2/2 | Complete | 2026-03-25 |
 | 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
+| 7. Data Foundation + TrailMap Refactor | v2.9 | 0/? | Not started | - |
+| 8. Audio Infrastructure + Rhythm Games | v2.9 | 0/? | Not started | - |
+| 9. Ear Training Games | v2.9 | 0/? | Not started | - |
+| 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
+| 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/? | Not started | - |
 
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
 ---
-*Last updated: 2026-03-26 — v2.8 milestone archived*
+*Last updated: 2026-03-26 — v2.9 roadmap created*

@@ -113,54 +113,54 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | — | Pending |
-| INFRA-02 | — | Pending |
-| INFRA-03 | — | Pending |
-| INFRA-04 | — | Pending |
-| INFRA-05 | — | Pending |
-| INFRA-06 | — | Pending |
-| INFRA-07 | — | Pending |
-| INFRA-08 | — | Pending |
-| RTAP-01 | — | Pending |
-| RTAP-02 | — | Pending |
-| RTAP-03 | — | Pending |
-| RTAP-04 | — | Pending |
-| RTAP-05 | — | Pending |
-| RDICT-01 | — | Pending |
-| RDICT-02 | — | Pending |
-| RDICT-03 | — | Pending |
-| RDICT-04 | — | Pending |
-| RDICT-05 | — | Pending |
-| RDICT-06 | — | Pending |
-| ARCR-01 | — | Pending |
-| ARCR-02 | — | Pending |
-| ARCR-03 | — | Pending |
-| ARCR-04 | — | Pending |
-| ARCR-05 | — | Pending |
-| PITCH-01 | — | Pending |
-| PITCH-02 | — | Pending |
-| PITCH-03 | — | Pending |
-| PITCH-04 | — | Pending |
-| PITCH-05 | — | Pending |
-| INTV-01 | — | Pending |
-| INTV-02 | — | Pending |
-| INTV-03 | — | Pending |
-| INTV-04 | — | Pending |
-| INTV-05 | — | Pending |
-| EAR-01 | — | Pending |
-| EAR-02 | — | Pending |
-| EAR-03 | — | Pending |
-| EAR-04 | — | Pending |
-| EAR-05 | — | Pending |
-| RMAP-01 | — | Pending |
-| RMAP-02 | — | Pending |
-| RMAP-03 | — | Pending |
+| INFRA-01 | Phase 7 | Pending |
+| INFRA-02 | Phase 7 | Pending |
+| INFRA-03 | Phase 7 | Pending |
+| INFRA-04 | Phase 7 | Pending |
+| INFRA-05 | Phase 7 | Pending |
+| INFRA-06 | Phase 8 | Pending |
+| INFRA-07 | Phase 8 | Pending |
+| INFRA-08 | Phase 8 | Pending |
+| RTAP-01 | Phase 8 | Pending |
+| RTAP-02 | Phase 8 | Pending |
+| RTAP-03 | Phase 8 | Pending |
+| RTAP-04 | Phase 8 | Pending |
+| RTAP-05 | Phase 8 | Pending |
+| RDICT-01 | Phase 8 | Pending |
+| RDICT-02 | Phase 8 | Pending |
+| RDICT-03 | Phase 8 | Pending |
+| RDICT-04 | Phase 8 | Pending |
+| RDICT-05 | Phase 8 | Pending |
+| RDICT-06 | Phase 8 | Pending |
+| ARCR-01 | Phase 11 | Pending |
+| ARCR-02 | Phase 11 | Pending |
+| ARCR-03 | Phase 11 | Pending |
+| ARCR-04 | Phase 11 | Pending |
+| ARCR-05 | Phase 11 | Pending |
+| PITCH-01 | Phase 9 | Pending |
+| PITCH-02 | Phase 9 | Pending |
+| PITCH-03 | Phase 9 | Pending |
+| PITCH-04 | Phase 9 | Pending |
+| PITCH-05 | Phase 9 | Pending |
+| INTV-01 | Phase 9 | Pending |
+| INTV-02 | Phase 9 | Pending |
+| INTV-03 | Phase 9 | Pending |
+| INTV-04 | Phase 9 | Pending |
+| INTV-05 | Phase 9 | Pending |
+| EAR-01 | Phase 10 | Pending |
+| EAR-02 | Phase 10 | Pending |
+| EAR-03 | Phase 10 | Pending |
+| EAR-04 | Phase 10 | Pending |
+| EAR-05 | Phase 10 | Pending |
+| RMAP-01 | Phase 11 | Pending |
+| RMAP-02 | Phase 11 | Pending |
+| RMAP-03 | Phase 11 | Pending |
 
 **Coverage:**
 - v2.9 requirements: 38 total
-- Mapped to phases: 0
-- Unmapped: 38
+- Mapped to phases: 38
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-26 — traceability updated after roadmap creation*
