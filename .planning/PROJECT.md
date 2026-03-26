@@ -186,6 +186,14 @@ These capabilities exist, are working, and have been shipped:
 - Signup flow redesigned: role-first wizard with back navigation, birth year simplification, optional parent email
 - 19/19 requirements delivered, 12 plans across 5 phases
 
+**v2.8 Introductory Single-Note Game (shipped 2026-03-26):**
+- REQ-01-09: NoteSpeedCards speed card game for single-note trail nodes (treble_1_1, bass_1_1) with conveyor animation, 3-lives, combo system, 4-tier speed ramp
+- NOTE_CATCH exercise type wired end-to-end: constant, node data, TrailNodeModal routing, App.jsx route, i18n
+- D-01-14/REQ-01-10: Dedicated Parent Portal with gate-first architecture, math gate on every visit, QuickStatsGrid, 4 content sections
+- Desktop sidebar + mobile Settings card entry points for Parent Zone
+- AppSettings cleanup: subscription/streak/notification sections migrated to Parent Portal, dead code removed
+- 33/33 requirements delivered, 5 plans across 2 phases
+
 ### Active
 
 **Next milestone: TBD (use `/gsd:new-milestone`)**
@@ -253,14 +261,17 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.7 — shipped 2026-03-25):**
+**Current State (after v2.8 — shipped 2026-03-26):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
+- NoteSpeedCards speed card game for single-note trail nodes (treble_1_1, bass_1_1) — conveyor animation, 3-lives, combo, 4-tier speed ramp
+- Dedicated Parent Portal with gate-first architecture: math gate on every visit, QuickStatsGrid, 4 content sections (stats, heatmap, subscription, settings)
+- Parent Zone entry points: desktop sidebar (ShieldCheck icon) + mobile Settings card (ParentZoneEntryCard)
 - Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools, PracticeLogCard
-- Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card
+- Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card, loading skeleton
 - Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit, practice check-in priority
 - Streak protection: 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
 - Instrument practice streak: dedicated tracker with piano icon, independent from app-usage streak
-- Notes Recognition arcade mode: combo/lives/speed bonus, on-fire mode, auto-grow note pool
+- Notes Recognition arcade mode: combo/lives/speed bonus, on-fire mode, auto-grow note pool with focusNotes/contextNotes
 - XP is sole reward currency: 30-level system with prestige tiers, no more "points"
 - VictoryScreen redesigned with useVictoryState hook extraction and two-panel landscape layout
 - Free play awards XP via calculateFreePlayXP (10-50 XP range)
@@ -453,6 +464,13 @@ Explicitly excluded:
 | Module-level MILESTONES constant | Avoids useCallback dep churn (same pattern as COMBO_TIERS) | Good |
 | Role-first signup wizard | Role selection as step 1; STUDENT_STEPS/TEACHER_STEPS drive wizard flow | Good |
 | Birth year integer (not full DOB) | Simpler age collection; stored as YYYY-01-01 convention | Good |
+| NOTE_CATCH replaces note_recognition on first nodes | Single-note recognition is trivially easy; speed card game is engaging | Good |
+| NoteSpeedCards stub in Plan 01 (not Plan 02) | Vite resolves all dynamic imports at build time; lazy import fails without module | Good |
+| No AudioContextProvider for NoteSpeedCards | Game uses screen tap only, no mic/audio input needed | Good |
+| Gate-first portal (useState true on mount) | Parent must verify every visit; no persistent consent per D-04 spec | Good |
+| Deferred queries (enabled: !gateOpen) | Prevents data fetching before parent passes math gate | Good |
+| Weekend pass no sub-gate in portal | Page-level gate covers all sections per D-13; individual gates removed | Good |
+| buildInitialTrailPool for auto-grow | Uses focusNotes/contextNotes from node config instead of walking forward nodes | Good |
 
 ## Evolution
 
@@ -473,4 +491,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-25 after v2.7 milestone complete*
+*Last updated: 2026-03-26 after v2.8 milestone complete*

@@ -20,59 +20,26 @@
 - ✅ **v2.5 Launch Prep** — Phases 12-15 (shipped 2026-03-22)
 - ✅ **v2.6 User Feedback** — Phases 16-17 (shipped 2026-03-23)
 - ✅ **v2.7 Instrument Practice Tracking** — Phases 1-5 (shipped 2026-03-25)
+- ✅ **v2.8 Introductory Single-Note Game** — Phases 1, 6 (shipped 2026-03-26)
 
 See `.planning/milestones/` for archived details of each milestone.
 
 ## Phases
 
 <details>
-<summary>✅ v1.0 through v2.6 — See milestones/ for archived details</summary>
+<summary>✅ v1.0 through v2.7 — See milestones/ for archived details</summary>
 
 See individual milestone archives in `.planning/milestones/` for full phase breakdowns.
 
 </details>
 
 <details>
-<summary>✅ v2.7 Instrument Practice Tracking (Phases 1-5) — SHIPPED 2026-03-25</summary>
+<summary>✅ v2.8 Introductory Single-Note Game (Phases 1, 6) — SHIPPED 2026-03-26</summary>
 
-- [x] Phase 1: Signup Flow Redesign (4/4 plans) — completed 2026-03-24
-- [x] Phase 2: Data Foundation and Core Logging (2/2 plans) — completed 2026-03-24
-- [x] Phase 3: Push Notification Integration (2/2 plans) — completed 2026-03-24
-- [x] Phase 4: Parent Calendar Heatmap (2/2 plans) — completed 2026-03-24
-- [x] Phase 5: Milestone Celebrations (2/2 plans) — completed 2026-03-25
+- [x] Phase 1: Introductory Single-Note Game (2/2 plans) — completed 2026-03-25
+- [x] Phase 6: Dedicated Parent Portal with Math Gate (3/3 plans) — completed 2026-03-25
 
 </details>
-
-### v2.8 Introductory Single-Note Game
-
-- [ ] **Phase 1: Introductory Single-Note Game** - Engaging first-encounter game for trail nodes with only one note (e.g., middle C)
-
----
-
-## Phase Details
-
-### Phase 1: Introductory Single-Note Game (v2.8)
-**Goal**: Build a speed card game for single-note trail nodes (treble_1_1 and bass_1_1) where note cards slide across a staff and the child taps to catch the target note. Replaces the trivially-easy note_recognition exercise with an engaging, Duolingo-kids-style arcade experience.
-**Depends on**: v2.7 completion
-**Requirements**: REQ-01 through REQ-09 (see 01-RESEARCH.md)
-**Plans:** 2/2 plans executed
-
-Plans:
-- [x] 01-01-PLAN.md — Wire NOTE_CATCH exercise type through trail system (constants, node data, routing, i18n)
-- [x] 01-02-PLAN.md — Build NoteSpeedCards game component with conveyor animation and VictoryScreen integration
-
-**UI hint**: yes
-
-### Phase 6: Dedicated Parent Portal with Math Gate
-**Goal:** Redesign /parent-portal as a dedicated, math-gate-guarded parent area consolidating subscription management, practice heatmap, progress stats, and parent settings (notification consent, weekend pass) behind a single COPPA-compliant gate. Add discoverable entry points in sidebar (desktop) and Settings (mobile). Remove individual ParentGateMath gates from Settings sections that move into the portal.
-**Requirements**: D-01 through D-14, REQ-01 through REQ-10 (see 06-RESEARCH.md)
-**Depends on:** None (standalone phase)
-**Plans:** 3/3 plans executed
-
-Plans:
-- [x] 06-01-PLAN.md — Navigation entry points, i18n keys, ParentZoneEntryCard component
-- [x] 06-02-PLAN.md — Refactor ParentPortalPage with gate-first shell, QuickStatsGrid, and 4 content sections
-- [x] 06-03-PLAN.md — Clean up AppSettings (remove moved sections, add entry card)
 
 ---
 
@@ -80,11 +47,10 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 1-5. Instrument Practice Tracking | v2.7 | 12/12 | Complete | 2026-03-25 |
 | 1. Introductory Single-Note Game | v2.8 | 2/2 | Complete | 2026-03-25 |
-| 6. Dedicated Parent Portal | v2.7 | 3/3 | Complete | 2026-03-25 |
+| 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
 
-**Total: 18 milestones shipped (v1.0-v2.7) — ~174 plans across ~80 phases**
+**Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
 ---
-*Last updated: 2026-03-25 — Phase 6 plans created*
+*Last updated: 2026-03-26 — v2.8 milestone archived*

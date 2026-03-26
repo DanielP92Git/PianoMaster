@@ -1,5 +1,18 @@
 # Project Milestones: PianoApp
 
+## v2.8 Introductory Single-Note Game (Shipped: 2026-03-26)
+
+**Phases completed:** 2 phases, 5 plans, 9 tasks
+
+**Key accomplishments:**
+
+- NOTE_CATCH exercise type wired end-to-end: constant, node data, TrailNodeModal routing, App.jsx route, i18n strings, and NoteSpeedCards stub with all pure functions tested (17/17 GREEN)
+- Parent Zone added to desktop sidebar with ShieldCheck icon, ParentZoneEntryCard component created, and all 12 i18n keys added to en + he locales for the entire phase
+- Gate-first ParentPortalPage with math gate on every visit, QuickStatsGrid 2x2 glass stats, and 4-section scrollable layout (Quick Stats, Practice Heatmap, Subscription Management, Parent Settings)
+- Removed subscription section, streak/weekend-pass section, and NotificationPermissionCard from Settings; added ParentZoneEntryCard as mobile entry point to Parent Portal; eliminated all dead code from migrated features
+
+---
+
 ## v2.7 Instrument Practice Tracking (Shipped: 2026-03-25)
 
 **Delivered:** Daily instrument practice tracker with dedicated streak, push notification check-ins, parent calendar heatmap, and streak milestone celebrations — plus a signup flow redesign.
