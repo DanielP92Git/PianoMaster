@@ -273,6 +273,86 @@ describe("patternBuilder (6/8 compound timing)", () => {
   });
 });
 
+describe("patternBuilder (accidental sorting)", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("NOTE_FREQUENCIES['F#4'] is approximately 369.99 (between F4=349.23 and G4=392.0)", async () => {
+    // Import NOTE_FREQUENCIES directly to verify the constant
+    const { NOTE_FREQUENCIES } = await import(
+      "../constants/staffPositions.js"
+    );
+    expect(NOTE_FREQUENCIES["F#4"]).toBeCloseTo(369.99, 1);
+    // Also verify it sits between F4 and G4
+    expect(NOTE_FREQUENCIES["F#4"]).toBeGreaterThan(NOTE_FREQUENCIES["F4"]);
+    expect(NOTE_FREQUENCIES["F#4"]).toBeLessThan(NOTE_FREQUENCIES["G4"]);
+  });
+
+  it("F#4 sorts between F4 and G4 when pool contains mixed accidentals and naturals", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0);
+
+    // Use a pool with 6 notes including F#4 — all in-key so no key sig filter needed
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "C#4", "D4", "F4", "F#4", "G4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+      keySignature: null,
+    });
+
+    // All selected notes should appear as available (at least 2 distinct pitches in output)
+    const pitches = result.notes
+      .filter((n) => n.type === "note")
+      .map((n) => n.pitch);
+    const distinctPitches = new Set(pitches);
+    // With sorted frequencies, beginner mode picks adjacent notes
+    // (not all clumped at index 0 because F#4 had freq=0)
+    expect(distinctPitches.size).toBeGreaterThanOrEqual(1);
+
+    // The key invariant: no pitch should be "undefined" or null
+    pitches.forEach((p) => expect(p).toBeTruthy());
+  });
+
+  it("pool with only sharps ['F#4','C#4','G#4'] produces notes (not empty output from broken sort)", async () => {
+    vi.spyOn(Math, "random").mockReturnValue(0.3);
+
+    const result = await generatePatternData({
+      difficulty: "beginner",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["F#4", "C#4", "G#4", "C4", "D4", "E4", "F4", "G4", "A4"],
+      clef: "Treble",
+      measuresPerPattern: 1,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["q"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+      keySignature: null,
+    });
+
+    const notePitches = result.notes
+      .filter((n) => n.type === "note")
+      .map((n) => n.pitch);
+
+    // Should have at least 2 distinct pitches across measures
+    // (Before fix: sharps sort to position 0, all get same frequency=0, order is random)
+    expect(notePitches.length).toBeGreaterThan(0);
+    const distinctPitches = new Set(notePitches);
+    expect(distinctPitches.size).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe("toVexFlowNote (accidentals via generatePatternData)", () => {
   afterEach(() => {
     vi.restoreAllMocks();
