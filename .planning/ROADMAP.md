@@ -55,7 +55,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Goal**: Build a speed card game for single-note trail nodes (treble_1_1 and bass_1_1) where note cards slide across a staff and the child taps to catch the target note. Replaces the trivially-easy note_recognition exercise with an engaging, Duolingo-kids-style arcade experience.
 **Depends on**: v2.7 completion
 **Requirements**: REQ-01 through REQ-09 (see 01-RESEARCH.md)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans executed
 
 Plans:
 - [x] 01-01-PLAN.md — Wire NOTE_CATCH exercise type through trail system (constants, node data, routing, i18n)
@@ -67,7 +67,7 @@ Plans:
 **Goal:** Redesign /parent-portal as a dedicated, math-gate-guarded parent area consolidating subscription management, practice heatmap, progress stats, and parent settings (notification consent, weekend pass) behind a single COPPA-compliant gate. Add discoverable entry points in sidebar (desktop) and Settings (mobile). Remove individual ParentGateMath gates from Settings sections that move into the portal.
 **Requirements**: D-01 through D-14, REQ-01 through REQ-10 (see 06-RESEARCH.md)
 **Depends on:** None (standalone phase)
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans executed
 
 Plans:
 - [x] 06-01-PLAN.md — Navigation entry points, i18n keys, ParentZoneEntryCard component
@@ -81,8 +81,8 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 1-5. Instrument Practice Tracking | v2.7 | 12/12 | Complete | 2026-03-25 |
-| 1. Introductory Single-Note Game | v2.8 | 1/2 | In Progress|  |
-| 6. Dedicated Parent Portal | v2.7 | 1/3 | In Progress|  |
+| 1. Introductory Single-Note Game | v2.8 | 2/2 | Complete | 2026-03-25 |
+| 6. Dedicated Parent Portal | v2.7 | 3/3 | Complete | 2026-03-25 |
 
 **Total: 18 milestones shipped (v1.0-v2.7) — ~174 plans across ~80 phases**
 
