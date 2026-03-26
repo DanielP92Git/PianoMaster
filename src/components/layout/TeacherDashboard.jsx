@@ -446,9 +446,11 @@ const EditStudentModal = ({
         email: student.email || "",
         level: student.level || "",
         studyingYear: student.studying_year || "",
-        startDate: student.member_since
-          ? new Date(student.member_since).toISOString().split("T")[0]
-          : "",
+        startDate: (() => {
+          if (!student.member_since) return "";
+          const d = new Date(student.member_since);
+          return isNaN(d.getTime()) ? "" : d.toISOString().split("T")[0];
+        })(),
         phoneNumber: student.phone_number || "",
         parentEmail: student.parent_email || "",
         parentPhone: student.parent_phone || "",
@@ -1195,7 +1197,7 @@ const StudentDetailModal = ({
               <label className="text-sm font-medium text-gray-600">
                 Started
               </label>
-              <p className="text-gray-900">{student.member_since}</p>
+              <p className="text-gray-900">{student.member_since ? new Date(student.member_since).toLocaleDateString("en-GB") : "N/A"}</p>
             </div>
           </div>
         </Card>
@@ -1476,7 +1478,7 @@ const TeacherDashboard = () => {
   const addStudentMutation = useMutation({
     mutationFn: addStudentToTeacher,
     onSuccess: () => {
-      queryClient.invalidateQueries(["teacher-students"]);
+      queryClient.invalidateQueries({ queryKey: ["teacher-students"] });
       toast.success("Student added successfully!");
       setShowAddStudentModal(false);
     },
@@ -1503,7 +1505,7 @@ const TeacherDashboard = () => {
   const deleteStudentMutation = useMutation({
     mutationFn: removeStudentFromTeacher,
     onSuccess: () => {
-      queryClient.invalidateQueries(["teacher-students"]);
+      queryClient.invalidateQueries({ queryKey: ["teacher-students"] });
       toast.success("Student removed successfully!");
       setShowDeleteModal(false);
       setStudentsToDelete([]);
@@ -1517,7 +1519,7 @@ const TeacherDashboard = () => {
   const deleteMultipleStudentsMutation = useMutation({
     mutationFn: removeMultipleStudentsFromTeacher,
     onSuccess: (data) => {
-      queryClient.invalidateQueries(["teacher-students"]);
+      queryClient.invalidateQueries({ queryKey: ["teacher-students"] });
       toast.success(data.message);
       setShowDeleteModal(false);
       setStudentsToDelete([]);
@@ -1533,7 +1535,7 @@ const TeacherDashboard = () => {
     mutationFn: ({ studentId, updates }) =>
       updateStudentDetails(studentId, updates),
     onSuccess: (data) => {
-      queryClient.invalidateQueries(["teacher-students"]);
+      queryClient.invalidateQueries({ queryKey: ["teacher-students"] });
       toast.success(data.message);
       setShowEditModal(false);
       setStudentToEdit(null);
@@ -2555,7 +2557,7 @@ const TeacherDashboard = () => {
                             <div className="flex justify-between">
                               <span className="text-gray-300">Started:</span>
                               <span className="text-xs font-medium text-white">
-                                {student.member_since || "N/A"}
+                                {student.member_since ? new Date(student.member_since).toLocaleDateString("en-GB") : "N/A"}
                               </span>
                             </div>
                           </div>

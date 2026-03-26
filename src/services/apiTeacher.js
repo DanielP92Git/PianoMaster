@@ -227,9 +227,7 @@ export const getTeacherStudents = async () => {
         average_accuracy: Math.round(averageAccuracy),
         total_achievements: 0, // Not available in current schema
         last_practice_date: lastPracticeDate,
-        member_since: connectionDates[student.id]
-          ? new Date(connectionDates[student.id]).toLocaleDateString("en-GB")
-          : new Date(student.created_at).toLocaleDateString("en-GB"),
+        member_since: connectionDates[student.id] || student.created_at,
         recent_practices: practices
           .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))
           .slice(0, 5), // Last 5 sessions
@@ -397,7 +395,7 @@ export const getStudentProgress = async (studentId) => {
         total_xp: 0, // Not available in current schema
         current_streak: 0, // Not available in current schema
         longest_streak: 0, // Not available in current schema
-        member_since: new Date(student.created_at).toLocaleDateString(),
+        member_since: student.created_at,
       },
       metrics: {
         total_practice_minutes: totalPracticeMinutes,
@@ -1087,31 +1085,37 @@ export const getAssignmentSubmissions = async (assignmentId) => {
 
     const { data: submissions, error } = await supabase
       .from("assignment_submissions")
-      .select(
-        `
-        *,
-        students!inner(
-          id,
-          first_name,
-          last_name,
-          email,
-          username
-        )
-      `
-      )
+      .select("*")
       .eq("assignment_id", assignmentId);
 
     if (error) throw error;
 
+    if (!submissions || submissions.length === 0) return [];
+
+    // Fetch student details separately (FK points to auth.users, not students table)
+    const studentIds = [...new Set(submissions.map((s) => s.student_id))];
+    const { data: studentRows } = await supabase
+      .from("students")
+      .select("id, first_name, last_name, email, username")
+      .in("id", studentIds);
+
+    const studentMap = {};
+    (studentRows || []).forEach((s) => {
+      studentMap[s.id] = s;
+    });
+
     // Transform submissions to include student info
-    const transformedSubmissions = submissions.map((submission) => ({
-      ...submission,
-      student_name:
-        `${submission.students.first_name || ""} ${submission.students.last_name || ""}`.trim() ||
-        submission.students.username ||
-        "Unknown Student",
-      student_email: submission.students.email,
-    }));
+    const transformedSubmissions = submissions.map((submission) => {
+      const student = studentMap[submission.student_id] || {};
+      return {
+        ...submission,
+        student_name:
+          `${student.first_name || ""} ${student.last_name || ""}`.trim() ||
+          student.username ||
+          "Unknown Student",
+        student_email: student.email || "",
+      };
+    });
 
     return transformedSubmissions;
   } catch (error) {
