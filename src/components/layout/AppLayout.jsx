@@ -46,12 +46,10 @@ export default function AppLayout() {
     setIsSidebarOpen(!isSidebarOpen);
   };
 
-  // Trail page and game routes have their own full-screen backgrounds, so use neutral base
+  // Trail page has its own dark background; everything else uses the app gradient
   const backgroundClass = isTrailPage
     ? "bg-[#1a1040]"
-    : isGameRoute
-      ? "bg-black"
-      : "bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900";
+    : "bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900";
 
   return (
     <div

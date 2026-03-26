@@ -32,7 +32,7 @@ const getAllNotesForClef = (clef) => {
   if (clef === "Both" || String(clef || "").toLowerCase() === "both") {
     return [...trebleNotes, ...bassNotes].map((note) => note.pitch).filter(Boolean);
   }
-  return (clef === "Bass" ? bassNotes : trebleNotes)
+  return (String(clef || "").toLowerCase() === "bass" ? bassNotes : trebleNotes)
     .map((note) => note.pitch)
     .filter(Boolean);
 };
@@ -114,7 +114,7 @@ export function MemoryGame() {
             ...trebleNotes.map((n) => ({ ...n, __clef: "treble" })),
             ...bassNotes.map((n) => ({ ...n, __clef: "bass" })),
           ]
-        : currentClef === "Treble"
+        : String(currentClef || "").toLowerCase() === "treble"
           ? trebleNotes.map((n) => ({ ...n, __clef: "treble" }))
           : bassNotes.map((n) => ({ ...n, __clef: "bass" }));
 
