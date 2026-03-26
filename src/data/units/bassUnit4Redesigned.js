@@ -198,11 +198,12 @@ export const bassUnit4Nodes = [
 
   // ============================================
   // NODE 4: Sharps Together (Practice - Sight Reading)
+  // Pool includes surrounding naturals so patterns sound like real melodies
   // ============================================
   {
     id: 'bass_4_4',
     name: 'Sharps Together',
-    description: 'Read melodies with all three sharp notes',
+    description: 'Play F#, C#, and G# mixed with natural notes',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -213,9 +214,9 @@ export const bassUnit4Nodes = [
     nodeType: NODE_TYPES.PRACTICE,
 
     noteConfig: {
-      notePool: ['F#3', 'C#3', 'G#3'],
+      notePool: ['C3', 'C#3', 'D3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3'],
       focusNotes: [],
-      contextNotes: ['F#3', 'C#3', 'G#3'],
+      contextNotes: ['C3', 'C#3', 'D3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3'],
       clef: 'bass',
       ledgerLines: false,
       accidentals: true
@@ -236,7 +237,7 @@ export const bassUnit4Nodes = [
         // SIGHT_READING is safe for sharps — mic outputs F#3/C#3/G#3 matching exactly
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['F#3', 'C#3', 'G#3'],
+          notePool: ['C3', 'C#3', 'D3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3'],
           measuresPerPattern: 2,
           clef: 'bass',
           timeSignature: '4/4',
@@ -246,7 +247,7 @@ export const bassUnit4Nodes = [
       }
     ],
 
-    skills: ['F#3', 'C#3', 'G#3'],
+    skills: ['C3', 'C#3', 'D3', 'E3', 'F3', 'F#3', 'G3', 'G#3', 'A3'],
     xpReward: 50,
     accessoryUnlock: null,
     isBoss: false,

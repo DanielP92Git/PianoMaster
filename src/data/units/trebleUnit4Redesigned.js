@@ -199,11 +199,12 @@ export const trebleUnit4Nodes = [
   // ============================================
   // NODE 4: All Three Sharps (Practice)
   // SIGHT_READING safe -- mic outputs F#4/C#4/G#4 matching exactly
+  // Pool includes surrounding naturals so patterns sound like real melodies
   // ============================================
   {
     id: 'treble_4_4',
     name: 'Sharps Together',
-    description: 'Play F#, C#, and G# side by side',
+    description: 'Play F#, C#, and G# mixed with natural notes',
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -214,9 +215,9 @@ export const trebleUnit4Nodes = [
     nodeType: NODE_TYPES.PRACTICE,
 
     noteConfig: {
-      notePool: ['F#4', 'C#4', 'G#4'],
+      notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
       focusNotes: [],
-      contextNotes: ['F#4', 'C#4', 'G#4'],
+      contextNotes: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
       clef: 'treble',
       ledgerLines: false,
       accidentals: true
@@ -237,7 +238,7 @@ export const trebleUnit4Nodes = [
         // SIGHT_READING is safe for sharps -- mic outputs F#4/C#4/G#4 matching exactly
         type: EXERCISE_TYPES.SIGHT_READING,
         config: {
-          notePool: ['F#4', 'C#4', 'G#4'],
+          notePool: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
           measuresPerPattern: 2,
           clef: 'treble',
           timeSignature: '4/4',
@@ -247,7 +248,7 @@ export const trebleUnit4Nodes = [
       }
     ],
 
-    skills: ['F#4', 'C#4', 'G#4'],
+    skills: ['C4', 'C#4', 'D4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4'],
     xpReward: 50,
     accessoryUnlock: null,
     isBoss: false,
