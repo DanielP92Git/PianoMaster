@@ -98,7 +98,9 @@
       "gotIt": "Got it!",
       "askParent": "Ask a parent to unlock!"
     },
-    "subtitle": "Add new notes to your collection"
+    "subtitle": "Add new notes to your collection",
+    "notePreview": "On the Staff",
+    "keyboardPreview": "On the Piano"
   },
   "noteNames": {
     "C": "C",

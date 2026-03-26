@@ -17,6 +17,7 @@ import { getExerciseProgress, getNextExerciseIndex } from '../../services/skillP
 import { useUser } from '../../features/authentication/useUser';
 import { translateNodeName } from '../../utils/translateNodeName';
 import { getNodeTypeIcon, getCategoryColors } from '../../utils/nodeTypeStyles';
+import NotePreview from './NotePreview';
 
 /**
  * Get display name for exercise type
@@ -363,6 +364,9 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
               })}
             </div>
           </div>
+
+          {/* Note preview — staff image + mini keyboard for Discovery nodes */}
+          <NotePreview node={node} />
 
           {/* Loading skeleton — reserves space while exercise progress loads to prevent layout shift */}
           {isUnlocked && isLoading && (
