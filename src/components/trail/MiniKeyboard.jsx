@@ -16,7 +16,7 @@ const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 // Hebrew solfege names for pitch classes
 const HEBREW_NAMES = {
   C: 'דו', D: 'רה', E: 'מי', F: 'פה', G: 'סול', A: 'לה', B: 'סי',
-  'C#': 'דו♯', 'D#': 'רה♯', 'F#': 'פה♯', 'G#': 'סול♯', 'A#': 'לה♯',
+  'C#': '♯דו', 'D#': '♯רה', 'F#': '♯פה', 'G#': '♯סול', 'A#': '♯לה',
 };
 
 // Black key pitch classes and their visual position between white keys.
