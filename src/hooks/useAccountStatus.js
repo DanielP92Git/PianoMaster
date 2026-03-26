@@ -27,14 +27,9 @@ export function useAccountStatus(userId) {
         .single();
 
       if (error) {
-        // User might be a teacher, not a student
-        // PGRST116 = "no rows returned" - user doesn't exist in students table
-        if (error.code === 'PGRST116') {
-          setStatus('active'); // Teachers don't have account_status
-        } else {
-          console.error('Error fetching account status:', error);
-          setStatus('active'); // Default to active on error
-        }
+        // Non-students (teachers) and placeholder students may not have these columns.
+        // Default to active — this hook is only critical for suspension/deletion gating.
+        setStatus('active');
       } else {
         setStatus(data?.account_status || 'active');
         setParentEmail(data?.parent_email);

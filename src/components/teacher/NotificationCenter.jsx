@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
@@ -43,6 +43,19 @@ const SendNotificationModal = ({
     message: "",
     priority: "normal",
   });
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({
+        recipientId: "",
+        type: "message",
+        title: "",
+        message: "",
+        priority: "normal",
+      });
+    }
+  }, [isOpen]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
