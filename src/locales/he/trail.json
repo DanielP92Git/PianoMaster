@@ -79,7 +79,7 @@
     "yourProgress": "ההתקדמות שלכם",
     "exercises": "תרגילים",
     "exerciseCount": "{{completed}}/{{total}}",
-    "bestScore": "ציון הטוב ביותר:",
+    "bestScore": "הציון הטוב ביותר:",
     "bestScoreValue": "{{score}}%",
     "startButton": "התחל",
     "replayButton": "שחק שוב",
