@@ -7,10 +7,17 @@
  * Props:
  *   focusNotes  {string[]}  e.g. ['F#4', 'C4']
  *   clef        {string}    'treble' | 'bass'
+ *   isHebrew    {boolean}   true → show Hebrew note names on highlighted keys
  */
 
 // White key note names in one octave (index 0–6 = C, D, E, F, G, A, B)
 const WHITE_NOTES = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+
+// Hebrew solfege names for pitch classes
+const HEBREW_NAMES = {
+  C: 'דו', D: 'רה', E: 'מי', F: 'פה', G: 'סול', A: 'לה', B: 'סי',
+  'C#': 'דו♯', 'D#': 'רה♯', 'F#': 'פה♯', 'G#': 'סול♯', 'A#': 'לה♯',
+};
 
 // Black key pitch classes and their visual position between white keys.
 // position 0.5 = between C(0) and D(1), 1.5 = D/E, 3.5 = F/G, 4.5 = G/A, 5.5 = A/B
@@ -71,7 +78,7 @@ const BLACK_KEY_HEIGHT = 50; // px
 // Total width: 8 white keys (C to next C) × 26px
 const KEYBOARD_WIDTH = WHITE_KEY_WIDTH * 8;
 
-const MiniKeyboard = ({ focusNotes = [], clef = 'treble' }) => {
+const MiniKeyboard = ({ focusNotes = [], clef = 'treble', isHebrew = false }) => {
   const displayOctave = getDisplayOctave(focusNotes);
   const highlightSet = buildHighlightSet(focusNotes);
 
@@ -129,7 +136,7 @@ const MiniKeyboard = ({ focusNotes = [], clef = 'treble' }) => {
                     lineHeight: 1,
                   }}
                 >
-                  {key.name}
+                  {isHebrew ? (HEBREW_NAMES[key.name] || key.name) : key.name}
                 </span>
               )}
             </div>
@@ -175,7 +182,7 @@ const MiniKeyboard = ({ focusNotes = [], clef = 'treble' }) => {
                     lineHeight: 1,
                   }}
                 >
-                  {bk.pitchClass}
+                  {isHebrew ? (HEBREW_NAMES[bk.pitchClass] || bk.pitchClass) : bk.pitchClass}
                 </span>
               )}
             </div>

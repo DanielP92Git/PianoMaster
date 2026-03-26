@@ -18,8 +18,9 @@ import { useTranslation } from 'react-i18next';
 import MiniKeyboard from './MiniKeyboard';
 
 const NotePreview = ({ node }) => {
-  const { t } = useTranslation('trail');
+  const { t, i18n } = useTranslation('trail');
   const [noteComponents, setNoteComponents] = useState(null);
+  const isHebrew = i18n.language === 'he';
 
   const focusNotes = node?.noteConfig?.focusNotes;
   const clef = node?.noteConfig?.clef || 'treble';
@@ -106,7 +107,7 @@ const NotePreview = ({ node }) => {
       </p>
 
       {/* Mini keyboard */}
-      <MiniKeyboard focusNotes={focusNotes} clef={clef} />
+      <MiniKeyboard focusNotes={focusNotes} clef={clef} isHebrew={isHebrew} />
     </div>
   );
 };
