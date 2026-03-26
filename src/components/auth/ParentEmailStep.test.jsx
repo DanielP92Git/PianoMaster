@@ -1,5 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
+
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key) => key,
+    i18n: { dir: () => 'ltr', language: 'en' },
+  }),
+}));
+
 import { ParentEmailStep } from "./ParentEmailStep";
 
 describe("ParentEmailStep", () => {
@@ -11,7 +19,7 @@ describe("ParentEmailStep", () => {
         onBack={vi.fn()}
       />
     );
-    expect(screen.getByPlaceholderText("parent@example.com")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("auth.signup.parentEmail.placeholder")).toBeInTheDocument();
   });
 
   // Current behavior stubs (before Plan 02 updates)

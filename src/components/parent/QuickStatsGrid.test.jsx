@@ -9,7 +9,7 @@
  *   - Shows em dash (—) for null/undefined values
  *   - Calculates totalStars (sum of p.stars) correctly from progressData
  *   - Calculates nodesCompleted (count where stars > 0) correctly
- *   - Formats nodes as "N/93"
+ *   - Formats nodes as "N/TOTAL" using SKILL_NODES.length
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -30,10 +30,10 @@ const sampleXpData = {
 };
 
 const sampleProgressData = [
-  { node_id: 'treble_c', stars: 3 },
-  { node_id: 'treble_d', stars: 1 },
-  { node_id: 'treble_e', stars: 0 }, // not completed
-  { node_id: 'bass_c', stars: 2 },
+  { node_id: 'treble_1_1', stars: 3 },
+  { node_id: 'treble_1_2', stars: 1 },
+  { node_id: 'treble_1_3', stars: 0 }, // not completed
+  { node_id: 'bass_1_1', stars: 2 },
 ];
 
 const sampleStreakState = {
@@ -124,13 +124,13 @@ describe('QuickStatsGrid', () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText('3/93')).toBeInTheDocument();
+    expect(screen.getByText('3/171')).toBeInTheDocument();
   });
 
-  it('REQ-04: formats nodes as "N/93"', () => {
+  it('REQ-04: formats nodes as "N/171"', () => {
     const progressData = [
-      { node_id: 'a', stars: 1 },
-      { node_id: 'b', stars: 1 },
+      { node_id: 'treble_1_1', stars: 1 },
+      { node_id: 'treble_1_2', stars: 1 },
     ];
     render(
       <QuickStatsGrid
@@ -140,7 +140,7 @@ describe('QuickStatsGrid', () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText('2/93')).toBeInTheDocument();
+    expect(screen.getByText('2/171')).toBeInTheDocument();
   });
 
   it('D-08: renders level value from xpData.levelData.level', () => {

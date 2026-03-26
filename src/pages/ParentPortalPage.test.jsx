@@ -21,6 +21,7 @@ const mockNavigate = vi.fn();
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  Link: ({ children, ...props }) => <a {...props}>{children}</a>,
 }));
 
 // ─── Mock: react-i18next ─────────────────────────────────────────────────────
@@ -87,6 +88,21 @@ vi.mock('../components/ui/BackButton', () => ({
   default: () => <button data-testid="back-button">Back</button>,
 }));
 
+// ─── Mock: TimePicker ────────────────────────────────────────────────────────
+vi.mock('../components/settings/TimePicker', () => ({
+  default: () => <div data-testid="time-picker" />,
+}));
+
+// ─── Mock: SettingsSection ───────────────────────────────────────────────────
+vi.mock('../components/settings/SettingsSection', () => ({
+  default: ({ title, children }) => <div data-testid="settings-section"><h3>{title}</h3>{children}</div>,
+}));
+
+// ─── Mock: AccountDeletionModal ──────────────────────────────────────────────
+vi.mock('../components/teacher/AccountDeletionModal', () => ({
+  default: () => null,
+}));
+
 // ─── Mock: useUser ────────────────────────────────────────────────────────────
 vi.mock('../features/authentication/useUser', () => ({
   useUser: () => ({ user: { id: 'test-user-123' } }),
@@ -95,6 +111,23 @@ vi.mock('../features/authentication/useUser', () => ({
 // ─── Mock: SubscriptionContext ────────────────────────────────────────────────
 vi.mock('../contexts/SubscriptionContext', () => ({
   useSubscription: () => ({ isLoading: false, isPremium: false }),
+}));
+
+// ─── Mock: SettingsContext ────────────────────────────────────────────────────
+vi.mock('../contexts/SettingsContext', () => ({
+  useSettings: () => ({
+    preferences: {
+      notifications_enabled: false,
+      notification_types: {},
+      quiet_hours_enabled: false,
+      quiet_hours_start: '22:00',
+      quiet_hours_end: '07:00',
+      daily_reminder_enabled: false,
+      daily_reminder_time: '16:00',
+    },
+    updatePreference: vi.fn(),
+    updateNotificationType: vi.fn(),
+  }),
 }));
 
 // ─── Mock: subscriptionService ────────────────────────────────────────────────
@@ -227,15 +260,19 @@ describe('ParentPortalPage — Portal sections after consent', () => {
 
   it('D-10/REQ-06: ToggleSetting for weekend pass renders in Section 4 after consent', async () => {
     await renderAndUnlock();
-    expect(screen.getByTestId('toggle-setting')).toBeInTheDocument();
+    const toggleSettings = screen.getAllByTestId('toggle-setting');
+    expect(toggleSettings.length).toBeGreaterThanOrEqual(1);
     // The toggle label uses the streak.weekendPassLabel i18n key
     expect(screen.getByText('streak.weekendPassLabel')).toBeInTheDocument();
   });
 
   it('D-13/REQ-06: weekend pass toggle calls streakService.setWeekendPass directly (no sub-gate)', async () => {
     await renderAndUnlock();
-    // Click the toggle button — should call streakService.setWeekendPass with true
-    fireEvent.click(screen.getByTestId('toggle-btn'));
+    // Find the weekend pass toggle by its label, then click its toggle button
+    const weekendPassLabel = screen.getByText('streak.weekendPassLabel');
+    const toggleContainer = weekendPassLabel.closest('[data-testid="toggle-setting"]');
+    const toggleBtn = toggleContainer.querySelector('[data-testid="toggle-btn"]');
+    fireEvent.click(toggleBtn);
     await waitFor(() => {
       expect(mockSetWeekendPass).toHaveBeenCalledWith(true);
     });
