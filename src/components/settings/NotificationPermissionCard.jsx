@@ -11,6 +11,26 @@ import {
 } from "../../services/notificationService";
 import ParentGateMath from "./ParentGateMath";
 import { useTranslation } from "react-i18next";
+import {
+  isAndroidDevice,
+  isIOSDevice,
+  isChromeBrowser,
+  isSafariBrowser,
+  isInStandaloneMode,
+} from "../../utils/pwaDetection";
+
+/**
+ * Detect platform to show the correct "unblock notifications" steps.
+ * Returns a key matching i18n notificationsBlockedSteps.
+ */
+function getNotificationPlatformKey() {
+  if (isAndroidDevice() && isInStandaloneMode()) return "androidPwa";
+  if (isIOSDevice() && isInStandaloneMode()) return "iosPwa";
+  if (isChromeBrowser() && !isAndroidDevice()) return "chrome";
+  if (isSafariBrowser() && !isIOSDevice()) return "safari";
+  if (typeof navigator !== "undefined" && /Firefox/i.test(navigator.userAgent)) return "firefox";
+  return "fallback";
+}
 
 /**
  * Notification permission card with parent-gate push subscription flow.
@@ -190,6 +210,9 @@ export function NotificationPermissionCard({
   }
 
   if (permission === "denied" || pushState === "denied") {
+    const platformKey = getNotificationPlatformKey();
+    const steps = t(`pages.settings.notifications.notificationsBlockedSteps.${platformKey}`, { returnObjects: true });
+
     return (
       <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
         <div className={rowClasses}>
@@ -199,11 +222,15 @@ export function NotificationPermissionCard({
               {t("pages.settings.notifications.notificationsBlocked")}
             </h4>
             <p className="text-white/70 text-xs mb-2">
-              {t("pages.settings.notifications.notificationsBlockedDescription")}
+              {t("pages.settings.notifications.notificationsBlockedSubtitle")}
             </p>
-            <p className="text-white/60 text-xs">
-              {t("pages.settings.notifications.notificationsBlockedDescription2")}
-            </p>
+            {Array.isArray(steps) && (
+              <ol className={`text-white/70 text-xs space-y-1 ${isRTL ? "pr-4" : "pl-4"} list-decimal`}>
+                {steps.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            )}
           </div>
         </div>
       </div>

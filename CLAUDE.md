@@ -58,7 +58,7 @@ src/
 │   ├── trail/                    # TrailMap, TrailNode, TrailNodeModal, UnitProgressCard
 │   ├── streak/                   # StreakDisplay with freeze/grace/comeback UI
 │   ├── orientation/              # RotatePromptOverlay for mobile landscape
-│   ├── settings/                 # NotificationPermissionCard, ParentGateMath
+│   ├── settings/                 # NotificationPermissionCard, ParentGateMath, ParentZoneEntryCard
 │   └── layout/                   # Dashboard, AppLayout, Sidebar
 ├── pages/                        # Routed page components (Achievements, AchievementsRedesign, AchievementsLegacy, AppSettings, TrailMapPage, etc.)
 ├── features/                     # Feature hooks (auth, games, userData)
@@ -123,8 +123,8 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 - `/achievements` — Achievement badges (AchievementsRedesign wrapper)
 - `/subscribe` — Subscription purchase (Lemon Squeezy overlay checkout)
 - `/subscribe/success` — Post-purchase confirmation
-- `/parent-portal` — Subscription management
-- `/settings` — App settings (notifications, subscription, accessibility, weekend pass)
+- `/parent-portal` — Parent Zone (math-gated: stats, heatmap, subscription, notifications, account deletion, legal)
+- `/settings` — App settings (profile, accessibility, audio, install instructions)
 - `/legal` — Privacy/legal page
 - `/consent/verify` — **Public route** (no auth). Parent email verification for COPPA consent
 
@@ -212,7 +212,7 @@ All four game components accept trail state and auto-start via `hasAutoStartedRe
 Web Push notifications to encourage daily practice. COPPA-compliant with parent gate.
 
 - **Dashboard**: `PushOptInCard` shown after 7 days → navigates to `/settings`
-- **Settings**: `NotificationPermissionCard` manages 6-state machine: `loading | unsupported | denied | enabled | consent_skip | default`
+- **Parent Portal**: `NotificationPermissionCard` manages 6-state machine: `loading | unsupported | denied | enabled | consent_skip | default`. Platform-specific unblock instructions when denied.
 - **COPPA gate**: `ParentGateMath` — two-digit addition problem, hint after 3 failures, `parent_consent_granted = true` in DB
 - **iOS PWA**: Detects non-standalone mode, shows "install first" warning
 

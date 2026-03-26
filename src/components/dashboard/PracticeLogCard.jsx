@@ -168,8 +168,7 @@ const PracticeLogCard = () => {
 
             {/* Streak row — only visible when streak >= 1 */}
             {streakCount > 0 && (
-              <div className="mt-2 flex items-center gap-1" dir={isRTL ? 'rtl' : 'ltr'}>
-                <Piano className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+              <div className="mt-2" dir={isRTL ? 'rtl' : 'ltr'}>
                 <span className="text-xs text-white/60">
                   {streakCount} {t('practice.streak.dayLabel', { count: streakCount })}
                 </span>
@@ -203,11 +202,10 @@ const PracticeLogCard = () => {
 
           {/* Streak row — only visible when streak >= 1 */}
           {streakCount > 0 && (
-            <div className="mt-2 flex items-center gap-1" dir={isRTL ? 'rtl' : 'ltr'}>
-              <Piano className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+            <div className="mt-2" dir={isRTL ? 'rtl' : 'ltr'}>
               <span className="text-sm font-bold text-green-300">{streakCount}</span>
               <span className="text-xs text-white/60">
-                {t('practice.streak.dayLabel', { count: streakCount })}
+                {' '}{t('practice.streak.dayLabel', { count: streakCount })}
               </span>
             </div>
           )}

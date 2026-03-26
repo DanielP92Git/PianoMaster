@@ -370,8 +370,15 @@
         "notificationsEnabled": "התראות פעילות",
         "notificationsEnabledDescription": "תקבלו התראות דרך התראות push של הדפדפן",
         "notificationsBlocked": "התראות חסומות",
-        "notificationsBlockedDescription": "התראות חסומות בדפדפן שלכם. כדי להפעיל אותן, עדכן את הגדרות הדפדפן שלכם.",
-        "notificationsBlockedDescription2": "חפש את הסמל הסולמית בסרגל הכתובת של הדפדפן ואפשר התראות.",
+        "notificationsBlockedSubtitle": "ההתראות נחסמו בעבר. בצעו את השלבים הבאים כדי להפעיל אותן:",
+        "notificationsBlockedSteps": {
+          "androidPwa": ["לחצו לחיצה ארוכה על סמל האפליקציה PianoMaster", "הקישו על 'פרטי אפליקציה'", "הקישו על 'התראות' והפעילו אותן"],
+          "iosPwa": ["פתחו את אפליקציית ההגדרות באייפון", "גללו למטה והקישו על 'PianoMaster'", "הקישו על 'התראות' והפעילו אותן"],
+          "chrome": ["לחצו על סמל הכוונון משמאל לשורת הכתובת", "מצאו 'התראות' ושנו ל'אפשר'"],
+          "safari": ["לחצו על 'Safari' בשורת התפריטים", "לחצו על 'הגדרות לאתר זה'", "הגדירו התראות ל'אפשר'"],
+          "firefox": ["לחצו על סמל המנעול משמאל לשורת הכתובת", "לחצו על 'התראות' תחת הרשאות", "בחרו 'אפשר'"],
+          "fallback": ["מצאו את סמל המנעול או הגדרות האתר בשורת הכתובת של הדפדפן", "חפשו 'התראות' ושנו ל'אפשר'"]
+        },
         "enablePushNotifications": "הפעלת התראות בעזרת התראות של הדפדפן",
         "enablePushNotificationsDescription": "קבלו התראות דרך התראות push של הדפדפן",
         "requesting": "מבוקש...",
@@ -748,7 +755,7 @@
       "subtitle": "המסע המוזיקלי שלך ממשיך"
     },
     "playNext": {
-      "label": "למשחק הבא"
+      "label": "המשיכו את המסע"
     },
     "continueButton": {
       "title": "המשך ללמוד",
@@ -1424,6 +1431,9 @@
     "statStars": "כוכבים",
     "statNodes": "יחידות שהושלמו",
     "statStreak": "ימי רצף",
+    "notificationsHeading": "העדפות התראות",
+    "accountHeading": "מחק חשבון",
+    "legalHeading": "משפטי",
     "noSubscriptionHeading": "אין מנוי פעיל",
     "noSubscriptionBody": "פתחו גישה מלאה למסלול כדי להמשיך ללמוד.",
     "practiceCalendar": {

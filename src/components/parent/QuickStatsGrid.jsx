@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import SKILL_NODES from '../../data/skillTrail';
 
 /**
  * Single stat card — glass card with centered value + label.
@@ -11,7 +12,7 @@ function StatCard({ label, value, loading }) {
   }
   return (
     <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4 flex flex-col items-center justify-center">
-      <span className="text-2xl font-bold text-indigo-300">
+      <span className="text-2xl font-bold text-indigo-300" dir="ltr">
         {value !== null && value !== undefined ? value : '\u2014'}
       </span>
       <span className="text-sm text-white/70 mt-1">{label}</span>
@@ -36,8 +37,9 @@ export default function QuickStatsGrid({ xpData, progressData, streakState, isLo
   const totalStars = progressData
     ? progressData.reduce((sum, p) => sum + (p.stars || 0), 0)
     : null;
+  const validNodeIds = new Set(SKILL_NODES.map(n => n.id));
   const nodesCompleted = progressData
-    ? progressData.filter(p => p.stars > 0).length
+    ? progressData.filter(p => p.stars > 0 && validNodeIds.has(p.node_id)).length
     : null;
   const streak = streakState?.streakCount ?? null;
 
@@ -55,7 +57,7 @@ export default function QuickStatsGrid({ xpData, progressData, streakState, isLo
       />
       <StatCard
         label={t('parentPortal.statNodes')}
-        value={nodesCompleted !== null ? `${nodesCompleted}/93` : null}
+        value={nodesCompleted !== null ? `${nodesCompleted}/${SKILL_NODES.length}` : null}
         loading={isLoading}
       />
       <StatCard

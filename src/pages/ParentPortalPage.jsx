@@ -12,7 +12,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -23,15 +23,23 @@ import {
   Loader2,
   Crown,
   AlertTriangle,
+  Trash2,
+  Scale,
+  Bell,
+  ShieldCheck,
 } from 'lucide-react';
 import PracticeHeatmapCard from '../components/parent/PracticeHeatmapCard';
 import QuickStatsGrid from '../components/parent/QuickStatsGrid';
 import ParentGateMath from '../components/settings/ParentGateMath';
 import NotificationPermissionCard from '../components/settings/NotificationPermissionCard';
 import ToggleSetting from '../components/settings/ToggleSetting';
+import TimePicker from '../components/settings/TimePicker';
+import SettingsSection from '../components/settings/SettingsSection';
+import AccountDeletionModal from '../components/teacher/AccountDeletionModal';
 import { toast } from 'react-hot-toast';
 import { useUser } from '../features/authentication/useUser';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { fetchSubscriptionDetail } from '../services/subscriptionService';
 import { getStudentXP } from '../utils/xpSystem';
 import { getStudentProgress } from '../services/skillProgressService';
@@ -99,6 +107,7 @@ export default function ParentPortalPage() {
   const locale = i18n.language || 'en';
   const { user } = useUser();
   const { isLoading: subCtxLoading } = useSubscription();
+  const { preferences, updatePreference, updateNotificationType } = useSettings();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -106,6 +115,7 @@ export default function ParentPortalPage() {
   const [gateOpen, setGateOpen] = useState(true);
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   // Optimistic state after cancel to avoid waiting for DB refresh
   const [optimisticCancel, setOptimisticCancel] = useState(null);
@@ -211,6 +221,33 @@ export default function ParentPortalPage() {
     }
   };
 
+  // Account deletion — no individual parent gate needed (portal gate covers it)
+  const studentDisplayName = user
+    ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.user_metadata?.username || user.email || ''
+    : '';
+
+  const handleDeleteAccountClick = async () => {
+    try {
+      if (user?.id) {
+        await supabase
+          .from('push_subscriptions')
+          .upsert(
+            {
+              student_id: user.id,
+              parent_consent_granted: true,
+              parent_consent_at: new Date().toISOString(),
+              is_enabled: false,
+            },
+            { onConflict: 'student_id' }
+          );
+      }
+      queryClient.invalidateQueries({ queryKey: ['push-subscription-status', user?.id] });
+      setShowDeleteModal(true);
+    } catch {
+      toast.error(t('common.saving'));
+    }
+  };
+
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Math gate — renders on every visit, always first */}
@@ -226,8 +263,8 @@ export default function ParentPortalPage() {
       {!gateOpen && (
         <div className="animate-fadeIn motion-reduce:animate-none min-h-screen pb-8">
           <div className="max-w-lg mx-auto px-4 sm:px-6 py-6 pb-16">
-            {/* Back navigation — navigate(-1) handles both desktop and mobile entry */}
-            <BackButton styling="mb-6" />
+            {/* Back navigation — only on mobile (desktop has sidebar nav) */}
+            <BackButton styling="mb-6 md:hidden" />
 
             <h1 className="mb-6 text-2xl font-bold text-white">
               {t('parentPortal.parentZoneTitle')}
@@ -364,33 +401,146 @@ export default function ParentPortalPage() {
             </section>
 
             {/* Section 4: Parent Settings */}
-            <section className="mt-8">
-              <h2 className="text-xl font-bold text-white mb-4">
-                {t('parentPortal.parentSettingsHeading')}
-              </h2>
-              <div className="space-y-4">
-                {/* NotificationPermissionCard keeps its own internal gate */}
+            <div className="mt-8 space-y-4">
+              <SettingsSection
+                isRTL={isRTL}
+                title={t('parentPortal.parentSettingsHeading')}
+                icon={ShieldCheck}
+                defaultOpen={false}
+              >
+                <div className="space-y-4">
+                  <ToggleSetting
+                    isRTL={isRTL}
+                    label={t('streak.weekendPassLabel')}
+                    description={t('streak.weekendPassDescription')}
+                    value={streakState?.weekendPassEnabled || false}
+                    onChange={handleWeekendPassToggle}
+                  />
+                  {streakState?.weekendPassEnabled && (
+                    <p className="text-xs text-green-300 mt-2">
+                      {t('streak.weekendPassEnabled')}
+                    </p>
+                  )}
+                </div>
+              </SettingsSection>
+
+              {/* Section 5: Notification Preferences */}
+              <SettingsSection
+                isRTL={isRTL}
+                title={t('parentPortal.notificationsHeading')}
+                icon={Bell}
+                defaultOpen={false}
+              >
+                {/* Practice reminders push permission */}
                 <NotificationPermissionCard
                   isRTL={isRTL}
                   studentId={user?.id}
                   onPermissionChange={() => {}}
                 />
-                {/* Weekend pass — no individual gate needed (portal gate covers it per D-13) */}
+
                 <ToggleSetting
                   isRTL={isRTL}
-                  label={t('streak.weekendPassLabel')}
-                  description={t('streak.weekendPassDescription')}
-                  value={streakState?.weekendPassEnabled || false}
-                  onChange={handleWeekendPassToggle}
+                  label={t('pages.settings.notifications.enableAllNotifications')}
+                  description={t('pages.settings.notifications.enableAllNotificationsDescription')}
+                  value={preferences.notifications_enabled}
+                  onChange={(value) => updatePreference('notifications_enabled', value)}
                 />
-                {streakState?.weekendPassEnabled && (
-                  <p className="text-xs text-green-300 mt-2">
-                    {t('streak.weekendPassEnabled')}
+
+                <div className="space-y-2 mt-4">
+                  <h4 className="text-white font-semibold text-sm mb-2">
+                    {t('pages.settings.notifications.notificationTypesTitle')}
+                  </h4>
+                  <ToggleSetting isRTL={isRTL} label={t('pages.settings.notifications.achievements')} value={preferences.notification_types?.achievement !== false} onChange={(value) => updateNotificationType('achievement', value)} disabled={!preferences.notifications_enabled} />
+                  <ToggleSetting isRTL={isRTL} label={t('pages.settings.notifications.assignments')} value={preferences.notification_types?.assignment !== false} onChange={(value) => updateNotificationType('assignment', value)} disabled={!preferences.notifications_enabled} />
+                  <ToggleSetting isRTL={isRTL} label={t('pages.settings.notifications.messages')} value={preferences.notification_types?.message !== false} onChange={(value) => updateNotificationType('message', value)} disabled={!preferences.notifications_enabled} />
+                  <ToggleSetting isRTL={isRTL} label={t('pages.settings.notifications.reminders')} value={preferences.notification_types?.reminder !== false} onChange={(value) => updateNotificationType('reminder', value)} disabled={!preferences.notifications_enabled} />
+                  <ToggleSetting isRTL={isRTL} label={t('pages.settings.notifications.system')} value={preferences.notification_types?.system !== false} onChange={(value) => updateNotificationType('system', value)} disabled={!preferences.notifications_enabled} />
+                </div>
+
+                <div className="mt-6">
+                  <ToggleSetting
+                    isRTL={isRTL}
+                    label={t('pages.settings.notifications.quietHours')}
+                    description={t('pages.settings.notifications.quietHoursDescription')}
+                    value={preferences.quiet_hours_enabled}
+                    onChange={(value) => updatePreference('quiet_hours_enabled', value)}
+                    disabled={!preferences.notifications_enabled}
+                  />
+                  {preferences.quiet_hours_enabled && (
+                    <div className="grid grid-cols-2 gap-4 mt-3">
+                      <TimePicker isRTL={isRTL} label={t('pages.settings.notifications.startTime')} value={preferences.quiet_hours_start} onChange={(value) => updatePreference('quiet_hours_start', value)} />
+                      <TimePicker isRTL={isRTL} label={t('pages.settings.notifications.endTime')} value={preferences.quiet_hours_end} onChange={(value) => updatePreference('quiet_hours_end', value)} />
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  <ToggleSetting
+                    isRTL={isRTL}
+                    label={t('pages.settings.notifications.dailyPracticeReminder')}
+                    description={t('pages.settings.notifications.dailyPracticeReminderDescription')}
+                    value={preferences.daily_reminder_enabled}
+                    onChange={(value) => updatePreference('daily_reminder_enabled', value)}
+                    disabled={!preferences.notifications_enabled}
+                  />
+                  {preferences.daily_reminder_enabled && (
+                    <div className="mt-3">
+                      <TimePicker isRTL={isRTL} label={t('pages.settings.notifications.reminderTime')} value={preferences.daily_reminder_time} onChange={(value) => updatePreference('daily_reminder_time', value)} />
+                    </div>
+                  )}
+                </div>
+              </SettingsSection>
+
+              {/* Section 6: Account */}
+              <SettingsSection
+                isRTL={isRTL}
+                title={t('parentPortal.accountHeading')}
+                icon={Trash2}
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
+                  <p className="text-white/70 text-sm">
+                    {t('pages.settings.deleteAccountDescription')}
                   </p>
-                )}
-              </div>
-            </section>
+                  <button
+                    onClick={handleDeleteAccountClick}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600/20 border border-red-500/30 text-red-300 hover:bg-red-600/30 hover:text-red-200 transition-all duration-200 text-sm font-medium"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {t('pages.settings.deleteAccountButton')}
+                  </button>
+                </div>
+              </SettingsSection>
+
+              {/* Section 7: Legal */}
+              <SettingsSection
+                isRTL={isRTL}
+                title={t('parentPortal.legalHeading')}
+                icon={Scale}
+                defaultOpen={false}
+              >
+                <div className="space-y-3">
+                  <Link to="/privacy" className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm">
+                    {t('pages.settings.privacyPolicy', 'Privacy Policy')}
+                  </Link>
+                  <Link to="/terms" className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm">
+                    {t('pages.settings.termsOfService', 'Terms of Service')}
+                  </Link>
+                  <Link to="/legal" className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm">
+                    {t('pages.settings.attributions', 'Attributions & Licenses')}
+                  </Link>
+                </div>
+              </SettingsSection>
+            </div>
           </div>
+
+          {/* Account Deletion Modal */}
+          <AccountDeletionModal
+            isOpen={showDeleteModal}
+            onClose={() => setShowDeleteModal(false)}
+            student={user ? { student_id: user.id, student_name: studentDisplayName } : null}
+            onDeletionRequested={() => setShowDeleteModal(false)}
+          />
 
           {/* Cancel Confirmation Dialog */}
           {showCancelDialog && (

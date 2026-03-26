@@ -33,7 +33,6 @@ import PracticeLogCard from "../dashboard/PracticeLogCard";
 import { practiceLogService } from "../../services/practiceLogService";
 import { getDailyGoalsWithProgress } from "../../services/dailyGoalsService";
 import { getWeeklyProgress } from "../../services/weeklyProgressService";
-import { translateNodeName } from "../../utils/translateNodeName";
 import { useSubscription } from "../../contexts/SubscriptionContext";
 import { useAccessibility } from "../../contexts/AccessibilityContext";
 import {
@@ -691,8 +690,6 @@ function Dashboard() {
       {/* PLAY NEXT BUTTON (overlaps hero) */}
       {isStudent && nextNode && (
         <PlayNextButton
-          nodeName={translateNodeName(nextNode.name, t, i18n)}
-          nodeStars={nextNode.progress?.stars}
           to="/trail"
           highlightNodeId={nextNode.id}
           isRTL={isRTL}

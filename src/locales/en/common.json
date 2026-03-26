@@ -365,8 +365,15 @@
         "notificationsEnabled": "Notifications Enabled",
         "notificationsEnabledDescription": "You will receive notifications via browser push notifications",
         "notificationsBlocked": "Notifications Blocked",
-        "notificationsBlockedDescription": "Notifications are blocked in your browser. To enable them, update your browser settings.",
-        "notificationsBlockedDescription2": "Look for the lock icon in the address bar and allow notifications.",
+        "notificationsBlockedSubtitle": "Notifications were previously blocked. Follow these steps to enable them:",
+        "notificationsBlockedSteps": {
+          "androidPwa": ["Long-press the PianoMaster app icon", "Tap 'App info'", "Tap 'Notifications' and turn them on"],
+          "iosPwa": ["Open your iPhone Settings app", "Scroll down and tap 'PianoMaster'", "Tap 'Notifications' and turn them on"],
+          "chrome": ["Click the tune icon left of the address bar", "Find 'Notifications' and change to 'Allow'"],
+          "safari": ["Click 'Safari' in the menu bar", "Click 'Settings for This Website'", "Set Notifications to 'Allow'"],
+          "firefox": ["Click the lock icon left of the address bar", "Click 'Notifications' under Permissions", "Select 'Allow'"],
+          "fallback": ["Find the lock or site settings icon in your browser's address bar", "Look for 'Notifications' and change to 'Allow'"]
+        },
         "startTime": "Start Time",
         "endTime": "End Time",
         "dailyPracticeReminder": "Daily Practice Reminder",
@@ -748,7 +755,7 @@
       "subtitle": "Your musical journey continues"
     },
     "playNext": {
-      "label": "PLAY NEXT"
+      "label": "CONTINUE JOURNEY"
     },
     "continueButton": {
       "title": "Continue Learning",
@@ -1417,6 +1424,9 @@
     "statStars": "Stars Earned",
     "statNodes": "Nodes Done",
     "statStreak": "Day Streak",
+    "notificationsHeading": "Notification Preferences",
+    "accountHeading": "Remove Account",
+    "legalHeading": "Legal",
     "noSubscriptionHeading": "No active subscription",
     "noSubscriptionBody": "Unlock the full trail to keep the learning going.",
     "practiceCalendar": {

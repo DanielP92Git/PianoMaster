@@ -10,8 +10,6 @@ import { useTranslation } from 'react-i18next';
 import { useAccessibility } from '../../contexts/AccessibilityContext';
 
 const PlayNextButton = ({
-  nodeName,
-  nodeStars = 0,
   to = '/trail',
   highlightNodeId,
   isRTL = false,
@@ -19,16 +17,13 @@ const PlayNextButton = ({
   const { t } = useTranslation('common');
   const { reducedMotion } = useAccessibility();
 
-  // Build star display string
-  const starsDisplay = nodeStars > 0 ? ' \u2B50'.repeat(nodeStars) : '';
-
   return (
     <div className="relative z-40 flex justify-center -mt-7">
       <Link
         to={to}
         state={highlightNodeId ? { highlightNodeId } : undefined}
         className={[
-          'inline-flex flex-col items-center px-10 py-0.5 rounded-full',
+          'inline-flex items-center justify-center px-10 py-1.5 rounded-full',
           'bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600',
           'border-2 border-blue-300/50',
           'shadow-[0_4px_24px_rgba(99,102,241,0.5)]',
@@ -41,18 +36,9 @@ const PlayNextButton = ({
           .join(' ')}
         dir={isRTL ? 'rtl' : 'ltr'}
       >
-        {/* Main label */}
         <span className="text-xl font-bold text-white tracking-widest uppercase">
-          {t('dashboard.playNext.label', { defaultValue: 'PLAY NEXT' })}
+          {t('dashboard.playNext.label', { defaultValue: 'CONTINUE JOURNEY' })}
         </span>
-
-        {/* Node name subtitle */}
-        {nodeName && (
-          <span className="text-sm font-medium text-white/80">
-            {nodeName}
-            {starsDisplay}
-          </span>
-        )}
       </Link>
 
       {/* Keyframes for glow pulse animation */}

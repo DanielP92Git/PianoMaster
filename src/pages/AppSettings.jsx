@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   User,
-  Bell,
   Volume2,
   Eye,
   SmilePlus,
@@ -11,12 +10,8 @@ import {
   Download,
   Share,
   Plus,
-  Scale,
-  Trash2,
 } from "lucide-react";
 import FeedbackForm from "../components/settings/FeedbackForm";
-import AccountDeletionModal from "../components/teacher/AccountDeletionModal";
-import { useQueryClient } from "@tanstack/react-query";
 import { useSettings } from "../contexts/SettingsContext";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import { useUser } from "../features/authentication/useUser";
@@ -24,9 +19,7 @@ import useGlobalAudioSettings from "../hooks/useGlobalAudioSettings";
 import SettingsSection from "../components/settings/SettingsSection";
 import ToggleSetting from "../components/settings/ToggleSetting";
 import SliderSetting from "../components/settings/SliderSetting";
-import TimePicker from "../components/settings/TimePicker";
 import ProfileForm from "../components/settings/ProfileForm";
-import ParentGateMath from "../components/settings/ParentGateMath";
 import LanguageSelector from "../components/settings/LanguageSelector";
 import ParentZoneEntryCard from "../components/settings/ParentZoneEntryCard";
 import { toast } from "react-hot-toast";
@@ -39,58 +32,17 @@ import {
 } from "../utils/pwaDetection";
 import { useTranslation } from "react-i18next";
 import AuthButton from "../components/auth/AuthButton";
-import supabase from "../services/supabase";
 
 function AppSettings() {
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
   const toggleProps = { isRTL };
   const sliderProps = { isRTL };
-  const timePickerProps = { isRTL };
-  const { preferences, updatePreference, updateNotificationType, isLoading } =
+  const { preferences, updatePreference, isLoading } =
     useSettings();
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
   const { user } = useUser();
-  const queryClient = useQueryClient();
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteParentGate, setShowDeleteParentGate] = useState(false);
-
-  // Build student object for AccountDeletionModal (expects { student_id, student_name })
-  const studentDisplayName = user
-    ? `${user.user_metadata?.first_name || ''} ${user.user_metadata?.last_name || ''}`.trim() || user.user_metadata?.username || user.email || ''
-    : '';
-
-  const handleDeleteAccountClick = () => {
-    setShowDeleteParentGate(true);
-  };
-
-  const handleDeleteParentConsentGranted = async () => {
-    setShowDeleteParentGate(false);
-    try {
-      if (user?.id) {
-        await supabase
-          .from("push_subscriptions")
-          .upsert(
-            {
-              student_id: user.id,
-              parent_consent_granted: true,
-              parent_consent_at: new Date().toISOString(),
-              is_enabled: false,
-            },
-            { onConflict: "student_id" }
-          );
-      }
-      queryClient.invalidateQueries({ queryKey: ["push-subscription-status", user?.id] });
-      setShowDeleteModal(true);
-    } catch {
-      toast.error(t("common.saving"));
-    }
-  };
-
-  const handleDeleteParentGateCancel = () => {
-    setShowDeleteParentGate(false);
-  };
 
   const [installEnv, setInstallEnv] = useState({
     isReady: false,
@@ -193,18 +145,13 @@ function AppSettings() {
 
   return (
     <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
-      {showDeleteParentGate && (
-        <ParentGateMath
-          onConsent={handleDeleteParentConsentGranted}
-          onCancel={handleDeleteParentGateCancel}
-          isRTL={isRTL}
-        />
-      )}
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 flex flex-col min-h-[calc(100vh-200px)]">
         <LanguageSelector />
 
-        {/* Parent Zone Entry Card — mobile entry to /parent-portal (D-02) */}
-        <ParentZoneEntryCard />
+        {/* Parent Zone Entry Card — mobile only (desktop has sidebar nav) */}
+        <div className="md:hidden">
+          <ParentZoneEntryCard />
+        </div>
 
         {/* Avatar Selection Link */}
         <Link
@@ -450,138 +397,6 @@ function AppSettings() {
           </div>
         </SettingsSection>
 
-        {/* Notification Settings */}
-        <SettingsSection
-          isRTL={isRTL}
-          title={t("pages.settings.notifications.notificationsSettingsTitle")}
-          description={t(
-            "pages.settings.notifications.notificationsSettingsDescription"
-          )}
-          icon={Bell}
-          defaultOpen={false}
-        >
-          {/* Master Toggle */}
-          <div className="mt-4">
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.enableAllNotifications")}
-              description={t(
-                "pages.settings.notifications.enableAllNotificationsDescription"
-              )}
-              value={preferences.notifications_enabled}
-              onChange={(value) =>
-                updatePreference("notifications_enabled", value)
-              }
-            />
-          </div>
-
-          {/* Notification Types */}
-          <div className="space-y-2 mt-4">
-            <h4 className="text-white font-semibold text-sm mb-3">
-              {t("pages.settings.notifications.notificationTypesTitle")}
-            </h4>
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.achievements")}
-              value={preferences.notification_types?.achievement !== false}
-              onChange={(value) => updateNotificationType("achievement", value)}
-              disabled={!preferences.notifications_enabled}
-            />
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.assignments")}
-              value={preferences.notification_types?.assignment !== false}
-              onChange={(value) => updateNotificationType("assignment", value)}
-              disabled={!preferences.notifications_enabled}
-            />
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.messages")}
-              value={preferences.notification_types?.message !== false}
-              onChange={(value) => updateNotificationType("message", value)}
-              disabled={!preferences.notifications_enabled}
-            />
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.reminders")}
-              value={preferences.notification_types?.reminder !== false}
-              onChange={(value) => updateNotificationType("reminder", value)}
-              disabled={!preferences.notifications_enabled}
-            />
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.system")}
-              value={preferences.notification_types?.system !== false}
-              onChange={(value) => updateNotificationType("system", value)}
-              disabled={!preferences.notifications_enabled}
-            />
-          </div>
-
-          {/* Quiet Hours */}
-          <div className="mt-6">
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.quietHours")}
-              description={t(
-                "pages.settings.notifications.quietHoursDescription"
-              )}
-              value={preferences.quiet_hours_enabled}
-              onChange={(value) =>
-                updatePreference("quiet_hours_enabled", value)
-              }
-              disabled={!preferences.notifications_enabled}
-            />
-            {preferences.quiet_hours_enabled && (
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                <TimePicker
-                  {...timePickerProps}
-                  label={t("pages.settings.notifications.startTime")}
-                  value={preferences.quiet_hours_start}
-                  onChange={(value) =>
-                    updatePreference("quiet_hours_start", value)
-                  }
-                />
-                <TimePicker
-                  {...timePickerProps}
-                  label={t("pages.settings.notifications.endTime")}
-                  value={preferences.quiet_hours_end}
-                  onChange={(value) =>
-                    updatePreference("quiet_hours_end", value)
-                  }
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Daily Practice Reminder */}
-          <div className="mt-6">
-            <ToggleSetting
-              {...toggleProps}
-              label={t("pages.settings.notifications.dailyPracticeReminder")}
-              description={t(
-                "pages.settings.notifications.dailyPracticeReminderDescription"
-              )}
-              value={preferences.daily_reminder_enabled}
-              onChange={(value) =>
-                updatePreference("daily_reminder_enabled", value)
-              }
-              disabled={!preferences.notifications_enabled}
-            />
-            {preferences.daily_reminder_enabled && (
-              <div className="mt-4">
-                <TimePicker
-                  {...timePickerProps}
-                  label={t("pages.settings.notifications.reminderTime")}
-                  value={preferences.daily_reminder_time}
-                  onChange={(value) =>
-                    updatePreference("daily_reminder_time", value)
-                  }
-                />
-              </div>
-            )}
-          </div>
-        </SettingsSection>
-
         {/* Audio/Sound Settings */}
         <SettingsSection
           isRTL={isRTL}
@@ -625,56 +440,6 @@ function AppSettings() {
           </div>
         </SettingsSection>
 
-        {/* Account Deletion (COPPA) */}
-        <SettingsSection
-          isRTL={isRTL}
-          title={t("pages.settings.accountDeletionTitle")}
-          icon={Trash2}
-          defaultOpen={false}
-        >
-          <div className="space-y-3 mt-2">
-            <p className="text-white/70 text-sm">
-              {t("pages.settings.deleteAccountDescription")}
-            </p>
-            <button
-              onClick={handleDeleteAccountClick}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600/20 border border-red-500/30 text-red-300 hover:bg-red-600/30 hover:text-red-200 transition-all duration-200 text-sm font-medium"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t("pages.settings.deleteAccountButton")}
-            </button>
-          </div>
-        </SettingsSection>
-
-        {/* Legal Section */}
-        <SettingsSection
-          isRTL={isRTL}
-          title={t("pages.settings.legalTitle", "Legal")}
-          icon={Scale}
-          defaultOpen={false}
-        >
-          <div className="space-y-3 mt-2">
-            <Link
-              to="/privacy"
-              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
-            >
-              {t("pages.settings.privacyPolicy", "Privacy Policy")}
-            </Link>
-            <Link
-              to="/terms"
-              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
-            >
-              {t("pages.settings.termsOfService", "Terms of Service")}
-            </Link>
-            <Link
-              to="/legal"
-              className="flex items-center gap-2 text-indigo-300 hover:text-indigo-200 transition-colors text-sm"
-            >
-              {t("pages.settings.attributions", "Attributions & Licenses")}
-            </Link>
-          </div>
-        </SettingsSection>
-
         {/* Logout Button */}
         <div className="mt-auto pt-12 pb-8 border-t border-white/20">
           <div className="max-w-xs mx-auto">
@@ -686,15 +451,6 @@ function AppSettings() {
         <FeedbackForm isRTL={isRTL} />
       </div>
 
-      <AccountDeletionModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        student={user ? { student_id: user.id, student_name: studentDisplayName } : null}
-        onDeletionRequested={() => {
-          setShowDeleteModal(false);
-          // Account was deleted -- signOut already called by accountDeletionService
-        }}
-      />
     </div>
   );
 }
