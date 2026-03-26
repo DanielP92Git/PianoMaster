@@ -58,10 +58,18 @@ All v2.8 decisions archived in `.planning/milestones/v2.8-ROADMAP.md`.
 | 260326-td5 | Add keySignature 'A' to Unit 4 SIGHT_READING exercises (key sig pipeline for sharps) | 2026-03-26 | 1eb3814 | [260326-td5-fix-sight-reading-sharp-pattern-generati](./quick/260326-td5-fix-sight-reading-sharp-pattern-generati/) |
 | 260326-wo7 | Add note staff image and mini keyboard to TrailNodeModal for Discovery nodes | 2026-03-26 | 4c8bf2d | [260326-wo7-add-note-staff-image-and-mini-keyboard-i](./quick/260326-wo7-add-note-staff-image-and-mini-keyboard-i/) |
 
+### Additional Fixes (2026-03-26/27)
+
+| Description | Date | Commit |
+|-------------|------|--------|
+| Revert keySignature 'A' approach — render sharps as accidentals next to notes (beginner-appropriate), fix note pools, enable bar-level accidental carry-through in VexFlowStaffDisplay | 2026-03-26 | 0b3e908 |
+| Fix NotesRecognitionGame showing unlearned accidentals (G#/D#) in trail Discovery nodes — add trailNotePoolSet guard | 2026-03-26 | 0b3e908 |
+| Hebrew note names on MiniKeyboard highlighted keys (פה♯ → ♯פה RTL order) | 2026-03-27 | fbe77a2 |
+
 ## Session Continuity
 
-Last session: 2026-03-26
-Stopped at: Completed quick-260326-wo7 (NotePreview + MiniKeyboard in TrailNodeModal)
+Last session: 2026-03-27
+Stopped at: Shipped sharp practice fixes + NotePreview/MiniKeyboard + i18n fixes
 Resume file: None
 
 **Next action:**
@@ -70,4 +78,4 @@ Resume file: None
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-26 — Milestone v2.9 started*
+*Last updated: 2026-03-27 — sharp practice fixes, NotePreview, accidental filtering, i18n*
