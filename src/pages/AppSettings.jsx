@@ -79,7 +79,7 @@ function AppSettings() {
     };
   }, [t]);
 
-  const handleAndroidInstallRequest = () => {
+  const handleInstallRequest = () => {
     if (typeof window === "undefined") return;
     // The native install prompt only works in a secure context (HTTPS / localhost).
     // On LAN HTTP, show manual Add-to-Home-Screen guidance instead.
@@ -101,6 +101,12 @@ function AppSettings() {
     installEnv.isAndroid &&
     installEnv.isChrome &&
     !installEnv.isStandalone;
+
+  const showDesktopInstall =
+    installEnv.isReady &&
+    !installEnv.isStandalone &&
+    !showIOSInstall &&
+    !showAndroidInstall;
 
   const handleTestSound = () => {
     if (audio.shouldPlaySound()) {
@@ -215,7 +221,7 @@ function AppSettings() {
                 {t("install.chrome.installDescription")}
               </p>
               <button
-                onClick={handleAndroidInstallRequest}
+                onClick={handleInstallRequest}
                 className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors text-sm font-medium"
               >
                 {t("install.chrome.installButton")}
@@ -227,10 +233,22 @@ function AppSettings() {
             </div>
           )}
 
-          {!showIOSInstall && !showAndroidInstall && (
-            <p className="text-white/70 text-sm">
-              {t("pages.settings.installDescriptionNoInstall")}
-            </p>
+          {showDesktopInstall && (
+            <div className="space-y-4 text-white">
+              <p className="text-white/80 text-sm">
+                {t("install.desktop.installDescription")}
+              </p>
+              <button
+                onClick={handleInstallRequest}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors text-sm font-medium"
+              >
+                <Download className="w-4 h-4" />
+                {t("install.desktop.installButton")}
+              </button>
+              <p className="text-xs text-white/70">
+                {t("install.desktop.installFallback")}
+              </p>
+            </div>
           )}
         </SettingsSection>
 

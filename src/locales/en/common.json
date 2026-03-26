@@ -467,6 +467,11 @@
       "installStep2": "Choose \"Add to Home Screen\"",
       "installStep3": "Tap \"Add\" to confirm"
     },
+    "desktop": {
+      "installDescription": "You can install PianoMaster as an app for quick access and a native experience.",
+      "installButton": "Install App",
+      "installFallback": "If the button doesn't work, your browser may not support app installation. Try using Chrome or Edge."
+    },
     "unavailableToast": "Install isn't available right now. If you're on Android, open Chrome's menu (⋮) and choose Add to Home screen, then reload.",
     "prompt": {
       "headerTitle": "Install PianoMaster",
