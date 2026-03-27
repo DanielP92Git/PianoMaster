@@ -2,7 +2,9 @@
  * TrailMap Component
  *
  * Displays the complete skill trail with nodes organized in a winding path
- * Duolingo-style progression with connected nodes and visual feedback
+ * Duolingo-style progression with connected nodes and visual feedback.
+ *
+ * Data-driven tab rendering: adding a new tab = one entry in TRAIL_TAB_CONFIGS (D-09).
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react';
@@ -19,6 +21,7 @@ import {
   NODE_CATEGORIES,
   UNITS
 } from '../../data/skillTrail';
+import { TRAIL_TAB_CONFIGS } from '../../data/constants';
 import {
   getStudentProgress,
   getCompletedNodeIds,
@@ -49,13 +52,6 @@ function useMediaQuery(query) {
   return matches;
 }
 
-// Tab configuration for path switching
-const TRAIL_TABS = [
-  { id: 'treble', label: 'Treble', categoryKey: 'TREBLE_CLEF' },
-  { id: 'bass', label: 'Bass', categoryKey: 'BASS_CLEF' },
-  { id: 'rhythm', label: 'Rhythm', categoryKey: 'RHYTHM' },
-];
-
 const TrailMap = () => {
   const { user } = useUser();
   const { isPremium } = useSubscription();
@@ -66,11 +62,9 @@ const TrailMap = () => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [unlockedNodes, setUnlockedNodes] = useState(new Set());
   const [loading, setLoading] = useState(true);
-  const [_currentUnits, setCurrentUnits] = useState({
-    treble: 1,
-    bass: 1,
-    rhythm: 1
-  });
+  const [_currentUnits, setCurrentUnits] = useState(
+    Object.fromEntries(TRAIL_TAB_CONFIGS.map(t => [t.id, 1]))
+  );
   const tabRefs = useRef([]);
   const activeNodeRef = useRef(null);
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -83,27 +77,25 @@ const TrailMap = () => {
 
       try {
         setLoading(true);
-        const [progressData, completedIds, trebleUnit, bassUnit, rhythmUnit] = await Promise.all([
+        const [progressData, completedIds, ...unitResults] = await Promise.all([
           getStudentProgress(user.id),
           getCompletedNodeIds(user.id),
-          getCurrentUnitForCategory(user.id, NODE_CATEGORIES.TREBLE_CLEF),
-          getCurrentUnitForCategory(user.id, NODE_CATEGORIES.BASS_CLEF),
-          getCurrentUnitForCategory(user.id, NODE_CATEGORIES.RHYTHM)
+          ...TRAIL_TAB_CONFIGS.map(tab =>
+            getCurrentUnitForCategory(user.id, NODE_CATEGORIES[tab.categoryKey])
+          )
         ]);
 
         setProgress(progressData);
         setCompletedNodeIds(completedIds);
-        setCurrentUnits({
-          treble: trebleUnit,
-          bass: bassUnit,
-          rhythm: rhythmUnit
-        });
+        setCurrentUnits(
+          Object.fromEntries(TRAIL_TAB_CONFIGS.map((tab, i) => [tab.id, unitResults[i]]))
+        );
 
         // Calculate which nodes are unlocked locally
         const allNodes = [
-          ...getNodesByCategory(NODE_CATEGORIES.TREBLE_CLEF),
-          ...getNodesByCategory(NODE_CATEGORIES.BASS_CLEF),
-          ...getNodesByCategory(NODE_CATEGORIES.RHYTHM),
+          ...TRAIL_TAB_CONFIGS.flatMap(tab =>
+            getNodesByCategory(NODE_CATEGORIES[tab.categoryKey])
+          ),
           ...getBossNodes()
         ];
 
@@ -145,38 +137,28 @@ const TrailMap = () => {
     return progress.find(p => p.node_id === nodeId);
   };
 
-  // Find the current (next to complete) node in a category
-  // Get nodes by category
-  const trebleNodes = getNodesByCategory(NODE_CATEGORIES.TREBLE_CLEF);
-  const bassNodes = getNodesByCategory(NODE_CATEGORIES.BASS_CLEF);
-  const rhythmNodes = getNodesByCategory(NODE_CATEGORIES.RHYTHM);
+  // Build a unified lookup map: { [tabId]: sortedNodes[] }
+  // Boss nodes are merged into their respective tab using bossPrefix from config (D-13)
   const bossNodes = getBossNodes();
 
-  // Merge boss nodes into their respective categories
-  const trebleWithBoss = useMemo(() => {
-    const trebleBosses = bossNodes.filter(b => b.id.startsWith('boss_treble'));
-    return [...trebleNodes, ...trebleBosses].sort((a, b) => a.order - b.order);
-  }, [trebleNodes, bossNodes]);
-
-  const bassWithBoss = useMemo(() => {
-    const bassBosses = bossNodes.filter(b => b.id.startsWith('boss_bass'));
-    return [...bassNodes, ...bassBosses].sort((a, b) => a.order - b.order);
-  }, [bassNodes, bossNodes]);
-
-  const rhythmWithBoss = useMemo(() => {
-    const rhythmBosses = bossNodes.filter(b => b.id.startsWith('boss_rhythm'));
-    return [...rhythmNodes, ...rhythmBosses].sort((a, b) => a.order - b.order);
-  }, [rhythmNodes, bossNodes]);
+  const nodesWithBossByTab = useMemo(() => {
+    return Object.fromEntries(
+      TRAIL_TAB_CONFIGS.map(tab => {
+        const categoryNodes = getNodesByCategory(NODE_CATEGORIES[tab.categoryKey]);
+        const tabBosses = bossNodes.filter(b => b.id.startsWith(tab.bossPrefix));
+        const merged = [...categoryNodes, ...tabBosses].sort((a, b) => a.order - b.order);
+        return [tab.id, merged];
+      })
+    );
+  }, [bossNodes]);
 
   const { t, i18n } = useTranslation(['trail', 'common']);
   const isRTL = i18n.dir() === 'rtl';
 
-  // Prepare data for active tab
-  const activeNodes = activeTab === 'treble' ? trebleWithBoss :
-                      activeTab === 'bass' ? bassWithBoss : rhythmWithBoss;
-  const activeCategory = activeTab === 'treble' ? NODE_CATEGORIES.TREBLE_CLEF :
-                         activeTab === 'bass' ? NODE_CATEGORIES.BASS_CLEF :
-                         NODE_CATEGORIES.RHYTHM;
+  // Prepare data for active tab — all driven by config (D-09, D-11, D-12)
+  const activeTabConfig = TRAIL_TAB_CONFIGS.find(t => t.id === activeTab) || TRAIL_TAB_CONFIGS[0];
+  const activeNodes = nodesWithBossByTab[activeTab] || [];
+  const activeCategory = NODE_CATEGORIES[activeTabConfig.categoryKey];
 
   // Group nodes by unit for layout components
   const { nodesByUnit, units } = useMemo(() => {
@@ -204,16 +186,16 @@ const TrailMap = () => {
   // Pre-compute which nodes are premium-locked for free-tier users
   // During loading/error, isPremium defaults to false → premium nodes show gold (safe default per CONTEXT.md)
   const premiumLockedNodeIds = useMemo(() => {
-    if (isPremium) return new Set(); // Subscribed users see normal colors
+    if (isPremium) return new Set();
     const locked = new Set();
-    const allNodes = [...trebleWithBoss, ...bassWithBoss, ...rhythmWithBoss];
-    for (const node of allNodes) {
+    const allNodesFlat = Object.values(nodesWithBossByTab).flat();
+    for (const node of allNodesFlat) {
       if (!isFreeNode(node.id)) {
         locked.add(node.id);
       }
     }
     return locked;
-  }, [isPremium, trebleWithBoss, bassWithBoss, rhythmWithBoss]);
+  }, [isPremium, nodesWithBossByTab]);
 
   // Tab change handler
   const handleTabChange = (tabId) => {
@@ -227,14 +209,14 @@ const TrailMap = () => {
 
     if (e.key === prevKey) {
       e.preventDefault();
-      const prevIndex = (index - 1 + TRAIL_TABS.length) % TRAIL_TABS.length;
+      const prevIndex = (index - 1 + TRAIL_TAB_CONFIGS.length) % TRAIL_TAB_CONFIGS.length;
       tabRefs.current[prevIndex]?.focus();
-      handleTabChange(TRAIL_TABS[prevIndex].id);
+      handleTabChange(TRAIL_TAB_CONFIGS[prevIndex].id);
     } else if (e.key === nextKey) {
       e.preventDefault();
-      const nextIndex = (index + 1) % TRAIL_TABS.length;
+      const nextIndex = (index + 1) % TRAIL_TAB_CONFIGS.length;
       tabRefs.current[nextIndex]?.focus();
-      handleTabChange(TRAIL_TABS[nextIndex].id);
+      handleTabChange(TRAIL_TAB_CONFIGS[nextIndex].id);
     }
   };
 
@@ -254,13 +236,13 @@ const TrailMap = () => {
 
   return (
     <div className="relative z-10 mx-auto max-w-6xl space-y-4 p-4 sm:space-y-6 sm:p-6">
-      {/* Tab Bar */}
+      {/* Tab Bar — data-driven from TRAIL_TAB_CONFIGS (D-09, D-10, D-11) */}
       <div role="tablist" aria-label={t('tabs.ariaLabel', { defaultValue: 'Learning paths' })} className="flex justify-center gap-2 px-4 py-3">
-        {TRAIL_TABS.map((tab, index) => {
+        {TRAIL_TAB_CONFIGS.map((tab, index) => {
           const isActive = activeTab === tab.id;
-          const nodes = tab.id === 'treble' ? trebleWithBoss :
-                        tab.id === 'bass' ? bassWithBoss : rhythmWithBoss;
+          const nodes = nodesWithBossByTab[tab.id] || [];
           const progress = getPathProgress(nodes);
+          const TabIcon = tab.icon;
 
           return (
             <button
@@ -277,11 +259,12 @@ const TrailMap = () => {
                 flex flex-col items-center px-5 py-2.5 min-h-[48px] rounded-full text-sm font-bold
                 transition-colors
                 ${isActive
-                  ? 'bg-white/15 backdrop-blur-sm border border-white/30 text-white shadow-lg'
+                  ? `${tab.colorActive} ${tab.colorBorder} border ${tab.colorGlow} text-white`
                   : 'bg-transparent border border-white/10 text-white/60 hover:text-white/80 hover:border-white/20'
                 }
               `}
             >
+              <TabIcon className="h-4 w-4 mb-0.5" />
               <span>{t(`tabs.${tab.id}`, { defaultValue: tab.label })}</span>
               <span className="text-[10px] font-normal opacity-70 mt-0.5">{progress}</span>
             </button>
@@ -296,19 +279,27 @@ const TrailMap = () => {
         aria-labelledby={`${activeTab}-tab`}
         aria-label={t(`tabs.${activeTab}Panel`, { defaultValue: `${activeTab} learning path` })}
       >
-        <ZigzagTrailLayout
-          nodes={activeNodes}
-          completedNodeIds={completedNodeIds}
-          unlockedNodes={unlockedNodes}
-          premiumLockedNodeIds={premiumLockedNodeIds}
-          onNodeClick={setSelectedNode}
-          getNodeProgress={getNodeProgress}
-          activeNodeRef={activeNodeRef}
-          units={units}
-          nodesByUnit={nodesByUnit}
-          isDesktop={isDesktop}
-          isRTL={isRTL}
-        />
+        {activeNodes.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <p className="text-lg text-white/50">
+              {t(`tabs.${activeTab}Panel`, { defaultValue: 'Coming soon!' })}
+            </p>
+          </div>
+        ) : (
+          <ZigzagTrailLayout
+            nodes={activeNodes}
+            completedNodeIds={completedNodeIds}
+            unlockedNodes={unlockedNodes}
+            premiumLockedNodeIds={premiumLockedNodeIds}
+            onNodeClick={setSelectedNode}
+            getNodeProgress={getNodeProgress}
+            activeNodeRef={activeNodeRef}
+            units={units}
+            nodesByUnit={nodesByUnit}
+            isDesktop={isDesktop}
+            isRTL={isRTL}
+          />
+        )}
       </div>
 
       {/* Node detail modal */}

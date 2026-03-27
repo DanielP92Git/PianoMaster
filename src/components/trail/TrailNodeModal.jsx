@@ -36,6 +36,16 @@ const getExerciseTypeName = (type, t) => {
       return t('trail:exerciseTypes.memory_game');
     case 'note_catch':
       return t('trail:exerciseTypes.note_catch');
+    case 'rhythm_tap':
+      return t('trail:exerciseTypes.rhythm_tap');
+    case 'rhythm_dictation':
+      return t('trail:exerciseTypes.rhythm_dictation');
+    case 'arcade_rhythm':
+      return t('trail:exerciseTypes.arcade_rhythm');
+    case 'pitch_comparison':
+      return t('trail:exerciseTypes.pitch_comparison');
+    case 'interval_id':
+      return t('trail:exerciseTypes.interval_id');
     default:
       return type;
   }
@@ -78,6 +88,11 @@ const BUBBLE_COLORS = {
     { bg: 'radial-gradient(circle at 35% 35%, #fcd34d, #eab308 60%, #a16207)', shadow: '234,179,8' },
     { bg: 'radial-gradient(circle at 35% 35%, #fed7aa, #f97316 60%, #c2410c)', shadow: '249,115,22' },
   ],
+  ear_training: [
+    { bg: 'radial-gradient(circle at 35% 35%, #67e8f9, #06b6d4 60%, #0e7490)', shadow: '6,182,212' },
+    { bg: 'radial-gradient(circle at 35% 35%, #5eead4, #14b8a6 60%, #0f766e)', shadow: '20,184,166' },
+    { bg: 'radial-gradient(circle at 35% 35%, #a5f3fc, #22d3ee 60%, #0891b2)', shadow: '34,211,238' },
+  ],
 };
 
 /**
@@ -104,6 +119,11 @@ const MODAL_ICON_STYLES = {
     background: 'radial-gradient(circle at 40% 38%, #5c3d0e 0%, #2a1a04 70%)',
     ringColor: 'rgba(234, 179, 8, 0.85)',
     glowColor: 'rgba(234, 179, 8, 0.45)',
+  },
+  ear_training: {
+    background: 'radial-gradient(circle at 40% 38%, #0e3d3d 0%, #0a1a2a 70%)',
+    ringColor: 'rgba(34, 211, 238, 0.85)',
+    glowColor: 'rgba(6, 182, 212, 0.45)',
   },
 };
 
@@ -208,6 +228,21 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
       case 'note_catch':
         navigate('/notes-master-mode/note-speed-cards', { state: navState });
         break;
+      case 'rhythm_tap':
+        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.rhythm_tap') } });
+        break;
+      case 'rhythm_dictation':
+        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.rhythm_dictation') } });
+        break;
+      case 'arcade_rhythm':
+        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.arcade_rhythm') } });
+        break;
+      case 'pitch_comparison':
+        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.pitch_comparison') } });
+        break;
+      case 'interval_id':
+        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.interval_id') } });
+        break;
       default:
         console.error('Unknown exercise type:', exercise.type);
     }
@@ -253,7 +288,9 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         ? 'bg-gradient-to-r from-purple-500 to-violet-600'
         : node.category === 'rhythm'
           ? 'bg-gradient-to-r from-emerald-500 to-teal-600'
-          : 'bg-gradient-to-r from-blue-500 to-indigo-600';
+          : node.category === 'ear_training'
+            ? 'bg-gradient-to-r from-cyan-400 to-teal-500'
+            : 'bg-gradient-to-r from-blue-500 to-indigo-600';
 
   // Get bubble colors for the current node category
   const bubbleCategory = node.isBoss ? 'boss' : (node.category || 'treble_clef');
