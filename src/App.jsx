@@ -62,6 +62,7 @@ const ParentPortalPage = lazyWithRetry(() => import("./pages/ParentPortalPage"))
 const Avatars = lazyWithRetry(() => import("./components/Avatars"));
 const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/PrivacyPolicyPage"));
 const TermsOfServicePage = lazyWithRetry(() => import("./pages/TermsOfServicePage"));
+const ComingSoon = lazyWithRetry(() => import("./components/shared/ComingSoon"));
 
 // Lazy-loaded game components
 const NotesMasterMode = lazyWithRetry(() => import("./components/games/NotesMasterMode").then(m => ({ default: m.NotesMasterMode })));
@@ -342,6 +343,7 @@ function AppRoutes() {
               path="/rhythm-mode/metronome-trainer"
               element={<AudioContextProvider><MetronomeTrainer /></AudioContextProvider>}
             />
+            <Route path="/coming-soon" element={<ComingSoon />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
