@@ -9,11 +9,11 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: New EXERCISE_TYPES constants added for all 5 new game types (RHYTHM_TAP, RHYTHM_DICTATION, ARCADE_RHYTHM, PITCH_COMPARISON, INTERVAL_ID)
-- [ ] **INFRA-02**: EAR_TRAINING added to NODE_CATEGORIES constant
+- [x] **INFRA-01**: New EXERCISE_TYPES constants added for all 5 new game types (RHYTHM_TAP, RHYTHM_DICTATION, ARCADE_RHYTHM, PITCH_COMPARISON, INTERVAL_ID)
+- [x] **INFRA-02**: EAR_TRAINING added to NODE_CATEGORIES constant
 - [ ] **INFRA-03**: TrailNodeModal routes to correct game component for each new exercise type
 - [ ] **INFRA-04**: TrailMap refactored to data-driven tab system supporting 4+ tabs
-- [ ] **INFRA-05**: validateTrail.mjs validates all exercise type strings against known constants
+- [x] **INFRA-05**: validateTrail.mjs validates all exercise type strings against known constants
 - [ ] **INFRA-06**: usePianoSampler hook plays piano notes via runtime-fetched AudioBuffers from shared AudioContext
 - [ ] **INFRA-07**: Service worker cache version bumped for new audio assets
 - [ ] **INFRA-08**: i18n keys added for all new exercise types and game UI in EN and HE
@@ -113,11 +113,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 7 | Pending |
-| INFRA-02 | Phase 7 | Pending |
+| INFRA-01 | Phase 7 | Complete |
+| INFRA-02 | Phase 7 | Complete |
 | INFRA-03 | Phase 7 | Pending |
 | INFRA-04 | Phase 7 | Pending |
-| INFRA-05 | Phase 7 | Pending |
+| INFRA-05 | Phase 7 | Complete |
 | INFRA-06 | Phase 8 | Pending |
 | INFRA-07 | Phase 8 | Pending |
 | INFRA-08 | Phase 8 | Pending |
