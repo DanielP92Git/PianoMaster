@@ -58,22 +58,16 @@ describe('noteNameToHz', () => {
 });
 
 describe('usePianoSampler', () => {
-  let createOscSpy;
-
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset createOscillator to return fresh objects each call
-    let oscCallCount = 0;
-    createOscSpy = mockAudioContext.createOscillator.mockImplementation(() => {
-      oscCallCount++;
-      return {
-        start: vi.fn(),
-        stop: vi.fn(),
-        connect: vi.fn(),
-        type: '',
-        frequency: { setValueAtTime: vi.fn() },
-      };
-    });
+    mockAudioContext.createOscillator.mockImplementation(() => ({
+      start: vi.fn(),
+      stop: vi.fn(),
+      connect: vi.fn(),
+      type: '',
+      frequency: { setValueAtTime: vi.fn() },
+    }));
     mockAudioContext.createGain.mockImplementation(() => ({
       connect: vi.fn(),
       gain: {
@@ -85,7 +79,6 @@ describe('usePianoSampler', () => {
     }));
     mockAudioContext.state = 'running';
     mockAudioContext.currentTime = 0.5;
-    void oscCallCount;
   });
 
   it('Test 1: playNote("C4") calls createOscillator twice (fundamental + second harmonic)', () => {
