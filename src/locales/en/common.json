@@ -750,6 +750,30 @@
       "errorTitle": "Oops!",
       "errorMessage": "We couldn't load practice modes. Please try again.",
       "startMode": "Start Mode"
+    },
+    "rhythmReading": {
+      "title": "Rhythm Reading",
+      "tapArea": {
+        "tapHere": "TAP",
+        "accuracy": {
+          "perfect": "PERFECT!",
+          "good": "GOOD!",
+          "miss": "MISS"
+        }
+      },
+      "countdown": {
+        "go": "GO!"
+      },
+      "errors": {
+        "audioUnavailable": "Audio not available. Tap to try again."
+      }
+    },
+    "rhythmDictation": {
+      "title": "Rhythm Dictation",
+      "listening": "Listen...",
+      "playAgain": "Play Again",
+      "correct": "Correct!",
+      "wrong": "Try again!"
     }
   },
   "dashboard": {

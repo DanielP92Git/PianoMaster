@@ -750,6 +750,30 @@
       "errorTitle": "אופס!",
       "errorMessage": "לא הצלחנו לטעון את משחקי התרגול. נסו שוב.",
       "startMode": "התחל משחק"
+    },
+    "rhythmReading": {
+      "title": "קריאת קצב",
+      "tapArea": {
+        "tapHere": "הקש",
+        "accuracy": {
+          "perfect": "!מושלם",
+          "good": "!טוב",
+          "miss": "פספסת"
+        }
+      },
+      "countdown": {
+        "go": "!קדימה"
+      },
+      "errors": {
+        "audioUnavailable": "שמע לא זמין. הקש לנסות שוב."
+      }
+    },
+    "rhythmDictation": {
+      "title": "שמיעת קצב",
+      "listening": "...הקשב",
+      "playAgain": "נגן שוב",
+      "correct": "!נכון",
+      "wrong": "!נסה שוב"
     }
   },
   "dashboard": {
