@@ -168,7 +168,7 @@ D-09 (CONTEXT.md) is the source of truth for feedback sequence timing.
 - Position: `position: absolute`, centered horizontally above tap point
 - Initial: `translateY(0) opacity-1`
 - Animation: `translateY(-40px) opacity-0` over 800ms, `ease-out`, triggered on each tap
-- Sizes: PERFECT = `text-3xl font-bold`, GOOD = `text-2xl font-bold`, MISS = `text-2xl font-bold`
+- Sizes: PERFECT = `text-3xl font-bold`, GOOD = `text-3xl font-bold`, MISS = `text-3xl font-bold`
 - Colors: PERFECT = `text-green-400`, GOOD = `text-yellow-400`, MISS = `text-red-400`
 - Note color change: VexFlow note SVG fill updated via `data-note-index` attribute lookup — green/yellow/red per accuracy
 
@@ -337,5 +337,5 @@ No third-party registries. Zero new npm packages. All UI is implemented with exi
 
 *Phase: 08-audio-infrastructure-rhythm-games*
 *UI-SPEC created: 2026-03-27*
-*UI-SPEC revised: 2026-03-27 — fixed typography weight table (3 weights → 2 weights, Heading remapped to bold/700), updated primary CTA copy to "Start Game" (verb + noun), clarified 56px beat circle spacing exception as inherited value*
+*UI-SPEC revised: 2026-03-27 — fixed typography weight table (3 weights → 2 weights, Heading remapped to bold/700), updated primary CTA copy to "Start Game" (verb + noun), clarified 56px beat circle spacing exception as inherited value; fixed floating feedback text sizes (GOOD/MISS changed from text-2xl to text-3xl to stay within declared 4-size scale — differentiated from PERFECT by color only)*
 *Sources: CONTEXT.md (13 decisions), RESEARCH.md (standard stack + architecture), CLAUDE.md (design system), docs/DESIGN_SYSTEM.md, tailwind.config.js, MetronomeTrainer.jsx, TapArea.jsx, MetronomeDisplay.jsx*
