@@ -63,7 +63,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
   2. Tapping a trail node with any of the 5 new exercise types opens the correct game screen (no blank screen, no console error)
   3. TrailMap displays a 4th tab for Ear Training without code changes to tab layout logic (driven entirely by a data array)
   4. Build succeeds with all 5 new EXERCISE_TYPES and EAR_TRAINING category constants present in constants.js
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 07-01-PLAN.md — Data constants, build validation, i18n keys (INFRA-01, INFRA-02, INFRA-05)
+- [ ] 07-02-PLAN.md — TrailMap data-driven refactor, ComingSoon component, TrailNodeModal routing (INFRA-03, INFRA-04)
 
 ### Phase 8: Audio Infrastructure + Rhythm Games
 **Goal**: Children can tap along with rhythm notation and identify rhythms by ear, with correct piano sample playback powering all new audio-dependent games
@@ -123,7 +126,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 |-------|-----------|----------------|--------|-----------|
 | 1. Introductory Single-Note Game | v2.8 | 2/2 | Complete | 2026-03-25 |
 | 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
-| 7. Data Foundation + TrailMap Refactor | v2.9 | 0/? | Not started | - |
+| 7. Data Foundation + TrailMap Refactor | v2.9 | 0/2 | Planning complete | - |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 0/? | Not started | - |
 | 9. Ear Training Games | v2.9 | 0/? | Not started | - |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
@@ -132,4 +135,4 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
 ---
-*Last updated: 2026-03-26 — v2.9 roadmap created*
+*Last updated: 2026-03-27 — Phase 7 plans created (2 plans, 2 waves)*
