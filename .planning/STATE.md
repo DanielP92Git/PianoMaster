@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.9
 milestone_name: Game Variety & Ear Training
 status: verifying
-stopped_at: Completed 08-01-PLAN.md
-last_updated: "2026-03-27T22:27:03.552Z"
+stopped_at: Completed 08-02-PLAN.md
+last_updated: "2026-03-27T22:42:55.642Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 5
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 6
+  completed_plans: 3
 ---
 
 # Project State
@@ -62,6 +62,7 @@ v2.9 Progress: [__________] 0/5 phases
 - [Phase 07]: ComingSoon shared placeholder pattern: gameName from location.state serves all unimplemented exercise types
 - [Phase 08]: usePianoSampler uses 2 oscillators (fundamental + 2nd harmonic at 0.4 gain) with 5ms attack, 80ms decay ADSR envelope
 - [Phase 08]: calculateTimingThresholds ported from MetronomeTrainer: 50/75/125ms at 120 BPM with Math.pow(120/tempo, 0.3) scaling
+- [Phase 08]: scoreTap extracted to rhythmScoringUtils.js (pure utils module) to avoid React/Supabase import chain in test files
 
 ### Roadmap Evolution
 
@@ -93,6 +94,7 @@ v2.9 Progress: [__________] 0/5 phases
 | Phase 07 P01 | 4 | 2 tasks | 6 files |
 | Phase 07 P02 | 4 minutes | 2 tasks | 4 files |
 | Phase 08 P01 | 6 minutes | 2 tasks | 6 files |
+| Phase 08 P02 | 11 | 2 tasks | 9 files |
 
 ### Additional Fixes (2026-03-26/27)
 
@@ -104,8 +106,8 @@ v2.9 Progress: [__________] 0/5 phases
 
 ## Session Continuity
 
-Last session: 2026-03-27T22:27:03.539Z
-Stopped at: Completed 08-01-PLAN.md
+Last session: 2026-03-27T22:42:55.631Z
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
 
 **Next action:**

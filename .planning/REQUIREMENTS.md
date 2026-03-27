@@ -20,11 +20,11 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 ### Rhythm Reading
 
-- [ ] **RTAP-01**: User sees VexFlow notation and taps screen in time with the rhythm
-- [ ] **RTAP-02**: Visual scrolling cursor advances through notation synced to tempo
-- [ ] **RTAP-03**: Count-in plays before pattern starts (1-2 bars)
+- [x] **RTAP-01**: User sees VexFlow notation and taps screen in time with the rhythm
+- [x] **RTAP-02**: Visual scrolling cursor advances through notation synced to tempo
+- [x] **RTAP-03**: Count-in plays before pattern starts (1-2 bars)
 - [x] **RTAP-04**: Each tap scored PERFECT/GOOD/MISS using audioContext.currentTime
-- [ ] **RTAP-05**: Session completes through VictoryScreen with star rating and XP
+- [x] **RTAP-05**: Session completes through VictoryScreen with star rating and XP
 
 ### Rhythm Dictation
 
@@ -121,11 +121,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-06 | Phase 8 | Complete |
 | INFRA-07 | Phase 8 | Pending |
 | INFRA-08 | Phase 8 | Pending |
-| RTAP-01 | Phase 8 | Pending |
-| RTAP-02 | Phase 8 | Pending |
-| RTAP-03 | Phase 8 | Pending |
+| RTAP-01 | Phase 8 | Complete |
+| RTAP-02 | Phase 8 | Complete |
+| RTAP-03 | Phase 8 | Complete |
 | RTAP-04 | Phase 8 | Complete |
-| RTAP-05 | Phase 8 | Pending |
+| RTAP-05 | Phase 8 | Complete |
 | RDICT-01 | Phase 8 | Pending |
 | RDICT-02 | Phase 8 | Pending |
 | RDICT-03 | Phase 8 | Pending |
