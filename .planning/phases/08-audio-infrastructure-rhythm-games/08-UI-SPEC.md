@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-03-27
+revised: 2026-03-27
 ---
 
 # Phase 8 — UI Design Contract
@@ -45,7 +46,7 @@ Standard 8-point scale inherited from project design system (`docs/DESIGN_SYSTEM
 Exceptions:
 - Touch targets (tap area, choice cards, replay button): minimum 44px height (`min-h-touch` token = 44px, defined in tailwind.config.js)
 - Cursor overlay: 0px spacing — `position: absolute` overlay on VexFlow SVG container, no box model spacing applies
-- Beat circles (MetronomeDisplay pattern): 36px (accented h-9/w-9) and 48-56px (strong beat h-12/w-12) — inheriting existing component
+- Beat circles (MetronomeDisplay pattern): 36px (accented h-9/w-9) and 48-56px (strong beat h-12/w-12) — inherited from MetronomeDisplay — not a new value
 
 Source: `tailwind.config.js` spacing tokens, `MetronomeDisplay.jsx` measured values.
 
@@ -55,14 +56,14 @@ Source: `tailwind.config.js` spacing tokens, `MetronomeDisplay.jsx` measured val
 
 Game components use Nunito (`font-rounded`) throughout. Hebrew RTL layout uses Heebo (`font-hebrew`).
 
+Strictly 2 weights: **regular (400)** for body/label/heading, **bold (700)** for display feedback text and section headers.
+
 | Role | Size | Weight | Line Height | Usage |
 |------|------|--------|-------------|-------|
 | Body | 16px (`text-base`) | 400 (regular) | 1.7 | Instructions, question text, score labels |
 | Label | 14px (`text-sm`) | 400 (regular) | 1.6 | Beat numbers, notation card sub-labels, i18n strings |
-| Heading | 20px (`text-xl`) | 600 (semibold) | 1.8 | Game title bar, section headers ("Listen", "Choose") |
+| Heading | 20px (`text-xl`) | 700 (bold) | 1.8 | Game title bar, section headers ("Listen", "Choose") |
 | Display | 30px (`text-3xl`) | 700 (bold) | 1.9 | Countdown numbers (3, 2, 1, GO!), PERFECT/GOOD/MISS floating text |
-
-Strictly 2 weights used in new components: **regular (400)** for body/label, **bold (700)** for display feedback text. Semibold (600) used only for heading role where Tailwind `font-semibold` is already the project norm.
 
 Source: `tailwind.config.js` fontSize tokens, existing `TapArea.jsx` (`text-5xl font-bold` for feedback — matched and normalized to `text-3xl` per D-04 "floats up and fades"), `MetronomeDisplay.jsx`.
 
@@ -209,7 +210,7 @@ All strings require EN + HE translation (INFRA-08 requirement). Hebrew uses RTL 
 | Count-in final cue | "GO!" | "!קדימה" |
 | Replay button label | "Play Again" | "נגן שוב" |
 | Auto-playing status | "Listen..." | "...הקשב" |
-| Primary CTA (setup screen) | "Start" | "התחל" |
+| Primary CTA (setup screen) | "Start Game" | "התחל משחק" |
 | PERFECT feedback | "PERFECT!" | "!מושלם" |
 | GOOD feedback | "GOOD!" | "!טוב" |
 | MISS feedback | "MISS" | "פספסת" |
@@ -336,4 +337,5 @@ No third-party registries. Zero new npm packages. All UI is implemented with exi
 
 *Phase: 08-audio-infrastructure-rhythm-games*
 *UI-SPEC created: 2026-03-27*
+*UI-SPEC revised: 2026-03-27 — fixed typography weight table (3 weights → 2 weights, Heading remapped to bold/700), updated primary CTA copy to "Start Game" (verb + noun), clarified 56px beat circle spacing exception as inherited value*
 *Sources: CONTEXT.md (13 decisions), RESEARCH.md (standard stack + architecture), CLAUDE.md (design system), docs/DESIGN_SYSTEM.md, tailwind.config.js, MetronomeTrainer.jsx, TapArea.jsx, MetronomeDisplay.jsx*
