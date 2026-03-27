@@ -693,6 +693,14 @@
       "metronomeTrainer": {
         "name": "Metronome Rhythm Trainer",
         "description": "Listen to rhythm patterns then tap them back with precise timing"
+      },
+      "rhythmReading": {
+        "name": "Rhythm Reading",
+        "description": "See rhythm notation and tap along in time"
+      },
+      "rhythmDictation": {
+        "name": "Rhythm Dictation",
+        "description": "Hear a rhythm and pick the correct notation"
       }
     },
     "modeCard": {
@@ -753,6 +761,8 @@
     },
     "rhythmReading": {
       "title": "Rhythm Reading",
+      "progressLabel": "Exercise {{current}} of {{total}}",
+      "startGame": "Start Game",
       "tapArea": {
         "tapHere": "TAP",
         "accuracy": {
@@ -762,18 +772,27 @@
         }
       },
       "countdown": {
+        "getReady": "Get Ready!",
         "go": "GO!"
       },
       "errors": {
-        "audioUnavailable": "Audio not available. Tap to try again."
+        "audioUnavailable": "Audio not available. Tap to try again.",
+        "patternError": "Something went wrong. Go back and try again."
       }
     },
     "rhythmDictation": {
       "title": "Rhythm Dictation",
+      "progressLabel": "Exercise {{current}} of {{total}}",
+      "startGame": "Start Game",
       "listening": "Listen...",
       "playAgain": "Play Again",
+      "chooseRhythm": "Choose the rhythm you heard",
       "correct": "Correct!",
-      "wrong": "Try again!"
+      "wrong": "Try again!",
+      "errors": {
+        "audioUnavailable": "Audio not available. Tap to try again.",
+        "patternError": "Something went wrong. Go back and try again."
+      }
     }
   },
   "dashboard": {
