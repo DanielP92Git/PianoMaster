@@ -211,6 +211,13 @@ export const getTeacherStudents = async () => {
             )
           : null;
 
+      // Count practice sessions in last 30 days (full count, not capped)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      const practiceCount30d = practices.filter(
+        (p) => new Date(p.submitted_at) >= thirtyDaysAgo
+      ).length;
+
       const transformedStudent = {
         student_id: student.id,
         student_name:
@@ -227,6 +234,7 @@ export const getTeacherStudents = async () => {
         average_accuracy: Math.round(averageAccuracy),
         total_achievements: 0, // Not available in current schema
         last_practice_date: lastPracticeDate,
+        practice_count_30d: practiceCount30d,
         member_since: connectionDates[student.id] || student.created_at,
         recent_practices: practices
           .sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at))

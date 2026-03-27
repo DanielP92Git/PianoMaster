@@ -998,7 +998,7 @@ const StudentDetailModal = ({
   isOpen,
   onClose,
   student,
-  calculateAttendanceRate,
+  calculatePracticeRate,
   getRecentActivitySummary,
   getPerformanceLevel,
 }) => {
@@ -1231,28 +1231,28 @@ const StudentDetailModal = ({
               </div>
             </div>
 
-            {/* Attendance Rate */}
+            {/* Practice Rate */}
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <span className="text-sm font-medium text-gray-600">
-                  Attendance Rate (30 days)
+                  Practice Rate (30 days)
                 </span>
                 <span className="text-sm font-bold text-gray-900">
-                  {calculateAttendanceRate(student)}%
+                  {calculatePracticeRate(student)}%
                 </span>
               </div>
               <div className="h-3 w-full rounded-full bg-gray-200">
                 <div
                   className={`h-3 rounded-full transition-all duration-500 ${
-                    calculateAttendanceRate(student) >= 80
+                    calculatePracticeRate(student) >= 80
                       ? "bg-green-500"
-                      : calculateAttendanceRate(student) >= 60
+                      : calculatePracticeRate(student) >= 60
                         ? "bg-blue-500"
-                        : calculateAttendanceRate(student) >= 40
+                        : calculatePracticeRate(student) >= 40
                           ? "bg-yellow-500"
                           : "bg-red-500"
                   }`}
-                  style={{ width: `${calculateAttendanceRate(student)}%` }}
+                  style={{ width: `${calculatePracticeRate(student)}%` }}
                 />
               </div>
             </div>
@@ -1554,27 +1554,11 @@ const TeacherDashboard = () => {
   });
 
   // Helper function to calculate attendance rate
-  const calculateAttendanceRate = React.useCallback((student) => {
-    if (!student.recent_practices || student.recent_practices.length === 0) {
-      return 0;
-    }
-
-    // Calculate attendance based on practice frequency over last 30 days
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const recentPractices = student.recent_practices.filter(
-      (practice) => new Date(practice.submitted_at) >= thirtyDaysAgo
-    );
-
-    // Expected practices = 4 per week for 4+ weeks = ~16 sessions in 30 days
-    const expectedPractices = 16;
-    const actualPractices = recentPractices.length;
-
-    return Math.min(
-      Math.round((actualPractices / expectedPractices) * 100),
-      100
-    );
+  const calculatePracticeRate = React.useCallback((student) => {
+    const actual = student.practice_count_30d || 0;
+    // Expected: ~4 sessions per week over 30 days = 16
+    const expected = 16;
+    return Math.min(Math.round((actual / expected) * 100), 100);
   }, []);
 
   // Helper function to get recent activity summary
@@ -1614,7 +1598,7 @@ const TeacherDashboard = () => {
   // Helper function to get performance level
   const getPerformanceLevel = React.useCallback(
     (student) => {
-      const attendance = calculateAttendanceRate(student);
+      const attendance = calculatePracticeRate(student);
       const accuracy = student.average_accuracy || 0;
       const streak = student.current_streak || 0;
 
@@ -1646,7 +1630,7 @@ const TeacherDashboard = () => {
         bgColor: "bg-red-500/20",
       };
     },
-    [calculateAttendanceRate]
+    [calculatePracticeRate]
   );
 
   // Filter and sort students based on search and filters
@@ -1691,9 +1675,9 @@ const TeacherDashboard = () => {
         }
       }
 
-      // Attendance range filter
+      // Practice rate range filter
       if (filters.attendanceRange !== "all") {
-        const attendance = calculateAttendanceRate(student);
+        const attendance = calculatePracticeRate(student);
         switch (filters.attendanceRange) {
           case "high":
             if (attendance < 80) return false;
@@ -1765,8 +1749,8 @@ const TeacherDashboard = () => {
           bValue = b.current_streak || 0;
           break;
         case "attendance":
-          aValue = calculateAttendanceRate(a);
-          bValue = calculateAttendanceRate(b);
+          aValue = calculatePracticeRate(a);
+          bValue = calculatePracticeRate(b);
           break;
         case "lastPractice":
           aValue =
@@ -1799,7 +1783,7 @@ const TeacherDashboard = () => {
     filters,
     sortBy,
     sortOrder,
-    calculateAttendanceRate,
+    calculatePracticeRate,
     getPerformanceLevel,
   ]);
 
@@ -2174,8 +2158,8 @@ const TeacherDashboard = () => {
                     <option value="xp-asc">XP Low-High</option>
                     <option value="streak-desc">Streak High-Low</option>
                     <option value="streak-asc">Streak Low-High</option>
-                    <option value="attendance-desc">Attendance High-Low</option>
-                    <option value="attendance-asc">Attendance Low-High</option>
+                    <option value="attendance-desc">Practice Rate High-Low</option>
+                    <option value="attendance-asc">Practice Rate Low-High</option>
                     <option value="lastPractice-desc">Recent Practice</option>
                     <option value="accuracy-desc">Accuracy High-Low</option>
                   </select>
@@ -2259,10 +2243,10 @@ const TeacherDashboard = () => {
                     </select>
                   </div>
 
-                  {/* Attendance Range */}
+                  {/* Practice Rate Range */}
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-300">
-                      Attendance
+                      Practice Rate
                     </label>
                     <select
                       value={filters.attendanceRange}
@@ -2452,27 +2436,27 @@ const TeacherDashboard = () => {
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-300">Attendance:</span>
+                          <span className="text-gray-300">Practice:</span>
                           <span className="font-medium text-white">
-                            {calculateAttendanceRate(student)}%
+                            {calculatePracticeRate(student)}%
                           </span>
                         </div>
                       </div>
 
-                      {/* Attendance Bar */}
+                      {/* Practice Rate Bar */}
                       <div className="mt-2 h-1.5 w-full rounded-full bg-gray-700">
                         <div
                           className={`h-1.5 rounded-full transition-all duration-500 ${
-                            calculateAttendanceRate(student) >= 80
+                            calculatePracticeRate(student) >= 80
                               ? "bg-green-500"
-                              : calculateAttendanceRate(student) >= 60
+                              : calculatePracticeRate(student) >= 60
                                 ? "bg-blue-500"
-                                : calculateAttendanceRate(student) >= 40
+                                : calculatePracticeRate(student) >= 40
                                   ? "bg-yellow-500"
                                   : "bg-red-500"
                           }`}
                           style={{
-                            width: `${calculateAttendanceRate(student)}%`,
+                            width: `${calculatePracticeRate(student)}%`,
                           }}
                         />
                       </div>
@@ -2533,7 +2517,7 @@ const TeacherDashboard = () => {
         isOpen={showDetailModal}
         onClose={() => setShowDetailModal(false)}
         student={studentForDetail}
-        calculateAttendanceRate={calculateAttendanceRate}
+        calculatePracticeRate={calculatePracticeRate}
         getRecentActivitySummary={getRecentActivitySummary}
         getPerformanceLevel={getPerformanceLevel}
       />
