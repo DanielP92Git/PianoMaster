@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v2.9
 milestone_name: Game Variety & Ear Training
 status: verifying
-stopped_at: Phase 8 context gathered
-last_updated: "2026-03-27T16:36:30.783Z"
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-03-27T22:27:03.552Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 5
@@ -60,6 +60,8 @@ v2.9 Progress: [__________] 0/5 phases
 - [Phase 07]: Hebrew translations for new exercise types use English placeholders (full Hebrew i18n is Phase 8 scope per INFRA-08)
 - [Phase 07]: nodesWithBossByTab single useMemo replaces 3 separate useMemo blocks — unified lookup map, O(1) access
 - [Phase 07]: ComingSoon shared placeholder pattern: gameName from location.state serves all unimplemented exercise types
+- [Phase 08]: usePianoSampler uses 2 oscillators (fundamental + 2nd harmonic at 0.4 gain) with 5ms attack, 80ms decay ADSR envelope
+- [Phase 08]: calculateTimingThresholds ported from MetronomeTrainer: 50/75/125ms at 120 BPM with Math.pow(120/tempo, 0.3) scaling
 
 ### Roadmap Evolution
 
@@ -90,6 +92,7 @@ v2.9 Progress: [__________] 0/5 phases
 | 260326-wo7 | Add note staff image and mini keyboard to TrailNodeModal for Discovery nodes | 2026-03-26 | 4c8bf2d | [260326-wo7-add-note-staff-image-and-mini-keyboard-i](./quick/260326-wo7-add-note-staff-image-and-mini-keyboard-i/) |
 | Phase 07 P01 | 4 | 2 tasks | 6 files |
 | Phase 07 P02 | 4 minutes | 2 tasks | 4 files |
+| Phase 08 P01 | 6 minutes | 2 tasks | 6 files |
 
 ### Additional Fixes (2026-03-26/27)
 
@@ -101,9 +104,9 @@ v2.9 Progress: [__________] 0/5 phases
 
 ## Session Continuity
 
-Last session: 2026-03-27T16:36:30.775Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-audio-infrastructure-rhythm-games/08-CONTEXT.md
+Last session: 2026-03-27T22:27:03.539Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
 
 **Next action:**
 

@@ -14,7 +14,7 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 - [x] **INFRA-03**: TrailNodeModal routes to correct game component for each new exercise type
 - [x] **INFRA-04**: TrailMap refactored to data-driven tab system supporting 4+ tabs
 - [x] **INFRA-05**: validateTrail.mjs validates all exercise type strings against known constants
-- [ ] **INFRA-06**: usePianoSampler hook plays piano notes via runtime-fetched AudioBuffers from shared AudioContext
+- [x] **INFRA-06**: usePianoSampler hook plays piano notes via runtime-fetched AudioBuffers from shared AudioContext
 - [ ] **INFRA-07**: Service worker cache version bumped for new audio assets
 - [ ] **INFRA-08**: i18n keys added for all new exercise types and game UI in EN and HE
 
@@ -23,7 +23,7 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 - [ ] **RTAP-01**: User sees VexFlow notation and taps screen in time with the rhythm
 - [ ] **RTAP-02**: Visual scrolling cursor advances through notation synced to tempo
 - [ ] **RTAP-03**: Count-in plays before pattern starts (1-2 bars)
-- [ ] **RTAP-04**: Each tap scored PERFECT/GOOD/MISS using audioContext.currentTime
+- [x] **RTAP-04**: Each tap scored PERFECT/GOOD/MISS using audioContext.currentTime
 - [ ] **RTAP-05**: Session completes through VictoryScreen with star rating and XP
 
 ### Rhythm Dictation
@@ -31,7 +31,7 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 - [ ] **RDICT-01**: User hears a rhythm pattern played audio-only
 - [ ] **RDICT-02**: User can replay the rhythm before answering
 - [ ] **RDICT-03**: User picks correct notation from 2-4 VexFlow multiple-choice cards
-- [ ] **RDICT-04**: Wrong answer distractors differ by at least one audible duration element
+- [x] **RDICT-04**: Wrong answer distractors differ by at least one audible duration element
 - [ ] **RDICT-05**: Correct/wrong feedback with reveal animation and optional notation replay
 - [ ] **RDICT-06**: Session completes through VictoryScreen with star rating and XP
 
@@ -118,18 +118,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INFRA-03 | Phase 7 | Complete |
 | INFRA-04 | Phase 7 | Complete |
 | INFRA-05 | Phase 7 | Complete |
-| INFRA-06 | Phase 8 | Pending |
+| INFRA-06 | Phase 8 | Complete |
 | INFRA-07 | Phase 8 | Pending |
 | INFRA-08 | Phase 8 | Pending |
 | RTAP-01 | Phase 8 | Pending |
 | RTAP-02 | Phase 8 | Pending |
 | RTAP-03 | Phase 8 | Pending |
-| RTAP-04 | Phase 8 | Pending |
+| RTAP-04 | Phase 8 | Complete |
 | RTAP-05 | Phase 8 | Pending |
 | RDICT-01 | Phase 8 | Pending |
 | RDICT-02 | Phase 8 | Pending |
 | RDICT-03 | Phase 8 | Pending |
-| RDICT-04 | Phase 8 | Pending |
+| RDICT-04 | Phase 8 | Complete |
 | RDICT-05 | Phase 8 | Pending |
 | RDICT-06 | Phase 8 | Pending |
 | ARCR-01 | Phase 11 | Pending |
