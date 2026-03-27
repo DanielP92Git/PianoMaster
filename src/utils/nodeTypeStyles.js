@@ -7,7 +7,7 @@
  * - State-based styling (locked, available, current, completed, mastered)
  */
 
-import { Search, Gamepad2, Zap, RotateCcw, Dumbbell, Crown, Trophy, Sparkles } from 'lucide-react';
+import { Search, Gamepad2, Zap, RotateCcw, Dumbbell, Crown, Trophy, Sparkles, Ear } from 'lucide-react';
 import TrebleClefIcon from '../components/trail/icons/TrebleClefIcon';
 import BassClefIcon from '../components/trail/icons/BassClefIcon';
 import MetronomeIcon from '../components/trail/icons/MetronomeIcon';
@@ -36,6 +36,7 @@ export const getNodeTypeIcon = (nodeType, category) => {
   if (category === NODE_CATEGORIES.TREBLE_CLEF) return TrebleClefIcon;
   if (category === NODE_CATEGORIES.BASS_CLEF) return BassClefIcon;
   if (category === NODE_CATEGORIES.RHYTHM) return MetronomeIcon;
+  if (category === NODE_CATEGORIES.EAR_TRAINING) return Ear;
 
   // Fallback to node type icons for non-category-specific nodes
   const iconMap = {
@@ -123,7 +124,14 @@ export const getCategoryColors = (category, state) => {
       text: 'text-white',
       icon: 'opacity-100',
       glow: 'shadow-[0_0_15px_rgba(16,185,129,0.4)]'
-    }
+    },
+    [NODE_CATEGORIES.EAR_TRAINING]: {
+      bg: 'bg-gradient-to-br from-cyan-400 to-teal-500',
+      border: 'border-cyan-300',
+      text: 'text-white',
+      icon: 'opacity-100',
+      glow: 'shadow-[0_0_15px_rgba(34,211,238,0.4)]'
+    },
   };
 
   // Fallback to treble clef colors if category unknown

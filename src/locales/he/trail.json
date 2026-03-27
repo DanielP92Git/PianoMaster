@@ -60,7 +60,9 @@
     "ariaLabel": "מסלולי למידה",
     "treble": "מפתח סול",
     "bass": "מפתח פה",
-    "rhythm": "קצב"
+    "rhythm": "קצב",
+    "ear_training": "Ear Training",
+    "ear_trainingPanel": "Ear Training learning path"
   },
   "node": {
     "startHere": "התחילו כאן!",
@@ -73,7 +75,12 @@
     "rhythm": "תרגול קצב",
     "boss_challenge": "אתגר בוס",
     "memory_game": "משחק זיכרון",
-    "note_catch": "קלפים מהירים"
+    "note_catch": "קלפים מהירים",
+    "rhythm_tap": "Rhythm Tap",
+    "rhythm_dictation": "Rhythm Dictation",
+    "arcade_rhythm": "Arcade Rhythm",
+    "pitch_comparison": "Pitch Comparison",
+    "interval_id": "Interval ID"
   },
   "modal": {
     "yourProgress": "ההתקדמות שלכם",
