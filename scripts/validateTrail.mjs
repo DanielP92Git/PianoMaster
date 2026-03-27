@@ -13,6 +13,7 @@
 
 import { SKILL_NODES } from '../src/data/skillTrail.js';
 import { NODE_TYPES } from '../src/data/nodeTypes.js';
+import { EXERCISE_TYPES } from '../src/data/constants.js';
 
 let hasErrors = false;
 let hasWarnings = false;
@@ -232,6 +233,36 @@ function validateXPEconomy() {
   }
 }
 
+/**
+ * Validate that all exercises reference known EXERCISE_TYPES.
+ * Unknown types cause a hard build failure (D-07).
+ * Only checks type string, not config shape (D-08).
+ */
+function validateExerciseTypes() {
+  console.log('\nChecking exercise types...');
+
+  const validTypes = new Set(Object.values(EXERCISE_TYPES));
+  let invalidCount = 0;
+
+  for (const node of SKILL_NODES) {
+    for (const exercise of (node.exercises || [])) {
+      if (!validTypes.has(exercise.type)) {
+        console.error(
+          `  ERROR: Unknown exercise type "${exercise.type}" in node "${node.id}"`
+        );
+        hasErrors = true;
+        invalidCount++;
+      }
+    }
+  }
+
+  if (invalidCount === 0) {
+    console.log('  Exercise types: OK');
+  } else {
+    console.error(`  Found ${invalidCount} unknown exercise type(s)`);
+  }
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -245,6 +276,7 @@ validatePrerequisiteChains();
 validateNodeTypes();
 validateDuplicateIds();
 validateXPEconomy();
+validateExerciseTypes();
 
 console.log('\n' + '='.repeat(50));
 

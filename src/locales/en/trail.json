@@ -60,7 +60,9 @@
     "ariaLabel": "Learning paths",
     "treble": "Treble",
     "bass": "Bass",
-    "rhythm": "Rhythm"
+    "rhythm": "Rhythm",
+    "ear_training": "Ear Training",
+    "ear_trainingPanel": "Ear Training learning path"
   },
   "node": {
     "startHere": "Start Here!",
@@ -73,7 +75,12 @@
     "rhythm": "Rhythm Practice",
     "boss_challenge": "Boss Challenge",
     "memory_game": "Memory Game",
-    "note_catch": "Speed Cards"
+    "note_catch": "Speed Cards",
+    "rhythm_tap": "Rhythm Tap",
+    "rhythm_dictation": "Rhythm Dictation",
+    "arcade_rhythm": "Arcade Rhythm",
+    "pitch_comparison": "Pitch Comparison",
+    "interval_id": "Interval ID"
   },
   "modal": {
     "yourProgress": "Your Progress",
