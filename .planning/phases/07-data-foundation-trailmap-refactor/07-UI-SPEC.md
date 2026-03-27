@@ -58,14 +58,12 @@ Sourced from `tailwind.config.js` fontSize scale and existing trail components.
 | Heading | 20px (text-xl) | 700 (bold) | 1.8 (from config) |
 | Display | 24px (text-2xl) | 700 (bold) | 1.8 (from config) |
 
+**Note on sub-scale detail:** The progress counter rendered below tab labels in `TrailMap.jsx` uses `text-[10px]` with weight 400 and opacity 70. This is a legacy sub-scale detail below the minimum type size — it is not a declared type role and is retained as-is from the existing `TrailMap.jsx` pattern.
+
 **ComingSoon component specifically:**
 - Game name: 24px (text-2xl), weight 700, line-height 1.8
 - Subtitle: 16px (text-base), weight 400, line-height 1.7
 - Back button label: 14px (text-sm), weight 700, line-height 1.6
-
-**Tab bar labels:**
-- Tab text: 14px (text-sm), weight 700
-- Progress counter below label: 10px (text-[10px]), weight 400, opacity 70 — existing pattern, retain as-is
 
 ---
 
@@ -158,7 +156,7 @@ Each entry shape:
 ### 3. Updated TrailMap tab bar (refactored from hardcoded `TRAIL_TABS`)
 
 - Tab bar renders via `.map()` over `TRAIL_TAB_CONFIGS`
-- Each tab button: icon (16px) + label text + progress counter (existing 10px pattern)
+- Each tab button: icon (16px) + label text + progress counter (existing `text-[10px]` legacy sub-scale pattern, retained as-is)
 - Icon renders above label text within the button column layout
 - Active tab: gradient background + border + glow matching config entry
 - Inactive tab: `bg-transparent border border-white/10 text-white/60 hover:text-white/80 hover:border-white/20`
