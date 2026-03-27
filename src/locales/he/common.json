@@ -693,6 +693,14 @@
       "metronomeTrainer": {
         "name": "תרגול קצב עם מטרונום",
         "description": "האזינו לתבניות הקצב והקישו אותן במדויק"
+      },
+      "rhythmReading": {
+        "name": "קריאת קצב",
+        "description": "ראה תווים של קצב והקש בזמן"
+      },
+      "rhythmDictation": {
+        "name": "שמיעת קצב",
+        "description": "שמע קצב ובחר את התווים הנכונים"
       }
     },
     "modeCard": {
@@ -750,6 +758,41 @@
       "errorTitle": "אופס!",
       "errorMessage": "לא הצלחנו לטעון את משחקי התרגול. נסו שוב.",
       "startMode": "התחל משחק"
+    },
+    "rhythmReading": {
+      "title": "קריאת קצב",
+      "progressLabel": "תרגיל {{current}} מתוך {{total}}",
+      "startGame": "התחל משחק",
+      "tapArea": {
+        "tapHere": "הקש",
+        "accuracy": {
+          "perfect": "!מושלם",
+          "good": "!טוב",
+          "miss": "פספסת"
+        }
+      },
+      "countdown": {
+        "getReady": "!היכונו",
+        "go": "!קדימה"
+      },
+      "errors": {
+        "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
+        "patternError": "משהו השתבש. חזור ונסה שוב."
+      }
+    },
+    "rhythmDictation": {
+      "title": "שמיעת קצב",
+      "progressLabel": "תרגיל {{current}} מתוך {{total}}",
+      "startGame": "התחל משחק",
+      "listening": "...הקשב",
+      "playAgain": "נגן שוב",
+      "chooseRhythm": "בחר את הקצב ששמעת",
+      "correct": "!נכון",
+      "wrong": "!נסה שוב",
+      "errors": {
+        "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
+        "patternError": "משהו השתבש. חזור ונסה שוב."
+      }
     }
   },
   "dashboard": {
