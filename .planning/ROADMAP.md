@@ -44,7 +44,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ### v2.9 Game Variety & Ear Training
 
-- [ ] **Phase 7: Data Foundation + TrailMap Refactor** — New EXERCISE_TYPES constants, EAR_TRAINING category, TrailNodeModal routing, data-driven TrailMap, validateTrail extension
+- [x] **Phase 7: Data Foundation + TrailMap Refactor** — New EXERCISE_TYPES constants, EAR_TRAINING category, TrailNodeModal routing, data-driven TrailMap, validateTrail extension (completed 2026-03-27)
 - [ ] **Phase 8: Audio Infrastructure + Rhythm Games** — usePianoSampler hook, RhythmReadingGame, RhythmDictationGame, i18n for all new game types
 - [ ] **Phase 9: Ear Training Games** — NoteComparisonGame, IntervalGame, shared piano keyboard SVG, subscriptionConfig for ear nodes
 - [ ] **Phase 10: Ear Training Trail Data + Trail Tab** — 12-15 ear training nodes across 2 units, Ear tab on TrailMap, boss nodes, DB subscription gate sync
@@ -63,10 +63,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
   2. Tapping a trail node with any of the 5 new exercise types opens the correct game screen (no blank screen, no console error)
   3. TrailMap displays a 4th tab for Ear Training without code changes to tab layout logic (driven entirely by a data array)
   4. Build succeeds with all 5 new EXERCISE_TYPES and EAR_TRAINING category constants present in constants.js
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 07-01-PLAN.md — Data constants, build validation, i18n keys (INFRA-01, INFRA-02, INFRA-05)
-- [ ] 07-02-PLAN.md — TrailMap data-driven refactor, ComingSoon component, TrailNodeModal routing (INFRA-03, INFRA-04)
+- [x] 07-02-PLAN.md — TrailMap data-driven refactor, ComingSoon component, TrailNodeModal routing (INFRA-03, INFRA-04)
 
 ### Phase 8: Audio Infrastructure + Rhythm Games
 **Goal**: Children can tap along with rhythm notation and identify rhythms by ear, with correct piano sample playback powering all new audio-dependent games
@@ -126,7 +126,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 1. Introductory Single-Note Game | v2.8 | 2/2 | Complete | 2026-03-25 |
 | 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
-| 7. Data Foundation + TrailMap Refactor | v2.9 | 1/2 | In Progress|  |
+| 7. Data Foundation + TrailMap Refactor | v2.9 | 2/2 | Complete   | 2026-03-27 |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 0/? | Not started | - |
 | 9. Ear Training Games | v2.9 | 0/? | Not started | - |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
