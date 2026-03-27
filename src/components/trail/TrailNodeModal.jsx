@@ -229,10 +229,10 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         navigate('/notes-master-mode/note-speed-cards', { state: navState });
         break;
       case 'rhythm_tap':
-        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.rhythm_tap') } });
+        navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
         break;
       case 'rhythm_dictation':
-        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.rhythm_dictation') } });
+        navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
         break;
       case 'arcade_rhythm':
         navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.arcade_rhythm') } });

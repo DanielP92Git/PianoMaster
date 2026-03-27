@@ -72,6 +72,12 @@ const NotesRecognitionGame = lazyWithRetry(() => import("./components/games/note
 const SightReadingGame = lazyWithRetry(() => import("./components/games/sight-reading-game/SightReadingGame").then(m => ({ default: m.SightReadingGame })));
 const NoteSpeedCards = lazyWithRetry(() => import("./components/games/notes-master-games/NoteSpeedCards").then(m => ({ default: m.NoteSpeedCards })));
 const MetronomeTrainer = lazyWithRetry(() => import("./components/games/rhythm-games/MetronomeTrainer"));
+const RhythmReadingGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/RhythmReadingGame")
+);
+const RhythmDictationGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/RhythmDictationGame")
+);
 const SightReadingLayoutHarness = lazyWithRetry(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
 
 // Clear stale-chunk reload flag on successful app load
@@ -188,6 +194,8 @@ function OrientationController() {
     "/notes-master-mode/sight-reading-game",
     "/rhythm-mode/metronome-trainer",
     "/notes-master-mode/note-speed-cards",
+    "/rhythm-mode/rhythm-reading-game",
+    "/rhythm-mode/rhythm-dictation-game",
   ];
 
   const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
@@ -342,6 +350,22 @@ function AppRoutes() {
             <Route
               path="/rhythm-mode/metronome-trainer"
               element={<AudioContextProvider><MetronomeTrainer /></AudioContextProvider>}
+            />
+            <Route
+              path="/rhythm-mode/rhythm-reading-game"
+              element={
+                <AudioContextProvider>
+                  <RhythmReadingGame />
+                </AudioContextProvider>
+              }
+            />
+            <Route
+              path="/rhythm-mode/rhythm-dictation-game"
+              element={
+                <AudioContextProvider>
+                  <RhythmDictationGame />
+                </AudioContextProvider>
+              }
             />
             <Route path="/coming-soon" element={<ComingSoon />} />
           </Route>
