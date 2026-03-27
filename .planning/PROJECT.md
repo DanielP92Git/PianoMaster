@@ -504,4 +504,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-26 after v2.9 milestone started*
+*Last updated: 2026-03-27 — Phase 7 complete (data foundation + TrailMap refactor)*
