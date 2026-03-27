@@ -28,12 +28,12 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 ### Rhythm Dictation
 
-- [ ] **RDICT-01**: User hears a rhythm pattern played audio-only
-- [ ] **RDICT-02**: User can replay the rhythm before answering
-- [ ] **RDICT-03**: User picks correct notation from 2-4 VexFlow multiple-choice cards
+- [x] **RDICT-01**: User hears a rhythm pattern played audio-only
+- [x] **RDICT-02**: User can replay the rhythm before answering
+- [x] **RDICT-03**: User picks correct notation from 2-4 VexFlow multiple-choice cards
 - [x] **RDICT-04**: Wrong answer distractors differ by at least one audible duration element
-- [ ] **RDICT-05**: Correct/wrong feedback with reveal animation and optional notation replay
-- [ ] **RDICT-06**: Session completes through VictoryScreen with star rating and XP
+- [x] **RDICT-05**: Correct/wrong feedback with reveal animation and optional notation replay
+- [x] **RDICT-06**: Session completes through VictoryScreen with star rating and XP
 
 ### Arcade Rhythm
 
@@ -126,12 +126,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RTAP-03 | Phase 8 | Complete |
 | RTAP-04 | Phase 8 | Complete |
 | RTAP-05 | Phase 8 | Complete |
-| RDICT-01 | Phase 8 | Pending |
-| RDICT-02 | Phase 8 | Pending |
-| RDICT-03 | Phase 8 | Pending |
+| RDICT-01 | Phase 8 | Complete |
+| RDICT-02 | Phase 8 | Complete |
+| RDICT-03 | Phase 8 | Complete |
 | RDICT-04 | Phase 8 | Complete |
-| RDICT-05 | Phase 8 | Pending |
-| RDICT-06 | Phase 8 | Pending |
+| RDICT-05 | Phase 8 | Complete |
+| RDICT-06 | Phase 8 | Complete |
 | ARCR-01 | Phase 11 | Pending |
 | ARCR-02 | Phase 11 | Pending |
 | ARCR-03 | Phase 11 | Pending |
