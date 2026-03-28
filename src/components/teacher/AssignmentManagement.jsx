@@ -14,10 +14,13 @@ import {
   FileText,
   Target,
   Eye,
+  Square,
+  CheckSquare,
+  ChevronDown,
 } from "lucide-react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
-import Input from "../ui/Input";
+
 import Modal from "../ui/Modal";
 import { toast } from "react-hot-toast";
 import {
@@ -33,6 +36,7 @@ const CreateAssignmentModal = ({
   onClose,
   onCreateAssignment,
   isLoading,
+  students = [],
 }) => {
   const [formData, setFormData] = useState({
     title: "",
@@ -41,6 +45,7 @@ const CreateAssignmentModal = ({
     assignmentType: "practice",
     dueDate: "",
     pointsPossible: 100,
+    assignTo: "all",
     requirements: {
       minPracticeSessions: 1,
       minPracticeTime: 30,
@@ -59,6 +64,7 @@ const CreateAssignmentModal = ({
         assignmentType: "practice",
         dueDate: "",
         pointsPossible: 100,
+        assignTo: "all",
         requirements: {
           minPracticeSessions: 1,
           minPracticeTime: 30,
@@ -67,7 +73,7 @@ const CreateAssignmentModal = ({
         },
       });
     }
-  }, [isOpen]);
+  }, [isOpen, students]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
@@ -101,6 +107,7 @@ const CreateAssignmentModal = ({
       assignmentType: "practice",
       dueDate: "",
       pointsPossible: 100,
+      assignTo: "all",
       requirements: {
         minPracticeSessions: 1,
         minPracticeTime: 30,
@@ -121,18 +128,37 @@ const CreateAssignmentModal = ({
         onSubmit={handleSubmit}
         className="space-y-6 custom-scrollbar-light"
       >
+        {/* Assign to Students */}
+        <div>
+          <label className="block text-sm font-medium mb-2 text-gray-700">
+            Assign to Student
+          </label>
+          <select
+            value={formData.assignTo}
+            onChange={(e) => handleInputChange("assignTo", e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            required
+          >
+            <option value="all">All Students</option>
+            {students.map((student) => (
+              <option key={student.student_id} value={student.student_id}>
+                {student.student_name} ({student.email})
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-2 text-gray-700">
               Assignment Title
             </label>
-            <Input
+            <input
               type="text"
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Practice Session Week 1"
-              className="w-full"
-              variant="solid"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-500"
               required
             />
           </div>
@@ -176,9 +202,9 @@ const CreateAssignmentModal = ({
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             >
               <option value="practice">Practice Session</option>
-              <option value="theory">Theory Study</option>
-              <option value="performance">Performance</option>
-              <option value="composition">Composition</option>
+              <option value="exercise">Exercise</option>
+              <option value="assessment">Assessment</option>
+              <option value="project">Project</option>
             </select>
           </div>
 
@@ -186,12 +212,11 @@ const CreateAssignmentModal = ({
             <label className="block text-sm font-medium mb-2 text-gray-700">
               Due Date
             </label>
-            <Input
+            <input
               type="date"
               value={formData.dueDate}
               onChange={(e) => handleInputChange("dueDate", e.target.value)}
-              className="w-full"
-              variant="solid"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
 
@@ -199,7 +224,7 @@ const CreateAssignmentModal = ({
             <label className="block text-sm font-medium mb-2 text-gray-700">
               Points Possible
             </label>
-            <Input
+            <input
               type="number"
               value={formData.pointsPossible}
               onChange={(e) =>
@@ -207,8 +232,7 @@ const CreateAssignmentModal = ({
               }
               min="1"
               max="1000"
-              className="w-full"
-              variant="solid"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
 
@@ -233,9 +257,9 @@ const CreateAssignmentModal = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">
-              Min Practice Sessions
+              Min Sessions
             </label>
-            <Input
+            <input
               type="number"
               value={formData.requirements.minPracticeSessions}
               onChange={(e) =>
@@ -246,16 +270,15 @@ const CreateAssignmentModal = ({
               }
               min="1"
               max="20"
-              className="w-full"
-              variant="solid"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">
-              Min Practice Time (minutes)
+              Min Time (minutes)
             </label>
-            <Input
+            <input
               type="number"
               value={formData.requirements.minPracticeTime}
               onChange={(e) =>
@@ -266,8 +289,7 @@ const CreateAssignmentModal = ({
               }
               min="5"
               max="180"
-              className="w-full"
-              variant="solid"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
 
@@ -275,7 +297,7 @@ const CreateAssignmentModal = ({
             <label className="block text-sm font-medium mb-2 text-gray-700">
               Target Accuracy (%)
             </label>
-            <Input
+            <input
               type="number"
               value={formData.requirements.targetAccuracy}
               onChange={(e) =>
@@ -286,8 +308,7 @@ const CreateAssignmentModal = ({
               }
               min="0"
               max="100"
-              className="w-full"
-              variant="solid"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             />
           </div>
         </div>
@@ -504,15 +525,39 @@ const AssignmentDetailsModal = ({
   );
 };
 
-const AssignmentManagement = () => {
+const AssignmentManagement = ({ students = [] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [assignmentSubmissions, setAssignmentSubmissions] = useState([]);
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   const queryClient = useQueryClient();
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredAssignments.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAssignments.map((a) => a.id)));
+    }
+  };
+
+  const handleDeleteSelectedAssignments = () => {
+    if (selectedIds.size === 0) return;
+    [...selectedIds].forEach((id) => deleteAssignmentMutation.mutate(id));
+    setSelectedIds(new Set());
+  };
 
   // Fetch assignments
   const {
@@ -552,6 +597,35 @@ const AssignmentManagement = () => {
     },
   });
 
+  const getAssignmentStatus = (assignment) => {
+    const now = new Date();
+    const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
+
+    if (dueDate && now > dueDate) {
+      return "overdue";
+    } else if (
+      dueDate &&
+      now > new Date(dueDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+    ) {
+      return "due_soon";
+    } else {
+      return "active";
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "active":
+        return "bg-green-500/20 text-green-300";
+      case "due_soon":
+        return "bg-yellow-500/20 text-yellow-300";
+      case "overdue":
+        return "bg-red-500/20 text-red-300";
+      default:
+        return "bg-gray-500/20 text-gray-300";
+    }
+  };
+
   // Filter assignments
   const filteredAssignments = assignments.filter((assignment) => {
     const matchesSearch =
@@ -559,7 +633,7 @@ const AssignmentManagement = () => {
       assignment.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || assignment.status === statusFilter;
+      statusFilter === "all" || getAssignmentStatus(assignment) === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -590,35 +664,6 @@ const AssignmentManagement = () => {
     }
   };
 
-  const getAssignmentStatus = (assignment) => {
-    const now = new Date();
-    const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
-
-    if (dueDate && now > dueDate) {
-      return "overdue";
-    } else if (
-      dueDate &&
-      now > new Date(dueDate.getTime() - 7 * 24 * 60 * 60 * 1000)
-    ) {
-      return "due_soon";
-    } else {
-      return "active";
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active":
-        return "bg-green-100 text-green-800";
-      case "due_soon":
-        return "bg-yellow-100 text-yellow-800";
-      case "overdue":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   if (error) {
     return (
       <div className="p-6">
@@ -636,12 +681,12 @@ const AssignmentManagement = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">Assignment Management</h2>
+      {/* Action Button */}
+      <div>
         <Button
           onClick={() => setShowCreateModal(true)}
           icon={Plus}
+          size="small"
           className="whitespace-nowrap"
         >
           Create Assignment
@@ -650,39 +695,69 @@ const AssignmentManagement = () => {
 
       {/* Filters */}
       <Card className="p-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search assignments..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search assignments..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
+            />
           </div>
-          <div className="flex gap-3">
+          <div className="relative w-full sm:w-auto">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full appearance-none rounded-lg border border-white/20 bg-white/10 py-2 pl-3 pr-8 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
             >
               <option value="all">All Assignments</option>
               <option value="active">Active</option>
               <option value="due_soon">Due Soon</option>
               <option value="overdue">Overdue</option>
             </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
           </div>
         </div>
       </Card>
 
       {/* Assignments List */}
       <Card className="p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">
-          My Assignments ({filteredAssignments.length})
-        </h3>
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold text-white mb-2">
+            My Assignments ({filteredAssignments.length})
+          </h3>
+          {filteredAssignments.length > 0 && (
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleSelectAll}
+                className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
+              >
+                {selectedIds.size === filteredAssignments.length ? (
+                  <CheckSquare className="w-4 h-4 text-blue-500" />
+                ) : (
+                  <Square className="w-4 h-4" />
+                )}
+                Select All
+              </button>
+              {selectedIds.size > 0 && (
+                <>
+                  <span className="text-xs text-white/30">|</span>
+                  <button
+                    onClick={handleDeleteSelectedAssignments}
+                    className="flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {selectedIds.size === filteredAssignments.length
+                      ? "Delete All"
+                      : `Delete (${selectedIds.size})`}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         {isLoading ? (
           <div className="text-center py-8">
@@ -698,71 +773,89 @@ const AssignmentManagement = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4 custom-scrollbar">
-            {filteredAssignments.map((assignment) => (
+          <div className="space-y-3 custom-scrollbar">
+            {filteredAssignments.map((assignment) => {
+              const isSelected = selectedIds.has(assignment.id);
+              return (
               <div
                 key={assignment.id}
-                className="bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-all duration-300"
+                className={`rounded-xl p-3 border transition-all ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-500/10"
+                    : "bg-blue-500/10 border-blue-500/20 hover:border-blue-500/30"
+                }`}
               >
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-white">
-                        {assignment.title}
-                      </h4>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(getAssignmentStatus(assignment))}`}
-                      >
-                        {getAssignmentStatus(assignment).replace("_", " ")}
-                      </span>
-                    </div>
-                    <p className="text-gray-300 text-sm mb-2">
-                      {assignment.description}
-                    </p>
-                    <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          {assignment.due_date
-                            ? `Due: ${new Date(assignment.due_date).toLocaleDateString()}`
-                            : "No due date"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Award className="w-4 h-4" />
-                        <span>{assignment.points_possible} points</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>
-                          {assignment.submission_count || 0} submissions
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="small"
+                {/* Row 1: Checkbox + Title + Badge + Actions */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleSelect(assignment.id)}
+                    className="flex-shrink-0 text-gray-400 hover:text-blue-400 transition-colors"
+                  >
+                    {isSelected ? (
+                      <CheckSquare className="w-4 h-4 text-blue-500" />
+                    ) : (
+                      <Square className="w-4 h-4" />
+                    )}
+                  </button>
+                  <h4 className="min-w-0 truncate text-sm font-semibold text-white">
+                    {assignment.title}
+                  </h4>
+                  <span
+                    className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(getAssignmentStatus(assignment))}`}
+                  >
+                    {getAssignmentStatus(assignment).replace("_", " ")}
+                  </span>
+                  <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">
+                    <button
                       onClick={() => handleViewAssignment(assignment)}
-                      icon={Eye}
+                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
+                      title="View Details"
                     >
-                      View
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="small"
+                      <Eye className="h-3.5 w-3.5" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteAssignment(assignment.id)}
-                      icon={Trash2}
-                      className="text-red-400 hover:text-red-300"
+                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                      title="Delete"
                     >
-                      Delete
-                    </Button>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Row 2: Description (if present) */}
+                {assignment.description && (
+                  <p className="mt-1 ml-6 text-xs text-white/50 truncate">
+                    {assignment.description}
+                  </p>
+                )}
+
+                {/* Row 3: Metadata inline */}
+                <div className="mt-2 ml-6 flex flex-wrap items-center gap-3 text-xs text-white/40">
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>
+                      {assignment.due_date
+                        ? new Date(assignment.due_date).toLocaleDateString()
+                        : "No due date"}
+                    </span>
+                  </div>
+                  <span className="text-white/20">&middot;</span>
+                  <div className="flex items-center gap-1">
+                    <Award className="h-3.5 w-3.5" />
+                    <span>{assignment.points_possible} pts</span>
+                  </div>
+                  <span className="text-white/20">&middot;</span>
+                  <div className="flex items-center gap-1">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>
+                      {assignment.submission_count || 0} submissions
+                    </span>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -773,6 +866,7 @@ const AssignmentManagement = () => {
         onClose={() => setShowCreateModal(false)}
         onCreateAssignment={handleCreateAssignment}
         isLoading={createAssignmentMutation.isPending}
+        students={students}
       />
 
       <AssignmentDetailsModal

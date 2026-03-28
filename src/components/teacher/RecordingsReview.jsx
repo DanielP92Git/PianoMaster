@@ -22,6 +22,7 @@ import {
   Trash2,
   Square,
   CheckSquare,
+  ChevronDown,
 } from "lucide-react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
@@ -170,8 +171,28 @@ const RecordingsReview = () => {
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [playingId, setPlayingId] = useState(null);
+  const [expandedRecordings, setExpandedRecordings] = useState(new Set());
+
+  const toggleExpanded = (id) => {
+    setExpandedRecordings((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
   const [selectedRecordings, setSelectedRecordings] = useState([]);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [expandedStudents, setExpandedStudents] = useState(new Set());
+
+  const toggleStudentExpanded = (studentId) => {
+    setExpandedStudents((prev) => {
+      const next = new Set(prev);
+      if (next.has(studentId)) next.delete(studentId);
+      else next.add(studentId);
+      return next;
+    });
+  };
 
   const queryClient = useQueryClient();
   const { user } = useUser();
@@ -282,6 +303,19 @@ const RecordingsReview = () => {
       recording.student_email.toLowerCase().includes(searchLower)
     );
   });
+
+  // Group recordings by student
+  const groupedByStudent = useMemo(() => {
+    const groups = {};
+    filteredRecordings.forEach((rec) => {
+      const key = rec.student_id;
+      if (!groups[key]) {
+        groups[key] = { studentName: rec.student_name, studentId: key, recordings: [] };
+      }
+      groups[key].recordings.push(rec);
+    });
+    return Object.values(groups);
+  }, [filteredRecordings]);
 
   // Debug logging for component state (disabled to prevent HMR spam)
   // 
@@ -406,80 +440,74 @@ const RecordingsReview = () => {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <input
               type="text"
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
             />
           </div>
 
           {/* Student Filter */}
-          <select
-            value={filters.studentId}
-            onChange={(e) => handleFilterChange("studentId", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-          >
-            <option value="" className="text-gray-900">
-              All Students
-            </option>
-            {students.map((student) => (
-              <option
-                key={student.student_id}
-                value={student.student_id}
-                className="text-gray-900"
-              >
-                {student.student_name}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={filters.studentId}
+              onChange={(e) => handleFilterChange("studentId", e.target.value)}
+              className="w-full appearance-none rounded-lg border border-white/20 bg-white/10 py-2 pl-3 pr-8 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
+            >
+              <option value="">All Students</option>
+              {students.map((student) => (
+                <option key={student.student_id} value={student.student_id}>
+                  {student.student_name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          </div>
 
           {/* Status Filter */}
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange("status", e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900"
-          >
-            <option value="" className="text-gray-900">
-              All Statuses
-            </option>
-            {REVIEW_STATUSES.map((status) => (
-              <option
-                key={status.value}
-                value={status.value}
-                className="text-gray-900"
-              >
-                {status.label}
-              </option>
-            ))}
-          </select>
+          <div className="relative w-full sm:w-auto">
+            <select
+              value={filters.status}
+              onChange={(e) => handleFilterChange("status", e.target.value)}
+              className="w-full appearance-none rounded-lg border border-white/20 bg-white/10 py-2 pl-3 pr-8 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
+            >
+              <option value="">All Statuses</option>
+              {REVIEW_STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          </div>
 
           {/* Date Range - Start Date */}
-          <Input
+          <input
             type="date"
             value={filters.startDate}
             onChange={(e) => handleFilterChange("startDate", e.target.value)}
-            placeholder="Start Date"
+            className="w-full rounded-lg border border-white/20 bg-white/10 py-2 px-3 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20 sm:w-auto"
           />
         </div>
       </Card>
 
       {/* Recordings List */}
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold text-white">
-              Recent Recordings ({filteredRecordings.length})
-            </h2>
-            {filteredRecordings.length > 0 && (
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold text-white mb-2">
+            Recent Recordings ({filteredRecordings.length})
+          </h2>
+          {filteredRecordings.length > 0 && (
+            <div className="flex items-center gap-3">
               <button
                 onClick={() => handleSelectAll(!isAllSelected)}
-                className="flex items-center gap-2 text-sm text-gray-300 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
               >
                 {isAllSelected ? (
                   <CheckSquare className="w-4 h-4 text-blue-500" />
@@ -488,33 +516,26 @@ const RecordingsReview = () => {
                 )}
                 Select All
               </button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {selectedRecordings.length > 0 && (
-              <Button
-                variant="error"
-                size="small"
-                onClick={handleDeleteSelected}
-                icon={Trash2}
-              >
-                Delete Selected ({selectedRecordings.length})
-              </Button>
-            )}
-            {filteredRecordings.length > 0 && (
-              <Button
-                variant="error"
-                size="small"
-                onClick={() => {
-                  setSelectedRecordings(filteredRecordings);
-                  setShowDeleteConfirmModal(true);
-                }}
-                icon={Trash2}
-              >
-                Delete All
-              </Button>
-            )}
-          </div>
+              {selectedRecordings.length > 0 && (
+                <>
+                  <span className="text-xs text-white/30">|</span>
+                  <button
+                    onClick={
+                      selectedRecordings.length === filteredRecordings.length
+                        ? () => setShowDeleteConfirmModal(true)
+                        : handleDeleteSelected
+                    }
+                    className="flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {selectedRecordings.length === filteredRecordings.length
+                      ? "Delete All"
+                      : `Delete (${selectedRecordings.length})`}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
         </div>
 
         {recordingsLoading ? (
@@ -553,86 +574,114 @@ const RecordingsReview = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            {filteredRecordings.map((recording) => {
-              const isSelected = isRecordingSelected(recording);
+          <div className="space-y-3">
+            {groupedByStudent.map((group) => {
+              const isStudentOpen = expandedStudents.has(group.studentId);
               return (
                 <div
-                  key={recording.id}
-                  className={`bg-white/5 backdrop-blur-sm rounded-lg p-4 border transition-all ${
-                    isSelected
-                      ? "border-blue-500 bg-blue-500/10"
-                      : "border-white/10 hover:border-white/20"
-                  }`}
+                  key={group.studentId}
+                  className="rounded-xl border border-white/10 bg-white/5 transition-all"
                 >
-                  <div className="flex items-start gap-3">
-                    {/* Selection Checkbox */}
-                    <button
-                      onClick={() => handleRecordingSelect(recording, !isSelected)}
-                      className="mt-1 text-gray-400 hover:text-blue-400 transition-colors flex-shrink-0"
-                    >
-                      {isSelected ? (
-                        <CheckSquare className="w-5 h-5 text-blue-500" />
-                      ) : (
-                        <Square className="w-5 h-5" />
-                      )}
-                    </button>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Header Row */}
-                      <div className="flex items-center gap-3 mb-2">
-                      <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-blue-400" />
-                        <span className="font-medium text-white">
-                          {recording.student_name}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-300">
-                        <Calendar className="w-4 h-4" />
-                        {recording.formatted_date}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-300">
-                        <Clock className="w-4 h-4" />
-                        {recording.duration_formatted}
-                      </div>
-                      {getStatusBadge(recording.status)}
-                    </div>
-
-                    {/* Audio Player */}
-                    <div className="mb-3">
-                      <PracticeSessionPlayer
-                        session={recording}
-                        isPlaying={playingId === recording.id}
-                        onPlayStateChange={setPlayingId}
-                        className="bg-white/5 border border-white/10 rounded-lg p-3"
-                      />
-                    </div>
-
-                    {/* Feedback */}
-                    {recording.teacher_feedback && (
-                      <div className="bg-white/5 rounded-lg p-3 mb-3">
-                        <p className="text-sm text-gray-300">
-                          <span className="font-medium text-white">
-                            Feedback:
-                          </span>{" "}
-                          {recording.teacher_feedback}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <Button
-                        variant="secondary"
-                        size="small"
-                        onClick={() => handleReviewRecording(recording)}
-                        icon={MessageSquare}
-                      >
-                        Review
-                      </Button>
-                    </div>
+                  {/* Level 1 — Student header */}
+                  <div
+                    className="flex items-center gap-3 p-3 cursor-pointer"
+                    onClick={() => toggleStudentExpanded(group.studentId)}
+                  >
+                    <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-white">
+                      {group.studentName}
+                    </h3>
+                    <span className="flex-shrink-0 text-xs text-white/40">
+                      {group.recordings.length} {group.recordings.length === 1 ? "recording" : "recordings"}
+                    </span>
+                    <ChevronDown
+                      className={`h-4 w-4 flex-shrink-0 text-white/40 transition-transform duration-200 ${
+                        isStudentOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </div>
-                  </div>
+
+                  {/* Level 1 — Expanded: student's recordings */}
+                  {isStudentOpen && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {group.recordings.map((recording) => {
+                        const isSelected = isRecordingSelected(recording);
+                        const isExpanded = expandedRecordings.has(recording.id);
+                        return (
+                          <div
+                            key={recording.id}
+                            className={`rounded-xl border transition-all ${
+                              isSelected
+                                ? "border-blue-500 bg-blue-500/10"
+                                : "border-white/10 bg-white/5 hover:border-white/20"
+                            }`}
+                          >
+                            {/* Level 2 — Recording header */}
+                            <div
+                              className="flex items-center gap-2 p-3 cursor-pointer"
+                              onClick={() => toggleExpanded(recording.id)}
+                            >
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRecordingSelect(recording, !isSelected);
+                                }}
+                                className="flex-shrink-0 text-gray-400 hover:text-blue-400 transition-colors"
+                              >
+                                {isSelected ? (
+                                  <CheckSquare className="w-4 h-4 text-blue-500" />
+                                ) : (
+                                  <Square className="w-4 h-4" />
+                                )}
+                              </button>
+                              <span className="min-w-0 flex-1 truncate text-xs text-white/60">
+                                {recording.formatted_date} | {recording.duration_formatted}
+                              </span>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {getStatusBadge(recording.status)}
+                                <ChevronDown
+                                  className={`w-3.5 h-3.5 text-white/40 transition-transform duration-200 ${
+                                    isExpanded ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Level 2 — Expanded: player + feedback */}
+                            {isExpanded && (
+                              <div className="px-3 pb-3">
+                                <div className="mb-3">
+                                  <PracticeSessionPlayer
+                                    session={recording}
+                                    isPlaying={playingId === recording.id}
+                                    onPlayStateChange={setPlayingId}
+                                    compact
+                                    showVolumeControl={false}
+                                    className="bg-[#22163a] rounded-xl p-4 border border-white/10"
+                                  />
+                                </div>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                  {recording.teacher_feedback && (
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs text-white/40">Feedback:</span>
+                                      <span className="text-sm text-white">
+                                        {recording.teacher_feedback}
+                                      </span>
+                                    </div>
+                                  )}
+                                  <button
+                                    onClick={() => handleReviewRecording(recording)}
+                                    className="ml-auto rounded-lg border border-cyan-400 px-4 py-1.5 text-sm font-medium text-cyan-400 transition-colors hover:bg-cyan-400/10"
+                                  >
+                                    Review
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -694,6 +743,7 @@ const RecordingsReview = () => {
           <div className="flex gap-3 justify-end pt-4">
             <Button
               variant="secondary"
+              size="small"
               onClick={() => setShowDeleteConfirmModal(false)}
               disabled={deleteMutation.isPending}
             >
@@ -701,13 +751,14 @@ const RecordingsReview = () => {
             </Button>
             <Button
               variant="error"
+              size="small"
               onClick={handleConfirmDelete}
               disabled={deleteMutation.isPending}
               icon={Trash2}
             >
               {deleteMutation.isPending
                 ? "Deleting..."
-                : `Delete ${selectedRecordings.length} Recording${selectedRecordings.length > 1 ? "s" : ""}`}
+                : `Delete (${selectedRecordings.length})`}
             </Button>
           </div>
         </div>

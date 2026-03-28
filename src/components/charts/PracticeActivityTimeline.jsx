@@ -78,7 +78,7 @@ const PracticeActivityTimeline = ({ students }) => {
     students.forEach((student) => {
       if (student.recent_practices && Array.isArray(student.recent_practices)) {
         student.recent_practices.forEach((practice) => {
-          const practiceDate = new Date(practice.created_at);
+          const practiceDate = new Date(practice.submitted_at);
           const dateKey =
             viewMode === "monthly"
               ? `${practiceDate.getFullYear()}-${String(practiceDate.getMonth() + 1).padStart(2, "0")}`
@@ -121,7 +121,7 @@ const PracticeActivityTimeline = ({ students }) => {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900 mb-2">{data.displayDate}</p>
+          <p className="font-medium text-white mb-2">{data.displayDate}</p>
           <div className="space-y-1">
             <p className="text-sm text-blue-600">
               <span className="font-medium">Sessions:</span>{" "}
@@ -237,7 +237,7 @@ const PracticeActivityTimeline = ({ students }) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <TrendingUp className="w-5 h-5 text-blue-500" />
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-medium text-white">
             Practice Activity Timeline
           </h3>
         </div>

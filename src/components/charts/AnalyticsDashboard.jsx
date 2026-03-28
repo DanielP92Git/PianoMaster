@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import ClassPerformanceChart from "./ClassPerformanceChart";
 import TopPerformersLeaderboard from "./TopPerformersLeaderboard";
-import PracticeActivityTimeline from "./PracticeActivityTimeline";
+
 import PerformanceDistribution from "./PerformanceDistribution";
 
 const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
@@ -19,7 +19,6 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
   const tabs = [
     { id: "overview", label: "Overview", icon: BarChart3 },
     { id: "performance", label: "Performance", icon: Trophy },
-    { id: "trends", label: "Trends", icon: TrendingUp },
     { id: "distribution", label: "Distribution", icon: PieChart },
   ];
 
@@ -52,7 +51,7 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
     const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
     const activeToday = students.filter((student) =>
       student.recent_practices?.some(
-        (practice) => new Date(practice.created_at) >= yesterday
+        (practice) => new Date(practice.submitted_at) >= yesterday
       )
     ).length;
 
@@ -96,13 +95,6 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
           </div>
         );
 
-      case "trends":
-        return (
-          <div className="space-y-6">
-            <PracticeActivityTimeline students={students} />
-          </div>
-        );
-
       case "distribution":
         return (
           <div className="space-y-6">
@@ -132,7 +124,7 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
             <select
               value={selectedMetric}
               onChange={(e) => setSelectedMetric(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="appearance-none rounded-lg border border-white/20 bg-white/10 py-2 pl-3 pr-8 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
             >
               <option value="all">All Metrics</option>
               <option value="xp">XP</option>
@@ -156,11 +148,11 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
 
       {/* Key Statistics */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white/10 p-4 rounded-lg border border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Total Students</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-white/60">Total Students</p>
+              <p className="text-2xl font-bold text-white">
                 {stats.totalStudents}
               </p>
             </div>
@@ -170,11 +162,11 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white/10 p-4 rounded-lg border border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Avg Accuracy</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-white/60">Avg Accuracy</p>
+              <p className="text-2xl font-bold text-white">
                 {stats.avgAccuracy}%
               </p>
             </div>
@@ -184,11 +176,11 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white/10 p-4 rounded-lg border border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Avg Attendance</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-white/60">Avg Attendance</p>
+              <p className="text-2xl font-bold text-white">
                 {stats.avgAttendance}%
               </p>
             </div>
@@ -198,11 +190,11 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white/10 p-4 rounded-lg border border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Practice Hours</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-white/60">Practice Hours</p>
+              <p className="text-2xl font-bold text-white">
                 {stats.totalPracticeHours}
               </p>
             </div>
@@ -212,11 +204,11 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
           </div>
         </div>
 
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-white/10 p-4 rounded-lg border border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-400">Active Today</p>
-              <p className="text-2xl font-bold text-gray-900">
+              <p className="text-sm text-white/60">Active Today</p>
+              <p className="text-2xl font-bold text-white">
                 {stats.activeToday}
               </p>
             </div>
@@ -228,8 +220,8 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex space-x-8">
+      <div className="overflow-x-auto border-b border-white/10">
+        <nav className="flex min-w-max gap-4">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -262,7 +254,7 @@ const AnalyticsDashboard = ({ students, onRefresh, loading = false }) => {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <BarChart3 className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-white mb-2">
                 No Data Available
               </h3>
               <p className="text-gray-300">

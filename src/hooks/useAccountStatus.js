@@ -8,31 +8,32 @@ import supabase from '../services/supabase';
  * @param {string} userId - Student UUID (from auth)
  * @returns {{ status, loading, isSuspended, suspensionReason, parentEmail, refetch }}
  */
-export function useAccountStatus(userId) {
+export function useAccountStatus(userId, { enabled = true } = {}) {
   const [status, setStatus] = useState(null);
   const [parentEmail, setParentEmail] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchStatus = async () => {
-    if (!userId) {
+    if (!userId || !enabled) {
+      setStatus('active');
       setLoading(false);
       return;
     }
 
     try {
+      // Query with wildcard — avoids 406 if COPPA columns haven't been migrated yet
       const { data, error } = await supabase
         .from('students')
-        .select('account_status, parent_email, deletion_scheduled_at')
+        .select('*')
         .eq('id', userId)
         .single();
 
       if (error) {
-        // Non-students (teachers) and placeholder students may not have these columns.
-        // Default to active — this hook is only critical for suspension/deletion gating.
+        // Non-students (teachers) or row not found — default to active
         setStatus('active');
       } else {
         setStatus(data?.account_status || 'active');
-        setParentEmail(data?.parent_email);
+        setParentEmail(data?.parent_email || null);
       }
     } catch (err) {
       console.error('Error in useAccountStatus:', err);

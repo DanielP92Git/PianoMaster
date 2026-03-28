@@ -13,6 +13,8 @@ export default function PracticeSessionPlayer({
   className = "",
   disabled = false,
   showDownload = false,
+  showVolumeControl = true,
+  compact = false,
 }) {
   const { t } = useTranslation("common");
   const [audioUrl, setAudioUrl] = useState(null);
@@ -168,41 +170,43 @@ export default function PracticeSessionPlayer({
         `bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20`
       }
     >
-      {/* Session Info Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="space-y-1">
-          <div className="text-white text-sm font-medium">
-            {formatDate(session.submitted_at)}
+      {/* Session Info Header — hidden in compact mode */}
+      {!compact && (
+        <div className="flex items-center justify-between mb-4">
+          <div className="space-y-1">
+            <div className="text-white text-sm font-medium">
+              {formatDate(session.submitted_at)}
+            </div>
+            <div className="flex items-center gap-4 text-xs text-white/70">
+              {session.format && <span>Format: {session.format}</span>}
+              {session.quality && <span>Quality: {session.quality}</span>}
+              {session.file_size && (
+                <span>Size: {formatFileSize(session.file_size)}</span>
+              )}
+              {session.duration_seconds && (
+                <span>
+                  Duration: {Math.floor(session.duration_seconds / 60)}:
+                  {(session.duration_seconds % 60).toString().padStart(2, "0")}
+                </span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-4 text-xs text-white/70">
-            {session.format && <span>Format: {session.format}</span>}
-            {session.quality && <span>Quality: {session.quality}</span>}
-            {session.file_size && (
-              <span>Size: {formatFileSize(session.file_size)}</span>
-            )}
-            {session.duration_seconds && (
-              <span>
-                Duration: {Math.floor(session.duration_seconds / 60)}:
-                {(session.duration_seconds % 60).toString().padStart(2, "0")}
-              </span>
-            )}
-          </div>
-        </div>
 
-        {/* Action Buttons */}
-        {showDownload && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleDownload}
-              disabled={disabled || (!audioUrl && !session.recording_url)}
-              className="p-2 text-white/70 hover:text-white disabled:text-white/30 disabled:cursor-not-allowed transition-colors"
-              title="Download recording"
-            >
-              <Download className="w-4 h-4" />
-            </button>
-          </div>
-        )}
-      </div>
+          {/* Action Buttons */}
+          {showDownload && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleDownload}
+                disabled={disabled || (!audioUrl && !session.recording_url)}
+                className="p-2 text-white/70 hover:text-white disabled:text-white/30 disabled:cursor-not-allowed transition-colors"
+                title="Download recording"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Session Notes */}
       {session.notes && (
@@ -243,17 +247,17 @@ export default function PracticeSessionPlayer({
           onStop={handleAudioStop}
           onEnded={handleAudioEnded}
           onError={handleAudioError}
-          showVolumeControl={true}
+          showVolumeControl={showVolumeControl}
           showSeekBar={true}
           showTimeDisplay={true}
           disabled={disabled}
-          knownDuration={session?.duration_seconds || null}
-          className="bg-transparent border-white/10"
+          knownDuration={session?.duration_seconds || session?.duration || null}
+          className="bg-transparent"
         />
       ) : null}
 
-      {/* Status Indicator */}
-      {session.status && (
+      {/* Status Indicator — hidden in compact mode */}
+      {!compact && session.status && (
         <div className="mt-3 flex items-center gap-2 text-xs">
           <span className="text-white/50">
             {t("pages.practiceSessions.statusLabel")}:

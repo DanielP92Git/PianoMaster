@@ -15,10 +15,10 @@ import {
   Plus,
   Target,
   User,
+  ChevronDown,
 } from "lucide-react";
 import Card from "../ui/Card";
 import Button from "../ui/Button";
-import Input from "../ui/Input";
 import Modal from "../ui/Modal";
 import { toast } from "react-hot-toast";
 import {
@@ -151,13 +151,12 @@ const SendNotificationModal = ({
           <label className="block text-sm font-medium mb-2 text-gray-700">
             Title
           </label>
-          <Input
+          <input
             type="text"
             value={formData.title}
             onChange={(e) => handleInputChange("title", e.target.value)}
             placeholder="Enter notification title..."
-            className="w-full"
-            variant="solid"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
             required
           />
         </div>
@@ -218,13 +217,13 @@ const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-800";
+        return "bg-red-500/20 text-red-300";
       case "normal":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-500/20 text-blue-300";
       case "low":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500/20 text-gray-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500/20 text-gray-300";
     }
   };
 
@@ -268,7 +267,10 @@ const NotificationDetailModal = ({ isOpen, onClose, notification }) => {
         {notification.student_name && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <User className="w-4 h-4" />
-            <span>From: {notification.student_name}</span>
+            <span>
+              {notification.direction === "sent" ? "To" : "From"}:{" "}
+              {notification.student_name}
+            </span>
           </div>
         )}
       </div>
@@ -418,13 +420,13 @@ const NotificationCenter = ({ students = [] }) => {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-800";
+        return "bg-red-500/20 text-red-300";
       case "normal":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-500/20 text-blue-300";
       case "low":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500/20 text-gray-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-500/20 text-gray-300";
     }
   };
 
@@ -457,57 +459,36 @@ const NotificationCenter = ({ students = [] }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <h2 className="text-2xl font-bold text-white">Notification Center</h2>
-          {unreadCount > 0 && (
-            <span className="bg-red-500 text-white px-2 py-1 rounded-full text-sm font-medium">
-              {unreadCount} new
-            </span>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowSendModal(true)}
-            icon={Plus}
-            className="whitespace-nowrap"
-          >
-            Send Notification
-          </Button>
-          {unreadCount > 0 && (
-            <Button
-              onClick={() => markAllAsReadMutation.mutate()}
-              variant="secondary"
-              icon={CheckCircle}
-              loading={markAllAsReadMutation.isPending}
-            >
-              Mark All Read
-            </Button>
-          )}
-        </div>
+      {/* Action Button */}
+      <div>
+        <Button
+          onClick={() => setShowSendModal(true)}
+          icon={Plus}
+          size="small"
+          className="whitespace-nowrap"
+        >
+          Send Notification
+        </Button>
       </div>
 
       {/* Filters */}
       <Card className="p-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search notifications..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <input
+              type="text"
+              placeholder="Search notifications..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-white/10 py-2 pl-9 pr-3 text-sm text-white placeholder:text-white/40 focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
+            />
           </div>
-          <div className="flex gap-3">
+          <div className="relative w-full sm:w-auto">
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full appearance-none rounded-lg border border-white/20 bg-white/10 py-2 pl-3 pr-8 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
             >
               <option value="all">All Types</option>
               <option value="achievement">Achievements</option>
@@ -515,40 +496,60 @@ const NotificationCenter = ({ students = [] }) => {
               <option value="message">Messages</option>
               <option value="reminder">Reminders</option>
             </select>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+          </div>
+          <div className="relative w-full sm:w-auto">
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full appearance-none rounded-lg border border-white/20 bg-white/10 py-2 pl-3 pr-8 text-sm text-white focus:border-white/40 focus:outline-none focus:ring-1 focus:ring-white/20"
             >
               <option value="all">All Priorities</option>
               <option value="high">High</option>
               <option value="normal">Normal</option>
               <option value="low">Low</option>
             </select>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={showUnreadOnly}
-                onChange={(e) => setShowUnreadOnly(e.target.checked)}
-                className="rounded"
-              />
-              <span className="text-sm text-white">Unread only</span>
-            </label>
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
           </div>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showUnreadOnly}
+              onChange={(e) => setShowUnreadOnly(e.target.checked)}
+              className="rounded"
+            />
+            <span className="text-sm text-white whitespace-nowrap">Unread only</span>
+          </label>
         </div>
       </Card>
 
       {/* Notifications List */}
       <Card className="p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
             <h3 className="text-lg font-semibold text-white">
-              Notifications ({filteredNotifications.length})
+              Notifications ({notifications.length})
             </h3>
-            {filteredNotifications.length > 0 && (
+            {unreadCount > 0 && (
+              <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-300">
+                {unreadCount} new
+              </span>
+            )}
+            {unreadCount > 0 && (
+              <button
+                onClick={() => markAllAsReadMutation.mutate()}
+                disabled={markAllAsReadMutation.isPending}
+                className="ml-auto text-xs text-white/40 hover:text-white/70 transition-colors disabled:opacity-50"
+              >
+                {markAllAsReadMutation.isPending ? "Marking..." : "Mark all read"}
+              </button>
+            )}
+          </div>
+          {filteredNotifications.length > 0 && (
+            <div className="flex items-center gap-3">
               <button
                 onClick={toggleSelectAll}
-                className="flex items-center gap-1 text-sm text-gray-300 hover:text-white transition-colors"
+                className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
               >
                 {selectedIds.size === filteredNotifications.length ? (
                   <CheckSquare className="h-4 w-4 text-blue-500" />
@@ -557,18 +558,22 @@ const NotificationCenter = ({ students = [] }) => {
                 )}
                 Select All
               </button>
-            )}
-          </div>
-          {selectedIds.size > 0 && (
-            <Button
-              variant="error"
-              size="small"
-              onClick={handleDeleteSelected}
-              icon={Trash2}
-              loading={deleteMultipleMutation.isPending}
-            >
-              Delete {selectedIds.size} Selected
-            </Button>
+              {selectedIds.size > 0 && (
+                <>
+                  <span className="text-xs text-white/30">|</span>
+                  <button
+                    onClick={handleDeleteSelected}
+                    disabled={deleteMultipleMutation.isPending}
+                    className="flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {selectedIds.size === filteredNotifications.length
+                      ? "Delete All"
+                      : `Delete (${selectedIds.size})`}
+                  </button>
+                </>
+              )}
+            </div>
           )}
         </div>
 
@@ -592,20 +597,21 @@ const NotificationCenter = ({ students = [] }) => {
             {filteredNotifications.map((notification) => (
               <div
                 key={notification.id}
-                className={`p-4 rounded-lg border cursor-pointer transition-all duration-200 hover:bg-white/5 ${
+                className={`p-3 rounded-xl border cursor-pointer transition-all ${
                   !notification.is_read
-                    ? "bg-blue-50/10 border-blue-200/20"
-                    : "bg-white/5 border-white/10"
+                    ? "bg-blue-500/10 border-blue-500/20"
+                    : "bg-white/5 border-white/10 hover:border-white/20"
                 }`}
                 onClick={() => handleNotificationClick(notification)}
               >
-                <div className="flex items-start gap-3">
+                {/* Row 1: Checkbox + Title + Priority + Actions */}
+                <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleSelect(notification.id);
                     }}
-                    className="mt-0.5 flex-shrink-0 text-gray-400 hover:text-blue-400 transition-colors"
+                    className="flex-shrink-0 text-gray-400 hover:text-blue-400 transition-colors"
                   >
                     {selectedIds.has(notification.id) ? (
                       <CheckSquare className="h-4 w-4 text-blue-500" />
@@ -613,57 +619,61 @@ const NotificationCenter = ({ students = [] }) => {
                       <Square className="h-4 w-4" />
                     )}
                   </button>
-                  {getNotificationIcon(notification.type)}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h4
-                        className={`font-medium ${!notification.is_read ? "text-white" : "text-gray-300"}`}
-                      >
-                        {notification.title}
-                      </h4>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(notification.priority)}`}
-                      >
-                        {notification.priority}
-                      </span>
-                      {!notification.is_read && (
-                        <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-400 mb-2 line-clamp-2">
-                      {notification.message}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-gray-400">
-                      <span>
-                        {new Date(notification.created_at).toLocaleString()}
-                      </span>
-                      {notification.student_name && (
-                        <span>From: {notification.student_name}</span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="small"
+                  <h4
+                    className={`min-w-0 flex-1 truncate text-sm font-semibold ${!notification.is_read ? "text-white" : "text-gray-300"}`}
+                  >
+                    {notification.title}
+                  </h4>
+                  <span
+                    className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${getPriorityColor(notification.priority)}`}
+                  >
+                    {notification.priority}
+                  </span>
+                  <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         archiveNotificationMutation.mutate(notification.id);
                       }}
-                      icon={Archive}
-                      className="text-gray-400 hover:text-gray-300"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="small"
+                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
+                      title="Archive"
+                    >
+                      <Archive className="h-3.5 w-3.5" />
+                    </button>
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
                         deleteNotificationMutation.mutate(notification.id);
                       }}
-                      icon={Trash2}
-                      className="text-red-400 hover:text-red-300"
-                    />
+                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
+                </div>
+
+                {/* Row 2: Message */}
+                {notification.message && (
+                  <p className="mt-1 ml-6 text-xs text-white/50 truncate">
+                    {notification.message}
+                  </p>
+                )}
+
+                {/* Row 3: Date + Recipient */}
+                <div className="mt-2 ml-6 flex flex-wrap items-center gap-3 text-xs text-white/40">
+                  <span>
+                    {new Date(notification.created_at).toLocaleString()}
+                  </span>
+                  {notification.student_name && (
+                    <>
+                      <span className="text-white/20">&middot;</span>
+                      <span>
+                        {notification.direction === "sent" ? "To" : "From"}:{" "}
+                        {notification.student_name}
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

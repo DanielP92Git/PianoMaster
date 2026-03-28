@@ -382,6 +382,12 @@ progress,
    REUSABLE COMPONENT CLASSES
    ======================================== */
 
+/* Dark dropdown options for glass-styled selects */
+select option {
+  background-color: #1e1b4b;
+  color: #fff;
+}
+
 @layer components {
   /* Card Components */
   .card {

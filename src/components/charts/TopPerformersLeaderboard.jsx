@@ -95,10 +95,10 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
 
   const getTrophyIcon = (rank) => {
     if (rank === 1) return <Trophy className="w-5 h-5 text-yellow-500" />;
-    if (rank === 2) return <Trophy className="w-5 h-5 text-gray-400" />;
+    if (rank === 2) return <Trophy className="w-5 h-5 text-white/50" />;
     if (rank === 3) return <Trophy className="w-5 h-5 text-amber-600" />;
     return (
-      <span className="w-5 h-5 flex items-center justify-center text-sm font-medium text-gray-400">
+      <span className="w-5 h-5 flex items-center justify-center text-sm font-medium text-white/50">
         #{rank}
       </span>
     );
@@ -110,7 +110,7 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-medium text-gray-900">{title}</h3>
+        <h3 className="text-lg font-medium text-white">{title}</h3>
         <div className="flex items-center gap-2">
           {currentMetric && (
             <currentMetric.icon className={`w-5 h-5 ${currentMetric.color}`} />
@@ -131,7 +131,7 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
 
       <div className="space-y-3">
         {rankedStudents.length === 0 ? (
-          <div className="text-center py-8 text-gray-400">
+          <div className="text-center py-8 text-white/50">
             No student data available
           </div>
         ) : (
@@ -149,7 +149,7 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
               <div className="flex items-center gap-3">
                 {getTrophyIcon(student.rank)}
                 <div>
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-white">
                     {student.student_name || "Unknown Student"}
                   </div>
                   
@@ -157,10 +157,10 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
               </div>
 
               <div className="text-right">
-                <div className="text-lg font-semibold text-gray-900">
+                <div className="text-lg font-semibold text-white">
                   {student.value}
                 </div>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-white/50">
                   {currentMetric?.label}
                 </div>
               </div>
@@ -170,7 +170,7 @@ const TopPerformersLeaderboard = ({ students, title = "Top Performers" }) => {
       </div>
 
       {rankedStudents.length > 10 && (
-        <div className="mt-4 text-center text-sm text-gray-400">
+        <div className="mt-4 text-center text-sm text-white/50">
           Showing top 10 of {rankedStudents.length} students
         </div>
       )}

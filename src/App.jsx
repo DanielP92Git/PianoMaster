@@ -118,7 +118,7 @@ function AuthenticatedWrapper({ children }) {
     isSuspended,
     suspensionReason,
     loading: statusLoading,
-  } = useAccountStatus(user?.id);
+  } = useAccountStatus(user?.id, { enabled: isStudent });
 
   // Preload avatar image for instant display
   useEffect(() => {

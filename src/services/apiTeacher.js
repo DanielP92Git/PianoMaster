@@ -966,20 +966,26 @@ export const createAssignment = async (assignmentData) => {
 
     if (error) throw error;
 
-    // Get all connected students for this teacher
-    const { data: connections, error: connectionsError } = await supabase
-      .from("teacher_student_connections")
-      .select("student_id")
-      .eq("teacher_id", user.id)
-      .eq("status", "accepted");
+    // Determine target students based on assignTo field
+    let studentIds;
+    if (assignmentData.assignTo && assignmentData.assignTo !== "all") {
+      studentIds = [assignmentData.assignTo];
+    } else {
+      const { data: connections, error: connectionsError } = await supabase
+        .from("teacher_student_connections")
+        .select("student_id")
+        .eq("teacher_id", user.id)
+        .eq("status", "accepted");
 
-    if (connectionsError) throw connectionsError;
+      if (connectionsError) throw connectionsError;
+      studentIds = (connections || []).map((conn) => conn.student_id);
+    }
 
-    // Create assignment submissions for all connected students
-    if (connections && connections.length > 0) {
-      const submissions = connections.map((conn) => ({
+    // Create assignment submissions for selected students
+    if (studentIds.length > 0) {
+      const submissions = studentIds.map((studentId) => ({
         assignment_id: assignment.id,
-        student_id: conn.student_id,
+        student_id: studentId,
         status: "assigned",
         completion_percentage: 0,
         practice_sessions: 0,
@@ -997,9 +1003,9 @@ export const createAssignment = async (assignmentData) => {
         );
       }
 
-      // Create notifications for all students
-      const notifications = connections.map((conn) => ({
-        recipient_id: conn.student_id,
+      // Create notifications for selected students
+      const notifications = studentIds.map((studentId) => ({
+        recipient_id: studentId,
         sender_id: user.id,
         type: "assignment",
         title: `New Assignment: ${assignment.title}`,
@@ -1194,11 +1200,38 @@ export const getTeacherNotifications = async () => {
 
     if (error) throw error;
 
-    // Transform notifications to include student info (simplified without join)
-    const transformedNotifications = notifications.map((notification) => ({
-      ...notification,
-      student_name: null, // Will be populated when we need sender info
-    }));
+    // Look up student names for recipient/sender IDs
+    const studentIds = [
+      ...new Set(
+        notifications.flatMap((n) =>
+          [n.recipient_id, n.sender_id].filter(Boolean)
+        )
+      ),
+    ].filter((id) => id !== user.id);
+
+    const studentMap = {};
+    if (studentIds.length > 0) {
+      const { data: studentRows } = await supabase
+        .from("students")
+        .select("id, first_name, last_name")
+        .in("id", studentIds);
+
+      (studentRows || []).forEach((s) => {
+        studentMap[s.id] =
+          `${s.first_name || ""} ${s.last_name || ""}`.trim() || "Unknown";
+      });
+    }
+
+    const transformedNotifications = notifications.map((notification) => {
+      const isSent = notification.sender_id === user.id;
+      return {
+        ...notification,
+        direction: isSent ? "sent" : "received",
+        student_name: isSent
+          ? studentMap[notification.recipient_id] || null
+          : studentMap[notification.sender_id] || null,
+      };
+    });
 
     return transformedNotifications;
   } catch (error) {

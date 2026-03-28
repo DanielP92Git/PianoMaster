@@ -26,7 +26,7 @@ const ClassPerformanceChart = ({ students, selectedMetric = "all" }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{label}</p>
+          <p className="font-medium text-white">{label}</p>
           {payload.map((entry, index) => (
             <p key={index} className="text-sm" style={{ color: entry.color }}>
               {entry.name}: {entry.value}
@@ -89,7 +89,7 @@ const ClassPerformanceChart = ({ students, selectedMetric = "all" }) => {
 
   return (
     <div className="w-full h-96 p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">
+      <h3 className="text-lg font-medium text-white mb-4">
         Class Performance Overview
       </h3>
       <ResponsiveContainer width="100%" height="100%">

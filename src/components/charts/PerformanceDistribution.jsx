@@ -127,8 +127,8 @@ const PerformanceDistribution = ({ students }) => {
       const data = payload[0].payload;
       return (
         <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-          <p className="font-medium text-gray-900">{data.name}</p>
-          <p className="text-sm text-gray-400">
+          <p className="font-medium text-white">{data.name}</p>
+          <p className="text-sm text-white/50">
             {data.value} students ({data.percentage}%)
           </p>
         </div>
@@ -196,7 +196,7 @@ const PerformanceDistribution = ({ students }) => {
         return {
           title: "Distribution",
           icon: Target,
-          color: "text-gray-400",
+          color: "text-white/50",
         };
     }
   };
@@ -208,7 +208,7 @@ const PerformanceDistribution = ({ students }) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <viewConfig.icon className={`w-5 h-5 ${viewConfig.color}`} />
-          <h3 className="text-lg font-medium text-gray-900">
+          <h3 className="text-lg font-medium text-white">
             {viewConfig.title}
           </h3>
         </div>
@@ -256,7 +256,7 @@ const PerformanceDistribution = ({ students }) => {
 
         {/* Statistics */}
         <div className="lg:w-80">
-          <h4 className="text-sm font-medium text-gray-400 mb-4">
+          <h4 className="text-sm font-medium text-white/50 mb-4">
             Distribution Summary
           </h4>
           <div className="space-y-3">
@@ -270,15 +270,15 @@ const PerformanceDistribution = ({ students }) => {
                     className="w-4 h-4 rounded-full"
                     style={{ backgroundColor: colors[item.name] || "#64748b" }}
                   />
-                  <span className="text-sm font-medium text-gray-900">
+                  <span className="text-sm font-medium text-white">
                     {item.name}
                   </span>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold text-gray-900">
+                  <div className="text-sm font-semibold text-white">
                     {item.value}
                   </div>
-                  <div className="text-xs text-gray-400">
+                  <div className="text-xs text-white/50">
                     {item.percentage}%
                   </div>
                 </div>

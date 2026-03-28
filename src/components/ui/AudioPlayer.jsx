@@ -171,13 +171,14 @@ export default function AudioPlayer({
     audio.load();
     setError(null);
     setCurrentTime(0);
-    setDuration(0);
+    setDuration(knownDuration || 0);
 
     if (autoPlay && !disabled) {
       audio.play().catch((err) => {
         console.error("Auto-play failed:", err);
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- knownDuration used only as fallback initial value, not as a trigger
   }, [src, autoPlay, disabled]);
 
   // Play/pause toggle
@@ -298,7 +299,7 @@ export default function AudioPlayer({
 
   return (
     <div
-      className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 ${className}`}
+      className={className || `bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20`}
     >
       {/* Hidden audio element */}
       <audio ref={audioRef} preload="metadata" />
@@ -312,46 +313,19 @@ export default function AudioPlayer({
 
       {/* Main controls */}
       <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
-        {/* Skip backward */}
-        <button
-          onClick={skipBackward}
-          disabled={disabled || !src}
-          className="p-2 text-white hover:text-indigo-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-        >
-          <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-
         {/* Play/Pause button */}
         <button
           onClick={togglePlayPause}
           disabled={disabled || !src || isLoading}
-          className="p-2.5 sm:p-3 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+          className="p-2.5 sm:p-3 border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 disabled:border-gray-600 disabled:text-gray-600 disabled:cursor-not-allowed rounded-full transition-colors flex items-center justify-center flex-shrink-0"
         >
           {isLoading ? (
             <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" />
           ) : isPlaying ? (
             <Pause className="w-5 h-5 sm:w-6 sm:h-6" />
           ) : (
-            <Play className="w-5 h-5 sm:w-6 sm:h-6" />
+            <Play className="w-5 h-5 sm:w-6 sm:h-6 ml-0.5" />
           )}
-        </button>
-
-        {/* Stop button */}
-        <button
-          onClick={stop}
-          disabled={disabled || !src}
-          className="p-2 text-white hover:text-red-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-        >
-          <Square className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-
-        {/* Skip forward */}
-        <button
-          onClick={skipForward}
-          disabled={disabled || !src}
-          className="p-2 text-white hover:text-indigo-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-        >
-          <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Volume control */}
@@ -401,11 +375,11 @@ export default function AudioPlayer({
             onMouseDown={handleSeekBarMouseDown}
           >
             <div
-              className="h-2 bg-indigo-600 rounded-full"
+              className="h-2 bg-cyan-400 rounded-full"
               style={{ width: `${progressPercent}%` }}
             />
             <div
-              className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-indigo-600 rounded-full shadow-lg transition-all duration-100"
+              className="absolute top-1/2 transform -translate-y-1/2 w-4 h-4 bg-cyan-400 rounded-full shadow-lg transition-all duration-100"
               style={{ left: `calc(${progressPercent}% - 8px)` }}
             />
           </div>

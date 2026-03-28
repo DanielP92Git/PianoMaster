@@ -132,6 +132,33 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 - **Full-viewport overlays** (Trail Map): `fixed inset-0 overflow-y-auto`, AppLayout hides sidebar/header
 - **Game routes** (`/notes-master-mode/*`, `/rhythm-mode/*`): Also hide sidebar/header for distraction-free gameplay
 
+## Teacher Dashboard
+
+The teacher dashboard (`/teacher/*`) provides class management across four tabs. All tabs use the glassmorphism design system.
+
+### Tabs & Components
+- **Students** (`TeacherDashboard.jsx`): Collapsible student cards (closed by default), stat summary grid (2x2 mobile, 4-across desktop), search/sort/filter toolbar
+- **Analytics** (`AnalyticsDashboard.jsx`): Class performance charts, top performers, practice activity timeline, performance distribution
+- **Recordings** (`RecordingsReview.jsx`): Two-level collapsible — grouped by student (Level 1), each recording expandable (Level 2) with audio player + review
+- **Assignments** (`AssignmentManagement.jsx`): Compact cards with inline metadata, CRUD with modal forms
+- **Notifications** (`NotificationCenter.jsx`): **Currently disabled** — tab and route commented out. Search `TODO: re-enable when ready` in `TeacherDashboard.jsx` to restore
+
+### UI Patterns
+- **Collapsible cards**: `expandedX` Set state + `toggleExpanded(id)` pattern (used in students, recordings)
+- **Select All / Delete**: Consistent text-style buttons across all tabs (not `Button` component)
+- **Action buttons**: Icon-only (`p-1 text-white/40 hover:bg-blue-500/20`) matching student card pattern
+- **Glass-styled filters**: `bg-white/10 border-white/20 text-white` inputs, `appearance-none` selects with `ChevronDown` overlay
+- **Dropdown options**: Global CSS rule (`select option { background-color: #1e1b4b; color: #fff; }`) in `index.css`
+
+### Audio Player (`AudioPlayer.jsx`)
+- Play/pause only (no skip/stop buttons)
+- `knownDuration` prop for DB-sourced duration (webm files often lack metadata duration)
+- `PracticeSessionPlayer` passes `session?.duration_seconds || session?.duration` to handle both field names
+
+### Key Services
+- `src/services/apiTeacher.js` — All teacher API functions (CRUD students, recordings, assignments, notifications)
+- `useAccountStatus` hook skips query for teachers (`{ enabled: isStudent }`) to avoid 406 errors
+
 ## Game Session Flow
 
 Games follow a consistent session model:
