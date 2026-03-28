@@ -595,6 +595,12 @@ export function useVictoryState({
       case EXERCISE_TYPES.RHYTHM:
         navigate('/rhythm-mode/metronome-trainer', { state: navState });
         break;
+      case EXERCISE_TYPES.RHYTHM_TAP:
+        navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+        break;
+      case EXERCISE_TYPES.RHYTHM_DICTATION:
+        navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+        break;
       case EXERCISE_TYPES.BOSS_CHALLENGE:
         // Boss challenges use note recognition game with special config
         navigate('/notes-master-mode/notes-recognition-game', { state: navState });
