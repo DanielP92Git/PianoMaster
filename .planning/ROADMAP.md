@@ -97,8 +97,13 @@ Plans:
   3. A child hears a two-note melody and identifies it as Step, Skip, or Leap — ascending intervals are presented before descending intervals
   4. After answering an interval question, a piano keyboard SVG highlights the two played notes so the child can see where they fell
   5. Both ear training games complete through VictoryScreen with star rating and XP award
-**Plans**: TBD
+**Plans:** 4 plans
 **UI hint**: yes
+Plans:
+- [ ] 09-01-PLAN.md — Shared earTrainingUtils + PianoKeyboardReveal SVG component (PITCH-03, INTV-02, INTV-03, INTV-04)
+- [ ] 09-02-PLAN.md — NoteComparisonGame higher/lower game (PITCH-01, PITCH-02, PITCH-03, PITCH-04, PITCH-05)
+- [ ] 09-03-PLAN.md — IntervalGame step/skip/leap game (INTV-01, INTV-02, INTV-03, INTV-04, INTV-05)
+- [ ] 09-04-PLAN.md — Route wiring, i18n EN+HE, handleNextExercise cross-game updates (PITCH-01, PITCH-02, PITCH-04, PITCH-05, INTV-01, INTV-04, INTV-05)
 
 ### Phase 10: Ear Training Trail Data + Trail Tab
 **Goal**: The Ear Training learning path is live on the trail with progression nodes, a distinct visual identity, correct subscription gating, and a boss challenge
@@ -134,11 +139,11 @@ Plans:
 | 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
 | 7. Data Foundation + TrailMap Refactor | v2.9 | 2/2 | Complete   | 2026-03-27 |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 4/4 | Complete   | 2026-03-28 |
-| 9. Ear Training Games | v2.9 | 0/? | Not started | - |
+| 9. Ear Training Games | v2.9 | 0/4 | Planned | - |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
 | 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/? | Not started | - |
 
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
 ---
-*Last updated: 2026-03-28 — Phase 8 plans created (4 plans, 3 waves)*
+*Last updated: 2026-03-29 — Phase 9 plans created (4 plans, 3 waves)*
