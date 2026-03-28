@@ -39,20 +39,102 @@ export function calculateTimingThresholds(tempo) {
 }
 
 /**
- * Duration swap maps for distractor generation (RDICT-04).
- * Swap a beat to a longer duration (longer map) or shorter (shorter map).
+ * Serialize beats to a fingerprint string for deduplication.
  */
-const SWAP_LONGER = { 1: 2, 2: 4, 4: 8, 8: 16 };
-const SWAP_SHORTER = { 16: 8, 8: 4, 4: 2, 2: 1 };
+function beatsFingerprint(beats) {
+  return beats.map((b) => `${b.durationUnits}${b.isRest ? 'r' : 'n'}`).join(',');
+}
+
+/**
+ * Pre-built distractor templates per measure length (in sixteenth-note units).
+ * Each template is an array of { durationUnits, isRest } beats that sums to
+ * the measure length. Templates are designed to be visually distinct from each
+ * other so an 8-year-old can clearly see the difference (different note counts,
+ * different rhythmic feel).
+ */
+const DISTRACTOR_TEMPLATES = {
+  // 4/4 = 16 sixteenth-note units
+  16: [
+    // 4 quarter notes
+    [{ d: 4, r: false }, { d: 4, r: false }, { d: 4, r: false }, { d: 4, r: false }],
+    // whole note
+    [{ d: 16, r: false }],
+    // 2 half notes
+    [{ d: 8, r: false }, { d: 8, r: false }],
+    // half + 2 quarters
+    [{ d: 8, r: false }, { d: 4, r: false }, { d: 4, r: false }],
+    // dotted half + quarter
+    [{ d: 12, r: false }, { d: 4, r: false }],
+    // quarter + half + quarter
+    [{ d: 4, r: false }, { d: 8, r: false }, { d: 4, r: false }],
+    // 2 quarters + half
+    [{ d: 4, r: false }, { d: 4, r: false }, { d: 8, r: false }],
+    // quarter + dotted half
+    [{ d: 4, r: false }, { d: 12, r: false }],
+    // half + quarter + quarter rest
+    [{ d: 8, r: false }, { d: 4, r: false }, { d: 4, r: true }],
+    // quarter rest + quarter + half
+    [{ d: 4, r: true }, { d: 4, r: false }, { d: 8, r: false }],
+    // quarter + quarter rest + half
+    [{ d: 4, r: false }, { d: 4, r: true }, { d: 8, r: false }],
+    // 2 quarters + quarter rest + quarter
+    [{ d: 4, r: false }, { d: 4, r: false }, { d: 4, r: true }, { d: 4, r: false }],
+  ],
+  // 3/4 = 12 sixteenth-note units
+  12: [
+    // 3 quarter notes
+    [{ d: 4, r: false }, { d: 4, r: false }, { d: 4, r: false }],
+    // dotted half
+    [{ d: 12, r: false }],
+    // half + quarter
+    [{ d: 8, r: false }, { d: 4, r: false }],
+    // quarter + half
+    [{ d: 4, r: false }, { d: 8, r: false }],
+    // quarter + quarter rest + quarter
+    [{ d: 4, r: false }, { d: 4, r: true }, { d: 4, r: false }],
+    // half + quarter rest
+    [{ d: 8, r: false }, { d: 4, r: true }],
+    // quarter rest + half
+    [{ d: 4, r: true }, { d: 8, r: false }],
+  ],
+  // 2/4 = 8 sixteenth-note units
+  8: [
+    // 2 quarter notes
+    [{ d: 4, r: false }, { d: 4, r: false }],
+    // half note
+    [{ d: 8, r: false }],
+    // quarter + quarter rest
+    [{ d: 4, r: false }, { d: 4, r: true }],
+    // quarter rest + quarter
+    [{ d: 4, r: true }, { d: 4, r: false }],
+    // dotted quarter + eighth
+    [{ d: 6, r: false }, { d: 2, r: false }],
+    // 4 eighths
+    [{ d: 2, r: false }, { d: 2, r: false }, { d: 2, r: false }, { d: 2, r: false }],
+  ],
+};
+
+/**
+ * Expand compact template format to full beat objects.
+ */
+function expandTemplate(template) {
+  return template.map((t) => ({ durationUnits: t.d, isRest: t.r }));
+}
+
+/**
+ * Count the number of visible notes (non-rest) in a beat array.
+ */
+function noteCount(beats) {
+  return beats.filter((b) => !b.isRest).length;
+}
 
 /**
  * Generate distractor patterns for rhythm dictation game.
  *
- * Each distractor differs from the correct pattern by exactly one duration swap:
- *   - Distractor 1: one beat swapped to a longer duration
- *   - Distractor 2: a different beat swapped to a shorter duration
- * After the swap, an adjacent rest is inserted/modified to keep the total
- * measure duration (sum of durationUnits) constant.
+ * Strategy: pick from pre-built templates that are visually distinct from the
+ * correct answer. "Visually distinct" = different number of notes OR very
+ * different rhythmic structure (different durations on most beats).
+ * This avoids confusing an 8-year-old with near-identical patterns.
  *
  * @param {{ durationUnits: number, isRest: boolean }[]} correctBeats
  * @param {number} [count=2] - Number of distractors to generate
@@ -60,121 +142,81 @@ const SWAP_SHORTER = { 16: 8, 8: 4, 4: 2, 2: 1 };
  */
 export function generateDistractors(correctBeats, count = 2) {
   const totalDuration = correctBeats.reduce((sum, b) => sum + b.durationUnits, 0);
-  const distractors = [];
+  const correctFp = beatsFingerprint(correctBeats);
+  const correctNotes = noteCount(correctBeats);
 
-  // Find non-rest beats that can be swapped
-  const swappable = correctBeats.reduce((acc, beat, i) => {
-    if (!beat.isRest) acc.push(i);
-    return acc;
-  }, []);
-
-  if (swappable.length === 0) {
-    // Fallback: return copies of correct pattern if nothing to swap
-    for (let d = 0; d < count; d++) {
-      distractors.push(correctBeats.map((b) => ({ ...b })));
-    }
-    return distractors;
+  const templates = DISTRACTOR_TEMPLATES[totalDuration];
+  if (!templates) {
+    // Unknown measure length — fall back to simple alternatives
+    return fallbackDistractors(correctBeats, totalDuration, count);
   }
 
-  const swapMaps = [SWAP_LONGER, SWAP_SHORTER];
-  const usedIndices = new Set();
+  // Expand all templates and filter out those identical to the correct answer
+  const candidates = templates
+    .map(expandTemplate)
+    .filter((t) => beatsFingerprint(t) !== correctFp);
 
-  for (let d = 0; d < count; d++) {
-    const swapMap = swapMaps[d % 2];
+  // Score candidates: prefer those with a different note count from the correct
+  // answer, then prefer those different from each other
+  const scored = candidates.map((c) => ({
+    beats: c,
+    fp: beatsFingerprint(c),
+    noteDiff: Math.abs(noteCount(c) - correctNotes),
+  }));
 
-    // Pick a beat index not used in previous distractors when possible
-    let targetIdx = swappable.find((i) => !usedIndices.has(i));
-    if (targetIdx === undefined) {
-      // Reuse first swappable if we've exhausted unique ones
-      targetIdx = swappable[0];
-    }
-    usedIndices.add(targetIdx);
+  // Sort: biggest note-count difference first (most visually distinct)
+  scored.sort((a, b) => b.noteDiff - a.noteDiff);
 
-    const targetBeat = correctBeats[targetIdx];
-    const newDuration = swapMap[targetBeat.durationUnits];
+  const distractors = [];
+  const usedFps = new Set([correctFp]);
 
-    if (!newDuration) {
-      // Duration not swappable in this direction — try opposite map
-      const altMap = swapMaps[(d + 1) % 2];
-      const altDuration = altMap[targetBeat.durationUnits];
+  for (const candidate of scored) {
+    if (distractors.length >= count) break;
+    if (usedFps.has(candidate.fp)) continue;
+    usedFps.add(candidate.fp);
+    distractors.push(candidate.beats);
+  }
 
-      if (!altDuration) {
-        // Still can't swap — return copy
-        distractors.push(correctBeats.map((b) => ({ ...b })));
-        continue;
-      }
+  // If we still need more (unlikely), fill with remaining candidates
+  for (const candidate of scored) {
+    if (distractors.length >= count) break;
+    if (usedFps.has(candidate.fp)) continue;
+    usedFps.add(candidate.fp);
+    distractors.push(candidate.beats);
+  }
 
-      const distractor = applySwap(correctBeats, targetIdx, altDuration, totalDuration);
-      distractors.push(distractor);
-      continue;
-    }
-
-    const distractor = applySwap(correctBeats, targetIdx, newDuration, totalDuration);
-    distractors.push(distractor);
+  // Last resort: generate simple patterns
+  while (distractors.length < count) {
+    const fb = fallbackDistractors(correctBeats, totalDuration, 1);
+    distractors.push(fb[0]);
   }
 
   return distractors;
 }
 
 /**
- * Apply a duration swap at the target index and compensate with an adjacent rest.
- *
- * @param {{ durationUnits: number, isRest: boolean }[]} beats
- * @param {number} targetIdx - Index of beat to swap
- * @param {number} newDuration - New durationUnits for the target beat
- * @param {number} totalDuration - Total measure duration to maintain
- * @returns {{ durationUnits: number, isRest: boolean }[]}
+ * Fallback distractor generation for unsupported measure lengths.
+ * Creates simple even-subdivision patterns.
  */
-function applySwap(beats, targetIdx, newDuration, totalDuration) {
-  const result = beats.map((b) => ({ ...b }));
-  result[targetIdx] = { durationUnits: newDuration, isRest: false };
+function fallbackDistractors(correctBeats, totalDuration, count) {
+  const results = [];
+  // Pattern 1: all quarter notes
+  const quarterCount = Math.floor(totalDuration / 4);
+  const remainder = totalDuration - quarterCount * 4;
+  const allQuarters = Array.from({ length: quarterCount }, () => ({
+    durationUnits: 4, isRest: false,
+  }));
+  if (remainder > 0) {
+    allQuarters.push({ durationUnits: remainder, isRest: false });
+  }
+  results.push(allQuarters);
 
-  const currentTotal = result.reduce((sum, b) => sum + b.durationUnits, 0);
-  const compensate = totalDuration - currentTotal; // what we need to add/remove
-
-  if (compensate === 0) return result;
-
-  // Try to add/remove compensation from the beat immediately after the target
-  const nextIdx = targetIdx + 1;
-  if (nextIdx < result.length) {
-    const nextBeat = result[nextIdx];
-    if (nextBeat.isRest && compensate > 0) {
-      // Extend existing rest
-      result[nextIdx] = { durationUnits: nextBeat.durationUnits + compensate, isRest: true };
-    } else if (nextBeat.isRest && compensate < 0 && nextBeat.durationUnits + compensate > 0) {
-      // Shrink existing rest
-      result[nextIdx] = { durationUnits: nextBeat.durationUnits + compensate, isRest: true };
-    } else if (compensate > 0) {
-      // Insert a rest after target
-      result.splice(nextIdx, 0, { durationUnits: compensate, isRest: true });
-    } else if (compensate < 0 && nextBeat.durationUnits + compensate > 0) {
-      // Shrink next beat
-      result[nextIdx] = { ...nextBeat, durationUnits: nextBeat.durationUnits + compensate };
-    } else if (compensate < 0) {
-      // Remove next beat entirely and adjust
-      result.splice(nextIdx, 1);
-    }
-  } else if (compensate > 0) {
-    // Append rest at end
-    result.push({ durationUnits: compensate, isRest: true });
-  } else if (compensate < 0) {
-    // Try to trim from last beat
-    const lastIdx = result.length - 1;
-    if (result[lastIdx].durationUnits + compensate > 0) {
-      result[lastIdx] = { ...result[lastIdx], durationUnits: result[lastIdx].durationUnits + compensate };
-    }
+  if (count > 1) {
+    // Pattern 2: one long note
+    results.push([{ durationUnits: totalDuration, isRest: false }]);
   }
 
-  // Final validation: ensure total is still correct (defensive)
-  const finalTotal = result.reduce((sum, b) => sum + b.durationUnits, 0);
-  if (finalTotal !== totalDuration && result.length > 0) {
-    // Force-correct the last element
-    const lastIdx = result.length - 1;
-    const adjustment = totalDuration - finalTotal;
-    result[lastIdx] = { ...result[lastIdx], durationUnits: result[lastIdx].durationUnits + adjustment };
-  }
-
-  return result;
+  return results.slice(0, count);
 }
 
 /**
@@ -189,10 +231,10 @@ function applySwap(beats, targetIdx, newDuration, totalDuration) {
  * @param {function} playNote - usePianoSampler().playNote callback
  * @returns {{ startTime: number, totalDuration: number }}
  */
-export function schedulePatternPlayback(beats, tempo, audioContext, playNote) {
+export function schedulePatternPlayback(beats, tempo, audioContext, playNote, explicitStartTime) {
   const beatDuration = 60 / tempo; // seconds per quarter note
   const sixteenthDuration = beatDuration / 4; // seconds per sixteenth note
-  const startTime = audioContext.currentTime + 0.1; // small scheduler buffer
+  const startTime = explicitStartTime ?? (audioContext.currentTime + 0.1);
   let offset = 0;
 
   beats.forEach((beat) => {

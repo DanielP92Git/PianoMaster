@@ -36,15 +36,13 @@ export function MetronomeDisplay({
         return (
           <div
             key={beat}
-            className={`flex items-center justify-center rounded-full border-2 font-bold transition-all duration-150 ${
-              isAccented
-                ? "h-12 w-12 text-base sm:h-14 sm:w-14 sm:text-lg"
-                : "h-9 w-9 text-xs sm:h-10 sm:w-10 sm:text-sm"
-            } ${
+            className={`flex items-center justify-center rounded-full border-2 font-bold transition-all duration-150
+              h-9 w-9 text-xs sm:h-10 sm:w-10 sm:text-sm
+            ${
               isCurrentBeat
                 ? isCountIn
-                  ? "scale-125 animate-pulse border-yellow-500 bg-yellow-500 text-black shadow-xl"
-                  : "scale-110 border-blue-500 bg-blue-500 text-white shadow-lg"
+                  ? "scale-150 border-yellow-500 bg-yellow-500 text-black shadow-xl"
+                  : "scale-150 border-blue-500 bg-blue-500 text-white shadow-lg"
                 : isAccented
                   ? "border-white/50 bg-white/15 text-white"
                   : "border-white/20 bg-white/5 text-white/60"

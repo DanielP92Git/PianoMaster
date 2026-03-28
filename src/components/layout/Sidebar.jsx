@@ -33,7 +33,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
         : "text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 lg:text-white/80 lg:hover:bg-white/10 lg:hover:text-white";
 
     return ({ isActive }) =>
-      `flex font-semibold items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 text-lg ${
+      `flex font-semibold items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 text-base ${
         isRTL ? "direction-rtl text-right" : ""
       } ${isActive ? activeClasses : inactiveClasses}`;
   };
@@ -128,7 +128,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
           </button>
         </div>
 
-        <nav className="flex flex-1 flex-col p-4 xl:p-6">
+        <nav className="flex flex-1 flex-col p-4">
           <div className="flex flex-1 flex-col justify-between gap-8">
             <div
               className="space-y-2"

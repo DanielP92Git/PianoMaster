@@ -20,6 +20,8 @@ export default function AppLayout() {
     "/notes-master-mode/memory-game",
     "/notes-master-mode/sight-reading-game",
     "/rhythm-mode/metronome-trainer",
+    "/rhythm-mode/rhythm-reading-game",
+    "/rhythm-mode/rhythm-dictation-game",
   ];
 
   // Routes that should hide the header (games + trail page)

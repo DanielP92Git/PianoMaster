@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { Renderer, Stave, Voice, Formatter, Beam, Stem } from 'vexflow';
 import { beatsToVexNotes } from '../utils/rhythmVexflowHelpers';
+import { beamGroupsForTimeSignature } from '../../sight-reading-game/utils/beamGroupUtils';
 
 /**
  * DictationChoiceCard
@@ -90,10 +91,10 @@ export function DictationChoiceCard({
       voice.setStrict(false);
       voice.addTickables(notes);
 
-      // Automatic beams for eighth-note groups
-      const beams = Beam.generateBeams(notes, {
-        groups: [{ numerator: 2, denominator: 8 }],
-      });
+      // Automatic beams — use Fraction-based groups for compound time
+      const beamGroups = beamGroupsForTimeSignature(timeSignature);
+      const beamConfig = beamGroups ? { groups: beamGroups } : {};
+      const beams = Beam.generateBeams(notes, beamConfig);
 
       // Format and draw
       new Formatter().joinVoices([voice]).format([voice], staveWidth - 60);

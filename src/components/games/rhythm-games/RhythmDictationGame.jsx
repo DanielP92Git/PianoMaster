@@ -72,7 +72,7 @@ export function RhythmDictationGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // --- Audio ---
-  const { audioContextRef, isInterrupted, handleTapToResume } = useAudioContext();
+  const { audioContextRef, isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
   const { playNote } = usePianoSampler();
   const { playCorrectSound, playWrongSound } = useSounds();
 
@@ -185,7 +185,10 @@ export function RhythmDictationGame() {
   // ---------------------------------------------------------------------------
   const playPattern = useCallback(
     (beats, currentTempo, onComplete) => {
-      const ctx = audioContextRef.current;
+      let ctx = audioContextRef.current;
+      if (!ctx) {
+        ctx = getOrCreateAudioContext();
+      }
       if (!ctx || !beats || beats.length === 0) {
         onComplete?.();
         return;
@@ -204,7 +207,7 @@ export function RhythmDictationGame() {
         onComplete?.();
       }, delayMs);
     },
-    [audioContextRef, playNote]
+    [audioContextRef, playNote, getOrCreateAudioContext]
   );
 
   // ---------------------------------------------------------------------------
@@ -213,8 +216,7 @@ export function RhythmDictationGame() {
   const generateQuestion = useCallback(
     async (questionIndex, currentTempo, currentTimeSig) => {
       try {
-        const timeSigObj = timeSigStringToObject(currentTimeSig);
-        const result = getPattern(timeSigObj, DEFAULT_DIFFICULTY);
+        const result = await getPattern(currentTimeSig, DEFAULT_DIFFICULTY);
 
         if (!result || !result.pattern) {
           // Pattern generation failed — skip to next question
