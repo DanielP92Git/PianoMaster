@@ -108,8 +108,11 @@ Plans:
   2. Tapping into the Ear tab reveals 12-15 progressive nodes across 2 units with appropriate prerequisite locks
   3. Free tier children can access the defined free ear training nodes and are shown a paywall for premium nodes — no silent RLS failures
   4. A boss node combining ear training skills is present and completable end-to-end through VictoryScreen
-**Plans**: TBD
+**Plans:** 2 plans
 **UI hint**: yes
+Plans:
+- [ ] 10-01-PLAN.md — Ear training unit data files (14 nodes), expandedNodes registration, UNITS map (EAR-01, EAR-02, EAR-03, EAR-05)
+- [ ] 10-02-PLAN.md — Subscription gating (JS + Postgres migration), tests (EAR-04)
 
 ### Phase 11: Arcade Rhythm Game + Rhythm Node Remapping
 **Goal**: An arcade-style falling-tile rhythm game is playable, and all 36 existing rhythm nodes are remapped to a mixed distribution of exercise types that reflects the full new game variety
@@ -134,10 +137,10 @@ Plans:
 | 7. Data Foundation + TrailMap Refactor | v2.9 | 2/2 | Complete   | 2026-03-27 |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 4/4 | Complete   | 2026-03-29 |
 | 9. Ear Training Games | v2.9 | 2/2 | Complete   | 2026-03-29 |
-| 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
+| 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/2 | Planned | - |
 | 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/? | Not started | - |
 
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
 ---
-*Last updated: 2026-03-28 — Phase 8 plans created (4 plans, 3 waves)*
+*Last updated: 2026-03-29 — Phase 10 plans created (2 plans, 2 waves)*
