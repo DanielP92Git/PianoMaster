@@ -175,13 +175,20 @@ export default function IntervalGame() {
 
   // ---------------------------------------------------------------------------
   // Play two notes sequentially (INTV-01)
+  // Async to ensure AudioContext is running before scheduling (trail auto-start
+  // mounts a new AudioContext that starts suspended — no user gesture on this page).
   // ---------------------------------------------------------------------------
   const playInterval = useCallback(
-    (question) => {
+    async (question) => {
       if (!question) return;
 
       let ctx = getOrCreateAudioContext();
       if (!ctx) return;
+
+      // Ensure AudioContext is running before scheduling oscillators
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+        try { await ctx.resume(); } catch { /* browser may block without user gesture */ }
+      }
 
       isPlayingRef.current = true;
       setIsPlaying(true);
@@ -321,6 +328,7 @@ export default function IntervalGame() {
 
   // ---------------------------------------------------------------------------
   // Auto-start from trail
+  // Reset guard in cleanup so React 18 strict mode double-mount re-triggers.
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
@@ -329,6 +337,7 @@ export default function IntervalGame() {
       setQuestionScores([]);
       generateQuestion(0);
     }
+    return () => { hasAutoStartedRef.current = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start guarded by hasAutoStartedRef
   }, [nodeConfig]);
 

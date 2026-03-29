@@ -49,8 +49,10 @@ export function usePianoSampler() {
       // Guard: closed or missing context — no crash
       if (!ctx || ctx.state === 'closed') return;
 
-      // iOS safety (IOS-02): resume must be called synchronously from user gesture path
-      if (ctx.state === 'suspended') {
+      // iOS safety (IOS-02): resume called synchronously from user gesture path.
+      // Callers that need guaranteed playback (ear training games) should await
+      // ctx.resume() themselves BEFORE calling playNote.
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
         ctx.resume().catch(() => {});
       }
 

@@ -111,13 +111,19 @@ export default function NoteComparisonGame() {
 
   // ---------------------------------------------------------------------------
   // playNotePair — schedule two notes via Web Audio API timing (PITCH-01)
+  // Async to ensure AudioContext is running before scheduling (trail auto-start
+  // mounts a new AudioContext that starts suspended — no user gesture on this page).
   // ---------------------------------------------------------------------------
   const playNotePair = useCallback(
-    (note1, note2, onComplete) => {
+    async (note1, note2, onComplete) => {
       const ctx = audioContextRef.current || getOrCreateAudioContext();
       if (!ctx) {
         onComplete?.();
         return;
+      }
+      // Ensure AudioContext is running before scheduling oscillators
+      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+        try { await ctx.resume(); } catch { /* browser may block without user gesture */ }
       }
       const when1 = ctx.currentTime + 0.05;
       const when2 = when1 + NOTE_DURATION + NOTE_GAP;
@@ -298,12 +304,14 @@ export default function NoteComparisonGame() {
 
   // ---------------------------------------------------------------------------
   // Auto-start from trail (one-time, guarded by hasAutoStartedRef)
+  // Reset guard in cleanup so React 18 strict mode double-mount re-triggers.
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
       hasAutoStartedRef.current = true;
       startGame(nodeConfig);
     }
+    return () => { hasAutoStartedRef.current = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start guarded by hasAutoStartedRef; only nodeConfig triggers
   }, [nodeConfig]);
 
