@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.9
 milestone_name: Game Variety & Ear Training
 status: verifying
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-29T08:14:02.298Z"
+stopped_at: Completed 09-03-PLAN.md
+last_updated: "2026-03-29T08:13:05.847Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 10
-  completed_plans: 8
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # Project State
@@ -62,11 +62,9 @@ v2.9 Progress: [__________] 0/5 phases
 - [Phase 07]: ComingSoon shared placeholder pattern: gameName from location.state serves all unimplemented exercise types
 - [Phase 08]: Both rhythm game routes in LANDSCAPE_ROUTES for consistent orientation lock
 - [Phase 08]: navState passed unchanged to rhythm game routes — already contains correct trail state shape
-- [Phase 09-ear-training-games]: earTrainingUtils imports NOTE_FREQS from usePianoSampler — single source of truth for C3-B4 note range
-- [Phase 09-ear-training-games]: classifyInterval: 1-2 semitones = step, 3-4 = skip, 5+ = leap (age-appropriate vocabulary per D-06)
-- [Phase 09-ear-training-games]: PianoKeyboardReveal test file requires .jsx extension for JSX syntax in Vitest/Rollup parsing
-- [Phase 09-ear-training-games]: NoteComparisonGame: nextQuestion takes questionIndex directly (no prevCorrectCount needed — state already tracked in React state)
-- [Phase 09-ear-training-games]: NoteComparisonGame tests: React.createElement in mocks to avoid JSX in .test.js, NOTE_FREQS inlined in usePianoSampler factory to avoid hoisting errors
+- [Phase 09-ear-training-games]: classifyInterval not directly imported in IntervalGame — generateIntervalQuestion returns category field internally
+- [Phase 09-ear-training-games]: DEFAULT_ASCENDING_RATIO=0.6 constant overridable via nodeConfig.ascendingRatio for trail difficulty tuning
+- [Phase 09-ear-training-games]: usePianoSampler test mock must export NOTE_FREQS (earTrainingUtils imports it at module load time)
 
 ### Roadmap Evolution
 
@@ -98,8 +96,7 @@ v2.9 Progress: [__________] 0/5 phases
 | Phase 07 P01 | 4 | 2 tasks | 6 files |
 | Phase 07 P02 | 4 minutes | 2 tasks | 4 files |
 | Phase 08 P04 | 8 | 2 tasks | 5 files |
-| Phase 09-ear-training-games P01 | 5min | 2 tasks | 4 files |
-| Phase 09-ear-training-games P02 | 10min | 2 tasks | 2 files |
+| Phase 09-ear-training-games P03 | 15 | 2 tasks | 2 files |
 
 ### Additional Fixes (2026-03-26/27)
 
@@ -111,8 +108,8 @@ v2.9 Progress: [__________] 0/5 phases
 
 ## Session Continuity
 
-Last session: 2026-03-29T08:14:02.291Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-03-29T08:13:05.842Z
+Stopped at: Completed 09-03-PLAN.md
 Resume file: None
 
 **Next action:**
