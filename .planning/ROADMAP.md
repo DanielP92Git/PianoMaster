@@ -46,7 +46,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 - [x] **Phase 7: Data Foundation + TrailMap Refactor** — New EXERCISE_TYPES constants, EAR_TRAINING category, TrailNodeModal routing, data-driven TrailMap, validateTrail extension (completed 2026-03-27)
 - [ ] **Phase 8: Audio Infrastructure + Rhythm Games** — usePianoSampler hook, RhythmReadingGame, RhythmDictationGame, i18n for all new game types
-- [ ] **Phase 9: Ear Training Games** — NoteComparisonGame, IntervalGame, shared piano keyboard SVG, subscriptionConfig for ear nodes
+- [x] **Phase 9: Ear Training Games** — NoteComparisonGame, IntervalGame, shared piano keyboard SVG, subscriptionConfig for ear nodes (completed 2026-03-29)
 - [ ] **Phase 10: Ear Training Trail Data + Trail Tab** — 12-15 ear training nodes across 2 units, Ear tab on TrailMap, boss nodes, DB subscription gate sync
 - [ ] **Phase 11: Arcade Rhythm Game + Rhythm Node Remapping** — ArcadeRhythmGame, 36 rhythm nodes remapped to mixed exercise types, DB migration clearing stale progress
 
@@ -133,7 +133,7 @@ Plans:
 | 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
 | 7. Data Foundation + TrailMap Refactor | v2.9 | 2/2 | Complete   | 2026-03-27 |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 2/4 | In Progress|  |
-| 9. Ear Training Games | v2.9 | 0/? | Not started | - |
+| 9. Ear Training Games | v2.9 | 2/2 | Complete   | 2026-03-29 |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
 | 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/? | Not started | - |
 
