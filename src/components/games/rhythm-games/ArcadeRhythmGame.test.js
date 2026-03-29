@@ -196,17 +196,14 @@ describe('ArcadeRhythmGame — component rendering', () => {
 
   it('Test 3: Component renders without crashing when given minimal location.state', () => {
     expect(() => {
-      render(<ArcadeRhythmGame />);
+      render(React.createElement(ArcadeRhythmGame));
     }).not.toThrow();
   });
 
   it('Test 4: Lives decrement on MISS — starting at 3, after 3 misses should be 0', () => {
-    const { container } = render(<ArcadeRhythmGame />);
+    render(React.createElement(ArcadeRhythmGame));
 
-    // In SETUP phase, all 3 hearts should be full (filled hearts)
-    // The component renders hearts — check initial state
-    const heartElements = container.querySelectorAll('[data-testid="heart-full"], [aria-label*="lives"]');
-    // Flexible check: container renders without showing 0 lives on initial load
+    // INITIAL_LIVES = 3
     expect(INITIAL_LIVES).toBe(3);
     // Lives start at 3; after 3 misses they should reach 0
     let lives = INITIAL_LIVES;
@@ -249,7 +246,7 @@ describe('ArcadeRhythmGame — component rendering', () => {
 
   it('Test 7: GameOverScreen renders when lives reach 0', () => {
     // Render in SETUP phase, component renders initially
-    const { container } = render(<ArcadeRhythmGame />);
+    const { container } = render(React.createElement(ArcadeRhythmGame));
     // The GameOverScreen is conditionally rendered when lives=0
     // It should NOT be shown initially
     expect(screen.queryByTestId('game-over-screen')).toBeNull();
@@ -258,7 +255,7 @@ describe('ArcadeRhythmGame — component rendering', () => {
   });
 
   it('Test 8: VictoryScreen renders when session completes (10 patterns scored)', () => {
-    const { container } = render(<ArcadeRhythmGame />);
+    const { container } = render(React.createElement(ArcadeRhythmGame));
     // VictoryScreen is conditionally rendered on SESSION_COMPLETE phase
     // It should NOT be shown initially (SETUP phase)
     expect(screen.queryByTestId('victory-screen')).toBeNull();
