@@ -10,6 +10,8 @@
  *   - src/data/units/trebleUnit1Redesigned.js (nodes treble_1_1 through treble_1_7, boss_treble_1)
  *   - src/data/units/bassUnit1Redesigned.js   (nodes bass_1_1 through bass_1_6, boss_bass_1)
  *   - src/data/units/rhythmUnit1Redesigned.js (nodes rhythm_1_1 through rhythm_1_6, boss_rhythm_1)
+ *   - src/data/units/earTrainingUnit1.js  (nodes ear_1_1 through ear_1_6, boss_ear_1)
+ *   - src/data/units/earTrainingUnit2.js  (nodes ear_2_1 through ear_2_6, boss_ear_2)
  *
  * Decision (locked): Static config with explicit IDs — NO dynamic resolution from unit files.
  * Reason: Avoids accidental paywall expansion if unit files grow; gate changes must be intentional.
@@ -51,6 +53,16 @@ export const FREE_RHYTHM_NODE_IDS = [
   'rhythm_1_6',
 ];
 
+/** Ear training Unit 1 — 6 free nodes (boss is paywalled per D-08) */
+export const FREE_EAR_TRAINING_NODE_IDS = [
+  'ear_1_1',
+  'ear_1_2',
+  'ear_1_3',
+  'ear_1_4',
+  'ear_1_5',
+  'ear_1_6',
+];
+
 // ─── Paywall Boss Node IDs ───────────────────────────────────────────────────
 
 /**
@@ -61,6 +73,8 @@ export const PAYWALL_BOSS_NODE_IDS = [
   'boss_treble_1',
   'boss_bass_1',
   'boss_rhythm_1',
+  'boss_ear_1',
+  'boss_ear_2',
 ];
 
 // ─── Derived Lookups ─────────────────────────────────────────────────────────
@@ -73,6 +87,7 @@ export const FREE_NODE_IDS = new Set([
   ...FREE_TREBLE_NODE_IDS,
   ...FREE_BASS_NODE_IDS,
   ...FREE_RHYTHM_NODE_IDS,
+  ...FREE_EAR_TRAINING_NODE_IDS,
 ]);
 
 // ─── Summary Metadata ────────────────────────────────────────────────────────
@@ -85,8 +100,9 @@ export const FREE_TIER_SUMMARY = {
   treble: { count: 7 },
   bass: { count: 6 },
   rhythm: { count: 6 },
-  total: 19,
-  bossNodeCount: 3,
+  ear_training: { count: 6 },
+  total: 25,
+  bossNodeCount: 5,
 };
 
 // ─── Gate Function ───────────────────────────────────────────────────────────
