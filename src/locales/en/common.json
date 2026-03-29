@@ -701,6 +701,14 @@
       "rhythmDictation": {
         "name": "Rhythm Dictation",
         "description": "Hear a rhythm and pick the correct notation"
+      },
+      "noteComparison": {
+        "name": "Note Comparison",
+        "description": "Hear two notes and identify which is higher"
+      },
+      "intervalGame": {
+        "name": "Interval Training",
+        "description": "Identify the distance between two notes"
       }
     },
     "modeCard": {
@@ -792,6 +800,50 @@
       "errors": {
         "audioUnavailable": "Audio not available. Tap to try again.",
         "patternError": "Something went wrong. Go back and try again."
+      }
+    },
+    "noteComparison": {
+      "title": "Note Comparison",
+      "question": "Which note is HIGHER?",
+      "higher": "HIGHER",
+      "lower": "LOWER",
+      "reveal": {
+        "higher": "HIGHER ▲",
+        "lower": "LOWER ▼"
+      },
+      "listening": "Listen...",
+      "playAgain": "Play Again",
+      "startGame": "Start Listening",
+      "correct": "Correct!",
+      "wrong": "Try again!",
+      "progress": "{{current}} / {{total}}",
+      "jumpedOver": "Jumped over {{note}}",
+      "jumpedOverMultiple": "{{count}} notes between",
+      "errors": {
+        "audioUnavailable": "Audio not available. Tap to try again.",
+        "generationFailed": "Something went wrong. Go back and try again."
+      }
+    },
+    "intervalGame": {
+      "title": "Interval Training",
+      "question": "How far apart are the notes?",
+      "step": "Step",
+      "stepHint": "next door",
+      "skip": "Skip",
+      "skipHint": "jump one",
+      "leap": "Leap",
+      "leapHint": "far apart",
+      "listening": "Listen...",
+      "playAgain": "Play Again",
+      "startGame": "Start Listening",
+      "correct": "Correct!",
+      "wrong": "Try again!",
+      "progress": "{{current}} / {{total}}",
+      "jumpedOver": "Jumped over {{note}}",
+      "jumpedOverMultiple": "{{count}} notes between",
+      "errors": {
+        "audioUnavailable": "Audio not available. Tap to try again.",
+        "generationFailed": "Something went wrong. Go back and try again."
       }
     }
   },

@@ -238,10 +238,10 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.arcade_rhythm') } });
         break;
       case 'pitch_comparison':
-        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.pitch_comparison') } });
+        navigate('/ear-training-mode/note-comparison-game', { state: navState });
         break;
       case 'interval_id':
-        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.interval_id') } });
+        navigate('/ear-training-mode/interval-game', { state: navState });
         break;
       default:
         console.error('Unknown exercise type:', exercise.type);
