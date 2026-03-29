@@ -64,7 +64,7 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 - [ ] **EAR-01**: 12-15 ear training nodes across 2 units with progressive difficulty
 - [ ] **EAR-02**: Ear Training tab visible on TrailMap with distinct color palette
 - [ ] **EAR-03**: Nodes use PITCH_COMPARISON and INTERVAL_ID exercise types
-- [ ] **EAR-04**: Free tier ear training nodes defined in subscriptionConfig.js and synced with Postgres is_free_node()
+- [x] **EAR-04**: Free tier ear training nodes defined in subscriptionConfig.js and synced with Postgres is_free_node()
 - [ ] **EAR-05**: Boss node(s) combining ear training skills
 
 ### Rhythm Remapping
@@ -150,7 +150,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EAR-01 | Phase 10 | Pending |
 | EAR-02 | Phase 10 | Pending |
 | EAR-03 | Phase 10 | Pending |
-| EAR-04 | Phase 10 | Pending |
+| EAR-04 | Phase 10 | Complete |
 | EAR-05 | Phase 10 | Pending |
 | RMAP-01 | Phase 11 | Pending |
 | RMAP-02 | Phase 11 | Pending |
