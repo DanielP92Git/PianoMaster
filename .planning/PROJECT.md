@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 129 nodes across 3 parallel learning paths (Treble, Bass, Rhythm) including sharps and flats accidentals, 8 node types for engagement variety, and 4 game modes (note recognition, sight reading, rhythm, memory). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery. Production-ready with Sentry error monitoring, route-based code splitting, React ErrorBoundary, first-time onboarding tour, daily challenge system with bonus XP, and COPPA-compliant Privacy Policy and Terms of Service pages.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 129 nodes across 3 parallel learning paths (Treble, Bass, Rhythm) including sharps and flats accidentals, 8 node types for engagement variety, and 6 game modes (note recognition, sight reading, rhythm, memory, note comparison, interval identification). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery. Production-ready with Sentry error monitoring, route-based code splitting, React ErrorBoundary, first-time onboarding tour, daily challenge system with bonus XP, and COPPA-compliant Privacy Policy and Terms of Service pages.
 
 ## Core Value
 
@@ -274,7 +274,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.8 — shipped 2026-03-26):**
+**Current State (after v2.9 Phase 9 — 2026-03-29):**
 - 171-node trail system (93 original + 36 accidental + 42 content expansion nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - NoteSpeedCards speed card game for single-note trail nodes (treble_1_1, bass_1_1) — conveyor animation, 3-lives, combo, 4-tier speed ramp
 - Dedicated Parent Portal with gate-first architecture: math gate on every visit, QuickStatsGrid, 4 content sections (stats, heatmap, subscription, settings)
@@ -325,6 +325,10 @@ Explicitly excluded:
 - Parent-gated feedback form in Settings: four-state component (idle/gated/form/success), honeypot anti-spam, 5-minute cooldown, inline error banners
 - send-feedback Edge Function: JWT auth, input validation, DB rate limiting (3/hr), Brevo plain-text delivery
 - Unified support Gmail sender for all transactional emails (consent, weekly report, deletion, feedback)
+- Ear training games: NoteComparisonGame (higher/lower pitch identification with tier-band narrowing) and IntervalGame (step/skip/leap classification with ascending-first progression)
+- Shared ear training foundation: earTrainingUtils.js (note pair generation, tier logic, interval classification), PianoKeyboardReveal SVG component
+- Both ear training games routable from trail nodes (pitch_comparison, interval_id exercise types) and URL
+- All 9 game components support cross-game trail chaining for ear training exercise types
 - ~86,905 lines JavaScript/JSX/CSS/JSON across src/
 - v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files | v2.4: 149 files | v2.6: 28 files
 
@@ -504,4 +508,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-27 — Phase 7 complete (data foundation + TrailMap refactor)*
+*Last updated: 2026-03-29 — Phase 9 complete (ear training games)*
