@@ -304,7 +304,7 @@ Explicitly excluded:
 - ESLint: 0 warnings, 0 errors (574 eliminated in v2.5 Phase 13)
 - COPPA hard-delete: cron-triggered Edge Function permanently deletes accounts past 30-day grace period (v2.5 Phase 14)
 - Production QA: 89-item checklist executed, all critical flows pass (v2.5 Phase 15)
-- PWA offline: service worker v8 caches production JS bundles (v2.5 Phase 15)
+- PWA offline: service worker v9 caches production JS bundles (bumped from v8 in Phase 8)
 - Student account deletion UI: Delete Account button in settings behind parent gate (v2.5 Phase 15)
 - Games auto-rotate to landscape on Android PWA, playful rotate prompt on iOS
 - App hardened with 3-layer authorization (RLS, SECURITY DEFINER, client-side)
@@ -325,10 +325,16 @@ Explicitly excluded:
 - Parent-gated feedback form in Settings: four-state component (idle/gated/form/success), honeypot anti-spam, 5-minute cooldown, inline error banners
 - send-feedback Edge Function: JWT auth, input validation, DB rate limiting (3/hr), Brevo plain-text delivery
 - Unified support Gmail sender for all transactional emails (consent, weekly report, deletion, feedback)
+- Rhythm Reading game: tap-along with VexFlow notation, sweeping cursor synced to AudioContext, PERFECT/GOOD/MISS feedback, count-in overlay
+- Rhythm Dictation game: hear-and-pick from VexFlow choice cards, replay button, correct/wrong card highlighting
+- usePianoSampler hook: runtime WAV piano samples from public/sounds/piano-samples/, iOS AudioContext resume guard
+- Rhythm utility modules: rhythmVexflowHelpers (notation rendering), rhythmTimingUtils (timing/scoring)
 - Ear training games: NoteComparisonGame (higher/lower pitch identification with tier-band narrowing) and IntervalGame (step/skip/leap classification with ascending-first progression)
 - Shared ear training foundation: earTrainingUtils.js (note pair generation, tier logic, interval classification), PianoKeyboardReveal SVG component
 - Both ear training games routable from trail nodes (pitch_comparison, interval_id exercise types) and URL
+- Both rhythm games routable from trail nodes (rhythm_tap, rhythm_dictation exercise types) and URL
 - All 9 game components support cross-game trail chaining for ear training exercise types
+- Service worker cache v9 for fresh PWA assets after rhythm + ear training game deployment
 - ~86,905 lines JavaScript/JSX/CSS/JSON across src/
 - v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files | v2.4: 149 files | v2.6: 28 files
 
