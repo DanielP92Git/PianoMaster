@@ -124,10 +124,10 @@ describe('QuickStatsGrid', () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText('3/171')).toBeInTheDocument();
+    expect(screen.getByText('3/185')).toBeInTheDocument();
   });
 
-  it('REQ-04: formats nodes as "N/171"', () => {
+  it('REQ-04: formats nodes as "N/185"', () => {
     const progressData = [
       { node_id: 'treble_1_1', stars: 1 },
       { node_id: 'treble_1_2', stars: 1 },
@@ -140,7 +140,7 @@ describe('QuickStatsGrid', () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText('2/171')).toBeInTheDocument();
+    expect(screen.getByText('2/185')).toBeInTheDocument();
   });
 
   it('D-08: renders level value from xpData.levelData.level', () => {
