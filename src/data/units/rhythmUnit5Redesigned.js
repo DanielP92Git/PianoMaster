@@ -165,7 +165,7 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
           rhythmPatterns: ['quarter', 'dotted-half'],
           tempo: 75,
@@ -216,7 +216,7 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_DICTATION,
         config: {
           rhythmPatterns: ['quarter', 'eighth', 'dotted-quarter'],
           tempo: 75,
@@ -267,7 +267,7 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
           rhythmPatterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
           tempo: 80,
@@ -371,7 +371,7 @@ export const rhythmUnit5Nodes = [
     exercises: [
       // First exercise in 4/4 time
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
           rhythmPatterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
           tempo: 80,
@@ -383,7 +383,7 @@ export const rhythmUnit5Nodes = [
       },
       // Second exercise in 3/4 time to test both time signatures
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
           rhythmPatterns: ['quarter', 'dotted-half', 'dotted-quarter', 'eighth'],
           tempo: 80,

@@ -164,7 +164,7 @@ export const rhythmUnit8Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
           rhythmPatterns: ['dotted-quarter', 'eighth', 'quarter'],
           tempo: 70,
@@ -215,7 +215,7 @@ export const rhythmUnit8Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_DICTATION,
         config: {
           rhythmPatterns: ['dotted-quarter', 'eighth', 'quarter'],
           tempo: 75,
@@ -266,7 +266,7 @@ export const rhythmUnit8Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
           rhythmPatterns: ['dotted-quarter', 'eighth', 'quarter', 'half'],
           tempo: 75,
@@ -372,7 +372,7 @@ export const rhythmUnit8Nodes = [
     exercises: [
       {
         // Exercise 1: 6/8 compound meter review (from Unit 7)
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
           rhythmPatterns: ['dotted-quarter', 'quarter', 'eighth'],
           tempo: 75,
@@ -384,7 +384,7 @@ export const rhythmUnit8Nodes = [
       },
       {
         // Exercise 2: Eighth-quarter-eighth syncopation in 4/4
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
           rhythmPatterns: ['eighth', 'quarter', 'dotted-quarter'],
           tempo: 75,
@@ -396,7 +396,7 @@ export const rhythmUnit8Nodes = [
       },
       {
         // Exercise 3: Combined challenge — all syncopation patterns at higher tempo
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
           rhythmPatterns: ['dotted-quarter', 'eighth', 'quarter', 'half'],
           tempo: 80,

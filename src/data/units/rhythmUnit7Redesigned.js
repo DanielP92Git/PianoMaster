@@ -167,7 +167,7 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
           rhythmPatterns: ['dotted-quarter', 'quarter'],
           tempo: 65,
@@ -219,7 +219,7 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_DICTATION,
         config: {
           rhythmPatterns: ['dotted-quarter', 'quarter', 'eighth'],
           tempo: 70,
@@ -271,7 +271,7 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
           rhythmPatterns: ['dotted-quarter', 'quarter', 'eighth'],
           tempo: 75,
@@ -375,7 +375,7 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
           rhythmPatterns: ['dotted-quarter', 'quarter', 'eighth'],
           tempo: 85,
