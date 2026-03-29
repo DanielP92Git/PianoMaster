@@ -78,6 +78,8 @@ const RhythmReadingGame = lazyWithRetry(
 const RhythmDictationGame = lazyWithRetry(
   () => import("./components/games/rhythm-games/RhythmDictationGame")
 );
+const NoteComparisonGame = lazyWithRetry(() => import("./components/games/ear-training-games/NoteComparisonGame"));
+const IntervalGame = lazyWithRetry(() => import("./components/games/ear-training-games/IntervalGame"));
 const SightReadingLayoutHarness = lazyWithRetry(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
 
 // Clear stale-chunk reload flag on successful app load
@@ -196,6 +198,8 @@ function OrientationController() {
     "/notes-master-mode/note-speed-cards",
     "/rhythm-mode/rhythm-reading-game",
     "/rhythm-mode/rhythm-dictation-game",
+    "/ear-training-mode/note-comparison-game",
+    "/ear-training-mode/interval-game",
   ];
 
   const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
@@ -366,6 +370,14 @@ function AppRoutes() {
                   <RhythmDictationGame />
                 </AudioContextProvider>
               }
+            />
+            <Route
+              path="/ear-training-mode/note-comparison-game"
+              element={<AudioContextProvider><NoteComparisonGame /></AudioContextProvider>}
+            />
+            <Route
+              path="/ear-training-mode/interval-game"
+              element={<AudioContextProvider><IntervalGame /></AudioContextProvider>}
             />
             <Route path="/coming-soon" element={<ComingSoon />} />
           </Route>

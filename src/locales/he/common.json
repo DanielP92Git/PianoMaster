@@ -701,6 +701,14 @@
       "rhythmDictation": {
         "name": "שמיעת קצב",
         "description": "שמע קצב ובחר את התווים הנכונים"
+      },
+      "noteComparison": {
+        "name": "השוואת צלילים",
+        "description": "שמע שני צלילים וזהה מי גבוה יותר"
+      },
+      "intervalGame": {
+        "name": "זיהוי קפיצות",
+        "description": "זהה את המרחק בין שני צלילים"
       }
     },
     "modeCard": {
@@ -792,6 +800,50 @@
       "errors": {
         "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
         "patternError": "משהו השתבש. חזור ונסה שוב."
+      }
+    },
+    "noteComparison": {
+      "title": "השוואת צלילים",
+      "question": "איזה צליל גבוה יותר?",
+      "higher": "גבוה יותר",
+      "lower": "נמוך יותר",
+      "reveal": {
+        "higher": "גבוה יותר ▲",
+        "lower": "נמוך יותר ▼"
+      },
+      "listening": "...הקשב",
+      "playAgain": "נגן שוב",
+      "startGame": "התחל להאזין",
+      "correct": "!נכון",
+      "wrong": "!נסה שוב",
+      "progress": "{{total}} / {{current}}",
+      "jumpedOver": "דילג על {{note}}",
+      "jumpedOverMultiple": "{{count}} צלילים באמצע",
+      "errors": {
+        "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
+        "generationFailed": "משהו השתבש. חזור ונסה שוב."
+      }
+    },
+    "intervalGame": {
+      "title": "זיהוי קפיצות",
+      "question": "כמה רחוקים הצלילים?",
+      "step": "שלב",
+      "stepHint": "שכן",
+      "skip": "דילוג",
+      "skipHint": "קפיצה אחת",
+      "leap": "קפיצה גדולה",
+      "leapHint": "רחוק",
+      "listening": "...הקשב",
+      "playAgain": "נגן שוב",
+      "startGame": "התחל להאזין",
+      "correct": "!נכון",
+      "wrong": "!נסה שוב",
+      "progress": "{{total}} / {{current}}",
+      "jumpedOver": "דילג על {{note}}",
+      "jumpedOverMultiple": "{{count}} צלילים באמצע",
+      "errors": {
+        "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
+        "generationFailed": "משהו השתבש. חזור ונסה שוב."
       }
     }
   },
