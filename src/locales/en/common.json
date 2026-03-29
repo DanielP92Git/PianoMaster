@@ -804,7 +804,7 @@
     },
     "noteComparison": {
       "title": "Note Comparison",
-      "question": "Which note is HIGHER?",
+      "question": "Is the second note HIGHER or LOWER?",
       "higher": "HIGHER",
       "lower": "LOWER",
       "reveal": {

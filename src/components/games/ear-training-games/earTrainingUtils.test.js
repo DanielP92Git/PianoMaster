@@ -7,7 +7,6 @@ import {
   classifyInterval,
   generateIntervalQuestion,
   getNotesInBetween,
-  getDisplayOctaveRoot,
 } from './earTrainingUtils';
 
 describe('NOTE_ORDER', () => {
@@ -243,27 +242,5 @@ describe('getNotesInBetween', () => {
   it('handles wider cross-octave intervals', () => {
     const between = getNotesInBetween('A3', 'C4');
     expect(between).toEqual(['A#3', 'B3']);
-  });
-});
-
-describe('getDisplayOctaveRoot', () => {
-  it('returns a valid note name from NOTE_ORDER', () => {
-    const root = getDisplayOctaveRoot('C4', 'E4');
-    expect(NOTE_ORDER).toContain(root);
-  });
-
-  it('returns C4 for notes C4 and E4 (both in C4 octave)', () => {
-    const root = getDisplayOctaveRoot('C4', 'E4');
-    expect(root).toBe('C4');
-  });
-
-  it('returns a note that allows both note1 and note2 to be visible in a 1-octave span', () => {
-    // For C4 and G4, both should fit in the C4 octave (C4 to B4)
-    const root = getDisplayOctaveRoot('C4', 'G4');
-    // Root should be C4 or earlier so G4 is still visible
-    const rootIdx = NOTE_ORDER.indexOf(root);
-    const note1Idx = NOTE_ORDER.indexOf('C4');
-    const note2Idx = NOTE_ORDER.indexOf('G4');
-    expect(rootIdx).toBeLessThanOrEqual(Math.min(note1Idx, note2Idx));
   });
 });

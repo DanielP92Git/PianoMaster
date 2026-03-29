@@ -2,20 +2,22 @@
  * PianoKeyboardReveal.jsx
  *
  * Shared SVG piano keyboard component used by both NoteComparisonGame and IntervalGame.
- * Renders a 1-octave keyboard (7 white keys + 5 black keys) centered around two notes.
+ * Renders a 2-octave keyboard (14 white keys + 10 black keys) covering C3-B4.
  *
  * Design spec: 09-UI-SPEC.md, CONTEXT.md D-01, D-02, D-03, D-08
  */
 
 import { useMemo } from 'react';
-import { NOTE_ORDER, getNotesInBetween, getDisplayOctaveRoot } from '../earTrainingUtils';
+import { NOTE_ORDER, getNotesInBetween } from '../earTrainingUtils';
 
 // Key dimensions (from 09-UI-SPEC.md)
 const WHITE_KEY_WIDTH = 28;
 const WHITE_KEY_HEIGHT = 120;
 const BLACK_KEY_WIDTH = 14;
 const BLACK_KEY_HEIGHT = 72;
-const SVG_WIDTH = 7 * WHITE_KEY_WIDTH; // 196
+const NUM_OCTAVES = 2;
+const NUM_WHITE_KEYS = 7 * NUM_OCTAVES; // 14
+const SVG_WIDTH = NUM_WHITE_KEYS * WHITE_KEY_WIDTH; // 392
 const SVG_HEIGHT = WHITE_KEY_HEIGHT + 20; // 140 (120 keys + 20 label area)
 
 // Note fill colors per state (from 09-UI-SPEC.md)
@@ -45,32 +47,19 @@ const LABEL_COLORS = {
  * Used for key layout positioning.
  */
 const WHITE_NOTES_IN_OCTAVE = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-const BLACK_NOTES_IN_OCTAVE = ['C#', 'D#', null, 'F#', 'G#', 'A#', null]; // null = no black key between E-F and B-C
 
-// Black key x-offsets within an octave (centered between adjacent white keys)
-// White key positions: C=0, D=28, E=56, F=84, G=112, A=140, B=168
-// C# is between C(0) and D(28): 0 + 28 - 7 = 21 ... but centered: (0 + 28)/2 - 7 = 7
-// Standard piano proportions: black keys are positioned at:
-const BLACK_KEY_X_OFFSETS = [
-  19, // C# (between C at 0 and D at 28)
-  47, // D# (between D at 28 and E at 56)
-  -1, // no black key between E and F
-  103, // F# (between F at 84 and G at 112)
-  131, // G# (between G at 112 and A at 140)
-  159, // A# (between A at 140 and B at 168)
-  -1, // no black key between B and C
+// Black key relative x-offsets within one octave (centered between adjacent white keys)
+const BLACK_KEYS_IN_OCTAVE = [
+  { name: 'C#', xOffset: 19 },
+  { name: 'D#', xOffset: 47 },
+  { name: 'F#', xOffset: 103 },
+  { name: 'G#', xOffset: 131 },
+  { name: 'A#', xOffset: 159 },
 ];
 
-/**
- * Get the note name for a key given the octave root and key name.
- * E.g. octaveRoot='C4', keyName='E' → 'E4'
- * E.g. octaveRoot='C4', keyName='C#' → 'C#4'
- */
-function getNoteForKey(octaveRoot, keyName) {
-  // octaveRoot is like 'C3' or 'C4'
-  const octaveNum = octaveRoot.slice(-1);
-  return `${keyName}${octaveNum}`;
-}
+// The two octaves we render: 3 and 4 (matching NOTE_ORDER C3-B4)
+const OCTAVES = [3, 4];
+const OCTAVE_WIDTH = 7 * WHITE_KEY_WIDTH; // 196px per octave
 
 /**
  * PianoKeyboardReveal
@@ -93,9 +82,6 @@ export function PianoKeyboardReveal({
   visible = false,
   reducedMotion = false,
 }) {
-  // Determine the octave to display
-  const octaveRoot = useMemo(() => getDisplayOctaveRoot(note1, note2), [note1, note2]);
-
   // Build note state map: note name → 'note1' | 'note2' | 'between' | 'default'
   const noteStateMap = useMemo(() => {
     const map = new Map();
@@ -129,37 +115,37 @@ export function PianoKeyboardReveal({
   // Compute which keys need labels (note1 and note2 only)
   const labelKeys = useMemo(() => {
     const labels = [];
-    // Check all 7 white key positions
-    WHITE_NOTES_IN_OCTAVE.forEach((keyBaseName, i) => {
-      const noteName = getNoteForKey(octaveRoot, keyBaseName);
-      const state = noteStateMap.get(noteName);
-      if (state === 'note1' || state === 'note2') {
-        labels.push({
-          noteName,
-          state,
-          x: i * WHITE_KEY_WIDTH + WHITE_KEY_WIDTH / 2,
-          y: WHITE_KEY_HEIGHT + 15,
-          isBlack: false,
-        });
-      }
-    });
-    // Check all 5 black key positions
-    BLACK_NOTES_IN_OCTAVE.forEach((keyBaseName, i) => {
-      if (!keyBaseName) return;
-      const noteName = getNoteForKey(octaveRoot, keyBaseName);
-      const state = noteStateMap.get(noteName);
-      if (state === 'note1' || state === 'note2') {
-        labels.push({
-          noteName,
-          state,
-          x: BLACK_KEY_X_OFFSETS[i] + BLACK_KEY_WIDTH / 2,
-          y: WHITE_KEY_HEIGHT + 15,
-          isBlack: true,
-        });
-      }
+    OCTAVES.forEach((octaveNum, octaveIdx) => {
+      const xBase = octaveIdx * OCTAVE_WIDTH;
+      // White keys
+      WHITE_NOTES_IN_OCTAVE.forEach((keyBaseName, i) => {
+        const noteName = `${keyBaseName}${octaveNum}`;
+        const state = noteStateMap.get(noteName);
+        if (state === 'note1' || state === 'note2') {
+          labels.push({
+            noteName,
+            state,
+            x: xBase + i * WHITE_KEY_WIDTH + WHITE_KEY_WIDTH / 2,
+            y: WHITE_KEY_HEIGHT + 15,
+          });
+        }
+      });
+      // Black keys
+      BLACK_KEYS_IN_OCTAVE.forEach(({ name, xOffset }) => {
+        const noteName = `${name}${octaveNum}`;
+        const state = noteStateMap.get(noteName);
+        if (state === 'note1' || state === 'note2') {
+          labels.push({
+            noteName,
+            state,
+            x: xBase + xOffset + BLACK_KEY_WIDTH / 2,
+            y: WHITE_KEY_HEIGHT + 15,
+          });
+        }
+      });
     });
     return labels;
-  }, [octaveRoot, noteStateMap]);
+  }, [noteStateMap]);
 
   return (
     <div dir="ltr" className="flex flex-col items-center" style={containerStyle}>
@@ -172,51 +158,53 @@ export function PianoKeyboardReveal({
           role="presentation"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* White keys */}
-          {WHITE_NOTES_IN_OCTAVE.map((keyBaseName, i) => {
-            const noteName = getNoteForKey(octaveRoot, keyBaseName);
-            const state = noteStateMap.get(noteName) ?? 'default';
-            const fill = FILL_COLORS.white[state] ?? FILL_COLORS.white.default;
-            const x = i * WHITE_KEY_WIDTH;
-            return (
-              <rect
-                key={noteName}
-                x={x}
-                y={0}
-                width={WHITE_KEY_WIDTH - 1}
-                height={WHITE_KEY_HEIGHT}
-                fill={fill}
-                stroke="rgba(255,255,255,0.3)"
-                rx="3"
-                data-note={noteName}
-                data-state={state}
-              />
-            );
-          })}
+          {/* White keys — 2 octaves */}
+          {OCTAVES.map((octaveNum, octaveIdx) =>
+            WHITE_NOTES_IN_OCTAVE.map((keyBaseName, i) => {
+              const noteName = `${keyBaseName}${octaveNum}`;
+              const state = noteStateMap.get(noteName) ?? 'default';
+              const fill = FILL_COLORS.white[state] ?? FILL_COLORS.white.default;
+              const x = octaveIdx * OCTAVE_WIDTH + i * WHITE_KEY_WIDTH;
+              return (
+                <rect
+                  key={noteName}
+                  x={x}
+                  y={0}
+                  width={WHITE_KEY_WIDTH - 1}
+                  height={WHITE_KEY_HEIGHT}
+                  fill={fill}
+                  stroke="rgba(255,255,255,0.3)"
+                  rx="3"
+                  data-note={noteName}
+                  data-state={state}
+                />
+              );
+            })
+          )}
 
-          {/* Black keys (rendered on top of white keys) */}
-          {BLACK_NOTES_IN_OCTAVE.map((keyBaseName, i) => {
-            if (!keyBaseName) return null;
-            const noteName = getNoteForKey(octaveRoot, keyBaseName);
-            const state = noteStateMap.get(noteName) ?? 'default';
-            const fill = FILL_COLORS.black[state] ?? FILL_COLORS.black.default;
-            const x = BLACK_KEY_X_OFFSETS[i];
-            if (x < 0) return null;
-            return (
-              <rect
-                key={noteName}
-                x={x}
-                y={0}
-                width={BLACK_KEY_WIDTH}
-                height={BLACK_KEY_HEIGHT}
-                fill={fill}
-                stroke="rgba(255,255,255,0.3)"
-                rx="2"
-                data-note={noteName}
-                data-state={state}
-              />
-            );
-          })}
+          {/* Black keys — 2 octaves (rendered on top of white keys) */}
+          {OCTAVES.map((octaveNum, octaveIdx) =>
+            BLACK_KEYS_IN_OCTAVE.map(({ name, xOffset }) => {
+              const noteName = `${name}${octaveNum}`;
+              const state = noteStateMap.get(noteName) ?? 'default';
+              const fill = FILL_COLORS.black[state] ?? FILL_COLORS.black.default;
+              const x = octaveIdx * OCTAVE_WIDTH + xOffset;
+              return (
+                <rect
+                  key={noteName}
+                  x={x}
+                  y={0}
+                  width={BLACK_KEY_WIDTH}
+                  height={BLACK_KEY_HEIGHT}
+                  fill={fill}
+                  stroke="rgba(255,255,255,0.3)"
+                  rx="2"
+                  data-note={noteName}
+                  data-state={state}
+                />
+              );
+            })
+          )}
 
           {/* Note name labels below highlighted keys */}
           {labelKeys.map(({ noteName, state, x, y }) => (

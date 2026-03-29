@@ -22,6 +22,8 @@ export default function AppLayout() {
     "/rhythm-mode/metronome-trainer",
     "/rhythm-mode/rhythm-reading-game",
     "/rhythm-mode/rhythm-dictation-game",
+    "/ear-training-mode/note-comparison-game",
+    "/ear-training-mode/interval-game",
   ];
 
   // Routes that should hide the header (games + trail page)

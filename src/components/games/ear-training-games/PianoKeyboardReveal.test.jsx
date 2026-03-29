@@ -3,20 +3,19 @@ import { render, screen } from '@testing-library/react';
 import { PianoKeyboardReveal } from './components/PianoKeyboardReveal';
 
 describe('PianoKeyboardReveal', () => {
-  it('renders 7 white key rect elements', () => {
+  it('renders 14 white key rect elements (2 octaves)', () => {
     const { container } = render(
       <PianoKeyboardReveal note1="C4" note2="E4" visible={true} />
     );
     const svg = container.querySelector('svg');
     const rects = svg.querySelectorAll('rect');
-    // 7 white keys + 5 black keys = 12 total
     const whiteKeys = Array.from(rects).filter(
       (r) => parseFloat(r.getAttribute('height')) === 120
     );
-    expect(whiteKeys).toHaveLength(7);
+    expect(whiteKeys).toHaveLength(14);
   });
 
-  it('renders 5 black key rect elements', () => {
+  it('renders 10 black key rect elements (2 octaves)', () => {
     const { container } = render(
       <PianoKeyboardReveal note1="C4" note2="E4" visible={true} />
     );
@@ -25,7 +24,7 @@ describe('PianoKeyboardReveal', () => {
     const blackKeys = Array.from(rects).filter(
       (r) => parseFloat(r.getAttribute('height')) === 72
     );
-    expect(blackKeys).toHaveLength(5);
+    expect(blackKeys).toHaveLength(10);
   });
 
   it('note1 white key (C4) has fill="#60a5fa" (blue-400)', () => {
