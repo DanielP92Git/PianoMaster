@@ -382,6 +382,9 @@ export function MemoryGame() {
             case 'interval_id':
               navigate('/ear-training-mode/interval-game', { state: navState });
               break;
+            case 'arcade_rhythm':
+              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+              break;
             default:
               console.warn('Unknown exercise type:', nextExercise.type);
               navigate('/trail');

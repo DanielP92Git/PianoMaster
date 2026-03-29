@@ -402,6 +402,9 @@ export default function IntervalGame() {
                 state: { ...navState, isBoss: true },
               });
               break;
+            case 'arcade_rhythm':
+              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+              break;
             default:
               navigate('/trail');
           }
