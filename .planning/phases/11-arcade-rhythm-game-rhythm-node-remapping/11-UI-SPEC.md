@@ -58,15 +58,16 @@ Source: `tailwind.config.js` spacing tokens, `docs/DESIGN_SYSTEM.md`, CONTEXT.md
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body / label | 14px (`text-sm`) | 400 (regular) | 1.6 |
-| Game UI label | 16px (`text-base`) | 600 (semibold) | 1.7 |
+| Game UI label | 16px (`text-base`) | 700 (bold) | 1.7 |
 | Feedback floating text | 30px (`text-3xl`) | 700 (bold) | 1.9 |
 | Countdown display | 30px (`text-3xl`) | 700 (bold) | 1.9 |
 
 Notes:
-- "Game UI label" covers: exercise counter, combo counter, lives display, BPM/tempo label — `font-bold text-white/80`
-- "Feedback floating text" matches the existing `FloatingFeedback` component's `text-3xl font-bold` — do not change
-- "Countdown display" matches existing `CountdownOverlay` `text-3xl font-bold` — do not change
-- All in-game text is white (`text-white`) or white-alpha variants on the purple gradient background
+- Two weights only: 400 (regular) for body/labels and 700 (bold) for all game feedback, counters, and countdown display.
+- "Game UI label" covers: exercise counter, combo counter, lives display, BPM/tempo label — `font-bold text-white/80`. Weight is 700 (bold), not 600 (semibold).
+- "Feedback floating text" matches the existing `FloatingFeedback` component's `text-3xl font-bold` — do not change.
+- "Countdown display" matches existing `CountdownOverlay` `text-3xl font-bold` — do not change.
+- All in-game text is white (`text-white`) or white-alpha variants on the purple gradient background.
 
 Source: `FloatingFeedback.jsx` line 94, `CountdownOverlay.jsx` line 35, `RhythmReadingGame.jsx` line 651.
 
@@ -97,7 +98,7 @@ Duration-coded tile colors (CONTEXT.md D-02, exact palette by Claude's discretio
 - Eighth note tile: `bg-orange-400/80 border border-orange-300/60` (`#fb923c`)
 - Whole note tile: `bg-violet-400/80 border border-violet-300/60` (`#a78bfa`)
 - Dotted notes: same color as their base duration with a white dot indicator overlay
-- Ghost tile (rest): `bg-white/15 border border-white/20` — semi-transparent, no solid fill
+- Ghost tile (rest): `bg-white/15 border border-dashed border-white/30` — semi-transparent, no solid fill
 
 Source: CONTEXT.md D-02, D-03, D-04, D-06. `RhythmReadingGame.jsx` bg pattern. `FloatingFeedback.jsx` color classes. `NotesRecognitionGame.jsx` on-fire flame reference.
 
@@ -108,6 +109,8 @@ Source: CONTEXT.md D-02, D-03, D-04, D-06. `RhythmReadingGame.jsx` bg pattern. `
 ### ArcadeRhythmGame — Layout Structure
 
 The game runs full-screen in landscape orientation (same as RhythmReadingGame). AppLayout hides sidebar/header for this route.
+
+Primary focal point: the glowing hit zone line at screen bottom; all visual hierarchy converges downward toward it.
 
 ```
 fixed inset-0
@@ -222,6 +225,8 @@ Source: CONTEXT.md D-05, D-06, D-07, D-08. Project convention from `NotesRecogni
 | Error: audio not ready | Reuse `AudioInterruptedOverlay` component (existing) |
 | Game over (lives depleted) | Passes to `GameOverScreen` with `livesLost={true}` |
 | Victory | Passes to `VictoryScreen` with standard trail props |
+
+CTA rationale: "Play" is intentionally single-word — game genre convention for children; the start button is visually unmistakable in context (large, centered, primary indigo button on an otherwise empty pre-game screen).
 
 Destructive actions: none in this game. The "quit via BackButton" navigates back without a confirmation dialog (consistent with all other rhythm games in this codebase).
 
