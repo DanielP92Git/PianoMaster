@@ -124,6 +124,15 @@ None — ArcadeRhythmGame is fully wired. The game renders its own tile lane fro
 - Plan 11-02 needs to register `/rhythm-mode/arcade-rhythm-game` route in `App.jsx` and add `arcade_rhythm` to LANDSCAPE_ROUTES
 - Plan 11-03 needs to remap rhythm trail nodes to use `arcade_rhythm` exercise type where appropriate
 
+## Self-Check: PASSED
+
+- `src/components/games/rhythm-games/ArcadeRhythmGame.jsx` — FOUND (1031 lines)
+- `src/components/games/rhythm-games/ArcadeRhythmGame.test.js` — FOUND (9 tests, all pass)
+- Commit `6ad0b9d` (test RED) — FOUND
+- Commit `cce0bd5` (feat GREEN) — FOUND
+- Commit `9509fab` (fix timer cleanup) — FOUND
+- REQUIREMENTS ARCR-01 through ARCR-05 — marked complete
+
 ---
 *Phase: 11-arcade-rhythm-game-rhythm-node-remapping*
 *Completed: 2026-03-30*
