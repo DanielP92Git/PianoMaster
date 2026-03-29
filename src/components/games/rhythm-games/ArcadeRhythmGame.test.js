@@ -188,9 +188,12 @@ describe('ArcadeRhythmGame — exported constants', () => {
 describe('ArcadeRhythmGame — component rendering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
+    vi.runOnlyPendingTimers();
+    vi.useRealTimers();
     vi.restoreAllMocks();
   });
 
