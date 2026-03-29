@@ -69,8 +69,8 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 ### Rhythm Remapping
 
-- [ ] **RMAP-01**: Existing 36 rhythm nodes remapped to mixed exercise types (~40% MetronomeTrainer, ~30% Rhythm Reading, ~20% Dictation, ~10% Arcade)
-- [ ] **RMAP-02**: DB migration resets exercise_progress for remapped nodes before data changes deploy
+- [x] **RMAP-01**: Existing 36 rhythm nodes remapped to mixed exercise types (~40% MetronomeTrainer, ~30% Rhythm Reading, ~20% Dictation, ~10% Arcade)
+- [x] **RMAP-02**: DB migration resets exercise_progress for remapped nodes before data changes deploy
 - [ ] **RMAP-03**: All remapped nodes playable end-to-end through VictoryScreen
 
 ## Future Requirements
@@ -152,8 +152,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EAR-03 | Phase 10 | Pending |
 | EAR-04 | Phase 10 | Complete |
 | EAR-05 | Phase 10 | Pending |
-| RMAP-01 | Phase 11 | Pending |
-| RMAP-02 | Phase 11 | Pending |
+| RMAP-01 | Phase 11 | Complete |
+| RMAP-02 | Phase 11 | Complete |
 | RMAP-03 | Phase 11 | Pending |
 
 **Coverage:**

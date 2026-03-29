@@ -123,11 +123,11 @@ Plans:
   2. Missing enough tiles depletes 3 lives and triggers GameOverScreen; hitting a streak triggers on-fire mode
   3. A DB migration has cleared exercise_progress and stars for all remapped rhythm nodes before the new node data deploys to production
   4. All 36 rhythm nodes are playable end-to-end through VictoryScreen with their new exercise type (MetronomeTrainer, Rhythm Reading, Dictation, or Arcade)
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 **UI hint**: yes
 Plans:
 - [ ] 11-01-PLAN.md — ArcadeRhythmGame component + tests (ARCR-01, ARCR-02, ARCR-03, ARCR-04, ARCR-05)
-- [ ] 11-02-PLAN.md — DB migration + rhythm node data remapping (RMAP-01, RMAP-02)
+- [x] 11-02-PLAN.md — DB migration + rhythm node data remapping (RMAP-01, RMAP-02)
 - [ ] 11-03-PLAN.md — Route wiring, handleNextExercise integration, human verification (RMAP-03)
 
 ---
@@ -142,7 +142,7 @@ Plans:
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 4/4 | Complete   | 2026-03-29 |
 | 9. Ear Training Games | v2.9 | 2/2 | Complete   | 2026-03-29 |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 1/2 | Complete    | 2026-03-29 |
-| 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/3 | Not started | - |
+| 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 1/3 | In Progress|  |
 
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
