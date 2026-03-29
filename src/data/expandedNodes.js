@@ -6,6 +6,7 @@
  * Treble Units 1-7: Redesigned (C4 to C5, including sharps, flats, and key signatures)
  * Bass Units 1-7: Redesigned (C4 to C3, including sharps, flats, and key signatures)
  * Rhythm Units 1-8: Redesigned (quarter notes to sixteenths, 6/8 compound meter, syncopation)
+ * Ear Training Units 1-2: Sound Direction (pitch comparison) and Interval Explorer (interval identification)
  *
  * All units follow consistent NODE_TYPES pattern with pedagogical scaffolding.
  */
@@ -47,6 +48,10 @@ import rhythmUnit6Nodes from './units/rhythmUnit6Redesigned.js';
 import rhythmUnit7Nodes from './units/rhythmUnit7Redesigned.js';
 import rhythmUnit8Nodes from './units/rhythmUnit8Redesigned.js';
 
+// Ear training units
+import earTrainingUnit1Nodes from './units/earTrainingUnit1.js';
+import earTrainingUnit2Nodes from './units/earTrainingUnit2.js';
+
 // Combine all nodes
 export const EXPANDED_NODES = [
   // Redesigned treble clef units (Units 1-5)
@@ -79,6 +84,10 @@ export const EXPANDED_NODES = [
   // Advanced rhythm units
   ...rhythmUnit7Nodes,
   ...rhythmUnit8Nodes,
+
+  // Ear training units
+  ...earTrainingUnit1Nodes,
+  ...earTrainingUnit2Nodes,
 ];
 
 // Export by category for easy integration
@@ -109,6 +118,11 @@ export const EXPANDED_RHYTHM_NODES = [
   ...rhythmUnit6Nodes,
   ...rhythmUnit7Nodes,
   ...rhythmUnit8Nodes,
+];
+
+export const EXPANDED_EAR_TRAINING_NODES = [
+  ...earTrainingUnit1Nodes,
+  ...earTrainingUnit2Nodes,
 ];
 
 // Update prerequisites to link between units

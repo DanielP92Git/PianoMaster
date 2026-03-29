@@ -334,6 +334,38 @@ export const UNITS = {
       name: 'Advanced Rhythm Badge'
     }
   },
+
+  // ============================================
+  // EAR TRAINING UNITS
+  // ============================================
+  EAR_1: {
+    id: 'ear_unit_1',
+    category: NODE_CATEGORIES.EAR_TRAINING,
+    name: 'Sound Direction',
+    description: 'Learn to tell which note is higher or lower',
+    order: 1,
+    theme: 'Direction Before Distance',
+    icon: '👂',
+    reward: {
+      type: 'accessory',
+      id: 'ear_sprout_badge',
+      name: 'Ear Sprout Badge'
+    }
+  },
+  EAR_2: {
+    id: 'ear_unit_2',
+    category: NODE_CATEGORIES.EAR_TRAINING,
+    name: 'Interval Explorer',
+    description: 'Identify steps, skips, and leaps between notes',
+    order: 2,
+    theme: 'Measuring the Distance',
+    icon: '🎵',
+    reward: {
+      type: 'accessory',
+      id: 'interval_master_badge',
+      name: 'Interval Master Badge'
+    }
+  },
 };
 
 /**
