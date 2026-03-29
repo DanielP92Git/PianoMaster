@@ -47,7 +47,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 - [x] **Phase 7: Data Foundation + TrailMap Refactor** — New EXERCISE_TYPES constants, EAR_TRAINING category, TrailNodeModal routing, data-driven TrailMap, validateTrail extension (completed 2026-03-27)
 - [x] **Phase 8: Audio Infrastructure + Rhythm Games** — usePianoSampler hook, RhythmReadingGame, RhythmDictationGame, i18n for all new game types (completed 2026-03-29)
 - [x] **Phase 9: Ear Training Games** — NoteComparisonGame, IntervalGame, shared piano keyboard SVG, subscriptionConfig for ear nodes (completed 2026-03-29)
-- [ ] **Phase 10: Ear Training Trail Data + Trail Tab** — 12-15 ear training nodes across 2 units, Ear tab on TrailMap, boss nodes, DB subscription gate sync
+- [x] **Phase 10: Ear Training Trail Data + Trail Tab** — 12-15 ear training nodes across 2 units, Ear tab on TrailMap, boss nodes, DB subscription gate sync (completed 2026-03-29)
 - [ ] **Phase 11: Arcade Rhythm Game + Rhythm Node Remapping** — ArcadeRhythmGame, 36 rhythm nodes remapped to mixed exercise types, DB migration clearing stale progress
 
 ---
@@ -108,7 +108,7 @@ Plans:
   2. Tapping into the Ear tab reveals 12-15 progressive nodes across 2 units with appropriate prerequisite locks
   3. Free tier children can access the defined free ear training nodes and are shown a paywall for premium nodes — no silent RLS failures
   4. A boss node combining ear training skills is present and completable end-to-end through VictoryScreen
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 **UI hint**: yes
 Plans:
 - [x] 10-01-PLAN.md — Ear training unit data files (14 nodes), expandedNodes registration, UNITS map (EAR-01, EAR-02, EAR-03, EAR-05)
@@ -137,7 +137,7 @@ Plans:
 | 7. Data Foundation + TrailMap Refactor | v2.9 | 2/2 | Complete   | 2026-03-27 |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 4/4 | Complete   | 2026-03-29 |
 | 9. Ear Training Games | v2.9 | 2/2 | Complete   | 2026-03-29 |
-| 10. Ear Training Trail Data + Trail Tab | v2.9 | 1/2 | In Progress|  |
+| 10. Ear Training Trail Data + Trail Tab | v2.9 | 1/2 | Complete    | 2026-03-29 |
 | 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/? | Not started | - |
 
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
