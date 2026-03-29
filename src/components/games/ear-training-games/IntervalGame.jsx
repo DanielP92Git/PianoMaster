@@ -32,7 +32,6 @@ import BackButton from '../../ui/BackButton';
 
 import {
   generateIntervalQuestion,
-  classifyInterval,
   getNotesInBetween,
 } from './earTrainingUtils';
 import { PianoKeyboardReveal } from './components/PianoKeyboardReveal';
