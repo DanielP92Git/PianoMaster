@@ -448,6 +448,18 @@ export function NoteSpeedCards() {
                 state: { ...navState, isBoss: true },
               });
               break;
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
+              break;
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", { state: navState });
+              break;
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", { state: navState });
+              break;
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
+              break;
             default:
               navigate("/trail");
           }
