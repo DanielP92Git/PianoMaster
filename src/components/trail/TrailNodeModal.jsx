@@ -235,7 +235,7 @@ const TrailNodeModal = ({ node, progress, isUnlocked, isPremiumLocked = false, p
         navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
         break;
       case 'arcade_rhythm':
-        navigate('/coming-soon', { state: { ...navState, gameName: t('trail:exerciseTypes.arcade_rhythm') } });
+        navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
         break;
       case 'pitch_comparison':
         navigate('/ear-training-mode/note-comparison-game', { state: navState });

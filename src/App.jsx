@@ -78,6 +78,9 @@ const RhythmReadingGame = lazyWithRetry(
 const RhythmDictationGame = lazyWithRetry(
   () => import("./components/games/rhythm-games/RhythmDictationGame")
 );
+const ArcadeRhythmGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/ArcadeRhythmGame")
+);
 const NoteComparisonGame = lazyWithRetry(() => import("./components/games/ear-training-games/NoteComparisonGame"));
 const IntervalGame = lazyWithRetry(() => import("./components/games/ear-training-games/IntervalGame"));
 const SightReadingLayoutHarness = lazyWithRetry(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
@@ -198,6 +201,7 @@ function OrientationController() {
     "/notes-master-mode/note-speed-cards",
     "/rhythm-mode/rhythm-reading-game",
     "/rhythm-mode/rhythm-dictation-game",
+    "/rhythm-mode/arcade-rhythm-game",
     "/ear-training-mode/note-comparison-game",
     "/ear-training-mode/interval-game",
   ];
@@ -368,6 +372,14 @@ function AppRoutes() {
               element={
                 <AudioContextProvider>
                   <RhythmDictationGame />
+                </AudioContextProvider>
+              }
+            />
+            <Route
+              path="/rhythm-mode/arcade-rhythm-game"
+              element={
+                <AudioContextProvider>
+                  <ArcadeRhythmGame />
                 </AudioContextProvider>
               }
             />
