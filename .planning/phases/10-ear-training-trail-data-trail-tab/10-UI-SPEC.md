@@ -69,9 +69,11 @@ Inherits from project-wide scale. No new typography introduced in this phase.
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 16px (text-base) | 400 (regular) | 1.7 |
-| Label / Node name | 14px (text-sm) | 600 (semibold) | 1.6 |
+| Label / Node name | 14px (text-sm) | 700 (bold) | 1.6 |
 | Heading / Unit name | 20px (text-xl) | 700 (bold) | 1.8 |
 | Node description | 12px (text-xs) | 400 (regular) | 1.5 |
+
+Weights used: 400 (regular) and 700 (bold) — two weights only.
 
 **Source:** tailwind.config.js fontSize definitions. Node names and descriptions follow existing trail node display pattern from trebleUnit1Redesigned.js.
 
