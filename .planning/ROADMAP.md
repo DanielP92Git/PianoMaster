@@ -133,7 +133,7 @@ Plans:
 | 6. Dedicated Parent Portal | v2.8 | 3/3 | Complete | 2026-03-25 |
 | 7. Data Foundation + TrailMap Refactor | v2.9 | 2/2 | Complete   | 2026-03-27 |
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 2/4 | In Progress|  |
-| 9. Ear Training Games | v2.9 | 1/1 | Complete   | 2026-03-29 |
+| 9. Ear Training Games | v2.9 | 3/4 | In Progress|  |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 0/? | Not started | - |
 | 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 0/? | Not started | - |
 

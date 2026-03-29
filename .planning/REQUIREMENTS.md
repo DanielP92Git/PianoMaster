@@ -45,11 +45,11 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 ### Note Comparison
 
-- [ ] **PITCH-01**: User hears two piano notes played sequentially via usePianoSampler
-- [ ] **PITCH-02**: User taps HIGHER or LOWER to identify the second note's relation
+- [x] **PITCH-01**: User hears two piano notes played sequentially via usePianoSampler
+- [x] **PITCH-02**: User taps HIGHER or LOWER to identify the second note's relation
 - [x] **PITCH-03**: Interval distance narrows progressively through the session (wide to close)
-- [ ] **PITCH-04**: Animated direction reveal after each answer
-- [ ] **PITCH-05**: Session completes through VictoryScreen with star rating and XP
+- [x] **PITCH-04**: Animated direction reveal after each answer
+- [x] **PITCH-05**: Session completes through VictoryScreen with star rating and XP
 
 ### Interval Identification
 
@@ -137,11 +137,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ARCR-03 | Phase 11 | Pending |
 | ARCR-04 | Phase 11 | Pending |
 | ARCR-05 | Phase 11 | Pending |
-| PITCH-01 | Phase 9 | Pending |
-| PITCH-02 | Phase 9 | Pending |
+| PITCH-01 | Phase 9 | Complete |
+| PITCH-02 | Phase 9 | Complete |
 | PITCH-03 | Phase 9 | Complete |
-| PITCH-04 | Phase 9 | Pending |
-| PITCH-05 | Phase 9 | Pending |
+| PITCH-04 | Phase 9 | Complete |
+| PITCH-05 | Phase 9 | Complete |
 | INTV-01 | Phase 9 | Pending |
 | INTV-02 | Phase 9 | Complete |
 | INTV-03 | Phase 9 | Complete |
