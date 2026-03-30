@@ -263,6 +263,56 @@ function validateExerciseTypes() {
   }
 }
 
+/**
+ * Validate that all exercise difficulty values are within the known set.
+ * Unknown difficulty values cause a hard build failure.
+ */
+function validateExerciseDifficultyValues() {
+  console.log('\nChecking exercise difficulty values...');
+  const VALID = new Set(['beginner', 'intermediate', 'advanced']);
+  let invalidCount = 0;
+  for (const node of SKILL_NODES) {
+    for (const exercise of (node.exercises || [])) {
+      const d = exercise.config?.difficulty;
+      if (d !== undefined && !VALID.has(d)) {
+        console.error(`  ERROR: Invalid difficulty "${d}" in node "${node.id}"`);
+        hasErrors = true;
+        invalidCount++;
+      }
+    }
+  }
+  if (invalidCount === 0) console.log('  Exercise difficulty values: OK');
+  else console.error(`  Found ${invalidCount} invalid difficulty value(s)`);
+}
+
+/**
+ * Validate that all rhythmPatterns entries use recognized duration names.
+ * Unknown names cause a hard build failure.
+ */
+function validateRhythmPatternNames() {
+  console.log('\nChecking rhythmPatterns duration names...');
+  const VALID = new Set([
+    'whole', 'half', 'quarter', 'eighth', 'sixteenth',
+    'dotted-half', 'dotted-quarter', 'dotted-eighth',
+    'quarter-triplet', 'eighth-triplet', 'sixteenth-triplet',
+    'whole-rest', 'half-rest', 'quarter-rest', 'eighth-rest', 'sixteenth-rest'
+  ]);
+  let invalidCount = 0;
+  for (const node of SKILL_NODES) {
+    for (const exercise of (node.exercises || [])) {
+      for (const pattern of (exercise.config?.rhythmPatterns || [])) {
+        if (!VALID.has(pattern)) {
+          console.error(`  ERROR: Unknown rhythmPattern "${pattern}" in node "${node.id}"`);
+          hasErrors = true;
+          invalidCount++;
+        }
+      }
+    }
+  }
+  if (invalidCount === 0) console.log('  Rhythm pattern names: OK');
+  else console.error(`  Found ${invalidCount} invalid rhythm pattern name(s)`);
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -277,6 +327,8 @@ validateNodeTypes();
 validateDuplicateIds();
 validateXPEconomy();
 validateExerciseTypes();
+validateExerciseDifficultyValues();
+validateRhythmPatternNames();
 
 console.log('\n' + '='.repeat(50));
 
