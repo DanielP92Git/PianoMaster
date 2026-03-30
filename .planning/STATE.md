@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cleanup & Polish
 status: executing
-stopped_at: Phase 13 UI-SPEC approved
-last_updated: "2026-03-30T22:52:33.407Z"
-last_activity: 2026-03-30 -- Phase 13 execution started
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-30T23:01:00Z"
+last_activity: 2026-03-30 -- Phase 13 Plan 01 complete (utility consolidation)
 progress:
   total_phases: 4
   completed_phases: 1
   total_plans: 4
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 ## Current Position
 
 Phase: 13 (code-quality-quick-wins) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 13
-Last activity: 2026-03-30 -- Phase 13 execution started
+Plan: 2 of 2
+Status: Plan 01 complete, ready for Plan 02
+Last activity: 2026-03-30 -- Phase 13 Plan 01 complete (utility consolidation)
 
 ```
 v3.0 Progress: [..........] 0/4 phases
@@ -44,6 +44,10 @@ v3.0 Progress: [..........] 0/4 phases
 
 ### Decisions
 
+- [Phase 13-01]: noteUtils.js uses VexFlowStaffDisplay implementation (not KlavierKeyboard) — only that version handles flat notes
+- [Phase 13-01]: Cb4 maps to B3 (MIDI 59) — flat-to-natural conversion for CB requires octave decrement
+- [Phase 13-01]: calculateStarsFromPercentage exported without underscore prefix — private underscore pattern dropped, function is now public API
+- [Phase 13-01]: apiDatabase.js callers all use await-only pattern so canonical {userId,isOwner,isTeacher} return is backward-compatible
 - v3.0 roadmap: 4 phases grouping 14 cleanup requirements by dependency and blast radius
 - Phases 12-13 are independent; Phase 14 best after code changes settle; Phase 15 depends on 12-13
 - [Phase 12-trail-config-fixes]: Rest pattern names (quarter-rest, half-rest, whole-rest) included in VALID set for rhythmPattern validator — legitimately used in unit 4
@@ -60,13 +64,13 @@ v3.0 Progress: [..........] 0/4 phases
 
 ## Session Continuity
 
-Last session: 2026-03-30T22:35:29.868Z
-Stopped at: Phase 13 UI-SPEC approved
-Resume file: .planning/phases/13-code-quality-quick-wins/13-UI-SPEC.md
+Last session: 2026-03-30T23:01:00Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: .planning/phases/13-code-quality-quick-wins/13-01-SUMMARY.md
 
 **Next action:**
 
-- `/gsd:plan-phase 12` -- plan Trail Config Fixes phase
+- Execute 13-02-PLAN.md (dead code removal, lazy-load TeacherDashboard, XP locale strings)
 
 ---
 *State initialized: 2026-01-31*

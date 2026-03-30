@@ -15,9 +15,9 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 
 ### Code Quality
 
-- [ ] **QUAL-01**: `noteNameToMidi` consolidated to single utility (currently 3 implementations)
-- [ ] **QUAL-02**: `calculateStars` consolidated to single utility (currently 2 implementations)
-- [ ] **QUAL-03**: `verifyStudentDataAccess` duplicate in apiDatabase.js removed, imports from authorizationUtils.js
+- [x] **QUAL-01**: `noteNameToMidi` consolidated to single utility (currently 3 implementations)
+- [x] **QUAL-02**: `calculateStars` consolidated to single utility (currently 2 implementations)
+- [x] **QUAL-03**: `verifyStudentDataAccess` duplicate in apiDatabase.js removed, imports from authorizationUtils.js
 - [x] **QUAL-04**: AchievementsLegacy.jsx deleted (dead code, never imported)
 - [x] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG_, TEST_, README_)
 - [ ] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 -> target: <50 production calls)
@@ -81,9 +81,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TCFG-01 | Phase 12 | Complete |
 | TCFG-02 | Phase 12 | Complete |
 | TCFG-03 | Phase 12 | Complete |
-| QUAL-01 | Phase 13 | Pending |
-| QUAL-02 | Phase 13 | Pending |
-| QUAL-03 | Phase 13 | Pending |
+| QUAL-01 | Phase 13 | Complete |
+| QUAL-02 | Phase 13 | Complete |
+| QUAL-03 | Phase 13 | Complete |
 | QUAL-04 | Phase 13 | Complete |
 | QUAL-05 | Phase 13 | Complete |
 | QUAL-06 | Phase 14 | Pending |

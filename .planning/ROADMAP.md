@@ -80,7 +80,7 @@ Plans:
   5. TeacherDashboard loads via React.lazy() and all `total_points` references in teacher code use XP terminology
 **Plans:** 2 plans
 Plans:
-- [ ] 13-01-PLAN.md -- Consolidate noteNameToMidi, calculateStars, and verifyStudentDataAccess to canonical locations
+- [x] 13-01-PLAN.md -- Consolidate noteNameToMidi, calculateStars, and verifyStudentDataAccess to canonical locations (completed 2026-03-30)
 - [ ] 13-02-PLAN.md -- Delete dead code, lazy-load TeacherDashboard, migrate XP locale strings
 
 ### Phase 14: Console Logging Cleanup
@@ -107,11 +107,11 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 12. Trail Config Fixes | v3.0 | 2/2 | Complete    | 2026-03-30 |
-| 13. Code Quality Quick Wins | v3.0 | 0/2 | Planned | - |
+| 13. Code Quality Quick Wins | v3.0 | 1/2 | Executing | - |
 | 14. Console Logging Cleanup | v3.0 | 0/? | Not started | - |
 | 15. Verification & Deploy | v3.0 | 0/? | Not started | - |
 
 **Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 4 phases, 14 requirements**
 
 ---
-*Last updated: 2026-03-31 -- Phase 13 planned (2 plans)*
+*Last updated: 2026-03-30 -- Phase 13 Plan 01 complete (utility consolidation done)*
