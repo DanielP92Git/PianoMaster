@@ -1,5 +1,27 @@
 # Project Milestones: PianoApp
 
+## v2.9 Game Variety & Ear Training (Shipped: 2026-03-30)
+
+**Phases completed:** 5 phases, 15 plans, 24 tasks
+
+**Key accomplishments:**
+
+- One-liner:
+- TrailMap fully data-driven from TRAIL_TAB_CONFIGS (4 tabs, zero hardcoded category references); ComingSoon placeholder wires all 5 new exercise types; Ear Training tab visible with teal/cyan design.
+- One-liner:
+- 1. [Rule 1 - Bug] Extracted scoreTap to separate utility module
+- VexFlow hear-and-pick rhythm dictation game with 10-question sessions, piano-synthesized audio playback, 3-card distractor choices, and correct/wrong reveal feedback completing through VictoryScreen
+- Both rhythm games wired into app routing via lazyWithRetry + AudioContextProvider, trail navigation updated from ComingSoon to real routes, complete EN+HE i18n added, service worker bumped to v9
+- Shared earTrainingUtils module (8 exports) + PianoKeyboardReveal SVG component (1-octave blue/orange keyboard) powering both NoteComparisonGame and IntervalGame
+- NoteComparisonGame component with GAME_PHASES FSM, Web Audio dual-note scheduling, tier-band narrowing (6-12 → 3-5 → 1-2 semitones), animated keyboard reveal, and VictoryScreen trail integration — 8 unit tests passing
+- IntervalGame component with Step/Skip/Leap three-button vertical layout, ascending-first question ordering (60% ascending), and PianoKeyboardReveal with dim in-between key highlights + interval label
+- Both ear training games fully wired into App.jsx routing, TrailNodeModal navigation updated from /coming-soon to actual game routes, EN+HE i18n keys added, and all 7 existing game handleNextExercise functions extended with pitch_comparison and interval_id cases
+- 14 ear training trail nodes authored across 2 unit files (Sound Direction + Interval Explorer) with validateTrail passing 185 nodes and build succeeding
+- Subscription gating for 14 ear training nodes: 6 free (Unit 1) and 8 premium (Unit 2 + both bosses), with synchronized JS and Postgres gates and 29 tests covering both
+- Falling-tile arcade rhythm game with rAF animation, audioContext.currentTime tap scoring, 3-lives system, combo/on-fire mode, and full trail integration
+
+---
+
 ## v2.8 Introductory Single-Note Game (Shipped: 2026-03-26)
 
 **Phases completed:** 2 phases, 5 plans, 9 tasks
