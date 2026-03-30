@@ -26,52 +26,7 @@ import {
   Stem,
 } from "vexflow";
 import { beamGroupsForTimeSignature } from "../utils/beamGroupUtils";
-
-const NOTE_TO_SEMITONE = {
-  C: 0,
-  "C#": 1,
-  D: 2,
-  "D#": 3,
-  E: 4,
-  F: 5,
-  "F#": 6,
-  G: 7,
-  "G#": 8,
-  A: 9,
-  "A#": 10,
-  B: 11,
-};
-
-const noteNameToMidi = (pitch) => {
-  if (!pitch) return null;
-  const match = pitch.match(/^([A-Ga-g])([#b]?)(\d)$/);
-  if (!match) return null;
-
-  const [, letter, accidental, octaveStr] = match;
-  const baseLetter = letter.toUpperCase();
-  const noteKey =
-    accidental === "b"
-      ? (() => {
-          const flatMap = {
-            CB: "B",
-            DB: "C#",
-            EB: "D#",
-            FB: "E",
-            GB: "F#",
-            AB: "G#",
-            BB: "A#",
-          };
-          return flatMap[`${baseLetter}B`] || baseLetter;
-        })()
-      : `${baseLetter}${accidental === "#" ? "#" : ""}`;
-  const semitone = NOTE_TO_SEMITONE[noteKey];
-  if (semitone === undefined) return null;
-
-  const octave = parseInt(octaveStr, 10);
-  if (Number.isNaN(octave)) return null;
-
-  return (octave + 1) * 12 + semitone;
-};
+import { noteNameToMidi } from "../../../../utils/noteUtils";
 
 const STEM_REFERENCE_MIDI = {
   treble: noteNameToMidi("B4"),

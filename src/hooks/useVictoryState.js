@@ -8,7 +8,7 @@ import { useUserProfile } from "./useUserProfile";
 import { usePointBalance } from "./useAccessories";
 import { useAccessoryUnlockDetection } from "./useAccessoryUnlockDetection";
 import { useUser } from "../features/authentication/useUser";
-import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath } from "../services/skillProgressService";
+import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath, calculateStarsFromPercentage } from "../services/skillProgressService";
 import { awardXP, calculateSessionXP, calculateFreePlayXP, getLevelProgress, PRESTIGE_XP_PER_TIER } from "../utils/xpSystem";
 import { getNodeById, EXERCISE_TYPES } from "../data/skillTrail";
 import { streakService } from "../services/streakService";
@@ -56,18 +56,6 @@ const useCountUp = (start, end, duration = 1400, shouldAnimate = true, reducedMo
   }, [start, end, duration, shouldAnimate, reducedMotion]);
 
   return value;
-};
-
-/**
- * Calculate stars based on score percentage
- * @param {number} percentage - Score percentage (0-100)
- * @returns {number} Stars earned (0-3)
- */
-const calculateStars = (percentage) => {
-  if (percentage >= 95) return 3;
-  if (percentage >= 80) return 2;
-  if (percentage >= 60) return 1;
-  return 0;
 };
 
 /**
@@ -202,7 +190,7 @@ export function useVictoryState({
     const nodeType = node?.nodeType || null;
 
     // For free play, calculate stars from score percentage
-    const effectiveStars = nodeId ? stars : calculateStars(scorePercentage);
+    const effectiveStars = nodeId ? stars : calculateStarsFromPercentage(scorePercentage);
 
     const tier = determineCelebrationTier(
       effectiveStars,
@@ -332,7 +320,7 @@ export function useVictoryState({
       if (!user?.id) return;
 
       // Calculate stars
-      const earnedStars = calculateStars(scorePercentage);
+      const earnedStars = calculateStarsFromPercentage(scorePercentage);
       setStars(earnedStars);
 
       // If this is a trail node, update progress and award XP
