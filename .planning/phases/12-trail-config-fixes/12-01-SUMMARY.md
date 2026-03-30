@@ -109,3 +109,13 @@ None - no external service configuration required.
 ---
 *Phase: 12-trail-config-fixes*
 *Completed: 2026-03-30*
+
+## Self-Check: PASSED
+
+- FOUND: src/data/units/rhythmUnit1Redesigned.js
+- FOUND: src/data/units/rhythmUnit2Redesigned.js
+- FOUND: src/data/units/rhythmUnits.difficulty.test.js
+- FOUND: scripts/validateTrail.mjs
+- FOUND: .planning/phases/12-trail-config-fixes/12-01-SUMMARY.md
+- FOUND: commit 3a74ff5 (fix: difficulty 'easy' → 'beginner')
+- FOUND: commit 077d3fb (feat: build validator functions)
