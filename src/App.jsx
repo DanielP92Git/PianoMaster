@@ -26,7 +26,6 @@ import {
 } from "./contexts/AccessibilityContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { SessionTimeoutProvider } from "./contexts/SessionTimeoutContext";
-import TeacherDashboard from "./components/layout/TeacherDashboard";
 import { RoleSelection } from "./components/auth/RoleSelection";
 import PWAInstallPrompt from "./components/pwa/PWAInstallPrompt";
 import IOSInstallPrompt from "./components/pwa/IOSInstallPrompt";
@@ -63,6 +62,7 @@ const Avatars = lazyWithRetry(() => import("./components/Avatars"));
 const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/PrivacyPolicyPage"));
 const TermsOfServicePage = lazyWithRetry(() => import("./pages/TermsOfServicePage"));
 const ComingSoon = lazyWithRetry(() => import("./components/shared/ComingSoon"));
+const TeacherDashboard = lazyWithRetry(() => import("./components/layout/TeacherDashboard"));
 
 // Lazy-loaded game components
 const NotesMasterMode = lazyWithRetry(() => import("./components/games/NotesMasterMode").then(m => ({ default: m.NotesMasterMode })));
