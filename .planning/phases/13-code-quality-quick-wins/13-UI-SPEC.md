@@ -74,7 +74,8 @@ Existing project typography applies. No new type styles introduced in this phase
 | Body | 16px (base) | 400 (regular) | 1.7 |
 | Label | 14px (sm) | 400 (regular) | 1.6 |
 | Heading | 20px (xl) | 600 (semibold) | 1.8 |
-| Display | 28px (2xl/3xl) | 700 (bold) | 1.8–1.9 |
+
+Note: The existing project type system uses 3 weights (400/600/700). This spec declares only the 2 weights relevant to phase scope. No new weights are introduced. Display-size text (28px/700) exists in the project but is not relevant to any of the 7 requirements (QUAL-01 through QUAL-07, XP-01) in this phase.
 
 **XP-01 typography note:** The locale string changes ("Total Points" → "Total XP") inherit the font size and weight of their existing render locations. No typography tokens change.
 
