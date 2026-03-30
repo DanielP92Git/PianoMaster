@@ -1,117 +1,77 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.9
-milestone_name: Game Variety & Ear Training
-status: verifying
-stopped_at: Completed 08-04-PLAN.md
-last_updated: "2026-03-27T22:57:41.137Z"
-last_activity: 2026-03-27
+milestone: v3.0
+milestone_name: Cleanup & Polish
+status: executing
+stopped_at: Completed 13-01-PLAN.md
+last_updated: "2026-03-30T23:01:00Z"
+last_activity: 2026-03-30 -- Phase 13 Plan 01 complete
 progress:
-  total_phases: 5
+  total_phases: 4
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-26)
+See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 07 — data-foundation-trailmap-refactor
+**Current focus:** Phase 13 — code-quality-quick-wins
 
 ## Current Position
 
-Phase: 8
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-27
+Phase: 13 (code-quality-quick-wins) — EXECUTING
+Plan: 2 of 2
+Status: Plan 01 complete, ready for Plan 02
+Last activity: 2026-03-30 -- Phase 13 Plan 01 complete
 
 ```
-v2.9 Progress: [__________] 0/5 phases
+v3.0 Progress: [..........] 0/4 phases
 ```
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: ~179 (across all shipped milestones)
-- 19 milestones shipped in 54 days (2026-01-31 to 2026-03-26)
+- Total plans completed: ~195 (across all shipped milestones)
+- 20 milestones shipped in 58 days (2026-01-31 to 2026-03-30)
 
 ## Accumulated Context
 
 ### Decisions
 
-**v2.9 Architecture decisions (from research):**
-
-- `usePianoSampler` hook fetches runtime WAVs from `public/sounds/piano-samples/` — no smplr dependency needed for piano notes
-- Arcade rhythm game uses `requestAnimationFrame` + `ref.style.transform` (not framer-motion) for GPU compositor animation
-- `audioContext.currentTime` (not `Date.now()`) is the mandatory tap capture clock for all timing games
-- TrailMap must be refactored to data-driven `TRAIL_TAB_CONFIGS` array before any EAR_TRAINING nodes are authored
-- Instrument Recognition deferred to next milestone (unresolved audio clip sourcing dependency)
-- Rhythm node remapping DB migration must run before data file changes deploy — hard deploy constraint
-
-**v2.8 decisions archived in `.planning/milestones/v2.8-ROADMAP.md`.**
-
-- [Phase 07]: constants.js imports lucide-react directly (external package, safe — no circular import risk)
-- [Phase 07]: validateExerciseTypes() hard-fails on unknown exercise type strings; checks type only, not config shape (D-07, D-08)
-- [Phase 07]: Hebrew translations for new exercise types use English placeholders (full Hebrew i18n is Phase 8 scope per INFRA-08)
-- [Phase 07]: nodesWithBossByTab single useMemo replaces 3 separate useMemo blocks — unified lookup map, O(1) access
-- [Phase 07]: ComingSoon shared placeholder pattern: gameName from location.state serves all unimplemented exercise types
-- [Phase 08]: Both rhythm game routes in LANDSCAPE_ROUTES for consistent orientation lock
-- [Phase 08]: navState passed unchanged to rhythm game routes — already contains correct trail state shape
-
-### Roadmap Evolution
-
-- v2.9 (Game Variety & Ear Training): 5 phases, 38 requirements, roadmap created 2026-03-26
-  - Phase 7 (7): Data Foundation + TrailMap Refactor — INFRA-01 through INFRA-05
-  - Phase 8 (8): Audio Infrastructure + Rhythm Games — INFRA-06, INFRA-07, INFRA-08, RTAP-01-05, RDICT-01-06
-  - Phase 9 (9): Ear Training Games — PITCH-01-05, INTV-01-05
-  - Phase 10 (10): Ear Training Trail Data + Trail Tab — EAR-01-05
-  - Phase 11 (11): Arcade Rhythm + Rhythm Remapping — ARCR-01-05, RMAP-01-03
+- v3.0 roadmap: 4 phases grouping 14 cleanup requirements by dependency and blast radius
+- Phases 12-13 are independent; Phase 14 best after code changes settle; Phase 15 depends on 12-13
+- [Phase 12-trail-config-fixes]: Rest pattern names (quarter-rest, half-rest, whole-rest) included in VALID set for rhythmPattern validator — legitimately used in unit 4
+- [Phase 12-trail-config-fixes]: allowedPatterns replaces preferCurated in getPattern() — null means free-play, array means trail-constrained
+- [Phase 12-trail-config-fixes]: GENERATION_RULES temporarily overridden then restored for constrained generation — avoids threading allowedSubdivisions through generatePattern()
+- [Phase 13-01]: noteUtils.js uses VexFlowStaffDisplay implementation (not KlavierKeyboard) — only that version handles flat notes
+- [Phase 13-01]: Cb4 maps to B3 (MIDI 59) — flat-to-natural conversion for CB requires octave decrement
+- [Phase 13-01]: calculateStarsFromPercentage exported without underscore prefix — private underscore pattern dropped
+- [Phase 13-01]: apiDatabase.js callers all use await-only pattern so canonical {userId,isOwner,isTeacher} return is backward-compatible
 
 ### Blockers/Concerns
 
 **COPPA deadline:** April 22, 2026
 
-**Research flags requiring attention before phases ship:**
+**Carry-forward from v2.9:**
 
-- Phase 8: iOS physical device testing required (silent switch + AudioContext onstatechange not replicable in simulator)
-- Phase 9: Audit `dailyGoalsService.js` for hardcoded category arrays before ear training games ship
-- Phase 11: Explicit deploy sequencing plan required — confirm Netlify runs Supabase migration before serving updated JS
-
-### Quick Tasks Completed
-
-| # | Description | Date | Commit | Directory |
-|---|-------------|------|--------|-----------|
-| 260326-mrm | Add Install App button to settings install card for PWA install prompt | 2026-03-26 | 3ecd77c | [260326-mrm-add-install-app-button-to-settings-insta](./quick/260326-mrm-add-install-app-button-to-settings-insta/) |
-| 260326-s6x | Fix sight-reading pattern generation for sharp practice nodes | 2026-03-26 | 7ab6fe0 | [260326-s6x-fix-sight-reading-pattern-generation-for](./quick/260326-s6x-fix-sight-reading-pattern-generation-for/) |
-| 260326-td5 | Add keySignature 'A' to Unit 4 SIGHT_READING exercises (key sig pipeline for sharps) | 2026-03-26 | 1eb3814 | [260326-td5-fix-sight-reading-sharp-pattern-generati](./quick/260326-td5-fix-sight-reading-sharp-pattern-generati/) |
-| 260326-wo7 | Add note staff image and mini keyboard to TrailNodeModal for Discovery nodes | 2026-03-26 | 4c8bf2d | [260326-wo7-add-note-staff-image-and-mini-keyboard-i](./quick/260326-wo7-add-note-staff-image-and-mini-keyboard-i/) |
-| Phase 07 P01 | 4 | 2 tasks | 6 files |
-| Phase 07 P02 | 4 minutes | 2 tasks | 4 files |
-| Phase 08 P04 | 8 | 2 tasks | 5 files |
-
-### Additional Fixes (2026-03-26/27)
-
-| Description | Date | Commit |
-|-------------|------|--------|
-| Revert keySignature 'A' approach — render sharps as accidentals next to notes (beginner-appropriate), fix note pools, enable bar-level accidental carry-through in VexFlowStaffDisplay | 2026-03-26 | 0b3e908 |
-| Fix NotesRecognitionGame showing unlearned accidentals (G#/D#) in trail Discovery nodes — add trailNotePoolSet guard | 2026-03-26 | 0b3e908 |
-| Hebrew note names on MiniKeyboard highlighted keys (פה♯ → ♯פה RTL order) | 2026-03-27 | fbe77a2 |
+- iOS physical device testing still required for AudioContext/silent switch behavior (covered by UAT-01)
 
 ## Session Continuity
 
-Last session: 2026-03-27T22:57:41.131Z
-Stopped at: Completed 08-04-PLAN.md
-Resume file: None
+Last session: 2026-03-30T23:01:00Z
+Stopped at: Completed 13-01-PLAN.md
+Resume file: .planning/phases/13-code-quality-quick-wins/13-01-SUMMARY.md
 
 **Next action:**
 
-- Run `/gsd:plan-phase 7` to plan Phase 7: Data Foundation + TrailMap Refactor
+- Execute 13-02-PLAN.md (dead code removal, lazy loading, XP locale)
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-26 — v2.9 roadmap created, 38 requirements mapped across 5 phases*
+*Last updated: 2026-03-30 -- Phase 13 Plan 01 complete*
