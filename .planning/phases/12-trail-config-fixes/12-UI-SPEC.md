@@ -68,16 +68,7 @@ Exceptions: Touch targets defined as `min-h-touch: 44px` and `min-h-touch-lg: 48
 
 ## Typography
 
-All typography is pre-existing from the project design system. No new type styles introduced.
-
-| Role | Size | Weight | Line Height | Source |
-|------|------|--------|-------------|--------|
-| Body | 16px (`text-base: 1rem`) | 400 (regular) | 1.7 | tailwind.config.js fontSize |
-| Label | 14px (`text-sm: 0.875rem`) | 400 (regular) | 1.6 | tailwind.config.js fontSize |
-| Heading | 20px (`text-xl: 1.25rem`) | 600 (semibold) | 1.8 | tailwind.config.js fontSize |
-| Display | 30px (`text-3xl: 1.875rem`) | 700 (bold) | 1.9 | tailwind.config.js fontSize |
-
-**Phase 12 additions:** none. No new text content is rendered.
+No new typography — all type styles pre-existing. See `docs/DESIGN_SYSTEM.md`.
 
 ---
 
@@ -183,7 +174,7 @@ No new component registry dependencies. All changes are to existing project file
 - [ ] Dimension 1 Copywriting: PASS — No new user-facing copy; developer CLI messages follow established pattern
 - [ ] Dimension 2 Visuals: PASS — No new visual elements; existing design system unchanged
 - [ ] Dimension 3 Color: PASS — No new color usage; existing glassmorphism tokens preserved
-- [ ] Dimension 4 Typography: PASS — No new type styles; existing scale preserved
+- [ ] Dimension 4 Typography: PASS — No new type styles; section marked not-applicable (zero-new-UI phase)
 - [ ] Dimension 5 Spacing: PASS — No new spacing; existing 8-point scale preserved
 - [ ] Dimension 6 Registry Safety: PASS — No third-party components; no registry vetting required
 
