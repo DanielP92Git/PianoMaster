@@ -18,14 +18,14 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 - [ ] **QUAL-01**: `noteNameToMidi` consolidated to single utility (currently 3 implementations)
 - [ ] **QUAL-02**: `calculateStars` consolidated to single utility (currently 2 implementations)
 - [ ] **QUAL-03**: `verifyStudentDataAccess` duplicate in apiDatabase.js removed, imports from authorizationUtils.js
-- [ ] **QUAL-04**: AchievementsLegacy.jsx deleted (dead code, never imported)
-- [ ] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG_, TEST_, README_)
+- [x] **QUAL-04**: AchievementsLegacy.jsx deleted (dead code, never imported)
+- [x] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG_, TEST_, README_)
 - [ ] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 -> target: <50 production calls)
-- [ ] **QUAL-07**: TeacherDashboard converted to React.lazy() (currently eager-loaded for all users)
+- [x] **QUAL-07**: TeacherDashboard converted to React.lazy() (currently eager-loaded for all users)
 
 ### XP Migration
 
-- [ ] **XP-01**: TeacherDashboard `total_points` references migrated to XP terminology (~20 occurrences)
+- [x] **XP-01**: TeacherDashboard `total_points` references migrated to XP terminology (~20 occurrences)
 
 ### Daily Goals
 
@@ -84,11 +84,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-01 | Phase 13 | Pending |
 | QUAL-02 | Phase 13 | Pending |
 | QUAL-03 | Phase 13 | Pending |
-| QUAL-04 | Phase 13 | Pending |
-| QUAL-05 | Phase 13 | Pending |
+| QUAL-04 | Phase 13 | Complete |
+| QUAL-05 | Phase 13 | Complete |
 | QUAL-06 | Phase 14 | Pending |
-| QUAL-07 | Phase 13 | Pending |
-| XP-01 | Phase 13 | Pending |
+| QUAL-07 | Phase 13 | Complete |
+| XP-01 | Phase 13 | Complete |
 | GOAL-01 | Phase 15 | Pending |
 | DEPLOY-01 | Phase 15 | Pending |
 | UAT-01 | Phase 15 | Pending |
