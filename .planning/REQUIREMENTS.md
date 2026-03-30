@@ -37,11 +37,11 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 ### Arcade Rhythm
 
-- [ ] **ARCR-01**: Falling tiles descend synced to beat schedule using requestAnimationFrame
-- [ ] **ARCR-02**: Hit zone at bottom with PERFECT/GOOD/MISS judgment display
-- [ ] **ARCR-03**: 3-lives system (miss = lose life, 0 lives = GameOverScreen)
-- [ ] **ARCR-04**: Combo counter and on-fire mode for consecutive hits
-- [ ] **ARCR-05**: Session completes through VictoryScreen with star rating and XP
+- [x] **ARCR-01**: Falling tiles descend synced to beat schedule using requestAnimationFrame
+- [x] **ARCR-02**: Hit zone at bottom with PERFECT/GOOD/MISS judgment display
+- [x] **ARCR-03**: 3-lives system (miss = lose life, 0 lives = GameOverScreen)
+- [x] **ARCR-04**: Combo counter and on-fire mode for consecutive hits
+- [x] **ARCR-05**: Session completes through VictoryScreen with star rating and XP
 
 ### Note Comparison
 
@@ -71,7 +71,7 @@ Requirements for Game Variety & Ear Training milestone. Each maps to roadmap pha
 
 - [x] **RMAP-01**: Existing 36 rhythm nodes remapped to mixed exercise types (~40% MetronomeTrainer, ~30% Rhythm Reading, ~20% Dictation, ~10% Arcade)
 - [x] **RMAP-02**: DB migration resets exercise_progress for remapped nodes before data changes deploy
-- [ ] **RMAP-03**: All remapped nodes playable end-to-end through VictoryScreen
+- [x] **RMAP-03**: All remapped nodes playable end-to-end through VictoryScreen
 
 ## Future Requirements
 
@@ -132,11 +132,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RDICT-04 | Phase 8 | Pending |
 | RDICT-05 | Phase 8 | Pending |
 | RDICT-06 | Phase 8 | Complete |
-| ARCR-01 | Phase 11 | Pending |
-| ARCR-02 | Phase 11 | Pending |
-| ARCR-03 | Phase 11 | Pending |
-| ARCR-04 | Phase 11 | Pending |
-| ARCR-05 | Phase 11 | Pending |
+| ARCR-01 | Phase 11 | Complete |
+| ARCR-02 | Phase 11 | Complete |
+| ARCR-03 | Phase 11 | Complete |
+| ARCR-04 | Phase 11 | Complete |
+| ARCR-05 | Phase 11 | Complete |
 | PITCH-01 | Phase 9 | Pending |
 | PITCH-02 | Phase 9 | Pending |
 | PITCH-03 | Phase 9 | Pending |
@@ -154,7 +154,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EAR-05 | Phase 10 | Pending |
 | RMAP-01 | Phase 11 | Complete |
 | RMAP-02 | Phase 11 | Complete |
-| RMAP-03 | Phase 11 | Pending |
+| RMAP-03 | Phase 11 | Complete |
 
 **Coverage:**
 - v2.9 requirements: 38 total

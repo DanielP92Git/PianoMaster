@@ -142,7 +142,7 @@ Plans:
 | 8. Audio Infrastructure + Rhythm Games | v2.9 | 4/4 | Complete   | 2026-03-29 |
 | 9. Ear Training Games | v2.9 | 2/2 | Complete   | 2026-03-29 |
 | 10. Ear Training Trail Data + Trail Tab | v2.9 | 1/2 | Complete    | 2026-03-29 |
-| 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 3/3 | Complete   | 2026-03-30 |
+| 11. Arcade Rhythm + Rhythm Remapping | v2.9 | 3/3 | Complete    | 2026-03-30 |
 
 **Total: 19 milestones shipped (v1.0-v2.8) — ~179 plans across ~82 phases**
 
