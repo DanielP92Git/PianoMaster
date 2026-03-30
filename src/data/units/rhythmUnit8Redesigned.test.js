@@ -77,11 +77,23 @@ describe('Rhythm Unit 8 — Syncopation', () => {
     });
   });
 
-  it('all exercises use RHYTHM type', () => {
-    rhythmUnit8Nodes.forEach((node) => {
-      node.exercises.forEach((exercise) => {
-        expect(exercise.type).toBe(EXERCISE_TYPES.RHYTHM);
-      });
+  it('regular node exercise types match D-12 distribution', () => {
+    const regularNodes = rhythmUnit8Nodes.slice(0, 6);
+    const types = regularNodes.map(n => n.exercises[0].type);
+    expect(types).toEqual([
+      EXERCISE_TYPES.RHYTHM,            // rhythm_8_1
+      EXERCISE_TYPES.RHYTHM,            // rhythm_8_2
+      EXERCISE_TYPES.RHYTHM_TAP,        // rhythm_8_3
+      EXERCISE_TYPES.RHYTHM_DICTATION,  // rhythm_8_4
+      EXERCISE_TYPES.RHYTHM_TAP,        // rhythm_8_5
+      EXERCISE_TYPES.RHYTHM,            // rhythm_8_6
+    ]);
+  });
+
+  it('boss node exercises are all ARCADE_RHYTHM', () => {
+    const bossNode = rhythmUnit8Nodes[rhythmUnit8Nodes.length - 1];
+    bossNode.exercises.forEach(ex => {
+      expect(ex.type).toBe(EXERCISE_TYPES.ARCADE_RHYTHM);
     });
   });
 });

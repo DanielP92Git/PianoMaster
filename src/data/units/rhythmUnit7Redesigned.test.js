@@ -78,10 +78,17 @@ describe('Rhythm Unit 7 — 6/8 Compound Meter', () => {
     }
   });
 
-  it('all exercises use RHYTHM type', () => {
-    rhythmUnit7Nodes.forEach(node => {
-      expect(node.exercises[0].type).toBe(EXERCISE_TYPES.RHYTHM);
-    });
+  it('exercise types match D-12 distribution', () => {
+    const types = rhythmUnit7Nodes.map(n => n.exercises[0].type);
+    expect(types).toEqual([
+      EXERCISE_TYPES.RHYTHM,            // rhythm_7_1
+      EXERCISE_TYPES.RHYTHM,            // rhythm_7_2
+      EXERCISE_TYPES.RHYTHM_TAP,        // rhythm_7_3
+      EXERCISE_TYPES.RHYTHM_DICTATION,  // rhythm_7_4
+      EXERCISE_TYPES.RHYTHM_TAP,        // rhythm_7_5
+      EXERCISE_TYPES.RHYTHM,            // rhythm_7_6
+      EXERCISE_TYPES.ARCADE_RHYTHM,     // boss_rhythm_7
+    ]);
   });
 
   it('tempo increases across the unit', () => {
