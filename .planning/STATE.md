@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cleanup & Polish
-status: executing
-stopped_at: Completed 12-01-PLAN.md
-last_updated: "2026-03-30T21:23:54.878Z"
+status: verifying
+stopped_at: Completed 12-02-PLAN.md
+last_updated: "2026-03-30T21:28:42.586Z"
 last_activity: 2026-03-30
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-30)
 
 Phase: 12 (trail-config-fixes) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-30
 
 ```
@@ -47,6 +47,8 @@ v3.0 Progress: [..........] 0/4 phases
 - v3.0 roadmap: 4 phases grouping 14 cleanup requirements by dependency and blast radius
 - Phases 12-13 are independent; Phase 14 best after code changes settle; Phase 15 depends on 12-13
 - [Phase 12-trail-config-fixes]: Rest pattern names (quarter-rest, half-rest, whole-rest) included in VALID set for rhythmPattern validator — legitimately used in unit 4
+- [Phase 12-trail-config-fixes]: allowedPatterns replaces preferCurated in getPattern() — null means free-play, array means trail-constrained
+- [Phase 12-trail-config-fixes]: GENERATION_RULES temporarily overridden then restored for constrained generation — avoids threading allowedSubdivisions through generatePattern()
 
 ### Blockers/Concerns
 
@@ -58,8 +60,8 @@ v3.0 Progress: [..........] 0/4 phases
 
 ## Session Continuity
 
-Last session: 2026-03-30T21:23:54.872Z
-Stopped at: Completed 12-01-PLAN.md
+Last session: 2026-03-30T21:28:42.577Z
+Stopped at: Completed 12-02-PLAN.md
 Resume file: None
 
 **Next action:**

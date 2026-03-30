@@ -48,7 +48,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ### v3.0 Cleanup & Polish (In Progress)
 
-- [ ] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping)
+- [x] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping) (completed 2026-03-30)
 - [ ] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle
 - [ ] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase
 - [ ] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items
@@ -63,10 +63,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
   1. When a trail rhythm node specifies `rhythmPatterns`, only those durations appear in the generated exercises
   2. Trail difficulty values (`easy`/`medium`/`hard`) correctly map to generator levels (`beginner`/`intermediate`/`advanced`) so node difficulty affects actual gameplay
   3. rhythmUnit7 and rhythmUnit8 test files pass with expectations matching the D-12 distribution (3x RHYTHM + 2x RHYTHM_TAP + 1x RHYTHM_DICTATION + 1x ARCADE_RHYTHM per node)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 12-01-PLAN.md -- Fix difficulty values in data files, regression test, build validator enhancement
-- [ ] 12-02-PLAN.md -- Wire allowedPatterns through generator and all 4 rhythm games, fix unit 7/8 test assertions
+- [x] 12-02-PLAN.md -- Wire allowedPatterns through generator and all 4 rhythm games, fix unit 7/8 test assertions
 
 ### Phase 13: Code Quality Quick Wins
 **Goal**: Eliminate duplicated utility code, remove dead code, and reduce teacher bundle from the main chunk
@@ -103,7 +103,7 @@ Plans:
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 12. Trail Config Fixes | v3.0 | 1/2 | In Progress|  |
+| 12. Trail Config Fixes | v3.0 | 2/2 | Complete   | 2026-03-30 |
 | 13. Code Quality Quick Wins | v3.0 | 0/? | Not started | - |
 | 14. Console Logging Cleanup | v3.0 | 0/? | Not started | - |
 | 15. Verification & Deploy | v3.0 | 0/? | Not started | - |

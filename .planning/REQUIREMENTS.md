@@ -9,9 +9,9 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 
 ### Trail Config
 
-- [ ] **TCFG-01**: Rhythm games read `rhythmPatterns` from trail node config to constrain which durations appear
+- [x] **TCFG-01**: Rhythm games read `rhythmPatterns` from trail node config to constrain which durations appear
 - [x] **TCFG-02**: Trail difficulty values (`easy`/`medium`/`hard`) map to generator levels (`beginner`/`intermediate`/`advanced`)
-- [ ] **TCFG-03**: rhythmUnit7/8 test expectations updated to validate D-12 distribution (3x RHYTHM + 2x RHYTHM_TAP + 1x RHYTHM_DICTATION + 1x ARCADE_RHYTHM)
+- [x] **TCFG-03**: rhythmUnit7/8 test expectations updated to validate D-12 distribution (3x RHYTHM + 2x RHYTHM_TAP + 1x RHYTHM_DICTATION + 1x ARCADE_RHYTHM)
 
 ### Code Quality
 
@@ -78,9 +78,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TCFG-01 | Phase 12 | Pending |
+| TCFG-01 | Phase 12 | Complete |
 | TCFG-02 | Phase 12 | Complete |
-| TCFG-03 | Phase 12 | Pending |
+| TCFG-03 | Phase 12 | Complete |
 | QUAL-01 | Phase 13 | Pending |
 | QUAL-02 | Phase 13 | Pending |
 | QUAL-03 | Phase 13 | Pending |
