@@ -2,7 +2,7 @@
 
 ## What This Is
 
-A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 129 nodes across 3 parallel learning paths (Treble, Bass, Rhythm) including sharps and flats accidentals, 8 node types for engagement variety, and 6 game modes (note recognition, sight reading, rhythm, memory, note comparison, interval identification). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery. Production-ready with Sentry error monitoring, route-based code splitting, React ErrorBoundary, first-time onboarding tour, daily challenge system with bonus XP, and COPPA-compliant Privacy Policy and Terms of Service pages.
+A piano learning PWA for 8-year-old learners with a Duolingo-style skill progression trail featuring 185 nodes across 4 parallel learning paths (Treble, Bass, Rhythm, Ear Training) including sharps and flats accidentals, 8 node types for engagement variety, and 10 game modes (note recognition, sight reading, rhythm/metronome, memory, note speed cards, rhythm reading, rhythm dictation, arcade rhythm, note comparison, interval identification). The trail features an immersive enchanted forest theme with 3D glowing nodes, responsive zigzag layout, tab-based path switching, glass-morphism cards, and tiered celebrations with boss unlock events. Games auto-rotate to landscape on Android PWA with a playful rotate prompt on iOS, landscape-optimized layouts, and full accessibility/i18n support. XP is the sole reward currency across all views (student and teacher), with a streamlined VictoryScreen and 30-level progression with prestige tiers. Security hardened with COPPA compliance, protecting children's data through layered authorization, parental consent flows with working email delivery, shared device safeguards, and password recovery. Production-ready with Sentry error monitoring, route-based code splitting, React ErrorBoundary, first-time onboarding tour, daily challenge system with bonus XP, and COPPA-compliant Privacy Policy and Terms of Service pages.
 
 ## Core Value
 
@@ -194,19 +194,20 @@ These capabilities exist, are working, and have been shipped:
 - AppSettings cleanup: subscription/streak/notification sections migrated to Parent Portal, dead code removed
 - 33/33 requirements delivered, 5 plans across 2 phases
 
+**v2.9 Game Variety & Ear Training (shipped 2026-03-30):**
+- INFRA-01-08: Data foundation refactor — EXERCISE_TYPES enum, validateExerciseTypes, TRAIL_TAB_CONFIGS, ComingSoon placeholder pattern
+- RTAP-01-05: RhythmReadingGame (tap-along) with RhythmPatternGenerator, VexFlow staff display, binary pattern scoring
+- RDICT-01-06: RhythmDictationGame (hear-and-pick) with multi-step playback workflow, audio-visual pattern display
+- PITCH-01-05: NoteComparisonGame with usePianoSampler, higher/lower comparison, animated direction reveal
+- INTV-01-05: IntervalGame with step/skip/leap identification, piano keyboard SVG reveal
+- EAR-01-05: 12 ear training trail nodes across 2 units, Ear Training tab on TrailMap
+- ARCR-01-05: ArcadeRhythmGame falling-tile arcade game with rAF animation, 3-lives, combo/on-fire mode
+- RMAP-01-03: 36 rhythm nodes remapped to mixed exercise types (MetronomeTrainer/RhythmReading/Dictation/Arcade), DB migration
+- 38/38 requirements delivered, 15 plans across 5 phases
+
 ### Active
 
-## Current Milestone: v2.9 Game Variety & Ear Training
-
-**Goal:** Diversify the rhythm trail with multiple game types and add an ear training path to expand musical learning beyond notation reading.
-
-**Target features:**
-- 3 new rhythm game components (Rhythm Reading/tap-along, Rhythm Dictation/hear-and-pick, Arcade-style rhythm game)
-- Remap existing 36 rhythm trail nodes to use a mix of all rhythm games (including MetronomeTrainer)
-- New Ear Training trail path (~12-15 nodes) with progressive difficulty
-- Ear training games: note comparison (higher/lower), instrument recognition, interval identification
-- Dashboard skill progress indicators (2-3 suggested paths based on weakest areas)
-- Trail map updated with Ear Training as a new tab/path
+No active milestone.
 
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
