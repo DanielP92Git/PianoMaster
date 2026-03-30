@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cleanup & Polish
-status: defining-requirements
-stopped_at: Milestone v3.0 started
-last_updated: "2026-03-30T17:30:00.000Z"
+status: roadmap-created
+stopped_at: Roadmap created with 4 phases (12-15) covering 14 requirements
+last_updated: "2026-03-30T18:00:00.000Z"
 last_activity: 2026-03-30
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,17 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-30)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v3.0 Cleanup & Polish — defining requirements
+**Current focus:** v3.0 Cleanup & Polish -- Phase 12 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-03-30 — Milestone v3.0 started
+Phase: 12 of 15 (Trail Config Fixes)
+Plan: --
+Status: Ready to plan
+Last activity: 2026-03-30 -- v3.0 roadmap created
 
 ```
-v2.9 Progress: [##########] 5/5 phases — SHIPPED
+v3.0 Progress: [..........] 0/4 phases
 ```
 
 ## Performance Metrics
@@ -44,29 +44,26 @@ v2.9 Progress: [##########] 5/5 phases — SHIPPED
 
 ### Decisions
 
-**v2.9 decisions archived in `.planning/milestones/v2.9-ROADMAP.md`.**
+- v3.0 roadmap: 4 phases grouping 14 cleanup requirements by dependency and blast radius
+- Phases 12-13 are independent; Phase 14 best after code changes settle; Phase 15 depends on 12-13
 
 ### Blockers/Concerns
 
 **COPPA deadline:** April 22, 2026
 
 **Carry-forward from v2.9:**
-- Trail config → game difficulty mapping: trail nodes use `difficulty: 'easy'` but RhythmPatternGenerator expects `'beginner'`/`'intermediate'`/`'advanced'`. `rhythmPatterns` field in node configs is never read by any game. Documented in Phase 11 deferred-items.md.
-- rhythmUnit7/8 test expectations need updating for mixed exercise types (D-12 distribution)
-- iOS physical device testing still required for AudioContext/silent switch behavior
-- Audit `dailyGoalsService.js` for hardcoded category arrays (ear training may not count toward daily goals)
-- Explicit deploy sequencing plan needed for Supabase migration + Netlify JS deploy ordering
+- iOS physical device testing still required for AudioContext/silent switch behavior (covered by UAT-01)
 
 ## Session Continuity
 
 Last session: 2026-03-30
-Stopped at: v2.9 milestone complete
+Stopped at: v3.0 roadmap created
 Resume file: None
 
 **Next action:**
 
-- `/gsd:new-milestone` — start next milestone
+- `/gsd:plan-phase 12` -- plan Trail Config Fixes phase
 
 ---
 *State initialized: 2026-01-31*
-*Last updated: 2026-03-30 — v2.9 milestone complete*
+*Last updated: 2026-03-30 -- v3.0 roadmap created*

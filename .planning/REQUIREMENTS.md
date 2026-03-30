@@ -20,7 +20,7 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 - [ ] **QUAL-03**: `verifyStudentDataAccess` duplicate in apiDatabase.js removed, imports from authorizationUtils.js
 - [ ] **QUAL-04**: AchievementsLegacy.jsx deleted (dead code, never imported)
 - [ ] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG_, TEST_, README_)
-- [ ] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 → target: <50 production calls)
+- [ ] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 -> target: <50 production calls)
 - [ ] **QUAL-07**: TeacherDashboard converted to React.lazy() (currently eager-loaded for all users)
 
 ### XP Migration
@@ -33,7 +33,7 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 
 ### Deploy
 
-- [ ] **DEPLOY-01**: Deploy sequencing documented — Supabase migration runs before Netlify JS serves updated code
+- [ ] **DEPLOY-01**: Deploy sequencing documented -- Supabase migration runs before Netlify JS serves updated code
 
 ### UAT
 
@@ -66,9 +66,9 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| New game types or trail content | v3.0 is cleanup only — no new features |
+| New game types or trail content | v3.0 is cleanup only -- no new features |
 | God component refactoring | Large effort, defer to dedicated refactoring milestone |
-| Full i18n audit | Separate milestone scope — i18n completeness |
+| Full i18n audit | Separate milestone scope -- i18n completeness |
 | Piano WAV CDN migration | Infrastructure change requiring CDN setup and testing |
 | Instrument Recognition game | Unresolved audio clip sourcing (from v2.9) |
 
@@ -78,25 +78,26 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TCFG-01 | TBD | Pending |
-| TCFG-02 | TBD | Pending |
-| TCFG-03 | TBD | Pending |
-| QUAL-01 | TBD | Pending |
-| QUAL-02 | TBD | Pending |
-| QUAL-03 | TBD | Pending |
-| QUAL-04 | TBD | Pending |
-| QUAL-05 | TBD | Pending |
-| QUAL-06 | TBD | Pending |
-| QUAL-07 | TBD | Pending |
-| XP-01 | TBD | Pending |
-| GOAL-01 | TBD | Pending |
-| DEPLOY-01 | TBD | Pending |
-| UAT-01 | TBD | Pending |
+| TCFG-01 | Phase 12 | Pending |
+| TCFG-02 | Phase 12 | Pending |
+| TCFG-03 | Phase 12 | Pending |
+| QUAL-01 | Phase 13 | Pending |
+| QUAL-02 | Phase 13 | Pending |
+| QUAL-03 | Phase 13 | Pending |
+| QUAL-04 | Phase 13 | Pending |
+| QUAL-05 | Phase 13 | Pending |
+| QUAL-06 | Phase 14 | Pending |
+| QUAL-07 | Phase 13 | Pending |
+| XP-01 | Phase 13 | Pending |
+| GOAL-01 | Phase 15 | Pending |
+| DEPLOY-01 | Phase 15 | Pending |
+| UAT-01 | Phase 15 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 14 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 14
+- Mapped to phases: 14/14
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-30*
+*Traceability updated: 2026-03-30*
