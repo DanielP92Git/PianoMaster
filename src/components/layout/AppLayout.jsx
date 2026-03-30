@@ -19,9 +19,11 @@ export default function AppLayout() {
     "/notes-master-mode/notes-recognition-game",
     "/notes-master-mode/memory-game",
     "/notes-master-mode/sight-reading-game",
+    "/notes-master-mode/note-speed-cards",
     "/rhythm-mode/metronome-trainer",
     "/rhythm-mode/rhythm-reading-game",
     "/rhythm-mode/rhythm-dictation-game",
+    "/rhythm-mode/arcade-rhythm-game",
     "/ear-training-mode/note-comparison-game",
     "/ear-training-mode/interval-game",
   ];

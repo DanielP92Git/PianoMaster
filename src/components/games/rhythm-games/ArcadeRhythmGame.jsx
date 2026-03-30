@@ -20,7 +20,7 @@ import BackButton from '../../ui/BackButton';
 import { getNodeById } from '../../../data/skillTrail';
 import { getPattern, TIME_SIGNATURES } from './RhythmPatternGenerator';
 import { binaryPatternToBeats } from './utils/rhythmVexflowHelpers';
-import { scoreTap } from './utils/rhythmScoringUtils';
+// scoreTap not used — arcade game uses wider inline timing windows
 import FloatingFeedback from './components/FloatingFeedback';
 import CountdownOverlay from './components/CountdownOverlay';
 
@@ -110,27 +110,13 @@ function ArcadeRhythmGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // Audio context
-  const { audioContextRef, isInterrupted, handleTapToResume } = useAudioContext();
+  const { audioContextRef, isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
 
   // Accessibility
-  let reducedMotion = false;
-  try {
-    const a11y = useAccessibility();
-    reducedMotion = a11y?.reducedMotion ?? false;
-  } catch {
-    // Not in AccessibilityProvider — reducedMotion defaults to false
-  }
+  const { reducedMotion = false } = useAccessibility();
 
   // Session timeout controls
-  let pauseTimer = useCallback(() => {}, []);
-  let resumeTimer = useCallback(() => {}, []);
-  try {
-    const sessionTimeout = useSessionTimeout();
-    pauseTimer = sessionTimeout.pauseTimer;
-    resumeTimer = sessionTimeout.resumeTimer;
-  } catch {
-    // Not in SessionTimeoutProvider — timer controls are no-ops
-  }
+  const { pauseTimer, resumeTimer } = useSessionTimeout();
 
   // Extract config from nodeConfig or use defaults (per RESEARCH Pattern 6)
   const tempo = nodeConfig?.tempo ?? nodeConfig?.config?.tempo ?? 90;
@@ -152,6 +138,7 @@ function ArcadeRhythmGame() {
   const [feedbackKey, setFeedbackKey] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [tiles, setTiles] = useState([]); // array of tile definitions for current pattern
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
 
   // Refs for animation loop (no re-renders)
   const rafIdRef = useRef(null);
@@ -168,6 +155,10 @@ function ArcadeRhythmGame() {
   const gamePhaseRef = useRef(GAME_PHASES.SETUP); // ref mirror for gamePhase (accessible in RAF)
   const patternScoresRef = useRef([]); // ref mirror for patternScores (accessible in RAF callbacks)
   const currentPatternIndexRef = useRef(0); // ref mirror for currentPatternIndex
+  const startPlayingPhaseRef = useRef(null); // latest startPlayingPhase (breaks stale closure chain)
+  const startNextPatternRef = useRef(null); // latest startNextPattern (breaks stale closure chain)
+  const tileLaneRef = useRef(null); // tile lane container (for height measurement)
+  const laneHeightRef = useRef(0); // cached lane height for RAF animation
 
   // Sync refs with state
   useEffect(() => {
@@ -397,34 +388,48 @@ function ArcadeRhythmGame() {
 
         if (progress < 0) {
           // Tile hasn't spawned yet — hide above screen
-          tileEl.style.transform = 'translateY(-100%)';
+          tileEl.style.transform = 'translateY(-100px)';
           tileEl.style.opacity = '0';
           return;
         }
 
+        const targetY = laneHeightRef.current - 24 - tile.height / 2;
+
         if (progress <= 1.0) {
-          // Tile is descending — position via transform
-          // progress 0 = top of screen, progress 1 = bottom (hit zone)
-          const yPercent = progress * 100;
-          tileEl.style.transform = `translateY(${yPercent}vh)`;
+          // Tile is descending — position via pixel transform
+          // progress 0 = top of lane, progress 1 = tile CENTER at hit zone line
+          const yPx = progress * targetY;
+          tileEl.style.transform = `translateY(${yPx}px)`;
           tileEl.style.opacity = '1';
           return;
         }
 
-        // progress > 1.0 — tile has exited hit zone
+        // progress > 1.0 — tile past hit zone: keep moving down + fade out
+        const overshoot = progress - 1.0;
+        const yPx = targetY + overshoot * targetY * 0.5; // continue descending
+        const fadeOpacity = Math.max(0, 1 - overshoot * 3); // fade over ~0.33 progress
+        tileEl.style.transform = `translateY(${yPx}px)`;
+        tileEl.style.opacity = String(fadeOpacity);
+
+        // Trigger miss once when tile first crosses the line
         if (!scoredRef.current.has(idx)) {
           scoredRef.current.add(idx);
-          tileEl.style.opacity = '0';
-
           if (!tile.isRest) {
-            // Non-rest tile missed — trigger MISS per D-04
-            handleMissFromRaf();
+            // Only penalize if the player hasn't already scored past this beat
+            // (prevents phantom misses when a tap scores a later beat first)
+            if (tile.beatIndex >= nextBeatIndexRef.current) {
+              handleMissFromRaf();
+            }
           }
-          // Rest (ghost) tiles silently pass through — no penalty per D-04
         }
       });
 
       rafIdRef.current = requestAnimationFrame(animationFrame);
+    }
+
+    // Cache lane height before starting loop (avoids layout thrash in RAF)
+    if (tileLaneRef.current) {
+      laneHeightRef.current = tileLaneRef.current.offsetHeight;
     }
 
     rafIdRef.current = requestAnimationFrame(animationFrame);
@@ -445,20 +450,20 @@ function ArcadeRhythmGame() {
     setPatternScores((prev) => {
       const updated = [...prev, score];
       patternScoresRef.current = updated;
-
-      feedbackTimeoutRef.current = setTimeout(() => {
-        const newPatternIndex = currentPatternIndexRef.current + 1;
-        if (updated.length >= TOTAL_PATTERNS || livesRef.current <= 0) {
-          setGamePhase(GAME_PHASES.SESSION_COMPLETE);
-        } else {
-          setCurrentPatternIndex(newPatternIndex);
-          currentPatternIndexRef.current = newPatternIndex;
-          startNextPattern();
-        }
-      }, 600);
-
       return updated;
     });
+
+    // Schedule advancement OUTSIDE state updater (StrictMode calls updaters twice)
+    feedbackTimeoutRef.current = setTimeout(() => {
+      const newPatternIndex = currentPatternIndexRef.current + 1;
+      if (patternScoresRef.current.length >= TOTAL_PATTERNS || livesRef.current <= 0) {
+        setGamePhase(GAME_PHASES.SESSION_COMPLETE);
+      } else {
+        setCurrentPatternIndex(newPatternIndex);
+        currentPatternIndexRef.current = newPatternIndex;
+        startNextPatternRef.current();
+      }
+    }, 600);
   }, [cancelAllTimers]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ---------------------------------------------------------------------------
@@ -468,19 +473,29 @@ function ArcadeRhythmGame() {
     setGamePhase(GAME_PHASES.COUNTDOWN);
     setCountdownValue(3);
 
-    const ctx = audioContextRef.current;
-    if (!ctx) return;
+    // Clear previous pattern's tiles
+    setTiles([]);
+    tilesRef.current = [];
+    tileRefs.current = [];
 
+    const ctx = audioContextRef.current;
     const beatDuration = 60 / tempo;
     const beatsPerMeasure = timeSignatureObj?.beats ?? 4;
-    const now = ctx.currentTime;
 
-    // Schedule metronome clicks for countdown measure
-    for (let i = 0; i < beatsPerMeasure; i++) {
-      playMetronomeClick(now + i * beatDuration, i === 0);
+    // Resume suspended AudioContext (browser autoplay policy)
+    if (ctx && ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
     }
 
-    // Visual countdown: 3 → 2 → 1 → GO
+    // Schedule metronome clicks for countdown measure (audio-dependent, skip if no ctx)
+    if (ctx) {
+      const now = ctx.currentTime;
+      for (let i = 0; i < beatsPerMeasure; i++) {
+        playMetronomeClick(now + i * beatDuration, i === 0);
+      }
+    }
+
+    // Visual countdown: 3 → 2 → 1 → GO (always schedule, independent of audio)
     const countdownSequence = [3, 2, 1, 'GO'];
     countdownSequence.forEach((value, idx) => {
       const timeoutId = setTimeout(() => {
@@ -492,7 +507,7 @@ function ArcadeRhythmGame() {
     // After countdown measure, start playing
     const playingTimeoutId = setTimeout(() => {
       setCountdownValue(null);
-      startPlayingPhase(beats);
+      startPlayingPhaseRef.current(beats);
     }, beatsPerMeasure * beatDuration * 1000);
     countdownTimeoutsRef.current.push(playingTimeoutId);
   }, [audioContextRef, tempo, timeSignatureObj, playMetronomeClick]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -509,11 +524,9 @@ function ArcadeRhythmGame() {
     const ctx = audioContextRef.current;
     if (!ctx) return;
 
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
-
-    const playbackStartTime = ctx.currentTime + 0.05;
+    // Offset by SCREEN_TRAVEL_TIME so tiles spawn at the top now and arrive
+    // at the hit zone after descending for the full travel duration.
+    const playbackStartTime = ctx.currentTime + SCREEN_TRAVEL_TIME + 0.05;
     patternStartTimeRef.current = playbackStartTime;
 
     // Build tile definitions
@@ -546,6 +559,7 @@ function ArcadeRhythmGame() {
       }
     }, patternEndTime);
   }, [audioContextRef, tempo, buildTilesFromBeats, buildBeatTimes, startRafLoop, finishPattern]);
+  startPlayingPhaseRef.current = startPlayingPhase;
 
   // ---------------------------------------------------------------------------
   // Start next pattern helper
@@ -556,6 +570,7 @@ function ArcadeRhythmGame() {
       startCountdown(beats);
     }
   }, [fetchNewPattern, startCountdown]);
+  startNextPatternRef.current = startNextPattern;
 
   // ---------------------------------------------------------------------------
   // Tap scoring
@@ -571,12 +586,28 @@ function ArcadeRhythmGame() {
     const tapTime = ctx.currentTime;
     if (scheduledBeatTimesRef.current.length === 0) return;
 
-    const { quality, noteIdx, newNextBeatIndex } = scoreTap(
-      tapTime,
-      scheduledBeatTimesRef.current,
-      nextBeatIndexRef.current,
-      tempo
-    );
+    // Arcade-specific scoring with wider windows than MetronomeTrainer
+    // Visual-only falling-tile games need generous windows (~3x wider)
+    const ARCADE_PERFECT_MS = 150; // ±150ms — generous for visual-only arcade game
+    const ARCADE_GOOD_MS = 280;    // ±280ms — forgiving for children
+
+    const beatTimes = scheduledBeatTimesRef.current;
+    const searchStart = Math.max(0, nextBeatIndexRef.current);
+    const searchEnd = Math.min(beatTimes.length - 1, nextBeatIndexRef.current + 2);
+    let bestDelta = Infinity;
+    let bestIdx = searchStart;
+    for (let i = searchStart; i <= searchEnd; i++) {
+      const delta = Math.abs((tapTime - beatTimes[i]) * 1000);
+      if (delta < bestDelta) { bestDelta = delta; bestIdx = i; }
+    }
+
+    let quality;
+    if (bestDelta <= ARCADE_PERFECT_MS) quality = 'PERFECT';
+    else if (bestDelta <= ARCADE_GOOD_MS) quality = 'GOOD';
+    else quality = 'MISS';
+
+    const noteIdx = bestIdx;
+    const newNextBeatIndex = bestIdx + 1;
 
     // Mark the corresponding tile as scored
     // Find the tile whose beatIndex matches noteIdx
@@ -590,18 +621,10 @@ function ArcadeRhythmGame() {
     nextBeatIndexRef.current = newNextBeatIndex;
 
     if (quality === 'MISS') {
-      // Tap too early/late
+      // Tap too early/late — reset combo but don't lose a life
+      // (lives are only lost when tiles pass through untapped, via handleMissFromRaf)
       setCombo(0);
       setIsOnFire(false);
-      setLives((prev) => {
-        const next = prev - 1;
-        livesRef.current = next;
-        if (next <= 0) {
-          setTimeout(() => setGamePhase(GAME_PHASES.FEEDBACK), 50);
-        }
-        return next;
-      });
-      triggerScreenShake();
     } else {
       // PERFECT or GOOD
       setCombo((prev) => {
@@ -698,6 +721,13 @@ function ArcadeRhythmGame() {
   // Start game
   // ---------------------------------------------------------------------------
   const startGame = useCallback(async () => {
+    // Resume AudioContext inside user gesture (required by browser autoplay policy)
+    // Ensure AudioContext exists (StrictMode cleanup may have nulled the ref)
+    const ctx = getOrCreateAudioContext();
+    if (ctx && ctx.state === 'suspended') {
+      await ctx.resume().catch(() => {});
+    }
+
     cancelAllTimers();
     setCurrentPatternIndex(0);
     currentPatternIndexRef.current = 0;
@@ -716,7 +746,18 @@ function ArcadeRhythmGame() {
     if (beats) {
       startCountdown(beats);
     }
-  }, [cancelAllTimers, fetchNewPattern, startCountdown]);
+  }, [audioContextRef, getOrCreateAudioContext, cancelAllTimers, fetchNewPattern, startCountdown]);
+
+  // IOS-02: Handle user-gesture tap-to-start when AudioContext is suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = getOrCreateAudioContext();
+    if (ctx) {
+      await ctx.resume().catch(() => {});
+    }
+    setNeedsGestureToStart(false);
+    hasAutoStartedRef.current = true;
+    setTimeout(() => startGame(), 100);
+  }, [audioContextRef, getOrCreateAudioContext, startGame]);
 
   // ---------------------------------------------------------------------------
   // Auto-start from trail node
@@ -725,6 +766,7 @@ function ArcadeRhythmGame() {
     if (nodeConfig && !hasAutoStartedRef.current) {
       const ctx = audioContextRef.current;
       if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+        setNeedsGestureToStart(true);
         return;
       }
       hasAutoStartedRef.current = true;
@@ -766,6 +808,23 @@ function ArcadeRhythmGame() {
   const totalPossibleScore = TOTAL_PATTERNS * 100;
   const correctAnswers = patternScores.filter((s) => s >= 60).length;
 
+  // Keyboard handler: spacebar to tap during PLAYING
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === 'Space' && gamePhaseRef.current === GAME_PHASES.PLAYING) {
+        e.preventDefault();
+        handleHitZoneTap();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleHitZoneTap]);
+
+  // ---------------------------------------------------------------------------
+  // Main game render
+  // ---------------------------------------------------------------------------
+  const isPlaying = gamePhase === GAME_PHASES.PLAYING;
+
   // ---------------------------------------------------------------------------
   // SESSION_COMPLETE → render VictoryScreen or GameOverScreen
   // ---------------------------------------------------------------------------
@@ -803,17 +862,13 @@ function ArcadeRhythmGame() {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Main game render
-  // ---------------------------------------------------------------------------
-  const isPlaying = gamePhase === GAME_PHASES.PLAYING;
-
   return (
     <div
       className={`fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col ${
         isShaking && !reducedMotion ? 'animate-[shake_400ms_ease-in-out]' : ''
       }`}
       dir="ltr"
+      onPointerDown={isPlaying ? handleHitZoneTap : undefined}
       style={isShaking && !reducedMotion ? { animation: 'shake 400ms ease-in-out' } : undefined}
     >
       {/* Screen shake keyframes */}
@@ -918,6 +973,7 @@ function ArcadeRhythmGame() {
         {/* ---------------------------------------------------------------- */}
         {(gamePhase === GAME_PHASES.COUNTDOWN || gamePhase === GAME_PHASES.PLAYING || gamePhase === GAME_PHASES.FEEDBACK) && (
           <div
+            ref={tileLaneRef}
             className="absolute inset-0 overflow-hidden"
             style={{ paddingBottom: '48px' }} // leave space for hit zone
           >
@@ -1007,10 +1063,21 @@ function ArcadeRhythmGame() {
       />
 
       {/* ------------------------------------------------------------------ */}
+      {/* Trail gesture gate — needs user tap to resume AudioContext */}
+      {/* ------------------------------------------------------------------ */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
+      )}
+
+      {/* ------------------------------------------------------------------ */}
       {/* iOS audio interrupted overlay */}
       {/* ------------------------------------------------------------------ */}
       <AudioInterruptedOverlay
-        isVisible={isInterrupted}
+        isVisible={isInterrupted && !needsGestureToStart}
         onTapToResume={handleTapToResume}
         onRestartExercise={() => {
           setGamePhase(GAME_PHASES.SETUP);

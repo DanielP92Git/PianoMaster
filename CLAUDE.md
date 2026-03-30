@@ -130,7 +130,8 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 
 ### Layout Patterns
 - **Full-viewport overlays** (Trail Map): `fixed inset-0 overflow-y-auto`, AppLayout hides sidebar/header
-- **Game routes** (`/notes-master-mode/*`, `/rhythm-mode/*`): Also hide sidebar/header for distraction-free gameplay
+- **Game routes** (`/notes-master-mode/*`, `/rhythm-mode/*`, `/ear-training-mode/*`): Hide sidebar/header for distraction-free gameplay
+- **CRITICAL: When adding a new game route**, add it to BOTH arrays: `LANDSCAPE_ROUTES` in `App.jsx` AND `gameRoutes` in `AppLayout.jsx`. Missing either causes sidebar/header to show during gameplay or landscape lock to fail.
 
 ## Teacher Dashboard
 
