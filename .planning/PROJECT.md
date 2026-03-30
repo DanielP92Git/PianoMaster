@@ -207,7 +207,21 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-No active milestone.
+## Current Milestone: v3.0 Cleanup & Polish
+
+**Goal:** Fix accumulated tech debt, broken tests, and deferred items to establish a clean foundation before the next feature milestone.
+
+**Target features:**
+- Trail difficulty mapping fix (easy→beginner vocabulary + rhythmPatterns config usage)
+- rhythmUnit7/8 test expectations updated for D-12 mixed exercise distribution
+- TeacherDashboard points→XP migration (~20 references)
+- dailyGoalsService category audit (ensure ear training exercises count)
+- Deploy sequencing plan (Supabase migration ordering)
+- Duplicate function consolidation (noteNameToMidi 3x, calculateStars 2x, verifyStudentDataAccess 2x)
+- Dead code removal (AchievementsLegacy.jsx, non-migration SQL files)
+- console.log cleanup (366 calls across 90 files)
+- TeacherDashboard lazy loading (2700-line eager import → React.lazy)
+- Phase 08 HUMAN-UAT completion (5 pending manual verification items)
 
 **Future candidates:**
 - Production deployment to Google Play / Apple App Store
