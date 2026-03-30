@@ -86,6 +86,7 @@ export function MetronomeTrainer() {
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
   const nodeConfig = location.state?.nodeConfig || null;
+  const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -731,7 +732,8 @@ export function MetronomeTrainer() {
         // Load first pattern using current settings
         const pattern = await getPattern(
           currentSettings.timeSignature.name,
-          currentSettings.difficulty
+          currentSettings.difficulty,
+          rhythmPatterns
         );
 
         if (!pattern || !pattern.pattern || !Array.isArray(pattern.pattern)) {
@@ -782,6 +784,7 @@ export function MetronomeTrainer() {
     },
     [
       gameSettings,
+      rhythmPatterns,
       audioEngine,
       startContinuousMetronome,
       startCountInWithPattern,
@@ -1182,7 +1185,8 @@ export function MetronomeTrainer() {
 
       const pattern = await getPattern(
         gameSettings.timeSignature.name,
-        gameSettings.difficulty
+        gameSettings.difficulty,
+        rhythmPatterns
       );
 
       if (!pattern || !pattern.pattern || !Array.isArray(pattern.pattern)) {
@@ -1212,6 +1216,7 @@ export function MetronomeTrainer() {
   }, [
     exerciseProgress.isGameComplete,
     gameSettings,
+    rhythmPatterns,
     stopContinuousMetronome,
     startContinuousMetronome,
     audioEngine,

@@ -644,11 +644,14 @@ export function createPatternGenerator() {
 /**
  * Main pattern generation function
  * Alternates between curated and generated patterns
+ * @param {string} timeSignature - Time signature name (e.g. "4/4")
+ * @param {string} difficulty - Difficulty level
+ * @param {string[]|null} allowedPatterns - Optional array of duration name strings to constrain generation (e.g. ['quarter','half']). When provided, curated patterns are skipped and generative logic is constrained to these durations. Pass null for free-play behavior.
  */
 export async function getPattern(
   timeSignature,
   difficulty,
-  preferCurated = true
+  allowedPatterns = null
 ) {
 
   const generator = createPatternGenerator();
@@ -663,20 +666,46 @@ export async function getPattern(
     throw new Error(`Unsupported time signature: ${timeSignature}`);
   }
 
+  // When allowedPatterns is specified, skip curated patterns and constrain generation
+  const useAllowedPatterns = Array.isArray(allowedPatterns) && allowedPatterns.length > 0;
+
   let result = null;
 
-  // Try curated pattern first if preferred
-  if (preferCurated) {
-    
+  // Try curated pattern first (only when no allowedPatterns constraint)
+  if (!useAllowedPatterns) {
     result = await generator.getCuratedPattern(timeSignature, difficulty);
-    
   }
 
-  // Fallback to generated pattern
+  // Fallback to generated pattern (or forced when constrained)
   if (!result) {
-    
-    result = generator.generatePattern(timeSignatureObj, difficulty);
-    
+    if (useAllowedPatterns) {
+      // Temporarily override generation rules with constrained subdivisions
+      const diffKey = difficulty || DIFFICULTY_LEVELS.BEGINNER;
+      const originalRules = GENERATION_RULES[diffKey] || GENERATION_RULES[DIFFICULTY_LEVELS.BEGINNER];
+      const allowedValues = allowedPatterns
+        .map(name => generator.getDurationValue(name))
+        .filter(v => v !== null);
+      if (allowedValues.length > 0) {
+        const intersection = originalRules.allowedSubdivisions.filter(v =>
+          allowedValues.some(av => Math.abs(av - v) < 0.001)
+        );
+        if (intersection.length > 0) {
+          // Create a temporary rules copy with constrained subdivisions
+          const constrainedRules = { ...originalRules, allowedSubdivisions: intersection };
+          // Temporarily replace in GENERATION_RULES for the generatePattern call
+          GENERATION_RULES[diffKey] = constrainedRules;
+          result = generator.generatePattern(timeSignatureObj, difficulty);
+          // Restore original rules immediately
+          GENERATION_RULES[diffKey] = originalRules;
+        } else {
+          result = generator.generatePattern(timeSignatureObj, difficulty);
+        }
+      } else {
+        result = generator.generatePattern(timeSignatureObj, difficulty);
+      }
+    } else {
+      result = generator.generatePattern(timeSignatureObj, difficulty);
+    }
   }
 
   // Convert legacy fractional patterns to binary if needed
@@ -773,9 +802,7 @@ export async function generatePracticeSession(
   const patterns = [];
 
   for (let i = 0; i < patternCount; i++) {
-    // Alternate between curated and generated
-    const preferCurated = i % 2 === 0;
-    const pattern = await getPattern(timeSignature, difficulty, preferCurated);
+    const pattern = await getPattern(timeSignature, difficulty);
     patterns.push(pattern);
   }
 

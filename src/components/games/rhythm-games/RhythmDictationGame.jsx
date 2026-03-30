@@ -67,6 +67,8 @@ export function RhythmDictationGame() {
   // --- Trail state (from TrailNodeModal navigation) ---
   const nodeId = location.state?.nodeId ?? null;
   const nodeConfig = location.state?.nodeConfig ?? null;
+  const difficulty = nodeConfig?.difficulty ?? DEFAULT_DIFFICULTY;
+  const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -216,7 +218,7 @@ export function RhythmDictationGame() {
   const generateQuestion = useCallback(
     async (questionIndex, currentTempo, currentTimeSig) => {
       try {
-        const result = await getPattern(currentTimeSig, DEFAULT_DIFFICULTY);
+        const result = await getPattern(currentTimeSig, difficulty, rhythmPatterns);
 
         if (!result || !result.pattern) {
           // Pattern generation failed — skip to next question
@@ -252,7 +254,7 @@ export function RhythmDictationGame() {
         setGamePhase(GAME_PHASES.SESSION_COMPLETE);
       }
     },
-    []
+    [difficulty, rhythmPatterns]
   );
 
   // ---------------------------------------------------------------------------

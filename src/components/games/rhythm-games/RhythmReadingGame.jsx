@@ -63,6 +63,7 @@ export function RhythmReadingGame() {
   // Trail state extraction from location.state
   const nodeId = location.state?.nodeId ?? null;
   const nodeConfig = location.state?.nodeConfig ?? null;
+  const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -256,7 +257,7 @@ export function RhythmReadingGame() {
    */
   const fetchNewPattern = useCallback(async () => {
     try {
-      const result = await getPattern(timeSignatureStr, difficulty);
+      const result = await getPattern(timeSignatureStr, difficulty, rhythmPatterns);
       if (!result || !result.pattern) return null;
       const beats = binaryPatternToBeats(result.pattern);
       return { beats, binaryPattern: result.pattern };
@@ -264,7 +265,7 @@ export function RhythmReadingGame() {
       console.warn('[RhythmReadingGame] fetchNewPattern error:', err);
       return null;
     }
-  }, [timeSignatureStr, difficulty]);
+  }, [timeSignatureStr, difficulty, rhythmPatterns]);
 
   /**
    * Start continuous metronome lookahead scheduler.
