@@ -289,11 +289,12 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v2.9 Phase 10 — 2026-03-29):**
+**Current State (after v3.0 Phase 12 — 2026-03-31):**
 - 185-node trail system (93 original + 36 accidental + 42 content expansion + 14 ear training nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Ear Training trail path: 14 nodes across 2 units (Sound Direction + Interval Explorer), 2 boss nodes with multi-exercise sessions
 - Ear Training tab on TrailMap with cyan palette, driven by TRAIL_TAB_CONFIGS data array
 - Defense-in-depth subscription gating: 6 free ear training nodes (Unit 1), Unit 2 + bosses paywalled (JS + Postgres synchronized, 25 total free nodes)
+- Trail rhythm config fixes: difficulty values corrected (easy→beginner), rhythmPatterns constraint wired through all 4 rhythm games, build-time validation catches invalid difficulty/patterns
 - NoteSpeedCards speed card game for single-note trail nodes (treble_1_1, bass_1_1) — conveyor animation, 3-lives, combo, 4-tier speed ramp
 - Dedicated Parent Portal with gate-first architecture: math gate on every visit, QuickStatsGrid, 4 content sections (stats, heatmap, subscription, settings)
 - Parent Zone entry points: desktop sidebar (ShieldCheck icon) + mobile Settings card (ParentZoneEntryCard)
@@ -532,4 +533,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-29 — Phase 10 complete (ear training trail data + trail tab)*
+*Last updated: 2026-03-31 — Phase 12 complete (trail config fixes)*
