@@ -1,5 +1,6 @@
 import React from "react";
 import { Klavier } from "klavier";
+import { noteNameToMidi } from "../../../../utils/noteUtils";
 
 const { useMemo, useCallback, useEffect, useRef } = React;
 Klavier.displayName = Klavier.displayName || "Klavier";
@@ -18,18 +19,6 @@ const NOTE_NAMES = [
   "A#",
   "B",
 ];
-
-const noteNameToMidi = (note) => {
-  const match = note.match(/^([A-G])(#?)(\d)$/i);
-  if (!match) return null;
-  const [, letter, accidental, octaveStr] = match;
-  const semitone = NOTE_NAMES.findIndex(
-    (name) => name === `${letter.toUpperCase()}${accidental ? "#" : ""}`
-  );
-  const octave = parseInt(octaveStr, 10);
-  if (semitone === -1 || Number.isNaN(octave)) return null;
-  return (octave + 1) * 12 + semitone;
-};
 
 const midiToNoteName = (midi) => {
   const note = NOTE_NAMES[midi % 12];
