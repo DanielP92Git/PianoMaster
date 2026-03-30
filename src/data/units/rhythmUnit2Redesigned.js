@@ -66,7 +66,7 @@ export const rhythmUnit2Nodes = [
           tempo: 65,
           measuresPerPattern: 1,
           timeSignature: '4/4',
-          difficulty: 'easy'
+          difficulty: 'beginner'
         }
       }
     ],
@@ -118,7 +118,7 @@ export const rhythmUnit2Nodes = [
           tempo: 70,
           measuresPerPattern: 2,
           timeSignature: '4/4',
-          difficulty: 'easy'
+          difficulty: 'beginner'
         }
       }
     ],
@@ -169,7 +169,7 @@ export const rhythmUnit2Nodes = [
           tempo: 65,
           measuresPerPattern: 2,
           timeSignature: '4/4',
-          difficulty: 'easy'
+          difficulty: 'beginner'
         }
       }
     ],
@@ -220,7 +220,7 @@ export const rhythmUnit2Nodes = [
           tempo: 70,
           measuresPerPattern: 2,
           timeSignature: '4/4',
-          difficulty: 'easy'
+          difficulty: 'beginner'
         }
       }
     ],
@@ -271,7 +271,7 @@ export const rhythmUnit2Nodes = [
           tempo: 70,
           measuresPerPattern: 2,
           timeSignature: '4/4',
-          difficulty: 'easy',
+          difficulty: 'beginner',
           patternVariety: true
         }
       }
