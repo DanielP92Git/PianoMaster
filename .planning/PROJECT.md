@@ -289,7 +289,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v3.0 Phase 12 — 2026-03-31):**
+**Current State (after v3.0 Phase 13 — 2026-03-31):**
 - 185-node trail system (93 original + 36 accidental + 42 content expansion + 14 ear training nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Ear Training trail path: 14 nodes across 2 units (Sound Direction + Interval Explorer), 2 boss nodes with multi-exercise sessions
 - Ear Training tab on TrailMap with cyan palette, driven by TRAIL_TAB_CONFIGS data array
@@ -320,6 +320,8 @@ Explicitly excluded:
 - 8 node types with unique icons and colorblind-safe colors
 - Build-time validation ensures node integrity on every build
 - WCAG 2.2 AA compliant trail page with RTL support
+- Utility consolidation: noteNameToMidi, calculateStarsFromPercentage, verifyStudentDataAccess each have single canonical implementation (v3.0 Phase 13)
+- TeacherDashboard lazy-loaded as separate 434 kB chunk — students never download teacher bundle (v3.0 Phase 13)
 - ESLint: 0 warnings, 0 errors (574 eliminated in v2.5 Phase 13)
 - COPPA hard-delete: cron-triggered Edge Function permanently deletes accounts past 30-day grace period (v2.5 Phase 14)
 - Production QA: 89-item checklist executed, all critical flows pass (v2.5 Phase 15)
