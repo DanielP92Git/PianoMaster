@@ -132,14 +132,14 @@ const PLAY_PERFORMANCE_DOWNBEAT_CLICK = true;
 // If the user plays to the audible metronome click, WebAudio output latency can make
 // their "on-click" performance look late relative to AudioContext currentTime.
 // We'll measure outputLatency in debug logs before applying any compensation.
-const AUDIO_OUTPUT_LATENCY_COMP_DEBUG = true;
+const AUDIO_OUTPUT_LATENCY_COMP_DEBUG = import.meta.env.DEV;
 const logMetronomeTiming = (label, payload = {}) => {
   if (!METRONOME_TIMING_DEBUG) return;
   const timestamp =
     typeof performance !== "undefined"
       ? Number(performance.now().toFixed(2))
       : null;
-  console.debug("[MetronomeTiming]", {
+  console.debug("[MetronomeTiming]", { // eslint-disable-line no-console
     timestamp,
     ...payload,
   });
@@ -1504,11 +1504,13 @@ export function SightReadingGame() {
 
       // Use unified timing state check (after we know elapsed time for logging)
       if (!canScoreNow(phase)) {
-        console.debug("[NoteDetection]", {
-          blocked: true,
-          phase,
-          timingState: timingStateRef.current,
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+            blocked: true,
+            phase,
+            timingState: timingStateRef.current,
+          });
+        }
         logFirstNoteDebug("detection blocked before scoring window", {
           elapsedTimeMs,
           phase,
@@ -1521,16 +1523,18 @@ export function SightReadingGame() {
       const timingWindows = timingWindowsRef.current;
       if (timingWindows.length > 0) {
         const firstWindow = timingWindows[0];
-        console.debug("[NoteDetection]", {
-          note: detectedNote,
-          elapsed: elapsedTimeMs.toFixed(0),
-          firstWindow: [
-            firstWindow.windowStart.toFixed(0),
-            firstWindow.windowEnd.toFixed(0),
-          ],
-          phase,
-          scoring: timingStateRef.current,
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+            note: detectedNote,
+            elapsed: elapsedTimeMs.toFixed(0),
+            firstWindow: [
+              firstWindow.windowStart.toFixed(0),
+              firstWindow.windowEnd.toFixed(0),
+            ],
+            phase,
+            scoring: timingStateRef.current,
+          });
+        }
       }
 
       // Find which note (if any) is currently within its timing window.
@@ -1686,11 +1690,13 @@ export function SightReadingGame() {
       const lastTime =
         lastDetectionTimesRef.current[matchingNoteIndex] ?? -Infinity;
       if (elapsedTimeMs - lastTime < DEBOUNCE_MS) {
-        console.debug("[NoteDetection]", {
-          debounced: true,
-          noteIndex: matchingNoteIndex + 1,
-          elapsed: (elapsedTimeMs - lastTime).toFixed(0),
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+            debounced: true,
+            noteIndex: matchingNoteIndex + 1,
+            elapsed: (elapsedTimeMs - lastTime).toFixed(0),
+          });
+        }
         return;
       }
       lastDetectionTimesRef.current[matchingNoteIndex] = elapsedTimeMs;
@@ -1775,14 +1781,16 @@ export function SightReadingGame() {
           phase,
         };
 
-        console.debug("[NoteDetection]", {
-          correct: true,
-          noteIndex: matchingNoteIndex + 1,
-          detectedNote,
-          frequency: frequency.toFixed(1),
-          timingStatus: timing.status,
-          timeDiff: timeDiff.toFixed(0),
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+            correct: true,
+            noteIndex: matchingNoteIndex + 1,
+            detectedNote,
+            frequency: frequency.toFixed(1),
+            timingStatus: timing.status,
+            timeDiff: timeDiff.toFixed(0),
+          });
+        }
         if (matchingNoteIndex === 0) {
           logFirstNoteDebug("first-note correct detection", {
             detectedNote,
@@ -1822,13 +1830,15 @@ export function SightReadingGame() {
         });
         // #endregion
         // Record wrong pitch (per PRD: show RED feedback)
-        console.debug("[NoteDetection]", {
-          wrong: true,
-          noteIndex: matchingNoteIndex + 1,
-          expected: matchingEvent.pitch,
-          detectedNote,
-          timeDiff: timeDiff.toFixed(0),
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+            wrong: true,
+            noteIndex: matchingNoteIndex + 1,
+            expected: matchingEvent.pitch,
+            detectedNote,
+            timeDiff: timeDiff.toFixed(0),
+          });
+        }
         if (matchingNoteIndex === 0) {
           logFirstNoteDebug("first-note wrong pitch", {
             detectedNote,
@@ -2296,7 +2306,7 @@ export function SightReadingGame() {
 
   useEffect(() => {
     if (METRONOME_TIMING_DEBUG) {
-      console.debug("[ScoreSyncStatus]", {
+      console.debug("[ScoreSyncStatus]", { // eslint-disable-line no-console
         scoreSyncStatus,
       });
     }

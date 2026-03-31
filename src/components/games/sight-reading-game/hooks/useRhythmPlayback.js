@@ -1,6 +1,6 @@
 import { useCallback, useRef, useEffect } from "react";
 
-const RHYTHM_DEBUG = true;
+const RHYTHM_DEBUG = import.meta.env.DEV;
 
 /**
  * Hook for rhythm playback with proper timing and duration
@@ -159,7 +159,7 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
         // Update visual highlighting
         if (onBeatCallbackRef.current) {
           if (RHYTHM_DEBUG) {
-            console.debug("[RhythmPlayback]", {
+            console.debug("[RhythmPlayback]", { // eslint-disable-line no-console
               currentIndex,
               elapsedTime,
               audioCurrentTime: currentTime,

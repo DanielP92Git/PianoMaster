@@ -93,7 +93,7 @@ export async function sendParentalConsentEmail(studentId, parentEmail) {
 
   // For development, also log the URL
   if (process.env.NODE_ENV === 'development') {
-    console.log('[DEV] Consent verification URL:', consentUrl);
+    console.log('[DEV] Consent verification URL:', consentUrl); // eslint-disable-line no-console
   }
 
   return { consentUrl, expiresAt };

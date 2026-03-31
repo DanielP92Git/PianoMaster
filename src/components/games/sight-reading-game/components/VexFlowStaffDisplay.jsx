@@ -292,19 +292,23 @@ export function VexFlowStaffDisplay({
           // the rhythm generator now fills measures completely. If it does happen,
           // Voice.Mode.SOFT will handle the incomplete measure gracefully without
           // throwing errors. We DO NOT add visual padding rests here.
-          console.debug("[VexFlowStaffDisplay] Pattern shorter than expected - relying on SOFT mode", {
-            expectedDuration,
-            actualDuration: pattern.totalDuration,
-            deficit: durationDiff,
-          });
+          if (import.meta.env.DEV) {
+            console.debug("[VexFlowStaffDisplay] Pattern shorter than expected - relying on SOFT mode", { // eslint-disable-line no-console
+              expectedDuration,
+              actualDuration: pattern.totalDuration,
+              deficit: durationDiff,
+            });
+          }
         } else {
           console.warn(`Pattern is ${Math.abs(durationDiff)} beats too long!`);
         }
       } else {
-        console.debug("[VexFlowStaffDisplay]", {
-          pattern,
-          durationDiff,
-        });
+        if (import.meta.env.DEV) {
+          console.debug("[VexFlowStaffDisplay]", { // eslint-disable-line no-console
+            pattern,
+            durationDiff,
+          });
+        }
       }
 
       const clefKey = String(clef || "treble").toLowerCase();
@@ -1321,9 +1325,11 @@ export function VexFlowStaffDisplay({
 
       // Extract note elements for highlighting
       notesRef.current = extractNoteElements();
-      console.debug("[VexFlowStaffDisplay]", {
-        notesRef: notesRef.current.length,
-      });
+      if (import.meta.env.DEV) {
+        console.debug("[VexFlowStaffDisplay]", { // eslint-disable-line no-console
+          notesRef: notesRef.current.length,
+        });
+      }
 
       // Fit SVG viewBox to rendered content after VexFlow completes drawing
       requestAnimationFrame(() => {
@@ -1488,15 +1494,17 @@ export function VexFlowStaffDisplay({
       justEnteredFeedback ||
       justLeftFeedback
     ) {
-      console.debug("[VexFlowStaffDisplay]", {
-        patternChanged,
-        clefChanged,
-        containerEmpty,
-        justEnteredFeedback,
-        justLeftFeedback,
-        gamePhase,
-        prevGamePhase: prevGamePhaseRef.current,
-      });
+      if (import.meta.env.DEV) {
+        console.debug("[VexFlowStaffDisplay]", { // eslint-disable-line no-console
+          patternChanged,
+          clefChanged,
+          containerEmpty,
+          justEnteredFeedback,
+          justLeftFeedback,
+          gamePhase,
+          prevGamePhase: prevGamePhaseRef.current,
+        });
+      }
       renderStaff();
       prevPatternRef.current = pattern?.easyscoreString;
       prevClefRef.current = clef;

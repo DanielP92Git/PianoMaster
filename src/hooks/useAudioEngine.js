@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
-const METRONOME_TIMING_DEBUG = false;
+const METRONOME_TIMING_DEBUG = import.meta.env.DEV;
 
 /**
  * Custom hook for managing Web Audio API operations
@@ -265,7 +265,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
 
     try {
       if (METRONOME_TIMING_DEBUG) {
-        console.debug("[createMetronomeClick]", {
+        console.debug("[createMetronomeClick]", { // eslint-disable-line no-console
           requestedTime: time,
           audioCurrentTime: audioContextRef.current.currentTime,
           deltaSeconds: time - audioContextRef.current.currentTime,

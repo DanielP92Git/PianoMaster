@@ -52,7 +52,7 @@ export function SubscriptionProvider({ children }) {
       )
       .subscribe((status) => {
         if (process.env.NODE_ENV === "development") {
-          console.log("[SubscriptionContext] Realtime status:", status);
+          console.log("[SubscriptionContext] Realtime status:", status); // eslint-disable-line no-console
         }
       });
 

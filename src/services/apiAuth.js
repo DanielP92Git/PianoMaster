@@ -239,7 +239,7 @@ export async function logout() {
 
     // Log cleanup count in development only
     if (import.meta.env.DEV) {
-      console.log(
+      console.log( // eslint-disable-line no-console
         `Logout: Cleared ${keysToRemove.length} user-specific localStorage keys`
       );
     }

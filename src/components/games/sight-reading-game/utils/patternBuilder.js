@@ -21,7 +21,7 @@ const isDebugEnabled =
 
 const debugLog = (...args) => {
   if (isDebugEnabled) {
-    console.debug("[PatternBuilder]", ...args);
+    console.debug("[PatternBuilder]", ...args); // eslint-disable-line no-console
   }
 };
 

@@ -253,7 +253,6 @@ export function skipWaitingAndReload() {
     // Fallback: reload after 3 seconds if controllerchange doesn't fire
     setTimeout(() => {
       if (!controllerChanged) {
-        console.log("Fallback reload triggered");
       window.location.reload();
       }
     }, 3000);

@@ -233,7 +233,9 @@ class AudioCacheService {
     expiredKeys.forEach(key => this.delete(key));
     
     if (expiredKeys.length > 0) {
-      console.debug("Audio cache: evicted", expiredKeys.length, "expired entries");
+      if (import.meta.env.DEV) {
+        console.debug("Audio cache: evicted", expiredKeys.length, "expired entries"); // eslint-disable-line no-console
+      }
     }
   }
 

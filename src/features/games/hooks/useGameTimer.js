@@ -1,15 +1,15 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
 // Debug mode - set to false to disable most logs
-const DEBUG = false;
+const DEBUG = import.meta.env.DEV;
 
 // Module-level logging utility: stable reference, no deps needed
 const debugLog = (message, data) => {
   if (DEBUG) {
     if (data !== undefined) {
-      console.log(message, data);
+      console.log(message, data); // eslint-disable-line no-console
     } else {
-      console.log(message);
+      console.log(message); // eslint-disable-line no-console
     }
   }
 };

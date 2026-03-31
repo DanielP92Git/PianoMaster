@@ -541,10 +541,7 @@ export function useVictoryState({
 
   // Navigation helper for moving to next node
   const navigateToNextNode = useCallback(() => {
-    console.log('[VictoryScreen] navigateToNextNode called:', { nextNode });
-
     if (!nextNode) {
-      console.log('[VictoryScreen] No nextNode, navigating to /trail');
       // Fallback to trail map if no next node
       navigate('/trail');
       return;
@@ -566,8 +563,6 @@ export function useVictoryState({
       totalExercises: nextNode.exercises.length,
       exerciseType: firstExercise.type
     };
-
-    console.log('[VictoryScreen] Navigating to next node with state:', navState);
 
     // Route based on exercise type
     switch (firstExercise.type) {
