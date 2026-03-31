@@ -49,7 +49,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 ### v3.0 Cleanup & Polish (In Progress)
 
 - [x] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping) (completed 2026-03-30)
-- [ ] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle
+- [x] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle (completed 2026-03-31)
 - [ ] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase
 - [ ] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items
 
@@ -78,7 +78,7 @@ Plans:
   3. `verifyStudentDataAccess` is defined only in authorizationUtils.js with no duplicate in apiDatabase.js
   4. AchievementsLegacy.jsx no longer exists in the codebase, and no non-migration files (DEBUG_, TEST_, README_) exist in supabase/migrations/
   5. TeacherDashboard loads via React.lazy() and all `total_points` references in teacher code use XP terminology
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 13-01-PLAN.md -- Consolidate noteNameToMidi, calculateStars, and verifyStudentDataAccess to canonical locations (completed 2026-03-30)
 - [ ] 13-02-PLAN.md -- Delete dead code, lazy-load TeacherDashboard, migrate XP locale strings
@@ -107,7 +107,7 @@ Plans:
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
 | 12. Trail Config Fixes | v3.0 | 2/2 | Complete    | 2026-03-30 |
-| 13. Code Quality Quick Wins | v3.0 | 1/2 | Executing | - |
+| 13. Code Quality Quick Wins | v3.0 | 1/2 | Complete    | 2026-03-31 |
 | 14. Console Logging Cleanup | v3.0 | 0/? | Not started | - |
 | 15. Verification & Deploy | v3.0 | 0/? | Not started | - |
 
