@@ -10,6 +10,7 @@ import { Volume2 } from 'lucide-react';
 
 import { useAudioContext } from '../../../contexts/AudioContextProvider';
 import { usePianoSampler } from '../../../hooks/usePianoSampler';
+import { useAudioEngine } from '../../../hooks/useAudioEngine';
 import { useSounds } from '../../../features/games/hooks/useSounds';
 import { useSessionTimeout } from '../../../contexts/SessionTimeoutContext';
 import { useRotatePrompt } from '../../../hooks/useRotatePrompt';
@@ -36,6 +37,7 @@ import { getNodeById } from '../../../data/skillTrail';
 // ---------------------------------------------------------------------------
 const GAME_PHASES = {
   SETUP: 'setup',
+  READY: 'ready',            // Waiting for user to click "Listen" before pattern plays
   LISTENING: 'listening',
   CHOOSING: 'choosing',
   FEEDBACK: 'feedback',
@@ -51,7 +53,7 @@ const DEFAULT_DIFFICULTY = DIFFICULTY_LEVELS.BEGINNER;
  * RhythmDictationGame
  *
  * Aural rhythm recognition game (RDICT-01 through RDICT-06).
- * Child hears a C4 piano rhythm pattern, then picks the correct notation
+ * Child hears a piano rhythm pattern, then picks the correct notation
  * from 3 vertically-stacked VexFlow choice cards.
  *
  * Structural template: MetronomeTrainer.jsx
@@ -75,8 +77,23 @@ export function RhythmDictationGame() {
 
   // --- Audio ---
   const { audioContextRef, isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
-  const { playNote } = usePianoSampler();
+  const { playNote } = usePianoSampler(); // kept for potential other uses; pattern playback uses audioEngine
   const { playCorrectSound, playWrongSound } = useSounds();
+
+  // --- Game settings ---
+  const [tempo, setTempo] = useState(DEFAULT_TEMPO);
+  const [timeSignature, setTimeSignature] = useState(DEFAULT_TIME_SIG);
+
+  // --- Audio engine (G4.mp3 piano sample — matches MetronomeTrainer) ---
+  const audioEngine = useAudioEngine(tempo, { sharedAudioContext: audioContextRef.current });
+
+  // enginePlayNote: wrapper that passes audioEngine.createPianoSound to schedulePatternPlayback
+  // The schedulePatternPlayback callback signature is (note, { startTime, duration }) — we use startTime only.
+  const enginePlayNote = useCallback((_note, opts) => {
+    if (audioEngine?.createPianoSound) {
+      audioEngine.createPianoSound(opts?.startTime, 0.8, 0.5);
+    }
+  }, [audioEngine]);
 
   // --- Session timeout ---
   let pauseTimer = useCallback(() => {}, []);
@@ -88,10 +105,6 @@ export function RhythmDictationGame() {
   } catch {
     // Not in SessionTimeoutProvider — timer controls are no-ops
   }
-
-  // --- Game settings ---
-  const [tempo, setTempo] = useState(DEFAULT_TEMPO);
-  const [timeSignature, setTimeSignature] = useState(DEFAULT_TIME_SIG);
 
   // --- Game state ---
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
@@ -124,7 +137,7 @@ export function RhythmDictationGame() {
   // Session timeout: pause during active gameplay, resume during setup/feedback
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const activePhases = [GAME_PHASES.LISTENING, GAME_PHASES.CHOOSING];
+    const activePhases = [GAME_PHASES.READY, GAME_PHASES.LISTENING, GAME_PHASES.CHOOSING];
     const isActive = activePhases.includes(gamePhase);
     if (isActive) {
       pauseTimer();
@@ -183,7 +196,7 @@ export function RhythmDictationGame() {
   }
 
   // ---------------------------------------------------------------------------
-  // Play pattern audio
+  // Play pattern audio (uses G4.mp3 via audioEngine — matches MetronomeTrainer)
   // ---------------------------------------------------------------------------
   const playPattern = useCallback(
     (beats, currentTempo, onComplete) => {
@@ -199,7 +212,7 @@ export function RhythmDictationGame() {
       isPlayingRef.current = true;
       setIsPlaying(true);
 
-      const { totalDuration } = schedulePatternPlayback(beats, currentTempo, ctx, playNote);
+      const { totalDuration } = schedulePatternPlayback(beats, currentTempo, ctx, enginePlayNote);
 
       // After pattern finishes + 300ms buffer, mark done
       const delayMs = (totalDuration + 0.3) * 1000;
@@ -209,7 +222,7 @@ export function RhythmDictationGame() {
         onComplete?.();
       }, delayMs);
     },
-    [audioContextRef, playNote, getOrCreateAudioContext]
+    [audioContextRef, enginePlayNote, getOrCreateAudioContext]
   );
 
   // ---------------------------------------------------------------------------
@@ -247,8 +260,8 @@ export function RhythmDictationGame() {
         setCardStates(['default', 'default', 'default']);
         setFeedbackText('');
 
-        // Transition to LISTENING — auto-play fires in the LISTENING effect
-        setGamePhase(GAME_PHASES.LISTENING);
+        // Transition to READY — user must press "Listen" before pattern plays
+        setGamePhase(GAME_PHASES.READY);
       } catch (err) {
         console.warn('[RhythmDictationGame] generateQuestion error:', err);
         setGamePhase(GAME_PHASES.SESSION_COMPLETE);
@@ -269,6 +282,13 @@ export function RhythmDictationGame() {
       setGamePhase(GAME_PHASES.CHOOSING);
     });
   }, [gamePhase, correctBeats]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ---------------------------------------------------------------------------
+  // READY phase: user clicks "Listen to the pattern" to start playback
+  // ---------------------------------------------------------------------------
+  const handleReady = useCallback(() => {
+    setGamePhase(GAME_PHASES.LISTENING);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Replay button handler
@@ -316,19 +336,19 @@ export function RhythmDictationGame() {
         setQuestionScores((prev) => [...prev, 0]);
 
         // After 300ms: dim selected, reveal correct, auto-replay correct pattern
+        // Then advance AFTER replay finishes + 1s breathing room (no premature cutoff)
         feedbackTimeoutRef.current = setTimeout(() => {
           const revealStates = ['dimmed', 'dimmed', 'dimmed'];
           revealStates[correctIndex] = 'correct';
           setCardStates(revealStates);
 
-          // Auto-replay correct pattern (RDICT-05)
-          playPattern(correctBeats, tempo, () => {});
+          // Auto-replay correct pattern (RDICT-05), then advance after replay ends
+          playPattern(correctBeats, tempo, () => {
+            feedbackTimeoutRef.current = setTimeout(() => {
+              advanceQuestion();
+            }, 1000); // 1s breathing room after replay finishes
+          });
         }, 300);
-
-        // After 2s: advance to next question
-        feedbackTimeoutRef.current = setTimeout(() => {
-          advanceQuestion();
-        }, 2000);
       }
     },
     [gamePhase, correctIndex, correctBeats, tempo, playPattern, playCorrectSound, playWrongSound, t] // eslint-disable-line react-hooks/exhaustive-deps
@@ -500,13 +520,13 @@ export function RhythmDictationGame() {
   }
 
   // ---------------------------------------------------------------------------
-  // Render: main game (LISTENING / CHOOSING / FEEDBACK)
+  // Render: main game (READY / LISTENING / CHOOSING / FEEDBACK)
   // ---------------------------------------------------------------------------
   const isInFeedback = gamePhase === GAME_PHASES.FEEDBACK;
+  // Choice cards only shown once pattern has played (not during READY or LISTENING)
   const showCards =
     gamePhase === GAME_PHASES.CHOOSING ||
-    gamePhase === GAME_PHASES.FEEDBACK ||
-    gamePhase === GAME_PHASES.LISTENING;
+    gamePhase === GAME_PHASES.FEEDBACK;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
@@ -582,6 +602,21 @@ export function RhythmDictationGame() {
           {feedbackText}
         </div>
 
+        {/* READY phase — "Listen to the pattern" gate (pacing control) */}
+        {gamePhase === GAME_PHASES.READY && (
+          <div className="flex flex-col items-center gap-4 py-8">
+            <p className="text-white/70 text-sm font-rounded">
+              {t('games.rhythmDictation.getReady', { defaultValue: 'Get ready to listen' })}
+            </p>
+            <button
+              onClick={handleReady}
+              className="px-6 py-3 bg-indigo-500/80 hover:bg-indigo-500 text-white font-rounded rounded-xl border border-indigo-400/30 transition-colors"
+            >
+              {t('games.rhythmDictation.listenButton', { defaultValue: 'Listen to the pattern' })}
+            </button>
+          </div>
+        )}
+
         {/* Choice cards — vertical stack (D-06) */}
         {showCards && choices.length === 3 && (
           <div className="flex flex-col gap-3">
@@ -593,7 +628,7 @@ export function RhythmDictationGame() {
                 cardIndex={idx}
                 state={cardStates[idx] ?? 'default'}
                 onSelect={handleCardSelect}
-                disabled={isInFeedback || gamePhase === GAME_PHASES.LISTENING}
+                disabled={isInFeedback}
               />
             ))}
           </div>
