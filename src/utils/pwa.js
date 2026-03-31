@@ -247,13 +247,13 @@ export function skipWaitingAndReload() {
     if (waitingWorker) {
       waitingWorker.postMessage({ type: "SKIP_WAITING" });
     } else if (navigator.serviceWorker.controller) {
-    navigator.serviceWorker.controller.postMessage({ type: "SKIP_WAITING" });
+      navigator.serviceWorker.controller.postMessage({ type: "SKIP_WAITING" });
     }
 
     // Fallback: reload after 3 seconds if controllerchange doesn't fire
     setTimeout(() => {
       if (!controllerChanged) {
-      window.location.reload();
+        window.location.reload();
       }
     }, 3000);
   }
@@ -459,3 +459,4 @@ function urlBase64ToUint8Array(base64String) {
   }
   return outputArray;
 }
+// test
