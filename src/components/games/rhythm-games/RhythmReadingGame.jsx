@@ -138,9 +138,6 @@ export function RhythmReadingGame() {
   const staveBoundsRef = useRef(null); // stave note-area bounds from RhythmStaffDisplay
   const transitionToFeedbackRef = useRef(null); // stable ref for transitionToFeedback
 
-  // IOS-02: Gesture gate state — true when AudioContext is suspended on load
-  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
-
   // Continuous metronome refs (READY phase)
   const metronomeIntervalRef = useRef(null);   // setInterval ID for audio lookahead scheduler
   const visualIntervalRef = useRef(null);      // setInterval ID for visual beat updates
