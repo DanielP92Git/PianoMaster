@@ -67,7 +67,7 @@ Existing project typography scale (tailwind.config.js `extend.fontSize`):
 | Body | 16px (base) | 400 (regular) | 1.7 |
 | Label | 14px (sm) | 600 (semibold) | 1.6 |
 | Heading | 20px (xl) | 600 (semibold) | 1.8 |
-| Display | 30px (3xl) | 700 (bold) | 1.9 |
+| Display | 30px (3xl) | 600 (semibold) | 1.9 |
 
 Source: tailwind.config.js existing fontSize scale. No new typography is introduced in this phase.
 
