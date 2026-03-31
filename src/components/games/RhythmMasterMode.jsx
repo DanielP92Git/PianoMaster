@@ -11,7 +11,7 @@ export function RhythmMasterMode() {
       id: "metronome-trainer",
       name: t("games.cards.metronomeTrainer.name"),
       description: t("games.cards.metronomeTrainer.description"),
-      icon: <Volume2 className="w-12 h-12 text-white" />,
+      icon: <Volume2 className="h-12 w-12 text-white" />,
       difficulty: t("games.difficulties.allLevels"),
       path: "/rhythm-mode/metronome-trainer",
     },
@@ -19,7 +19,7 @@ export function RhythmMasterMode() {
       id: "rhythm-reading-game",
       name: t("games.cards.rhythmReading.name"),
       description: t("games.cards.rhythmReading.description"),
-      icon: <Music className="w-12 h-12 text-white" />,
+      icon: <Music className="h-12 w-12 text-white" />,
       difficulty: t("games.difficulties.allLevels"),
       path: "/rhythm-mode/rhythm-reading-game",
     },
@@ -27,15 +27,15 @@ export function RhythmMasterMode() {
       id: "rhythm-dictation-game",
       name: t("games.cards.rhythmDictation.name"),
       description: t("games.cards.rhythmDictation.description"),
-      icon: <Ear className="w-12 h-12 text-white" />,
+      icon: <Ear className="h-12 w-12 text-white" />,
       difficulty: t("games.difficulties.allLevels"),
       path: "/rhythm-mode/rhythm-dictation-game",
     },
   ];
 
   return (
-    <div className="p-4 lg:p-6 max-w-7xl mx-auto">
-      <div className="flex items-center mb-4">
+    <div className="mx-auto max-w-7xl p-4 lg:p-6">
+      <div className="mb-4 flex items-center">
         <BackButton
           to="/practice-modes"
           name={t("games.backToModes")}
@@ -43,7 +43,7 @@ export function RhythmMasterMode() {
         />
       </div>
 
-      <GameModeGrid games={games} />
+      <GameModeGrid games={games} layout="column" />
     </div>
   );
 }
