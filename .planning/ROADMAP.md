@@ -90,7 +90,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Running `grep -r "console.log\|console.debug" src/` shows fewer than 50 hits, all guarded by `import.meta.env.DEV` or justified as intentional production logging (errors/warnings)
   2. Production build (`npm run build && npm run preview`) shows zero debug-level console output during normal app usage (login, trail navigation, playing a game, viewing dashboard)
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 14-01-PLAN.md -- Remove/gate all 24 unguarded console.log/debug calls, add ESLint no-console rule
 
 ### Phase 15: Verification & Deploy
 **Goal**: All operational loose ends are closed -- daily goals work with all game types, deploy process is documented, and pending manual verification items are completed
@@ -108,10 +110,10 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 12. Trail Config Fixes | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 13. Code Quality Quick Wins | v3.0 | 1/2 | Complete    | 2026-03-31 |
-| 14. Console Logging Cleanup | v3.0 | 0/? | Not started | - |
+| 14. Console Logging Cleanup | v3.0 | 0/1 | In progress | - |
 | 15. Verification & Deploy | v3.0 | 0/? | Not started | - |
 
 **Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 4 phases, 14 requirements**
 
 ---
-*Last updated: 2026-03-30 -- Phase 13 Plan 01 complete (utility consolidation done)*
+*Last updated: 2026-03-31 -- Phase 14 planned (1 plan, console logging cleanup)*
