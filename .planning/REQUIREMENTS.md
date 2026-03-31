@@ -20,7 +20,7 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 - [x] **QUAL-03**: `verifyStudentDataAccess` duplicate in apiDatabase.js removed, imports from authorizationUtils.js
 - [x] **QUAL-04**: AchievementsLegacy.jsx deleted (dead code, never imported)
 - [x] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG_, TEST_, README_)
-- [ ] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 -> target: <50 production calls)
+- [x] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 -> target: <50 production calls)
 - [x] **QUAL-07**: TeacherDashboard converted to React.lazy() (currently eager-loaded for all users)
 
 ### XP Migration
@@ -86,7 +86,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-03 | Phase 13 | Complete |
 | QUAL-04 | Phase 13 | Complete |
 | QUAL-05 | Phase 13 | Complete |
-| QUAL-06 | Phase 14 | Pending |
+| QUAL-06 | Phase 14 | Complete |
 | QUAL-07 | Phase 13 | Complete |
 | XP-01 | Phase 13 | Complete |
 | GOAL-01 | Phase 15 | Pending |

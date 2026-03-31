@@ -50,7 +50,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 - [x] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping) (completed 2026-03-30)
 - [x] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle (completed 2026-03-31)
-- [ ] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase
+- [x] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase (completed 2026-03-31)
 - [ ] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items
 
 ## Phase Details
@@ -90,9 +90,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Running `grep -r "console.log\|console.debug" src/` shows fewer than 50 hits, all guarded by `import.meta.env.DEV` or justified as intentional production logging (errors/warnings)
   2. Production build (`npm run build && npm run preview`) shows zero debug-level console output during normal app usage (login, trail navigation, playing a game, viewing dashboard)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 14-01-PLAN.md -- Remove/gate all 24 unguarded console.log/debug calls, add ESLint no-console rule
+- [x] 14-01-PLAN.md -- Remove/gate all 24 unguarded console.log/debug calls, add ESLint no-console rule
 
 ### Phase 15: Verification & Deploy
 **Goal**: All operational loose ends are closed -- daily goals work with all game types, deploy process is documented, and pending manual verification items are completed
@@ -110,7 +110,7 @@ Plans:
 |-------|-----------|----------------|--------|-----------|
 | 12. Trail Config Fixes | v3.0 | 2/2 | Complete    | 2026-03-30 |
 | 13. Code Quality Quick Wins | v3.0 | 1/2 | Complete    | 2026-03-31 |
-| 14. Console Logging Cleanup | v3.0 | 0/1 | In progress | - |
+| 14. Console Logging Cleanup | v3.0 | 1/1 | Complete   | 2026-03-31 |
 | 15. Verification & Deploy | v3.0 | 0/? | Not started | - |
 
 **Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 4 phases, 14 requirements**
