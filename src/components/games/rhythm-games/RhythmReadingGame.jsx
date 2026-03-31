@@ -121,6 +121,8 @@ export function RhythmReadingGame() {
   const [latestFeedback, setLatestFeedback] = useState(null);
   const [feedbackKey, setFeedbackKey] = useState(0);
   const [currentBeat, setCurrentBeat] = useState(1); // for MetronomeDisplay
+  // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
 
   // Refs for timing and animation (not state — no re-renders on updates)
   const cursorDivRef = useRef(null); // passed to RhythmStaffDisplay

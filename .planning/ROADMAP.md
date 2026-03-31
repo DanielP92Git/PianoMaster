@@ -113,14 +113,14 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 1. `dailyGoalsService.js` counts exercises from all game types (including ear training and arcade rhythm) toward daily goals with no hardcoded category arrays
 2. A deploy sequencing document exists in `.planning/` or `docs/` that describes the correct order for Supabase migration + Netlify deploy
 3. All 5 pending Phase 08 UAT items (rhythm games, piano tone, PWA cache) are verified on a real device and results documented
-   **Plans:** 4/5 plans executed
+   **Plans:** 5/5 plans executed
    Plans:
 
 - [x] 15-01-PLAN.md -- Daily goals regression tests + deploy sequencing document
 - [x] 15-02-PLAN.md -- UAT testing checklist creation + human device verification
 - [x] 15-03-PLAN.md -- [GAP] RhythmReadingGame fixes: double cursor, cursor desync, back button
 - [x] 15-04-PLAN.md -- [GAP] RhythmDictationGame UX: ready button, advance timing, sound unification
-- [ ] 15-05-PLAN.md -- [GAP] iOS gesture gate for RhythmReadingGame + RhythmDictationGame
+- [x] 15-05-PLAN.md -- [GAP] iOS gesture gate for RhythmReadingGame + RhythmDictationGame
 
 ## Progress
 
@@ -129,7 +129,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 | 12. Trail Config Fixes      | v3.0      | 2/2            | Complete    | 2026-03-30 |
 | 13. Code Quality Quick Wins | v3.0      | 1/2            | Complete    | 2026-03-31 |
 | 14. Console Logging Cleanup | v3.0      | 1/1            | Complete    | 2026-03-31 |
-| 15. Verification & Deploy   | v3.0      | 4/5 | In Progress |  |
+| 15. Verification & Deploy   | v3.0      | 5/5 | In Progress |  |
 
 **Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 4 phases, 14 requirements**
 

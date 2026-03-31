@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cleanup & Polish
 status: executing
-stopped_at: Completed 15-04-PLAN.md
+stopped_at: Completed 15-05-PLAN.md
 last_updated: "2026-03-31T22:16:39.412Z"
 last_activity: 2026-03-31
 progress:
@@ -59,6 +59,7 @@ v3.0 Progress: [..........] 0/4 phases
 - [Phase 15-04]: READY phase gate in RhythmDictationGame: user-controlled 'Listen' button before each exercise pattern plays
 - [Phase 15-04]: Wrong-answer advance uses playPattern callback + 1s buffer instead of hardcoded 2s timeout — prevents replay cutoff
 - [Phase 15-04]: RhythmDictationGame pattern playback unified to G4.mp3 via audioEngine.createPianoSound matching MetronomeTrainer
+- [Phase 15-05]: Gesture gate rendered as separate overlay before standard AudioInterruptedOverlay — needsGestureToStart (initial) vs isInterrupted (runtime) stay separated
 
 ### Blockers/Concerns
 
@@ -71,7 +72,7 @@ v3.0 Progress: [..........] 0/4 phases
 ## Session Continuity
 
 Last session: 2026-03-31T22:16:39.403Z
-Stopped at: Completed 15-04-PLAN.md
+Stopped at: Completed 15-05-PLAN.md
 Resume file: None
 
 **Next action:**

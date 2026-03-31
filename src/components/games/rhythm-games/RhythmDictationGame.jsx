@@ -127,6 +127,9 @@ export function RhythmDictationGame() {
   // Scores — one entry per question (1 = correct, 0 = wrong)
   const [questionScores, setQuestionScores] = useState([]);
 
+  // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
+
   // Auto-start guard
   const hasAutoStartedRef = useRef(false);
 
@@ -372,6 +375,12 @@ export function RhythmDictationGame() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
+      const ctx = audioContextRef.current;
+      // IOS-02: If AudioContext needs a gesture to resume, show tap-to-start overlay
+      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+        setNeedsGestureToStart(true);
+        return;
+      }
       hasAutoStartedRef.current = true;
       const resolvedTimeSig = resolveTimeSigString(nodeConfig.timeSignature) || DEFAULT_TIME_SIG;
       const resolvedTempo = nodeConfig.tempo || DEFAULT_TEMPO;
@@ -393,6 +402,23 @@ export function RhythmDictationGame() {
     setQuestionScores([]);
     generateQuestion(0, tempo, timeSignature);
   }, [tempo, timeSignature, generateQuestion]);
+
+  // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = audioContextRef.current;
+    if (ctx) {
+      await ctx.resume();
+    }
+    setNeedsGestureToStart(false);
+    hasAutoStartedRef.current = true;
+    const resolvedTimeSig = resolveTimeSigString(nodeConfig?.timeSignature) || DEFAULT_TIME_SIG;
+    const resolvedTempo = nodeConfig?.tempo || DEFAULT_TEMPO;
+    setTempo(resolvedTempo);
+    setTimeSignature(resolvedTimeSig);
+    setCurrentQuestion(0);
+    setQuestionScores([]);
+    generateQuestion(0, resolvedTempo, resolvedTimeSig);
+  }, [audioContextRef, nodeConfig, generateQuestion]);
 
   // ---------------------------------------------------------------------------
   // handleNextExercise — trail exercise routing (mirrors MetronomeTrainer)
@@ -533,6 +559,15 @@ export function RhythmDictationGame() {
       {/* iOS rotate prompt */}
       {shouldShowPrompt && (
         <RotatePromptOverlay onDismiss={dismissPrompt} />
+      )}
+
+      {/* IOS-02: Initial gesture gate overlay — shown when AudioContext suspended on trail load */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
       )}
 
       {/* iOS audio interruption overlay */}
