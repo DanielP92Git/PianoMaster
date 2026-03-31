@@ -121,6 +121,8 @@ export function RhythmReadingGame() {
   const [latestFeedback, setLatestFeedback] = useState(null);
   const [feedbackKey, setFeedbackKey] = useState(0);
   const [currentBeat, setCurrentBeat] = useState(1); // for MetronomeDisplay
+  // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
+  const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
 
   // Refs for timing and animation (not state — no re-renders on updates)
   const cursorDivRef = useRef(null); // passed to RhythmStaffDisplay
@@ -156,9 +158,10 @@ export function RhythmReadingGame() {
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
       const ctx = audioContextRef.current;
-      // IOS-02: If AudioContext needs a gesture to resume, defer
+      // IOS-02: If AudioContext needs a gesture to resume, show tap-to-start overlay
       if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
-        return;
+        setNeedsGestureToStart(true);
+        return; // Don't auto-start — show tap-to-start overlay
       }
       hasAutoStartedRef.current = true;
       setTimeout(() => startGame(), 100);
@@ -559,6 +562,17 @@ export function RhythmReadingGame() {
     }
   }, [cancelAllTimers, fetchNewPattern, startReadyPhase]);
 
+  // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = audioContextRef.current;
+    if (ctx) {
+      await ctx.resume();
+    }
+    setNeedsGestureToStart(false);
+    hasAutoStartedRef.current = true;
+    setTimeout(() => startGame(), 100);
+  }, [audioContextRef, startGame]);
+
   /**
    * Handle next exercise routing for trail mode.
    * Follows MetronomeTrainer.handleNextExercise pattern exactly.
@@ -756,6 +770,15 @@ export function RhythmReadingGame() {
           </div>
         )}
       </main>
+
+      {/* IOS-02: Initial gesture gate overlay — shown when AudioContext suspended on trail load */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
+      )}
 
       {/* iOS audio interrupted overlay */}
       <AudioInterruptedOverlay
