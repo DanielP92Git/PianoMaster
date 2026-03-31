@@ -133,6 +133,7 @@ export function RhythmReadingGame() {
   const hasAutoStartedRef = useRef(false); // auto-start guard pattern
   const exerciseScoreRef = useRef(0); // temp storage to pass score out of state updater
   const startPlayingRef = useRef(null); // stable ref for startPlaying
+  const staveBoundsRef = useRef(null); // stave note-area bounds from RhythmStaffDisplay
   const transitionToFeedbackRef = useRef(null); // stable ref for transitionToFeedback
 
   // IOS-02: Gesture gate state — true when AudioContext is suspended on load
@@ -159,9 +160,10 @@ export function RhythmReadingGame() {
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
       const ctx = audioContextRef.current;
-      // IOS-02: If AudioContext needs a gesture to resume, defer
+      // IOS-02: If AudioContext needs a gesture to resume, show tap-to-start overlay
       if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
-        return;
+        setNeedsGestureToStart(true);
+        return; // Don't auto-start — show tap-to-start overlay
       }
       hasAutoStartedRef.current = true;
       setTimeout(() => startGame(), 100);
@@ -391,7 +393,18 @@ export function RhythmReadingGame() {
 
       // Update cursor position directly via DOM (avoids React re-render on every frame)
       if (cursorDivRef.current) {
-        cursorDivRef.current.style.left = `${progress * 100}%`;
+        const bounds = staveBoundsRef.current;
+        if (bounds && bounds.containerWidth > 0) {
+          // Map cursor to stave note area (between clef/time-sig and barline)
+          // VexFlow distributes notes proportionally within this region
+          const startPct = bounds.noteStartX / bounds.containerWidth;
+          const endPct = bounds.noteEndX / bounds.containerWidth;
+          const cursorPct = startPct + progress * (endPct - startPct);
+          cursorDivRef.current.style.left = `${cursorPct * 100}%`;
+        } else {
+          // Fallback to linear sweep if stave bounds not yet available
+          cursorDivRef.current.style.left = `${progress * 100}%`;
+        }
       }
 
       // Update MetronomeDisplay beat indicator
@@ -416,6 +429,11 @@ export function RhythmReadingGame() {
 
   // Keep ref in sync so handleTap's READY→PLAYING transition calls the current version
   startPlayingRef.current = startPlaying;
+
+  // Receive stave note-area bounds from RhythmStaffDisplay after VexFlow renders
+  const handleStaveBoundsReady = useCallback((bounds) => {
+    staveBoundsRef.current = bounds;
+  }, []);
 
   /**
    * Handle pointer-down tap on the tap area (D-04, D-05, RTAP-04).
@@ -562,6 +580,17 @@ export function RhythmReadingGame() {
     }
   }, [cancelAllTimers, fetchNewPattern, startReadyPhase]);
 
+  // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
+  const handleGestureStart = useCallback(async () => {
+    const ctx = audioContextRef.current;
+    if (ctx) {
+      await ctx.resume();
+    }
+    setNeedsGestureToStart(false);
+    hasAutoStartedRef.current = true;
+    setTimeout(() => startGame(), 100);
+  }, [audioContextRef, startGame]);
+
   /**
    * Handle next exercise routing for trail mode.
    * Follows MetronomeTrainer.handleNextExercise pattern exactly.
@@ -673,6 +702,7 @@ export function RhythmReadingGame() {
             tapResults={tapResults}
             showCursor={false} // parent renders its own RAF-driven cursor div below
             reducedMotion={reducedMotion}
+            onStaveBoundsReady={handleStaveBoundsReady}
           />
           {/* Cursor div - passed via ref to be updated by RAF without React re-renders */}
           <div
@@ -759,6 +789,15 @@ export function RhythmReadingGame() {
           </div>
         )}
       </main>
+
+      {/* IOS-02: Initial gesture gate overlay — shown when AudioContext suspended on trail load */}
+      {needsGestureToStart && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleGestureStart}
+          onRestartExercise={() => navigate(-1)}
+        />
+      )}
 
       {/* iOS audio interrupted overlay */}
       <AudioInterruptedOverlay

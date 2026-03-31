@@ -25,6 +25,7 @@ export function RhythmStaffDisplay({
   tapResults = [],
   showCursor = false,
   reducedMotion = false,
+  onStaveBoundsReady = null,
 }) {
   const containerRef = useRef(null);
   const cursorDivRef = useRef(null);
@@ -100,6 +101,16 @@ export function RhythmStaffDisplay({
       new Formatter().joinVoices([voice]).format([voice], staveWidth - 60);
       voice.draw(ctx, stave);
       beams.forEach((beam) => beam.setContext(ctx).draw());
+
+      // Expose stave note-area bounds so parent can align cursor to note region
+      if (onStaveBoundsReady) {
+        const currentContainerWidth = containerRef.current?.offsetWidth || containerWidth;
+        onStaveBoundsReady({
+          noteStartX: stave.getNoteStartX(),
+          noteEndX: stave.getNoteEndX(),
+          containerWidth: currentContainerWidth,
+        });
+      }
 
       // Store note SVG elements for color updates
       noteElementsRef.current = notes.map((note) => {
