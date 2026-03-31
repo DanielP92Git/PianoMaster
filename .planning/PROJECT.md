@@ -15,6 +15,7 @@ A piano learning PWA for 8-year-old learners with a Duolingo-style skill progres
 These capabilities exist, are working, and have been shipped:
 
 **v1.5 Trail Page Visual Redesign (shipped 2026-02-12):**
+
 - Enchanted forest CSS-only background with starfield, glow orbs, and multi-layer gradients
 - 3D node buttons with radial gradients, state-based glow effects, and press animations
 - Tab-based path switching (Treble/Bass/Rhythm) with URL persistence and ARIA keyboard navigation
@@ -28,6 +29,7 @@ These capabilities exist, are working, and have been shipped:
 - 59/59 requirements delivered with zero database changes
 
 **v1.4 UI Polish & Celebrations (shipped 2026-02-09):**
+
 - Tiered VictoryScreen celebrations (minimal/standard/full/epic) with confetti and node-type-specific messaging
 - Boss unlock 3-stage modal (celebration, unlock animation, next unit preview) with musical confetti and Web Audio fanfare
 - Node type visual distinction: 8 unique lucide-react icons, colorblind-safe palette, boss crown/gold
@@ -36,6 +38,7 @@ These capabilities exist, are working, and have been shipped:
 - Codebase cleanup: 37 dead files removed, 5 unused dependencies removed, bundle visualizer added
 
 **v1.3 Trail System Redesign (shipped 2026-02-05):**
+
 - 93-node trail system with consistent pedagogy across Treble (23), Bass (22), and Rhythm (36) paths
 - Build-time validation script catches prerequisite cycles and invalid node types before deploy
 - 22 bass clef nodes following treble pedagogy (C4 -> C3 octave progression)
@@ -44,6 +47,7 @@ These capabilities exist, are working, and have been shipped:
 - All 70 v1.3 requirements delivered (4 data + 26 bass + 35 rhythm + 5 integration)
 
 **v1.2 Trail System Stabilization (shipped 2026-02-03):**
+
 - TRAIL-01-04: 26 treble clef nodes across Units 1-3 (C4 through C5 progression)
 - MEM-01-05: Memory Game integrated with trail auto-start, correct config parsing, progress saving
 - NAV-01-04: Cross-exercise navigation works (note_recognition, memory_game, sight_reading, rhythm)
@@ -51,6 +55,7 @@ These capabilities exist, are working, and have been shipped:
 - DEBT-01-04: Tech debt resolved (docs gap, i18n, code deduplication, debug removal)
 
 **v1.1 Parental Consent Email Service (shipped 2026-02-02):**
+
 - EMAIL-01: Edge Function sends consent verification email via Brevo API
 - EMAIL-02: Email contains child-friendly branding and clear CTA for parent
 - EMAIL-03: Consent URL in email works end-to-end (verify -> activate account)
@@ -58,6 +63,7 @@ These capabilities exist, are working, and have been shipped:
 - FIX-02: Handle edge cases (resend, expired tokens, invalid links)
 
 **v1.0 Security Hardening (shipped 2026-02-01):**
+
 - SEC-01: RLS policies use database state (not user_metadata) for authorization
 - SEC-02: All SECURITY DEFINER functions have auth.uid() checks
 - SEC-03: Client-side services verify user.id matches studentId
@@ -76,6 +82,7 @@ These capabilities exist, are working, and have been shipped:
 - COPPA-06: No third-party data collection (self-hosted fonts)
 
 **Pre-existing:**
+
 - Supabase authentication (email/password)
 - Student/teacher role differentiation
 - Trail gamification system with XP and levels
@@ -83,6 +90,7 @@ These capabilities exist, are working, and have been shipped:
 - Multiple game modes (sight reading, notes recognition, rhythm, memory)
 
 **v1.6 Auto-Rotate Landscape for Games (shipped 2026-02-17):**
+
 - ORIENT-01 through ORIENT-05: Playful animated rotate prompt on mobile portrait with auto-dismiss, permanent dismiss, all 4 game modes
 - LAYOUT-01 through LAYOUT-04: Landscape-optimized CSS layouts for all 4 games, settings modals, VictoryScreen, portrait playable (WCAG 1.3.4)
 - PLAT-01 through PLAT-04: Android PWA auto-locks landscape via Screen Orientation API, unlocks on navigation away, iOS fallback to rotate prompt
@@ -90,6 +98,7 @@ These capabilities exist, are working, and have been shipped:
 - 18/18 requirements delivered with zero database changes
 
 **v1.7 Mic Pitch Detection Overhaul (shipped 2026-03-04):**
+
 - FIX-01/02: Mic-restart regression fixed with sync ref guard
 - AUDIO-01/02/03: Raw piano signal (no browser DSP), zero smoothing, 4096 fftSize for bass resolution
 - ALGO-01/02/03: McLeod Pitch Method via pitchy library — octave errors eliminated, confidence gating
@@ -100,6 +109,7 @@ These capabilities exist, are working, and have been shipped:
 - 24/24 requirements delivered (2 conditional N/A), 12 plans across 5 phases
 
 **v1.8 App Monetization (shipped 2026-03-01):**
+
 - SUB-01-04: Subscription database with RLS (client SELECT-only, webhook service_role writes)
 - PAY-01-04: Lemon Squeezy integration with webhook signature verification, idempotent UPSERT
 - GATE-01-03: Dual-layer content gate (React UI + database RLS), gold lock vs gray prerequisite lock
@@ -110,6 +120,7 @@ These capabilities exist, are working, and have been shipped:
 - 25/25 requirements delivered, 13 plans across 6 phases
 
 **v1.9 Engagement & Retention (shipped 2026-03-08):**
+
 - NOTIF-01-05: COPPA-compliant push notifications with parent math gate, context-aware messages, 1/day rate limit
 - STRK-01-05: Streak protection with 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
 - GAME-01-05: Notes Recognition arcade mode — combo/lives/speed bonus, on-fire mode, auto-grow note pool
@@ -120,6 +131,7 @@ These capabilities exist, are working, and have been shipped:
 - 36/36 requirements delivered, 15 plans across 7 phases
 
 **v2.0 VictoryScreen & XP Unification (shipped 2026-03-08):**
+
 - VS-EXTRACT/LAYOUT/CONTENT/BUTTONS/FREEPLAY: VictoryScreen hook extraction (70% line reduction) + two-panel landscape layout
 - XP-SERVICE/ACHIEVE/DEAD-CODE: Points replaced with XP as sole reward currency, dead code deleted
 - XP-FREEPLAY/VICTORY/DASHBOARD/HOOKS: Free play XP awarding, unified display, query cleanup
@@ -128,6 +140,7 @@ These capabilities exist, are working, and have been shipped:
 - 17/17 requirements delivered, 6 plans across 2 phases
 
 **v2.1 Forgot Password Recovery (shipped 2026-03-10):**
+
 - PWD-RESET-API: Supabase password reset API with anti-enumeration security
 - PWD-RESET-I18N: Complete EN/HE translations (23 keys each)
 - PWD-RESET-LOGIN-UI: Inline three-state forgot password flow in LoginForm
@@ -136,6 +149,7 @@ These capabilities exist, are working, and have been shipped:
 - 5/5 requirements delivered, 2 plans across 1 phase
 
 **v2.2 Sharps & Flats (shipped 2026-03-17):**
+
 - FIX-01/02: patternBuilder regex + trail flag derivation for accidental pitches
 - TREB-01/02/03: 18 treble accidental nodes (F#4, C#4, G#4 sharps + Bb4, Eb4, Ab4, Db4 flats + boss)
 - BASS-01/02/03: 18 bass accidental nodes (F#3, C#3, G#3 sharps + Bb3, Eb3, Ab3, Db3 flats + boss)
@@ -144,6 +158,7 @@ These capabilities exist, are working, and have been shipped:
 - 12/12 requirements delivered, 9 plans across 5 phases
 
 **v2.5 Launch Prep (shipped 2026-03-22):**
+
 - BUILD-01/02: Fixed verify:patterns (.js extension), synchronized Supabase migration history
 - LINT-01-04: All 574 ESLint warnings eliminated (config fixes, dead code removal, justified suppressions)
 - DEL-01-07: COPPA hard-delete Edge Function — cron-triggered permanent deletion after 30-day grace, CASCADE across all tables, LS cancel, Brevo confirmation email, HMAC audit log
@@ -151,6 +166,7 @@ These capabilities exist, are working, and have been shipped:
 - 20/20 requirements delivered, 11 plans across 4 phases
 
 **v2.4 Content Expansion (shipped 2026-03-19):**
+
 - RENDER-01/02/03: VexFlow key signature glyph rendering, accidental suppression, config pipeline threading
 - TREB-01-07: 14 treble key signature nodes (G, D, A, F, Bb, Eb major + memory + boss)
 - BASS-01-07: 14 bass key signature nodes mirroring treble with C3-C4 range
@@ -160,6 +176,7 @@ These capabilities exist, are working, and have been shipped:
 - 26/26 requirements delivered, 10 plans across 5 phases
 
 **v2.3 Launch Readiness (shipped 2026-03-17):**
+
 - LEGAL-01/07: Privacy Policy and Terms of Service public pages with glassmorphism, cross-linked from signup/settings/legal/consent
 - QUAL-01/03: All 23 ESLint errors fixed (0 remaining), React ErrorBoundary with Sentry integration
 - OBS-01/04: Sentry error monitoring (COPPA-safe, prod-only), source maps, analytics placeholder
@@ -169,6 +186,7 @@ These capabilities exist, are working, and have been shipped:
 - 30/30 requirements delivered, 6 phases in 1 day
 
 **v2.6 User Feedback (shipped 2026-03-23):**
+
 - BACK-01/02: send-feedback Edge Function with JWT auth, input validation, Brevo plain-text delivery
 - SPAM-01-05: JWT gate, DB rate limiting (3/hr), honeypot silent rejection, server-side validation, 5-minute client cooldown
 - FORM-01-05: Four-state FeedbackForm (idle/gated/form/success) with ParentGateMath, type dropdown, character counter, inline error banners
@@ -177,6 +195,7 @@ These capabilities exist, are working, and have been shipped:
 - 15/15 requirements delivered, 3 plans across 2 phases
 
 **v2.7 Instrument Practice Tracking (shipped 2026-03-25):**
+
 - LOG-01/02/03: Daily practice logging via dashboard PracticeLogCard with FSM state, 25 XP/day reward
 - LOG-04: Practice streak milestone celebrations at 5/10/21/30 days with emerald confetti modal
 - STRK-01/02/03: Dedicated instrument practice streak counter (piano icon), weekend pass, independent DB table
@@ -187,6 +206,7 @@ These capabilities exist, are working, and have been shipped:
 - 19/19 requirements delivered, 12 plans across 5 phases
 
 **v2.8 Introductory Single-Note Game (shipped 2026-03-26):**
+
 - REQ-01-09: NoteSpeedCards speed card game for single-note trail nodes (treble_1_1, bass_1_1) with conveyor animation, 3-lives, combo system, 4-tier speed ramp
 - NOTE_CATCH exercise type wired end-to-end: constant, node data, TrailNodeModal routing, App.jsx route, i18n
 - D-01-14/REQ-01-10: Dedicated Parent Portal with gate-first architecture, math gate on every visit, QuickStatsGrid, 4 content sections
@@ -195,6 +215,7 @@ These capabilities exist, are working, and have been shipped:
 - 33/33 requirements delivered, 5 plans across 2 phases
 
 **v2.9 Game Variety & Ear Training (shipped 2026-03-30):**
+
 - INFRA-01-08: Data foundation refactor — EXERCISE_TYPES enum, validateExerciseTypes, TRAIL_TAB_CONFIGS, ComingSoon placeholder pattern
 - RTAP-01-05: RhythmReadingGame (tap-along) with RhythmPatternGenerator, VexFlow staff display, binary pattern scoring
 - RDICT-01-06: RhythmDictationGame (hear-and-pick) with multi-step playback workflow, audio-visual pattern display
@@ -212,6 +233,7 @@ These capabilities exist, are working, and have been shipped:
 **Goal:** Fix accumulated tech debt, broken tests, and deferred items to establish a clean foundation before the next feature milestone.
 
 **Target features:**
+
 - Trail difficulty mapping fix (easy→beginner vocabulary + rhythmPatterns config usage)
 - rhythmUnit7/8 test expectations updated for D-12 mixed exercise distribution
 - TeacherDashboard points→XP migration (~20 references)
@@ -224,6 +246,7 @@ These capabilities exist, are working, and have been shipped:
 - Phase 08 HUMAN-UAT completion (5 pending manual verification items)
 
 **Future candidates:**
+
 - Production deployment to Google Play / Apple App Store
 - Celebration sound effects with volume control (requires classroom A/B testing)
 - Streak/unit/path completion celebrations
@@ -237,7 +260,8 @@ These capabilities exist, are working, and have been shipped:
 **Future candidates — Engagement & Retention (researched 2026-02-25):**
 See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.planning/research/PITFALLS_ENGAGEMENT.md` for pitfalls.
 
-*Content Expansion (extends trail from 2-3 months → 12+ months):*
+_Content Expansion (extends trail from 2-3 months → 12+ months):_
+
 - Trail Section 5: Key Signatures (~15 nodes)
 - Trail Section 6: Two-Hand Basics (~20 nodes)
 - Trail Section 7: Simple Melodies (~15 nodes, public domain songs)
@@ -245,24 +269,29 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.plannin
 - Procedural "Endless Practice" mode (infinite post-trail content)
 - Real Song Library (public domain first, licensed later)
 
-*Daily Return Hooks:*
+_Daily Return Hooks:_
+
 - Daily challenge system (rotating unique challenges with bonus XP)
 - Weekly bonus events (Double XP, Bass Week, Speed Week, Review Week)
 
-*Progression Plateau Solutions:*
+_Progression Plateau Solutions:_
+
 - Prestige / mastery star tiers (Gold 4th, Diamond 5th beyond current 3-star max)
 - Spaced repetition "Rusty Skills" system (accuracy decay + review incentives)
 
-*Game Variety:*
+_Game Variety:_
+
 - New mini-game types: Note Catcher (Guitar Hero style), Melody Puzzle, Rhythm Battle, Interval Training
 - Adaptive difficulty within sessions (flow zone management)
 
-*Narrative & Emotional:*
+_Narrative & Emotional:_
+
 - Story campaign wrapper ("Help Beethoven restore his musical powers")
 - Seasonal events (quarterly themed content with exclusive cosmetics)
 - Accessory system expansion (avatar in gameplay, themed sets, rare items)
 
-*Social & Competitive (COPPA-safe):*
+_Social & Competitive (COPPA-safe):_
+
 - Classroom challenges (teacher-set, anonymous collective progress)
 - Classroom leaderboard with consent (first names, weekly reset, "most improved")
 
@@ -270,26 +299,27 @@ See `.planning/research/ENGAGEMENT_RETENTION.md` for full analysis and `.plannin
 
 Explicitly excluded:
 
-| Feature | Reason |
-|---------|--------|
-| Real song integration (licensed) | Licensing complexity ($500-5000/song); start with public domain only |
-| Path branching logic | Current linear progression works; complexity not justified |
-| Multi-language consent emails | English only for now, Hebrew later |
+| Feature                                      | Reason                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Real song integration (licensed)             | Licensing complexity ($500-5000/song); start with public domain only                    |
+| Path branching logic                         | Current linear progression works; complexity not justified                              |
+| Multi-language consent emails                | English only for now, Hebrew later                                                      |
 | Social network features (chat, friend lists) | COPPA prohibits without verifiable parental consent; classroom-level features preferred |
-| Daily login rewards (open-and-close) | Manipulative pattern; reward meaningful activity instead |
-| Virtual currency purchasable with money | COPPA dark pattern risk; earn-only accessories tied to achievements |
+| Daily login rewards (open-and-close)         | Manipulative pattern; reward meaningful activity instead                                |
+| Virtual currency purchasable with money      | COPPA dark pattern risk; earn-only accessories tied to achievements                     |
 
 **Revisited decisions (2026-02-25 engagement research):**
 
-| Previously Excluded | New Status | Rationale |
-|---|---|---|
-| Avatar customization / unlockable items | **Moved to future candidate** | Engagement research shows cosmetic rewards critical for 12-month retention; balance with intrinsic motivation per SDT theory |
-| Social comparison / leaderboard celebrations | **Moved to future candidate (COPPA-safe variant)** | Anonymous classroom challenges and teacher-set goals are COPPA-compliant and add social accountability |
-| REVIEW node automation (spaced repetition) | **Moved to future candidate** | Critical for post-trail retention; "rusty skills" system prevents content exhaustion |
+| Previously Excluded                          | New Status                                         | Rationale                                                                                                                    |
+| -------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Avatar customization / unlockable items      | **Moved to future candidate**                      | Engagement research shows cosmetic rewards critical for 12-month retention; balance with intrinsic motivation per SDT theory |
+| Social comparison / leaderboard celebrations | **Moved to future candidate (COPPA-safe variant)** | Anonymous classroom challenges and teacher-set goals are COPPA-compliant and add social accountability                       |
+| REVIEW node automation (spaced repetition)   | **Moved to future candidate**                      | Critical for post-trail retention; "rusty skills" system prevents content exhaustion                                         |
 
 ## Context
 
-**Current State (after v3.0 Phase 13 — 2026-03-31):**
+**Current State (after v3.0 Phase 14 — 2026-03-31):**
+
 - 185-node trail system (93 original + 36 accidental + 42 content expansion + 14 ear training nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Ear Training trail path: 14 nodes across 2 units (Sound Direction + Interval Explorer), 2 boss nodes with multi-exercise sessions
 - Ear Training tab on TrailMap with cyan palette, driven by TRAIL_TAB_CONFIGS data array
@@ -360,6 +390,7 @@ Explicitly excluded:
 - v1.0: 177 files | v1.1: 15 files | v1.2: 31 files | v1.3: 88 files | v1.4: 127 files | v1.5: 45 files | v1.6: 42 files | v1.7: ~30 files | v1.8: ~40 files | v1.9: 124 files | v2.0: 43 files | v2.1: 11 files | v2.2: 66 files | v2.4: 149 files | v2.6: 28 files
 
 **Tech Stack:**
+
 - Frontend: React 18, Vite 6, React Router v7
 - State: Redux Toolkit (minimal), React Context (feature-scoped), TanStack Query v5
 - Backend: Supabase (auth, database, real-time, Edge Functions)
@@ -371,11 +402,13 @@ Explicitly excluded:
 - Font: @fontsource/quicksand (trail page only)
 
 **User Demographics:**
+
 - Primary users: 8-year-old children learning piano
 - Secondary users: Teachers managing students, parents overseeing progress
 - COPPA compliance required for children under 13
 
 **Known Issues (non-blocking):**
+
 - Parental consent verification method needs legal review
 - Privacy policy language requires attorney review
 - State age verification laws may require Play Age Signals API
@@ -393,134 +426,135 @@ Explicitly excluded:
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| is_admin() function for admin checks | user_metadata is user-modifiable via supabase.auth.updateUser() | Good |
-| Defense-in-depth in triggers | Verify auth.uid() even when RLS should prevent access | Good |
-| Trigger-based is_under_13 column | GENERATED ALWAYS AS doesn't support date functions | Good |
-| Neutral DOB collection | COPPA requires dropdown menus not leading questions | Good |
-| Fixed window rate limiting | Simpler than sliding window, reset after 5 min of inactivity | Good |
-| 30min student / 2hr teacher timeout | Balance security on shared devices vs. not interrupting practice | Good |
-| crossTab with leaderElection | One tab coordinates timeout across all tabs | Good |
-| Fontsource packages for fonts | npm versioning, Vite bundling, no manual font management | Good |
-| No separate staging environment | Beta phase with few users; adds maintenance burden | Good |
-| Switch from Resend to Brevo | Resend free tier domain limitation; Brevo offers 300/day | Good |
-| .maybeSingle() for optional queries | Prevents 406 errors when no rows found | Good |
-| SignOut before SignUp | Prevents session conflicts from previous users | Good |
-| Public route bypass for consent verify | Parents complete verification regardless of child status | Good |
-| Table-based HTML email layout | Maximum email client compatibility (Outlook uses Word engine) | Good |
-| 8 node types for engagement variety | Psychological variety improves learning retention | Good |
-| 26 nodes in Units 1-3 vs 18 original | Gradual progression appropriate for 8-year-old learners | Good |
-| Score calc uses pairs: (cards/2)*10 | Cards count double-counts; pairs is correct game mechanic | Good |
-| Use shared verifyStudentDataAccess | Robustness (.maybeSingle), code deduplication | Good |
-| Validation runs at prebuild | Catches prerequisite cycles and invalid types before deploy | Good |
-| START_ORDER = 51 for bass, 100 for rhythm | Clear separation between clef and rhythm paths | Good |
-| Single pitch C4 for all rhythm nodes | Pure rhythm focus, no pitch confusion for learners | Good |
-| Silent progress reset, XP preserved | Maintains motivation despite trail restructure | Good |
-| 93 nodes final count | Actual count after implementation (was 87 estimate) | Good |
-| Celebration duration tiers (500ms/1000ms/3000ms) | Based on 8-year-old attention span research | Good |
-| Extended timeouts 1.5x multiplier | Balances cognitive accessibility with engagement | Good |
-| Boss icons override category icons | Trophy/crown more recognizable for special nodes | Good |
-| Blue/purple/green colorblind-safe palette | Maximally distinguishable in all colorblindness types | Good |
-| Hardcoded English for celebrations | i18n deferred; English primary for learners | Good |
-| Epic tier requires boss + stars | Boss nodes only epic when player earns at least 1 star | Good |
-| Web Audio API fanfare (not bundled file) | 0kb bundle cost vs 20-50kb; synthesis quality sufficient | Good |
-| Singleton AudioContext pattern | Prevents browser "too many contexts" error | Good |
-| 3-stage boss modal | Matches Duolingo celebration patterns for milestone gravitas | Good |
-| Bundle visualizer as permanent tool | Ongoing monitoring vs one-time audit | Good |
-| Knip for dead code detection | JSX/TSX support, comprehensive analysis | Good |
-| Conservative dead code removal | Detection -> verification -> test -> atomic commit | Good |
-| Quicksand font for trail page | Rounded, kid-friendly feel; matches Stitch design | Good |
-| CSS-only forest background | No image dependency, better performance, easier maintenance | Good |
-| Tab-based path switching | Mobile screen too narrow for 3 simultaneous paths | Good |
-| Vertical zigzag trail (mobile/desktop) | Unified layout matches natural scrolling; user preferred over horizontal | Good |
-| Pseudo-element + opacity for glow effects | Avoids box-shadow transitions that cause paint storms | Good |
-| URL query param as tab state source | Single source of truth; no useState duplication; supports browser back | Good |
-| Boss nodes merged into category tabs | ID prefix matching (boss_treble_, boss_bass_, boss_rhythm_) | Good |
-| Stars inside completed node circles | More cohesive than floating elements; absolute overlay positioning | Good |
-| 2px press depth (not 4px) | Gentler tactile feedback appropriate for 8-year-olds | Good |
-| RTL mirrors x-axis (100 - xPercent) | Natural right-to-left flow for Hebrew users | Good |
-| White 3px outline for focus-visible | Consistent keyboard navigation indicator across all node states | Good |
-| Flat solid background (not gradient) | Gradient caused visible banding artifact on trail page | Good |
-| will-change only on hover states | Avoids GPU layer promotion for all 93 nodes simultaneously | Good |
-| Semi-opaque bg-slate-900/40 overlay | Ensures WCAG 4.5:1 contrast on glass panels | Good |
-| 40% Bezier control point offset | Creates winding river S-curves (not sharp zigzags) | Good |
-| Function initializer useState for orientation | Synchronous first-render value avoids flash of incorrect state | Good |
-| Text-only "Play anyway" dismiss (no X icon) | WCAG 1.3.4 escape hatch, simple and clear for 8-year-olds | Good |
-| localStorage permanent dismiss for rotate prompt | Matches pianoapp- naming convention, persists across sessions | Good |
-| Rotate-pause-reset animation cycle | User feedback: phone rotates to landscape, pauses, snaps back | Good |
-| Tailwind raw media queries for orientation | No aspect-ratio guards needed (games have no text inputs) | Good |
-| Portrait-first design philosophy | WCAG 1.3.4: portrait as baseline, landscape as CSS-only enhancement | Good |
-| MemoryGame landscape grid 6-8 cols | Better horizontal space utilization in landscape orientation | Good |
-| Fullscreen before orientation lock | Android API requirement: requestFullscreen then screen.orientation.lock | Good |
-| fullscreenchange listener for Escape key | Auto-unlocks orientation when user exits fullscreen manually | Good |
-| Platform guard: Android PWA only | iOS/desktop/browser get rotate prompt or no-op, not API lock | Good |
-| useLandscapeLock before useRotatePrompt | Consistent mount order in all game components | Good |
-| ARIA live region as first child | Immediate screen reader monitoring with sr-only visual hiding | Good |
-| useMotionTokens for fade, AccessibilityContext for icon | Kept existing fade (already respects motion), added explicit control for phone icon | Good |
-| Separate COPPA consent for push notifications | Push consent separate from account verification to avoid confusion | Good |
-| Parent math gate for push + weekend pass | ParentGateMath reused for dual COPPA purpose | Good |
-| 36-hour grace window (not midnight cutoff) | Accommodates varied practice schedules for children | Good |
-| All streak logic in JS service layer | No new Postgres functions, consistent with patterns, testable | Good |
-| Combo tiers as module-level constants | Avoids useCallback dep churn in NotesRecognitionGame | Good |
-| Fire sound via standalone Web Audio oscillator | Avoids mutual-pause conflict with game sounds | Good |
-| Arabic numerals for prestige (Maestro 1, not I) | Simpler for 8-year-olds than Roman numerals | Good |
-| PRESTIGE_XP_PER_TIER = 3000 | Matches late-level XP gaps, keeps prestige achievable | Good |
-| HMAC-SHA256 for email unsubscribe tokens | Stateless, no parent login needed for one-click unsubscribe | Good |
-| XPRing uses SVG foreignObject for center icon | Clean SVG composition for gold star placement | Good |
-| UnifiedStatsCard gradient border via wrapper div | Better rounded corner support than border-image | Good |
-| Fireflies plain div when reducedMotion | Eliminates animation loop entirely for accessibility | Good |
-| Free play XP: 10 + floor(score% * 0.4) | Less than trail nodes (10-50 vs 50-150+), keeps trail incentive | Good |
-| Hook extraction: useVictoryState | Clean separation of 792 lines business logic from render | Good |
-| Teacher XP: "X XP (Lv. Y)" format | Meaningful context for teachers instead of raw numbers | Good |
-| Inline forgot password (not modal) | Keeps UX within login card, simpler than separate page | Good |
-| Smart expired-link detection via URL params | Immediate error for missing params, 10s timeout for real links | Good |
-| Anti-enumeration: generic errors only on reset | Prevents email harvesting via password reset endpoint | Good |
-| Flag derivation from notePool in TrailNodeModal | Curriculum authority in one place, games consume flags | Good |
-| Auto-grow skips accidentals nodes for natural sessions | Prevents confusing mixed-context note injection | Good |
-| SIGHT_READING excluded from flat practice nodes | Mic outputs sharp-form (A#4 not Bb4); boss nodes include as inert placeholder | Good |
-| MIDI comparison (noteToMidi) for enharmonic matching | Eliminates string equality bugs for A#4=Bb4 equivalence | Good |
-| Anchored regex `/^[A-G]b\d/` for flat detection | Prevents natural 'B' note from triggering false flat mode | Good |
-| Unicode symbols for accidental display (not ASCII) | Proper musical notation: F♯ not F#, B♭ not Bb | Good |
-| Hebrew solfege terms for accidentals | Culture-appropriate: דיאז (sharp) and במול (flat) | Good |
-| 36 new nodes all premium (default-deny) | No new IDs in FREE_NODE_IDS; subscription gate by exclusion | Good |
-| Separate sharps/flats units (not mixed) | Avoids enharmonic confusion; mic outputs sharp-form only | Good |
-| filterNotesToKey static KEY_NOTE_LETTERS map | Not VexFlow KeyManager; testable and deterministic | Good |
-| skipManualAccidental flag on buildStaveNote | Prevents double accidental when applyAccidentals active | Good |
-| SIX_EIGHT.beats = 2 with subdivisions: 6 | Compound time modeled as 2 dotted-quarter beats, not 6 eighths | Good |
-| beamGroupsForTimeSignature returns null for simple time | beamConfig = {} leaves VexFlow defaults fully intact | Good |
-| Mini-boss nodes: isBoss:false, category:'boss' | Distinct from true BOSS nodes; boss naming convention preserved | Good |
-| Default-deny gate for 42 new nodes | subscriptionConfig.js untouched; new nodes premium by default | Good |
-| RHYTHM_5/6 backfilled to UNITS object | Closed metadata gap between RHYTHM_4 and new RHYTHM_7/8 | Good |
-| Feedback form in Settings (not standalone page) | Parent-gated section matches existing parent-gated patterns | Good |
-| Brevo email only (no DB message storage) | COPPA-safe: no PII accumulation; email is ground truth for v1 | Good |
-| Service role for rate-check COUNT | No SELECT RLS on feedback_submissions; service role bypasses safely | Good |
-| Honeypot silent rejection (fake 200) | Avoids tipping off scrapers; bot thinks submission succeeded | Good |
-| onClick handler (not form onSubmit) | Supports retry button calling handleSubmit directly | Good |
-| Unified support Gmail for all emails | One inbox for support + feedback; simplifies sender management | Good |
-| Separate instrument_practice_streak table | Two distinct behavioral domains; merging entangles app-usage and practice | Good |
-| local_date DATE column (not UTC timestamp) | Prevents timezone drift in streak/heatmap calculations | Good |
-| logState FSM (idle/logging/settled) | Prevents double-tap and manages 2-second hold state | Good |
-| Practice check-in priority in push cron | Practice check-in checked before app-usage; continue prevents double-notification | Good |
-| iOS URL param fallback (?practice_checkin=1) | iOS has no notification action buttons; URL param is primary path not fallback | Good |
-| react-activity-calendar v3 for heatmap | Date-math reliability, proven component vs bespoke SVG | Good |
-| showMonthLabels=false in RTL mode | Avoids SVG text double-mirror; functional heatmap in RTL v1 | Good |
-| Module-level MILESTONES constant | Avoids useCallback dep churn (same pattern as COMBO_TIERS) | Good |
-| Role-first signup wizard | Role selection as step 1; STUDENT_STEPS/TEACHER_STEPS drive wizard flow | Good |
-| Birth year integer (not full DOB) | Simpler age collection; stored as YYYY-01-01 convention | Good |
-| NOTE_CATCH replaces note_recognition on first nodes | Single-note recognition is trivially easy; speed card game is engaging | Good |
-| NoteSpeedCards stub in Plan 01 (not Plan 02) | Vite resolves all dynamic imports at build time; lazy import fails without module | Good |
-| No AudioContextProvider for NoteSpeedCards | Game uses screen tap only, no mic/audio input needed | Good |
-| Gate-first portal (useState true on mount) | Parent must verify every visit; no persistent consent per D-04 spec | Good |
-| Deferred queries (enabled: !gateOpen) | Prevents data fetching before parent passes math gate | Good |
-| Weekend pass no sub-gate in portal | Page-level gate covers all sections per D-13; individual gates removed | Good |
-| buildInitialTrailPool for auto-grow | Uses focusNotes/contextNotes from node config instead of walking forward nodes | Good |
+| Decision                                                | Rationale                                                                           | Outcome |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------- |
+| is_admin() function for admin checks                    | user_metadata is user-modifiable via supabase.auth.updateUser()                     | Good    |
+| Defense-in-depth in triggers                            | Verify auth.uid() even when RLS should prevent access                               | Good    |
+| Trigger-based is_under_13 column                        | GENERATED ALWAYS AS doesn't support date functions                                  | Good    |
+| Neutral DOB collection                                  | COPPA requires dropdown menus not leading questions                                 | Good    |
+| Fixed window rate limiting                              | Simpler than sliding window, reset after 5 min of inactivity                        | Good    |
+| 30min student / 2hr teacher timeout                     | Balance security on shared devices vs. not interrupting practice                    | Good    |
+| crossTab with leaderElection                            | One tab coordinates timeout across all tabs                                         | Good    |
+| Fontsource packages for fonts                           | npm versioning, Vite bundling, no manual font management                            | Good    |
+| No separate staging environment                         | Beta phase with few users; adds maintenance burden                                  | Good    |
+| Switch from Resend to Brevo                             | Resend free tier domain limitation; Brevo offers 300/day                            | Good    |
+| .maybeSingle() for optional queries                     | Prevents 406 errors when no rows found                                              | Good    |
+| SignOut before SignUp                                   | Prevents session conflicts from previous users                                      | Good    |
+| Public route bypass for consent verify                  | Parents complete verification regardless of child status                            | Good    |
+| Table-based HTML email layout                           | Maximum email client compatibility (Outlook uses Word engine)                       | Good    |
+| 8 node types for engagement variety                     | Psychological variety improves learning retention                                   | Good    |
+| 26 nodes in Units 1-3 vs 18 original                    | Gradual progression appropriate for 8-year-old learners                             | Good    |
+| Score calc uses pairs: (cards/2)\*10                    | Cards count double-counts; pairs is correct game mechanic                           | Good    |
+| Use shared verifyStudentDataAccess                      | Robustness (.maybeSingle), code deduplication                                       | Good    |
+| Validation runs at prebuild                             | Catches prerequisite cycles and invalid types before deploy                         | Good    |
+| START_ORDER = 51 for bass, 100 for rhythm               | Clear separation between clef and rhythm paths                                      | Good    |
+| Single pitch C4 for all rhythm nodes                    | Pure rhythm focus, no pitch confusion for learners                                  | Good    |
+| Silent progress reset, XP preserved                     | Maintains motivation despite trail restructure                                      | Good    |
+| 93 nodes final count                                    | Actual count after implementation (was 87 estimate)                                 | Good    |
+| Celebration duration tiers (500ms/1000ms/3000ms)        | Based on 8-year-old attention span research                                         | Good    |
+| Extended timeouts 1.5x multiplier                       | Balances cognitive accessibility with engagement                                    | Good    |
+| Boss icons override category icons                      | Trophy/crown more recognizable for special nodes                                    | Good    |
+| Blue/purple/green colorblind-safe palette               | Maximally distinguishable in all colorblindness types                               | Good    |
+| Hardcoded English for celebrations                      | i18n deferred; English primary for learners                                         | Good    |
+| Epic tier requires boss + stars                         | Boss nodes only epic when player earns at least 1 star                              | Good    |
+| Web Audio API fanfare (not bundled file)                | 0kb bundle cost vs 20-50kb; synthesis quality sufficient                            | Good    |
+| Singleton AudioContext pattern                          | Prevents browser "too many contexts" error                                          | Good    |
+| 3-stage boss modal                                      | Matches Duolingo celebration patterns for milestone gravitas                        | Good    |
+| Bundle visualizer as permanent tool                     | Ongoing monitoring vs one-time audit                                                | Good    |
+| Knip for dead code detection                            | JSX/TSX support, comprehensive analysis                                             | Good    |
+| Conservative dead code removal                          | Detection -> verification -> test -> atomic commit                                  | Good    |
+| Quicksand font for trail page                           | Rounded, kid-friendly feel; matches Stitch design                                   | Good    |
+| CSS-only forest background                              | No image dependency, better performance, easier maintenance                         | Good    |
+| Tab-based path switching                                | Mobile screen too narrow for 3 simultaneous paths                                   | Good    |
+| Vertical zigzag trail (mobile/desktop)                  | Unified layout matches natural scrolling; user preferred over horizontal            | Good    |
+| Pseudo-element + opacity for glow effects               | Avoids box-shadow transitions that cause paint storms                               | Good    |
+| URL query param as tab state source                     | Single source of truth; no useState duplication; supports browser back              | Good    |
+| Boss nodes merged into category tabs                    | ID prefix matching (boss*treble*, boss*bass*, boss*rhythm*)                         | Good    |
+| Stars inside completed node circles                     | More cohesive than floating elements; absolute overlay positioning                  | Good    |
+| 2px press depth (not 4px)                               | Gentler tactile feedback appropriate for 8-year-olds                                | Good    |
+| RTL mirrors x-axis (100 - xPercent)                     | Natural right-to-left flow for Hebrew users                                         | Good    |
+| White 3px outline for focus-visible                     | Consistent keyboard navigation indicator across all node states                     | Good    |
+| Flat solid background (not gradient)                    | Gradient caused visible banding artifact on trail page                              | Good    |
+| will-change only on hover states                        | Avoids GPU layer promotion for all 93 nodes simultaneously                          | Good    |
+| Semi-opaque bg-slate-900/40 overlay                     | Ensures WCAG 4.5:1 contrast on glass panels                                         | Good    |
+| 40% Bezier control point offset                         | Creates winding river S-curves (not sharp zigzags)                                  | Good    |
+| Function initializer useState for orientation           | Synchronous first-render value avoids flash of incorrect state                      | Good    |
+| Text-only "Play anyway" dismiss (no X icon)             | WCAG 1.3.4 escape hatch, simple and clear for 8-year-olds                           | Good    |
+| localStorage permanent dismiss for rotate prompt        | Matches pianoapp- naming convention, persists across sessions                       | Good    |
+| Rotate-pause-reset animation cycle                      | User feedback: phone rotates to landscape, pauses, snaps back                       | Good    |
+| Tailwind raw media queries for orientation              | No aspect-ratio guards needed (games have no text inputs)                           | Good    |
+| Portrait-first design philosophy                        | WCAG 1.3.4: portrait as baseline, landscape as CSS-only enhancement                 | Good    |
+| MemoryGame landscape grid 6-8 cols                      | Better horizontal space utilization in landscape orientation                        | Good    |
+| Fullscreen before orientation lock                      | Android API requirement: requestFullscreen then screen.orientation.lock             | Good    |
+| fullscreenchange listener for Escape key                | Auto-unlocks orientation when user exits fullscreen manually                        | Good    |
+| Platform guard: Android PWA only                        | iOS/desktop/browser get rotate prompt or no-op, not API lock                        | Good    |
+| useLandscapeLock before useRotatePrompt                 | Consistent mount order in all game components                                       | Good    |
+| ARIA live region as first child                         | Immediate screen reader monitoring with sr-only visual hiding                       | Good    |
+| useMotionTokens for fade, AccessibilityContext for icon | Kept existing fade (already respects motion), added explicit control for phone icon | Good    |
+| Separate COPPA consent for push notifications           | Push consent separate from account verification to avoid confusion                  | Good    |
+| Parent math gate for push + weekend pass                | ParentGateMath reused for dual COPPA purpose                                        | Good    |
+| 36-hour grace window (not midnight cutoff)              | Accommodates varied practice schedules for children                                 | Good    |
+| All streak logic in JS service layer                    | No new Postgres functions, consistent with patterns, testable                       | Good    |
+| Combo tiers as module-level constants                   | Avoids useCallback dep churn in NotesRecognitionGame                                | Good    |
+| Fire sound via standalone Web Audio oscillator          | Avoids mutual-pause conflict with game sounds                                       | Good    |
+| Arabic numerals for prestige (Maestro 1, not I)         | Simpler for 8-year-olds than Roman numerals                                         | Good    |
+| PRESTIGE_XP_PER_TIER = 3000                             | Matches late-level XP gaps, keeps prestige achievable                               | Good    |
+| HMAC-SHA256 for email unsubscribe tokens                | Stateless, no parent login needed for one-click unsubscribe                         | Good    |
+| XPRing uses SVG foreignObject for center icon           | Clean SVG composition for gold star placement                                       | Good    |
+| UnifiedStatsCard gradient border via wrapper div        | Better rounded corner support than border-image                                     | Good    |
+| Fireflies plain div when reducedMotion                  | Eliminates animation loop entirely for accessibility                                | Good    |
+| Free play XP: 10 + floor(score% \* 0.4)                 | Less than trail nodes (10-50 vs 50-150+), keeps trail incentive                     | Good    |
+| Hook extraction: useVictoryState                        | Clean separation of 792 lines business logic from render                            | Good    |
+| Teacher XP: "X XP (Lv. Y)" format                       | Meaningful context for teachers instead of raw numbers                              | Good    |
+| Inline forgot password (not modal)                      | Keeps UX within login card, simpler than separate page                              | Good    |
+| Smart expired-link detection via URL params             | Immediate error for missing params, 10s timeout for real links                      | Good    |
+| Anti-enumeration: generic errors only on reset          | Prevents email harvesting via password reset endpoint                               | Good    |
+| Flag derivation from notePool in TrailNodeModal         | Curriculum authority in one place, games consume flags                              | Good    |
+| Auto-grow skips accidentals nodes for natural sessions  | Prevents confusing mixed-context note injection                                     | Good    |
+| SIGHT_READING excluded from flat practice nodes         | Mic outputs sharp-form (A#4 not Bb4); boss nodes include as inert placeholder       | Good    |
+| MIDI comparison (noteToMidi) for enharmonic matching    | Eliminates string equality bugs for A#4=Bb4 equivalence                             | Good    |
+| Anchored regex `/^[A-G]b\d/` for flat detection         | Prevents natural 'B' note from triggering false flat mode                           | Good    |
+| Unicode symbols for accidental display (not ASCII)      | Proper musical notation: F♯ not F#, B♭ not Bb                                       | Good    |
+| Hebrew solfege terms for accidentals                    | Culture-appropriate: דיאז (sharp) and במול (flat)                                   | Good    |
+| 36 new nodes all premium (default-deny)                 | No new IDs in FREE_NODE_IDS; subscription gate by exclusion                         | Good    |
+| Separate sharps/flats units (not mixed)                 | Avoids enharmonic confusion; mic outputs sharp-form only                            | Good    |
+| filterNotesToKey static KEY_NOTE_LETTERS map            | Not VexFlow KeyManager; testable and deterministic                                  | Good    |
+| skipManualAccidental flag on buildStaveNote             | Prevents double accidental when applyAccidentals active                             | Good    |
+| SIX_EIGHT.beats = 2 with subdivisions: 6                | Compound time modeled as 2 dotted-quarter beats, not 6 eighths                      | Good    |
+| beamGroupsForTimeSignature returns null for simple time | beamConfig = {} leaves VexFlow defaults fully intact                                | Good    |
+| Mini-boss nodes: isBoss:false, category:'boss'          | Distinct from true BOSS nodes; boss naming convention preserved                     | Good    |
+| Default-deny gate for 42 new nodes                      | subscriptionConfig.js untouched; new nodes premium by default                       | Good    |
+| RHYTHM_5/6 backfilled to UNITS object                   | Closed metadata gap between RHYTHM_4 and new RHYTHM_7/8                             | Good    |
+| Feedback form in Settings (not standalone page)         | Parent-gated section matches existing parent-gated patterns                         | Good    |
+| Brevo email only (no DB message storage)                | COPPA-safe: no PII accumulation; email is ground truth for v1                       | Good    |
+| Service role for rate-check COUNT                       | No SELECT RLS on feedback_submissions; service role bypasses safely                 | Good    |
+| Honeypot silent rejection (fake 200)                    | Avoids tipping off scrapers; bot thinks submission succeeded                        | Good    |
+| onClick handler (not form onSubmit)                     | Supports retry button calling handleSubmit directly                                 | Good    |
+| Unified support Gmail for all emails                    | One inbox for support + feedback; simplifies sender management                      | Good    |
+| Separate instrument_practice_streak table               | Two distinct behavioral domains; merging entangles app-usage and practice           | Good    |
+| local_date DATE column (not UTC timestamp)              | Prevents timezone drift in streak/heatmap calculations                              | Good    |
+| logState FSM (idle/logging/settled)                     | Prevents double-tap and manages 2-second hold state                                 | Good    |
+| Practice check-in priority in push cron                 | Practice check-in checked before app-usage; continue prevents double-notification   | Good    |
+| iOS URL param fallback (?practice_checkin=1)            | iOS has no notification action buttons; URL param is primary path not fallback      | Good    |
+| react-activity-calendar v3 for heatmap                  | Date-math reliability, proven component vs bespoke SVG                              | Good    |
+| showMonthLabels=false in RTL mode                       | Avoids SVG text double-mirror; functional heatmap in RTL v1                         | Good    |
+| Module-level MILESTONES constant                        | Avoids useCallback dep churn (same pattern as COMBO_TIERS)                          | Good    |
+| Role-first signup wizard                                | Role selection as step 1; STUDENT_STEPS/TEACHER_STEPS drive wizard flow             | Good    |
+| Birth year integer (not full DOB)                       | Simpler age collection; stored as YYYY-01-01 convention                             | Good    |
+| NOTE_CATCH replaces note_recognition on first nodes     | Single-note recognition is trivially easy; speed card game is engaging              | Good    |
+| NoteSpeedCards stub in Plan 01 (not Plan 02)            | Vite resolves all dynamic imports at build time; lazy import fails without module   | Good    |
+| No AudioContextProvider for NoteSpeedCards              | Game uses screen tap only, no mic/audio input needed                                | Good    |
+| Gate-first portal (useState true on mount)              | Parent must verify every visit; no persistent consent per D-04 spec                 | Good    |
+| Deferred queries (enabled: !gateOpen)                   | Prevents data fetching before parent passes math gate                               | Good    |
+| Weekend pass no sub-gate in portal                      | Page-level gate covers all sections per D-13; individual gates removed              | Good    |
+| buildInitialTrailPool for auto-grow                     | Uses focusNotes/contextNotes from node config instead of walking forward nodes      | Good    |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd:transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -528,6 +562,7 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd:complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
@@ -535,4 +570,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-*Last updated: 2026-03-31 — Phase 12 complete (trail config fixes)*
+_Last updated: 2026-03-31 — Phase 14 complete (console logging cleanup, ESLint no-console rule, pre-commit hook restored)_
