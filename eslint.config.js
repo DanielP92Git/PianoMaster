@@ -44,6 +44,7 @@ export default [
         caughtErrorsIgnorePattern: "^_",
       }],
       "no-undef": "warn",
+      "no-console": ["warn", { allow: ["warn", "error", "info"] }],
     },
   },
   // Vitest test globals — eliminates ~320 no-undef warnings from test files
