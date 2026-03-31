@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 08-audio-infrastructure-rhythm-games
 source: [08-VERIFICATION.md]
 started: 2026-03-28T00:12:00Z
-updated: 2026-04-01T00:00:00Z
+updated: 2026-04-01T01:30:00Z
 ---
 
 ## Current Test
@@ -44,19 +44,19 @@ blocked: 0
 ## Gaps
 
 ### Gap 1: RhythmReadingGame visual bugs
-status: failed
+status: resolved
 items: [1a, 1b, 1c]
 fix_plan: 15-03-PLAN.md
 description: Double cursor, cursor/metronome desync, back button stuck spinning
 
 ### Gap 2: RhythmDictationGame pacing
-status: failed
+status: resolved
 items: [2a, 2b]
 fix_plan: 15-04-PLAN.md
 description: Auto-advance too fast, needs "I'm ready" button + sound unification
 
 ### Gap 3: iOS gesture gate
-status: failed
+status: resolved
 items: [3]
 fix_plan: 15-05-PLAN.md
 description: RhythmReadingGame missing needsGestureToStart pattern for iOS AudioContext

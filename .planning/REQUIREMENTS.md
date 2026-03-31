@@ -29,11 +29,11 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 
 ### Daily Goals
 
-- [ ] **GOAL-01**: dailyGoalsService handles all exercise types including ear training (no hardcoded category arrays)
+- [x] **GOAL-01**: dailyGoalsService handles all exercise types including ear training (no hardcoded category arrays)
 
 ### Deploy
 
-- [ ] **DEPLOY-01**: Deploy sequencing documented -- Supabase migration runs before Netlify JS serves updated code
+- [x] **DEPLOY-01**: Deploy sequencing documented -- Supabase migration runs before Netlify JS serves updated code
 
 ### UAT
 
@@ -89,8 +89,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | QUAL-06 | Phase 14 | Complete |
 | QUAL-07 | Phase 13 | Complete |
 | XP-01 | Phase 13 | Complete |
-| GOAL-01 | Phase 15 | Pending |
-| DEPLOY-01 | Phase 15 | Pending |
+| GOAL-01 | Phase 15 | Complete |
+| DEPLOY-01 | Phase 15 | Complete |
 | UAT-01 | Phase 15 | Complete |
 
 **Coverage:**
@@ -100,4 +100,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-03-30*
-*Traceability updated: 2026-03-30*
+*Traceability updated: 2026-04-01*
