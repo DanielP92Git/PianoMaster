@@ -37,7 +37,7 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 
 ### UAT
 
-- [ ] **UAT-01**: Phase 08 human verification items completed (5 pending: rhythm games, piano tone, PWA cache)
+- [x] **UAT-01**: Phase 08 human verification items completed (5 pending: rhythm games, piano tone, PWA cache)
 
 ## Future Requirements
 
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | XP-01 | Phase 13 | Complete |
 | GOAL-01 | Phase 15 | Pending |
 | DEPLOY-01 | Phase 15 | Pending |
-| UAT-01 | Phase 15 | Pending |
+| UAT-01 | Phase 15 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 14 total

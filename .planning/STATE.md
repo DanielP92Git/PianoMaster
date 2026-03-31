@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.0
 milestone_name: Cleanup & Polish
 status: verifying
-stopped_at: Checkpoint at 15-02-PLAN.md Task 2 (human-verify UAT)
-last_updated: "2026-03-31T21:10:06.287Z"
+stopped_at: Completed 15-04-PLAN.md
+last_updated: "2026-03-31T22:16:39.412Z"
 last_activity: 2026-03-31
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 8
 ---
 
 # Project State
@@ -54,6 +54,9 @@ v3.0 Progress: [..........] 0/4 phases
 - [Phase 12-trail-config-fixes]: allowedPatterns replaces preferCurated in getPattern() — null means free-play, array means trail-constrained
 - [Phase 12-trail-config-fixes]: GENERATION_RULES temporarily overridden then restored for constrained generation — avoids threading allowedSubdivisions through generatePattern()
 - [Phase 14-console-logging-cleanup]: eslint-disable-line no-console placed inline (same line as console call) for grep audit to work correctly; no-console severity warn (not error) so pre-commit doesn't block DEV-gated logs
+- [Phase 15-04]: READY phase gate in RhythmDictationGame: user-controlled 'Listen' button before each exercise pattern plays
+- [Phase 15-04]: Wrong-answer advance uses playPattern callback + 1s buffer instead of hardcoded 2s timeout — prevents replay cutoff
+- [Phase 15-04]: RhythmDictationGame pattern playback unified to G4.mp3 via audioEngine.createPianoSound matching MetronomeTrainer
 
 ### Blockers/Concerns
 
@@ -65,8 +68,8 @@ v3.0 Progress: [..........] 0/4 phases
 
 ## Session Continuity
 
-Last session: 2026-03-31T21:10:06.280Z
-Stopped at: Checkpoint at 15-02-PLAN.md Task 2 (human-verify UAT)
+Last session: 2026-03-31T22:16:39.403Z
+Stopped at: Completed 15-04-PLAN.md
 Resume file: None
 
 **Next action:**

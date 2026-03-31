@@ -51,7 +51,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 - [x] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping) (completed 2026-03-30)
 - [x] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle (completed 2026-03-31)
 - [x] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase (completed 2026-03-31)
-- [ ] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items
+- [x] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items (completed 2026-03-31)
 
 ## Phase Details
 
@@ -113,11 +113,11 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 1. `dailyGoalsService.js` counts exercises from all game types (including ear training and arcade rhythm) toward daily goals with no hardcoded category arrays
 2. A deploy sequencing document exists in `.planning/` or `docs/` that describes the correct order for Supabase migration + Netlify deploy
 3. All 5 pending Phase 08 UAT items (rhythm games, piano tone, PWA cache) are verified on a real device and results documented
-   **Plans:** 2 plans
+   **Plans:** 3/2 plans complete
    Plans:
 
-- [ ] 15-01-PLAN.md -- Daily goals regression tests + deploy sequencing document
-- [ ] 15-02-PLAN.md -- UAT testing checklist creation + human device verification
+- [x] 15-01-PLAN.md -- Daily goals regression tests + deploy sequencing document
+- [x] 15-02-PLAN.md -- UAT testing checklist creation + human device verification
 
 ## Progress
 
@@ -126,7 +126,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 | 12. Trail Config Fixes      | v3.0      | 2/2            | Complete    | 2026-03-30 |
 | 13. Code Quality Quick Wins | v3.0      | 1/2            | Complete    | 2026-03-31 |
 | 14. Console Logging Cleanup | v3.0      | 1/1            | Complete    | 2026-03-31 |
-| 15. Verification & Deploy   | v3.0      | 0/2            | Not started | -          |
+| 15. Verification & Deploy   | v3.0      | 3/2 | Complete   | 2026-03-31 |
 
 **Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 4 phases, 14 requirements**
 
