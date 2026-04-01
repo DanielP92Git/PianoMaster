@@ -1,52 +1,47 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Volume2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Volume2 } from "lucide-react";
 
-import { useAudioContext } from '../../../contexts/AudioContextProvider';
-import { usePianoSampler } from '../../../hooks/usePianoSampler';
-import { useAudioEngine } from '../../../hooks/useAudioEngine';
-import { useSounds } from '../../../features/games/hooks/useSounds';
-import { useSessionTimeout } from '../../../contexts/SessionTimeoutContext';
-import { useRotatePrompt } from '../../../hooks/useRotatePrompt';
-import { RotatePromptOverlay } from '../../orientation/RotatePromptOverlay';
-import { AudioInterruptedOverlay } from '../shared/AudioInterruptedOverlay.jsx';
-import VictoryScreen from '../VictoryScreen';
-import BackButton from '../../ui/BackButton';
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
+import { usePianoSampler } from "../../../hooks/usePianoSampler";
+import { useAudioEngine } from "../../../hooks/useAudioEngine";
+import { useSounds } from "../../../features/games/hooks/useSounds";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
+import VictoryScreen from "../VictoryScreen";
+import BackButton from "../../ui/BackButton";
 
 import {
   getPattern,
   DIFFICULTY_LEVELS,
   TIME_SIGNATURES,
-} from './RhythmPatternGenerator';
-import { binaryPatternToBeats } from './utils/rhythmVexflowHelpers';
+} from "./RhythmPatternGenerator";
+import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import {
   generateDistractors,
   schedulePatternPlayback,
-} from './utils/rhythmTimingUtils';
-import { DictationChoiceCard } from './components/DictationChoiceCard';
-import { getNodeById } from '../../../data/skillTrail';
+} from "./utils/rhythmTimingUtils";
+import { DictationChoiceCard } from "./components/DictationChoiceCard";
+import { getNodeById } from "../../../data/skillTrail";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
 // ---------------------------------------------------------------------------
 const GAME_PHASES = {
-  SETUP: 'setup',
-  READY: 'ready',            // Waiting for user to click "Listen" before pattern plays
-  LISTENING: 'listening',
-  CHOOSING: 'choosing',
-  FEEDBACK: 'feedback',
-  SESSION_COMPLETE: 'session-complete',
+  SETUP: "setup",
+  READY: "ready", // Waiting for user to click "Listen" before pattern plays
+  LISTENING: "listening",
+  CHOOSING: "choosing",
+  FEEDBACK: "feedback",
+  SESSION_COMPLETE: "session-complete",
 };
 
 const TOTAL_QUESTIONS = 10;
 const DEFAULT_TEMPO = 90;
-const DEFAULT_TIME_SIG = '4/4';
+const DEFAULT_TIME_SIG = "4/4";
 const DEFAULT_DIFFICULTY = DIFFICULTY_LEVELS.BEGINNER;
 
 /**
@@ -61,7 +56,7 @@ const DEFAULT_DIFFICULTY = DIFFICULTY_LEVELS.BEGINNER;
 export function RhythmDictationGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   // --- Orientation prompt (portrait-primary, landscape-compatible per UI-SPEC) ---
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
@@ -76,7 +71,12 @@ export function RhythmDictationGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // --- Audio ---
-  const { audioContextRef, isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
+  const {
+    audioContextRef,
+    isInterrupted,
+    handleTapToResume,
+    getOrCreateAudioContext,
+  } = useAudioContext();
   const { playNote } = usePianoSampler(); // kept for potential other uses; pattern playback uses audioEngine
   const { playCorrectSound, playWrongSound } = useSounds();
 
@@ -85,15 +85,20 @@ export function RhythmDictationGame() {
   const [timeSignature, setTimeSignature] = useState(DEFAULT_TIME_SIG);
 
   // --- Audio engine (G4.mp3 piano sample — matches MetronomeTrainer) ---
-  const audioEngine = useAudioEngine(tempo, { sharedAudioContext: audioContextRef.current });
+  const audioEngine = useAudioEngine(tempo, {
+    sharedAudioContext: audioContextRef.current,
+  });
 
   // enginePlayNote: wrapper that passes audioEngine.createPianoSound to schedulePatternPlayback
   // The schedulePatternPlayback callback signature is (note, { startTime, duration }) — we use startTime only.
-  const enginePlayNote = useCallback((_note, opts) => {
-    if (audioEngine?.createPianoSound) {
-      audioEngine.createPianoSound(opts?.startTime, 0.8, 0.5);
-    }
-  }, [audioEngine]);
+  const enginePlayNote = useCallback(
+    (_note, opts) => {
+      if (audioEngine?.createPianoSound) {
+        audioEngine.createPianoSound(opts?.startTime, 0.8, 0.5);
+      }
+    },
+    [audioEngine]
+  );
 
   // --- Session timeout ---
   let pauseTimer = useCallback(() => {}, []);
@@ -111,18 +116,22 @@ export function RhythmDictationGame() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
 
   // Question data
-  const [correctBeats, setCorrectBeats] = useState(null);   // [{durationUnits, isRest}]
-  const [choices, setChoices] = useState([]);                // [beats, beats, beats]
-  const [correctIndex, setCorrectIndex] = useState(-1);     // index within choices
+  const [correctBeats, setCorrectBeats] = useState(null); // [{durationUnits, isRest}]
+  const [choices, setChoices] = useState([]); // [beats, beats, beats]
+  const [correctIndex, setCorrectIndex] = useState(-1); // index within choices
   const [_selectedIndex, setSelectedIndex] = useState(null); // user's pick (tracked for future use)
-  const [cardStates, setCardStates] = useState(['default', 'default', 'default']);
+  const [cardStates, setCardStates] = useState([
+    "default",
+    "default",
+    "default",
+  ]);
 
   // Audio status
   const [isPlaying, setIsPlaying] = useState(false);
   const isPlayingRef = useRef(false);
 
   // Feedback text
-  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackText, setFeedbackText] = useState("");
 
   // Scores — one entry per question (1 = correct, 0 = wrong)
   const [questionScores, setQuestionScores] = useState([]);
@@ -140,7 +149,11 @@ export function RhythmDictationGame() {
   // Session timeout: pause during active gameplay, resume during setup/feedback
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    const activePhases = [GAME_PHASES.READY, GAME_PHASES.LISTENING, GAME_PHASES.CHOOSING];
+    const activePhases = [
+      GAME_PHASES.READY,
+      GAME_PHASES.LISTENING,
+      GAME_PHASES.CHOOSING,
+    ];
     const isActive = activePhases.includes(gamePhase);
     if (isActive) {
       pauseTimer();
@@ -167,7 +180,7 @@ export function RhythmDictationGame() {
    * Map a TIME_SIGNATURES object name to its string form, or use as-is if string.
    */
   function resolveTimeSigString(cfg) {
-    if (typeof cfg === 'string') return cfg;
+    if (typeof cfg === "string") return cfg;
     // It might be a TIME_SIGNATURES object like { name: '4/4', ... }
     if (cfg && cfg.name) return cfg.name;
     return DEFAULT_TIME_SIG;
@@ -178,10 +191,10 @@ export function RhythmDictationGame() {
    */
   function timeSigStringToObject(str) {
     const map = {
-      '4/4': TIME_SIGNATURES.FOUR_FOUR,
-      '3/4': TIME_SIGNATURES.THREE_FOUR,
-      '2/4': TIME_SIGNATURES.TWO_FOUR,
-      '6/8': TIME_SIGNATURES.SIX_EIGHT,
+      "4/4": TIME_SIGNATURES.FOUR_FOUR,
+      "3/4": TIME_SIGNATURES.THREE_FOUR,
+      "2/4": TIME_SIGNATURES.TWO_FOUR,
+      "6/8": TIME_SIGNATURES.SIX_EIGHT,
     };
     return map[str] || TIME_SIGNATURES.FOUR_FOUR;
   }
@@ -215,7 +228,12 @@ export function RhythmDictationGame() {
       isPlayingRef.current = true;
       setIsPlaying(true);
 
-      const { totalDuration } = schedulePatternPlayback(beats, currentTempo, ctx, enginePlayNote);
+      const { totalDuration } = schedulePatternPlayback(
+        beats,
+        currentTempo,
+        ctx,
+        enginePlayNote
+      );
 
       // After pattern finishes + 300ms buffer, mark done
       const delayMs = (totalDuration + 0.3) * 1000;
@@ -234,7 +252,11 @@ export function RhythmDictationGame() {
   const generateQuestion = useCallback(
     async (questionIndex, currentTempo, currentTimeSig) => {
       try {
-        const result = await getPattern(currentTimeSig, difficulty, rhythmPatterns);
+        const result = await getPattern(
+          currentTimeSig,
+          difficulty,
+          rhythmPatterns
+        );
 
         if (!result || !result.pattern) {
           // Pattern generation failed — skip to next question
@@ -260,13 +282,13 @@ export function RhythmDictationGame() {
         setChoices(shuffled);
         setCorrectIndex(corrIdx);
         setSelectedIndex(null);
-        setCardStates(['default', 'default', 'default']);
-        setFeedbackText('');
+        setCardStates(["default", "default", "default"]);
+        setFeedbackText("");
 
         // Transition to READY — user must press "Listen" before pattern plays
         setGamePhase(GAME_PHASES.READY);
       } catch (err) {
-        console.warn('[RhythmDictationGame] generateQuestion error:', err);
+        console.warn("[RhythmDictationGame] generateQuestion error:", err);
         setGamePhase(GAME_PHASES.SESSION_COMPLETE);
       }
     },
@@ -278,10 +300,10 @@ export function RhythmDictationGame() {
   // ---------------------------------------------------------------------------
   useEffect(() => {
     if (gamePhase !== GAME_PHASES.LISTENING || !correctBeats) return;
-    setFeedbackText(t('games.rhythmDictation.listening'));
+    setFeedbackText(t("games.rhythmDictation.listening"));
 
     playPattern(correctBeats, tempo, () => {
-      setFeedbackText('');
+      setFeedbackText("");
       setGamePhase(GAME_PHASES.CHOOSING);
     });
   }, [gamePhase, correctBeats]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -300,9 +322,9 @@ export function RhythmDictationGame() {
     if (isPlayingRef.current || gamePhase === GAME_PHASES.FEEDBACK) return;
     if (!correctBeats) return;
 
-    setFeedbackText(t('games.rhythmDictation.listening'));
+    setFeedbackText(t("games.rhythmDictation.listening"));
     playPattern(correctBeats, tempo, () => {
-      setFeedbackText('');
+      setFeedbackText("");
     });
   }, [correctBeats, gamePhase, tempo, playPattern, t]);
 
@@ -320,9 +342,9 @@ export function RhythmDictationGame() {
       if (isCorrect) {
         // Correct: correct card glows green, others dim
         playCorrectSound();
-        setFeedbackText(t('games.rhythmDictation.correct'));
-        const newStates = ['dimmed', 'dimmed', 'dimmed'];
-        newStates[correctIndex] = 'correct';
+        setFeedbackText(t("games.rhythmDictation.correct"));
+        const newStates = ["dimmed", "dimmed", "dimmed"];
+        newStates[correctIndex] = "correct";
         setCardStates(newStates);
         setQuestionScores((prev) => [...prev, 1]);
 
@@ -332,17 +354,17 @@ export function RhythmDictationGame() {
       } else {
         // Wrong: selected card flashes red
         playWrongSound();
-        setFeedbackText(t('games.rhythmDictation.wrong'));
-        const flashStates = ['default', 'default', 'default'];
-        flashStates[cardIdx] = 'wrong';
+        setFeedbackText(t("games.rhythmDictation.wrong"));
+        const flashStates = ["default", "default", "default"];
+        flashStates[cardIdx] = "wrong";
         setCardStates(flashStates);
         setQuestionScores((prev) => [...prev, 0]);
 
         // After 300ms: dim selected, reveal correct, auto-replay correct pattern
         // Then advance AFTER replay finishes + 1s breathing room (no premature cutoff)
         feedbackTimeoutRef.current = setTimeout(() => {
-          const revealStates = ['dimmed', 'dimmed', 'dimmed'];
-          revealStates[correctIndex] = 'correct';
+          const revealStates = ["dimmed", "dimmed", "dimmed"];
+          revealStates[correctIndex] = "correct";
           setCardStates(revealStates);
 
           // Auto-replay correct pattern (RDICT-05), then advance after replay ends
@@ -354,7 +376,16 @@ export function RhythmDictationGame() {
         }, 300);
       }
     },
-    [gamePhase, correctIndex, correctBeats, tempo, playPattern, playCorrectSound, playWrongSound, t] // eslint-disable-line react-hooks/exhaustive-deps
+    [
+      gamePhase,
+      correctIndex,
+      correctBeats,
+      tempo,
+      playPattern,
+      playCorrectSound,
+      playWrongSound,
+      t,
+    ] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // ---------------------------------------------------------------------------
@@ -376,13 +407,14 @@ export function RhythmDictationGame() {
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
       const ctx = audioContextRef.current;
-      // IOS-02: If AudioContext needs a gesture to resume, show tap-to-start overlay
-      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+      // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, show tap-to-start overlay
+      if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
         setNeedsGestureToStart(true);
         return;
       }
       hasAutoStartedRef.current = true;
-      const resolvedTimeSig = resolveTimeSigString(nodeConfig.timeSignature) || DEFAULT_TIME_SIG;
+      const resolvedTimeSig =
+        resolveTimeSigString(nodeConfig.timeSignature) || DEFAULT_TIME_SIG;
       const resolvedTempo = nodeConfig.tempo || DEFAULT_TEMPO;
       setTempo(resolvedTempo);
       setTimeSignature(resolvedTimeSig);
@@ -390,7 +422,7 @@ export function RhythmDictationGame() {
       setQuestionScores([]);
       generateQuestion(0, resolvedTempo, resolvedTimeSig);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start guarded by hasAutoStartedRef; only nodeConfig triggers
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start guarded by hasAutoStartedRef; only nodeConfig triggers
   }, [nodeConfig]);
 
   // ---------------------------------------------------------------------------
@@ -405,20 +437,22 @@ export function RhythmDictationGame() {
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
   const handleGestureStart = useCallback(async () => {
-    const ctx = audioContextRef.current;
-    if (ctx) {
+    // Create AudioContext if it doesn't exist yet (iOS needs user gesture to create)
+    const ctx = getOrCreateAudioContext();
+    if (ctx && ctx.state === "suspended") {
       await ctx.resume();
     }
     setNeedsGestureToStart(false);
     hasAutoStartedRef.current = true;
-    const resolvedTimeSig = resolveTimeSigString(nodeConfig?.timeSignature) || DEFAULT_TIME_SIG;
+    const resolvedTimeSig =
+      resolveTimeSigString(nodeConfig?.timeSignature) || DEFAULT_TIME_SIG;
     const resolvedTempo = nodeConfig?.tempo || DEFAULT_TEMPO;
     setTempo(resolvedTempo);
     setTimeSignature(resolvedTimeSig);
     setCurrentQuestion(0);
     setQuestionScores([]);
     generateQuestion(0, resolvedTempo, resolvedTimeSig);
-  }, [audioContextRef, nodeConfig, generateQuestion]);
+  }, [getOrCreateAudioContext, nodeConfig, generateQuestion]);
 
   // ---------------------------------------------------------------------------
   // handleNextExercise — trail exercise routing (mirrors MetronomeTrainer)
@@ -439,42 +473,54 @@ export function RhythmDictationGame() {
           };
 
           switch (nextExercise.type) {
-            case 'note_recognition':
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+            case "note_recognition":
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState, replace: true });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', {
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
                 state: { ...navState, isBoss: true },
               });
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -491,8 +537,8 @@ export function RhythmDictationGame() {
     setQuestionScores([]);
     setCorrectBeats(null);
     setChoices([]);
-    setCardStates(['default', 'default', 'default']);
-    setFeedbackText('');
+    setCardStates(["default", "default", "default"]);
+    setFeedbackText("");
     setIsPlaying(false);
     isPlayingRef.current = false;
   }, []);
@@ -511,7 +557,7 @@ export function RhythmDictationGame() {
         score={correctCount}
         totalPossibleScore={TOTAL_QUESTIONS}
         onReset={handleReset}
-        onExit={() => navigate('/trail')}
+        onExit={() => navigate("/trail")}
         nodeId={nodeId}
         exerciseIndex={trailExerciseIndex}
         totalExercises={trailTotalExercises}
@@ -526,19 +572,19 @@ export function RhythmDictationGame() {
   // ---------------------------------------------------------------------------
   if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-        {shouldShowPrompt && (
-          <RotatePromptOverlay onDismiss={dismissPrompt} />
-        )}
-        <div className="w-full max-w-lg bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 flex flex-col gap-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
           <h1 className="text-xl font-bold text-white">
-            {t('games.rhythmDictation.title')}
+            {t("games.rhythmDictation.title")}
           </h1>
           <button
             onClick={handleStartGame}
-            className="bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl px-6 py-3 transition-colors"
+            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
           >
-            {t('games.metronomeTrainer.startGame', { defaultValue: 'Start Game' })}
+            {t("games.metronomeTrainer.startGame", {
+              defaultValue: "Start Game",
+            })}
           </button>
         </div>
       </div>
@@ -549,17 +595,17 @@ export function RhythmDictationGame() {
   // Render: main game (READY / LISTENING / CHOOSING / FEEDBACK)
   // ---------------------------------------------------------------------------
   const isInFeedback = gamePhase === GAME_PHASES.FEEDBACK;
-  // Choice cards only shown once pattern has played (not during READY or LISTENING)
+  // Choice cards visible during LISTENING (so user can study options while hearing pattern),
+  // CHOOSING (active selection), and FEEDBACK (showing result)
   const showCards =
+    gamePhase === GAME_PHASES.LISTENING ||
     gamePhase === GAME_PHASES.CHOOSING ||
     gamePhase === GAME_PHASES.FEEDBACK;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
       {/* iOS rotate prompt */}
-      {shouldShowPrompt && (
-        <RotatePromptOverlay onDismiss={dismissPrompt} />
-      )}
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
       {/* IOS-02: Initial gesture gate overlay — shown when AudioContext suspended on trail load */}
       {needsGestureToStart && (
@@ -577,57 +623,73 @@ export function RhythmDictationGame() {
         onRestartExercise={handleReset}
       />
 
-      <div className="flex flex-col gap-3 p-4 max-w-lg mx-auto">
-
+      <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
         {/* Header bar */}
-        <div className="flex items-center justify-between h-12">
-          <BackButton />
+        <div className="flex h-12 items-center justify-between">
+          <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
           <div className="flex items-center gap-2">
             {/* Progress counter — dir=ltr to prevent digit reversal in RTL */}
-            <span dir="ltr" className="text-white/70 text-sm font-rounded">
+            <span dir="ltr" className="font-rounded text-sm text-white/70">
               {currentQuestion + 1} / {TOTAL_QUESTIONS}
             </span>
             {/* Score */}
-            <span className="text-indigo-300 text-sm font-rounded">
+            <span className="font-rounded text-sm text-indigo-300">
               {correctCount} ✓
             </span>
           </div>
         </div>
 
         {/* Audio status row */}
-        <div className="flex items-center justify-between px-4 py-2 bg-white/5 rounded-xl h-12">
+        <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
           <div className="flex items-center gap-2">
-            <Volume2 size={20} className={isPlaying ? 'text-indigo-300 animate-pulse' : 'text-white/60'} />
+            <Volume2
+              size={20}
+              className={
+                isPlaying ? "animate-pulse text-indigo-300" : "text-white/60"
+              }
+            />
             {feedbackText ? (
               <span
                 aria-live="polite"
-                className="text-sm text-white/80 font-rounded"
+                className="font-rounded text-sm text-white/80"
               >
                 {feedbackText}
               </span>
             ) : (
-              <span className="text-sm text-white/40 font-rounded" aria-hidden="true">
+              <span
+                className="font-rounded text-sm text-white/40"
+                aria-hidden="true"
+              >
                 {gamePhase === GAME_PHASES.CHOOSING
-                  ? t('games.rhythmDictation.playAgain', { defaultValue: 'Play Again' })
-                  : ''}
+                  ? t("games.rhythmDictation.playAgain", {
+                      defaultValue: "Play Again",
+                    })
+                  : ""}
               </span>
             )}
           </div>
 
           {/* Replay button — visible during LISTENING and CHOOSING */}
-          {(gamePhase === GAME_PHASES.LISTENING || gamePhase === GAME_PHASES.CHOOSING) && (
+          {(gamePhase === GAME_PHASES.LISTENING ||
+            gamePhase === GAME_PHASES.CHOOSING) && (
             <button
               onClick={handleReplay}
               disabled={isPlaying}
-              aria-label={t('games.rhythmDictation.playAgain', { defaultValue: 'Play Again' })}
-              className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-rounded transition-all ${
+              aria-label={t("games.rhythmDictation.playAgain", {
+                defaultValue: "Play Again",
+              })}
+              className={`flex items-center gap-1 rounded-xl px-4 py-2 font-rounded text-sm transition-all ${
                 isPlaying
-                  ? 'opacity-50 cursor-not-allowed bg-indigo-500/50'
-                  : 'bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer'
+                  ? "cursor-not-allowed bg-indigo-500/50 opacity-50"
+                  : "cursor-pointer bg-indigo-500 text-white hover:bg-indigo-400"
               }`}
             >
               <Volume2 size={20} />
-              <span>{t('games.rhythmDictation.playAgain', { defaultValue: 'Play Again' })}</span>
+              <span>
+                {t("games.rhythmDictation.playAgain", {
+                  defaultValue: "Play Again",
+                })}
+              </span>
             </button>
           )}
         </div>
@@ -640,14 +702,18 @@ export function RhythmDictationGame() {
         {/* READY phase — "Listen to the pattern" gate (pacing control) */}
         {gamePhase === GAME_PHASES.READY && (
           <div className="flex flex-col items-center gap-4 py-8">
-            <p className="text-white/70 text-sm font-rounded">
-              {t('games.rhythmDictation.getReady', { defaultValue: 'Get ready to listen' })}
+            <p className="font-rounded text-sm text-white/70">
+              {t("games.rhythmDictation.getReady", {
+                defaultValue: "Get ready to listen",
+              })}
             </p>
             <button
               onClick={handleReady}
-              className="px-6 py-3 bg-indigo-500/80 hover:bg-indigo-500 text-white font-rounded rounded-xl border border-indigo-400/30 transition-colors"
+              className="rounded-xl border border-indigo-400/30 bg-indigo-500/80 px-6 py-3 font-rounded text-white transition-colors hover:bg-indigo-500"
             >
-              {t('games.rhythmDictation.listenButton', { defaultValue: 'Listen to the pattern' })}
+              {t("games.rhythmDictation.listenButton", {
+                defaultValue: "Listen to the pattern",
+              })}
             </button>
           </div>
         )}
@@ -661,7 +727,7 @@ export function RhythmDictationGame() {
                 beats={choiceBeats}
                 timeSignature={timeSignature}
                 cardIndex={idx}
-                state={cardStates[idx] ?? 'default'}
+                state={cardStates[idx] ?? "default"}
                 onSelect={handleCardSelect}
                 disabled={isInFeedback}
               />
@@ -672,8 +738,10 @@ export function RhythmDictationGame() {
         {/* Loading state while generating first question */}
         {gamePhase === GAME_PHASES.SETUP && nodeConfig && (
           <div className="flex items-center justify-center py-8">
-            <span className="text-white/60 text-sm animate-pulse">
-              {t('games.rhythmDictation.listening', { defaultValue: 'Loading...' })}
+            <span className="animate-pulse text-sm text-white/60">
+              {t("games.rhythmDictation.listening", {
+                defaultValue: "Loading...",
+              })}
             </span>
           </div>
         )}

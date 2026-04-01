@@ -1,39 +1,32 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { useAudioContext } from '../../../contexts/AudioContextProvider';
-import { usePianoSampler } from '../../../hooks/usePianoSampler';
-import { useSounds } from '../../../features/games/hooks/useSounds';
-import { useSessionTimeout } from '../../../contexts/SessionTimeoutContext';
-import { useLandscapeLock } from '../../../hooks/useLandscapeLock';
-import { useRotatePrompt } from '../../../hooks/useRotatePrompt';
-import { RotatePromptOverlay } from '../../orientation/RotatePromptOverlay';
-import { AudioInterruptedOverlay } from '../shared/AudioInterruptedOverlay';
-import VictoryScreen from '../VictoryScreen';
-import BackButton from '../../ui/BackButton';
-import { getNodeById } from '../../../data/skillTrail';
-import { getPattern, TIME_SIGNATURES } from './RhythmPatternGenerator';
-import {
-  binaryPatternToBeats,
-} from './utils/rhythmVexflowHelpers';
-import { scoreTap } from './utils/rhythmScoringUtils';
-import RhythmStaffDisplay from './components/RhythmStaffDisplay';
-import FloatingFeedback from './components/FloatingFeedback';
-import { MetronomeDisplay } from './components';
-import { useAccessibility } from '../../../contexts/AccessibilityContext';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
+import { usePianoSampler } from "../../../hooks/usePianoSampler";
+import { useSounds } from "../../../features/games/hooks/useSounds";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay";
+import VictoryScreen from "../VictoryScreen";
+import BackButton from "../../ui/BackButton";
+import { getNodeById } from "../../../data/skillTrail";
+import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
+import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
+import { scoreTap } from "./utils/rhythmScoringUtils";
+import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
+import FloatingFeedback from "./components/FloatingFeedback";
+import { MetronomeDisplay } from "./components";
+import { useAccessibility } from "../../../contexts/AccessibilityContext";
 
 // Game phases FSM
 const GAME_PHASES = {
-  SETUP: 'setup',
-  READY: 'ready',       // Metronome loops, notation visible, waiting for tap on beat 1
-  PLAYING: 'playing',
-  FEEDBACK: 'feedback',
-  SESSION_COMPLETE: 'session-complete',
+  SETUP: "setup",
+  READY: "ready", // Metronome loops, notation visible, waiting for tap on beat 1
+  PLAYING: "playing",
+  FEEDBACK: "feedback",
+  SESSION_COMPLETE: "session-complete",
 };
 
 /**
@@ -52,7 +45,7 @@ const GAME_PHASES = {
 export function RhythmReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -69,7 +62,12 @@ export function RhythmReadingGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // Audio contexts
-  const { audioContextRef, isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
+  const {
+    audioContextRef,
+    isInterrupted,
+    handleTapToResume,
+    getOrCreateAudioContext,
+  } = useAudioContext();
   const { playNote } = usePianoSampler();
   useSounds(); // Loaded for potential future use (correct/wrong sounds for post-exercise feedback)
 
@@ -95,16 +93,18 @@ export function RhythmReadingGame() {
 
   // Extract config from nodeConfig or use defaults
   const tempo = nodeConfig?.tempo ?? nodeConfig?.config?.tempo ?? 80;
-  const timeSignatureStr = nodeConfig?.timeSignature ?? nodeConfig?.config?.timeSignature ?? '4/4';
-  const difficulty = nodeConfig?.difficulty ?? nodeConfig?.config?.difficulty ?? 'beginner';
+  const timeSignatureStr =
+    nodeConfig?.timeSignature ?? nodeConfig?.config?.timeSignature ?? "4/4";
+  const difficulty =
+    nodeConfig?.difficulty ?? nodeConfig?.config?.difficulty ?? "beginner";
 
   // Get TIME_SIGNATURES object for MetronomeDisplay
   const getTimeSignatureObject = useCallback((timeSigStr) => {
     const mapping = {
-      '4/4': TIME_SIGNATURES.FOUR_FOUR,
-      '3/4': TIME_SIGNATURES.THREE_FOUR,
-      '2/4': TIME_SIGNATURES.TWO_FOUR,
-      '6/8': TIME_SIGNATURES.SIX_EIGHT,
+      "4/4": TIME_SIGNATURES.FOUR_FOUR,
+      "3/4": TIME_SIGNATURES.THREE_FOUR,
+      "2/4": TIME_SIGNATURES.TWO_FOUR,
+      "6/8": TIME_SIGNATURES.SIX_EIGHT,
     };
     return mapping[timeSigStr] ?? TIME_SIGNATURES.FOUR_FOUR;
   }, []);
@@ -139,10 +139,10 @@ export function RhythmReadingGame() {
   const transitionToFeedbackRef = useRef(null); // stable ref for transitionToFeedback
 
   // Continuous metronome refs (READY phase)
-  const metronomeIntervalRef = useRef(null);   // setInterval ID for audio lookahead scheduler
-  const visualIntervalRef = useRef(null);      // setInterval ID for visual beat updates
-  const metronomeStartTimeRef = useRef(0);     // AudioContext time when metronome started
-  const lastScheduledBeatRef = useRef(-1);     // highest beat number already scheduled
+  const metronomeIntervalRef = useRef(null); // setInterval ID for audio lookahead scheduler
+  const visualIntervalRef = useRef(null); // setInterval ID for visual beat updates
+  const metronomeStartTimeRef = useRef(0); // AudioContext time when metronome started
+  const lastScheduledBeatRef = useRef(-1); // highest beat number already scheduled
 
   // Pause/resume session timer based on game phase
   useEffect(() => {
@@ -159,15 +159,15 @@ export function RhythmReadingGame() {
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
       const ctx = audioContextRef.current;
-      // IOS-02: If AudioContext needs a gesture to resume, show tap-to-start overlay
-      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+      // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, show tap-to-start overlay
+      if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
         setNeedsGestureToStart(true);
         return; // Don't auto-start — show tap-to-start overlay
       }
       hasAutoStartedRef.current = true;
       setTimeout(() => startGame(), 100);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; only nodeConfig changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; only nodeConfig changes should re-evaluate
   }, [nodeConfig]);
 
   // Reset guard when nodeId changes (navigating between trail nodes)
@@ -231,29 +231,32 @@ export function RhythmReadingGame() {
    * Play metronome click for count-in.
    * Downbeat (beat 1): 900Hz, 0.15 gain. Other beats: 700Hz, 0.1 gain.
    */
-  const playMetronomeClick = useCallback((time, isDownbeat) => {
-    const ctx = audioContextRef.current;
-    if (!ctx || ctx.state === 'closed') return;
+  const playMetronomeClick = useCallback(
+    (time, isDownbeat) => {
+      const ctx = audioContextRef.current;
+      if (!ctx || ctx.state === "closed") return;
 
-    try {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const freq = isDownbeat ? 900 : 700;
-      const vol = isDownbeat ? 0.15 : 0.10;
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const freq = isDownbeat ? 900 : 700;
+        const vol = isDownbeat ? 0.15 : 0.1;
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, time);
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(vol, time + 0.005);
-      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(time);
-      osc.stop(time + 0.07);
-    } catch {
-      // Audio scheduling error — ignore
-    }
-  }, [audioContextRef]);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, time);
+        gain.gain.setValueAtTime(0, time);
+        gain.gain.linearRampToValueAtTime(vol, time + 0.005);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.06);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(time);
+        osc.stop(time + 0.07);
+      } catch {
+        // Audio scheduling error — ignore
+      }
+    },
+    [audioContextRef]
+  );
 
   /**
    * Fetch a new pattern and convert to beats array.
@@ -261,12 +264,16 @@ export function RhythmReadingGame() {
    */
   const fetchNewPattern = useCallback(async () => {
     try {
-      const result = await getPattern(timeSignatureStr, difficulty, rhythmPatterns);
+      const result = await getPattern(
+        timeSignatureStr,
+        difficulty,
+        rhythmPatterns
+      );
       if (!result || !result.pattern) return null;
       const beats = binaryPatternToBeats(result.pattern);
       return { beats, binaryPattern: result.pattern };
     } catch (err) {
-      console.warn('[RhythmReadingGame] fetchNewPattern error:', err);
+      console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
   }, [timeSignatureStr, difficulty, rhythmPatterns]);
@@ -326,105 +333,146 @@ export function RhythmReadingGame() {
   /**
    * Enter READY phase: show notation, start looping metronome, wait for tap on beat 1.
    */
-  const startReadyPhase = useCallback((_beats) => {
-    cancelAllTimers();
-    setGamePhase(GAME_PHASES.READY);
-    setTapResults([]);
+  const startReadyPhase = useCallback(
+    (_beats) => {
+      cancelAllTimers();
+      setGamePhase(GAME_PHASES.READY);
+      setTapResults([]);
 
-    // Ensure AudioContext exists (lazy-created on first user gesture)
-    let ctx = audioContextRef.current;
-    if (!ctx) {
-      ctx = getOrCreateAudioContext();
-    }
-    if (!ctx || ctx.state === 'closed') return;
+      // Ensure AudioContext exists (lazy-created on first user gesture)
+      let ctx = audioContextRef.current;
+      if (!ctx) {
+        ctx = getOrCreateAudioContext();
+      }
+      if (!ctx || ctx.state === "closed") return;
 
-    // Resume suspended AudioContext (iOS + Chrome autoplay policy)
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
+      // Resume suspended AudioContext (iOS + Chrome autoplay policy)
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
 
-    metronomeStartTimeRef.current = ctx.currentTime;
-    startContinuousMetronome();
-  }, [audioContextRef, getOrCreateAudioContext, cancelAllTimers, startContinuousMetronome]);
+      metronomeStartTimeRef.current = ctx.currentTime;
+      startContinuousMetronome();
+    },
+    [
+      audioContextRef,
+      getOrCreateAudioContext,
+      cancelAllTimers,
+      startContinuousMetronome,
+    ]
+  );
 
   /**
    * Start playing phase: schedule pattern audio, start cursor RAF loop, enable tapping.
    */
-  const startPlaying = useCallback((beats, explicitStartTime) => {
-    setGamePhase(GAME_PHASES.PLAYING);
-    nextBeatIndexRef.current = 0;
+  const startPlaying = useCallback(
+    (beats, explicitStartTime) => {
+      setGamePhase(GAME_PHASES.PLAYING);
+      nextBeatIndexRef.current = 0;
 
-    const ctx = audioContextRef.current || getOrCreateAudioContext();
-    if (!ctx) return;
+      const ctx = audioContextRef.current || getOrCreateAudioContext();
+      if (!ctx) return;
 
-    // Resume context if suspended (iOS safety)
-    if (ctx.state === 'suspended') {
-      ctx.resume().catch(() => {});
-    }
+      // Resume context if suspended (iOS safety)
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+      }
 
-    // Use explicit start time (from metronome grid alignment) or fallback
-    const playbackStartTime = explicitStartTime ?? (ctx.currentTime + 0.05);
-    patternStartTimeRef.current = playbackStartTime;
+      // Use explicit start time (from metronome grid alignment) or fallback
+      const playbackStartTime = explicitStartTime ?? ctx.currentTime + 0.05;
+      patternStartTimeRef.current = playbackStartTime;
 
-    // Compute measure duration from time signature (no pattern playback — child taps the rhythm)
-    const beatsPerMeasureForDuration = timeSignatureObj.beats ?? 4;
-    measureDurationRef.current = beatsPerMeasureForDuration * (60 / tempo);
+      // Compute measure duration from time signature (no pattern playback — child taps the rhythm)
+      const beatsPerMeasureForDuration = timeSignatureObj.beats ?? 4;
+      measureDurationRef.current = beatsPerMeasureForDuration * (60 / tempo);
 
-    // Pre-compute scheduled beat times for scoring
-    const { times } = buildBeatTimes(beats, tempo, playbackStartTime);
-    scheduledBeatTimesRef.current = times;
+      // Pre-compute scheduled beat times for scoring
+      const { times } = buildBeatTimes(beats, tempo, playbackStartTime);
+      scheduledBeatTimesRef.current = times;
 
-    // Start MetronomeDisplay beat updates
-    const beatDuration = 60 / tempo;
-    const beatsPerMeasure = timeSignatureObj.beats ?? 4;
-    let lastBeatUpdate = -1;
+      // Start MetronomeDisplay beat updates
+      const beatDuration = 60 / tempo;
+      const beatsPerMeasure = timeSignatureObj.beats ?? 4;
+      let lastBeatUpdate = -1;
 
-    // RAF cursor sweep loop
-    function updateCursor() {
-      const context = audioContextRef.current;
-      if (!context) return;
+      // RAF cursor sweep loop
+      function updateCursor() {
+        const context = audioContextRef.current;
+        if (!context) return;
 
-      const elapsed = context.currentTime - patternStartTimeRef.current;
-      const total = measureDurationRef.current;
-      if (total <= 0) return;
+        const elapsed = context.currentTime - patternStartTimeRef.current;
+        const total = measureDurationRef.current;
+        if (total <= 0) return;
 
-      const progress = Math.min(elapsed / total, 1);
+        const progress = Math.min(elapsed / total, 1);
 
-      // Update cursor position directly via DOM (avoids React re-render on every frame)
-      if (cursorDivRef.current) {
-        const bounds = staveBoundsRef.current;
-        if (bounds && bounds.containerWidth > 0) {
-          // Map cursor to stave note area (between clef/time-sig and barline)
-          // VexFlow distributes notes proportionally within this region
-          const startPct = bounds.noteStartX / bounds.containerWidth;
-          const endPct = bounds.noteEndX / bounds.containerWidth;
-          const cursorPct = startPct + progress * (endPct - startPct);
-          cursorDivRef.current.style.left = `${cursorPct * 100}%`;
+        // Update cursor position directly via DOM (avoids React re-render on every frame)
+        if (cursorDivRef.current) {
+          const bounds = staveBoundsRef.current;
+          if (
+            bounds &&
+            bounds.noteXPositions &&
+            bounds.noteXPositions.length > 0 &&
+            bounds.containerWidth > 0
+          ) {
+            // Beat-indexed interpolation: map time progress to VexFlow note X positions
+            const positions = bounds.noteXPositions;
+            const totalDurationUnits = beats.reduce(
+              (sum, b) => sum + b.durationUnits,
+              0
+            );
+            let cumulative = 0;
+            let cursorX = positions[0];
+
+            for (let i = 0; i < beats.length; i++) {
+              const beatStart = cumulative / totalDurationUnits;
+              cumulative += beats[i].durationUnits;
+              const beatEnd = cumulative / totalDurationUnits;
+
+              if (progress >= beatStart && progress < beatEnd) {
+                const nextX =
+                  i + 1 < positions.length ? positions[i + 1] : bounds.noteEndX;
+                const localProgress =
+                  (progress - beatStart) / (beatEnd - beatStart);
+                cursorX = positions[i] + localProgress * (nextX - positions[i]);
+                break;
+              }
+            }
+            if (progress >= 1) cursorX = bounds.noteEndX;
+
+            cursorDivRef.current.style.left = `${(cursorX / bounds.containerWidth) * 100}%`;
+          } else if (bounds && bounds.containerWidth > 0) {
+            // Fallback to linear sweep if per-note positions not available
+            const startPct = bounds.noteStartX / bounds.containerWidth;
+            const endPct = bounds.noteEndX / bounds.containerWidth;
+            const cursorPct = startPct + progress * (endPct - startPct);
+            cursorDivRef.current.style.left = `${cursorPct * 100}%`;
+          } else {
+            cursorDivRef.current.style.left = `${progress * 100}%`;
+          }
+        }
+
+        // Update MetronomeDisplay beat indicator
+        const beatIdx = Math.floor(elapsed / beatDuration) % beatsPerMeasure;
+        const beatNumber = beatIdx + 1;
+        if (beatNumber !== lastBeatUpdate) {
+          lastBeatUpdate = beatNumber;
+          setCurrentBeat(beatNumber);
+        }
+
+        if (progress < 1) {
+          rafIdRef.current = requestAnimationFrame(updateCursor);
         } else {
-          // Fallback to linear sweep if stave bounds not yet available
-          cursorDivRef.current.style.left = `${progress * 100}%`;
+          // Pattern complete — transition to feedback phase
+          rafIdRef.current = null;
+          transitionToFeedbackRef.current(beats);
         }
       }
 
-      // Update MetronomeDisplay beat indicator
-      const beatIdx = Math.floor(elapsed / beatDuration) % beatsPerMeasure;
-      const beatNumber = beatIdx + 1;
-      if (beatNumber !== lastBeatUpdate) {
-        lastBeatUpdate = beatNumber;
-        setCurrentBeat(beatNumber);
-      }
-
-      if (progress < 1) {
-        rafIdRef.current = requestAnimationFrame(updateCursor);
-      } else {
-        // Pattern complete — transition to feedback phase
-        rafIdRef.current = null;
-        transitionToFeedbackRef.current(beats);
-      }
-    }
-
-    rafIdRef.current = requestAnimationFrame(updateCursor);
-  }, [audioContextRef, tempo, timeSignatureObj, playNote, buildBeatTimes]); // eslint-disable-line react-hooks/exhaustive-deps
+      rafIdRef.current = requestAnimationFrame(updateCursor);
+    },
+    [audioContextRef, tempo, timeSignatureObj, playNote, buildBeatTimes]
+  ); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Keep ref in sync so handleTap's READY→PLAYING transition calls the current version
   startPlayingRef.current = startPlaying;
@@ -447,21 +495,28 @@ export function RhythmReadingGame() {
       const beatDuration = 60 / tempo;
       const beatsPerMeasure = timeSignatureObj.beats ?? 4;
       const elapsed = tapTime - metronomeStartTimeRef.current;
-      const beatPosition = ((elapsed / beatDuration) % beatsPerMeasure + beatsPerMeasure) % beatsPerMeasure;
+      const beatPosition =
+        (((elapsed / beatDuration) % beatsPerMeasure) + beatsPerMeasure) %
+        beatsPerMeasure;
 
       // Distance from nearest beat 1 (wraps around: 3.9 in 4/4 → 0.1 from beat 1)
-      const distanceFromBeat1 = Math.min(beatPosition, beatsPerMeasure - beatPosition);
+      const distanceFromBeat1 = Math.min(
+        beatPosition,
+        beatsPerMeasure - beatPosition
+      );
       // Generous threshold for start detection (35% of a beat) — child is signaling "go", not being scored
       const thresholdBeats = 0.35;
 
       if (distanceFromBeat1 <= thresholdBeats) {
         // Snap to nearest beat 1 time
         const totalBeatsElapsed = elapsed / beatDuration;
-        const nearestBeat1Number = Math.round(totalBeatsElapsed / beatsPerMeasure) * beatsPerMeasure;
-        const nearestBeat1Time = metronomeStartTimeRef.current + nearestBeat1Number * beatDuration;
+        const nearestBeat1Number =
+          Math.round(totalBeatsElapsed / beatsPerMeasure) * beatsPerMeasure;
+        const nearestBeat1Time =
+          metronomeStartTimeRef.current + nearestBeat1Number * beatDuration;
 
         // Piano sound as feedback for the starting tap
-        playNote('C4', { duration: 0.3 });
+        playNote("C4", { duration: 0.3 });
         stopContinuousMetronome();
         startPlayingRef.current(currentBeats, nearestBeat1Time);
       }
@@ -473,7 +528,7 @@ export function RhythmReadingGame() {
     if (gamePhase !== GAME_PHASES.PLAYING) return;
 
     // Piano sound as feedback for each tap (child is "playing" the rhythm)
-    playNote('C4', { duration: 0.3 });
+    playNote("C4", { duration: 0.3 });
 
     const tapTime = ctx.currentTime;
     const beats = currentBeats;
@@ -501,7 +556,15 @@ export function RhythmReadingGame() {
     // Trigger FloatingFeedback animation
     setLatestFeedback(quality);
     setFeedbackKey((k) => k + 1);
-  }, [gamePhase, audioContextRef, currentBeats, tempo, timeSignatureObj, playNote, stopContinuousMetronome]);
+  }, [
+    gamePhase,
+    audioContextRef,
+    currentBeats,
+    tempo,
+    timeSignatureObj,
+    playNote,
+    stopContinuousMetronome,
+  ]);
 
   /**
    * Fetch next pattern and start count-in.
@@ -526,10 +589,11 @@ export function RhythmReadingGame() {
       const maxPoints = nonRestBeats * 3;
       let earned = 0;
       currentTapResults.forEach(({ quality }) => {
-        if (quality === 'PERFECT') earned += 3;
-        else if (quality === 'GOOD') earned += 1;
+        if (quality === "PERFECT") earned += 3;
+        else if (quality === "GOOD") earned += 1;
       });
-      exerciseScoreRef.current = maxPoints > 0 ? Math.round((earned / maxPoints) * 100) : 0;
+      exerciseScoreRef.current =
+        maxPoints > 0 ? Math.round((earned / maxPoints) * 100) : 0;
       return currentTapResults;
     });
     // Stay in FEEDBACK — user chooses Repeat or Next via buttons
@@ -581,14 +645,15 @@ export function RhythmReadingGame() {
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
   const handleGestureStart = useCallback(async () => {
-    const ctx = audioContextRef.current;
-    if (ctx) {
+    // Create AudioContext if it doesn't exist yet (iOS needs user gesture to create)
+    const ctx = getOrCreateAudioContext();
+    if (ctx && ctx.state === "suspended") {
       await ctx.resume();
     }
     setNeedsGestureToStart(false);
     hasAutoStartedRef.current = true;
     setTimeout(() => startGame(), 100);
-  }, [audioContextRef, startGame]);
+  }, [getOrCreateAudioContext, startGame]);
 
   /**
    * Handle next exercise routing for trail mode.
@@ -609,40 +674,56 @@ export function RhythmReadingGame() {
             exerciseType: nextExercise.type,
           };
           switch (nextExercise.type) {
-            case 'note_recognition':
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+            case "note_recognition":
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState, replace: true });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true } });
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: { ...navState, isBoss: true },
+              });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+              });
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -668,7 +749,7 @@ export function RhythmReadingGame() {
           setGamePhase(GAME_PHASES.SETUP);
           hasAutoStartedRef.current = false;
         }}
-        onExit={() => navigate('/trail')}
+        onExit={() => navigate("/trail")}
       />
     );
   }
@@ -677,14 +758,14 @@ export function RhythmReadingGame() {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col"
+      className="flex min-h-screen flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
       dir="ltr"
     >
       {/* Header bar */}
       <header className="flex h-12 items-center justify-between px-4 py-2 text-white/80">
-        <BackButton />
+        <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
         <div className="text-sm font-medium">
-          {t('games.rhythmReading.title')} &mdash;{' '}
+          {t("games.rhythmReading.title")} &mdash;{" "}
           <span dir="ltr">
             {currentExercise + 1} / {totalExercises}
           </span>
@@ -693,7 +774,7 @@ export function RhythmReadingGame() {
 
       <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
         {/* VexFlow Staff Display */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: "relative" }}>
           <RhythmStaffDisplay
             beats={currentBeats}
             timeSignature={timeSignatureStr}
@@ -708,17 +789,19 @@ export function RhythmReadingGame() {
             ref={cursorDivRef}
             aria-hidden="true"
             style={{
-              position: 'absolute',
-              top: '16px', // inside the card padding
-              left: '0%',
-              width: '2px',
-              height: 'calc(100% - 32px)',
-              backgroundColor: 'rgb(129, 140, 248)',
+              position: "absolute",
+              top: "16px", // inside the card padding
+              left: "0%",
+              width: "2px",
+              height: "calc(100% - 32px)",
+              backgroundColor: "rgb(129, 140, 248)",
               opacity: isPlaying ? 0.8 : 0,
-              boxShadow: reducedMotion ? 'none' : '0 0 8px rgba(129,140,248,0.8)',
-              pointerEvents: 'none',
+              boxShadow: reducedMotion
+                ? "none"
+                : "0 0 8px rgba(129,140,248,0.8)",
+              pointerEvents: "none",
               zIndex: 10,
-              transition: isPlaying ? 'none' : 'opacity 0.2s',
+              transition: isPlaying ? "none" : "opacity 0.2s",
             }}
           />
         </div>
@@ -736,34 +819,37 @@ export function RhythmReadingGame() {
         {/* Tap area */}
         <div
           className="relative flex-1"
-          style={{ position: 'relative', minHeight: '120px' }}
+          style={{ position: "relative", minHeight: "120px" }}
         >
           {/* Tap area — visible during READY and PLAYING */}
           {(isPlaying || gamePhase === GAME_PHASES.READY) && (
             <button
               onPointerDown={handleTap}
-              aria-label={t('games.rhythmReading.tapArea.tapHere')}
-              className="flex h-full max-h-96 w-full items-center justify-center rounded-3xl bg-white/10 border border-white/20 text-white font-bold text-xl transition-transform duration-75 cursor-pointer hover:bg-white/20 active:scale-95"
-              style={{ minHeight: '120px' }}
+              aria-label={t("games.rhythmReading.tapArea.tapHere")}
+              className="flex h-full max-h-96 w-full cursor-pointer items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-xl font-bold text-white transition-transform duration-75 hover:bg-white/20 active:scale-95"
+              style={{ minHeight: "120px" }}
             >
-              {t('games.rhythmReading.tapArea.tapHere')}
+              {t("games.rhythmReading.tapArea.tapHere")}
             </button>
           )}
 
           {/* Repeat / Next buttons — visible during FEEDBACK */}
           {gamePhase === GAME_PHASES.FEEDBACK && (
-            <div className="flex gap-4 w-full items-center justify-center" style={{ minHeight: '120px' }}>
+            <div
+              className="flex w-full items-center justify-center gap-4"
+              style={{ minHeight: "120px" }}
+            >
               <button
                 onClick={handleRepeatExercise}
-                className="rounded-xl bg-white/10 border border-white/20 px-6 py-3 font-bold text-white hover:bg-white/20 transition-colors"
+                className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 font-bold text-white transition-colors hover:bg-white/20"
               >
-                {t('games.actions.repeat', 'Repeat')}
+                {t("games.actions.repeat", "Repeat")}
               </button>
               <button
                 onClick={handleNextExerciseInSession}
-                className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white hover:bg-indigo-400 transition-colors"
+                className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
               >
-                {t('games.actions.next', 'Next')}
+                {t("games.actions.next", "Next")}
               </button>
             </div>
           )}
@@ -781,9 +867,9 @@ export function RhythmReadingGame() {
           <div className="flex justify-center pb-4">
             <button
               onClick={startGame}
-              className="rounded-xl bg-indigo-500 px-8 py-3 font-bold text-white hover:bg-indigo-400 transition-colors"
+              className="rounded-xl bg-indigo-500 px-8 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
             >
-              {t('games.actions.start', 'Start Game')}
+              {t("games.actions.start", "Start Game")}
             </button>
           </div>
         )}
@@ -809,9 +895,7 @@ export function RhythmReadingGame() {
       />
 
       {/* Rotate prompt for iOS/non-PWA */}
-      {shouldShowPrompt && (
-        <RotatePromptOverlay onDismiss={dismissPrompt} />
-      )}
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
     </div>
   );
 }

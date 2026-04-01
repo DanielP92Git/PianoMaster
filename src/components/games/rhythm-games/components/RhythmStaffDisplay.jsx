@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react';
-import { Renderer, Stave, Voice, Formatter, Beam, Stem } from 'vexflow';
-import { beatsToVexNotes } from '../utils/rhythmVexflowHelpers';
-import { beamGroupsForTimeSignature } from '../../sight-reading-game/utils/beamGroupUtils';
+import React, { useRef, useEffect } from "react";
+import { Renderer, Stave, Voice, Formatter, Beam, Stem } from "vexflow";
+import { beatsToVexNotes } from "../utils/rhythmVexflowHelpers";
+import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamGroupUtils";
 
 /**
  * RhythmStaffDisplay
@@ -20,7 +20,7 @@ import { beamGroupsForTimeSignature } from '../../sight-reading-game/utils/beamG
  */
 export function RhythmStaffDisplay({
   beats,
-  timeSignature = '4/4',
+  timeSignature = "4/4",
   cursorProgress = 0,
   tapResults = [],
   showCursor = false,
@@ -33,9 +33,12 @@ export function RhythmStaffDisplay({
 
   // Parse time signature string into beats numerator/denominator
   const parseTimeSignature = (timeSig) => {
-    const parts = timeSig.split('/');
+    const parts = timeSig.split("/");
     if (parts.length === 2) {
-      return { numerator: parseInt(parts[0], 10), denominator: parseInt(parts[1], 10) };
+      return {
+        numerator: parseInt(parts[0], 10),
+        denominator: parseInt(parts[1], 10),
+      };
     }
     return { numerator: 4, denominator: 4 };
   };
@@ -56,7 +59,7 @@ export function RhythmStaffDisplay({
     if (!containerRef.current || !beats || beats.length === 0) return;
 
     // Clear previous rendering
-    containerRef.current.innerHTML = '';
+    containerRef.current.innerHTML = "";
     noteElementsRef.current = [];
 
     const containerWidth = containerRef.current.offsetWidth || 400;
@@ -65,11 +68,14 @@ export function RhythmStaffDisplay({
 
     try {
       // Create SVG renderer
-      const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
+      const renderer = new Renderer(
+        containerRef.current,
+        Renderer.Backends.SVG
+      );
       renderer.resize(containerWidth, staveHeight);
       const ctx = renderer.getContext();
-      ctx.setFillStyle('#ffffff');
-      ctx.setStrokeStyle('#ffffff');
+      ctx.setFillStyle("#ffffff");
+      ctx.setStrokeStyle("#ffffff");
 
       // Create stave
       const stave = new Stave(10, 10, staveWidth);
@@ -102,13 +108,24 @@ export function RhythmStaffDisplay({
       voice.draw(ctx, stave);
       beams.forEach((beam) => beam.setContext(ctx).draw());
 
-      // Expose stave note-area bounds so parent can align cursor to note region
+      // Expose stave note-area bounds + per-note X positions for beat-accurate cursor
       if (onStaveBoundsReady) {
-        const currentContainerWidth = containerRef.current?.offsetWidth || containerWidth;
+        const currentContainerWidth =
+          containerRef.current?.offsetWidth || containerWidth;
+        const noteXPositions = notes
+          .map((note) => {
+            try {
+              return note.getAbsoluteX();
+            } catch {
+              return null;
+            }
+          })
+          .filter((x) => x !== null);
         onStaveBoundsReady({
           noteStartX: stave.getNoteStartX(),
           noteEndX: stave.getNoteEndX(),
           containerWidth: currentContainerWidth,
+          noteXPositions,
         });
       }
 
@@ -122,23 +139,26 @@ export function RhythmStaffDisplay({
       });
 
       // Style SVG elements to match glassmorphism theme
-      const svgEl = containerRef.current.querySelector('svg');
+      const svgEl = containerRef.current.querySelector("svg");
       if (svgEl) {
-        svgEl.querySelectorAll('path, line, rect').forEach((el) => {
-          if (!el.getAttribute('fill') || el.getAttribute('fill') === 'black') {
-            el.setAttribute('fill', 'white');
+        svgEl.querySelectorAll("path, line, rect").forEach((el) => {
+          if (!el.getAttribute("fill") || el.getAttribute("fill") === "black") {
+            el.setAttribute("fill", "white");
           }
-          if (!el.getAttribute('stroke') || el.getAttribute('stroke') === 'black') {
-            el.setAttribute('stroke', 'white');
+          if (
+            !el.getAttribute("stroke") ||
+            el.getAttribute("stroke") === "black"
+          ) {
+            el.setAttribute("stroke", "white");
           }
         });
         // Text (time signature, etc.) should be white
-        svgEl.querySelectorAll('text').forEach((el) => {
-          el.setAttribute('fill', 'white');
+        svgEl.querySelectorAll("text").forEach((el) => {
+          el.setAttribute("fill", "white");
         });
       }
     } catch (err) {
-      console.warn('[RhythmStaffDisplay] VexFlow render error:', err);
+      console.warn("[RhythmStaffDisplay] VexFlow render error:", err);
     }
   }, [beats, timeSignature]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -152,24 +172,24 @@ export function RhythmStaffDisplay({
 
       let color;
       switch (quality) {
-        case 'PERFECT':
-          color = '#4ade80'; // green-400
+        case "PERFECT":
+          color = "#4ade80"; // green-400
           break;
-        case 'GOOD':
-          color = '#facc15'; // yellow-400
+        case "GOOD":
+          color = "#facc15"; // yellow-400
           break;
-        case 'MISS':
-          color = '#f87171'; // red-400
+        case "MISS":
+          color = "#f87171"; // red-400
           break;
         default:
-          color = 'white';
+          color = "white";
       }
 
       // Update all path elements within this note's SVG group
       try {
-        noteEl.querySelectorAll('path, .vf-notehead path').forEach((el) => {
-          el.setAttribute('fill', color);
-          el.setAttribute('stroke', color);
+        noteEl.querySelectorAll("path, .vf-notehead path").forEach((el) => {
+          el.setAttribute("fill", color);
+          el.setAttribute("stroke", color);
         });
       } catch {
         // Note element may not have querySelectorAll in test environments
@@ -185,11 +205,11 @@ export function RhythmStaffDisplay({
   }, [cursorProgress]);
 
   return (
-    <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-4">
+    <div className="rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
       {/* Music notation is always LTR regardless of app locale */}
-      <div dir="ltr" style={{ position: 'relative' }}>
+      <div dir="ltr" style={{ position: "relative" }}>
         {/* VexFlow rendering container */}
-        <div ref={containerRef} style={{ width: '100%', minHeight: '120px' }} />
+        <div ref={containerRef} style={{ width: "100%", minHeight: "120px" }} />
 
         {/* Cursor overlay line */}
         {showCursor && (
@@ -197,15 +217,17 @@ export function RhythmStaffDisplay({
             ref={cursorDivRef}
             aria-hidden="true"
             style={{
-              position: 'absolute',
+              position: "absolute",
               top: 0,
               left: `${cursorProgress * 100}%`,
-              width: '2px',
-              height: '100%',
-              backgroundColor: 'rgb(129, 140, 248)', // indigo-400
+              width: "2px",
+              height: "100%",
+              backgroundColor: "rgb(129, 140, 248)", // indigo-400
               opacity: 0.8,
-              boxShadow: reducedMotion ? 'none' : '0 0 8px rgba(129,140,248,0.8)',
-              pointerEvents: 'none',
+              boxShadow: reducedMotion
+                ? "none"
+                : "0 0 8px rgba(129,140,248,0.8)",
+              pointerEvents: "none",
               zIndex: 10,
             }}
             className="bg-indigo-400"
