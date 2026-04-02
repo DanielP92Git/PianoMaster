@@ -1292,13 +1292,25 @@ export function MetronomeTrainer() {
     if (nodeConfig) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-          {/* IOS-02: Gesture gate overlay must render HERE — the early return prevents the overlay at line 1358 from rendering */}
           {needsGestureToStart ? (
-            <AudioInterruptedOverlay
-              isVisible={true}
-              onTapToResume={handleGestureStart}
-              onRestartExercise={() => navigate(-1)}
-            />
+            <button
+              onClick={handleGestureStart}
+              className="flex flex-col items-center gap-4 rounded-2xl border border-white/20 bg-white/10 px-12 py-8 backdrop-blur-md transition-colors hover:bg-white/20"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-full border border-indigo-400/40 bg-indigo-500/30">
+                <svg
+                  className="h-8 w-8 text-indigo-300"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+              <span className="text-lg font-bold text-white">
+                {t("games.actions.start", "Start Game")}
+              </span>
+            </button>
           ) : (
             <div className="text-center">
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>

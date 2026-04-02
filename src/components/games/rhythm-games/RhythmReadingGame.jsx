@@ -472,7 +472,7 @@ export function RhythmReadingGame() {
       rafIdRef.current = requestAnimationFrame(updateCursor);
     },
     [audioContextRef, tempo, timeSignatureObj, playNote, buildBeatTimes]
-  ); // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   // Keep ref in sync so handleTap's READY→PLAYING transition calls the current version
   startPlayingRef.current = startPlaying;
@@ -875,13 +875,28 @@ export function RhythmReadingGame() {
         )}
       </main>
 
-      {/* IOS-02: Initial gesture gate overlay — shown when AudioContext suspended on trail load */}
+      {/* IOS-02: Gesture gate — shown when AudioContext needs user gesture to start (e.g. iOS trail auto-start) */}
       {needsGestureToStart && (
-        <AudioInterruptedOverlay
-          isVisible={true}
-          onTapToResume={handleGestureStart}
-          onRestartExercise={() => navigate(-1)}
-        />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <button
+            onClick={handleGestureStart}
+            className="flex flex-col items-center gap-4 rounded-2xl border border-white/20 bg-white/10 px-12 py-8 backdrop-blur-md transition-colors hover:bg-white/20"
+          >
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border border-indigo-400/40 bg-indigo-500/30">
+              <svg
+                className="h-8 w-8 text-indigo-300"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-white">
+              {t("games.actions.start", "Start Game")}
+            </span>
+          </button>
+        </div>
       )}
 
       {/* iOS audio interrupted overlay */}
