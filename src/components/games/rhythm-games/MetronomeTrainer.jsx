@@ -90,13 +90,13 @@ export function MetronomeTrainer() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const { audioContextRef, isInterrupted, handleTapToResume } = useAudioContext();
+  const { audioContextRef, isInterrupted, handleTapToResume } =
+    useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
-  const audioEngine = useAudioEngine(120, { sharedAudioContext: audioContextRef.current });
-  const {
-    playWrongSound,
-    playVictorySound,
-  } = useSounds();
+  const audioEngine = useAudioEngine(120, {
+    sharedAudioContext: audioContextRef.current,
+  });
+  const { playWrongSound, playVictorySound } = useSounds();
 
   // Game state
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
@@ -138,14 +138,13 @@ export function MetronomeTrainer() {
 
   // Pattern and timing state
 
-
   // Helper to convert time signature string to TIME_SIGNATURES object
   const getTimeSignatureObject = useCallback((timeSigString) => {
     const mapping = {
-      '4/4': TIME_SIGNATURES.FOUR_FOUR,
-      '3/4': TIME_SIGNATURES.THREE_FOUR,
-      '2/4': TIME_SIGNATURES.TWO_FOUR,
-      '6/8': TIME_SIGNATURES.SIX_EIGHT
+      "4/4": TIME_SIGNATURES.FOUR_FOUR,
+      "3/4": TIME_SIGNATURES.THREE_FOUR,
+      "2/4": TIME_SIGNATURES.TWO_FOUR,
+      "6/8": TIME_SIGNATURES.SIX_EIGHT,
     };
     return mapping[timeSigString] || TIME_SIGNATURES.FOUR_FOUR;
   }, []);
@@ -170,9 +169,9 @@ export function MetronomeTrainer() {
 
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
-      // IOS-02: If AudioContext needs a gesture to resume, defer to user tap
+      // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, defer to user tap
       const ctx = audioContextRef.current;
-      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+      if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
         setNeedsGestureToStart(true);
         return; // Don't auto-start — show tap-to-start overlay
       }
@@ -181,12 +180,12 @@ export function MetronomeTrainer() {
 
       // Build settings from node configuration
       // Convert string timeSignature to TIME_SIGNATURES object
-      const timeSigString = nodeConfig.timeSignature || '4/4';
+      const timeSigString = nodeConfig.timeSignature || "4/4";
       const trailSettings = {
-        difficulty: nodeConfig.difficulty || 'beginner',
+        difficulty: nodeConfig.difficulty || "beginner",
         tempo: nodeConfig.tempo || 80,
         timeSignature: getTimeSignatureObject(timeSigString),
-        totalExercises: 10
+        totalExercises: 10,
       };
 
       setGameSettings(trailSettings);
@@ -196,7 +195,7 @@ export function MetronomeTrainer() {
         startGame(trailSettings);
       }, 100);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, getTimeSignatureObject, startGame intentionally omitted to prevent re-triggering; only nodeConfig changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, getTimeSignatureObject, startGame intentionally omitted to prevent re-triggering; only nodeConfig changes should re-evaluate
   }, [nodeConfig]);
 
   // Handle navigation to next exercise in the trail node
@@ -213,44 +212,57 @@ export function MetronomeTrainer() {
             nodeConfig: nextExercise.config,
             exerciseIndex: nextIndex,
             totalExercises: trailTotalExercises,
-            exerciseType: nextExercise.type
+            exerciseType: nextExercise.type,
           };
 
           // Navigate based on exercise type
           switch (nextExercise.type) {
-            case 'note_recognition':
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+            case "note_recognition":
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload(); // Force reload for same route
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true } });
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: { ...navState, isBoss: true },
+              });
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+              });
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -380,7 +392,8 @@ export function MetronomeTrainer() {
       // Each compound beat has 3 eighth-note subdivisions, so subdivisionDur = beatDur/3.
       // For simple time, one tick per beat.
       const isCompound = !!currentTimeSignature.isCompound;
-      const visualSubdivisions = currentTimeSignature.subdivisions ?? beatsPerMeasure;
+      const visualSubdivisions =
+        currentTimeSignature.subdivisions ?? beatsPerMeasure;
       const subdivisionDur = isCompound ? beatDur / 3 : beatDur;
 
       // Clear any existing metronome
@@ -405,10 +418,12 @@ export function MetronomeTrainer() {
 
           for (let i = 0; i < 9; i++) {
             const subdivisionNumber = totalSubdivisionsCompleted + i;
-            const subdivisionTime = startTime + subdivisionNumber * subdivisionDur;
+            const subdivisionTime =
+              startTime + subdivisionNumber * subdivisionDur;
 
             if (subdivisionTime > currentTime + 0.05) {
-              const subdivisionInMeasure = subdivisionNumber % visualSubdivisions;
+              const subdivisionInMeasure =
+                subdivisionNumber % visualSubdivisions;
               const isCompoundDownbeat =
                 subdivisionInMeasure === 0 || subdivisionInMeasure === 3;
 
@@ -484,8 +499,11 @@ export function MetronomeTrainer() {
               if (isCompound) {
                 // Track subdivision position (1–6 for 6/8)
                 const totalSubdivisionsFloat = timeSinceStart / subdivisionDur;
-                const totalSubdivisionsCompleted = Math.floor(totalSubdivisionsFloat);
-                beatInDisplay = (totalSubdivisionsCompleted % visualSubdivisions) + 1;
+                const totalSubdivisionsCompleted = Math.floor(
+                  totalSubdivisionsFloat
+                );
+                beatInDisplay =
+                  (totalSubdivisionsCompleted % visualSubdivisions) + 1;
               } else {
                 // Track beat position (1–N for simple time)
                 const totalBeatsFloat = timeSinceStart / beatDur;
@@ -695,8 +713,8 @@ export function MetronomeTrainer() {
       // Compound time (6/8) gets 2 measures of count-in (4 compound beats) so the student
       // can feel the full dotted-quarter pulse before playing. Simple time stays at 1 measure.
       const beatsInCountIn = currentTimeSignature.isCompound
-        ? currentTimeSignature.beats * 2   // 2 compound beats × 2 measures = 4 for 6/8
-        : currentTimeSignature.beats;       // 1 measure for simple time (4/4=4, 3/4=3, 2/4=2)
+        ? currentTimeSignature.beats * 2 // 2 compound beats × 2 measures = 4 for 6/8
+        : currentTimeSignature.beats; // 1 measure for simple time (4/4=4, 3/4=3, 2/4=2)
 
       // Calculate precise timing for pattern start (immediately after count-in)
       const patternStartTime = countInStartTime + beatsInCountIn * beatDur;
@@ -793,24 +811,23 @@ export function MetronomeTrainer() {
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
   const handleGestureStart = useCallback(async () => {
-    const ctx = audioContextRef.current;
-    if (ctx) {
-      // resume() synchronously before any await — IOS-02 requirement
-      const resumePromise = ctx.resume();
-      await resumePromise;
+    // Create AudioContext if it doesn't exist yet (iOS needs user gesture to create)
+    const ctx = getOrCreateAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      await ctx.resume();
     }
     setNeedsGestureToStart(false);
     hasAutoConfigured.current = true;
-    const timeSigString = nodeConfig?.timeSignature || '4/4';
+    const timeSigString = nodeConfig?.timeSignature || "4/4";
     const trailSettings = {
-      difficulty: nodeConfig?.difficulty || 'beginner',
+      difficulty: nodeConfig?.difficulty || "beginner",
       tempo: nodeConfig?.tempo || 80,
       timeSignature: getTimeSignatureObject(timeSigString),
-      totalExercises: 10
+      totalExercises: 10,
     };
     setGameSettings(trailSettings);
     setTimeout(() => startGame(trailSettings), 50);
-  }, [audioContextRef, nodeConfig, getTimeSignatureObject, startGame]);
+  }, [getOrCreateAudioContext, nodeConfig, getTimeSignatureObject, startGame]);
 
   /**
    * Evaluate user performance using metronome-based timing
@@ -846,7 +863,9 @@ export function MetronomeTrainer() {
     const beatsPerMeasure = gameSettings.timeSignature.beats;
     // For compound time (6/8): measureLength=12, beats=2 → unitsPerBeat=6
     // For simple time (4/4): measureLength=16, beats=4 → unitsPerBeat=4
-    const unitsPerBeat = gameSettings.timeSignature.measureLength / gameSettings.timeSignature.beats;
+    const unitsPerBeat =
+      gameSettings.timeSignature.measureLength /
+      gameSettings.timeSignature.beats;
 
     // Calculate expected tap positions within the measure (in beats, not seconds)
     const expectedBeatPositions = [];
@@ -1110,7 +1129,9 @@ export function MetronomeTrainer() {
       const beatsPerMeasure = gameSettings.timeSignature.beats;
       // For compound time (6/8): measureLength=12, beats=2 → unitsPerBeat=6
       // For simple time (4/4): measureLength=16, beats=4 → unitsPerBeat=4
-      const unitsPerBeat = gameSettings.timeSignature.measureLength / gameSettings.timeSignature.beats;
+      const unitsPerBeat =
+        gameSettings.timeSignature.measureLength /
+        gameSettings.timeSignature.beats;
 
       // Convert user tap to beat position
       const userBeatPos = (relativeTime / currentBeatDur) % beatsPerMeasure;
@@ -1267,10 +1288,21 @@ export function MetronomeTrainer() {
     if (nodeConfig) {
       return (
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
-            <p className="text-lg font-medium text-white/80">{t('common.loading')}</p>
-          </div>
+          {/* IOS-02: Gesture gate overlay must render HERE — the early return prevents the overlay at line 1358 from rendering */}
+          {needsGestureToStart ? (
+            <AudioInterruptedOverlay
+              isVisible={true}
+              onTapToResume={handleGestureStart}
+              onRestartExercise={() => navigate(-1)}
+            />
+          ) : (
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
+              <p className="text-lg font-medium text-white/80">
+                {t("common.loading")}
+              </p>
+            </div>
+          )}
         </div>
       );
     }
