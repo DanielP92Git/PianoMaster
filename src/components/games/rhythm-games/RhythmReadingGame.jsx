@@ -292,7 +292,19 @@ export function RhythmReadingGame() {
     const lookaheadBeats = 3;
     lastScheduledBeatRef.current = -1;
 
-    // Audio lookahead: every 50ms, schedule unscheduled beats up to 3 ahead
+    // Schedule first batch immediately so beat 0 is never missed
+    const startNow = ctx.currentTime;
+    const startElapsed = startNow - metronomeStartTimeRef.current;
+    const startBeatFloat = startElapsed / beatDuration;
+    const startScheduleTo = Math.floor(startBeatFloat) + lookaheadBeats;
+    for (let b = lastScheduledBeatRef.current + 1; b <= startScheduleTo; b++) {
+      const beatTime = metronomeStartTimeRef.current + b * beatDuration;
+      const isDownbeat = b % beatsPerMeasure === 0;
+      playMetronomeClick(beatTime, isDownbeat);
+    }
+    lastScheduledBeatRef.current = startScheduleTo;
+
+    // Continue scheduling in setInterval for subsequent beats
     metronomeIntervalRef.current = setInterval(() => {
       const now = ctx.currentTime;
       const elapsed = now - metronomeStartTimeRef.current;
@@ -351,7 +363,9 @@ export function RhythmReadingGame() {
         ctx.resume().catch(() => {});
       }
 
-      metronomeStartTimeRef.current = ctx.currentTime;
+      // Small future buffer ensures beat 0 is scheduled ahead of ctx.currentTime,
+      // not in the past by the time the scheduler runs
+      metronomeStartTimeRef.current = ctx.currentTime + 0.05;
       startContinuousMetronome();
     },
     [
