@@ -1,5 +1,25 @@
 # Project Milestones: PianoApp
 
+## v3.0 Cleanup & Polish (Shipped: 2026-04-02)
+
+**Phases completed:** 5 phases, 11 plans, 24 tasks
+
+**Key accomplishments:**
+
+- Replaced 10 invalid `difficulty: 'easy'` values in rhythm units 1-2 with `'beginner'`, added regression test covering all 8 units, and extended build validator to catch difficulty and rhythmPattern name violations
+- allowedPatterns constraint wired through getPattern() and all 4 rhythm games; RhythmDictationGame reads difficulty from nodeConfig; unit 7/8 tests corrected to D-12 distribution
+- Three duplicated utility functions (noteNameToMidi, calculateStarsFromPercentage, verifyStudentDataAccess) consolidated to single canonical implementations with 19 unit tests covering all threshold boundaries and edge cases
+- TeacherDashboard split into 433 kB separate chunk via lazyWithRetry; 4 dead files deleted; 12 locale strings migrated from "points" to "XP" across English and Hebrew
+- 24 unguarded console.log/debug calls eliminated from src/ via DEV flag upgrades, inline DEV guards, deletions, and ESLint no-console rule enforcement
+- Regression tests proving dailyGoalsService counts all 11 game types without category filtering, plus deploy sequencing guide for Supabase-first migration ordering
+- Step-by-step UAT testing checklist for 5 Phase 08 items covering rhythm games, piano tone, trail navigation, and PWA cache across Android/iOS/Desktop
+- Three UAT bugs fixed: duplicate cursor eliminated, cursor/beat alignment corrected via VexFlow stave bounds, and BackButton stuck spinner removed
+- READY phase gate + replay-callback advance fix + G4.mp3 piano sound unification in RhythmDictationGame
+- iOS tap-to-start overlay added to RhythmReadingGame and RhythmDictationGame, matching MetronomeTrainer's existing suspended-AudioContext detection pattern
+- ESLint disable comment moved inline to console.debug call, build pipeline confirmed passing, and v3.0 milestone docs updated to reflect all 5 phases complete
+
+---
+
 ## v2.9 Game Variety & Ear Training (Shipped: 2026-03-30)
 
 **Phases completed:** 5 phases, 15 plans, 24 tasks
@@ -571,4 +591,4 @@
 
 ---
 
-*Last updated: 2026-03-15*
+_Last updated: 2026-03-15_

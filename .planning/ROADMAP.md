@@ -46,111 +46,45 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
-### v3.0 Cleanup & Polish (Complete)
+<details>
+<summary>v3.0 Cleanup & Polish (Phases 12-16) -- SHIPPED 2026-04-03</summary>
 
-- [x] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping) (completed 2026-03-30)
-- [x] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle (completed 2026-03-31)
-- [x] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase (completed 2026-03-31)
-- [x] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items (completed 2026-03-31)
-- [x] **Phase 16: Milestone Cleanup** - Fix ESLint comment placement, correct ROADMAP doc errors, close audit tech debt (completed 2026-04-03)
+- [x] Phase 12: Trail Config Fixes (2/2 plans) -- completed 2026-03-30
+- [x] Phase 13: Code Quality Quick Wins (2/2 plans) -- completed 2026-03-31
+- [x] Phase 14: Console Logging Cleanup (1/1 plan) -- completed 2026-03-31
+- [x] Phase 15: Verification & Deploy (5/5 plans) -- completed 2026-03-31
+- [x] Phase 16: Milestone Cleanup (1/1 plan) -- completed 2026-04-02
 
-## Phase Details
-
-### Phase 12: Trail Config Fixes
-
-**Goal**: Rhythm games correctly read and apply trail node configuration so difficulty and pattern constraints work as designed
-**Depends on**: Nothing (first phase of v3.0)
-**Requirements**: TCFG-01, TCFG-02, TCFG-03
-**Success Criteria** (what must be TRUE):
-
-1. When a trail rhythm node specifies `rhythmPatterns`, only those durations appear in the generated exercises
-2. Trail difficulty values (`easy`/`medium`/`hard`) correctly map to generator levels (`beginner`/`intermediate`/`advanced`) so node difficulty affects actual gameplay
-3. rhythmUnit7 and rhythmUnit8 test files pass with expectations matching the D-12 distribution (3x RHYTHM + 2x RHYTHM_TAP + 1x RHYTHM_DICTATION + 1x ARCADE_RHYTHM per node)
-   **Plans:** 2/2 plans complete
-   Plans:
-
-- [x] 12-01-PLAN.md -- Fix difficulty values in data files, regression test, build validator enhancement
-- [x] 12-02-PLAN.md -- Wire allowedPatterns through generator and all 4 rhythm games, fix unit 7/8 test assertions
-
-### Phase 13: Code Quality Quick Wins
-
-**Goal**: Eliminate duplicated utility code, remove dead code, and reduce teacher bundle from the main chunk
-**Depends on**: Nothing (independent of Phase 12)
-**Requirements**: QUAL-01, QUAL-02, QUAL-03, QUAL-04, QUAL-05, QUAL-07, XP-01
-**Success Criteria** (what must be TRUE):
-
-1. `noteNameToMidi` has a single canonical implementation and all call sites import from one module (zero duplicates)
-2. `calculateStars` has a single canonical implementation and all call sites import from one module (zero duplicates)
-3. `verifyStudentDataAccess` is defined only in authorizationUtils.js with no duplicate in apiDatabase.js
-4. AchievementsLegacy.jsx no longer exists in the codebase, and no non-migration files (DEBUG*, TEST*, README\_) exist in supabase/migrations/
-5. TeacherDashboard loads via React.lazy() and all `total_points` references in teacher code use XP terminology
-   **Plans:** 2/2 plans complete
-   Plans:
-
-- [x] 13-01-PLAN.md -- Consolidate noteNameToMidi, calculateStars, and verifyStudentDataAccess to canonical locations (completed 2026-03-30)
-- [x] 13-02-PLAN.md -- Delete dead code, lazy-load TeacherDashboard, migrate XP locale strings
-
-### Phase 14: Console Logging Cleanup
-
-**Goal**: Production builds contain no unguarded debug logging, keeping the browser console clean for end users
-**Depends on**: Nothing (independent of other phases, but best done after code changes in 12-13 to avoid merge conflicts)
-**Requirements**: QUAL-06
-**Success Criteria** (what must be TRUE):
-
-1. Running `grep -r "console.log\|console.debug" src/` shows fewer than 50 hits, all guarded by `import.meta.env.DEV` or justified as intentional production logging (errors/warnings)
-2. Production build (`npm run build && npm run preview`) shows zero debug-level console output during normal app usage (login, trail navigation, playing a game, viewing dashboard)
-   **Plans:** 1/1 plans complete
-   Plans:
-
-- [x] 14-01-PLAN.md -- Remove/gate all 24 unguarded console.log/debug calls, add ESLint no-console rule
-
-### Phase 15: Verification & Deploy
-
-**Goal**: All operational loose ends are closed -- daily goals work with all game types, deploy process is documented, and pending manual verification items are completed
-**Depends on**: Phases 12-13 (daily goals audit needs trail config fixes in place; UAT covers rhythm game behavior)
-**Requirements**: GOAL-01, DEPLOY-01, UAT-01
-**Success Criteria** (what must be TRUE):
-
-1. `dailyGoalsService.js` counts exercises from all game types (including ear training and arcade rhythm) toward daily goals with no hardcoded category arrays
-2. A deploy sequencing document exists in `.planning/` or `docs/` that describes the correct order for Supabase migration + Netlify deploy
-3. All 5 pending Phase 08 UAT items (rhythm games, piano tone, PWA cache) are verified on a real device and results documented
-   **Plans:** 5/5 plans executed
-   Plans:
-
-- [x] 15-01-PLAN.md -- Daily goals regression tests + deploy sequencing document
-- [x] 15-02-PLAN.md -- UAT testing checklist creation + human device verification
-- [x] 15-03-PLAN.md -- [GAP] RhythmReadingGame fixes: double cursor, cursor desync, back button
-- [x] 15-04-PLAN.md -- [GAP] RhythmDictationGame UX: ready button, advance timing, sound unification
-- [x] 15-05-PLAN.md -- [GAP] iOS gesture gate for RhythmReadingGame + RhythmDictationGame
-
-### Phase 16: Milestone Cleanup
-
-**Goal**: Close all audit tech debt items so v3.0 can be marked complete with a clean bill of health
-**Depends on**: Phases 12-15 (cleanup of their artifacts)
-**Requirements**: CLEAN-01
-**Gap Closure:** Closes integration gap QUAL-06-eslint-comment + ROADMAP doc errors from audit
-**Success Criteria** (what must be TRUE):
-
-1. `useAudioEngine.js` line 271 has the `eslint-disable-line no-console` comment on the correct line (the `console.debug` call, not the line below it)
-2. ROADMAP progress table accurately reflects all phase statuses (no stale "In Progress" or wrong plan counts)
-3. `npm run build` succeeds with prebuild trail validation passing (confirms SVG import issue is resolved)
-   **Plans:** 1/1 plans complete
-   Plans:
-
-- [x] 16-01-PLAN.md -- Fix ESLint comment, verify build, update ROADMAP accuracy
+</details>
 
 ## Progress
 
-| Phase                       | Milestone | Plans Complete | Status   | Completed  |
-| --------------------------- | --------- | -------------- | -------- | ---------- |
-| 12. Trail Config Fixes      | v3.0      | 2/2            | Complete | 2026-03-30 |
-| 13. Code Quality Quick Wins | v3.0      | 2/2            | Complete | 2026-03-31 |
-| 14. Console Logging Cleanup | v3.0      | 1/1            | Complete | 2026-03-31 |
-| 15. Verification & Deploy   | v3.0      | 5/5            | Complete | 2026-03-31 |
-| 16. Milestone Cleanup       | v3.0      | 1/1            | Complete    | 2026-04-02 |
+| Milestone                        | Phases | Plans | Status   | Shipped    |
+| -------------------------------- | ------ | ----- | -------- | ---------- |
+| v1.0 Security Hardening          | 4      | 15    | Complete | 2026-02-01 |
+| v1.1 Parental Consent Email      | 1      | 2     | Complete | 2026-02-02 |
+| v1.2 Trail Stabilization         | 2      | 4     | Complete | 2026-02-03 |
+| v1.3 Trail Redesign              | 5      | 14    | Complete | 2026-02-05 |
+| v1.4 UI Polish & Celebrations    | 6      | 13    | Complete | 2026-02-09 |
+| v1.5 Trail Visual Redesign       | 4      | 10    | Complete | 2026-02-12 |
+| v1.6 Auto-Rotate Landscape       | 5      | 10    | Complete | 2026-02-17 |
+| v1.7 Mic Pitch Detection         | 5      | 12    | Complete | 2026-03-04 |
+| v1.8 App Monetization            | 6      | 13    | Complete | 2026-03-01 |
+| v1.9 Engagement & Retention      | 7      | 15    | Complete | 2026-03-08 |
+| v2.0 VictoryScreen & XP          | 2      | 6     | Complete | 2026-03-08 |
+| v2.1 Forgot Password             | 1      | 2     | Complete | 2026-03-10 |
+| v2.2 Sharps & Flats              | 5      | 9     | Complete | 2026-03-17 |
+| v2.3 Launch Readiness            | 6      | 6     | Complete | 2026-03-17 |
+| v2.4 Content Expansion           | 5      | 10    | Complete | 2026-03-19 |
+| v2.5 Launch Prep                 | 4      | 11    | Complete | 2026-03-22 |
+| v2.6 User Feedback               | 2      | 3     | Complete | 2026-03-23 |
+| v2.7 Instrument Practice         | 5      | 12    | Complete | 2026-03-25 |
+| v2.8 Single-Note Game            | 2      | 5     | Complete | 2026-03-26 |
+| v2.9 Game Variety & Ear Training | 5      | 15    | Complete | 2026-03-30 |
+| v3.0 Cleanup & Polish            | 5      | 11    | Complete | 2026-04-03 |
 
-**Total: 20 milestones shipped (v1.0-v2.9), v3.0 complete -- 5 phases, 15 requirements**
+**Total: 21 milestones shipped, 92 phases, ~198 plans**
 
 ---
 
-_Last updated: 2026-04-03 -- Phase 16 complete, v3.0 milestone closed_
+_Last updated: 2026-04-03 — v3.0 milestone archived_

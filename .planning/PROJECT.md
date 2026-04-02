@@ -226,24 +226,21 @@ These capabilities exist, are working, and have been shipped:
 - RMAP-01-03: 36 rhythm nodes remapped to mixed exercise types (MetronomeTrainer/RhythmReading/Dictation/Arcade), DB migration
 - 38/38 requirements delivered, 15 plans across 5 phases
 
+**v3.0 Cleanup & Polish (shipped 2026-04-03):**
+
+- Trail rhythm config: difficulty values corrected (easy→beginner), rhythmPatterns constraint wired through all 4 rhythm games
+- Utility consolidation: noteNameToMidi, calculateStarsFromPercentage, verifyStudentDataAccess each have single canonical implementation
+- Console cleanup: zero unguarded console.log/debug in production, ESLint no-console rule with husky pre-commit regression guard
+- TeacherDashboard lazy-loaded (433 kB separate chunk), dead code removed (AchievementsLegacy, debug SQL files)
+- XP terminology migration: 12 locale strings updated from "points" to "XP" across EN/HE
+- Daily goals verified for all 11 exercise types (no hardcoded category filtering)
+- Deploy sequencing documented (Supabase migration → Netlify deploy → Edge Functions)
+- Phase 08 UAT completed on real devices: rhythm games, piano tone, PWA cache all verified
+- RhythmReadingGame fixes: cursor alignment, back button, iOS gesture gate
+- RhythmDictationGame UX: READY phase gate, replay-callback advance, G4.mp3 sound unification
+- ESLint comment placement fixed, build pipeline verified end-to-end
+
 ### Active
-
-## Current Milestone: v3.0 Cleanup & Polish
-
-**Goal:** Fix accumulated tech debt, broken tests, and deferred items to establish a clean foundation before the next feature milestone.
-
-**Target features:**
-
-- Trail difficulty mapping fix (easy→beginner vocabulary + rhythmPatterns config usage)
-- rhythmUnit7/8 test expectations updated for D-12 mixed exercise distribution
-- TeacherDashboard points→XP migration (~20 references)
-- dailyGoalsService category audit (ensure ear training exercises count)
-- Deploy sequencing plan (Supabase migration ordering)
-- Duplicate function consolidation (noteNameToMidi 3x, calculateStars 2x, verifyStudentDataAccess 2x)
-- Dead code removal (AchievementsLegacy.jsx, non-migration SQL files)
-- console.log cleanup (366 calls across 90 files)
-- TeacherDashboard lazy loading (2700-line eager import → React.lazy)
-- Phase 08 HUMAN-UAT completion (5 pending manual verification items)
 
 **Future candidates:**
 
