@@ -638,31 +638,13 @@ export function RhythmDictationGame() {
         onRestartExercise={handleReset}
       />
 
-      <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
-        {/* Header bar */}
-        <div className="flex h-12 items-center justify-between">
+      <div className="mx-auto flex max-w-lg flex-col gap-2 p-3">
+        {/* Compact header: back + replay + progress in one row */}
+        <div className="flex h-10 items-center justify-between">
           <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
-          <div className="flex items-center gap-2">
-            {/* Progress counter — dir=ltr to prevent digit reversal in RTL */}
-            <span dir="ltr" className="font-rounded text-sm text-white/70">
-              {currentQuestion + 1} / {TOTAL_QUESTIONS}
-            </span>
-            {/* Score */}
-            <span className="font-rounded text-sm text-indigo-300">
-              {correctCount} ✓
-            </span>
-          </div>
-        </div>
 
-        {/* Audio status row */}
-        <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
+          {/* Center: replay button or feedback text */}
           <div className="flex items-center gap-2">
-            <Volume2
-              size={20}
-              className={
-                isPlaying ? "animate-pulse text-indigo-300" : "text-white/60"
-              }
-            />
             {feedbackText ? (
               <span
                 aria-live="polite"
@@ -670,43 +652,39 @@ export function RhythmDictationGame() {
               >
                 {feedbackText}
               </span>
-            ) : (
-              <span
-                className="font-rounded text-sm text-white/40"
-                aria-hidden="true"
-              >
-                {gamePhase === GAME_PHASES.CHOOSING
-                  ? t("games.rhythmDictation.playAgain", {
-                      defaultValue: "Play Again",
-                    })
-                  : ""}
-              </span>
-            )}
-          </div>
-
-          {/* Replay button — visible during LISTENING and CHOOSING */}
-          {(gamePhase === GAME_PHASES.LISTENING ||
-            gamePhase === GAME_PHASES.CHOOSING) && (
-            <button
-              onClick={handleReplay}
-              disabled={isPlaying}
-              aria-label={t("games.rhythmDictation.playAgain", {
-                defaultValue: "Play Again",
-              })}
-              className={`flex items-center gap-1 rounded-xl px-4 py-2 font-rounded text-sm transition-all ${
-                isPlaying
-                  ? "cursor-not-allowed bg-indigo-500/50 opacity-50"
-                  : "cursor-pointer bg-indigo-500 text-white hover:bg-indigo-400"
-              }`}
-            >
-              <Volume2 size={20} />
-              <span>
-                {t("games.rhythmDictation.playAgain", {
+            ) : gamePhase === GAME_PHASES.LISTENING ||
+              gamePhase === GAME_PHASES.CHOOSING ? (
+              <button
+                onClick={handleReplay}
+                disabled={isPlaying}
+                aria-label={t("games.rhythmDictation.playAgain", {
                   defaultValue: "Play Again",
                 })}
-              </span>
-            </button>
-          )}
+                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 font-rounded text-sm transition-all ${
+                  isPlaying
+                    ? "cursor-not-allowed bg-indigo-500/50 opacity-50"
+                    : "cursor-pointer bg-indigo-500 text-white hover:bg-indigo-400"
+                }`}
+              >
+                <Volume2 size={16} />
+                <span>
+                  {t("games.rhythmDictation.playAgain", {
+                    defaultValue: "Play Again",
+                  })}
+                </span>
+              </button>
+            ) : null}
+          </div>
+
+          {/* Right: progress + score */}
+          <div className="flex items-center gap-2">
+            <span dir="ltr" className="font-rounded text-sm text-white/70">
+              {currentQuestion + 1} / {TOTAL_QUESTIONS}
+            </span>
+            <span className="font-rounded text-sm text-indigo-300">
+              {correctCount} ✓
+            </span>
+          </div>
         </div>
 
         {/* Feedback announcement (sr-only live region for screen readers) */}
@@ -735,7 +713,7 @@ export function RhythmDictationGame() {
 
         {/* Choice cards — vertical stack (D-06) */}
         {showCards && choices.length === 3 && (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             {choices.map((choiceBeats, idx) => (
               <DictationChoiceCard
                 key={idx}

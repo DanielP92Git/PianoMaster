@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react';
-import { Renderer, Stave, Voice, Formatter, Beam, Stem } from 'vexflow';
-import { beatsToVexNotes } from '../utils/rhythmVexflowHelpers';
-import { beamGroupsForTimeSignature } from '../../sight-reading-game/utils/beamGroupUtils';
+import React, { useRef, useEffect } from "react";
+import { Renderer, Stave, Voice, Formatter, Beam, Stem } from "vexflow";
+import { beatsToVexNotes } from "../utils/rhythmVexflowHelpers";
+import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamGroupUtils";
 
 /**
  * DictationChoiceCard
@@ -21,20 +21,20 @@ import { beamGroupsForTimeSignature } from '../../sight-reading-game/utils/beamG
 // Map visual states to Tailwind class strings per UI-SPEC choice card states table
 const STATE_CLASSES = {
   default:
-    'bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/40 cursor-pointer transition-colors duration-150',
+    "bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/40 cursor-pointer transition-colors duration-150",
   correct:
-    'bg-green-500/20 backdrop-blur-md border-2 border-green-400 rounded-xl shadow-[0_0_12px_rgba(74,222,128,0.4)] transition-all duration-300',
+    "bg-green-500/20 backdrop-blur-md border-2 border-green-400 rounded-xl shadow-[0_0_12px_rgba(74,222,128,0.4)] transition-all duration-300",
   wrong:
-    'bg-red-500/20 backdrop-blur-md border-2 border-red-400 rounded-xl transition-all duration-300',
+    "bg-red-500/20 backdrop-blur-md border-2 border-red-400 rounded-xl transition-all duration-300",
   dimmed:
-    'opacity-40 pointer-events-none bg-white/10 border border-white/20 rounded-xl',
+    "opacity-40 pointer-events-none bg-white/10 border border-white/20 rounded-xl",
 };
 
 /**
  * Parse time signature string to beat count (in quarter notes) for VexFlow Voice.
  */
 function getBeatCount(timeSig) {
-  const parts = timeSig.split('/');
+  const parts = timeSig.split("/");
   if (parts.length !== 2) return 4;
   const [num, den] = parts.map(Number);
   // For compound time (6/8): 6 eighth notes = 3 quarter-note beats
@@ -44,9 +44,9 @@ function getBeatCount(timeSig) {
 
 export function DictationChoiceCard({
   beats,
-  timeSignature = '4/4',
+  timeSignature = "4/4",
   cardIndex,
-  state = 'default',
+  state = "default",
   onSelect,
   disabled = false,
 }) {
@@ -57,18 +57,21 @@ export function DictationChoiceCard({
     if (!containerRef.current || !beats || beats.length === 0) return;
 
     // Clear previous render
-    containerRef.current.innerHTML = '';
+    containerRef.current.innerHTML = "";
 
     const containerWidth = containerRef.current.offsetWidth || 320;
     const staveWidth = containerWidth - 20;
-    const staveHeight = 100;
+    const staveHeight = 80;
 
     try {
-      const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
+      const renderer = new Renderer(
+        containerRef.current,
+        Renderer.Backends.SVG
+      );
       renderer.resize(containerWidth, staveHeight);
       const ctx = renderer.getContext();
-      ctx.setFillStyle('#ffffff');
-      ctx.setStrokeStyle('#ffffff');
+      ctx.setFillStyle("#ffffff");
+      ctx.setStrokeStyle("#ffffff");
 
       // Create stave with time signature
       const stave = new Stave(10, 5, staveWidth);
@@ -102,31 +105,35 @@ export function DictationChoiceCard({
       beams.forEach((beam) => beam.setContext(ctx).draw());
 
       // Apply white fill to SVG elements to match glassmorphism dark theme
-      const svgEl = containerRef.current.querySelector('svg');
+      const svgEl = containerRef.current.querySelector("svg");
       if (svgEl) {
-        svgEl.querySelectorAll('path, line, rect').forEach((el) => {
-          const fill = el.getAttribute('fill');
-          const stroke = el.getAttribute('stroke');
-          if (!fill || fill === 'black') el.setAttribute('fill', 'white');
-          if (!stroke || stroke === 'black') el.setAttribute('stroke', 'white');
+        svgEl.querySelectorAll("path, line, rect").forEach((el) => {
+          const fill = el.getAttribute("fill");
+          const stroke = el.getAttribute("stroke");
+          if (!fill || fill === "black") el.setAttribute("fill", "white");
+          if (!stroke || stroke === "black") el.setAttribute("stroke", "white");
         });
-        svgEl.querySelectorAll('text').forEach((el) => {
-          el.setAttribute('fill', 'white');
+        svgEl.querySelectorAll("text").forEach((el) => {
+          el.setAttribute("fill", "white");
         });
       }
     } catch (err) {
-      console.warn('[DictationChoiceCard] VexFlow render error:', err);
+      console.warn("[DictationChoiceCard] VexFlow render error:", err);
     }
   }, [beats, timeSignature]);
 
   const handleClick = () => {
-    if (!disabled && state !== 'dimmed' && onSelect) {
+    if (!disabled && state !== "dimmed" && onSelect) {
       onSelect(cardIndex);
     }
   };
 
   const handleKeyDown = (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && !disabled && state !== 'dimmed') {
+    if (
+      (e.key === "Enter" || e.key === " ") &&
+      !disabled &&
+      state !== "dimmed"
+    ) {
       e.preventDefault();
       onSelect?.(cardIndex);
     }
@@ -137,16 +144,21 @@ export function DictationChoiceCard({
   return (
     <div
       role="button"
-      tabIndex={disabled || state === 'dimmed' ? -1 : 0}
+      tabIndex={disabled || state === "dimmed" ? -1 : 0}
       aria-label={`Choice ${cardIndex + 1}`}
       aria-disabled={disabled}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`w-full p-3 min-h-[96px] flex items-center justify-center ${stateClass}`}
-      style={{ minHeight: '96px' }}
+      className={`flex min-h-[76px] w-full items-center justify-center p-2 ${stateClass}`}
+      style={{ minHeight: "76px" }}
     >
       {/* VexFlow notation — always LTR regardless of app locale */}
-      <div dir="ltr" className="w-full" ref={containerRef} style={{ minHeight: '80px' }} />
+      <div
+        dir="ltr"
+        className="w-full"
+        ref={containerRef}
+        style={{ minHeight: "64px" }}
+      />
     </div>
   );
 }
