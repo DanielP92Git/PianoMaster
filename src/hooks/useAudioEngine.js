@@ -11,7 +11,10 @@ const METRONOME_TIMING_DEBUG = import.meta.env.DEV;
  *   When provided, the hook uses this context instead of creating its own, and does NOT close it on cleanup.
  * @returns {Object} Audio engine API
  */
-export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null } = {}) => {
+export const useAudioEngine = (
+  initialTempo = 120,
+  { sharedAudioContext = null } = {}
+) => {
   // State management
   const [tempo, setTempo] = useState(Math.max(60, Math.min(200, initialTempo)));
   const [isPlaying, setIsPlaying] = useState(false);
@@ -105,7 +108,7 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
       console.error("❌ Error stack:", err.stack);
       return false;
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- loadPianoSoundAsync and loadTapSoundAsync are defined after this callback; they are fire-and-forget wrappers that only use refs and loadPianoSound/loadTapSound (proper useCallbacks); circular dependency would cause infinite invalidation
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadPianoSoundAsync and loadTapSoundAsync are defined after this callback; they are fire-and-forget wrappers that only use refs and loadPianoSound/loadTapSound (proper useCallbacks); circular dependency would cause infinite invalidation
   }, [sharedAudioContext]); // sharedAudioContext is the only external dep
 
   /**
@@ -261,46 +264,47 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
    */
   const createMetronomeClick = useCallback(
     (time, isDownbeat = false, gainMultiplier = 1) => {
-    if (!audioContextRef.current || !gainNodeRef.current) return;
+      if (!audioContextRef.current || !gainNodeRef.current) return;
 
-    try {
-      if (METRONOME_TIMING_DEBUG) {
-        console.debug("[createMetronomeClick]", { // eslint-disable-line no-console
-          requestedTime: time,
-          audioCurrentTime: audioContextRef.current.currentTime,
-          deltaSeconds: time - audioContextRef.current.currentTime,
-          isDownbeat,
-          gainMultiplier,
-        });
+      try {
+        if (METRONOME_TIMING_DEBUG) {
+          console.debug("[createMetronomeClick]", {
+            // eslint-disable-line no-console
+            requestedTime: time,
+            audioCurrentTime: audioContextRef.current.currentTime,
+            deltaSeconds: time - audioContextRef.current.currentTime,
+            isDownbeat,
+            gainMultiplier,
+          });
+        }
+        // Create oscillator for the click sound
+        const oscillator = audioContextRef.current.createOscillator();
+        const clickGain = audioContextRef.current.createGain();
+
+        // Configure frequency - higher pitch for downbeat
+        oscillator.frequency.setValueAtTime(isDownbeat ? 1000 : 800, time);
+        oscillator.type = "sine";
+
+        // Configure amplitude envelope to avoid clicks/pops
+        const peakGain = Math.min(0.3 * (gainMultiplier || 1), 1);
+        clickGain.gain.setValueAtTime(0, time);
+        clickGain.gain.linearRampToValueAtTime(peakGain, time + 0.001); // Quick attack
+        clickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05); // Decay
+
+        // Connect nodes
+        oscillator.connect(clickGain);
+        clickGain.connect(gainNodeRef.current);
+
+        // Schedule play
+        oscillator.start(time);
+        oscillator.stop(time + 0.05); // Short duration
+
+        return { oscillator, gain: clickGain };
+      } catch (err) {
+        console.error("Error creating metronome click:", err);
+        return null;
       }
-      // Create oscillator for the click sound
-      const oscillator = audioContextRef.current.createOscillator();
-      const clickGain = audioContextRef.current.createGain();
-
-      // Configure frequency - higher pitch for downbeat
-      oscillator.frequency.setValueAtTime(isDownbeat ? 1000 : 800, time);
-      oscillator.type = "sine";
-
-      // Configure amplitude envelope to avoid clicks/pops
-      const peakGain = Math.min(0.3 * (gainMultiplier || 1), 1);
-      clickGain.gain.setValueAtTime(0, time);
-      clickGain.gain.linearRampToValueAtTime(peakGain, time + 0.001); // Quick attack
-      clickGain.gain.exponentialRampToValueAtTime(0.01, time + 0.05); // Decay
-
-      // Connect nodes
-      oscillator.connect(clickGain);
-      clickGain.connect(gainNodeRef.current);
-
-      // Schedule play
-      oscillator.start(time);
-      oscillator.stop(time + 0.05); // Short duration
-
-      return { oscillator, gain: clickGain };
-    } catch (err) {
-      console.error("Error creating metronome click:", err);
-      return null;
-    }
-  },
+    },
     []
   );
 
@@ -315,11 +319,8 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
 
       const currentTime = audioContextRef.current.currentTime;
       return (
-        createMetronomeClick(
-          currentTime + 0.01,
-          isDownbeat,
-          gainMultiplier
-        ) !== null
+        createMetronomeClick(currentTime + 0.01, isDownbeat, gainMultiplier) !==
+        null
       );
     },
     [createMetronomeClick, isReady]
@@ -411,11 +412,19 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
             source.playbackRate.value = Math.pow(2, pitchShift / 12);
           }
 
-          // Configure volume envelope for natural decay
+          // Configure volume envelope: quick attack, sustained body, short release tail
+          const releaseTime = Math.min(0.3, duration * 0.15); // release is 15% of duration, max 0.3s
           pianoGain.gain.setValueAtTime(0, time);
           pianoGain.gain.linearRampToValueAtTime(volume, time + 0.01); // Quick attack
-          pianoGain.gain.exponentialRampToValueAtTime(volume * 0.5, time + 0.2); // Sustain
-          pianoGain.gain.exponentialRampToValueAtTime(0.01, time + duration); // Natural decay
+          pianoGain.gain.exponentialRampToValueAtTime(
+            volume * 0.6,
+            time + 0.15
+          ); // Initial decay
+          pianoGain.gain.setValueAtTime(
+            volume * 0.6,
+            time + duration - releaseTime
+          ); // Hold sustain
+          pianoGain.gain.exponentialRampToValueAtTime(0.01, time + duration); // Release
 
           // Connect nodes
           source.connect(pianoGain);
@@ -1155,7 +1164,10 @@ export const useAudioEngine = (initialTempo = 120, { sharedAudioContext = null }
 
     if (isOwnedContextRef.current) {
       // We created this context — close it on cleanup
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed"
+      ) {
         audioContextRef.current.close();
       }
     }

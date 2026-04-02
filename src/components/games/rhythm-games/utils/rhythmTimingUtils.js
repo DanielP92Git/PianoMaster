@@ -8,9 +8,9 @@
 // Base timing thresholds at 120 BPM (in milliseconds)
 // Matches MetronomeTrainer.jsx BASE_TIMING_THRESHOLDS exactly.
 const BASE_TIMING_THRESHOLDS = {
-  PERFECT: 50,  // ±50ms at 120 BPM
-  GOOD: 75,     // ±75ms at 120 BPM
-  FAIR: 125,    // ±125ms at 120 BPM
+  PERFECT: 50, // ±50ms at 120 BPM
+  GOOD: 75, // ±75ms at 120 BPM
+  FAIR: 125, // ±125ms at 120 BPM
 };
 
 const BASE_TEMPO = 120;
@@ -42,7 +42,9 @@ export function calculateTimingThresholds(tempo) {
  * Serialize beats to a fingerprint string for deduplication.
  */
 function beatsFingerprint(beats) {
-  return beats.map((b) => `${b.durationUnits}${b.isRest ? 'r' : 'n'}`).join(',');
+  return beats
+    .map((b) => `${b.durationUnits}${b.isRest ? "r" : "n"}`)
+    .join(",");
 }
 
 /**
@@ -56,61 +58,141 @@ const DISTRACTOR_TEMPLATES = {
   // 4/4 = 16 sixteenth-note units
   16: [
     // 4 quarter notes
-    [{ d: 4, r: false }, { d: 4, r: false }, { d: 4, r: false }, { d: 4, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: false },
+      { d: 4, r: false },
+      { d: 4, r: false },
+    ],
     // whole note
     [{ d: 16, r: false }],
     // 2 half notes
-    [{ d: 8, r: false }, { d: 8, r: false }],
+    [
+      { d: 8, r: false },
+      { d: 8, r: false },
+    ],
     // half + 2 quarters
-    [{ d: 8, r: false }, { d: 4, r: false }, { d: 4, r: false }],
+    [
+      { d: 8, r: false },
+      { d: 4, r: false },
+      { d: 4, r: false },
+    ],
     // dotted half + quarter
-    [{ d: 12, r: false }, { d: 4, r: false }],
+    [
+      { d: 12, r: false },
+      { d: 4, r: false },
+    ],
     // quarter + half + quarter
-    [{ d: 4, r: false }, { d: 8, r: false }, { d: 4, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 8, r: false },
+      { d: 4, r: false },
+    ],
     // 2 quarters + half
-    [{ d: 4, r: false }, { d: 4, r: false }, { d: 8, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: false },
+      { d: 8, r: false },
+    ],
     // quarter + dotted half
-    [{ d: 4, r: false }, { d: 12, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 12, r: false },
+    ],
     // half + quarter + quarter rest
-    [{ d: 8, r: false }, { d: 4, r: false }, { d: 4, r: true }],
+    [
+      { d: 8, r: false },
+      { d: 4, r: false },
+      { d: 4, r: true },
+    ],
     // quarter rest + quarter + half
-    [{ d: 4, r: true }, { d: 4, r: false }, { d: 8, r: false }],
+    [
+      { d: 4, r: true },
+      { d: 4, r: false },
+      { d: 8, r: false },
+    ],
     // quarter + quarter rest + half
-    [{ d: 4, r: false }, { d: 4, r: true }, { d: 8, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: true },
+      { d: 8, r: false },
+    ],
     // 2 quarters + quarter rest + quarter
-    [{ d: 4, r: false }, { d: 4, r: false }, { d: 4, r: true }, { d: 4, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: false },
+      { d: 4, r: true },
+      { d: 4, r: false },
+    ],
   ],
   // 3/4 = 12 sixteenth-note units
   12: [
     // 3 quarter notes
-    [{ d: 4, r: false }, { d: 4, r: false }, { d: 4, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: false },
+      { d: 4, r: false },
+    ],
     // dotted half
     [{ d: 12, r: false }],
     // half + quarter
-    [{ d: 8, r: false }, { d: 4, r: false }],
+    [
+      { d: 8, r: false },
+      { d: 4, r: false },
+    ],
     // quarter + half
-    [{ d: 4, r: false }, { d: 8, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 8, r: false },
+    ],
     // quarter + quarter rest + quarter
-    [{ d: 4, r: false }, { d: 4, r: true }, { d: 4, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: true },
+      { d: 4, r: false },
+    ],
     // half + quarter rest
-    [{ d: 8, r: false }, { d: 4, r: true }],
+    [
+      { d: 8, r: false },
+      { d: 4, r: true },
+    ],
     // quarter rest + half
-    [{ d: 4, r: true }, { d: 8, r: false }],
+    [
+      { d: 4, r: true },
+      { d: 8, r: false },
+    ],
   ],
   // 2/4 = 8 sixteenth-note units
   8: [
     // 2 quarter notes
-    [{ d: 4, r: false }, { d: 4, r: false }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: false },
+    ],
     // half note
     [{ d: 8, r: false }],
     // quarter + quarter rest
-    [{ d: 4, r: false }, { d: 4, r: true }],
+    [
+      { d: 4, r: false },
+      { d: 4, r: true },
+    ],
     // quarter rest + quarter
-    [{ d: 4, r: true }, { d: 4, r: false }],
+    [
+      { d: 4, r: true },
+      { d: 4, r: false },
+    ],
     // dotted quarter + eighth
-    [{ d: 6, r: false }, { d: 2, r: false }],
+    [
+      { d: 6, r: false },
+      { d: 2, r: false },
+    ],
     // 4 eighths
-    [{ d: 2, r: false }, { d: 2, r: false }, { d: 2, r: false }, { d: 2, r: false }],
+    [
+      { d: 2, r: false },
+      { d: 2, r: false },
+      { d: 2, r: false },
+      { d: 2, r: false },
+    ],
   ],
 };
 
@@ -141,7 +223,10 @@ function noteCount(beats) {
  * @returns {Array<{ durationUnits: number, isRest: boolean }[]>}
  */
 export function generateDistractors(correctBeats, count = 2) {
-  const totalDuration = correctBeats.reduce((sum, b) => sum + b.durationUnits, 0);
+  const totalDuration = correctBeats.reduce(
+    (sum, b) => sum + b.durationUnits,
+    0
+  );
   const correctFp = beatsFingerprint(correctBeats);
   const correctNotes = noteCount(correctBeats);
 
@@ -204,7 +289,8 @@ function fallbackDistractors(correctBeats, totalDuration, count) {
   const quarterCount = Math.floor(totalDuration / 4);
   const remainder = totalDuration - quarterCount * 4;
   const allQuarters = Array.from({ length: quarterCount }, () => ({
-    durationUnits: 4, isRest: false,
+    durationUnits: 4,
+    isRest: false,
   }));
   if (remainder > 0) {
     allQuarters.push({ durationUnits: remainder, isRest: false });
@@ -231,17 +317,23 @@ function fallbackDistractors(correctBeats, totalDuration, count) {
  * @param {function} playNote - usePianoSampler().playNote callback
  * @returns {{ startTime: number, totalDuration: number }}
  */
-export function schedulePatternPlayback(beats, tempo, audioContext, playNote, explicitStartTime) {
+export function schedulePatternPlayback(
+  beats,
+  tempo,
+  audioContext,
+  playNote,
+  explicitStartTime
+) {
   const beatDuration = 60 / tempo; // seconds per quarter note
   const sixteenthDuration = beatDuration / 4; // seconds per sixteenth note
-  const startTime = explicitStartTime ?? (audioContext.currentTime + 0.1);
+  const startTime = explicitStartTime ?? audioContext.currentTime + 0.1;
   let offset = 0;
 
   beats.forEach((beat) => {
     if (!beat.isRest) {
-      playNote('C4', {
+      playNote("C4", {
         startTime: startTime + offset,
-        duration: sixteenthDuration * beat.durationUnits * 0.8, // slight staccato
+        duration: sixteenthDuration * beat.durationUnits * 0.95, // tiny gap between notes
       });
     }
     offset += sixteenthDuration * beat.durationUnits;
