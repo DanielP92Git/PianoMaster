@@ -644,9 +644,9 @@ export function RhythmDictationGame() {
       </div>
 
       {/* 3-column layout: [back] [cards] [controls] */}
-      <div className="flex min-h-screen items-stretch">
+      <div className="flex h-screen items-stretch overflow-hidden">
         {/* Left column: back button */}
-        <div className="flex w-10 flex-shrink-0 items-center justify-center">
+        <div className="flex w-14 flex-shrink-0 items-center justify-center">
           <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
         </div>
 
@@ -701,7 +701,7 @@ export function RhythmDictationGame() {
         </div>
 
         {/* Right column: replay + progress + score */}
-        <div className="flex w-14 flex-shrink-0 flex-col items-center justify-center gap-3">
+        <div className="flex w-16 flex-shrink-0 flex-col items-center justify-center gap-3">
           {/* Replay icon button */}
           {(gamePhase === GAME_PHASES.LISTENING ||
             gamePhase === GAME_PHASES.CHOOSING) && (
