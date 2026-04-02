@@ -100,6 +100,17 @@ None - no external service configuration required.
 - Visual verification of single cursor, beat alignment, and navigation still requires manual UAT in browser
 - Rhythm game test suite: 47 tests passing, 6 test files green
 
+## Self-Check: PASSED
+
+- FOUND: src/components/games/rhythm-games/RhythmReadingGame.jsx
+- FOUND: src/components/games/rhythm-games/components/RhythmStaffDisplay.jsx
+- FOUND: src/components/ui/BackButton.jsx
+- FOUND: .planning/phases/15-verification-deploy/15-03-SUMMARY.md
+- FOUND commit f53007d: fix(15-03): disable duplicate cursor in RhythmStaffDisplay
+- FOUND commit 7551c71: fix(15-03): align cursor sweep to VexFlow stave note-area bounds
+- FOUND commit e6392e0: fix(15-03): remove stuck spinner state from BackButton
+
 ---
-*Phase: 15-verification-deploy*
-*Completed: 2026-04-01*
+
+_Phase: 15-verification-deploy_
+_Completed: 2026-04-01_
