@@ -137,6 +137,7 @@ export function RhythmReadingGame() {
   const startPlayingRef = useRef(null); // stable ref for startPlaying
   const staveBoundsRef = useRef(null); // stave note-area bounds from RhythmStaffDisplay
   const transitionToFeedbackRef = useRef(null); // stable ref for transitionToFeedback
+  const activeTapNoteRef = useRef(null); // handle for press-to-sustain note (stopped on pointerUp)
 
   // Continuous metronome refs (READY phase)
   const metronomeIntervalRef = useRef(null); // setInterval ID for audio lookahead scheduler
@@ -529,8 +530,9 @@ export function RhythmReadingGame() {
         const nearestBeat1Time =
           metronomeStartTimeRef.current + nearestBeat1Number * beatDuration;
 
-        // Piano sound as feedback for the starting tap
-        playNote("C4", { duration: 0.3 });
+        // Piano sound as feedback for the starting tap (sustain until pointerUp)
+        if (activeTapNoteRef.current) activeTapNoteRef.current.stop();
+        activeTapNoteRef.current = playNote("C4", { duration: 4.0 });
         stopContinuousMetronome();
         startPlayingRef.current(currentBeats, nearestBeat1Time);
 
@@ -556,8 +558,9 @@ export function RhythmReadingGame() {
     // --- PLAYING phase: score the tap ---
     if (gamePhase !== GAME_PHASES.PLAYING) return;
 
-    // Piano sound as feedback for each tap (child is "playing" the rhythm)
-    playNote("C4", { duration: 0.3 });
+    // Piano sound — sustain until pointerUp (press-to-hold like a piano key)
+    if (activeTapNoteRef.current) activeTapNoteRef.current.stop();
+    activeTapNoteRef.current = playNote("C4", { duration: 4.0 });
 
     const tapTime = ctx.currentTime;
     const beats = currentBeats;
@@ -594,6 +597,14 @@ export function RhythmReadingGame() {
     playNote,
     stopContinuousMetronome,
   ]);
+
+  // Stop the sustained tap note on pointer release (press-to-sustain pattern)
+  const handleTapRelease = useCallback(() => {
+    if (activeTapNoteRef.current) {
+      activeTapNoteRef.current.stop();
+      activeTapNoteRef.current = null;
+    }
+  }, []);
 
   /**
    * Fetch next pattern and start count-in.
@@ -854,6 +865,8 @@ export function RhythmReadingGame() {
           {(isPlaying || gamePhase === GAME_PHASES.READY) && (
             <button
               onPointerDown={handleTap}
+              onPointerUp={handleTapRelease}
+              onPointerLeave={handleTapRelease}
               aria-label={t("games.rhythmReading.tapArea.tapHere")}
               className="flex h-full max-h-96 w-full cursor-pointer items-center justify-center rounded-3xl border border-white/20 bg-white/10 text-xl font-bold text-white transition-transform duration-75 hover:bg-white/20 active:scale-95"
               style={{ minHeight: "120px" }}

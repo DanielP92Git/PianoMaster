@@ -90,11 +90,15 @@ export function RhythmDictationGame() {
   });
 
   // enginePlayNote: wrapper that passes audioEngine.createPianoSound to schedulePatternPlayback
-  // The schedulePatternPlayback callback signature is (note, { startTime, duration }) — we use startTime only.
+  // The schedulePatternPlayback callback signature is (note, { startTime, duration }) — forward duration for correct note lengths.
   const enginePlayNote = useCallback(
     (_note, opts) => {
       if (audioEngine?.createPianoSound) {
-        audioEngine.createPianoSound(opts?.startTime, 0.8, 0.5);
+        audioEngine.createPianoSound(
+          opts?.startTime,
+          0.8,
+          opts?.duration ?? 0.5
+        );
       }
     },
     [audioEngine]

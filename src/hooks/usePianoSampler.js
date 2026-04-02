@@ -1,17 +1,35 @@
-import { useCallback } from 'react';
-import { useAudioContext } from '../contexts/AudioContextProvider';
+import { useCallback } from "react";
+import { useAudioContext } from "../contexts/AudioContextProvider";
 
 /**
  * Piano note frequency map — 24 chromatic notes, C3 through B4 (D-10).
  * Tuned to A4 = 440 Hz standard.
  */
 export const NOTE_FREQS = {
-  'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56,
-  'E3': 164.81, 'F3': 174.61, 'F#3': 185.00, 'G3': 196.00,
-  'G#3': 207.65, 'A3': 220.00, 'A#3': 233.08, 'B3': 246.94,
-  'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13,
-  'E4': 329.63, 'F4': 349.23, 'F#4': 369.99, 'G4': 392.00,
-  'G#4': 415.30, 'A4': 440.00, 'A#4': 466.16, 'B4': 493.88,
+  C3: 130.81,
+  "C#3": 138.59,
+  D3: 146.83,
+  "D#3": 155.56,
+  E3: 164.81,
+  F3: 174.61,
+  "F#3": 185.0,
+  G3: 196.0,
+  "G#3": 207.65,
+  A3: 220.0,
+  "A#3": 233.08,
+  B3: 246.94,
+  C4: 261.63,
+  "C#4": 277.18,
+  D4: 293.66,
+  "D#4": 311.13,
+  E4: 329.63,
+  F4: 349.23,
+  "F#4": 369.99,
+  G4: 392.0,
+  "G#4": 415.3,
+  A4: 440.0,
+  "A#4": 466.16,
+  B4: 493.88,
 };
 
 /**
@@ -19,7 +37,7 @@ export const NOTE_FREQS = {
  * Returns 261.63 (C4) for unknown notes as a safe fallback.
  */
 export function noteNameToHz(noteId) {
-  return NOTE_FREQS[noteId] ?? NOTE_FREQS['C4'];
+  return NOTE_FREQS[noteId] ?? NOTE_FREQS["C4"];
 }
 
 /**
@@ -43,16 +61,19 @@ export function usePianoSampler() {
    * @param {number|null} [options.startTime=null] - AudioContext time to start (null = now)
    */
   const playNote = useCallback(
-    (noteId = 'C4', { duration = 0.5, velocity = 0.7, startTime = null } = {}) => {
+    (
+      noteId = "C4",
+      { duration = 0.5, velocity = 0.7, startTime = null } = {}
+    ) => {
       const ctx = audioContextRef.current;
 
       // Guard: closed or missing context — no crash
-      if (!ctx || ctx.state === 'closed') return;
+      if (!ctx || ctx.state === "closed") return;
 
       // iOS safety (IOS-02): resume called synchronously from user gesture path.
       // Callers that need guaranteed playback (ear training games) should await
       // ctx.resume() themselves BEFORE calling playNote.
-      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
+      if (ctx.state === "suspended" || ctx.state === "interrupted") {
         ctx.resume().catch(() => {});
       }
 
@@ -62,12 +83,12 @@ export function usePianoSampler() {
       // --- Oscillators ---
       // osc1: fundamental (sine wave at note frequency)
       const osc1 = ctx.createOscillator();
-      osc1.type = 'sine';
+      osc1.type = "sine";
       osc1.frequency.setValueAtTime(freq, when);
 
       // osc2: second harmonic at 2x frequency (40% gain for piano-like timbre)
       const osc2 = ctx.createOscillator();
-      osc2.type = 'sine';
+      osc2.type = "sine";
       osc2.frequency.setValueAtTime(freq * 2, when);
 
       // --- Gain envelope (ADSR) ---
@@ -99,6 +120,22 @@ export function usePianoSampler() {
       osc1.stop(stopTime);
       osc2.start(when);
       osc2.stop(stopTime);
+
+      // Return a handle to stop the note early (for press-to-sustain patterns)
+      return {
+        stop: (fadeTime = 0.05) => {
+          try {
+            const now = ctx.currentTime;
+            gainEnv.gain.cancelScheduledValues(now);
+            gainEnv.gain.setValueAtTime(gainEnv.gain.value, now);
+            gainEnv.gain.linearRampToValueAtTime(0.001, now + fadeTime);
+            osc1.stop(now + fadeTime + 0.01);
+            osc2.stop(now + fadeTime + 0.01);
+          } catch {
+            /* already stopped */
+          }
+        },
+      };
     },
     [audioContextRef]
   );
