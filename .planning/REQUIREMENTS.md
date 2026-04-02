@@ -19,7 +19,7 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 - [x] **QUAL-02**: `calculateStars` consolidated to single utility (currently 2 implementations)
 - [x] **QUAL-03**: `verifyStudentDataAccess` duplicate in apiDatabase.js removed, imports from authorizationUtils.js
 - [x] **QUAL-04**: AchievementsLegacy.jsx deleted (dead code, never imported)
-- [x] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG_, TEST_, README_)
+- [x] **QUAL-05**: Non-migration files removed from supabase/migrations/ (DEBUG*, TEST*, README\_)
 - [x] **QUAL-06**: console.log/debug calls gated behind `import.meta.env.DEV` or removed (366 -> target: <50 production calls)
 - [x] **QUAL-07**: TeacherDashboard converted to React.lazy() (currently eager-loaded for all users)
 
@@ -38,6 +38,10 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 ### UAT
 
 - [x] **UAT-01**: Phase 08 human verification items completed (5 pending: rhythm games, piano tone, PWA cache)
+
+### Milestone Cleanup
+
+- [ ] **CLEAN-01**: All audit tech debt items resolved — ESLint comment placement fixed, ROADMAP doc accuracy corrected, build prebuild hook passes
 
 ## Future Requirements
 
@@ -64,40 +68,43 @@ Deferred to future milestone. Tracked but not in current roadmap.
 
 Explicitly excluded. Documented to prevent scope creep.
 
-| Feature | Reason |
-|---------|--------|
-| New game types or trail content | v3.0 is cleanup only -- no new features |
-| God component refactoring | Large effort, defer to dedicated refactoring milestone |
-| Full i18n audit | Separate milestone scope -- i18n completeness |
-| Piano WAV CDN migration | Infrastructure change requiring CDN setup and testing |
-| Instrument Recognition game | Unresolved audio clip sourcing (from v2.9) |
+| Feature                         | Reason                                                 |
+| ------------------------------- | ------------------------------------------------------ |
+| New game types or trail content | v3.0 is cleanup only -- no new features                |
+| God component refactoring       | Large effort, defer to dedicated refactoring milestone |
+| Full i18n audit                 | Separate milestone scope -- i18n completeness          |
+| Piano WAV CDN migration         | Infrastructure change requiring CDN setup and testing  |
+| Instrument Recognition game     | Unresolved audio clip sourcing (from v2.9)             |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| TCFG-01 | Phase 12 | Complete |
-| TCFG-02 | Phase 12 | Complete |
-| TCFG-03 | Phase 12 | Complete |
-| QUAL-01 | Phase 13 | Complete |
-| QUAL-02 | Phase 13 | Complete |
-| QUAL-03 | Phase 13 | Complete |
-| QUAL-04 | Phase 13 | Complete |
-| QUAL-05 | Phase 13 | Complete |
-| QUAL-06 | Phase 14 | Complete |
-| QUAL-07 | Phase 13 | Complete |
-| XP-01 | Phase 13 | Complete |
-| GOAL-01 | Phase 15 | Complete |
-| DEPLOY-01 | Phase 15 | Complete |
-| UAT-01 | Phase 15 | Complete |
+| Requirement | Phase    | Status   |
+| ----------- | -------- | -------- |
+| TCFG-01     | Phase 12 | Complete |
+| TCFG-02     | Phase 12 | Complete |
+| TCFG-03     | Phase 12 | Complete |
+| QUAL-01     | Phase 13 | Complete |
+| QUAL-02     | Phase 13 | Complete |
+| QUAL-03     | Phase 13 | Complete |
+| QUAL-04     | Phase 13 | Complete |
+| QUAL-05     | Phase 13 | Complete |
+| QUAL-06     | Phase 14 | Complete |
+| QUAL-07     | Phase 13 | Complete |
+| XP-01       | Phase 13 | Complete |
+| GOAL-01     | Phase 15 | Complete |
+| DEPLOY-01   | Phase 15 | Complete |
+| UAT-01      | Phase 15 | Complete |
+| CLEAN-01    | Phase 16 | Pending  |
 
 **Coverage:**
-- v3.0 requirements: 14 total
-- Mapped to phases: 14/14
+
+- v3.0 requirements: 15 total
+- Mapped to phases: 15/15
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-03-30*
-*Traceability updated: 2026-04-01*
+
+_Requirements defined: 2026-03-30_
+_Traceability updated: 2026-04-02_

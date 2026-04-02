@@ -22,7 +22,7 @@
 - ✅ **v2.7 Instrument Practice Tracking** — Phases 1-5 (shipped 2026-03-25)
 - ✅ **v2.8 Introductory Single-Note Game** — Phases 1, 6 (shipped 2026-03-26)
 - ✅ **v2.9 Game Variety & Ear Training** — Phases 7-11 (shipped 2026-03-30)
-- **v3.0 Cleanup & Polish** — Phases 12-15 (in progress)
+- **v3.0 Cleanup & Polish** — Phases 12-16 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -52,6 +52,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 - [x] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle (completed 2026-03-31)
 - [x] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase (completed 2026-03-31)
 - [x] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items (completed 2026-03-31)
+- [ ] **Phase 16: Milestone Cleanup** - Fix ESLint comment placement, correct ROADMAP doc errors, close audit tech debt
 
 ## Phase Details
 
@@ -87,7 +88,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
    Plans:
 
 - [x] 13-01-PLAN.md -- Consolidate noteNameToMidi, calculateStars, and verifyStudentDataAccess to canonical locations (completed 2026-03-30)
-- [ ] 13-02-PLAN.md -- Delete dead code, lazy-load TeacherDashboard, migrate XP locale strings
+- [x] 13-02-PLAN.md -- Delete dead code, lazy-load TeacherDashboard, migrate XP locale strings
 
 ### Phase 14: Console Logging Cleanup
 
@@ -122,17 +123,34 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 - [x] 15-04-PLAN.md -- [GAP] RhythmDictationGame UX: ready button, advance timing, sound unification
 - [x] 15-05-PLAN.md -- [GAP] iOS gesture gate for RhythmReadingGame + RhythmDictationGame
 
+### Phase 16: Milestone Cleanup
+
+**Goal**: Close all audit tech debt items so v3.0 can be marked complete with a clean bill of health
+**Depends on**: Phases 12-15 (cleanup of their artifacts)
+**Requirements**: CLEAN-01
+**Gap Closure:** Closes integration gap QUAL-06-eslint-comment + ROADMAP doc errors from audit
+**Success Criteria** (what must be TRUE):
+
+1. `useAudioEngine.js` line 271 has the `eslint-disable-line no-console` comment on the correct line (the `console.debug` call, not the line below it)
+2. ROADMAP progress table accurately reflects all phase statuses (no stale "In Progress" or wrong plan counts)
+3. `npm run build` succeeds with prebuild trail validation passing (confirms SVG import issue is resolved)
+   **Plans:** 0/1 plans complete
+   Plans:
+
+- [ ] 16-01-PLAN.md -- Fix ESLint comment, verify build, update ROADMAP accuracy
+
 ## Progress
 
-| Phase                       | Milestone | Plans Complete | Status      | Completed  |
-| --------------------------- | --------- | -------------- | ----------- | ---------- |
-| 12. Trail Config Fixes      | v3.0      | 2/2            | Complete    | 2026-03-30 |
-| 13. Code Quality Quick Wins | v3.0      | 1/2            | Complete    | 2026-03-31 |
-| 14. Console Logging Cleanup | v3.0      | 1/1            | Complete    | 2026-03-31 |
-| 15. Verification & Deploy   | v3.0      | 5/5 | In Progress |  |
+| Phase                       | Milestone | Plans Complete | Status   | Completed  |
+| --------------------------- | --------- | -------------- | -------- | ---------- |
+| 12. Trail Config Fixes      | v3.0      | 2/2            | Complete | 2026-03-30 |
+| 13. Code Quality Quick Wins | v3.0      | 2/2            | Complete | 2026-03-31 |
+| 14. Console Logging Cleanup | v3.0      | 1/1            | Complete | 2026-03-31 |
+| 15. Verification & Deploy   | v3.0      | 5/5            | Complete | 2026-03-31 |
+| 16. Milestone Cleanup       | v3.0      | 0/1            | Pending  |            |
 
-**Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 4 phases, 14 requirements**
+**Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 5 phases, 15 requirements**
 
 ---
 
-_Last updated: 2026-03-31 -- Phase 15 planned (2 plans, daily goals tests + deploy doc + UAT checklist)_
+_Last updated: 2026-04-02 -- Phase 16 added (gap closure from milestone audit)_
