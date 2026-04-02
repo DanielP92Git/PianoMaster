@@ -13,9 +13,7 @@ import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
 import { Send, Loader2 } from "lucide-react";
 import { usePracticeSessionWithAchievements } from "../../hooks/usePracticeSessionWithAchievements";
-import {
-  dashboardReminderService,
-} from "../../services/dashboardReminderService";
+import { dashboardReminderService } from "../../services/dashboardReminderService";
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
 import { getAvatarImageSource } from "../../utils/avatarAssets";
@@ -108,34 +106,39 @@ function Dashboard() {
   const comebackBonus = streakState?.comebackBonus;
 
   // Auto-log practice from notification tap (PUSH-05, D-11, D-12)
-  const hasPracticeCheckin = searchParams.get('practice_checkin') === '1';
+  const hasPracticeCheckin = searchParams.get("practice_checkin") === "1";
 
   useEffect(() => {
     if (!hasPracticeCheckin || !user?.id || !isStudent) return;
 
     // Clean URL synchronously before async work — prevents re-trigger on re-render (D-18)
-    window.history.replaceState({}, '', '/');
+    window.history.replaceState({}, "", "/");
 
     const localDate = practiceLogService.getCalendarDate();
 
-    practiceLogService.logPractice(localDate)
+    practiceLogService
+      .logPractice(localDate)
       .then(({ inserted }) => {
         if (inserted) {
           // D-11: Triggers PracticeLogCard settled state via React Query cache invalidation
-          queryClient.invalidateQueries({ queryKey: ['practice-log-today', user.id, localDate] });
-          queryClient.invalidateQueries({ queryKey: ['practice-streak', user.id] });
-          queryClient.invalidateQueries({ queryKey: ['student-xp', user.id] });
-          toast.success(t('practice.toast.autoLogged'));
+          queryClient.invalidateQueries({
+            queryKey: ["practice-log-today", user.id, localDate],
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["practice-streak", user.id],
+          });
+          queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+          toast.success(t("practice.toast.autoLogged"));
         } else {
           // D-12: Already logged — show friendly neutral toast
-          toast(t('practice.toast.alreadyLogged'));
+          toast(t("practice.toast.alreadyLogged"));
         }
       })
       .catch((err) => {
-        console.error('[Dashboard] practice_checkin auto-log failed:', err);
-        toast.error(t('practice.toast.autoLogError'));
+        console.error("[Dashboard] practice_checkin auto-log failed:", err);
+        toast.error(t("practice.toast.autoLogError"));
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasPracticeCheckin, user?.id, isStudent]);
 
   // Fetch next recommended trail node (only for students)
@@ -593,7 +596,7 @@ function Dashboard() {
             className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
             aria-hidden="true"
             loading="eager"
-            fetchpriority="high"
+            fetchPriority="high"
           />
         </picture>
 
@@ -614,7 +617,7 @@ function Dashboard() {
             <div className="mb-2 h-16 w-16 animate-pulse rounded-full bg-white/10" />
           ) : (
             <div
-              className={`mb-2 flex items-center  ${isRTL ? "flex-row-reverse" : "flex-row"}`}
+              className={`mb-2 flex items-center ${isRTL ? "flex-row-reverse" : "flex-row"}`}
             >
               {/* Avatar (z-10, overlaps the pill) */}
               <Link to="/avatars" className="relative z-10 shrink-0">
@@ -650,7 +653,7 @@ function Dashboard() {
               </Link>
               {/* Level pill (tucks behind avatar with negative margin) */}
               <div
-                className={`flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2 -ml-7`}
+                className={`-ml-7 flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2`}
                 style={{
                   background: isPrestige
                     ? "linear-gradient(135deg, #f59e0b, #d97706, #b45309) padding-box, linear-gradient(to right, #fbbf24, #fde68a, #fbbf24) border-box"
@@ -662,7 +665,9 @@ function Dashboard() {
               >
                 <span className="ml-3 text-xs font-bold uppercase tracking-wider text-white">
                   {isPrestige
-                    ? t("xpLevels.prestigeTitle", { tier: levelData.prestigeTier })
+                    ? t("xpLevels.prestigeTitle", {
+                        tier: levelData.prestigeTier,
+                      })
                     : t("dashboard.header.level", {
                         level,
                         defaultValue: `Level ${level}`,
@@ -805,18 +810,6 @@ function Dashboard() {
               })}
             </div>
           </section>
-        )}
-
-        {/* COMEBACK BONUS BANNER */}
-        {isStudent && comebackBonus?.active && (
-          <div className="w-full rounded-xl border border-amber-400/30 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-4 py-3 text-center">
-            <p className="text-sm font-bold text-amber-300">
-              {t("streak.comebackBanner", { days: comebackBonus.daysLeft })}
-            </p>
-            <p className="mt-0.5 text-xs text-amber-200/70">
-              {t("streak.comebackDescription")}
-            </p>
-          </div>
         )}
 
         {/* PUSH OPT-IN CARD */}
