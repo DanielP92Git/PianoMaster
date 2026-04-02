@@ -33,14 +33,25 @@ const TrailMapPage = () => {
 
   const scrollRef = useRef(null);
 
-  // Match html/body background to trail page so iOS safe-area bottom
-  // doesn't reveal the lighter app background behind this fixed overlay
+  // Override every layer that can peek through the fixed trail overlay on iOS
+  // (html, body, and theme-color meta tag all default to the lighter #581c87)
   useEffect(() => {
-    const el = document.documentElement;
-    const prev = el.style.backgroundColor;
-    el.style.backgroundColor = TRAIL_BG;
+    const html = document.documentElement;
+    const body = document.body;
+    const meta = document.querySelector('meta[name="theme-color"]');
+
+    const prevHtml = html.style.backgroundColor;
+    const prevBody = body.style.backgroundColor;
+    const prevTheme = meta?.getAttribute("content") ?? null;
+
+    html.style.backgroundColor = TRAIL_BG;
+    body.style.backgroundColor = TRAIL_BG;
+    if (meta) meta.setAttribute("content", TRAIL_BG);
+
     return () => {
-      el.style.backgroundColor = prev;
+      html.style.backgroundColor = prevHtml;
+      body.style.backgroundColor = prevBody;
+      if (meta && prevTheme !== null) meta.setAttribute("content", prevTheme);
     };
   }, []);
 

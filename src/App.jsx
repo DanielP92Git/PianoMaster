@@ -16,7 +16,6 @@ import { reminderService } from "./services/reminderService";
 import { dashboardReminderService } from "./services/dashboardReminderService";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-
 import { useUser } from "./features/authentication/useUser";
 import MusicLoader from "./components/ui/MusicLoader";
 import { ModalProvider } from "./contexts/ModalContext";
@@ -51,27 +50,69 @@ const TrailMapPage = lazyWithRetry(() => import("./pages/TrailMapPage"));
 import("./pages/TrailMapPage");
 const Achievements = lazyWithRetry(() => import("./pages/Achievements"));
 const PracticeModes = lazyWithRetry(() => import("./pages/PracticeModes"));
-const PracticeSessions = lazyWithRetry(() => import("./pages/PracticeSessions"));
-const StudentAssignments = lazyWithRetry(() => import("./pages/StudentAssignments"));
+const PracticeSessions = lazyWithRetry(
+  () => import("./pages/PracticeSessions")
+);
+const StudentAssignments = lazyWithRetry(
+  () => import("./pages/StudentAssignments")
+);
 const AppSettings = lazyWithRetry(() => import("./pages/AppSettings"));
 const Legal = lazyWithRetry(() => import("./pages/Legal"));
 const SubscribePage = lazyWithRetry(() => import("./pages/SubscribePage"));
-const SubscribeSuccessPage = lazyWithRetry(() => import("./pages/SubscribeSuccessPage"));
-const ParentPortalPage = lazyWithRetry(() => import("./pages/ParentPortalPage"));
+const SubscribeSuccessPage = lazyWithRetry(
+  () => import("./pages/SubscribeSuccessPage")
+);
+const ParentPortalPage = lazyWithRetry(
+  () => import("./pages/ParentPortalPage")
+);
 const Avatars = lazyWithRetry(() => import("./components/Avatars"));
-const PrivacyPolicyPage = lazyWithRetry(() => import("./pages/PrivacyPolicyPage"));
-const TermsOfServicePage = lazyWithRetry(() => import("./pages/TermsOfServicePage"));
-const ComingSoon = lazyWithRetry(() => import("./components/shared/ComingSoon"));
-const TeacherDashboard = lazyWithRetry(() => import("./components/layout/TeacherDashboard"));
+const PrivacyPolicyPage = lazyWithRetry(
+  () => import("./pages/PrivacyPolicyPage")
+);
+const TermsOfServicePage = lazyWithRetry(
+  () => import("./pages/TermsOfServicePage")
+);
+const ComingSoon = lazyWithRetry(
+  () => import("./components/shared/ComingSoon")
+);
+const TeacherDashboard = lazyWithRetry(
+  () => import("./components/layout/TeacherDashboard")
+);
 
 // Lazy-loaded game components
-const NotesMasterMode = lazyWithRetry(() => import("./components/games/NotesMasterMode").then(m => ({ default: m.NotesMasterMode })));
-const RhythmMasterMode = lazyWithRetry(() => import("./components/games/RhythmMasterMode").then(m => ({ default: m.RhythmMasterMode })));
-const MemoryGame = lazyWithRetry(() => import("./components/games/notes-master-games/MemoryGame").then(m => ({ default: m.MemoryGame })));
-const NotesRecognitionGame = lazyWithRetry(() => import("./components/games/notes-master-games/NotesRecognitionGame").then(m => ({ default: m.NotesRecognitionGame })));
-const SightReadingGame = lazyWithRetry(() => import("./components/games/sight-reading-game/SightReadingGame").then(m => ({ default: m.SightReadingGame })));
-const NoteSpeedCards = lazyWithRetry(() => import("./components/games/notes-master-games/NoteSpeedCards").then(m => ({ default: m.NoteSpeedCards })));
-const MetronomeTrainer = lazyWithRetry(() => import("./components/games/rhythm-games/MetronomeTrainer"));
+const NotesMasterMode = lazyWithRetry(() =>
+  import("./components/games/NotesMasterMode").then((m) => ({
+    default: m.NotesMasterMode,
+  }))
+);
+const RhythmMasterMode = lazyWithRetry(() =>
+  import("./components/games/RhythmMasterMode").then((m) => ({
+    default: m.RhythmMasterMode,
+  }))
+);
+const MemoryGame = lazyWithRetry(() =>
+  import("./components/games/notes-master-games/MemoryGame").then((m) => ({
+    default: m.MemoryGame,
+  }))
+);
+const NotesRecognitionGame = lazyWithRetry(() =>
+  import("./components/games/notes-master-games/NotesRecognitionGame").then(
+    (m) => ({ default: m.NotesRecognitionGame })
+  )
+);
+const SightReadingGame = lazyWithRetry(() =>
+  import("./components/games/sight-reading-game/SightReadingGame").then(
+    (m) => ({ default: m.SightReadingGame })
+  )
+);
+const NoteSpeedCards = lazyWithRetry(() =>
+  import("./components/games/notes-master-games/NoteSpeedCards").then((m) => ({
+    default: m.NoteSpeedCards,
+  }))
+);
+const MetronomeTrainer = lazyWithRetry(
+  () => import("./components/games/rhythm-games/MetronomeTrainer")
+);
 const RhythmReadingGame = lazyWithRetry(
   () => import("./components/games/rhythm-games/RhythmReadingGame")
 );
@@ -81,9 +122,17 @@ const RhythmDictationGame = lazyWithRetry(
 const ArcadeRhythmGame = lazyWithRetry(
   () => import("./components/games/rhythm-games/ArcadeRhythmGame")
 );
-const NoteComparisonGame = lazyWithRetry(() => import("./components/games/ear-training-games/NoteComparisonGame"));
-const IntervalGame = lazyWithRetry(() => import("./components/games/ear-training-games/IntervalGame"));
-const SightReadingLayoutHarness = lazyWithRetry(() => import("./components/games/sight-reading-game/components/SightReadingLayoutHarness").then(m => ({ default: m.SightReadingLayoutHarness })));
+const NoteComparisonGame = lazyWithRetry(
+  () => import("./components/games/ear-training-games/NoteComparisonGame")
+);
+const IntervalGame = lazyWithRetry(
+  () => import("./components/games/ear-training-games/IntervalGame")
+);
+const SightReadingLayoutHarness = lazyWithRetry(() =>
+  import(
+    "./components/games/sight-reading-game/components/SightReadingLayoutHarness"
+  ).then((m) => ({ default: m.SightReadingLayoutHarness }))
+);
 
 // Clear stale-chunk reload flag on successful app load
 sessionStorage.removeItem("chunk-reload");
@@ -116,7 +165,8 @@ function AuthenticatedWrapper({ children }) {
   const location = useLocation();
 
   // Public routes that should bypass suspension checks
-  const isPublicRoute = location.pathname === '/consent/verify' || location.pathname === '/login';
+  const isPublicRoute =
+    location.pathname === "/consent/verify" || location.pathname === "/login";
 
   // Check account status for students (suspended for deletion)
   const {
@@ -151,14 +201,22 @@ function AuthenticatedWrapper({ children }) {
   // If account is suspended for deletion, also show a message (could be a different component)
   // For now, we reuse the consent pending with a different message
   // Skip for public routes
-  if (user && isStudent && isSuspended && suspensionReason === 'deletion' && !isPublicRoute) {
+  if (
+    user &&
+    isStudent &&
+    isSuspended &&
+    suspensionReason === "deletion" &&
+    !isPublicRoute
+  ) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-md p-6 md:p-8 text-center">
-          <h1 className="text-2xl font-bold text-white mb-4">Account Suspended</h1>
-          <p className="text-white/90 mb-6">
-            Your account has been scheduled for deletion. If you believe this is an error,
-            please contact support.
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+        <div className="w-full max-w-md rounded-2xl border border-white/20 bg-white/10 p-6 text-center shadow-2xl backdrop-blur-lg md:p-8">
+          <h1 className="mb-4 text-2xl font-bold text-white">
+            Account Suspended
+          </h1>
+          <p className="mb-6 text-white/90">
+            Your account has been scheduled for deletion. If you believe this is
+            an error, please contact support.
           </p>
         </div>
       </div>
@@ -270,7 +328,14 @@ function OrientationController() {
     } else {
       setShowTip(false);
     }
-  }, [isLoading, user, derivedRole, derivedIsStudent, location.pathname, isLandscapeRoute]);
+  }, [
+    isLoading,
+    user,
+    derivedRole,
+    derivedIsStudent,
+    location.pathname,
+    isLandscapeRoute,
+  ]);
 
   const handleClose = ({ dontShowAgain } = {}) => {
     setShowTip(false);
@@ -333,7 +398,10 @@ function AppRoutes() {
             <Route path="/settings" element={<AppSettings />} />
             <Route path="/legal" element={<Legal />} />
             <Route path="/subscribe" element={<SubscribePage />} />
-            <Route path="/subscribe/success" element={<SubscribeSuccessPage />} />
+            <Route
+              path="/subscribe/success"
+              element={<SubscribeSuccessPage />}
+            />
             <Route path="/parent-portal" element={<ParentPortalPage />} />
             <Route path="/avatars" element={<Avatars />} />
             <Route path="/teacher/*" element={<TeacherDashboard />} />
@@ -348,16 +416,28 @@ function AppRoutes() {
             />
             <Route
               path="/notes-master-mode/notes-recognition-game"
-              element={<AudioContextProvider><NotesRecognitionGame /></AudioContextProvider>}
+              element={
+                <AudioContextProvider>
+                  <NotesRecognitionGame />
+                </AudioContextProvider>
+              }
             />
             <Route
               path="/notes-master-mode/sight-reading-game"
-              element={<AudioContextProvider><SightReadingGame /></AudioContextProvider>}
+              element={
+                <AudioContextProvider>
+                  <SightReadingGame />
+                </AudioContextProvider>
+              }
             />
             <Route path="/rhythm-mode" element={<RhythmMasterMode />} />
             <Route
               path="/rhythm-mode/metronome-trainer"
-              element={<AudioContextProvider><MetronomeTrainer /></AudioContextProvider>}
+              element={
+                <AudioContextProvider>
+                  <MetronomeTrainer />
+                </AudioContextProvider>
+              }
             />
             <Route
               path="/rhythm-mode/rhythm-reading-game"
@@ -385,11 +465,19 @@ function AppRoutes() {
             />
             <Route
               path="/ear-training-mode/note-comparison-game"
-              element={<AudioContextProvider><NoteComparisonGame /></AudioContextProvider>}
+              element={
+                <AudioContextProvider>
+                  <NoteComparisonGame />
+                </AudioContextProvider>
+              }
             />
             <Route
               path="/ear-training-mode/interval-game"
-              element={<AudioContextProvider><IntervalGame /></AudioContextProvider>}
+              element={
+                <AudioContextProvider>
+                  <IntervalGame />
+                </AudioContextProvider>
+              }
             />
             <Route path="/coming-soon" element={<ComingSoon />} />
           </Route>
@@ -423,7 +511,10 @@ function App() {
     if (typeof document === "undefined") return;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
-    meta.setAttribute("content", "#581c87");
+    // Trail page manages its own dark background; match theme-color to avoid
+    // the lighter purple leaking through iOS safe-area insets.
+    const color = location.pathname === "/trail" ? "#1a1040" : "#581c87";
+    meta.setAttribute("content", color);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -481,34 +572,33 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-      <AccessibilityProvider>
-        <SettingsProvider>
-          <SessionTimeoutProvider>
-            <ModalProvider>
-              <RhythmProvider>
-                <SightReadingSessionProvider>
-                  <SubscriptionProvider>
-                    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 safe-area-app">
-                      <AccessibleToaster />
-                      <AppRoutes />
+        <AccessibilityProvider>
+          <SettingsProvider>
+            <SessionTimeoutProvider>
+              <ModalProvider>
+                <RhythmProvider>
+                  <SightReadingSessionProvider>
+                    <SubscriptionProvider>
+                      <div className="safe-area-app min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+                        <AccessibleToaster />
+                        <AppRoutes />
 
-                      {/* PWA Components */}
-                      <PWAInstallPrompt />
-                      <IOSInstallPrompt />
-                      <PWAUpdateNotification />
-                      <NetworkStatus />
+                        {/* PWA Components */}
+                        <PWAInstallPrompt />
+                        <IOSInstallPrompt />
+                        <PWAUpdateNotification />
+                        <NetworkStatus />
 
-                      {/* Alarm Modal */}
-                      <AlarmModal />
-
-                    </div>
-                  </SubscriptionProvider>
-                </SightReadingSessionProvider>
-              </RhythmProvider>
-            </ModalProvider>
-          </SessionTimeoutProvider>
-        </SettingsProvider>
-      </AccessibilityProvider>
+                        {/* Alarm Modal */}
+                        <AlarmModal />
+                      </div>
+                    </SubscriptionProvider>
+                  </SightReadingSessionProvider>
+                </RhythmProvider>
+              </ModalProvider>
+            </SessionTimeoutProvider>
+          </SettingsProvider>
+        </AccessibilityProvider>
       </ErrorBoundary>
       {import.meta.env.DEV && <ReactQueryDevtools />}
     </QueryClientProvider>
