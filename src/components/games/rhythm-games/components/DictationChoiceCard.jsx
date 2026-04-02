@@ -61,7 +61,7 @@ export function DictationChoiceCard({
 
     const containerWidth = containerRef.current.offsetWidth || 320;
     const staveWidth = containerWidth - 20;
-    const staveHeight = 80;
+    const staveHeight = 100;
 
     try {
       const renderer = new Renderer(
@@ -149,15 +149,15 @@ export function DictationChoiceCard({
       aria-disabled={disabled}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
-      className={`flex min-h-[76px] w-full items-center justify-center p-2 ${stateClass}`}
-      style={{ minHeight: "76px" }}
+      className={`flex min-h-[96px] w-full items-center justify-center p-3 ${stateClass}`}
+      style={{ minHeight: "96px" }}
     >
       {/* VexFlow notation — always LTR regardless of app locale */}
       <div
         dir="ltr"
         className="w-full"
         ref={containerRef}
-        style={{ minHeight: "64px" }}
+        style={{ minHeight: "80px" }}
       />
     </div>
   );
