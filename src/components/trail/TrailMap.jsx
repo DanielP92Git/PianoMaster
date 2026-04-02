@@ -20,7 +20,7 @@ import {
   NODE_CATEGORIES,
   UNITS,
 } from "../../data/skillTrail";
-import { TRAIL_TAB_CONFIGS } from "../../data/constants";
+import { TRAIL_TAB_CONFIGS } from "../../data/trailTabConfigs";
 import {
   getStudentProgress,
   getCompletedNodeIds,
