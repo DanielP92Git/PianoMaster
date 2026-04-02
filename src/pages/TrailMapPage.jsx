@@ -4,7 +4,7 @@
  * Page wrapper for the Trail Map with clean, minimal background
  */
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import BackButton from "../components/ui/BackButton";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +14,8 @@ import { getStudentXP } from "../utils/xpSystem";
 import TrailMap from "../components/trail/TrailMap";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import "../styles/trail-effects.css";
+
+const TRAIL_BG = "#1a1040";
 
 const TrailMapPage = () => {
   const { t, i18n } = useTranslation(["common", "trail"]);
@@ -30,6 +32,17 @@ const TrailMapPage = () => {
   });
 
   const scrollRef = useRef(null);
+
+  // Match html/body background to trail page so iOS safe-area bottom
+  // doesn't reveal the lighter app background behind this fixed overlay
+  useEffect(() => {
+    const el = document.documentElement;
+    const prev = el.style.backgroundColor;
+    el.style.backgroundColor = TRAIL_BG;
+    return () => {
+      el.style.backgroundColor = prev;
+    };
+  }, []);
 
   return (
     <div
