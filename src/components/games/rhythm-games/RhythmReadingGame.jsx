@@ -519,6 +519,21 @@ export function RhythmReadingGame() {
         playNote("C4", { duration: 0.3 });
         stopContinuousMetronome();
         startPlayingRef.current(currentBeats, nearestBeat1Time);
+
+        // Score the starting tap as beat 0 — it triggered the transition
+        // scheduledBeatTimesRef is set synchronously inside startPlaying
+        if (scheduledBeatTimesRef.current.length > 0) {
+          const { quality, noteIdx, newNextBeatIndex } = scoreTap(
+            tapTime,
+            scheduledBeatTimesRef.current,
+            nextBeatIndexRef.current,
+            tempo
+          );
+          nextBeatIndexRef.current = newNextBeatIndex;
+          setTapResults([{ noteIdx, quality }]);
+          setLatestFeedback(quality);
+          setFeedbackKey((k) => k + 1);
+        }
       }
       // Off-beat taps during READY are silently ignored — child retries naturally
       return;
