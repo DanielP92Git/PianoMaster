@@ -90,8 +90,12 @@ export function MetronomeTrainer() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const { audioContextRef, isInterrupted, handleTapToResume } =
-    useAudioContext();
+  const {
+    audioContextRef,
+    isInterrupted,
+    handleTapToResume,
+    getOrCreateAudioContext,
+  } = useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
   const audioEngine = useAudioEngine(120, {
     sharedAudioContext: audioContextRef.current,
