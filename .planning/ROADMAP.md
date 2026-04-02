@@ -22,7 +22,7 @@
 - ✅ **v2.7 Instrument Practice Tracking** — Phases 1-5 (shipped 2026-03-25)
 - ✅ **v2.8 Introductory Single-Note Game** — Phases 1, 6 (shipped 2026-03-26)
 - ✅ **v2.9 Game Variety & Ear Training** — Phases 7-11 (shipped 2026-03-30)
-- **v3.0 Cleanup & Polish** — Phases 12-16 (in progress)
+- ✅ **v3.0 Cleanup & Polish** — Phases 12-16 (shipped 2026-04-03)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -46,13 +46,13 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
-### v3.0 Cleanup & Polish (In Progress)
+### v3.0 Cleanup & Polish (Complete)
 
 - [x] **Phase 12: Trail Config Fixes** - Rhythm games honor trail node config (patterns + difficulty mapping) (completed 2026-03-30)
 - [x] **Phase 13: Code Quality Quick Wins** - Consolidate duplicated utilities, remove dead code, lazy-load teacher bundle (completed 2026-03-31)
 - [x] **Phase 14: Console Logging Cleanup** - Gate all debug logging behind DEV flag across the codebase (completed 2026-03-31)
 - [x] **Phase 15: Verification & Deploy** - Daily goals audit, deploy sequencing docs, pending UAT items (completed 2026-03-31)
-- [ ] **Phase 16: Milestone Cleanup** - Fix ESLint comment placement, correct ROADMAP doc errors, close audit tech debt
+- [x] **Phase 16: Milestone Cleanup** - Fix ESLint comment placement, correct ROADMAP doc errors, close audit tech debt (completed 2026-04-03)
 
 ## Phase Details
 
@@ -134,10 +134,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 1. `useAudioEngine.js` line 271 has the `eslint-disable-line no-console` comment on the correct line (the `console.debug` call, not the line below it)
 2. ROADMAP progress table accurately reflects all phase statuses (no stale "In Progress" or wrong plan counts)
 3. `npm run build` succeeds with prebuild trail validation passing (confirms SVG import issue is resolved)
-   **Plans:** 0/1 plans complete
+   **Plans:** 1/1 plans complete
    Plans:
 
-- [ ] 16-01-PLAN.md -- Fix ESLint comment, verify build, update ROADMAP accuracy
+- [x] 16-01-PLAN.md -- Fix ESLint comment, verify build, update ROADMAP accuracy
 
 ## Progress
 
@@ -147,10 +147,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 | 13. Code Quality Quick Wins | v3.0      | 2/2            | Complete | 2026-03-31 |
 | 14. Console Logging Cleanup | v3.0      | 1/1            | Complete | 2026-03-31 |
 | 15. Verification & Deploy   | v3.0      | 5/5            | Complete | 2026-03-31 |
-| 16. Milestone Cleanup       | v3.0      | 0/1            | Pending  |            |
+| 16. Milestone Cleanup       | v3.0      | 1/1            | Complete | 2026-04-03 |
 
-**Total: 20 milestones shipped (v1.0-v2.9), v3.0 in progress -- 5 phases, 15 requirements**
+**Total: 20 milestones shipped (v1.0-v2.9), v3.0 complete -- 5 phases, 15 requirements**
 
 ---
 
-_Last updated: 2026-04-02 -- Phase 16 added (gap closure from milestone audit)_
+_Last updated: 2026-04-03 -- Phase 16 complete, v3.0 milestone closed_

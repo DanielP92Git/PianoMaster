@@ -41,7 +41,7 @@ Requirements for Cleanup & Polish milestone. Addresses accumulated tech debt, br
 
 ### Milestone Cleanup
 
-- [ ] **CLEAN-01**: All audit tech debt items resolved — ESLint comment placement fixed, ROADMAP doc accuracy corrected, build prebuild hook passes
+- [x] **CLEAN-01**: All audit tech debt items resolved — ESLint comment placement fixed, ROADMAP doc accuracy corrected, build prebuild hook passes
 
 ## Future Requirements
 
@@ -96,7 +96,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | GOAL-01     | Phase 15 | Complete |
 | DEPLOY-01   | Phase 15 | Complete |
 | UAT-01      | Phase 15 | Complete |
-| CLEAN-01    | Phase 16 | Pending  |
+| CLEAN-01    | Phase 16 | Complete |
 
 **Coverage:**
 
