@@ -34,7 +34,7 @@ const TrailMapPage = () => {
   const scrollRef = useRef(null);
 
   // Override every layer that can peek through the fixed trail overlay on iOS
-  // (html, body, and theme-color meta tag all default to the lighter #581c87)
+  // (html, body, and theme-color meta tag all default to #1e1b4b)
   useEffect(() => {
     const html = document.documentElement;
     const body = document.body;

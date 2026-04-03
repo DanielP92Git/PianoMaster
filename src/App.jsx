@@ -511,9 +511,8 @@ function App() {
     if (typeof document === "undefined") return;
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
-    // Trail page manages its own dark background; match theme-color to avoid
-    // the lighter purple leaking through iOS safe-area insets.
-    const color = location.pathname === "/trail" ? "#1a1040" : "#581c87";
+    // Trail page uses its own dark background; all other pages use indigo-950.
+    const color = location.pathname === "/trail" ? "#1a1040" : "#1e1b4b";
     meta.setAttribute("content", color);
   }, [location.pathname]);
 

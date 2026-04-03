@@ -145,7 +145,7 @@
   --color-gray-900: #111827;
 
   /* Colors - Background & Surface */
-  --color-background: #581c87;
+  --color-background: #1e1b4b;
   --color-surface: #ffffff;
   --color-surface-light: #ffffff;
   --color-surface-medium: #ffffff;
@@ -1866,7 +1866,8 @@ input[type="range"]::-moz-range-thumb:hover {
    ======================================== */
 
 @keyframes pulse-subtle {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4);
   }
   50% {
