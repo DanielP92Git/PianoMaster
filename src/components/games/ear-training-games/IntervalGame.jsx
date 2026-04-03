@@ -8,49 +8,44 @@
  * Design spec: 09-UI-SPEC.md (D-06, D-07, D-08, D-10)
  */
 
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useRef,
-} from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { Volume2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Volume2 } from "lucide-react";
 
-import { useAudioContext } from '../../../contexts/AudioContextProvider';
-import { usePianoSampler } from '../../../hooks/usePianoSampler';
-import { useSounds } from '../../../features/games/hooks/useSounds';
-import { useSessionTimeout } from '../../../contexts/SessionTimeoutContext';
-import { useRotatePrompt } from '../../../hooks/useRotatePrompt';
-import { useLandscapeLock } from '../../../hooks/useLandscapeLock';
-import { useAccessibility } from '../../../contexts/AccessibilityContext';
-import { RotatePromptOverlay } from '../../orientation/RotatePromptOverlay';
-import { AudioInterruptedOverlay } from '../shared/AudioInterruptedOverlay.jsx';
-import VictoryScreen from '../VictoryScreen';
-import BackButton from '../../ui/BackButton';
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
+import { usePianoSampler } from "../../../hooks/usePianoSampler";
+import { useSounds } from "../../../features/games/hooks/useSounds";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
+import { useAccessibility } from "../../../contexts/AccessibilityContext";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
+import VictoryScreen from "../VictoryScreen";
+import BackButton from "../../ui/BackButton";
 
 import {
   generateIntervalQuestion,
   getNotesInBetween,
-} from './earTrainingUtils';
-import { PianoKeyboardReveal } from './components/PianoKeyboardReveal';
-import { getNodeById } from '../../../data/skillTrail';
+} from "./earTrainingUtils";
+import { PianoKeyboardReveal } from "./components/PianoKeyboardReveal";
+import { getNodeById } from "../../../data/skillTrail";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
 // ---------------------------------------------------------------------------
 const GAME_PHASES = {
-  SETUP: 'setup',
-  LISTENING: 'listening',
-  CHOOSING: 'choosing',
-  FEEDBACK: 'feedback',
-  SESSION_COMPLETE: 'session-complete',
+  SETUP: "setup",
+  LISTENING: "listening",
+  CHOOSING: "choosing",
+  FEEDBACK: "feedback",
+  SESSION_COMPLETE: "session-complete",
 };
 
 const TOTAL_QUESTIONS = 10;
-const NOTE_DURATION = 0.6;   // seconds per note
-const NOTE_GAP = 0.25;       // gap between note1 and note2
+const NOTE_DURATION = 0.6; // seconds per note
+const NOTE_GAP = 0.25; // gap between note1 and note2
 const CORRECT_PAUSE_MS = 1500;
 const WRONG_PAUSE_MS = 2000;
 const DEFAULT_ASCENDING_RATIO = 0.6; // D-10: ~60% ascending first
@@ -60,15 +55,15 @@ const DEFAULT_ASCENDING_RATIO = 0.6; // D-10: ~60% ascending first
 // ---------------------------------------------------------------------------
 const STATE_CLASSES = {
   default:
-    'bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/40 cursor-pointer transition-colors duration-150',
+    "bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/40 cursor-pointer transition-colors duration-150",
   correct:
-    'bg-green-500/20 backdrop-blur-md border-2 border-green-400 rounded-xl shadow-[0_0_12px_rgba(74,222,128,0.4)] transition-all duration-300',
+    "bg-green-500/20 backdrop-blur-md border-2 border-green-400 rounded-xl shadow-[0_0_12px_rgba(74,222,128,0.4)] transition-all duration-300",
   wrong:
-    'bg-red-500/20 backdrop-blur-md border-2 border-red-400 rounded-xl transition-all duration-300',
+    "bg-red-500/20 backdrop-blur-md border-2 border-red-400 rounded-xl transition-all duration-300",
   dimmed:
-    'opacity-40 pointer-events-none bg-white/10 border border-white/20 rounded-xl',
+    "opacity-40 pointer-events-none bg-white/10 border border-white/20 rounded-xl",
   disabled:
-    'opacity-50 pointer-events-none bg-white/10 border border-white/20 rounded-xl',
+    "opacity-50 pointer-events-none bg-white/10 border border-white/20 rounded-xl",
 };
 
 /**
@@ -88,7 +83,7 @@ const STATE_CLASSES = {
 export default function IntervalGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   // --- Orientation prompt ---
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
@@ -105,7 +100,8 @@ export default function IntervalGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // --- Audio ---
-  const { isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
+  const { isInterrupted, handleTapToResume, getOrCreateAudioContext } =
+    useAudioContext();
   const { playNote } = usePianoSampler();
   const { playCorrectSound, playWrongSound } = useSounds();
 
@@ -127,9 +123,9 @@ export default function IntervalGame() {
   // { note1, note2, semitones, direction, category }
 
   const [selectedAnswer, setSelectedAnswer] = useState(null); // 'step' | 'skip' | 'leap'
-  const [answerCorrect, setAnswerCorrect] = useState(null);   // boolean
-  const [questionScores, setQuestionScores] = useState([]);   // 1 or 0 per question
-  const [feedbackText, setFeedbackText] = useState('');
+  const [answerCorrect, setAnswerCorrect] = useState(null); // boolean
+  const [questionScores, setQuestionScores] = useState([]); // 1 or 0 per question
+  const [feedbackText, setFeedbackText] = useState("");
 
   // Keyboard reveal
   const [showKeyboard, setShowKeyboard] = useState(false);
@@ -186,8 +182,12 @@ export default function IntervalGame() {
       if (!ctx) return;
 
       // Ensure AudioContext is running before scheduling oscillators
-      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
-        try { await ctx.resume(); } catch { /* browser may block without user gesture */ }
+      if (ctx.state === "suspended" || ctx.state === "interrupted") {
+        try {
+          await ctx.resume();
+        } catch {
+          /* browser may block without user gesture */
+        }
       }
 
       isPlayingRef.current = true;
@@ -195,10 +195,18 @@ export default function IntervalGame() {
 
       const now = ctx.currentTime;
       // Note 1 at time now
-      playNote(question.note1, { duration: NOTE_DURATION, velocity: 0.75, startTime: now });
+      playNote(question.note1, {
+        duration: NOTE_DURATION,
+        velocity: 0.75,
+        startTime: now,
+      });
       // Note 2 after note1 + gap
       const note2Start = now + NOTE_DURATION + NOTE_GAP;
-      playNote(question.note2, { duration: NOTE_DURATION, velocity: 0.75, startTime: note2Start });
+      playNote(question.note2, {
+        duration: NOTE_DURATION,
+        velocity: 0.75,
+        startTime: note2Start,
+      });
 
       // Total duration: note1 + gap + note2
       const totalDurationMs = (NOTE_DURATION + NOTE_GAP + NOTE_DURATION) * 1000;
@@ -221,12 +229,16 @@ export default function IntervalGame() {
   // ---------------------------------------------------------------------------
   const generateQuestion = useCallback(
     (qIndex) => {
-      const question = generateIntervalQuestion(qIndex, TOTAL_QUESTIONS, ascendingRatio);
+      const question = generateIntervalQuestion(
+        qIndex,
+        TOTAL_QUESTIONS,
+        ascendingRatio
+      );
       setCurrentQuestion(question);
       setSelectedAnswer(null);
       setAnswerCorrect(null);
       setShowKeyboard(false);
-      setFeedbackText('');
+      setFeedbackText("");
       setGamePhase(GAME_PHASES.LISTENING);
     },
     [ascendingRatio]
@@ -238,7 +250,7 @@ export default function IntervalGame() {
   useEffect(() => {
     if (gamePhase !== GAME_PHASES.LISTENING || !currentQuestion) return;
     setFeedbackText(
-      t('games.intervalGame.listening', { defaultValue: 'Listen carefully...' })
+      t("games.intervalGame.listening", { defaultValue: "Listen carefully..." })
     );
     playInterval(currentQuestion);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot per question
@@ -251,7 +263,7 @@ export default function IntervalGame() {
     if (isPlayingRef.current || gamePhase === GAME_PHASES.FEEDBACK) return;
     if (!currentQuestion) return;
     setFeedbackText(
-      t('games.intervalGame.listening', { defaultValue: 'Listen carefully...' })
+      t("games.intervalGame.listening", { defaultValue: "Listen carefully..." })
     );
     playInterval(currentQuestion);
   }, [currentQuestion, gamePhase, playInterval, t]);
@@ -290,7 +302,7 @@ export default function IntervalGame() {
       if (isCorrect) {
         playCorrectSound();
         setFeedbackText(
-          t('games.intervalGame.correct', { defaultValue: 'Correct!' })
+          t("games.intervalGame.correct", { defaultValue: "Correct!" })
         );
         setQuestionScores((prev) => [...prev, 1]);
 
@@ -300,7 +312,7 @@ export default function IntervalGame() {
       } else {
         playWrongSound();
         setFeedbackText(
-          t('games.intervalGame.wrong', { defaultValue: 'Try again!' })
+          t("games.intervalGame.wrong", { defaultValue: "Try again!" })
         );
         setQuestionScores((prev) => [...prev, 0]);
 
@@ -337,7 +349,9 @@ export default function IntervalGame() {
       setQuestionScores([]);
       generateQuestion(0);
     }
-    return () => { hasAutoStartedRef.current = false; };
+    return () => {
+      hasAutoStartedRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start guarded by hasAutoStartedRef
   }, [nodeConfig]);
 
@@ -370,43 +384,54 @@ export default function IntervalGame() {
           };
 
           switch (nextExercise.type) {
-            case 'note_recognition':
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+            case "note_recognition":
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState, replace: true });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training/note-comparison', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training/interval-game', { state: navState, replace: true });
-              window.location.reload();
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', {
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
                 state: { ...navState, isBoss: true },
               });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -425,7 +450,7 @@ export default function IntervalGame() {
     setSelectedAnswer(null);
     setAnswerCorrect(null);
     setShowKeyboard(false);
-    setFeedbackText('');
+    setFeedbackText("");
     setIsPlaying(false);
     isPlayingRef.current = false;
     if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
@@ -439,25 +464,27 @@ export default function IntervalGame() {
   // Interval label + subLabel for PianoKeyboardReveal (D-08)
   const intervalLabel = (() => {
     if (!currentQuestion || !showKeyboard) return null;
-    const categoryLabel = t(
-      `games.intervalGame.${currentQuestion.category}`,
-      { defaultValue: currentQuestion.category.toUpperCase() }
-    ).toUpperCase();
+    const categoryLabel = t(`games.intervalGame.${currentQuestion.category}`, {
+      defaultValue: currentQuestion.category.toUpperCase(),
+    }).toUpperCase();
     return `${categoryLabel} \u2014 ${currentQuestion.note1} to ${currentQuestion.note2}`;
   })();
 
   const subLabel = (() => {
     if (!currentQuestion || !showKeyboard) return null;
-    const between = getNotesInBetween(currentQuestion.note1, currentQuestion.note2);
+    const between = getNotesInBetween(
+      currentQuestion.note1,
+      currentQuestion.note2
+    );
     if (between.length === 1) {
       return (
-        t('games.intervalGame.jumpedOver', { note: between[0] }) ||
+        t("games.intervalGame.jumpedOver", { note: between[0] }) ||
         `Jumped over ${between[0]}`
       );
     }
     if (between.length > 1) {
       return (
-        t('games.intervalGame.jumpedOverMultiple', { count: between.length }) ||
+        t("games.intervalGame.jumpedOverMultiple", { count: between.length }) ||
         `${between.length} notes between`
       );
     }
@@ -473,7 +500,7 @@ export default function IntervalGame() {
         score={correctCount}
         totalPossibleScore={TOTAL_QUESTIONS}
         onReset={handleReset}
-        onExit={() => navigate('/trail')}
+        onExit={() => navigate("/trail")}
         nodeId={nodeId}
         exerciseIndex={trailExerciseIndex}
         totalExercises={trailTotalExercises}
@@ -488,24 +515,23 @@ export default function IntervalGame() {
   // ---------------------------------------------------------------------------
   if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-        {shouldShowPrompt && (
-          <RotatePromptOverlay onDismiss={dismissPrompt} />
-        )}
-        <div className="w-full max-w-lg bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 flex flex-col gap-4">
-          <h1 className="text-xl font-bold text-white text-center">
-            {t('games.intervalGame.title', { defaultValue: 'Interval Game' })}
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
+          <h1 className="text-center text-xl font-bold text-white">
+            {t("games.intervalGame.title", { defaultValue: "Interval Game" })}
           </h1>
-          <p className="text-white/70 text-center text-sm">
-            {t('games.intervalGame.description', {
-              defaultValue: 'Listen to two notes and identify how far apart they are.',
+          <p className="text-center text-sm text-white/70">
+            {t("games.intervalGame.description", {
+              defaultValue:
+                "Listen to two notes and identify how far apart they are.",
             })}
           </p>
           <button
             onClick={handleStartGame}
-            className="bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl px-6 py-3 transition-colors"
+            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
           >
-            {t('games.intervalGame.startGame', { defaultValue: 'Start Game' })}
+            {t("games.intervalGame.startGame", { defaultValue: "Start Game" })}
           </button>
         </div>
       </div>
@@ -518,9 +544,7 @@ export default function IntervalGame() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
       {/* iOS rotate prompt */}
-      {shouldShowPrompt && (
-        <RotatePromptOverlay onDismiss={dismissPrompt} />
-      )}
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
       {/* iOS audio interruption overlay */}
       <AudioInterruptedOverlay
@@ -529,66 +553,84 @@ export default function IntervalGame() {
         onRestartExercise={handleReset}
       />
 
-      <div className="flex flex-col gap-3 p-4 max-w-lg mx-auto">
-
+      <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
         {/* Header bar */}
-        <div className="flex items-center justify-between h-12">
-          <BackButton />
+        <div className="flex h-12 items-center justify-between">
+          <BackButton
+            to={nodeId ? "/trail?path=ear_training" : "/ear-training-mode"}
+          />
           <div className="flex items-center gap-2">
             {/* Progress counter — dir=ltr to prevent digit reversal in RTL */}
-            <span dir="ltr" className="text-white/70 text-sm font-rounded">
+            <span dir="ltr" className="font-rounded text-sm text-white/70">
               {questionIndex + 1} / {TOTAL_QUESTIONS}
             </span>
             {/* Score */}
-            <span className="text-indigo-300 text-sm font-rounded">
+            <span className="font-rounded text-sm text-indigo-300">
               {correctCount} ✓
             </span>
           </div>
         </div>
 
         {/* Audio status row with replay button */}
-        <div className="flex items-center justify-between px-4 py-2 bg-white/5 rounded-xl h-12">
+        <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
           <div className="flex items-center gap-2">
             <Volume2
               size={20}
-              className={isPlaying ? 'text-indigo-300 animate-pulse' : 'text-white/60'}
+              className={
+                isPlaying ? "animate-pulse text-indigo-300" : "text-white/60"
+              }
             />
             {feedbackText ? (
-              <span aria-live="polite" className="text-sm text-white/80 font-rounded">
+              <span
+                aria-live="polite"
+                className="font-rounded text-sm text-white/80"
+              >
                 {feedbackText}
               </span>
             ) : (
-              <span className="text-sm text-white/40 font-rounded" aria-hidden="true">
+              <span
+                className="font-rounded text-sm text-white/40"
+                aria-hidden="true"
+              >
                 {gamePhase === GAME_PHASES.CHOOSING
-                  ? t('games.intervalGame.playAgain', { defaultValue: 'Play Again' })
-                  : ''}
+                  ? t("games.intervalGame.playAgain", {
+                      defaultValue: "Play Again",
+                    })
+                  : ""}
               </span>
             )}
           </div>
 
           {/* Replay button — visible during LISTENING and CHOOSING */}
-          {(gamePhase === GAME_PHASES.LISTENING || gamePhase === GAME_PHASES.CHOOSING) && (
+          {(gamePhase === GAME_PHASES.LISTENING ||
+            gamePhase === GAME_PHASES.CHOOSING) && (
             <button
               onClick={handleReplay}
               disabled={isPlaying}
-              aria-label={t('games.intervalGame.playAgain', { defaultValue: 'Play Again' })}
-              className={`flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-rounded transition-all ${
+              aria-label={t("games.intervalGame.playAgain", {
+                defaultValue: "Play Again",
+              })}
+              className={`flex items-center gap-1 rounded-xl px-4 py-2 font-rounded text-sm transition-all ${
                 isPlaying
-                  ? 'opacity-50 cursor-not-allowed bg-indigo-500/50'
-                  : 'bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer'
+                  ? "cursor-not-allowed bg-indigo-500/50 opacity-50"
+                  : "cursor-pointer bg-indigo-500 text-white hover:bg-indigo-400"
               }`}
             >
               <Volume2 size={16} />
-              <span>{t('games.intervalGame.playAgain', { defaultValue: 'Play Again' })}</span>
+              <span>
+                {t("games.intervalGame.playAgain", {
+                  defaultValue: "Play Again",
+                })}
+              </span>
             </button>
           )}
         </div>
 
         {/* Question heading */}
-        <div className="text-center py-2">
-          <h2 className="text-white text-lg font-bold">
-            {t('games.intervalGame.question', {
-              defaultValue: 'How far apart are the notes?',
+        <div className="py-2 text-center">
+          <h2 className="text-lg font-bold text-white">
+            {t("games.intervalGame.question", {
+              defaultValue: "How far apart are the notes?",
             })}
           </h2>
         </div>
@@ -599,24 +641,29 @@ export default function IntervalGame() {
         </div>
 
         {/* Answer buttons — vertical stack (D-07) */}
-        <div className="flex flex-col gap-3 w-full">
-          {['step', 'skip', 'leap'].map((choice) => (
+        <div className="flex w-full flex-col gap-3">
+          {["step", "skip", "leap"].map((choice) => (
             <button
               key={choice}
               onClick={() => handleAnswer(choice)}
               disabled={gamePhase !== GAME_PHASES.CHOOSING}
-              className={`w-full min-h-[64px] flex items-center justify-between px-5 rounded-xl ${getButtonState(choice)}`}
-              aria-label={`${t(`games.intervalGame.${choice}`, { defaultValue: choice })} — ${t(`games.intervalGame.${choice}Hint`, { defaultValue: '' })}`}
+              className={`flex min-h-[64px] w-full items-center justify-between rounded-xl px-5 ${getButtonState(choice)}`}
+              aria-label={`${t(`games.intervalGame.${choice}`, { defaultValue: choice })} — ${t(`games.intervalGame.${choice}Hint`, { defaultValue: "" })}`}
             >
               <span className="text-base font-bold text-white">
-                {t(`games.intervalGame.${choice}`, { defaultValue: choice.charAt(0).toUpperCase() + choice.slice(1) })}
+                {t(`games.intervalGame.${choice}`, {
+                  defaultValue:
+                    choice.charAt(0).toUpperCase() + choice.slice(1),
+                })}
               </span>
               <span className="text-sm text-white/60">
                 {t(`games.intervalGame.${choice}Hint`, {
                   defaultValue:
-                    choice === 'step' ? 'next door' :
-                    choice === 'skip' ? 'jump one' :
-                    'far apart',
+                    choice === "step"
+                      ? "next door"
+                      : choice === "skip"
+                        ? "jump one"
+                        : "far apart",
                 })}
               </span>
             </button>
@@ -641,8 +688,10 @@ export default function IntervalGame() {
         {/* Loading state while awaiting first question in trail mode */}
         {gamePhase === GAME_PHASES.SETUP && nodeConfig && (
           <div className="flex items-center justify-center py-8">
-            <span className="text-white/60 text-sm animate-pulse">
-              {t('games.intervalGame.listening', { defaultValue: 'Loading...' })}
+            <span className="animate-pulse text-sm text-white/60">
+              {t("games.intervalGame.listening", {
+                defaultValue: "Loading...",
+              })}
             </span>
           </div>
         )}

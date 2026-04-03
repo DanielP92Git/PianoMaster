@@ -6,7 +6,11 @@ import React, {
   useRef,
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getNodeById, EXERCISE_TYPES } from "../../../data/skillTrail";
+import {
+  getNodeById,
+  getTrailTabForNode,
+  EXERCISE_TYPES,
+} from "../../../data/skillTrail";
 import { useScores } from "../../../features/userData/useScores";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import {
@@ -30,7 +34,9 @@ const bassNotes = BASS_NOTES;
 
 const getAllNotesForClef = (clef) => {
   if (clef === "Both" || String(clef || "").toLowerCase() === "both") {
-    return [...trebleNotes, ...bassNotes].map((note) => note.pitch).filter(Boolean);
+    return [...trebleNotes, ...bassNotes]
+      .map((note) => note.pitch)
+      .filter(Boolean);
   }
   return (String(clef || "").toLowerCase() === "bass" ? bassNotes : trebleNotes)
     .map((note) => note.pitch)
@@ -109,7 +115,8 @@ export function MemoryGame() {
 
     // Select the appropriate notes based on clef
     const allNotesArray =
-      currentClef === "Both" || String(currentClef || "").toLowerCase() === "both"
+      currentClef === "Both" ||
+      String(currentClef || "").toLowerCase() === "both"
         ? [
             ...trebleNotes.map((n) => ({ ...n, __clef: "treble" })),
             ...bassNotes.map((n) => ({ ...n, __clef: "bass" })),
@@ -130,7 +137,9 @@ export function MemoryGame() {
     });
 
     const isAccidentalPitch = (pitch) =>
-      pitch ? String(pitch).includes("#") || String(pitch).includes("b") : false;
+      pitch
+        ? String(pitch).includes("#") || String(pitch).includes("b")
+        : false;
     const naturalBasePitch = (pitch) => {
       if (!pitch) return null;
       const raw = String(pitch).trim().replace(/\s+/g, "");
@@ -165,7 +174,10 @@ export function MemoryGame() {
                 isAccidentalPitch(notePitch) &&
                 ((String(notePitch).includes("#") && currentEnableSharps) ||
                   (String(notePitch).includes("b") && currentEnableFlats));
-              return selectedSet.has(notePitch) || (allowAccidental && selectedSet.has(base));
+              return (
+                selectedSet.has(notePitch) ||
+                (allowAccidental && selectedSet.has(base))
+              );
             });
           })()
         : allNotesArray;
@@ -263,8 +275,14 @@ export function MemoryGame() {
 
   // Fix the initial cards creation to use the proper grid size
   const initialCards = useMemo(() => {
-    return createCards(clef, DIFFICULTIES["Easy"], selectedNotes, enableSharps, enableFlats);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; including it would cause infinite re-creation; actual deps drive recalculation correctly
+    return createCards(
+      clef,
+      DIFFICULTIES["Easy"],
+      selectedNotes,
+      enableSharps,
+      enableFlats
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; including it would cause infinite re-creation; actual deps drive recalculation correctly
   }, [clef, selectedNotes, enableSharps, enableFlats]);
 
   const [cards, setCards] = useState(initialCards);
@@ -311,7 +329,9 @@ export function MemoryGame() {
       let parsedGridSize = "3 X 4"; // default
       if (nodeConfig.gridSize) {
         // Convert from formats like "3x4", "2x4" to "3 X 4", "3 X 6", etc.
-        const gridStr = String(nodeConfig.gridSize).toUpperCase().replace(/X/g, ' X ');
+        const gridStr = String(nodeConfig.gridSize)
+          .toUpperCase()
+          .replace(/X/g, " X ");
         if (GRID_SIZES[gridStr]) {
           parsedGridSize = gridStr;
         }
@@ -319,19 +339,20 @@ export function MemoryGame() {
 
       // Build settings from node configuration
       const trailSettings = {
-        clef: nodeConfig.clef || 'treble',
+        clef: nodeConfig.clef || "treble",
         selectedNotes: nodeConfig.notePool || [],
         gridSize: parsedGridSize,
-        timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
+        timedMode:
+          nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
         timeLimit: nodeConfig.timeLimit || 90,
         enableSharps: false,
-        enableFlats: false
+        enableFlats: false,
       };
 
       // Apply settings and start the game
       applySettingsAndRestart(trailSettings, { closeModal: false });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; applySettingsAndRestart is intentionally omitted to prevent re-triggering on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; applySettingsAndRestart is intentionally omitted to prevent re-triggering on every render
   }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
 
   // Handle navigation to next exercise in the trail node
@@ -350,44 +371,54 @@ export function MemoryGame() {
             nodeConfig: nextExercise.config,
             exerciseIndex: nextIndex,
             totalExercises: trailTotalExercises,
-            exerciseType: nextExercise.type
+            exerciseType: nextExercise.type,
           };
 
           // Navigate to the appropriate game based on exercise type
           switch (nextExercise.type) {
             case EXERCISE_TYPES.NOTE_RECOGNITION:
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
             case EXERCISE_TYPES.SIGHT_READING:
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
             case EXERCISE_TYPES.MEMORY_GAME:
-              navigate('/notes-master-mode/memory-game', { state: navState });
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
             case EXERCISE_TYPES.RHYTHM:
-              navigate('/rhythm-mode/metronome-trainer', { state: navState });
+              navigate("/rhythm-mode/metronome-trainer", { state: navState });
               break;
             case EXERCISE_TYPES.BOSS_CHALLENGE:
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+              });
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              console.warn('Unknown exercise type:', nextExercise.type);
-              navigate('/trail');
+              console.warn("Unknown exercise type:", nextExercise.type);
+              navigate("/trail");
           }
         }
       }
@@ -522,7 +553,13 @@ export function MemoryGame() {
       setEnableSharps(newEnableSharps);
       setEnableFlats(newEnableFlats);
 
-      const newCards = createCards(newClef, newGridSize, newSelectedNotes, newEnableSharps, newEnableFlats);
+      const newCards = createCards(
+        newClef,
+        newGridSize,
+        newSelectedNotes,
+        newEnableSharps,
+        newEnableFlats
+      );
       setCards(newCards);
       setFlippedIndexes([]);
       setMatchedIndexes([]);
@@ -535,7 +572,6 @@ export function MemoryGame() {
 
       pauseTimer();
       resetTimer(newTimeLimit);
-
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; including it would cause infinite callback invalidation; game restart is explicitly triggered by user action or trail navigation
     [
@@ -585,7 +621,13 @@ export function MemoryGame() {
 
     const resetGridSize = gridSize;
 
-    const newCards = createCards(clef, resetGridSize, selectedNotes, enableSharps, enableFlats);
+    const newCards = createCards(
+      clef,
+      resetGridSize,
+      selectedNotes,
+      enableSharps,
+      enableFlats
+    );
     setCards(newCards);
 
     setFlippedIndexes([]);
@@ -624,7 +666,8 @@ export function MemoryGame() {
       // Match ONLY when it's a note-name card + a staff-note card of the same note value.
       // Prevents name+name or note+note from matching.
       const isMatchingPair =
-        firstCard.value === secondCard.value && firstCard.type !== secondCard.type;
+        firstCard.value === secondCard.value &&
+        firstCard.type !== secondCard.type;
 
       if (isMatchingPair) {
         // Match found - show firework and delay disappearance
@@ -769,7 +812,13 @@ export function MemoryGame() {
     // Only run this effect if gridSize has changed and game has started
     if (prevGridSizeRef.current !== gridSize && gameStarted) {
       // Create new cards with the updated grid size
-      const newCards = createCards(clef, gridSize, selectedNotes, enableSharps, enableFlats);
+      const newCards = createCards(
+        clef,
+        gridSize,
+        selectedNotes,
+        enableSharps,
+        enableFlats
+      );
 
       // Update cards state
       setCards(newCards);
@@ -782,7 +831,7 @@ export function MemoryGame() {
 
     // Update ref to current gridSize
     prevGridSizeRef.current = gridSize;
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; actual state deps drive re-execution correctly; including createCards would cause infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; actual state deps drive re-execution correctly; including createCards would cause infinite loops
   }, [gridSize, clef, gameStarted, selectedNotes, enableSharps, enableFlats]);
 
   useEffect(() => {
@@ -790,20 +839,42 @@ export function MemoryGame() {
     const expectedCount = GRID_SIZES[gridSize];
     if (!expectedCount) return;
     if (cards.length !== expectedCount) {
-      const refreshedCards = createCards(clef, gridSize, selectedNotes, enableSharps, enableFlats);
+      const refreshedCards = createCards(
+        clef,
+        gridSize,
+        selectedNotes,
+        enableSharps,
+        enableFlats
+      );
       setCards(refreshedCards);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; actual state deps drive re-execution correctly; including createCards would cause infinite loops
-  }, [gameStarted, gridSize, cards.length, clef, selectedNotes, enableSharps, enableFlats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- createCards is defined in the component body and changes every render; actual state deps drive re-execution correctly; including createCards would cause infinite loops
+  }, [
+    gameStarted,
+    gridSize,
+    cards.length,
+    clef,
+    selectedNotes,
+    enableSharps,
+    enableFlats,
+  ]);
 
   return (
     <div className="flex h-screen flex-col">
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
-      <div className="flex items-center justify-between gap-2 p-2 sm:p-3 landscape:p-1 landscape:gap-1">
+      <div className="flex items-center justify-between gap-2 p-2 sm:p-3 landscape:gap-1 landscape:p-1">
         {!gameFinished && gameStarted && (
           <BackButton
-            to={nodeId ? "/trail" : "/notes-master-mode"}
-            name={nodeId ? t("navigation.links.trail", { defaultValue: "Trail" }) : t("navigation.links.studentDashboard")}
+            to={
+              nodeId
+                ? `/trail?path=${getTrailTabForNode(nodeId) || "treble"}`
+                : "/notes-master-mode"
+            }
+            name={
+              nodeId
+                ? t("navigation.links.trail", { defaultValue: "Trail" })
+                : t("navigation.links.studentDashboard")
+            }
             styling="text-white/80 hover:text-white text-xs sm:text-sm flex-shrink-0"
           />
         )}
@@ -854,7 +925,9 @@ export function MemoryGame() {
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
-            <p className="text-lg font-medium text-white/80">Loading Memory Game...</p>
+            <p className="text-lg font-medium text-white/80">
+              Loading Memory Game...
+            </p>
           </div>
         </div>
       ) : !gameStarted ? (
@@ -932,7 +1005,7 @@ export function MemoryGame() {
           />
         )
       ) : (
-        <div className="flex flex-1 flex-col min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col">
           {/* Game grid - fits in viewport */}
           <div className="flex flex-1 items-start justify-center overflow-y-auto overflow-x-hidden px-2 py-2 sm:px-4 sm:py-4 md:items-center">
             <div className={`${getGridClassName()} px-2 sm:px-4`}>
@@ -955,11 +1028,11 @@ export function MemoryGame() {
                       WebkitPerspective: "1000px",
                     }}
                     className={[
-                      "relative w-full aspect-[4/3] select-none",
+                      "relative aspect-[4/3] w-full select-none",
                       "cursor-pointer",
                       "transition-[transform,opacity,box-shadow] duration-200 ease-out",
                       "hover:shadow-2xl active:scale-95",
-                      isMatched ? "opacity-0 scale-90 pointer-events-none" : "",
+                      isMatched ? "pointer-events-none scale-90 opacity-0" : "",
                     ].join(" ")}
                     onClick={() => handleCardClick(index)}
                   >
@@ -971,7 +1044,9 @@ export function MemoryGame() {
                         transition: "transform 0.6s",
                         transformStyle: "preserve-3d",
                         WebkitTransformStyle: "preserve-3d",
-                        transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)",
+                        transform: isFlipped
+                          ? "rotateY(180deg)"
+                          : "rotateY(0deg)",
                         WebkitTransform: isFlipped
                           ? "rotateY(180deg)"
                           : "rotateY(0deg)",

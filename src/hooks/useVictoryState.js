@@ -8,21 +8,49 @@ import { useUserProfile } from "./useUserProfile";
 import { usePointBalance } from "./useAccessories";
 import { useAccessoryUnlockDetection } from "./useAccessoryUnlockDetection";
 import { useUser } from "../features/authentication/useUser";
-import { updateNodeProgress, getNodeProgress, updateExerciseProgress, getNextNodeInPath, calculateStarsFromPercentage } from "../services/skillProgressService";
-import { awardXP, calculateSessionXP, calculateFreePlayXP, getLevelProgress, PRESTIGE_XP_PER_TIER } from "../utils/xpSystem";
-import { getNodeById, EXERCISE_TYPES } from "../data/skillTrail";
+import {
+  updateNodeProgress,
+  getNodeProgress,
+  updateExerciseProgress,
+  getNextNodeInPath,
+  calculateStarsFromPercentage,
+} from "../services/skillProgressService";
+import {
+  awardXP,
+  calculateSessionXP,
+  calculateFreePlayXP,
+  getLevelProgress,
+  PRESTIGE_XP_PER_TIER,
+} from "../utils/xpSystem";
+import {
+  getNodeById,
+  getTrailTabForNode,
+  EXERCISE_TYPES,
+} from "../data/skillTrail";
 import { streakService } from "../services/streakService";
 import { toast } from "react-hot-toast";
 import { useAccessibility } from "../contexts/AccessibilityContext";
-import { determineCelebrationTier, getCelebrationConfig } from '../utils/celebrationTiers';
-import { getCelebrationMessage } from '../utils/celebrationMessages';
-import { hasLevelBeenCelebrated, markLevelCelebrated } from '../utils/levelUpTracking';
-import { useBossUnlockTracking } from './useBossUnlockTracking';
+import {
+  determineCelebrationTier,
+  getCelebrationConfig,
+} from "../utils/celebrationTiers";
+import { getCelebrationMessage } from "../utils/celebrationMessages";
+import {
+  hasLevelBeenCelebrated,
+  markLevelCelebrated,
+} from "../utils/levelUpTracking";
+import { useBossUnlockTracking } from "./useBossUnlockTracking";
 import { useTranslation } from "react-i18next";
 
 const SHOWN_UNLOCKS_VERSION = 2;
 
-const useCountUp = (start, end, duration = 1400, shouldAnimate = true, reducedMotion = false) => {
+const useCountUp = (
+  start,
+  end,
+  duration = 1400,
+  shouldAnimate = true,
+  reducedMotion = false
+) => {
   const [value, setValue] = useState(() => {
     if (reducedMotion || !shouldAnimate) {
       return end ?? start ?? 0;
@@ -82,7 +110,8 @@ export function useVictoryState({
   const queryClient = useQueryClient();
   const { user, isTeacher } = useUser();
   const { reducedMotion } = useAccessibility();
-  const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } = useBossUnlockTracking(user?.id, nodeId);
+  const { shouldShow: shouldShowBossModal, markAsShown: markBossAsShown } =
+    useBossUnlockTracking(user?.id, nodeId);
   const scorePercentage = (score / totalPossibleScore) * 100;
 
   // Fetch streak state to check comeback bonus (for 2x XP display)
@@ -107,7 +136,13 @@ export function useVictoryState({
   const [xpData, setXpData] = useState(null);
 
   // XP count-up animation (1 second)
-  const animatedXPGain = useCountUp(0, xpData?.totalXP || 0, 1000, !!xpData?.totalXP, reducedMotion);
+  const animatedXPGain = useCountUp(
+    0,
+    xpData?.totalXP || 0,
+    1000,
+    !!xpData?.totalXP,
+    reducedMotion
+  );
 
   const refreshQueries = useCallback(async () => {
     if (!user?.id) return;
@@ -139,8 +174,9 @@ export function useVictoryState({
   }, [navigate, refreshQueries]);
 
   const handleNavigateToTrail = useCallback(() => {
-    navigate('/trail');
-  }, [navigate]);
+    const tab = getTrailTabForNode(nodeId);
+    navigate(tab ? `/trail?path=${tab}` : "/trail");
+  }, [navigate, nodeId]);
 
   const handleEquipAccessory = useCallback(() => {
     if (user?.id) {
@@ -190,7 +226,9 @@ export function useVictoryState({
     const nodeType = node?.nodeType || null;
 
     // For free play, calculate stars from score percentage
-    const effectiveStars = nodeId ? stars : calculateStarsFromPercentage(scorePercentage);
+    const effectiveStars = nodeId
+      ? stars
+      : calculateStarsFromPercentage(scorePercentage);
 
     const tier = determineCelebrationTier(
       effectiveStars,
@@ -268,12 +306,7 @@ export function useVictoryState({
         level: profileData?.level || 1,
       });
     }
-  }, [
-    gamesPlayedCount,
-    profileData,
-    pointsBalance,
-    setBaselineProgress,
-  ]);
+  }, [gamesPlayedCount, profileData, pointsBalance, setBaselineProgress]);
 
   // Current progress state (after game completion)
   const currentProgress = useMemo(() => {
@@ -304,7 +337,7 @@ export function useVictoryState({
           // Show freeze-earned toast with a short delay so it doesn't overlap XP animation
           if (newStreak?.freezeEarned) {
             setTimeout(() => {
-              toast.success(t('streak.freezeEarned'));
+              toast.success(t("streak.freezeEarned"));
             }, 1500);
           }
         },
@@ -341,13 +374,15 @@ export function useVictoryState({
             if (exerciseIndex !== null && totalExercises !== null) {
               // Fetch pre-update progress for personal best detection
               const preUpdateProgress = await getNodeProgress(user.id, nodeId);
-              const existingExercise = preUpdateProgress?.exercise_progress?.find(
-                (ep) => ep.index === exerciseIndex
-              );
+              const existingExercise =
+                preUpdateProgress?.exercise_progress?.find(
+                  (ep) => ep.index === exerciseIndex
+                );
               if (
                 existingExercise &&
                 existingExercise.bestScore > 0 &&
-                Math.round(Math.min(scorePercentage, 100)) > existingExercise.bestScore
+                Math.round(Math.min(scorePercentage, 100)) >
+                  existingExercise.bestScore
               ) {
                 setIsPersonalBest(true);
               }
@@ -357,7 +392,9 @@ export function useVictoryState({
                 user.id,
                 nodeId,
                 exerciseIndex,
-                exerciseType || node.exercises?.[exerciseIndex]?.type || 'unknown',
+                exerciseType ||
+                  node.exercises?.[exerciseIndex]?.type ||
+                  "unknown",
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
                 totalExercises,
@@ -389,14 +426,16 @@ export function useVictoryState({
                   maxScore: totalPossibleScore,
                   nodeId,
                   isFirstComplete: true,
-                  comebackMultiplier: comebackActive ? 2 : 1
+                  comebackMultiplier: comebackActive ? 2 : 1,
                 };
                 const xpBreakdown = calculateSessionXP(sessionData);
 
                 if (xpBreakdown.totalXP > 0) {
                   const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
                   setXpData({ ...xpBreakdown, ...xpResult });
-                  queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+                  queryClient.invalidateQueries({
+                    queryKey: ["student-xp", user.id],
+                  });
                 }
               }
             } else {
@@ -409,7 +448,8 @@ export function useVictoryState({
               if (
                 existingProgress &&
                 existingProgress.best_score > 0 &&
-                Math.round(Math.min(scorePercentage, 100)) > existingProgress.best_score
+                Math.round(Math.min(scorePercentage, 100)) >
+                  existingProgress.best_score
               ) {
                 setIsPersonalBest(true);
               }
@@ -443,14 +483,16 @@ export function useVictoryState({
                 maxScore: totalPossibleScore,
                 nodeId,
                 isFirstComplete: isFirst,
-                comebackMultiplier: comebackActive ? 2 : 1
+                comebackMultiplier: comebackActive ? 2 : 1,
               };
               const xpBreakdown = calculateSessionXP(sessionData);
 
               if (xpBreakdown.totalXP > 0) {
                 const xpResult = await awardXP(user.id, xpBreakdown.totalXP);
                 setXpData({ ...xpBreakdown, ...xpResult });
-                queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+                queryClient.invalidateQueries({
+                  queryKey: ["student-xp", user.id],
+                });
               }
             }
           }
@@ -463,11 +505,16 @@ export function useVictoryState({
         // Free play: award XP based on score
         if (user?.id && scorePercentage > 0) {
           try {
-            const freePlayXP = calculateFreePlayXP(scorePercentage, comebackActive ? 2 : 1);
+            const freePlayXP = calculateFreePlayXP(
+              scorePercentage,
+              comebackActive ? 2 : 1
+            );
             if (freePlayXP > 0) {
               const xpResult = await awardXP(user.id, freePlayXP);
               setXpData({ totalXP: freePlayXP, ...xpResult });
-              queryClient.invalidateQueries({ queryKey: ["student-xp", user.id] });
+              queryClient.invalidateQueries({
+                queryKey: ["student-xp", user.id],
+              });
             }
           } catch (error) {
             console.error("Error awarding free play XP:", error);
@@ -478,11 +525,27 @@ export function useVictoryState({
     };
 
     processTrailCompletion();
-  }, [user?.id, nodeId, score, totalPossibleScore, scorePercentage, exerciseIndex, totalExercises, exerciseType, queryClient, isTeacher, comebackActive]);
+  }, [
+    user?.id,
+    nodeId,
+    score,
+    totalPossibleScore,
+    scorePercentage,
+    exerciseIndex,
+    totalExercises,
+    exerciseType,
+    queryClient,
+    isTeacher,
+    comebackActive,
+  ]);
 
   // Trigger confetti for full/epic tiers (non-blocking, after trail processing)
   useEffect(() => {
-    if (!isProcessingTrail && celebrationData.config.confetti && !reducedMotion) {
+    if (
+      !isProcessingTrail &&
+      celebrationData.config.confetti &&
+      !reducedMotion
+    ) {
       setShowConfetti(true);
     }
   }, [isProcessingTrail, celebrationData.config.confetti, reducedMotion]);
@@ -506,12 +569,22 @@ export function useVictoryState({
 
   // Trigger boss unlock modal (after trail processing completes)
   useEffect(() => {
-    if (!isProcessingTrail && nodeComplete && celebrationData.isBoss && shouldShowBossModal) {
+    if (
+      !isProcessingTrail &&
+      nodeComplete &&
+      celebrationData.isBoss &&
+      shouldShowBossModal
+    ) {
       // Short delay to let VictoryScreen render first
       const timer = setTimeout(() => setShowBossModal(true), 500);
       return () => clearTimeout(timer);
     }
-  }, [isProcessingTrail, nodeComplete, celebrationData.isBoss, shouldShowBossModal]);
+  }, [
+    isProcessingTrail,
+    nodeComplete,
+    celebrationData.isBoss,
+    shouldShowBossModal,
+  ]);
 
   // Boss modal close handler
   const handleBossModalClose = useCallback(() => {
@@ -540,10 +613,12 @@ export function useVictoryState({
   }, [user?.id, nodeId, nodeComplete]);
 
   // Navigation helper for moving to next node
+  const trailTab = getTrailTabForNode(nodeId);
+  const trailPath = trailTab ? `/trail?path=${trailTab}` : "/trail";
+
   const navigateToNextNode = useCallback(() => {
     if (!nextNode) {
-      // Fallback to trail map if no next node
-      navigate('/trail');
+      navigate(trailPath);
       return;
     }
 
@@ -551,7 +626,7 @@ export function useVictoryState({
     const firstExercise = nextNode.exercises?.[0];
     if (!firstExercise) {
       console.warn("Next node has no exercises");
-      navigate('/trail');
+      navigate(trailPath);
       return;
     }
 
@@ -561,38 +636,55 @@ export function useVictoryState({
       nodeConfig: firstExercise.config,
       exerciseIndex: 0,
       totalExercises: nextNode.exercises.length,
-      exerciseType: firstExercise.type
+      exerciseType: firstExercise.type,
     };
 
     // Route based on exercise type
     switch (firstExercise.type) {
       case EXERCISE_TYPES.NOTE_RECOGNITION:
-        navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+        navigate("/notes-master-mode/notes-recognition-game", {
+          state: navState,
+        });
         break;
       case EXERCISE_TYPES.SIGHT_READING:
-        navigate('/notes-master-mode/sight-reading-game', { state: navState });
+        navigate("/notes-master-mode/sight-reading-game", { state: navState });
         break;
       case EXERCISE_TYPES.MEMORY_GAME:
-        navigate('/notes-master-mode/memory-game', { state: navState });
+        navigate("/notes-master-mode/memory-game", { state: navState });
         break;
       case EXERCISE_TYPES.RHYTHM:
-        navigate('/rhythm-mode/metronome-trainer', { state: navState });
+        navigate("/rhythm-mode/metronome-trainer", { state: navState });
         break;
       case EXERCISE_TYPES.RHYTHM_TAP:
-        navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+        navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
         break;
       case EXERCISE_TYPES.RHYTHM_DICTATION:
-        navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+        navigate("/rhythm-mode/rhythm-dictation-game", { state: navState });
         break;
       case EXERCISE_TYPES.BOSS_CHALLENGE:
-        // Boss challenges use note recognition game with special config
-        navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+        navigate("/notes-master-mode/notes-recognition-game", {
+          state: navState,
+        });
+        break;
+      case EXERCISE_TYPES.NOTE_CATCH:
+        navigate("/notes-master-mode/note-speed-cards", { state: navState });
+        break;
+      case EXERCISE_TYPES.ARCADE_RHYTHM:
+        navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
+        break;
+      case EXERCISE_TYPES.PITCH_COMPARISON:
+        navigate("/ear-training-mode/note-comparison-game", {
+          state: navState,
+        });
+        break;
+      case EXERCISE_TYPES.INTERVAL_ID:
+        navigate("/ear-training-mode/interval-game", { state: navState });
         break;
       default:
-        console.warn('Unknown exercise type:', firstExercise.type);
-        navigate('/trail');
+        console.warn("Unknown exercise type:", firstExercise.type);
+        navigate(trailPath);
     }
-  }, [nextNode, navigate]);
+  }, [nextNode, navigate, trailPath]);
 
   // Check for newly unlocked accessories after stats update
   useEffect(() => {

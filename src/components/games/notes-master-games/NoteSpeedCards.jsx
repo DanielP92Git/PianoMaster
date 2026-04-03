@@ -26,7 +26,7 @@ import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
-import { getNodeById } from "../../../data/skillTrail";
+import { getNodeById, getTrailTabForNode } from "../../../data/skillTrail";
 
 // ============================================================
 // Pure Functions (exported for testability — tested by NoteSpeedCards.test.js)
@@ -42,7 +42,12 @@ import { getNodeById } from "../../../data/skillTrail";
  * @param {string[]} distractorPool - Array of distractor pitches to sample from
  * @returns {{ id: number, pitch: string, isTarget: boolean }[]}
  */
-export function generateCardSequence(totalCards, targetCount, targetPitch, distractorPool) {
+export function generateCardSequence(
+  totalCards,
+  targetCount,
+  targetPitch,
+  distractorPool
+) {
   const cards = [];
 
   // Create target cards
@@ -126,7 +131,6 @@ export function NoteSpeedCards() {
   let pauseTimer = useCallback(() => {}, []);
   let resumeTimer = useCallback(() => {}, []);
   try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
     const sessionTimeout = useSessionTimeout();
     pauseTimer = sessionTimeout.pauseTimer;
     resumeTimer = sessionTimeout.resumeTimer;
@@ -139,10 +143,18 @@ export function NoteSpeedCards() {
   const nodeConfig = location.state?.nodeConfig || null;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
+  const trailBackPath = nodeId
+    ? `/trail?path=${getTrailTabForNode(nodeId) || "treble"}`
+    : "/trail";
 
   // Derived config (defaults for standalone/free-play mode)
   const targetNote = nodeConfig?.targetNote || "C4";
-  const distractorNotes = nodeConfig?.distractorNotes || ["D4", "E4", "G4", "A4"];
+  const distractorNotes = nodeConfig?.distractorNotes || [
+    "D4",
+    "E4",
+    "G4",
+    "A4",
+  ];
   const totalCards = nodeConfig?.totalCards || 30;
   const totalTargets = nodeConfig?.targetCount || 8;
   const clef = nodeConfig?.clef || "treble";
@@ -207,7 +219,7 @@ export function NoteSpeedCards() {
         ImageComponent: null,
       };
     },
-    [noteObjects, clef],
+    [noteObjects, clef]
   );
 
   // ── Speed tier label ──────────────────────────────────────────────────────
@@ -218,17 +230,24 @@ export function NoteSpeedCards() {
       if (cardIndex < 24) return t("noteSpeedCards.speedLabel.challenge");
       return t("noteSpeedCards.speedLabel.fast");
     },
-    [t],
+    [t]
   );
 
   // ── Target headline (from i18n or node name) ──────────────────────────────
-  const noteName = t(`trail:noteNames.${targetNote.replace(/[0-9]/g, "")}`, { defaultValue: targetNote });
+  const noteName = t(`trail:noteNames.${targetNote.replace(/[0-9]/g, "")}`, {
+    defaultValue: targetNote,
+  });
   const headline = t("noteSpeedCards.headline", { noteName });
   const subheadline = t("noteSpeedCards.subheadline", { noteName });
 
   // ── Start game (with countdown) ─────────────────────────────────────────
   const startGame = useCallback(() => {
-    const sequence = generateCardSequence(totalCards, totalTargets, targetNote, distractorNotes);
+    const sequence = generateCardSequence(
+      totalCards,
+      totalTargets,
+      targetNote,
+      distractorNotes
+    );
     setCardSequence(sequence);
     setCurrentCardIndex(0);
     setCorrectCatches(0);
@@ -322,7 +341,10 @@ export function NoteSpeedCards() {
 
     // Calculate speed with bonus reduction (-100ms per correct catch, floor 700ms)
     const baseSpeed = getSpeedForCard(currentCardIndex);
-    const adjustedSpeed = Math.max(1000, baseSpeed - correctCatchesRef.current * 50);
+    const adjustedSpeed = Math.max(
+      1000,
+      baseSpeed - correctCatchesRef.current * 50
+    );
     currentSpeedRef.current = adjustedSpeed;
 
     const id = setTimeout(() => {
@@ -383,7 +405,7 @@ export function NoteSpeedCards() {
       // Advance card shortly after tap feedback
       setTimeout(() => setCurrentCardIndex((prev) => prev + 1), 300);
     },
-    [gameState, cardSequence, playCorrectSound, playWrongSound],
+    [gameState, cardSequence, playCorrectSound, playWrongSound]
   );
 
   // Touch handler that prevents 300ms delay on mobile
@@ -391,7 +413,7 @@ export function NoteSpeedCards() {
     (e) => {
       handleTap(e);
     },
-    [handleTap],
+    [handleTap]
   );
 
   // Spacebar handler for desktop/laptop play
@@ -429,7 +451,9 @@ export function NoteSpeedCards() {
               });
               break;
             case "sight_reading":
-              navigate("/notes-master-mode/sight-reading-game", { state: navState });
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
             case "memory_game":
               navigate("/notes-master-mode/memory-game", { state: navState });
@@ -452,10 +476,14 @@ export function NoteSpeedCards() {
               navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
             case "rhythm_dictation":
-              navigate("/rhythm-mode/rhythm-dictation-game", { state: navState });
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+              });
               break;
             case "pitch_comparison":
-              navigate("/ear-training-mode/note-comparison-game", { state: navState });
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
             case "interval_id":
               navigate("/ear-training-mode/interval-game", { state: navState });
@@ -515,7 +543,10 @@ export function NoteSpeedCards() {
         totalExercises={trailTotalExercises}
         exerciseType="note_catch"
         onNextExercise={handleNextExercise}
-        subtitle={t("noteSpeedCards.catchResult", { caught: correctCatches, total: totalTargets })}
+        subtitle={t("noteSpeedCards.catchResult", {
+          caught: correctCatches,
+          total: totalTargets,
+        })}
       />
     );
   }
@@ -533,21 +564,23 @@ export function NoteSpeedCards() {
 
         {/* Back button */}
         <div className="absolute left-4 top-4 z-10">
-          <BackButton to="/trail" name="Back to Trail" />
+          <BackButton to={trailBackPath} name="Back to Trail" />
         </div>
 
         {/* Idle card */}
         <div
           className={`mx-6 flex flex-col items-center gap-6 rounded-3xl border border-white/20 p-8 shadow-xl ${glassBase} backdrop-blur-md`}
         >
-          <h1 className="font-rounded text-center text-2xl font-bold text-white">
+          <h1 className="text-center font-rounded text-2xl font-bold text-white">
             {headline}
           </h1>
-          <p className={`text-center text-base ${secondaryText}`}>{subheadline}</p>
+          <p className={`text-center text-base ${secondaryText}`}>
+            {subheadline}
+          </p>
 
           <button
             onClick={startGame}
-            className="font-playful cursor-pointer rounded-2xl border border-white/20 bg-white/10 px-10 py-4 text-xl font-bold text-white backdrop-blur-md transition-colors hover:bg-white/20 active:scale-95"
+            className="cursor-pointer rounded-2xl border border-white/20 bg-white/10 px-10 py-4 font-playful text-xl font-bold text-white backdrop-blur-md transition-colors hover:bg-white/20 active:scale-95"
           >
             {t("noteSpeedCards.startButton")}
           </button>
@@ -580,7 +613,7 @@ export function NoteSpeedCards() {
   // ── Render: In-progress state ─────────────────────────────────────────────
   return (
     <div
-      className="relative flex h-[100svh] touch-manipulation cursor-pointer flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 select-none"
+      className="relative flex h-[100svh] cursor-pointer touch-manipulation select-none flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
       onClick={handleTap}
       onTouchStart={handleTouchStart}
     >
@@ -598,7 +631,7 @@ export function NoteSpeedCards() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Back button — stopPropagation so tap doesn't trigger game */}
-        <BackButton to="/trail" name="Back to Trail" />
+        <BackButton to={trailBackPath} name="Back to Trail" />
 
         {/* Score pill */}
         <div
@@ -715,7 +748,10 @@ export function NoteSpeedCards() {
             >
               <div className="flex h-48 w-full items-center justify-center rounded-2xl border border-white/20 bg-white/10 p-3 shadow-lg">
                 {currentNoteObj && (
-                  <NoteImageDisplay note={currentNoteObj} className="h-full w-full" />
+                  <NoteImageDisplay
+                    note={currentNoteObj}
+                    className="h-full w-full"
+                  />
                 )}
               </div>
             </motion.div>
@@ -727,7 +763,11 @@ export function NoteSpeedCards() {
       <div className="shrink-0 px-4 pb-6 pt-3">
         {/* Tap hint */}
         <p className={`mb-3 text-center text-base ${secondaryText}`}>
-          {t("noteSpeedCards.tapHint", { noteName: t(`trail:noteNames.${targetNote.replace(/[0-9]/g, "")}`, { defaultValue: targetNote }) })}
+          {t("noteSpeedCards.tapHint", {
+            noteName: t(`trail:noteNames.${targetNote.replace(/[0-9]/g, "")}`, {
+              defaultValue: targetNote,
+            }),
+          })}
         </p>
 
         {/* Speed progress bar */}

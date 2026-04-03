@@ -20,7 +20,7 @@ import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
 import { useTranslation } from "react-i18next";
 import { NoteImageDisplay } from "./NoteImageDisplay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
-import { getNodeById } from "../../../data/skillTrail";
+import { getNodeById, getTrailTabForNode } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
@@ -37,7 +37,6 @@ const bassNotes = BASS_NOTES;
 
 // Audio level threshold for note release detection (percentage)
 const RELEASE_THRESHOLD = 1.5; // 1.5% - low enough to catch release, high enough to avoid background noise
-
 
 const NOTE_AUDIO_LOADERS = {
   B0: () => import("../../../assets/sounds/piano/B0.wav"),
@@ -357,12 +356,14 @@ const ProgressBar = ({ current, total }) => {
             />
           );
         })}
-
       </div>
 
       <div className="mt-2 text-xs font-semibold text-white/75">
         <span>
-          {t('noteRecognition.questionProgress', { current: Math.min(total, Math.max(1, current + 1)), total })}
+          {t("noteRecognition.questionProgress", {
+            current: Math.min(total, Math.max(1, current + 1)),
+            total,
+          })}
         </span>
       </div>
     </div>
@@ -551,7 +552,7 @@ export function NotesRecognitionGame() {
     if (nodeConfig && !hasAutoStartedRef.current) {
       // IOS-02: If AudioContext needs a gesture to resume, defer to user tap
       const ctx = audioContextProviderRef?.current;
-      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+      if (ctx && (ctx.state === "suspended" || ctx.state === "interrupted")) {
         setNeedsGestureToStart(true);
         return; // Don't auto-start — show tap-to-start overlay
       }
@@ -564,9 +565,11 @@ export function NotesRecognitionGame() {
       hiddenNodeNotesRef.current = hiddenNotes;
 
       const trailSettings = {
-        clef: nodeConfig.clef || 'treble',
-        selectedNotes: initialNotes.length > 0 ? initialNotes : (nodeConfig.notePool || []),
-        timedMode: nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
+        clef: nodeConfig.clef || "treble",
+        selectedNotes:
+          initialNotes.length > 0 ? initialNotes : nodeConfig.notePool || [],
+        timedMode:
+          nodeConfig.timeLimit !== null && nodeConfig.timeLimit !== undefined,
         timeLimit: nodeConfig.timeLimit || 45,
         enableSharps: trailEnableSharps,
         enableFlats: trailEnableFlats,
@@ -581,7 +584,7 @@ export function NotesRecognitionGame() {
         startGame(trailSettings);
       }, 50);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; startGame, updateSettings, updateProgress, audioContextProviderRef, trailEnableFlats, trailEnableSharps intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; startGame, updateSettings, updateProgress, audioContextProviderRef, trailEnableFlats, trailEnableSharps intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]); // Run when nodeConfig OR nodeId changes
 
   // Auto-configure and auto-start from daily challenge
@@ -590,7 +593,7 @@ export function NotesRecognitionGame() {
       hasAutoStartedRef.current = true;
 
       const challengeSettings = {
-        clef: challengeConfig.clef || 'treble',
+        clef: challengeConfig.clef || "treble",
         selectedNotes: challengeConfig.notePool || [],
         timedMode: !!challengeConfig.timeLimit,
         timeLimit: challengeConfig.timeLimit || 60,
@@ -605,7 +608,7 @@ export function NotesRecognitionGame() {
         startGame(challengeSettings);
       }, 50);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; startGame, updateSettings, updateProgress intentionally omitted; only challengeMode/challengeConfig changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; startGame, updateSettings, updateProgress intentionally omitted; only challengeMode/challengeConfig changes should re-evaluate
   }, [challengeMode, challengeConfig]);
 
   // Handle navigation to next exercise in the trail node
@@ -624,44 +627,55 @@ export function NotesRecognitionGame() {
             nodeConfig: nextExercise.config,
             exerciseIndex: nextIndex,
             totalExercises: trailTotalExercises,
-            exerciseType: nextExercise.type
+            exerciseType: nextExercise.type,
           };
 
           // Navigate based on exercise type
           switch (nextExercise.type) {
-            case 'note_recognition':
+            case "note_recognition":
               // State resets automatically via nodeId change effect
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState, replace: true });
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+                replace: true,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", { state: navState });
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true } });
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: { ...navState, isBoss: true },
+              });
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+              });
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -675,7 +689,13 @@ export function NotesRecognitionGame() {
   const [detectedNote, setDetectedNote] = useState(null);
 
   // Shared AudioContextProvider consumption
-  const { requestMic, releaseMic, audioContextRef: audioContextProviderRef, isInterrupted, handleTapToResume } = useAudioContext();
+  const {
+    requestMic,
+    releaseMic,
+    audioContextRef: audioContextProviderRef,
+    isInterrupted,
+    handleTapToResume,
+  } = useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
 
   // Ref to track mic listening state — avoids TDZ since useMicNoteInput
@@ -710,7 +730,7 @@ export function NotesRecognitionGame() {
   const [comboShake, setComboShake] = useState(false);
   const questionStartTimeRef = useRef(null);
   const [tierUpMultiplier, setTierUpMultiplier] = useState(null);
-  const [tierUpTarget, setTierUpTarget] = useState({ x: 0, y: '-45vh' });
+  const [tierUpTarget, setTierUpTarget] = useState({ x: 0, y: "-45vh" });
   const prevTierRef = useRef(1);
   const comboPillRef = useRef(null);
   const scorePillRef = useRef(null);
@@ -733,9 +753,12 @@ export function NotesRecognitionGame() {
       const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'sine';
+      osc.type = "sine";
       osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.15);
+      osc.frequency.exponentialRampToValueAtTime(
+        1760,
+        audioCtx.currentTime + 0.15
+      );
       gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
       osc.connect(gain);
@@ -961,9 +984,13 @@ export function NotesRecognitionGame() {
     if (hidden.length === 0) return null;
 
     const nextPitch = hidden[0];
-    const clefKey = String(settings.clef || 'Treble').toLowerCase();
-    const allNotes = clefKey === 'bass' ? bassNotes : trebleNotes;
-    return allNotes.find(n => n.pitch === nextPitch || n.englishName === nextPitch) ?? null;
+    const clefKey = String(settings.clef || "Treble").toLowerCase();
+    const allNotes = clefKey === "bass" ? bassNotes : trebleNotes;
+    return (
+      allNotes.find(
+        (n) => n.pitch === nextPitch || n.englishName === nextPitch
+      ) ?? null
+    );
   }, [settings.clef]);
 
   // Get random note based on current settings
@@ -996,13 +1023,19 @@ export function NotesRecognitionGame() {
             ((notePitch.includes("#") && settings.enableSharps) ||
               (notePitch.includes("b") && settings.enableFlats));
           // Trail guard: accidentals must be in the exercise's notePool
-          const trailAllowed = !trailNotePoolSet || !isAccidentalPitch(notePitch) || trailNotePoolSet.has(notePitch);
+          const trailAllowed =
+            !trailNotePoolSet ||
+            !isAccidentalPitch(notePitch) ||
+            trailNotePoolSet.has(notePitch);
 
-          return trailAllowed && (clefKey === "both"
-            ? selectedSet.has(`${tag}:${notePitch}`) ||
+          return (
+            trailAllowed &&
+            (clefKey === "both"
+              ? selectedSet.has(`${tag}:${notePitch}`) ||
                 (allowAccidental && selectedSet.has(`${tag}:${base}`))
-            : selectedSet.has(notePitch) ||
-                (allowAccidental && selectedSet.has(base)));
+              : selectedSet.has(notePitch) ||
+                (allowAccidental && selectedSet.has(base)))
+          );
         })
       : notesArray;
 
@@ -1011,8 +1044,11 @@ export function NotesRecognitionGame() {
     const extras = sessionExtraNotesRef.current;
     if (extras.length > 0) {
       for (const extraNote of extras) {
-        if (!filteredNotes.some(n => n.note === extraNote.note)) {
-          filteredNotes.push({ ...extraNote, __clef: extraNote.__clef || clefKey });
+        if (!filteredNotes.some((n) => n.note === extraNote.note)) {
+          filteredNotes.push({
+            ...extraNote,
+            __clef: extraNote.__clef || clefKey,
+          });
         }
       }
     }
@@ -1073,7 +1109,7 @@ export function NotesRecognitionGame() {
   };
 
   // Start the game with current or new settings
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- startGame is a plain function that cannot be wrapped in useCallback without listing many state deps (risks infinite loops); handleGestureStart useCallback intentionally includes startGame to avoid stale closure
+
   const startGame = (gameSettings = settings) => {
     const resolvedSelectedNotes = normalizeSelectedNotes({
       selectedNotes: gameSettings.selectedNotes,
@@ -1099,7 +1135,11 @@ export function NotesRecognitionGame() {
     resetProgress();
     setGameOver(false);
     isGameEndingRef.current = false;
-    setAnswerFeedback({ selectedNote: null, correctNote: null, isCorrect: null });
+    setAnswerFeedback({
+      selectedNote: null,
+      correctNote: null,
+      isCorrect: null,
+    });
     setWaitingForRelease(false);
     setPendingNextNote(null);
     setDetectedNote(null);
@@ -1220,9 +1260,11 @@ export function NotesRecognitionGame() {
     hiddenNodeNotesRef.current = hiddenNotes;
 
     const trailSettings = {
-      clef: nodeConfig?.clef || 'treble',
-      selectedNotes: initialNotes.length > 0 ? initialNotes : (nodeConfig?.notePool || []),
-      timedMode: nodeConfig?.timeLimit !== null && nodeConfig?.timeLimit !== undefined,
+      clef: nodeConfig?.clef || "treble",
+      selectedNotes:
+        initialNotes.length > 0 ? initialNotes : nodeConfig?.notePool || [],
+      timedMode:
+        nodeConfig?.timeLimit !== null && nodeConfig?.timeLimit !== undefined,
       timeLimit: nodeConfig?.timeLimit || 45,
       enableSharps: trailEnableSharps,
       enableFlats: trailEnableFlats,
@@ -1230,7 +1272,13 @@ export function NotesRecognitionGame() {
     updateSettings(trailSettings);
     updateProgress({ showSettingsModal: false });
     setTimeout(() => startGame(trailSettings), 50);
-  }, [audioContextProviderRef, nodeConfig, updateSettings, updateProgress, startGame]);
+  }, [
+    audioContextProviderRef,
+    nodeConfig,
+    updateSettings,
+    updateProgress,
+    startGame,
+  ]);
 
   // IOS-01/03: Freeze game timer when AudioContext is interrupted
   useEffect(() => {
@@ -1287,13 +1335,19 @@ export function NotesRecognitionGame() {
                 ((notePitch.includes("#") && settings.enableSharps) ||
                   (notePitch.includes("b") && settings.enableFlats));
               // Trail guard: accidentals must be in the exercise's notePool
-              const trailAllowed = !trailNotePoolSet || !isAccidentalPitch(notePitch) || trailNotePoolSet.has(notePitch);
+              const trailAllowed =
+                !trailNotePoolSet ||
+                !isAccidentalPitch(notePitch) ||
+                trailNotePoolSet.has(notePitch);
 
-              return trailAllowed && (clefKey === "both"
-                ? selectedSet.has(`${tag}:${notePitch}`) ||
+              return (
+                trailAllowed &&
+                (clefKey === "both"
+                  ? selectedSet.has(`${tag}:${notePitch}`) ||
                     (allowAccidental && selectedSet.has(`${tag}:${base}`))
-                : selectedSet.has(notePitch) ||
-                    (allowAccidental && selectedSet.has(base)));
+                  : selectedSet.has(notePitch) ||
+                    (allowAccidental && selectedSet.has(base)))
+              );
             });
           })()
         : allNotes;
@@ -1647,10 +1701,14 @@ export function NotesRecognitionGame() {
         // Increment combo (use ref to avoid stale closure)
         comboRef.current += 1;
         // Determine multiplier tier
-        const tier = [...COMBO_TIERS].reverse().find((t) => comboRef.current >= t.min);
+        const tier = [...COMBO_TIERS]
+          .reverse()
+          .find((t) => comboRef.current >= t.min);
         const multiplier = tier?.multiplier ?? 1;
         // Check speed bonus
-        const elapsed = performance.now() - (questionStartTimeRef.current ?? performance.now());
+        const elapsed =
+          performance.now() -
+          (questionStartTimeRef.current ?? performance.now());
         const isSpeedBonus = elapsed <= SPEED_BONUS_THRESHOLD_MS;
         // Compute XP (flat per correct answer; combo + speed are visual-only engagement)
         earnedScore = BASE_XP;
@@ -1691,11 +1749,18 @@ export function NotesRecognitionGame() {
           setTimeout(() => setShowFireSplash(false), 1500);
         }
         // Auto-grow note pool (trail mode only — reveals hidden notes from current node's pool)
-        if (nodeId && comboRef.current > 0 && hiddenNodeNotesRef.current.length > 0) {
+        if (
+          nodeId &&
+          comboRef.current > 0 &&
+          hiddenNodeNotesRef.current.length > 0
+        ) {
           // Adaptive timing: reveal after 1 correct when only 1 note visible (avoids boring repetition),
           // otherwise use standard GROW_INTERVAL
-          const visiblePoolSize = (normalizedSelectedNotes?.length || 0) + sessionExtraNotesRef.current.length;
-          const shouldReveal = visiblePoolSize <= 1 || comboRef.current % GROW_INTERVAL === 0;
+          const visiblePoolSize =
+            (normalizedSelectedNotes?.length || 0) +
+            sessionExtraNotesRef.current.length;
+          const shouldReveal =
+            visiblePoolSize <= 1 || comboRef.current % GROW_INTERVAL === 0;
 
           if (shouldReveal) {
             const currentExtras = sessionExtraNotesRef.current;
@@ -1703,12 +1768,13 @@ export function NotesRecognitionGame() {
               const nextNote = getNextHiddenNote();
               if (nextNote) {
                 // Consume the revealed note from the hidden queue
-                hiddenNodeNotesRef.current = hiddenNodeNotesRef.current.slice(1);
+                hiddenNodeNotesRef.current =
+                  hiddenNodeNotesRef.current.slice(1);
                 const updated = [...currentExtras, nextNote];
                 sessionExtraNotesRef.current = updated;
                 setSessionExtraNotes(updated);
                 setShowNewNoteBanner(true);
-                setNewNoteBannerKey(prev => prev + 1);
+                setNewNoteBannerKey((prev) => prev + 1);
                 setTimeout(() => setShowNewNoteBanner(false), 2000);
               }
             }
@@ -1738,7 +1804,11 @@ export function NotesRecognitionGame() {
       }
 
       // Call handleAnswer with scoreOverride for multiplied+speed score
-      handleAnswer(selectedAnswer, curNote.note, isCorrect ? earnedScore : undefined);
+      handleAnswer(
+        selectedAnswer,
+        curNote.note,
+        isCorrect ? earnedScore : undefined
+      );
 
       const willEndByLives = livesRef.current <= 0;
 
@@ -1978,41 +2048,46 @@ export function NotesRecognitionGame() {
   const micTiming = useMemo(() => {
     // NotesRecognitionGame may not have BPM settings — use a moderate default
     const bpm = settings?.tempo || settings?.bpm || 90;
-    return calcMicTimingFromBpm(bpm, 'q'); // Quarter note default for recognition
+    return calcMicTimingFromBpm(bpm, "q"); // Quarter note default for recognition
   }, [settings?.tempo, settings?.bpm]);
 
   // Callback for useMicNoteInput: handle incoming note events from shared audio pipeline.
   // Reads currentNote from ref to avoid stale closure — the callback chain through
   // useMicNoteInput → usePitchDetection → rAF loop can lag behind React re-renders.
-  const handleMicNoteEvent = useCallback((event) => {
-    if (event.type !== 'noteOn') return;
+  const handleMicNoteEvent = useCallback(
+    (event) => {
+      if (event.type !== "noteOn") return;
 
-    const now = performance.now();
-    const last = lastScoredRef.current;
-    const minScoreInterval = micTiming.minInterOnMs || 80;
-    if (last.pitch === event.pitch && now - last.time < minScoreInterval * 2) {
-      return; // Block double-scoring same pitch
-    }
-    lastScoredRef.current = { pitch: event.pitch, time: now };
+      const now = performance.now();
+      const last = lastScoredRef.current;
+      const minScoreInterval = micTiming.minInterOnMs || 80;
+      if (
+        last.pitch === event.pitch &&
+        now - last.time < minScoreInterval * 2
+      ) {
+        return; // Block double-scoring same pitch
+      }
+      lastScoredRef.current = { pitch: event.pitch, time: now };
 
-    const note = event.pitch;
-    setDetectedNote(note);
+      const note = event.pitch;
+      setDetectedNote(note);
 
-    // Game-specific logic: if waiting for note release, ignore new note events
-    if (waitingForReleaseRef.current) return;
+      // Game-specific logic: if waiting for note release, ignore new note events
+      if (waitingForReleaseRef.current) return;
 
-    // Read from ref for latest value (avoids stale closure)
-    const cur = currentNoteRef.current;
+      // Read from ref for latest value (avoids stale closure)
+      const cur = currentNoteRef.current;
 
-    // Check if detected note matches current question
-    // event.pitch is English format ("C4"), match against .pitch or .englishName
-    if (note && cur &&
-        (note === cur.pitch || note === cur.englishName)) {
-      handleAnswerSelect(cur.note);
-    } else if (note && cur) {
-      handleAnswerSelect(note); // Wrong note — triggers life deduction, combo reset, etc.
-    }
-  }, [handleAnswerSelect, micTiming]);
+      // Check if detected note matches current question
+      // event.pitch is English format ("C4"), match against .pitch or .englishName
+      if (note && cur && (note === cur.pitch || note === cur.englishName)) {
+        handleAnswerSelect(cur.note);
+      } else if (note && cur) {
+        handleAnswerSelect(note); // Wrong note — triggers life deduction, combo reset, etc.
+      }
+    },
+    [handleAnswerSelect, micTiming]
+  );
 
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
@@ -2036,9 +2111,12 @@ export function NotesRecognitionGame() {
       audioContextProviderRef?.current?.resume();
       // requestMic() returns { audioContext, analyser } — pass directly at call time
       const { analyser, audioContext: ctx } = await requestMic();
-      await startMicListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
+      await startMicListening({
+        analyserNode: analyser,
+        sampleRate: ctx.sampleRate,
+      });
     } catch (error) {
-      console.error('Error accessing microphone:', error);
+      console.error("Error accessing microphone:", error);
     }
   }, [requestMic, startMicListening, audioContextProviderRef]);
 
@@ -2121,21 +2199,20 @@ export function NotesRecognitionGame() {
       <div className="flex h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
         <div className="text-center">
           <Loader2 className="mx-auto mb-4 h-16 w-16 animate-spin text-white" />
-          <p className="text-xl text-white">{t('common.loading')}</p>
+          <p className="text-xl text-white">{t("common.loading")}</p>
         </div>
       </div>
     );
   }
-
 
   return (
     <div
       className="relative flex h-screen flex-col overflow-hidden supports-[height:100svh]:h-[100svh]"
       style={{
         background: isOnFire
-          ? 'linear-gradient(to bottom right, #713f12, #854d0e, #713f12)'
-          : 'linear-gradient(to bottom right, #312e81, #581c87, #4c1d95)',
-        transition: 'background 0.6s ease-in-out',
+          ? "linear-gradient(to bottom right, #713f12, #854d0e, #713f12)"
+          : "linear-gradient(to bottom right, #312e81, #581c87, #4c1d95)",
+        transition: "background 0.6s ease-in-out",
       }}
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
@@ -2153,16 +2230,21 @@ export function NotesRecognitionGame() {
           <motion.div
             key="fire-splash"
             initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.5 }}
-            animate={reduce ? { opacity: 1 } : { opacity: 1, scale: [1, 1.15, 1] }}
+            animate={
+              reduce ? { opacity: 1 } : { opacity: 1, scale: [1, 1.15, 1] }
+            }
             exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center"
           >
-            <img src={flameIcon} alt="" className="h-24 w-24 drop-shadow-[0_0_16px_rgba(251,146,60,0.6)] sm:h-28 sm:w-28" />
+            <img
+              src={flameIcon}
+              alt=""
+              className="h-24 w-24 drop-shadow-[0_0_16px_rgba(251,146,60,0.6)] sm:h-28 sm:w-28"
+            />
           </motion.div>
         )}
       </AnimatePresence>
-
 
       {progress.showFireworks && <Firework />}
 
@@ -2171,7 +2253,9 @@ export function NotesRecognitionGame() {
         <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
-            <p className="text-lg font-medium text-white/80">{t('common.loading')}</p>
+            <p className="text-lg font-medium text-white/80">
+              {t("common.loading")}
+            </p>
           </div>
         </div>
       ) : !progress.isStarted ? (
@@ -2251,8 +2335,16 @@ export function NotesRecognitionGame() {
               <div className="flex items-center justify-between gap-2">
                 {!progress.isFinished ? (
                   <BackButton
-                    to={nodeId ? "/trail" : "/notes-master-mode"}
-                    name={nodeId ? t("navigation.links.trail", "Trail") : t("navigation.links.studentDashboard")}
+                    to={
+                      nodeId
+                        ? `/trail?path=${getTrailTabForNode(nodeId) || "treble"}`
+                        : "/notes-master-mode"
+                    }
+                    name={
+                      nodeId
+                        ? t("navigation.links.trail", "Trail")
+                        : t("navigation.links.studentDashboard")
+                    }
                     styling="text-white/85 hover:text-white text-xs sm:text-sm flex-shrink-0"
                   />
                 ) : (
@@ -2262,18 +2354,22 @@ export function NotesRecognitionGame() {
                 <div className="flex flex-1 items-center justify-center gap-2">
                   {/* Score pill — glows when multiplier active */}
                   {(() => {
-                    const tier = [...COMBO_TIERS].reverse().find((t) => combo >= t.min);
+                    const tier = [...COMBO_TIERS]
+                      .reverse()
+                      .find((t) => combo >= t.min);
                     const mult = tier?.multiplier ?? 1;
-                    const pillBorder = mult >= 3
-                      ? "border-yellow-400/40"
-                      : mult >= 2
-                        ? "border-amber-400/30"
-                        : "border-white/20";
-                    const pillBg = mult >= 3
-                      ? "bg-yellow-500/20"
-                      : mult >= 2
-                        ? "bg-amber-500/15"
-                        : "bg-white/10";
+                    const pillBorder =
+                      mult >= 3
+                        ? "border-yellow-400/40"
+                        : mult >= 2
+                          ? "border-amber-400/30"
+                          : "border-white/20";
+                    const pillBg =
+                      mult >= 3
+                        ? "bg-yellow-500/20"
+                        : mult >= 2
+                          ? "bg-amber-500/15"
+                          : "bg-white/10";
                     return (
                       <div ref={scorePillRef} className="relative">
                         <div
@@ -2291,8 +2387,12 @@ export function NotesRecognitionGame() {
                           {floatingScore !== null && (
                             <motion.span
                               key={floatingScoreKey}
-                              initial={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                              animate={reduce ? { opacity: 0 } : { opacity: 0, y: -28 }}
+                              initial={
+                                reduce ? { opacity: 1 } : { opacity: 1, y: 0 }
+                              }
+                              animate={
+                                reduce ? { opacity: 0 } : { opacity: 0, y: -28 }
+                              }
                               transition={{ duration: 0.55 }}
                               className={`pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 font-mono font-bold drop-shadow-md ${
                                 (tier?.multiplier ?? 1) >= 3
@@ -2317,9 +2417,13 @@ export function NotesRecognitionGame() {
                         key="fire-badge"
                         initial={reduce ? false : { opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        exit={reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8 }}
+                        exit={
+                          reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8 }
+                        }
                         transition={{ duration: 0.3 }}
-                        className={reduce || appReducedMotion ? '' : 'animate-pulse'}
+                        className={
+                          reduce || appReducedMotion ? "" : "animate-pulse"
+                        }
                       >
                         <img src={flameIcon} alt="" className="h-10 w-10" />
                       </motion.div>
@@ -2336,7 +2440,11 @@ export function NotesRecognitionGame() {
                           ? { scale: [1, 1.18, 1] }
                           : undefined
                     }
-                    transition={reduce ? undefined : { type: "tween", duration: 0.22, ease: "easeInOut" }}
+                    transition={
+                      reduce
+                        ? undefined
+                        : { type: "tween", duration: 0.22, ease: "easeInOut" }
+                    }
                     className={`flex items-center gap-1 rounded-full border px-3 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md transition-colors duration-300 motion-reduce:transition-none ${
                       combo >= 8
                         ? "border-yellow-400/40 bg-yellow-500/20"
@@ -2374,7 +2482,11 @@ export function NotesRecognitionGame() {
                             <motion.div
                               key={`heart-${i}-alive`}
                               initial={false}
-                              exit={reduce ? undefined : { scale: [1, 1.4, 0], opacity: [1, 1, 0] }}
+                              exit={
+                                reduce
+                                  ? undefined
+                                  : { scale: [1, 1.4, 0], opacity: [1, 1, 0] }
+                              }
                               transition={{ duration: 0.3 }}
                             >
                               <Heart className="h-5 w-5 fill-red-400 text-red-400 sm:h-6 sm:w-6" />
@@ -2382,7 +2494,9 @@ export function NotesRecognitionGame() {
                           ) : (
                             <motion.div
                               key={`heart-${i}-dead`}
-                              initial={reduce ? undefined : { scale: 0, opacity: 0 }}
+                              initial={
+                                reduce ? undefined : { scale: 0, opacity: 0 }
+                              }
                               animate={{ scale: 1, opacity: 0.3 }}
                               transition={{ duration: 0.2 }}
                             >
@@ -2457,23 +2571,29 @@ export function NotesRecognitionGame() {
               {tierUpMultiplier && (
                 <motion.div
                   key={`tier-${tierUpMultiplier}`}
-                  initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.5, x: 0, y: 0 }}
-                  animate={reduce
-                    ? { opacity: [1, 1, 0] }
-                    : {
-                        opacity: [0, 1, 1, 1],
-                        scale: [0.5, 1, 1, 0.3],
-                        x: [0, 0, 0, tierUpTarget.x],
-                        y: [0, 0, 0, tierUpTarget.y],
-                      }
+                  initial={
+                    reduce
+                      ? { opacity: 1 }
+                      : { opacity: 0, scale: 0.5, x: 0, y: 0 }
                   }
-                  transition={reduce
-                    ? { duration: 1.2 }
-                    : {
-                        duration: 1.2,
-                        times: [0, 0.15, 0.6, 1],
-                        ease: 'easeInOut',
-                      }
+                  animate={
+                    reduce
+                      ? { opacity: [1, 1, 0] }
+                      : {
+                          opacity: [0, 1, 1, 1],
+                          scale: [0.5, 1, 1, 0.3],
+                          x: [0, 0, 0, tierUpTarget.x],
+                          y: [0, 0, 0, tierUpTarget.y],
+                        }
+                  }
+                  transition={
+                    reduce
+                      ? { duration: 1.2 }
+                      : {
+                          duration: 1.2,
+                          times: [0, 0.15, 0.6, 1],
+                          ease: "easeInOut",
+                        }
                   }
                   className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center"
                 >
@@ -2555,7 +2675,9 @@ export function NotesRecognitionGame() {
                   ref={baseNotesRegionRef}
                   className="relative grid min-h-0 flex-1 grid-cols-2 gap-1 overflow-y-auto overflow-x-visible pr-1 lg:hidden landscape:grid-cols-3 landscape:gap-1.5"
                 >
-                  {groupedMobileNotes.map((group) => renderMobileNoteGroup(group))}
+                  {groupedMobileNotes.map((group) =>
+                    renderMobileNoteGroup(group)
+                  )}
                 </div>
 
                 {/* Desktop: split into naturals and accidentals */}
@@ -2568,7 +2690,9 @@ export function NotesRecognitionGame() {
                   {orderedAccidentals.length > 0 && (
                     <div className="flex-1 border-l border-white/10 pl-4">
                       <div className="grid grid-cols-2 gap-3">
-                        {orderedAccidentals.map((note) => renderNoteButton(note))}
+                        {orderedAccidentals.map((note) =>
+                          renderNoteButton(note)
+                        )}
                       </div>
                     </div>
                   )}
@@ -2791,7 +2915,7 @@ export function NotesRecognitionGame() {
       <AudioInterruptedOverlay
         isVisible={isInterrupted}
         onTapToResume={handleTapToResume}
-        onRestartExercise={() => navigate('/notes-master-mode')}
+        onRestartExercise={() => navigate("/notes-master-mode")}
       />
 
       {/* Trail gesture gate — shown when trail auto-start needs a user gesture to resume AudioContext */}

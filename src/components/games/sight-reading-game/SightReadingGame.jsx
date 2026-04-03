@@ -7,7 +7,10 @@ import MetronomeIcon from "../../../assets/icons/metronome.svg";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
-import { calcMicTimingFromBpm, MIC_INPUT_PRESETS } from "../../../hooks/micInputPresets";
+import {
+  calcMicTimingFromBpm,
+  MIC_INPUT_PRESETS,
+} from "../../../hooks/micInputPresets";
 import { PreGameSetup } from "./components/PreGameSetup";
 import { VexFlowStaffDisplay } from "./components/VexFlowStaffDisplay";
 import { KlavierKeyboard } from "./components/KlavierKeyboard";
@@ -40,7 +43,7 @@ import {
   useSightReadingSession,
 } from "../../../contexts/SightReadingSessionContext";
 import VictoryScreen from "../VictoryScreen";
-import { getNodeById } from "../../../data/skillTrail";
+import { getNodeById, getTrailTabForNode } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
@@ -91,7 +94,25 @@ const ANTI_CHEAT_THRESHOLD = 5;
 
 // Semitone distance helper — used to exclude adjacent-pitch mic misdetections
 // from anti-cheat tracking (mic commonly oscillates ±1 semitone).
-const SEMITONE_MAP = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };
+const SEMITONE_MAP = {
+  C: 0,
+  "C#": 1,
+  Db: 1,
+  D: 2,
+  "D#": 3,
+  Eb: 3,
+  E: 4,
+  F: 5,
+  "F#": 6,
+  Gb: 6,
+  G: 7,
+  "G#": 8,
+  Ab: 8,
+  A: 9,
+  "A#": 10,
+  Bb: 10,
+  B: 11,
+};
 function noteToMidi(note) {
   if (!note) return null;
   const m = note.match(/^([A-G][b#]?)(\d)$/);
@@ -101,7 +122,8 @@ function noteToMidi(note) {
   return (parseInt(m[2], 10) + 1) * 12 + semi;
 }
 function isAdjacentSemitone(noteA, noteB) {
-  const a = noteToMidi(noteA), b = noteToMidi(noteB);
+  const a = noteToMidi(noteA),
+    b = noteToMidi(noteB);
   if (a == null || b == null) return false;
   return Math.abs(a - b) <= 1;
 }
@@ -139,7 +161,8 @@ const logMetronomeTiming = (label, payload = {}) => {
     typeof performance !== "undefined"
       ? Number(performance.now().toFixed(2))
       : null;
-  console.debug("[MetronomeTiming]", { // eslint-disable-line no-console
+  console.debug("[MetronomeTiming]", {
+    // eslint-disable-line no-console
     timestamp,
     ...payload,
   });
@@ -174,9 +197,12 @@ export function SightReadingGame() {
   const trailEnableSharps = location.state?.enableSharps ?? false;
   const trailEnableFlats = location.state?.enableFlats ?? false;
   const trailKeySignature = location.state?.keySignature ?? null;
-  const { audioContextRef, requestMic, isInterrupted, handleTapToResume } = useAudioContext();
+  const { audioContextRef, requestMic, isInterrupted, handleTapToResume } =
+    useAudioContext();
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
-  const audioEngine = useAudioEngine(80, { sharedAudioContext: audioContextRef.current });
+  const audioEngine = useAudioEngine(80, {
+    sharedAudioContext: audioContextRef.current,
+  });
   const { generatePattern } = usePatternGeneration();
   const { user, isStudent } = useUser();
   const studentId = user?.id;
@@ -219,7 +245,11 @@ export function SightReadingGame() {
   // Pause/resume inactivity timer based on game phase
   useEffect(() => {
     // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE
-    const activePhases = [GAME_PHASES.COUNT_IN, GAME_PHASES.DISPLAY, GAME_PHASES.PERFORMANCE];
+    const activePhases = [
+      GAME_PHASES.COUNT_IN,
+      GAME_PHASES.DISPLAY,
+      GAME_PHASES.PERFORMANCE,
+    ];
     const isGameActive = activePhases.includes(gamePhase);
     if (isGameActive) {
       pauseTimer();
@@ -249,7 +279,10 @@ export function SightReadingGame() {
   }, [nodeId]);
 
   // Continuous horizontal staff scroll progress (0–1) during performance phase.
-  const measuresPerPattern = Math.max(1, Number(gameSettings.measuresPerPattern || 1));
+  const measuresPerPattern = Math.max(
+    1,
+    Number(gameSettings.measuresPerPattern || 1)
+  );
   const [staffScrollProgress, setStaffScrollProgress] = useState(0);
   const staffScrollRafRef = useRef(null);
 
@@ -282,13 +315,12 @@ export function SightReadingGame() {
   // Sync keyboard visibility with input mode
   const [showKeyboard, setShowKeyboard] = useState(true); // Toggle for on-screen keyboard - default to true for better UX
 
-
   // Auto-configure and auto-start from trail node
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
       // IOS-02: If AudioContext needs a gesture to resume, defer to user tap
       const ctx = audioContextRef.current;
-      if (ctx && (ctx.state === 'suspended' || ctx.state === 'interrupted')) {
+      if (ctx && (ctx.state === "suspended" || ctx.state === "interrupted")) {
         setNeedsGestureToStart(true);
         return; // Don't auto-start — show tap-to-start overlay
       }
@@ -300,10 +332,10 @@ export function SightReadingGame() {
       // This ensures trail sessions override user game settings per curriculum intent.
       const trailSettings = {
         ...DEFAULT_SETTINGS,
-        clef: nodeConfig.clef || 'treble',
+        clef: nodeConfig.clef || "treble",
         selectedNotes: nodeConfig.notePool || [],
         measuresPerPattern: nodeConfig.measuresPerPattern || 1,
-        timeSignature: nodeConfig.timeSignature || '4/4',
+        timeSignature: nodeConfig.timeSignature || "4/4",
         enableSharps: trailEnableSharps,
         enableFlats: trailEnableFlats,
         keySignature: trailKeySignature,
@@ -316,7 +348,7 @@ export function SightReadingGame() {
         startGame(trailSettings);
       }, 100);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, trailEnableFlats, trailEnableSharps, trailKeySignature intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, trailEnableFlats, trailEnableSharps, trailKeySignature intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
@@ -372,7 +404,13 @@ export function SightReadingGame() {
         staffScrollRafRef.current = null;
       }
     };
-  }, [gamePhase, currentPattern, measuresPerPattern, gameSettings.tempo, audioEngine]);
+  }, [
+    gamePhase,
+    currentPattern,
+    measuresPerPattern,
+    gameSettings.tempo,
+    audioEngine,
+  ]);
 
   // Compact landscape detection (for very short, wide screens like mobile landscape).
   // Used to tighten vertical spacing so feedback + buttons fit without scrolling.
@@ -624,7 +662,7 @@ export function SightReadingGame() {
     // Fallback: wall-clock baseline.
     if (!wallClockStartTimeRef.current) return 0;
     return Math.max(0, Date.now() - wallClockStartTimeRef.current);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render (returned from useAudioEngine); adding it would invalidate this callback on every render; audioEngine.getCurrentTime() accesses an internal AudioContext ref that is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render (returned from useAudioEngine); adding it would invalidate this callback on every render; audioEngine.getCurrentTime() accesses an internal AudioContext ref that is stable
   }, []);
 
   const [, setTimingFeedback] = useState(null); // { message, color, timestamp }
@@ -776,45 +814,57 @@ export function SightReadingGame() {
             nodeConfig: nextExercise.config,
             exerciseIndex: nextIndex,
             totalExercises: trailTotalExercises,
-            exerciseType: nextExercise.type
+            exerciseType: nextExercise.type,
           };
 
           // Navigate based on exercise type
           switch (nextExercise.type) {
-            case 'note_recognition':
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+            case "note_recognition":
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState, replace: true });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload(); // Force reload for same route
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", { state: navState });
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', { state: { ...navState, isBoss: true }, replace: true });
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: { ...navState, isBoss: true },
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+              });
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -846,19 +896,19 @@ export function SightReadingGame() {
   // onFrames/changeFrames than quarter-note patterns; using 'q' as a blanket
   // default gives changeFrames=8 (134ms) which is too slow for 375ms eighths.
   const shortestPatternDuration = useMemo(() => {
-    if (!currentPattern?.notes?.length) return 'q';
+    if (!currentPattern?.notes?.length) return "q";
     const bpm = gameSettings?.tempo || 80;
     const beatSec = 60 / bpm;
     let minRatio = 4; // whole note = 4 beats
     for (const n of currentPattern.notes) {
-      if (n.type === 'rest' || !n.duration) continue;
+      if (n.type === "rest" || !n.duration) continue;
       const ratio = n.duration / beatSec;
       if (ratio < minRatio) minRatio = ratio;
     }
-    if (minRatio <= 0.26) return '16';
-    if (minRatio <= 0.51) return '8';
-    if (minRatio <= 1.01) return 'q';
-    return 'h';
+    if (minRatio <= 0.26) return "16";
+    if (minRatio <= 0.51) return "8";
+    if (minRatio <= 1.01) return "q";
+    return "h";
   }, [currentPattern, gameSettings?.tempo]);
 
   const micTiming = useMemo(() => {
@@ -870,42 +920,50 @@ export function SightReadingGame() {
     return MIC_INPUT_PRESETS.sightReading;
   }, [gameSettings?.tempo, gameSettings?.bpm, shortestPatternDuration]);
 
-  const handleNoteEvent = useCallback((event) => {
-    if (!event || event.type !== "noteOn") return;
-    pendingMicLatencyMsRef.current =
-      typeof event.latencyMs === "number" ? event.latencyMs : null;
-    // #region agent log
-    __srLog({
-      sessionId: "debug-session",
-      runId: "mic-latency-pre",
-      hypothesisId: "Hmic",
-      location:
-        "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteEvent",
-      message: "mic.noteOn.received",
-      data: {
-        pitch: event.pitch,
-        frequency: event.frequency ?? null,
-        perfNow: typeof performance !== "undefined" ? performance.now() : null,
-        eventTime: event.time ?? null,
-        latencyMs: typeof event.latencyMs === "number" ? event.latencyMs : null,
-        wallNow: Date.now(),
-        audioNow: audioEngine.getCurrentTime(),
-        phase: gamePhaseRef.current,
-        timingState: timingStateRef.current,
-      },
-      timestamp: Date.now(),
-    });
-    // #endregion
-    const now = performance.now();
-    const last = lastScoredRef.current;
-    const minScoreInterval = micTiming.minInterOnMs || 80;
-    if (last.pitch === event.pitch && now - last.time < minScoreInterval * 2) {
-      return; // Block double-scoring same pitch within dedup window
-    }
-    lastScoredRef.current = { pitch: event.pitch, time: now };
-    handleNoteDetectedRef.current(event.pitch, event.frequency ?? 440);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this hot-path callback on every render
-  }, [micTiming]);
+  const handleNoteEvent = useCallback(
+    (event) => {
+      if (!event || event.type !== "noteOn") return;
+      pendingMicLatencyMsRef.current =
+        typeof event.latencyMs === "number" ? event.latencyMs : null;
+      // #region agent log
+      __srLog({
+        sessionId: "debug-session",
+        runId: "mic-latency-pre",
+        hypothesisId: "Hmic",
+        location:
+          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleNoteEvent",
+        message: "mic.noteOn.received",
+        data: {
+          pitch: event.pitch,
+          frequency: event.frequency ?? null,
+          perfNow:
+            typeof performance !== "undefined" ? performance.now() : null,
+          eventTime: event.time ?? null,
+          latencyMs:
+            typeof event.latencyMs === "number" ? event.latencyMs : null,
+          wallNow: Date.now(),
+          audioNow: audioEngine.getCurrentTime(),
+          phase: gamePhaseRef.current,
+          timingState: timingStateRef.current,
+        },
+        timestamp: Date.now(),
+      });
+      // #endregion
+      const now = performance.now();
+      const last = lastScoredRef.current;
+      const minScoreInterval = micTiming.minInterOnMs || 80;
+      if (
+        last.pitch === event.pitch &&
+        now - last.time < minScoreInterval * 2
+      ) {
+        return; // Block double-scoring same pitch within dedup window
+      }
+      lastScoredRef.current = { pitch: event.pitch, time: now };
+      handleNoteDetectedRef.current(event.pitch, event.frequency ?? 440);
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this hot-path callback on every render
+    },
+    [micTiming]
+  );
 
   // Dev-only mic debug overlay toggle:
   // In console: localStorage.setItem("debug-mic", "1") then refresh.
@@ -936,7 +994,10 @@ export function SightReadingGame() {
       // IOS-02: resume() synchronously on gesture before any await (no-op when already running)
       audioContextRef.current?.resume();
       const { analyser, audioContext: ctx } = await requestMic();
-      await startListening({ analyserNode: analyser, sampleRate: ctx.sampleRate });
+      await startListening({
+        analyserNode: analyser,
+        sampleRate: ctx.sampleRate,
+      });
     } catch (err) {
       micIsListeningRef.current = false;
       throw err;
@@ -1433,7 +1494,14 @@ export function SightReadingGame() {
     return () => {
       isMounted = false;
     };
-  }, [summaryStats, gamePhase, isStudent, studentId, scoreSubmitted, queryClient]);
+  }, [
+    summaryStats,
+    gamePhase,
+    isStudent,
+    studentId,
+    scoreSubmitted,
+    queryClient,
+  ]);
 
   const recordPerformanceResult = useCallback((newResult) => {
     setPerformanceResults((prev) => {
@@ -1505,7 +1573,8 @@ export function SightReadingGame() {
       // Use unified timing state check (after we know elapsed time for logging)
       if (!canScoreNow(phase)) {
         if (import.meta.env.DEV) {
-          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+          console.debug("[NoteDetection]", {
+            // eslint-disable-line no-console
             blocked: true,
             phase,
             timingState: timingStateRef.current,
@@ -1524,7 +1593,8 @@ export function SightReadingGame() {
       if (timingWindows.length > 0) {
         const firstWindow = timingWindows[0];
         if (import.meta.env.DEV) {
-          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+          console.debug("[NoteDetection]", {
+            // eslint-disable-line no-console
             note: detectedNote,
             elapsed: elapsedTimeMs.toFixed(0),
             firstWindow: [
@@ -1630,12 +1700,14 @@ export function SightReadingGame() {
         // Use MIDI comparison so enharmonic equivalents (e.g., C#4 == Db4) are treated
         // as correct — mic always reports sharp-form, notes pool may contain flat-form.
         const detectedMidi = noteToMidi(detectedNote);
-        const isExpectedPitch = detectedMidi != null && pattern?.notes?.some(
-          (n) => noteToMidi(n.pitch) === detectedMidi
-        );
-        const isAdjacentToExpected = inputMode === "mic" && pattern?.notes?.some(
-          (n) => isAdjacentSemitone(n.pitch, detectedNote)
-        );
+        const isExpectedPitch =
+          detectedMidi != null &&
+          pattern?.notes?.some((n) => noteToMidi(n.pitch) === detectedMidi);
+        const isAdjacentToExpected =
+          inputMode === "mic" &&
+          pattern?.notes?.some((n) =>
+            isAdjacentSemitone(n.pitch, detectedNote)
+          );
         if (!isExpectedPitch && !isAdjacentToExpected) {
           trackFailedAttemptForAntiCheat({
             type: "no_window",
@@ -1691,7 +1763,8 @@ export function SightReadingGame() {
         lastDetectionTimesRef.current[matchingNoteIndex] ?? -Infinity;
       if (elapsedTimeMs - lastTime < DEBOUNCE_MS) {
         if (import.meta.env.DEV) {
-          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+          console.debug("[NoteDetection]", {
+            // eslint-disable-line no-console
             debounced: true,
             noteIndex: matchingNoteIndex + 1,
             elapsed: (elapsedTimeMs - lastTime).toFixed(0),
@@ -1710,7 +1783,11 @@ export function SightReadingGame() {
       // enharmonic equivalents (e.g., mic reports C#4, note pool has Db4) score correctly.
       const detectedMidiForScore = noteToMidi(detectedNote);
       const expectedMidiForScore = noteToMidi(matchingEvent.pitch);
-      if (detectedMidiForScore != null && expectedMidiForScore != null && detectedMidiForScore === expectedMidiForScore) {
+      if (
+        detectedMidiForScore != null &&
+        expectedMidiForScore != null &&
+        detectedMidiForScore === expectedMidiForScore
+      ) {
         failedAttemptTrackerRef.current = [];
         keyboardSpamTrackerRef.current = [];
         // Calculate timing accuracy
@@ -1782,7 +1859,8 @@ export function SightReadingGame() {
         };
 
         if (import.meta.env.DEV) {
-          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+          console.debug("[NoteDetection]", {
+            // eslint-disable-line no-console
             correct: true,
             noteIndex: matchingNoteIndex + 1,
             detectedNote,
@@ -1831,7 +1909,8 @@ export function SightReadingGame() {
         // #endregion
         // Record wrong pitch (per PRD: show RED feedback)
         if (import.meta.env.DEV) {
-          console.debug("[NoteDetection]", { // eslint-disable-line no-console
+          console.debug("[NoteDetection]", {
+            // eslint-disable-line no-console
             wrong: true,
             noteIndex: matchingNoteIndex + 1,
             expected: matchingEvent.pitch,
@@ -1859,7 +1938,12 @@ export function SightReadingGame() {
         showTimingFeedback({ status: "wrong_pitch", label: "Wrong Note!" });
         // Mic pitch detection commonly oscillates ±1 semitone from the true pitch.
         // Don't count these transient adjacent-semitone misdetections toward anti-cheat.
-        if (!(inputMode === "mic" && isAdjacentSemitone(detectedNote, matchingEvent.pitch))) {
+        if (
+          !(
+            inputMode === "mic" &&
+            isAdjacentSemitone(detectedNote, matchingEvent.pitch)
+          )
+        ) {
           trackFailedAttemptForAntiCheat({
             type: "wrong_pitch",
             detected: detectedNote,
@@ -2119,7 +2203,7 @@ export function SightReadingGame() {
     };
 
     performanceTimelineRafRef.current = requestAnimationFrame(tick);
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this RAF-loop callback on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this RAF-loop callback on every render
   }, [
     completePerformance,
     getElapsedMsFromPerformanceStart,
@@ -2306,7 +2390,8 @@ export function SightReadingGame() {
 
   useEffect(() => {
     if (METRONOME_TIMING_DEBUG) {
-      console.debug("[ScoreSyncStatus]", { // eslint-disable-line no-console
+      console.debug("[ScoreSyncStatus]", {
+        // eslint-disable-line no-console
         scoreSyncStatus,
       });
     }
@@ -2405,8 +2490,12 @@ export function SightReadingGame() {
       setIsMicRetrying(false);
       setShowVolumeMeter(true);
       resumeTimer?.();
-      if (volumeMeterTimeoutRef.current) clearTimeout(volumeMeterTimeoutRef.current);
-      volumeMeterTimeoutRef.current = setTimeout(() => setShowVolumeMeter(false), 4000);
+      if (volumeMeterTimeoutRef.current)
+        clearTimeout(volumeMeterTimeoutRef.current);
+      volumeMeterTimeoutRef.current = setTimeout(
+        () => setShowVolumeMeter(false),
+        4000
+      );
     } catch (err) {
       setIsMicRetrying(false);
       const isPermissionDenied =
@@ -2434,7 +2523,8 @@ export function SightReadingGame() {
   // Clean up volumeMeterTimeoutRef on unmount
   useEffect(() => {
     return () => {
-      if (volumeMeterTimeoutRef.current) clearTimeout(volumeMeterTimeoutRef.current);
+      if (volumeMeterTimeoutRef.current)
+        clearTimeout(volumeMeterTimeoutRef.current);
     };
   }, []);
 
@@ -3126,10 +3216,10 @@ export function SightReadingGame() {
     hasAutoConfigured.current = true;
     const trailSettings = {
       ...DEFAULT_SETTINGS,
-      clef: nodeConfig?.clef || 'treble',
+      clef: nodeConfig?.clef || "treble",
       selectedNotes: nodeConfig?.notePool || [],
       measuresPerPattern: nodeConfig?.measuresPerPattern || 1,
-      timeSignature: nodeConfig?.timeSignature || '4/4',
+      timeSignature: nodeConfig?.timeSignature || "4/4",
       keySignature: trailKeySignature,
     };
     setGameSettings(trailSettings);
@@ -3138,9 +3228,17 @@ export function SightReadingGame() {
 
   // IOS-01/03: Freeze session timer when AudioContext is interrupted
   useEffect(() => {
-    if (isInterrupted && gamePhase !== GAME_PHASES.SETUP && gamePhase !== GAME_PHASES.FEEDBACK) {
+    if (
+      isInterrupted &&
+      gamePhase !== GAME_PHASES.SETUP &&
+      gamePhase !== GAME_PHASES.FEEDBACK
+    ) {
       pauseTimer();
-    } else if (!isInterrupted && gamePhase !== GAME_PHASES.SETUP && gamePhase !== GAME_PHASES.FEEDBACK) {
+    } else if (
+      !isInterrupted &&
+      gamePhase !== GAME_PHASES.SETUP &&
+      gamePhase !== GAME_PHASES.FEEDBACK
+    ) {
       resumeTimer();
     }
   }, [isInterrupted]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -3229,7 +3327,9 @@ export function SightReadingGame() {
         <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/30 border-t-white"></div>
-            <p className="text-lg font-medium text-white/80">{t('common.loading')}</p>
+            <p className="text-lg font-medium text-white/80">
+              {t("common.loading")}
+            </p>
           </div>
         </div>
       );
@@ -3297,15 +3397,16 @@ export function SightReadingGame() {
                 </span>
               </p>
               <p className="text-sm font-semibold uppercase tracking-widest text-purple-400">
-                {t('sightReading.finalScore')}
+                {t("sightReading.finalScore")}
               </p>
               <p className="text-sm text-gray-600">
-                {sessionScoreSummary} total XP &bull; Aim for 70% to achieve victory.
+                {sessionScoreSummary} total XP &bull; Aim for 70% to achieve
+                victory.
               </p>
             </div>
 
             <p className="text-sm text-gray-600 sm:text-base">
-              {t('sightReading.encouragement')}
+              {t("sightReading.encouragement")}
             </p>
 
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -3313,19 +3414,19 @@ export function SightReadingGame() {
                 onClick={handleStartNewSession}
                 className="flex-1 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 py-3 font-semibold text-white shadow-lg shadow-violet-500/30 transition-transform hover:scale-[1.01]"
               >
-                {t('sightReading.tryAgain')}
+                {t("sightReading.tryAgain")}
               </button>
               <button
                 onClick={returnToSetup}
                 className="flex-1 rounded-2xl border border-indigo-200 bg-white py-3 font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
               >
-                {t('sightReading.changeSettings')}
+                {t("sightReading.changeSettings")}
               </button>
               <button
                 onClick={() => navigate("/practice-modes")}
                 className="flex-1 rounded-2xl border border-transparent py-3 font-semibold text-indigo-700 hover:text-indigo-900"
               >
-                {t('sightReading.backToMenu')}
+                {t("sightReading.backToMenu")}
               </button>
             </div>
           </div>
@@ -3365,7 +3466,11 @@ export function SightReadingGame() {
     <div className="flex flex-shrink-0 items-center justify-between gap-2 px-2 py-1 sm:gap-3 sm:px-3">
       {/* Back Button - Icon Only */}
       <BackButton
-        to={nodeId ? "/trail" : "/notes-master-mode"}
+        to={
+          nodeId
+            ? `/trail?path=${getTrailTabForNode(nodeId) || "treble"}`
+            : "/notes-master-mode"
+        }
         name={nodeId ? "Trail" : "Notes Master"}
         styling="text-white/80 hover:text-white p-2"
       />
@@ -3375,7 +3480,10 @@ export function SightReadingGame() {
         <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
           <div className="mb-1 flex items-center justify-between text-xs font-semibold">
             <span className="truncate">
-              {t('sightReading.exercise', { current: Math.min(currentExerciseNumber, sessionTotalExercises), total: sessionTotalExercises })}
+              {t("sightReading.exercise", {
+                current: Math.min(currentExerciseNumber, sessionTotalExercises),
+                total: sessionTotalExercises,
+              })}
             </span>
             <span
               className={`ml-2 text-[10px] sm:text-xs ${
@@ -3481,13 +3589,13 @@ export function SightReadingGame() {
           disabled={!currentPattern}
           className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
         >
-          {t('sightReading.startPlaying')}
+          {t("sightReading.startPlaying")}
         </button>
       </div>
     ) : gamePhase === GAME_PHASES.COUNT_IN ? (
       <div className="my-2 flex-shrink-0 text-center">
         <p className="text-sm font-semibold text-gray-700 sm:text-base">
-          {t('sightReading.listenCountIn')}
+          {t("sightReading.listenCountIn")}
         </p>
       </div>
     ) : null;
@@ -3520,7 +3628,9 @@ export function SightReadingGame() {
         clef={gameSettings.clef.toLowerCase()}
         performanceResults={performanceResults}
         gamePhase={gamePhase}
-        scrollProgress={gamePhase === GAME_PHASES.PERFORMANCE ? staffScrollProgress : 0}
+        scrollProgress={
+          gamePhase === GAME_PHASES.PERFORMANCE ? staffScrollProgress : 0
+        }
         keySignature={gameSettings.keySignature || null}
       />
     </div>
@@ -3535,7 +3645,7 @@ export function SightReadingGame() {
         summaryStats={summaryStats}
         onTryAgain={replayPattern}
         onNextPattern={handleNextExercise}
-        nextButtonLabel={t('sightReading.nextExercise')}
+        nextButtonLabel={t("sightReading.nextExercise")}
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
       />
@@ -3730,7 +3840,11 @@ export function SightReadingGame() {
         <div className="fixed right-3 top-3 z-40 flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-1 shadow-sm backdrop-blur-sm transition-opacity">
           <div
             className="h-2 rounded-full bg-green-500 transition-all duration-75"
-            style={{ width: `${Math.min(100, (audioLevel || 0) * 400)}%`, maxWidth: "64px", minWidth: "4px" }}
+            style={{
+              width: `${Math.min(100, (audioLevel || 0) * 400)}%`,
+              maxWidth: "64px",
+              minWidth: "4px",
+            }}
           />
           <span className="text-xs text-gray-600">mic</span>
         </div>
@@ -3758,7 +3872,7 @@ export function SightReadingGame() {
               onClick={handlePenaltyTryAgain}
               className="w-full flex-shrink-0 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2.5 font-semibold text-white shadow-lg transition-transform hover:scale-[1.01]"
             >
-              {t('sightReading.tryAgain')}
+              {t("sightReading.tryAgain")}
             </button>
             <p className="flex-shrink-0 text-xs text-gray-400">
               Tap &quot;Start Playing&quot; after resetting to begin the

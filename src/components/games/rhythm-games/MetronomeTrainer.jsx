@@ -1417,7 +1417,7 @@ export function MetronomeTrainer() {
         {/* Only show back button during gameplay (not on session complete screen) */}
         {gamePhase !== GAME_PHASES.SESSION_COMPLETE && (
           <BackButton
-            to={nodeId ? "/trail" : "/rhythm-mode"}
+            to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"}
             name={nodeId ? "Trail" : t("games.backToModes")}
             className="text-sm text-white/80 hover:text-white"
           />

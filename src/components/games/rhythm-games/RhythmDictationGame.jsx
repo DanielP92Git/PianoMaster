@@ -651,7 +651,7 @@ export function RhythmDictationGame() {
       <div className="flex h-screen items-stretch overflow-hidden">
         {/* Left column: back button */}
         <div className="flex w-14 flex-shrink-0 items-start justify-center pt-3">
-          <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
+          <BackButton to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"} />
         </div>
 
         {/* Center column: answer cards */}

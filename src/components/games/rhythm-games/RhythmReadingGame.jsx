@@ -803,7 +803,7 @@ export function RhythmReadingGame() {
     >
       {/* Header bar */}
       <header className="flex h-12 items-center justify-between px-4 py-2 text-white/80">
-        <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
+        <BackButton to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"} />
         <div className="text-sm font-medium">
           {t("games.rhythmReading.title")} &mdash;{" "}
           <span dir="ltr">

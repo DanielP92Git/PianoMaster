@@ -1,47 +1,52 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { ArrowUp, ArrowDown, Volume2 } from 'lucide-react';
+import { useState, useCallback, useRef, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { ArrowUp, ArrowDown, Volume2 } from "lucide-react";
 
-import { usePianoSampler } from '../../../hooks/usePianoSampler';
-import { useAudioContext } from '../../../contexts/AudioContextProvider';
-import { useSounds } from '../../../features/games/hooks/useSounds';
-import { useSessionTimeout } from '../../../contexts/SessionTimeoutContext';
-import { useRotatePrompt } from '../../../hooks/useRotatePrompt';
-import { useLandscapeLock } from '../../../hooks/useLandscapeLock';
-import { useAccessibility } from '../../../contexts/AccessibilityContext';
-import { AudioInterruptedOverlay } from '../shared/AudioInterruptedOverlay.jsx';
-import { RotatePromptOverlay } from '../../orientation/RotatePromptOverlay';
-import BackButton from '../../ui/BackButton';
-import VictoryScreen from '../VictoryScreen';
-import { PianoKeyboardReveal } from './components/PianoKeyboardReveal';
-import { generateNotePair, getTierForQuestion } from './earTrainingUtils';
-import { getNodeById } from '../../../data/skillTrail';
+import { usePianoSampler } from "../../../hooks/usePianoSampler";
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
+import { useSounds } from "../../../features/games/hooks/useSounds";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
+import { useAccessibility } from "../../../contexts/AccessibilityContext";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
+import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import BackButton from "../../ui/BackButton";
+import VictoryScreen from "../VictoryScreen";
+import { PianoKeyboardReveal } from "./components/PianoKeyboardReveal";
+import { generateNotePair, getTierForQuestion } from "./earTrainingUtils";
+import { getNodeById } from "../../../data/skillTrail";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
 // ---------------------------------------------------------------------------
 const GAME_PHASES = {
-  SETUP: 'setup',
-  LISTENING: 'listening',
-  CHOOSING: 'choosing',
-  FEEDBACK: 'feedback',
-  SESSION_COMPLETE: 'session-complete',
+  SETUP: "setup",
+  LISTENING: "listening",
+  CHOOSING: "choosing",
+  FEEDBACK: "feedback",
+  SESSION_COMPLETE: "session-complete",
 };
 
 const TOTAL_QUESTIONS = 10;
-const NOTE_DURATION = 0.6;  // seconds per note
-const NOTE_GAP = 0.25;      // silence between notes
+const NOTE_DURATION = 0.6; // seconds per note
+const NOTE_GAP = 0.25; // silence between notes
 const CORRECT_PAUSE_MS = 1500;
 const WRONG_PAUSE_MS = 2000;
 
 // Button state classes (mirroring DictationChoiceCard verbatim)
 const STATE_CLASSES = {
-  default: 'bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/40 cursor-pointer transition-colors duration-150',
-  correct: 'bg-green-500/20 backdrop-blur-md border-2 border-green-400 rounded-xl shadow-[0_0_12px_rgba(74,222,128,0.4)] transition-all duration-300',
-  wrong: 'bg-red-500/20 backdrop-blur-md border-2 border-red-400 rounded-xl transition-all duration-300',
-  dimmed: 'opacity-40 pointer-events-none bg-white/10 border border-white/20 rounded-xl',
-  disabled: 'opacity-60 cursor-not-allowed pointer-events-none bg-white/10 border border-white/20 rounded-xl',
+  default:
+    "bg-white/10 backdrop-blur-md border border-white/20 rounded-xl hover:bg-white/20 hover:border-white/40 cursor-pointer transition-colors duration-150",
+  correct:
+    "bg-green-500/20 backdrop-blur-md border-2 border-green-400 rounded-xl shadow-[0_0_12px_rgba(74,222,128,0.4)] transition-all duration-300",
+  wrong:
+    "bg-red-500/20 backdrop-blur-md border-2 border-red-400 rounded-xl transition-all duration-300",
+  dimmed:
+    "opacity-40 pointer-events-none bg-white/10 border border-white/20 rounded-xl",
+  disabled:
+    "opacity-60 cursor-not-allowed pointer-events-none bg-white/10 border border-white/20 rounded-xl",
 };
 
 /**
@@ -55,7 +60,7 @@ const STATE_CLASSES = {
 export default function NoteComparisonGame() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation('common');
+  const { t } = useTranslation("common");
 
   // --- Trail state (from TrailNodeModal navigation) ---
   const nodeId = location.state?.nodeId ?? null;
@@ -65,7 +70,12 @@ export default function NoteComparisonGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // --- Audio ---
-  const { audioContextRef, isInterrupted, handleTapToResume, getOrCreateAudioContext } = useAudioContext();
+  const {
+    audioContextRef,
+    isInterrupted,
+    handleTapToResume,
+    getOrCreateAudioContext,
+  } = useAudioContext();
   const { playNote } = usePianoSampler();
   const { playCorrectSound, playWrongSound } = useSounds();
 
@@ -122,14 +132,26 @@ export default function NoteComparisonGame() {
         return;
       }
       // Ensure AudioContext is running before scheduling oscillators
-      if (ctx.state === 'suspended' || ctx.state === 'interrupted') {
-        try { await ctx.resume(); } catch { /* browser may block without user gesture */ }
+      if (ctx.state === "suspended" || ctx.state === "interrupted") {
+        try {
+          await ctx.resume();
+        } catch {
+          /* browser may block without user gesture */
+        }
       }
       const when1 = ctx.currentTime + 0.05;
       const when2 = when1 + NOTE_DURATION + NOTE_GAP;
-      playNote(note1, { duration: NOTE_DURATION, velocity: 0.7, startTime: when1 });
-      playNote(note2, { duration: NOTE_DURATION, velocity: 0.7, startTime: when2 });
-      const totalMs = ((when2 + NOTE_DURATION - ctx.currentTime) + 0.2) * 1000;
+      playNote(note1, {
+        duration: NOTE_DURATION,
+        velocity: 0.7,
+        startTime: when1,
+      });
+      playNote(note2, {
+        duration: NOTE_DURATION,
+        velocity: 0.7,
+        startTime: when2,
+      });
+      const totalMs = (when2 + NOTE_DURATION - ctx.currentTime + 0.2) * 1000;
       feedbackTimeoutRef.current = setTimeout(() => onComplete?.(), totalMs);
     },
     [audioContextRef, playNote, getOrCreateAudioContext]
@@ -195,7 +217,8 @@ export default function NoteComparisonGame() {
     (answer) => {
       if (gamePhase !== GAME_PHASES.CHOOSING || !currentPair) return;
 
-      const correctAnswer = currentPair.direction === 'ascending' ? 'higher' : 'lower';
+      const correctAnswer =
+        currentPair.direction === "ascending" ? "higher" : "lower";
       const isCorrect = answer === correctAnswer;
 
       setSelectedAnswer(answer);
@@ -219,7 +242,14 @@ export default function NoteComparisonGame() {
         nextQuestion(currentQuestion);
       }, pauseMs);
     },
-    [gamePhase, currentPair, currentQuestion, playCorrectSound, playWrongSound, nextQuestion]
+    [
+      gamePhase,
+      currentPair,
+      currentQuestion,
+      playCorrectSound,
+      playWrongSound,
+      nextQuestion,
+    ]
   );
 
   // ---------------------------------------------------------------------------
@@ -263,42 +293,54 @@ export default function NoteComparisonGame() {
           };
 
           switch (nextExercise.type) {
-            case 'note_recognition':
-              navigate('/notes-master-mode/notes-recognition-game', { state: navState });
+            case "note_recognition":
+              navigate("/notes-master-mode/notes-recognition-game", {
+                state: navState,
+              });
               break;
-            case 'sight_reading':
-              navigate('/notes-master-mode/sight-reading-game', { state: navState });
+            case "sight_reading":
+              navigate("/notes-master-mode/sight-reading-game", {
+                state: navState,
+              });
               break;
-            case 'memory_game':
-              navigate('/notes-master-mode/memory-game', { state: navState });
+            case "memory_game":
+              navigate("/notes-master-mode/memory-game", { state: navState });
               break;
-            case 'rhythm':
-              navigate('/rhythm-mode/metronome-trainer', { state: navState, replace: true });
+            case "rhythm":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'rhythm_reading':
-              navigate('/rhythm-mode/rhythm-reading-game', { state: navState });
+            case "rhythm_reading":
+              navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
               break;
-            case 'rhythm_dictation':
-              navigate('/rhythm-mode/rhythm-dictation-game', { state: navState, replace: true });
+            case "rhythm_dictation":
+              navigate("/rhythm-mode/rhythm-dictation-game", {
+                state: navState,
+                replace: true,
+              });
               window.location.reload();
               break;
-            case 'pitch_comparison':
-              navigate('/ear-training-mode/note-comparison-game', { state: navState });
+            case "pitch_comparison":
+              navigate("/ear-training-mode/note-comparison-game", {
+                state: navState,
+              });
               break;
-            case 'interval_id':
-              navigate('/ear-training-mode/interval-game', { state: navState });
+            case "interval_id":
+              navigate("/ear-training-mode/interval-game", { state: navState });
               break;
-            case 'boss_challenge':
-              navigate('/notes-master-mode/sight-reading-game', {
+            case "boss_challenge":
+              navigate("/notes-master-mode/sight-reading-game", {
                 state: { ...navState, isBoss: true },
               });
               break;
-            case 'arcade_rhythm':
-              navigate('/rhythm-mode/arcade-rhythm-game', { state: navState });
+            case "arcade_rhythm":
+              navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
             default:
-              navigate('/trail');
+              navigate("/trail");
           }
         }
       }
@@ -314,7 +356,9 @@ export default function NoteComparisonGame() {
       hasAutoStartedRef.current = true;
       startGame(nodeConfig);
     }
-    return () => { hasAutoStartedRef.current = false; };
+    return () => {
+      hasAutoStartedRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start guarded by hasAutoStartedRef; only nodeConfig triggers
   }, [nodeConfig]);
 
@@ -322,16 +366,17 @@ export default function NoteComparisonGame() {
   // getButtonState — derive visual state for a HIGHER/LOWER button
   // ---------------------------------------------------------------------------
   function getButtonState(buttonId) {
-    if (gamePhase === GAME_PHASES.LISTENING) return 'disabled';
-    if (gamePhase !== GAME_PHASES.FEEDBACK) return 'default';
+    if (gamePhase === GAME_PHASES.LISTENING) return "disabled";
+    if (gamePhase !== GAME_PHASES.FEEDBACK) return "default";
     // In FEEDBACK phase:
-    if (buttonId === selectedAnswer) return answerCorrect ? 'correct' : 'wrong';
+    if (buttonId === selectedAnswer) return answerCorrect ? "correct" : "wrong";
     // Reveal the correct answer when user was wrong
     if (currentPair) {
-      const correctAnswer = currentPair.direction === 'ascending' ? 'higher' : 'lower';
-      if (!answerCorrect && buttonId === correctAnswer) return 'correct';
+      const correctAnswer =
+        currentPair.direction === "ascending" ? "higher" : "lower";
+      if (!answerCorrect && buttonId === correctAnswer) return "correct";
     }
-    return 'dimmed';
+    return "dimmed";
   }
 
   // ---------------------------------------------------------------------------
@@ -343,7 +388,7 @@ export default function NoteComparisonGame() {
         score={correctCount}
         totalPossibleScore={TOTAL_QUESTIONS}
         onReset={handleReset}
-        onExit={() => navigate('/trail')}
+        onExit={() => navigate("/trail")}
         nodeId={nodeId}
         exerciseIndex={trailExerciseIndex}
         totalExercises={trailTotalExercises}
@@ -358,25 +403,30 @@ export default function NoteComparisonGame() {
   // ---------------------------------------------------------------------------
   if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-        {shouldShowPrompt && (
-          <RotatePromptOverlay onDismiss={dismissPrompt} />
-        )}
-        <div className="w-full max-w-lg bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 flex flex-col gap-4">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
           <h1 className="text-xl font-bold text-white">
-            {t('games.noteComparison.title', { defaultValue: 'Higher or Lower?' })}
+            {t("games.noteComparison.title", {
+              defaultValue: "Higher or Lower?",
+            })}
           </h1>
-          <p className="text-white/70 text-sm">
-            {t('games.noteComparison.description', { defaultValue: 'Listen to two notes and decide which one is higher!' })}
+          <p className="text-sm text-white/70">
+            {t("games.noteComparison.description", {
+              defaultValue:
+                "Listen to two notes and decide which one is higher!",
+            })}
           </p>
           <button
             onClick={() => {
               hasAutoStartedRef.current = true;
               startGame(null);
             }}
-            className="bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-xl px-6 py-3 transition-colors"
+            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
           >
-            {t('games.noteComparison.startGame', { defaultValue: 'Start Game' })}
+            {t("games.noteComparison.startGame", {
+              defaultValue: "Start Game",
+            })}
           </button>
         </div>
       </div>
@@ -386,19 +436,18 @@ export default function NoteComparisonGame() {
   // ---------------------------------------------------------------------------
   // Render: main game (LISTENING / CHOOSING / FEEDBACK)
   // ---------------------------------------------------------------------------
-  const higherState = getButtonState('higher');
-  const lowerState = getButtonState('lower');
+  const higherState = getButtonState("higher");
+  const lowerState = getButtonState("lower");
 
-  const directionLabel = currentPair?.direction === 'ascending'
-    ? t('games.noteComparison.reveal.higher', { defaultValue: 'HIGHER' })
-    : t('games.noteComparison.reveal.lower', { defaultValue: 'LOWER' });
+  const directionLabel =
+    currentPair?.direction === "ascending"
+      ? t("games.noteComparison.reveal.higher", { defaultValue: "HIGHER" })
+      : t("games.noteComparison.reveal.lower", { defaultValue: "LOWER" });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
       {/* iOS rotate prompt */}
-      {shouldShowPrompt && (
-        <RotatePromptOverlay onDismiss={dismissPrompt} />
-      )}
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
       {/* iOS audio interruption overlay */}
       <AudioInterruptedOverlay
@@ -407,33 +456,43 @@ export default function NoteComparisonGame() {
         onRestartExercise={handleReset}
       />
 
-      <div className="flex flex-col gap-3 p-4 max-w-lg mx-auto">
-
+      <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
         {/* Header bar */}
-        <div className="flex items-center justify-between h-12">
-          <BackButton />
+        <div className="flex h-12 items-center justify-between">
+          <BackButton
+            to={nodeId ? "/trail?path=ear_training" : "/ear-training-mode"}
+          />
           <div className="flex items-center gap-2">
             {/* Progress counter — dir=ltr to prevent digit reversal in RTL */}
-            <span dir="ltr" className="text-white/70 text-sm font-rounded">
+            <span dir="ltr" className="font-rounded text-sm text-white/70">
               {currentQuestion + 1} / {TOTAL_QUESTIONS}
             </span>
             {/* Score */}
-            <span className="text-indigo-300 text-sm font-rounded">
+            <span className="font-rounded text-sm text-indigo-300">
               {correctCount} ✓
             </span>
           </div>
         </div>
 
         {/* Audio status row */}
-        <div className="flex items-center justify-between px-4 py-2 bg-white/5 rounded-xl h-12">
+        <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
           <div className="flex items-center gap-2">
             <Volume2
               size={20}
-              className={gamePhase === GAME_PHASES.LISTENING ? 'text-indigo-300 animate-pulse' : 'text-white/60'}
+              className={
+                gamePhase === GAME_PHASES.LISTENING
+                  ? "animate-pulse text-indigo-300"
+                  : "text-white/60"
+              }
             />
             {gamePhase === GAME_PHASES.LISTENING && (
-              <span aria-live="polite" className="text-sm text-white/80 font-rounded">
-                {t('games.noteComparison.listening', { defaultValue: 'Listen...' })}
+              <span
+                aria-live="polite"
+                className="font-rounded text-sm text-white/80"
+              >
+                {t("games.noteComparison.listening", {
+                  defaultValue: "Listen...",
+                })}
               </span>
             )}
           </div>
@@ -442,59 +501,81 @@ export default function NoteComparisonGame() {
           {gamePhase === GAME_PHASES.CHOOSING && (
             <button
               onClick={handleReplay}
-              aria-label={t('games.noteComparison.playAgain', { defaultValue: 'Play Again' })}
-              className="flex items-center gap-1 px-4 py-2 rounded-xl text-sm font-rounded transition-all bg-indigo-500 hover:bg-indigo-400 text-white cursor-pointer"
+              aria-label={t("games.noteComparison.playAgain", {
+                defaultValue: "Play Again",
+              })}
+              className="flex cursor-pointer items-center gap-1 rounded-xl bg-indigo-500 px-4 py-2 font-rounded text-sm text-white transition-all hover:bg-indigo-400"
             >
               <Volume2 size={20} />
-              <span>{t('games.noteComparison.playAgain', { defaultValue: 'Play Again' })}</span>
+              <span>
+                {t("games.noteComparison.playAgain", {
+                  defaultValue: "Play Again",
+                })}
+              </span>
             </button>
           )}
         </div>
 
         {/* Question prompt */}
-        <div className="text-center py-2">
-          <p className="text-white/80 text-base font-rounded">
-            {t('games.noteComparison.question', { defaultValue: 'Is the second note higher or lower?' })}
+        <div className="py-2 text-center">
+          <p className="font-rounded text-base text-white/80">
+            {t("games.noteComparison.question", {
+              defaultValue: "Is the second note higher or lower?",
+            })}
           </p>
         </div>
 
         {/* HIGHER / LOWER answer buttons */}
-        <div className="grid grid-cols-2 gap-3 w-full">
+        <div className="grid w-full grid-cols-2 gap-3">
           {/* HIGHER button */}
           <button
-            onClick={() => handleAnswer('higher')}
-            disabled={gamePhase === GAME_PHASES.LISTENING || gamePhase === GAME_PHASES.FEEDBACK}
-            aria-label={t('games.noteComparison.higher', { defaultValue: 'Higher' })}
-            className={`w-full min-h-[64px] flex flex-col items-center justify-center gap-1 ${STATE_CLASSES[higherState]}`}
+            onClick={() => handleAnswer("higher")}
+            disabled={
+              gamePhase === GAME_PHASES.LISTENING ||
+              gamePhase === GAME_PHASES.FEEDBACK
+            }
+            aria-label={t("games.noteComparison.higher", {
+              defaultValue: "Higher",
+            })}
+            className={`flex min-h-[64px] w-full flex-col items-center justify-center gap-1 ${STATE_CLASSES[higherState]}`}
           >
             <ArrowUp size={28} className="text-white" />
-            <span className="text-white font-bold text-base">
-              {t('games.noteComparison.higher', { defaultValue: 'HIGHER' })}
+            <span className="text-base font-bold text-white">
+              {t("games.noteComparison.higher", { defaultValue: "HIGHER" })}
             </span>
           </button>
 
           {/* LOWER button */}
           <button
-            onClick={() => handleAnswer('lower')}
-            disabled={gamePhase === GAME_PHASES.LISTENING || gamePhase === GAME_PHASES.FEEDBACK}
-            aria-label={t('games.noteComparison.lower', { defaultValue: 'Lower' })}
-            className={`w-full min-h-[64px] flex flex-col items-center justify-center gap-1 ${STATE_CLASSES[lowerState]}`}
+            onClick={() => handleAnswer("lower")}
+            disabled={
+              gamePhase === GAME_PHASES.LISTENING ||
+              gamePhase === GAME_PHASES.FEEDBACK
+            }
+            aria-label={t("games.noteComparison.lower", {
+              defaultValue: "Lower",
+            })}
+            className={`flex min-h-[64px] w-full flex-col items-center justify-center gap-1 ${STATE_CLASSES[lowerState]}`}
           >
             <ArrowDown size={28} className="text-white" />
-            <span className="text-white font-bold text-base">
-              {t('games.noteComparison.lower', { defaultValue: 'LOWER' })}
+            <span className="text-base font-bold text-white">
+              {t("games.noteComparison.lower", { defaultValue: "LOWER" })}
             </span>
           </button>
         </div>
 
         {/* FEEDBACK phase: keyboard reveal + direction label (PITCH-04) */}
         {gamePhase === GAME_PHASES.FEEDBACK && currentPair && (
-          <div className="flex flex-col items-center gap-3 mt-2">
+          <div className="mt-2 flex flex-col items-center gap-3">
             {/* Screen-reader feedback announcement */}
             <div aria-live="assertive" className="sr-only">
               {answerCorrect
-                ? t('games.noteComparison.correct', { defaultValue: 'Correct!' })
-                : t('games.noteComparison.wrong', { defaultValue: 'Try again!' })}
+                ? t("games.noteComparison.correct", {
+                    defaultValue: "Correct!",
+                  })
+                : t("games.noteComparison.wrong", {
+                    defaultValue: "Try again!",
+                  })}
             </div>
 
             {/* Piano keyboard slides in from bottom (D-05) */}
@@ -508,7 +589,7 @@ export default function NoteComparisonGame() {
 
             {/* Direction label (text-3xl bold per UI-SPEC) */}
             {showKeyboard && (
-              <div className="flex flex-col items-center gap-1 animate-floatUp">
+              <div className="flex animate-floatUp flex-col items-center gap-1">
                 <span
                   aria-live="polite"
                   className="text-3xl font-bold text-white"
@@ -523,8 +604,10 @@ export default function NoteComparisonGame() {
         {/* Loading state while trail auto-starts */}
         {gamePhase === GAME_PHASES.SETUP && nodeConfig && (
           <div className="flex items-center justify-center py-8">
-            <span className="text-white/60 text-sm animate-pulse">
-              {t('games.noteComparison.listening', { defaultValue: 'Loading...' })}
+            <span className="animate-pulse text-sm text-white/60">
+              {t("games.noteComparison.listening", {
+                defaultValue: "Loading...",
+              })}
             </span>
           </div>
         )}
