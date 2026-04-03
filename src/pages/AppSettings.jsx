@@ -38,8 +38,7 @@ function AppSettings() {
   const isRTL = i18n.dir() === "rtl";
   const toggleProps = { isRTL };
   const sliderProps = { isRTL };
-  const { preferences, updatePreference, isLoading } =
-    useSettings();
+  const { preferences, updatePreference, isLoading } = useSettings();
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
   const { user } = useUser();
@@ -84,7 +83,11 @@ function AppSettings() {
     // The native install prompt only works in a secure context (HTTPS / localhost).
     // On LAN HTTP, show manual Add-to-Home-Screen guidance instead.
     if (!window.isSecureContext) {
-      toast(t("install.android.unavailableInsecure", { step: t("install.android.installStep") }));
+      toast(
+        t("install.android.unavailableInsecure", {
+          step: t("install.android.installStep"),
+        })
+      );
       return;
     }
     window.dispatchEvent(new Event("request-pwa-install"));
@@ -143,37 +146,37 @@ function AppSettings() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-white" />
       </div>
     );
   }
 
   return (
     <div className="min-h-screen pb-8" dir={isRTL ? "rtl" : "ltr"}>
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 flex flex-col min-h-[calc(100vh-200px)]">
+      <div className="mx-auto flex min-h-[calc(100vh-200px)] max-w-4xl flex-col space-y-6 px-4 py-6">
         <LanguageSelector />
 
-        {/* Parent Zone Entry Card — mobile only (desktop has sidebar nav) */}
-        <div className="md:hidden">
+        {/* Parent Zone Entry Card — hidden when sidebar is visible (xl+) */}
+        <div className="xl:hidden">
           <ParentZoneEntryCard />
         </div>
 
         {/* Avatar Selection Link */}
         <Link
           to="/avatars"
-          className={`flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-6 hover:bg-white/20 transition-all duration-300 ${
+          className={`flex items-center rounded-xl border border-white/20 bg-white/10 p-6 shadow-lg backdrop-blur-md transition-all duration-300 hover:bg-white/20 ${
             isRTL ? "direction-rtl" : ""
           }`}
         >
           <SmilePlus
-            className={`w-8 h-8 text-white/80 ${isRTL ? "ml-4" : "mr-4"}`}
+            className={`h-8 w-8 text-white/80 ${isRTL ? "ml-4" : "mr-4"}`}
           />
           <div>
             <h3 className="text-xl font-bold text-white">
               {t("pages.settings.chooseYourAvatar")}
             </h3>
-            <p className="text-white/60 text-sm mt-1">
+            <p className="mt-1 text-sm text-white/60">
               {t("pages.settings.chooseYourAvatarDescription")}
             </p>
           </div>
@@ -187,7 +190,7 @@ function AppSettings() {
         >
           {showIOSInstall && (
             <div className="space-y-4 text-white">
-              <p className="text-white/80 text-sm">
+              <p className="text-sm text-white/80">
                 {t("install.ios.installDescription")}
               </p>
               <div className="space-y-3">
@@ -217,12 +220,12 @@ function AppSettings() {
 
           {showAndroidInstall && (
             <div className="space-y-4 text-white">
-              <p className="text-white/80 text-sm">
+              <p className="text-sm text-white/80">
                 {t("install.chrome.installDescription")}
               </p>
               <button
                 onClick={handleInstallRequest}
-                className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors text-sm font-medium"
+                className="rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium transition-colors hover:from-indigo-700 hover:to-purple-700"
               >
                 {t("install.chrome.installButton")}
               </button>
@@ -235,14 +238,14 @@ function AppSettings() {
 
           {showDesktopInstall && (
             <div className="space-y-4 text-white">
-              <p className="text-white/80 text-sm">
+              <p className="text-sm text-white/80">
                 {t("install.desktop.installDescription")}
               </p>
               <button
                 onClick={handleInstallRequest}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-colors text-sm font-medium"
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 px-4 py-2.5 text-sm font-medium transition-colors hover:from-indigo-700 hover:to-purple-700"
               >
-                <Download className="w-4 h-4" />
+                <Download className="h-4 w-4" />
                 {t("install.desktop.installButton")}
               </button>
               <p className="text-xs text-white/70">
@@ -275,7 +278,7 @@ function AppSettings() {
         >
           {/* Visual Accessibility */}
           <div className="space-y-2">
-            <h4 className="text-white font-semibold text-sm mb-3 mt-4">
+            <h4 className="mb-3 mt-4 text-sm font-semibold text-white">
               {t("pages.settings.accessibility.visualSettingsTitle")}
             </h4>
             <ToggleSetting
@@ -297,7 +300,7 @@ function AppSettings() {
               onChange={accessibility.actions.toggleReducedMotion}
             />
             <div className="py-3">
-              <label className="text-white font-medium text-sm block mb-3">
+              <label className="mb-3 block text-sm font-medium text-white">
                 {t("pages.settings.accessibility.fontSize")}
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -305,14 +308,11 @@ function AppSettings() {
                   <button
                     key={size}
                     onClick={() => accessibility.actions.setFontSize(size)}
-                    className={`
-                      px-4 py-2 rounded-lg font-medium text-sm transition-all
-                      ${
-                        accessibility.fontSize === size
-                          ? "bg-indigo-600 text-white"
-                          : "bg-white/10 text-white/70 hover:bg-white/20"
-                      }
-                    `}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                      accessibility.fontSize === size
+                        ? "bg-indigo-600 text-white"
+                        : "bg-white/10 text-white/70 hover:bg-white/20"
+                    } `}
                   >
                     {t(`pages.settings.accessibility.fontSizes.${size}`)}
                   </button>
@@ -323,7 +323,7 @@ function AppSettings() {
 
           {/* Motor Accessibility */}
           <div className="space-y-2">
-            <h4 className="text-white font-semibold text-sm mb-3 mt-6">
+            <h4 className="mb-3 mt-6 text-sm font-semibold text-white">
               {t("pages.settings.accessibility.motorSettingsTitle")}
             </h4>
             <ToggleSetting
@@ -348,7 +348,7 @@ function AppSettings() {
 
           {/* Cognitive Accessibility */}
           <div className="space-y-2">
-            <h4 className="text-white font-semibold text-sm mb-3 mt-6">
+            <h4 className="mb-3 mt-6 text-sm font-semibold text-white">
               {t("pages.settings.accessibility.cognitiveSettingsTitle")}
             </h4>
             <ToggleSetting
@@ -373,7 +373,7 @@ function AppSettings() {
 
           {/* Navigation & Screen Reader */}
           <div className="space-y-2">
-            <h4 className="text-white font-semibold text-sm mb-3 mt-6">
+            <h4 className="mb-3 mt-6 text-sm font-semibold text-white">
               {t("pages.settings.accessibility.navigationSettingsTitle")}
             </h4>
             <ToggleSetting
@@ -449,9 +449,9 @@ function AppSettings() {
               <button
                 onClick={handleTestSound}
                 disabled={!preferences.sound_enabled}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Play className="w-4 h-4" />
+                <Play className="h-4 w-4" />
                 {t("pages.settings.audio.testSound")}
               </button>
             </div>
@@ -459,8 +459,8 @@ function AppSettings() {
         </SettingsSection>
 
         {/* Logout Button */}
-        <div className="mt-auto pt-12 pb-8 border-t border-white/20">
-          <div className="max-w-xs mx-auto">
+        <div className="mt-auto border-t border-white/20 pb-8 pt-12">
+          <div className="mx-auto max-w-xs">
             <AuthButton />
           </div>
         </div>
@@ -468,7 +468,6 @@ function AppSettings() {
         {/* Feedback Form - per D-04: standalone centered button below Logout */}
         <FeedbackForm isRTL={isRTL} />
       </div>
-
     </div>
   );
 }
