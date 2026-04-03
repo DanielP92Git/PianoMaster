@@ -1,7 +1,7 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v9";
+const CACHE_NAME = "pianomaster-v10";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
@@ -28,14 +28,14 @@ const RUNTIME_CACHE_PATTERNS = [
 // - Session persistence issues on shared devices
 // - Sensitive data leakage to other users on shared devices
 const AUTH_EXCLUDED_PATTERNS = [
-  /\/auth\//,           // All auth-related paths
-  /\/token/,            // Token endpoints
-  /\/session/,          // Session endpoints
-  /\/logout/,           // Logout endpoints
-  /\/signup/,           // Signup endpoints
-  /\/recover/,          // Password recovery
-  /\/verify/,           // Email/phone verification
-  /\/user/,             // User info endpoints
+  /\/auth\//, // All auth-related paths
+  /\/token/, // Token endpoints
+  /\/session/, // Session endpoints
+  /\/logout/, // Logout endpoints
+  /\/signup/, // Signup endpoints
+  /\/recover/, // Password recovery
+  /\/verify/, // Email/phone verification
+  /\/user/, // User info endpoints
 ];
 
 /**
@@ -45,7 +45,7 @@ const AUTH_EXCLUDED_PATTERNS = [
  */
 function isAuthEndpoint(url) {
   // Only check Supabase URLs
-  if (!url.hostname.includes('supabase.co')) {
+  if (!url.hostname.includes("supabase.co")) {
     return false;
   }
 
@@ -63,10 +63,10 @@ function isAuthEndpoint(url) {
  * @returns {boolean} - True if the URL is a REST API endpoint
  */
 function isRestApiEndpoint(url) {
-  if (!url.hostname.includes('supabase.co')) {
+  if (!url.hostname.includes("supabase.co")) {
     return false;
   }
-  return url.pathname.startsWith('/rest/');
+  return url.pathname.startsWith("/rest/");
 }
 
 async function cacheFirst(request, cacheName = CACHE_NAME) {
@@ -250,7 +250,8 @@ self.addEventListener("fetch", (event) => {
           const isAuth = isAuthEndpoint(url);
 
           // Only cache if matches pattern AND is not an auth or REST API endpoint
-          const shouldCache = matchesPattern && !isAuth && !isRestApiEndpoint(url);
+          const shouldCache =
+            matchesPattern && !isAuth && !isRestApiEndpoint(url);
 
           if (shouldCache) {
             const cache = await caches.open(CACHE_NAME);
@@ -382,15 +383,28 @@ self.addEventListener("push", (event) => {
       dateOfArrival: Date.now(),
       clickAction: notificationData.data.url || "/",
     },
-    actions: notificationData.tag === 'practice-checkin'
-      ? [
-          { action: 'yes-practiced', title: 'Yes, I practiced!', icon: '/icons/favicon_96x96.png' },
-          { action: 'not-yet', title: 'Not yet', icon: '/icons/favicon_96x96.png' },
-        ]
-      : [
-          { action: 'open', title: 'Open', icon: '/icons/favicon_96x96.png' },
-          { action: 'close', title: 'Dismiss', icon: '/icons/favicon_96x96.png' },
-        ],
+    actions:
+      notificationData.tag === "practice-checkin"
+        ? [
+            {
+              action: "yes-practiced",
+              title: "Yes, I practiced!",
+              icon: "/icons/favicon_96x96.png",
+            },
+            {
+              action: "not-yet",
+              title: "Not yet",
+              icon: "/icons/favicon_96x96.png",
+            },
+          ]
+        : [
+            { action: "open", title: "Open", icon: "/icons/favicon_96x96.png" },
+            {
+              action: "close",
+              title: "Dismiss",
+              icon: "/icons/favicon_96x96.png",
+            },
+          ],
   };
 
   event.waitUntil(
@@ -515,32 +529,33 @@ self.addEventListener("notificationclick", (event) => {
 
   // Handle practice check-in notification clicks (from server-sent practice-checkin push)
   // PUSH-04: action buttons on Android/desktop; PUSH-05: body tap on iOS
-  if (notificationType === 'practice-checkin') {
+  if (notificationType === "practice-checkin") {
     event.notification.close();
 
     const isSnoozed = event.notification.data?.snoozed === true;
 
     // "Yes, I practiced!" button (Android/desktop) OR notification body tap (iOS — no action)
-    if (action === 'yes-practiced' || !action) {
-      const urlToOpen = new URL('/?practice_checkin=1', self.location.origin).href;
+    if (action === "yes-practiced" || !action) {
+      const urlToOpen = new URL("/?practice_checkin=1", self.location.origin)
+        .href;
       event.waitUntil(
         (async () => {
           const allClients = await self.clients.matchAll({
-            type: 'window',
+            type: "window",
             includeUncontrolled: true,
           });
 
           // Try to focus an existing window and navigate it
           for (const client of allClients) {
-            if ('focus' in client) {
+            if ("focus" in client) {
               try {
                 await client.navigate(urlToOpen);
                 return client.focus();
               } catch (_e) {
                 // Uncontrolled client — use postMessage fallback
                 client.postMessage({
-                  type: 'NAVIGATE',
-                  url: '/?practice_checkin=1',
+                  type: "NAVIGATE",
+                  url: "/?practice_checkin=1",
                 });
                 return client.focus();
               }
@@ -556,7 +571,7 @@ self.addEventListener("notificationclick", (event) => {
     }
 
     // "Not yet" button (D-08, D-09)
-    if (action === 'not-yet') {
+    if (action === "not-yet") {
       if (isSnoozed) {
         // D-09: snoozed notification's "Not yet" — just dismiss, no further snooze chain
         return;
@@ -566,30 +581,44 @@ self.addEventListener("notificationclick", (event) => {
       // Note: Best-effort — browser may kill SW before 2hr timer on backgrounded mobile.
       event.waitUntil(
         new Promise((resolve) => {
-          setTimeout(async () => {
-            try {
-              await self.registration.showNotification('Still time to practice! \u{1F3B9}', {
-                body: 'Did you get a chance to play your instrument?',
-                icon: '/icons/favicon_192x192.png',
-                badge: '/icons/favicon_96x96.png',
-                vibrate: [100, 50, 100],
-                tag: 'practice-checkin-snoozed',
-                requireInteraction: false,
-                data: {
-                  type: 'practice-checkin',
-                  url: '/?practice_checkin=1',
-                  snoozed: true,
-                },
-                actions: [
-                  { action: 'yes-practiced', title: 'Yes, I practiced!', icon: '/icons/favicon_96x96.png' },
-                  { action: 'not-yet', title: 'Not yet', icon: '/icons/favicon_96x96.png' },
-                ],
-              });
-            } catch (err) {
-              console.error('sw: snooze showNotification failed:', err);
-            }
-            resolve();
-          }, 2 * 60 * 60 * 1000); // 2 hours
+          setTimeout(
+            async () => {
+              try {
+                await self.registration.showNotification(
+                  "Still time to practice! \u{1F3B9}",
+                  {
+                    body: "Did you get a chance to play your instrument?",
+                    icon: "/icons/favicon_192x192.png",
+                    badge: "/icons/favicon_96x96.png",
+                    vibrate: [100, 50, 100],
+                    tag: "practice-checkin-snoozed",
+                    requireInteraction: false,
+                    data: {
+                      type: "practice-checkin",
+                      url: "/?practice_checkin=1",
+                      snoozed: true,
+                    },
+                    actions: [
+                      {
+                        action: "yes-practiced",
+                        title: "Yes, I practiced!",
+                        icon: "/icons/favicon_96x96.png",
+                      },
+                      {
+                        action: "not-yet",
+                        title: "Not yet",
+                        icon: "/icons/favicon_96x96.png",
+                      },
+                    ],
+                  }
+                );
+              } catch (err) {
+                console.error("sw: snooze showNotification failed:", err);
+              }
+              resolve();
+            },
+            2 * 60 * 60 * 1000
+          ); // 2 hours
         })
       );
       return;
