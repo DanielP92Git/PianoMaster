@@ -2,13 +2,23 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Use vi.hoisted() so mock variables are available when vi.mock() factory runs
 // (vi.mock is hoisted to the top of the file by Vitest's transform)
-const { mockMaybeSingle, mockEq, mockSelect, mockFrom } = vi.hoisted(() => {
-  const mockMaybeSingle = vi.fn();
-  const mockEq = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
-  const mockSelect = vi.fn(() => ({ eq: mockEq }));
-  const mockFrom = vi.fn(() => ({ select: mockSelect }));
-  return { mockMaybeSingle, mockEq, mockSelect, mockFrom };
-});
+const { mockMaybeSingle, mockLimit, mockOrder, mockEq, mockSelect, mockFrom } =
+  vi.hoisted(() => {
+    const mockMaybeSingle = vi.fn();
+    const mockLimit = vi.fn(() => ({ maybeSingle: mockMaybeSingle }));
+    const mockOrder = vi.fn(() => ({ limit: mockLimit }));
+    const mockEq = vi.fn(() => ({ order: mockOrder }));
+    const mockSelect = vi.fn(() => ({ eq: mockEq }));
+    const mockFrom = vi.fn(() => ({ select: mockSelect }));
+    return {
+      mockMaybeSingle,
+      mockLimit,
+      mockOrder,
+      mockEq,
+      mockSelect,
+      mockFrom,
+    };
+  });
 
 vi.mock("../supabase", () => ({
   default: { from: mockFrom },
@@ -21,7 +31,9 @@ describe("fetchSubscriptionStatus", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Re-wire mock chain after clearAllMocks (clearAllMocks resets mock implementations)
-    mockEq.mockImplementation(() => ({ maybeSingle: mockMaybeSingle }));
+    mockLimit.mockImplementation(() => ({ maybeSingle: mockMaybeSingle }));
+    mockOrder.mockImplementation(() => ({ limit: mockLimit }));
+    mockEq.mockImplementation(() => ({ order: mockOrder }));
     mockSelect.mockImplementation(() => ({ eq: mockEq }));
     mockFrom.mockImplementation(() => ({ select: mockSelect }));
   });
@@ -73,7 +85,9 @@ describe("fetchSubscriptionStatus", () => {
   });
 
   it("returns isPremium: true for cancelled with future period end (grace period)", async () => {
-    const futureDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const futureDate = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
     mockMaybeSingle.mockResolvedValue({
       data: { status: "cancelled", current_period_end: futureDate },
       error: null,
@@ -84,7 +98,9 @@ describe("fetchSubscriptionStatus", () => {
   });
 
   it("returns isPremium: false for cancelled with past period end", async () => {
-    const pastDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const pastDate = new Date(
+      Date.now() - 30 * 24 * 60 * 60 * 1000
+    ).toISOString();
     mockMaybeSingle.mockResolvedValue({
       data: { status: "cancelled", current_period_end: pastDate },
       error: null,
@@ -96,7 +112,9 @@ describe("fetchSubscriptionStatus", () => {
 
   it("returns isPremium: true for past_due within 3-day grace period", async () => {
     // period ended 1 day ago — within the 3-day grace window
-    const recentDate = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString();
+    const recentDate = new Date(
+      Date.now() - 1 * 24 * 60 * 60 * 1000
+    ).toISOString();
     mockMaybeSingle.mockResolvedValue({
       data: { status: "past_due", current_period_end: recentDate },
       error: null,

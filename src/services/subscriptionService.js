@@ -17,13 +17,25 @@ export async function fetchSubscriptionStatus(studentId) {
 
   const now = new Date().toISOString();
 
+  // A student may have multiple subscription rows (e.g. repeated test-mode checkouts).
+  // Fetch the most recent one — .maybeSingle() would throw on multiple rows.
   const { data, error } = await supabase
     .from("parent_subscriptions")
     .select("status, current_period_end")
     .eq("student_id", studentId)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (error || !data) return { isPremium: false };
+  if (error) {
+    console.error(
+      "[subscriptionService] fetchSubscriptionStatus error:",
+      error.message,
+      error.code
+    );
+    return { isPremium: false };
+  }
+  if (!data) return { isPremium: false };
 
   const { status, current_period_end } = data;
 
@@ -33,7 +45,11 @@ export async function fetchSubscriptionStatus(studentId) {
   }
 
   // Cancelled but period not ended — still premium (grace period)
-  if (status === "cancelled" && current_period_end && current_period_end > now) {
+  if (
+    status === "cancelled" &&
+    current_period_end &&
+    current_period_end > now
+  ) {
     return { isPremium: true };
   }
 
@@ -92,13 +108,24 @@ export async function fetchSubscriptionPlans(currency) {
 export async function fetchSubscriptionDetail(studentId) {
   if (!studentId) return null;
 
+  // A student may have multiple subscription rows — fetch the most recent.
   const { data, error } = await supabase
     .from("parent_subscriptions")
     .select("status, current_period_end, plan_id, ls_subscription_id")
     .eq("student_id", studentId)
+    .order("created_at", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    console.error(
+      "[subscriptionService] fetchSubscriptionDetail error:",
+      error.message,
+      error.code
+    );
+    return null;
+  }
+  if (!data) return null;
 
   // Fetch plan details if plan_id is present
   let planName = null;
@@ -132,4 +159,8 @@ export async function fetchSubscriptionDetail(studentId) {
   };
 }
 
-export default { fetchSubscriptionStatus, fetchSubscriptionPlans, fetchSubscriptionDetail };
+export default {
+  fetchSubscriptionStatus,
+  fetchSubscriptionPlans,
+  fetchSubscriptionDetail,
+};
