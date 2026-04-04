@@ -78,8 +78,15 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 3. A returning student who logs in lands on the trail map (not the dashboard)
 4. The active/highlighted state in both sidebar and bottom tabs correctly reflects whichever page the user is on (trail, dashboard, settings, etc.)
 5. Dashboard remains accessible from both sidebar and bottom tabs as a secondary item
-   **Plans**: TBD
-   **UI hint**: yes
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 17-01-PLAN.md — Nav config, routing, AppLayout, and NavLink end prop wiring
+- [ ] 17-02-PLAN.md — TrailMapPage layout conversion and URL reference audit
+
+**UI hint**: yes
 
 ### Phase 18: Dashboard Compaction
 
@@ -110,7 +117,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 | Phase                        | Milestone | Plans Complete | Status      | Completed |
 | ---------------------------- | --------- | -------------- | ----------- | --------- |
-| 17. Navigation Restructuring | v3.1      | 0/?            | Not started | -         |
+| 17. Navigation Restructuring | v3.1      | 0/2            | Planning    | -         |
 | 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -         |
 | 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -         |
 
@@ -118,4 +125,4 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ---
 
-_Last updated: 2026-04-04 -- v3.1 roadmap created_
+_Last updated: 2026-04-05 -- Phase 17 planned (2 plans)_
