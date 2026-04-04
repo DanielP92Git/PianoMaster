@@ -115,11 +115,11 @@ Plans:
 
 ## Progress
 
-| Phase                        | Milestone | Plans Complete | Status      | Completed |
-| ---------------------------- | --------- | -------------- | ----------- | --------- |
-| 17. Navigation Restructuring | v3.1      | 2/2 | Complete   | 2026-04-04 |
-| 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -         |
-| 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -         |
+| Phase                        | Milestone | Plans Complete | Status      | Completed  |
+| ---------------------------- | --------- | -------------- | ----------- | ---------- |
+| 17. Navigation Restructuring | v3.1      | 2/2            | Complete    | 2026-04-04 |
+| 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -          |
+| 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -          |
 
 **Total: 21 milestones shipped, 92 phases, ~198 plans | v3.1 in progress: 3 phases**
 
