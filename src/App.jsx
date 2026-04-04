@@ -227,14 +227,14 @@ function AuthenticatedWrapper({ children }) {
 }
 
 // Component to redirect teachers to their dashboard
-function TeacherRedirect() {
+export function TeacherRedirect() {
   const { isTeacher } = useUser();
 
   if (isTeacher) {
     return <Navigate to="/teacher" replace />;
   }
 
-  return <Dashboard />;
+  return <TrailMapPage />;
 }
 
 function OrientationController() {
@@ -390,6 +390,7 @@ function AppRoutes() {
             }
           >
             <Route index element={<TeacherRedirect />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/trail" element={<TrailMapPage />} />
             <Route path="/practice-modes" element={<PracticeModes />} />
             <Route path="practice-sessions" element={<PracticeSessions />} />
@@ -512,7 +513,7 @@ function App() {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
     // Trail page uses its own dark background; all other pages use indigo-950.
-    const color = location.pathname === "/trail" ? "#1a1040" : "#1e1b4b";
+    const color = location.pathname === "/" || location.pathname === "/trail" ? "#1a1040" : "#1e1b4b";
     meta.setAttribute("content", color);
   }, [location.pathname]);
 

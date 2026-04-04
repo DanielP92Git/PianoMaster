@@ -12,7 +12,7 @@ export default function AppLayout() {
   const direction = i18n.dir();
   const language = i18n.language || i18n.resolvedLanguage || "en";
   const isHebrew = language.startsWith("he");
-  const isDashboard = location.pathname === "/";
+  const isDashboard = location.pathname === "/dashboard";
 
   // Updated game routes to match actual URL structure
   const gameRoutes = [
@@ -30,7 +30,7 @@ export default function AppLayout() {
 
   // Routes that should hide the header (games + trail page)
   const isGameRoute = gameRoutes.includes(location.pathname);
-  const isTrailPage = location.pathname === "/trail";
+  const isTrailPage = location.pathname === "/" || location.pathname === "/trail";
 
   // Map routes to page titles
   const getPageTitleKey = () => {
@@ -73,7 +73,7 @@ export default function AppLayout() {
           overlay={isDashboard}
         />
       )}
-      {!isGameRoute && !isTrailPage && (
+      {!isGameRoute && (
         <div className="hidden xl:block">
           <Sidebar
             isOpen={isSidebarOpen}
@@ -85,22 +85,22 @@ export default function AppLayout() {
       )}
       <main
         className={`${
-          !isGameRoute && !isTrailPage
+          !isGameRoute
             ? direction === "rtl"
-              ? isDashboard
+              ? isDashboard || isTrailPage
                 ? "pt-0 xl:pr-[19rem]"
                 : "pt-2 xl:pr-[19rem]"
-              : isDashboard
+              : isDashboard || isTrailPage
                 ? "pt-0 xl:pl-[19rem]"
-              : "pt-2 xl:pl-[19rem]"
+                : "pt-2 xl:pl-[19rem]"
             : ""
         } flex-1 ${
-          !isGameRoute && !isTrailPage ? "pb-20 xl:pb-0" : ""
-        } ${isGameRoute || isTrailPage ? "min-h-0 overflow-hidden" : ""} ${isGameRoute || isTrailPage ? "w-full" : ""}`}
+          !isGameRoute ? "pb-20 xl:pb-0" : ""
+        } ${isGameRoute ? "min-h-0 overflow-hidden w-full" : ""}`}
       >
         <Outlet />
       </main>
-      {!isGameRoute && !isTrailPage && <MobileTabsNav />}
+      {!isGameRoute && <MobileTabsNav />}
     </div>
   );
 }
