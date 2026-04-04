@@ -1,13 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import {
-  Mic,
-  Square,
-  Play,
-  Pause,
-  Loader2,
-  X,
-  Settings,
-} from "lucide-react";
+import { Mic, Square, Play, Pause, Loader2, X, Settings } from "lucide-react";
 import AudioCompressionService, {
   AUDIO_QUALITY_PRESETS,
 } from "../../services/audioCompressionService";
@@ -178,6 +170,18 @@ export default function AudioRecorder({
     }
   }, [recordingDuration, qualityPreset, defaultQuality]);
 
+  // Stop recording (defined first — startRecording and resumeRecording depend on it)
+  const stopRecording = useCallback(() => {
+    if (
+      mediaRecorder.current &&
+      (mediaRecorder.current.state === "recording" ||
+        mediaRecorder.current.state === "paused")
+    ) {
+      mediaRecorder.current.stop();
+      // Note: Parent components will show "Recording completed" with duration
+    }
+  }, []);
+
   // Start recording
   const startRecording = useCallback(async () => {
     if (disabled) return;
@@ -327,18 +331,6 @@ export default function AudioRecorder({
     }
   }, [maxDuration, stopRecording, t]);
 
-  // Stop recording
-  const stopRecording = useCallback(() => {
-    if (
-      mediaRecorder.current &&
-      (mediaRecorder.current.state === "recording" ||
-        mediaRecorder.current.state === "paused")
-    ) {
-      mediaRecorder.current.stop();
-      // Note: Parent components will show "Recording completed" with duration
-    }
-  }, []);
-
   // Cancel recording
   const cancelRecording = useCallback(() => {
     isCancelling.current = true;
@@ -362,25 +354,25 @@ export default function AudioRecorder({
 
   return (
     <div
-      className={`bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 ${className}`}
+      className={`rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-md ${className}`}
     >
       {/* Recording Timer Display */}
       {(isRecording || isPaused) && (
         <div className="mb-4 text-center">
-          <div className="inline-flex items-center gap-3 px-6 py-3 bg-black/30 rounded-2xl border border-white/20">
+          <div className="inline-flex items-center gap-3 rounded-2xl border border-white/20 bg-black/30 px-6 py-3">
             <div
-              className={`w-4 h-4 rounded-full ${
+              className={`h-4 w-4 rounded-full ${
                 isRecording && !isPaused
-                  ? "bg-red-500 animate-pulse"
+                  ? "animate-pulse bg-red-500"
                   : isPaused
                     ? "bg-yellow-500"
                     : "bg-gray-500"
               }`}
             />
-            <div className="text-white text-2xl font-mono font-bold tracking-wider">
+            <div className="font-mono text-2xl font-bold tracking-wider text-white">
               {formatDuration(recordingDuration)}
             </div>
-            <div className="text-white/60 text-sm">
+            <div className="text-sm text-white/60">
               {t("audioRecorder.labels.maxDuration", {
                 duration: formatDuration(maxDuration),
               })}
@@ -402,28 +394,28 @@ export default function AudioRecorder({
       )}
 
       {/* Recording Status */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           {isRecording && !isPaused && (
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-              <span className="text-red-400 text-sm font-medium">
+              <div className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+              <span className="text-sm font-medium text-red-400">
                 {t("audioRecorder.status.recording")}
               </span>
             </div>
           )}
           {isPaused && (
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-              <span className="text-yellow-400 text-sm font-medium">
+              <div className="h-3 w-3 rounded-full bg-yellow-500" />
+              <span className="text-sm font-medium text-yellow-400">
                 {t("audioRecorder.status.paused")}
               </span>
             </div>
           )}
           {!isRecording && !isPaused && recordingBlob && (
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full" />
-              <span className="text-green-400 text-sm font-medium">
+              <div className="h-3 w-3 rounded-full bg-green-500" />
+              <span className="text-sm font-medium text-green-400">
                 {t("audioRecorder.status.recorded")}
               </span>
             </div>
@@ -435,14 +427,14 @@ export default function AudioRecorder({
           {showQualitySettings && !isRecording && (
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="p-2 text-white/70 hover:text-white transition-colors"
+              className="p-2 text-white/70 transition-colors hover:text-white"
               title={t("audioRecorder.tooltips.quality")}
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="h-4 w-4" />
             </button>
           )}
 
-          <div className="text-white text-sm font-mono">
+          <div className="font-mono text-sm text-white">
             {formatDuration(recordingDuration)} / {formatDuration(maxDuration)}
           </div>
         </div>
@@ -450,13 +442,13 @@ export default function AudioRecorder({
 
       {/* Quality Settings Panel */}
       {showSettings && showQualitySettings && !isRecording && (
-            <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
-          <div className="flex items-center gap-4 mb-3">
-            <h4 className="text-white text-sm font-semibold">
+        <div className="mb-4 rounded-lg border border-white/10 bg-white/5 p-4">
+          <div className="mb-3 flex items-center gap-4">
+            <h4 className="text-sm font-semibold text-white">
               {t("audioRecorder.quality.title")}
             </h4>
             {estimatedFileSize && (
-              <span className="text-white/70 text-xs">
+              <span className="text-xs text-white/70">
                 {t("audioRecorder.quality.estimatedSize", {
                   size: estimatedFileSize.humanReadable,
                 })}
@@ -466,12 +458,9 @@ export default function AudioRecorder({
 
           <div className="grid grid-cols-2 gap-2">
             {Object.entries(AUDIO_QUALITY_PRESETS).map(([key, preset]) => {
-              const label = t(
-                `audioRecorder.quality.presets.${key}.label`,
-                {
-                  defaultValue: preset.label,
-                }
-              );
+              const label = t(`audioRecorder.quality.presets.${key}.label`, {
+                defaultValue: preset.label,
+              });
               const description = t(
                 `audioRecorder.quality.presets.${key}.description`,
                 {
@@ -482,7 +471,7 @@ export default function AudioRecorder({
                 <button
                   key={key}
                   onClick={() => setQualityPreset(key)}
-                  className={`p-2 rounded-lg text-left transition-colors ${
+                  className={`rounded-lg p-2 text-left transition-colors ${
                     qualityPreset === key
                       ? "bg-indigo-600 text-white"
                       : "bg-white/5 text-white/70 hover:bg-white/10 hover:text-white"
@@ -511,18 +500,18 @@ export default function AudioRecorder({
           <button
             onClick={startRecording}
             disabled={disabled || isProcessing}
-            className="flex-1 min-w-0 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center justify-center gap-2 text-sm"
+            className="flex min-w-0 flex-1 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-gray-600"
           >
             {isProcessing ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="h-4 w-4 animate-spin" />
                 <span className="hidden sm:inline">
                   {t("audioRecorder.buttons.starting")}
                 </span>
               </>
             ) : (
               <>
-                <Mic className="w-4 h-4" />
+                <Mic className="h-4 w-4" />
                 <span className="hidden sm:inline">
                   {t("audioRecorder.buttons.start")}
                 </span>
@@ -535,27 +524,27 @@ export default function AudioRecorder({
           <>
             <button
               onClick={pauseRecording}
-              className="flex-1 min-w-0 px-2 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-yellow-600 px-2 py-2 text-sm text-white transition-colors hover:bg-yellow-700"
             >
-              <Pause className="w-4 h-4" />
+              <Pause className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {t("audioRecorder.buttons.pause")}
               </span>
             </button>
             <button
               onClick={stopRecording}
-              className="flex-1 min-w-0 px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-red-600 px-2 py-2 text-sm text-white transition-colors hover:bg-red-700"
             >
-              <Square className="w-4 h-4" />
+              <Square className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {t("audioRecorder.buttons.stop")}
               </span>
             </button>
             <button
               onClick={cancelRecording}
-              className="flex-1 min-w-0 px-2 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-gray-600 px-2 py-2 text-sm text-white transition-colors hover:bg-gray-700"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {t("audioRecorder.buttons.cancel")}
               </span>
@@ -567,27 +556,27 @@ export default function AudioRecorder({
           <>
             <button
               onClick={resumeRecording}
-              className="flex-1 min-w-0 px-2 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-green-600 px-2 py-2 text-sm text-white transition-colors hover:bg-green-700"
             >
-              <Play className="w-4 h-4" />
+              <Play className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {t("audioRecorder.buttons.resume")}
               </span>
             </button>
             <button
               onClick={stopRecording}
-              className="flex-1 min-w-0 px-2 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-red-600 px-2 py-2 text-sm text-white transition-colors hover:bg-red-700"
             >
-              <Square className="w-4 h-4" />
+              <Square className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {t("audioRecorder.buttons.stop")}
               </span>
             </button>
             <button
               onClick={cancelRecording}
-              className="flex-1 min-w-0 px-2 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors flex items-center justify-center gap-1 text-sm"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1 rounded-lg bg-gray-600 px-2 py-2 text-sm text-white transition-colors hover:bg-gray-700"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
               <span className="hidden sm:inline">
                 {t("audioRecorder.buttons.cancel")}
               </span>
@@ -599,9 +588,9 @@ export default function AudioRecorder({
       {/* Progress bar */}
       {isRecording && (
         <div className="mt-4">
-          <div className="w-full bg-gray-700 rounded-full h-2">
+          <div className="h-2 w-full rounded-full bg-gray-700">
             <div
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-1000"
+              className="h-2 rounded-full bg-indigo-600 transition-all duration-1000"
               style={{ width: `${(recordingDuration / maxDuration) * 100}%` }}
             />
           </div>
