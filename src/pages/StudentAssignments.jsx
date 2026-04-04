@@ -167,7 +167,7 @@ const StudentAssignments = () => {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <BackButton to="/" name="Dashboard" styling="mb-4" />
+          <BackButton to="/dashboard" name="Dashboard" styling="mb-4" />
           <h1 className="text-3xl font-bold text-white mb-2">My Assignments</h1>
           <p className="text-white/80">
             View and manage all your assignments in one place

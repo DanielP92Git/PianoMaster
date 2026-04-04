@@ -4,8 +4,6 @@
  * Page wrapper for the Trail Map with clean, minimal background
  */
 
-import { useRef, useEffect } from "react";
-import BackButton from "../components/ui/BackButton";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Shield, ChevronUp } from "lucide-react";
@@ -14,8 +12,6 @@ import { getStudentXP } from "../utils/xpSystem";
 import TrailMap from "../components/trail/TrailMap";
 import { useAccessibility } from "../contexts/AccessibilityContext";
 import "../styles/trail-effects.css";
-
-const TRAIL_BG = "#1a1040";
 
 const TrailMapPage = () => {
   const { t, i18n } = useTranslation(["common", "trail"]);
@@ -31,35 +27,9 @@ const TrailMapPage = () => {
     staleTime: 60 * 1000, // 1 minute
   });
 
-  const scrollRef = useRef(null);
-
-  // Override every layer that can peek through the fixed trail overlay on iOS
-  // (html, body, and theme-color meta tag all default to #1e1b4b)
-  useEffect(() => {
-    const html = document.documentElement;
-    const body = document.body;
-    const meta = document.querySelector('meta[name="theme-color"]');
-
-    const prevHtml = html.style.backgroundColor;
-    const prevBody = body.style.backgroundColor;
-    const prevTheme = meta?.getAttribute("content") ?? null;
-
-    html.style.backgroundColor = TRAIL_BG;
-    body.style.backgroundColor = TRAIL_BG;
-    if (meta) meta.setAttribute("content", TRAIL_BG);
-
-    return () => {
-      html.style.backgroundColor = prevHtml;
-      body.style.backgroundColor = prevBody;
-      if (meta && prevTheme !== null) meta.setAttribute("content", prevTheme);
-    };
-  }, []);
-
   return (
     <div
-      ref={scrollRef}
-      className={`trail-page trail-forest-bg fixed inset-0 overflow-y-auto font-quicksand${reducedMotion ? " reduced-motion" : ""}`}
-      dir={isRTL ? "rtl" : "ltr"}
+      className={`trail-page trail-forest-bg min-h-full font-quicksand${reducedMotion ? " reduced-motion" : ""}`}
     >
       {/* Enchanted starfield */}
       <div
@@ -145,14 +115,11 @@ const TrailMapPage = () => {
         <div
           className={`mx-auto max-w-6xl space-y-2.5 p-4 ${isRTL ? "text-right" : ""}`}
         >
-          {/* Row 1: Navigation + Title */}
-          <div className="flex items-center justify-between">
-            <BackButton to="/" name="Dashboard" />
+          {/* Row 1: Title */}
+          <div className="flex items-center justify-center">
             <h1 className="font-quicksand text-xl font-bold text-white">
               {t("pageTitle", { ns: "trail" })}
             </h1>
-            {/* Spacer to balance back button */}
-            <div className="w-9" />
           </div>
 
           {/* Row 2: Level badge + XP progress bar */}
@@ -204,9 +171,9 @@ const TrailMapPage = () => {
       {/* Jump to Top - Floating Action Button */}
       <button
         onClick={() =>
-          scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })
+          window.scrollTo({ top: 0, behavior: "smooth" })
         }
-        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-2xl transition-all hover:scale-110 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 sm:h-16 sm:w-16"
+        className="fixed bottom-24 right-6 xl:bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-2xl transition-all hover:scale-110 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 sm:h-16 sm:w-16"
         aria-label="Jump to top"
       >
         <ChevronUp className="h-6 w-6 sm:h-7 sm:w-7" />

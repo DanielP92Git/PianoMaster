@@ -170,7 +170,7 @@ export function useVictoryState({
 
   const handleGoToDashboard = useCallback(() => {
     refreshQueries();
-    navigate("/");
+    navigate("/dashboard");
   }, [navigate, refreshQueries]);
 
   const handleNavigateToTrail = useCallback(() => {

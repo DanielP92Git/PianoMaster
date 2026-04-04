@@ -175,7 +175,7 @@ export default function SubscribePage() {
             {t("subscribe.alreadySubscribed")}
           </h1>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/dashboard")}
             className="mt-4 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-bold py-3 px-8 rounded-xl transition-all duration-200"
           >
             {t("subscribe.goToDashboard")}
