@@ -41,7 +41,7 @@ function AppSettings() {
   const { preferences, updatePreference, isLoading } = useSettings();
   const accessibility = useAccessibility();
   const audio = useGlobalAudioSettings();
-  const { user } = useUser();
+  const { user, isStudent } = useUser();
 
   const [installEnv, setInstallEnv] = useState({
     isReady: false,
@@ -158,9 +158,11 @@ function AppSettings() {
         <LanguageSelector />
 
         {/* Parent Zone Entry Card — hidden when sidebar is visible (xl+) */}
-        <div className="xl:hidden">
-          <ParentZoneEntryCard />
-        </div>
+        {isStudent && (
+          <div className="xl:hidden">
+            <ParentZoneEntryCard />
+          </div>
+        )}
 
         {/* Avatar Selection Link */}
         <Link
