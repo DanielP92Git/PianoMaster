@@ -171,9 +171,11 @@ const TrailMapPage = () => {
       {/* Jump to Top - Floating Action Button */}
       <button
         onClick={() =>
-          window.scrollTo({ top: 0, behavior: "smooth" })
+          document
+            .getElementById("root")
+            ?.scrollTo({ top: 0, behavior: "smooth" })
         }
-        className="fixed bottom-24 right-6 xl:bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-2xl transition-all hover:scale-110 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 sm:h-16 sm:w-16"
+        className="fixed bottom-24 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-2xl transition-all hover:scale-110 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 sm:h-16 sm:w-16 xl:bottom-6"
         aria-label="Jump to top"
       >
         <ChevronUp className="h-6 w-6 sm:h-7 sm:w-7" />
