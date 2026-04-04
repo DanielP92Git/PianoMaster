@@ -282,6 +282,7 @@ const BottomNavigation = React.forwardRef(
               <NavLink
                 key={index}
                 to={item.to}
+                end={item.end}
                 aria-label={item.ariaLabel || item.label}
                 className={({ isActive }) =>
                   `group relative flex min-w-[60px] flex-col items-center justify-center gap-0.5 rounded-2xl px-3 py-2 font-rounded transition-all duration-200 ${

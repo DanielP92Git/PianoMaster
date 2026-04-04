@@ -1,6 +1,7 @@
 import {
   GraduationCap,
   Home,
+  Map,
   Mic,
   Gamepad2,
   Settings,
@@ -21,17 +22,25 @@ import {
 export const APP_NAV_ITEMS = {
   student: [
     {
-      id: "studentDashboard",
+      id: "trail",
       to: "/",
-      icon: Home,
-      labelKey: "navigation.links.studentDashboard",
+      icon: Map,
+      labelKey: "navigation.links.trail",
       theme: "indigo",
+      end: true,
     },
     {
       id: "practiceGames",
       to: "/practice-modes",
       icon: Gamepad2,
       labelKey: "navigation.links.practiceGames",
+      theme: "indigo",
+    },
+    {
+      id: "studentDashboard",
+      to: "/dashboard",
+      icon: Home,
+      labelKey: "navigation.links.studentDashboard",
       theme: "indigo",
     },
     {

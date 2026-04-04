@@ -17,7 +17,7 @@ export default function MobileTabsNav() {
   const items = useMemo(() => {
     // tabIds computed inside useMemo to avoid unstable reference causing deps to change on every render
     const tabIds = isStudent
-      ? ["studentDashboard", "practiceGames", "recordings", "achievements", "settings"]
+      ? ["trail", "practiceGames", "studentDashboard", "achievements", "settings"]
       : isTeacher
         ? ["teacherDashboard", "settings"]
         : ["settings"];
@@ -39,6 +39,7 @@ export default function MobileTabsNav() {
           label,
           ariaLabel: label,
           icon: <Icon />,
+          end: item.end,
           badge:
             item.id === "recordings" && (item.badgeCount || 0) > 0
               ? { count: item.badgeCount, variant: "error" }

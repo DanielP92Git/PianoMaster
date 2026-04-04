@@ -145,6 +145,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
                   <NavLink
                     key={item.id}
                     to={item.to}
+                    end={!!item.end}
                     onClick={onClose}
                     className={({ isActive }) => {
                       const base = getNavLinkClasses(item.theme)({ isActive });
@@ -174,6 +175,7 @@ export default function Sidebar({ isOpen, onClose, isGameRoute }) {
                   <NavLink
                     key={item.id}
                     to={item.to}
+                    end={!!item.end}
                     onClick={onClose}
                     className={getNavLinkClasses(item.theme)}
                   >
