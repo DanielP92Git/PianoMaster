@@ -60,7 +60,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ### v3.1 Trail-First Navigation (In Progress)
 
-- [ ] **Phase 17: Navigation Restructuring** - Trail becomes the primary nav destination with correct active states
+- [x] **Phase 17: Navigation Restructuring** - Trail becomes the primary nav destination with correct active states (completed 2026-04-04)
 - [ ] **Phase 18: Dashboard Compaction** - Dashboard redesigned as a compact stats hub without the hero CTA
 - [ ] **Phase 19: Post-Game Trail Return** - VictoryScreen flows guide players back to the trail
 
@@ -79,12 +79,12 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 4. The active/highlighted state in both sidebar and bottom tabs correctly reflects whichever page the user is on (trail, dashboard, settings, etc.)
 5. Dashboard remains accessible from both sidebar and bottom tabs as a secondary item
 
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 
 - [x] 17-01-PLAN.md — Nav config, routing, AppLayout, and NavLink end prop wiring (completed 2026-04-05)
-- [ ] 17-02-PLAN.md — TrailMapPage layout conversion and URL reference audit
+- [x] 17-02-PLAN.md — TrailMapPage layout conversion and URL reference audit
 
 **UI hint**: yes
 
@@ -117,7 +117,7 @@ Plans:
 
 | Phase                        | Milestone | Plans Complete | Status      | Completed |
 | ---------------------------- | --------- | -------------- | ----------- | --------- |
-| 17. Navigation Restructuring | v3.1      | 1/2            | Executing   | -         |
+| 17. Navigation Restructuring | v3.1      | 2/2 | Complete   | 2026-04-04 |
 | 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -         |
 | 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -         |
 
