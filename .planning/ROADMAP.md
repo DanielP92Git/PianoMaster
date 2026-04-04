@@ -23,6 +23,7 @@
 - ✅ **v2.8 Introductory Single-Note Game** — Phases 1, 6 (shipped 2026-03-26)
 - ✅ **v2.9 Game Variety & Ear Training** — Phases 7-11 (shipped 2026-03-30)
 - ✅ **v3.0 Cleanup & Polish** — Phases 12-16 (shipped 2026-04-03)
+- 🚧 **v3.1 Trail-First Navigation** — Phases 17-19 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -57,34 +58,64 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
+### v3.1 Trail-First Navigation (In Progress)
+
+- [ ] **Phase 17: Navigation Restructuring** - Trail becomes the primary nav destination with correct active states
+- [ ] **Phase 18: Dashboard Compaction** - Dashboard redesigned as a compact stats hub without the hero CTA
+- [ ] **Phase 19: Post-Game Trail Return** - VictoryScreen flows guide players back to the trail
+
+## Phase Details
+
+### Phase 17: Navigation Restructuring
+
+**Goal**: Students navigate to and from the trail as the app's primary destination
+**Depends on**: Nothing (first phase of v3.1)
+**Requirements**: NAV-01, NAV-02, NAV-03, NAV-04, DASH-04
+**Success Criteria** (what must be TRUE):
+
+1. Trail map appears as a top-level item in the desktop sidebar and is clickable
+2. Trail map appears as a tab in the mobile bottom navigation bar
+3. A returning student who logs in lands on the trail map (not the dashboard)
+4. The active/highlighted state in both sidebar and bottom tabs correctly reflects whichever page the user is on (trail, dashboard, settings, etc.)
+5. Dashboard remains accessible from both sidebar and bottom tabs as a secondary item
+   **Plans**: TBD
+   **UI hint**: yes
+
+### Phase 18: Dashboard Compaction
+
+**Goal**: Dashboard serves as a quick-glance stats hub rather than the app's front door
+**Depends on**: Phase 17
+**Requirements**: DASH-01, DASH-02, DASH-03
+**Success Criteria** (what must be TRUE):
+
+1. Dashboard displays a compact layout that feels like a stats overview, not a landing page
+2. The PlayNextButton ("Continue/Begin Journey") hero CTA no longer appears anywhere on the dashboard
+3. Existing dashboard cards (streak display, XP progress, daily goals, practice log, daily message) are all still visible and functional in the compact layout
+   **Plans**: TBD
+   **UI hint**: yes
+
+### Phase 19: Post-Game Trail Return
+
+**Goal**: After completing a game, students are guided back to the trail as the natural next step
+**Depends on**: Phase 17
+**Requirements**: POST-01, POST-02
+**Success Criteria** (what must be TRUE):
+
+1. VictoryScreen for trail-originated games shows "Back to Trail" as the primary (most prominent) action button
+2. VictoryScreen for free play games includes a "Go to Trail" option alongside existing navigation choices (e.g., "Play Again", "Back")
+   **Plans**: TBD
+   **UI hint**: yes
+
 ## Progress
 
-| Milestone                        | Phases | Plans | Status   | Shipped    |
-| -------------------------------- | ------ | ----- | -------- | ---------- |
-| v1.0 Security Hardening          | 4      | 15    | Complete | 2026-02-01 |
-| v1.1 Parental Consent Email      | 1      | 2     | Complete | 2026-02-02 |
-| v1.2 Trail Stabilization         | 2      | 4     | Complete | 2026-02-03 |
-| v1.3 Trail Redesign              | 5      | 14    | Complete | 2026-02-05 |
-| v1.4 UI Polish & Celebrations    | 6      | 13    | Complete | 2026-02-09 |
-| v1.5 Trail Visual Redesign       | 4      | 10    | Complete | 2026-02-12 |
-| v1.6 Auto-Rotate Landscape       | 5      | 10    | Complete | 2026-02-17 |
-| v1.7 Mic Pitch Detection         | 5      | 12    | Complete | 2026-03-04 |
-| v1.8 App Monetization            | 6      | 13    | Complete | 2026-03-01 |
-| v1.9 Engagement & Retention      | 7      | 15    | Complete | 2026-03-08 |
-| v2.0 VictoryScreen & XP          | 2      | 6     | Complete | 2026-03-08 |
-| v2.1 Forgot Password             | 1      | 2     | Complete | 2026-03-10 |
-| v2.2 Sharps & Flats              | 5      | 9     | Complete | 2026-03-17 |
-| v2.3 Launch Readiness            | 6      | 6     | Complete | 2026-03-17 |
-| v2.4 Content Expansion           | 5      | 10    | Complete | 2026-03-19 |
-| v2.5 Launch Prep                 | 4      | 11    | Complete | 2026-03-22 |
-| v2.6 User Feedback               | 2      | 3     | Complete | 2026-03-23 |
-| v2.7 Instrument Practice         | 5      | 12    | Complete | 2026-03-25 |
-| v2.8 Single-Note Game            | 2      | 5     | Complete | 2026-03-26 |
-| v2.9 Game Variety & Ear Training | 5      | 15    | Complete | 2026-03-30 |
-| v3.0 Cleanup & Polish            | 5      | 11    | Complete | 2026-04-03 |
+| Phase                        | Milestone | Plans Complete | Status      | Completed |
+| ---------------------------- | --------- | -------------- | ----------- | --------- |
+| 17. Navigation Restructuring | v3.1      | 0/?            | Not started | -         |
+| 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -         |
+| 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -         |
 
-**Total: 21 milestones shipped, 92 phases, ~198 plans**
+**Total: 21 milestones shipped, 92 phases, ~198 plans | v3.1 in progress: 3 phases**
 
 ---
 
-_Last updated: 2026-04-03 — v3.0 milestone archived_
+_Last updated: 2026-04-04 -- v3.1 roadmap created_

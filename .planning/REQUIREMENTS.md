@@ -65,24 +65,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 | ----------- | ----- | ------- |
-| NAV-01      | —     | Pending |
-| NAV-02      | —     | Pending |
-| NAV-03      | —     | Pending |
-| NAV-04      | —     | Pending |
-| DASH-01     | —     | Pending |
-| DASH-02     | —     | Pending |
-| DASH-03     | —     | Pending |
-| DASH-04     | —     | Pending |
-| POST-01     | —     | Pending |
-| POST-02     | —     | Pending |
+| NAV-01      | 17    | Pending |
+| NAV-02      | 17    | Pending |
+| NAV-03      | 17    | Pending |
+| NAV-04      | 17    | Pending |
+| DASH-01     | 18    | Pending |
+| DASH-02     | 18    | Pending |
+| DASH-03     | 18    | Pending |
+| DASH-04     | 17    | Pending |
+| POST-01     | 19    | Pending |
+| POST-02     | 19    | Pending |
 
 **Coverage:**
 
 - v3.1 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10 ⚠️
+- Mapped to phases: 10
+- Unmapped: 0
 
 ---
 
 _Requirements defined: 2026-04-05_
-_Last updated: 2026-04-05 after initial definition_
+_Last updated: 2026-04-04 after roadmap creation_

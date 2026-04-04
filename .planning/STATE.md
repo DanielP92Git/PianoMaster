@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Trail-First Navigation
-status: requirements
-stopped_at: Defining requirements
+status: roadmap_complete
+stopped_at: Roadmap created, ready to plan Phase 17
 last_updated: "2026-04-04T00:00:00.000Z"
 last_activity: 2026-04-04
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,17 +20,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v3.1 Trail-First Navigation — defining requirements
+**Current focus:** v3.1 Trail-First Navigation -- Phase 17 ready to plan
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-04 — Milestone v3.1 started
+Phase: 17 of 19 (Navigation Restructuring)
+Plan: --
+Status: Ready to plan
+Last activity: 2026-04-04 -- Roadmap created for v3.1 (3 phases, 10 requirements)
 
 ```
-v3.1 Trail-First Navigation: DEFINING REQUIREMENTS
+v3.1 Trail-First Navigation: [░░░░░░░░░░] 0%
 ```
 
 ## Performance Metrics
@@ -44,7 +44,9 @@ v3.1 Trail-First Navigation: DEFINING REQUIREMENTS
 
 ### Decisions
 
-(New milestone — no decisions yet)
+- v3.1: Trail replaces dashboard as default landing page for returning students
+- v3.1: PlayNextButton hero CTA removed (trail is now the primary call-to-action)
+- v3.1: DASH-04 grouped with NAV phase (nav restructuring is one coherent change)
 
 ### Blockers/Concerns
 
@@ -53,14 +55,14 @@ v3.1 Trail-First Navigation: DEFINING REQUIREMENTS
 ## Session Continuity
 
 Last session: 2026-04-04
-Stopped at: Defining v3.1 requirements
+Stopped at: Roadmap created for v3.1 Trail-First Navigation
 Resume file: None
 
 **Next action:**
 
-- Define requirements for v3.1 Trail-First Navigation
+- Plan Phase 17 (Navigation Restructuring) via `/gsd:plan-phase 17`
 
 ---
 
 _State initialized: 2026-01-31_
-_Last updated: 2026-04-04 — v3.1 Trail-First Navigation milestone started_
+_Last updated: 2026-04-04 -- v3.1 roadmap created_
