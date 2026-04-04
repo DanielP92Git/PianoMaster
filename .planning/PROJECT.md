@@ -326,8 +326,9 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v3.0 Phase 16 — 2026-04-03, milestone complete):**
+**Current State (after v3.1 Phase 17 — 2026-04-05, navigation restructuring complete):**
 
+- Trail is the primary student landing page at `/` with sidebar + bottom tab navigation; dashboard moved to `/dashboard` as secondary stats hub
 - 185-node trail system (93 original + 36 accidental + 42 content expansion + 14 ear training nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Ear Training trail path: 14 nodes across 2 units (Sound Direction + Interval Explorer), 2 boss nodes with multi-exercise sessions
 - Ear Training tab on TrailMap with cyan palette, driven by TRAIL_TAB_CONFIGS data array
@@ -578,4 +579,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-04 — v3.1 Trail-First Navigation milestone started_
+_Last updated: 2026-04-05 — Phase 17 Navigation Restructuring complete_
