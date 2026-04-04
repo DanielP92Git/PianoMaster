@@ -2,7 +2,7 @@
 phase: 17
 slug: navigation-restructuring
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-04-05
 ---
@@ -36,22 +36,22 @@ created: 2026-04-05
 
 ## Per-Task Verification Map
 
-| Task ID  | Plan | Wave | Requirement    | Test Type | Automated Command                    | File Exists | Status     |
-| -------- | ---- | ---- | -------------- | --------- | ------------------------------------ | ----------- | ---------- |
-| 17-01-01 | 01   | 1    | NAV-01, NAV-02 | unit      | `npx vitest run appNavigationConfig` | ❌ W0       | ⬜ pending |
-| 17-01-02 | 01   | 1    | NAV-04         | unit      | `npx vitest run appNavigationConfig` | ❌ W0       | ⬜ pending |
-| 17-01-03 | 01   | 1    | NAV-03         | unit      | `npx vitest run App`                 | ❌ W0       | ⬜ pending |
-| 17-01-04 | 01   | 1    | DASH-04        | unit      | `npx vitest run appNavigationConfig` | ❌ W0       | ⬜ pending |
-| 17-02-01 | 02   | 1    | NAV-01, NAV-02 | manual    | N/A — visual layout verification     | N/A         | ⬜ pending |
+| Task ID  | Plan | Wave | Requirement    | Test Type | Automated Command                    | File Exists | Status  |
+| -------- | ---- | ---- | -------------- | --------- | ------------------------------------ | ----------- | ------- |
+| 17-01-01 | 01   | 1    | NAV-01, NAV-02 | unit      | `npx vitest run appNavigationConfig` | W0          | pending |
+| 17-01-02 | 01   | 1    | NAV-04         | unit      | `npx vitest run appNavigationConfig` | W0          | pending |
+| 17-01-03 | 01   | 1    | NAV-03         | unit      | `npx vitest run App.test`            | W0          | pending |
+| 17-01-04 | 01   | 1    | DASH-04        | unit      | `npx vitest run appNavigationConfig` | W0          | pending |
+| 17-02-01 | 02   | 1    | NAV-01, NAV-02 | manual    | N/A — visual layout verification     | N/A         | pending |
 
-_Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
+_Status: pending / green / red / flaky_
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `src/components/layout/__tests__/appNavigationConfig.test.js` — stubs for NAV-01, NAV-02, NAV-04, DASH-04 (nav item order, trail presence, tab composition)
-- [ ] `src/__tests__/App.test.jsx` — stub for NAV-03 (index route renders TrailMapPage)
+- [ ] `src/components/layout/appNavigationConfig.test.js` — tests for NAV-01, NAV-02, NAV-04, DASH-04 (nav item order, trail presence, tab composition, end prop passthrough) — **created by Plan 17-01 Task 1**
+- [ ] `src/__tests__/App.test.jsx` — test for NAV-03 (index route renders TrailMapPage for students) — **created by Plan 17-01 Task 2**
 
 _Existing test infrastructure (vitest + @testing-library/react) covers all framework needs._
 
@@ -70,11 +70,11 @@ _Existing test infrastructure (vitest + @testing-library/react) covers all frame
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** pending
