@@ -242,6 +242,17 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
+## Current Milestone: v3.1 Trail-First Navigation
+
+**Goal:** Make the trail the center of the student experience by defaulting to it on login, adding it to persistent navigation, and reshaping the dashboard into a compact secondary hub.
+
+**Target features:**
+
+- Trail becomes the default landing page for returning students
+- Trail added to sidebar (desktop) and bottom tabs (mobile) as primary nav item
+- Dashboard redesigned as a compact stats/overview hub (keeps streak, XP, daily goals, practice log)
+- Post-game flow improved — easier path back to trail from VictoryScreen
+
 **Future candidates:**
 
 - Production deployment to Google Play / Apple App Store
@@ -567,4 +578,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-03 — v3.0 Cleanup & Polish milestone complete (5 phases, 15 requirements closed)_
+_Last updated: 2026-04-04 — v3.1 Trail-First Navigation milestone started_
