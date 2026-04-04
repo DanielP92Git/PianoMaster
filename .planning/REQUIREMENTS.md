@@ -9,17 +9,17 @@ Requirements for milestone v3.1 Trail-First Navigation. Each maps to roadmap pha
 
 ### Navigation
 
-- [ ] **NAV-01**: Trail is accessible from the desktop sidebar as a primary navigation item
-- [ ] **NAV-02**: Trail is accessible from the mobile bottom tab bar as a primary navigation item
-- [ ] **NAV-03**: Returning students land on the trail map by default after login (not the dashboard)
-- [ ] **NAV-04**: Navigation highlight/active state correctly reflects the current page (trail, dashboard, etc.)
+- [x] **NAV-01**: Trail is accessible from the desktop sidebar as a primary navigation item
+- [x] **NAV-02**: Trail is accessible from the mobile bottom tab bar as a primary navigation item
+- [x] **NAV-03**: Returning students land on the trail map by default after login (not the dashboard)
+- [x] **NAV-04**: Navigation highlight/active state correctly reflects the current page (trail, dashboard, etc.)
 
 ### Dashboard
 
 - [ ] **DASH-01**: Dashboard is redesigned as a compact stats/overview hub (not the primary destination)
 - [ ] **DASH-02**: PlayNextButton ("Continue/Begin Journey") hero CTA is removed from the dashboard
 - [ ] **DASH-03**: Existing dashboard cards (streak, XP, daily goals, practice log, daily message) are retained in the compact layout
-- [ ] **DASH-04**: Dashboard is accessible from sidebar and mobile bottom tabs as a secondary nav item
+- [x] **DASH-04**: Dashboard is accessible from sidebar and mobile bottom tabs as a secondary nav item
 
 ### Post-Game
 
@@ -65,14 +65,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 | ----------- | ----- | ------- |
-| NAV-01      | 17    | Pending |
-| NAV-02      | 17    | Pending |
-| NAV-03      | 17    | Pending |
-| NAV-04      | 17    | Pending |
+| NAV-01      | 17    | Done    |
+| NAV-02      | 17    | Done    |
+| NAV-03      | 17    | Done    |
+| NAV-04      | 17    | Done    |
 | DASH-01     | 18    | Pending |
 | DASH-02     | 18    | Pending |
 | DASH-03     | 18    | Pending |
-| DASH-04     | 17    | Pending |
+| DASH-04     | 17    | Done    |
 | POST-01     | 19    | Pending |
 | POST-02     | 19    | Pending |
 
@@ -85,4 +85,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 
 _Requirements defined: 2026-04-05_
-_Last updated: 2026-04-04 after roadmap creation_
+_Last updated: 2026-04-05 -- NAV-01 through NAV-04 and DASH-04 completed in plan 17-01_

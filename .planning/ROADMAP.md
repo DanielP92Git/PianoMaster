@@ -83,7 +83,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 Plans:
 
-- [ ] 17-01-PLAN.md — Nav config, routing, AppLayout, and NavLink end prop wiring
+- [x] 17-01-PLAN.md — Nav config, routing, AppLayout, and NavLink end prop wiring (completed 2026-04-05)
 - [ ] 17-02-PLAN.md — TrailMapPage layout conversion and URL reference audit
 
 **UI hint**: yes
@@ -117,7 +117,7 @@ Plans:
 
 | Phase                        | Milestone | Plans Complete | Status      | Completed |
 | ---------------------------- | --------- | -------------- | ----------- | --------- |
-| 17. Navigation Restructuring | v3.1      | 0/2            | Planning    | -         |
+| 17. Navigation Restructuring | v3.1      | 1/2            | Executing   | -         |
 | 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -         |
 | 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -         |
 
@@ -125,4 +125,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-05 -- Phase 17 planned (2 plans)_
+_Last updated: 2026-04-05 -- Phase 17 plan 01 complete (1/2 plans)_

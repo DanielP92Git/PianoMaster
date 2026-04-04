@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.1
 milestone_name: Trail-First Navigation
-status: planning
-stopped_at: Phase 17 context gathered
-last_updated: "2026-04-04T21:41:37.527Z"
-last_activity: 2026-04-04 -- Roadmap created for v3.1 (3 phases, 10 requirements)
+status: executing
+stopped_at: Completed 17-01-PLAN.md
+last_updated: "2026-04-05T00:00:00.000Z"
+last_activity: 2026-04-05 -- Plan 17-01 executed (nav config + routing + layout)
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -20,25 +20,29 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-04)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v3.1 Trail-First Navigation -- Phase 17 ready to plan
+**Current focus:** v3.1 Trail-First Navigation -- Executing Phase 17
 
 ## Current Position
 
 Phase: 17 of 19 (Navigation Restructuring)
-Plan: --
-Status: Ready to plan
-Last activity: 2026-04-04 -- Roadmap created for v3.1 (3 phases, 10 requirements)
+Plan: 1 of 2 complete
+Status: Executing
+Last activity: 2026-04-05 -- Plan 17-01 executed (nav config + routing + layout)
 
 ```
-v3.1 Trail-First Navigation: [░░░░░░░░░░] 0%
+v3.1 Trail-First Navigation: [█████░░░░░] 50% (1/2 plans)
 ```
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: ~198 (across all shipped milestones)
+- Total plans completed: ~199 (across all shipped milestones)
 - 21 milestones shipped in 63 days (2026-01-31 to 2026-04-03)
+
+| Phase | Plan | Duration | Tasks | Files |
+| ----- | ---- | -------- | ----- | ----- |
+| 17    | 01   | 11min    | 2     | 7     |
 
 ## Accumulated Context
 
@@ -47,6 +51,8 @@ v3.1 Trail-First Navigation: [░░░░░░░░░░] 0%
 - v3.1: Trail replaces dashboard as default landing page for returning students
 - v3.1: PlayNextButton hero CTA removed (trail is now the primary call-to-action)
 - v3.1: DASH-04 grouped with NAV phase (nav restructuring is one coherent change)
+- 17-01: Exported TeacherRedirect as named export for isolated unit testing
+- 17-01: NavLink end prop threaded through nav config, MobileTabsNav, Sidebar, and BottomNavigation
 
 ### Blockers/Concerns
 
@@ -54,15 +60,15 @@ v3.1 Trail-First Navigation: [░░░░░░░░░░] 0%
 
 ## Session Continuity
 
-Last session: 2026-04-04T21:41:37.519Z
-Stopped at: Phase 17 context gathered
-Resume file: .planning/phases/17-navigation-restructuring/17-CONTEXT.md
+Last session: 2026-04-05
+Stopped at: Completed 17-01-PLAN.md
+Resume file: .planning/phases/17-navigation-restructuring/17-01-SUMMARY.md
 
 **Next action:**
 
-- Plan Phase 17 (Navigation Restructuring) via `/gsd:plan-phase 17`
+- Execute Plan 17-02 (TrailMapPage layout + URL references) via `/gsd:execute-phase 17`
 
 ---
 
 _State initialized: 2026-01-31_
-_Last updated: 2026-04-04 -- v3.1 roadmap created_
+_Last updated: 2026-04-05 -- Plan 17-01 complete_
