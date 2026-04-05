@@ -114,10 +114,19 @@ Plans:
 **Requirements**: POST-01, POST-02
 **Success Criteria** (what must be TRUE):
 
-1. VictoryScreen for trail-originated games shows "Back to Trail" as the primary (most prominent) action button
-2. VictoryScreen for free play games includes a "Go to Trail" option alongside existing navigation choices (e.g., "Play Again", "Back")
-   **Plans**: TBD
-   **UI hint**: yes
+1. VictoryScreen for trail-originated games shows "Next Adventure" as the single primary action button (Duolingo-style single CTA)
+2. VictoryScreen for free play games shows "Play Again" + "Back to Games" (no trail option)
+3. GameOverScreen for trail games shows "Try Again" + "Back to Trail" (context-aware, not hardcoded)
+4. GameOverScreen for free play games shows "Try Again" + "Back to Games"
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 19-01-PLAN.md — VictoryScreen button simplification + useVictoryState cleanup + i18n
+- [ ] 19-02-PLAN.md — GameOverScreen context-aware navigation + game component threading
+
+**UI hint**: yes
 
 ## Progress
 
@@ -125,10 +134,10 @@ Plans:
 | ---------------------------- | --------- | -------------- | ----------- | ---------- |
 | 17. Navigation Restructuring | v3.1      | 2/2            | Complete    | 2026-04-04 |
 | 18. Dashboard Compaction     | v3.1      | 0/1            | Complete    | 2026-04-05 |
-| 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -          |
+| 19. Post-Game Trail Return   | v3.1      | 0/2            | Not started | -          |
 
 **Total: 21 milestones shipped, 92 phases, ~198 plans | v3.1 in progress: 3 phases**
 
 ---
 
-_Last updated: 2026-04-05 -- Phase 18 planned (1 plan)_
+_Last updated: 2026-04-05 -- Phase 19 planned (2 plans)_
