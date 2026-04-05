@@ -548,21 +548,23 @@ const EditStudentModal = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="mb-6 flex space-x-1 rounded-lg bg-gray-100 p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                activeTab === tab.id
-                  ? "bg-white text-gray-900 shadow-sm"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              <span>{tab.icon}</span>
-              {tab.name}
-            </button>
-          ))}
+        <div className="mb-6 overflow-x-auto rounded-lg bg-gray-100 p-1">
+          <div className="flex min-w-max space-x-1">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                <span>{tab.icon}</span>
+                {tab.name}
+              </button>
+            ))}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -881,7 +883,7 @@ const DeleteConfirmationModal = ({
             <h3 className="text-xl font-semibold text-white">
               {isMultiple ? "Delete Students" : "Delete Student"}
             </h3>
-            <p className="text-sm font-medium text-gray-400">
+            <p className="text-sm font-medium text-white/60">
               This action cannot be undone
             </p>
           </div>
@@ -1207,7 +1209,11 @@ const StudentDetailModal = ({
               <label className="text-sm font-medium text-gray-600">
                 Started
               </label>
-              <p className="text-gray-900">{student.member_since ? new Date(student.member_since).toLocaleDateString("en-GB") : "N/A"}</p>
+              <p className="text-gray-900">
+                {student.member_since
+                  ? new Date(student.member_since).toLocaleDateString("en-GB")
+                  : "N/A"}
+              </p>
             </div>
           </div>
         </Card>
@@ -2026,7 +2032,10 @@ const TeacherDashboard = () => {
           }
         />
         <Route path="/recordings" element={<RecordingsReview />} />
-        <Route path="/assignments" element={<AssignmentManagement students={students} />} />
+        <Route
+          path="/assignments"
+          element={<AssignmentManagement students={students} />}
+        />
         {/* TODO: re-enable when ready */}
         {/* <Route
           path="/notifications"
@@ -2034,7 +2043,7 @@ const TeacherDashboard = () => {
         /> */}
       </Routes>
 
-      {/* Students Tab Content (temporary until we extract it) */}
+      {/* Students Tab Content */}
       {activeTab === "students" && (
         <>
           {/* Summary Statistics */}
@@ -2042,7 +2051,9 @@ const TeacherDashboard = () => {
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs text-white/50">Total Students</p>
               <div className="mt-1 flex items-end justify-between">
-                <span className="text-2xl font-bold text-white">{totalStudents}</span>
+                <span className="text-2xl font-bold text-white">
+                  {totalStudents}
+                </span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/20">
                   <UserPlus className="h-4 w-4 text-blue-300" />
                 </div>
@@ -2052,7 +2063,9 @@ const TeacherDashboard = () => {
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs text-white/50">Active</p>
               <div className="mt-1 flex items-end justify-between">
-                <span className="text-2xl font-bold text-white">{activeStudents}</span>
+                <span className="text-2xl font-bold text-white">
+                  {activeStudents}
+                </span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/20">
                   <TrendingUp className="h-4 w-4 text-green-300" />
                 </div>
@@ -2062,7 +2075,9 @@ const TeacherDashboard = () => {
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs text-white/50">Avg. Accuracy</p>
               <div className="mt-1 flex items-end justify-between">
-                <span className="text-2xl font-bold text-white">{averageAccuracy}%</span>
+                <span className="text-2xl font-bold text-white">
+                  {averageAccuracy}%
+                </span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/20">
                   <TrendingUp className="h-4 w-4 text-purple-300" />
                 </div>
@@ -2072,7 +2087,9 @@ const TeacherDashboard = () => {
             <div className="rounded-xl border border-white/10 bg-white/5 p-3">
               <p className="text-xs text-white/50">Practice</p>
               <div className="mt-1 flex items-end justify-between">
-                <span className="text-2xl font-bold text-white">{Math.round(totalPracticeMins)}m</span>
+                <span className="text-2xl font-bold text-white">
+                  {Math.round(totalPracticeMins)}m
+                </span>
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/20">
                   <TrendingUp className="h-4 w-4 text-orange-300" />
                 </div>
@@ -2120,8 +2137,12 @@ const TeacherDashboard = () => {
                       <option value="xp-asc">XP Low-High</option>
                       <option value="streak-desc">Streak High-Low</option>
                       <option value="streak-asc">Streak Low-High</option>
-                      <option value="attendance-desc">Practice Rate High-Low</option>
-                      <option value="attendance-asc">Practice Rate Low-High</option>
+                      <option value="attendance-desc">
+                        Practice Rate High-Low
+                      </option>
+                      <option value="attendance-asc">
+                        Practice Rate Low-High
+                      </option>
                       <option value="lastPractice-desc">Recent Practice</option>
                       <option value="accuracy-desc">Accuracy High-Low</option>
                     </select>
@@ -2355,8 +2376,10 @@ const TeacherDashboard = () => {
                     >
                       {/* Collapsed header — always visible */}
                       <div
-                        className="flex items-center gap-3 p-3 cursor-pointer"
-                        onClick={() => toggleStudentExpanded(student.student_id)}
+                        className="flex cursor-pointer items-center gap-3 p-3"
+                        onClick={() =>
+                          toggleStudentExpanded(student.student_id)
+                        }
                       >
                         <button
                           onClick={(e) => {
@@ -2390,7 +2413,7 @@ const TeacherDashboard = () => {
                       {isExpanded && (
                         <div className="px-3 pb-3">
                           {/* Activity + actions */}
-                          <div className="flex items-center justify-between mb-3">
+                          <div className="mb-3 flex items-center justify-between">
                             <span
                               className={`text-xs ${getRecentActivitySummary(student).color}`}
                             >
@@ -2430,9 +2453,13 @@ const TeacherDashboard = () => {
                                 <span className="text-sm font-semibold text-white">
                                   {student.current_streak || 0}
                                 </span>
-                                <span className="text-xs text-white/50">days</span>
+                                <span className="text-xs text-white/50">
+                                  days
+                                </span>
                               </div>
-                              <p className="mt-0.5 text-xs text-white/40">Streak</p>
+                              <p className="mt-0.5 text-xs text-white/40">
+                                Streak
+                              </p>
                             </div>
 
                             {/* Practice Rate */}
@@ -2443,7 +2470,9 @@ const TeacherDashboard = () => {
                                   {calculatePracticeRate(student)}%
                                 </span>
                               </div>
-                              <p className="mt-0.5 text-xs text-white/40">Practice</p>
+                              <p className="mt-0.5 text-xs text-white/40">
+                                Practice
+                              </p>
                               <div className="mt-1 h-1 w-full rounded-full bg-white/15">
                                 <div
                                   className={`h-1 rounded-full transition-all duration-500 ${
@@ -2530,7 +2559,6 @@ const TeacherDashboard = () => {
         onClose={() => setShowExportModal(false)}
         student={studentForExport}
       />
-
     </div>
   );
 };
