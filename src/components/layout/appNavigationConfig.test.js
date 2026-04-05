@@ -35,11 +35,11 @@ describe("APP_NAV_ITEMS.student trail as first item", () => {
     expect(trail.end).toBe(true);
   });
 
-  it("D-15: trail entry uses Map icon from lucide-react", () => {
+  it("D-15: trail entry uses TrailIcon (PNG)", () => {
     const trail = APP_NAV_ITEMS.student.find((item) => item.id === "trail");
     expect(trail.icon).toBeTruthy();
     const name = trail.icon.displayName || trail.icon.name || "";
-    expect(name).toContain("Map");
+    expect(name).toContain("TrailIcon");
   });
 
   it("trail entry uses navigation.links.trail labelKey", () => {
