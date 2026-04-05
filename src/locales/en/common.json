@@ -27,7 +27,7 @@
     "points": "XP",
     "loading": "Loading...",
     "next": "Next",
-    "toGamesMode": "To Games Mode",
+    "backToGames": "Back to Games",
     "dashboard": "Dashboard",
     "playAgain": "Play Again",
     "enabled": "On",
@@ -1373,7 +1373,8 @@
     "youAreNow": "You are now a {{title}}!",
     "prestigeUnlocked": "Prestige Unlocked!",
     "prestigeEntry": "You've reached the highest level! Welcome to Maestro tier!",
-    "personalBest": "New Personal Best!"
+    "personalBest": "New Personal Best!",
+    "nextAdventure": "Next Adventure"
   },
   "celebration": {
     "boss.perfectVictory": "PERFECT VICTORY!",
