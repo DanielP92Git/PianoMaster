@@ -326,10 +326,11 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v3.1 Phase 18 — 2026-04-05, dashboard compaction complete):**
+**Current State (after v3.1 Phase 19 — 2026-04-05, post-game trail return complete):**
 
 - Trail is the primary student landing page at `/` with sidebar + bottom tab navigation; dashboard moved to `/dashboard` as secondary stats hub
 - Dashboard compacted: hero image removed, glass greeting bar (avatar + name + level pill), card spacing tightened (space-y-4), PlayNextButton/OnboardingTour/Fireflies removed, "History" renamed to "Recordings" with Headphones icon
+- Post-game flow: VictoryScreen shows single "Next Adventure" CTA for trail games (Duolingo-style), "Play Again"+"Back to Games" for free play; GameOverScreen uses React Router navigation with smart trail tab routing instead of hardcoded redirects
 - 185-node trail system (93 original + 36 accidental + 42 content expansion + 14 ear training nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Ear Training trail path: 14 nodes across 2 units (Sound Direction + Interval Explorer), 2 boss nodes with multi-exercise sessions
 - Ear Training tab on TrailMap with cyan palette, driven by TRAIL_TAB_CONFIGS data array
@@ -580,4 +581,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-05 — Phase 18 Dashboard Compaction complete_
+_Last updated: 2026-04-05 — Phase 19 Post-Game Trail Return complete (v3.1 milestone complete)_
