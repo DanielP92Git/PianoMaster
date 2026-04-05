@@ -655,7 +655,9 @@
       "tryAgain": "Try Again",
       "exit": "Exit",
       "livesLost": "No lives left!",
-      "livesLostMessage": "Great try! You got {{count}} right!"
+      "livesLostMessage": "Great try! You got {{count}} right!",
+      "backToTrail": "Back to Trail",
+      "backToGames": "Back to Games"
     },
     "engagement": {
       "combo": "Combo",
