@@ -2303,6 +2303,7 @@ export function NotesRecognitionGame() {
             timeRanOut={progress.timeRanOut}
             livesLost={progress.livesLost}
             correctAnswers={progress.correctAnswers}
+            nodeId={nodeId}
             onReset={() => {
               resetProgress();
               resetSettings();
