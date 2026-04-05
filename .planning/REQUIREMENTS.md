@@ -16,9 +16,9 @@ Requirements for milestone v3.1 Trail-First Navigation. Each maps to roadmap pha
 
 ### Dashboard
 
-- [ ] **DASH-01**: Dashboard is redesigned as a compact stats/overview hub (not the primary destination)
-- [ ] **DASH-02**: PlayNextButton ("Continue/Begin Journey") hero CTA is removed from the dashboard
-- [ ] **DASH-03**: Existing dashboard cards (streak, XP, daily goals, practice log, daily message) are retained in the compact layout
+- [x] **DASH-01**: Dashboard is redesigned as a compact stats/overview hub (not the primary destination)
+- [x] **DASH-02**: PlayNextButton ("Continue/Begin Journey") hero CTA is removed from the dashboard
+- [x] **DASH-03**: Existing dashboard cards (streak, XP, daily goals, practice log, daily message) are retained in the compact layout
 - [x] **DASH-04**: Dashboard is accessible from sidebar and mobile bottom tabs as a secondary nav item
 
 ### Post-Game
@@ -65,16 +65,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 | ----------- | ----- | ------- |
-| NAV-01      | 17    | Done    |
-| NAV-02      | 17    | Done    |
-| NAV-03      | 17    | Done    |
-| NAV-04      | 17    | Done    |
-| DASH-01     | 18    | Pending |
-| DASH-02     | 18    | Pending |
-| DASH-03     | 18    | Pending |
-| DASH-04     | 17    | Done    |
-| POST-01     | 19    | Pending |
-| POST-02     | 19    | Pending |
+| NAV-01      | 17    | Done     |
+| NAV-02      | 17    | Done     |
+| NAV-03      | 17    | Done     |
+| NAV-04      | 17    | Done     |
+| DASH-01     | 18    | Complete |
+| DASH-02     | 18    | Complete |
+| DASH-03     | 18    | Complete |
+| DASH-04     | 17    | Done     |
+| POST-01     | 19    | Pending  |
+| POST-02     | 19    | Pending  |
 
 **Coverage:**
 

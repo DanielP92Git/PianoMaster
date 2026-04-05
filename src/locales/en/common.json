@@ -989,6 +989,11 @@
           "title": "View Practice History",
           "description": "Review your progress and sessions",
           "short": "History"
+        },
+        "recordings": {
+          "title": "View Recordings",
+          "description": "Review your progress and sessions",
+          "short": "Recordings"
         }
       }
     },

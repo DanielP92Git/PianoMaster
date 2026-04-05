@@ -306,7 +306,7 @@ Deno.serve(async (req: Request) => {
             title: checkin.title,
             body: checkin.body,
             tag: 'practice-checkin',
-            data: { url: '/?practice_checkin=1', type: 'practice-checkin' },
+            data: { url: '/dashboard?practice_checkin=1', type: 'practice-checkin' },
           }),
           {},
         );

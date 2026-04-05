@@ -5,9 +5,8 @@ import { useScores } from "../../features/userData/useScores";
 import { useUser } from "../../features/authentication/useUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streakService } from "../../services/streakService";
-import { getNextRecommendedNode } from "../../services/skillProgressService";
 import { useModal } from "../../contexts/ModalContext";
-import { Bell, X, Mic, Piano } from "lucide-react";
+import { Bell, X, Mic, Headphones } from "lucide-react";
 import { toast } from "react-hot-toast";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
@@ -17,14 +16,10 @@ import { dashboardReminderService } from "../../services/dashboardReminderServic
 import { useUserProfile } from "../../hooks/useUserProfile";
 import { ACCESSORY_SLOT_STYLES } from "../ui/AnimatedAvatar";
 import { getAvatarImageSource } from "../../utils/avatarAssets";
-import Fireflies from "../ui/Fireflies";
 import DailyGoalsCard from "../dashboard/DailyGoalsCard";
 import WeeklySummaryCard from "../dashboard/WeeklySummaryCard";
 import DailyMessageBanner from "../dashboard/DailyMessageBanner";
-import PlayNextButton from "../dashboard/PlayNextButton";
 import DailyChallengeCard from "../dashboard/DailyChallengeCard";
-import { useOnboarding } from "../../hooks/useOnboarding";
-import OnboardingTour from "../onboarding/OnboardingTour";
 import UnifiedStatsCard from "../dashboard/UnifiedStatsCard";
 import PushOptInCard from "../dashboard/PushOptInCard";
 import PracticeLogCard from "../dashboard/PracticeLogCard";
@@ -43,7 +38,6 @@ import { motion } from "framer-motion";
 function Dashboard() {
   const { user, isTeacher, isStudent, profile } = useUser();
   const { isPremium } = useSubscription();
-  const { shouldShowOnboarding, completeOnboarding } = useOnboarding();
   const { t, i18n } = useTranslation(["common", "trail"]);
   const isRTL = i18n.dir() === "rtl";
   const { data: profileData, isLoading: isProfileLoading } = useUserProfile();
@@ -112,7 +106,7 @@ function Dashboard() {
     if (!hasPracticeCheckin || !user?.id || !isStudent) return;
 
     // Clean URL synchronously before async work — prevents re-trigger on re-render (D-18)
-    window.history.replaceState({}, "", "/");
+    window.history.replaceState({}, "", "/dashboard");
 
     const localDate = practiceLogService.getCalendarDate();
 
@@ -140,18 +134,6 @@ function Dashboard() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasPracticeCheckin, user?.id, isStudent]);
-
-  // Fetch next recommended trail node (only for students)
-  // isPremium in queryKey ensures cache invalidates when subscription status changes
-  const { data: nextNode } = useQuery({
-    queryKey: ["next-recommended-node", user?.id, isPremium],
-    queryFn: () => {
-      if (!user?.id || !isStudent) return null;
-      return getNextRecommendedNode(user.id, isPremium);
-    },
-    enabled: !!user?.id && isStudent,
-    staleTime: 1 * 60 * 1000, // 1 minute - node availability changes when exercises complete
-  });
 
   // Fetch daily goals with progress (only for students)
   const {
@@ -503,27 +485,21 @@ function Dashboard() {
   if (isLoading || streakLoading) {
     return (
       <div className="min-h-screen">
-        <div className="animate-pulse">
-          {/* Hero skeleton */}
-          <div className="h-[220px] bg-white/10 md:h-[260px]" />
-          {/* Play button skeleton */}
-          <div className="mx-auto -mt-7 flex justify-center">
-            <div className="h-16 w-56 rounded-full bg-white/15" />
-          </div>
-          <div className="mx-auto max-w-2xl space-y-6 px-4 pt-6 md:px-6">
-            {/* Stats card skeleton */}
-            <div className="h-40 rounded-2xl bg-white/10" />
-            {/* Goals skeleton */}
-            <div className="h-48 rounded-3xl bg-white/10" />
-            {/* Practice tools skeleton */}
-            <div className="flex justify-center gap-8">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex flex-col items-center gap-2">
-                  <div className="h-16 w-16 rounded-full bg-white/10" />
-                  <div className="h-3 w-12 rounded bg-white/10" />
-                </div>
-              ))}
-            </div>
+        <div className="mx-auto max-w-2xl animate-pulse space-y-4 px-4 pt-4 md:px-6">
+          {/* Greeting bar skeleton */}
+          <div className="h-14 rounded-xl bg-white/10" />
+          {/* Stats card skeleton */}
+          <div className="h-40 rounded-2xl bg-white/10" />
+          {/* Goals skeleton */}
+          <div className="h-48 rounded-3xl bg-white/10" />
+          {/* Practice tools skeleton */}
+          <div className="flex justify-center gap-8">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
+                <div className="h-16 w-16 rounded-full bg-white/10" />
+                <div className="h-3 w-12 rounded bg-white/10" />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -559,15 +535,15 @@ function Dashboard() {
       hasIndicator: false,
     },
     {
-      key: "history",
+      key: "recordings",
       to: "/practice-sessions",
       element: "link",
       borderColor: "border-blue-400/40",
       bgColor: "bg-blue-500/15",
       glowShadow: "shadow-[0_0_20px_rgba(59,130,246,0.25)]",
-      icon: <Piano className="h-7 w-7 text-blue-300" />,
-      label: t("dashboard.practiceTools.cards.history.short", {
-        defaultValue: "History",
+      icon: <Headphones className="h-7 w-7 text-blue-300" />,
+      label: t("dashboard.practiceTools.cards.recordings.short", {
+        defaultValue: "Recordings",
       }),
       hasIndicator: false,
     },
@@ -577,52 +553,28 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen pb-4" dir={isRTL ? "rtl" : "ltr"}>
-      {/* COMPACT HERO */}
-      <header className="group relative h-[220px] overflow-hidden rounded-b-[3rem] shadow-2xl md:h-[260px]">
-        <picture className="absolute inset-0">
-          <source
-            media="(min-width: 1024px)"
-            type="image/webp"
-            srcSet="/images/desktop-dashboard-hero.webp"
-          />
-          <source type="image/webp" srcSet="/images/dashboard-hero.webp" />
-          <source
-            media="(min-width: 1024px)"
-            srcSet="/images/desktop-dashboard-hero.png"
-          />
-          <img
-            src="/images/dashboard-hero.png"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
-            aria-hidden="true"
-            loading="eager"
-            fetchPriority="high"
-          />
-        </picture>
-
-        {/* Dark gradient overlay */}
-        <div className="absolute inset-0 z-[1] bg-gradient-to-t from-violet-950 via-violet-950/40 to-transparent opacity-90" />
-
-        {/* Fireflies effect overlay */}
-        <Fireflies count={5} className="z-[2]" />
-
-        <div className="relative z-20 flex h-full flex-col items-center justify-center">
-          {/* Small app name */}
-          <span className="mb-2 text-xs font-medium uppercase tracking-widest text-white/60">
-            {t("app.title")}
-          </span>
-
-          {/* Horizontal avatar + level pill */}
-          {isProfileLoading ? (
-            <div className="mb-2 h-16 w-16 animate-pulse rounded-full bg-white/10" />
-          ) : (
-            <div
-              className={`mb-2 flex items-center ${isRTL ? "flex-row-reverse" : "flex-row"}`}
-            >
-              {/* Avatar (z-10, overlaps the pill) */}
+      {/* MAIN CONTENT */}
+      <MotionOrDiv
+        className="mx-auto max-w-2xl space-y-4 px-4 pt-4 md:px-6"
+        {...(!reducedMotion && {
+          initial: { opacity: 0 },
+          animate: { opacity: 1 },
+          transition: { duration: 0.4 },
+        })}
+      >
+        {/* GREETING BAR */}
+        {isStudent && (
+          <div
+            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg px-4 py-3 flex items-center gap-3"
+            style={{ direction: isRTL ? "rtl" : "ltr" }}
+          >
+            {/* Avatar — 48px, linked to /avatars */}
+            {isProfileLoading ? (
+              <div className="h-12 w-12 shrink-0 animate-pulse rounded-full bg-white/10" />
+            ) : (
               <Link to="/avatars" className="relative z-10 shrink-0">
                 {avatarUrl ? (
-                  <div className="relative h-16 w-16 overflow-hidden rounded-full border-2 border-sky-300/50 shadow-[0_2px_12px_rgba(56,189,248,0.4)]">
+                  <div className="relative h-12 w-12 overflow-hidden rounded-full border-2 border-sky-300/50 shadow-[0_2px_12px_rgba(56,189,248,0.4)] hover:border-sky-300/80 hover:shadow-[0_2px_16px_rgba(56,189,248,0.6)] focus-visible:ring-2 focus-visible:ring-white/50">
                     <img
                       className="h-full w-full object-cover"
                       src={avatarUrl}
@@ -646,14 +598,25 @@ function Dashboard() {
                     })}
                   </div>
                 ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-white/30 bg-slate-800">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/30 bg-slate-800">
                     <span className="text-2xl">🎹</span>
                   </div>
                 )}
               </Link>
-              {/* Level pill (tucks behind avatar with negative margin) */}
+            )}
+
+            {/* Greeting text */}
+            <span className="flex-1 text-base font-semibold text-white">
+              {t("dashboard.header.greeting", {
+                name: firstName,
+                defaultValue: `Hi, ${firstName}!`,
+              })}
+            </span>
+
+            {/* Level pill */}
+            {!isProfileLoading && (
               <div
-                className={`-ml-7 flex h-6 items-center rounded-full border-2 border-transparent pl-5 pr-2`}
+                className="flex h-6 items-center rounded-full border-2 border-transparent px-3"
                 style={{
                   background: isPrestige
                     ? "linear-gradient(135deg, #f59e0b, #d97706, #b45309) padding-box, linear-gradient(to right, #fbbf24, #fde68a, #fbbf24) border-box"
@@ -663,7 +626,7 @@ function Dashboard() {
                     : "0 2px 12px rgba(56,189,248,0.4)",
                 }}
               >
-                <span className="ml-3 text-xs font-bold uppercase tracking-wider text-white">
+                <span className="text-xs font-bold uppercase tracking-wider text-white">
                   {isPrestige
                     ? t("xpLevels.prestigeTitle", {
                         tier: levelData.prestigeTier,
@@ -674,43 +637,10 @@ function Dashboard() {
                       })}
                 </span>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* Compact greeting */}
-          <h1 className="text-xl font-bold text-white drop-shadow">
-            {t("dashboard.header.greeting", {
-              name: firstName,
-              defaultValue: `Hi, ${firstName}!`,
-            })}
-          </h1>
-        </div>
-      </header>
-
-      {/* ONBOARDING TOUR */}
-      {shouldShowOnboarding && (
-        <OnboardingTour onComplete={completeOnboarding} />
-      )}
-
-      {/* PLAY NEXT BUTTON (overlaps hero) */}
-      {isStudent && nextNode && (
-        <PlayNextButton
-          to="/trail"
-          highlightNodeId={nextNode.id}
-          hasStarted={!!(nextNode.progress || nextNode.prerequisites?.length)}
-          isRTL={isRTL}
-        />
-      )}
-
-      {/* MAIN CONTENT */}
-      <MotionOrDiv
-        className="mx-auto max-w-2xl space-y-12 px-4 pt-6 md:px-6"
-        {...(!reducedMotion && {
-          initial: { opacity: 0 },
-          animate: { opacity: 1 },
-          transition: { duration: 0.4 },
-        })}
-      >
         {/* DAILY FUN FACT BANNER */}
         {isStudent && <DailyMessageBanner />}
 
