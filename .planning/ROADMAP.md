@@ -98,8 +98,14 @@ Plans:
 1. Dashboard displays a compact layout that feels like a stats overview, not a landing page
 2. The PlayNextButton ("Continue/Begin Journey") hero CTA no longer appears anywhere on the dashboard
 3. Existing dashboard cards (streak display, XP progress, daily goals, practice log, daily message) are all still visible and functional in the compact layout
-   **Plans**: TBD
-   **UI hint**: yes
+
+**Plans:** 1 plan
+
+Plans:
+
+- [ ] 18-01-PLAN.md — Compact dashboard redesign: hero removal, greeting bar, gap reduction, Recordings button, URL updates
+
+**UI hint**: yes
 
 ### Phase 19: Post-Game Trail Return
 
@@ -118,11 +124,11 @@ Plans:
 | Phase                        | Milestone | Plans Complete | Status      | Completed  |
 | ---------------------------- | --------- | -------------- | ----------- | ---------- |
 | 17. Navigation Restructuring | v3.1      | 2/2            | Complete    | 2026-04-04 |
-| 18. Dashboard Compaction     | v3.1      | 0/?            | Not started | -          |
+| 18. Dashboard Compaction     | v3.1      | 0/1            | Planned     | -          |
 | 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -          |
 
 **Total: 21 milestones shipped, 92 phases, ~198 plans | v3.1 in progress: 3 phases**
 
 ---
 
-_Last updated: 2026-04-05 -- Phase 17 plan 01 complete (1/2 plans)_
+_Last updated: 2026-04-05 -- Phase 18 planned (1 plan)_
