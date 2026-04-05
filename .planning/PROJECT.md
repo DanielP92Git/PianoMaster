@@ -326,9 +326,10 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v3.1 Phase 17 — 2026-04-05, navigation restructuring complete):**
+**Current State (after v3.1 Phase 18 — 2026-04-05, dashboard compaction complete):**
 
 - Trail is the primary student landing page at `/` with sidebar + bottom tab navigation; dashboard moved to `/dashboard` as secondary stats hub
+- Dashboard compacted: hero image removed, glass greeting bar (avatar + name + level pill), card spacing tightened (space-y-4), PlayNextButton/OnboardingTour/Fireflies removed, "History" renamed to "Recordings" with Headphones icon
 - 185-node trail system (93 original + 36 accidental + 42 content expansion + 14 ear training nodes) with enchanted forest theme, 3D nodes, zigzag layout, and tab navigation
 - Ear Training trail path: 14 nodes across 2 units (Sound Direction + Interval Explorer), 2 boss nodes with multi-exercise sessions
 - Ear Training tab on TrailMap with cyan palette, driven by TRAIL_TAB_CONFIGS data array
@@ -337,7 +338,7 @@ Explicitly excluded:
 - NoteSpeedCards speed card game for single-note trail nodes (treble_1_1, bass_1_1) — conveyor animation, 3-lives, combo, 4-tier speed ramp
 - Dedicated Parent Portal with gate-first architecture: math gate on every visit, QuickStatsGrid, 4 content sections (stats, heatmap, subscription, settings)
 - Parent Zone entry points: desktop sidebar (ShieldCheck icon) + mobile Settings card (ParentZoneEntryCard)
-- Kid-friendly Dashboard with compact hero, XP ring, unified stats card, circular practice tools, PracticeLogCard
+- Kid-friendly Dashboard with glass greeting bar (avatar + name + level pill), unified stats card, circular practice tools (Recordings/Headphones), PracticeLogCard
 - Kid-friendly TrailNodeModal with centered glowing icon, 3D bubble note badges, golden XP card, loading skeleton
 - Push notifications: COPPA parent gate, context-aware messages, 1/day rate limit, practice check-in priority
 - Streak protection: 36-hour grace, freeze shields, weekend pass, 2x comeback bonus
@@ -579,4 +580,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-05 — Phase 17 Navigation Restructuring complete_
+_Last updated: 2026-04-05 — Phase 18 Dashboard Compaction complete_
