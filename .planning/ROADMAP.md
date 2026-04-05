@@ -61,7 +61,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 ### v3.1 Trail-First Navigation (In Progress)
 
 - [x] **Phase 17: Navigation Restructuring** - Trail becomes the primary nav destination with correct active states (completed 2026-04-04)
-- [ ] **Phase 18: Dashboard Compaction** - Dashboard redesigned as a compact stats hub without the hero CTA
+- [x] **Phase 18: Dashboard Compaction** - Dashboard redesigned as a compact stats hub without the hero CTA (completed 2026-04-05)
 - [ ] **Phase 19: Post-Game Trail Return** - VictoryScreen flows guide players back to the trail
 
 ## Phase Details
@@ -99,7 +99,7 @@ Plans:
 2. The PlayNextButton ("Continue/Begin Journey") hero CTA no longer appears anywhere on the dashboard
 3. Existing dashboard cards (streak display, XP progress, daily goals, practice log, daily message) are all still visible and functional in the compact layout
 
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 
@@ -124,7 +124,7 @@ Plans:
 | Phase                        | Milestone | Plans Complete | Status      | Completed  |
 | ---------------------------- | --------- | -------------- | ----------- | ---------- |
 | 17. Navigation Restructuring | v3.1      | 2/2            | Complete    | 2026-04-04 |
-| 18. Dashboard Compaction     | v3.1      | 0/1            | Planned     | -          |
+| 18. Dashboard Compaction     | v3.1      | 0/1            | Complete    | 2026-04-05 |
 | 19. Post-Game Trail Return   | v3.1      | 0/?            | Not started | -          |
 
 **Total: 21 milestones shipped, 92 phases, ~198 plans | v3.1 in progress: 3 phases**
