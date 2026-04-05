@@ -41,7 +41,7 @@ created: 2026-04-05
 | 18-01-01 | 01   | 1    | DASH-01     | smoke (render) | `npx vitest run src/components/layout/` | ❌ W0       | ⬜ pending |
 | 18-01-02 | 01   | 1    | DASH-02     | unit           | `npx vitest run src/components/layout/` | ❌ W0       | ⬜ pending |
 | 18-01-03 | 01   | 1    | DASH-03     | unit           | `npx vitest run src/components/layout/` | ❌ W0       | ⬜ pending |
-| 18-02-01 | 02   | 1    | DASH-02     | unit           | `npx vitest run src/locales/`           | ❌ W0       | ⬜ pending |
+| 18-01-04 | 01   | 1    | DASH-02     | unit           | `npx vitest run src/locales/`           | ❌ W0       | ⬜ pending |
 
 _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 
@@ -62,7 +62,7 @@ _Note: Dashboard.jsx has no existing test file. The existing test at `src/__test
 | Dashboard renders compact layout without hero | DASH-01     | Visual layout change — no automated assertion for "compact feel" | Load `/dashboard`, verify no hero image, greeting bar shows avatar + name + level pill                                                                             |
 | PlayNextButton absent from dashboard          | DASH-02     | Component removal — verify visually it's gone                    | Load `/dashboard`, verify no "Continue Journey" / "Begin Journey" CTA                                                                                              |
 | All dashboard cards render                    | DASH-03     | Card presence is visual                                          | Load `/dashboard`, scroll through cards: DailyMessage, UnifiedStats, PracticeLog, Practice Tools (3 buttons), PushOptIn, DailyChallenge, DailyGoals, WeeklySummary |
-| Greeting bar RTL                              | DASH-01     | RTL visual layout                                                | Switch to Hebrew, verify greeting bar flex-row-reverse                                                                                                             |
+| Greeting bar RTL                              | DASH-01     | RTL visual layout                                                | Switch to Hebrew, verify greeting bar renders with direction:rtl — avatar on right, pill on left, text between them                                                |
 | Push notification URL opens dashboard         | DASH-01     | Requires push notification trigger                               | Send test push, tap it, verify lands on `/dashboard`                                                                                                               |
 
 ---
