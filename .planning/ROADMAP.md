@@ -23,6 +23,7 @@
 - ✅ **v2.8 Introductory Single-Note Game** — Phases 1, 6 (shipped 2026-03-26)
 - ✅ **v2.9 Game Variety & Ear Training** — Phases 7-11 (shipped 2026-03-30)
 - ✅ **v3.0 Cleanup & Polish** — Phases 12-16 (shipped 2026-04-03)
+- 🚧 **v3.1 Trail-First Navigation** — Phases 17-19 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -85,6 +86,12 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 **Total: 21 milestones shipped, 92 phases, ~198 plans**
 
+### v3.1 Trail-First Navigation (In Progress)
+
+- [x] Phase 17: Navigation Restructuring (2/2 plans) -- completed 2026-04-04
+- [x] Phase 18: Dashboard Compaction (1/1 plan) -- completed 2026-04-05
+- [ ] Phase 19: Post-Game Trail Return (1/2 plans) -- in progress
+
 ---
 
-_Last updated: 2026-04-03 — v3.0 milestone archived_
+_Last updated: 2026-04-05 — Phase 19 Plan 01 complete_

@@ -23,8 +23,8 @@ Requirements for milestone v3.1 Trail-First Navigation. Each maps to roadmap pha
 
 ### Post-Game
 
-- [ ] **POST-01**: VictoryScreen shows "Back to Trail" as the primary action for trail games (verify and ensure consistency)
-- [ ] **POST-02**: VictoryScreen for free play games offers a "Go to Trail" option alongside existing navigation
+- [x] **POST-01**: VictoryScreen shows "Back to Trail" as the primary action for trail games (verify and ensure consistency)
+- [x] **POST-02**: VictoryScreen for free play games offers a "Go to Trail" option alongside existing navigation
 
 ## Future Requirements
 
@@ -73,8 +73,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-02     | —     | Pending |
 | DASH-03     | —     | Pending |
 | DASH-04     | —     | Pending |
-| POST-01     | —     | Pending |
-| POST-02     | —     | Pending |
+| POST-01     | 19-01 | Complete |
+| POST-02     | 19-01 | Complete |
 
 **Coverage:**
 
