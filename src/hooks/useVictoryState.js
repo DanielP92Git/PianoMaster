@@ -12,7 +12,6 @@ import {
   updateNodeProgress,
   getNodeProgress,
   updateExerciseProgress,
-  getNextNodeInPath,
   calculateStarsFromPercentage,
 } from "../services/skillProgressService";
 import {
@@ -25,7 +24,6 @@ import {
 import {
   getNodeById,
   getTrailTabForNode,
-  EXERCISE_TYPES,
 } from "../data/skillTrail";
 import { streakService } from "../services/streakService";
 import { toast } from "react-hot-toast";
@@ -200,8 +198,6 @@ export function useVictoryState({
   const [_isFirstComplete, setIsFirstComplete] = useState(false);
   const [exercisesRemaining, setExercisesRemaining] = useState(0);
   const [nodeComplete, setNodeComplete] = useState(false);
-  const [nextNode, setNextNode] = useState(null);
-  const [fetchingNextNode, setFetchingNextNode] = useState(false);
   // Track if we're still processing completion (show loading until done)
   const [isProcessingTrail, setIsProcessingTrail] = useState(true);
   const hasProcessedTrail = useRef(false);
@@ -592,100 +588,6 @@ export function useVictoryState({
     setShowBossModal(false);
   }, [markBossAsShown]);
 
-  // Fetch next recommended node when current node is complete
-  useEffect(() => {
-    const fetchNextNode = async () => {
-      if (!user?.id || !nodeId || !nodeComplete) return;
-
-      setFetchingNextNode(true);
-      try {
-        const recommendedNode = await getNextNodeInPath(user.id, nodeId);
-        setNextNode(recommendedNode);
-      } catch (error) {
-        console.error("Error fetching next node:", error);
-        setNextNode(null);
-      } finally {
-        setFetchingNextNode(false);
-      }
-    };
-
-    fetchNextNode();
-  }, [user?.id, nodeId, nodeComplete]);
-
-  // Navigation helper for moving to next node
-  const trailTab = getTrailTabForNode(nodeId);
-  const trailPath = trailTab ? `/trail?path=${trailTab}` : "/trail";
-
-  const navigateToNextNode = useCallback(() => {
-    if (!nextNode) {
-      navigate(trailPath);
-      return;
-    }
-
-    // Get first exercise of next node
-    const firstExercise = nextNode.exercises?.[0];
-    if (!firstExercise) {
-      console.warn("Next node has no exercises");
-      navigate(trailPath);
-      return;
-    }
-
-    // Build navigation state for the next node
-    const navState = {
-      nodeId: nextNode.id,
-      nodeConfig: firstExercise.config,
-      exerciseIndex: 0,
-      totalExercises: nextNode.exercises.length,
-      exerciseType: firstExercise.type,
-    };
-
-    // Route based on exercise type
-    switch (firstExercise.type) {
-      case EXERCISE_TYPES.NOTE_RECOGNITION:
-        navigate("/notes-master-mode/notes-recognition-game", {
-          state: navState,
-        });
-        break;
-      case EXERCISE_TYPES.SIGHT_READING:
-        navigate("/notes-master-mode/sight-reading-game", { state: navState });
-        break;
-      case EXERCISE_TYPES.MEMORY_GAME:
-        navigate("/notes-master-mode/memory-game", { state: navState });
-        break;
-      case EXERCISE_TYPES.RHYTHM:
-        navigate("/rhythm-mode/metronome-trainer", { state: navState });
-        break;
-      case EXERCISE_TYPES.RHYTHM_TAP:
-        navigate("/rhythm-mode/rhythm-reading-game", { state: navState });
-        break;
-      case EXERCISE_TYPES.RHYTHM_DICTATION:
-        navigate("/rhythm-mode/rhythm-dictation-game", { state: navState });
-        break;
-      case EXERCISE_TYPES.BOSS_CHALLENGE:
-        navigate("/notes-master-mode/notes-recognition-game", {
-          state: navState,
-        });
-        break;
-      case EXERCISE_TYPES.NOTE_CATCH:
-        navigate("/notes-master-mode/note-speed-cards", { state: navState });
-        break;
-      case EXERCISE_TYPES.ARCADE_RHYTHM:
-        navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
-        break;
-      case EXERCISE_TYPES.PITCH_COMPARISON:
-        navigate("/ear-training-mode/note-comparison-game", {
-          state: navState,
-        });
-        break;
-      case EXERCISE_TYPES.INTERVAL_ID:
-        navigate("/ear-training-mode/interval-game", { state: navState });
-        break;
-      default:
-        console.warn("Unknown exercise type:", firstExercise.type);
-        navigate(trailPath);
-    }
-  }, [nextNode, navigate, trailPath]);
-
   // Check for newly unlocked accessories after stats update
   useEffect(() => {
     if (!shownUnlocksLoaded || !newlyUnlocked || newlyUnlocked.length === 0) {
@@ -753,8 +655,6 @@ export function useVictoryState({
     isPersonalBest,
     showConfetti,
     showBossModal,
-    nextNode,
-    fetchingNextNode,
     rateLimited,
     rateLimitResetTime,
     comebackActive,
@@ -769,7 +669,6 @@ export function useVictoryState({
     handleGoToDashboard,
     handleNavigateToTrail,
     handleEquipAccessory,
-    navigateToNextNode,
     handleBossModalClose,
     setShowConfetti,
     setShowBossModal,

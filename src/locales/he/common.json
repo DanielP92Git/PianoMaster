@@ -27,7 +27,7 @@
     "points": "XP",
     "loading": "טוען...",
     "next": "הבא",
-    "toGamesMode": "למסך המשחקים",
+    "backToGames": "חזרה למשחקים",
     "dashboard": "למסך הבית",
     "playAgain": "שחק שוב",
     "enabled": "פועל",
@@ -1385,7 +1385,8 @@
     "youAreNow": "!{{title}} עכשיו אתה",
     "prestigeUnlocked": "!יוקרה נפתחה",
     "prestigeEntry": "!הגעת לרמה הגבוהה ביותר! ברוכים הבאים לרמת מאסטרו",
-    "personalBest": "שיא אישי חדש!"
+    "personalBest": "שיא אישי חדש!",
+    "nextAdventure": "להרפתקה הבאה"
   },
   "celebration": {
     "boss.perfectVictory": "ניצחון מושלם!",

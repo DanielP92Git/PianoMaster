@@ -5,7 +5,6 @@ import { BossUnlockModal } from '../celebrations/BossUnlockModal';
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
 import { Trophy, Zap } from "lucide-react";
-import { translateNodeName } from "../../utils/translateNodeName";
 import { getNodeById } from "../../data/skillTrail";
 import { completeDailyChallenge } from "../../services/dailyChallengeService";
 import GoldStar from "../ui/GoldStar";
@@ -37,13 +36,10 @@ const VictoryScreen = ({
     animatedXPGain,
     levelProgressData,
     isProcessingTrail,
-    nodeComplete,
     exercisesRemaining,
     isPersonalBest,
     showConfetti,
     showBossModal,
-    nextNode,
-    fetchingNextNode,
     rateLimited,
     rateLimitResetTime,
     comebackActive,
@@ -53,7 +49,6 @@ const VictoryScreen = ({
     handlePlayAgain,
     handleNavigateToTrail,
     handleEquipAccessory,
-    navigateToNextNode,
     handleBossModalClose,
     setShowConfetti,
     setShowUnlockModal,
@@ -68,7 +63,6 @@ const VictoryScreen = ({
     user,
     reducedMotion: _reducedMotion,
     t,
-    i18n,
   } = useVictoryState({
     score,
     totalPossibleScore,
@@ -123,12 +117,12 @@ const VictoryScreen = ({
         <BossUnlockModal
           nodeId={nodeId}
           nodeName={getNodeById(nodeId)?.name || 'Boss'}
-          nextNode={nextNode}
+          nextNode={null}
           stars={stars}
           onClose={handleBossModalClose}
           onNavigateToNext={() => {
             handleBossModalClose();
-            navigateToNextNode();
+            handleNavigateToTrail();
           }}
         />
       )}
@@ -286,78 +280,56 @@ const VictoryScreen = ({
 
           {/* Action buttons */}
           <div className="flex w-full flex-col gap-2 pt-1">
-            {/* Trail mode buttons */}
+            {/* Trail mode: single CTA per D-01, D-02, D-03 */}
             {nodeId ? (
               <>
-                {/* Primary action button (full-width, polished badge style) */}
+                {/* Mid-node: Next Exercise stepping (preserved per D-03) */}
                 {exercisesRemaining > 0 && onNextExercise ? (
                   <button
                     onClick={onNextExercise}
-                    className="w-full rounded-full bg-gradient-to-b from-blue-500/90 to-indigo-900/90 border-2 border-blue-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(96,165,250,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(96,165,250,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 landscape:py-2"
+                    className="w-full rounded-full border-2 border-blue-400/50 bg-gradient-to-b from-blue-500/90 to-indigo-900/90 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(96,165,250,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(96,165,250,0.5)] focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 landscape:py-2"
                   >
                     {t('victory.nextExercise', { count: exercisesRemaining })}
                   </button>
-                ) : isProcessingTrail || fetchingNextNode ? (
+                ) : isProcessingTrail ? (
                   <button
                     disabled
-                    className="w-full rounded-full bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 border-2 border-emerald-400/50 px-5 py-2.5 text-base font-bold text-white opacity-80 shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] landscape:py-2"
+                    className="w-full rounded-full border-2 border-emerald-400/50 bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 px-5 py-2.5 text-base font-bold text-white opacity-80 shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] landscape:py-2"
                   >
                     <span className="inline-block animate-pulse">{t('victory.loading')}</span>
                   </button>
-                ) : nodeComplete && nextNode ? (
-                  <button
-                    onClick={navigateToNextNode}
-                    className="w-full rounded-full bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 border-2 border-emerald-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(52,211,153,0.5)] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 landscape:py-2"
-                  >
-                    {t('victory.continueToNode', { name: translateNodeName(nextNode.name, t, i18n) })}
-                  </button>
                 ) : (
+                  /* Node complete: Single "Next Adventure" CTA per D-01 */
                   <button
                     onClick={handleNavigateToTrail}
-                    className="w-full rounded-full bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 border-2 border-emerald-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(52,211,153,0.5)] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 landscape:py-2"
+                    className="w-full rounded-full border-2 border-emerald-400/50 bg-gradient-to-b from-emerald-500/90 to-emerald-900/90 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(52,211,153,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(52,211,153,0.5)] focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 landscape:py-2"
                   >
-                    {nodeComplete ? t('victory.backToTrail') : t('victory.continueLearning')}
+                    {t('victory.nextAdventure')}
                   </button>
                 )}
-
-                {/* Secondary row: Play Again + Exit to trail */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={handlePlayAgain}
-                    className="flex-1 rounded-full bg-gradient-to-b from-indigo-500/80 to-indigo-900/80 border-2 border-indigo-400/40 px-3 py-2 text-sm font-bold text-white shadow-[0_0_12px_rgba(129,140,248,0.3),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(129,140,248,0.45)] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-transparent"
-                  >
-                    {t("common.playAgain")}
-                  </button>
-                  <button
-                    onClick={handleNavigateToTrail}
-                    className="flex-1 rounded-full bg-gradient-to-b from-white/15 to-white/5 border-2 border-white/25 px-3 py-2 text-sm font-bold text-white/80 shadow-[0_0_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
-                  >
-                    {t("victory.backToTrail")}
-                  </button>
-                </div>
               </>
             ) : challengeMode ? (
-              /* Challenge mode: Back to Dashboard (primary) */
+              /* Challenge mode: Back to Trail per D-07 (trail is home now) */
               <button
-                onClick={handleExit}
-                className="w-full rounded-full bg-gradient-to-b from-amber-500/90 to-amber-900/90 border-2 border-amber-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(251,191,36,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(251,191,36,0.5)] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 landscape:py-2"
+                onClick={handleNavigateToTrail}
+                className="w-full rounded-full border-2 border-amber-400/50 bg-gradient-to-b from-amber-500/90 to-amber-900/90 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(251,191,36,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(251,191,36,0.5)] focus:outline-none focus:ring-2 focus:ring-amber-400 focus:ring-offset-2 landscape:py-2"
               >
-                {t("common.dashboard", "Back to Dashboard")}
+                {t("victory.backToTrail")}
               </button>
             ) : (
-              /* Free play mode: 2 buttons - Play Again (primary) + Exit (secondary) */
+              /* Free play mode per D-05: Play Again (primary) + Back to Games (secondary) */
               <>
                 <button
                   onClick={handlePlayAgain}
-                  className="w-full rounded-full bg-gradient-to-b from-indigo-500/90 to-indigo-900/90 border-2 border-indigo-400/50 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(129,140,248,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(129,140,248,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 landscape:py-2"
+                  className="w-full rounded-full border-2 border-indigo-400/50 bg-gradient-to-b from-indigo-500/90 to-indigo-900/90 px-5 py-2.5 text-base font-bold text-white shadow-[0_0_16px_rgba(129,140,248,0.35),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(129,140,248,0.5)] focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 landscape:py-2"
                 >
                   {t("common.playAgain")}
                 </button>
                 <button
                   onClick={handleExit}
-                  className="w-full rounded-full bg-gradient-to-b from-white/15 to-white/5 border-2 border-white/25 px-4 py-2 text-sm font-bold text-white/80 shadow-[0_0_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
+                  className="w-full rounded-full border-2 border-white/25 bg-gradient-to-b from-white/15 to-white/5 px-4 py-2 text-sm font-bold text-white/80 shadow-[0_0_12px_rgba(255,255,255,0.1),inset_0_1px_0_rgba(255,255,255,0.1)] transition-all duration-200 hover:scale-[1.02] hover:text-white hover:shadow-[0_0_20px_rgba(255,255,255,0.2)] focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-transparent"
                 >
-                  {t("common.toGamesMode")}
+                  {t("common.backToGames")}
                 </button>
               </>
             )}
