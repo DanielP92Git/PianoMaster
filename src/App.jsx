@@ -4,7 +4,6 @@ import AppLayout from "./components/layout/AppLayout";
 import Dashboard from "./components/layout/Dashboard";
 import { useTranslation } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import Login from "./components/auth/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
@@ -513,7 +512,10 @@ function App() {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
     // Trail page uses its own dark background; all other pages use indigo-950.
-    const color = location.pathname === "/" || location.pathname === "/trail" ? "#1a1040" : "#1e1b4b";
+    const color =
+      location.pathname === "/" || location.pathname === "/trail"
+        ? "#1a1040"
+        : "#1e1b4b";
     meta.setAttribute("content", color);
   }, [location.pathname]);
 
@@ -600,7 +602,6 @@ function App() {
           </SettingsProvider>
         </AccessibilityProvider>
       </ErrorBoundary>
-      {import.meta.env.DEV && <ReactQueryDevtools />}
     </QueryClientProvider>
   );
 }

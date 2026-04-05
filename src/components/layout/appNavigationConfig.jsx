@@ -1,16 +1,30 @@
-import {
-  GraduationCap,
-  Home,
-  Mic,
-  Gamepad2,
-  Settings,
-  ShieldCheck,
-  Trophy,
-} from "lucide-react";
-import trailIconSrc from "../../assets/icons/trail.png";
+import { GraduationCap, Mic, ShieldCheck } from "lucide-react";
+import trailIconSrc from "../../assets/icons/Trail.svg";
+import houseIconSrc from "../../assets/icons/House.svg";
+import gameHubIconSrc from "../../assets/icons/Game-Hub.svg";
+import achievementsIconSrc from "../../assets/icons/Achievements.svg";
+import settingsIconSrc from "../../assets/icons/Settings.svg";
 
-function TrailIcon(props) {
-  return <img src={trailIconSrc} alt="" {...props} />;
+function TrailIcon({ className: _className, ...props }) {
+  return <img src={trailIconSrc} alt="" className="h-12 w-12" {...props} />;
+}
+
+function DashboardIcon({ className: _className, ...props }) {
+  return <img src={houseIconSrc} alt="" className="h-12 w-12" {...props} />;
+}
+
+function GameHubIcon({ className: _className, ...props }) {
+  return <img src={gameHubIconSrc} alt="" className="h-12 w-12" {...props} />;
+}
+
+function AchievementsIcon({ className: _className, ...props }) {
+  return (
+    <img src={achievementsIconSrc} alt="" className="h-8 w-8" {...props} />
+  );
+}
+
+function SettingsIcon({ className: _className, ...props }) {
+  return <img src={settingsIconSrc} alt="" className="h-8 w-8" {...props} />;
 }
 
 /**
@@ -36,14 +50,14 @@ export const APP_NAV_ITEMS = {
     {
       id: "practiceGames",
       to: "/practice-modes",
-      icon: Gamepad2,
+      icon: GameHubIcon,
       labelKey: "navigation.links.practiceGames",
       theme: "indigo",
     },
     {
       id: "studentDashboard",
       to: "/dashboard",
-      icon: Home,
+      icon: DashboardIcon,
       labelKey: "navigation.links.studentDashboard",
       theme: "indigo",
     },
@@ -58,7 +72,7 @@ export const APP_NAV_ITEMS = {
     {
       id: "achievements",
       to: "/achievements",
-      icon: Trophy,
+      icon: AchievementsIcon,
       labelKey: "navigation.links.achievements",
       theme: "indigo",
     },
@@ -83,7 +97,7 @@ export const APP_NAV_ITEMS = {
     {
       id: "settings",
       to: "/settings",
-      icon: Settings,
+      icon: SettingsIcon,
       labelKey: "navigation.links.settings",
       theme: "indigo",
     },
@@ -112,8 +126,3 @@ export function getSidebarNavItems({ isStudent, isTeacher, newFeedbackCount }) {
 
   return items;
 }
-
-
-
-
-
