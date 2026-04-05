@@ -73,16 +73,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DASH-02     | —     | Pending |
 | DASH-03     | —     | Pending |
 | DASH-04     | —     | Pending |
-| POST-01     | 19-01 | Complete |
-| POST-02     | 19-01 | Complete |
+| POST-01     | 19    | Done    |
+| POST-02     | 19    | Done    |
 
 **Coverage:**
 
 - v3.1 requirements: 10 total
-- Mapped to phases: 0
-- Unmapped: 10 ⚠️
+- Mapped to phases: 2
+- Unmapped: 8 ⚠️
 
 ---
 
 _Requirements defined: 2026-04-05_
-_Last updated: 2026-04-05 after initial definition_
+_Last updated: 2026-04-05 — POST-01, POST-02 completed (Phase 19)_

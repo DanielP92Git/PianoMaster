@@ -920,6 +920,7 @@ function ArcadeRhythmGame() {
           score={totalScore}
           correctAnswers={correctAnswers}
           totalQuestions={TOTAL_PATTERNS}
+          nodeId={nodeId}
           onReset={() => {
             setGamePhase(GAME_PHASES.SETUP);
             hasAutoStartedRef.current = false;

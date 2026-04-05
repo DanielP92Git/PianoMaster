@@ -525,6 +525,7 @@ export function NoteSpeedCards() {
         totalQuestions={totalCards}
         livesLost={true}
         correctAnswers={correctCatches}
+        nodeId={nodeId}
         onReset={handleReset}
       />
     );

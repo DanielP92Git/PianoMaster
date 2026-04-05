@@ -1,10 +1,24 @@
 import React from "react";
 import { FaClock } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { TrendingDownIcon, Heart } from "lucide-react";
+import { getTrailTabForNode } from "../../data/skillTrail";
 
-const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctAnswers, onReset }) => {
+const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctAnswers, onReset, nodeId = null }) => {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
+
+  const handleExit = () => {
+    if (nodeId) {
+      // Trail game: navigate back to trail with smart tab routing
+      const tab = getTrailTabForNode(nodeId);
+      navigate(tab ? `/trail?path=${tab}` : "/trail");
+    } else {
+      // Free play: navigate to games menu
+      navigate("/practice-modes");
+    }
+  };
 
   // Priority order: livesLost > timeRanOut > scoreTooLow
   const reason = livesLost
@@ -70,10 +84,12 @@ const GameOverScreen = ({ score, totalQuestions, timeRanOut, livesLost, correctA
               {t("games.gameOver.tryAgain")}
             </button>
             <button
-              onClick={() => (window.location.href = "/notes-master-mode")}
+              onClick={handleExit}
               className="w-full transform rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition-all duration-200 hover:scale-[1.02] hover:from-gray-200 hover:to-gray-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:flex-1 sm:py-2.5 sm:text-base"
             >
-              {t("games.gameOver.exit")}
+              {nodeId
+                ? t("games.gameOver.backToTrail")
+                : t("games.gameOver.backToGames")}
             </button>
           </div>
         </div>

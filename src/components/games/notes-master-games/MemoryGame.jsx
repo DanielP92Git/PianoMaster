@@ -989,6 +989,7 @@ export function MemoryGame() {
             score={score}
             totalQuestions={cards.length / 2}
             timeRanOut={true}
+            nodeId={nodeId}
             onReset={handleReset}
           />
         ) : (
