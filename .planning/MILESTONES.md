@@ -1,5 +1,19 @@
 # Project Milestones: PianoApp
 
+## v3.1 Trail-First Navigation (Shipped: 2026-04-05)
+
+**Phases completed:** 3 phases, 5 plans, 8 tasks
+
+**Key accomplishments:**
+
+- Trail wired as primary nav destination: first in sidebar/tabs, index route renders TrailMapPage, dashboard moved to /dashboard, NavLink end prop prevents false active states
+- Converted TrailMapPage from fixed overlay to AppLayout child, updated FAB positioning for mobile tabs, removed BackButton, audited all dashboard-intent navigate("/") calls to use /dashboard
+- Hero section removed, replaced with compact glass greeting bar (avatar + name + level pill) with tighter card spacing and Recordings practice tool
+- Simplified VictoryScreen to Duolingo-style single-destination flow: trail-complete shows "Next Adventure", free play shows "Play Again" + "Back to Games", challenge navigates to trail
+- Replaced hardcoded /notes-master-mode exit with React Router navigation branching trail vs free play based on nodeId prop
+
+---
+
 ## v3.0 Cleanup & Polish (Shipped: 2026-04-02)
 
 **Phases completed:** 5 phases, 11 plans, 24 tasks

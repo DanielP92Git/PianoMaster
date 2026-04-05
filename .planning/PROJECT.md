@@ -240,18 +240,14 @@ These capabilities exist, are working, and have been shipped:
 - RhythmDictationGame UX: READY phase gate, replay-callback advance, G4.mp3 sound unification
 - ESLint comment placement fixed, build pipeline verified end-to-end
 
+**v3.1 Trail-First Navigation (shipped 2026-04-05):**
+
+- NAV-01-04: Trail wired as primary nav destination (first in sidebar/tabs), index route renders TrailMapPage, dashboard moved to /dashboard, NavLink end prop prevents false active states
+- DASH-01-04: Dashboard compacted to stats hub — hero removed, glass greeting bar (avatar + name + level pill), tighter spacing, Recordings practice tool
+- POST-01-02: VictoryScreen simplified to Duolingo-style single-CTA flow (trail: "Next Adventure", free play: "Play Again" + "Back to Games", challenge: "Back to Trail"); GameOverScreen uses React Router with smart trail tab routing
+- 10/10 requirements delivered, 5 plans across 3 phases
+
 ### Active
-
-## Current Milestone: v3.1 Trail-First Navigation
-
-**Goal:** Make the trail the center of the student experience by defaulting to it on login, adding it to persistent navigation, and reshaping the dashboard into a compact secondary hub.
-
-**Target features:**
-
-- Trail becomes the default landing page for returning students
-- Trail added to sidebar (desktop) and bottom tabs (mobile) as primary nav item
-- Dashboard redesigned as a compact stats/overview hub (keeps streak, XP, daily goals, practice log)
-- Post-game flow improved — easier path back to trail from VictoryScreen
 
 **Future candidates:**
 
@@ -581,4 +577,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-05 — Phase 19 Post-Game Trail Return complete (v3.1 milestone complete)_
+_Last updated: 2026-04-05 — v3.1 Trail-First Navigation shipped (22 milestones total)_

@@ -560,6 +560,56 @@ _A living document updated after each milestone. Lessons feed forward into futur
 
 ---
 
+## Milestone: v3.1 — Trail-First Navigation
+
+**Shipped:** 2026-04-05
+**Phases:** 3 | **Plans:** 5
+
+### What Was Built
+
+- Trail wired as primary nav destination (first in sidebar/tabs), index route renders TrailMapPage, dashboard moved to /dashboard
+- NavLink end prop threaded through config, sidebar, and bottom navigation for correct active states
+- TrailMapPage converted from fixed overlay to AppLayout child, FAB repositioned for mobile tabs
+- Dashboard compacted: hero removed, glass greeting bar (avatar + name + level pill), tighter card spacing
+- VictoryScreen simplified to Duolingo-style single-destination flow (trail/challenge/free play)
+- GameOverScreen hardcoded redirect replaced with React Router navigation and smart trail tab routing
+
+### What Worked
+
+- Small focused milestone: 3 phases, 5 plans, 2 days — clean execution with clear dependency chain
+- Phase 17 → 18/19 dependency structure: nav restructuring first, then dashboard and post-game independently
+- Parallel worktree execution for Phase 19 plans: both plans (VictoryScreen + GameOverScreen) ran simultaneously with clean locale file merges
+- Leveraging existing patterns: getTrailTabForNode, handleNavigateToTrail, NavLink end prop were already in codebase — just needed wiring
+- CONTEXT.md + DISCUSSION-LOG.md before planning caught the "remove Continue to Node" simplification early
+
+### What Was Inefficient
+
+- REQUIREMENTS.md traceability not updated for Phases 17 and 18 — NAV-01-04 and DASH-01-04 showed as "Pending" despite being complete
+- Phase 18 plan checkbox in ROADMAP.md not ticked (showed `[ ]` instead of `[x]`) despite summary existing
+- STATE.md accumulated decisions from all 3 phases but wasn't cleaned during phase transitions
+
+### Patterns Established
+
+- NavLink `end` prop threading for accurate active states in nested route structures
+- Three-mode button pattern in VictoryScreen: trail (single CTA), challenge (trail), free play (dual buttons)
+- nodeId prop threading to GameOverScreen for context-aware exit navigation
+- backgroundClass prop in AppLayout for route-specific body backgrounds
+
+### Key Lessons
+
+1. Requirements traceability should be updated during plan execution (not just at milestone boundary) — 8/10 requirements were stale
+2. Small navigation milestones (3 phases) ship fast when they build on existing infrastructure
+3. Parallel worktree execution works well even when plans touch shared files (locale JSONs) — different JSON sections merge cleanly
+4. "Continue to Next Node" removal (D-02) was the right call — simpler single-CTA matches Duolingo's proven pattern
+
+### Cost Observations
+
+- Model mix: ~70% opus, ~30% sonnet (executors ran as sonnet)
+- Sessions: ~3
+- Notable: 3 phases, 5 plans in 2 days — fast navigation-focused milestone
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -587,6 +637,7 @@ _A living document updated after each milestone. Lessons feed forward into futur
 | v2.8      | 2      | 5     | Single-note game + Parent Portal gate-first architecture                           |
 | v2.9      | 5      | 15    | Game variety — 8 new exercise types, data-driven trail tabs                        |
 | v3.0      | 5      | 11    | Cleanup & polish — utility consolidation, UAT-driven bug fixes, audit debt closure |
+| v3.1      | 3      | 5     | Trail-first navigation — trail as primary destination, compact dashboard, post-game flow |
 
 ### Top Lessons (Verified Across Milestones)
 
