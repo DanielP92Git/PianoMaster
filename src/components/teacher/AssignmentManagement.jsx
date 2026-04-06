@@ -73,7 +73,8 @@ const CreateAssignmentModal = ({
         },
       });
     }
-  }, [isOpen, students]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({
