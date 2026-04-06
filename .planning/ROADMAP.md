@@ -68,13 +68,13 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
-### v3.2 Rhythm Trail Rework (In Progress)
+### 🚧 v3.2 Rhythm Trail Rework (In Progress)
 
 **Milestone Goal:** Rework the rhythm trail's pedagogy so every node introduces one concept at a time, uses the correct game for each learning stage, and draws from a curated hand-crafted pattern library — replacing the current random-generative approach with pedagogically sequenced content following Kodaly/Orff principles.
 
 #### Phases
 
-- [x] **Phase 20: Curriculum Audit** - Audit all 48 rhythm nodes and lock game-type policy before touching any files (completed 2026-04-06)
+- [ ] **Phase 20: Curriculum Audit** - Audit all 50 rhythm nodes and lock game-type policy before touching any files
 - [ ] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module
 - [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
@@ -88,16 +88,11 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Requirements**: CURR-01, CURR-02, CURR-03, CURR-04
 **Success Criteria** (what must be TRUE):
 
-1. Every one of the 48 rhythm nodes has been reviewed and its single introduced concept identified — violations are documented
+1. Every one of the 50 rhythm nodes has been reviewed and its single introduced concept identified — violations are documented
 2. A written decision exists for which game type belongs at each node type: Discovery uses notation-showing game, Practice uses echo game, Speed/Boss uses ArcadeRhythmGame
 3. A node-by-node remediation list exists covering every node that currently violates the one-concept or wrong-game rule
 4. The audit output is committed as a reference document that Phase 22 implementation follows exactly
-
-**Plans:** 1/1 plans complete
-
-Plans:
-
-- [x] 20-01-PLAN.md — Write complete curriculum audit document with policy tables, 8 unit node tables, and remediation list
+   **Plans**: TBD
 
 ### Phase 21: Pattern Library Construction
 
@@ -110,13 +105,7 @@ Plans:
 2. Every pattern carries a `tags` array with at least one duration-set tag (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
 3. The file is a plain synchronous ES module import — no async fetch, no JSON file, no dynamic loading
 4. Patterns cover all duration sets used across the 50 rhythm nodes (quarter-only through syncopation/compound)
-
-**Plans:** 2 plans
-
-Plans:
-
-- [ ] 21-01-PLAN.md — Author complete rhythm pattern library module (120+ patterns, PATTERN_TAGS, helper functions)
-- [ ] 21-02-PLAN.md — Build-time pattern validation in validateTrail.mjs and unit tests for helpers and coverage
+   **Plans**: TBD
 
 ### Phase 22: Service Layer & Trail Wiring
 
@@ -148,15 +137,15 @@ Plans:
 
 ## Progress
 
-| Phase                            | Milestone | Plans Complete | Status      | Completed  |
-| -------------------------------- | --------- | -------------- | ----------- | ---------- |
-| 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-06 |
-| 21. Pattern Library Construction | v3.2      | 0/2            | Not started | -          |
-| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
-| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
+| Phase                            | Milestone | Plans Complete | Status      | Completed |
+| -------------------------------- | --------- | -------------- | ----------- | --------- |
+| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -         |
+| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -         |
+| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -         |
+| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -         |
 
 **Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 4 phases, 0/4 complete**
 
 ---
 
-_Last updated: 2026-04-06 -- Phase 21 planned (2 plans)_
+_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework roadmap created_
