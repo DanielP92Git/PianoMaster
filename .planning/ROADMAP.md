@@ -75,7 +75,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 #### Phases
 
 - [ ] **Phase 20: Curriculum Audit** - Audit all 50 rhythm nodes and lock game-type policy before touching any files
-- [ ] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module
+- [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-06)
 - [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
 
@@ -137,12 +137,12 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ## Progress
 
-| Phase                            | Milestone | Plans Complete | Status      | Completed |
-| -------------------------------- | --------- | -------------- | ----------- | --------- |
-| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -         |
-| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -         |
-| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -         |
-| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -         |
+| Phase                            | Milestone | Plans Complete | Status      | Completed  |
+| -------------------------------- | --------- | -------------- | ----------- | ---------- |
+| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
+| 21. Pattern Library Construction | v3.2      | 2/2            | Complete    | 2026-04-06 |
+| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
+| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 
 **Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 4 phases, 0/4 complete**
 
