@@ -110,7 +110,13 @@ Plans:
 2. Every pattern carries a `tags` array with at least one duration-set tag (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
 3. The file is a plain synchronous ES module import — no async fetch, no JSON file, no dynamic loading
 4. Patterns cover all duration sets used across the 50 rhythm nodes (quarter-only through syncopation/compound)
-   **Plans**: TBD
+
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 21-01-PLAN.md — Author complete rhythm pattern library module (120+ patterns, PATTERN_TAGS, helper functions)
+- [ ] 21-02-PLAN.md — Build-time pattern validation in validateTrail.mjs and unit tests for helpers and coverage
 
 ### Phase 22: Service Layer & Trail Wiring
 
@@ -145,7 +151,7 @@ Plans:
 | Phase                            | Milestone | Plans Complete | Status      | Completed  |
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-06 |
-| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -          |
+| 21. Pattern Library Construction | v3.2      | 0/2            | Not started | -          |
 | 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 
@@ -153,4 +159,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-06 -- Phase 20 planned (1 plan)_
+_Last updated: 2026-04-06 -- Phase 21 planned (2 plans)_
