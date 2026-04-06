@@ -1,20 +1,22 @@
-import { GraduationCap, Mic, ShieldCheck } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 import trailIconSrc from "../../assets/icons/Trail.svg";
 import houseIconSrc from "../../assets/icons/House.svg";
 import gameHubIconSrc from "../../assets/icons/Game-Hub.svg";
 import achievementsIconSrc from "../../assets/icons/Achievements.svg";
 import settingsIconSrc from "../../assets/icons/Settings.svg";
+import micIconSrc from "../../assets/icons/Mic.svg";
+import parentIconSrc from "../../assets/icons/Parent.svg";
 
 function TrailIcon({ className: _className, ...props }) {
-  return <img src={trailIconSrc} alt="" className="h-12 w-12" {...props} />;
+  return <img src={trailIconSrc} alt="" className="h-8 w-8" {...props} />;
 }
 
 function DashboardIcon({ className: _className, ...props }) {
-  return <img src={houseIconSrc} alt="" className="h-12 w-12" {...props} />;
+  return <img src={houseIconSrc} alt="" className="h-8 w-8" {...props} />;
 }
 
 function GameHubIcon({ className: _className, ...props }) {
-  return <img src={gameHubIconSrc} alt="" className="h-12 w-12" {...props} />;
+  return <img src={gameHubIconSrc} alt="" className="h-8 w-8" {...props} />;
 }
 
 function AchievementsIcon({ className: _className, ...props }) {
@@ -25,6 +27,14 @@ function AchievementsIcon({ className: _className, ...props }) {
 
 function SettingsIcon({ className: _className, ...props }) {
   return <img src={settingsIconSrc} alt="" className="h-8 w-8" {...props} />;
+}
+
+function MicIcon({ className: _className, ...props }) {
+  return <img src={micIconSrc} alt="" className="h-8 w-8" {...props} />;
+}
+
+function ParentIcon({ className: _className, ...props }) {
+  return <img src={parentIconSrc} alt="" className="h-8 w-8" {...props} />;
 }
 
 /**
@@ -64,7 +74,7 @@ export const APP_NAV_ITEMS = {
     {
       id: "recordings",
       to: "/practice-sessions",
-      icon: Mic,
+      icon: MicIcon,
       labelKey: "navigation.links.recordings",
       theme: "indigo",
       badgeKey: "studentFeedback",
@@ -79,7 +89,7 @@ export const APP_NAV_ITEMS = {
     {
       id: "parentZone",
       to: "/parent-portal",
-      icon: ShieldCheck,
+      icon: ParentIcon,
       labelKey: "navigation.links.parentZone",
       theme: "indigo",
     },
