@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Rhythm Trail Rework
-status: defining_requirements
-stopped_at: Defining requirements for v3.2
+status: ready_to_plan
+stopped_at: Roadmap created, Phase 20 ready to plan
 last_updated: "2026-04-06T00:00:00.000Z"
 last_activity: 2026-04-06
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Defining requirements for v3.2 Rhythm Trail Rework
+**Current focus:** Phase 20 — Curriculum Audit
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-04-06 — Milestone v3.2 started
+Phase: 20 of 23 (Curriculum Audit)
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-04-06 — v3.2 roadmap created, 4 phases mapped to 16 requirements
+
+Progress: [░░░░░░░░░░] 0%
 
 ## Performance Metrics
 
@@ -40,22 +42,30 @@ Last activity: 2026-04-06 — Milestone v3.2 started
 
 ### Decisions
 
-Cleared at milestone boundary. See `.planning/milestones/v3.1-ROADMAP.md` for v3.1 decisions.
+- Phase 20 is a documentation-only audit phase — no source files are modified
+- Pattern library (Phase 21) is a pure addition; no existing files change until Phase 22
+- Phase 22 is a coordinated change: generator + unit files + game components + validator ship together
+- CURR-05 (pulse exercise) ships in Phase 22 alongside unit file rewiring, not Phase 20
+- Node `order` values are immutable for nodes with live user progress — audit must check prod DB
+
+### Pending Todos
+
+None yet.
 
 ### Blockers/Concerns
 
-**COPPA deadline:** April 22, 2026
+- **COPPA deadline:** April 22, 2026
+- **Live progress risk:** Node order values cannot be changed for nodes with existing student progress — audit output must account for this constraint
 
 ## Session Continuity
 
 Last session: 2026-04-06
-Stopped at: Defining requirements for v3.2
+Stopped at: Roadmap written, REQUIREMENTS.md traceability updated
+Resume file: None
 
-**Next action:**
-
-- Define requirements for v3.2 Rhythm Trail Rework
+**Next action:** `/gsd-plan-phase 20`
 
 ---
 
-_State initialized: 2026-01-31_
-_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework milestone started_
+_State initialized: 2026-04-06_
+_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework roadmap created_

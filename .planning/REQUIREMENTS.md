@@ -66,30 +66,30 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 | ----------- | ----- | ------- |
-| CURR-01     | —     | Pending |
-| CURR-02     | —     | Pending |
-| CURR-03     | —     | Pending |
-| CURR-04     | —     | Pending |
-| CURR-05     | —     | Pending |
-| PAT-01      | —     | Pending |
-| PAT-02      | —     | Pending |
-| PAT-03      | —     | Pending |
-| PAT-04      | —     | Pending |
-| PAT-05      | —     | Pending |
-| PAT-06      | —     | Pending |
-| UX-01       | —     | Pending |
-| UX-02       | —     | Pending |
-| UX-03       | —     | Pending |
-| UX-04       | —     | Pending |
-| UX-05       | —     | Pending |
+| CURR-01     | 20    | Pending |
+| CURR-02     | 20    | Pending |
+| CURR-03     | 20    | Pending |
+| CURR-04     | 20    | Pending |
+| CURR-05     | 22    | Pending |
+| PAT-01      | 21    | Pending |
+| PAT-02      | 21    | Pending |
+| PAT-03      | 22    | Pending |
+| PAT-04      | 22    | Pending |
+| PAT-05      | 22    | Pending |
+| PAT-06      | 22    | Pending |
+| UX-01       | 23    | Pending |
+| UX-02       | 23    | Pending |
+| UX-03       | 23    | Pending |
+| UX-04       | 23    | Pending |
+| UX-05       | 23    | Pending |
 
 **Coverage:**
 
 - v3.2 requirements: 16 total
-- Mapped to phases: 0
-- Unmapped: 16 ⚠️
+- Mapped to phases: 16
+- Unmapped: 0 ✓
 
 ---
 
 _Requirements defined: 2026-04-06_
-_Last updated: 2026-04-06 after initial definition_
+_Last updated: 2026-04-06 — traceability filled in after roadmap creation_
