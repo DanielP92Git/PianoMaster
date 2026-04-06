@@ -72,7 +72,8 @@ const CreateAssignmentModal = ({
           pointsPossible: assignment.points_possible || 100,
           assignTo: assignment.assign_to || "all",
           requirements: {
-            minPracticeSessions: assignment.requirements?.minPracticeSessions || 1,
+            minPracticeSessions:
+              assignment.requirements?.minPracticeSessions || 1,
             minPracticeTime: assignment.requirements?.minPracticeTime || 30,
             targetAccuracy: assignment.requirements?.targetAccuracy || 80,
             practiceMode: assignment.requirements?.practiceMode || "any",
@@ -97,7 +98,7 @@ const CreateAssignmentModal = ({
         });
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleInputChange = (field, value) => {
@@ -152,20 +153,24 @@ const CreateAssignmentModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={assignment ? "Edit Assignment" : "Create New Assignment"}>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={assignment ? "Edit Assignment" : "Create New Assignment"}
+    >
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 custom-scrollbar-light"
+        className="custom-scrollbar-light space-y-6"
       >
         {/* Assign to Students */}
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-700">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
             Assign to Student
           </label>
           <select
             value={formData.assignTo}
             onChange={(e) => handleInputChange("assignTo", e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             required
           >
             <option value="all">All Students</option>
@@ -177,9 +182,9 @@ const CreateAssignmentModal = ({
           </select>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Assignment Title
             </label>
             <input
@@ -187,26 +192,26 @@ const CreateAssignmentModal = ({
               value={formData.title}
               onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Practice Session Week 1"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-500"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Description
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Describe what students need to accomplish..."
-              className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-500"
+              className="h-24 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Instructions
             </label>
             <textarea
@@ -215,12 +220,12 @@ const CreateAssignmentModal = ({
                 handleInputChange("instructions", e.target.value)
               }
               placeholder="Detailed instructions for completing the assignment..."
-              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder:text-gray-500"
+              className="h-32 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Assignment Type
             </label>
             <select
@@ -228,7 +233,7 @@ const CreateAssignmentModal = ({
               onChange={(e) =>
                 handleInputChange("assignmentType", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="practice">Practice Session</option>
               <option value="exercise">Exercise</option>
@@ -238,19 +243,19 @@ const CreateAssignmentModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Due Date
             </label>
             <input
               type="date"
               value={formData.dueDate}
               onChange={(e) => handleInputChange("dueDate", e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Points Possible
             </label>
             <input
@@ -261,12 +266,12 @@ const CreateAssignmentModal = ({
               }
               min="1"
               max="1000"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Practice Mode
             </label>
             <select
@@ -274,7 +279,7 @@ const CreateAssignmentModal = ({
               onChange={(e) =>
                 handleRequirementChange("practiceMode", e.target.value)
               }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="any">Any Mode</option>
               <option value="note-recognition">Note Recognition</option>
@@ -283,9 +288,9 @@ const CreateAssignmentModal = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Min Sessions
             </label>
             <input
@@ -299,12 +304,12 @@ const CreateAssignmentModal = ({
               }
               min="1"
               max="20"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Min Time (minutes)
             </label>
             <input
@@ -318,12 +323,12 @@ const CreateAssignmentModal = ({
               }
               min="5"
               max="180"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Target Accuracy (%)
             </label>
             <input
@@ -337,7 +342,7 @@ const CreateAssignmentModal = ({
               }
               min="0"
               max="100"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -387,13 +392,13 @@ const AssignmentDetailsModal = ({
   const getStatusIcon = (status) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="w-4 h-4" />;
+        return <CheckCircle className="h-4 w-4" />;
       case "in_progress":
-        return <Clock className="w-4 h-4" />;
+        return <Clock className="h-4 w-4" />;
       case "overdue":
-        return <AlertCircle className="w-4 h-4" />;
+        return <AlertCircle className="h-4 w-4" />;
       default:
-        return <FileText className="w-4 h-4" />;
+        return <FileText className="h-4 w-4" />;
     }
   };
 
@@ -408,13 +413,13 @@ const AssignmentDetailsModal = ({
     >
       <div className="space-y-6">
         {/* Assignment Info */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="font-semibold text-gray-900 mb-2">
+        <div className="rounded-lg bg-gray-50 p-4">
+          <h3 className="mb-2 font-semibold text-gray-900">
             {assignment.title}
           </h3>
-          <p className="text-gray-700 mb-3">{assignment.description}</p>
+          <p className="mb-3 text-gray-700">{assignment.description}</p>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
             <div>
               <span className="text-gray-700">Type:</span>
               <p className="font-medium">{assignment.assignment_type}</p>
@@ -440,12 +445,12 @@ const AssignmentDetailsModal = ({
 
         {/* Requirements */}
         {assignment.requirements && (
-          <div className="bg-blue-50 rounded-lg p-4">
-            <h4 className="font-semibold text-blue-900 mb-2">Requirements</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+          <div className="rounded-lg bg-blue-50 p-4">
+            <h4 className="mb-2 font-semibold text-blue-900">Requirements</h4>
+            <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
               {assignment.requirements.minPracticeSessions && (
                 <div className="flex items-center gap-2">
-                  <Target className="w-4 h-4 text-blue-600" />
+                  <Target className="h-4 w-4 text-blue-600" />
                   <span>
                     {assignment.requirements.minPracticeSessions} sessions
                   </span>
@@ -453,13 +458,13 @@ const AssignmentDetailsModal = ({
               )}
               {assignment.requirements.minPracticeTime && (
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-600" />
+                  <Clock className="h-4 w-4 text-blue-600" />
                   <span>{assignment.requirements.minPracticeTime} minutes</span>
                 </div>
               )}
               {assignment.requirements.targetAccuracy && (
                 <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-blue-600" />
+                  <Award className="h-4 w-4 text-blue-600" />
                   <span>
                     {assignment.requirements.targetAccuracy}% accuracy
                   </span>
@@ -468,7 +473,7 @@ const AssignmentDetailsModal = ({
               {assignment.requirements.practiceMode &&
                 assignment.requirements.practiceMode !== "any" && (
                   <div className="flex items-center gap-2">
-                    <BookOpen className="w-4 h-4 text-blue-600" />
+                    <BookOpen className="h-4 w-4 text-blue-600" />
                     <span>{assignment.requirements.practiceMode}</span>
                   </div>
                 )}
@@ -478,7 +483,7 @@ const AssignmentDetailsModal = ({
 
         {/* Submissions */}
         <div>
-          <h4 className="font-semibold text-gray-900 mb-3">
+          <h4 className="mb-3 font-semibold text-gray-900">
             Student Submissions
           </h4>
           {submissions && submissions.length > 0 ? (
@@ -486,9 +491,9 @@ const AssignmentDetailsModal = ({
               {submissions.map((submission) => (
                 <div
                   key={submission.id}
-                  className="bg-white border rounded-lg p-4"
+                  className="rounded-lg border bg-white p-4"
                 >
-                  <div className="flex justify-between items-start mb-2">
+                  <div className="mb-2 flex items-start justify-between">
                     <div>
                       <h5 className="font-medium text-gray-900">
                         {submission.student_name}
@@ -498,14 +503,14 @@ const AssignmentDetailsModal = ({
                       </p>
                     </div>
                     <div
-                      className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1 ${getStatusColor(submission.status)}`}
+                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium ${getStatusColor(submission.status)}`}
                     >
                       {getStatusIcon(submission.status)}
                       {submission.status.replace("_", " ")}
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
                     <div>
                       <span className="text-gray-700">Progress:</span>
                       <p className="font-medium">
@@ -533,7 +538,7 @@ const AssignmentDetailsModal = ({
                   </div>
 
                   {submission.feedback && (
-                    <div className="mt-3 p-3 bg-gray-50 rounded">
+                    <div className="mt-3 rounded bg-gray-50 p-3">
                       <p className="text-sm text-gray-700">
                         {submission.feedback}
                       </p>
@@ -543,8 +548,8 @@ const AssignmentDetailsModal = ({
               ))}
             </div>
           ) : (
-            <div className="text-center py-8 text-gray-700">
-              <FileText className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+            <div className="py-8 text-center text-gray-700">
+              <FileText className="mx-auto mb-3 h-12 w-12 text-gray-500" />
               <p>No submissions yet</p>
             </div>
           )}
@@ -564,6 +569,8 @@ const AssignmentManagement = ({ students = [] }) => {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingAssignment, setEditingAssignment] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [assignmentToDelete, setAssignmentToDelete] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -630,7 +637,8 @@ const AssignmentManagement = ({ students = [] }) => {
 
   // Update assignment mutation
   const updateAssignmentMutation = useMutation({
-    mutationFn: ({ assignmentId, updates }) => updateAssignment(assignmentId, updates),
+    mutationFn: ({ assignmentId, updates }) =>
+      updateAssignment(assignmentId, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacherAssignments"] });
       setShowEditModal(false);
@@ -679,7 +687,8 @@ const AssignmentManagement = ({ students = [] }) => {
       assignment.description.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "all" || getAssignmentStatus(assignment) === statusFilter;
+      statusFilter === "all" ||
+      getAssignmentStatus(assignment) === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -688,13 +697,16 @@ const AssignmentManagement = ({ students = [] }) => {
     createAssignmentMutation.mutate(formData);
   };
 
-  const handleDeleteAssignment = (assignmentId) => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete this assignment? This action cannot be undone."
-      )
-    ) {
-      deleteAssignmentMutation.mutate(assignmentId);
+  const handleDeleteAssignment = (assignment) => {
+    setAssignmentToDelete(assignment);
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (assignmentToDelete) {
+      deleteAssignmentMutation.mutate(assignmentToDelete.id);
+      setShowDeleteModal(false);
+      setAssignmentToDelete(null);
     }
   };
 
@@ -762,7 +774,7 @@ const AssignmentManagement = ({ students = [] }) => {
 
       {/* Filters */}
       <Card className="p-6">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
             <input
@@ -792,19 +804,19 @@ const AssignmentManagement = ({ students = [] }) => {
       {/* Assignments List */}
       <Card className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-white mb-2">
+          <h3 className="mb-2 text-lg font-semibold text-white">
             My Assignments ({filteredAssignments.length})
           </h3>
           {filteredAssignments.length > 0 && (
             <div className="flex items-center gap-3">
               <button
                 onClick={toggleSelectAll}
-                className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80 transition-colors"
+                className="flex items-center gap-1.5 text-sm text-white/50 transition-colors hover:text-white/80"
               >
                 {selectedIds.size === filteredAssignments.length ? (
-                  <CheckSquare className="w-4 h-4 text-blue-500" />
+                  <CheckSquare className="h-4 w-4 text-blue-500" />
                 ) : (
-                  <Square className="w-4 h-4" />
+                  <Square className="h-4 w-4" />
                 )}
                 Select All
               </button>
@@ -813,9 +825,9 @@ const AssignmentManagement = ({ students = [] }) => {
                   <span className="text-xs text-white/30">|</span>
                   <button
                     onClick={handleDeleteSelectedAssignments}
-                    className="flex items-center gap-1.5 text-sm text-red-400 hover:text-red-300 transition-colors"
+                    className="flex items-center gap-1.5 text-sm text-red-400 transition-colors hover:text-red-300"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-4 w-4" />
                     {selectedIds.size === filteredAssignments.length
                       ? "Delete All"
                       : `Delete (${selectedIds.size})`}
@@ -827,107 +839,107 @@ const AssignmentManagement = ({ students = [] }) => {
         </div>
 
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="py-8 text-center">
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
             <p className="mt-4 text-gray-400">Loading assignments...</p>
           </div>
         ) : filteredAssignments.length === 0 ? (
-          <div className="text-center py-8 text-gray-200">
-            <BookOpen className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+          <div className="py-8 text-center text-gray-200">
+            <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-300" />
             <p className="text-white">No assignments found</p>
             <p className="text-sm text-gray-300">
               Create your first assignment to get started!
             </p>
           </div>
         ) : (
-          <div className="space-y-3 custom-scrollbar">
+          <div className="custom-scrollbar space-y-3">
             {filteredAssignments.map((assignment) => {
               const isSelected = selectedIds.has(assignment.id);
               return (
-              <div
-                key={assignment.id}
-                className={`rounded-xl p-3 border transition-all ${
-                  isSelected
-                    ? "border-blue-500 bg-blue-500/10"
-                    : "bg-blue-500/10 border-blue-500/20 hover:border-blue-500/30"
-                }`}
-              >
-                {/* Row 1: Checkbox + Title + Badge + Actions */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => toggleSelect(assignment.id)}
-                    className="flex-shrink-0 text-gray-400 hover:text-blue-400 transition-colors"
-                  >
-                    {isSelected ? (
-                      <CheckSquare className="w-4 h-4 text-blue-500" />
-                    ) : (
-                      <Square className="w-4 h-4" />
-                    )}
-                  </button>
-                  <h4 className="min-w-0 truncate text-sm font-semibold text-white">
-                    {assignment.title}
-                  </h4>
-                  <span
-                    className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(getAssignmentStatus(assignment))}`}
-                  >
-                    {getAssignmentStatus(assignment).replace("_", " ")}
-                  </span>
-                  <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">
+                <div
+                  key={assignment.id}
+                  className={`rounded-xl border p-3 transition-all ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-500/10"
+                      : "border-blue-500/20 bg-blue-500/10 hover:border-blue-500/30"
+                  }`}
+                >
+                  {/* Row 1: Checkbox + Title + Badge + Actions */}
+                  <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleViewAssignment(assignment)}
-                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
-                      title="View Details"
+                      onClick={() => toggleSelect(assignment.id)}
+                      className="flex-shrink-0 text-gray-400 transition-colors hover:text-blue-400"
                     >
-                      <Eye className="h-3.5 w-3.5" />
+                      {isSelected ? (
+                        <CheckSquare className="h-4 w-4 text-blue-500" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
                     </button>
-                    <button
-                      onClick={() => handleEditAssignment(assignment)}
-                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-yellow-500/20 hover:text-yellow-300"
-                      title="Edit"
+                    <h4 className="min-w-0 truncate text-sm font-semibold text-white">
+                      {assignment.title}
+                    </h4>
+                    <span
+                      className={`flex-shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${getStatusColor(getAssignmentStatus(assignment))}`}
                     >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAssignment(assignment.id)}
-                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-300"
-                      title="Delete"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                      {getAssignmentStatus(assignment).replace("_", " ")}
+                    </span>
+                    <div className="ml-auto flex flex-shrink-0 items-center gap-0.5">
+                      <button
+                        onClick={() => handleViewAssignment(assignment)}
+                        className="rounded-lg p-1 text-white/40 transition-colors hover:bg-blue-500/20 hover:text-blue-300"
+                        title="View Details"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleEditAssignment(assignment)}
+                        className="rounded-lg p-1 text-white/40 transition-colors hover:bg-yellow-500/20 hover:text-yellow-300"
+                        title="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAssignment(assignment)}
+                        className="rounded-lg p-1 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-300"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Description (if present) */}
+                  {assignment.description && (
+                    <p className="ml-6 mt-1 truncate text-xs text-white/50">
+                      {assignment.description}
+                    </p>
+                  )}
+
+                  {/* Row 3: Metadata inline */}
+                  <div className="ml-6 mt-2 flex flex-wrap items-center gap-3 text-xs text-white/40">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      <span>
+                        {assignment.due_date
+                          ? new Date(assignment.due_date).toLocaleDateString()
+                          : "No due date"}
+                      </span>
+                    </div>
+                    <span className="text-white/20">&middot;</span>
+                    <div className="flex items-center gap-1">
+                      <Award className="h-3.5 w-3.5" />
+                      <span>{assignment.points_possible} pts</span>
+                    </div>
+                    <span className="text-white/20">&middot;</span>
+                    <div className="flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5" />
+                      <span>
+                        {assignment.submission_count || 0} submissions
+                      </span>
+                    </div>
                   </div>
                 </div>
-
-                {/* Row 2: Description (if present) */}
-                {assignment.description && (
-                  <p className="mt-1 ml-6 text-xs text-white/50 truncate">
-                    {assignment.description}
-                  </p>
-                )}
-
-                {/* Row 3: Metadata inline */}
-                <div className="mt-2 ml-6 flex flex-wrap items-center gap-3 text-xs text-white/40">
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>
-                      {assignment.due_date
-                        ? new Date(assignment.due_date).toLocaleDateString()
-                        : "No due date"}
-                    </span>
-                  </div>
-                  <span className="text-white/20">&middot;</span>
-                  <div className="flex items-center gap-1">
-                    <Award className="h-3.5 w-3.5" />
-                    <span>{assignment.points_possible} pts</span>
-                  </div>
-                  <span className="text-white/20">&middot;</span>
-                  <div className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5" />
-                    <span>
-                      {assignment.submission_count || 0} submissions
-                    </span>
-                  </div>
-                </div>
-              </div>
               );
             })}
           </div>
@@ -962,6 +974,63 @@ const AssignmentManagement = ({ students = [] }) => {
         students={students}
         assignment={editingAssignment}
       />
+
+      {/* Delete Assignment Confirmation Modal */}
+      <Modal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setAssignmentToDelete(null);
+        }}
+        variant="default"
+        size="default"
+      >
+        <div>
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <Trash2 className="h-6 w-6 text-red-600" />
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-gray-900">
+                Delete Assignment
+              </h3>
+              <p className="text-sm font-medium text-gray-500">
+                This action cannot be undone
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <p className="text-base leading-relaxed text-gray-700">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold">{assignmentToDelete?.title}</span>
+              ?
+            </p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setShowDeleteModal(false);
+                setAssignmentToDelete(null);
+              }}
+              disabled={deleteAssignmentMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="error"
+              onClick={handleConfirmDelete}
+              disabled={deleteAssignmentMutation.isPending}
+            >
+              {deleteAssignmentMutation.isPending
+                ? "Deleting..."
+                : "Delete Assignment"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

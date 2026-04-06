@@ -863,44 +863,49 @@ const DeleteConfirmationModal = ({
   onConfirmDelete,
   isLoading,
 }) => {
+  const [confirmText, setConfirmText] = useState("");
   const isMultiple = studentsToDelete && studentsToDelete.length > 1;
   const studentNames = studentsToDelete?.map((s) => s.student_name).join(", ");
 
+  const expectedText = isMultiple
+    ? "DELETE"
+    : studentsToDelete?.[0]?.student_name || "";
+  const isConfirmed =
+    confirmText.trim().toLowerCase() === expectedText.toLowerCase();
+
+  useEffect(() => {
+    if (isOpen) setConfirmText("");
+  }, [isOpen]);
+
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      variant="default"
-      size="default"
-      className="border-gray-600 bg-gray-900"
-    >
-      <div className="text-white">
+    <Modal isOpen={isOpen} onClose={onClose} variant="default" size="default">
+      <div>
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <Trash2 className="h-6 w-6 text-red-600" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">
+            <h3 className="text-xl font-semibold text-gray-900">
               {isMultiple ? "Delete Students" : "Delete Student"}
             </h3>
-            <p className="text-sm font-medium text-white/60">
+            <p className="text-sm font-medium text-gray-500">
               This action cannot be undone
             </p>
           </div>
         </div>
 
         <div className="mb-6">
-          <p className="text-base leading-relaxed text-gray-100">
+          <p className="text-base leading-relaxed text-gray-700">
             {isMultiple
               ? `Are you sure you want to remove ${studentsToDelete.length} students from your class?`
               : `Are you sure you want to remove ${studentNames} from your class?`}
           </p>
           {isMultiple && (
             <div className="custom-scrollbar mt-4 max-h-32 overflow-y-auto">
-              <p className="mb-2 text-sm font-medium text-gray-200">
+              <p className="mb-2 text-sm font-medium text-gray-600">
                 Students to be removed:
               </p>
-              <ul className="space-y-1 text-sm text-gray-100">
+              <ul className="space-y-1 text-sm text-gray-700">
                 {studentsToDelete.map((student) => (
                   <li
                     key={student.student_id}
@@ -915,6 +920,25 @@ const DeleteConfirmationModal = ({
           )}
         </div>
 
+        <div className="mb-6">
+          <label className="mb-2 block text-sm font-medium text-gray-700">
+            {isMultiple
+              ? 'To confirm, type "DELETE":'
+              : `To confirm, type the student's name:`}
+          </label>
+          <p className="mb-2 select-none text-sm font-semibold text-gray-900">
+            {expectedText}
+          </p>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+            placeholder={expectedText}
+            autoFocus
+          />
+        </div>
+
         <div className="flex justify-end gap-3">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
             Cancel
@@ -922,7 +946,7 @@ const DeleteConfirmationModal = ({
           <Button
             variant="error"
             onClick={onConfirmDelete}
-            disabled={isLoading}
+            disabled={isLoading || !isConfirmed}
           >
             {isLoading
               ? "Removing..."
