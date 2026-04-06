@@ -20,6 +20,7 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
+import { useAccessibility } from "../../../contexts/AccessibilityContext";
 
 // Game phases
 const GAME_PHASES = {
@@ -76,6 +77,7 @@ export function MetronomeTrainer() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation("common");
+  const { reducedMotion } = useAccessibility();
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -87,6 +89,9 @@ export function MetronomeTrainer() {
   const nodeId = location.state?.nodeId || null;
   const nodeConfig = location.state?.nodeConfig || null;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
+  const pulseOnly = nodeConfig?.pulseOnly ?? false;
+  const pulseBeatCount = nodeConfig?.beats ?? 8;
+  const pulsePitch = nodeConfig?.pitch ?? "C4";
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -241,6 +246,13 @@ export function MetronomeTrainer() {
               });
               window.location.reload(); // Force reload for same route
               break;
+            case "rhythm_pulse":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
+              window.location.reload();
+              break;
             case "boss_challenge":
               navigate("/notes-master-mode/sight-reading-game", {
                 state: { ...navState, isBoss: true },
@@ -314,6 +326,13 @@ export function MetronomeTrainer() {
   const scheduledOscillatorsRef = useRef([]); // Track scheduled oscillators for manual stopping
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
   const [_countdownToStart, setCountdownToStart] = useState(null); // Countdown until user should start tapping
+
+  // Pulse mode visual state
+  const [isOnBeat, setIsOnBeat] = useState(false);
+  const pulseBeatCounterRef = useRef(0); // Tracks beats elapsed in pulse mode
+  // Refs to break circular dependency between startContinuousMetronome and stop/evaluate
+  const stopContinuousMetronomeRef = useRef(null);
+  const evaluatePerformanceRef = useRef(null);
 
   // Calculate beat duration from tempo
   useEffect(() => {
@@ -541,6 +560,43 @@ export function MetronomeTrainer() {
         },
         50 // Check every 50ms for more responsive stopping
       );
+
+      // Pulse mode: schedule piano C4 on each beat and stop after pulseBeatCount beats
+      if (pulseOnly) {
+        pulseBeatCounterRef.current = 0;
+        const beatDur = beatDuration.current;
+
+        for (let i = 0; i < pulseBeatCount; i++) {
+          const beatTime = startTime + i * beatDur;
+
+          // Schedule piano C4 sound at each beat time using createPianoSound
+          // (playPianoSound is instant; we need scheduled future beats via createPianoSound)
+          setTimeout(
+            () => {
+              audioEngine.playPianoSound(0.6, pulsePitch);
+              pulseBeatCounterRef.current += 1;
+
+              // Visual pulse flash
+              setIsOnBeat(true);
+              setTimeout(() => setIsOnBeat(false), 200);
+
+              // After final beat window, stop metronome and evaluate
+              if (pulseBeatCounterRef.current >= pulseBeatCount) {
+                setTimeout(
+                  () => {
+                    if (stopContinuousMetronomeRef.current)
+                      stopContinuousMetronomeRef.current();
+                    if (evaluatePerformanceRef.current)
+                      evaluatePerformanceRef.current();
+                  },
+                  beatDur * 1000 * 0.75
+                ); // 75% of a beat after the last beat
+              }
+            },
+            Math.max(0, (beatTime - audioEngine.getCurrentTime()) * 1000)
+          );
+        }
+      }
     },
     [
       audioEngine,
@@ -548,6 +604,9 @@ export function MetronomeTrainer() {
       beatDuration,
       gamePhase,
       createCustomMetronomeSound,
+      pulseOnly,
+      pulseBeatCount,
+      pulsePitch,
     ]
   );
 
@@ -586,6 +645,11 @@ export function MetronomeTrainer() {
     // Clear any already scheduled metronome events
     audioEngine.clearScheduledEvents();
   }, [audioEngine]);
+
+  // Keep stopContinuousMetronomeRef in sync so pulse scheduling can call it without circular dep
+  useEffect(() => {
+    stopContinuousMetronomeRef.current = stopContinuousMetronome;
+  }, [stopContinuousMetronome]);
 
   /**
    * Start user performance exactly at beat 1 (no countdown needed)
@@ -725,6 +789,19 @@ export function MetronomeTrainer() {
 
       // The continuous metronome handles both audio and visual synchronization
 
+      // In pulse mode: skip pattern playback entirely — go straight to user performance
+      if (pulseOnly) {
+        const delayToStart =
+          (patternStartTime - audioEngine.getCurrentTime()) * 1000;
+        setTimeout(
+          () => {
+            startUserPerformanceAtBeat1();
+          },
+          Math.max(0, delayToStart)
+        );
+        return;
+      }
+
       // Schedule pattern playback to start after count-in
       const delayToPatternStart =
         (patternStartTime - audioEngine.getCurrentTime()) * 1000;
@@ -733,7 +810,14 @@ export function MetronomeTrainer() {
         Math.max(0, delayToPatternStart)
       );
     },
-    [audioEngine, gameSettings, beatDuration, startPatternPlaybackWithPattern]
+    [
+      audioEngine,
+      gameSettings,
+      beatDuration,
+      startPatternPlaybackWithPattern,
+      pulseOnly,
+      startUserPerformanceAtBeat1,
+    ]
   );
 
   /**
@@ -751,12 +835,31 @@ export function MetronomeTrainer() {
         setGamePhase(GAME_PHASES.COUNT_IN);
         gameStartTime.current = audioEngine.getCurrentTime();
 
-        // Load first pattern using current settings
-        const pattern = await getPattern(
-          currentSettings.timeSignature.name,
-          currentSettings.difficulty,
-          rhythmPatterns
-        );
+        // In pulse mode: build a synthetic pattern where every beat is a tap beat.
+        // Each beat maps to 4 sixteenth-note slots (4/4 time), so pulseBeatCount beats
+        // = pulseBeatCount * 4 slots with a 1 at position 0 of each beat.
+        let pattern;
+        if (pulseOnly) {
+          const beatsPerMeasure = currentSettings.timeSignature?.beats ?? 4;
+          const unitsPerBeat = 4; // sixteenth-note grid
+          const totalUnits = pulseBeatCount * unitsPerBeat;
+          const pulsePattern = Array(totalUnits).fill(0);
+          for (let b = 0; b < pulseBeatCount; b++) {
+            pulsePattern[b * unitsPerBeat] = 1;
+          }
+          pattern = {
+            pattern: pulsePattern,
+            name: "pulse",
+            timeSignature: `${beatsPerMeasure}/4`,
+            difficulty: "beginner",
+          };
+        } else {
+          pattern = await getPattern(
+            currentSettings.timeSignature.name,
+            currentSettings.difficulty,
+            rhythmPatterns
+          );
+        }
 
         if (!pattern || !pattern.pattern || !Array.isArray(pattern.pattern)) {
           console.error(
@@ -772,13 +875,25 @@ export function MetronomeTrainer() {
         setUserTaps([]);
         setExpectedTaps([]);
         setCountdownToStart(null); // Clear countdown
-        patternInfoRef.current = null; // Clear previous pattern info
         userTapsRef.current = []; // Clear user taps ref
+        pulseBeatCounterRef.current = 0; // Reset pulse beat counter
 
-        // Reset exercise progress
+        // In pulse mode, set patternInfoRef now (startPatternPlaybackWithPattern is skipped)
+        // so evaluatePerformance can score taps against the synthetic pulse pattern.
+        if (pulseOnly) {
+          patternInfoRef.current = {
+            pattern: pattern.pattern,
+            startTime: audioEngine.getCurrentTime() + 0.1,
+            beatDuration: beatDuration.current,
+          };
+        } else {
+          patternInfoRef.current = null; // Clear previous pattern info
+        }
+
+        // Reset exercise progress — pulse mode is a single exercise (1 round)
         setExerciseProgress({
           currentExercise: 0,
-          totalExercises: 10,
+          totalExercises: pulseOnly ? 1 : 10,
           exerciseScores: [],
           isGameComplete: false,
         });
@@ -810,6 +925,9 @@ export function MetronomeTrainer() {
       audioEngine,
       startContinuousMetronome,
       startCountInWithPattern,
+      pulseOnly,
+      pulseBeatCount,
+      beatDuration,
     ]
   );
 
@@ -1018,6 +1136,11 @@ export function MetronomeTrainer() {
     playVictorySound,
     playWrongSound,
   ]);
+
+  // Keep evaluatePerformanceRef in sync so pulse scheduling can call it without circular dep
+  useEffect(() => {
+    evaluatePerformanceRef.current = evaluatePerformance;
+  }, [evaluatePerformance]);
 
   /**
    * Handle user tap input
@@ -1441,20 +1564,46 @@ export function MetronomeTrainer() {
 
       {/* Main Game Area - Side by Side */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row landscape:flex-row landscape:gap-2">
-        {/* Left Side: Metronome + Guidance */}
+        {/* Left Side: Metronome + Guidance (or Pulse Circle in pulseOnly mode) */}
         <div className="flex min-h-0 flex-1 flex-col justify-center space-y-4">
-          {/* Metronome Beats - Horizontal */}
-          <MetronomeDisplay
-            currentBeat={currentBeat}
-            timeSignature={gameSettings.timeSignature}
-            isActive={gamePhase !== GAME_PHASES.FEEDBACK}
-            isCountIn={gamePhase === GAME_PHASES.COUNT_IN}
-          />
+          {pulseOnly ? (
+            /* Pulse mode: large pulsing circle instead of notation */
+            <div className="flex flex-col items-center justify-center gap-6">
+              <div
+                className={`flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shadow-lg transition-transform ${
+                  reducedMotion ? "duration-0" : "duration-200"
+                } ${
+                  isOnBeat
+                    ? reducedMotion
+                      ? "scale-105"
+                      : "scale-125 shadow-purple-400/50"
+                    : "scale-100 shadow-purple-500/30"
+                }`}
+              >
+                <span className="text-4xl font-bold text-white">
+                  {currentBeat > 0 ? currentBeat : ""}
+                </span>
+              </div>
+              <div className="px-4 text-center text-sm text-white sm:text-base">
+                {getGuidanceText()}
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Metronome Beats - Horizontal */}
+              <MetronomeDisplay
+                currentBeat={currentBeat}
+                timeSignature={gameSettings.timeSignature}
+                isActive={gamePhase !== GAME_PHASES.FEEDBACK}
+                isCountIn={gamePhase === GAME_PHASES.COUNT_IN}
+              />
 
-          {/* User Guidance Text */}
-          <div className="px-4 text-center text-sm text-white sm:text-base">
-            {getGuidanceText()}
-          </div>
+              {/* User Guidance Text */}
+              <div className="px-4 text-center text-sm text-white sm:text-base">
+                {getGuidanceText()}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Right Side: TAP HERE Button */}
