@@ -1,34 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.1
-milestone_name: Trail-First Navigation
-status: shipped
-stopped_at: v3.1 milestone complete
-last_updated: "2026-04-05T13:00:00.000Z"
-last_activity: 2026-04-05
+milestone: v3.2
+milestone_name: Rhythm Trail Rework
+status: defining_requirements
+stopped_at: Defining requirements for v3.2
+last_updated: "2026-04-06T00:00:00.000Z"
+last_activity: 2026-04-06
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-05)
+See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v3.2 Rhythm Trail Rework
 
 ## Current Position
 
-Milestone v3.1 Trail-First Navigation: SHIPPED 2026-04-05
-
-```
-v3.1 Trail-First Navigation: [██████████] 100% (5/5 plans) ✅ SHIPPED
-```
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-06 — Milestone v3.2 started
 
 ## Performance Metrics
 
@@ -49,14 +48,14 @@ Cleared at milestone boundary. See `.planning/milestones/v3.1-ROADMAP.md` for v3
 
 ## Session Continuity
 
-Last session: 2026-04-05
-Stopped at: v3.1 milestone complete
+Last session: 2026-04-06
+Stopped at: Defining requirements for v3.2
 
 **Next action:**
 
-- `/gsd:new-milestone` to start next milestone
+- Define requirements for v3.2 Rhythm Trail Rework
 
 ---
 
 _State initialized: 2026-01-31_
-_Last updated: 2026-04-05 -- v3.1 Trail-First Navigation shipped_
+_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework milestone started_

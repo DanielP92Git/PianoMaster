@@ -249,6 +249,18 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
+## Current Milestone: v3.2 Rhythm Trail Rework
+
+**Goal:** Rethink and refactor the rhythm trail to deliver a structured, pedagogically sound progression for 8-year-old learners.
+
+**Target features:**
+
+- Curated pattern database per node (replace random generative patterns with hand-crafted progressions)
+- Rhythm node progression audit and restructure (50 nodes across units 1-8)
+- Game type assignment review (right game for right learning stage)
+- Difficulty curve tuning (engaging, not frustrating)
+- Game naming improvements (e.g. "MetronomeTrainer" → kid-friendly name)
+
 **Future candidates:**
 
 - Production deployment to Google Play / Apple App Store
@@ -577,4 +589,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-05 — v3.1 Trail-First Navigation shipped (22 milestones total)_
+_Last updated: 2026-04-06 — v3.2 Rhythm Trail Rework milestone started_
