@@ -54,9 +54,9 @@ export const TIME_SIGNATURES = {
   },
   SIX_EIGHT: {
     name: "6/8",
-    beats: 2,           // FIXED: compound time has 2 dotted-quarter beats
-    subdivisions: 6,    // Explicit subdivision count: 6 eighth-note positions
-    subdivision: 12,    // Total sixteenth-note slots in measure
+    beats: 2, // FIXED: compound time has 2 dotted-quarter beats
+    subdivisions: 6, // Explicit subdivision count: 6 eighth-note positions
+    subdivision: 12, // Total sixteenth-note slots in measure
     strongBeats: [0, 3], // Positions 0 and 3 in the 6-subdivision grid (1-indexed: 1 and 4)
     mediumBeats: [], // No medium beats in 6/8
     weakBeats: [1, 2, 4, 5], // Other positions are weak
@@ -155,13 +155,10 @@ class HybridPatternService {
    * Validate pattern database structure
    */
   validatePatternDatabase(data) {
-
     if (!data || typeof data !== "object") {
-      
       return false;
     }
     if (!data.timeSignature || !data.patterns || !data.metadata) {
-      
       return false;
     }
 
@@ -171,7 +168,6 @@ class HybridPatternService {
         !data.patterns[difficulty] ||
         !Array.isArray(data.patterns[difficulty])
       ) {
-        
         return false;
       }
 
@@ -179,7 +175,6 @@ class HybridPatternService {
       for (let i = 0; i < data.patterns[difficulty].length; i++) {
         const pattern = data.patterns[difficulty][i];
         if (!this.validatePattern(pattern, data.timeSignature)) {
-          
           return false;
         }
       }
@@ -193,14 +188,13 @@ class HybridPatternService {
    */
   validatePattern(pattern, timeSignature = "4/4") {
     if (!Array.isArray(pattern)) {
-      
       return false;
     }
 
     // Handle different pattern formats
     if (typeof pattern[0] === "number") {
       // JSON format: array of fractional values (e.g., [0.25, 0, 0.25, 0.25])
-      
+
       return this.validatePatternDuration(pattern, timeSignature);
     } else {
       // Schema format: array of objects with duration and note properties
@@ -209,15 +203,12 @@ class HybridPatternService {
       for (let i = 0; i < pattern.length; i++) {
         const note = pattern[i];
         if (!note || typeof note !== "object") {
-          
           return false;
         }
         if (typeof note.duration !== "string") {
-          
           return false;
         }
         if (typeof note.note !== "boolean") {
-          
           return false;
         }
       }
@@ -258,7 +249,6 @@ class HybridPatternService {
           (frac) => Math.abs(value - frac) < tolerance
         );
         if (!isValidFraction && value !== 0) {
-          
           return false;
         }
       }
@@ -266,7 +256,6 @@ class HybridPatternService {
       // For JSON patterns, just ensure they're not empty and have reasonable values
       const hasNotes = pattern.some((value) => value > 0);
       if (!hasNotes) {
-        
         return false;
       }
 
@@ -276,7 +265,6 @@ class HybridPatternService {
       for (const note of pattern) {
         const duration = this.getDurationValue(note.duration);
         if (duration === null) {
-          
           return false;
         }
         totalDuration += duration;
@@ -291,7 +279,9 @@ class HybridPatternService {
       // Allow small floating point tolerance
       const isValid = Math.abs(totalDuration - expectedLength) < 0.001;
       if (!isValid) {
-        console.warn("Pattern total duration does not match expected measure length");
+        console.warn(
+          "Pattern total duration does not match expected measure length"
+        );
       }
       return isValid;
     }
@@ -360,15 +350,29 @@ class HybridPatternService {
 
   /**
    * Get a curated pattern from JSON database
+   * @param {string} timeSignature
+   * @param {string} difficulty
+   * @param {string[]|null} allowedDurations - Optional filter: only return patterns whose note durations are all in this set
    */
-  async getCuratedPattern(timeSignature, difficulty) {
+  async getCuratedPattern(timeSignature, difficulty, allowedDurations = null) {
     const patterns = await this.loadPatterns(timeSignature);
 
     if (!patterns || !patterns.patterns[difficulty]) {
       return null;
     }
 
-    const difficultyPatterns = patterns.patterns[difficulty];
+    let difficultyPatterns = patterns.patterns[difficulty];
+
+    // Filter by allowed durations if specified
+    if (Array.isArray(allowedDurations) && allowedDurations.length > 0) {
+      difficultyPatterns = difficultyPatterns.filter((pattern) =>
+        pattern.every((note) => allowedDurations.includes(note.duration))
+      );
+      if (difficultyPatterns.length === 0) {
+        return null;
+      }
+    }
+
     const randomIndex = Math.floor(Math.random() * difficultyPatterns.length);
     const selectedPattern = difficultyPatterns[randomIndex];
 
@@ -400,7 +404,9 @@ class HybridPatternService {
    */
   generatePattern(timeSignatureObj, difficulty) {
     // Fallback to beginner if unknown difficulty
-    const rules = GENERATION_RULES[difficulty] || GENERATION_RULES[DIFFICULTY_LEVELS.BEGINNER];
+    const rules =
+      GENERATION_RULES[difficulty] ||
+      GENERATION_RULES[DIFFICULTY_LEVELS.BEGINNER];
     const { measureLength, strongBeats, mediumBeats, weakBeats } =
       timeSignatureObj;
 
@@ -409,7 +415,8 @@ class HybridPatternService {
     //   4/4: measureLength(16) / beats(4) = 4  → quarter-note beat index * 4 = sixteenth position
     // For compound time (6/8): subdivisions = 6 (eighth-note positions in the measure).
     //   6/8: measureLength(12) / subdivisions(6) = 2 → position * 2 = sixteenth position
-    const subdivisionCount = timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
+    const subdivisionCount =
+      timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
     const positionMultiplier = measureLength / subdivisionCount;
 
     // Create empty pattern array
@@ -418,7 +425,10 @@ class HybridPatternService {
     // Apply strong beat logic
     strongBeats.forEach((beatIndex) => {
       const sixteenthIndex = Math.round(beatIndex * positionMultiplier);
-      if (sixteenthIndex < pattern.length && Math.random() < rules.strongBeatProbability) {
+      if (
+        sixteenthIndex < pattern.length &&
+        Math.random() < rules.strongBeatProbability
+      ) {
         pattern[sixteenthIndex] = 1;
       }
     });
@@ -426,7 +436,10 @@ class HybridPatternService {
     // Apply medium beat logic
     mediumBeats.forEach((beatIndex) => {
       const sixteenthIndex = Math.round(beatIndex * positionMultiplier);
-      if (sixteenthIndex < pattern.length && Math.random() < rules.strongBeatProbability * 0.7) {
+      if (
+        sixteenthIndex < pattern.length &&
+        Math.random() < rules.strongBeatProbability * 0.7
+      ) {
         pattern[sixteenthIndex] = 1;
       }
     });
@@ -434,7 +447,10 @@ class HybridPatternService {
     // Apply weak beat logic
     weakBeats.forEach((beatIndex) => {
       const sixteenthIndex = Math.round(beatIndex * positionMultiplier);
-      if (sixteenthIndex < pattern.length && Math.random() < rules.weakBeatProbability) {
+      if (
+        sixteenthIndex < pattern.length &&
+        Math.random() < rules.weakBeatProbability
+      ) {
         pattern[sixteenthIndex] = 1;
       }
     });
@@ -463,14 +479,15 @@ class HybridPatternService {
   addSubdivisionNotes(pattern, rules, timeSignatureObj) {
     const { measureLength } = timeSignatureObj;
 
-    // Add some subdivision variety
-    for (let i = 1; i < measureLength; i += 2) {
-      // Off-beat positions
+    // Determine the minimum grid step from allowed subdivisions
+    // e.g. quarter-only → step 4 (positions 0,4,8,12), quarter+eighth → step 2
+    const minSubdivision = Math.min(...rules.allowedSubdivisions);
+
+    // Only add notes at positions aligned to the subdivision grid
+    for (let i = 0; i < measureLength; i += minSubdivision) {
       if (pattern[i] === 0 && Math.random() < 0.3) {
-        // Check if this creates too much density
         const localDensity = this.calculateLocalDensity(pattern, i, 4);
         if (localDensity < 0.5) {
-          // Don't exceed 50% local density
           pattern[i] = 1;
         }
       }
@@ -601,7 +618,8 @@ class HybridPatternService {
 
     // For 4/4 time, fractional patterns typically represent 4 beat positions.
     // For 6/8, fractional patterns represent 6 eighth-note positions (use subdivisions, not beats).
-    const beatsPerMeasure = timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
+    const beatsPerMeasure =
+      timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
     const sixteenthsPerBeat = timeSignatureObj.measureLength / beatsPerMeasure;
 
     fractionalPattern.forEach((value, beatIndex) => {
@@ -653,7 +671,6 @@ export async function getPattern(
   difficulty,
   allowedPatterns = null
 ) {
-
   const generator = createPatternGenerator();
   const timeSignatureObj =
     TIME_SIGNATURES[
@@ -667,13 +684,18 @@ export async function getPattern(
   }
 
   // When allowedPatterns is specified, skip curated patterns and constrain generation
-  const useAllowedPatterns = Array.isArray(allowedPatterns) && allowedPatterns.length > 0;
+  const useAllowedPatterns =
+    Array.isArray(allowedPatterns) && allowedPatterns.length > 0;
 
   let result = null;
 
   // Try curated pattern first (only when no allowedPatterns constraint)
   if (!useAllowedPatterns) {
-    result = await generator.getCuratedPattern(timeSignature, difficulty);
+    result = await generator.getCuratedPattern(
+      timeSignature,
+      difficulty,
+      allowedPatterns
+    );
   }
 
   // Fallback to generated pattern (or forced when constrained)
@@ -681,17 +703,22 @@ export async function getPattern(
     if (useAllowedPatterns) {
       // Temporarily override generation rules with constrained subdivisions
       const diffKey = difficulty || DIFFICULTY_LEVELS.BEGINNER;
-      const originalRules = GENERATION_RULES[diffKey] || GENERATION_RULES[DIFFICULTY_LEVELS.BEGINNER];
+      const originalRules =
+        GENERATION_RULES[diffKey] ||
+        GENERATION_RULES[DIFFICULTY_LEVELS.BEGINNER];
       const allowedValues = allowedPatterns
-        .map(name => generator.getDurationValue(name))
-        .filter(v => v !== null);
+        .map((name) => generator.getDurationValue(name))
+        .filter((v) => v !== null);
       if (allowedValues.length > 0) {
-        const intersection = originalRules.allowedSubdivisions.filter(v =>
-          allowedValues.some(av => Math.abs(av - v) < 0.001)
+        const intersection = originalRules.allowedSubdivisions.filter((v) =>
+          allowedValues.some((av) => Math.abs(av - v) < 0.001)
         );
         if (intersection.length > 0) {
           // Create a temporary rules copy with constrained subdivisions
-          const constrainedRules = { ...originalRules, allowedSubdivisions: intersection };
+          const constrainedRules = {
+            ...originalRules,
+            allowedSubdivisions: intersection,
+          };
           // Temporarily replace in GENERATION_RULES for the generatePattern call
           GENERATION_RULES[diffKey] = constrainedRules;
           result = generator.generatePattern(timeSignatureObj, difficulty);
@@ -730,8 +757,10 @@ export async function getPattern(
     // Create appropriate fallback pattern for the time signature
     const fallbackPattern = new Array(timeSignatureObj.measureLength).fill(0);
     // Add notes at each subdivision position using the compound-aware multiplier
-    const fallbackSubdivisionCount = timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
-    const fallbackMultiplier = timeSignatureObj.measureLength / fallbackSubdivisionCount;
+    const fallbackSubdivisionCount =
+      timeSignatureObj.subdivisions ?? timeSignatureObj.beats;
+    const fallbackMultiplier =
+      timeSignatureObj.measureLength / fallbackSubdivisionCount;
     for (let i = 0; i < fallbackSubdivisionCount; i++) {
       const pos = Math.round(i * fallbackMultiplier);
       if (pos < fallbackPattern.length) {
@@ -745,7 +774,6 @@ export async function getPattern(
       timeSignature: timeSignatureObj.name,
       difficulty,
     };
-    
   }
 
   return result;
