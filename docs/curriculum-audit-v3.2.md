@@ -230,3 +230,91 @@ Per D-16 (custom project order): quarter → half → whole → eighth → rests
 | rhythm_7_1 | SIG+DUR                    | 6/8 introduces compound meter (correct position) but pairs with qd duration — the SIG+DUR CURR-01 flag applies |
 
 No duration-order violations detected: the custom project sequence (q→h→w→8→rests→dotted→16→compound) is respected across Units 1-8.
+
+---
+
+## Remediation List
+
+The following sections list every actionable fix for Phase 22. Kodaly resequencing is excluded per D-17.
+
+### Game-Type Fixes
+
+| #    | Node ID       | Node Type   | Current Game       | Required Game                  | Phase 22 Action                                                                         |
+| ---- | ------------- | ----------- | ------------------ | ------------------------------ | --------------------------------------------------------------------------------------- |
+| G-01 | rhythm_1_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-02 | rhythm_1_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-03 | rhythm_1_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-04 | rhythm_1_5    | MIX_UP      | RHYTHM_TAP         | RHYTHM_DICTATION               | Replace exercises[0].type                                                               |
+| G-05 | rhythm_1_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-06 | boss_rhythm_1 | MINI_BOSS   | ARCADE_RHYTHM      | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-07 | rhythm_2_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-08 | rhythm_2_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-09 | rhythm_2_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-10 | rhythm_2_5    | MIX_UP      | RHYTHM_TAP         | RHYTHM_DICTATION               | Replace exercises[0].type                                                               |
+| G-11 | rhythm_2_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-12 | boss_rhythm_2 | MINI_BOSS   | ARCADE_RHYTHM      | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-13 | rhythm_3_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-14 | rhythm_3_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-15 | rhythm_3_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-16 | rhythm_3_5    | MIX_UP      | RHYTHM_TAP         | RHYTHM_DICTATION               | Replace exercises[0].type                                                               |
+| G-17 | rhythm_3_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-18 | boss_rhythm_3 | MINI_BOSS   | ARCADE_RHYTHM      | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-19 | rhythm_4_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-20 | rhythm_4_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-21 | rhythm_4_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-22 | rhythm_4_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-23 | boss_rhythm_4 | MINI_BOSS   | ARCADE_RHYTHM      | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-24 | rhythm_5_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-25 | rhythm_5_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-26 | rhythm_5_5    | PRACTICE    | RHYTHM_TAP         | RHYTHM_TAP (MetronomeTrainer)  | Conditional — see Open Question 1; keep if RHYTHM_TAP IS the MetronomeTrainer echo mode |
+| G-27 | rhythm_5_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-28 | boss_rhythm_5 | MINI_BOSS   | ARCADE_RHYTHM (x2) | RHYTHM_TAP (x2)                | Replace both exercises[].type                                                           |
+| G-29 | rhythm_6_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-30 | rhythm_6_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-31 | rhythm_6_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-32 | rhythm_6_5    | MIX_UP      | RHYTHM_TAP         | RHYTHM_DICTATION               | Replace exercises[0].type                                                               |
+| G-33 | rhythm_6_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-34 | rhythm_7_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-35 | rhythm_7_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-36 | rhythm_7_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-37 | rhythm_7_5    | MIX_UP      | RHYTHM_TAP         | RHYTHM_DICTATION               | Replace exercises[0].type                                                               |
+| G-38 | rhythm_7_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+| G-39 | boss_rhythm_7 | MINI_BOSS   | ARCADE_RHYTHM      | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-40 | rhythm_8_1    | DISCOVERY   | RHYTHM             | RHYTHM_TAP                     | Replace exercises[0].type                                                               |
+| G-41 | rhythm_8_2    | PRACTICE    | RHYTHM             | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-42 | rhythm_8_4    | PRACTICE    | RHYTHM_DICTATION   | RHYTHM_TAP (MetronomeTrainer)  | Replace exercises[0].type                                                               |
+| G-43 | rhythm_8_5    | MIX_UP      | RHYTHM_TAP         | RHYTHM_DICTATION               | Replace exercises[0].type                                                               |
+| G-44 | rhythm_8_6    | SPEED_ROUND | RHYTHM             | ARCADE_RHYTHM                  | Replace exercises[0].type                                                               |
+
+**Total game-type remediations: 44** (G-26 is conditional — see Open Question 1)
+
+### Concept (CURR-01) Fixes
+
+| #    | Node ID    | Violation                                                       | Required Change                                                                                                                                                                                                                                     |
+| ---- | ---------- | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C-01 | rhythm_7_1 | SIG+DUR: 6/8 time + qd duration introduced together             | Keep as one node, set focusDurations: [] and newContentDescription: '6/8 Compound Meter (Two Big Beats)', remove qd from focusDurations since the metre is the new concept. Alternatively: split into two Discovery nodes.                          |
+| C-02 | rhythm_7_3 | REPEATED: q already introduced in Unit 1                        | Set focusDurations: [] and newContentDescription: 'Quarter Notes within 6/8 Context'. The node teaches 6/8 feel with a known duration — valid but must not claim to introduce a new duration.                                                       |
+| C-03 | rhythm_7_4 | REPEATED: 8 already introduced in Unit 3; also on Practice node | Set focusDurations: [] and newContentDescription: 'Eighth Notes within 6/8 Context'. Consider whether nodeType should change to DISCOVERY since it introduces a contextual technique.                                                               |
+| C-04 | rhythm_8_1 | REPEATED: 8 already introduced in Unit 3                        | Set focusDurations: [] and newContentDescription: 'Syncopation: Eighth-Quarter-Eighth Pattern'. The concept is syncopation, not the duration.                                                                                                       |
+| C-05 | rhythm_8_3 | REPEATED: qd already introduced in Unit 5                       | Set focusDurations: [] and newContentDescription: 'Dotted Quarter-Eighth Syncopation Pattern'. Same fix as C-04.                                                                                                                                    |
+
+**Total concept remediations: 5**
+
+---
+
+## Open Questions
+
+1. **RHYTHM_TAP = MetronomeTrainer (echo) OR RhythmReadingGame (notation)?** — Phase 22 must verify the exercise-type-to-component binding. The audit specifies intended game behavior per policy; the correct EXERCISE_TYPES constant will be confirmed during implementation. Impact on G-26: if RHYTHM_TAP maps to RhythmReadingGame (notation-showing) exclusively, then rhythm_5_5 (PRACTICE) using RHYTHM_TAP is a violation — Practice should use MetronomeTrainer, not RhythmReadingGame. G-26 remains a violation until this is resolved.
+
+2. **Should rhythm_7_3 and rhythm_7_4 concept remediations also change the node type to DISCOVERY?** — The audit flags this as "OPTIONAL: consider changing nodeType to DISCOVERY" — Phase 22 planner decides. rhythm_7_4 is PRACTICE but introduces a contextual concept (eighths in 6/8); D-12 implies concepts belong on Discovery nodes.
+
+---
+
+## Assumptions
+
+| #  | Claim                                                                                                                            | Risk if Wrong                                                                                                 |
+| -- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| A1 | EXERCISE_TYPES.RHYTHM maps to MetronomeTrainer in the current runtime and is not a synonym for any of the three new game types   | If RHYTHM already routes to a specific new game, some "violations" may be false positives                     |
+| A2 | EXERCISE_TYPES.RHYTHM_TAP is the exercise type consumed by MetronomeTrainer in echo mode (D-05)                                  | If RHYTHM_TAP maps to RhythmReadingGame (notation-showing) exclusively, then Practice node corrections differ |
+| A3 | rhythm_5_3 correctly isolates 3/4 time (no CURR-01 violation) because focusDurations is []                                       | Confirmed by file read; very low risk                                                                         |
+| A4 | boss_rhythm_7 has isBoss: false (set explicitly in file) — it is a MINI_BOSS, not a true BOSS                                    | Confirmed by file read; very low risk                                                                         |
