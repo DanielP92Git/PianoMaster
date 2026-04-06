@@ -364,15 +364,13 @@ Also add `RHYTHM_PULSE` as an allowed type for the special pulse exercise on `rh
 
 ## Common Pitfalls
 
-### Pitfall 1: `RHYTHM_TAP` Routes to RhythmReadingGame, Not MetronomeTrainer
+### Pitfall 1: `RHYTHM_TAP` Routes to RhythmReadingGame, Not MetronomeTrainer (RESOLVED)
 
-**What goes wrong:** The audit Open Question 1 is now resolved by the routing table in `TrailNodeModal.jsx` (line 231-232): `case 'rhythm_tap': navigate('/rhythm-mode/rhythm-reading-game')`. RHYTHM_TAP routes to **RhythmReadingGame** (notation-showing), NOT MetronomeTrainer.
+**What goes wrong:** The audit Open Question 1 is now resolved by the routing table in `TrailNodeModal.jsx` (line 231-232): `case 'rhythm_tap': navigate('/rhythm-mode/rhythm-reading-game')`. RHYTHM_TAP routes to **RhythmReadingGame** (notation-showing tap-along), NOT MetronomeTrainer.
 
-**Implication for game-type policy:** Per D-05, Practice nodes → MetronomeTrainer. But `RHYTHM_TAP` goes to RhythmReadingGame. This means **Practice nodes need a different exercise type** than RHYTHM_TAP — or the routing table must be updated. The policy says "MetronomeTrainer (echo mode)" for Practice; the current routing says RHYTHM_TAP = RhythmReadingGame. These are inconsistent.
+**Resolution:** `RhythmReadingGame.jsx` has been verified as a notation-showing tap-along game (see Open Questions (RESOLVED) #1 above). This makes RHYTHM_TAP → RhythmReadingGame the correct routing for both Discovery and Practice nodes. Discovery introduces notation; Practice reinforces it by having the child tap along. The routing table does NOT need changes.
 
-**Resolution needed:** The planner must decide: (a) change the routing so `RHYTHM_TAP` goes to MetronomeTrainer (echo), and add a new type like `RHYTHM_NOTATION` for RhythmReadingGame; OR (b) use `RHYTHM_TAP` for Practice nodes but verify RhythmReadingGame does in fact act as an echo/tap game (not notation-showing). Check `RhythmReadingGame.jsx` during implementation. [VERIFIED: routing from TrailNodeModal.jsx line 231-232; ASSUMED that RhythmReadingGame is notation-showing]
-
-**Warning signs:** If Practice nodes launch RhythmReadingGame showing notation instead of MetronomeTrainer showing patterns to echo, this pitfall occurred.
+[VERIFIED: RhythmReadingGame.jsx docstring, imports (RhythmStaffDisplay, MetronomeDisplay, scoreTap), game phases FSM]
 
 ### Pitfall 2: `rhythmPatterns` Field Still Exists in `rhythmConfig.patterns`
 
@@ -504,32 +502,29 @@ case 'arcade_rhythm':  navigate('/rhythm-mode/arcade-rhythm-game');
 
 ## Assumptions Log
 
-| #   | Claim                                                                                                                                                 | Section                   | Risk if Wrong                                                                                                            |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| A1  | `RHYTHM_TAP` routes to RhythmReadingGame (notation-showing), not MetronomeTrainer                                                                     | Pitfall 1, Standard Stack | If RhythmReadingGame is actually an echo/tap game, practice node routing is already correct and no routing change needed |
-| A2  | `rhythmConfig.patterns` field (separate from `exercises[].config.rhythmPatterns`) is not consumed by game components or validator — can be left as-is | Pitfall 2                 | If it IS consumed somewhere, it needs updating too — grep for consumers during implementation                            |
-| A3  | Unit 4 has no MIX_UP node (the audit shows 4 violations but no RHYTHM_DICTATION swap needed — 6 nodes, no MIX_UP type)                                | Unit file migration scope | Low risk — confirmed by audit table showing only G-19 through G-23 with no G-XX for MIX_UP in Unit 4                     |
+| #   | Claim                                                                                                                                                 | Section                   | Risk if Wrong                                                                                                                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| A1  | `RHYTHM_TAP` routes to RhythmReadingGame (notation-showing tap-along), not MetronomeTrainer. **VERIFIED** by reading RhythmReadingGame.jsx source.    | Pitfall 1, Standard Stack | N/A — verified. RhythmReadingGame is a notation-showing tap-along game. RHYTHM_TAP routing is correct for both Discovery and Practice nodes. |
+| A2  | `rhythmConfig.patterns` field (separate from `exercises[].config.rhythmPatterns`) is not consumed by game components or validator — can be left as-is | Pitfall 2                 | If it IS consumed somewhere, it needs updating too — grep for consumers during implementation                                                |
+| A3  | Unit 4 has no MIX_UP node (the audit shows 4 violations but no RHYTHM_DICTATION swap needed — 6 nodes, no MIX_UP type)                                | Unit file migration scope | Low risk — confirmed by audit table showing only G-19 through G-23 with no G-XX for MIX_UP in Unit 4                                         |
 
-**Assumptions A1 and A2 require verification at implementation start before writing any code.**
+**Assumption A1 is now verified (see Open Questions RESOLVED #1). Assumption A2 requires verification at implementation start before writing any code.**
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **RHYTHM_TAP routing disambiguation (critical — blocks game-type migration)**
    - What we know: `TrailNodeModal.jsx` routes `rhythm_tap` → `/rhythm-mode/rhythm-reading-game`. The policy says Practice nodes use MetronomeTrainer (echo mode). These are inconsistent.
-   - What's unclear: Does RhythmReadingGame operate as an echo/tap game (no notation display), making it suitable for Practice nodes? Or is it strictly notation-showing?
-   - Recommendation: Read `RhythmReadingGame.jsx` in Wave 0 to determine its actual mode. Then decide whether to (a) keep `RHYTHM_TAP` for RhythmReadingGame and add a new `RHYTHM_ECHO` type for MetronomeTrainer, or (b) reroute `RHYTHM_TAP` to MetronomeTrainer and introduce `RHYTHM_NOTATION` for RhythmReadingGame.
+   - **RESOLVED:** Reading `RhythmReadingGame.jsx` confirms it is a **notation-showing tap-along game**. Its docstring states: "Tap-along rhythm game where children synchronize taps to visual notation. Shows VexFlow-rendered rhythm pattern, sweeping cursor." It imports `RhythmStaffDisplay` (VexFlow notation rendering) and `MetronomeDisplay`, uses a sweeping cursor, and scores each tap with `scoreTap()`. This is NOT an echo game — the child sees notation and taps along in time. This makes `RHYTHM_TAP` routing to RhythmReadingGame **correct and appropriate** for both Discovery and Practice nodes: Discovery introduces the notation, Practice reinforces reading it. The original confusion arose from the Phase 20 audit describing Practice nodes as "MetronomeTrainer (echo mode)" — but the actual game-type policy mapping (PRACTICE → RHYTHM_TAP → RhythmReadingGame) is pedagogically sound: Practice nodes have the child read and tap along to notation they have already seen in Discovery. No new exercise types needed; no routing changes required.
 
 2. **`RHYTHM_PULSE` exercise type registration**
    - What we know: `constants.js` EXERCISE_TYPES currently has: RHYTHM, RHYTHM_TAP, RHYTHM_DICTATION, ARCADE_RHYTHM. No RHYTHM_PULSE.
-   - What's unclear: Should pulse be a distinct exercise type, or should it be handled as a submode of RHYTHM_TAP (detected via `config.pulseOnly`)?
-   - Recommendation: Add `RHYTHM_PULSE: 'rhythm_pulse'` to EXERCISE_TYPES so the validator can permit it explicitly on Node 1. Keep it separate from RHYTHM_TAP to avoid confusing the nodeType→exerciseType validator.
+   - **RESOLVED:** Plan 01 Task 1 adds `RHYTHM_PULSE: 'rhythm_pulse'` to EXERCISE_TYPES as a distinct type. This is the correct approach — a separate type allows the build validator to explicitly permit it only on rhythm_1_1 (via `config.pulseOnly === true` exemption), and the routing tables in TrailNodeModal and MetronomeTrainer's handleNextExercise can handle it with dedicated `case 'rhythm_pulse':` entries. Making it a submode of RHYTHM_TAP would confuse the nodeType→exerciseType validator since pulse is not a standard Discovery/Practice exercise.
 
 3. **rhythm_7_3 and rhythm_7_4 nodeType changes (Open Question 2 from audit)**
    - What we know: rhythm_7_4 is PRACTICE but introduces contextual concept (eighths in 6/8). D-12 implies concepts belong on Discovery nodes.
-   - What's unclear: Should nodeType be changed to DISCOVERY? Changes nodeType → changes required exercise type → changes routing.
-   - Recommendation: Per audit guidance, change rhythm_7_4 to DISCOVERY. This keeps the concept-introduction semantic consistent. rhythm_7_3 stays DISCOVERY (already correct type, just fix focusDurations).
+   - **RESOLVED:** Plan 02 Task 2 changes rhythm_7_4's nodeType from `NODE_TYPES.PRACTICE` to `NODE_TYPES.DISCOVERY` and sets its exercise type to `RHYTHM_TAP` (valid for Discovery per the game-type policy). This keeps the concept-introduction semantic consistent. rhythm_7_3 stays DISCOVERY (already correct nodeType, just needs focusDurations fix). The test file `rhythmUnit7Redesigned.test.js` is updated in Plan 02 Task 2 to expect `NODE_TYPES.DISCOVERY` for rhythm_7_4.
 
 ---
 

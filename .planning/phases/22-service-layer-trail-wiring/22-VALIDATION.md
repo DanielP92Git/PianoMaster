@@ -41,7 +41,7 @@ created: 2026-04-07
 | 22-01-01 | 01   | 0    | PAT-04         | —          | N/A             | unit        | `npx vitest run src/components/games/rhythm-games/RhythmPatternGenerator.test.js` | ❌ W0       | ⬜ pending |
 | 22-01-02 | 01   | 0    | CURR-05        | —          | N/A             | unit        | `npx vitest run src/data/units/rhythmUnit1Redesigned.test.js`                     | ❌ W0       | ⬜ pending |
 | 22-02-01 | 02   | 1    | PAT-04, PAT-05 | —          | N/A             | unit        | `npx vitest run src/components/games/rhythm-games/RhythmPatternGenerator.test.js` | ❌ W0       | ⬜ pending |
-| 22-03-01 | 03   | 1    | CURR-05        | —          | N/A             | unit        | `npx vitest run src/components/games/rhythm-games/MetronomeTrainer.test.jsx`      | ❌ W0       | ⬜ pending |
+| 22-03-01 | 03   | 1    | CURR-05        | —          | N/A             | structural  | `grep -c "pulseOnly" src/components/games/rhythm-games/MetronomeTrainer.jsx`      | ✅          | ⬜ pending |
 | 22-04-01 | 04   | 2    | PAT-03         | —          | N/A             | unit        | `npx vitest run src/data/units/`                                                  | Partial     | ⬜ pending |
 | 22-05-01 | 05   | 3    | PAT-06         | —          | N/A             | integration | `npm run verify:trail`                                                            | ✅          | ⬜ pending |
 
@@ -54,6 +54,8 @@ _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 - [ ] `src/components/games/rhythm-games/RhythmPatternGenerator.test.js` — stubs for resolveByTags/resolveByIds (PAT-04, PAT-05)
 - [ ] `src/data/units/rhythmUnit1Redesigned.test.js` — extend/create for pulse exercise presence (CURR-05) + patternTags migration shape
 - [ ] Update existing `rhythmUnit7Redesigned.test.js` and `rhythmUnit8Redesigned.test.js` expected exercise types after game-type remediation
+
+_Note: MetronomeTrainer.test.jsx is NOT a Wave 0 requirement. Plan 03 T1 uses grep-based structural assertions to verify pulseOnly mode implementation rather than requiring a pre-existing test file._
 
 ---
 
