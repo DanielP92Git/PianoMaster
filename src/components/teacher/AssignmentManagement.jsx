@@ -4,6 +4,7 @@ import {
   Award,
   Plus,
   Trash2,
+  Pencil,
   Calendar,
   Users,
   CheckCircle,
@@ -26,6 +27,7 @@ import { toast } from "react-hot-toast";
 import {
   getTeacherAssignments,
   createAssignment,
+  updateAssignment,
   deleteAssignment,
   getAssignmentSubmissions,
 } from "../../services/apiTeacher";
@@ -35,8 +37,10 @@ const CreateAssignmentModal = ({
   isOpen,
   onClose,
   onCreateAssignment,
+  onUpdateAssignment,
   isLoading,
   students = [],
+  assignment = null,
 }) => {
   const [formData, setFormData] = useState({
     title: "",
@@ -54,24 +58,44 @@ const CreateAssignmentModal = ({
     },
   });
 
-  // Reset form when modal opens
+  // Reset form when modal opens, or pre-fill when editing
   useEffect(() => {
     if (isOpen) {
-      setFormData({
-        title: "",
-        description: "",
-        instructions: "",
-        assignmentType: "practice",
-        dueDate: "",
-        pointsPossible: 100,
-        assignTo: "all",
-        requirements: {
-          minPracticeSessions: 1,
-          minPracticeTime: 30,
-          targetAccuracy: 80,
-          practiceMode: "any",
-        },
-      });
+      if (assignment) {
+        // Edit mode: pre-fill from existing assignment
+        setFormData({
+          title: assignment.title || "",
+          description: assignment.description || "",
+          instructions: assignment.instructions || "",
+          assignmentType: assignment.assignment_type || "practice",
+          dueDate: assignment.due_date ? assignment.due_date.split("T")[0] : "",
+          pointsPossible: assignment.points_possible || 100,
+          assignTo: assignment.assign_to || "all",
+          requirements: {
+            minPracticeSessions: assignment.requirements?.minPracticeSessions || 1,
+            minPracticeTime: assignment.requirements?.minPracticeTime || 30,
+            targetAccuracy: assignment.requirements?.targetAccuracy || 80,
+            practiceMode: assignment.requirements?.practiceMode || "any",
+          },
+        });
+      } else {
+        // Create mode: reset to defaults
+        setFormData({
+          title: "",
+          description: "",
+          instructions: "",
+          assignmentType: "practice",
+          dueDate: "",
+          pointsPossible: 100,
+          assignTo: "all",
+          requirements: {
+            minPracticeSessions: 1,
+            minPracticeTime: 30,
+            targetAccuracy: 80,
+            practiceMode: "any",
+          },
+        });
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -96,7 +120,11 @@ const CreateAssignmentModal = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isFormValid()) {
-      onCreateAssignment(formData);
+      if (assignment) {
+        onUpdateAssignment(assignment.id, formData);
+      } else {
+        onCreateAssignment(formData);
+      }
     }
   };
 
@@ -124,7 +152,7 @@ const CreateAssignmentModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create New Assignment">
+    <Modal isOpen={isOpen} onClose={handleClose} title={assignment ? "Edit Assignment" : "Create New Assignment"}>
       <form
         onSubmit={handleSubmit}
         className="space-y-6 custom-scrollbar-light"
@@ -328,7 +356,7 @@ const CreateAssignmentModal = ({
             disabled={!isFormValid() || isLoading}
             loading={isLoading}
           >
-            Create Assignment
+            {assignment ? "Save Changes" : "Create Assignment"}
           </Button>
         </div>
       </form>
@@ -534,6 +562,8 @@ const AssignmentManagement = ({ students = [] }) => {
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [assignmentSubmissions, setAssignmentSubmissions] = useState([]);
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingAssignment, setEditingAssignment] = useState(null);
 
   const queryClient = useQueryClient();
 
@@ -598,6 +628,21 @@ const AssignmentManagement = ({ students = [] }) => {
     },
   });
 
+  // Update assignment mutation
+  const updateAssignmentMutation = useMutation({
+    mutationFn: ({ assignmentId, updates }) => updateAssignment(assignmentId, updates),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["teacherAssignments"] });
+      setShowEditModal(false);
+      setEditingAssignment(null);
+      toast.success("Assignment updated successfully!");
+    },
+    onError: (error) => {
+      console.error("Update assignment error:", error);
+      toast.error("Failed to update assignment. Please try again.");
+    },
+  });
+
   const getAssignmentStatus = (assignment) => {
     const now = new Date();
     const dueDate = assignment.due_date ? new Date(assignment.due_date) : null;
@@ -651,6 +696,27 @@ const AssignmentManagement = ({ students = [] }) => {
     ) {
       deleteAssignmentMutation.mutate(assignmentId);
     }
+  };
+
+  const handleEditAssignment = (assignment) => {
+    setEditingAssignment(assignment);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateAssignment = (assignmentId, formData) => {
+    updateAssignmentMutation.mutate({
+      assignmentId,
+      updates: {
+        title: formData.title,
+        description: formData.description,
+        instructions: formData.instructions,
+        assignment_type: formData.assignmentType,
+        due_date: formData.dueDate || null,
+        points_possible: formData.pointsPossible,
+        assign_to: formData.assignTo,
+        requirements: formData.requirements,
+      },
+    });
   };
 
   const handleViewAssignment = async (assignment) => {
@@ -815,6 +881,13 @@ const AssignmentManagement = ({ students = [] }) => {
                       <Eye className="h-3.5 w-3.5" />
                     </button>
                     <button
+                      onClick={() => handleEditAssignment(assignment)}
+                      className="rounded-lg p-1 text-white/40 transition-colors hover:bg-yellow-500/20 hover:text-yellow-300"
+                      title="Edit"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteAssignment(assignment.id)}
                       className="rounded-lg p-1 text-white/40 transition-colors hover:bg-red-500/20 hover:text-red-300"
                       title="Delete"
@@ -875,6 +948,19 @@ const AssignmentManagement = ({ students = [] }) => {
         onClose={() => setShowDetailsModal(false)}
         assignment={selectedAssignment}
         submissions={assignmentSubmissions}
+      />
+
+      <CreateAssignmentModal
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setEditingAssignment(null);
+        }}
+        onCreateAssignment={handleCreateAssignment}
+        onUpdateAssignment={handleUpdateAssignment}
+        isLoading={updateAssignmentMutation.isPending}
+        students={students}
+        assignment={editingAssignment}
       />
     </div>
   );
