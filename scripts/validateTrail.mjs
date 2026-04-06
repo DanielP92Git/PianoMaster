@@ -14,6 +14,10 @@
 import { SKILL_NODES } from '../src/data/skillTrail.js';
 import { NODE_TYPES } from '../src/data/nodeTypes.js';
 import { EXERCISE_TYPES } from '../src/data/constants.js';
+import {
+  RHYTHM_PATTERNS,
+  PATTERN_TAGS,
+} from '../src/data/patterns/rhythmPatterns.js';
 
 let hasErrors = false;
 let hasWarnings = false;
@@ -313,6 +317,287 @@ function validateRhythmPatternNames() {
   else console.error(`  Found ${invalidCount} invalid rhythm pattern name(s)`);
 }
 
+/**
+ * Validate the rhythm pattern library for structural integrity and coverage.
+ * Checks: unique IDs, required fields, valid tags, measureCount==beats.length,
+ * measure sums, durationSet matches beats, D-23 no-rest check, D-24 no-pure-rest-measure,
+ * minimum 8 per tag, difficulty coverage (2 per level per tag),
+ * measure length coverage (1/2/4 bar per tag).
+ */
+function validatePatternLibrary() {
+  console.log('\nChecking pattern library...');
+
+  const SIXTEENTH_UNITS = {
+    q: 4,
+    h: 8,
+    w: 16,
+    '8': 2,
+    '16': 1,
+    qd: 6,
+    hd: 12,
+    qr: 4,
+    hr: 8,
+    wr: 16,
+  };
+  const MEASURE_LENGTHS = { '4/4': 16, '3/4': 12, '6/8': 12 };
+  const VALID_TAG_SET = new Set(PATTERN_TAGS);
+  const VALID_DIFFICULTIES = new Set(['beginner', 'intermediate', 'advanced']);
+  const VALID_MEASURE_COUNTS = new Set([1, 2, 4]);
+  const VALID_TIME_SIGS = new Set(['4/4', '3/4', '6/8']);
+  const NO_REST_TAGS = new Set([
+    'quarter-only',
+    'quarter-half',
+    'quarter-half-whole',
+    'quarter-eighth',
+  ]);
+  const REST_DURATIONS = new Set(['qr', 'hr', 'wr']);
+
+  let errors = 0;
+  const seenIds = new Set();
+  const tagStats = {};
+
+  // Initialize tagStats for all declared tags
+  for (const tag of PATTERN_TAGS) {
+    tagStats[tag] = { total: 0, byDifficulty: {}, byMeasureCount: {} };
+  }
+
+  for (const pattern of RHYTHM_PATTERNS) {
+    // 1. Required fields
+    for (const field of [
+      'id',
+      'description',
+      'beats',
+      'durationSet',
+      'tags',
+      'timeSignature',
+      'difficulty',
+      'measureCount',
+    ]) {
+      if (pattern[field] === undefined || pattern[field] === null) {
+        console.error(
+          `  ERROR: Missing field "${field}" in pattern "${pattern.id || 'UNKNOWN'}"`
+        );
+        errors++;
+      }
+    }
+
+    // 2. Unique IDs
+    if (seenIds.has(pattern.id)) {
+      console.error(`  ERROR: Duplicate pattern ID "${pattern.id}"`);
+      errors++;
+    }
+    seenIds.add(pattern.id);
+
+    // 3. Valid difficulty
+    if (!VALID_DIFFICULTIES.has(pattern.difficulty)) {
+      console.error(
+        `  ERROR: Invalid difficulty "${pattern.difficulty}" in "${pattern.id}"`
+      );
+      errors++;
+    }
+
+    // 4. Valid time signature
+    if (!VALID_TIME_SIGS.has(pattern.timeSignature)) {
+      console.error(
+        `  ERROR: Invalid timeSignature "${pattern.timeSignature}" in "${pattern.id}"`
+      );
+      errors++;
+    }
+
+    // 5. Valid measureCount
+    if (!VALID_MEASURE_COUNTS.has(pattern.measureCount)) {
+      console.error(
+        `  ERROR: Invalid measureCount ${pattern.measureCount} in "${pattern.id}" (must be 1, 2, or 4)`
+      );
+      errors++;
+    }
+
+    // 6. measureCount === beats.length
+    if (
+      Array.isArray(pattern.beats) &&
+      pattern.measureCount !== pattern.beats.length
+    ) {
+      console.error(
+        `  ERROR: measureCount ${pattern.measureCount} != beats.length ${pattern.beats.length} in "${pattern.id}"`
+      );
+      errors++;
+    }
+
+    // 7. beats is array of arrays
+    if (!Array.isArray(pattern.beats)) {
+      console.error(`  ERROR: beats is not an array in "${pattern.id}"`);
+      errors++;
+    } else {
+      for (let i = 0; i < pattern.beats.length; i++) {
+        if (!Array.isArray(pattern.beats[i])) {
+          console.error(
+            `  ERROR: beats[${i}] is not an array in "${pattern.id}"`
+          );
+          errors++;
+        }
+      }
+    }
+
+    // 8. tags subset of PATTERN_TAGS + accumulate stats
+    if (Array.isArray(pattern.tags)) {
+      if (pattern.tags.length === 0) {
+        console.error(`  ERROR: Empty tags array in "${pattern.id}"`);
+        errors++;
+      }
+      for (const tag of pattern.tags) {
+        if (!VALID_TAG_SET.has(tag)) {
+          console.error(
+            `  ERROR: Unknown tag "${tag}" in pattern "${pattern.id}"`
+          );
+          errors++;
+        } else {
+          tagStats[tag].total++;
+          tagStats[tag].byDifficulty[pattern.difficulty] =
+            (tagStats[tag].byDifficulty[pattern.difficulty] || 0) + 1;
+          tagStats[tag].byMeasureCount[pattern.measureCount] =
+            (tagStats[tag].byMeasureCount[pattern.measureCount] || 0) + 1;
+        }
+      }
+    }
+
+    // 9. Each measure sums to time signature
+    if (
+      Array.isArray(pattern.beats) &&
+      MEASURE_LENGTHS[pattern.timeSignature] !== undefined
+    ) {
+      const expectedLength = MEASURE_LENGTHS[pattern.timeSignature];
+      for (let i = 0; i < pattern.beats.length; i++) {
+        if (Array.isArray(pattern.beats[i])) {
+          const sum = pattern.beats[i].reduce(
+            (acc, dur) => acc + (SIXTEENTH_UNITS[dur] || 0),
+            0
+          );
+          if (sum !== expectedLength) {
+            console.error(
+              `  ERROR: Measure ${i + 1} of "${pattern.id}" sums to ${sum}, expected ${expectedLength}`
+            );
+            errors++;
+          }
+          // Check for unknown duration codes
+          for (const dur of pattern.beats[i]) {
+            if (SIXTEENTH_UNITS[dur] === undefined) {
+              console.error(
+                `  ERROR: Unknown duration code "${dur}" in measure ${i + 1} of "${pattern.id}"`
+              );
+              errors++;
+            }
+          }
+        }
+      }
+    }
+
+    // 10. durationSet matches beats
+    if (Array.isArray(pattern.beats) && Array.isArray(pattern.durationSet)) {
+      const actualDurs = new Set(pattern.beats.flat());
+      const claimedDurs = new Set(pattern.durationSet);
+      for (const dur of actualDurs) {
+        if (!claimedDurs.has(dur)) {
+          console.error(
+            `  ERROR: Duration "${dur}" in beats but not in durationSet for "${pattern.id}"`
+          );
+          errors++;
+        }
+      }
+      for (const dur of claimedDurs) {
+        if (!actualDurs.has(dur)) {
+          console.error(
+            `  ERROR: Duration "${dur}" in durationSet but not in beats for "${pattern.id}"`
+          );
+          errors++;
+        }
+      }
+    }
+
+    // 11. D-23: No rests in pre-Unit-4 tags
+    if (Array.isArray(pattern.tags) && Array.isArray(pattern.beats)) {
+      const hasNoRestTag = pattern.tags.some((t) => NO_REST_TAGS.has(t));
+      if (hasNoRestTag) {
+        const allDurs = pattern.beats.flat();
+        for (const dur of allDurs) {
+          if (REST_DURATIONS.has(dur)) {
+            console.error(
+              `  ERROR: Rest duration "${dur}" found in pre-Unit-4 tag pattern "${pattern.id}" (D-23 violation)`
+            );
+            errors++;
+          }
+        }
+      }
+    }
+
+    // 12. D-24: No pure-rest measures
+    // Exception: a single 'wr' is the canonical whole-measure rest notation and is allowed.
+    if (Array.isArray(pattern.beats)) {
+      for (let i = 0; i < pattern.beats.length; i++) {
+        const measure = pattern.beats[i];
+        if (Array.isArray(measure) && measure.length > 0) {
+          // Allow ['wr'] — canonical whole-measure rest (valid music notation)
+          const isWholeMeasureRest = measure.length === 1 && measure[0] === 'wr';
+          if (!isWholeMeasureRest) {
+            const allRests = measure.every((dur) => REST_DURATIONS.has(dur));
+            if (allRests) {
+              console.error(
+                `  ERROR: Pure-rest measure ${i + 1} in "${pattern.id}" (D-24 violation)`
+              );
+              errors++;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 13. Minimum patterns per tag (>= 8)
+  for (const tag of PATTERN_TAGS) {
+    const stats = tagStats[tag];
+    if (stats.total < 8) {
+      console.error(
+        `  ERROR: Tag "${tag}" has only ${stats.total} patterns (minimum 8 required)`
+      );
+      errors++;
+    }
+  }
+
+  // 14. Difficulty coverage per tag (>= 2 per level per tag)
+  for (const tag of PATTERN_TAGS) {
+    const stats = tagStats[tag];
+    for (const diff of ['beginner', 'intermediate', 'advanced']) {
+      const count = stats.byDifficulty[diff] || 0;
+      if (count < 2) {
+        console.error(
+          `  ERROR: Tag "${tag}" has ${count} "${diff}" patterns (minimum 2 required)`
+        );
+        errors++;
+      }
+    }
+  }
+
+  // 15. Measure length coverage per tag (1-bar, 2-bar, 4-bar all present)
+  for (const tag of PATTERN_TAGS) {
+    const stats = tagStats[tag];
+    for (const len of [1, 2, 4]) {
+      const count = stats.byMeasureCount[len] || 0;
+      if (count < 1) {
+        console.error(`  ERROR: Tag "${tag}" has no ${len}-bar patterns`);
+        errors++;
+      }
+    }
+  }
+
+  if (errors === 0) {
+    console.log(
+      `  Pattern library: OK (${RHYTHM_PATTERNS.length} patterns, ${PATTERN_TAGS.length} tags)`
+    );
+  } else {
+    console.error(`  Found ${errors} pattern library error(s)`);
+    hasErrors = true;
+  }
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -329,6 +614,7 @@ validateXPEconomy();
 validateExerciseTypes();
 validateExerciseDifficultyValues();
 validateRhythmPatternNames();
+validatePatternLibrary();
 
 console.log('\n' + '='.repeat(50));
 
