@@ -874,7 +874,7 @@ const DeleteConfirmationModal = ({
       size="default"
       className="border-gray-600 bg-gray-900"
     >
-      <div>
+      <div className="text-white">
         <div className="mb-6 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <Trash2 className="h-6 w-6 text-red-600" />
