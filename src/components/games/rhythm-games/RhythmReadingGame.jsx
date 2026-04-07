@@ -12,7 +12,11 @@ import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay";
 import VictoryScreen from "../VictoryScreen";
 import BackButton from "../../ui/BackButton";
 import { getNodeById } from "../../../data/skillTrail";
-import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
+import {
+  resolveByTags,
+  getPattern,
+  TIME_SIGNATURES,
+} from "./RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { scoreTap } from "./utils/rhythmScoringUtils";
 import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
@@ -58,6 +62,8 @@ export function RhythmReadingGame() {
   const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig ?? null;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
+  const patternTags = nodeConfig?.patternTags ?? null;
+  const trailMeasureCount = nodeConfig?.measureCount ?? 1;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -117,6 +123,7 @@ export function RhythmReadingGame() {
   const [currentExercise, setCurrentExercise] = useState(0);
   const totalExercises = 10; // D-02: 10 exercises per session
   const [currentBeats, setCurrentBeats] = useState(null);
+  const [currentMeasures, setCurrentMeasures] = useState(null);
   const [tapResults, setTapResults] = useState([]);
   const [exerciseScores, setExerciseScores] = useState([]);
   const [latestFeedback, setLatestFeedback] = useState(null);
@@ -178,6 +185,7 @@ export function RhythmReadingGame() {
     setGamePhase(GAME_PHASES.SETUP);
     setCurrentExercise(0);
     setCurrentBeats(null);
+    setCurrentMeasures(null);
     setTapResults([]);
     setExerciseScores([]);
     cancelAllTimers();
@@ -262,23 +270,69 @@ export function RhythmReadingGame() {
 
   /**
    * Fetch a new pattern and convert to beats array.
-   * Returns { beats, binaryPattern } or null on failure.
+   * Trail mode: uses resolveByTags (curated patterns, synchronous).
+   * Free-practice mode: uses legacy getPattern generator (async).
+   * Returns { beats, measures, binaryPattern } or null on failure.
    */
   const fetchNewPattern = useCallback(async () => {
     try {
-      const result = await getPattern(
-        timeSignatureStr,
-        difficulty,
-        rhythmPatterns
-      );
-      if (!result || !result.pattern) return null;
-      const beats = binaryPatternToBeats(result.pattern);
-      return { beats, binaryPattern: result.pattern };
+      if (patternTags && patternTags.length > 0) {
+        // Trail mode: use curated patterns via resolveByTags
+        const candidates = resolveByTags(patternTags, {
+          difficulty,
+          measureCount: trailMeasureCount,
+        });
+        if (!candidates || candidates.length === 0) {
+          console.warn(
+            "[RhythmReadingGame] No curated patterns for tags:",
+            patternTags
+          );
+          return null;
+        }
+        // Pick a random pattern from candidates
+        const pattern = candidates[Math.floor(Math.random() * candidates.length)];
+        // Convert beats from VexFlow duration codes to beat objects
+        // pattern.beats is array of arrays: [['q','q','q','q'], ['h','h']]
+        const SIXTEENTH_UNITS = {
+          w: 16,
+          h: 8,
+          q: 4,
+          "8": 2,
+          "16": 1,
+          qd: 6,
+          hd: 12,
+          "8d": 3,
+        };
+        const REST_UNITS = { w: 16, h: 8, q: 4, "8": 2, "16": 1 };
+        const measuresResult = pattern.beats.map((measure) =>
+          measure.map((durCode) => {
+            const isRest = durCode.endsWith("r");
+            const baseDur = isRest ? durCode.slice(0, -1) : durCode;
+            const durationUnits = isRest
+              ? REST_UNITS[baseDur] || 4
+              : SIXTEENTH_UNITS[durCode] || 4;
+            return { durationUnits, isRest };
+          })
+        );
+        // Flatten for scoring logic (flat array of all beats across all measures)
+        const flatBeats = measuresResult.flat();
+        return { beats: flatBeats, measures: measuresResult, binaryPattern: null };
+      } else {
+        // Free practice mode: use legacy generator
+        const result = await getPattern(
+          timeSignatureStr,
+          difficulty,
+          rhythmPatterns
+        );
+        if (!result || !result.pattern) return null;
+        const beats = binaryPatternToBeats(result.pattern);
+        return { beats, measures: null, binaryPattern: result.pattern };
+      }
     } catch (err) {
       console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
-  }, [timeSignatureStr, difficulty, rhythmPatterns]);
+  }, [patternTags, trailMeasureCount, difficulty, timeSignatureStr, rhythmPatterns]);
 
   /**
    * Start continuous metronome lookahead scheduler.
@@ -616,6 +670,7 @@ export function RhythmReadingGame() {
     const result = await fetchNewPattern();
     if (result) {
       setCurrentBeats(result.beats);
+      setCurrentMeasures(result.measures);
       startReadyPhase(result.beats);
     }
   }, [fetchNewPattern, startReadyPhase]);
@@ -682,6 +737,7 @@ export function RhythmReadingGame() {
     const result = await fetchNewPattern();
     if (result) {
       setCurrentBeats(result.beats);
+      setCurrentMeasures(result.measures);
       startReadyPhase(result.beats);
     }
   }, [cancelAllTimers, fetchNewPattern, startReadyPhase]);
@@ -820,6 +876,7 @@ export function RhythmReadingGame() {
         <div style={{ position: "relative" }}>
           <RhythmStaffDisplay
             beats={currentBeats}
+            measures={currentMeasures}
             timeSignature={timeSignatureStr}
             cursorProgress={0} // cursor is controlled directly via cursorDivRef
             tapResults={tapResults}
