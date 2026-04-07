@@ -55,9 +55,11 @@ Source: `tailwind.config.js` fontSize tokens + existing game component patterns.
 | Role    | Size | Weight | Line Height | Usage                                                           |
 | ------- | ---- | ------ | ----------- | --------------------------------------------------------------- |
 | Body    | 16px | 400    | 1.7         | General UI text, game instructions                              |
-| Label   | 14px | 500    | 1.6         | Settings bar labels, toggle label, exercise counter             |
+| Label   | 14px | 400    | 1.6         | Settings bar labels, toggle label, exercise counter             |
 | Heading | 20px | 700    | 1.2         | Game title in header, VictoryScreen headings                    |
 | Display | 30px | 700    | 1.0         | FloatingFeedback text (PERFECT / GOOD / "Almost!") — `text-3xl` |
+
+**Two weights only: 400 (normal) and 700 (bold).** Labels use `font-normal` (400) at 14px — `font-medium` (500) is not used in this phase.
 
 Notes:
 
@@ -69,6 +71,8 @@ Notes:
 ## Color
 
 Source: CLAUDE.md glassmorphism design system + `tailwind.config.js` + existing game components.
+
+**Primary visual anchor:** The staff container (glass card, center viewport) is the primary focal point of the game screen. FloatingFeedback text at `text-3xl` (`Display` role, 30px) is the highest-attention transient element — it appears above the staff on tap events and demands immediate read before fading.
 
 | Role            | Value                                                            | Usage                                                    |
 | --------------- | ---------------------------------------------------------------- | -------------------------------------------------------- |
@@ -104,7 +108,7 @@ Appearance — OFF state (syllables hidden):
 
 ```
 bg-white/10 border border-white/20 text-white/60
-rounded-xl px-3 py-2 text-sm font-medium
+rounded-xl px-3 py-2 text-sm font-normal
 min-h-[44px] transition-colors hover:bg-white/20
 ```
 
@@ -112,7 +116,7 @@ Appearance — ON state (syllables visible):
 
 ```
 bg-indigo-500/30 border border-indigo-400/40 text-indigo-300
-rounded-xl px-3 py-2 text-sm font-medium
+rounded-xl px-3 py-2 text-sm font-normal
 min-h-[44px] transition-colors hover:bg-indigo-500/40
 ```
 
@@ -149,7 +153,7 @@ Duration-to-syllable mapping:
 | `'8'`       | `ti`        | `טִי`                                           |
 | any rest    | `sh`        | `הס` (exact Nikud TBD by user — see note below) |
 
-Note: Hebrew Nikud for "Almost!" HE i18n value and rest syllable `הס` with Nikud are flagged as user-confirmed TBD in D-18, D-19, and RESEARCH.md. Planner must include a user-confirm step for these two Hebrew strings before implementation. Do not hardcode placeholder Nikud.
+> **IMPLEMENTATION GATE — Hebrew strings (D-18, D-19):** The Hebrew Nikud for the "Almost!" feedback text and the rest syllable `הס` with Nikud are not confirmed. The planner MUST include an explicit user-confirmation step for these two Hebrew strings before implementation begins. Do not hardcode placeholder Nikud — leave string keys as empty/TODO until the user provides confirmed values.
 
 Per-note vs per-pair eighth notes: Each individual eighth note gets "ti" (not "ti-ti"). "ti-ti" describes the rhythmic pair as a unit, but VexFlow annotates per note. Source: RESEARCH.md UX-05 note.
 
@@ -181,16 +185,18 @@ Backward compatibility: existing `beats` prop (flat array) continues to render a
 
 Source: CONTEXT.md decisions D-04, D-07, and phase requirements UX-02, UX-03.
 
-| Element                          | Copy (EN)                          | Copy (HE)                          |
-| -------------------------------- | ---------------------------------- | ---------------------------------- |
-| Game name (was MetronomeTrainer) | **Listen & Tap**                   | **חזור אחריי**                     |
-| MISS feedback text               | **Almost!**                        | TBD with Nikud — user must confirm |
-| Primary CTA (start game)         | Start Game                         | (existing i18n key, unchanged)     |
-| Syllable toggle — off state      | ♩ Syllables                        | הברות ♩                            |
-| Syllable toggle — on state       | ♩ Syllables (pressed/active state) | הברות ♩ (pressed/active state)     |
-| Empty state (no beats loaded)    | Loading pattern... (existing)      | (existing i18n)                    |
-| Error state (no pattern)         | Could not load rhythm. Try again.  | (existing i18n pattern)            |
-| Destructive actions              | None in this phase                 | —                                  |
+| Element                          | Copy (EN)                          | Copy (HE)                                                                  |
+| -------------------------------- | ---------------------------------- | -------------------------------------------------------------------------- |
+| Game name (was MetronomeTrainer) | **Listen & Tap**                   | **חזור אחריי**                                                             |
+| MISS feedback text               | **Almost!**                        | **TBD — user must confirm Nikud before implementation (D-07, D-18, D-19)** |
+| Primary CTA (start game)         | Start Game                         | (existing i18n key, unchanged)                                             |
+| Syllable toggle — off state      | ♩ Syllables                        | הברות ♩                                                                    |
+| Syllable toggle — on state       | ♩ Syllables (pressed/active state) | הברות ♩ (pressed/active state)                                             |
+| Empty state (no beats loaded)    | Loading pattern... (existing)      | (existing i18n)                                                            |
+| Error state (no pattern)         | Could not load rhythm. Try again.  | (existing i18n pattern)                                                    |
+| Destructive actions              | None in this phase                 | —                                                                          |
+
+> **BLOCKED STRINGS:** Hebrew "Almost!" (MISS feedback) and rest syllable `הס` with Nikud are both unconfirmed. These two strings must be provided by the user before the Hebrew i18n keys are written. Planner must gate implementation of these values on user confirmation. Do not use placeholder Nikud.
 
 D-06 enforcement: The string "MetronomeTrainer" must not appear in any visible UI label after this phase. All i18n string values at `games.metronomeTrainer.*` and `games.practiceModes.metronomeTrainer.name` must be updated. The JSON key names themselves are unchanged (D-05).
 
@@ -211,11 +217,11 @@ localStorage key: `pianomaster_kodaly_syllables` (string `"true"` / `"false"` or
 
 ### Tap Area Feedback
 
-| Quality | Color             | Copy (EN) | Copy (HE)   |
-| ------- | ----------------- | --------- | ----------- |
-| PERFECT | `text-green-400`  | PERFECT   | (existing)  |
-| GOOD    | `text-yellow-400` | GOOD      | (existing)  |
-| MISS    | `text-red-400`    | Almost!   | TBD (Nikud) |
+| Quality | Color             | Copy (EN) | Copy (HE)                  |
+| ------- | ----------------- | --------- | -------------------------- |
+| PERFECT | `text-green-400`  | PERFECT   | (existing)                 |
+| GOOD    | `text-yellow-400` | GOOD      | (existing)                 |
+| MISS    | `text-red-400`    | Almost!   | TBD — user confirm (Nikud) |
 
 ### Reduced Motion
 
@@ -262,4 +268,5 @@ No new npm packages required. No third-party component registries involved. Sour
 
 _Phase: 23-ux-polish_
 _UI-SPEC created: 2026-04-07_
+_UI-SPEC revised: 2026-04-07 (checker fix: 3 issues resolved — typography weight reduced to 2, focal point added, Hebrew TBD gates made explicit)_
 _Sources: 23-CONTEXT.md (20 decisions used), 23-RESEARCH.md (architecture patterns + VexFlow API), REQUIREMENTS.md (UX-01–05), tailwind.config.js + index.css (existing tokens), RhythmReadingGame.jsx + FloatingFeedback.jsx + RhythmStaffDisplay.jsx (existing component patterns)_
