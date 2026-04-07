@@ -140,8 +140,15 @@ Plans:
 2. The MetronomeTrainer game shows a child-friendly name in both English and Hebrew UI — the string "MetronomeTrainer" does not appear in any visible label
 3. Tapping incorrectly in any rhythm game shows "Almost!" (EN) or its Hebrew equivalent — the word "MISS" does not appear anywhere in the rhythm game UI
 4. A Discovery node shows a 1-bar pattern, a Practice node shows a 2-bar pattern, and a Speed or Boss node shows a 4-bar pattern
-5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; טָה / טָה-טָה / טָה-אָה / טָה-אָה-אָה-אָה in HE) appear below VexFlow note heads for all rendered rhythm patterns
-   **Plans**: TBD
+5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; Hebrew equivalents with Nikud in HE) appear below VexFlow note heads for all rendered rhythm patterns
+
+**Plans:** 3 plans
+
+Plans:
+
+- [ ] 23-01-PLAN.md — Timing thresholds, MetronomeTrainer rename, MISS to Almost! i18n
+- [ ] 23-02-PLAN.md — Progressive measure length: data updates, validator, multi-stave display
+- [ ] 23-03-PLAN.md — Kodaly syllable rendering with VexFlow annotations and toggle
 
 ## Progress
 
@@ -150,10 +157,10 @@ Plans:
 | 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
 | 21. Pattern Library Construction | v3.2      | 2/2            | Complete    | 2026-04-06 |
 | 22. Service Layer & Trail Wiring | v3.2      | 4/4            | Complete    | 2026-04-07 |
-| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
+| 23. UX Polish                    | v3.2      | 0/3            | Planned     | -          |
 
 **Total: 22 milestones shipped, 95 phases, ~207 plans | v3.2: 4 phases, 2/4 complete**
 
 ---
 
-_Last updated: 2026-04-07 -- Phase 22 complete (4/4 plans, 3 waves)_
+_Last updated: 2026-04-07 -- Phase 23 planned (3 plans, 2 waves)_
