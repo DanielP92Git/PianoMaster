@@ -36,12 +36,12 @@ created: 2026-04-07
 
 ## Per-Task Verification Map
 
-| Task ID  | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command                                                                               | File Exists | Status     |
-| -------- | ---- | ---- | ----------- | ---------- | --------------- | --------- | ----------------------------------------------------------------------------------------------- | ----------- | ---------- |
-| 23-01-01 | 01   | 1    | UX-01       | —          | N/A             | unit      | `npx vitest run src/components/games/rhythm-games/utils/__tests__/rhythmTimingUtils.test.js`    | ❌ W0       | ⬜ pending |
-| 23-01-02 | 01   | 1    | UX-03       | —          | N/A             | unit      | `npx vitest run src/locales`                                                                    | ❌ W0       | ⬜ pending |
-| 23-02-01 | 02   | 1    | UX-04       | —          | N/A             | unit      | `npm run verify:trail`                                                                          | ✅          | ⬜ pending |
-| 23-03-01 | 03   | 2    | UX-05       | —          | N/A             | unit      | `npx vitest run src/components/games/rhythm-games/components/__tests__/KodalySyllables.test.js` | ❌ W0       | ⬜ pending |
+| Task ID  | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command                                                                     | File Exists | Status     |
+| -------- | ---- | ---- | ----------- | ---------- | --------------- | --------- | ------------------------------------------------------------------------------------- | ----------- | ---------- |
+| 23-01-01 | 01   | 1    | UX-01       | —          | N/A             | unit      | `npx vitest run src/components/games/rhythm-games/utils/rhythmTimingUtils.test.js`    | ❌ W0       | ⬜ pending |
+| 23-01-02 | 01   | 1    | UX-03       | —          | N/A             | unit      | `npx vitest run src/locales`                                                          | ❌ W0       | ⬜ pending |
+| 23-02-01 | 02   | 1    | UX-04       | —          | N/A             | unit      | `npm run verify:trail`                                                                | ✅          | ⬜ pending |
+| 23-03-01 | 03   | 2    | UX-05       | —          | N/A             | unit      | `npx vitest run src/components/games/rhythm-games/utils/rhythmVexflowHelpers.test.js` | ❌ W0       | ⬜ pending |
 
 _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 

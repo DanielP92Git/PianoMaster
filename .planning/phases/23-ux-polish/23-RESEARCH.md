@@ -538,27 +538,23 @@ All visible "MetronomeTrainer" strings to update:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Hebrew "Almost!" exact string with Nikud**
-   - What we know: D-07 requires Hebrew equivalent with Nikud; "פספוס" / "פספסת" are the current MISS strings
-   - What's unclear: The exact Hebrew string for "Almost!" with proper Nikud diacritics
-   - Recommendation: Add as Wave 0 blocker — planner should include a user-confirm task before the Hebrew i18n keys are finalized
+1. **Hebrew "Almost!" exact string with Nikud** (RESOLVED)
+   - What we know: D-07 requires Hebrew equivalent with Nikud; current MISS strings are "pfspus" / "pfspst"
+   - Resolution: Plan 01 Task 1 is a checkpoint:decision gate that blocks implementation until the user confirms the exact Hebrew string. Hebrew i18n keys are only written after user approval.
 
-2. **Rest syllable Hebrew Nikud**
+2. **Rest syllable Hebrew Nikud** (RESOLVED)
    - What we know: D-19 specifies 'הס' with Nikud but defers exact form to user
-   - What's unclear: Is it הֶס, הַס, הִס, or another vowel?
-   - Recommendation: Same Wave 0 blocker — confirm alongside "Almost!" Hebrew
+   - Resolution: Same Plan 01 Task 1 checkpoint gate covers this string. Suggested "הֶס" (with segol) is presented; user confirms or provides alternative before Plan 03 implements it.
 
-3. **Multi-measure cursor behavior (UX-04)**
-   - What we know: `RhythmStaffDisplay` has a cursor that sweeps 0-1 across the stave
-   - What's unclear: For 2-bar/4-bar patterns, should the cursor continue across staves or reset per stave?
-   - Recommendation: Cursor sweeps the full duration (0 = start of measure 1, 1 = end of last measure); multi-stave layout places staves left-to-right within a scrollable container
+3. **Multi-measure cursor behavior (UX-04)** (RESOLVED)
+   - What we know: RhythmStaffDisplay has a cursor that sweeps 0-1 across the stave
+   - Resolution: Plan 02 Task 2 implements cursor sweep across the full duration (0 = start of measure 1, 1 = end of last measure). Multi-stave layout places staves left-to-right; cursor maps linearly across all staves via flattened note index.
 
-4. **GOOD/FAIR threshold values for easy tier**
-   - What we know: D-01 specifies PERFECT=100ms for easy nodes, with D-03 saying tempo-scaling preserved on top
-   - What's unclear: D-01 only specifies PERFECT. Are GOOD/FAIR also scaled proportionally (50/100/125 → 100/150/250) or kept at their hard-tier values?
-   - Recommendation: Scale proportionally (the ratio 50:75:125 → 100:150:250) — consistent with the mental model that "easy" tier is 2× forgiving at all levels
+4. **GOOD/FAIR threshold values for easy tier** (RESOLVED)
+   - What we know: D-01 specifies PERFECT=100ms for easy nodes
+   - Resolution: Plan 01 Task 2 implements proportional scaling: PERFECT=100, GOOD=150, FAIR=250 (the ratio 50:75:125 scaled 2x). This is consistent with the mental model that "easy" tier is 2x forgiving at all levels. Tests verify these exact values.
 
 ---
 
