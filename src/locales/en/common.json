@@ -788,6 +788,10 @@
       "errors": {
         "audioUnavailable": "Audio not available. Tap to try again.",
         "patternError": "Something went wrong. Go back and try again."
+      },
+      "syllableToggle": {
+        "label": "Syllables",
+        "ariaLabel": "Toggle rhythm syllables"
       }
     },
     "rhythmDictation": {

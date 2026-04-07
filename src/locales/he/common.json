@@ -788,6 +788,10 @@
       "errors": {
         "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
         "patternError": "משהו השתבש. חזור ונסה שוב."
+      },
+      "syllableToggle": {
+        "label": "הברות",
+        "ariaLabel": "הצג הברות קצב"
       }
     },
     "rhythmDictation": {

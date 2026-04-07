@@ -49,6 +49,8 @@ export function DictationChoiceCard({
   state = "default",
   onSelect,
   disabled = false,
+  showSyllables = false,
+  language = "en",
 }) {
   const containerRef = useRef(null);
 
@@ -78,8 +80,8 @@ export function DictationChoiceCard({
       stave.addTimeSignature(timeSignature);
       stave.setContext(ctx).draw();
 
-      // Build VexFlow notes from beats
-      const notes = beatsToVexNotes(beats);
+      // Build VexFlow notes from beats (pass syllable options)
+      const notes = beatsToVexNotes(beats, { showSyllables, language });
 
       // Force stems up — rhythm-only display per D-01 convention
       notes.forEach((note) => {
@@ -120,7 +122,7 @@ export function DictationChoiceCard({
     } catch (err) {
       console.warn("[DictationChoiceCard] VexFlow render error:", err);
     }
-  }, [beats, timeSignature]);
+  }, [beats, timeSignature, showSyllables, language]);
 
   const handleClick = () => {
     if (!disabled && state !== "dimmed" && onSelect) {

@@ -4,6 +4,8 @@
  * Avoids floating-point errors and ensures musical coherence
  */
 
+import { RHYTHM_PATTERNS } from "../../../data/patterns/rhythmPatterns.js";
+
 // Constants for precise durations (in sixteenth note units)
 export const DURATION_CONSTANTS = {
   WHOLE: 16, // Whole note = 16 sixteenth notes
@@ -848,3 +850,40 @@ export default {
   TIME_SIGNATURES,
   DIFFICULTY_LEVELS,
 };
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Curated pattern resolvers (Phase 22 — PAT-03, PAT-04)
+// These are the new API for trail-wired rhythm games. Existing generator code
+// above stays untouched as fallback for free-practice mode (D-09).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Resolve curated patterns by tags, with optional difficulty and measureCount filters.
+ * Returns full pattern objects (D-08) — game component picks randomly from pool (D-10).
+ * @param {string[]} tags - One or more PATTERN_TAGS values
+ * @param {Object} [options]
+ * @param {string} [options.difficulty] - 'beginner'|'intermediate'|'advanced'
+ * @param {number} [options.measureCount] - 1, 2, or 4
+ * @returns {Object[]} Full pattern objects matching all filters
+ */
+export function resolveByTags(tags, { difficulty, measureCount } = {}) {
+  const tagSet = new Set(tags);
+  let pool = RHYTHM_PATTERNS.filter((p) => p.tags.some((t) => tagSet.has(t)));
+  if (difficulty) {
+    pool = pool.filter((p) => p.difficulty === difficulty);
+  }
+  if (measureCount != null) {
+    pool = pool.filter((p) => p.measureCount === measureCount);
+  }
+  return pool;
+}
+
+/**
+ * Resolve curated patterns by exact IDs.
+ * @param {string[]} ids - Pattern IDs from rhythmPatterns.js
+ * @returns {Object[]} Matching full pattern objects
+ */
+export function resolveByIds(ids) {
+  const idSet = new Set(ids);
+  return RHYTHM_PATTERNS.filter((p) => idSet.has(p.id));
+}

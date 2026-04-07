@@ -49,7 +49,7 @@ const GAME_PHASES = {
 export function RhythmReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -131,6 +131,34 @@ export function RhythmReadingGame() {
   const [currentBeat, setCurrentBeat] = useState(1); // for MetronomeDisplay
   // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
+
+  // Kodaly syllable toggle (D-13 to D-16)
+  const SYLLABLE_TOGGLE_KEY = "pianomaster_kodaly_syllables";
+  const isDiscovery = nodeType === "discovery";
+  const [syllablesEnabled, setSyllablesEnabled] = useState(() => {
+    if (isDiscovery) return true;
+    try {
+      return localStorage.getItem(SYLLABLE_TOGGLE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const showSyllableToggle = !isDiscovery; // Hide toggle on Discovery nodes (D-14)
+
+  const handleSyllableToggle = useCallback(() => {
+    setSyllablesEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SYLLABLE_TOGGLE_KEY, String(next));
+      } catch {
+        // localStorage unavailable — toggle still works in memory
+      }
+      return next;
+    });
+  }, []);
+
+  // Derive current language for syllable rendering
+  const currentLanguage = i18n.language?.startsWith("he") ? "he" : "en";
 
   // Refs for timing and animation (not state — no re-renders on updates)
   const cursorDivRef = useRef(null); // passed to RhythmStaffDisplay
@@ -869,6 +897,25 @@ export function RhythmReadingGame() {
             {currentExercise + 1} / {totalExercises}
           </span>
         </div>
+        {/* Syllable toggle button — hidden on Discovery nodes (always-on), visible otherwise */}
+        {showSyllableToggle ? (
+          <button
+            onClick={handleSyllableToggle}
+            aria-pressed={syllablesEnabled}
+            aria-label={t("games.rhythmReading.syllableToggle.ariaLabel")}
+            className={`min-h-[44px] rounded-xl border px-3 py-2 text-sm font-normal transition-colors ${
+              !reducedMotion ? "active:scale-95" : ""
+            } ${
+              syllablesEnabled
+                ? "border-indigo-400/40 bg-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40"
+                : "border-white/20 bg-white/10 text-white/60 hover:bg-white/20"
+            }`}
+          >
+            {"\u2669"} {t("games.rhythmReading.syllableToggle.label")}
+          </button>
+        ) : (
+          <div className="w-20" aria-hidden="true" />
+        )}
       </header>
 
       <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
@@ -883,6 +930,8 @@ export function RhythmReadingGame() {
             showCursor={false} // parent renders its own RAF-driven cursor div below
             reducedMotion={reducedMotion}
             onStaveBoundsReady={handleStaveBoundsReady}
+            showSyllables={syllablesEnabled}
+            language={currentLanguage}
           />
           {/* Cursor div - passed via ref to be updated by RAF without React re-renders */}
           <div

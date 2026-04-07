@@ -29,6 +29,8 @@ export function RhythmStaffDisplay({
   showCursor = false,
   reducedMotion = false,
   onStaveBoundsReady = null,
+  showSyllables = false,
+  language = "en",
 }) {
   const containerRef = useRef(null);
   const cursorDivRef = useRef(null);
@@ -104,8 +106,8 @@ export function RhythmStaffDisplay({
         if (m === 0) stave.addTimeSignature(timeSignature);
         stave.setContext(ctx).draw();
 
-        // Build VexFlow notes for this measure
-        const notes = beatsToVexNotes(measureBeats);
+        // Build VexFlow notes for this measure (pass syllable options)
+        const notes = beatsToVexNotes(measureBeats, { showSyllables, language });
 
         // Force stems up for all notes (rhythm-only display)
         notes.forEach((note) => {
@@ -186,7 +188,7 @@ export function RhythmStaffDisplay({
     } catch (err) {
       console.warn("[RhythmStaffDisplay] VexFlow render error:", err);
     }
-  }, [beats, measures, timeSignature]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [beats, measures, timeSignature, showSyllables, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update note colors based on tap results
   useEffect(() => {

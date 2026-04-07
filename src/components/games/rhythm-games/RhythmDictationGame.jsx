@@ -56,13 +56,14 @@ const DEFAULT_DIFFICULTY = DIFFICULTY_LEVELS.BEGINNER;
 export function RhythmDictationGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 
   // --- Orientation prompt (portrait-primary, landscape-compatible per UI-SPEC) ---
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // --- Trail state (from TrailNodeModal navigation) ---
   const nodeId = location.state?.nodeId ?? null;
+  const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig ?? null;
   const difficulty = nodeConfig?.difficulty ?? DEFAULT_DIFFICULTY;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
@@ -142,6 +143,33 @@ export function RhythmDictationGame() {
 
   // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
+
+  // Kodaly syllable toggle (D-13 to D-16)
+  const SYLLABLE_TOGGLE_KEY = "pianomaster_kodaly_syllables";
+  const isDiscovery = nodeType === "discovery";
+  const [syllablesEnabled, setSyllablesEnabled] = useState(() => {
+    if (isDiscovery) return true;
+    try {
+      return localStorage.getItem(SYLLABLE_TOGGLE_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const showSyllableToggle = !isDiscovery;
+
+  const handleSyllableToggle = useCallback(() => {
+    setSyllablesEnabled((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SYLLABLE_TOGGLE_KEY, String(next));
+      } catch {
+        // localStorage unavailable — toggle still works in memory
+      }
+      return next;
+    });
+  }, []);
+
+  const currentLanguage = i18n.language?.startsWith("he") ? "he" : "en";
 
   // Auto-start guard
   const hasAutoStartedRef = useRef(false);
@@ -656,6 +684,24 @@ export function RhythmDictationGame() {
 
         {/* Center column: answer cards */}
         <div className="flex flex-1 flex-col justify-center gap-3 py-3">
+          {/* Syllable toggle button — top of center column, hidden on Discovery (always-on) */}
+          {showSyllableToggle && (
+            <div className="flex justify-end px-2">
+              <button
+                onClick={handleSyllableToggle}
+                aria-pressed={syllablesEnabled}
+                aria-label={t("games.rhythmReading.syllableToggle.ariaLabel")}
+                className={`min-h-[44px] rounded-xl border px-3 py-2 text-sm font-normal transition-colors ${
+                  syllablesEnabled
+                    ? "border-indigo-400/40 bg-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40"
+                    : "border-white/20 bg-white/10 text-white/60 hover:bg-white/20"
+                }`}
+              >
+                {"\u2669"} {t("games.rhythmReading.syllableToggle.label")}
+              </button>
+            </div>
+          )}
+
           {/* READY phase — "Listen to the pattern" gate */}
           {gamePhase === GAME_PHASES.READY && (
             <div className="flex flex-col items-center gap-4 py-8">
@@ -687,6 +733,8 @@ export function RhythmDictationGame() {
                   state={cardStates[idx] ?? "default"}
                   onSelect={handleCardSelect}
                   disabled={isInFeedback}
+                  showSyllables={syllablesEnabled}
+                  language={currentLanguage}
                 />
               ))}
             </div>
