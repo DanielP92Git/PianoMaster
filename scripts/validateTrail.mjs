@@ -292,6 +292,12 @@ function validateExerciseDifficultyValues() {
 /**
  * Validate that all rhythmPatterns entries use recognized duration names.
  * Unknown names cause a hard build failure.
+ *
+ * After Phase 22 migration, rhythmPatterns field is removed from all rhythm-game
+ * exercise configs. validateLegacyRhythmPatterns() catches any remaining instances
+ * in rhythm-type exercises. This function is retained as a safety net for non-rhythm
+ * exercises (e.g. sight_reading) that still legitimately use the field for notation
+ * rendering — it validates that their duration name values are recognized strings.
  */
 function validateRhythmPatternNames() {
   console.log('\nChecking rhythmPatterns duration names...');
@@ -313,7 +319,7 @@ function validateRhythmPatternNames() {
       }
     }
   }
-  if (invalidCount === 0) console.log('  Rhythm pattern names: OK');
+  if (invalidCount === 0) console.log('  Rhythm pattern names: OK (no legacy fields found)');
   else console.error(`  Found ${invalidCount} invalid rhythm pattern name(s)`);
 }
 
@@ -598,6 +604,134 @@ function validatePatternLibrary() {
   }
 }
 
+/**
+ * Reject legacy rhythmPatterns field in rhythm exercise configs.
+ * After Phase 22 migration, all rhythm-game exercises use patternTags instead.
+ * Any remaining rhythmPatterns field in a rhythm-type exercise is an error (D-15).
+ * Note: rhythmPatterns in sight_reading exercise configs is a separate field used
+ * by the notation renderer — it is NOT flagged here.
+ */
+function validateLegacyRhythmPatterns() {
+  console.log('\nChecking for legacy rhythmPatterns field...');
+  const RHYTHM_EXERCISE_TYPES = new Set([
+    'rhythm',
+    'rhythm_tap',
+    'rhythm_dictation',
+    'arcade_rhythm',
+    'rhythm_pulse',
+  ]);
+  let count = 0;
+  for (const node of SKILL_NODES) {
+    if (node.category !== 'rhythm' && node.category !== 'boss') continue;
+    for (const exercise of (node.exercises || [])) {
+      // Only flag rhythmPatterns on rhythm-type exercises, not sight_reading
+      if (!RHYTHM_EXERCISE_TYPES.has(exercise.type)) continue;
+      if (exercise.config?.rhythmPatterns !== undefined) {
+        console.error(
+          `  ERROR: Legacy "rhythmPatterns" field in "${node.id}" exercise — migrate to patternTags`
+        );
+        hasErrors = true;
+        count++;
+      }
+    }
+  }
+  if (count === 0) console.log('  No legacy rhythmPatterns: OK');
+}
+
+/**
+ * Validate that patternTags reference known PATTERN_TAGS and patternIds reference
+ * known pattern IDs from the rhythm pattern library.
+ */
+function validatePatternTagReferences() {
+  console.log('\nChecking patternTags and patternIds references...');
+  const validTags = new Set(PATTERN_TAGS);
+  const validIds = new Set(RHYTHM_PATTERNS.map((p) => p.id));
+  let count = 0;
+  for (const node of SKILL_NODES) {
+    for (const exercise of (node.exercises || [])) {
+      for (const tag of (exercise.config?.patternTags || [])) {
+        if (!validTags.has(tag)) {
+          console.error(`  ERROR: Unknown patternTag "${tag}" in "${node.id}"`);
+          hasErrors = true;
+          count++;
+        }
+      }
+      for (const id of (exercise.config?.patternIds || [])) {
+        if (!validIds.has(id)) {
+          console.error(`  ERROR: Unknown patternId "${id}" in "${node.id}"`);
+          hasErrors = true;
+          count++;
+        }
+      }
+    }
+  }
+  if (count === 0) console.log('  Pattern tag/ID references: OK');
+}
+
+/**
+ * Enforce nodeType -> exercise type mapping for rhythm nodes.
+ * Prevents wrong game launching after remediation (D-17).
+ * Only checks rhythm-category and boss-with-rhythm nodes.
+ * RHYTHM_PULSE is allowed only when config.pulseOnly is true.
+ */
+function validateNodeTypeExerciseTypeMapping() {
+  console.log('\nChecking nodeType -> exercise type policy...');
+
+  const RHYTHM_EXERCISE_TYPES = new Set([
+    'rhythm',
+    'rhythm_tap',
+    'rhythm_dictation',
+    'arcade_rhythm',
+    'rhythm_pulse',
+  ]);
+
+  const NODE_TYPE_EXERCISE_POLICY = {
+    discovery: new Set(['rhythm_tap', 'rhythm_dictation']),
+    practice: new Set(['rhythm_tap']),
+    mix_up: new Set(['rhythm_dictation']),
+    review: new Set(['rhythm_tap']),
+    challenge: new Set(['rhythm_tap']),
+    speed_round: new Set(['arcade_rhythm']),
+    mini_boss: new Set(['rhythm_tap']),
+    boss: new Set(['arcade_rhythm']),
+  };
+
+  let count = 0;
+  for (const node of SKILL_NODES) {
+    // Only check rhythm-category nodes and boss nodes with rhythm exercises
+    const isRhythmNode = node.category === 'rhythm';
+    const isBossWithRhythm =
+      node.category === 'boss' &&
+      (node.exercises || []).some((e) => RHYTHM_EXERCISE_TYPES.has(e.type));
+    if (!isRhythmNode && !isBossWithRhythm) continue;
+
+    const nodeType = node.nodeType;
+    if (!nodeType) continue; // Legacy nodes without nodeType are exempt
+
+    const allowedTypes = NODE_TYPE_EXERCISE_POLICY[nodeType];
+    if (!allowedTypes) continue; // Unknown nodeType handled by validateNodeTypes()
+
+    for (const exercise of (node.exercises || [])) {
+      // Skip non-rhythm exercise types (e.g. note_recognition on a boss node)
+      if (!RHYTHM_EXERCISE_TYPES.has(exercise.type)) continue;
+
+      // RHYTHM_PULSE is allowed when pulseOnly: true (special case for rhythm_1_1)
+      if (exercise.type === 'rhythm_pulse' && exercise.config?.pulseOnly === true)
+        continue;
+
+      if (!allowedTypes.has(exercise.type)) {
+        console.error(
+          `  ERROR: Node "${node.id}" (${nodeType}) uses exercise type "${exercise.type}" — ` +
+            `allowed: [${[...allowedTypes].join(', ')}]`
+        );
+        hasErrors = true;
+        count++;
+      }
+    }
+  }
+  if (count === 0) console.log('  NodeType -> exercise type mapping: OK');
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -615,6 +749,9 @@ validateExerciseTypes();
 validateExerciseDifficultyValues();
 validateRhythmPatternNames();
 validatePatternLibrary();
+validateLegacyRhythmPatterns();
+validatePatternTagReferences();
+validateNodeTypeExerciseTypeMapping();
 
 console.log('\n' + '='.repeat(50));
 
