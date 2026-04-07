@@ -45,7 +45,7 @@ export function useDocumentTitle() {
         return `${t("pages.notesMaster", { defaultValue: "Notes Master" })} - ${t("games.sightReading.title", { defaultValue: "Sight Reading" })}`;
       }
       if (path.includes("/metronome-trainer")) {
-        return `${t("pages.rhythmMaster", { defaultValue: "Rhythm Master" })} - ${t("games.metronomeTrainer.title", { defaultValue: "Listen & Tap" })}`;
+        return `${t("pages.rhythmMaster", { defaultValue: "Rhythm Master" })} - ${t("games.metronomeTrainer.headerTitle", { defaultValue: "Listen & Tap" })}`;
       }
 
       // Default fallback
@@ -56,4 +56,3 @@ export function useDocumentTitle() {
     document.title = title;
   }, [location.pathname, t]);
 }
-
