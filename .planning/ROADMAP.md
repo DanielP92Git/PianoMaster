@@ -76,7 +76,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 - [ ] **Phase 20: Curriculum Audit** - Audit all 50 rhythm nodes and lock game-type policy before touching any files
 - [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-06)
-- [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
+- [x] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change (completed 2026-04-07)
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
 
 ## Phase Details
@@ -124,10 +124,10 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 Plans:
 
-- [ ] 22-01-PLAN.md — Foundation: RHYTHM_PULSE constant, resolveByTags/resolveByIds, test scaffolds
-- [ ] 22-02-PLAN.md — Unit file migration: all 8 units, game-type fixes, concept fixes, pulse exercise
-- [ ] 22-03-PLAN.md — Pulse exercise: MetronomeTrainer pulseOnly mode, routing entries
-- [ ] 22-04-PLAN.md — Build validator: legacy field rejection, tag reference checks, policy enforcement
+- [x] 22-01-PLAN.md — Foundation: RHYTHM_PULSE constant, resolveByTags/resolveByIds, test scaffolds
+- [x] 22-02-PLAN.md — Unit file migration: all 8 units, game-type fixes, concept fixes, pulse exercise
+- [x] 22-03-PLAN.md — Pulse exercise: MetronomeTrainer pulseOnly mode, routing entries
+- [x] 22-04-PLAN.md — Build validator: legacy field rejection, tag reference checks, policy enforcement
 
 ### Phase 23: UX Polish
 
@@ -149,11 +149,11 @@ Plans:
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
 | 21. Pattern Library Construction | v3.2      | 2/2            | Complete    | 2026-04-06 |
-| 22. Service Layer & Trail Wiring | v3.2      | 0/4            | Planned     | -          |
+| 22. Service Layer & Trail Wiring | v3.2      | 4/4            | Complete    | 2026-04-07 |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 
-**Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 4 phases, 0/4 complete**
+**Total: 22 milestones shipped, 95 phases, ~207 plans | v3.2: 4 phases, 2/4 complete**
 
 ---
 
-_Last updated: 2026-04-07 -- Phase 22 plans created (4 plans, 3 waves)_
+_Last updated: 2026-04-07 -- Phase 22 complete (4/4 plans, 3 waves)_
