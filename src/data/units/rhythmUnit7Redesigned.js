@@ -125,7 +125,7 @@ export const rhythmUnit7Nodes = [
         config: {
           patternTags: ["compound-basic"],
           tempo: 65,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "6/8",
           difficulty: "beginner",
         },
@@ -338,7 +338,7 @@ export const rhythmUnit7Nodes = [
         config: {
           patternTags: ["compound-basic", "compound-mixed"],
           tempo: 85,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "6/8",
           difficulty: "advanced",
         },
@@ -392,7 +392,7 @@ export const rhythmUnit7Nodes = [
         config: {
           patternTags: ["compound-basic", "compound-mixed"],
           tempo: 85,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "6/8",
           difficulty: "intermediate",
           questionCount: 10,

@@ -122,7 +122,7 @@ export const rhythmUnit2Nodes = [
         config: {
           patternTags: ["quarter-half-whole"],
           tempo: 70,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "beginner",
         },
@@ -226,7 +226,7 @@ export const rhythmUnit2Nodes = [
         config: {
           patternTags: ["quarter-half-whole"],
           tempo: 70,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "beginner",
         },
@@ -330,7 +330,7 @@ export const rhythmUnit2Nodes = [
         config: {
           patternTags: ["quarter-half-whole"],
           tempo: 90,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -383,7 +383,7 @@ export const rhythmUnit2Nodes = [
         config: {
           patternTags: ["quarter-half-whole"],
           tempo: 75,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "intermediate",
           questionCount: 12,

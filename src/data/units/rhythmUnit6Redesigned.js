@@ -123,7 +123,7 @@ export const rhythmUnit6Nodes = [
         config: {
           patternTags: ["with-sixteenth"],
           tempo: 85,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "advanced",
         },
@@ -227,7 +227,7 @@ export const rhythmUnit6Nodes = [
         config: {
           patternTags: ["with-sixteenth"],
           tempo: 85,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "advanced",
         },
@@ -347,7 +347,7 @@ export const rhythmUnit6Nodes = [
         config: {
           patternTags: ["with-sixteenth"],
           tempo: 100,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "advanced",
         },

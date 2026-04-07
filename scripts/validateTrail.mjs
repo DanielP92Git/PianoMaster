@@ -732,6 +732,67 @@ function validateNodeTypeExerciseTypeMapping() {
   if (count === 0) console.log('  NodeType -> exercise type mapping: OK');
 }
 
+/**
+ * Enforce nodeType -> measureCount policy for rhythm exercises.
+ * Prevents drift in measure lengths after Phase 23 data migration (D-12).
+ * Pulse exercises (pulseOnly: true) are exempt.
+ */
+function validateMeasureCountPolicy() {
+  console.log("\nChecking measureCount policy...");
+
+  const MEASURE_COUNT_POLICY = {
+    discovery: 1,
+    practice: 2,
+    mix_up: 1,
+    review: 2,
+    challenge: 2,
+    speed_round: 4,
+    mini_boss: 4,
+    boss: 4,
+  };
+
+  const RHYTHM_EXERCISE_TYPES = new Set([
+    "rhythm",
+    "rhythm_tap",
+    "rhythm_dictation",
+    "arcade_rhythm",
+    "rhythm_pulse",
+  ]);
+
+  let violations = 0;
+  for (const node of SKILL_NODES) {
+    // Only check rhythm-category nodes and boss nodes with rhythm exercises
+    const isRhythmNode = node.category === "rhythm";
+    const isBossWithRhythm =
+      node.category === "boss" &&
+      (node.exercises || []).some((e) => RHYTHM_EXERCISE_TYPES.has(e.type));
+    if (!isRhythmNode && !isBossWithRhythm) continue;
+
+    const nodeType = node.nodeType;
+    if (!nodeType) continue;
+
+    const expected = MEASURE_COUNT_POLICY[nodeType];
+    if (expected === undefined) continue;
+
+    for (const exercise of node.exercises || []) {
+      // Skip non-rhythm exercises and pulse exercises
+      if (!RHYTHM_EXERCISE_TYPES.has(exercise.type)) continue;
+      if (exercise.config?.pulseOnly === true) continue;
+
+      const mc = exercise.config?.measureCount;
+      if (mc !== expected) {
+        console.error(
+          `  ERROR: "${node.id}" (${nodeType}) has measureCount=${mc}, expected ${expected}`
+        );
+        hasErrors = true;
+        violations++;
+      }
+    }
+  }
+  if (violations === 0) console.log("  MeasureCount policy: OK");
+  else console.error(`  Found ${violations} measureCount policy violation(s)`);
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -752,6 +813,7 @@ validatePatternLibrary();
 validateLegacyRhythmPatterns();
 validatePatternTagReferences();
 validateNodeTypeExerciseTypeMapping();
+validateMeasureCountPolicy();
 
 console.log('\n' + '='.repeat(50));
 

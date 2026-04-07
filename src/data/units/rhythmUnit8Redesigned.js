@@ -123,7 +123,7 @@ export const rhythmUnit8Nodes = [
         config: {
           patternTags: ["syncopation-basic"],
           tempo: 70,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -227,7 +227,7 @@ export const rhythmUnit8Nodes = [
         config: {
           patternTags: ["syncopation-basic", "syncopation-dotted"],
           tempo: 75,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -331,7 +331,7 @@ export const rhythmUnit8Nodes = [
         config: {
           patternTags: ["syncopation-basic", "syncopation-dotted"],
           tempo: 83,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "advanced",
         },

@@ -122,7 +122,7 @@ export const rhythmUnit3Nodes = [
         config: {
           patternTags: ["quarter-eighth"],
           tempo: 80,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -227,7 +227,7 @@ export const rhythmUnit3Nodes = [
         config: {
           patternTags: ["quarter-eighth"],
           tempo: 80,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -331,7 +331,7 @@ export const rhythmUnit3Nodes = [
         config: {
           patternTags: ["quarter-eighth"],
           tempo: 95,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -384,7 +384,7 @@ export const rhythmUnit3Nodes = [
         config: {
           patternTags: ["quarter-eighth"],
           tempo: 80,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "intermediate",
           questionCount: 12,

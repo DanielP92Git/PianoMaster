@@ -123,7 +123,7 @@ export const rhythmUnit5Nodes = [
         config: {
           patternTags: ["dotted-half"],
           tempo: 80,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -281,7 +281,7 @@ export const rhythmUnit5Nodes = [
         config: {
           patternTags: ["dotted-half", "dotted-quarter"],
           tempo: 80,
-          measureCount: 1,
+          measureCount: 2,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -333,7 +333,7 @@ export const rhythmUnit5Nodes = [
         config: {
           patternTags: ["dotted-half", "dotted-quarter"],
           tempo: 95,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "intermediate",
         },
@@ -387,7 +387,7 @@ export const rhythmUnit5Nodes = [
         config: {
           patternTags: ["dotted-half", "dotted-quarter", "three-four"],
           tempo: 80,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "4/4",
           difficulty: "intermediate",
           questionCount: 6,
@@ -399,7 +399,7 @@ export const rhythmUnit5Nodes = [
         config: {
           patternTags: ["dotted-half", "dotted-quarter", "three-four"],
           tempo: 80,
-          measureCount: 2,
+          measureCount: 4,
           timeSignature: "3/4",
           difficulty: "intermediate",
           questionCount: 6,
