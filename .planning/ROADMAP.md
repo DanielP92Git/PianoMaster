@@ -75,8 +75,8 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 #### Phases
 
 - [ ] **Phase 20: Curriculum Audit** - Audit all 50 rhythm nodes and lock game-type policy before touching any files
-- [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-06)
-- [x] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change (completed 2026-04-07)
+- [ ] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module
+- [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
 
 ## Phase Details
@@ -119,15 +119,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 3. A child playing a Discovery node only ever encounters patterns that contain durations from duration sets they have already encountered — no patterns with unintroduced note values appear
 4. Running `npm run build` fails with a clear error if any node config references a pattern tag or ID that does not exist in `rhythmPatterns.js`
 5. Running `npm run build` passes cleanly when all pattern references are valid
-
-**Plans:** 4 plans
-
-Plans:
-
-- [x] 22-01-PLAN.md — Foundation: RHYTHM_PULSE constant, resolveByTags/resolveByIds, test scaffolds
-- [x] 22-02-PLAN.md — Unit file migration: all 8 units, game-type fixes, concept fixes, pulse exercise
-- [x] 22-03-PLAN.md — Pulse exercise: MetronomeTrainer pulseOnly mode, routing entries
-- [x] 22-04-PLAN.md — Build validator: legacy field rejection, tag reference checks, policy enforcement
+   **Plans**: TBD
 
 ### Phase 23: UX Polish
 
@@ -140,27 +132,20 @@ Plans:
 2. The MetronomeTrainer game shows a child-friendly name in both English and Hebrew UI — the string "MetronomeTrainer" does not appear in any visible label
 3. Tapping incorrectly in any rhythm game shows "Almost!" (EN) or its Hebrew equivalent — the word "MISS" does not appear anywhere in the rhythm game UI
 4. A Discovery node shows a 1-bar pattern, a Practice node shows a 2-bar pattern, and a Speed or Boss node shows a 4-bar pattern
-5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; Hebrew equivalents with Nikud in HE) appear below VexFlow note heads for all rendered rhythm patterns
-
-**Plans:** 3 plans
-
-Plans:
-
-- [ ] 23-01-PLAN.md — Timing thresholds, MetronomeTrainer rename, MISS to Almost! i18n
-- [ ] 23-02-PLAN.md — Progressive measure length: data updates, validator, multi-stave display
-- [ ] 23-03-PLAN.md — Kodaly syllable rendering with VexFlow annotations and toggle
+5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; טָה / טָה-טָה / טָה-אָה / טָה-אָה-אָה-אָה in HE) appear below VexFlow note heads for all rendered rhythm patterns
+   **Plans**: TBD
 
 ## Progress
 
-| Phase                            | Milestone | Plans Complete | Status      | Completed  |
-| -------------------------------- | --------- | -------------- | ----------- | ---------- |
-| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
-| 21. Pattern Library Construction | v3.2      | 2/2            | Complete    | 2026-04-06 |
-| 22. Service Layer & Trail Wiring | v3.2      | 4/4            | Complete    | 2026-04-07 |
-| 23. UX Polish                    | v3.2      | 0/3            | Planned     | -          |
+| Phase                            | Milestone | Plans Complete | Status      | Completed |
+| -------------------------------- | --------- | -------------- | ----------- | --------- |
+| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -         |
+| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -         |
+| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -         |
+| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -         |
 
-**Total: 22 milestones shipped, 95 phases, ~207 plans | v3.2: 4 phases, 2/4 complete**
+**Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 4 phases, 0/4 complete**
 
 ---
 
-_Last updated: 2026-04-07 -- Phase 23 planned (3 plans, 2 waves)_
+_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework roadmap created_

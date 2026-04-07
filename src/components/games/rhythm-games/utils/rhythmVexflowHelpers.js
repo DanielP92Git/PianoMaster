@@ -1,4 +1,40 @@
-import { StaveNote, Stem, Dot } from 'vexflow';
+import { StaveNote, Stem, Dot, Annotation, AnnotationVerticalJustify } from 'vexflow';
+
+/**
+ * Kodaly syllable mappings by durationUnits (English).
+ * Per D-18: quarter=ta, eighth=ti, half=ta-a, whole=ta-a-a-a
+ * Each individual eighth note gets "ti" per RESEARCH A1.
+ */
+export const SYLLABLE_MAP_EN = {
+  16: "ta-a-a-a", // whole
+  12: "ta-a-a",   // dotted half
+  8: "ta-a",      // half
+  6: "ta-a",      // dotted quarter (sustained)
+  4: "ta",        // quarter
+  3: "ta",        // dotted eighth (sustained)
+  2: "ti",        // eighth
+  1: "ti",        // sixteenth
+};
+
+/**
+ * Kodaly syllable mappings by durationUnits (Hebrew with Nikud).
+ * Corrected per user review:
+ *   - Eighth/sixteenth: "טָה-טֶה" (ta-te, NOT "טִי")
+ *   - Rest: "הָס" (Kamatz under heh)
+ */
+export const SYLLABLE_MAP_HE = {
+  16: "טָה-אָה-אָה-אָה",
+  12: "טָה-אָה-אָה",
+  8: "טָה-אָה",
+  6: "טָה-אָה",
+  4: "טָה",
+  3: "טָה",
+  2: "טָה-טֶה",   // CORRECTED: ta-te, not ti
+  1: "טָה-טֶה",   // CORRECTED: ta-te, not ti
+};
+
+export const REST_SYLLABLE_EN = "sh";
+export const REST_SYLLABLE_HE = "הָס"; // Kamatz under heh (confirmed by user)
 
 /**
  * Map from sixteenth-note duration units to VexFlow duration code strings.
@@ -72,7 +108,7 @@ export function binaryPatternToBeats(binaryPattern) {
  * @param {{ durationUnits: number, isRest: boolean }[]} beats
  * @returns {StaveNote[]}
  */
-export function beatsToVexNotes(beats) {
+export function beatsToVexNotes(beats, { showSyllables = false, language = 'en' } = {}) {
   return beats.map((beat) => {
     const vexDur = DURATION_TO_VEX[beat.durationUnits];
 
@@ -98,6 +134,18 @@ export function beatsToVexNotes(beats) {
 
     if (isDotted) {
       Dot.buildAndAttach([note], { all: true });
+    }
+
+    if (showSyllables) {
+      const syllableMap = language === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
+      const restSyllable = language === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
+      const syllableText = beat.isRest
+        ? restSyllable
+        : (syllableMap[beat.durationUnits] ?? "?");
+      const annotation = new Annotation(syllableText);
+      annotation.setVerticalJustification(AnnotationVerticalJustify.BOTTOM);
+      annotation.setFont({ family: "sans-serif", size: 10, weight: "normal" });
+      note.addModifier(annotation, 0);
     }
 
     return note;
