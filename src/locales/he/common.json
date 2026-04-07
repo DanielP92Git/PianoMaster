@@ -693,7 +693,7 @@
         "description": "זהו תווים על החמשה"
       },
       "metronomeTrainer": {
-        "name": "תרגול קצב עם מטרונום",
+        "name": "חזור אחריי",
         "description": "האזינו לתבניות הקצב והקישו אותן במדויק"
       },
       "rhythmReading": {
@@ -718,7 +718,7 @@
       "playNow": "שחק עכשיו"
     },
     "metronomeTrainer": {
-      "headerTitle": "מאמן המטרונום",
+      "headerTitle": "חזור אחריי",
       "progressLabel": "תרגיל {{current}} מתוך {{total}}",
       "sessionCompleteTitle": "המשחק הושלם!",
       "sessionCompleteSubtitle": "עבודה נהדרת בתרגול הקצב שלך!",
@@ -759,7 +759,7 @@
           "perfect": "בול",
           "good": "טוב",
           "fair": "בסדר",
-          "miss": "פספוס"
+          "miss": "כמעט!"
         }
       }
     },
@@ -778,7 +778,7 @@
         "accuracy": {
           "perfect": "!מושלם",
           "good": "!טוב",
-          "miss": "פספסת"
+          "miss": "כמעט!"
         }
       },
       "countdown": {
@@ -1221,7 +1221,7 @@
   },
   "gameSettings": {
     "titles": {
-      "metronomeTrainer": "מאמן קצב עם מטרונום",
+      "metronomeTrainer": "חזור אחריי",
       "metronomeSubtitle": "הגדירו את אימון הקצב שלכם"
     },
     "steps": {
