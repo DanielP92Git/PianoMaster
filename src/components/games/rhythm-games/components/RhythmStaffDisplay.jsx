@@ -97,17 +97,16 @@ export function RhythmStaffDisplay({
         const measureBeats = measuresData[m];
         const xOffset = 10 + m * staveWidth;
 
-        const stave = new Stave(
-          xOffset,
-          10,
-          staveWidth - (m < measureCount - 1 ? 5 : 0)
-        );
+        const stave = new Stave(xOffset, 10, staveWidth);
         // Only show time signature on first stave
         if (m === 0) stave.addTimeSignature(timeSignature);
         stave.setContext(ctx).draw();
 
         // Build VexFlow notes for this measure (pass syllable options)
-        const notes = beatsToVexNotes(measureBeats, { showSyllables, language });
+        const notes = beatsToVexNotes(measureBeats, {
+          showSyllables,
+          language,
+        });
 
         // Force stems up for all notes (rhythm-only display)
         notes.forEach((note) => {

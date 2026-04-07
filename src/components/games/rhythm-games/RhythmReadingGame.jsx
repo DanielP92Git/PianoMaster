@@ -318,20 +318,21 @@ export function RhythmReadingGame() {
           return null;
         }
         // Pick a random pattern from candidates
-        const pattern = candidates[Math.floor(Math.random() * candidates.length)];
+        const pattern =
+          candidates[Math.floor(Math.random() * candidates.length)];
         // Convert beats from VexFlow duration codes to beat objects
         // pattern.beats is array of arrays: [['q','q','q','q'], ['h','h']]
         const SIXTEENTH_UNITS = {
           w: 16,
           h: 8,
           q: 4,
-          "8": 2,
-          "16": 1,
+          8: 2,
+          16: 1,
           qd: 6,
           hd: 12,
           "8d": 3,
         };
-        const REST_UNITS = { w: 16, h: 8, q: 4, "8": 2, "16": 1 };
+        const REST_UNITS = { w: 16, h: 8, q: 4, 8: 2, 16: 1 };
         const measuresResult = pattern.beats.map((measure) =>
           measure.map((durCode) => {
             const isRest = durCode.endsWith("r");
@@ -344,7 +345,11 @@ export function RhythmReadingGame() {
         );
         // Flatten for scoring logic (flat array of all beats across all measures)
         const flatBeats = measuresResult.flat();
-        return { beats: flatBeats, measures: measuresResult, binaryPattern: null };
+        return {
+          beats: flatBeats,
+          measures: measuresResult,
+          binaryPattern: null,
+        };
       } else {
         // Free practice mode: use legacy generator
         const result = await getPattern(
@@ -360,7 +365,13 @@ export function RhythmReadingGame() {
       console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
-  }, [patternTags, trailMeasureCount, difficulty, timeSignatureStr, rhythmPatterns]);
+  }, [
+    patternTags,
+    trailMeasureCount,
+    difficulty,
+    timeSignatureStr,
+    rhythmPatterns,
+  ]);
 
   /**
    * Start continuous metronome lookahead scheduler.
@@ -480,9 +491,11 @@ export function RhythmReadingGame() {
       const playbackStartTime = explicitStartTime ?? ctx.currentTime + 0.05;
       patternStartTimeRef.current = playbackStartTime;
 
-      // Compute measure duration from time signature (no pattern playback — child taps the rhythm)
+      // Compute total duration from time signature × number of measures
       const beatsPerMeasureForDuration = timeSignatureObj.beats ?? 4;
-      measureDurationRef.current = beatsPerMeasureForDuration * (60 / tempo);
+      const measuresInPattern = currentMeasures ? currentMeasures.length : 1;
+      measureDurationRef.current =
+        beatsPerMeasureForDuration * (60 / tempo) * measuresInPattern;
 
       // Pre-compute scheduled beat times for scoring
       const { times } = buildBeatTimes(beats, tempo, playbackStartTime);
@@ -569,7 +582,14 @@ export function RhythmReadingGame() {
 
       rafIdRef.current = requestAnimationFrame(updateCursor);
     },
-    [audioContextRef, tempo, timeSignatureObj, playNote, buildBeatTimes]
+    [
+      audioContextRef,
+      tempo,
+      timeSignatureObj,
+      playNote,
+      buildBeatTimes,
+      currentMeasures,
+    ]
   );
 
   // Keep ref in sync so handleTap's READY→PLAYING transition calls the current version
