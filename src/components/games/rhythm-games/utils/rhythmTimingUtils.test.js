@@ -1,12 +1,12 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 import {
   calculateTimingThresholds,
   generateDistractors,
   schedulePatternPlayback,
-} from './rhythmTimingUtils';
+} from "./rhythmTimingUtils";
 
-describe('calculateTimingThresholds', () => {
-  it('Test 6: calculateTimingThresholds(60) returns wider windows than calculateTimingThresholds(120)', () => {
+describe("calculateTimingThresholds", () => {
+  it("Test 6: calculateTimingThresholds(60) returns wider windows than calculateTimingThresholds(120)", () => {
     const slow = calculateTimingThresholds(60);
     const fast = calculateTimingThresholds(120);
     expect(slow.PERFECT).toBeGreaterThan(fast.PERFECT);
@@ -14,23 +14,62 @@ describe('calculateTimingThresholds', () => {
     expect(slow.FAIR).toBeGreaterThan(fast.FAIR);
   });
 
-  it('Test 7: calculateTimingThresholds returns PERFECT, GOOD, FAIR keys', () => {
+  it("Test 7: calculateTimingThresholds returns PERFECT, GOOD, FAIR keys", () => {
     const thresholds = calculateTimingThresholds(60);
-    expect(thresholds).toHaveProperty('PERFECT');
-    expect(thresholds).toHaveProperty('GOOD');
-    expect(thresholds).toHaveProperty('FAIR');
+    expect(thresholds).toHaveProperty("PERFECT");
+    expect(thresholds).toHaveProperty("GOOD");
+    expect(thresholds).toHaveProperty("FAIR");
     // PERFECT should be a positive number
     expect(thresholds.PERFECT).toBeGreaterThan(0);
   });
 
-  it('thresholds scale proportionally with tempo (120 BPM baseline)', () => {
-    const baseline = calculateTimingThresholds(120);
-    // PERFECT at 120 BPM should be the base value (50ms)
+  it("thresholds scale proportionally with tempo (120 BPM baseline)", () => {
+    const baseline = calculateTimingThresholds(120, null);
+    // PERFECT at 120 BPM with null nodeType (hard tier) should be 50ms
     expect(baseline.PERFECT).toBe(50);
+  });
+
+  it("returns hard-tier thresholds when nodeType is null (backward compat)", () => {
+    const result = calculateTimingThresholds(120, null);
+    expect(result.PERFECT).toBe(50);
+    expect(result.GOOD).toBe(75);
+    expect(result.FAIR).toBe(125);
+  });
+
+  it("returns easy-tier thresholds for discovery nodes (D-01)", () => {
+    const result = calculateTimingThresholds(120, "discovery");
+    expect(result.PERFECT).toBe(100);
+    expect(result.GOOD).toBe(150);
+    expect(result.FAIR).toBe(250);
+  });
+
+  it("returns easy-tier thresholds for practice nodes", () => {
+    expect(calculateTimingThresholds(120, "practice").PERFECT).toBe(100);
+  });
+
+  it("returns easy-tier thresholds for mix_up nodes", () => {
+    expect(calculateTimingThresholds(120, "mix_up").PERFECT).toBe(100);
+  });
+
+  it("returns easy-tier thresholds for review nodes", () => {
+    expect(calculateTimingThresholds(120, "review").PERFECT).toBe(100);
+  });
+
+  it("returns hard-tier thresholds for boss nodes", () => {
+    expect(calculateTimingThresholds(120, "boss").PERFECT).toBe(50);
+  });
+
+  it("returns hard-tier thresholds for speed_round nodes", () => {
+    expect(calculateTimingThresholds(120, "speed_round").PERFECT).toBe(50);
+  });
+
+  it("easy-tier at 65 BPM gives PERFECT >= 100ms (tempo scaling widens)", () => {
+    const result = calculateTimingThresholds(65, "discovery");
+    expect(result.PERFECT).toBeGreaterThanOrEqual(100);
   });
 });
 
-describe('generateDistractors', () => {
+describe("generateDistractors", () => {
   const correctBeats = [
     { durationUnits: 4, isRest: false },
     { durationUnits: 4, isRest: false },
@@ -38,38 +77,49 @@ describe('generateDistractors', () => {
     { durationUnits: 4, isRest: false },
   ];
 
-  it('Test 8: generateDistractors(correctBeats, 2) returns 2 distractor patterns', () => {
+  it("Test 8: generateDistractors(correctBeats, 2) returns 2 distractor patterns", () => {
     const distractors = generateDistractors(correctBeats, 2);
     expect(distractors).toHaveLength(2);
   });
 
-  it('Test 8b: each distractor differs from correct by at least 1 duration element', () => {
+  it("Test 8b: each distractor differs from correct by at least 1 duration element", () => {
     const distractors = generateDistractors(correctBeats, 2);
     distractors.forEach((distractor) => {
       const hasDiff = distractor.some(
-        (beat, i) => beat.durationUnits !== correctBeats[i]?.durationUnits || beat.isRest !== correctBeats[i]?.isRest
+        (beat, i) =>
+          beat.durationUnits !== correctBeats[i]?.durationUnits ||
+          beat.isRest !== correctBeats[i]?.isRest
       );
       expect(hasDiff).toBe(true);
     });
   });
 
-  it('Test 9: generateDistractors preserves total measure duration', () => {
-    const totalCorrect = correctBeats.reduce((sum, b) => sum + b.durationUnits, 0);
+  it("Test 9: generateDistractors preserves total measure duration", () => {
+    const totalCorrect = correctBeats.reduce(
+      (sum, b) => sum + b.durationUnits,
+      0
+    );
     const distractors = generateDistractors(correctBeats, 2);
     distractors.forEach((distractor) => {
-      const totalDistractor = distractor.reduce((sum, b) => sum + b.durationUnits, 0);
+      const totalDistractor = distractor.reduce(
+        (sum, b) => sum + b.durationUnits,
+        0
+      );
       expect(totalDistractor).toBe(totalCorrect);
     });
   });
 
-  it('handles patterns with mixed durations', () => {
+  it("handles patterns with mixed durations", () => {
     const mixedBeats = [
       { durationUnits: 8, isRest: false },
       { durationUnits: 4, isRest: false },
       { durationUnits: 4, isRest: false },
     ];
     const distractors = generateDistractors(mixedBeats, 2);
-    const totalCorrect = mixedBeats.reduce((sum, b) => sum + b.durationUnits, 0);
+    const totalCorrect = mixedBeats.reduce(
+      (sum, b) => sum + b.durationUnits,
+      0
+    );
     distractors.forEach((distractor) => {
       const total = distractor.reduce((sum, b) => sum + b.durationUnits, 0);
       expect(total).toBe(totalCorrect);
@@ -77,8 +127,8 @@ describe('generateDistractors', () => {
   });
 });
 
-describe('schedulePatternPlayback', () => {
-  it('Test 10: schedulePatternPlayback returns an object with patternStartTime number', () => {
+describe("schedulePatternPlayback", () => {
+  it("Test 10: schedulePatternPlayback returns an object with patternStartTime number", () => {
     const beats = [
       { durationUnits: 4, isRest: false },
       { durationUnits: 4, isRest: false },
@@ -86,11 +136,16 @@ describe('schedulePatternPlayback', () => {
     const mockAudioContext = { currentTime: 1.0 };
     const mockPlayNote = vi.fn();
 
-    const result = schedulePatternPlayback(beats, 120, mockAudioContext, mockPlayNote);
-    expect(typeof result.startTime).toBe('number');
+    const result = schedulePatternPlayback(
+      beats,
+      120,
+      mockAudioContext,
+      mockPlayNote
+    );
+    expect(typeof result.startTime).toBe("number");
   });
 
-  it('calls playNote for non-rest beats', () => {
+  it("calls playNote for non-rest beats", () => {
     const beats = [
       { durationUnits: 4, isRest: false },
       { durationUnits: 4, isRest: true },
@@ -104,7 +159,7 @@ describe('schedulePatternPlayback', () => {
     expect(mockPlayNote).toHaveBeenCalledTimes(2);
   });
 
-  it('does not call playNote for rest beats', () => {
+  it("does not call playNote for rest beats", () => {
     const beats = [
       { durationUnits: 4, isRest: true },
       { durationUnits: 4, isRest: true },
