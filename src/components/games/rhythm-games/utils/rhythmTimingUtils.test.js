@@ -24,9 +24,48 @@ describe('calculateTimingThresholds', () => {
   });
 
   it('thresholds scale proportionally with tempo (120 BPM baseline)', () => {
-    const baseline = calculateTimingThresholds(120);
-    // PERFECT at 120 BPM should be the base value (50ms)
+    const baseline = calculateTimingThresholds(120, null);
+    // PERFECT at 120 BPM with null nodeType (hard tier) should be 50ms
     expect(baseline.PERFECT).toBe(50);
+  });
+
+  it("returns hard-tier thresholds when nodeType is null (backward compat)", () => {
+    const result = calculateTimingThresholds(120, null);
+    expect(result.PERFECT).toBe(50);
+    expect(result.GOOD).toBe(75);
+    expect(result.FAIR).toBe(125);
+  });
+
+  it("returns easy-tier thresholds for discovery nodes (D-01)", () => {
+    const result = calculateTimingThresholds(120, "discovery");
+    expect(result.PERFECT).toBe(100);
+    expect(result.GOOD).toBe(150);
+    expect(result.FAIR).toBe(250);
+  });
+
+  it("returns easy-tier thresholds for practice nodes", () => {
+    expect(calculateTimingThresholds(120, "practice").PERFECT).toBe(100);
+  });
+
+  it("returns easy-tier thresholds for mix_up nodes", () => {
+    expect(calculateTimingThresholds(120, "mix_up").PERFECT).toBe(100);
+  });
+
+  it("returns easy-tier thresholds for review nodes", () => {
+    expect(calculateTimingThresholds(120, "review").PERFECT).toBe(100);
+  });
+
+  it("returns hard-tier thresholds for boss nodes", () => {
+    expect(calculateTimingThresholds(120, "boss").PERFECT).toBe(50);
+  });
+
+  it("returns hard-tier thresholds for speed_round nodes", () => {
+    expect(calculateTimingThresholds(120, "speed_round").PERFECT).toBe(50);
+  });
+
+  it("easy-tier at 65 BPM gives PERFECT >= 100ms (tempo scaling widens)", () => {
+    const result = calculateTimingThresholds(65, "discovery");
+    expect(result.PERFECT).toBeGreaterThanOrEqual(100);
   });
 });
 

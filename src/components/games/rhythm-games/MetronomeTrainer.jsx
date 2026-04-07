@@ -21,6 +21,7 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
+import { calculateTimingThresholds } from "./utils/rhythmTimingUtils";
 
 // Game phases
 const GAME_PHASES = {
@@ -31,37 +32,6 @@ const GAME_PHASES = {
   USER_PERFORMANCE: "user-performance",
   FEEDBACK: "feedback",
   SESSION_COMPLETE: "session-complete",
-};
-
-// Base timing thresholds (in milliseconds) - these are for 120 BPM
-const BASE_TIMING_THRESHOLDS = {
-  PERFECT: 50, // ±20ms
-  GOOD: 75, // ±50ms
-  FAIR: 125, // ±100ms
-  // >100ms = MISS
-};
-
-/**
- * Calculate dynamic timing thresholds based on tempo
- * Slower tempos get more generous thresholds, faster tempos get stricter
- */
-const calculateTimingThresholds = (tempo) => {
-  // Base tempo for reference (120 BPM)
-  const baseTempo = 120;
-
-  // Calculate scaling factor
-  // At 60 BPM: factor = 1.4 (40% more generous)
-  // At 90 BPM: factor = 1.15 (15% more generous)
-  // At 120 BPM: factor = 1.0 (baseline)
-  // At 150 BPM: factor = 0.85 (15% stricter)
-  // At 180 BPM: factor = 0.75 (25% stricter)
-  const scalingFactor = Math.pow(baseTempo / tempo, 0.3); // Gentle exponential scaling
-
-  return {
-    PERFECT: Math.round(BASE_TIMING_THRESHOLDS.PERFECT * scalingFactor),
-    GOOD: Math.round(BASE_TIMING_THRESHOLDS.GOOD * scalingFactor),
-    FAIR: Math.round(BASE_TIMING_THRESHOLDS.FAIR * scalingFactor),
-  };
 };
 
 // Scoring system
@@ -87,6 +57,7 @@ export function MetronomeTrainer() {
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
+  const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig || null;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
   const pulseOnly = nodeConfig?.pulseOnly ?? false;
@@ -1028,7 +999,7 @@ export function MetronomeTrainer() {
         const timingErrorSeconds = timingError * currentBeatDur;
 
         // Use the same accuracy calculation as immediate feedback
-        const thresholds = calculateTimingThresholds(gameSettings.tempo);
+        const thresholds = calculateTimingThresholds(gameSettings.tempo, nodeType);
         const timingErrorMs = timingErrorSeconds * 1000;
 
         let accuracy = "MISS";
@@ -1291,7 +1262,7 @@ export function MetronomeTrainer() {
       if (bestTimingError < Infinity) {
         const timingErrorSeconds = bestTimingError * currentBeatDur;
         const timingErrorMs = timingErrorSeconds * 1000;
-        const thresholds = calculateTimingThresholds(gameSettings.tempo);
+        const thresholds = calculateTimingThresholds(gameSettings.tempo, nodeType);
 
         if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
         else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";

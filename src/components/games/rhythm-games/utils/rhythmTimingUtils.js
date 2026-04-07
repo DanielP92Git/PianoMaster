@@ -5,36 +5,45 @@
  * Ported from MetronomeTrainer.jsx calculateTimingThresholds (lines 47-64).
  */
 
-// Base timing thresholds at 120 BPM (in milliseconds)
-// Matches MetronomeTrainer.jsx BASE_TIMING_THRESHOLDS exactly.
-const BASE_TIMING_THRESHOLDS = {
-  PERFECT: 50, // ±50ms at 120 BPM
-  GOOD: 75, // ±75ms at 120 BPM
-  FAIR: 125, // ±125ms at 120 BPM
-};
+// Node types that get more forgiving (easy-tier) timing thresholds.
+// These are learning/practice nodes where children should feel successful.
+const EASY_NODE_TYPES = new Set(["discovery", "practice", "mix_up", "review"]);
+
+// Easy-tier: 2x more forgiving — for learning/discovery/review nodes
+const BASE_TIMING_THRESHOLDS_EASY = { PERFECT: 100, GOOD: 150, FAIR: 250 };
+
+// Hard-tier: original thresholds — for challenge/speed_round/boss/mini_boss nodes
+const BASE_TIMING_THRESHOLDS_HARD = { PERFECT: 50, GOOD: 75, FAIR: 125 };
 
 const BASE_TEMPO = 120;
 
 /**
- * Calculate dynamic timing thresholds based on tempo.
+ * Calculate dynamic timing thresholds based on tempo and node type.
+ *
+ * Two-tier system (D-01):
+ *   - Easy tier (discovery/practice/mix_up/review): PERFECT=100ms at 120 BPM
+ *   - Hard tier (challenge/speed_round/mini_boss/boss/null): PERFECT=50ms at 120 BPM
  *
  * Uses gentle exponential scaling (exponent 0.3) so that:
  *   - Slower tempos (60 BPM) get more generous windows (~40% wider)
  *   - Faster tempos (180 BPM) get stricter windows (~25% tighter)
  *
- * Ported from MetronomeTrainer.jsx — same algorithm, same base values.
- *
  * @param {number} tempo - Tempo in BPM
+ * @param {string|null} [nodeType=null] - Node type from NODE_TYPES (null = hard tier)
  * @returns {{ PERFECT: number, GOOD: number, FAIR: number }} Thresholds in ms
  */
-export function calculateTimingThresholds(tempo) {
+export function calculateTimingThresholds(tempo, nodeType = null) {
+  const base = EASY_NODE_TYPES.has(nodeType)
+    ? BASE_TIMING_THRESHOLDS_EASY
+    : BASE_TIMING_THRESHOLDS_HARD;
+
   // Gentle exponential scaling: slower = more generous, faster = stricter
   const scalingFactor = Math.pow(BASE_TEMPO / tempo, 0.3);
 
   return {
-    PERFECT: Math.round(BASE_TIMING_THRESHOLDS.PERFECT * scalingFactor),
-    GOOD: Math.round(BASE_TIMING_THRESHOLDS.GOOD * scalingFactor),
-    FAIR: Math.round(BASE_TIMING_THRESHOLDS.FAIR * scalingFactor),
+    PERFECT: Math.round(base.PERFECT * scalingFactor),
+    GOOD: Math.round(base.GOOD * scalingFactor),
+    FAIR: Math.round(base.FAIR * scalingFactor),
   };
 }
 

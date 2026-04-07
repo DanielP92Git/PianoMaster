@@ -55,6 +55,7 @@ export function RhythmReadingGame() {
 
   // Trail state extraction from location.state
   const nodeId = location.state?.nodeId ?? null;
+  const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig ?? null;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
@@ -543,7 +544,8 @@ export function RhythmReadingGame() {
             tapTime,
             scheduledBeatTimesRef.current,
             nextBeatIndexRef.current,
-            tempo
+            tempo,
+            nodeType
           );
           nextBeatIndexRef.current = newNextBeatIndex;
           setTapResults([{ noteIdx, quality }]);
@@ -571,7 +573,8 @@ export function RhythmReadingGame() {
       tapTime,
       scheduledBeatTimesRef.current,
       nextBeatIndexRef.current,
-      tempo
+      tempo,
+      nodeType
     );
 
     // Advance next beat index to prevent double-scoring
