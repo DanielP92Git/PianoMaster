@@ -361,6 +361,19 @@ export function RhythmDictationGame() {
   }, [correctBeats, gamePhase, tempo, playPattern, t]);
 
   // ---------------------------------------------------------------------------
+  // Advance to next question or complete session
+  // ---------------------------------------------------------------------------
+  const advanceQuestion = useCallback(() => {
+    const nextQuestion = currentQuestion + 1;
+    if (nextQuestion >= TOTAL_QUESTIONS) {
+      setGamePhase(GAME_PHASES.SESSION_COMPLETE);
+    } else {
+      setCurrentQuestion(nextQuestion);
+      generateQuestion(nextQuestion, tempo, timeSignature);
+    }
+  }, [currentQuestion, tempo, timeSignature, generateQuestion]);
+
+  // ---------------------------------------------------------------------------
   // Card selection handler
   // ---------------------------------------------------------------------------
   const handleCardSelect = useCallback(
@@ -417,21 +430,9 @@ export function RhythmDictationGame() {
       playCorrectSound,
       playWrongSound,
       t,
+      advanceQuestion,
     ]
   );
-
-  // ---------------------------------------------------------------------------
-  // Advance to next question or complete session
-  // ---------------------------------------------------------------------------
-  const advanceQuestion = useCallback(() => {
-    const nextQuestion = currentQuestion + 1;
-    if (nextQuestion >= TOTAL_QUESTIONS) {
-      setGamePhase(GAME_PHASES.SESSION_COMPLETE);
-    } else {
-      setCurrentQuestion(nextQuestion);
-      generateQuestion(nextQuestion, tempo, timeSignature);
-    }
-  }, [currentQuestion, tempo, timeSignature, generateQuestion]);
 
   // ---------------------------------------------------------------------------
   // Auto-start from trail
