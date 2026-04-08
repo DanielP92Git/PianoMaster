@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 22-service-layer-trail-wiring
 source: [22-01-SUMMARY.md, 22-02-SUMMARY.md, 22-03-SUMMARY.md, 22-04-SUMMARY.md]
 started: 2026-04-08T16:15:00Z
-updated: 2026-04-08T16:45:00Z
+updated: 2026-04-08T17:00:00Z
 ---
 
 ## Current Test
@@ -74,14 +74,27 @@ blocked: 1
 ## Gaps
 
 - truth: "Pulse exercise on rhythm_1_1 starts cleanly without Paused modal, waits for user interaction before playing audio, and gracefully handles late first taps"
-  status: failed
+  status: diagnosed
   reason: "User reported: 1) Paused modal appears on load, pulse plays before interaction. 2) Game expects immediate tap after count-in; should wait for first tap across multiple bar loops and end after the bar completes even if first tap is late."
   severity: major
   test: 2
-  root_cause: ""
-  artifacts: []
-  missing: []
-  debug_session: ""
+  root_cause: |
+  Three compounding issues:
+  A) AudioContextProvider.jsx visibilitychange handler sets isInterrupted=true on initial load when streamRef.current is null (confuses 'never requested mic' with 'stream died'), causing the Paused modal.
+  B) MetronomeTrainer.jsx auto-start (line 150-179) only checks for suspended/interrupted AudioContext but not browser autoplay policy — proceeds to call startGame() without user gesture.
+  C) Pulse timing flow pre-schedules all pulseBeatCount (8) beats via setTimeout from count-in start time (line 540-574), then evaluates after the last beat. It does NOT wait for the user's first tap or loop the bar. The expected behavior: after count-in, keep looping the metronome, wait for user's first tap, then finish the bar and evaluate.
+  artifacts:
+  - path: "src/contexts/AudioContextProvider.jsx"
+    issue: "visibilitychange handler line 292 falsely triggers isInterrupted when mic was never requested"
+  - path: "src/components/games/rhythm-games/MetronomeTrainer.jsx"
+    issue: "Auto-start line 150-179 doesn't require user gesture for pulse mode"
+  - path: "src/components/games/rhythm-games/MetronomeTrainer.jsx"
+    issue: "Pulse beat scheduling (line 540-574) pre-fires all beats, doesn't wait for first tap or loop"
+    missing:
+  - "Guard visibilitychange to not set isInterrupted when mic was never requested"
+  - "Force needsGestureToStart=true for pulse exercises"
+  - "Redesign pulse flow: loop metronome beats continuously, wait for first tap, then finish bar and evaluate"
+    debug_session: ""
 
 - truth: "Trail map section headers match the actual content of their rhythm unit nodes"
   status: failed
