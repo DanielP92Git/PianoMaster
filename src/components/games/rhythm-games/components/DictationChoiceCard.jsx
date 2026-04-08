@@ -1,6 +1,9 @@
 import React, { useRef, useEffect } from "react";
 import { Renderer, Stave, Voice, Formatter, Beam, Stem } from "vexflow";
-import { beatsToVexNotes } from "../utils/rhythmVexflowHelpers";
+import {
+  beatsToVexNotes,
+  renderSpreadSyllables,
+} from "../utils/rhythmVexflowHelpers";
 import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamGroupUtils";
 
 /**
@@ -63,7 +66,7 @@ export function DictationChoiceCard({
 
     const containerWidth = containerRef.current.offsetWidth || 320;
     const staveWidth = containerWidth - 20;
-    const staveHeight = 100;
+    const staveHeight = showSyllables ? 130 : 100;
 
     try {
       const renderer = new Renderer(
@@ -117,6 +120,15 @@ export function DictationChoiceCard({
         });
         svgEl.querySelectorAll("text").forEach((el) => {
           el.setAttribute("fill", "white");
+        });
+      }
+
+      // Clone VexFlow annotations for spread syllables on sustained notes
+      // Runs AFTER white-fill so clones inherit white fill from the source element
+      if (showSyllables) {
+        renderSpreadSyllables(containerRef.current, notes, beats, {
+          noteEndX: staveWidth,
+          language,
         });
       }
     } catch (err) {

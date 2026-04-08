@@ -1,6 +1,9 @@
 import React, { useRef, useEffect } from "react";
 import { Renderer, Stave, Voice, Formatter, Beam, Stem } from "vexflow";
-import { beatsToVexNotes } from "../utils/rhythmVexflowHelpers";
+import {
+  beatsToVexNotes,
+  renderSpreadSyllables,
+} from "../utils/rhythmVexflowHelpers";
 import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamGroupUtils";
 
 /**
@@ -78,7 +81,7 @@ export function RhythmStaffDisplay({
     const containerWidth = containerRef.current.offsetWidth || 400;
     const measureCount = measuresData.length;
     const staveWidth = Math.floor((containerWidth - 20) / measureCount);
-    const staveHeight = 120;
+    const staveHeight = showSyllables ? 150 : 120;
 
     try {
       // Create SVG renderer
@@ -91,16 +94,28 @@ export function RhythmStaffDisplay({
       ctx.setFillStyle("#ffffff");
       ctx.setStrokeStyle("#ffffff");
 
-      const allNotes = []; // Flat array of all StaveNote objects for cursor/tap mapping
-
+      // Pass 1: Create and draw all staves to measure actual note areas
+      const staves = [];
       for (let m = 0; m < measureCount; m++) {
-        const measureBeats = measuresData[m];
         const xOffset = 10 + m * staveWidth;
-
         const stave = new Stave(xOffset, 10, staveWidth);
-        // Only show time signature on first stave
         if (m === 0) stave.addTimeSignature(timeSignature);
         stave.setContext(ctx).draw();
+        staves.push(stave);
+      }
+
+      // Find the smallest note area across all staves so notes are equally spaced
+      const noteAreaWidths = staves.map(
+        (s) => s.getNoteEndX() - s.getNoteStartX()
+      );
+      const minNoteArea = Math.max(Math.min(...noteAreaWidths), 40);
+
+      const allNotes = []; // Flat array of all StaveNote objects for cursor/tap mapping
+
+      // Pass 2: Format and draw notes using the uniform note area width
+      for (let m = 0; m < measureCount; m++) {
+        const measureBeats = measuresData[m];
+        const stave = staves[m];
 
         // Build VexFlow notes for this measure (pass syllable options)
         const notes = beatsToVexNotes(measureBeats, {
@@ -126,8 +141,8 @@ export function RhythmStaffDisplay({
         const beamConfig = beamGroups ? { groups: beamGroups } : {};
         const beams = Beam.generateBeams(notes, beamConfig);
 
-        // Format and draw
-        new Formatter().joinVoices([voice]).format([voice], staveWidth - 80);
+        // Format with uniform width so notes are equally spaced across all bars
+        new Formatter().joinVoices([voice]).format([voice], minNoteArea);
         voice.draw(ctx, stave);
         beams.forEach((beam) => beam.setContext(ctx).draw());
 
@@ -179,9 +194,18 @@ export function RhythmStaffDisplay({
             el.setAttribute("stroke", "white");
           }
         });
-        // Text (time signature, etc.) should be white
         svgEl.querySelectorAll("text").forEach((el) => {
           el.setAttribute("fill", "white");
+        });
+      }
+
+      // Clone VexFlow annotations for spread syllables on sustained notes
+      // Runs AFTER white-fill so clones inherit white fill from the source element
+      if (showSyllables) {
+        const flatBeats = measuresData.flat();
+        renderSpreadSyllables(containerRef.current, allNotes, flatBeats, {
+          noteEndX: containerWidth - 10,
+          language,
         });
       }
     } catch (err) {

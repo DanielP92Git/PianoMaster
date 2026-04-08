@@ -192,19 +192,20 @@ export function RhythmReadingGame() {
     return () => resumeTimer();
   }, [gamePhase, pauseTimer, resumeTimer]);
 
-  // Auto-start from trail node (hasAutoStartedRef guard)
+  // Pre-fetch pattern from trail node so notation is visible before user clicks Start
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
-      const ctx = audioContextRef.current;
-      // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, show tap-to-start overlay
-      if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
-        setNeedsGestureToStart(true);
-        return; // Don't auto-start — show tap-to-start overlay
-      }
       hasAutoStartedRef.current = true;
-      setTimeout(() => startGame(), 100);
+      // Fetch and display the pattern but stay in SETUP (user clicks Start to begin metronome)
+      (async () => {
+        const result = await fetchNewPattern();
+        if (result) {
+          setCurrentBeats(result.beats);
+          setCurrentMeasures(result.measures);
+        }
+      })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; only nodeConfig changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time pre-fetch guarded by hasAutoStartedRef
   }, [nodeConfig]);
 
   // Reset guard when nodeId changes (navigating between trail nodes)
@@ -782,13 +783,19 @@ export function RhythmReadingGame() {
     setExerciseScores([]);
     setTapResults([]);
 
+    // If pattern was already pre-fetched (trail mode), use it directly
+    if (currentBeats) {
+      startReadyPhase(currentBeats);
+      return;
+    }
+
     const result = await fetchNewPattern();
     if (result) {
       setCurrentBeats(result.beats);
       setCurrentMeasures(result.measures);
       startReadyPhase(result.beats);
     }
-  }, [cancelAllTimers, fetchNewPattern, startReadyPhase]);
+  }, [cancelAllTimers, currentBeats, fetchNewPattern, startReadyPhase]);
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
   const handleGestureStart = useCallback(async () => {
