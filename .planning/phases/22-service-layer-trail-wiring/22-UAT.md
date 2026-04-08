@@ -1,0 +1,101 @@
+---
+status: complete
+phase: 22-service-layer-trail-wiring
+source: [22-01-SUMMARY.md, 22-02-SUMMARY.md, 22-03-SUMMARY.md, 22-04-SUMMARY.md]
+started: 2026-04-08T16:15:00Z
+updated: 2026-04-08T16:45:00Z
+---
+
+## Current Test
+
+[testing complete]
+
+## Tests
+
+### 1. Resolver API and Migration (Automated)
+
+expected: resolveByTags() and resolveByIds() are exported. All 8 unit files migrated to patternTags. 11 resolver tests + 14 unit tests pass. Trail validator passes cleanly.
+result: pass
+note: Auto-verified — resolveByTags (line 869) and resolveByIds (line 886) exported. All 8 units have patternTags (7-9 each). 0 legacy rhythmPatterns fields. 11/11 resolver tests pass. 14/14 unit1 tests pass. Trail validator: all 11 validators pass.
+
+### 2. Pulse Exercise on rhythm_1_1
+
+expected: Open the trail, tap on rhythm_1_1 (first rhythm node). The first exercise should be a pulse exercise — a pulsing circle visual with piano C4 beats, NO music notation shown. You tap along with the beat. After 8 beats, it evaluates your taps and shows results.
+result: issue
+reported: "1) 'Paused' modal appears immediately on load and pulse starts playing before any user interaction. 2) Game expects user to tap immediately after count-in/Listen phase, then waits for only 1 bar of input before finishing. Expected: after count-in, wait for user's first tap even if it takes multiple bar loops; if user taps late (e.g. beat 2), still finish after beat 4 of that bar — don't require N taps equal to total beats."
+severity: major
+
+### 3. Pulse Exercise Scoring
+
+expected: During the pulse exercise, tapping in time with the beats should score PERFECT/GOOD. Missing beats or tapping off-time should score lower. After the exercise ends, VictoryScreen shows stars based on accuracy.
+result: blocked
+blocked_by: prior-phase
+reason: "Pulse exercise not testable due to Paused modal and auto-play issues from test 2"
+
+### 4. Discovery Node Pattern Length
+
+expected: Open any Discovery-type rhythm node (e.g. rhythm_1_2 or rhythm_2_1). The rhythm pattern shown should be appropriate for that node's difficulty — Discovery nodes show patterns from the curated pattern library, not random durations.
+result: issue
+reported: "Patterns seem correct, but section headers in the trail map mismatch the actual node content. RHYTHM_2 says 'Eighth Notes' but contains Whole Notes; RHYTHM_3 says 'Whole Notes & Rests' but contains Eighth Notes; RHYTHM_4 says 'Dotted & Syncopation' but contains Rests. Units 2-4 section headers in skillTrail.js were not updated to match redesigned unit content."
+severity: minor
+
+### 5. Pattern Learning Order (No Unintroduced Durations)
+
+expected: Play a Discovery node in an early unit (Unit 1 or 2). The patterns shown should only contain note values that have been introduced up to that point. For example, Unit 1 quarter-only nodes should never show half notes, eighth notes, or rests.
+result: pass
+
+### 6. Game Type Routing — Discovery Nodes
+
+expected: Discovery-type rhythm nodes should launch either RhythmReadingGame (notation-showing "Listen & Tap") or RhythmDictationGame — NOT MetronomeTrainer echo mode or ArcadeRhythmGame.
+result: pass
+note: rhythm_1_1 uses MetronomeTrainer for RHYTHM_PULSE (intentional exception — pulse exercise by design). Other Discovery nodes (rhythm_1_3, rhythm_2_1) confirmed to open RhythmReadingGame.
+
+### 7. Game Type Routing — Speed/Boss Nodes
+
+expected: Speed Round or Boss rhythm nodes should launch ArcadeRhythmGame. They should NOT launch MetronomeTrainer or RhythmReadingGame.
+result: pass
+note: MINI_BOSS nodes correctly use RHYTHM_TAP (RhythmReadingGame) per policy. Only true BOSS and SPEED_ROUND nodes use ArcadeRhythmGame. User confirmed SPEED_ROUND opens ArcadeRhythmGame.
+
+### 8. Build Validator Enforcement
+
+expected: npm run build completes successfully. The trail validator checks pattern tag references, legacy field rejection, and game-type policy — all pass with no errors.
+result: pass
+note: Auto-verified — npm run verify:trail passes all 11 validators (pattern library, legacy field rejection, tag references, nodeType policy, measureCount policy).
+
+## Summary
+
+total: 8
+passed: 5
+issues: 2
+pending: 0
+skipped: 0
+blocked: 1
+
+## Gaps
+
+- truth: "Pulse exercise on rhythm_1_1 starts cleanly without Paused modal, waits for user interaction before playing audio, and gracefully handles late first taps"
+  status: failed
+  reason: "User reported: 1) Paused modal appears on load, pulse plays before interaction. 2) Game expects immediate tap after count-in; should wait for first tap across multiple bar loops and end after the bar completes even if first tap is late."
+  severity: major
+  test: 2
+  root_cause: ""
+  artifacts: []
+  missing: []
+  debug_session: ""
+
+- truth: "Trail map section headers match the actual content of their rhythm unit nodes"
+  status: failed
+  reason: "User reported: RHYTHM_2 header says 'Eighth Notes' but unit 2 is Whole Notes; RHYTHM_3 says 'Whole Notes & Rests' but unit 3 is Eighth Notes; RHYTHM_4 says 'Dotted & Syncopation' but unit 4 is Rests. Section headers in skillTrail.js not updated after unit redesign."
+  severity: minor
+  test: 4
+  root_cause: "skillTrail.js RHYTHM_2/3/4 section names and descriptions not updated to match redesigned rhythmUnit2/3/4Redesigned.js content"
+  artifacts:
+  - path: "src/data/skillTrail.js"
+    issue: "RHYTHM_2 name 'Eighth Notes' should be 'Beat Builders' or similar (unit has whole notes)"
+  - path: "src/data/skillTrail.js"
+    issue: "RHYTHM_3 name 'Whole Notes & Rests' should reflect eighth notes content"
+  - path: "src/data/skillTrail.js"
+    issue: "RHYTHM_4 name 'Dotted & Syncopation' should reflect rests content"
+    missing:
+  - "Update RHYTHM_2, RHYTHM_3, RHYTHM_4 name and description in skillTrail.js"
+    debug_session: ""
