@@ -317,11 +317,20 @@ export function MetronomeTrainer() {
   // Refs to break circular dependency between startContinuousMetronome and stop/evaluate
   const stopContinuousMetronomeRef = useRef(null);
   const evaluatePerformanceRef = useRef(null);
+  const pendingTimeoutsRef = useRef([]); // Track setTimeout IDs for cleanup on unmount/reset
 
   // Calculate beat duration from tempo
   useEffect(() => {
     beatDuration.current = 60 / gameSettings.tempo; // seconds per beat
   }, [gameSettings.tempo]);
+
+  // Cleanup pending timeouts on unmount to prevent stale callbacks
+  useEffect(() => {
+    return () => {
+      pendingTimeoutsRef.current.forEach(clearTimeout);
+      pendingTimeoutsRef.current = [];
+    };
+  }, []);
 
   /**
    * Create custom metronome sound with specific frequency and volume
@@ -496,7 +505,11 @@ export function MetronomeTrainer() {
                     setIsOnBeat(true);
                     setTimeout(() => setIsOnBeat(false), 200);
                   },
-                  Math.max(0, (beatTime - audioEngine.getCurrentTime() + pianoDelay) * 1000)
+                  Math.max(
+                    0,
+                    (beatTime - audioEngine.getCurrentTime() + pianoDelay) *
+                      1000
+                  )
                 );
               }
             }
@@ -558,7 +571,6 @@ export function MetronomeTrainer() {
         },
         50 // Check every 50ms for more responsive stopping
       );
-
     },
     [
       audioEngine,
@@ -1120,14 +1132,16 @@ export function MetronomeTrainer() {
       if (pulseOnly) {
         // PULSE MODE: Snap to nearest beat (any beat, not just downbeat) and finish the bar
         const currentTime = audioEngine.getCurrentTime();
-        const timeSinceMetronomeStart = currentTime - metronomeStartTimeRef.current;
+        const timeSinceMetronomeStart =
+          currentTime - metronomeStartTimeRef.current;
         const beatDur = beatDuration.current;
         const beatsPerMeasure = gameSettings.timeSignature.beats;
 
         // Find which beat we're closest to (any beat, not just beat 1)
         const totalBeatsFloat = timeSinceMetronomeStart / beatDur;
         const nearestBeatNumber = Math.round(totalBeatsFloat);
-        const nearestBeatTime = metronomeStartTimeRef.current + nearestBeatNumber * beatDur;
+        const nearestBeatTime =
+          metronomeStartTimeRef.current + nearestBeatNumber * beatDur;
         const timingError = Math.abs(currentTime - nearestBeatTime);
 
         // Generous tolerance: allow up to 1.2 beats of error
@@ -1139,9 +1153,12 @@ export function MetronomeTrainer() {
         setHasUserStartedTapping(true);
 
         // Calculate the start of the CURRENT bar containing this beat
-        const beatInMeasure = ((nearestBeatNumber % beatsPerMeasure) + beatsPerMeasure) % beatsPerMeasure;
+        const beatInMeasure =
+          ((nearestBeatNumber % beatsPerMeasure) + beatsPerMeasure) %
+          beatsPerMeasure;
         const barStartBeat = nearestBeatNumber - beatInMeasure;
-        const barStartTime = metronomeStartTimeRef.current + barStartBeat * beatDur;
+        const barStartTime =
+          metronomeStartTimeRef.current + barStartBeat * beatDur;
 
         // Set performance start to bar start so tap positions are relative to bar
         userPerformanceStartTime.current = barStartTime;
@@ -1184,13 +1201,21 @@ export function MetronomeTrainer() {
         const measureEndTime = barStartTime + measureDuration;
         const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
 
-        setTimeout(() => {
-          stopContinuousMetronome();
-        }, Math.max(0, delayToMeasureEnd));
+        const t1 = setTimeout(
+          () => {
+            stopContinuousMetronome();
+          },
+          Math.max(0, delayToMeasureEnd)
+        );
+        pendingTimeoutsRef.current.push(t1);
 
-        setTimeout(() => {
-          evaluatePerformance();
-        }, Math.max(200, delayToMeasureEnd + 200));
+        const t2 = setTimeout(
+          () => {
+            evaluatePerformance();
+          },
+          Math.max(200, delayToMeasureEnd + 200)
+        );
+        pendingTimeoutsRef.current.push(t2);
 
         // Record this tap (fall through to tap recording below)
       } else {
@@ -1208,9 +1233,11 @@ export function MetronomeTrainer() {
         const nextMeasure = Math.ceil(currentMeasureFloat);
 
         const prevBeat1Time =
-          metronomeStartTimeRef.current + prevMeasure * beatsPerMeasure * beatDur;
+          metronomeStartTimeRef.current +
+          prevMeasure * beatsPerMeasure * beatDur;
         const nextBeat1Time =
-          metronomeStartTimeRef.current + nextMeasure * beatsPerMeasure * beatDur;
+          metronomeStartTimeRef.current +
+          nextMeasure * beatsPerMeasure * beatDur;
 
         // Choose the closest beat 1
         const prevError = Math.abs(currentTime - prevBeat1Time);
@@ -1261,21 +1288,23 @@ export function MetronomeTrainer() {
         const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
 
         // Stop metronome exactly at the end of the measure (beat 4)
-        setTimeout(
+        const t3 = setTimeout(
           () => {
             stopContinuousMetronome();
           },
           Math.max(0, delayToMeasureEnd) // Stop exactly at measure end
         );
+        pendingTimeoutsRef.current.push(t3);
 
         // Evaluate and play victory sound slightly after metronome stops
         const evaluationDelay = delayToMeasureEnd + 200; // 200ms after measure end
-        setTimeout(
+        const t4 = setTimeout(
           () => {
             evaluatePerformance();
           },
           Math.max(200, evaluationDelay) // Small pause after metronome stops
         );
+        pendingTimeoutsRef.current.push(t4);
       }
     }
 
@@ -1420,6 +1449,9 @@ export function MetronomeTrainer() {
    * Reset game to setup
    */
   const resetGame = useCallback(() => {
+    // Clear any pending measure-end timeouts to prevent stale callbacks
+    pendingTimeoutsRef.current.forEach(clearTimeout);
+    pendingTimeoutsRef.current = [];
     stopContinuousMetronome();
     setGamePhase(GAME_PHASES.SETUP);
     setCurrentPattern(null);
