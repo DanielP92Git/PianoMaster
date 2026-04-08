@@ -47,6 +47,21 @@ export function useDocumentTitle() {
       if (path.includes("/metronome-trainer")) {
         return `${t("pages.rhythmMaster", { defaultValue: "Rhythm Master" })} - ${t("games.metronomeTrainer.headerTitle", { defaultValue: "Listen & Tap" })}`;
       }
+      if (path.includes("/rhythm-reading-game")) {
+        return `${t("pages.rhythmMaster", { defaultValue: "Rhythm Master" })} - ${t("games.rhythmReading.title", { defaultValue: "Rhythm Reading" })}`;
+      }
+      if (path.includes("/rhythm-dictation-game")) {
+        return `${t("pages.rhythmMaster", { defaultValue: "Rhythm Master" })} - ${t("games.rhythmDictation.title", { defaultValue: "Rhythm Dictation" })}`;
+      }
+      if (path.includes("/arcade-rhythm-game")) {
+        return `${t("pages.rhythmMaster", { defaultValue: "Rhythm Master" })} - ${t("games.arcadeRhythm.title", { defaultValue: "Arcade Rhythm" })}`;
+      }
+      if (path.includes("/note-comparison-game")) {
+        return `${t("pages.earTraining", { defaultValue: "Ear Training" })} - ${t("games.noteComparison.title", { defaultValue: "Note Comparison" })}`;
+      }
+      if (path.includes("/interval-game")) {
+        return `${t("pages.earTraining", { defaultValue: "Ear Training" })} - ${t("games.intervalGame.title", { defaultValue: "Interval Game" })}`;
+      }
 
       // Default fallback
       return t("app.title", { defaultValue: "PianoMaster" });
