@@ -725,7 +725,6 @@ const AssignmentManagement = ({ students = [] }) => {
         assignment_type: formData.assignmentType,
         due_date: formData.dueDate || null,
         points_possible: formData.pointsPossible,
-        assign_to: formData.assignTo,
         requirements: formData.requirements,
       },
     });

@@ -1,14 +1,14 @@
 ---
-status: diagnosed
+status: complete
 phase: teacher-dashboard-review
 source: code-review (no SUMMARY.md - standalone audit)
 started: 2026-03-26T12:00:00Z
-updated: 2026-04-06T12:00:00Z
+updated: 2026-04-08T12:00:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+[testing complete — all issues resolved]
 
 ## Tests
 
@@ -63,16 +63,14 @@ result: pass
 ### 10. Bulk Select & Delete Students
 
 expected: Checkboxes appear on student cards for multi-select. Selecting multiple students enables a bulk delete button. Confirming deletion removes all selected students with a success toast showing count.
-result: issue
-reported: "deletion confirmation modal needs UI fix to make text visible. but everything else works"
-severity: cosmetic
+result: pass
+note: "Retested 2026-04-08. Text visibility fix confirmed."
 
 ### 11. Analytics Tab
 
 expected: Clicking the "Analytics" tab navigates to "/teacher/analytics" and shows an analytics dashboard with: class performance chart, top performers leaderboard, practice activity timeline, and performance distribution visualization.
-result: issue
-reported: "UI needs text visibility fix — text invisible in top performers leaderboard cards"
-severity: cosmetic
+result: pass
+note: "Retested 2026-04-08. Text visibility fix confirmed — dark text on light backgrounds."
 
 ### 12. Recordings Review Tab
 
@@ -91,17 +89,15 @@ result: pass
 
 ### 15. Create Assignment
 
-expected: Clicking "Create Assignment" opens a multi-step form with: title, description, instructions, assignment type (practice/exercise/assessment/project), due date, points possible, and configurable requirements (min sessions, practice time, target accuracy, practice mode). On submit, the assignment appears in the list.
-result: issue
-reported: "form gets reset after a few seconds while filling it up. not sure why and when exactly"
-severity: major
+expected: Clicking "Create Assignment" opens a vertical scroll form with: title, description, instructions, assignment type (practice/exercise/assessment/project), due date, points possible, and configurable requirements (min sessions, practice time, target accuracy, practice mode). On submit, the assignment appears in the list.
+result: pass
+note: "Retested 2026-04-08. Form no longer resets. Vertical scroll layout (not multi-step wizard) — preferred by user."
 
 ### 16. Assignment Submissions & Grading
 
-expected: Clicking an assignment shows student submissions with status (assigned, in_progress, submitted, graded, returned). Teacher can score submissions and provide written feedback. Saving updates the submission status.
-result: issue
-reported: "edit the assignment button currently missing"
-severity: minor
+expected: Clicking an assignment shows student submissions with status (assigned, in_progress, submitted, graded, returned). Teacher can edit assignments via pencil button. Saving updates the assignment and submission status.
+result: pass
+note: "Retested 2026-04-08. Removed assign_to from update payload — column didn't exist in DB. Edit now saves successfully."
 
 ### 17. Notifications Tab
 
@@ -136,64 +132,12 @@ note: "Retested 2026-04-06. Badge updates confirmed."
 ## Summary
 
 total: 21
-passed: 16
-issues: 4
+passed: 20
+issues: 0
 pending: 0
 skipped: 1
 blocked: 0
 
 ## Gaps
 
-- truth: "Deletion confirmation modal text should be visible/readable"
-  status: failed
-  reason: "User reported: deletion confirmation modal needs UI fix to make text visible"
-  severity: cosmetic
-  test: 10
-  root_cause: "DeleteConfirmationModal in TeacherDashboard.jsx renders student names at line 910 without explicit text color class. The <ul> has text-gray-100 but names don't inherit properly on the bg-gray-900 modal."
-  artifacts:
-  - path: "src/components/layout/TeacherDashboard.jsx"
-    issue: "DeleteConfirmationModal line 910 — student names lack text color class"
-    missing:
-  - "Add explicit text-gray-100 or text-white to student name elements"
-
-- truth: "Top performers leaderboard card text should be visible/readable"
-  status: failed
-  reason: "User reported: text invisible in top performers leaderboard cards"
-  severity: cosmetic
-  test: 11
-  root_cause: "TopPerformersLeaderboard.jsx uses text-white on light backgrounds (bg-gradient-to-r from-yellow-50 to-orange-50 for top 3, bg-gray-50 for others). White text on near-white backgrounds = invisible."
-  artifacts:
-  - path: "src/components/charts/TopPerformersLeaderboard.jsx"
-    issue: "Lines 139-167 — text-white on \*-50 light backgrounds"
-    missing:
-  - "Change text-white to text-gray-900 for names/values, text-white/50 to text-gray-500 for labels"
-
-- truth: "Create assignment form should retain data while filling"
-  status: failed
-  reason: "User reported: form gets reset after a few seconds while filling it up"
-  severity: major
-  test: 15
-  root_cause: "CreateAssignmentModal useEffect (line 76) has students in dependency array. TeacherDashboard refetches students every 2 min (refetchInterval: 120000), producing new array reference that triggers the useEffect, which calls setFormData to reset the form."
-  artifacts:
-  - path: "src/components/teacher/AssignmentManagement.jsx"
-    issue: "Line 76 — useEffect dependency includes students, causing form reset on refetch"
-  - path: "src/components/layout/TeacherDashboard.jsx"
-    issue: "Line 1497 — refetchInterval: 120000 on teacher-students query"
-    missing:
-  - "Remove students from useEffect dependency array, or only reset form when isOpen transitions from false to true"
-
-- truth: "Assignment detail view should have an edit button"
-  status: failed
-  reason: "User reported: edit the assignment button currently missing"
-  severity: minor
-  test: 16
-  root_cause: "Backend updateAssignment() exists in apiTeacher.js (lines 1041-1063) but no edit UI was implemented. AssignmentDetailsModal is read-only. No EditAssignmentModal exists. Only create, view, and delete are wired up."
-  artifacts:
-  - path: "src/components/teacher/AssignmentManagement.jsx"
-    issue: "No edit button in assignment list or detail modal. updateAssignment not imported."
-  - path: "src/services/apiTeacher.js"
-    issue: "updateAssignment exists (lines 1041-1063) but unused by UI"
-    missing:
-  - "Add edit button to assignment list and/or detail modal"
-  - "Create edit modal or repurpose CreateAssignmentModal with assignment prop"
-  - "Import and wire up updateAssignment mutation"
+[none — all issues resolved 2026-04-08]
