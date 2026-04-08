@@ -39,27 +39,16 @@ export function RhythmStaffDisplay({
   const cursorDivRef = useRef(null);
   const noteElementsRef = useRef([]);
 
-  // Parse time signature string into beats numerator/denominator
-  const parseTimeSignature = (timeSig) => {
+  // Parse time signature string to VexFlow Voice parameters.
+  // Returns raw num_beats and beat_value so VexFlow can validate measure totals correctly
+  // (e.g. 6/8 → { num_beats: 6, beat_value: 8 } instead of collapsing to 3/4).
+  const getVoiceParams = (timeSig) => {
     const parts = timeSig.split("/");
-    if (parts.length === 2) {
-      return {
-        numerator: parseInt(parts[0], 10),
-        denominator: parseInt(parts[1], 10),
-      };
-    }
-    return { numerator: 4, denominator: 4 };
-  };
-
-  // Calculate total beat count for Voice based on time signature
-  const getBeatCount = (timeSig) => {
-    const { numerator, denominator } = parseTimeSignature(timeSig);
-    // Voice needs beat count in quarter notes
-    if (denominator === 8) {
-      // For 6/8: 6 eighth notes = 3 quarter notes (in terms of beat value)
-      return numerator / 2;
-    }
-    return numerator;
+    if (parts.length !== 2) return { num_beats: 4, beat_value: 4 };
+    return {
+      num_beats: parseInt(parts[0], 10),
+      beat_value: parseInt(parts[1], 10),
+    };
   };
 
   // Render VexFlow notation when beats/measures or timeSignature changes
@@ -130,9 +119,8 @@ export function RhythmStaffDisplay({
           }
         });
 
-        // Create voice
-        const beatCount = getBeatCount(timeSignature);
-        const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
+        // Create voice with raw time signature values for correct VexFlow validation
+        const voice = new Voice(getVoiceParams(timeSignature));
         voice.setStrict(false);
         voice.addTickables(notes);
 
