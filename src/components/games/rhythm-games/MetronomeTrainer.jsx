@@ -248,6 +248,11 @@ export function MetronomeTrainer() {
             case "arcade_rhythm":
               navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
+            case "rhythm_tap":
+              navigate("/rhythm-mode/rhythm-reading-game", {
+                state: navState,
+              });
+              break;
             default:
               navigate("/trail");
           }
@@ -999,7 +1004,10 @@ export function MetronomeTrainer() {
         const timingErrorSeconds = timingError * currentBeatDur;
 
         // Use the same accuracy calculation as immediate feedback
-        const thresholds = calculateTimingThresholds(gameSettings.tempo, nodeType);
+        const thresholds = calculateTimingThresholds(
+          gameSettings.tempo,
+          nodeType
+        );
         const timingErrorMs = timingErrorSeconds * 1000;
 
         let accuracy = "MISS";
@@ -1262,7 +1270,10 @@ export function MetronomeTrainer() {
       if (bestTimingError < Infinity) {
         const timingErrorSeconds = bestTimingError * currentBeatDur;
         const timingErrorMs = timingErrorSeconds * 1000;
-        const thresholds = calculateTimingThresholds(gameSettings.tempo, nodeType);
+        const thresholds = calculateTimingThresholds(
+          gameSettings.tempo,
+          nodeType
+        );
 
         if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
         else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";

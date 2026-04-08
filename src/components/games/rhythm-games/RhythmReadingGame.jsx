@@ -876,6 +876,20 @@ export function RhythmReadingGame() {
             case "arcade_rhythm":
               navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
+            case "rhythm_tap":
+              navigate("/rhythm-mode/rhythm-reading-game", {
+                state: navState,
+                replace: true,
+              });
+              window.location.reload();
+              break;
+            case "rhythm_pulse":
+              navigate("/rhythm-mode/metronome-trainer", {
+                state: navState,
+                replace: true,
+              });
+              window.location.reload();
+              break;
             default:
               navigate("/trail");
           }
