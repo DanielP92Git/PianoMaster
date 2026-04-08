@@ -318,6 +318,8 @@ export function MetronomeTrainer() {
   const stopContinuousMetronomeRef = useRef(null);
   const evaluatePerformanceRef = useRef(null);
   const pendingTimeoutsRef = useRef([]); // Track setTimeout IDs for cleanup on unmount/reset
+  const pulsePerformanceActiveRef = useRef(false); // True once pulse enters USER_PERFORMANCE
+  const pulseStopTimeRef = useRef(null); // AudioContext time after which no beats should be scheduled
 
   // Calculate beat duration from tempo
   useEffect(() => {
@@ -493,10 +495,19 @@ export function MetronomeTrainer() {
                 frequency = isDownbeat ? 600 : 500;
               }
 
+              // In pulse mode, skip scheduling beats past the stop time
+              if (
+                pulseOnly &&
+                pulseStopTimeRef.current &&
+                beatTime >= pulseStopTimeRef.current
+              ) {
+                continue;
+              }
+
               createCustomMetronomeSound(beatTime, frequency, volume);
 
-              // In pulse mode, play piano C4 on every beat continuously
-              if (pulseOnly) {
+              // In pulse mode, play piano C4 only during user performance (not count-in)
+              if (pulseOnly && pulsePerformanceActiveRef.current) {
                 const pianoDelay = 0.01; // 10ms after click for clarity
                 setTimeout(
                   () => {
@@ -631,7 +642,10 @@ export function MetronomeTrainer() {
     setGamePhase(GAME_PHASES.USER_PERFORMANCE);
     setHasUserStartedTapping(false);
     setCountdownToStart(null);
-  }, []);
+    if (pulseOnly) {
+      pulsePerformanceActiveRef.current = true;
+    }
+  }, [pulseOnly]);
 
   /**
    * Start get ready phase (metronome continues, taps ignored)
@@ -807,6 +821,8 @@ export function MetronomeTrainer() {
 
         setGamePhase(GAME_PHASES.COUNT_IN);
         gameStartTime.current = audioEngine.getCurrentTime();
+        pulsePerformanceActiveRef.current = false;
+        pulseStopTimeRef.current = null;
 
         // In pulse mode: build a synthetic pattern for ONE bar where every beat is a tap beat.
         // Each beat maps to 4 sixteenth-note slots (4/4 time), so beatsPerMeasure beats
@@ -1205,6 +1221,9 @@ export function MetronomeTrainer() {
         const measureEndTime = barStartTime + measureDuration;
         const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
 
+        // Prevent scheduler from queuing beats past bar end
+        pulseStopTimeRef.current = measureEndTime;
+
         const t1 = setTimeout(
           () => {
             stopContinuousMetronome();
@@ -1456,6 +1475,8 @@ export function MetronomeTrainer() {
     // Clear any pending measure-end timeouts to prevent stale callbacks
     pendingTimeoutsRef.current.forEach(clearTimeout);
     pendingTimeoutsRef.current = [];
+    pulsePerformanceActiveRef.current = false;
+    pulseStopTimeRef.current = null;
     stopContinuousMetronome();
     setGamePhase(GAME_PHASES.SETUP);
     setCurrentPattern(null);
