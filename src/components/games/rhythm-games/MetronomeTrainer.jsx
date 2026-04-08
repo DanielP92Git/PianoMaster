@@ -1187,7 +1187,11 @@ export function MetronomeTrainer() {
           // Also update patternInfoRef to reflect the reduced expected beats
           // so evaluatePerformance scores correctly
           const reducedPattern = [...pattern];
-          for (let i = 0; i < beatInMeasure * unitsPerBeat; i++) {
+          const zeroEnd = Math.min(
+            beatInMeasure * unitsPerBeat,
+            reducedPattern.length
+          );
+          for (let i = 0; i < zeroEnd; i++) {
             reducedPattern[i] = 0; // Zero out beats before first tap
           }
           patternInfoRef.current = {
