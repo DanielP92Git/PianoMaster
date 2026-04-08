@@ -34,15 +34,17 @@ const STATE_CLASSES = {
 };
 
 /**
- * Parse time signature string to beat count (in quarter notes) for VexFlow Voice.
+ * Parse time signature string to VexFlow Voice parameters.
+ * Returns raw num_beats and beat_value so VexFlow can validate measure totals correctly
+ * (e.g. 6/8 → { num_beats: 6, beat_value: 8 } instead of collapsing to 3/4).
  */
-function getBeatCount(timeSig) {
+function getVoiceParams(timeSig) {
   const parts = timeSig.split("/");
-  if (parts.length !== 2) return 4;
-  const [num, den] = parts.map(Number);
-  // For compound time (6/8): 6 eighth notes = 3 quarter-note beats
-  if (den === 8) return num / 2;
-  return num;
+  if (parts.length !== 2) return { num_beats: 4, beat_value: 4 };
+  return {
+    num_beats: parseInt(parts[0], 10),
+    beat_value: parseInt(parts[1], 10),
+  };
 }
 
 export function DictationChoiceCard({
@@ -93,9 +95,8 @@ export function DictationChoiceCard({
         }
       });
 
-      // Create voice
-      const beatCount = getBeatCount(timeSignature);
-      const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
+      // Create voice with raw time signature values for correct VexFlow validation
+      const voice = new Voice(getVoiceParams(timeSignature));
       voice.setStrict(false);
       voice.addTickables(notes);
 
