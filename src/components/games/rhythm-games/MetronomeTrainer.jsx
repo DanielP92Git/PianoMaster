@@ -149,6 +149,14 @@ export function MetronomeTrainer() {
 
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
+      // Pulse exercises always require a user gesture to start audio playback.
+      // This prevents autoplay policy violations and ensures a clean user experience
+      // where the child explicitly taps to begin.
+      if (pulseOnly) {
+        setNeedsGestureToStart(true);
+        return;
+      }
+
       // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, defer to user tap
       const ctx = audioContextRef.current;
       if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
@@ -1501,14 +1509,14 @@ export function MetronomeTrainer() {
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
-      {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
+      {/* Audio Interrupted Overlay — only show when NOT already showing gesture gate */}
       <AudioInterruptedOverlay
-        isVisible={isInterrupted}
+        isVisible={isInterrupted && !needsGestureToStart}
         onTapToResume={handleTapToResume}
         onRestartExercise={() => setGamePhase(GAME_PHASES.SETUP)}
       />
 
-      {/* Trail gesture gate — shown when trail auto-start needs a user gesture to resume AudioContext */}
+      {/* Trail gesture gate — takes priority over interrupted overlay */}
       {needsGestureToStart && (
         <AudioInterruptedOverlay
           isVisible={true}
