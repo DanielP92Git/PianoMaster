@@ -271,14 +271,6 @@ export function generateDistractors(correctBeats, count = 2) {
     distractors.push(candidate.beats);
   }
 
-  // If we still need more (unlikely), fill with remaining candidates
-  for (const candidate of scored) {
-    if (distractors.length >= count) break;
-    if (usedFps.has(candidate.fp)) continue;
-    usedFps.add(candidate.fp);
-    distractors.push(candidate.beats);
-  }
-
   // Last resort: generate simple patterns
   while (distractors.length < count) {
     const fb = fallbackDistractors(correctBeats, totalDuration, 1);
