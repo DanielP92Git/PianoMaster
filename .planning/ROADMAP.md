@@ -68,7 +68,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
-### 🚧 v3.2 Rhythm Trail Rework (In Progress)
+### v3.2 Rhythm Trail Rework (In Progress)
 
 **Milestone Goal:** Rework the rhythm trail's pedagogy so every node introduces one concept at a time, uses the correct game for each learning stage, and draws from a curated hand-crafted pattern library — replacing the current random-generative approach with pedagogically sequenced content following Kodaly/Orff principles.
 
@@ -76,7 +76,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 - [ ] **Phase 20: Curriculum Audit** - Audit all 50 rhythm nodes and lock game-type policy before touching any files
 - [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-06)
-- [x] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change (completed 2026-04-07)
+- [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change (gap closure in progress)
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
 
 ## Phase Details
@@ -120,7 +120,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 4. Running `npm run build` fails with a clear error if any node config references a pattern tag or ID that does not exist in `rhythmPatterns.js`
 5. Running `npm run build` passes cleanly when all pattern references are valid
 
-**Plans:** 4 plans
+**Plans:** 6 plans
 
 Plans:
 
@@ -128,6 +128,8 @@ Plans:
 - [x] 22-02-PLAN.md — Unit file migration: all 8 units, game-type fixes, concept fixes, pulse exercise
 - [x] 22-03-PLAN.md — Pulse exercise: MetronomeTrainer pulseOnly mode, routing entries
 - [x] 22-04-PLAN.md — Build validator: legacy field rejection, tag reference checks, policy enforcement
+- [ ] 22-05-PLAN.md — Gap closure: Pulse exercise startup fixes (false positive modal, gesture gate, timing redesign)
+- [ ] 22-06-PLAN.md — Gap closure: RHYTHM_2/3/4 section header corrections
 
 ### Phase 23: UX Polish
 
@@ -156,11 +158,11 @@ Plans:
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
 | 21. Pattern Library Construction | v3.2      | 2/2            | Complete    | 2026-04-06 |
-| 22. Service Layer & Trail Wiring | v3.2      | 4/4            | Complete    | 2026-04-07 |
+| 22. Service Layer & Trail Wiring | v3.2      | 4/6            | Gap closure | -          |
 | 23. UX Polish                    | v3.2      | 0/3            | Planned     | -          |
 
 **Total: 22 milestones shipped, 95 phases, ~207 plans | v3.2: 4 phases, 2/4 complete**
 
 ---
 
-_Last updated: 2026-04-07 -- Phase 23 planned (3 plans, 2 waves)_
+_Last updated: 2026-04-08 -- Phase 22 gap closure plans created (2 plans, 1 wave)_
