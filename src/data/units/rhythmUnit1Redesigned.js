@@ -77,6 +77,21 @@ export const rhythmUnit1Nodes = [
         type: EXERCISE_TYPES.SYLLABLE_MATCHING,
         config: { questionCount: 5 },
       },
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+          ]
+        }
+      },
     ],
 
     // Progression
@@ -137,6 +152,21 @@ export const rhythmUnit1Nodes = [
         type: EXERCISE_TYPES.SYLLABLE_MATCHING,
         config: { questionCount: 5 },
       },
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+          ]
+        }
+      },
     ],
 
     skills: ['quarter_note'],
@@ -195,6 +225,21 @@ export const rhythmUnit1Nodes = [
       {
         type: EXERCISE_TYPES.SYLLABLE_MATCHING,
         config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+            { type: 'visual_recognition' },
+            { type: 'syllable_matching' },
+          ]
+        }
       },
     ],
 
