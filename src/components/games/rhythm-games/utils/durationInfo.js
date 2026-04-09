@@ -30,7 +30,7 @@ export const DURATION_INFO = {
     isRest: false,
   },
   w: {
-    svgFilename: "whole-note",
+    svgFilename: "whole-note-head",
     i18nKey: "rhythm.duration.whole",
     durationUnits: 16,
     isRest: false,
@@ -48,13 +48,13 @@ export const DURATION_INFO = {
     isRest: false,
   },
   qd: {
-    svgFilename: "dotted-quarter",
+    svgFilename: "dotted-quarter-note",
     i18nKey: "rhythm.duration.dottedQuarter",
     durationUnits: 6,
     isRest: false,
   },
   hd: {
-    svgFilename: "dotted-half",
+    svgFilename: "dotted-half-note",
     i18nKey: "rhythm.duration.dottedHalf",
     durationUnits: 12,
     isRest: false,
@@ -148,7 +148,9 @@ export function generateQuestions(
 
     // Apply syllable dedup if requested
     if (dedupSyllables) {
-      const filtered = candidates.filter((c) => getSyllable(c) !== correctSyllable);
+      const filtered = candidates.filter(
+        (c) => getSyllable(c) !== correctSyllable
+      );
       // Only use filtered list if we have enough distractors (3)
       if (filtered.length >= 3) {
         candidates = filtered;

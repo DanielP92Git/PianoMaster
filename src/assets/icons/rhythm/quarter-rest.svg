@@ -1,7 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" fill="none">
-  <!-- Quarter rest: zigzag symbol centered -->
-  <path d="M36 24 L28 38 L36 48 L24 66" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <circle cx="28" cy="68" r="4" fill="#ffffff"/>
-  <!-- Reference line for visual context -->
-  <line x1="16" y1="48" x2="48" y2="48" stroke="#ffffff" stroke-width="1" opacity="0.3"/>
-</svg>

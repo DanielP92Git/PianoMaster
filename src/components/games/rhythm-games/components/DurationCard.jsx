@@ -19,17 +19,17 @@
 import React from "react";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
 
-// SVG sprite imports — ?react suffix required per CLAUDE.md build conventions
-import QuarterNoteIcon from "../../../../assets/icons/rhythm/quarter-note.svg?react";
-import HalfNoteIcon from "../../../../assets/icons/rhythm/half-note.svg?react";
-import WholeNoteIcon from "../../../../assets/icons/rhythm/whole-note.svg?react";
-import EighthNoteIcon from "../../../../assets/icons/rhythm/eighth-note.svg?react";
-import SixteenthNoteIcon from "../../../../assets/icons/rhythm/sixteenth-note.svg?react";
-import DottedQuarterIcon from "../../../../assets/icons/rhythm/dotted-quarter.svg?react";
-import DottedHalfIcon from "../../../../assets/icons/rhythm/dotted-half.svg?react";
-import QuarterRestIcon from "../../../../assets/icons/rhythm/quarter-rest.svg?react";
-import HalfRestIcon from "../../../../assets/icons/rhythm/half-rest.svg?react";
-import WholeRestIcon from "../../../../assets/icons/rhythm/whole-rest.svg?react";
+// SVG imports from musicSymbols — ?react suffix required per CLAUDE.md build conventions
+import QuarterNoteIcon from "../../../../assets/musicSymbols/quarter-note.svg?react";
+import HalfNoteIcon from "../../../../assets/musicSymbols/half-note.svg?react";
+import WholeNoteIcon from "../../../../assets/musicSymbols/whole-note-head.svg?react";
+import EighthNoteIcon from "../../../../assets/musicSymbols/eighth-note.svg?react";
+import SixteenthNoteIcon from "../../../../assets/musicSymbols/sixteenth-note.svg?react";
+import DottedQuarterIcon from "../../../../assets/musicSymbols/dotted-quarter-note.svg?react";
+import DottedHalfIcon from "../../../../assets/musicSymbols/dotted-half-note.svg?react";
+import QuarterRestIcon from "../../../../assets/musicSymbols/quarter-rest.svg?react";
+import HalfRestIcon from "../../../../assets/musicSymbols/half-rest.svg?react";
+import WholeRestIcon from "../../../../assets/musicSymbols/whole-rest.svg?react";
 
 /**
  * Map duration codes to their SVG React components.
@@ -39,8 +39,8 @@ export const SVG_COMPONENTS = {
   q: QuarterNoteIcon,
   h: HalfNoteIcon,
   w: WholeNoteIcon,
-  "8": EighthNoteIcon,
-  "16": SixteenthNoteIcon,
+  8: EighthNoteIcon,
+  16: SixteenthNoteIcon,
   qd: DottedQuarterIcon,
   hd: DottedHalfIcon,
   qr: QuarterRestIcon,
@@ -106,15 +106,15 @@ export function DurationCard({
       if (!SvgComponent) return null;
 
       return (
-        <div dir="ltr" className="flex items-center justify-center">
-          <SvgComponent className="w-16 h-24" aria-hidden="true" />
+        <div dir="ltr" className="flex items-center justify-center text-white">
+          <SvgComponent className="h-24 w-16" aria-hidden="true" />
         </div>
       );
     }
 
     // type === "text"
     return (
-      <span className="text-3xl font-bold text-white select-none">{text}</span>
+      <span className="select-none text-3xl font-bold text-white">{text}</span>
     );
   };
 

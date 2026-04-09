@@ -159,7 +159,8 @@ export default function VisualRecognitionGame() {
       if (gameState !== GAME_STATES.IN_PROGRESS) return;
 
       const currentQuestion = questions[currentIndex];
-      const isCorrect = currentQuestion.choices[cardIndex] === currentQuestion.correct;
+      const isCorrect =
+        currentQuestion.choices[cardIndex] === currentQuestion.correct;
 
       _setSelectedIndex(cardIndex);
       setResults((prev) => [...prev, isCorrect]);
@@ -228,9 +229,9 @@ export default function VisualRecognitionGame() {
   // Error state — no nodeConfig
   if (!nodeId || !nodeConfig) {
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 text-center max-w-sm">
-          <p className="text-white text-lg mb-4">
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+        <div className="max-w-sm rounded-xl border border-white/20 bg-white/10 p-6 text-center backdrop-blur-md">
+          <p className="mb-4 text-lg text-white">
             {t(
               "game.error.generic",
               "Something went wrong. Go back to the trail and try again."
@@ -266,7 +267,11 @@ export default function VisualRecognitionGame() {
 
   // Progress dots
   const renderProgressDots = () => (
-    <div className="flex items-center justify-center gap-2" role="group" aria-label="Progress">
+    <div
+      className="flex items-center justify-center gap-2"
+      role="group"
+      aria-label="Progress"
+    >
       {Array.from({ length: QUESTION_COUNT }, (_, i) => {
         let dotClass = "w-3 h-3 rounded-full bg-white/30";
         if (i < results.length) {
@@ -284,7 +289,7 @@ export default function VisualRecognitionGame() {
   // Card grid
   const renderCards = () => {
     const gridClass = isLandscape
-      ? "flex flex-col gap-4 flex-1"
+      ? "grid grid-cols-4 gap-3 w-full max-w-2xl"
       : "grid grid-cols-2 gap-4 w-full max-w-sm";
 
     return (
@@ -309,33 +314,29 @@ export default function VisualRecognitionGame() {
   if (isLandscape) {
     return (
       <div
-        className={`fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col p-4 overflow-y-auto ${
+        className={`fixed inset-0 flex flex-col overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4 ${
           reducedMotion ? "" : "animate-fadeIn"
         }`}
       >
-        <RotatePromptOverlay show={shouldShowPrompt} onDismiss={dismissPrompt} />
+        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
         <div aria-live="polite" className="sr-only">
           {feedbackMessage}
         </div>
 
         {/* Top bar */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="mb-4 flex items-center gap-4">
           <BackButton />
           <div className="flex-1">{renderProgressDots()}</div>
         </div>
 
-        {/* Main content: prompt left, cards right */}
-        <div className="flex flex-row flex-1 gap-6 items-center">
-          <div className="flex-1 flex items-center justify-center">
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
-              <h2 className="text-xl font-bold text-white text-center">
-                {promptText}
-              </h2>
-            </div>
+        {/* Main content: prompt centered above, cards row below */}
+        <div className="flex flex-1 flex-col items-center justify-center gap-4">
+          <div className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 backdrop-blur-md">
+            <h2 className="text-center text-lg font-bold text-white">
+              {promptText}
+            </h2>
           </div>
-          <div className="flex-1 flex items-center justify-center">
-            {renderCards()}
-          </div>
+          {renderCards()}
         </div>
       </div>
     );
@@ -344,11 +345,11 @@ export default function VisualRecognitionGame() {
   // Portrait layout
   return (
     <div
-      className={`fixed inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex flex-col items-center p-4 overflow-y-auto ${
+      className={`fixed inset-0 flex flex-col items-center overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4 ${
         reducedMotion ? "" : "animate-fadeIn"
       }`}
     >
-      <RotatePromptOverlay show={shouldShowPrompt} onDismiss={dismissPrompt} />
+      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       <div aria-live="polite" className="sr-only">
         {feedbackMessage}
       </div>
@@ -362,14 +363,14 @@ export default function VisualRecognitionGame() {
       <div className="mt-4">{renderProgressDots()}</div>
 
       {/* Prompt */}
-      <div className="mt-6 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white text-center">
+      <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
+        <h2 className="text-center text-xl font-bold text-white">
           {promptText}
         </h2>
       </div>
 
       {/* Answer cards — 2x2 grid */}
-      <div className="mt-6 flex-1 flex items-start justify-center w-full">
+      <div className="mt-6 flex w-full flex-1 items-start justify-center">
         {renderCards()}
       </div>
     </div>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 183.61877 110" fill="currentColor">
+  <!-- Rectangle hanging from line (above the line) -->
+  <rect x="30" y="41" width="123.61877" height="55" />
+  <!-- Reference line on bottom -->
+  <line x1="0" y1="102" x2="183.61877" y2="102" stroke="currentColor" stroke-width="6" />
+</svg>

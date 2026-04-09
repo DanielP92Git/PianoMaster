@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import React from "react";
 
 // ---------------------------------------------------------------------------
@@ -134,35 +140,38 @@ vi.mock("../utils/durationInfo", async () => {
   };
 });
 
-// SVG component mocks
-vi.mock("../../../../assets/icons/rhythm/quarter-note.svg?react", () => ({
+// SVG component mocks (musicSymbols paths)
+vi.mock("../../../../assets/musicSymbols/quarter-note.svg?react", () => ({
   default: (props) => <svg data-testid="svg-quarter-note" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/half-note.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/half-note.svg?react", () => ({
   default: (props) => <svg data-testid="svg-half-note" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/whole-note.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/whole-note-head.svg?react", () => ({
   default: (props) => <svg data-testid="svg-whole-note" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/eighth-note.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/eighth-note.svg?react", () => ({
   default: (props) => <svg data-testid="svg-eighth-note" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/sixteenth-note.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/sixteenth-note.svg?react", () => ({
   default: (props) => <svg data-testid="svg-sixteenth-note" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/dotted-quarter.svg?react", () => ({
-  default: (props) => <svg data-testid="svg-dotted-quarter" {...props} />,
-}));
-vi.mock("../../../../assets/icons/rhythm/dotted-half.svg?react", () => ({
+vi.mock(
+  "../../../../assets/musicSymbols/dotted-quarter-note.svg?react",
+  () => ({
+    default: (props) => <svg data-testid="svg-dotted-quarter" {...props} />,
+  })
+);
+vi.mock("../../../../assets/musicSymbols/dotted-half-note.svg?react", () => ({
   default: (props) => <svg data-testid="svg-dotted-half" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/quarter-rest.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/quarter-rest.svg?react", () => ({
   default: (props) => <svg data-testid="svg-quarter-rest" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/half-rest.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/half-rest.svg?react", () => ({
   default: (props) => <svg data-testid="svg-half-rest" {...props} />,
 }));
-vi.mock("../../../../assets/icons/rhythm/whole-rest.svg?react", () => ({
+vi.mock("../../../../assets/musicSymbols/whole-rest.svg?react", () => ({
   default: (props) => <svg data-testid="svg-whole-rest" {...props} />,
 }));
 
@@ -338,8 +347,10 @@ describe("SyllableMatchingGame", () => {
     const { useTranslation } = await import("react-i18next");
     useTranslation.mockReturnValue({
       t: (key) => {
-        if (key === "syllableMatching.prompt") return "?\u05D0\u05D9\u05D6\u05D5 \u05D4\u05D1\u05E8\u05D4 \u05D6\u05D5";
-        if (key === "rhythm.duration.quarter") return "\u05EA\u05D5 \u05E8\u05D1\u05E2";
+        if (key === "syllableMatching.prompt")
+          return "?\u05D0\u05D9\u05D6\u05D5 \u05D4\u05D1\u05E8\u05D4 \u05D6\u05D5";
+        if (key === "rhythm.duration.quarter")
+          return "\u05EA\u05D5 \u05E8\u05D1\u05E2";
         return key;
       },
       i18n: { language: "he" },

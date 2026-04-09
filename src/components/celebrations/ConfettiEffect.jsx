@@ -5,9 +5,9 @@
  * Respects reduced motion preferences and provides tier-based configurations.
  */
 
-import { useState, useEffect } from 'react';
-import Confetti from 'react-confetti';
-import { useAccessibility } from '../../contexts/AccessibilityContext';
+import { useState, useEffect } from "react";
+import Confetti from "react-confetti";
+import { useAccessibility } from "../../contexts/AccessibilityContext";
 
 /**
  * Confetti tier configurations
@@ -17,14 +17,14 @@ const TIER_CONFIGS = {
     numberOfPieces: 500,
     gravity: 0.3,
     initialVelocityY: 20,
-    colors: ['#FFD700', '#FFA500', '#FF6347', '#87CEEB', '#9370DB']
+    colors: ["#FFD700", "#FFA500", "#FF6347", "#87CEEB", "#9370DB"],
   },
   full: {
     numberOfPieces: 200,
     gravity: 0.5,
     initialVelocityY: 15,
-    colors: ['#FFD700', '#FFA500', '#87CEEB', '#98FB98']
-  }
+    colors: ["#FFD700", "#FFA500", "#87CEEB", "#98FB98"],
+  },
 };
 
 /**
@@ -34,12 +34,12 @@ const TIER_CONFIGS = {
  * @param {'epic' | 'full'} props.tier - Celebration tier
  * @param {Function} props.onComplete - Called when confetti completes
  */
-export function ConfettiEffect({ tier = 'full', onComplete }) {
+export function ConfettiEffect({ tier = "full", onComplete }) {
   // Call all hooks unconditionally at the top
   const { reducedMotion } = useAccessibility();
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
-    height: window.innerHeight
+    height: window.innerHeight,
   });
   const [isRunning, setIsRunning] = useState(true);
 
@@ -48,12 +48,12 @@ export function ConfettiEffect({ tier = 'full', onComplete }) {
     const handleResize = () => {
       setWindowSize({
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
       });
     };
 
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Handle confetti completion
@@ -92,7 +92,7 @@ export function ConfettiEffect({ tier = 'full', onComplete }) {
   };
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-[9998]">
+    <div className="pointer-events-none fixed inset-0 z-[9998] overflow-hidden">
       <Confetti
         width={windowSize.width}
         height={windowSize.height}
