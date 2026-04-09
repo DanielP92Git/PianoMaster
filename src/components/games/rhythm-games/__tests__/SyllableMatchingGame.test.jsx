@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import React from "react";
 
 // ---------------------------------------------------------------------------
@@ -305,11 +305,14 @@ describe("SyllableMatchingGame", () => {
   });
 
   it("shows VictoryScreen after 5 questions with correct score", async () => {
+    vi.useFakeTimers();
     render(<SyllableMatchingGame />);
 
     // Answer all 5 questions
     for (let q = 0; q < 5; q++) {
-      await clickCardAndWait(0);
+      const cards = getAnswerCards();
+      fireEvent.click(cards[0]);
+      await act(() => vi.advanceTimersByTime(1500));
     }
 
     // VictoryScreen should appear
@@ -318,6 +321,8 @@ describe("SyllableMatchingGame", () => {
     expect(screen.getByTestId("victory-total").textContent).toBe("5");
     expect(screen.getByTestId("victory-node").textContent).toBe("rhythm_1_1");
     expect(screen.getByTestId("victory-exercise").textContent).toBe("2");
+
+    vi.useRealTimers();
   });
 
   it("uses dedupSyllables option to avoid ambiguous distractors", () => {

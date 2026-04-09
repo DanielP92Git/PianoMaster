@@ -268,6 +268,7 @@ describe("VisualRecognitionGame", () => {
   });
 
   it("shows VictoryScreen after 5 questions with correct score", async () => {
+    vi.useFakeTimers();
     render(<VisualRecognitionGame />);
 
     // Answer all 5 questions by clicking index 0 each time:
@@ -277,7 +278,9 @@ describe("VisualRecognitionGame", () => {
     // q3: correct=h, choices[0]=w -> wrong
     // q4: correct=q, choices[0]=8 -> wrong
     for (let q = 0; q < 5; q++) {
-      await clickCardAndWait(0);
+      const cards = getAnswerCards();
+      fireEvent.click(cards[0]);
+      await act(() => vi.advanceTimersByTime(1500));
     }
 
     // VictoryScreen should be rendered with correct score
@@ -286,6 +289,8 @@ describe("VisualRecognitionGame", () => {
     expect(screen.getByTestId("victory-total").textContent).toBe("5");
     expect(screen.getByTestId("victory-node").textContent).toBe("rhythm_1_1");
     expect(screen.getByTestId("victory-exercise").textContent).toBe("1");
+
+    vi.useRealTimers();
   });
 
   it("tracks progress dots (green=correct, red=wrong)", async () => {
@@ -309,6 +314,7 @@ describe("VisualRecognitionGame", () => {
   });
 
   it("integrates with trail via location.state (nodeId, exerciseIndex)", async () => {
+    vi.useFakeTimers();
     render(<VisualRecognitionGame />);
 
     // Verify game started via auto-start
@@ -318,11 +324,15 @@ describe("VisualRecognitionGame", () => {
 
     // Complete all 5 questions
     for (let q = 0; q < 5; q++) {
-      await clickCardAndWait(0);
+      const cards = getAnswerCards();
+      fireEvent.click(cards[0]);
+      await act(() => vi.advanceTimersByTime(1500));
     }
 
     // VictoryScreen should receive trail props
     expect(screen.getByTestId("victory-node").textContent).toBe("rhythm_1_1");
     expect(screen.getByTestId("victory-exercise").textContent).toBe("1");
+
+    vi.useRealTimers();
   });
 });
