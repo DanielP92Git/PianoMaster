@@ -7,7 +7,7 @@ import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { usePianoSampler } from "../../../hooks/usePianoSampler";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useSounds } from "../../../features/games/hooks/useSounds";
-import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useSafeSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
@@ -105,16 +105,8 @@ export function RhythmDictationGame() {
     [audioEngine]
   );
 
-  // --- Session timeout ---
-  let pauseTimer = useCallback(() => {}, []);
-  let resumeTimer = useCallback(() => {}, []);
-  try {
-    const sessionTimeout = useSessionTimeout();
-    pauseTimer = sessionTimeout.pauseTimer;
-    resumeTimer = sessionTimeout.resumeTimer;
-  } catch {
-    // Not in SessionTimeoutProvider — timer controls are no-ops
-  }
+  // Session timeout controls — safe hook returns no-ops outside provider
+  const { pauseTimer, resumeTimer } = useSafeSessionTimeout();
 
   // --- Game state ---
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);

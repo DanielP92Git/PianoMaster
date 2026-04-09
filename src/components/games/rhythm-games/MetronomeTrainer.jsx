@@ -14,7 +14,7 @@ import RhythmGameSetup from "./components/RhythmGameSetup";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
-import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useSafeSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
@@ -87,16 +87,8 @@ export function MetronomeTrainer() {
     adaptiveDifficulty: false,
   });
 
-  // Session timeout controls - pause timer during active gameplay
-  let pauseTimer = useCallback(() => {}, []);
-  let resumeTimer = useCallback(() => {}, []);
-  try {
-    const sessionTimeout = useSessionTimeout();
-    pauseTimer = sessionTimeout.pauseTimer;
-    resumeTimer = sessionTimeout.resumeTimer;
-  } catch {
-    // Not in SessionTimeoutProvider, timer controls are no-ops
-  }
+  // Session timeout controls — safe hook returns no-ops outside provider
+  const { pauseTimer, resumeTimer } = useSafeSessionTimeout();
 
   // Pause/resume inactivity timer based on game phase
   useEffect(() => {

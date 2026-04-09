@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { usePianoSampler } from "../../../hooks/usePianoSampler";
 import { useSounds } from "../../../features/games/hooks/useSounds";
-import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useSafeSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
@@ -22,7 +22,7 @@ import { scoreTap } from "./utils/rhythmScoringUtils";
 import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
 import FloatingFeedback from "./components/FloatingFeedback";
 import { MetronomeDisplay } from "./components";
-import { useAccessibility } from "../../../contexts/AccessibilityContext";
+import { useSafeAccessibility } from "../../../contexts/AccessibilityContext";
 
 // Game phases FSM
 const GAME_PHASES = {
@@ -78,25 +78,11 @@ export function RhythmReadingGame() {
   const { playNote } = usePianoSampler();
   useSounds(); // Loaded for potential future use (correct/wrong sounds for post-exercise feedback)
 
-  // Accessibility context for reducedMotion (safe outside AccessibilityProvider in tests)
-  let reducedMotion = false;
-  try {
-    const a11y = useAccessibility();
-    reducedMotion = a11y?.reducedMotion ?? false;
-  } catch {
-    // Not in AccessibilityProvider — reducedMotion defaults to false
-  }
+  // Accessibility context — safe hook returns defaults outside provider
+  const { reducedMotion } = useSafeAccessibility();
 
-  // Session timeout controls
-  let pauseTimer = useCallback(() => {}, []);
-  let resumeTimer = useCallback(() => {}, []);
-  try {
-    const sessionTimeout = useSessionTimeout();
-    pauseTimer = sessionTimeout.pauseTimer;
-    resumeTimer = sessionTimeout.resumeTimer;
-  } catch {
-    // Not in SessionTimeoutProvider — timer controls are no-ops
-  }
+  // Session timeout controls — safe hook returns no-ops outside provider
+  const { pauseTimer, resumeTimer } = useSafeSessionTimeout();
 
   // Extract config from nodeConfig or use defaults
   const tempo = nodeConfig?.tempo ?? nodeConfig?.config?.tempo ?? 80;

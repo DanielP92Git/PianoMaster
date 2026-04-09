@@ -344,6 +344,26 @@ export const useAccessibility = () => {
   return context;
 };
 
+/**
+ * Safe version of useAccessibility that returns sensible defaults when used
+ * outside AccessibilityProvider. Avoids try-catch around hook calls which
+ * violates the spirit of React's Rules of Hooks.
+ *
+ * @returns {{ reducedMotion: boolean, highContrast: boolean, ... }}
+ */
+// eslint-disable-next-line react-refresh/only-export-components
+export const useSafeAccessibility = () => {
+  const context = useContext(AccessibilityContext);
+  if (!context) {
+    return {
+      reducedMotion: false,
+      highContrast: false,
+      screenReaderOptimized: false,
+    };
+  }
+  return context;
+};
+
 // HOC for components that need accessibility props
 // eslint-disable-next-line react-refresh/only-export-components -- context provider and hook are co-located by design; splitting would break encapsulation with no HMR benefit
 export const withAccessibility = (Component) => {
@@ -361,7 +381,7 @@ export const withAccessibility = (Component) => {
       />
     );
   });
-  WithAccessibilityWrapper.displayName = `withAccessibility(${Component.displayName || Component.name || 'Component'})`;
+  WithAccessibilityWrapper.displayName = `withAccessibility(${Component.displayName || Component.name || "Component"})`;
   return WithAccessibilityWrapper;
 };
 
