@@ -82,7 +82,7 @@ export default function SyllableMatchingGame() {
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
   const [questions, setQuestions] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [_selectedIndex, _setSelectedIndex] = useState(null);
   const [results, setResults] = useState([]);
   const [cardStates, setCardStates] = useState([
     "default",
@@ -145,7 +145,7 @@ export default function SyllableMatchingGame() {
     });
     setQuestions(q);
     setCurrentIndex(0);
-    setSelectedIndex(null);
+    _setSelectedIndex(null);
     setResults([]);
     setCardStates(["default", "default", "default", "default"]);
     setFeedbackMessage("");
@@ -180,7 +180,7 @@ export default function SyllableMatchingGame() {
       const currentQuestion = questions[currentIndex];
       const isCorrect = currentQuestion.choices[cardIndex] === currentQuestion.correct;
 
-      setSelectedIndex(cardIndex);
+      _setSelectedIndex(cardIndex);
       setResults((prev) => [...prev, isCorrect]);
 
       // Play sound
@@ -215,7 +215,7 @@ export default function SyllableMatchingGame() {
           resumeTimer();
         } else {
           setCurrentIndex(nextIndex);
-          setSelectedIndex(null);
+          _setSelectedIndex(null);
           setCardStates(["default", "default", "default", "default"]);
           setFeedbackMessage("");
           setGameState(GAME_STATES.IN_PROGRESS);
