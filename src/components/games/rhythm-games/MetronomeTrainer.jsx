@@ -1742,33 +1742,35 @@ export function MetronomeTrainer() {
 
       {/* Bottom Stats + Controls */}
       <div className="flex-shrink-0 space-y-3 px-4 pb-4">
-        {/* Compact Stats Row */}
-        <div className="flex justify-around text-center text-xs text-white sm:text-sm">
-          <div>
-            <div className="text-lg font-bold text-blue-400 sm:text-2xl">
-              {sessionStats.patternsCompleted}
+        {/* Compact Stats Row — hidden in pulse mode (single-bar exercise, stats not meaningful) */}
+        {!pulseOnly && (
+          <div className="flex justify-around text-center text-xs text-white sm:text-sm">
+            <div>
+              <div className="text-lg font-bold text-blue-400 sm:text-2xl">
+                {sessionStats.patternsCompleted}
+              </div>
+              <div>{t("games.metronomeTrainer.stats.patterns")}</div>
             </div>
-            <div>{t("games.metronomeTrainer.stats.patterns")}</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-green-400 sm:text-2xl">
-              {sessionStats.totalScore}
+            <div>
+              <div className="text-lg font-bold text-green-400 sm:text-2xl">
+                {sessionStats.totalScore}
+              </div>
+              <div>XP</div>
             </div>
-            <div>XP</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
-              {sessionStats.maxCombo}
+            <div>
+              <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
+                {sessionStats.maxCombo}
+              </div>
+              <div>{t("games.metronomeTrainer.stats.maxCombo")}</div>
             </div>
-            <div>{t("games.metronomeTrainer.stats.maxCombo")}</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-purple-400 sm:text-2xl">
-              {sessionStats.perfectTaps + sessionStats.goodTaps}
+            <div>
+              <div className="text-lg font-bold text-purple-400 sm:text-2xl">
+                {sessionStats.perfectTaps + sessionStats.goodTaps}
+              </div>
+              <div>{t("games.metronomeTrainer.stats.goodTaps")}</div>
             </div>
-            <div>{t("games.metronomeTrainer.stats.goodTaps")}</div>
           </div>
-        </div>
+        )}
 
         {/* Navigation Buttons (feedback phase only) */}
         {gamePhase === GAME_PHASES.FEEDBACK &&
