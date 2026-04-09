@@ -1,15 +1,15 @@
 ---
 phase: 23-ux-polish
-reviewed: 2026-04-08T11:38:11Z
+reviewed: 2026-04-09T14:22:00Z
 depth: standard
 files_reviewed: 21
 files_reviewed_list:
   - scripts/validateTrail.mjs
-  - src/components/games/rhythm-games/components/DictationChoiceCard.jsx
-  - src/components/games/rhythm-games/components/RhythmStaffDisplay.jsx
   - src/components/games/rhythm-games/MetronomeTrainer.jsx
   - src/components/games/rhythm-games/RhythmDictationGame.jsx
   - src/components/games/rhythm-games/RhythmReadingGame.jsx
+  - src/components/games/rhythm-games/components/DictationChoiceCard.jsx
+  - src/components/games/rhythm-games/components/RhythmStaffDisplay.jsx
   - src/components/games/rhythm-games/utils/rhythmScoringUtils.js
   - src/components/games/rhythm-games/utils/rhythmTimingUtils.js
   - src/components/games/rhythm-games/utils/rhythmTimingUtils.test.js
@@ -29,125 +29,122 @@ files_reviewed_list:
 findings:
   critical: 0
   warning: 3
-  info: 5
-  total: 8
+  info: 4
+  total: 7
 status: issues_found
 ---
 
 # Phase 23: Code Review Report
 
-**Reviewed:** 2026-04-08T11:38:11Z
+**Reviewed:** 2026-04-09T14:22:00Z
 **Depth:** standard
 **Files Reviewed:** 21
 **Status:** issues_found
 
 ## Summary
 
-Reviewed 21 files across the rhythm game system, trail data units, VexFlow helpers, scoring/timing utilities, document title hook, and locale files. The codebase is well-structured with consistent patterns across game components, thorough build-time trail validation, and good test coverage for utility functions. Three warnings were found: a VexFlow Voice parameter inconsistency in RhythmStaffDisplay (same class of bug that was already fixed in DictationChoiceCard), a missing i18n translation key used by the document title hook, and a redundant duplicate loop in the distractor generation function. Five informational items note unused state variables, missing `/trail` route title mapping, and `key={idx}` anti-patterns.
+Phase 23 (UX Polish) implements five features across the rhythm game subsystem: timing threshold widening with a two-tier node-type-based system, MetronomeTrainer rename to "Listen & Tap" in UI, "MISS" replaced with "Almost!" in feedback text, progressive measure lengths (1/2/4-bar), and Kodaly syllable rendering below VexFlow noteheads with i18n support.
+
+The code is well-structured overall. The timing threshold system is cleanly extracted into `rhythmTimingUtils.js` with thorough tests covering all node types and tempo scaling. The Kodaly syllable implementation handles Hebrew alternation correctly and includes spread-syllable rendering for sustained notes. The `validateTrail.mjs` script enforces measureCount and exercise-type policies at build time, which is an effective guardrail against data drift.
+
+Three warnings were found: a React hooks rules violation (hooks called inside try-catch blocks), a potential `findIndex` identity comparison that may fail, and missing `nodeType` parameter in test calls. Four informational items are noted.
 
 ## Warnings
 
-### WR-01: RhythmStaffDisplay uses incorrect VexFlow Voice params for compound time (6/8)
+### WR-01: React hooks called inside try-catch blocks (conditional hook execution)
 
-**File:** `src/components/games/rhythm-games/components/RhythmStaffDisplay.jsx:134-135`
-**Issue:** `getBeatCount()` collapses 6/8 time to `{ num_beats: 3, beat_value: 4 }`, which tells VexFlow the voice is in 3/4 time rather than 6/8. This is the same class of bug that was fixed in `DictationChoiceCard.jsx` (commit `1397d92`) where `getVoiceParams()` was introduced to pass raw time signature values (`{ num_beats: 6, beat_value: 8 }`). While `voice.setStrict(false)` on line 136 prevents a runtime crash, the Voice tick math is technically wrong for 6/8 patterns, which could cause incorrect note spacing or beam grouping.
-**Fix:**
-Replace `getBeatCount` with the same `getVoiceParams` approach used in DictationChoiceCard:
+**File:** `src/components/games/rhythm-games/RhythmReadingGame.jsx:82-98`
+**Issue:** `useAccessibility()` (line 84) and `useSessionTimeout()` (line 94) are called inside `try { ... } catch { ... }` blocks. While this technically works in the current React version because the hooks are always called (the try-catch wraps the call, not a conditional), it is fragile and violates the spirit of the Rules of Hooks. If React's hook reconciliation ever changes to detect exception-based control flow, or if a linter update flags this, it would break. The same pattern exists in `RhythmDictationGame.jsx:111-117` and `MetronomeTrainer.jsx:91-98`.
 
-```jsx
-// Replace lines 55-63 and 134-135 with:
-function getVoiceParams(timeSig) {
-  const parts = timeSig.split("/");
-  if (parts.length !== 2) return { num_beats: 4, beat_value: 4 };
-  return {
-    num_beats: parseInt(parts[0], 10),
-    beat_value: parseInt(parts[1], 10),
-  };
+**Fix:** This is an established pattern across the codebase (used in all three game components), so it is likely intentional to handle the case where the component renders outside the provider in test environments. If so, consider wrapping the provider conditionally at the test level instead, or creating a safe wrapper hook:
+
+```javascript
+// src/hooks/useSafeSessionTimeout.js
+export function useSafeSessionTimeout() {
+  // Only call useSessionTimeout if inside the provider
+  // (check via a dedicated context value or use a custom provider with default)
 }
-
-// At line 134-135, replace:
-//   const beatCount = getBeatCount(timeSignature);
-//   const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
-// With:
-const voice = new Voice(getVoiceParams(timeSignature));
 ```
 
-### WR-02: Missing `pages.earTraining` translation key in locale files
+Since this pattern is consistent across multiple game components and has been working in production, this is flagged as warning rather than critical.
 
-**File:** `src/hooks/useDocumentTitle.js:60,63`
-**Issue:** The document title hook references `t("pages.earTraining")` for ear training game routes (`/note-comparison-game`, `/interval-game`), but neither `src/locales/en/common.json` nor `src/locales/he/common.json` defines a `pages.earTraining` key. The `defaultValue: "Ear Training"` fallback prevents a visible error, but Hebrew users will see the English "Ear Training" text in their browser tab/title bar instead of a Hebrew translation.
-**Fix:**
-Add the key to both locale files:
+### WR-02: `findIndex` identity comparison may fail with distractor shuffling
 
-```json
-// In src/locales/en/common.json under "pages":
-"earTraining": "Ear Training",
+**File:** `src/components/games/rhythm-games/RhythmDictationGame.jsx:313`
+**Issue:** After shuffling `allChoices`, the correct answer index is found via `shuffled.findIndex((c) => c === beats)`. This uses reference equality (`===`), which relies on the fact that `shuffleArray` creates a new array of the same object references (shallow copy). If `shuffleArray` were ever changed to deep-clone its elements, or if `beats` were re-created between generation and comparison, this would silently fail -- the correct answer would never be found, `corrIdx` would be `-1`, and the child would have no correct answer to select.
 
-// In src/locales/he/common.json under "pages":
-"earTraining": "אימון שמיעה",
+Currently `shuffleArray` does use shallow copy (`const a = [...arr]`), so the references are preserved. However, the reliance on object identity for a critical game mechanic (which answer is "correct") is fragile.
+
+**Fix:** Use a fingerprint-based comparison instead of reference equality:
+
+```javascript
+const correctFp = JSON.stringify(beats);
+const corrIdx = shuffled.findIndex((c) => JSON.stringify(c) === correctFp);
 ```
 
-### WR-03: Redundant duplicate loop in generateDistractors
+Or tag the correct answer before shuffling:
 
-**File:** `src/components/games/rhythm-games/utils/rhythmTimingUtils.js:267-279`
-**Issue:** The function has two identical `for...of` loops over `scored` (lines 267-272 and 275-279). Both check `if (usedFps.has(candidate.fp)) continue;` and add to `distractors`. The second loop will never add any candidates because the first loop already added all non-duplicate candidates up to `count`. The second loop is dead code that adds unnecessary complexity.
-**Fix:**
-Remove the second loop (lines 274-279):
+```javascript
+const tagged = allChoices.map((c, i) => ({ beats: c, isCorrect: i === 0 }));
+const shuffled = shuffleArray(tagged);
+const corrIdx = shuffled.findIndex((t) => t.isCorrect);
+```
 
-```js
-// Remove lines 274-279:
-// // If we still need more (unlikely), fill with remaining candidates
-// for (const candidate of scored) {
-//   if (distractors.length >= count) break;
-//   if (usedFps.has(candidate.fp)) continue;
-//   usedFps.add(candidate.fp);
-//   distractors.push(candidate.beats);
-// }
+### WR-03: Test file does not pass `nodeType` to `scoreTap`, testing only hard-tier thresholds
+
+**File:** `src/components/games/rhythm-games/RhythmReadingGame.test.js:22-66`
+**Issue:** All `scoreTap` test calls use only 4 arguments (`scoreTap(tapTime, beatTimes, 0, tempo)`) and never pass the 5th `nodeType` parameter. This means the test suite only exercises the hard-tier path (PERFECT=50ms at 120 BPM baseline). The easy-tier path (discovery/practice nodes with PERFECT=100ms) is untested via `scoreTap`. While `calculateTimingThresholds` has dedicated tests for both tiers in `rhythmTimingUtils.test.js`, the integration point where `scoreTap` calls `calculateTimingThresholds` with a nodeType is never tested.
+
+**Fix:** Add at least one test case that exercises the easy tier:
+
+```javascript
+it("uses easy-tier thresholds for discovery nodeType", () => {
+  // 70ms off at 60 BPM: hard-tier would be GOOD (>59ms PERFECT), easy-tier would be PERFECT (<118ms)
+  const result = scoreTap(1.07, beatTimes, 0, tempo, "discovery");
+  expect(result.quality).toBe("PERFECT");
+});
 ```
 
 ## Info
 
-### IN-01: Unused state variables with underscore prefix in MetronomeTrainer
+### IN-01: MetronomeTrainer root container has hardcoded `dir="rtl"`
 
-**File:** `src/components/games/rhythm-games/MetronomeTrainer.jsx:265-267,304`
-**Issue:** Four state values are prefixed with underscore (`_currentPattern`, `_expectedTaps`, `_userTaps`, `_countdownToStart`) indicating they are never read. Only their setters are used. While the underscore convention suppresses linting, these represent state that is being tracked but never consumed by the render function. The values are accessed via refs instead (`patternInfoRef`, `userTapsRef`).
-**Fix:** Consider whether these state variables can be removed entirely (using only refs), or if they serve a purpose for future features. If only the setters trigger re-renders, and the component does not need re-renders from these state changes, they can be safely replaced with refs.
+**File:** `src/components/games/rhythm-games/MetronomeTrainer.jsx:1635`
+**Issue:** The root `<div>` of the main game render has `dir="rtl"` hardcoded. All other game components (RhythmReadingGame, ArcadeRhythmGame, DictationChoiceCard, RhythmStaffDisplay) correctly use `dir="ltr"` for their root or music notation containers. While this `dir="rtl"` predates Phase 23 changes and may have been intentional for some layout reason (the Hebrew locale), it means the entire game layout renders right-to-left even for English users, potentially affecting button order, text alignment, and flex layout direction.
 
-### IN-02: Unused state variable `_selectedIndex` in RhythmDictationGame
-
-**File:** `src/components/games/rhythm-games/RhythmDictationGame.jsx:127`
-**Issue:** `_selectedIndex` is set but never read. The comment says "tracked for future use" which is acceptable for now but adds unnecessary state.
-**Fix:** Remove if no concrete plan to use it, or keep with the comment if it will be needed soon.
-
-### IN-03: Missing `/trail` route in useDocumentTitle mapping
-
-**File:** `src/hooks/useDocumentTitle.js:18-30`
-**Issue:** The `/trail` route (a primary navigation destination) has no entry in `routeTitleMap`. It falls through to the default "PianoMaster" title. This is a minor UX gap -- the browser tab won't show "Trail" when the user is on the trail page.
-**Fix:**
-
-```js
-"/trail": "pages.trail.title", // Add to routeTitleMap
-```
-
-And add corresponding locale entries.
-
-### IN-04: `key={idx}` on choice cards in RhythmDictationGame
-
-**File:** `src/components/games/rhythm-games/RhythmDictationGame.jsx:741`
-**Issue:** Choice cards use array index as React key (`key={idx}`). Since choices are shuffled each question, the cards always have indices 0, 1, 2 -- React may reuse DOM nodes across questions, potentially causing stale VexFlow SVG renders if the `useEffect` cleanup doesn't fully clear the previous notation. In practice the `containerRef.current.innerHTML = ""` cleanup should handle this, but a unique key per question round would be more robust.
-**Fix:**
+**Fix:** Change to `dir="ltr"` to match other game components, or make it responsive to the current locale:
 
 ```jsx
-key={`q${currentQuestion}-c${idx}`}
+<div ... dir="ltr">
 ```
 
-### IN-05: Commented-out code patterns in validateTrail.mjs
+### IN-02: Unused import `useSounds` in RhythmReadingGame
 
-**File:** `scripts/validateTrail.mjs`
-**Issue:** No issues found. The validation script is thorough and well-structured with clear error messages, comprehensive checks (prerequisite chains, cycle detection, exercise type mapping, measure count policy, pattern library integrity), and proper exit codes. This is exemplary build-time validation.
+**File:** `src/components/games/rhythm-games/RhythmReadingGame.jsx:79`
+**Issue:** `useSounds()` is called but its return value is not destructured or used. The comment says "Loaded for potential future use" but the hook still executes audio preloading on mount.
+
+**Fix:** Remove the call until it is actually needed to avoid unnecessary audio resource preloading:
+
+```javascript
+// Remove: useSounds();
+```
+
+### IN-03: Duplicated `SIXTEENTH_UNITS` map in RhythmReadingGame
+
+**File:** `src/components/games/rhythm-games/RhythmReadingGame.jsx:326-335`
+**Issue:** A `SIXTEENTH_UNITS` map is defined inline inside `fetchNewPattern` that duplicates the `DURATION_TO_VEX` map from `rhythmVexflowHelpers.js` (just with inverted key-value semantics). Similarly, `REST_UNITS` (line 336) is a subset. This creates a maintenance risk if new durations are added to one but not the other.
+
+**Fix:** Consider extracting a shared `VEX_TO_SIXTEENTH_UNITS` constant in `rhythmVexflowHelpers.js` and importing it, or inverting the existing `DURATION_TO_VEX` map programmatically.
+
+### IN-04: Hebrew syllable toggle `ariaLabel` uses Hebrew text (good), but lacks English fallback
+
+**File:** `src/locales/he/common.json:817`
+**Issue:** The Hebrew aria-label `"ariaLabel": "הצג הברות קצב"` is a valid Hebrew string, but the English version (`"ariaLabel": "Toggle rhythm syllables"`) uses "Toggle" which is a technical term an 8-year-old may not understand. This is a minor accessibility wording concern, not a bug. The label is only consumed by screen readers so it is not critical.
+
+**Fix:** Consider simpler wording: `"ariaLabel": "Show or hide rhythm syllables"`.
 
 ---
 
-_Reviewed: 2026-04-08T11:38:11Z_
+_Reviewed: 2026-04-09T14:22:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
