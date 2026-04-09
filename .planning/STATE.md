@@ -48,6 +48,7 @@ Progress: [████████░░] 80%
 - CURR-05 (pulse exercise) ships in Phase 22 alongside unit file rewiring, not Phase 20
 - Node `order` values are immutable for nodes with live user progress — audit must check prod DB
 - Phase 24 adds new game types for low-variety rhythm nodes (visual recognition + syllable matching)
+- Phase 25 added: Unified Mixed Lesson Engine — Duolingo-style interleaved question types within one game session, replacing sequential separate-game-per-exercise model
 
 ### Pending Todos
 
