@@ -53,17 +53,18 @@ Source: index.css CSS custom properties, tailwind.config.js minHeight/minWidth t
 
 ## Typography
 
-| Role    | Size             | Weight       | Line Height | Usage                                                 |
-| ------- | ---------------- | ------------ | ----------- | ----------------------------------------------------- |
-| Body    | 16px (text-base) | 400 regular  | 1.7         | General game instructions                             |
-| Label   | 14px (text-sm)   | 400 regular  | 1.6         | Secondary labels, progress text                       |
-| Heading | 20px (text-xl)   | 600 semibold | 1.8         | Question prompt text ("Which one is a quarter note?") |
-| Display | 28px (text-3xl)  | 700 bold     | 1.9         | Syllable answer card text (large centered syllable)   |
+| Role    | Size             | Weight      | Line Height | Usage                                                                                                       |
+| ------- | ---------------- | ----------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
+| Body    | 16px (text-base) | 400 regular | 1.7         | General game instructions; secondary labels and progress text use `text-white/60` for color differentiation |
+| Heading | 20px (text-xl)   | 700 bold    | 1.8         | Question prompt text ("Which one is a quarter note?")                                                       |
+| Display | 28px (text-3xl)  | 700 bold    | 1.9         | Syllable answer card text (large centered syllable)                                                         |
+
+Note: 14px label size merged into 16px body. Color differentiation (`text-white/60`) replaces size differentiation for secondary labels — appropriate for 8-year-old readability. Size difference between Heading (20px) and Display (28px) provides sufficient hierarchy with a shared 700 bold weight.
 
 Font stack (game UI): `Nunito, sans-serif` (font-rounded class)
 Font stack (Hebrew): `Heebo, Assistant, Noto Sans Hebrew, Open Sans, Arial, sans-serif` (font-hebrew class)
 
-Source: tailwind.config.js fontSize scale, CLAUDE.md design system, CONTEXT.md D-21
+Source: tailwind.config.js fontSize scale, CLAUDE.md design system, CONTEXT.md D-21; revised per checker fix (3 sizes, 2 weights)
 
 ---
 
@@ -83,7 +84,7 @@ Text colors:
 
 - Primary text: `text-white` (#ffffff)
 - Secondary text: `text-white/70` (rgba 255,255,255,0.7)
-- Tertiary / muted: `text-white/60` (rgba 255,255,255,0.6)
+- Tertiary / muted: `text-white/60` (rgba 255,255,255,0.6) — used for secondary labels and progress text
 
 SVG sprite fill: `#ffffff` (white fill on glass background) — same pattern as DictationChoiceCard VexFlow color override
 
@@ -173,11 +174,13 @@ Source: CONTEXT.md D-07
 
 ### Layout — portrait (default)
 
+The answer card grid is the primary focal point of the Visual Recognition layout. It occupies the lower two-thirds of the screen and must be visually dominant — cards fill available width with equal sizing before the prompt panel claims additional vertical space.
+
 ```
 [Back Button]                               (top-left, 44px touch)
 [Progress dots — 5 dots, centered]          (margin-top 16px)
 [Prompt panel — glass card, centered]       (margin-top 24px)
-  "Which one is a quarter note?"            (text-xl semibold, text-white)
+  "Which one is a quarter note?"            (text-xl bold, text-white)
 [Answer cards — 2x2 grid]                   (margin-top 24px, gap 16px)
   [Card] [Card]
   [Card] [Card]
@@ -195,6 +198,8 @@ Source: CONTEXT.md D-01, D-15, D-19
 
 ### Layout — Syllable Matching (portrait)
 
+The 96px SVG note in the prompt panel is the primary visual anchor for the Syllable Matching screen. It must be centered and unobstructed — no competing visual elements at the same scale.
+
 ```
 [Back Button]
 [Progress dots — 5 dots, centered]
@@ -205,7 +210,7 @@ Source: CONTEXT.md D-01, D-15, D-19
 ```
 
 - SVG in prompt panel: 96px height, auto width, centered
-- "What syllable is this?" label: text-base (16px), text-white/70, below SVG, margin-top 8px
+- "What syllable is this?" label: text-base (16px), text-white/60, below SVG, margin-top 8px
 - Syllable text cards: Display size 28px (text-3xl) bold, centered in glass card
 
 Source: CONTEXT.md D-02, D-20, D-21
