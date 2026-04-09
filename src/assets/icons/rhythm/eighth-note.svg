@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" fill="none">
+  <!-- Eighth note: filled head + stem + single flag -->
+  <ellipse cx="24" cy="76" rx="12" ry="9" transform="rotate(-20 24 76)" fill="#ffffff"/>
+  <line x1="35" y1="72" x2="35" y2="20" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+  <path d="M35 20 C45 28, 50 36, 42 48" stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+</svg>

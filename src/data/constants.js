@@ -36,4 +36,7 @@ export const EXERCISE_TYPES = {
   ARCADE_RHYTHM: "arcade_rhythm",
   PITCH_COMPARISON: "pitch_comparison",
   INTERVAL_ID: "interval_id",
+  // v3.2 multi-angle games
+  VISUAL_RECOGNITION: "visual_recognition",
+  SYLLABLE_MATCHING: "syllable_matching",
 };

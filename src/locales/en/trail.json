@@ -80,7 +80,9 @@
     "rhythm_dictation": "Rhythm Dictation",
     "arcade_rhythm": "Arcade Rhythm",
     "pitch_comparison": "Pitch Comparison",
-    "interval_id": "Interval ID"
+    "interval_id": "Interval ID",
+    "visual_recognition": "Visual Recognition",
+    "syllable_matching": "Syllable Matching"
   },
   "modal": {
     "yourProgress": "Your Progress",

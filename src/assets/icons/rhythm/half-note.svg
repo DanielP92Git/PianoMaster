@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 96" fill="none">
+  <!-- Half note: open head + stem -->
+  <ellipse cx="24" cy="76" rx="12" ry="9" transform="rotate(-20 24 76)" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+  <line x1="35" y1="72" x2="35" y2="20" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+</svg>
