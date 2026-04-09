@@ -68,7 +68,15 @@ export const rhythmUnit1Nodes = [
           timeSignature: '4/4',
           difficulty: 'beginner'
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     // Progression
@@ -120,7 +128,15 @@ export const rhythmUnit1Nodes = [
           timeSignature: '4/4',
           difficulty: 'beginner'
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     skills: ['quarter_note'],
@@ -171,7 +187,15 @@ export const rhythmUnit1Nodes = [
           timeSignature: '4/4',
           difficulty: 'beginner'
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     skills: ['quarter_note', 'half_note'],
@@ -222,7 +246,15 @@ export const rhythmUnit1Nodes = [
           timeSignature: '4/4',
           difficulty: 'beginner'
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     skills: ['quarter_note', 'half_note'],
@@ -274,7 +306,15 @@ export const rhythmUnit1Nodes = [
           difficulty: 'beginner',
           patternVariety: true         // Hint for varied patterns
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     skills: ['quarter_note', 'half_note'],
@@ -325,7 +365,15 @@ export const rhythmUnit1Nodes = [
           timeSignature: '4/4',
           difficulty: 'intermediate'
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     skills: ['quarter_note', 'half_note'],

@@ -171,7 +171,15 @@ export const rhythmUnit2Nodes = [
           timeSignature: '4/4',
           difficulty: 'beginner'
         }
-      }
+      },
+      {
+        type: EXERCISE_TYPES.VISUAL_RECOGNITION,
+        config: { questionCount: 5 },
+      },
+      {
+        type: EXERCISE_TYPES.SYLLABLE_MATCHING,
+        config: { questionCount: 5 },
+      },
     ],
 
     skills: ['quarter_note', 'whole_note'],

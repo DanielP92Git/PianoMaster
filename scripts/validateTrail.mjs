@@ -313,6 +313,73 @@ function validateRhythmPatternNames() {
   else console.error(`  Found ${invalidCount} invalid rhythm pattern name(s)`);
 }
 
+/**
+ * Validate multi-angle game exercises (visual_recognition, syllable_matching).
+ * Rules:
+ *   1. Multi-angle exercises must have rhythmConfig on the node
+ *   2. config.questionCount must be > 0
+ *   3. Low-variety rhythm nodes (<=2 non-rest durations) should include at least one multi-angle game (warning)
+ */
+function validateMultiAngleGames() {
+  console.log('\nChecking multi-angle game exercises...');
+
+  const MULTI_ANGLE_TYPES = ['visual_recognition', 'syllable_matching'];
+  let errorCount = 0;
+  let warningCount = 0;
+
+  for (const node of SKILL_NODES) {
+    for (const exercise of node.exercises || []) {
+      if (MULTI_ANGLE_TYPES.includes(exercise.type)) {
+        // Rule 1: multi-angle exercise must have rhythmConfig on the node
+        if (!node.rhythmConfig) {
+          console.error(
+            `  ERROR: Node "${node.id}" has ${exercise.type} exercise but no rhythmConfig`
+          );
+          hasErrors = true;
+          errorCount++;
+        }
+        // Rule 2: config.questionCount must be > 0
+        if (!exercise.config?.questionCount || exercise.config.questionCount <= 0) {
+          console.error(
+            `  ERROR: Node "${node.id}" exercise ${exercise.type} has invalid or missing questionCount`
+          );
+          hasErrors = true;
+          errorCount++;
+        }
+      }
+    }
+
+    // Rule 3: low-variety rhythm nodes should include at least one multi-angle game
+    if (
+      node.category === 'rhythm' &&
+      node.rhythmConfig?.durations &&
+      !node.isBoss
+    ) {
+      const nonRestDurations = node.rhythmConfig.durations.filter(
+        (d) => !d.includes('r')
+      );
+      if (nonRestDurations.length <= 2) {
+        const hasMultiAngle = (node.exercises || []).some((e) =>
+          MULTI_ANGLE_TYPES.includes(e.type)
+        );
+        if (!hasMultiAngle) {
+          console.warn(
+            `  WARNING: Low-variety node "${node.id}" (${nonRestDurations.length} non-rest durations) has no multi-angle game exercise`
+          );
+          hasWarnings = true;
+          warningCount++;
+        }
+      }
+    }
+  }
+
+  if (errorCount === 0) {
+    console.log(`  Multi-angle games: OK${warningCount > 0 ? ` (${warningCount} low-variety nodes without multi-angle games)` : ''}`);
+  } else {
+    console.error(`  Found ${errorCount} multi-angle game error(s)`);
+  }
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -329,6 +396,7 @@ validateXPEconomy();
 validateExerciseTypes();
 validateExerciseDifficultyValues();
 validateRhythmPatternNames();
+validateMultiAngleGames();
 
 console.log('\n' + '='.repeat(50));
 
