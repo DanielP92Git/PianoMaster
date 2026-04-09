@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { usePianoSampler } from "../../../hooks/usePianoSampler";
 import { useSounds } from "../../../features/games/hooks/useSounds";
-import { useSafeSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
@@ -12,17 +12,13 @@ import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay";
 import VictoryScreen from "../VictoryScreen";
 import BackButton from "../../ui/BackButton";
 import { getNodeById } from "../../../data/skillTrail";
-import {
-  resolveByTags,
-  getPattern,
-  TIME_SIGNATURES,
-} from "./RhythmPatternGenerator";
+import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { scoreTap } from "./utils/rhythmScoringUtils";
 import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
 import FloatingFeedback from "./components/FloatingFeedback";
 import { MetronomeDisplay } from "./components";
-import { useSafeAccessibility } from "../../../contexts/AccessibilityContext";
+import { useAccessibility } from "../../../contexts/AccessibilityContext";
 
 // Game phases FSM
 const GAME_PHASES = {
@@ -49,7 +45,7 @@ const GAME_PHASES = {
 export function RhythmReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -59,11 +55,8 @@ export function RhythmReadingGame() {
 
   // Trail state extraction from location.state
   const nodeId = location.state?.nodeId ?? null;
-  const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig ?? null;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
-  const patternTags = nodeConfig?.patternTags ?? null;
-  const trailMeasureCount = nodeConfig?.measureCount ?? 1;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -78,11 +71,25 @@ export function RhythmReadingGame() {
   const { playNote } = usePianoSampler();
   useSounds(); // Loaded for potential future use (correct/wrong sounds for post-exercise feedback)
 
-  // Accessibility context — safe hook returns defaults outside provider
-  const { reducedMotion } = useSafeAccessibility();
+  // Accessibility context for reducedMotion (safe outside AccessibilityProvider in tests)
+  let reducedMotion = false;
+  try {
+    const a11y = useAccessibility();
+    reducedMotion = a11y?.reducedMotion ?? false;
+  } catch {
+    // Not in AccessibilityProvider — reducedMotion defaults to false
+  }
 
-  // Session timeout controls — safe hook returns no-ops outside provider
-  const { pauseTimer, resumeTimer } = useSafeSessionTimeout();
+  // Session timeout controls
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider — timer controls are no-ops
+  }
 
   // Extract config from nodeConfig or use defaults
   const tempo = nodeConfig?.tempo ?? nodeConfig?.config?.tempo ?? 80;
@@ -109,7 +116,6 @@ export function RhythmReadingGame() {
   const [currentExercise, setCurrentExercise] = useState(0);
   const totalExercises = 10; // D-02: 10 exercises per session
   const [currentBeats, setCurrentBeats] = useState(null);
-  const [currentMeasures, setCurrentMeasures] = useState(null);
   const [tapResults, setTapResults] = useState([]);
   const [exerciseScores, setExerciseScores] = useState([]);
   const [latestFeedback, setLatestFeedback] = useState(null);
@@ -117,34 +123,6 @@ export function RhythmReadingGame() {
   const [currentBeat, setCurrentBeat] = useState(1); // for MetronomeDisplay
   // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
-
-  // Kodaly syllable toggle (D-13 to D-16)
-  const SYLLABLE_TOGGLE_KEY = "pianomaster_kodaly_syllables";
-  const isDiscovery = nodeType === "discovery";
-  const [syllablesEnabled, setSyllablesEnabled] = useState(() => {
-    if (isDiscovery) return true;
-    try {
-      return localStorage.getItem(SYLLABLE_TOGGLE_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const showSyllableToggle = !isDiscovery; // Hide toggle on Discovery nodes (D-14)
-
-  const handleSyllableToggle = useCallback(() => {
-    setSyllablesEnabled((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SYLLABLE_TOGGLE_KEY, String(next));
-      } catch {
-        // localStorage unavailable — toggle still works in memory
-      }
-      return next;
-    });
-  }, []);
-
-  // Derive current language for syllable rendering
-  const currentLanguage = i18n.language?.startsWith("he") ? "he" : "en";
 
   // Refs for timing and animation (not state — no re-renders on updates)
   const cursorDivRef = useRef(null); // passed to RhythmStaffDisplay
@@ -178,20 +156,19 @@ export function RhythmReadingGame() {
     return () => resumeTimer();
   }, [gamePhase, pauseTimer, resumeTimer]);
 
-  // Pre-fetch pattern from trail node so notation is visible before user clicks Start
+  // Auto-start from trail node (hasAutoStartedRef guard)
   useEffect(() => {
     if (nodeConfig && !hasAutoStartedRef.current) {
+      const ctx = audioContextRef.current;
+      // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, show tap-to-start overlay
+      if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
+        setNeedsGestureToStart(true);
+        return; // Don't auto-start — show tap-to-start overlay
+      }
       hasAutoStartedRef.current = true;
-      // Fetch and display the pattern but stay in SETUP (user clicks Start to begin metronome)
-      (async () => {
-        const result = await fetchNewPattern();
-        if (result) {
-          setCurrentBeats(result.beats);
-          setCurrentMeasures(result.measures);
-        }
-      })();
+      setTimeout(() => startGame(), 100);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time pre-fetch guarded by hasAutoStartedRef
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoStartedRef; only nodeConfig changes should re-evaluate
   }, [nodeConfig]);
 
   // Reset guard when nodeId changes (navigating between trail nodes)
@@ -200,7 +177,6 @@ export function RhythmReadingGame() {
     setGamePhase(GAME_PHASES.SETUP);
     setCurrentExercise(0);
     setCurrentBeats(null);
-    setCurrentMeasures(null);
     setTapResults([]);
     setExerciseScores([]);
     cancelAllTimers();
@@ -285,80 +261,23 @@ export function RhythmReadingGame() {
 
   /**
    * Fetch a new pattern and convert to beats array.
-   * Trail mode: uses resolveByTags (curated patterns, synchronous).
-   * Free-practice mode: uses legacy getPattern generator (async).
-   * Returns { beats, measures, binaryPattern } or null on failure.
+   * Returns { beats, binaryPattern } or null on failure.
    */
   const fetchNewPattern = useCallback(async () => {
     try {
-      if (patternTags && patternTags.length > 0) {
-        // Trail mode: use curated patterns via resolveByTags
-        const candidates = resolveByTags(patternTags, {
-          difficulty,
-          measureCount: trailMeasureCount,
-        });
-        if (!candidates || candidates.length === 0) {
-          console.warn(
-            "[RhythmReadingGame] No curated patterns for tags:",
-            patternTags
-          );
-          return null;
-        }
-        // Pick a random pattern from candidates
-        const pattern =
-          candidates[Math.floor(Math.random() * candidates.length)];
-        // Convert beats from VexFlow duration codes to beat objects
-        // pattern.beats is array of arrays: [['q','q','q','q'], ['h','h']]
-        const SIXTEENTH_UNITS = {
-          w: 16,
-          h: 8,
-          q: 4,
-          8: 2,
-          16: 1,
-          qd: 6,
-          hd: 12,
-          "8d": 3,
-        };
-        const REST_UNITS = { w: 16, h: 8, q: 4, 8: 2, 16: 1 };
-        const measuresResult = pattern.beats.map((measure) =>
-          measure.map((durCode) => {
-            const isRest = durCode.endsWith("r");
-            const baseDur = isRest ? durCode.slice(0, -1) : durCode;
-            const durationUnits = isRest
-              ? REST_UNITS[baseDur] || 4
-              : SIXTEENTH_UNITS[durCode] || 4;
-            return { durationUnits, isRest };
-          })
-        );
-        // Flatten for scoring logic (flat array of all beats across all measures)
-        const flatBeats = measuresResult.flat();
-        return {
-          beats: flatBeats,
-          measures: measuresResult,
-          binaryPattern: null,
-        };
-      } else {
-        // Free practice mode: use legacy generator
-        const result = await getPattern(
-          timeSignatureStr,
-          difficulty,
-          rhythmPatterns
-        );
-        if (!result || !result.pattern) return null;
-        const beats = binaryPatternToBeats(result.pattern);
-        return { beats, measures: null, binaryPattern: result.pattern };
-      }
+      const result = await getPattern(
+        timeSignatureStr,
+        difficulty,
+        rhythmPatterns
+      );
+      if (!result || !result.pattern) return null;
+      const beats = binaryPatternToBeats(result.pattern);
+      return { beats, binaryPattern: result.pattern };
     } catch (err) {
       console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
-  }, [
-    patternTags,
-    trailMeasureCount,
-    difficulty,
-    timeSignatureStr,
-    rhythmPatterns,
-  ]);
+  }, [timeSignatureStr, difficulty, rhythmPatterns]);
 
   /**
    * Start continuous metronome lookahead scheduler.
@@ -478,11 +397,9 @@ export function RhythmReadingGame() {
       const playbackStartTime = explicitStartTime ?? ctx.currentTime + 0.05;
       patternStartTimeRef.current = playbackStartTime;
 
-      // Compute total duration from time signature × number of measures
+      // Compute measure duration from time signature (no pattern playback — child taps the rhythm)
       const beatsPerMeasureForDuration = timeSignatureObj.beats ?? 4;
-      const measuresInPattern = currentMeasures ? currentMeasures.length : 1;
-      measureDurationRef.current =
-        beatsPerMeasureForDuration * (60 / tempo) * measuresInPattern;
+      measureDurationRef.current = beatsPerMeasureForDuration * (60 / tempo);
 
       // Pre-compute scheduled beat times for scoring
       const { times } = buildBeatTimes(beats, tempo, playbackStartTime);
@@ -569,14 +486,7 @@ export function RhythmReadingGame() {
 
       rafIdRef.current = requestAnimationFrame(updateCursor);
     },
-    [
-      audioContextRef,
-      tempo,
-      timeSignatureObj,
-      playNote,
-      buildBeatTimes,
-      currentMeasures,
-    ]
+    [audioContextRef, tempo, timeSignatureObj, playNote, buildBeatTimes]
   );
 
   // Keep ref in sync so handleTap's READY→PLAYING transition calls the current version
@@ -633,8 +543,7 @@ export function RhythmReadingGame() {
             tapTime,
             scheduledBeatTimesRef.current,
             nextBeatIndexRef.current,
-            tempo,
-            nodeType
+            tempo
           );
           nextBeatIndexRef.current = newNextBeatIndex;
           setTapResults([{ noteIdx, quality }]);
@@ -662,8 +571,7 @@ export function RhythmReadingGame() {
       tapTime,
       scheduledBeatTimesRef.current,
       nextBeatIndexRef.current,
-      tempo,
-      nodeType
+      tempo
     );
 
     // Advance next beat index to prevent double-scoring
@@ -705,7 +613,6 @@ export function RhythmReadingGame() {
     const result = await fetchNewPattern();
     if (result) {
       setCurrentBeats(result.beats);
-      setCurrentMeasures(result.measures);
       startReadyPhase(result.beats);
     }
   }, [fetchNewPattern, startReadyPhase]);
@@ -769,19 +676,12 @@ export function RhythmReadingGame() {
     setExerciseScores([]);
     setTapResults([]);
 
-    // If pattern was already pre-fetched (trail mode), use it directly
-    if (currentBeats) {
-      startReadyPhase(currentBeats);
-      return;
-    }
-
     const result = await fetchNewPattern();
     if (result) {
       setCurrentBeats(result.beats);
-      setCurrentMeasures(result.measures);
       startReadyPhase(result.beats);
     }
-  }, [cancelAllTimers, currentBeats, fetchNewPattern, startReadyPhase]);
+  }, [cancelAllTimers, fetchNewPattern, startReadyPhase]);
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
   const handleGestureStart = useCallback(async () => {
@@ -862,20 +762,6 @@ export function RhythmReadingGame() {
             case "arcade_rhythm":
               navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
               break;
-            case "rhythm_tap":
-              navigate("/rhythm-mode/rhythm-reading-game", {
-                state: navState,
-                replace: true,
-              });
-              window.location.reload();
-              break;
-            case "rhythm_pulse":
-              navigate("/rhythm-mode/metronome-trainer", {
-                state: navState,
-                replace: true,
-              });
-              window.location.reload();
-              break;
             default:
               navigate("/trail");
           }
@@ -924,25 +810,6 @@ export function RhythmReadingGame() {
             {currentExercise + 1} / {totalExercises}
           </span>
         </div>
-        {/* Syllable toggle button — hidden on Discovery nodes (always-on), visible otherwise */}
-        {showSyllableToggle ? (
-          <button
-            onClick={handleSyllableToggle}
-            aria-pressed={syllablesEnabled}
-            aria-label={t("games.rhythmReading.syllableToggle.ariaLabel")}
-            className={`min-h-[44px] rounded-xl border px-3 py-2 text-sm font-normal transition-colors ${
-              !reducedMotion ? "active:scale-95" : ""
-            } ${
-              syllablesEnabled
-                ? "border-indigo-400/40 bg-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40"
-                : "border-white/20 bg-white/10 text-white/60 hover:bg-white/20"
-            }`}
-          >
-            {"\u2669"} {t("games.rhythmReading.syllableToggle.label")}
-          </button>
-        ) : (
-          <div className="w-20" aria-hidden="true" />
-        )}
       </header>
 
       <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
@@ -950,15 +817,12 @@ export function RhythmReadingGame() {
         <div style={{ position: "relative" }}>
           <RhythmStaffDisplay
             beats={currentBeats}
-            measures={currentMeasures}
             timeSignature={timeSignatureStr}
             cursorProgress={0} // cursor is controlled directly via cursorDivRef
             tapResults={tapResults}
             showCursor={false} // parent renders its own RAF-driven cursor div below
             reducedMotion={reducedMotion}
             onStaveBoundsReady={handleStaveBoundsReady}
-            showSyllables={syllablesEnabled}
-            language={currentLanguage}
           />
           {/* Cursor div - passed via ref to be updated by RAF without React re-renders */}
           <div

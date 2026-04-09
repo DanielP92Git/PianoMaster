@@ -156,7 +156,6 @@
   "pages": {
     "notesMaster": "Notes Master",
     "rhythmMaster": "Rhythm Master",
-    "earTraining": "Ear Training",
     "gameModes": "Game Modes",
     "practiceSessions": {
       "title": "Practice Sessions Recordings",
@@ -368,34 +367,12 @@
         "notificationsBlocked": "Notifications Blocked",
         "notificationsBlockedSubtitle": "Notifications were previously blocked. Follow these steps to enable them:",
         "notificationsBlockedSteps": {
-          "androidPwa": [
-            "Long-press the PianoMaster app icon",
-            "Tap 'App info'",
-            "Tap 'Notifications' and turn them on"
-          ],
-          "iosPwa": [
-            "Open your iPhone Settings app",
-            "Scroll down and tap 'PianoMaster'",
-            "Tap 'Notifications' and turn them on"
-          ],
-          "chrome": [
-            "Click the tune icon left of the address bar",
-            "Find 'Notifications' and change to 'Allow'"
-          ],
-          "safari": [
-            "Click 'Safari' in the menu bar",
-            "Click 'Settings for This Website'",
-            "Set Notifications to 'Allow'"
-          ],
-          "firefox": [
-            "Click the lock icon left of the address bar",
-            "Click 'Notifications' under Permissions",
-            "Select 'Allow'"
-          ],
-          "fallback": [
-            "Find the lock or site settings icon in your browser's address bar",
-            "Look for 'Notifications' and change to 'Allow'"
-          ]
+          "androidPwa": ["Long-press the PianoMaster app icon", "Tap 'App info'", "Tap 'Notifications' and turn them on"],
+          "iosPwa": ["Open your iPhone Settings app", "Scroll down and tap 'PianoMaster'", "Tap 'Notifications' and turn them on"],
+          "chrome": ["Click the tune icon left of the address bar", "Find 'Notifications' and change to 'Allow'"],
+          "safari": ["Click 'Safari' in the menu bar", "Click 'Settings for This Website'", "Set Notifications to 'Allow'"],
+          "firefox": ["Click the lock icon left of the address bar", "Click 'Notifications' under Permissions", "Select 'Allow'"],
+          "fallback": ["Find the lock or site settings icon in your browser's address bar", "Look for 'Notifications' and change to 'Allow'"]
         },
         "startTime": "Start Time",
         "endTime": "End Time",
@@ -716,7 +693,7 @@
         "description": "Identify notes on the staff"
       },
       "metronomeTrainer": {
-        "name": "Listen & Tap",
+        "name": "Metronome Rhythm Trainer",
         "description": "Listen to rhythm patterns then tap them back with precise timing"
       },
       "rhythmReading": {
@@ -741,7 +718,7 @@
       "playNow": "Play Now"
     },
     "metronomeTrainer": {
-      "headerTitle": "Listen & Tap",
+      "headerTitle": "Metronome Rhythm Trainer",
       "progressLabel": "Exercise {{current}} of {{total}}",
       "sessionCompleteTitle": "Session Complete!",
       "sessionCompleteSubtitle": "Great work on your rhythm training!",
@@ -782,7 +759,7 @@
           "perfect": "Perfect",
           "good": "Good",
           "fair": "Fair",
-          "miss": "Almost!"
+          "miss": "Miss"
         }
       }
     },
@@ -801,7 +778,7 @@
         "accuracy": {
           "perfect": "PERFECT!",
           "good": "GOOD!",
-          "miss": "Almost!"
+          "miss": "MISS"
         }
       },
       "countdown": {
@@ -811,10 +788,6 @@
       "errors": {
         "audioUnavailable": "Audio not available. Tap to try again.",
         "patternError": "Something went wrong. Go back and try again."
-      },
-      "syllableToggle": {
-        "label": "Syllables",
-        "ariaLabel": "Toggle rhythm syllables"
       }
     },
     "rhythmDictation": {
@@ -1246,7 +1219,7 @@
   },
   "gameSettings": {
     "titles": {
-      "metronomeTrainer": "Listen & Tap",
+      "metronomeTrainer": "Metronome Rhythm Trainer",
       "metronomeSubtitle": "Configure your rhythm training session"
     },
     "steps": {

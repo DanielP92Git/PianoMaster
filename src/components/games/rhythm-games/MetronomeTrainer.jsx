@@ -14,14 +14,12 @@ import RhythmGameSetup from "./components/RhythmGameSetup";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
-import { useSafeSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
-import { useAccessibility } from "../../../contexts/AccessibilityContext";
-import { calculateTimingThresholds } from "./utils/rhythmTimingUtils";
 
 // Game phases
 const GAME_PHASES = {
@@ -32,6 +30,37 @@ const GAME_PHASES = {
   USER_PERFORMANCE: "user-performance",
   FEEDBACK: "feedback",
   SESSION_COMPLETE: "session-complete",
+};
+
+// Base timing thresholds (in milliseconds) - these are for 120 BPM
+const BASE_TIMING_THRESHOLDS = {
+  PERFECT: 50, // ±20ms
+  GOOD: 75, // ±50ms
+  FAIR: 125, // ±100ms
+  // >100ms = MISS
+};
+
+/**
+ * Calculate dynamic timing thresholds based on tempo
+ * Slower tempos get more generous thresholds, faster tempos get stricter
+ */
+const calculateTimingThresholds = (tempo) => {
+  // Base tempo for reference (120 BPM)
+  const baseTempo = 120;
+
+  // Calculate scaling factor
+  // At 60 BPM: factor = 1.4 (40% more generous)
+  // At 90 BPM: factor = 1.15 (15% more generous)
+  // At 120 BPM: factor = 1.0 (baseline)
+  // At 150 BPM: factor = 0.85 (15% stricter)
+  // At 180 BPM: factor = 0.75 (25% stricter)
+  const scalingFactor = Math.pow(baseTempo / tempo, 0.3); // Gentle exponential scaling
+
+  return {
+    PERFECT: Math.round(BASE_TIMING_THRESHOLDS.PERFECT * scalingFactor),
+    GOOD: Math.round(BASE_TIMING_THRESHOLDS.GOOD * scalingFactor),
+    FAIR: Math.round(BASE_TIMING_THRESHOLDS.FAIR * scalingFactor),
+  };
 };
 
 // Scoring system
@@ -47,7 +76,6 @@ export function MetronomeTrainer() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation("common");
-  const { reducedMotion } = useAccessibility();
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -57,12 +85,8 @@ export function MetronomeTrainer() {
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
-  const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig || null;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
-  const pulseOnly = nodeConfig?.pulseOnly ?? false;
-  const pulseBeatCount = nodeConfig?.beats ?? 8;
-  const pulsePitch = nodeConfig?.pitch ?? "C4";
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
@@ -87,8 +111,16 @@ export function MetronomeTrainer() {
     adaptiveDifficulty: false,
   });
 
-  // Session timeout controls — safe hook returns no-ops outside provider
-  const { pauseTimer, resumeTimer } = useSafeSessionTimeout();
+  // Session timeout controls - pause timer during active gameplay
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider, timer controls are no-ops
+  }
 
   // Pause/resume inactivity timer based on game phase
   useEffect(() => {
@@ -141,14 +173,6 @@ export function MetronomeTrainer() {
 
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
-      // Pulse exercises always require a user gesture to start audio playback.
-      // This prevents autoplay policy violations and ensures a clean user experience
-      // where the child explicitly taps to begin.
-      if (pulseOnly) {
-        setNeedsGestureToStart(true);
-        return;
-      }
-
       // IOS-02: If AudioContext is missing (needs user gesture to create) or suspended, defer to user tap
       const ctx = audioContextRef.current;
       if (!ctx || ctx.state === "suspended" || ctx.state === "interrupted") {
@@ -217,13 +241,6 @@ export function MetronomeTrainer() {
               });
               window.location.reload(); // Force reload for same route
               break;
-            case "rhythm_pulse":
-              navigate("/rhythm-mode/metronome-trainer", {
-                state: navState,
-                replace: true,
-              });
-              window.location.reload();
-              break;
             case "boss_challenge":
               navigate("/notes-master-mode/sight-reading-game", {
                 state: { ...navState, isBoss: true },
@@ -247,11 +264,6 @@ export function MetronomeTrainer() {
               break;
             case "arcade_rhythm":
               navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
-              break;
-            case "rhythm_tap":
-              navigate("/rhythm-mode/rhythm-reading-game", {
-                state: navState,
-              });
               break;
             default:
               navigate("/trail");
@@ -303,30 +315,10 @@ export function MetronomeTrainer() {
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
   const [_countdownToStart, setCountdownToStart] = useState(null); // Countdown until user should start tapping
 
-  // Pulse mode visual state
-  const [isOnBeat, setIsOnBeat] = useState(false);
-  const pulseBeatCounterRef = useRef(0); // Tracks beats elapsed in pulse mode
-  // Refs to break circular dependency between startContinuousMetronome and stop/evaluate
-  const stopContinuousMetronomeRef = useRef(null);
-  const evaluatePerformanceRef = useRef(null);
-  const pendingTimeoutsRef = useRef([]); // Track setTimeout IDs for cleanup on unmount/reset
-  const pulsePerformanceActiveRef = useRef(false); // True once pulse enters USER_PERFORMANCE
-  const pulseStopTimeRef = useRef(null); // AudioContext time after which no beats should be scheduled
-  const pulsePerformanceStartTimeRef = useRef(null); // AudioContext time when performance begins (set synchronously)
-  const lastScheduledPianoBeatRef = useRef(-1); // Dedup: last beat number with piano scheduled
-
   // Calculate beat duration from tempo
   useEffect(() => {
     beatDuration.current = 60 / gameSettings.tempo; // seconds per beat
   }, [gameSettings.tempo]);
-
-  // Cleanup pending timeouts on unmount to prevent stale callbacks
-  useEffect(() => {
-    return () => {
-      pendingTimeoutsRef.current.forEach(clearTimeout);
-      pendingTimeoutsRef.current = [];
-    };
-  }, []);
 
   /**
    * Create custom metronome sound with specific frequency and volume
@@ -489,40 +481,7 @@ export function MetronomeTrainer() {
                 frequency = isDownbeat ? 600 : 500;
               }
 
-              // In pulse mode, skip scheduling beats past the stop time
-              if (
-                pulseOnly &&
-                pulseStopTimeRef.current &&
-                beatTime >= pulseStopTimeRef.current
-              ) {
-                continue;
-              }
-
               createCustomMetronomeSound(beatTime, frequency, volume);
-
-              // In pulse mode, play piano C4 only during performance (time-based gate + dedup)
-              if (
-                pulseOnly &&
-                pulsePerformanceStartTimeRef.current &&
-                beatTime >= pulsePerformanceStartTimeRef.current &&
-                beatNumber > lastScheduledPianoBeatRef.current
-              ) {
-                lastScheduledPianoBeatRef.current = beatNumber;
-                const pianoDelay = 0.01; // 10ms after click for clarity
-                setTimeout(
-                  () => {
-                    audioEngine.playPianoSound(0.6, pulsePitch);
-                    // Visual pulse flash
-                    setIsOnBeat(true);
-                    setTimeout(() => setIsOnBeat(false), 200);
-                  },
-                  Math.max(
-                    0,
-                    (beatTime - audioEngine.getCurrentTime() + pianoDelay) *
-                      1000
-                  )
-                );
-              }
             }
           }
         }
@@ -589,8 +548,6 @@ export function MetronomeTrainer() {
       beatDuration,
       gamePhase,
       createCustomMetronomeSound,
-      pulseOnly,
-      pulsePitch,
     ]
   );
 
@@ -630,11 +587,6 @@ export function MetronomeTrainer() {
     audioEngine.clearScheduledEvents();
   }, [audioEngine]);
 
-  // Keep stopContinuousMetronomeRef in sync so pulse scheduling can call it without circular dep
-  useEffect(() => {
-    stopContinuousMetronomeRef.current = stopContinuousMetronome;
-  }, [stopContinuousMetronome]);
-
   /**
    * Start user performance exactly at beat 1 (no countdown needed)
    */
@@ -642,10 +594,7 @@ export function MetronomeTrainer() {
     setGamePhase(GAME_PHASES.USER_PERFORMANCE);
     setHasUserStartedTapping(false);
     setCountdownToStart(null);
-    if (pulseOnly) {
-      pulsePerformanceActiveRef.current = true;
-    }
-  }, [pulseOnly]);
+  }, []);
 
   /**
    * Start get ready phase (metronome continues, taps ignored)
@@ -776,22 +725,6 @@ export function MetronomeTrainer() {
 
       // The continuous metronome handles both audio and visual synchronization
 
-      // In pulse mode: skip pattern playback entirely — go straight to user performance
-      if (pulseOnly) {
-        // Set synchronously so the beat scheduler knows when piano should start
-        // (avoids race condition with async setTimeout for startUserPerformanceAtBeat1)
-        pulsePerformanceStartTimeRef.current = patternStartTime;
-        const delayToStart =
-          (patternStartTime - audioEngine.getCurrentTime()) * 1000;
-        setTimeout(
-          () => {
-            startUserPerformanceAtBeat1();
-          },
-          Math.max(0, delayToStart)
-        );
-        return;
-      }
-
       // Schedule pattern playback to start after count-in
       const delayToPatternStart =
         (patternStartTime - audioEngine.getCurrentTime()) * 1000;
@@ -800,14 +733,7 @@ export function MetronomeTrainer() {
         Math.max(0, delayToPatternStart)
       );
     },
-    [
-      audioEngine,
-      gameSettings,
-      beatDuration,
-      startPatternPlaybackWithPattern,
-      pulseOnly,
-      startUserPerformanceAtBeat1,
-    ]
+    [audioEngine, gameSettings, beatDuration, startPatternPlaybackWithPattern]
   );
 
   /**
@@ -824,36 +750,13 @@ export function MetronomeTrainer() {
 
         setGamePhase(GAME_PHASES.COUNT_IN);
         gameStartTime.current = audioEngine.getCurrentTime();
-        pulsePerformanceActiveRef.current = false;
-        pulseStopTimeRef.current = null;
-        pulsePerformanceStartTimeRef.current = null;
-        lastScheduledPianoBeatRef.current = -1;
 
-        // In pulse mode: build a synthetic pattern for ONE bar where every beat is a tap beat.
-        // Each beat maps to 4 sixteenth-note slots (4/4 time), so beatsPerMeasure beats
-        // = beatsPerMeasure * 4 slots with a 1 at position 0 of each beat.
-        let pattern;
-        if (pulseOnly) {
-          const beatsPerMeasure = currentSettings.timeSignature?.beats ?? 4;
-          const unitsPerBeat = 4; // sixteenth-note grid
-          const totalUnits = beatsPerMeasure * unitsPerBeat; // ONE bar
-          const pulsePattern = Array(totalUnits).fill(0);
-          for (let b = 0; b < beatsPerMeasure; b++) {
-            pulsePattern[b * unitsPerBeat] = 1;
-          }
-          pattern = {
-            pattern: pulsePattern,
-            name: "pulse",
-            timeSignature: `${beatsPerMeasure}/4`,
-            difficulty: "beginner",
-          };
-        } else {
-          pattern = await getPattern(
-            currentSettings.timeSignature.name,
-            currentSettings.difficulty,
-            rhythmPatterns
-          );
-        }
+        // Load first pattern using current settings
+        const pattern = await getPattern(
+          currentSettings.timeSignature.name,
+          currentSettings.difficulty,
+          rhythmPatterns
+        );
 
         if (!pattern || !pattern.pattern || !Array.isArray(pattern.pattern)) {
           console.error(
@@ -869,25 +772,13 @@ export function MetronomeTrainer() {
         setUserTaps([]);
         setExpectedTaps([]);
         setCountdownToStart(null); // Clear countdown
+        patternInfoRef.current = null; // Clear previous pattern info
         userTapsRef.current = []; // Clear user taps ref
-        pulseBeatCounterRef.current = 0; // Reset pulse beat counter
 
-        // In pulse mode, set patternInfoRef now (startPatternPlaybackWithPattern is skipped)
-        // so evaluatePerformance can score taps against the synthetic pulse pattern.
-        if (pulseOnly) {
-          patternInfoRef.current = {
-            pattern: pattern.pattern,
-            startTime: audioEngine.getCurrentTime() + 0.1,
-            beatDuration: beatDuration.current,
-          };
-        } else {
-          patternInfoRef.current = null; // Clear previous pattern info
-        }
-
-        // Reset exercise progress — pulse mode is a single exercise (1 round)
+        // Reset exercise progress
         setExerciseProgress({
           currentExercise: 0,
-          totalExercises: pulseOnly ? 1 : 10,
+          totalExercises: 10,
           exerciseScores: [],
           isGameComplete: false,
         });
@@ -898,7 +789,7 @@ export function MetronomeTrainer() {
         }
 
         // Start continuous metronome and count-in
-        const countInStartTime = audioEngine.getCurrentTime() + 0.15;
+        const countInStartTime = audioEngine.getCurrentTime() + 0.1;
         startContinuousMetronome(
           countInStartTime,
           currentSettings.timeSignature
@@ -919,8 +810,6 @@ export function MetronomeTrainer() {
       audioEngine,
       startContinuousMetronome,
       startCountInWithPattern,
-      pulseOnly,
-      beatDuration,
     ]
   );
 
@@ -1021,10 +910,7 @@ export function MetronomeTrainer() {
         const timingErrorSeconds = timingError * currentBeatDur;
 
         // Use the same accuracy calculation as immediate feedback
-        const thresholds = calculateTimingThresholds(
-          gameSettings.tempo,
-          nodeType
-        );
+        const thresholds = calculateTimingThresholds(gameSettings.tempo);
         const timingErrorMs = timingErrorSeconds * 1000;
 
         let accuracy = "MISS";
@@ -1133,11 +1019,6 @@ export function MetronomeTrainer() {
     playWrongSound,
   ]);
 
-  // Keep evaluatePerformanceRef in sync so pulse scheduling can call it without circular dep
-  useEffect(() => {
-    evaluatePerformanceRef.current = evaluatePerformance;
-  }, [evaluatePerformance]);
-
   /**
    * Handle user tap input
    */
@@ -1150,190 +1031,88 @@ export function MetronomeTrainer() {
 
     // If this is the first tap, start the timed response phase
     if (!hasUserStartedTapping) {
-      if (pulseOnly) {
-        // PULSE MODE: Snap to nearest beat (any beat, not just downbeat) and finish the bar
-        const currentTime = audioEngine.getCurrentTime();
-        const timeSinceMetronomeStart =
-          currentTime - metronomeStartTimeRef.current;
-        const beatDur = beatDuration.current;
-        const beatsPerMeasure = gameSettings.timeSignature.beats;
+      // Calculate which beat 1 the user actually tapped on
+      const currentTime = audioEngine.getCurrentTime();
+      const timeSinceMetronomeStart =
+        currentTime - metronomeStartTimeRef.current;
+      const beatDur = beatDuration.current;
+      const beatsPerMeasure = gameSettings.timeSignature.beats;
+      const totalBeatsFloat = timeSinceMetronomeStart / beatDur;
 
-        // Find which beat we're closest to (any beat, not just beat 1)
-        const totalBeatsFloat = timeSinceMetronomeStart / beatDur;
-        const nearestBeatNumber = Math.round(totalBeatsFloat);
-        const nearestBeatTime =
-          metronomeStartTimeRef.current + nearestBeatNumber * beatDur;
-        const timingError = Math.abs(currentTime - nearestBeatTime);
+      // Find the nearest beat 1 (downbeat) - look both forward and backward
+      const currentMeasureFloat = totalBeatsFloat / beatsPerMeasure;
+      const prevMeasure = Math.floor(currentMeasureFloat);
+      const nextMeasure = Math.ceil(currentMeasureFloat);
 
-        // Generous tolerance: allow up to 1.2 beats of error
-        const maxAllowedError = beatDur * 1.2;
-        if (timingError > maxAllowedError) {
-          return; // Ignore — too far from any beat
-        }
+      const prevBeat1Time =
+        metronomeStartTimeRef.current + prevMeasure * beatsPerMeasure * beatDur;
+      const nextBeat1Time =
+        metronomeStartTimeRef.current + nextMeasure * beatsPerMeasure * beatDur;
 
-        setHasUserStartedTapping(true);
+      // Choose the closest beat 1
+      const prevError = Math.abs(currentTime - prevBeat1Time);
+      const nextError = Math.abs(currentTime - nextBeat1Time);
 
-        // Calculate the start of the CURRENT bar containing this beat
-        const beatInMeasure =
-          ((nearestBeatNumber % beatsPerMeasure) + beatsPerMeasure) %
-          beatsPerMeasure;
-        const barStartBeat = nearestBeatNumber - beatInMeasure;
-        const barStartTime =
-          metronomeStartTimeRef.current + barStartBeat * beatDur;
+      const nearestBeat1Time =
+        prevError < nextError ? prevBeat1Time : nextBeat1Time;
+      const timingError = Math.min(prevError, nextError);
 
-        // Set performance start to bar start so tap positions are relative to bar
-        userPerformanceStartTime.current = barStartTime;
+      // Very generous tolerance - allow up to 1.2 beats worth of error
+      // This gives users plenty of room to sync with the metronome
+      const maxAllowedError = beatDur * 1.2; // 120% of a beat duration
 
-        // Rebuild expected taps: only beats from the tapped beat to end of bar
-        if (patternInfoRef.current) {
-          const { pattern } = patternInfoRef.current;
-          const currentBeatDur = beatDuration.current;
-          const unitsPerBeat = 4; // sixteenth-note grid
-          const expectedTimes = [];
-
-          pattern.forEach((beat, index) => {
-            if (beat === 1) {
-              const beatPosition = index / unitsPerBeat; // beat number within bar
-              // Only include beats from the tapped beat onward
-              if (beatPosition >= beatInMeasure) {
-                const relativeTime = (index * currentBeatDur) / 4;
-                const absoluteTapTime = barStartTime + relativeTime;
-                expectedTimes.push(absoluteTapTime);
-              }
-            }
-          });
-
-          setExpectedTaps(expectedTimes);
-
-          // Also update patternInfoRef to reflect the reduced expected beats
-          // so evaluatePerformance scores correctly
-          const reducedPattern = [...pattern];
-          const zeroEnd = Math.min(
-            beatInMeasure * unitsPerBeat,
-            reducedPattern.length
-          );
-          for (let i = 0; i < zeroEnd; i++) {
-            reducedPattern[i] = 0; // Zero out beats before first tap
-          }
-          patternInfoRef.current = {
-            ...patternInfoRef.current,
-            pattern: reducedPattern,
-          };
-        }
-
-        // Schedule bar end: stop metronome and evaluate
-        const measureDuration = beatsPerMeasure * beatDur;
-        const measureEndTime = barStartTime + measureDuration;
-        const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
-
-        // Prevent scheduler from queuing beats past bar end
-        pulseStopTimeRef.current = measureEndTime;
-
-        const t1 = setTimeout(
-          () => {
-            stopContinuousMetronome();
-          },
-          Math.max(0, delayToMeasureEnd)
-        );
-        pendingTimeoutsRef.current.push(t1);
-
-        const t2 = setTimeout(
-          () => {
-            evaluatePerformance();
-          },
-          Math.max(200, delayToMeasureEnd + 200)
-        );
-        pendingTimeoutsRef.current.push(t2);
-
-        // Record this tap (fall through to tap recording below)
-      } else {
-        // NORMAL MODE: existing first-tap logic (snap to nearest beat 1)
-        const currentTime = audioEngine.getCurrentTime();
-        const timeSinceMetronomeStart =
-          currentTime - metronomeStartTimeRef.current;
-        const beatDur = beatDuration.current;
-        const beatsPerMeasure = gameSettings.timeSignature.beats;
-        const totalBeatsFloat = timeSinceMetronomeStart / beatDur;
-
-        // Find the nearest beat 1 (downbeat) - look both forward and backward
-        const currentMeasureFloat = totalBeatsFloat / beatsPerMeasure;
-        const prevMeasure = Math.floor(currentMeasureFloat);
-        const nextMeasure = Math.ceil(currentMeasureFloat);
-
-        const prevBeat1Time =
-          metronomeStartTimeRef.current +
-          prevMeasure * beatsPerMeasure * beatDur;
-        const nextBeat1Time =
-          metronomeStartTimeRef.current +
-          nextMeasure * beatsPerMeasure * beatDur;
-
-        // Choose the closest beat 1
-        const prevError = Math.abs(currentTime - prevBeat1Time);
-        const nextError = Math.abs(currentTime - nextBeat1Time);
-
-        const nearestBeat1Time =
-          prevError < nextError ? prevBeat1Time : nextBeat1Time;
-        const timingError = Math.min(prevError, nextError);
-
-        // Very generous tolerance - allow up to 1.2 beats worth of error
-        // This gives users plenty of room to sync with the metronome
-        const maxAllowedError = beatDur * 1.2; // 120% of a beat duration
-
-        if (timingError > maxAllowedError) {
-          // Don't start the performance yet, let them try again
-          return;
-        }
-
-        // Now we can mark that the user has started tapping
-        setHasUserStartedTapping(true);
-
-        const actualBeat1Time = nearestBeat1Time;
-
-        // Update the user performance start time to the actual beat 1 they tapped on
-        userPerformanceStartTime.current = actualBeat1Time;
-
-        // Recalculate expected taps relative to the new start time
-        if (patternInfoRef.current) {
-          const { pattern } = patternInfoRef.current;
-          const currentBeatDur = beatDuration.current; // Use current beat duration, not stored one
-          const expectedTimes = [];
-
-          pattern.forEach((beat, index) => {
-            if (beat === 1) {
-              const relativeTime = (index * currentBeatDur) / 4; // Convert to sixteenth note timing
-              const absoluteTapTime = actualBeat1Time + relativeTime;
-              expectedTimes.push(absoluteTapTime);
-            }
-          });
-
-          setExpectedTaps(expectedTimes);
-        }
-
-        // Wait for the full measure to complete before evaluation
-        // This ensures victory sound plays at the end of the measure, not immediately after last tap
-        const measureDuration = beatsPerMeasure * beatDur;
-        const measureEndTime = actualBeat1Time + measureDuration;
-        const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
-
-        // Stop metronome exactly at the end of the measure (beat 4)
-        const t3 = setTimeout(
-          () => {
-            stopContinuousMetronome();
-          },
-          Math.max(0, delayToMeasureEnd) // Stop exactly at measure end
-        );
-        pendingTimeoutsRef.current.push(t3);
-
-        // Evaluate and play victory sound slightly after metronome stops
-        const evaluationDelay = delayToMeasureEnd + 200; // 200ms after measure end
-        const t4 = setTimeout(
-          () => {
-            evaluatePerformance();
-          },
-          Math.max(200, evaluationDelay) // Small pause after metronome stops
-        );
-        pendingTimeoutsRef.current.push(t4);
+      if (timingError > maxAllowedError) {
+        // Don't start the performance yet, let them try again
+        return;
       }
+
+      // Now we can mark that the user has started tapping
+      setHasUserStartedTapping(true);
+
+      const actualBeat1Time = nearestBeat1Time;
+
+      // Update the user performance start time to the actual beat 1 they tapped on
+      userPerformanceStartTime.current = actualBeat1Time;
+
+      // Recalculate expected taps relative to the new start time
+      if (patternInfoRef.current) {
+        const { pattern } = patternInfoRef.current;
+        const currentBeatDur = beatDuration.current; // Use current beat duration, not stored one
+        const expectedTimes = [];
+
+        pattern.forEach((beat, index) => {
+          if (beat === 1) {
+            const relativeTime = (index * currentBeatDur) / 4; // Convert to sixteenth note timing
+            const absoluteTapTime = actualBeat1Time + relativeTime;
+            expectedTimes.push(absoluteTapTime);
+          }
+        });
+
+        setExpectedTaps(expectedTimes);
+      }
+
+      // Wait for the full measure to complete before evaluation
+      // This ensures victory sound plays at the end of the measure, not immediately after last tap
+      const measureDuration = beatsPerMeasure * beatDur;
+      const measureEndTime = actualBeat1Time + measureDuration;
+      const delayToMeasureEnd = (measureEndTime - currentTime) * 1000;
+
+      // Stop metronome exactly at the end of the measure (beat 4)
+      setTimeout(
+        () => {
+          stopContinuousMetronome();
+        },
+        Math.max(0, delayToMeasureEnd) // Stop exactly at measure end
+      );
+
+      // Evaluate and play victory sound slightly after metronome stops
+      const evaluationDelay = delayToMeasureEnd + 200; // 200ms after measure end
+      setTimeout(
+        () => {
+          evaluatePerformance();
+        },
+        Math.max(200, evaluationDelay) // Small pause after metronome stops
+      );
     }
 
     const relativeTime = tapTime - userPerformanceStartTime.current;
@@ -1389,10 +1168,7 @@ export function MetronomeTrainer() {
       if (bestTimingError < Infinity) {
         const timingErrorSeconds = bestTimingError * currentBeatDur;
         const timingErrorMs = timingErrorSeconds * 1000;
-        const thresholds = calculateTimingThresholds(
-          gameSettings.tempo,
-          nodeType
-        );
+        const thresholds = calculateTimingThresholds(gameSettings.tempo);
 
         if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
         else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";
@@ -1417,7 +1193,6 @@ export function MetronomeTrainer() {
     gameSettings,
     stopContinuousMetronome,
     evaluatePerformance,
-    pulseOnly,
   ]);
 
   /**
@@ -1477,13 +1252,6 @@ export function MetronomeTrainer() {
    * Reset game to setup
    */
   const resetGame = useCallback(() => {
-    // Clear any pending measure-end timeouts to prevent stale callbacks
-    pendingTimeoutsRef.current.forEach(clearTimeout);
-    pendingTimeoutsRef.current = [];
-    pulsePerformanceActiveRef.current = false;
-    pulseStopTimeRef.current = null;
-    pulsePerformanceStartTimeRef.current = null;
-    lastScheduledPianoBeatRef.current = -1;
     stopContinuousMetronome();
     setGamePhase(GAME_PHASES.SETUP);
     setCurrentPattern(null);
@@ -1628,14 +1396,14 @@ export function MetronomeTrainer() {
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
-      {/* Audio Interrupted Overlay — only show when NOT already showing gesture gate */}
+      {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
       <AudioInterruptedOverlay
-        isVisible={isInterrupted && !needsGestureToStart}
+        isVisible={isInterrupted}
         onTapToResume={handleTapToResume}
         onRestartExercise={() => setGamePhase(GAME_PHASES.SETUP)}
       />
 
-      {/* Trail gesture gate — takes priority over interrupted overlay */}
+      {/* Trail gesture gate — shown when trail auto-start needs a user gesture to resume AudioContext */}
       {needsGestureToStart && (
         <AudioInterruptedOverlay
           isVisible={true}
@@ -1673,46 +1441,20 @@ export function MetronomeTrainer() {
 
       {/* Main Game Area - Side by Side */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row landscape:flex-row landscape:gap-2">
-        {/* Left Side: Metronome + Guidance (or Pulse Circle in pulseOnly mode) */}
+        {/* Left Side: Metronome + Guidance */}
         <div className="flex min-h-0 flex-1 flex-col justify-center space-y-4">
-          {pulseOnly ? (
-            /* Pulse mode: large pulsing circle instead of notation */
-            <div className="flex flex-col items-center justify-center gap-6">
-              <div
-                className={`flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 shadow-lg transition-transform ${
-                  reducedMotion ? "duration-0" : "duration-200"
-                } ${
-                  isOnBeat
-                    ? reducedMotion
-                      ? "scale-105"
-                      : "scale-125 shadow-purple-400/50"
-                    : "scale-100 shadow-purple-500/30"
-                }`}
-              >
-                <span className="text-4xl font-bold text-white">
-                  {currentBeat > 0 ? currentBeat : ""}
-                </span>
-              </div>
-              <div className="px-4 text-center text-sm text-white sm:text-base">
-                {getGuidanceText()}
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* Metronome Beats - Horizontal */}
-              <MetronomeDisplay
-                currentBeat={currentBeat}
-                timeSignature={gameSettings.timeSignature}
-                isActive={gamePhase !== GAME_PHASES.FEEDBACK}
-                isCountIn={gamePhase === GAME_PHASES.COUNT_IN}
-              />
+          {/* Metronome Beats - Horizontal */}
+          <MetronomeDisplay
+            currentBeat={currentBeat}
+            timeSignature={gameSettings.timeSignature}
+            isActive={gamePhase !== GAME_PHASES.FEEDBACK}
+            isCountIn={gamePhase === GAME_PHASES.COUNT_IN}
+          />
 
-              {/* User Guidance Text */}
-              <div className="px-4 text-center text-sm text-white sm:text-base">
-                {getGuidanceText()}
-              </div>
-            </>
-          )}
+          {/* User Guidance Text */}
+          <div className="px-4 text-center text-sm text-white sm:text-base">
+            {getGuidanceText()}
+          </div>
         </div>
 
         {/* Right Side: TAP HERE Button */}
@@ -1734,35 +1476,33 @@ export function MetronomeTrainer() {
 
       {/* Bottom Stats + Controls */}
       <div className="flex-shrink-0 space-y-3 px-4 pb-4">
-        {/* Compact Stats Row — hidden in pulse mode (single-bar exercise, stats not meaningful) */}
-        {!pulseOnly && (
-          <div className="flex justify-around text-center text-xs text-white sm:text-sm">
-            <div>
-              <div className="text-lg font-bold text-blue-400 sm:text-2xl">
-                {sessionStats.patternsCompleted}
-              </div>
-              <div>{t("games.metronomeTrainer.stats.patterns")}</div>
+        {/* Compact Stats Row */}
+        <div className="flex justify-around text-center text-xs text-white sm:text-sm">
+          <div>
+            <div className="text-lg font-bold text-blue-400 sm:text-2xl">
+              {sessionStats.patternsCompleted}
             </div>
-            <div>
-              <div className="text-lg font-bold text-green-400 sm:text-2xl">
-                {sessionStats.totalScore}
-              </div>
-              <div>XP</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
-                {sessionStats.maxCombo}
-              </div>
-              <div>{t("games.metronomeTrainer.stats.maxCombo")}</div>
-            </div>
-            <div>
-              <div className="text-lg font-bold text-purple-400 sm:text-2xl">
-                {sessionStats.perfectTaps + sessionStats.goodTaps}
-              </div>
-              <div>{t("games.metronomeTrainer.stats.goodTaps")}</div>
-            </div>
+            <div>{t("games.metronomeTrainer.stats.patterns")}</div>
           </div>
-        )}
+          <div>
+            <div className="text-lg font-bold text-green-400 sm:text-2xl">
+              {sessionStats.totalScore}
+            </div>
+            <div>XP</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
+              {sessionStats.maxCombo}
+            </div>
+            <div>{t("games.metronomeTrainer.stats.maxCombo")}</div>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-purple-400 sm:text-2xl">
+              {sessionStats.perfectTaps + sessionStats.goodTaps}
+            </div>
+            <div>{t("games.metronomeTrainer.stats.goodTaps")}</div>
+          </div>
+        </div>
 
         {/* Navigation Buttons (feedback phase only) */}
         {gamePhase === GAME_PHASES.FEEDBACK &&

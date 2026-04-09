@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useCallback } from "react";
-import { useUser } from "../features/authentication/useUser";
-import { useLogout } from "../features/authentication/useLogout";
-import { useInactivityTimeout } from "../hooks/useInactivityTimeout";
-import InactivityWarningModal from "../components/ui/InactivityWarningModal";
+import React, { createContext, useContext, useCallback } from 'react';
+import { useUser } from '../features/authentication/useUser';
+import { useLogout } from '../features/authentication/useLogout';
+import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
+import InactivityWarningModal from '../components/ui/InactivityWarningModal';
 
 const SessionTimeoutContext = createContext(null);
 
@@ -27,7 +27,7 @@ export function SessionTimeoutProvider({ children }) {
   // Handle logout with inactivity message
   const handleInactivityLogout = useCallback(() => {
     // Store flag for login page to show message
-    sessionStorage.setItem("logoutReason", "inactivity");
+    sessionStorage.setItem('logoutReason', 'inactivity');
     logout();
   }, [logout]);
 
@@ -53,13 +53,7 @@ export function SessionTimeoutProvider({ children }) {
   // Don't render modal or provide timer when not authenticated
   if (!isAuthenticated) {
     return (
-      <SessionTimeoutContext.Provider
-        value={{
-          pauseTimer: () => {},
-          resumeTimer: () => {},
-          isTimerActive: false,
-        }}
-      >
+      <SessionTimeoutContext.Provider value={{ pauseTimer: () => {}, resumeTimer: () => {}, isTimerActive: false }}>
         {children}
       </SessionTimeoutContext.Provider>
     );
@@ -87,29 +81,7 @@ export function SessionTimeoutProvider({ children }) {
 export function useSessionTimeout() {
   const context = useContext(SessionTimeoutContext);
   if (!context) {
-    throw new Error(
-      "useSessionTimeout must be used within SessionTimeoutProvider"
-    );
-  }
-  return context;
-}
-
-/**
- * Safe version of useSessionTimeout that returns no-op defaults when used
- * outside SessionTimeoutProvider. Avoids try-catch around hook calls which
- * violates the spirit of React's Rules of Hooks.
- *
- * @returns {{ pauseTimer: Function, resumeTimer: Function, isTimerActive: boolean }}
- */
-// eslint-disable-next-line react-refresh/only-export-components
-export function useSafeSessionTimeout() {
-  const context = useContext(SessionTimeoutContext);
-  if (!context) {
-    return {
-      pauseTimer: () => {},
-      resumeTimer: () => {},
-      isTimerActive: false,
-    };
+    throw new Error('useSessionTimeout must be used within SessionTimeoutProvider');
   }
   return context;
 }

@@ -49,11 +49,6 @@ export function AudioContextProvider({ children }) {
   const streamRef = useRef(null);
   const sourceRef = useRef(null); // Store to prevent GC
 
-  // Phase 22-05: Track whether requestMic() has ever been called in this session.
-  // Used by the visibilitychange handler to avoid false-positive isInterrupted
-  // when returning to foreground on pages that never requested the mic (e.g., pulse exercise).
-  const micEverRequestedRef = useRef(false);
-
   const [isReady, setIsReady] = useState(false);
   const [micPermission, setMicPermission] = useState("prompt"); // 'prompt' | 'granted' | 'denied'
 
@@ -124,10 +119,6 @@ export function AudioContextProvider({ children }) {
    * Returns { audioContext, analyser } for immediate use by the caller.
    */
   const requestMic = useCallback(async () => {
-    // Phase 22-05: Mark that mic was requested at least once in this session.
-    // Once set, the visibilitychange handler will correctly detect dead tracks.
-    micEverRequestedRef.current = true;
-
     // If already set up, return existing chain
     if (isReady && analyserRef.current && audioContextRef.current) {
       return {
@@ -298,10 +289,10 @@ export function AudioContextProvider({ children }) {
         streamRef.current?.getTracks().every((t) => t.readyState === "live") ??
         false;
 
-      if (ctx?.state === "interrupted" || (micEverRequestedRef.current && !tracksLive)) {
+      if (ctx?.state === "interrupted" || (streamRef.current && !tracksLive)) {
         // Need user gesture to recover — show the interrupted overlay
         setIsInterrupted(true);
-      } else if (ctx?.state === "running" && (!micEverRequestedRef.current || tracksLive)) {
+      } else if (ctx?.state === "running" && tracksLive) {
         // Everything alive — silent resume, no overlay
         return;
       } else {

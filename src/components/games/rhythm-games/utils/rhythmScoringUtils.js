@@ -12,8 +12,8 @@ import { calculateTimingThresholds } from './rhythmTimingUtils';
  * @param {number} tempo - Current tempo in BPM
  * @returns {{ quality: 'PERFECT'|'GOOD'|'MISS', noteIdx: number, deltaMs: number, newNextBeatIndex: number }}
  */
-export function scoreTap(tapTime, scheduledBeatTimes, nextBeatIndex, tempo, nodeType = null) {
-  const thresholds = calculateTimingThresholds(tempo, nodeType);
+export function scoreTap(tapTime, scheduledBeatTimes, nextBeatIndex, tempo) {
+  const thresholds = calculateTimingThresholds(tempo);
 
   if (!scheduledBeatTimes || scheduledBeatTimes.length === 0) {
     return {

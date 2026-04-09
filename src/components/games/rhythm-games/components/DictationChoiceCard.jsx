@@ -1,9 +1,6 @@
 import React, { useRef, useEffect } from "react";
 import { Renderer, Stave, Voice, Formatter, Beam, Stem } from "vexflow";
-import {
-  beatsToVexNotes,
-  renderSpreadSyllables,
-} from "../utils/rhythmVexflowHelpers";
+import { beatsToVexNotes } from "../utils/rhythmVexflowHelpers";
 import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamGroupUtils";
 
 /**
@@ -34,17 +31,15 @@ const STATE_CLASSES = {
 };
 
 /**
- * Parse time signature string to VexFlow Voice parameters.
- * Returns raw num_beats and beat_value so VexFlow can validate measure totals correctly
- * (e.g. 6/8 → { num_beats: 6, beat_value: 8 } instead of collapsing to 3/4).
+ * Parse time signature string to beat count (in quarter notes) for VexFlow Voice.
  */
-function getVoiceParams(timeSig) {
+function getBeatCount(timeSig) {
   const parts = timeSig.split("/");
-  if (parts.length !== 2) return { num_beats: 4, beat_value: 4 };
-  return {
-    num_beats: parseInt(parts[0], 10),
-    beat_value: parseInt(parts[1], 10),
-  };
+  if (parts.length !== 2) return 4;
+  const [num, den] = parts.map(Number);
+  // For compound time (6/8): 6 eighth notes = 3 quarter-note beats
+  if (den === 8) return num / 2;
+  return num;
 }
 
 export function DictationChoiceCard({
@@ -54,8 +49,6 @@ export function DictationChoiceCard({
   state = "default",
   onSelect,
   disabled = false,
-  showSyllables = false,
-  language = "en",
 }) {
   const containerRef = useRef(null);
 
@@ -68,7 +61,7 @@ export function DictationChoiceCard({
 
     const containerWidth = containerRef.current.offsetWidth || 320;
     const staveWidth = containerWidth - 20;
-    const staveHeight = showSyllables ? 130 : 100;
+    const staveHeight = 100;
 
     try {
       const renderer = new Renderer(
@@ -85,8 +78,8 @@ export function DictationChoiceCard({
       stave.addTimeSignature(timeSignature);
       stave.setContext(ctx).draw();
 
-      // Build VexFlow notes from beats (pass syllable options)
-      const notes = beatsToVexNotes(beats, { showSyllables, language });
+      // Build VexFlow notes from beats
+      const notes = beatsToVexNotes(beats);
 
       // Force stems up — rhythm-only display per D-01 convention
       notes.forEach((note) => {
@@ -95,8 +88,9 @@ export function DictationChoiceCard({
         }
       });
 
-      // Create voice with raw time signature values for correct VexFlow validation
-      const voice = new Voice(getVoiceParams(timeSignature));
+      // Create voice
+      const beatCount = getBeatCount(timeSignature);
+      const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
       voice.setStrict(false);
       voice.addTickables(notes);
 
@@ -123,19 +117,10 @@ export function DictationChoiceCard({
           el.setAttribute("fill", "white");
         });
       }
-
-      // Clone VexFlow annotations for spread syllables on sustained notes
-      // Runs AFTER white-fill so clones inherit white fill from the source element
-      if (showSyllables) {
-        renderSpreadSyllables(containerRef.current, notes, beats, {
-          noteEndX: staveWidth,
-          language,
-        });
-      }
     } catch (err) {
       console.warn("[DictationChoiceCard] VexFlow render error:", err);
     }
-  }, [beats, timeSignature, showSyllables, language]);
+  }, [beats, timeSignature]);
 
   const handleClick = () => {
     if (!disabled && state !== "dimmed" && onSelect) {

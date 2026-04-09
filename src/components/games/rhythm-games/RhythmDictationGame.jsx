@@ -7,7 +7,7 @@ import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { usePianoSampler } from "../../../hooks/usePianoSampler";
 import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useSounds } from "../../../features/games/hooks/useSounds";
-import { useSafeSessionTimeout } from "../../../contexts/SessionTimeoutContext";
+import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
@@ -56,14 +56,13 @@ const DEFAULT_DIFFICULTY = DIFFICULTY_LEVELS.BEGINNER;
 export function RhythmDictationGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
 
   // --- Orientation prompt (portrait-primary, landscape-compatible per UI-SPEC) ---
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
 
   // --- Trail state (from TrailNodeModal navigation) ---
   const nodeId = location.state?.nodeId ?? null;
-  const nodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
   const nodeConfig = location.state?.nodeConfig ?? null;
   const difficulty = nodeConfig?.difficulty ?? DEFAULT_DIFFICULTY;
   const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
@@ -105,8 +104,16 @@ export function RhythmDictationGame() {
     [audioEngine]
   );
 
-  // Session timeout controls — safe hook returns no-ops outside provider
-  const { pauseTimer, resumeTimer } = useSafeSessionTimeout();
+  // --- Session timeout ---
+  let pauseTimer = useCallback(() => {}, []);
+  let resumeTimer = useCallback(() => {}, []);
+  try {
+    const sessionTimeout = useSessionTimeout();
+    pauseTimer = sessionTimeout.pauseTimer;
+    resumeTimer = sessionTimeout.resumeTimer;
+  } catch {
+    // Not in SessionTimeoutProvider — timer controls are no-ops
+  }
 
   // --- Game state ---
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
@@ -135,33 +142,6 @@ export function RhythmDictationGame() {
 
   // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
-
-  // Kodaly syllable toggle (D-13 to D-16)
-  const SYLLABLE_TOGGLE_KEY = "pianomaster_kodaly_syllables";
-  const isDiscovery = nodeType === "discovery";
-  const [syllablesEnabled, setSyllablesEnabled] = useState(() => {
-    if (isDiscovery) return true;
-    try {
-      return localStorage.getItem(SYLLABLE_TOGGLE_KEY) === "true";
-    } catch {
-      return false;
-    }
-  });
-  const showSyllableToggle = !isDiscovery;
-
-  const handleSyllableToggle = useCallback(() => {
-    setSyllablesEnabled((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem(SYLLABLE_TOGGLE_KEY, String(next));
-      } catch {
-        // localStorage unavailable — toggle still works in memory
-      }
-      return next;
-    });
-  }, []);
-
-  const currentLanguage = i18n.language?.startsWith("he") ? "he" : "en";
 
   // Auto-start guard
   const hasAutoStartedRef = useRef(false);
@@ -299,13 +279,8 @@ export function RhythmDictationGame() {
         // Shuffle: place correct + distractors randomly
         const allChoices = [beats, ...distractors];
         const shuffled = shuffleArray(allChoices);
-        // Track which index is the correct one (fingerprint comparison avoids
-        // fragile reference-equality that would break if shuffleArray ever
-        // deep-clones or if beats is recreated between generation and lookup)
-        const correctFp = JSON.stringify(beats);
-        const corrIdx = shuffled.findIndex(
-          (c) => JSON.stringify(c) === correctFp
-        );
+        // Track which index is the correct one
+        const corrIdx = shuffled.findIndex((c) => c === beats);
 
         setCorrectBeats(beats);
         setChoices(shuffled);
@@ -356,19 +331,6 @@ export function RhythmDictationGame() {
       setFeedbackText("");
     });
   }, [correctBeats, gamePhase, tempo, playPattern, t]);
-
-  // ---------------------------------------------------------------------------
-  // Advance to next question or complete session
-  // ---------------------------------------------------------------------------
-  const advanceQuestion = useCallback(() => {
-    const nextQuestion = currentQuestion + 1;
-    if (nextQuestion >= TOTAL_QUESTIONS) {
-      setGamePhase(GAME_PHASES.SESSION_COMPLETE);
-    } else {
-      setCurrentQuestion(nextQuestion);
-      generateQuestion(nextQuestion, tempo, timeSignature);
-    }
-  }, [currentQuestion, tempo, timeSignature, generateQuestion]);
 
   // ---------------------------------------------------------------------------
   // Card selection handler
@@ -427,9 +389,21 @@ export function RhythmDictationGame() {
       playCorrectSound,
       playWrongSound,
       t,
-      advanceQuestion,
     ]
   );
+
+  // ---------------------------------------------------------------------------
+  // Advance to next question or complete session
+  // ---------------------------------------------------------------------------
+  const advanceQuestion = useCallback(() => {
+    const nextQuestion = currentQuestion + 1;
+    if (nextQuestion >= TOTAL_QUESTIONS) {
+      setGamePhase(GAME_PHASES.SESSION_COMPLETE);
+    } else {
+      setCurrentQuestion(nextQuestion);
+      generateQuestion(nextQuestion, tempo, timeSignature);
+    }
+  }, [currentQuestion, tempo, timeSignature, generateQuestion]);
 
   // ---------------------------------------------------------------------------
   // Auto-start from trail
@@ -548,18 +522,6 @@ export function RhythmDictationGame() {
               break;
             case "arcade_rhythm":
               navigate("/rhythm-mode/arcade-rhythm-game", { state: navState });
-              break;
-            case "rhythm_tap":
-              navigate("/rhythm-mode/rhythm-reading-game", {
-                state: navState,
-              });
-              break;
-            case "rhythm_pulse":
-              navigate("/rhythm-mode/metronome-trainer", {
-                state: navState,
-                replace: true,
-              });
-              window.location.reload();
               break;
             default:
               navigate("/trail");
@@ -694,24 +656,6 @@ export function RhythmDictationGame() {
 
         {/* Center column: answer cards */}
         <div className="flex flex-1 flex-col justify-center gap-3 py-3">
-          {/* Syllable toggle button — top of center column, hidden on Discovery (always-on) */}
-          {showSyllableToggle && (
-            <div className="flex justify-end px-2">
-              <button
-                onClick={handleSyllableToggle}
-                aria-pressed={syllablesEnabled}
-                aria-label={t("games.rhythmReading.syllableToggle.ariaLabel")}
-                className={`min-h-[44px] rounded-xl border px-3 py-2 text-sm font-normal transition-colors ${
-                  syllablesEnabled
-                    ? "border-indigo-400/40 bg-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40"
-                    : "border-white/20 bg-white/10 text-white/60 hover:bg-white/20"
-                }`}
-              >
-                {"\u2669"} {t("games.rhythmReading.syllableToggle.label")}
-              </button>
-            </div>
-          )}
-
           {/* READY phase — "Listen to the pattern" gate */}
           {gamePhase === GAME_PHASES.READY && (
             <div className="flex flex-col items-center gap-4 py-8">
@@ -743,8 +687,6 @@ export function RhythmDictationGame() {
                   state={cardStates[idx] ?? "default"}
                   onSelect={handleCardSelect}
                   disabled={isInFeedback}
-                  showSyllables={syllablesEnabled}
-                  language={currentLanguage}
                 />
               ))}
             </div>
