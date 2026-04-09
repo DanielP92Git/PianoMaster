@@ -12,10 +12,9 @@ import { useTranslation } from "react-i18next";
 
 import {
   generateQuestions,
-  DURATION_INFO,
   ALL_DURATION_CODES,
 } from "./utils/durationInfo";
-import DurationCard from "./components/DurationCard";
+import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
@@ -262,9 +261,6 @@ export default function VisualRecognitionGame() {
   const currentQuestion = questions[currentIndex];
   if (!currentQuestion) return null;
 
-  const durationName = t(DURATION_INFO[currentQuestion.correct].i18nKey);
-  const promptText = t("visualRecognition.prompt", { durationName });
-
   // Progress dots
   const renderProgressDots = () => (
     <div
@@ -285,30 +281,6 @@ export default function VisualRecognitionGame() {
       })}
     </div>
   );
-
-  // Card grid
-  const renderCards = () => {
-    const gridClass = isLandscape
-      ? "grid grid-cols-4 gap-3 w-full max-w-2xl"
-      : "grid grid-cols-2 gap-4 w-full max-w-sm";
-
-    return (
-      <div className={gridClass}>
-        {currentQuestion.choices.map((choice, i) => (
-          <DurationCard
-            key={`${currentIndex}-${i}`}
-            type="icon"
-            durationCode={choice}
-            state={cardStates[i]}
-            onSelect={handleSelect}
-            disabled={gameState === GAME_STATES.FEEDBACK}
-            cardIndex={i}
-            ariaLabel={t(DURATION_INFO[choice].i18nKey)}
-          />
-        ))}
-      </div>
-    );
-  };
 
   // Landscape layout
   if (isLandscape) {
@@ -331,12 +303,13 @@ export default function VisualRecognitionGame() {
 
         {/* Main content: prompt centered above, cards row below */}
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          <div className="rounded-xl border border-white/20 bg-white/10 px-6 py-3 backdrop-blur-md">
-            <h2 className="text-center text-lg font-bold text-white">
-              {promptText}
-            </h2>
-          </div>
-          {renderCards()}
+          <VisualRecognitionQuestion
+            question={currentQuestion}
+            cardStates={cardStates}
+            isLandscape={isLandscape}
+            onSelect={handleSelect}
+            disabled={gameState === GAME_STATES.FEEDBACK}
+          />
         </div>
       </div>
     );
@@ -362,16 +335,15 @@ export default function VisualRecognitionGame() {
       {/* Progress dots */}
       <div className="mt-4">{renderProgressDots()}</div>
 
-      {/* Prompt */}
-      <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-        <h2 className="text-center text-xl font-bold text-white">
-          {promptText}
-        </h2>
-      </div>
-
-      {/* Answer cards — 2x2 grid */}
-      <div className="mt-6 flex w-full flex-1 items-start justify-center">
-        {renderCards()}
+      {/* Prompt + Answer cards */}
+      <div className="mt-6 flex w-full flex-1 flex-col items-center gap-6">
+        <VisualRecognitionQuestion
+          question={currentQuestion}
+          cardStates={cardStates}
+          isLandscape={isLandscape}
+          onSelect={handleSelect}
+          disabled={gameState === GAME_STATES.FEEDBACK}
+        />
       </div>
     </div>
   );

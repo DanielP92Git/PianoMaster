@@ -12,10 +12,9 @@ import { useTranslation } from "react-i18next";
 
 import {
   generateQuestions,
-  DURATION_INFO,
   ALL_DURATION_CODES,
 } from "./utils/durationInfo";
-import DurationCard, { SVG_COMPONENTS } from "./components/DurationCard";
+import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { getNodeById } from "../../../data/skillTrail";
@@ -25,12 +24,6 @@ import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
-import {
-  SYLLABLE_MAP_EN,
-  SYLLABLE_MAP_HE,
-  REST_SYLLABLE_EN,
-  REST_SYLLABLE_HE,
-} from "./utils/rhythmVexflowHelpers";
 
 const GAME_STATES = {
   IDLE: "idle",
@@ -46,7 +39,7 @@ const WRONG_DELAY = 1200;
 export default function SyllableMatchingGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
   const { reduce: reducedMotion } = useMotionTokens();
 
   // Android PWA: fullscreen + orientation lock
@@ -107,20 +100,6 @@ export default function SyllableMatchingGame() {
     mql.addEventListener("change", handler);
     return () => mql.removeEventListener("change", handler);
   }, []);
-
-  // Syllable lookup helper
-  const getSyllable = useCallback(
-    (code) => {
-      const info = DURATION_INFO[code];
-      if (!info) return code;
-      const lang = i18n.language;
-      if (info.isRest)
-        return lang === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
-      const map = lang === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
-      return map[info.durationUnits] || code;
-    },
-    [i18n.language]
-  );
 
   // Build duration pool from nodeConfig
   const buildDurationPool = useCallback(() => {
@@ -282,9 +261,6 @@ export default function SyllableMatchingGame() {
   const currentQuestion = questions[currentIndex];
   if (!currentQuestion) return null;
 
-  // Render the SVG prompt for the current note
-  const SvgIcon = SVG_COMPONENTS[currentQuestion.correct];
-
   // Progress dots
   const renderProgressDots = () => (
     <div
@@ -303,50 +279,6 @@ export default function SyllableMatchingGame() {
         }
         return <div key={i} className={dotClass} aria-hidden="true" />;
       })}
-    </div>
-  );
-
-  // Card grid (text mode with syllables)
-  const renderCards = () => {
-    const gridClass = isLandscape
-      ? "grid grid-cols-4 gap-3 w-full max-w-2xl"
-      : "grid grid-cols-2 gap-4 w-full max-w-sm";
-
-    return (
-      <div className={gridClass}>
-        {currentQuestion.choices.map((choice, i) => {
-          const syllable = getSyllable(choice);
-          return (
-            <DurationCard
-              key={`${currentIndex}-${i}`}
-              type="text"
-              text={syllable}
-              state={cardStates[i]}
-              onSelect={handleSelect}
-              disabled={gameState === GAME_STATES.FEEDBACK}
-              cardIndex={i}
-              ariaLabel={syllable}
-            />
-          );
-        })}
-      </div>
-    );
-  };
-
-  // Prompt panel with large SVG
-  const renderPromptPanel = () => (
-    <div className="flex flex-col items-center rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-      <div dir="ltr" className="flex items-center justify-center">
-        {SvgIcon && (
-          <SvgIcon
-            className={`${isLandscape ? "h-16" : "h-24"} w-auto`}
-            aria-label={t(DURATION_INFO[currentQuestion.correct].i18nKey)}
-          />
-        )}
-      </div>
-      <p className="mt-2 text-center text-base text-white/60">
-        {t("syllableMatching.prompt")}
-      </p>
     </div>
   );
 
@@ -371,8 +303,13 @@ export default function SyllableMatchingGame() {
 
         {/* Main content: prompt centered above, cards row below */}
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
-          {renderPromptPanel()}
-          {renderCards()}
+          <SyllableMatchingQuestion
+            question={currentQuestion}
+            cardStates={cardStates}
+            isLandscape={isLandscape}
+            onSelect={handleSelect}
+            disabled={gameState === GAME_STATES.FEEDBACK}
+          />
         </div>
       </div>
     );
@@ -398,12 +335,15 @@ export default function SyllableMatchingGame() {
       {/* Progress dots */}
       <div className="mt-4">{renderProgressDots()}</div>
 
-      {/* Prompt panel with SVG + question text */}
-      <div className="mt-6">{renderPromptPanel()}</div>
-
-      {/* Answer cards — 2x2 grid */}
-      <div className="mt-6 flex w-full flex-1 items-start justify-center">
-        {renderCards()}
+      {/* Prompt + Answer cards */}
+      <div className="mt-6 flex w-full flex-1 flex-col items-center gap-6">
+        <SyllableMatchingQuestion
+          question={currentQuestion}
+          cardStates={cardStates}
+          isLandscape={isLandscape}
+          onSelect={handleSelect}
+          disabled={gameState === GAME_STATES.FEEDBACK}
+        />
       </div>
     </div>
   );
