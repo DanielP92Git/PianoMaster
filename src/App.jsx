@@ -134,6 +134,9 @@ const VisualRecognitionGame = lazyWithRetry(
 const SyllableMatchingGame = lazyWithRetry(
   () => import("./components/games/rhythm-games/SyllableMatchingGame")
 );
+const MixedLessonGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/MixedLessonGame")
+);
 const NoteComparisonGame = lazyWithRetry(
   () => import("./components/games/ear-training-games/NoteComparisonGame")
 );
@@ -276,6 +279,7 @@ function OrientationController() {
     "/ear-training-mode/interval-game",
     "/rhythm-mode/visual-recognition-game",
     "/rhythm-mode/syllable-matching-game",
+    "/rhythm-mode/mixed-lesson",
   ];
 
   const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
@@ -485,6 +489,10 @@ function AppRoutes() {
             <Route
               path="/rhythm-mode/syllable-matching-game"
               element={<SyllableMatchingGame />}
+            />
+            <Route
+              path="/rhythm-mode/mixed-lesson"
+              element={<MixedLessonGame />}
             />
             <Route path="/ear-training-mode" element={<EarTrainingMode />} />
             <Route

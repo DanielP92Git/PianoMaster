@@ -39,4 +39,5 @@ export const EXERCISE_TYPES = {
   // v3.2 multi-angle games
   VISUAL_RECOGNITION: "visual_recognition",
   SYLLABLE_MATCHING: "syllable_matching",
+  MIXED_LESSON: "mixed_lesson", // v3.2 unified mixed lesson engine
 };

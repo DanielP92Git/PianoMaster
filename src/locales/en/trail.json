@@ -82,7 +82,8 @@
     "pitch_comparison": "Pitch Comparison",
     "interval_id": "Interval ID",
     "visual_recognition": "Visual Recognition",
-    "syllable_matching": "Syllable Matching"
+    "syllable_matching": "Syllable Matching",
+    "mixed_lesson": "Mixed Lesson"
   },
   "modal": {
     "yourProgress": "Your Progress",
