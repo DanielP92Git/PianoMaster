@@ -380,6 +380,66 @@ function validateMultiAngleGames() {
   }
 }
 
+/**
+ * Validate mixed lesson exercises.
+ * Rules:
+ *   1. Node must have rhythmConfig (duration source for question generation)
+ *   2. config.questions must be a non-empty array
+ *   3. Each question entry must have a type field with a known renderer type
+ *   4. Question count should be 8-10 (warning, not error)
+ */
+const RENDERER_TYPES = new Set(['visual_recognition', 'syllable_matching']);
+
+function validateMixedLessons() {
+  console.log('\nChecking mixed lesson exercises...');
+  let errorCount = 0;
+  let warningCount = 0;
+
+  for (const node of SKILL_NODES) {
+    for (const exercise of node.exercises || []) {
+      if (exercise.type !== 'mixed_lesson') continue;
+
+      // Rule 1: must have rhythmConfig
+      if (!node.rhythmConfig) {
+        console.error(`  ERROR: Node "${node.id}" has mixed_lesson exercise but no rhythmConfig`);
+        hasErrors = true;
+        errorCount++;
+      }
+
+      // Rule 2: must have questions array
+      const questions = exercise.config?.questions;
+      if (!Array.isArray(questions) || questions.length === 0) {
+        console.error(`  ERROR: Node "${node.id}" mixed_lesson has no questions array`);
+        hasErrors = true;
+        errorCount++;
+        continue;
+      }
+
+      // Rule 3: each question entry must have a valid type
+      for (const [i, q] of questions.entries()) {
+        if (!q.type || !RENDERER_TYPES.has(q.type)) {
+          console.error(`  ERROR: Node "${node.id}" mixed_lesson question[${i}] has unknown type "${q.type}"`);
+          hasErrors = true;
+          errorCount++;
+        }
+      }
+
+      // Rule 4: question count should be 8-10 (soft warning)
+      if (questions.length < 8 || questions.length > 10) {
+        console.warn(`  WARNING: Node "${node.id}" mixed_lesson has ${questions.length} questions (expected 8-10)`);
+        hasWarnings = true;
+        warningCount++;
+      }
+    }
+  }
+
+  if (errorCount === 0) {
+    console.log(`  Mixed lessons: OK${warningCount > 0 ? ` (${warningCount} warning(s))` : ''}`);
+  } else {
+    console.error(`  Found ${errorCount} mixed lesson error(s)`);
+  }
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -397,6 +457,7 @@ validateExerciseTypes();
 validateExerciseDifficultyValues();
 validateRhythmPatternNames();
 validateMultiAngleGames();
+validateMixedLessons();
 
 console.log('\n' + '='.repeat(50));
 
