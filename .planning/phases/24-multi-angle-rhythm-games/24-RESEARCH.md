@@ -713,17 +713,17 @@ All critical claims were verified against the live codebase. No high-risk assump
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should rhythm_1_6 (Speed Challenge, SPEED_ROUND type) get multi-angle exercises?**
    - What we know: It has ["q","h"] — qualifies by duration count. SPEED_ROUND nodes are meant for fast-paced challenge.
    - What's unclear: Does adding visual_recognition/syllable_matching to a SPEED_ROUND node fit pedagogically? Or should speed rounds stay single-exercise?
-   - Recommendation: Include it. The exercise_sequence [rhythm_tap → visual_recognition → syllable_matching] still works; the speed challenge comes from the ARCADE_RHYTHM exercise within rhythm_tap config.
+   - RESOLVED: Include it. The exercise_sequence [rhythm_tap → visual_recognition → syllable_matching] still works; the speed challenge comes from the ARCADE_RHYTHM exercise within rhythm_tap config. Plan 03 includes rhythm_1_6.
 
 2. **The `rhythm_1_1` node has two existing exercises (RHYTHM_PULSE + RHYTHM_TAP). Adding visual_recognition and syllable_matching would make it a 4-exercise node.**
    - What we know: RHYTHM_PULSE is 8 beats of pulse-only (very short). Adding 2 more exercises is consistent with D-24.
    - What's unclear: Does a 4-exercise node feel too long for the very first node?
-   - Recommendation: Include all 4 — pulse is very short (< 1 min), and having rhythm_1_1 be the most thorough introduction node is pedagogically sound.
+   - RESOLVED: Include all 4 — pulse is very short (< 1 min), and having rhythm_1_1 be the most thorough introduction node is pedagogically sound. 4-exercise length is acceptable.
 
 ---
 
