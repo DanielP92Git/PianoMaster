@@ -52,20 +52,21 @@ Source: tailwind.config.js (minHeight.touch = 44px), CLAUDE.md glass card patter
 
 ## Typography
 
-| Role                              | Size                                               | Weight         | Line Height |
-| --------------------------------- | -------------------------------------------------- | -------------- | ----------- |
-| Body                              | 16px (text-base)                                   | 400 (regular)  | 1.7         |
-| Label                             | 14px (text-sm)                                     | 400 (regular)  | 1.6         |
-| Heading (prompt)                  | 18px (text-lg) landscape / 20px (text-xl) portrait | 700 (bold)     | 1.7         |
-| Display (fraction counter "3/10") | 14px (text-sm)                                     | 600 (semibold) | 1.5         |
+| Role                              | Size             | Weight        | Line Height |
+| --------------------------------- | ---------------- | ------------- | ----------- |
+| Body                              | 16px (text-base) | 400 (regular) | 1.7         |
+| Label                             | 14px (text-sm)   | 400 (regular) | 1.6         |
+| Heading (prompt)                  | 20px (text-xl)   | 700 (bold)    | 1.7         |
+| Display (fraction counter "3/10") | 14px (text-sm)   | 700 (bold)    | 1.5         |
 
 Notes:
 
+- Prompt heading uses `text-xl` (20px) in both portrait and landscape orientations — single heading size across layouts
 - Syllable text inside DurationCard type="text": 24px (text-2xl) weight 700 — existing DurationCard pattern, do not change
 - Feedback status message (sr-only, not visible): aria-live only, no visual typography needed
 - Hebrew (RTL): use `font-hebrew` stack (Heebo/Assistant/Noto Sans Hebrew); all size/weight rules remain identical
 
-Source: tailwind.config.js fontSize tokens, existing VisualRecognitionGame.jsx (text-lg/text-xl prompt), SyllableMatchingGame.jsx (text-base prompt secondary)
+Source: tailwind.config.js fontSize tokens, existing VisualRecognitionGame.jsx (text-xl prompt), SyllableMatchingGame.jsx (text-base prompt secondary)
 
 ---
 
@@ -103,6 +104,8 @@ Source: CONTEXT.md D-10, DurationCard.jsx STATE_CLASSES (verified), CLAUDE.md gl
 
 These are the specific UI surfaces Phase 25 introduces or refactors. Each maps to a specific implementation artifact.
 
+Primary focal point: the question prompt panel (glass card with bold text-xl heading) in the center of the viewport.
+
 ### 1. MixedLessonGame — top-level game component
 
 **Layout (portrait):**
@@ -113,7 +116,7 @@ fixed inset-0 flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-
   │     ├── BackButton (self-start)
   │     ├── [Progress bar] flex-1 h-2 rounded-full bg-white/15 overflow-hidden
   │     │     └── [Fill] h-2 rounded-full bg-green-400 transition-[width] duration-300
-  │     └── [Fraction text] text-sm font-semibold text-white/70 ml-2   "3/10"
+  │     └── [Fraction text] text-sm font-bold text-white/70 ml-2   "3/10"
   ├── [Question area] flex-1 flex flex-col items-center justify-center gap-6
   │     └── [Crossfade wrapper] relative w-full — renders VisualRecognitionQuestion OR SyllableMatchingQuestion
   └── [sr-only aria-live] feedback message for screen readers
@@ -138,7 +141,7 @@ fixed inset-0 flex flex-col overflow-y-auto p-4
 - Track: `h-2 rounded-full bg-white/15 overflow-hidden` — same glass track as existing progress bars (CLAUDE.md)
 - Fill: `h-2 rounded-full bg-green-400` — width set as inline style: `width: {(currentIndex / total) * 100}%`
 - Width transition: `transition-[width] duration-300 ease-in-out` — skipped when `reducedMotion` is true
-- Fraction label: `text-sm font-semibold text-white/70` at right end of top bar — `"3/10"` format (never "3 of 10")
+- Fraction label: `text-sm font-bold text-white/70` at right end of top bar — `"3/10"` format (never "3 of 10")
 - ARIA: `role="progressbar" aria-valuenow={currentIndex} aria-valuemin={0} aria-valuemax={total} aria-label="Lesson progress"`
 
 Source: CONTEXT.md D-10
@@ -174,7 +177,7 @@ VisualRecognitionQuestion({
 **Layout (portrait):** prompt heading in glass card → 2×2 DurationCard grid below
 **Layout (landscape):** prompt heading → 1×4 DurationCard row
 
-Prompt text: `text-xl font-bold text-white` centered in `rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md`
+Prompt text: `text-xl font-bold text-white` centered in `rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md` — used in both portrait and landscape
 Card grid portrait: `grid grid-cols-2 gap-4 w-full max-w-sm`
 Card grid landscape: `grid grid-cols-4 gap-3 w-full max-w-2xl`
 
@@ -199,6 +202,7 @@ SyllableMatchingQuestion({
 **Layout (portrait):** prompt panel (large SVG + "What syllable?" text) → 2×2 DurationCard text-mode grid below
 **Layout (landscape):** prompt panel (SVG icon `h-16`) → 1×4 DurationCard text-mode row
 
+Prompt heading: `text-xl font-bold text-white` — used in both portrait and landscape
 SVG icon portrait: `h-24 w-auto`, landscape: `h-16 w-auto`
 Prompt subtext: `text-base text-white/60` below SVG
 Card grid: same as VisualRecognitionQuestion
@@ -225,7 +229,7 @@ Source: DurationCard.jsx STATE_CLASSES (verified, do not change)
 ```
 fixed inset-0 flex flex-col items-center justify-center p-4 [gradient background]
   └── max-w-sm rounded-xl border border-white/20 bg-white/10 p-6 text-center backdrop-blur-md
-        ├── error message text-lg text-white
+        ├── error message text-xl text-white
         └── BackButton
 ```
 
@@ -353,4 +357,5 @@ No new registries or third-party component blocks are introduced in Phase 25. Al
 
 _Phase: 25-unified-mixed-lesson-engine-for-trail-nodes_
 _UI-SPEC created: 2026-04-09_
+_UI-SPEC revised: 2026-04-09 (typography fixes: 4 sizes, 2 weights; focal point added)_
 _Sources: 25-CONTEXT.md, 25-RESEARCH.md, CLAUDE.md, tailwind.config.js, VisualRecognitionGame.jsx, SyllableMatchingGame.jsx, DurationCard.jsx_
