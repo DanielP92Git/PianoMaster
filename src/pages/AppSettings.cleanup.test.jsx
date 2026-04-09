@@ -12,39 +12,48 @@
  *   - No showParentGate-style gate for weekend pass flow (REQ-08)
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // ─── Mock: react-router-dom ──────────────────────────────────────────────────
-vi.mock('react-router-dom', () => ({
+vi.mock("react-router-dom", () => ({
   useNavigate: () => vi.fn(),
-  Link: ({ children, to, ...props }) => <a href={to} {...props}>{children}</a>,
+  Link: ({ children, to, ...props }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
+  ),
 }));
 
 // ─── Mock: react-i18next ─────────────────────────────────────────────────────
-vi.mock('react-i18next', () => ({
+vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key) => key,
-    i18n: { dir: () => 'ltr', language: 'en', changeLanguage: vi.fn() },
+    i18n: { dir: () => "ltr", language: "en", changeLanguage: vi.fn() },
   }),
 }));
 
 // ─── Mock: react-hot-toast ───────────────────────────────────────────────────
-vi.mock('react-hot-toast', () => ({
+vi.mock("react-hot-toast", () => ({
   toast: { error: vi.fn(), success: vi.fn() },
   default: { error: vi.fn(), success: vi.fn() },
 }));
 
 // ─── Mock: Authentication ─────────────────────────────────────────────────────
-vi.mock('../features/authentication/useUser', () => ({
+vi.mock("../features/authentication/useUser", () => ({
   useUser: () => ({
-    user: { id: 'test-user-id', email: 'test@test.com', user_metadata: { first_name: 'Test' } },
+    user: {
+      id: "test-user-id",
+      email: "test@test.com",
+      user_metadata: { first_name: "Test" },
+    },
+    isStudent: true,
   }),
 }));
 
 // ─── Mock: Settings Context ───────────────────────────────────────────────────
-vi.mock('../contexts/SettingsContext', () => ({
+vi.mock("../contexts/SettingsContext", () => ({
   useSettings: () => ({
     preferences: {
       notifications_enabled: false,
@@ -54,9 +63,9 @@ vi.mock('../contexts/SettingsContext', () => ({
       notify_streak_at_risk: false,
       notify_new_content: false,
       quiet_hours_enabled: false,
-      quiet_hours_start: '22:00',
-      quiet_hours_end: '08:00',
-      daily_reminder_time: '18:00',
+      quiet_hours_start: "22:00",
+      quiet_hours_end: "08:00",
+      daily_reminder_time: "18:00",
       web_push_enabled: false,
     },
     updatePreference: vi.fn(),
@@ -66,7 +75,7 @@ vi.mock('../contexts/SettingsContext', () => ({
 }));
 
 // ─── Mock: Accessibility Context ─────────────────────────────────────────────
-vi.mock('../contexts/AccessibilityContext', () => ({
+vi.mock("../contexts/AccessibilityContext", () => ({
   useAccessibility: () => ({
     highContrast: false,
     reducedMotion: false,
@@ -82,7 +91,7 @@ vi.mock('../contexts/AccessibilityContext', () => ({
 }));
 
 // ─── Mock: Audio Settings ─────────────────────────────────────────────────────
-vi.mock('../hooks/useGlobalAudioSettings', () => ({
+vi.mock("../hooks/useGlobalAudioSettings", () => ({
   default: () => ({
     effectiveVolume: 0.7,
     shouldPlaySound: () => true,
@@ -92,12 +101,12 @@ vi.mock('../hooks/useGlobalAudioSettings', () => ({
 }));
 
 // ─── Mock: Subscription Context ──────────────────────────────────────────────
-vi.mock('../contexts/SubscriptionContext', () => ({
+vi.mock("../contexts/SubscriptionContext", () => ({
   useSubscription: () => ({ isLoading: false, isPremium: false }),
 }));
 
 // ─── Mock: pwaDetection ──────────────────────────────────────────────────────
-vi.mock('../utils/pwaDetection', () => ({
+vi.mock("../utils/pwaDetection", () => ({
   isAndroidDevice: () => false,
   isChromeBrowser: () => false,
   isIOSDevice: () => false,
@@ -106,40 +115,44 @@ vi.mock('../utils/pwaDetection', () => ({
 }));
 
 // ─── Mock: supabase ──────────────────────────────────────────────────────────
-vi.mock('../services/supabase', () => ({
+vi.mock("../services/supabase", () => ({
   default: {
     from: () => ({ upsert: vi.fn().mockResolvedValue({ error: null }) }),
-    functions: { invoke: vi.fn().mockResolvedValue({ data: null, error: null }) },
+    functions: {
+      invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
+    },
   },
 }));
 
 // ─── Mock: AuthButton ────────────────────────────────────────────────────────
-vi.mock('../components/auth/AuthButton', () => ({
+vi.mock("../components/auth/AuthButton", () => ({
   default: () => <button data-testid="auth-button">Logout</button>,
 }));
 
 // ─── Mock: ProfileForm ────────────────────────────────────────────────────────
-vi.mock('../components/settings/ProfileForm', () => ({
+vi.mock("../components/settings/ProfileForm", () => ({
   default: () => <div data-testid="profile-form" />,
 }));
 
 // ─── Mock: LanguageSelector ───────────────────────────────────────────────────
-vi.mock('../components/settings/LanguageSelector', () => ({
+vi.mock("../components/settings/LanguageSelector", () => ({
   default: () => <div data-testid="language-selector" />,
 }));
 
 // ─── Mock: ParentZoneEntryCard ────────────────────────────────────────────────
-vi.mock('../components/settings/ParentZoneEntryCard', () => ({
-  default: () => <div data-testid="parent-zone-entry-card">Parent Zone Entry</div>,
+vi.mock("../components/settings/ParentZoneEntryCard", () => ({
+  default: () => (
+    <div data-testid="parent-zone-entry-card">Parent Zone Entry</div>
+  ),
 }));
 
 // ─── Mock: FeedbackForm ───────────────────────────────────────────────────────
-vi.mock('../components/settings/FeedbackForm', () => ({
+vi.mock("../components/settings/FeedbackForm", () => ({
   default: () => <div data-testid="feedback-form">Feedback</div>,
 }));
 
 // ─── Mock: ParentGateMath ─────────────────────────────────────────────────────
-vi.mock('../components/settings/ParentGateMath', () => ({
+vi.mock("../components/settings/ParentGateMath", () => ({
   default: ({ onConsent, onCancel }) => (
     <div data-testid="parent-gate-math">
       <button onClick={onConsent}>Consent</button>
@@ -149,12 +162,12 @@ vi.mock('../components/settings/ParentGateMath', () => ({
 }));
 
 // ─── Mock: AccountDeletionModal ───────────────────────────────────────────────
-vi.mock('../components/teacher/AccountDeletionModal', () => ({
+vi.mock("../components/teacher/AccountDeletionModal", () => ({
   default: () => <div data-testid="account-deletion-modal" />,
 }));
 
 // ─── Mock: SettingsSection — renders children only when open ─────────────────
-vi.mock('../components/settings/SettingsSection', () => ({
+vi.mock("../components/settings/SettingsSection", () => ({
   default: ({ title, children }) => (
     <div data-testid="settings-section">
       <span data-testid="section-title">{title}</span>
@@ -164,23 +177,23 @@ vi.mock('../components/settings/SettingsSection', () => ({
 }));
 
 // ─── Mock: ToggleSetting ─────────────────────────────────────────────────────
-vi.mock('../components/settings/ToggleSetting', () => ({
+vi.mock("../components/settings/ToggleSetting", () => ({
   default: ({ label }) => <div data-testid="toggle-setting">{label}</div>,
   ToggleSetting: ({ label }) => <div data-testid="toggle-setting">{label}</div>,
 }));
 
 // ─── Mock: SliderSetting ─────────────────────────────────────────────────────
-vi.mock('../components/settings/SliderSetting', () => ({
+vi.mock("../components/settings/SliderSetting", () => ({
   default: ({ label }) => <div data-testid="slider-setting">{label}</div>,
 }));
 
 // ─── Mock: TimePicker ─────────────────────────────────────────────────────────
-vi.mock('../components/settings/TimePicker', () => ({
+vi.mock("../components/settings/TimePicker", () => ({
   default: ({ label }) => <div data-testid="time-picker">{label}</div>,
 }));
 
 // ─── Import after mocks ───────────────────────────────────────────────────────
-import AppSettings from './AppSettings';
+import AppSettings from "./AppSettings";
 
 function renderSettings() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -191,39 +204,45 @@ function renderSettings() {
   );
 }
 
-describe('AppSettings — Phase 06 cleanup (D-12, D-14, REQ-07, REQ-08)', () => {
-  it('REQ-02/REQ-07: ParentZoneEntryCard is rendered', () => {
+describe("AppSettings — Phase 06 cleanup (D-12, D-14, REQ-07, REQ-08)", () => {
+  it("REQ-02/REQ-07: ParentZoneEntryCard is rendered", () => {
     renderSettings();
-    expect(screen.getByTestId('parent-zone-entry-card')).toBeInTheDocument();
+    expect(screen.getByTestId("parent-zone-entry-card")).toBeInTheDocument();
   });
 
-  it('D-14: FeedbackForm is rendered', () => {
+  it("D-14: FeedbackForm is rendered", () => {
     renderSettings();
-    expect(screen.getByTestId('feedback-form')).toBeInTheDocument();
+    expect(screen.getByTestId("feedback-form")).toBeInTheDocument();
   });
 
   it('D-12/REQ-07: no "subscriptionTitle" section is rendered', () => {
     renderSettings();
     // i18n key pages.settings.subscriptionTitle should not appear in any section title
-    const sectionTitles = screen.queryAllByTestId('section-title').map((el) => el.textContent);
-    expect(sectionTitles).not.toContain('pages.settings.subscriptionTitle');
+    const sectionTitles = screen
+      .queryAllByTestId("section-title")
+      .map((el) => el.textContent);
+    expect(sectionTitles).not.toContain("pages.settings.subscriptionTitle");
   });
 
   it('REQ-08: no "streakSettingsTitle" section is rendered', () => {
     renderSettings();
-    const sectionTitles = screen.queryAllByTestId('section-title').map((el) => el.textContent);
-    expect(sectionTitles).not.toContain('streak.streakSettingsTitle');
+    const sectionTitles = screen
+      .queryAllByTestId("section-title")
+      .map((el) => el.textContent);
+    expect(sectionTitles).not.toContain("streak.streakSettingsTitle");
   });
 
-  it('D-11: NotificationPermissionCard is NOT rendered in AppSettings', () => {
+  it("D-11: NotificationPermissionCard is NOT rendered in AppSettings", () => {
     renderSettings();
     // NotificationPermissionCard moved to ParentPortalPage — should NOT appear here
-    expect(screen.queryByTestId('notification-permission-card')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("notification-permission-card")
+    ).not.toBeInTheDocument();
   });
 
-  it('REQ-08: no showParentGate-style overlay for weekend pass (parent-gate-math not shown on load)', () => {
+  it("REQ-08: no showParentGate-style overlay for weekend pass (parent-gate-math not shown on load)", () => {
     renderSettings();
     // ParentGateMath should NOT be rendered on initial load (only renders for account deletion)
-    expect(screen.queryByTestId('parent-gate-math')).not.toBeInTheDocument();
+    expect(screen.queryByTestId("parent-gate-math")).not.toBeInTheDocument();
   });
 });
