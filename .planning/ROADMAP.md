@@ -24,7 +24,7 @@
 - ✅ **v2.9 Game Variety & Ear Training** — Phases 7-11 (shipped 2026-03-30)
 - ✅ **v3.0 Cleanup & Polish** — Phases 12-16 (shipped 2026-04-03)
 - ✅ **v3.1 Trail-First Navigation** — Phases 17-19 (shipped 2026-04-05)
-- 🚧 **v3.2 Rhythm Trail Rework** — Phases 20-23 (in progress)
+- 🚧 **v3.2 Rhythm Trail Rework** — Phases 20-25 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -68,7 +68,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
-### 🚧 v3.2 Rhythm Trail Rework (In Progress)
+### v3.2 Rhythm Trail Rework (In Progress)
 
 **Milestone Goal:** Rework the rhythm trail's pedagogy so every node introduces one concept at a time, uses the correct game for each learning stage, and draws from a curated hand-crafted pattern library — replacing the current random-generative approach with pedagogically sequenced content following Kodaly/Orff principles.
 
@@ -132,7 +132,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 2. The MetronomeTrainer game shows a child-friendly name in both English and Hebrew UI — the string "MetronomeTrainer" does not appear in any visible label
 3. Tapping incorrectly in any rhythm game shows "Almost!" (EN) or its Hebrew equivalent — the word "MISS" does not appear anywhere in the rhythm game UI
 4. A Discovery node shows a 1-bar pattern, a Practice node shows a 2-bar pattern, and a Speed or Boss node shows a 4-bar pattern
-5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; טָה / טָה-טָה / טָה-אָה / טָה-אָה-אָה-אָה in HE) appear below VexFlow note heads for all rendered rhythm patterns
+5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; ta-a-a-a / ta-a-a-a in HE) appear below VexFlow note heads for all rendered rhythm patterns
    **Plans**: TBD
 
 ## Progress
@@ -143,9 +143,24 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 | 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -         |
 | 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -         |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -         |
+| 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -         |
+| 25. Unified Mixed Lesson Engine  | v3.2      | 0/3            | Not started | -         |
 
-**Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 4 phases, 0/4 complete**
+**Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 6 phases, 0/6 complete**
+
+### Phase 25: Unified Mixed Lesson Engine for Trail Nodes
+
+**Goal:** Build a MixedLessonGame component that plays through a pre-authored sequence of different question types (visual recognition, syllable matching, and future types) within one unified game session — Duolingo-style interleaved learning instead of separate sequential games per exercise.
+**Requirements**: MLE-01, MLE-02, MLE-03, MLE-04, MLE-05, MLE-06, MLE-07
+**Depends on:** Phase 24
+**Plans:** 3 plans
+
+Plans:
+
+- [ ] 25-01-PLAN.md — Extract stateless renderers + refactor standalone games to thin wrappers
+- [ ] 25-02-PLAN.md — Register MIXED_LESSON exercise type, route, TrailNodeModal, i18n, and build validator
+- [ ] 25-03-PLAN.md — Build MixedLessonGame engine component + wire trail node data + engine tests
 
 ---
 
-_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework roadmap created_
+_Last updated: 2026-04-09 -- Phase 25 plan breakdown created (3 plans in 2 waves)_
