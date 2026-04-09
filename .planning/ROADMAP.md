@@ -137,14 +137,14 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ## Progress
 
-| Phase                            | Milestone | Plans Complete | Status      | Completed |
-| -------------------------------- | --------- | -------------- | ----------- | --------- |
-| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -         |
-| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -         |
-| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -         |
-| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -         |
-| 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -         |
-| 25. Unified Mixed Lesson Engine  | v3.2      | 0/3            | Not started | -         |
+| Phase                            | Milestone | Plans Complete | Status      | Completed  |
+| -------------------------------- | --------- | -------------- | ----------- | ---------- |
+| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
+| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -          |
+| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
+| 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
+| 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -          |
+| 25. Unified Mixed Lesson Engine  | v3.2      | 3/3            | Complete    | 2026-04-09 |
 
 **Total: 22 milestones shipped, 95 phases, ~203 plans | v3.2: 6 phases, 0/6 complete**
 
@@ -153,13 +153,13 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Goal:** Build a MixedLessonGame component that plays through a pre-authored sequence of different question types (visual recognition, syllable matching, and future types) within one unified game session — Duolingo-style interleaved learning instead of separate sequential games per exercise.
 **Requirements**: MLE-01, MLE-02, MLE-03, MLE-04, MLE-05, MLE-06, MLE-07
 **Depends on:** Phase 24
-**Plans:** 3 plans
+**Plans:** 3/3 plans complete
 
 Plans:
 
-- [ ] 25-01-PLAN.md — Extract stateless renderers + refactor standalone games to thin wrappers
-- [ ] 25-02-PLAN.md — Register MIXED_LESSON exercise type, route, TrailNodeModal, i18n, and build validator
-- [ ] 25-03-PLAN.md — Build MixedLessonGame engine component + wire trail node data + engine tests
+- [x] 25-01-PLAN.md — Extract stateless renderers + refactor standalone games to thin wrappers
+- [x] 25-02-PLAN.md — Register MIXED_LESSON exercise type, route, TrailNodeModal, i18n, and build validator
+- [x] 25-03-PLAN.md — Build MixedLessonGame engine component + wire trail node data + engine tests
 
 ---
 
