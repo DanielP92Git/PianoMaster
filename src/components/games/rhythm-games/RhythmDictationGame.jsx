@@ -299,8 +299,13 @@ export function RhythmDictationGame() {
         // Shuffle: place correct + distractors randomly
         const allChoices = [beats, ...distractors];
         const shuffled = shuffleArray(allChoices);
-        // Track which index is the correct one
-        const corrIdx = shuffled.findIndex((c) => c === beats);
+        // Track which index is the correct one (fingerprint comparison avoids
+        // fragile reference-equality that would break if shuffleArray ever
+        // deep-clones or if beats is recreated between generation and lookup)
+        const correctFp = JSON.stringify(beats);
+        const corrIdx = shuffled.findIndex(
+          (c) => JSON.stringify(c) === correctFp
+        );
 
         setCorrectBeats(beats);
         setChoices(shuffled);
