@@ -10,7 +10,11 @@ function BackButton({ to, name, styling }) {
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(to, { replace: false });
+    if (to) {
+      navigate(to, { replace: false });
+    } else {
+      navigate(-1);
+    }
   };
 
   const Arrow = isRTL ? ArrowRight : ArrowLeft;
@@ -18,11 +22,11 @@ function BackButton({ to, name, styling }) {
   return (
     <button
       onClick={handleClick}
-      className={`flex items-center justify-center w-9 h-9 rounded-full bg-white/10 border border-white/20 text-white/80 hover:bg-white/20 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-wait relative z-40 cursor-pointer ${styling || ""}`}
+      className={`relative z-40 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-white/10 text-white/80 transition-colors hover:bg-white/20 hover:text-white disabled:cursor-wait disabled:opacity-50 ${styling || ""}`}
       title={name}
       aria-label={name}
     >
-      <Arrow className="w-4 h-4" />
+      <Arrow className="h-4 w-4" />
     </button>
   );
 }

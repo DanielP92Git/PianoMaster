@@ -11,10 +11,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import {
-  generateQuestions,
-  ALL_DURATION_CODES,
-} from "./utils/durationInfo";
+import { generateQuestions, ALL_DURATION_CODES } from "./utils/durationInfo";
 import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
 import BackButton from "../../ui/BackButton";
@@ -57,7 +54,7 @@ export default function MixedLessonGame() {
   const trailExerciseType = location.state?.exerciseType ?? null;
 
   // Sounds
-  const { playCorrectSound, playWrongSound } = useSounds();
+  const { playCorrectSound, playWrongSound, playVictorySound } = useSounds();
 
   // Session timeout controls — use refs to avoid re-render cycles
   const pauseTimerRef = useRef(() => {});
@@ -202,6 +199,7 @@ export default function MixedLessonGame() {
       feedbackTimerRef.current = setTimeout(() => {
         const nextIndex = currentIndex + 1;
         if (nextIndex >= questions.length) {
+          playVictorySound();
           setGameState(GAME_STATES.COMPLETE);
           resumeTimer();
         } else {
@@ -224,6 +222,7 @@ export default function MixedLessonGame() {
       currentIndex,
       playCorrectSound,
       playWrongSound,
+      playVictorySound,
       resumeTimer,
       t,
     ]
@@ -251,7 +250,7 @@ export default function MixedLessonGame() {
               "Something went wrong. Go back to the trail and try again."
             )}
           </p>
-          <BackButton />
+          <BackButton to="/trail" />
         </div>
       </div>
     );
@@ -331,7 +330,7 @@ export default function MixedLessonGame() {
 
         {/* Top bar */}
         <div className="mb-4 flex items-center gap-4">
-          <BackButton />
+          <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
           {renderProgressBar()}
         </div>
 
@@ -360,7 +359,7 @@ export default function MixedLessonGame() {
 
       {/* Top bar */}
       <div className="mb-4 flex w-full items-center gap-4">
-        <BackButton />
+        <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
         {renderProgressBar()}
       </div>
 
