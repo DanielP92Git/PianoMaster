@@ -54,6 +54,19 @@ vi.mock("../../../../features/games/hooks/useSounds", () => ({
   })),
 }));
 
+vi.mock("../../../../contexts/AudioContextProvider", () => ({
+  useAudioContext: vi.fn(() => ({
+    audioContextRef: { current: null },
+    isInterrupted: false,
+    handleTapToResume: vi.fn(),
+    getOrCreateAudioContext: vi.fn(),
+  })),
+}));
+
+vi.mock("../../shared/AudioInterruptedOverlay.jsx", () => ({
+  AudioInterruptedOverlay: () => null,
+}));
+
 vi.mock("../../../../contexts/SessionTimeoutContext", () => ({
   useSessionTimeout: vi.fn(() => ({
     pauseTimer: vi.fn(),

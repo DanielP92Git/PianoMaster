@@ -492,7 +492,11 @@ function AppRoutes() {
             />
             <Route
               path="/rhythm-mode/mixed-lesson"
-              element={<MixedLessonGame />}
+              element={
+                <AudioContextProvider>
+                  <MixedLessonGame />
+                </AudioContextProvider>
+              }
             />
             <Route path="/ear-training-mode" element={<EarTrainingMode />} />
             <Route

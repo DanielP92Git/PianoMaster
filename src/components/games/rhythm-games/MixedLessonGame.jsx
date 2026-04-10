@@ -14,10 +14,13 @@ import { useTranslation } from "react-i18next";
 import { generateQuestions, ALL_DURATION_CODES } from "./utils/durationInfo";
 import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
+import RhythmTapQuestion from "./renderers/RhythmTapQuestion";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
+import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { getNodeById } from "../../../data/skillTrail";
 import { useSounds } from "../../../features/games/hooks/useSounds";
+import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
@@ -55,6 +58,9 @@ export default function MixedLessonGame() {
 
   // Sounds
   const { playCorrectSound, playWrongSound, playVictorySound } = useSounds();
+
+  // Audio context for rhythm_tap questions (provided by AudioContextProvider wrapper)
+  const { isInterrupted, handleTapToResume } = useAudioContext();
 
   // Session timeout controls — use refs to avoid re-render cycles
   const pauseTimerRef = useRef(() => {});
@@ -114,16 +120,33 @@ export default function MixedLessonGame() {
     return rc.durations || [];
   }, [nodeId]);
 
+  // Build rhythm tap config from node's rhythmConfig
+  const buildRhythmTapConfig = useCallback(() => {
+    if (!nodeId) return {};
+    const node = getNodeById(nodeId);
+    if (!node?.rhythmConfig) return {};
+    const rc = node.rhythmConfig;
+    return {
+      patterns: rc.patterns || ["quarter"],
+      tempo: typeof rc.tempo === "object" ? rc.tempo.default : rc.tempo || 80,
+      timeSignature: rc.timeSignature || "4/4",
+      difficulty: "beginner",
+    };
+  }, [nodeId]);
+
   // Start game — pre-generate all questions from authored sequence (D-06, D-07, D-08, D-09)
   const startGame = useCallback(() => {
     const pool = buildDurationPool();
-    if (pool.length === 0) return;
-
     const questionSequence = nodeConfig?.questions || [];
     if (questionSequence.length === 0) return;
 
     // Generate one question per authored entry — 1:1 mapping (D-09: pre-structured, not random)
     const allQuestions = questionSequence.map((entry) => {
+      if (entry.type === "rhythm_tap") {
+        return { type: "rhythm_tap", rhythmConfig: buildRhythmTapConfig() };
+      }
+      if (pool.length === 0)
+        return { type: entry.type, correct: "", choices: [] };
       const dedupSyllables = entry.type === "syllable_matching";
       const generated = generateQuestions(pool, ALL_DURATION_CODES, 1, {
         dedupSyllables,
@@ -139,7 +162,7 @@ export default function MixedLessonGame() {
     setFadeKey(0);
     setGameState(GAME_STATES.IN_PROGRESS);
     pauseTimer();
-  }, [buildDurationPool, nodeConfig, pauseTimer]);
+  }, [buildDurationPool, buildRhythmTapConfig, nodeConfig, pauseTimer]);
 
   // Trail auto-start (hasAutoStartedRef pattern, same as existing games)
   useEffect(() => {
@@ -228,6 +251,48 @@ export default function MixedLessonGame() {
     ]
   );
 
+  // Handle rhythm tap question completion — kid-friendly tap count scoring
+  const handleRhythmTapComplete = useCallback(
+    (onTimeTaps, totalExpectedTaps) => {
+      const isCorrect = onTimeTaps >= Math.ceil(totalExpectedTaps / 2);
+      setResults((prev) => [...prev, isCorrect]);
+
+      if (isCorrect) {
+        playCorrectSound();
+      } else {
+        playWrongSound();
+      }
+
+      // Shorter delay since RhythmTapQuestion already showed per-beat feedback
+      feedbackTimerRef.current = setTimeout(() => {
+        const nextIndex = currentIndex + 1;
+        if (nextIndex >= questions.length) {
+          playVictorySound();
+          setGameState(GAME_STATES.COMPLETE);
+          resumeTimer();
+        } else {
+          const typeChanged =
+            questions[nextIndex].type !== questions[currentIndex].type;
+          if (typeChanged) {
+            setFadeKey((k) => k + 1);
+          }
+          setCurrentIndex(nextIndex);
+          setCardStates(["default", "default", "default", "default"]);
+          setFeedbackMessage("");
+          setGameState(GAME_STATES.IN_PROGRESS);
+        }
+      }, 500);
+    },
+    [
+      questions,
+      currentIndex,
+      playCorrectSound,
+      playWrongSound,
+      playVictorySound,
+      resumeTimer,
+    ]
+  );
+
   // Reset game
   const handleReset = useCallback(() => {
     hasAutoStartedRef.current = false;
@@ -290,6 +355,15 @@ export default function MixedLessonGame() {
         return <VisualRecognitionQuestion {...rendererProps} />;
       case "syllable_matching":
         return <SyllableMatchingQuestion {...rendererProps} />;
+      case "rhythm_tap":
+        return (
+          <RhythmTapQuestion
+            question={currentQuestion}
+            isLandscape={isLandscape}
+            onComplete={handleRhythmTapComplete}
+            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+          />
+        );
       default:
         return null;
     }
@@ -324,6 +398,13 @@ export default function MixedLessonGame() {
         className={`fixed inset-0 flex flex-col overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4${reducedMotion ? "" : " animate-fadeIn"}`}
       >
         {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+        {isInterrupted && (
+          <AudioInterruptedOverlay
+            isVisible={true}
+            onTapToResume={handleTapToResume}
+            onRestartExercise={() => navigate("/trail")}
+          />
+        )}
         <div aria-live="polite" className="sr-only">
           {feedbackMessage}
         </div>
@@ -353,6 +434,13 @@ export default function MixedLessonGame() {
       className={`fixed inset-0 flex flex-col items-center overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4${reducedMotion ? "" : " animate-fadeIn"}`}
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+      {isInterrupted && (
+        <AudioInterruptedOverlay
+          isVisible={true}
+          onTapToResume={handleTapToResume}
+          onRestartExercise={() => navigate("/trail")}
+        />
+      )}
       <div aria-live="polite" className="sr-only">
         {feedbackMessage}
       </div>
