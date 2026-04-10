@@ -71,7 +71,7 @@ export default function RhythmTapQuestion({
 
   // Sub-state machine
   const [phase, setPhase] = useState(PHASES.INITIALIZING);
-  const [currentBeat, setCurrentBeat] = useState(0);
+  const [currentBeat, setCurrentBeat] = useState(1);
   const [feedback, setFeedback] = useState(null);
   const [beatResults, setBeatResults] = useState([]); // Array of 'PERFECT'|'GOOD'|'FAIR'|'MISS' per expected beat
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
@@ -166,7 +166,8 @@ export default function RhythmTapQuestion({
         const currentTime = audioEngine.getCurrentTime();
         const timeSinceStart = currentTime - startTime;
         const currentBeatFloat = timeSinceStart / beatDur;
-        const beatInMeasure = Math.floor(currentBeatFloat) % beatsPerMeasure;
+        const beatInMeasure =
+          (Math.floor(currentBeatFloat) % beatsPerMeasure) + 1; // 1-based for MetronomeDisplay
         setCurrentBeat(beatInMeasure);
       }, 50);
     },
@@ -229,8 +230,10 @@ export default function RhythmTapQuestion({
       let bestAccuracy = "MISS";
 
       currentUserTaps.forEach((userTap) => {
-        const userBeatPos =
+        const rawBeatPos =
           (userTap.relativeTime / currentBeatDur) % beatsPerMeasure;
+        const userBeatPos =
+          rawBeatPos < 0 ? rawBeatPos + beatsPerMeasure : rawBeatPos;
         let timingError = Math.abs(userBeatPos - expectedBeatPos);
         if (timingError > beatsPerMeasure / 2) {
           timingError = beatsPerMeasure - timingError;
@@ -311,7 +314,10 @@ export default function RhythmTapQuestion({
       const { pattern } = patternInfoRef.current;
       const currentBeatDur = beatDuration.current;
       const unitsPerBeat = timeSignature.measureLength / timeSignature.beats;
-      const userBeatPos = (relativeTime / currentBeatDur) % beatsPerMeasure;
+      // Ensure positive modulo for beat position (handles slight negative relativeTime from anticipation)
+      const rawBeatPos = (relativeTime / currentBeatDur) % beatsPerMeasure;
+      const userBeatPos =
+        rawBeatPos < 0 ? rawBeatPos + beatsPerMeasure : rawBeatPos;
 
       const expectedBeatPositions = [];
       pattern.forEach((beat, index) => {
@@ -379,7 +385,7 @@ export default function RhythmTapQuestion({
     setHasUserStartedTapping(false);
     setFeedback(null);
     setBeatResults([]);
-    setCurrentBeat(0);
+    setCurrentBeat(1);
 
     // Start metronome
     startContinuousMetronome(countInStartTime);
