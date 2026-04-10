@@ -388,7 +388,7 @@ function validateMultiAngleGames() {
  *   3. Each question entry must have a type field with a known renderer type
  *   4. Question count should be 8-10 (warning, not error)
  */
-const RENDERER_TYPES = new Set(['visual_recognition', 'syllable_matching']);
+const RENDERER_TYPES = new Set(['visual_recognition', 'syllable_matching', 'rhythm_tap']);
 
 function validateMixedLessons() {
   console.log('\nChecking mixed lesson exercises...');
