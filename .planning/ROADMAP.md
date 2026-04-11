@@ -104,13 +104,18 @@ Plans:
 **Goal**: A curated library of ~120+ hand-crafted rhythm patterns exists as a synchronous Vite-bundled JS module, tagged by duration set
 **Depends on**: Phase 20
 **Requirements**: PAT-01, PAT-02
+**Plans:** 1 plan
+
+Plans:
+
+- [ ] 21-01-PLAN.md — Create test suite and author 130+ rhythm patterns across all 15 duration-set tags
+
 **Success Criteria** (what must be TRUE):
 
 1. `src/data/patterns/rhythmPatterns.js` exists with at minimum 120 patterns, each a complete VexFlow-compatible pattern definition
 2. Every pattern carries a `tags` array with at least one duration-set tag (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
 3. The file is a plain synchronous ES module import — no async fetch, no JSON file, no dynamic loading
 4. Patterns cover all duration sets used across the 56 rhythm nodes (quarter-only through syncopation/compound)
-   **Plans**: TBD
 
 ### Phase 22: Service Layer & Trail Wiring
 
@@ -145,7 +150,7 @@ Plans:
 | Phase                            | Milestone | Plans Complete | Status      | Completed  |
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-11 |
-| 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -          |
+| 21. Pattern Library Construction | v3.2      | 0/1            | Planning    | -          |
 | 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 | 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -          |
@@ -168,4 +173,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-11 -- Phase 20 plan breakdown created (1 plan in 1 wave)_
+_Last updated: 2026-04-12 -- Phase 21 plan breakdown created (1 plan in 1 wave)_
