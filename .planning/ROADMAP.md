@@ -74,7 +74,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 #### Phases
 
-- [ ] **Phase 20: Curriculum Audit** - Audit all 50 rhythm nodes and lock game-type policy before touching any files
+- [ ] **Phase 20: Curriculum Audit** - Audit all 56 rhythm nodes and lock game-type policy before touching any files
 - [ ] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module
 - [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
@@ -86,13 +86,18 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Goal**: All pedagogical decisions about the rhythm trail are documented and locked before any file is modified
 **Depends on**: Nothing (first phase of this milestone)
 **Requirements**: CURR-01, CURR-02, CURR-03, CURR-04
+**Plans:** 1 plan
+
+Plans:
+
+- [ ] 20-01-PLAN.md — Audit all 56 rhythm nodes and produce curriculum audit reference document
+
 **Success Criteria** (what must be TRUE):
 
-1. Every one of the 50 rhythm nodes has been reviewed and its single introduced concept identified — violations are documented
-2. A written decision exists for which game type belongs at each node type: Discovery uses notation-showing game, Practice uses echo game, Speed/Boss uses ArcadeRhythmGame
+1. Every one of the 56 rhythm nodes has been reviewed and its single introduced concept identified — violations are documented
+2. A written decision exists for which game type belongs at each node type: Discovery/Practice/MIX_UP/REVIEW/MINI_BOSS use mixed_lesson, SPEED_ROUND/CHALLENGE/BOSS use arcade_rhythm
 3. A node-by-node remediation list exists covering every node that currently violates the one-concept or wrong-game rule
 4. The audit output is committed as a reference document that Phase 22 implementation follows exactly
-   **Plans**: TBD
 
 ### Phase 21: Pattern Library Construction
 
@@ -104,7 +109,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 1. `src/data/patterns/rhythmPatterns.js` exists with at minimum 120 patterns, each a complete VexFlow-compatible pattern definition
 2. Every pattern carries a `tags` array with at least one duration-set tag (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
 3. The file is a plain synchronous ES module import — no async fetch, no JSON file, no dynamic loading
-4. Patterns cover all duration sets used across the 50 rhythm nodes (quarter-only through syncopation/compound)
+4. Patterns cover all duration sets used across the 56 rhythm nodes (quarter-only through syncopation/compound)
    **Plans**: TBD
 
 ### Phase 22: Service Layer & Trail Wiring
@@ -114,7 +119,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Requirements**: CURR-05, PAT-03, PAT-04, PAT-05, PAT-06
 **Success Criteria** (what must be TRUE):
 
-1. `RhythmPatternGenerator.js` exposes `resolveByTags()` and `resolveByIds()` and all 50 rhythm node configs use `patternTags` or `patternIds` instead of `rhythmPatterns` duration allowlists
+1. `RhythmPatternGenerator.js` exposes `resolveByTags()` and `resolveByIds()` and all 56 rhythm node configs use `patternTags` or `patternIds` instead of `rhythmPatterns` duration allowlists
 2. Unit 1 Node 1 delivers a pulse exercise where the child taps with the metronome beat and sees no music notation
 3. A child playing a Discovery node only ever encounters patterns that contain durations from duration sets they have already encountered — no patterns with unintroduced note values appear
 4. Running `npm run build` fails with a clear error if any node config references a pattern tag or ID that does not exist in `rhythmPatterns.js`
@@ -139,7 +144,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 | Phase                            | Milestone | Plans Complete | Status      | Completed  |
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
-| 20. Curriculum Audit             | v3.2      | 0/TBD          | Not started | -          |
+| 20. Curriculum Audit             | v3.2      | 0/1            | Planned     | -          |
 | 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -          |
 | 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
@@ -163,4 +168,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-09 -- Phase 25 plan breakdown created (3 plans in 2 waves)_
+_Last updated: 2026-04-11 -- Phase 20 plan breakdown created (1 plan in 1 wave)_
