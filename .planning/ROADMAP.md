@@ -75,7 +75,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 #### Phases
 
 - [x] **Phase 20: Curriculum Audit** - Audit all 56 rhythm nodes and lock game-type policy before touching any files (completed 2026-04-11)
-- [ ] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module
+- [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-11)
 - [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
 
@@ -104,11 +104,11 @@ Plans:
 **Goal**: A curated library of ~120+ hand-crafted rhythm patterns exists as a synchronous Vite-bundled JS module, tagged by duration set
 **Depends on**: Phase 20
 **Requirements**: PAT-01, PAT-02
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] 21-01-PLAN.md — Create test suite and author 130+ rhythm patterns across all 15 duration-set tags
+- [x] 21-01-PLAN.md — Create test suite and author 130+ rhythm patterns across all 15 duration-set tags
 
 **Success Criteria** (what must be TRUE):
 
@@ -150,7 +150,7 @@ Plans:
 | Phase                            | Milestone | Plans Complete | Status      | Completed  |
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-11 |
-| 21. Pattern Library Construction | v3.2      | 0/1            | Planning    | -          |
+| 21. Pattern Library Construction | v3.2      | 1/1            | Complete    | 2026-04-11 |
 | 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 | 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -          |

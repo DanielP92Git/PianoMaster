@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Rhythm Trail Rework
 status: verifying
-last_updated: "2026-04-11T16:16:22.855Z"
+last_updated: "2026-04-11T23:22:02.763Z"
 last_activity: 2026-04-11
 progress:
   total_phases: 5
@@ -50,6 +50,7 @@ Progress: [████████░░] 80%
 - Phase 24 adds new game types for low-variety rhythm nodes (visual recognition + syllable matching)
 - Phase 25 added: Unified Mixed Lesson Engine — Duolingo-style interleaved question types within one game session, replacing sequential separate-game-per-exercise model
 - [Phase 20]: 56-node audit complete: 51 exercise type violations, 1 one-concept violation, 5 clean nodes; document LOCKED for Phase 22
+- [Phase 21]: Multi-tag binary-ambiguous patterns (rest vs sustain indistinguishable in binary format) rather than creating duplicates
 
 ### Pending Todos
 

@@ -17,8 +17,8 @@ Requirements for rhythm trail pedagogy rework. Each maps to roadmap phases.
 
 ### Patterns
 
-- [ ] **PAT-01**: Curated pattern library exists at `src/data/patterns/rhythmPatterns.js` with ~120+ hand-crafted patterns
-- [ ] **PAT-02**: Each pattern is tagged by duration set (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
+- [x] **PAT-01**: Curated pattern library exists at `src/data/patterns/rhythmPatterns.js` with ~120+ hand-crafted patterns
+- [x] **PAT-02**: Each pattern is tagged by duration set (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
 - [ ] **PAT-03**: Node configs use `patternTags` (or `patternIds` for boss nodes) instead of `rhythmPatterns` duration allowlist
 - [ ] **PAT-04**: `getPattern()` resolves curated patterns by tags/IDs via synchronous JS import (not async JSON fetch)
 - [ ] **PAT-05**: Children only see patterns containing durations they have already learned (enforced by tag system)
@@ -71,8 +71,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CURR-03     | 20    | Complete |
 | CURR-04     | 20    | Complete |
 | CURR-05     | 22    | Pending  |
-| PAT-01      | 21    | Pending  |
-| PAT-02      | 21    | Pending  |
+| PAT-01      | 21    | Complete |
+| PAT-02      | 21    | Complete |
 | PAT-03      | 22    | Pending  |
 | PAT-04      | 22    | Pending  |
 | PAT-05      | 22    | Pending  |
