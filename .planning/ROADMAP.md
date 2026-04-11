@@ -74,7 +74,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 #### Phases
 
-- [ ] **Phase 20: Curriculum Audit** - Audit all 56 rhythm nodes and lock game-type policy before touching any files
+- [x] **Phase 20: Curriculum Audit** - Audit all 56 rhythm nodes and lock game-type policy before touching any files (completed 2026-04-11)
 - [ ] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module
 - [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
@@ -86,11 +86,11 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Goal**: All pedagogical decisions about the rhythm trail are documented and locked before any file is modified
 **Depends on**: Nothing (first phase of this milestone)
 **Requirements**: CURR-01, CURR-02, CURR-03, CURR-04
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
 
-- [ ] 20-01-PLAN.md — Audit all 56 rhythm nodes and produce curriculum audit reference document
+- [x] 20-01-PLAN.md — Audit all 56 rhythm nodes and produce curriculum audit reference document
 
 **Success Criteria** (what must be TRUE):
 
@@ -144,7 +144,7 @@ Plans:
 
 | Phase                            | Milestone | Plans Complete | Status      | Completed  |
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
-| 20. Curriculum Audit             | v3.2      | 0/1            | Planned     | -          |
+| 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-11 |
 | 21. Pattern Library Construction | v3.2      | 0/TBD          | Not started | -          |
 | 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |

@@ -9,10 +9,10 @@ Requirements for rhythm trail pedagogy rework. Each maps to roadmap phases.
 
 ### Curriculum
 
-- [ ] **CURR-01**: Each rhythm node introduces at most one new musical concept (audit all 50 nodes, fix violations)
-- [ ] **CURR-02**: Discovery nodes use notation-showing game (RhythmReadingGame or RhythmDictationGame), not MetronomeTrainer
-- [ ] **CURR-03**: Practice nodes use echo game (MetronomeTrainer) for call-and-response reinforcement
-- [ ] **CURR-04**: Speed/Boss nodes use ArcadeRhythmGame for engagement challenge
+- [x] **CURR-01**: Each rhythm node introduces at most one new musical concept (audit all 50 nodes, fix violations)
+- [x] **CURR-02**: Discovery nodes use notation-showing game (RhythmReadingGame or RhythmDictationGame), not MetronomeTrainer
+- [x] **CURR-03**: Practice nodes use echo game (MetronomeTrainer) for call-and-response reinforcement
+- [x] **CURR-04**: Speed/Boss nodes use ArcadeRhythmGame for engagement challenge
 - [ ] **CURR-05**: Unit 1 Node 1 includes a pulse exercise ("tap with the beat", metronome only, no notation)
 
 ### Patterns
@@ -64,24 +64,24 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status  |
-| ----------- | ----- | ------- |
-| CURR-01     | 20    | Pending |
-| CURR-02     | 20    | Pending |
-| CURR-03     | 20    | Pending |
-| CURR-04     | 20    | Pending |
-| CURR-05     | 22    | Pending |
-| PAT-01      | 21    | Pending |
-| PAT-02      | 21    | Pending |
-| PAT-03      | 22    | Pending |
-| PAT-04      | 22    | Pending |
-| PAT-05      | 22    | Pending |
-| PAT-06      | 22    | Pending |
-| UX-01       | 23    | Pending |
-| UX-02       | 23    | Pending |
-| UX-03       | 23    | Pending |
-| UX-04       | 23    | Pending |
-| UX-05       | 23    | Pending |
+| Requirement | Phase | Status   |
+| ----------- | ----- | -------- |
+| CURR-01     | 20    | Complete |
+| CURR-02     | 20    | Complete |
+| CURR-03     | 20    | Complete |
+| CURR-04     | 20    | Complete |
+| CURR-05     | 22    | Pending  |
+| PAT-01      | 21    | Pending  |
+| PAT-02      | 21    | Pending  |
+| PAT-03      | 22    | Pending  |
+| PAT-04      | 22    | Pending  |
+| PAT-05      | 22    | Pending  |
+| PAT-06      | 22    | Pending  |
+| UX-01       | 23    | Pending  |
+| UX-02       | 23    | Pending  |
+| UX-03       | 23    | Pending  |
+| UX-04       | 23    | Pending  |
+| UX-05       | 23    | Pending  |
 
 **Coverage:**
 
