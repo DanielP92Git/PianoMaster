@@ -176,7 +176,7 @@ Plans:
 | 23. UX Polish                      | v3.2      | 3/3            | Complete | 2026-04-09 |
 | 24. Multi-Angle Rhythm Games       | v3.2      | 3/3            | Complete | 2026-04-09 |
 | 25. Unified Mixed Lesson Engine    | v3.2      | 3/3            | Complete | 2026-04-09 |
-| 26. Restore Phase 23 UX Regression | v3.2      | 0/0            | Planned  | —          |
+| 26. Restore Phase 23 UX Regression | v3.2      | 0/2            | Planned  | —          |
 | 27. Verification & Traceability    | v3.2      | 0/0            | Planned  | —          |
 | 28. Tech Debt Fixes                | v3.2      | 0/0            | Planned  | —          |
 
@@ -201,6 +201,12 @@ Plans:
 **Depends on**: Phase 23, Phase 22
 **Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, PAT-04, PAT-06
 **Gap Closure:** Closes gaps from v3.2 milestone audit
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 26-01-PLAN.md — Timing forgiveness, game rename, "Almost!" feedback, pulse i18n
+- [ ] 26-02-PLAN.md — Multi-stave display, resolveByTags, syllable toggle, measure count validator
 
 **Success Criteria** (what must be TRUE):
 
@@ -244,4 +250,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-12 -- v3.2 gap closure phases added (26-28)_
+_Last updated: 2026-04-13 -- Phase 26 plans created (2 plans, Wave 1)_
