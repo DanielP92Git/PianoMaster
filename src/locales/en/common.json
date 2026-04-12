@@ -693,7 +693,7 @@
         "description": "Identify notes on the staff"
       },
       "metronomeTrainer": {
-        "name": "Metronome Rhythm Trainer",
+        "name": "Listen & Tap",
         "description": "Listen to rhythm patterns then tap them back with precise timing"
       },
       "rhythmReading": {
@@ -718,7 +718,7 @@
       "playNow": "Play Now"
     },
     "metronomeTrainer": {
-      "headerTitle": "Metronome Rhythm Trainer",
+      "headerTitle": "Listen & Tap",
       "progressLabel": "Exercise {{current}} of {{total}}",
       "sessionCompleteTitle": "Session Complete!",
       "sessionCompleteSubtitle": "Great work on your rhythm training!",
@@ -759,7 +759,7 @@
           "perfect": "Perfect",
           "good": "Good",
           "fair": "Fair",
-          "miss": "Miss"
+          "miss": "Almost!"
         }
       }
     },
@@ -778,8 +778,12 @@
         "accuracy": {
           "perfect": "PERFECT!",
           "good": "GOOD!",
-          "miss": "MISS"
+          "miss": "Almost!"
         }
+      },
+      "syllableToggle": {
+        "show": "Show syllables",
+        "hide": "Hide syllables"
       },
       "countdown": {
         "getReady": "Get Ready!",
@@ -1219,7 +1223,7 @@
   },
   "gameSettings": {
     "titles": {
-      "metronomeTrainer": "Metronome Rhythm Trainer",
+      "metronomeTrainer": "Listen & Tap",
       "metronomeSubtitle": "Configure your rhythm training session"
     },
     "steps": {
