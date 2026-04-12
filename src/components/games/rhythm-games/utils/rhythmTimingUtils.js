@@ -13,28 +13,49 @@ const BASE_TIMING_THRESHOLDS = {
   FAIR: 125, // ±125ms at 120 BPM
 };
 
+// Two-tier system (D-03): easy nodes get 100ms PERFECT base, hard nodes keep 50ms
+export const EASY_NODE_TYPES = new Set([
+  "discovery",
+  "practice",
+  "mix_up",
+  "review",
+]);
+
+export const BASE_TIMING_THRESHOLDS_EASY = {
+  PERFECT: 100, // ±100ms at 120 BPM
+  GOOD: 150, // ±150ms at 120 BPM
+  FAIR: 250, // ±250ms at 120 BPM
+};
+
 const BASE_TEMPO = 120;
 
 /**
- * Calculate dynamic timing thresholds based on tempo.
+ * Calculate dynamic timing thresholds based on tempo and node type.
+ *
+ * Two-tier system: easy nodes (Discovery, Practice, MIX_UP, REVIEW) use a
+ * more forgiving PERFECT=100ms base. Hard nodes keep PERFECT=50ms base.
  *
  * Uses gentle exponential scaling (exponent 0.3) so that:
  *   - Slower tempos (60 BPM) get more generous windows (~40% wider)
  *   - Faster tempos (180 BPM) get stricter windows (~25% tighter)
  *
- * Ported from MetronomeTrainer.jsx — same algorithm, same base values.
- *
  * @param {number} tempo - Tempo in BPM
+ * @param {string|null} nodeType - Node type from NODE_TYPES (optional, defaults to null for hard)
  * @returns {{ PERFECT: number, GOOD: number, FAIR: number }} Thresholds in ms
  */
-export function calculateTimingThresholds(tempo) {
+export function calculateTimingThresholds(tempo, nodeType = null) {
+  const base =
+    nodeType && EASY_NODE_TYPES.has(nodeType)
+      ? BASE_TIMING_THRESHOLDS_EASY
+      : BASE_TIMING_THRESHOLDS;
+
   // Gentle exponential scaling: slower = more generous, faster = stricter
   const scalingFactor = Math.pow(BASE_TEMPO / tempo, 0.3);
 
   return {
-    PERFECT: Math.round(BASE_TIMING_THRESHOLDS.PERFECT * scalingFactor),
-    GOOD: Math.round(BASE_TIMING_THRESHOLDS.GOOD * scalingFactor),
-    FAIR: Math.round(BASE_TIMING_THRESHOLDS.FAIR * scalingFactor),
+    PERFECT: Math.round(base.PERFECT * scalingFactor),
+    GOOD: Math.round(base.GOOD * scalingFactor),
+    FAIR: Math.round(base.FAIR * scalingFactor),
   };
 }
 

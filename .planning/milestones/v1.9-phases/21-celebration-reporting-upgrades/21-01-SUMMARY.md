@@ -1,121 +1,119 @@
 ---
 phase: 21-celebration-reporting-upgrades
 plan: 01
-subsystem: data/patterns
-tags: [rhythm, patterns, curriculum, data-module]
-dependency_graph:
-  requires: []
-  provides: [RHYTHM_PATTERNS, rhythm-pattern-library]
-  affects: [RhythmPatternGenerator, validateTrail]
-tech_stack:
+subsystem: ui
+tags: [react, dashboard, victory-screen, i18n, supabase, weekly-progress]
+
+# Dependency graph
+requires:
+  - phase: 20-extended-progression
+    provides: XP system, prestige levels, Dashboard layout
+provides:
+  - Weekly progress summary card with rolling 7-day stats
+  - Daily rotating fun-fact banner with localStorage non-repeat
+  - Personal best badge on VictoryScreen
+  - weeklyProgressService for Supabase queries
+affects: [dashboard, victory-screen, i18n]
+
+# Tech tracking
+tech-stack:
   added: []
-  patterns: [pure-data-module, multi-tagging, binary-pattern-format]
-key_files:
+  patterns:
+    - "localStorage rotation: store date + index, pick random avoiding last index"
+    - "Circular SVG progress indicator with stroke-dashoffset animation"
+
+key-files:
   created:
-    - src/data/patterns/rhythmPatterns.js
-    - src/data/patterns/rhythmPatterns.test.js
-  modified: []
-decisions:
-  - Multi-tag binary-ambiguous patterns rather than duplicating entries (rest vs sustain indistinguishable in binary)
-  - Use single flat array with multi-tagging instead of separate sections per tag
-  - Author only 1-measure patterns (Phase 22 composes multi-measure sequences)
-metrics:
-  duration: ~20 minutes
-  completed: 2026-04-12
-  pattern_count: 122
-  tag_coverage: 15/15
-  test_count: 859
+    - src/services/weeklyProgressService.js
+    - src/components/dashboard/WeeklySummaryCard.jsx
+    - src/components/dashboard/DailyMessageBanner.jsx
+  modified:
+    - src/components/games/VictoryScreen.jsx
+    - src/components/layout/Dashboard.jsx
+    - src/locales/en/common.json
+    - src/locales/he/common.json
+
+key-decisions:
+  - "weeklyProgressService counts exercises from students_score rather than XP delta (no historical XP snapshots available)"
+  - "Personal best detection fetches pre-update progress before updateExerciseProgress to compare against existing bestScore"
+  - "DailyMessageBanner placed between header and PlayNextButton for visibility without disrupting play flow"
+
+patterns-established:
+  - "Weekly stats pattern: query students_score + student_skill_progress with 7-day rolling window"
+  - "Personal best detection: compare current score against exercise_progress[].bestScore before update"
+
+requirements-completed: [PROG-04, PROG-05, PROG-06]
+
+# Metrics
+duration: 8min
+completed: 2026-03-07
 ---
 
-# Phase 21 Plan 01: Pattern Library Construction Summary
+# Phase 21 Plan 01: Celebration & Reporting Upgrades Summary
 
-Curated rhythm pattern library with 122 hand-crafted binary patterns covering all 15 curriculum duration-set tags across 4/4, 3/4, and 6/8 time signatures.
+**Weekly summary card with 7-day rolling stats, personal best trophy badge on VictoryScreen, and daily rotating fun-fact banner with 12 bilingual messages**
 
-## What Was Done
+## Performance
 
-### Task 1: Test Suite + Basic Duration Patterns (commit a1068ca)
+- **Duration:** 8 min
+- **Started:** 2026-03-07T18:58:55Z
+- **Completed:** 2026-03-07T19:07:06Z
+- **Tasks:** 2
+- **Files modified:** 7
 
-Created the comprehensive validation test suite (`rhythmPatterns.test.js`) with 7 per-pattern tests plus 5 global tests:
+## Accomplishments
 
-- Pattern count >= 120
-- All IDs unique (Set size === array length)
-- All IDs match `/^[a-z0-9_]+$/` format
-- No duplicate binary patterns within same time signature
-- All 15 tags covered
-- Per-pattern: valid time signature, correct array length, only 0s and 1s, at least one onset, valid tags, measures=1, id format
+- WeeklySummaryCard renders days practiced (circular SVG), nodes completed, and exercises done with golden border celebration for 7/7 days
+- VictoryScreen detects personal best in both exercise-level and legacy node-level paths, showing amber Trophy badge only when beating previous bestScore (not on first completion)
+- DailyMessageBanner rotates through 12 fun facts with localStorage-based non-repeat logic
+- Full i18n support in English and Hebrew for all new strings
 
-Authored initial 35 patterns for the 5 basic duration tags: `quarter-only`, `quarter-half`, `quarter-half-whole`, `quarter-eighth`, `quarter-half-whole-eighth`.
+## Task Commits
 
-### Task 2: Remaining Patterns to 122 Total (commit ccd5e86)
+Each task was committed atomically:
 
-Added patterns for all 10 remaining tag categories:
+1. **Task 1: Create weeklyProgressService, WeeklySummaryCard, and DailyMessageBanner** - `e729fdb` (feat)
+2. **Task 2: Add personal best badge, wire Dashboard components, add i18n keys** - `2b788b7` (feat)
 
-- `quarter-rest` (8 patterns via multi-tagging + 2 unique)
-- `half-rest` (8 patterns via multi-tagging + 1 unique)
-- `whole-rest` (7 patterns via multi-tagging + 2 unique)
-- `dotted-half` (10 patterns via multi-tagging + 2 unique)
-- `three-four` (12 patterns in 3/4 time, 12 slots)
-- `dotted-quarter` (12 patterns using qd=6 slots)
-- `sixteenth` (10 patterns using 16th=1 slot)
-- `six-eight` (18 patterns in 6/8 time, 12 slots)
-- `syncopation` (16 patterns with 8th-quarter-8th offbeat emphasis)
-- `dotted-syncopation` (16 patterns with qd+8th long-short phrasing)
+## Files Created/Modified
 
-## Key Design Decision: Multi-Tagging
+- `src/services/weeklyProgressService.js` - 7-day rolling progress query service
+- `src/components/dashboard/WeeklySummaryCard.jsx` - Glass card with 3 stat columns and perfect week celebration
+- `src/components/dashboard/DailyMessageBanner.jsx` - Fun fact banner with localStorage date-based rotation
+- `src/components/games/VictoryScreen.jsx` - Personal best detection and Trophy badge render
+- `src/components/layout/Dashboard.jsx` - Wired DailyMessageBanner, WeeklySummaryCard, and weekly-summary useQuery
+- `src/locales/en/common.json` - Added weeklySummary, funFacts (12), and victory.personalBest keys
+- `src/locales/he/common.json` - Added Hebrew translations for all new keys
 
-Binary arrays cannot distinguish between note sustain and rest (both are `0`). For example, `[1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0]` could be "h q q" or "q qr q q". Rather than creating duplicate entries with different tags, each unique binary pattern appears exactly once with all applicable tags. Phase 22's renderer will select the appropriate VexFlow rendering based on the node's duration set.
+## Decisions Made
 
-## Pattern Distribution
-
-| Time Signature | Count   | Array Length |
-| -------------- | ------- | ------------ |
-| 4/4            | 92      | 16 slots     |
-| 3/4            | 12      | 12 slots     |
-| 6/8            | 18      | 12 slots     |
-| **Total**      | **122** |              |
-
-## Tag Coverage (all 15/15)
-
-| Tag                       | Patterns |
-| ------------------------- | -------- |
-| quarter-only              | 8        |
-| quarter-half              | 10       |
-| quarter-half-whole        | 13       |
-| quarter-eighth            | 20       |
-| quarter-half-whole-eighth | 17       |
-| quarter-rest              | 12       |
-| half-rest                 | 8        |
-| whole-rest                | 7        |
-| dotted-half               | 10       |
-| three-four                | 12       |
-| dotted-quarter            | 12       |
-| sixteenth                 | 10       |
-| six-eight                 | 18       |
-| syncopation               | 16       |
-| dotted-syncopation        | 16       |
-
-## Verification Results
-
-1. `npx vitest run src/data/patterns/rhythmPatterns.test.js` -- 859/859 tests pass
-2. `npm run verify:trail` -- passes (with pre-existing warnings, no regressions)
-3. `npm run test:run` -- 55 files pass, 1543 tests pass (pre-existing ArcadeRhythmGame timer warnings unrelated)
-4. File contains zero `import` statements (Node-safe)
-5. All 122 patterns unique per time signature (no duplicate binary arrays)
+- weeklyProgressService counts exercises from students_score rather than computing XP delta, since no historical XP snapshots are available
+- Personal best detection in exercise path fetches pre-update progress before calling updateExerciseProgress to compare against existing bestScore
+- DailyMessageBanner placed between header and PlayNextButton for immediate visibility without disrupting the play flow
+- WeeklySummaryCard placed after DailyGoalsCard to group progress-related content together
 
 ## Deviations from Plan
 
-### Auto-fixed Issues
+None - plan executed exactly as written.
 
-**1. [Rule 1 - Bug] Binary ambiguity between rests and sustain**
+## Issues Encountered
 
-- **Found during:** Task 2
-- **Issue:** Many "rest" patterns (quarter-rest, half-rest, whole-rest) and "dotted-half" patterns have identical binary representations to existing quarter/half patterns because binary format cannot distinguish rest from sustain
-- **Fix:** Used multi-tagging on existing patterns instead of creating duplicate entries. Added unique patterns (using eighth notes for disambiguation) for tag categories that needed dedicated entries.
-- **Files modified:** src/data/patterns/rhythmPatterns.js
-- **Impact:** Pattern count is 122 (not the planned ~130) but exceeds the 120 minimum. Multi-tagging is the correct design for Phase 22's tag-based lookup.
+None
 
-## Known Stubs
+## User Setup Required
 
-None -- all patterns are fully authored with correct binary arrays.
+None - no external service configuration required.
+
+## Next Phase Readiness
+
+- All client-side celebration and reporting features complete
+- Ready for Phase 21 Plan 02 (parent weekly email report)
 
 ## Self-Check: PASSED
+
+All created files exist. All task commits verified (e729fdb, 2b788b7).
+
+---
+
+_Phase: 21-celebration-reporting-upgrades_
+_Completed: 2026-03-07_

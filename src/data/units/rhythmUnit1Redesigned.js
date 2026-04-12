@@ -9,8 +9,6 @@
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Build confidence with steady beat, establish that learning is FUN
- *
- * Phase 22 migration: patternTags replace patterns field; exercise types corrected per audit.
  */
 
 import {
@@ -53,7 +51,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q"],
       focusDurations: ["q"], // NEW: Quarter notes are being introduced
       contextDurations: [], // No previous durations yet
-      patternTags: ["quarter-only"],
+      patterns: ["quarter"],
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -63,21 +61,16 @@ export const rhythmUnit1Nodes = [
     newContent: NEW_CONTENT_TYPES.RHYTHM,
     newContentDescription: "Quarter Notes (1 beat)",
 
-    // Exercises — D-05: Node 1 starts with pulse questions
+    // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          questions: [
-            { type: "pulse" },
-            { type: "pulse" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-          ],
+          rhythmPatterns: ["quarter"],
+          tempo: 65,
+          measuresPerPattern: 1, // Short first session
+          timeSignature: "4/4",
+          difficulty: "beginner",
         },
       },
     ],
@@ -112,7 +105,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q"],
       focusDurations: [], // No new durations
       contextDurations: ["q"],
-      patternTags: ["quarter-only"],
+      patterns: ["quarter"],
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -123,18 +116,13 @@ export const rhythmUnit1Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-          ],
+          rhythmPatterns: ["quarter"],
+          tempo: 70,
+          measuresPerPattern: 2, // Longer patterns for practice
+          timeSignature: "4/4",
+          difficulty: "beginner",
         },
       },
     ],
@@ -168,7 +156,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q", "h"],
       focusDurations: ["h"], // NEW: Half notes are being introduced
       contextDurations: ["q"], // Quarters are already known
-      patternTags: ["quarter-half"],
+      patterns: ["quarter", "half"],
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -179,18 +167,13 @@ export const rhythmUnit1Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-          ],
+          rhythmPatterns: ["quarter", "half"],
+          tempo: 65,
+          measuresPerPattern: 1,
+          timeSignature: "4/4",
+          difficulty: "beginner",
         },
       },
     ],
@@ -224,7 +207,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q", "h"],
       focusDurations: [],
       contextDurations: ["q", "h"],
-      patternTags: ["quarter-half"],
+      patterns: ["quarter", "half"],
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -235,18 +218,13 @@ export const rhythmUnit1Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_DICTATION,
         config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-          ],
+          rhythmPatterns: ["quarter", "half"],
+          tempo: 70,
+          measuresPerPattern: 2,
+          timeSignature: "4/4",
+          difficulty: "beginner",
         },
       },
     ],
@@ -280,7 +258,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q", "h"],
       focusDurations: [],
       contextDurations: ["q", "h"],
-      patternTags: ["quarter-only", "quarter-half"],
+      patterns: ["quarter", "half"],
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -291,18 +269,14 @@ export const rhythmUnit1Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
-          questions: [
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "syllable_matching" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-          ],
+          rhythmPatterns: ["quarter", "half"],
+          tempo: 70,
+          measuresPerPattern: 2,
+          timeSignature: "4/4",
+          difficulty: "beginner",
+          patternVariety: true, // Hint for varied patterns
         },
       },
     ],
@@ -336,7 +310,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q", "h"],
       focusDurations: [],
       contextDurations: ["q", "h"],
-      patternTags: ["quarter-only", "quarter-half"],
+      patterns: ["quarter", "half"],
       tempo: { min: 85, max: 95, default: 90 }, // Fixed fast tempo
       pitch: "C4",
       timeSignature: "4/4",
@@ -347,8 +321,12 @@ export const rhythmUnit1Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
+          rhythmPatterns: ["quarter", "half"],
+          tempo: 90,
+          measuresPerPattern: 2,
+          timeSignature: "4/4",
           difficulty: "intermediate",
         },
       },
@@ -384,7 +362,7 @@ export const rhythmUnit1Nodes = [
       durations: ["q", "h"],
       focusDurations: [],
       contextDurations: ["q", "h"],
-      patternTags: ["quarter-only", "quarter-half"],
+      patterns: ["quarter", "half"],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -395,22 +373,14 @@ export const rhythmUnit1Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
-            { type: "syllable_matching" },
-          ],
+          rhythmPatterns: ["quarter", "half"],
+          tempo: 75,
+          measuresPerPattern: 4, // Longer patterns for boss
+          timeSignature: "4/4",
+          difficulty: "intermediate",
+          questionCount: 12, // More exercises
         },
       },
     ],

@@ -367,12 +367,34 @@
         "notificationsBlocked": "Notifications Blocked",
         "notificationsBlockedSubtitle": "Notifications were previously blocked. Follow these steps to enable them:",
         "notificationsBlockedSteps": {
-          "androidPwa": ["Long-press the PianoMaster app icon", "Tap 'App info'", "Tap 'Notifications' and turn them on"],
-          "iosPwa": ["Open your iPhone Settings app", "Scroll down and tap 'PianoMaster'", "Tap 'Notifications' and turn them on"],
-          "chrome": ["Click the tune icon left of the address bar", "Find 'Notifications' and change to 'Allow'"],
-          "safari": ["Click 'Safari' in the menu bar", "Click 'Settings for This Website'", "Set Notifications to 'Allow'"],
-          "firefox": ["Click the lock icon left of the address bar", "Click 'Notifications' under Permissions", "Select 'Allow'"],
-          "fallback": ["Find the lock or site settings icon in your browser's address bar", "Look for 'Notifications' and change to 'Allow'"]
+          "androidPwa": [
+            "Long-press the PianoMaster app icon",
+            "Tap 'App info'",
+            "Tap 'Notifications' and turn them on"
+          ],
+          "iosPwa": [
+            "Open your iPhone Settings app",
+            "Scroll down and tap 'PianoMaster'",
+            "Tap 'Notifications' and turn them on"
+          ],
+          "chrome": [
+            "Click the tune icon left of the address bar",
+            "Find 'Notifications' and change to 'Allow'"
+          ],
+          "safari": [
+            "Click 'Safari' in the menu bar",
+            "Click 'Settings for This Website'",
+            "Set Notifications to 'Allow'"
+          ],
+          "firefox": [
+            "Click the lock icon left of the address bar",
+            "Click 'Notifications' under Permissions",
+            "Select 'Allow'"
+          ],
+          "fallback": [
+            "Find the lock or site settings icon in your browser's address bar",
+            "Look for 'Notifications' and change to 'Allow'"
+          ]
         },
         "startTime": "Start Time",
         "endTime": "End Time",
@@ -693,7 +715,7 @@
         "description": "Identify notes on the staff"
       },
       "metronomeTrainer": {
-        "name": "Metronome Rhythm Trainer",
+        "name": "Listen & Tap",
         "description": "Listen to rhythm patterns then tap them back with precise timing"
       },
       "rhythmReading": {
@@ -718,7 +740,7 @@
       "playNow": "Play Now"
     },
     "metronomeTrainer": {
-      "headerTitle": "Metronome Rhythm Trainer",
+      "headerTitle": "Listen & Tap",
       "progressLabel": "Exercise {{current}} of {{total}}",
       "sessionCompleteTitle": "Session Complete!",
       "sessionCompleteSubtitle": "Great work on your rhythm training!",
@@ -759,7 +781,7 @@
           "perfect": "Perfect",
           "good": "Good",
           "fair": "Fair",
-          "miss": "Miss"
+          "miss": "Almost!"
         }
       }
     },
@@ -778,8 +800,12 @@
         "accuracy": {
           "perfect": "PERFECT!",
           "good": "GOOD!",
-          "miss": "MISS"
+          "miss": "Almost!"
         }
+      },
+      "syllableToggle": {
+        "show": "Show syllables",
+        "hide": "Hide syllables"
       },
       "countdown": {
         "getReady": "Get Ready!",
@@ -1223,7 +1249,7 @@
   },
   "gameSettings": {
     "titles": {
-      "metronomeTrainer": "Metronome Rhythm Trainer",
+      "metronomeTrainer": "Listen & Tap",
       "metronomeSubtitle": "Configure your rhythm training session"
     },
     "steps": {
@@ -1788,27 +1814,5 @@
     "missedBanner": "Missed!",
     "cardProgress": "Card {{current}} of {{total}}",
     "catchResult": "You caught {{caught}} out of {{total}} Middle C!"
-  },
-  "visualRecognition": {
-    "prompt": "Which one is a {{durationName}}?",
-    "title": "Visual Recognition"
-  },
-  "syllableMatching": {
-    "prompt": "What syllable is this?",
-    "title": "Syllable Matching"
-  },
-  "rhythm": {
-    "duration": {
-      "quarter": "quarter note",
-      "half": "half note",
-      "whole": "whole note",
-      "eighth": "eighth note",
-      "sixteenth": "sixteenth note",
-      "dottedQuarter": "dotted quarter note",
-      "dottedHalf": "dotted half note",
-      "quarterRest": "quarter rest",
-      "halfRest": "half rest",
-      "wholeRest": "whole rest"
-    }
   }
 }

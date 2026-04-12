@@ -1,3 +1,4 @@
+import { GraduationCap } from "lucide-react";
 import trailIconSrc from "../../assets/icons/Trail.svg";
 import houseIconSrc from "../../assets/icons/House.svg";
 import gameHubIconSrc from "../../assets/icons/Game-Hub.svg";
@@ -5,7 +6,6 @@ import achievementsIconSrc from "../../assets/icons/Achievements.svg";
 import settingsIconSrc from "../../assets/icons/Settings.svg";
 import micIconSrc from "../../assets/icons/Mic.svg";
 import parentIconSrc from "../../assets/icons/Parent.svg";
-import teacherHatIconSrc from "../../assets/icons/Teacher-Hat.svg";
 
 function TrailIcon({ className: _className, ...props }) {
   return <img src={trailIconSrc} alt="" className="h-8 w-8" {...props} />;
@@ -35,10 +35,6 @@ function MicIcon({ className: _className, ...props }) {
 
 function ParentIcon({ className: _className, ...props }) {
   return <img src={parentIconSrc} alt="" className="h-8 w-8" {...props} />;
-}
-
-function TeacherHatIcon({ className: _className, ...props }) {
-  return <img src={teacherHatIconSrc} alt="" className="h-8 w-8" {...props} />;
 }
 
 /**
@@ -102,7 +98,7 @@ export const APP_NAV_ITEMS = {
     {
       id: "teacherDashboard",
       to: "/teacher",
-      icon: TeacherHatIcon,
+      icon: GraduationCap,
       labelKey: "navigation.links.teacherDashboard",
       theme: "purple",
     },

@@ -81,9 +81,7 @@
     "arcade_rhythm": "Arcade Rhythm",
     "pitch_comparison": "Pitch Comparison",
     "interval_id": "Interval ID",
-    "visual_recognition": "Visual Recognition",
-    "syllable_matching": "Syllable Matching",
-    "mixed_lesson": "Mixed Lesson"
+    "pulse": "Pulse"
   },
   "modal": {
     "yourProgress": "Your Progress",

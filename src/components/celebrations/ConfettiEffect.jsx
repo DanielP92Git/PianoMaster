@@ -92,7 +92,7 @@ export function ConfettiEffect({ tier = "full", onComplete }) {
   };
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[9998] overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-[9998]">
       <Confetti
         width={windowSize.width}
         height={windowSize.height}

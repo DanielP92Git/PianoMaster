@@ -1,4 +1,4 @@
-import { StaveNote, Stem, Dot, Annotation } from 'vexflow';
+import { StaveNote, Stem, Dot, Annotation } from "vexflow";
 
 /**
  * Map from sixteenth-note duration units to VexFlow duration code strings.
@@ -14,14 +14,14 @@ import { StaveNote, Stem, Dot, Annotation } from 'vexflow';
  *    1 → sixteenth ('16')
  */
 export const DURATION_TO_VEX = {
-  16: 'w',
-  12: 'hd',
-  8: 'h',
-  6: 'qd',
-  4: 'q',
-  3: '8d',
-  2: '8',
-  1: '16',
+  16: "w",
+  12: "hd",
+  8: "h",
+  6: "qd",
+  4: "q",
+  3: "8d",
+  2: "8",
+  1: "16",
 };
 
 /**
@@ -76,24 +76,31 @@ export function binaryPatternToBeats(binaryPattern) {
  * @param {{ showSyllables?: boolean, language?: string }} [options]
  * @returns {StaveNote[]}
  */
-export function beatsToVexNotes(beats, { showSyllables = false, language = 'en' } = {}) {
+export function beatsToVexNotes(
+  beats,
+  { showSyllables = false, language = "en" } = {}
+) {
   return beats.map((beat) => {
     const vexDur = DURATION_TO_VEX[beat.durationUnits];
 
     // Fallback to quarter note if duration not in map
     if (!vexDur) {
       const note = new StaveNote({
-        keys: ['b/4'],
-        duration: beat.isRest ? 'qr' : 'q',
+        keys: ["b/4"],
+        duration: beat.isRest ? "qr" : "q",
         stem_direction: Stem.UP,
       });
 
       if (showSyllables) {
-        const syllableMap = language === 'he' ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
-        const restSyllable = language === 'he' ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
-        const syllableText = beat.isRest ? restSyllable : (syllableMap[beat.durationUnits] || '');
+        const syllableMap =
+          language === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
+        const restSyllable =
+          language === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
+        const syllableText = beat.isRest
+          ? restSyllable
+          : syllableMap[beat.durationUnits] || "";
         if (syllableText) {
-          const fontFamily = language === 'he' ? 'Heebo' : 'sans-serif';
+          const fontFamily = language === "he" ? "Heebo" : "sans-serif";
           const annotation = new Annotation(syllableText)
             .setFont(fontFamily, 11)
             .setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
@@ -104,13 +111,13 @@ export function beatsToVexNotes(beats, { showSyllables = false, language = 'en' 
       return note;
     }
 
-    const isDotted = vexDur.endsWith('d');
+    const isDotted = vexDur.endsWith("d");
     // Strip the 'd' suffix for VexFlow — dots are added separately via Dot.buildAndAttach
     const baseDur = isDotted ? vexDur.slice(0, -1) : vexDur;
 
     const note = new StaveNote({
-      keys: ['b/4'],
-      duration: beat.isRest ? baseDur + 'r' : baseDur,
+      keys: ["b/4"],
+      duration: beat.isRest ? baseDur + "r" : baseDur,
       stem_direction: Stem.UP,
     });
 
@@ -119,11 +126,14 @@ export function beatsToVexNotes(beats, { showSyllables = false, language = 'en' 
     }
 
     if (showSyllables) {
-      const syllableMap = language === 'he' ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
-      const restSyllable = language === 'he' ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
-      const syllableText = beat.isRest ? restSyllable : (syllableMap[beat.durationUnits] || '');
+      const syllableMap = language === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
+      const restSyllable =
+        language === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
+      const syllableText = beat.isRest
+        ? restSyllable
+        : syllableMap[beat.durationUnits] || "";
       if (syllableText) {
-        const fontFamily = language === 'he' ? 'Heebo' : 'sans-serif';
+        const fontFamily = language === "he" ? "Heebo" : "sans-serif";
         const annotation = new Annotation(syllableText)
           .setFont(fontFamily, 11)
           .setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
@@ -134,32 +144,3 @@ export function beatsToVexNotes(beats, { showSyllables = false, language = 'en' 
     return note;
   });
 }
-
-/**
- * Kodaly syllable maps — keyed by durationUnits (sixteenth-note units).
- * Used by SyllableMatchingGame for answer card text.
- *
- * Hebrew syllables include Nikud diacritics — do not alter without user approval.
- */
-export const SYLLABLE_MAP_EN = {
-  16: "ta-a-a-a",
-  12: "ta-a-a",
-  8: "ta-a",
-  6: "ta-a",
-  4: "ta",
-  2: "ti",
-  1: "ti-ka",
-};
-
-export const SYLLABLE_MAP_HE = {
-  16: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4-\u05D0\u05B8\u05D4-\u05D0\u05B8\u05D4",
-  12: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4-\u05D0\u05B8\u05D4",
-  8: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4",
-  6: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4",
-  4: "\u05D8\u05B8\u05D4",
-  2: "\u05D8\u05B4\u05D9",
-  1: "\u05D8\u05B4\u05D9-\u05DB\u05BC\u05B8\u05D4",
-};
-
-export const REST_SYLLABLE_EN = "sh";
-export const REST_SYLLABLE_HE = "\u05D4\u05B8\u05E1";

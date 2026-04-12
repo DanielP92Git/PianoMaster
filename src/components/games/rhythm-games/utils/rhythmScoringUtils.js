@@ -1,4 +1,4 @@
-import { calculateTimingThresholds } from './rhythmTimingUtils';
+import { calculateTimingThresholds } from "./rhythmTimingUtils";
 
 /**
  * Score a single tap against the scheduled beat times.
@@ -12,12 +12,18 @@ import { calculateTimingThresholds } from './rhythmTimingUtils';
  * @param {number} tempo - Current tempo in BPM
  * @returns {{ quality: 'PERFECT'|'GOOD'|'MISS', noteIdx: number, deltaMs: number, newNextBeatIndex: number }}
  */
-export function scoreTap(tapTime, scheduledBeatTimes, nextBeatIndex, tempo) {
-  const thresholds = calculateTimingThresholds(tempo);
+export function scoreTap(
+  tapTime,
+  scheduledBeatTimes,
+  nextBeatIndex,
+  tempo,
+  nodeType = null
+) {
+  const thresholds = calculateTimingThresholds(tempo, nodeType);
 
   if (!scheduledBeatTimes || scheduledBeatTimes.length === 0) {
     return {
-      quality: 'MISS',
+      quality: "MISS",
       noteIdx: -1,
       deltaMs: Infinity,
       newNextBeatIndex: nextBeatIndex,
@@ -41,11 +47,11 @@ export function scoreTap(tapTime, scheduledBeatTimes, nextBeatIndex, tempo) {
 
   let quality;
   if (bestDelta <= thresholds.PERFECT) {
-    quality = 'PERFECT';
+    quality = "PERFECT";
   } else if (bestDelta <= thresholds.GOOD) {
-    quality = 'GOOD';
+    quality = "GOOD";
   } else {
-    quality = 'MISS';
+    quality = "MISS";
   }
 
   // Advance next beat index past the scored beat (prevent double-scoring same beat)
