@@ -76,7 +76,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 - [x] **Phase 20: Curriculum Audit** - Audit all 56 rhythm nodes and lock game-type policy before touching any files (completed 2026-04-11)
 - [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-11)
-- [ ] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change
+- [x] **Phase 22: Service Layer & Trail Wiring** - Wire generator, unit files, game components, and validator as a coordinated change (completed 2026-04-12)
 - [ ] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables
 
 ## Phase Details
@@ -122,15 +122,15 @@ Plans:
 **Goal**: Rhythm nodes use curated patterns instead of duration allowlists, the generator resolves by tags/IDs, Unit 1 Node 1 has a pulse exercise, and the build validator enforces pattern correctness
 **Depends on**: Phase 21
 **Requirements**: CURR-05, PAT-03, PAT-04, PAT-05, PAT-06
-**Plans:** 5 plans
+**Plans:** 5/5 plans complete
 
 Plans:
 
-- [ ] 22-01-PLAN.md — Create RhythmPatternGenerator module with resolveByTags/resolveByIds + TDD tests
-- [ ] 22-02-PLAN.md — Add PULSE exercise type, PulseQuestion renderer, register in MixedLessonGame/validator
-- [ ] 22-03-PLAN.md — Update game consumers + migrate Units 1-4 (28 nodes) to patternTags
-- [ ] 22-04-PLAN.md — Migrate Units 5-8 (28 nodes) to patternTags + fix rhythm_7_4 violation
-- [ ] 22-05-PLAN.md — Extend build validator with tag existence, coverage, duration safety, game-type policy checks
+- [x] 22-01-PLAN.md — Create RhythmPatternGenerator module with resolveByTags/resolveByIds + TDD tests
+- [x] 22-02-PLAN.md — Add PULSE exercise type, PulseQuestion renderer, register in MixedLessonGame/validator
+- [x] 22-03-PLAN.md — Update game consumers + migrate Units 1-4 (28 nodes) to patternTags
+- [x] 22-04-PLAN.md — Migrate Units 5-8 (28 nodes) to patternTags + fix rhythm_7_4 violation
+- [x] 22-05-PLAN.md — Extend build validator with tag existence, coverage, duration safety, game-type policy checks
 
 **Success Criteria** (what must be TRUE):
 
@@ -160,7 +160,7 @@ Plans:
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-11 |
 | 21. Pattern Library Construction | v3.2      | 1/1            | Complete    | 2026-04-11 |
-| 22. Service Layer & Trail Wiring | v3.2      | 0/5            | Planning    | -          |
+| 22. Service Layer & Trail Wiring | v3.2      | 5/5            | Complete    | 2026-04-12 |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 | 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -          |
 | 25. Unified Mixed Lesson Engine  | v3.2      | 3/3            | Complete    | 2026-04-09 |
