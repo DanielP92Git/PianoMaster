@@ -595,22 +595,16 @@ This phase has no authentication, data access, or user input beyond tap timing. 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does `resolveByTags` need a `timeSignature` parameter or can it infer from node?**
-   - What we know: Each pattern has a `timeSignature` field. The node has `rhythmConfig.timeSignature`.
-   - What's unclear: Whether the planner wants the resolver to auto-filter by time signature or require explicit passing.
-   - Recommendation: Pass `timeSignature` as part of `options` parameter (optional, defaults to "4/4"). The validator can use it for duration safety checks.
+   - RESOLVED: Pass `timeSignature` as part of `options` parameter (optional, defaults to "4/4"). Plan 22-01 implements this as `options.timeSignature`.
 
 2. **What happens when `resolveByTags` finds no matching pattern?**
-   - What we know: Some tag combinations may not have patterns (e.g., narrow tags at unusual time signatures).
-   - What's unclear: Whether to return `null`, throw, or fall back to a generative pattern.
-   - Recommendation: Return `null` and log a warning. The validator will catch this as a duration safety error at build time, so runtime null is a development-only edge case.
+   - RESOLVED: Return `null`. The build validator catches this as a duration safety error at build time. Plan 22-01 tests confirm null return on no match.
 
 3. **Does the REVIEW nodeType appear in any of the 56 rhythm nodes?**
-   - What we know: Phase 20 audit table only documents DISCOVERY/PRACTICE/MIX_UP/SPEED_ROUND/MINI_BOSS/BOSS. No REVIEW nodes are listed.
-   - What's unclear: Whether any REVIEW nodes exist or will be added.
-   - Recommendation: Include REVIEW in the game-type policy validator check (maps to mixed_lesson) but don't expect any current nodes to require it.
+   - RESOLVED: No current REVIEW nodes exist. Plan 22-05 includes REVIEW in the `MIXED_LESSON_TYPES` Set for game-type policy validation as a forward-compatible guard.
 
 ---
 
