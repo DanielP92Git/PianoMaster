@@ -307,7 +307,7 @@ export const rhythmUnit5Nodes = [
       durations: ['q', 'h', 'hd', 'qd', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'hd', 'qd', '8'],
-      patternTags: ['dotted-half', 'dotted-quarter', 'three-four'],
+      patternTags: ['dotted-half', 'dotted-quarter'],
       tempo: { min: 90, max: 100, default: 95 },   // Fixed fast tempo
       pitch: 'C4',
       timeSignature: '4/4'
@@ -355,7 +355,7 @@ export const rhythmUnit5Nodes = [
       durations: ['q', 'h', 'hd', 'qd', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'hd', 'qd', '8'],
-      patternTags: ['dotted-half', 'dotted-quarter', 'three-four'],
+      patternTags: ['dotted-half', 'dotted-quarter'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'

@@ -355,7 +355,7 @@ export const rhythmUnit8Nodes = [
       durations: ['qd', '8', 'q', 'h'],
       focusDurations: [],
       contextDurations: ['qd', '8', 'q', 'h'],
-      patternTags: ['syncopation', 'dotted-syncopation', 'six-eight'],
+      patternTags: ['syncopation', 'dotted-syncopation'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
