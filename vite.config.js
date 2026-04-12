@@ -43,9 +43,12 @@ export default defineConfig({
         authToken: process.env.SENTRY_AUTH_TOKEN,
       }),
   ].filter(Boolean),
+  optimizeDeps: {
+    exclude: ["lucide-react"],
+  },
   server: {
     port: 5174,
-    host: "localhost",
+    host: "0.0.0.0",
     strictPort: true, // This will fail if port 5174 is not available
     https: false, // Enable HTTPS for PWA install prompts on mobile devices
   },

@@ -334,7 +334,7 @@ Explicitly excluded:
 
 ## Context
 
-**Current State (after v3.2 Phase 21 — 2026-04-06, pattern library construction complete):**
+**Current State (after v3.1 Phase 19 — 2026-04-05, post-game trail return complete):**
 
 - Trail is the primary student landing page at `/` with sidebar + bottom tab navigation; dashboard moved to `/dashboard` as secondary stats hub
 - Dashboard compacted: hero image removed, glass greeting bar (avatar + name + level pill), card spacing tightened (space-y-4), PlayNextButton/OnboardingTour/Fireflies removed, "History" renamed to "Recordings" with Headphones icon
@@ -589,4 +589,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-06 — Phase 21 pattern library construction complete_
+_Last updated: 2026-04-06 — v3.2 Rhythm Trail Rework milestone started_

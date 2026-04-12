@@ -68,7 +68,7 @@ describe("APP_NAV_ITEMS.student ordering (D-05)", () => {
 
   it("D-12: studentDashboard entry navigates to /dashboard", () => {
     const dashboard = APP_NAV_ITEMS.student.find(
-      (item) => item.id === "studentDashboard"
+      (item) => item.id === "studentDashboard",
     );
     expect(dashboard).toBeDefined();
     expect(dashboard.to).toBe("/dashboard");
@@ -83,7 +83,7 @@ describe("APP_NAV_ITEMS.student contains parentZone", () => {
 
   it("D-01: parentZone entry navigates to /parent-portal", () => {
     const entry = APP_NAV_ITEMS.student.find(
-      (item) => item.id === "parentZone"
+      (item) => item.id === "parentZone",
     );
     expect(entry).toBeDefined();
     expect(entry.to).toBe("/parent-portal");
@@ -91,18 +91,20 @@ describe("APP_NAV_ITEMS.student contains parentZone", () => {
 
   it("D-01: parentZone entry uses navigation.links.parentZone labelKey", () => {
     const entry = APP_NAV_ITEMS.student.find(
-      (item) => item.id === "parentZone"
+      (item) => item.id === "parentZone",
     );
     expect(entry.labelKey).toBe("navigation.links.parentZone");
   });
 
-  it("D-01: parentZone entry references ParentIcon", () => {
+  it("D-01: parentZone entry references ShieldCheck icon (lucide React component)", () => {
     const entry = APP_NAV_ITEMS.student.find(
-      (item) => item.id === "parentZone"
+      (item) => item.id === "parentZone",
     );
+    // lucide-react icons are forwardRef objects, so typeof is 'object', not 'function'
+    // Verify it is truthy (not undefined/null) and has a displayName indicating ShieldCheck
     expect(entry.icon).toBeTruthy();
     const name = entry.icon.displayName || entry.icon.name || "";
-    expect(name).toContain("ParentIcon");
+    expect(name).toContain("ShieldCheck");
   });
 
   it("D-01: parentZone is positioned after achievements in student array", () => {

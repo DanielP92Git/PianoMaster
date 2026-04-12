@@ -9,8 +9,6 @@
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Feel the difference between walking (quarter) and running (eighth) notes
- *
- * Phase 22 migration: patternTags replace patterns field; exercise types corrected per audit.
  */
 
 import { NODE_TYPES, RHYTHM_COMPLEXITY, NEW_CONTENT_TYPES } from '../nodeTypes.js';
@@ -49,7 +47,7 @@ export const rhythmUnit3Nodes = [
       durations: ['q', '8'],
       focusDurations: ['8'],              // NEW: Eighth notes are being introduced
       contextDurations: ['q'],            // Quarter notes are already known
-      patternTags: ['quarter-eighth'],
+      patterns: ['quarter', 'eighth'],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -59,22 +57,17 @@ export const rhythmUnit3Nodes = [
     newContent: NEW_CONTENT_TYPES.RHYTHM,
     newContentDescription: 'Eighth Notes (1/2 beat)',
 
-    // Exercises — DISCOVERY: notation-weighted question sequence
+    // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          questions: [
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-          ],
-        },
+          rhythmPatterns: ['quarter', 'eighth'],
+          tempo: 75,
+          measuresPerPattern: 1,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
+        }
       }
     ],
 
@@ -108,7 +101,7 @@ export const rhythmUnit3Nodes = [
       durations: ['q', '8'],
       focusDurations: [],
       contextDurations: ['q', '8'],
-      patternTags: ['quarter-eighth'],
+      patterns: ['quarter', 'eighth'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -119,19 +112,14 @@ export const rhythmUnit3Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          questions: [
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-          ],
-        },
+          rhythmPatterns: ['quarter', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
+        }
       }
     ],
 
@@ -161,10 +149,10 @@ export const rhythmUnit3Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ['q', 'h', 'w', '8'],
+      durations: ['q', 'h', '8'],
       focusDurations: [],                 // Contrasting known durations
-      contextDurations: ['q', 'h', 'w', '8'],
-      patternTags: ['quarter-eighth', 'quarter-half-whole-eighth'],
+      contextDurations: ['q', 'h', '8'],
+      patterns: ['quarter', 'half', 'eighth'],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -175,19 +163,14 @@ export const rhythmUnit3Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
-          questions: [
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-          ],
-        },
+          rhythmPatterns: ['quarter', 'half', 'eighth'],
+          tempo: 75,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
+        }
       }
     ],
 
@@ -217,10 +200,10 @@ export const rhythmUnit3Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ['q', 'h', 'w', '8'],
+      durations: ['q', 'h', '8'],
       focusDurations: [],
-      contextDurations: ['q', 'h', 'w', '8'],
-      patternTags: ['quarter-half-whole-eighth'],
+      contextDurations: ['q', 'h', '8'],
+      patterns: ['quarter', 'half', 'eighth'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -231,19 +214,14 @@ export const rhythmUnit3Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_DICTATION,
         config: {
-          questions: [
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-          ],
-        },
+          rhythmPatterns: ['quarter', 'half', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
+        }
       }
     ],
 
@@ -276,7 +254,7 @@ export const rhythmUnit3Nodes = [
       durations: ['q', 'h', 'w', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'w', '8'],
-      patternTags: ['quarter-eighth', 'quarter-half-whole-eighth'],
+      patterns: ['quarter', 'half', 'whole', 'eighth'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -287,19 +265,15 @@ export const rhythmUnit3Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
-          questions: [
-            { type: 'visual_recognition' },
-            { type: 'rhythm_tap' },
-            { type: 'syllable_matching' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-          ],
-        },
+          rhythmPatterns: ['quarter', 'half', 'whole', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate',
+          patternVariety: true
+        }
       }
     ],
 
@@ -329,10 +303,10 @@ export const rhythmUnit3Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ['q', 'h', 'w', '8'],
+      durations: ['q', 'h', '8'],
       focusDurations: [],
-      contextDurations: ['q', 'h', 'w', '8'],
-      patternTags: ['quarter-eighth', 'quarter-half-whole-eighth'],
+      contextDurations: ['q', 'h', '8'],
+      patterns: ['quarter', 'half', 'eighth'],
       tempo: { min: 90, max: 100, default: 95 },   // Fixed fast tempo
       pitch: 'C4',
       timeSignature: '4/4'
@@ -343,10 +317,14 @@ export const rhythmUnit3Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          difficulty: 'intermediate',
-        },
+          rhythmPatterns: ['quarter', 'half', 'eighth'],
+          tempo: 95,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
+        }
       }
     ],
 
@@ -380,7 +358,7 @@ export const rhythmUnit3Nodes = [
       durations: ['q', 'h', 'w', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'w', '8'],
-      patternTags: ['quarter-eighth', 'quarter-half-whole-eighth'],
+      patterns: ['quarter', 'half', 'whole', 'eighth'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -391,23 +369,15 @@ export const rhythmUnit3Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
-          questions: [
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-            { type: 'rhythm_tap' },
-            { type: 'visual_recognition' },
-            { type: 'syllable_matching' },
-          ],
-        },
+          rhythmPatterns: ['quarter', 'half', 'whole', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 4,         // Longer patterns for boss
+          timeSignature: '4/4',
+          difficulty: 'intermediate',
+          questionCount: 12
+        }
       }
     ],
 

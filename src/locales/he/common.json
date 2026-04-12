@@ -1791,27 +1791,5 @@
     "missedBanner": "פספסת!",
     "cardProgress": "קלף {{current}} מתוך {{total}}",
     "catchResult": "תפסת {{caught}} מתוך {{total}} דו אמצעי!"
-  },
-  "visualRecognition": {
-    "prompt": "?{{durationName}} איזה מהם הוא",
-    "title": "זיהוי חזותי"
-  },
-  "syllableMatching": {
-    "prompt": "?איזו הברה זו",
-    "title": "התאמת הברות"
-  },
-  "rhythm": {
-    "duration": {
-      "quarter": "תו רבע",
-      "half": "תו חצי",
-      "whole": "תו שלם",
-      "eighth": "תו שמינית",
-      "sixteenth": "תו שש עשרה",
-      "dottedQuarter": "תו רבע מנוקד",
-      "dottedHalf": "תו חצי מנוקד",
-      "quarterRest": "שתקת רבע",
-      "halfRest": "שתקת חצי",
-      "wholeRest": "שתקת שלם"
-    }
   }
 }

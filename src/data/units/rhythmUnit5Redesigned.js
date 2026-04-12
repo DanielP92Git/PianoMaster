@@ -45,10 +45,10 @@ export const rhythmUnit5Nodes = [
     // Rhythm configuration with dotted notes
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ['q', 'h', 'w', '8', 'qr', 'hr', 'wr', 'hd'],
+      durations: ['q', 'h', 'hd'],
       focusDurations: ['hd'],              // NEW: Dotted half note is being introduced
-      contextDurations: ['q', 'h', 'w', '8', 'qr', 'hr', 'wr'],
-      patternTags: ['dotted-half'],
+      contextDurations: ['q', 'h'],        // Quarters and halves are already known
+      patterns: ['quarter', 'half', 'dotted-half'],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -61,13 +61,13 @@ export const rhythmUnit5Nodes = [
     // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          questions: [
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'rhythm_tap' },
-            { type: 'visual_recognition' }, { type: 'syllable_matching' }, { type: 'rhythm_tap' },
-          ]
+          rhythmPatterns: ['quarter', 'half', 'dotted-half'],
+          tempo: 75,
+          measuresPerPattern: 1,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
         }
       }
     ],
@@ -99,10 +99,10 @@ export const rhythmUnit5Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ['q', 'h', 'w', '8', 'qr', 'hr', 'wr', 'hd'],
+      durations: ['q', 'h', 'hd'],
       focusDurations: [],
-      contextDurations: ['q', 'h', 'w', '8', 'qr', 'hr', 'wr', 'hd'],
-      patternTags: ['dotted-half'],
+      contextDurations: ['q', 'h', 'hd'],
+      patterns: ['quarter', 'half', 'dotted-half'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -113,13 +113,13 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
-          questions: [
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' },
-          ]
+          rhythmPatterns: ['quarter', 'half', 'dotted-half'],
+          tempo: 80,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
         }
       }
     ],
@@ -153,7 +153,7 @@ export const rhythmUnit5Nodes = [
       durations: ['q', 'hd'],
       focusDurations: [],                  // Focus is on time signature, not new durations
       contextDurations: ['q', 'hd'],
-      patternTags: ['three-four'],
+      patterns: ['quarter', 'dotted-half'],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: 'C4',
       timeSignature: '3/4',
@@ -165,13 +165,13 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
-          questions: [
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'rhythm_tap' },
-            { type: 'visual_recognition' }, { type: 'syllable_matching' }, { type: 'rhythm_tap' },
-          ]
+          rhythmPatterns: ['quarter', 'dotted-half'],
+          tempo: 75,
+          measuresPerPattern: 2,
+          timeSignature: '3/4',
+          difficulty: 'intermediate'
         }
       }
     ],
@@ -205,7 +205,7 @@ export const rhythmUnit5Nodes = [
       durations: ['q', '8', 'qd'],
       focusDurations: ['qd'],              // NEW: Dotted quarter is being introduced
       contextDurations: ['q', '8'],        // Quarters and eighths are already known
-      patternTags: ['dotted-quarter'],
+      patterns: ['quarter', 'eighth', 'dotted-quarter'],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -216,13 +216,13 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_DICTATION,
         config: {
-          questions: [
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'rhythm_tap' },
-            { type: 'visual_recognition' }, { type: 'syllable_matching' }, { type: 'rhythm_tap' },
-          ]
+          rhythmPatterns: ['quarter', 'eighth', 'dotted-quarter'],
+          tempo: 75,
+          measuresPerPattern: 1,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
         }
       }
     ],
@@ -256,7 +256,7 @@ export const rhythmUnit5Nodes = [
       durations: ['q', 'h', 'hd', 'qd', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'hd', 'qd', '8'],
-      patternTags: ['dotted-half', 'dotted-quarter'],
+      patterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
       timeSignature: '4/4'
@@ -267,13 +267,13 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.RHYTHM_TAP,
         config: {
-          questions: [
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' },
-          ]
+          rhythmPatterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
+          difficulty: 'intermediate'
         }
       }
     ],
@@ -307,7 +307,7 @@ export const rhythmUnit5Nodes = [
       durations: ['q', 'h', 'hd', 'qd', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'hd', 'qd', '8'],
-      patternTags: ['dotted-half', 'dotted-quarter'],
+      patterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
       tempo: { min: 90, max: 100, default: 95 },   // Fixed fast tempo
       pitch: 'C4',
       timeSignature: '4/4'
@@ -318,8 +318,12 @@ export const rhythmUnit5Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
+        type: EXERCISE_TYPES.RHYTHM,
         config: {
+          rhythmPatterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
+          tempo: 95,
+          measuresPerPattern: 2,
+          timeSignature: '4/4',
           difficulty: 'intermediate'
         }
       }
@@ -355,25 +359,38 @@ export const rhythmUnit5Nodes = [
       durations: ['q', 'h', 'hd', 'qd', '8'],
       focusDurations: [],
       contextDurations: ['q', 'h', 'hd', 'qd', '8'],
-      patternTags: ['dotted-half', 'dotted-quarter'],
+      patterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: 'C4',
-      timeSignature: '4/4'
+      timeSignature: '4/4'    // Mix of 4/4 and 3/4 exercises
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
     newContentDescription: 'Unit Challenge',
 
     exercises: [
+      // First exercise in 4/4 time
       {
-        type: EXERCISE_TYPES.MIXED_LESSON,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
-          questions: [
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-            { type: 'rhythm_tap' }, { type: 'visual_recognition' }, { type: 'syllable_matching' },
-          ]
+          rhythmPatterns: ['quarter', 'half', 'dotted-half', 'dotted-quarter', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 4,         // Longer patterns for boss
+          timeSignature: '4/4',
+          difficulty: 'intermediate',
+          questionCount: 6
+        }
+      },
+      // Second exercise in 3/4 time to test both time signatures
+      {
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
+        config: {
+          rhythmPatterns: ['quarter', 'dotted-half', 'dotted-quarter', 'eighth'],
+          tempo: 80,
+          measuresPerPattern: 4,
+          timeSignature: '3/4',
+          difficulty: 'intermediate',
+          questionCount: 6
         }
       }
     ],

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Sidebar from "./Sidebar";  
+import Header from "./Header";  
 import MobileTabsNav from "./MobileTabsNav";
 
 export default function AppLayout() {
@@ -26,28 +26,21 @@ export default function AppLayout() {
     "/rhythm-mode/arcade-rhythm-game",
     "/ear-training-mode/note-comparison-game",
     "/ear-training-mode/interval-game",
-    "/rhythm-mode/visual-recognition-game",
-    "/rhythm-mode/syllable-matching-game",
-    "/rhythm-mode/mixed-lesson",
   ];
 
   // Routes that should hide the header (games + trail page)
   const isGameRoute = gameRoutes.includes(location.pathname);
-  const isTrailPage =
-    location.pathname === "/" || location.pathname === "/trail";
+  const isTrailPage = location.pathname === "/" || location.pathname === "/trail";
 
   // Map routes to page titles
   const getPageTitleKey = () => {
     if (location.pathname === "/notes-master-mode") return "pages.notesMaster";
     if (location.pathname === "/rhythm-mode") return "pages.rhythmMaster";
     if (location.pathname === "/practice-modes") return "pages.gameModes";
-    if (location.pathname === "/practice-sessions")
-      return "pages.practiceSessions.title";
-    if (location.pathname === "/achievements")
-      return "pages.achievements.title";
+    if (location.pathname === "/practice-sessions") return "pages.practiceSessions.title";
+    if (location.pathname === "/achievements") return "pages.achievements.title";
     if (location.pathname === "/settings") return "pages.settings.title";
-    if (location.pathname === "/parent-portal")
-      return "parentPortal.parentZoneTitle";
+    if (location.pathname === "/parent-portal") return "parentPortal.parentZoneTitle";
     // Add other routes as needed
     return null; // Default: show PianoMaster logo
   };
@@ -103,7 +96,7 @@ export default function AppLayout() {
             : ""
         } flex-1 ${
           !isGameRoute ? "pb-20 xl:pb-0" : ""
-        } ${isGameRoute ? "min-h-0 w-full overflow-hidden" : ""}`}
+        } ${isGameRoute ? "min-h-0 overflow-hidden w-full" : ""}`}
       >
         <Outlet />
       </main>
