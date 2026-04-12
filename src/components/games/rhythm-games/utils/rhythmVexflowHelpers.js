@@ -1,4 +1,4 @@
-import { StaveNote, Stem, Dot } from 'vexflow';
+import { StaveNote, Stem, Dot, Annotation } from 'vexflow';
 
 /**
  * Map from sixteenth-note duration units to VexFlow duration code strings.
@@ -69,10 +69,14 @@ export function binaryPatternToBeats(binaryPattern) {
  * Dotted notes (e.g. durationUnits=6 → 'qd') have a VexFlow Dot attached
  * via Dot.buildAndAttach().
  *
+ * When showSyllables is true, attaches a Kodaly syllable annotation below
+ * each note head using VexFlow Annotation (D-16).
+ *
  * @param {{ durationUnits: number, isRest: boolean }[]} beats
+ * @param {{ showSyllables?: boolean, language?: string }} [options]
  * @returns {StaveNote[]}
  */
-export function beatsToVexNotes(beats) {
+export function beatsToVexNotes(beats, { showSyllables = false, language = 'en' } = {}) {
   return beats.map((beat) => {
     const vexDur = DURATION_TO_VEX[beat.durationUnits];
 
@@ -83,6 +87,20 @@ export function beatsToVexNotes(beats) {
         duration: beat.isRest ? 'qr' : 'q',
         stem_direction: Stem.UP,
       });
+
+      if (showSyllables) {
+        const syllableMap = language === 'he' ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
+        const restSyllable = language === 'he' ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
+        const syllableText = beat.isRest ? restSyllable : (syllableMap[beat.durationUnits] || '');
+        if (syllableText) {
+          const fontFamily = language === 'he' ? 'Heebo' : 'sans-serif';
+          const annotation = new Annotation(syllableText)
+            .setFont(fontFamily, 11)
+            .setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
+          note.addModifier(annotation);
+        }
+      }
+
       return note;
     }
 
@@ -98,6 +116,19 @@ export function beatsToVexNotes(beats) {
 
     if (isDotted) {
       Dot.buildAndAttach([note], { all: true });
+    }
+
+    if (showSyllables) {
+      const syllableMap = language === 'he' ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
+      const restSyllable = language === 'he' ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
+      const syllableText = beat.isRest ? restSyllable : (syllableMap[beat.durationUnits] || '');
+      if (syllableText) {
+        const fontFamily = language === 'he' ? 'Heebo' : 'sans-serif';
+        const annotation = new Annotation(syllableText)
+          .setFont(fontFamily, 11)
+          .setVerticalJustification(Annotation.VerticalJustify.BOTTOM);
+        note.addModifier(annotation);
+      }
     }
 
     return note;

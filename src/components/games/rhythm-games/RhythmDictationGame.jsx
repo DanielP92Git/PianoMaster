@@ -56,7 +56,8 @@ const DEFAULT_DIFFICULTY = DIFFICULTY_LEVELS.BEGINNER;
 export function RhythmDictationGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const syllableLanguage = i18n.language?.startsWith('he') ? 'he' : 'en';
 
   // --- Orientation prompt (portrait-primary, landscape-compatible per UI-SPEC) ---
   const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
@@ -142,6 +143,25 @@ export function RhythmDictationGame() {
 
   // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
+
+  // Syllable toggle — persists in localStorage (D-20)
+  const [showSyllables, setShowSyllables] = useState(() => {
+    const stored = localStorage.getItem('syllablesEnabled');
+    return stored === null ? true : stored === 'true';
+  });
+
+  // Discovery nodes enforce syllables (no toggle visible) per D-19
+  const trailNodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
+  const isDiscoveryNode = trailNodeType === 'discovery';
+  const effectiveShowSyllables = isDiscoveryNode ? true : showSyllables;
+
+  const handleSyllableToggle = useCallback(() => {
+    setShowSyllables(prev => {
+      const next = !prev;
+      localStorage.setItem('syllablesEnabled', String(next));
+      return next;
+    });
+  }, []);
 
   // Auto-start guard
   const hasAutoStartedRef = useRef(false);
@@ -687,6 +707,8 @@ export function RhythmDictationGame() {
                   state={cardStates[idx] ?? "default"}
                   onSelect={handleCardSelect}
                   disabled={isInFeedback}
+                  showSyllables={effectiveShowSyllables}
+                  language={syllableLanguage}
                 />
               ))}
             </div>
@@ -704,7 +726,7 @@ export function RhythmDictationGame() {
           )}
         </div>
 
-        {/* Right column: replay + progress + score */}
+        {/* Right column: replay + progress + score + syllable toggle */}
         <div className="flex w-16 flex-shrink-0 flex-col items-center justify-center gap-3">
           {/* Replay icon button */}
           {(gamePhase === GAME_PHASES.LISTENING ||
@@ -741,6 +763,24 @@ export function RhythmDictationGame() {
           <span className="font-rounded text-xs text-indigo-300">
             {correctCount} ✓
           </span>
+
+          {/* Syllable toggle — hidden on Discovery nodes (D-19: enforced) */}
+          {!isDiscoveryNode && (
+            <button
+              onClick={handleSyllableToggle}
+              aria-pressed={showSyllables}
+              aria-label={showSyllables
+                ? t('games.rhythmReading.syllableToggle.hide')
+                : t('games.rhythmReading.syllableToggle.show')}
+              className={`min-h-[44px] rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
+                showSyllables
+                  ? 'bg-white/10 text-indigo-300'
+                  : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              ta
+            </button>
+          )}
         </div>
       </div>
     </div>

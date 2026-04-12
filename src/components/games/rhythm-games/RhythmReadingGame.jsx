@@ -46,7 +46,8 @@ const GAME_PHASES = {
 export function RhythmReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const syllableLanguage = i18n.language?.startsWith('he') ? 'he' : 'en';
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -126,6 +127,24 @@ export function RhythmReadingGame() {
   const [currentBeat, setCurrentBeat] = useState(1); // for MetronomeDisplay
   // IOS-02: Gesture gate — true when AudioContext is suspended on trail auto-start
   const [needsGestureToStart, setNeedsGestureToStart] = useState(false);
+
+  // Syllable toggle — persists in localStorage (D-20)
+  const [showSyllables, setShowSyllables] = useState(() => {
+    const stored = localStorage.getItem('syllablesEnabled');
+    return stored === null ? true : stored === 'true';
+  });
+
+  // Discovery nodes enforce syllables (no toggle visible) per D-19
+  const isDiscoveryNode = trailNodeType === 'discovery';
+  const effectiveShowSyllables = isDiscoveryNode ? true : showSyllables;
+
+  const handleSyllableToggle = useCallback(() => {
+    setShowSyllables(prev => {
+      const next = !prev;
+      localStorage.setItem('syllablesEnabled', String(next));
+      return next;
+    });
+  }, []);
 
   // Refs for timing and animation (not state — no re-renders on updates)
   const cursorDivRef = useRef(null); // passed to RhythmStaffDisplay
@@ -830,6 +849,26 @@ export function RhythmReadingGame() {
       </header>
 
       <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
+        {/* Syllable toggle — hidden on Discovery nodes where syllables are enforced (D-19) */}
+        {!isDiscoveryNode && (
+          <div className="flex justify-end px-1">
+            <button
+              onClick={handleSyllableToggle}
+              aria-pressed={showSyllables}
+              aria-label={showSyllables
+                ? t('games.rhythmReading.syllableToggle.hide')
+                : t('games.rhythmReading.syllableToggle.show')}
+              className={`min-h-[44px] rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                showSyllables
+                  ? 'bg-white/10 text-indigo-300'
+                  : 'text-white/50 hover:text-white/80'
+              }`}
+            >
+              ta
+            </button>
+          </div>
+        )}
+
         {/* VexFlow Staff Display */}
         <div style={{ position: "relative" }}>
           <RhythmStaffDisplay
@@ -841,6 +880,8 @@ export function RhythmReadingGame() {
             reducedMotion={reducedMotion}
             onStaveBoundsReady={handleStaveBoundsReady}
             measures={trailMeasureCount}
+            showSyllables={effectiveShowSyllables}
+            language={syllableLanguage}
           />
           {/* Cursor div - passed via ref to be updated by RAF without React re-renders */}
           <div
