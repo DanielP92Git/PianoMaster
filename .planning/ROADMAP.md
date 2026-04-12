@@ -122,6 +122,16 @@ Plans:
 **Goal**: Rhythm nodes use curated patterns instead of duration allowlists, the generator resolves by tags/IDs, Unit 1 Node 1 has a pulse exercise, and the build validator enforces pattern correctness
 **Depends on**: Phase 21
 **Requirements**: CURR-05, PAT-03, PAT-04, PAT-05, PAT-06
+**Plans:** 5 plans
+
+Plans:
+
+- [ ] 22-01-PLAN.md — Create RhythmPatternGenerator module with resolveByTags/resolveByIds + TDD tests
+- [ ] 22-02-PLAN.md — Add PULSE exercise type, PulseQuestion renderer, register in MixedLessonGame/validator
+- [ ] 22-03-PLAN.md — Update game consumers + migrate Units 1-4 (28 nodes) to patternTags
+- [ ] 22-04-PLAN.md — Migrate Units 5-8 (28 nodes) to patternTags + fix rhythm_7_4 violation
+- [ ] 22-05-PLAN.md — Extend build validator with tag existence, coverage, duration safety, game-type policy checks
+
 **Success Criteria** (what must be TRUE):
 
 1. `RhythmPatternGenerator.js` exposes `resolveByTags()` and `resolveByIds()` and all 56 rhythm node configs use `patternTags` or `patternIds` instead of `rhythmPatterns` duration allowlists
@@ -129,7 +139,6 @@ Plans:
 3. A child playing a Discovery node only ever encounters patterns that contain durations from duration sets they have already encountered — no patterns with unintroduced note values appear
 4. Running `npm run build` fails with a clear error if any node config references a pattern tag or ID that does not exist in `rhythmPatterns.js`
 5. Running `npm run build` passes cleanly when all pattern references are valid
-   **Plans**: TBD
 
 ### Phase 23: UX Polish
 
@@ -151,7 +160,7 @@ Plans:
 | -------------------------------- | --------- | -------------- | ----------- | ---------- |
 | 20. Curriculum Audit             | v3.2      | 1/1            | Complete    | 2026-04-11 |
 | 21. Pattern Library Construction | v3.2      | 1/1            | Complete    | 2026-04-11 |
-| 22. Service Layer & Trail Wiring | v3.2      | 0/TBD          | Not started | -          |
+| 22. Service Layer & Trail Wiring | v3.2      | 0/5            | Planning    | -          |
 | 23. UX Polish                    | v3.2      | 0/TBD          | Not started | -          |
 | 24. Multi-Angle Rhythm Games     | v3.2      | 3/3            | Executing   | -          |
 | 25. Unified Mixed Lesson Engine  | v3.2      | 3/3            | Complete    | 2026-04-09 |
@@ -173,4 +182,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-12 -- Phase 21 plan breakdown created (1 plan in 1 wave)_
+_Last updated: 2026-04-12 -- Phase 22 plan breakdown created (5 plans in 3 waves)_
