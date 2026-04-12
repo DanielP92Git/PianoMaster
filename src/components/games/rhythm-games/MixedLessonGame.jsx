@@ -28,6 +28,20 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
 
+// Map VexFlow duration codes to legacy pattern names for RhythmTapQuestion/getPattern() compatibility
+const VEX_TO_OLD_NAME = {
+  q: "quarter",
+  h: "half",
+  w: "whole",
+  "8": "eighth",
+  "16": "sixteenth",
+  qr: "quarter-rest",
+  hr: "half-rest",
+  wr: "whole-rest",
+  hd: "dotted-half",
+  qd: "dotted-quarter",
+};
+
 const GAME_STATES = {
   IDLE: "idle",
   IN_PROGRESS: "in_progress",
@@ -127,8 +141,12 @@ export default function MixedLessonGame() {
     const node = getNodeById(nodeId);
     if (!node?.rhythmConfig) return {};
     const rc = node.rhythmConfig;
+    // Translate VexFlow duration codes to legacy pattern names for RhythmTapQuestion/getPattern() compatibility
+    const patterns = (rc.durations || ["q"]).map((d) => VEX_TO_OLD_NAME[d] || d);
     return {
-      patterns: rc.patterns || ["quarter"],
+      patterns,
+      patternTags: rc.patternTags || [],
+      durations: rc.durations || ["q"],
       tempo: typeof rc.tempo === "object" ? rc.tempo.default : rc.tempo || 80,
       timeSignature: rc.timeSignature || "4/4",
       difficulty: "beginner",

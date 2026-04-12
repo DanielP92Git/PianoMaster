@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heart, Zap, Flame } from "lucide-react";
@@ -41,6 +41,20 @@ export const SCREEN_TRAVEL_TIME = 3.0; // seconds for a tile to travel from top 
 // ---------------------------------------------------------------------------
 
 const TOTAL_PATTERNS = 10; // 10 patterns per session
+
+// Map VexFlow duration codes to legacy pattern names for getPattern() compatibility (Phase 22 migration)
+const VEX_TO_OLD_NAME = {
+  q: "quarter",
+  h: "half",
+  w: "whole",
+  "8": "eighth",
+  "16": "sixteenth",
+  qr: "quarter-rest",
+  hr: "half-rest",
+  wr: "whole-rest",
+  hd: "dotted-half",
+  qd: "dotted-quarter",
+};
 
 /** Duration-coded tile heights in pixels */
 const TILE_HEIGHTS = {
@@ -102,10 +116,20 @@ function ArcadeRhythmGame() {
   // Trail state extraction from location.state
   const nodeId = location.state?.nodeId ?? null;
   const nodeConfig = location.state?.nodeConfig ?? null;
-  const rhythmPatterns = nodeConfig?.rhythmPatterns ?? null;
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
+
+  // Derive allowed patterns from node's duration vocabulary (Phase 22 migration)
+  // Falls back to nodeConfig.rhythmPatterns for backward compatibility
+  const rhythmPatterns = useMemo(() => {
+    if (nodeConfig?.rhythmPatterns) return nodeConfig.rhythmPatterns; // Backward compat
+    if (!nodeId) return null;
+    const node = getNodeById(nodeId);
+    const durations = node?.rhythmConfig?.durations;
+    if (!durations) return null;
+    return durations.map((d) => VEX_TO_OLD_NAME[d] || d);
+  }, [nodeId, nodeConfig]);
 
   // Audio context
   const {
