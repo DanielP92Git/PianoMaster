@@ -1094,6 +1094,129 @@ select option {
   animation: wiggle 0.5s ease-in-out;
 }
 
+/* Victory Screen background — pure CSS, no image dependency */
+.victory-bg {
+  background-color: #0f0720;
+  background-image:
+    /* Central radial glory glow — gold/amber spotlight */
+    radial-gradient(
+      ellipse 70% 55% at 50% 42%,
+      rgba(251, 191, 36, 0.18) 0%,
+      transparent 70%
+    ),
+    /* Mid-purple halo ring */
+      radial-gradient(
+        ellipse 90% 80% at 50% 50%,
+        rgba(139, 92, 246, 0.22) 0%,
+        transparent 65%
+      ),
+    /* Deep base gradient */
+      linear-gradient(
+        135deg,
+        #1e0845 0%,
+        #2d1060 30%,
+        #1a0533 60%,
+        #0f0720 100%
+      );
+}
+
+/* Starfield dots via box-shadow on a pseudo-element isn't possible with plain CSS,
+   so we use a repeating radial pattern to mimic scattered star points */
+.victory-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(
+      1px 1px at 15% 20%,
+      rgba(255, 255, 255, 0.6) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 80% 15%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 45% 8%,
+      rgba(255, 255, 255, 0.7) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 70% 30%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 25% 55%,
+      rgba(255, 255, 255, 0.35) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 88% 60%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 10% 75%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 55% 80%,
+      rgba(255, 255, 255, 0.35) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1.5px 1.5px at 35% 90%,
+      rgba(255, 255, 255, 0.5) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 90% 88%,
+      rgba(255, 255, 255, 0.45) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 60% 45%,
+      rgba(255, 255, 255, 0.3) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      1px 1px at 5% 40%,
+      rgba(255, 255, 255, 0.4) 0%,
+      transparent 100%
+    ),
+    /* Soft bokeh circles for depth */
+      radial-gradient(
+        circle 60px at 18% 25%,
+        rgba(167, 139, 250, 0.12) 0%,
+        transparent 100%
+      ),
+    radial-gradient(
+      circle 80px at 82% 20%,
+      rgba(196, 181, 253, 0.1) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle 50px at 72% 75%,
+      rgba(167, 139, 250, 0.1) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle 70px at 12% 80%,
+      rgba(196, 181, 253, 0.08) 0%,
+      transparent 100%
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+.victory-bg > * {
+  position: relative;
+  z-index: 1;
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
 }

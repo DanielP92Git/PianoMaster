@@ -8,7 +8,6 @@ import { Trophy, Zap } from "lucide-react";
 import { getNodeById } from "../../data/skillTrail";
 import { completeDailyChallenge } from "../../services/dailyChallengeService";
 import GoldStar from "../ui/GoldStar";
-import victoryBg from "../../assets/images/victory-background.webp";
 
 const VictoryScreen = ({
   score,
@@ -111,14 +110,7 @@ const VictoryScreen = ({
   const isPrestige = levelProgressData?.isPrestige || xpData?.newLevel >= 30;
 
   return (
-    <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto bg-indigo-950 p-2 sm:p-4"
-      style={{
-        backgroundImage: `url(${victoryBg})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
-    >
+    <div className="victory-bg fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-2 sm:p-4">
       {/* Confetti overlay for full/epic celebrations */}
       {showConfetti && (
         <ConfettiEffect

@@ -10,7 +10,11 @@ function BackButton({ to, name, styling }) {
   const handleClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    navigate(to, { replace: false });
+    if (to) {
+      navigate(to, { replace: false });
+    } else {
+      navigate(-1);
+    }
   };
 
   const Arrow = isRTL ? ArrowRight : ArrowLeft;

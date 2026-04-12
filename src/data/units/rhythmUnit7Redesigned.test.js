@@ -45,7 +45,6 @@ describe("Rhythm Unit 7 — 6/8 Compound Meter", () => {
   it("all nodes use 6/8 time signature", () => {
     rhythmUnit7Nodes.forEach((node) => {
       expect(node.rhythmConfig.timeSignature).toBe("6/8");
-      expect(node.exercises[0].config.timeSignature).toBe("6/8");
     });
   });
 
@@ -82,16 +81,16 @@ describe("Rhythm Unit 7 — 6/8 Compound Meter", () => {
     }
   });
 
-  it("exercise types match D-12 distribution", () => {
+  it("exercise types match game-type policy (mixed_lesson for discovery/practice/mix_up/review, arcade_rhythm for speed_round/mini_boss)", () => {
     const types = rhythmUnit7Nodes.map((n) => n.exercises[0].type);
     expect(types).toEqual([
-      EXERCISE_TYPES.RHYTHM, // rhythm_7_1
-      EXERCISE_TYPES.RHYTHM, // rhythm_7_2
-      EXERCISE_TYPES.RHYTHM_TAP, // rhythm_7_3
-      EXERCISE_TYPES.RHYTHM_DICTATION, // rhythm_7_4
-      EXERCISE_TYPES.RHYTHM_TAP, // rhythm_7_5
-      EXERCISE_TYPES.RHYTHM, // rhythm_7_6
-      EXERCISE_TYPES.ARCADE_RHYTHM, // boss_rhythm_7
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_7_1 (discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_7_2 (practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_7_3 (discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_7_4 (practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_7_5 (mix_up)
+      EXERCISE_TYPES.ARCADE_RHYTHM, // rhythm_7_6 (speed_round)
+      EXERCISE_TYPES.MIXED_LESSON, // boss_rhythm_7 (mini_boss)
     ]);
   });
 

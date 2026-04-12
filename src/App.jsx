@@ -1,14 +1,10 @@
 import React, { Suspense, useRef, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
-import Dashboard from "./components/layout/Dashboard";
 import { useTranslation } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import Login from "./components/auth/LoginForm";
 import { Toaster } from "react-hot-toast";
 import ProtectedRoute from "./ui/ProtectedRoute";
-import ConsentVerifyPage from "./pages/ConsentVerifyPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
 import { useAccountStatus } from "./hooks/useAccountStatus";
 import { RhythmProvider } from "./reducers/rhythmReducer";
 import { reminderService } from "./services/reminderService";
@@ -44,9 +40,15 @@ import { useGlobalFullscreenOnFirstTap } from "./hooks/useGlobalFullscreenOnFirs
 import { useDocumentTitle } from "./hooks/useDocumentTitle";
 
 // Lazy-loaded page components (lazyWithRetry auto-reloads on stale chunks after deploy)
+const Dashboard = lazyWithRetry(() => import("./components/layout/Dashboard"));
+const Login = lazyWithRetry(() => import("./components/auth/LoginForm"));
+const ConsentVerifyPage = lazyWithRetry(
+  () => import("./pages/ConsentVerifyPage")
+);
+const ResetPasswordPage = lazyWithRetry(
+  () => import("./pages/ResetPasswordPage")
+);
 const TrailMapPage = lazyWithRetry(() => import("./pages/TrailMapPage"));
-// Prefetch trail module so Suspense fallback never shows on navigation
-import("./pages/TrailMapPage");
 const Achievements = lazyWithRetry(() => import("./pages/Achievements"));
 const PracticeModes = lazyWithRetry(() => import("./pages/PracticeModes"));
 const PracticeSessions = lazyWithRetry(
@@ -82,6 +84,11 @@ const TeacherDashboard = lazyWithRetry(
 const NotesMasterMode = lazyWithRetry(() =>
   import("./components/games/NotesMasterMode").then((m) => ({
     default: m.NotesMasterMode,
+  }))
+);
+const EarTrainingMode = lazyWithRetry(() =>
+  import("./components/games/EarTrainingMode").then((m) => ({
+    default: m.EarTrainingMode,
   }))
 );
 const RhythmMasterMode = lazyWithRetry(() =>
@@ -120,6 +127,15 @@ const RhythmDictationGame = lazyWithRetry(
 );
 const ArcadeRhythmGame = lazyWithRetry(
   () => import("./components/games/rhythm-games/ArcadeRhythmGame")
+);
+const VisualRecognitionGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/VisualRecognitionGame")
+);
+const SyllableMatchingGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/SyllableMatchingGame")
+);
+const MixedLessonGame = lazyWithRetry(
+  () => import("./components/games/rhythm-games/MixedLessonGame")
 );
 const NoteComparisonGame = lazyWithRetry(
   () => import("./components/games/ear-training-games/NoteComparisonGame")
@@ -261,6 +277,9 @@ function OrientationController() {
     "/rhythm-mode/arcade-rhythm-game",
     "/ear-training-mode/note-comparison-game",
     "/ear-training-mode/interval-game",
+    "/rhythm-mode/visual-recognition-game",
+    "/rhythm-mode/syllable-matching-game",
+    "/rhythm-mode/mixed-lesson",
   ];
 
   const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
@@ -463,6 +482,23 @@ function AppRoutes() {
                 </AudioContextProvider>
               }
             />
+            <Route
+              path="/rhythm-mode/visual-recognition-game"
+              element={<VisualRecognitionGame />}
+            />
+            <Route
+              path="/rhythm-mode/syllable-matching-game"
+              element={<SyllableMatchingGame />}
+            />
+            <Route
+              path="/rhythm-mode/mixed-lesson"
+              element={
+                <AudioContextProvider>
+                  <MixedLessonGame />
+                </AudioContextProvider>
+              }
+            />
+            <Route path="/ear-training-mode" element={<EarTrainingMode />} />
             <Route
               path="/ear-training-mode/note-comparison-game"
               element={

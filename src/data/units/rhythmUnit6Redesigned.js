@@ -3,7 +3,7 @@
  *
  * Educational psychology-driven design for 8-year-old learners
  * - Introduces durations: Sixteenth notes (1/4 beat - groups of 4 per beat)
- * - FINAL UNIT of the rhythm path
+ * - FINAL UNIT of the rhythm path (Units 1-6)
  * - Single pitch (C4) throughout for pure rhythm focus
  * - 7 nodes with variety and a TRUE BOSS node (not Mini-Boss)
  *
@@ -52,7 +52,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "16"],
       focusDurations: ["16"], // NEW: Sixteenth notes being introduced
       contextDurations: ["q"], // Quarters for contrast
-      patterns: ["quarter", "sixteenth"],
+      patternTags: ["sixteenth"],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -65,13 +65,18 @@ export const rhythmUnit6Nodes = [
     // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["quarter", "sixteenth"],
-          tempo: 80,
-          measuresPerPattern: 1,
-          timeSignature: "4/4",
-          difficulty: "advanced",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+          ],
         },
       },
     ],
@@ -106,7 +111,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "16"],
       focusDurations: [],
       contextDurations: ["q", "16"],
-      patterns: ["quarter", "sixteenth"],
+      patternTags: ["sixteenth"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -117,13 +122,18 @@ export const rhythmUnit6Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["quarter", "sixteenth"],
-          tempo: 85,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
-          difficulty: "advanced",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+          ],
         },
       },
     ],
@@ -157,7 +167,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "8", "16"],
       focusDurations: [], // Mixing known durations
       contextDurations: ["q", "8", "16"],
-      patterns: ["quarter", "eighth", "sixteenth"],
+      patternTags: ["sixteenth", "quarter-eighth"],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -168,13 +178,18 @@ export const rhythmUnit6Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM_TAP,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["quarter", "eighth", "sixteenth"],
-          tempo: 80,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
-          difficulty: "advanced",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+          ],
         },
       },
     ],
@@ -208,7 +223,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "h", "8", "16"],
       focusDurations: [],
       contextDurations: ["q", "h", "8", "16"],
-      patterns: ["quarter", "half", "eighth", "sixteenth"],
+      patternTags: ["sixteenth", "quarter-eighth"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -219,13 +234,18 @@ export const rhythmUnit6Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM_DICTATION,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["quarter", "half", "eighth", "sixteenth"],
-          tempo: 85,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
-          difficulty: "advanced",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+          ],
         },
       },
     ],
@@ -259,15 +279,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "h", "w", "8", "16", "qd", "hd"],
       focusDurations: [],
       contextDurations: ["q", "h", "w", "8", "16", "qd", "hd"],
-      patterns: [
-        "quarter",
-        "half",
-        "whole",
-        "eighth",
-        "sixteenth",
-        "dotted-quarter",
-        "dotted-half",
-      ],
+      patternTags: ["sixteenth", "quarter-eighth", "quarter-half-whole-eighth"],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -278,22 +290,18 @@ export const rhythmUnit6Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM_TAP,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: [
-            "quarter",
-            "half",
-            "whole",
-            "eighth",
-            "sixteenth",
-            "dotted-quarter",
-            "dotted-half",
+          questions: [
+            { type: "visual_recognition" },
+            { type: "rhythm_tap" },
+            { type: "syllable_matching" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
           ],
-          tempo: 80,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
-          difficulty: "advanced",
-          patternVariety: true,
         },
       },
     ],
@@ -335,7 +343,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "h", "8", "16"],
       focusDurations: [],
       contextDurations: ["q", "h", "8", "16"],
-      patterns: ["quarter", "half", "eighth", "sixteenth"],
+      patternTags: ["sixteenth", "quarter-eighth"],
       tempo: { min: 95, max: 105, default: 100 }, // Fastest tempo in rhythm path
       pitch: "C4",
       timeSignature: "4/4",
@@ -346,12 +354,8 @@ export const rhythmUnit6Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
-          rhythmPatterns: ["quarter", "half", "eighth", "sixteenth"],
-          tempo: 100,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
           difficulty: "advanced",
         },
       },
@@ -389,15 +393,7 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "h", "w", "8", "16", "qd", "hd"],
       focusDurations: [],
       contextDurations: ["q", "h", "w", "8", "16", "qd", "hd"],
-      patterns: [
-        "quarter",
-        "half",
-        "whole",
-        "eighth",
-        "sixteenth",
-        "dotted-quarter",
-        "dotted-half",
-      ],
+      patternTags: ["sixteenth", "quarter-eighth", "quarter-half-whole-eighth"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -410,15 +406,6 @@ export const rhythmUnit6Nodes = [
       {
         type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
-          rhythmPatterns: [
-            "quarter",
-            "half",
-            "whole",
-            "eighth",
-            "sixteenth",
-            "dotted-quarter",
-            "dotted-half",
-          ],
           tempo: 85,
           measuresPerPattern: 4, // Longest patterns in rhythm path
           timeSignature: "4/4",

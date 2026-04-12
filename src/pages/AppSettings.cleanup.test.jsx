@@ -48,6 +48,7 @@ vi.mock("../features/authentication/useUser", () => ({
       email: "test@test.com",
       user_metadata: { first_name: "Test" },
     },
+    isStudent: true,
   }),
 }));
 

@@ -49,6 +49,14 @@ const getExerciseTypeName = (type, t) => {
       return t("trail:exerciseTypes.pitch_comparison");
     case "interval_id":
       return t("trail:exerciseTypes.interval_id");
+    case "visual_recognition":
+      return t("trail:exerciseTypes.visual_recognition");
+    case "syllable_matching":
+      return t("trail:exerciseTypes.syllable_matching");
+    case "mixed_lesson":
+      return t("trail:exerciseTypes.mixed_lesson");
+    case "pulse":
+      return t("trail:exerciseTypes.pulse", "Pulse");
     default:
       return type;
   }
@@ -334,6 +342,15 @@ const TrailNodeModal = ({
         break;
       case "interval_id":
         navigate("/ear-training-mode/interval-game", { state: navState });
+        break;
+      case "visual_recognition":
+        navigate("/rhythm-mode/visual-recognition-game", { state: navState });
+        break;
+      case "syllable_matching":
+        navigate("/rhythm-mode/syllable-matching-game", { state: navState });
+        break;
+      case "mixed_lesson":
+        navigate("/rhythm-mode/mixed-lesson", { state: navState });
         break;
       default:
         console.error("Unknown exercise type:", exercise.type);

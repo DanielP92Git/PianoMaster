@@ -96,15 +96,13 @@ describe("APP_NAV_ITEMS.student contains parentZone", () => {
     expect(entry.labelKey).toBe("navigation.links.parentZone");
   });
 
-  it("D-01: parentZone entry references ShieldCheck icon (lucide React component)", () => {
+  it("D-01: parentZone entry references ParentIcon", () => {
     const entry = APP_NAV_ITEMS.student.find(
       (item) => item.id === "parentZone"
     );
-    // lucide-react icons are forwardRef objects, so typeof is 'object', not 'function'
-    // Verify it is truthy (not undefined/null) and has a displayName indicating ShieldCheck
     expect(entry.icon).toBeTruthy();
     const name = entry.icon.displayName || entry.icon.name || "";
-    expect(name).toContain("ShieldCheck");
+    expect(name).toContain("ParentIcon");
   });
 
   it("D-01: parentZone is positioned after achievements in student array", () => {

@@ -53,7 +53,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd"],
       focusDurations: ["qd"], // NEW: Dotted-quarter as the primary 6/8 beat
       contextDurations: [],
-      patterns: ["dotted-quarter"],
+      patternTags: ["six-eight"],
       tempo: { min: 55, max: 60, default: 58 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -66,13 +66,18 @@ export const rhythmUnit7Nodes = [
     // Exercises
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["dotted-quarter"],
-          tempo: 58,
-          measuresPerPattern: 1,
-          timeSignature: "6/8",
-          difficulty: "beginner",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+          ],
         },
       },
     ],
@@ -108,7 +113,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd"],
       focusDurations: [],
       contextDurations: ["qd"],
-      patterns: ["dotted-quarter"],
+      patternTags: ["six-eight"],
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -119,13 +124,18 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["dotted-quarter"],
-          tempo: 65,
-          measuresPerPattern: 2,
-          timeSignature: "6/8",
-          difficulty: "beginner",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+          ],
         },
       },
     ],
@@ -160,7 +170,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q"],
       focusDurations: ["q"], // NEW: Quarter notes in 6/8
       contextDurations: ["qd"],
-      patterns: ["dotted-quarter", "quarter"],
+      patternTags: ["six-eight"],
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -171,13 +181,18 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM_TAP,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["dotted-quarter", "quarter"],
-          tempo: 65,
-          measuresPerPattern: 1,
-          timeSignature: "6/8",
-          difficulty: "beginner",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+          ],
         },
       },
     ],
@@ -207,29 +222,36 @@ export const rhythmUnit7Nodes = [
     nodeType: NODE_TYPES.PRACTICE,
 
     // Add eighth notes — the subdivision unit in 6/8 time
+    // ONE-CONCEPT FIX: focusDurations cleared (eighth notes already known from Unit 3;
+    // their use in 6/8 is contextual reinforcement, not a new concept)
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
       durations: ["qd", "q", "8"],
-      focusDurations: ["8"], // NEW: Eighth notes in 6/8
-      contextDurations: ["qd", "q"],
-      patterns: ["dotted-quarter", "quarter", "eighth"],
+      focusDurations: [], // FIXED: was ['8'] — eighth notes already known from Unit 3
+      contextDurations: ["qd", "q", "8"],
+      patternTags: ["six-eight"],
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "6/8",
     },
 
-    newContent: NEW_CONTENT_TYPES.RHYTHM,
-    newContentDescription: "Eighth Notes in 6/8",
+    newContent: NEW_CONTENT_TYPES.NONE,
+    newContentDescription: null,
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM_DICTATION,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["dotted-quarter", "quarter", "eighth"],
-          tempo: 70,
-          measuresPerPattern: 2,
-          timeSignature: "6/8",
-          difficulty: "intermediate",
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+          ],
         },
       },
     ],
@@ -264,7 +286,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      patterns: ["dotted-quarter", "quarter", "eighth"],
+      patternTags: ["six-eight"],
       tempo: { min: 70, max: 80, default: 75 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -275,13 +297,18 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM_TAP,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["dotted-quarter", "quarter", "eighth"],
-          tempo: 75,
-          measuresPerPattern: 2,
-          timeSignature: "6/8",
-          difficulty: "intermediate",
+          questions: [
+            { type: "visual_recognition" },
+            { type: "rhythm_tap" },
+            { type: "syllable_matching" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+          ],
         },
       },
     ],
@@ -315,7 +342,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      patterns: ["dotted-quarter", "quarter", "eighth"],
+      patternTags: ["six-eight"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -326,12 +353,8 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.RHYTHM,
+        type: EXERCISE_TYPES.ARCADE_RHYTHM,
         config: {
-          rhythmPatterns: ["dotted-quarter", "quarter", "eighth"],
-          tempo: 85,
-          measuresPerPattern: 2,
-          timeSignature: "6/8",
           difficulty: "advanced",
         },
       },
@@ -368,7 +391,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      patterns: ["dotted-quarter", "quarter", "eighth"],
+      patternTags: ["six-eight"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -379,14 +402,22 @@ export const rhythmUnit7Nodes = [
 
     exercises: [
       {
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          rhythmPatterns: ["dotted-quarter", "quarter", "eighth"],
-          tempo: 85,
-          measuresPerPattern: 2,
-          timeSignature: "6/8",
-          difficulty: "advanced",
-          questionCount: 10,
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+          ],
         },
       },
     ],

@@ -61,6 +61,34 @@ export function binaryPatternToBeats(binaryPattern) {
 }
 
 /**
+ * Kodaly syllable maps for rhythm notation display.
+ *
+ * Hebrew syllables include Nikud diacritics — do not alter without user approval.
+ */
+export const SYLLABLE_MAP_EN = {
+  16: "ta-a-a-a",
+  12: "ta-a-a",
+  8: "ta-a",
+  6: "ta-a",
+  4: "ta",
+  2: "ti",
+  1: "ti-ka",
+};
+
+export const SYLLABLE_MAP_HE = {
+  16: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4-\u05D0\u05B8\u05D4-\u05D0\u05B8\u05D4",
+  12: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4-\u05D0\u05B8\u05D4",
+  8: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4",
+  6: "\u05D8\u05B8\u05D4-\u05D0\u05B8\u05D4",
+  4: "\u05D8\u05B8\u05D4",
+  2: "\u05D8\u05B4\u05D9",
+  1: "\u05D8\u05B4\u05D9-\u05DB\u05BC\u05B8\u05D4",
+};
+
+export const REST_SYLLABLE_EN = "sh";
+export const REST_SYLLABLE_HE = "\u05D4\u05B8\u05E1";
+
+/**
  * Convert beat objects into VexFlow StaveNote objects for rhythm-only display.
  *
  * All notes use pitch 'b/4' (mid-staff treble position) and Stem.UP per D-01

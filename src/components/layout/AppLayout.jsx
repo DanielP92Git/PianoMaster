@@ -26,6 +26,9 @@ export default function AppLayout() {
     "/rhythm-mode/arcade-rhythm-game",
     "/ear-training-mode/note-comparison-game",
     "/ear-training-mode/interval-game",
+    "/rhythm-mode/visual-recognition-game",
+    "/rhythm-mode/syllable-matching-game",
+    "/rhythm-mode/mixed-lesson",
   ];
 
   // Routes that should hide the header (games + trail page)

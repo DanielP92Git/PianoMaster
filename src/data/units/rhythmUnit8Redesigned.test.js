@@ -48,7 +48,6 @@ describe("Rhythm Unit 8 — Syncopation", () => {
     const regularNodes = rhythmUnit8Nodes.slice(0, 6);
     regularNodes.forEach((node) => {
       expect(node.rhythmConfig.timeSignature).toBe("4/4");
-      expect(node.exercises[0].config.timeSignature).toBe("4/4");
     });
   });
 
@@ -83,16 +82,16 @@ describe("Rhythm Unit 8 — Syncopation", () => {
     });
   });
 
-  it("regular node exercise types match D-12 distribution", () => {
+  it("regular node exercise types match game-type policy (mixed_lesson for discovery/practice/mix_up, arcade_rhythm for speed_round)", () => {
     const regularNodes = rhythmUnit8Nodes.slice(0, 6);
     const types = regularNodes.map((n) => n.exercises[0].type);
     expect(types).toEqual([
-      EXERCISE_TYPES.RHYTHM, // rhythm_8_1
-      EXERCISE_TYPES.RHYTHM, // rhythm_8_2
-      EXERCISE_TYPES.RHYTHM_TAP, // rhythm_8_3
-      EXERCISE_TYPES.RHYTHM_DICTATION, // rhythm_8_4
-      EXERCISE_TYPES.RHYTHM_TAP, // rhythm_8_5
-      EXERCISE_TYPES.RHYTHM, // rhythm_8_6
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_1 (discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_2 (practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_3 (discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_4 (practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_5 (mix_up)
+      EXERCISE_TYPES.ARCADE_RHYTHM, // rhythm_8_6 (speed_round)
     ]);
   });
 
