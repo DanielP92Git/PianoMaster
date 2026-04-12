@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.2
 milestone_name: Rhythm Trail Rework
-status: ready_to_plan
-stopped_at: Roadmap created, Phase 20 ready to plan
-last_updated: "2026-04-06T00:00:00.000Z"
-last_activity: 2026-04-06
+status: executing
+last_updated: "2026-04-12T21:28:55.566Z"
+last_activity: 2026-04-12 -- Phase 26 execution started
 progress:
-  total_phases: 4
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_phases: 8
+  completed_phases: 5
+  total_plans: 16
+  completed_plans: 14
+  percent: 88
 ---
 
 # Project State
@@ -20,23 +20,23 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-06)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 20 — Curriculum Audit
+**Current focus:** Phase 26 — restore-ux-regression
 
 ## Current Position
 
-Phase: 20 of 23 (Curriculum Audit)
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-04-06 — v3.2 roadmap created, 4 phases mapped to 16 requirements
+Phase: 26 (restore-ux-regression) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 26
+Last activity: 2026-04-12 -- Phase 26 execution started
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: ~203 (across all shipped milestones)
-- 22 milestones shipped in 64 days (2026-01-31 to 2026-04-05)
+- Total plans completed: ~218 (across all shipped milestones)
+- 22 milestones shipped in 68 days (2026-01-31 to 2026-04-09)
 
 ## Accumulated Context
 
@@ -47,25 +47,24 @@ Progress: [░░░░░░░░░░] 0%
 - Phase 22 is a coordinated change: generator + unit files + game components + validator ship together
 - CURR-05 (pulse exercise) ships in Phase 22 alongside unit file rewiring, not Phase 20
 - Node `order` values are immutable for nodes with live user progress — audit must check prod DB
+- Phase 24 adds new game types for low-variety rhythm nodes (visual recognition + syllable matching)
+- Phase 25 added: Unified Mixed Lesson Engine — Duolingo-style interleaved question types within one game session, replacing sequential separate-game-per-exercise model
+- [Phase 20]: 56-node audit complete: 51 exercise type violations, 1 one-concept violation, 5 clean nodes; document LOCKED for Phase 22
+- [Phase 21]: Multi-tag binary-ambiguous patterns (rest vs sustain indistinguishable in binary format) rather than creating duplicates
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
 
 - **COPPA deadline:** April 22, 2026
-- **Live progress risk:** Node order values cannot be changed for nodes with existing student progress — audit output must account for this constraint
 
 ## Session Continuity
 
-Last session: 2026-04-06
-Stopped at: Roadmap written, REQUIREMENTS.md traceability updated
-Resume file: None
-
-**Next action:** `/gsd-plan-phase 20`
+**Next action:** `/gsd-plan-phase 24` to create implementation plan
 
 ---
 
 _State initialized: 2026-04-06_
-_Last updated: 2026-04-06 -- v3.2 Rhythm Trail Rework roadmap created_
+_Last updated: 2026-04-09 -- Phase 24 added to v3.2_

@@ -13,7 +13,6 @@ import VictoryScreen from "../VictoryScreen";
 import BackButton from "../../ui/BackButton";
 import { getNodeById } from "../../../data/skillTrail";
 import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
-import { resolveByTags } from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { scoreTap } from "./utils/rhythmScoringUtils";
 import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
@@ -47,7 +46,7 @@ export function RhythmReadingGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
-  const syllableLanguage = i18n.language?.startsWith('he') ? 'he' : 'en';
+  const syllableLanguage = i18n.language?.startsWith("he") ? "he" : "en";
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -130,18 +129,18 @@ export function RhythmReadingGame() {
 
   // Syllable toggle — persists in localStorage (D-20)
   const [showSyllables, setShowSyllables] = useState(() => {
-    const stored = localStorage.getItem('syllablesEnabled');
-    return stored === null ? true : stored === 'true';
+    const stored = localStorage.getItem("syllablesEnabled");
+    return stored === null ? true : stored === "true";
   });
 
   // Discovery nodes enforce syllables (no toggle visible) per D-19
-  const isDiscoveryNode = trailNodeType === 'discovery';
+  const isDiscoveryNode = trailNodeType === "discovery";
   const effectiveShowSyllables = isDiscoveryNode ? true : showSyllables;
 
   const handleSyllableToggle = useCallback(() => {
-    setShowSyllables(prev => {
+    setShowSyllables((prev) => {
       const next = !prev;
-      localStorage.setItem('syllablesEnabled', String(next));
+      localStorage.setItem("syllablesEnabled", String(next));
       return next;
     });
   }, []);
@@ -283,24 +282,11 @@ export function RhythmReadingGame() {
 
   /**
    * Fetch a new pattern and convert to beats array.
-   * Trail mode: uses resolveByTags for curated patterns (D-23, PAT-04).
-   * Free-practice/fallback: uses legacy getPattern.
    * Returns { beats, binaryPattern } or null on failure.
+   * TODO: When pattern library is rebuilt (Phase 21), add resolveByTags path for trail-mode curated patterns (PAT-04).
    */
   const fetchNewPattern = useCallback(async () => {
     try {
-      // Trail mode: use curated patterns via resolveByTags
-      if (nodeConfig?.patternTags) {
-        const durations = nodeConfig.durations || ['q'];
-        const result = resolveByTags(nodeConfig.patternTags, durations, {
-          timeSignature: timeSignatureStr,
-        });
-        if (result) {
-          const beats = binaryPatternToBeats(result.binary);
-          return { beats, binaryPattern: result.binary };
-        }
-      }
-      // Fallback: legacy getPattern (non-trail / free-practice mode)
       const result = await getPattern(
         timeSignatureStr,
         difficulty,
@@ -313,7 +299,7 @@ export function RhythmReadingGame() {
       console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
-  }, [timeSignatureStr, difficulty, rhythmPatterns, nodeConfig]);
+  }, [timeSignatureStr, difficulty, rhythmPatterns]);
 
   /**
    * Start continuous metronome lookahead scheduler.
@@ -855,13 +841,15 @@ export function RhythmReadingGame() {
             <button
               onClick={handleSyllableToggle}
               aria-pressed={showSyllables}
-              aria-label={showSyllables
-                ? t('games.rhythmReading.syllableToggle.hide')
-                : t('games.rhythmReading.syllableToggle.show')}
+              aria-label={
+                showSyllables
+                  ? t("games.rhythmReading.syllableToggle.hide")
+                  : t("games.rhythmReading.syllableToggle.show")
+              }
               className={`min-h-[44px] rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 showSyllables
-                  ? 'bg-white/10 text-indigo-300'
-                  : 'text-white/50 hover:text-white/80'
+                  ? "bg-white/10 text-indigo-300"
+                  : "text-white/50 hover:text-white/80"
               }`}
             >
               ta
