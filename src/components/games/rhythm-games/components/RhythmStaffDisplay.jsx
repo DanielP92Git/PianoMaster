@@ -17,6 +17,10 @@ import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamG
  * - tapResults: [{noteIdx, quality: 'PERFECT'|'GOOD'|'MISS'}] for coloring notes
  * - showCursor: boolean — show/hide cursor overlay
  * - reducedMotion: boolean from AccessibilityContext
+ * - onStaveBoundsReady: callback for stave bounds (used by parent for cursor)
+ * - measures: number 1-4 — number of staves to render (D-13)
+ * - showSyllables: boolean — render Kodaly syllables below notes (D-16/D-17)
+ * - language: 'en' | 'he' — syllable language (D-16/D-17)
  */
 export function RhythmStaffDisplay({
   beats,
@@ -26,10 +30,15 @@ export function RhythmStaffDisplay({
   showCursor = false,
   reducedMotion = false,
   onStaveBoundsReady = null,
+  measures = 1,          // NEW: number of staves to render (1-4)
+  showSyllables = false, // NEW: render Kodaly syllables below notes
+  language = 'en',       // NEW: 'en' or 'he' for syllable text
 }) {
   const containerRef = useRef(null);
   const cursorDivRef = useRef(null);
   const noteElementsRef = useRef([]);
+  // For multi-stave, track which measure is "active" (contains the cursor)
+  const staveContainerRefs = useRef([]);
 
   // Parse time signature string into beats numerator/denominator
   const parseTimeSignature = (timeSig) => {
@@ -43,6 +52,13 @@ export function RhythmStaffDisplay({
     return { numerator: 4, denominator: 4 };
   };
 
+  // Calculate total sixteenth-note units per measure from time signature
+  const getSixteenthUnitsPerMeasure = (timeSig) => {
+    const { numerator, denominator } = parseTimeSignature(timeSig);
+    // Each beat = (16 / denominator) sixteenth-note units
+    return numerator * (16 / denominator);
+  };
+
   // Calculate total beat count for Voice based on time signature
   const getBeatCount = (timeSig) => {
     const { numerator, denominator } = parseTimeSignature(timeSig);
@@ -54,113 +70,236 @@ export function RhythmStaffDisplay({
     return numerator;
   };
 
-  // Render VexFlow notation when beats or timeSignature changes
+  /**
+   * Split beats array into chunks where each chunk sums to one measure's worth
+   * of sixteenth-note units (based on time signature).
+   */
+  const splitBeatsIntoMeasures = (allBeats, timeSig) => {
+    const unitsPerMeasure = getSixteenthUnitsPerMeasure(timeSig);
+    const chunks = [];
+    let chunk = [];
+    let chunkSum = 0;
+
+    for (const beat of allBeats) {
+      chunk.push(beat);
+      chunkSum += beat.durationUnits;
+      if (chunkSum >= unitsPerMeasure) {
+        chunks.push(chunk);
+        chunk = [];
+        chunkSum = 0;
+      }
+    }
+    // Any leftover beats go into a final chunk
+    if (chunk.length > 0) {
+      chunks.push(chunk);
+    }
+    return chunks;
+  };
+
+  /**
+   * Render a single stave into a container element.
+   * Returns { allNotes, stave } for bounds reporting and color updates.
+   */
+  const renderSingleStave = (container, staveBeats, timeSig, showTimeSig, syllableOpts) => {
+    const containerWidth = container.offsetWidth || 400;
+    const staveWidth = containerWidth - 20;
+    const staveHeight = 120;
+
+    const renderer = new Renderer(container, Renderer.Backends.SVG);
+    renderer.resize(containerWidth, staveHeight);
+    const ctx = renderer.getContext();
+    ctx.setFillStyle("#ffffff");
+    ctx.setStrokeStyle("#ffffff");
+
+    const stave = new Stave(10, 10, staveWidth);
+    if (showTimeSig) {
+      stave.addTimeSignature(timeSig);
+    }
+    stave.setContext(ctx).draw();
+
+    // Build VexFlow notes with optional syllable annotations
+    const notes = beatsToVexNotes(staveBeats, syllableOpts);
+
+    // Force stems up for all notes (rhythm-only display)
+    notes.forEach((note) => {
+      if (note.setStemDirection) {
+        note.setStemDirection(Stem.UP);
+      }
+    });
+
+    const beatCount = getBeatCount(timeSig);
+    const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
+    voice.setStrict(false);
+    voice.addTickables(notes);
+
+    const beamGroups = beamGroupsForTimeSignature(timeSig);
+    const beamConfig = beamGroups ? { groups: beamGroups } : {};
+    const beams = Beam.generateBeams(notes, beamConfig);
+
+    new Formatter().joinVoices([voice]).format([voice], staveWidth - 60);
+    voice.draw(ctx, stave);
+    beams.forEach((beam) => beam.setContext(ctx).draw());
+
+    // Style SVG elements to match glassmorphism theme
+    const svgEl = container.querySelector("svg");
+    if (svgEl) {
+      svgEl.querySelectorAll("path, line, rect").forEach((el) => {
+        if (!el.getAttribute("fill") || el.getAttribute("fill") === "black") {
+          el.setAttribute("fill", "white");
+        }
+        if (!el.getAttribute("stroke") || el.getAttribute("stroke") === "black") {
+          el.setAttribute("stroke", "white");
+        }
+      });
+      svgEl.querySelectorAll("text").forEach((el) => {
+        el.setAttribute("fill", "white");
+      });
+    }
+
+    return { notes, stave };
+  };
+
+  // Render VexFlow notation when beats, timeSignature, measures, or syllable options change
   useEffect(() => {
     if (!containerRef.current || !beats || beats.length === 0) return;
 
     // Clear previous rendering
     containerRef.current.innerHTML = "";
     noteElementsRef.current = [];
+    staveContainerRefs.current = [];
 
-    const containerWidth = containerRef.current.offsetWidth || 400;
-    const staveWidth = containerWidth - 20;
-    const staveHeight = 120;
+    const syllableOpts = { showSyllables, language };
+    const effectiveMeasures = Math.max(1, Math.min(4, measures));
 
     try {
-      // Create SVG renderer
-      const renderer = new Renderer(
-        containerRef.current,
-        Renderer.Backends.SVG
-      );
-      renderer.resize(containerWidth, staveHeight);
-      const ctx = renderer.getContext();
-      ctx.setFillStyle("#ffffff");
-      ctx.setStrokeStyle("#ffffff");
+      if (effectiveMeasures <= 1) {
+        // --- Single stave (original behavior) ---
+        const containerWidth = containerRef.current.offsetWidth || 400;
+        const staveWidth = containerWidth - 20;
+        const staveHeight = 120;
 
-      // Create stave
-      const stave = new Stave(10, 10, staveWidth);
-      stave.addTimeSignature(timeSignature);
-      stave.setContext(ctx).draw();
+        const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
+        renderer.resize(containerWidth, staveHeight);
+        const ctx = renderer.getContext();
+        ctx.setFillStyle("#ffffff");
+        ctx.setStrokeStyle("#ffffff");
 
-      // Build VexFlow notes
-      const notes = beatsToVexNotes(beats);
+        const stave = new Stave(10, 10, staveWidth);
+        stave.addTimeSignature(timeSignature);
+        stave.setContext(ctx).draw();
 
-      // Force stems up for all notes (rhythm-only display)
-      notes.forEach((note) => {
-        if (note.setStemDirection) {
-          note.setStemDirection(Stem.UP);
+        const notes = beatsToVexNotes(beats, syllableOpts);
+        notes.forEach((note) => {
+          if (note.setStemDirection) note.setStemDirection(Stem.UP);
+        });
+
+        const beatCount = getBeatCount(timeSignature);
+        const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
+        voice.setStrict(false);
+        voice.addTickables(notes);
+
+        const beamGroups = beamGroupsForTimeSignature(timeSignature);
+        const beamConfig = beamGroups ? { groups: beamGroups } : {};
+        const beams = Beam.generateBeams(notes, beamConfig);
+
+        new Formatter().joinVoices([voice]).format([voice], staveWidth - 60);
+        voice.draw(ctx, stave);
+        beams.forEach((beam) => beam.setContext(ctx).draw());
+
+        // Expose stave note-area bounds for beat-accurate cursor
+        if (onStaveBoundsReady) {
+          const currentContainerWidth = containerRef.current?.offsetWidth || containerWidth;
+          const noteXPositions = notes
+            .map((note) => { try { return note.getAbsoluteX(); } catch { return null; } })
+            .filter((x) => x !== null);
+          onStaveBoundsReady({
+            noteStartX: stave.getNoteStartX(),
+            noteEndX: stave.getNoteEndX(),
+            containerWidth: currentContainerWidth,
+            noteXPositions,
+          });
         }
-      });
 
-      // Create voice
-      const beatCount = getBeatCount(timeSignature);
-      const voice = new Voice({ num_beats: beatCount, beat_value: 4 });
-      voice.setStrict(false);
-      voice.addTickables(notes);
+        noteElementsRef.current = notes.map((note) => {
+          try { return note.getElem ? note.getElem() : null; } catch { return null; }
+        });
 
-      // Generate automatic beams — use Fraction-based groups for compound time
-      const beamGroups = beamGroupsForTimeSignature(timeSignature);
-      const beamConfig = beamGroups ? { groups: beamGroups } : {};
-      const beams = Beam.generateBeams(notes, beamConfig);
+        // Style SVG
+        const svgEl = containerRef.current.querySelector("svg");
+        if (svgEl) {
+          svgEl.querySelectorAll("path, line, rect").forEach((el) => {
+            if (!el.getAttribute("fill") || el.getAttribute("fill") === "black") el.setAttribute("fill", "white");
+            if (!el.getAttribute("stroke") || el.getAttribute("stroke") === "black") el.setAttribute("stroke", "white");
+          });
+          svgEl.querySelectorAll("text").forEach((el) => el.setAttribute("fill", "white"));
+        }
 
-      // Format and draw
-      new Formatter().joinVoices([voice]).format([voice], staveWidth - 60);
-      voice.draw(ctx, stave);
-      beams.forEach((beam) => beam.setContext(ctx).draw());
+      } else {
+        // --- Multi-stave rendering (D-13) ---
+        // Split beats into measure-sized chunks
+        const measureChunks = splitBeatsIntoMeasures(beats, timeSignature);
 
-      // Expose stave note-area bounds + per-note X positions for beat-accurate cursor
-      if (onStaveBoundsReady) {
-        const currentContainerWidth =
-          containerRef.current?.offsetWidth || containerWidth;
-        const noteXPositions = notes
-          .map((note) => {
-            try {
-              return note.getAbsoluteX();
-            } catch {
-              return null;
+        // Create a flex-column wrapper
+        const wrapper = document.createElement("div");
+        wrapper.style.cssText = "display:flex;flex-direction:column;gap:8px;";
+        containerRef.current.appendChild(wrapper);
+
+        let allNoteElements = [];
+        let firstStaveData = null;
+
+        for (let i = 0; i < measureChunks.length; i++) {
+          const chunkBeats = measureChunks[i];
+          const staveDiv = document.createElement("div");
+          staveDiv.style.width = "100%";
+          wrapper.appendChild(staveDiv);
+          staveContainerRefs.current.push(staveDiv);
+
+          // Only show time signature on the first stave
+          const showTimeSig = i === 0;
+
+          try {
+            const { notes, stave } = renderSingleStave(
+              staveDiv,
+              chunkBeats,
+              timeSignature,
+              showTimeSig,
+              syllableOpts
+            );
+
+            // Record note elements for color updates
+            const noteElems = notes.map((note) => {
+              try { return note.getElem ? note.getElem() : null; } catch { return null; }
+            });
+            allNoteElements = allNoteElements.concat(noteElems);
+
+            // Report bounds for first stave (cursor uses first/active stave)
+            if (i === 0) {
+              firstStaveData = { notes, stave };
+              if (onStaveBoundsReady) {
+                const currentContainerWidth = staveDiv.offsetWidth || 400;
+                const noteXPositions = notes
+                  .map((note) => { try { return note.getAbsoluteX(); } catch { return null; } })
+                  .filter((x) => x !== null);
+                onStaveBoundsReady({
+                  noteStartX: stave.getNoteStartX(),
+                  noteEndX: stave.getNoteEndX(),
+                  containerWidth: currentContainerWidth,
+                  noteXPositions,
+                });
+              }
             }
-          })
-          .filter((x) => x !== null);
-        onStaveBoundsReady({
-          noteStartX: stave.getNoteStartX(),
-          noteEndX: stave.getNoteEndX(),
-          containerWidth: currentContainerWidth,
-          noteXPositions,
-        });
-      }
-
-      // Store note SVG elements for color updates
-      noteElementsRef.current = notes.map((note) => {
-        try {
-          return note.getElem ? note.getElem() : null;
-        } catch {
-          return null;
+          } catch (err) {
+            console.warn(`[RhythmStaffDisplay] VexFlow render error (stave ${i}):`, err);
+          }
         }
-      });
 
-      // Style SVG elements to match glassmorphism theme
-      const svgEl = containerRef.current.querySelector("svg");
-      if (svgEl) {
-        svgEl.querySelectorAll("path, line, rect").forEach((el) => {
-          if (!el.getAttribute("fill") || el.getAttribute("fill") === "black") {
-            el.setAttribute("fill", "white");
-          }
-          if (
-            !el.getAttribute("stroke") ||
-            el.getAttribute("stroke") === "black"
-          ) {
-            el.setAttribute("stroke", "white");
-          }
-        });
-        // Text (time signature, etc.) should be white
-        svgEl.querySelectorAll("text").forEach((el) => {
-          el.setAttribute("fill", "white");
-        });
+        noteElementsRef.current = allNoteElements;
+        void firstStaveData; // suppress unused-var warning
       }
     } catch (err) {
       console.warn("[RhythmStaffDisplay] VexFlow render error:", err);
     }
-  }, [beats, timeSignature]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [beats, timeSignature, measures, showSyllables, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update note colors based on tap results
   useEffect(() => {
@@ -208,10 +347,14 @@ export function RhythmStaffDisplay({
     <div className="rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-md">
       {/* Music notation is always LTR regardless of app locale */}
       <div dir="ltr" style={{ position: "relative" }}>
-        {/* VexFlow rendering container */}
-        <div ref={containerRef} style={{ width: "100%", minHeight: "120px" }} />
+        {/* VexFlow rendering container — single or multi-stave based on measures prop */}
+        <div
+          ref={containerRef}
+          style={{ width: "100%", minHeight: "120px" }}
+          className={measures > 1 ? "overflow-y-auto" : ""}
+        />
 
-        {/* Cursor overlay line */}
+        {/* Cursor overlay line — spans first/active stave only */}
         {showCursor && (
           <div
             ref={cursorDivRef}
@@ -221,7 +364,7 @@ export function RhythmStaffDisplay({
               top: 0,
               left: `${cursorProgress * 100}%`,
               width: "2px",
-              height: "100%",
+              height: "120px",
               backgroundColor: "rgb(129, 140, 248)", // indigo-400
               opacity: 0.8,
               boxShadow: reducedMotion

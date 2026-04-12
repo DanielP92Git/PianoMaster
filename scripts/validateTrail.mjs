@@ -580,6 +580,67 @@ function validateGameTypePolicy() {
   else console.error(`  Found ${errorCount} game-type policy violation(s)`);
 }
 
+/**
+ * Validate that each rhythm node's measureCount matches its nodeType policy.
+ * Policy (from Phase 23 D-12):
+ *   discovery=1, practice=2, mix_up=1, review=2,
+ *   challenge=2, speed_round=4, mini_boss=4, boss=4
+ *
+ * Only validates exercise types that use measureCount (rhythm_tap, rhythm_dictation, arcade_rhythm).
+ * Skips pulse, visual_recognition, syllable_matching, mixed_lesson, note_recognition, memory_game.
+ */
+function validateMeasureCountPolicy() {
+  console.log('\nChecking measure count policy...');
+
+  const MEASURE_COUNT_POLICY = {
+    discovery: 1,
+    practice: 2,
+    mix_up: 1,
+    review: 2,
+    challenge: 2,
+    speed_round: 4,
+    mini_boss: 4,
+    boss: 4,
+  };
+
+  const SKIP_EXERCISE_TYPES = new Set([
+    'pulse', 'visual_recognition', 'syllable_matching',
+    'mixed_lesson', 'note_recognition', 'memory_game',
+  ]);
+
+  const errors = [];
+
+  for (const node of SKILL_NODES) {
+    if (node.category !== 'rhythm') continue;
+    if (!node.nodeType) continue;
+
+    const expectedMeasureCount = MEASURE_COUNT_POLICY[node.nodeType];
+    if (expectedMeasureCount === undefined) continue;
+
+    if (node.exercises) {
+      for (let i = 0; i < node.exercises.length; i++) {
+        const ex = node.exercises[i];
+        if (SKIP_EXERCISE_TYPES.has(ex.type)) continue;
+
+        const mc = ex.config?.measureCount;
+        if (mc !== undefined && mc !== expectedMeasureCount) {
+          errors.push(
+            `${node.id} exercise[${i}] (${ex.type}): measureCount=${mc}, expected=${expectedMeasureCount} for nodeType=${node.nodeType}`
+          );
+        }
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    console.error('\n--- Measure Count Policy Violations ---');
+    errors.forEach(e => console.error(`  ERROR: ${e}`));
+    process.exitCode = 1;
+  } else {
+    console.log('  Measure count policy: OK');
+  }
+}
+
 // ============================================
 // MAIN EXECUTION
 // ============================================
@@ -602,6 +663,7 @@ validatePatternTagExistence();
 validatePatternTagCoverage();
 validateDurationSafety();
 validateGameTypePolicy();
+validateMeasureCountPolicy();
 
 console.log('\n' + '='.repeat(50));
 

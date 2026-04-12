@@ -13,6 +13,7 @@ import VictoryScreen from "../VictoryScreen";
 import BackButton from "../../ui/BackButton";
 import { getNodeById } from "../../../data/skillTrail";
 import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
+import { resolveByTags } from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { scoreTap } from "./utils/rhythmScoringUtils";
 import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
@@ -60,6 +61,8 @@ export function RhythmReadingGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
+  const trailMeasureCount = nodeConfig?.measureCount ?? 1;
+  const trailNodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
 
   // Audio contexts
   const {
@@ -261,10 +264,24 @@ export function RhythmReadingGame() {
 
   /**
    * Fetch a new pattern and convert to beats array.
+   * Trail mode: uses resolveByTags for curated patterns (D-23, PAT-04).
+   * Free-practice/fallback: uses legacy getPattern.
    * Returns { beats, binaryPattern } or null on failure.
    */
   const fetchNewPattern = useCallback(async () => {
     try {
+      // Trail mode: use curated patterns via resolveByTags
+      if (nodeConfig?.patternTags) {
+        const durations = nodeConfig.durations || ['q'];
+        const result = resolveByTags(nodeConfig.patternTags, durations, {
+          timeSignature: timeSignatureStr,
+        });
+        if (result) {
+          const beats = binaryPatternToBeats(result.binary);
+          return { beats, binaryPattern: result.binary };
+        }
+      }
+      // Fallback: legacy getPattern (non-trail / free-practice mode)
       const result = await getPattern(
         timeSignatureStr,
         difficulty,
@@ -277,7 +294,7 @@ export function RhythmReadingGame() {
       console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
-  }, [timeSignatureStr, difficulty, rhythmPatterns]);
+  }, [timeSignatureStr, difficulty, rhythmPatterns, nodeConfig]);
 
   /**
    * Start continuous metronome lookahead scheduler.
@@ -823,6 +840,7 @@ export function RhythmReadingGame() {
             showCursor={false} // parent renders its own RAF-driven cursor div below
             reducedMotion={reducedMotion}
             onStaveBoundsReady={handleStaveBoundsReady}
+            measures={trailMeasureCount}
           />
           {/* Cursor div - passed via ref to be updated by RAF without React re-renders */}
           <div
