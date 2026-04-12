@@ -40,4 +40,5 @@ export const EXERCISE_TYPES = {
   VISUAL_RECOGNITION: "visual_recognition",
   SYLLABLE_MATCHING: "syllable_matching",
   MIXED_LESSON: "mixed_lesson", // v3.2 unified mixed lesson engine
+  PULSE: "pulse", // v3.2 Phase 22: tap-with-the-beat exercise
 };

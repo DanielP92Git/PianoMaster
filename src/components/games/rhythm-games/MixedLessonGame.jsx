@@ -15,6 +15,7 @@ import { generateQuestions, ALL_DURATION_CODES } from "./utils/durationInfo";
 import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
 import RhythmTapQuestion from "./renderers/RhythmTapQuestion";
+import PulseQuestion from "./renderers/PulseQuestion";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
@@ -144,6 +145,9 @@ export default function MixedLessonGame() {
     const allQuestions = questionSequence.map((entry) => {
       if (entry.type === "rhythm_tap") {
         return { type: "rhythm_tap", rhythmConfig: buildRhythmTapConfig() };
+      }
+      if (entry.type === "pulse") {
+        return { type: "pulse", rhythmConfig: buildRhythmTapConfig() };
       }
       if (pool.length === 0)
         return { type: entry.type, correct: "", choices: [] };
@@ -358,6 +362,15 @@ export default function MixedLessonGame() {
       case "rhythm_tap":
         return (
           <RhythmTapQuestion
+            question={currentQuestion}
+            isLandscape={isLandscape}
+            onComplete={handleRhythmTapComplete}
+            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+          />
+        );
+      case "pulse":
+        return (
+          <PulseQuestion
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}

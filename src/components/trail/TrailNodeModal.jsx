@@ -55,6 +55,8 @@ const getExerciseTypeName = (type, t) => {
       return t("trail:exerciseTypes.syllable_matching");
     case "mixed_lesson":
       return t("trail:exerciseTypes.mixed_lesson");
+    case "pulse":
+      return t("trail:exerciseTypes.pulse", "Pulse");
     default:
       return type;
   }

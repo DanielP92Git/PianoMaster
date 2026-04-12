@@ -388,7 +388,7 @@ function validateMultiAngleGames() {
  *   3. Each question entry must have a type field with a known renderer type
  *   4. Question count should be 8-10 (warning, not error)
  */
-const RENDERER_TYPES = new Set(['visual_recognition', 'syllable_matching', 'rhythm_tap']);
+const RENDERER_TYPES = new Set(['visual_recognition', 'syllable_matching', 'rhythm_tap', 'pulse']);
 
 function validateMixedLessons() {
   console.log('\nChecking mixed lesson exercises...');
@@ -424,9 +424,12 @@ function validateMixedLessons() {
         }
       }
 
-      // Rule 4: question count should be 8-10 (soft warning)
-      if (questions.length < 8 || questions.length > 10) {
-        console.warn(`  WARNING: Node "${node.id}" mixed_lesson has ${questions.length} questions (expected 8-10)`);
+      // Rule 4: question count should be 8-10 (soft warning), 10-12 for mini_boss
+      const isMini = node.nodeType === 'mini_boss';
+      const minQ = isMini ? 10 : 8;
+      const maxQ = isMini ? 12 : 10;
+      if (questions.length < minQ || questions.length > maxQ) {
+        console.warn(`  WARNING: Node "${node.id}" mixed_lesson has ${questions.length} questions (expected ${minQ}-${maxQ})`);
         hasWarnings = true;
         warningCount++;
       }
