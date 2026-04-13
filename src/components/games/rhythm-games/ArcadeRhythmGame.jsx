@@ -619,14 +619,22 @@ function ArcadeRhythmGame() {
 
       feedbackTimeoutRef.current = setTimeout(() => {
         if (gamePhaseRef.current === GAME_PHASES.PLAYING) {
-          // Tally hits
-          const hitCount = scoredRef.current.size;
+          // CODE-02: Filter scoredRef to exclude rest tiles — rest tiles in the Set
+          // would inflate hitCount above nonRestCount, causing score > 100%
+          const hitCount = [...scoredRef.current].filter(
+            (idx) =>
+              idx < tilesRef.current.length && !tilesRef.current[idx]?.isRest
+          ).length;
           const nonRestCount = beatTimes.length;
-          // We don't have per-quality counts here, use approximate scoring
+          // We don't have per-quality counts here, use approximate scoring.
+          // Math.min(100) caps score as safety net for any remaining edge cases.
           finishPattern(
-            Math.max(
-              0,
-              Math.round((hitCount / Math.max(nonRestCount, 1)) * 100)
+            Math.min(
+              100,
+              Math.max(
+                0,
+                Math.round((hitCount / Math.max(nonRestCount, 1)) * 100)
+              )
             )
           );
         }
