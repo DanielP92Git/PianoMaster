@@ -390,7 +390,10 @@ function validateMultiAngleGames() {
  *   3. Each question entry must have a type field with a known renderer type
  *   4. Question count should be 8-10 (warning, not error)
  */
-const RENDERER_TYPES = new Set(['visual_recognition', 'syllable_matching', 'rhythm_tap', 'pulse']);
+const RENDERER_TYPES = new Set([
+  'visual_recognition', 'syllable_matching', 'rhythm_tap', 'pulse',
+  'discovery_intro', 'rhythm_reading', 'rhythm_dictation'
+]);
 
 function validateMixedLessons() {
   console.log('\nChecking mixed lesson exercises...');
@@ -426,10 +429,10 @@ function validateMixedLessons() {
         }
       }
 
-      // Rule 4: question count should be 8-10 (soft warning), 10-12 for mini_boss
-      const isMini = node.nodeType === 'mini_boss';
-      const minQ = isMini ? 10 : 8;
-      const maxQ = isMini ? 12 : 10;
+      // Rule 4: question count should be 8-10 (soft warning), 10-12 for boss/mini_boss
+      const isBossLike = node.nodeType === 'mini_boss' || node.nodeType === 'boss';
+      const minQ = isBossLike ? 10 : node.nodeType === 'discovery' ? 4 : 8;
+      const maxQ = isBossLike ? 12 : 10;
       if (questions.length < minQ || questions.length > maxQ) {
         console.warn(`  WARNING: Node "${node.id}" mixed_lesson has ${questions.length} questions (expected ${minQ}-${maxQ})`);
         hasWarnings = true;
@@ -524,8 +527,13 @@ function validateDurationSafety() {
     if (!rc?.patternTags || !rc?.durations) continue;
 
     for (const tag of rc.patternTags) {
+      // Pass allowRests:true here — the validator checks whether ANY pattern
+      // exists for the tag+duration combination, regardless of rest content.
+      // Rest filtering is a runtime concern (callers pass allowRests based on
+      // whether the node's curriculum includes rests).
       const result = resolveByTags([tag], rc.durations, {
         timeSignature: rc.timeSignature || '4/4',
+        allowRests: true,
       });
       if (result === null) {
         console.error(`  ERROR: Node "${node.id}" tag "${tag}" has no matching patterns that can render with durations [${rc.durations.join(', ')}] in ${rc.timeSignature || '4/4'}`);

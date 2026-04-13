@@ -2,6 +2,10 @@ import { describe, it, expect } from "vitest";
 import { rhythmUnit8Nodes } from "./rhythmUnit8Redesigned.js";
 import { NODE_TYPES, NEW_CONTENT_TYPES } from "../nodeTypes.js";
 import { EXERCISE_TYPES } from "../constants.js";
+import { rhythmUnit1Nodes } from "./rhythmUnit1Redesigned.js";
+import { rhythmUnit2Nodes } from "./rhythmUnit2Redesigned.js";
+import { rhythmUnit3Nodes } from "./rhythmUnit3Redesigned.js";
+import { resolveByTags } from "../patterns/RhythmPatternGenerator.js";
 
 describe("Rhythm Unit 8 — Syncopation", () => {
   it("exports exactly 7 nodes", () => {
@@ -95,15 +99,14 @@ describe("Rhythm Unit 8 — Syncopation", () => {
     ]);
   });
 
-  it("boss node exercises are all ARCADE_RHYTHM", () => {
+  it("boss node exercise is MIXED_LESSON", () => {
     const bossNode = rhythmUnit8Nodes[rhythmUnit8Nodes.length - 1];
-    bossNode.exercises.forEach((ex) => {
-      expect(ex.type).toBe(EXERCISE_TYPES.ARCADE_RHYTHM);
-    });
+    expect(bossNode.exercises).toHaveLength(1);
+    expect(bossNode.exercises[0].type).toBe(EXERCISE_TYPES.MIXED_LESSON);
   });
 });
 
-describe("Rhythm Unit 8 — Boss Challenge (RADV-04)", () => {
+describe("Rhythm Unit 8 — Boss Challenge", () => {
   const bossNode = rhythmUnit8Nodes[rhythmUnit8Nodes.length - 1];
 
   it("boss node has correct ID and properties", () => {
@@ -121,34 +124,10 @@ describe("Rhythm Unit 8 — Boss Challenge (RADV-04)", () => {
     expect(bossNode.accessoryUnlock).toBe("advanced_rhythm_badge");
   });
 
-  it("boss has 3 exercises", () => {
-    expect(bossNode.exercises).toHaveLength(3);
-  });
-
-  it("boss exercises total 15 questions", () => {
-    const total = bossNode.exercises.reduce(
-      (sum, ex) => sum + ex.config.questionCount,
-      0
-    );
-    expect(total).toBe(15);
-  });
-
-  it("boss exercise 1 uses 6/8 time signature", () => {
-    expect(bossNode.exercises[0].config.timeSignature).toBe("6/8");
-    expect(bossNode.exercises[0].config.questionCount).toBe(5);
-  });
-
-  it("boss exercises 2 and 3 use 4/4 time signature", () => {
-    expect(bossNode.exercises[1].config.timeSignature).toBe("4/4");
-    expect(bossNode.exercises[2].config.timeSignature).toBe("4/4");
-  });
-
-  it("boss mixes both 6/8 and 4/4 content", () => {
-    const timeSignatures = bossNode.exercises.map(
-      (ex) => ex.config.timeSignature
-    );
-    expect(timeSignatures).toContain("6/8");
-    expect(timeSignatures).toContain("4/4");
+  it("boss has 1 MIXED_LESSON exercise with 12 questions", () => {
+    expect(bossNode.exercises).toHaveLength(1);
+    expect(bossNode.exercises[0].type).toBe(EXERCISE_TYPES.MIXED_LESSON);
+    expect(bossNode.exercises[0].config.questions).toHaveLength(12);
   });
 
   it("tempo increases across the unit", () => {
@@ -165,5 +144,61 @@ describe("Rhythm Unit 8 — Boss Challenge (RADV-04)", () => {
       expect(node.xpReward).toBeLessThanOrEqual(90);
     });
     expect(bossNode.xpReward).toBe(250);
+  });
+});
+
+describe("Combined-values node variety (DATA-04)", () => {
+  /**
+   * For each practice/mix-up node with 2+ duration codes, calls resolveByTags
+   * 20 times and verifies that at least 2 different duration codes appear across
+   * the combined vexDurations output. This is a statistical smoke test.
+   */
+  const SAMPLES = 20;
+
+  function collectDurationCodes(patternTags, durations) {
+    const seen = new Set();
+    for (let i = 0; i < SAMPLES; i++) {
+      const result = resolveByTags(patternTags, durations);
+      if (result) {
+        result.vexDurations
+          .filter((d) => !d.endsWith("r"))
+          .forEach((d) => seen.add(d));
+      }
+    }
+    return seen;
+  }
+
+  it("rhythm_1_4 (quarter-only + quarter-half, durations q+h) produces both q and h over 20 samples", () => {
+    const node = rhythmUnit1Nodes.find((n) => n.id === "rhythm_1_4");
+    expect(node).toBeDefined();
+    const seen = collectDurationCodes(
+      node.rhythmConfig.patternTags,
+      node.rhythmConfig.durations
+    );
+    expect(seen.has("q")).toBe(true);
+    expect(seen.has("h")).toBe(true);
+  });
+
+  it("rhythm_2_4 (quarter-half + quarter-half-whole, durations q+h+w) produces q, h, and w over 20 samples", () => {
+    const node = rhythmUnit2Nodes.find((n) => n.id === "rhythm_2_4");
+    expect(node).toBeDefined();
+    const seen = collectDurationCodes(
+      node.rhythmConfig.patternTags,
+      node.rhythmConfig.durations
+    );
+    expect(seen.has("q")).toBe(true);
+    expect(seen.has("h")).toBe(true);
+    expect(seen.has("w")).toBe(true);
+  });
+
+  it("rhythm_3_4 (quarter-eighth + quarter-half-whole-eighth, durations q+h+w+8) produces q and 8 over 20 samples", () => {
+    const node = rhythmUnit3Nodes.find((n) => n.id === "rhythm_3_4");
+    expect(node).toBeDefined();
+    const seen = collectDurationCodes(
+      node.rhythmConfig.patternTags,
+      node.rhythmConfig.durations
+    );
+    expect(seen.has("q")).toBe(true);
+    expect(seen.has("8")).toBe(true);
   });
 });
