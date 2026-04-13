@@ -1,113 +1,87 @@
-# Requirements: PianoApp — v3.2 Rhythm Trail Rework
+# Requirements: PianoApp — v3.3 Rhythm Trail Fix & Polish
 
-**Defined:** 2026-04-06
+**Defined:** 2026-04-13
 **Core Value:** Children's data must be protected and inaccessible to unauthorized users
 
-## v3.2 Requirements
+## v3.3 Requirements
 
-Requirements for rhythm trail pedagogy rework. Each maps to roadmap phases.
+Requirements for rhythm trail bug fixes, gameplay tuning, and polish. Each maps to roadmap phases.
 
-### Curriculum
+### Audio & Playback
 
-- [ ] **CURR-01**: Each rhythm node introduces at most one new musical concept (audit all 50 nodes, fix violations)
-- [ ] **CURR-02**: Discovery nodes use notation-showing game (RhythmReadingGame or RhythmDictationGame), not MetronomeTrainer
-- [ ] **CURR-03**: Practice nodes use echo game (MetronomeTrainer) for call-and-response reinforcement
-- [ ] **CURR-04**: Speed/Boss nodes use ArcadeRhythmGame for engagement challenge
-- [ ] **CURR-05**: Unit 1 Node 1 includes a pulse exercise ("tap with the beat", metronome only, no notation)
+- [ ] **AUDIO-01**: First play of quarter/eighth note presentations plays without audio trimming (audio context pre-warmed)
+- [ ] **AUDIO-02**: Dictation game 'listen' button plays the pattern on first click (not only on 'replay')
+- [ ] **AUDIO-03**: Eighths discovery presentation plays 4 pairs of beamed eighth notes in sequence
 
-### Patterns
+### Data & Curriculum
 
-- [ ] **PAT-01**: Curated pattern library exists at `src/data/patterns/rhythmPatterns.js` with ~120+ hand-crafted patterns
-- [ ] **PAT-02**: Each pattern is tagged by duration set (e.g. `quarter-only`, `quarter-half`, `quarter-eighth`)
-- [ ] **PAT-03**: Node configs use `patternTags` (or `patternIds` for boss nodes) instead of `rhythmPatterns` duration allowlist
-- [ ] **PAT-04**: `getPattern()` resolves curated patterns by tags/IDs via synchronous JS import (not async JSON fetch)
-- [ ] **PAT-05**: Children only see patterns containing durations they have already learned (enforced by tag system)
-- [ ] **PAT-06**: `validateTrail.mjs` checks pattern ID/tag existence, tag coverage, and complexity bounds at build time
+- [ ] **DATA-01**: Node 1_3 patterns contain only note values already introduced (no unlearned rests)
+- [ ] **DATA-02**: Pulse game in quarter-only nodes generates only quarter-note patterns (no halves)
+- [ ] **DATA-03**: Section titles accurately match the content and skills of their contained nodes
+- [ ] **DATA-04**: Combined values practice nodes use all expected duration values in shuffled/random order
 
-### UX
+### Gameplay & UX
 
-- [ ] **UX-01**: Timing PERFECT threshold widened to 100ms for Discovery/Practice nodes (from 50ms)
-- [ ] **UX-02**: MetronomeTrainer renamed to child-friendly name in UI (EN + HE i18n)
-- [ ] **UX-03**: "MISS" feedback text replaced with "Almost!" throughout rhythm games (EN + HE)
-- [ ] **UX-04**: Progressive measure length: Discovery 1-bar, Practice 2-bar, Speed/Boss 4-bar patterns
-- [ ] **UX-05**: Rhythm syllables displayed below VexFlow note heads — EN: ta / ti-ti / ta-a / ta-a-a-a, HE: טָה / טָה-טָה / טָה-אָה / טָה-אָה-אָה-אָה (with Nikud)
+- [ ] **PLAY-01**: Half/whole notes in listen&tap and pulse require sustained long press matching note duration (piano-like feel)
+- [ ] **PLAY-02**: Speed Challenge generates varied patterns with appropriate exercise count for kids
+- [ ] **PLAY-03**: Boss nodes deliver a distinctly different, more challenging experience than regular nodes
+- [ ] **PLAY-04**: Rhythm pattern nodes are differentiated from practice nodes (unique content or replaced)
 
-### Mixed Lesson Engine
+### Code Quality
 
-- [x] **MLE-01**: MixedLessonGame plays through a pre-authored sequence of interleaved question types in one session
-- [x] **MLE-02**: Stateless renderers extracted from standalone games (VisualRecognitionRenderer, SyllableMatchingRenderer)
-- [x] **MLE-03**: Standalone games refactored to thin wrappers around extracted renderers
-- [x] **MLE-04**: MIXED_LESSON exercise type registered in constants, routes, TrailNodeModal, i18n, and validator
-- [x] **MLE-05**: Progress bar shows current question / total with visual fill
-- [x] **MLE-06**: ~300ms crossfade transition between question types
-- [x] **MLE-07**: MixedLessonGame engine handles rhythm_tap, visual_recognition, syllable_matching, and pulse question types
+- [ ] **CODE-01**: handleRhythmTapComplete in MixedLessonGame reads current state (not stale closure)
+- [ ] **CODE-02**: ArcadeRhythmGame scoredRef excludes rest tiles — score cannot exceed 100%
+- [ ] **CODE-03**: MixedLessonGame safely handles empty generated array without crashing
 
 ## Future Requirements
 
 Deferred to future milestone. Tracked but not in current roadmap.
 
-### Curriculum Expansion
+### Gameplay Expansion
 
-- **CURR-F01**: Kodaly duration reorder (quarter → eighth → half → whole → rests → dotted → sixteenth → compound)
-- **CURR-F02**: Adaptive difficulty system (algorithm-based within sessions)
-- **CURR-F03**: Adaptive tempo nudge (±5 BPM per consecutive correct/wrong)
-
-### Polish
-
-- **UX-F01**: focusDuration highlight for newly introduced note values
-- **UX-F02**: Rest highlighting visual when cursor passes a rest position
+- **PLAY-F01**: Adaptive difficulty system (algorithm-based within sessions)
+- **PLAY-F02**: Adaptive tempo nudge (+-5 BPM per consecutive correct/wrong)
+- **PLAY-F03**: focusDuration highlight for newly introduced note values
 
 ## Out of Scope
 
 Explicitly excluded. Documented to prevent scope creep.
 
-| Feature                                      | Reason                                                                     |
-| -------------------------------------------- | -------------------------------------------------------------------------- |
-| Kodaly syllable overlay (English "ta/ti-ti") | Hebrew syllables with Nikud included; English Kodaly deferred              |
-| 3/4 meter trail branch                       | Separate trail path; beyond rhythm rework scope                            |
-| Triplet introduction                         | Advanced content; future milestone                                         |
-| Student composition mode                     | New game type; not a rework item                                           |
-| Euclidean procedural generation              | Future "Endless Practice" mode                                             |
-| Node reordering across units                 | Risk to live user progress; defer until progress migration strategy exists |
+| Feature                      | Reason                                               |
+| ---------------------------- | ---------------------------------------------------- |
+| New rhythm game types        | This milestone is fix/tune, not new features         |
+| Node reordering across units | Risk to live user progress; needs migration strategy |
+| 3/4 meter or triplets        | Advanced content for future milestone                |
+| Celebration sound effects    | Requires classroom A/B testing                       |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Gap Closure | Status   |
-| ----------- | ----- | ----------- | -------- |
-| CURR-01     | 20    | 27          | Pending  |
-| CURR-02     | 20    | 27          | Pending  |
-| CURR-03     | 20    | 27          | Pending  |
-| CURR-04     | 20    | 27          | Pending  |
-| CURR-05     | 22    | —           | Complete |
-| PAT-01      | 21    | 27          | Pending  |
-| PAT-02      | 21    | 27          | Pending  |
-| PAT-03      | 22    | 27          | Pending  |
-| PAT-04      | 22    | 26          | Pending  |
-| PAT-05      | 22    | 27          | Pending  |
-| PAT-06      | 22    | 26, 27      | Pending  |
-| UX-01       | 23    | 26          | Pending  |
-| UX-02       | 23    | 26          | Pending  |
-| UX-03       | 23    | 26          | Pending  |
-| UX-04       | 23    | 26          | Pending  |
-| UX-05       | 23    | 26          | Pending  |
-| MLE-01      | 25    | —           | Complete |
-| MLE-02      | 25    | —           | Complete |
-| MLE-03      | 25    | —           | Complete |
-| MLE-04      | 25    | —           | Complete |
-| MLE-05      | 25    | —           | Complete |
-| MLE-06      | 25    | —           | Complete |
-| MLE-07      | 25    | —           | Complete |
+| Requirement | Phase | Status  |
+| ----------- | ----- | ------- |
+| AUDIO-01    | —     | Pending |
+| AUDIO-02    | —     | Pending |
+| AUDIO-03    | —     | Pending |
+| DATA-01     | —     | Pending |
+| DATA-02     | —     | Pending |
+| DATA-03     | —     | Pending |
+| DATA-04     | —     | Pending |
+| PLAY-01     | —     | Pending |
+| PLAY-02     | —     | Pending |
+| PLAY-03     | —     | Pending |
+| PLAY-04     | —     | Pending |
+| CODE-01     | —     | Pending |
+| CODE-02     | —     | Pending |
+| CODE-03     | —     | Pending |
 
 **Coverage:**
 
-- v3.2 requirements: 23 total
-- Mapped to phases: 23
-- Unmapped: 0
-- Gap closure needed: 15 (Phase 26: 7, Phase 27: 10, overlap: 2)
+- v3.3 requirements: 14 total
+- Mapped to phases: 0
+- Unmapped: 14
 
 ---
 
-_Requirements defined: 2026-04-06_
-_Last updated: 2026-04-12 — gap closure phases 26-28 added after milestone audit_
+_Requirements defined: 2026-04-13_
+_Last updated: 2026-04-13 after initial definition_
