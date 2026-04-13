@@ -205,7 +205,12 @@ Plans:
 **Goal**: Known bugs from v3.2 code review are eliminated and unit data errors that cause wrong patterns or incorrect section labels are corrected
 **Depends on**: Phase 26 (v3.2 complete)
 **Requirements**: CODE-01, CODE-02, CODE-03, DATA-01, DATA-02, DATA-03, DATA-04
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 29-01-PLAN.md — Fix stale-closure, score-cap, and empty-array bugs in game components
+- [ ] 29-02-PLAN.md — Add rest-aware pattern filtering, fix section titles, ensure duration variety
 
 **Success Criteria** (what must be TRUE):
 
@@ -272,7 +277,7 @@ Plans:
 | 26. Restore Phase 23 UX Regression | v3.2      | 2/2            | Complete    | 2026-04-13 |
 | 27. Verification & Traceability    | v3.2      | —              | Skipped     | —          |
 | 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
-| 29. Code Quality & Data Fixes      | v3.3      | 0/TBD          | Not started | —          |
+| 29. Code Quality & Data Fixes      | v3.3      | 0/2            | Planned     | —          |
 | 30. Audio Fixes                    | v3.3      | 0/TBD          | Not started | —          |
 | 31. Long-Press Sustain             | v3.3      | 0/TBD          | Not started | —          |
 | 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
@@ -281,4 +286,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-13 -- v3.3 roadmap created (Phases 29-32)_
+_Last updated: 2026-04-13 -- Phase 29 planned (2 plans, 1 wave)_
