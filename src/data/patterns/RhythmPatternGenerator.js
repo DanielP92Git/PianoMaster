@@ -159,23 +159,89 @@ function fillRests(result, slots, restCandidates) {
 }
 
 /**
+ * Check whether a binary pattern would require rest codes when rendered
+ * with the given durations.
+ *
+ * Algorithm mirrors binaryToVexDurations: each onset gets exactly ONE note
+ * (the longest that fits within the gap to the next onset). If the note
+ * doesn't exactly fill the gap, the remainder becomes a rest. Therefore,
+ * a pattern needs rests if:
+ *   - There is a leading gap before the first onset, OR
+ *   - Any gap (onset to next onset, or onset to measure end) is not exactly
+ *     equal to one of the available note durations.
+ *
+ * @param {number[]} binary - Pattern array of 0s and 1s
+ * @param {string[]} durations - Allowed duration codes (may include rest codes)
+ * @returns {boolean}
+ */
+function patternNeedsRests(binary, durations) {
+  // Note-only (non-rest) duration slot sizes, as a Set for O(1) lookup
+  const noteSlotSet = new Set(
+    durations
+      .filter((d) => !d.endsWith("r") && DURATION_SLOTS[d] !== undefined)
+      .map((d) => DURATION_SLOTS[d])
+  );
+
+  if (noteSlotSet.size === 0) return true; // No note durations available
+
+  const onsets = [];
+  for (let i = 0; i < binary.length; i++) {
+    if (binary[i] === 1) onsets.push(i);
+  }
+  if (onsets.length === 0) return true; // No onsets = all rests
+
+  // Check leading gap (before first onset) — needs a rest if onset doesn't start at 0
+  if (onsets[0] > 0) return true;
+
+  // For each onset, binaryToVexDurations places exactly ONE note (longest fit).
+  // If that note doesn't exactly span the gap to the next onset, rests fill the remainder.
+  // So: pattern is rest-free iff every gap exactly matches an available note duration.
+  for (let i = 0; i < onsets.length; i++) {
+    const nextOnset = i + 1 < onsets.length ? onsets[i + 1] : binary.length;
+    const gap = nextOnset - onsets[i];
+
+    // The gap must exactly equal one of the note durations
+    if (!noteSlotSet.has(gap)) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Check if a durations array includes any rest codes.
+ *
+ * @param {string[]} durations - Duration codes to check
+ * @returns {boolean}
+ */
+export function durationsIncludeRests(durations) {
+  return durations.some((d) => d.endsWith("r"));
+}
+
+/**
  * Resolve a random pattern matching ALL provided tags.
  *
  * @param {string[]} tags - Tags that the pattern must have (AND logic)
  * @param {string[]} durations - Allowed note duration codes for rendering
  * @param {Object} [options={}] - Optional filters
  * @param {string} [options.timeSignature] - Filter by time signature ('4/4' | '3/4' | '6/8')
+ * @param {boolean} [options.allowRests=false] - Whether to allow patterns that produce rest codes.
+ *   Defaults to false (safe default). Pass true for nodes whose curriculum includes rests.
  * @returns {{ patternId, binary, timeSignature, vexDurations, tags } | null}
  */
 export function resolveByTags(tags, durations, options = {}) {
+  const { allowRests = false, timeSignature: tsFilter } = options;
+
   let matching = RHYTHM_PATTERNS.filter((p) =>
     tags.every((tag) => p.tags.includes(tag))
   );
 
-  if (options.timeSignature) {
-    matching = matching.filter(
-      (p) => p.timeSignature === options.timeSignature
-    );
+  if (tsFilter) {
+    matching = matching.filter((p) => p.timeSignature === tsFilter);
+  }
+
+  // When rests are not allowed, filter out patterns that would produce rest codes
+  if (!allowRests) {
+    matching = matching.filter((p) => !patternNeedsRests(p.pattern, durations));
   }
 
   if (matching.length === 0) return null;
@@ -201,10 +267,22 @@ export function resolveByTags(tags, durations, options = {}) {
  *
  * @param {string[]} ids - Pattern IDs to search for
  * @param {string[]} durations - Allowed note duration codes for rendering
+ * @param {Object} [options={}] - Optional filters
+ * @param {boolean} [options.allowRests=false] - Whether to allow patterns that produce rest codes
  * @returns {{ patternId, binary, timeSignature, vexDurations, tags } | null}
  */
-export function resolveByIds(ids, durations) {
-  const selected = RHYTHM_PATTERNS.find((p) => ids.includes(p.id));
+export function resolveByIds(ids, durations, options = {}) {
+  const { allowRests = false } = options;
+
+  let candidates = RHYTHM_PATTERNS.filter((p) => ids.includes(p.id));
+
+  if (!allowRests) {
+    candidates = candidates.filter(
+      (p) => !patternNeedsRests(p.pattern, durations)
+    );
+  }
+
+  const selected = candidates[0];
   if (!selected) return null;
 
   const vexDurations = binaryToVexDurations(

@@ -3,6 +3,7 @@ import {
   resolveByTags,
   resolveByIds,
   binaryToVexDurations,
+  durationsIncludeRests,
 } from "./RhythmPatternGenerator";
 
 // Duration slot sizes (sixteenth-note units)
@@ -219,6 +220,91 @@ describe("resolveByTags", () => {
     result.binary.forEach((v) => {
       expect(v === 0 || v === 1).toBe(true);
     });
+  });
+});
+
+describe("resolveByTags — allowRests filtering (DATA-01, DATA-02)", () => {
+  it("Test 1: quarter-only with allowRests:false never returns rest codes", () => {
+    for (let i = 0; i < 100; i++) {
+      const result = resolveByTags(["quarter-only"], ["q"], {
+        allowRests: false,
+      });
+      if (result) {
+        result.vexDurations.forEach((d) => {
+          expect(d.endsWith("r")).toBe(false);
+        });
+      }
+    }
+  });
+
+  it("Test 2: quarter-half with allowRests:false never returns rest codes", () => {
+    for (let i = 0; i < 100; i++) {
+      const result = resolveByTags(["quarter-half"], ["q", "h"], {
+        allowRests: false,
+      });
+      if (result) {
+        result.vexDurations.forEach((d) => {
+          expect(d.endsWith("r")).toBe(false);
+        });
+      }
+    }
+  });
+
+  it("Test 3: quarter-rest with allowRests:true can return qr codes", () => {
+    let foundRest = false;
+    for (let i = 0; i < 100; i++) {
+      const result = resolveByTags(["quarter-rest"], ["q", "qr"], {
+        allowRests: true,
+      });
+      if (result && result.vexDurations.some((d) => d.endsWith("r"))) {
+        foundRest = true;
+        break;
+      }
+    }
+    expect(foundRest).toBe(true);
+  });
+
+  it("Test 4: allowRests defaults to false (backwards-compatible safety)", () => {
+    for (let i = 0; i < 100; i++) {
+      const result = resolveByTags(["quarter-only"], ["q"]);
+      if (result) {
+        result.vexDurations.forEach((d) => {
+          expect(d.endsWith("r")).toBe(false);
+        });
+      }
+    }
+  });
+
+  it("Test 5: quarter-only patterns with allowRests:false produce only quarter notes", () => {
+    for (let i = 0; i < 100; i++) {
+      const result = resolveByTags(["quarter-only"], ["q"], {
+        allowRests: false,
+      });
+      if (result) {
+        result.vexDurations.forEach((d) => {
+          expect(d).toBe("q");
+        });
+        expect(result.vexDurations).toHaveLength(4); // 4 quarter notes in 4/4
+      }
+    }
+  });
+});
+
+describe("durationsIncludeRests", () => {
+  it("returns false for durations with no rest codes", () => {
+    expect(durationsIncludeRests(["q"])).toBe(false);
+    expect(durationsIncludeRests(["q", "h"])).toBe(false);
+    expect(durationsIncludeRests(["q", "h", "w"])).toBe(false);
+  });
+
+  it("returns true when any duration code ends with r", () => {
+    expect(durationsIncludeRests(["q", "qr"])).toBe(true);
+    expect(durationsIncludeRests(["qr"])).toBe(true);
+    expect(durationsIncludeRests(["q", "h", "hr"])).toBe(true);
+  });
+
+  it("returns false for empty array", () => {
+    expect(durationsIncludeRests([])).toBe(false);
   });
 });
 
