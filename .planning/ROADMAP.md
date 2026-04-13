@@ -24,7 +24,8 @@
 - ✅ **v2.9 Game Variety & Ear Training** — Phases 7-11 (shipped 2026-03-30)
 - ✅ **v3.0 Cleanup & Polish** — Phases 12-16 (shipped 2026-04-03)
 - ✅ **v3.1 Trail-First Navigation** — Phases 17-19 (shipped 2026-04-05)
-- **v3.2 Rhythm Trail Rework** — Phases 20-28 (gap closure in progress)
+- ✅ **v3.2 Rhythm Trail Rework** — Phases 20-28 (shipped 2026-04-13)
+- **v3.3 Rhythm Trail Fix & Polish** — Phases 29-32 (in progress)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -68,11 +69,8 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 </details>
 
-### v3.2 Rhythm Trail Rework
-
-**Milestone Goal:** Rework the rhythm trail's pedagogy so every node introduces one concept at a time, uses the correct game for each learning stage, and draws from a curated hand-crafted pattern library — replacing the current random-generative approach with pedagogically sequenced content following Kodaly/Orff principles.
-
-#### Phases
+<details>
+<summary>v3.2 Rhythm Trail Rework (Phases 20-28) -- SHIPPED 2026-04-13</summary>
 
 - [x] **Phase 20: Curriculum Audit** - Audit all 56 rhythm nodes and lock game-type policy before touching any files (completed 2026-04-11)
 - [x] **Phase 21: Pattern Library Construction** - Author ~120+ hand-crafted tagged patterns as a new synchronous JS module (completed 2026-04-11)
@@ -80,9 +78,22 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 - [x] **Phase 23: UX Polish** - Widen timing thresholds, rename games, replace MISS text, add measure length progression, and render Kodaly syllables (completed 2026-04-09)
 - [x] **Phase 24: Multi-Angle Rhythm Games** - Visual recognition + syllable matching games for rhythm trail nodes (completed 2026-04-09)
 - [x] **Phase 25: Unified Mixed Lesson Engine** - Duolingo-style interleaved lesson engine for trail nodes (completed 2026-04-09)
-- [ ] **Phase 26: Restore Phase 23 UX Regression** - Restore 12 files reverted by commit 13cff54; fix all UX + integration regressions
-- [ ] **Phase 27: Verification & Traceability Cleanup** - Generate missing verification docs, fix stale artifacts, add MLE requirements
-- [ ] **Phase 28: Tech Debt Fixes** - Fix code review findings from Phases 22 and 25
+- [x] **Phase 26: Restore Phase 23 UX Regression** - Restore 12 files reverted by commit 13cff54; fix all UX + integration regressions (completed 2026-04-13)
+- [x] **Phase 27: Verification & Traceability Cleanup** - Skipped — carried to v3.3 (completed N/A)
+- [x] **Phase 28: Tech Debt Fixes** - Skipped — CODE-01/02/03 carried to v3.3 Phase 29 (completed N/A)
+
+</details>
+
+### v3.3 Rhythm Trail Fix & Polish
+
+**Milestone Goal:** Fix known audio bugs, data/curriculum errors, and code quality issues from v3.2, then tune gameplay so long notes require sustained press, speed challenge has appropriate variety, boss nodes feel distinctly harder, and pattern nodes are meaningfully differentiated.
+
+#### Phases
+
+- [ ] **Phase 29: Code Quality & Data Fixes** - Fix stale-closure and score-cap bugs, guard empty arrays, correct unit data errors and section titles
+- [ ] **Phase 30: Audio Fixes** - Pre-warm audio context, fix dictation listen-button, fix eighths discovery audio sequencing
+- [ ] **Phase 31: Long-Press Sustain** - Implement piano-like sustained press for half/whole notes in listen&tap and pulse games
+- [ ] **Phase 32: Game Design Differentiation** - Tune speed challenge variety and count, redesign boss nodes, differentiate pattern nodes from practice nodes
 
 ## Phase Details
 
@@ -166,47 +177,18 @@ Plans:
 4. A Discovery node shows a 1-bar pattern, a Practice node shows a 2-bar pattern, and a Speed or Boss node shows a 4-bar pattern
 5. Kodaly syllables (ta / ti-ti / ta-a / ta-a-a-a in EN; ta-a-a-a / ta-a-a-a in HE) appear below VexFlow note heads for all rendered rhythm patterns
 
-## Progress
-
-| Phase                              | Milestone | Plans Complete | Status   | Completed  |
-| ---------------------------------- | --------- | -------------- | -------- | ---------- |
-| 20. Curriculum Audit               | v3.2      | 1/1            | Complete | 2026-04-11 |
-| 21. Pattern Library Construction   | v3.2      | 1/1            | Complete | 2026-04-11 |
-| 22. Service Layer & Trail Wiring   | v3.2      | 5/5            | Complete | 2026-04-12 |
-| 23. UX Polish                      | v3.2      | 3/3            | Complete | 2026-04-09 |
-| 24. Multi-Angle Rhythm Games       | v3.2      | 3/3            | Complete | 2026-04-09 |
-| 25. Unified Mixed Lesson Engine    | v3.2      | 3/3            | Complete | 2026-04-09 |
-| 26. Restore Phase 23 UX Regression | v3.2      | 0/2            | Planned  | —          |
-| 27. Verification & Traceability    | v3.2      | 0/0            | Planned  | —          |
-| 28. Tech Debt Fixes                | v3.2      | 0/0            | Planned  | —          |
-
-**Total: 22 milestones shipped, 98 phases, ~203 plans | v3.2: 9 phases, 6/9 complete**
-
-### Phase 25: Unified Mixed Lesson Engine for Trail Nodes
-
-**Goal:** Build a MixedLessonGame component that plays through a pre-authored sequence of different question types (visual recognition, syllable matching, and future types) within one unified game session — Duolingo-style interleaved learning instead of separate sequential games per exercise.
-**Requirements**: MLE-01, MLE-02, MLE-03, MLE-04, MLE-05, MLE-06, MLE-07
-**Depends on:** Phase 24
-**Plans:** 3/3 plans complete
-
-Plans:
-
-- [x] 25-01-PLAN.md — Extract stateless renderers + refactor standalone games to thin wrappers
-- [x] 25-02-PLAN.md — Register MIXED_LESSON exercise type, route, TrailNodeModal, i18n, and build validator
-- [x] 25-03-PLAN.md — Build MixedLessonGame engine component + wire trail node data + engine tests
-
 ### Phase 26: Restore Phase 23 UX Regression
 
 **Goal**: Restore all 12 source files reverted by commit 13cff54 to their Phase 23 state — fixing all UX requirements, integration gaps, and broken E2E flows
 **Depends on**: Phase 23, Phase 22
 **Requirements**: UX-01, UX-02, UX-03, UX-04, UX-05, PAT-04, PAT-06
 **Gap Closure:** Closes gaps from v3.2 milestone audit
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 
-- [ ] 26-01-PLAN.md — Timing forgiveness, game rename, "Almost!" feedback, pulse i18n
-- [ ] 26-02-PLAN.md — Multi-stave display, resolveByTags, syllable toggle, measure count validator
+- [x] 26-01-PLAN.md — Timing forgiveness, game rename, "Almost!" feedback, pulse i18n
+- [x] 26-02-PLAN.md — Multi-stave display, resolveByTags, syllable toggle, measure count validator
 
 **Success Criteria** (what must be TRUE):
 
@@ -218,36 +200,85 @@ Plans:
 6. RhythmReadingGame imports `resolveByTags` from RhythmPatternGenerator (PAT-04)
 7. Pulse exercise type has i18n key in trail.json for Hebrew (integration gap 4)
 
-### Phase 27: Verification & Traceability Cleanup
+### Phase 29: Code Quality & Data Fixes
 
-**Goal**: Close all process/documentation gaps so milestone audit passes with no partial requirements due to missing verification artifacts
-**Depends on**: Phase 26
-**Requirements**: CURR-01, CURR-02, CURR-03, CURR-04, PAT-01, PAT-02, PAT-03, PAT-05, PAT-06
-**Gap Closure:** Closes documentation gaps from v3.2 milestone audit
-
-**Success Criteria** (what must be TRUE):
-
-1. Phase 20 has a valid VERIFICATION.md confirming CURR-01 through CURR-04
-2. Phase 21 VERIFICATION.md contains current-milestone content (not stale v1.4 data)
-3. Phase 22 SUMMARY frontmatter includes PAT-03, PAT-05, PAT-06 in `requirements_completed`
-4. MLE-01 through MLE-07 are formally defined in REQUIREMENTS.md with traceability to Phase 25
-5. REQUIREMENTS.md traceability table reflects all gap closure phase assignments
-
-### Phase 28: Tech Debt Fixes
-
-**Goal**: Fix code review findings from Phases 22 and 25 to eliminate known bugs and code quality issues
-**Depends on**: Phase 26
-**Gap Closure:** Addresses tech debt from v3.2 milestone audit
+**Goal**: Known bugs from v3.2 code review are eliminated and unit data errors that cause wrong patterns or incorrect section labels are corrected
+**Depends on**: Phase 26 (v3.2 complete)
+**Requirements**: CODE-01, CODE-02, CODE-03, DATA-01, DATA-02, DATA-03, DATA-04
+**Plans**: TBD
 
 **Success Criteria** (what must be TRUE):
 
-1. `handleRhythmTapComplete` in MixedLessonGame does not read stale `currentIndex` from closure (22-REVIEW HR-01)
-2. `ArcadeRhythmGame` `scoredRef` excludes rest tiles — score cannot exceed 100 (22-REVIEW HR-02)
-3. `validateGameTypePolicy` correctly handles boss-category mini-boss nodes (22-REVIEW MD-01)
-4. `VEX_TO_OLD_NAME` is defined in one shared location, not duplicated (22-REVIEW LW-01)
-5. `binaryToVexDurations` handles `qd` rest correctly (22-REVIEW MD-04)
-6. `MixedLessonGame` line 134 safely handles empty `generated` array (25-VERIFICATION)
+1. Tapping a rhythm answer in MixedLessonGame always advances to the correct next question — no question is skipped or repeated due to a stale-closure index read
+2. Completing an ArcadeRhythmGame session with all notes correct (and any number of rests) shows exactly 100% score — the score cannot display above 100%
+3. MixedLessonGame handles nodes with zero generated questions by showing an error or fallback rather than crashing
+4. Playing node 1_3 never presents a rest value that has not yet been introduced to the child — only note values from completed prior nodes appear
+5. The pulse game on a quarter-only node generates only quarter-note patterns — no half notes appear in the beat
+6. Every section header on the rhythm trail accurately describes the nodes it contains — no section title mismatches its content
+7. Combined-values practice nodes use all expected duration values and vary order across sessions — no single duration dominates every play
+
+### Phase 30: Audio Fixes
+
+**Goal**: All audio playback issues in rhythm games are resolved — patterns play on first attempt with no trimming, dictation listen button works on first click, and the eighths discovery plays its full sequence
+**Depends on**: Phase 29
+**Requirements**: AUDIO-01, AUDIO-02, AUDIO-03
+**Plans**: TBD
+
+**Success Criteria** (what must be TRUE):
+
+1. The very first time a child opens a rhythm game in a session and taps play, the quarter or eighth note sound is heard in full with no audible clipping or silence at the start
+2. Tapping the "Listen" button in a dictation game for the first time plays the pattern — the child does not need to tap "Replay" to hear the first playback
+3. The eighths discovery presentation plays all 4 beamed eighth-note pairs in sequence — the child hears all 4 pairs, not just the first
+
+### Phase 31: Long-Press Sustain
+
+**Goal**: Half and whole notes in listen&tap and pulse exercises require the child to hold their finger down for the note's full duration, giving the game a piano-like physical feel
+**Depends on**: Phase 30
+**Requirements**: PLAY-01
+**Plans**: TBD
+**UI hint**: yes
+
+**Success Criteria** (what must be TRUE):
+
+1. Tapping and immediately releasing on a half note in listen&tap registers as incorrect — the child must hold for the note's duration to score a correct answer
+2. Tapping and immediately releasing on a whole note in a pulse exercise registers as incorrect — sustained hold is required
+3. A child holding a half note for the correct duration receives positive feedback equivalent to a correctly timed quarter-note tap
+4. The hold-duration requirement scales with note value — a whole note requires roughly twice the hold time of a half note
+
+### Phase 32: Game Design Differentiation
+
+**Goal**: Speed challenge nodes have appropriately varied content and exercise count for kids, boss nodes feel distinctly harder than regular nodes, and rhythm pattern nodes offer a meaningfully different experience from practice nodes
+**Depends on**: Phase 31
+**Requirements**: PLAY-02, PLAY-03, PLAY-04
+**Plans**: TBD
+
+**Success Criteria** (what must be TRUE):
+
+1. Playing a speed challenge node presents a set of varied patterns — no two consecutive questions are identical, and the total exercise count is appropriate for a child's attention span
+2. Playing a boss node presents a noticeably harder challenge than the practice nodes in the same unit — it uses a wider duration set, longer patterns, or a higher tempo
+3. Playing a rhythm pattern node presents content that feels distinct from its neighbouring practice node — it is not a duplicate of the practice node's question sequence
+4. After completing a speed challenge, a boss node, and a practice node in the same unit, the child can describe each as a different kind of challenge
+
+## Progress
+
+| Phase                              | Milestone | Plans Complete | Status      | Completed  |
+| ---------------------------------- | --------- | -------------- | ----------- | ---------- |
+| 20. Curriculum Audit               | v3.2      | 1/1            | Complete    | 2026-04-11 |
+| 21. Pattern Library Construction   | v3.2      | 1/1            | Complete    | 2026-04-11 |
+| 22. Service Layer & Trail Wiring   | v3.2      | 5/5            | Complete    | 2026-04-12 |
+| 23. UX Polish                      | v3.2      | 3/3            | Complete    | 2026-04-09 |
+| 24. Multi-Angle Rhythm Games       | v3.2      | 3/3            | Complete    | 2026-04-09 |
+| 25. Unified Mixed Lesson Engine    | v3.2      | 3/3            | Complete    | 2026-04-09 |
+| 26. Restore Phase 23 UX Regression | v3.2      | 2/2            | Complete    | 2026-04-13 |
+| 27. Verification & Traceability    | v3.2      | —              | Skipped     | —          |
+| 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
+| 29. Code Quality & Data Fixes      | v3.3      | 0/TBD          | Not started | —          |
+| 30. Audio Fixes                    | v3.3      | 0/TBD          | Not started | —          |
+| 31. Long-Press Sustain             | v3.3      | 0/TBD          | Not started | —          |
+| 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
+
+**Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 0/4 complete**
 
 ---
 
-_Last updated: 2026-04-13 -- Phase 26 plans created (2 plans, Wave 1)_
+_Last updated: 2026-04-13 -- v3.3 roadmap created (Phases 29-32)_

@@ -60,28 +60,28 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status  |
 | ----------- | ----- | ------- |
-| AUDIO-01    | —     | Pending |
-| AUDIO-02    | —     | Pending |
-| AUDIO-03    | —     | Pending |
-| DATA-01     | —     | Pending |
-| DATA-02     | —     | Pending |
-| DATA-03     | —     | Pending |
-| DATA-04     | —     | Pending |
-| PLAY-01     | —     | Pending |
-| PLAY-02     | —     | Pending |
-| PLAY-03     | —     | Pending |
-| PLAY-04     | —     | Pending |
-| CODE-01     | —     | Pending |
-| CODE-02     | —     | Pending |
-| CODE-03     | —     | Pending |
+| AUDIO-01    | 30    | Pending |
+| AUDIO-02    | 30    | Pending |
+| AUDIO-03    | 30    | Pending |
+| DATA-01     | 29    | Pending |
+| DATA-02     | 29    | Pending |
+| DATA-03     | 29    | Pending |
+| DATA-04     | 29    | Pending |
+| PLAY-01     | 31    | Pending |
+| PLAY-02     | 32    | Pending |
+| PLAY-03     | 32    | Pending |
+| PLAY-04     | 32    | Pending |
+| CODE-01     | 29    | Pending |
+| CODE-02     | 29    | Pending |
+| CODE-03     | 29    | Pending |
 
 **Coverage:**
 
 - v3.3 requirements: 14 total
-- Mapped to phases: 0
-- Unmapped: 14
+- Mapped to phases: 14
+- Unmapped: 0
 
 ---
 
 _Requirements defined: 2026-04-13_
-_Last updated: 2026-04-13 after initial definition_
+_Last updated: 2026-04-13 — traceability filled after roadmap creation_
