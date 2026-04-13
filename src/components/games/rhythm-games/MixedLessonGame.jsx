@@ -16,10 +16,16 @@ import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
 import RhythmTapQuestion from "./renderers/RhythmTapQuestion";
 import PulseQuestion from "./renderers/PulseQuestion";
+import DiscoveryIntroQuestion from "./renderers/DiscoveryIntroQuestion";
+import RhythmReadingQuestion from "./renderers/RhythmReadingQuestion";
+import RhythmDictationQuestion from "./renderers/RhythmDictationQuestion";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { getNodeById } from "../../../data/skillTrail";
+import { resolveByTags } from "../../../data/patterns/RhythmPatternGenerator";
+import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
+import { generateDistractors } from "./utils/rhythmTimingUtils";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
@@ -94,6 +100,7 @@ export default function MixedLessonGame() {
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
   const [questions, setQuestions] = useState([]); // Pre-generated: { type, correct, choices }[]
   const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndexRef = useRef(0); // Mutable ref — avoids stale-closure in async callbacks (CODE-01)
   const [results, setResults] = useState([]); // boolean[] per question
   const [cardStates, setCardStates] = useState([
     "default",
@@ -110,6 +117,11 @@ export default function MixedLessonGame() {
   // Auto-start guard
   const hasAutoStartedRef = useRef(false);
   const feedbackTimerRef = useRef(null);
+
+  // Keep currentIndexRef in sync with currentIndex state (CODE-01)
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
 
   // Landscape media query
   useEffect(() => {
@@ -161,6 +173,20 @@ export default function MixedLessonGame() {
     const questionSequence = nodeConfig?.questions || [];
     if (questionSequence.length === 0) return;
 
+    // CODE-03: Guard against empty pool — show complete state rather than crash
+    if (pool.length === 0) {
+      setQuestions([]);
+      currentIndexRef.current = 0;
+      setCurrentIndex(0);
+      setResults([]);
+      setCardStates(["default", "default", "default", "default"]);
+      setFeedbackMessage("");
+      setFadeKey(0);
+      setGameState(GAME_STATES.COMPLETE);
+      resumeTimer();
+      return;
+    }
+
     // Generate one question per authored entry — 1:1 mapping (D-09: pre-structured, not random)
     const allQuestions = questionSequence.map((entry) => {
       if (entry.type === "rhythm_tap") {
@@ -169,16 +195,67 @@ export default function MixedLessonGame() {
       if (entry.type === "pulse") {
         return { type: "pulse", rhythmConfig: buildRhythmTapConfig() };
       }
-      if (pool.length === 0)
-        return { type: entry.type, correct: "", choices: [] };
+      if (entry.type === "discovery_intro") {
+        return { type: "discovery_intro", focusDuration: entry.focusDuration };
+      }
+      if (entry.type === "rhythm_reading") {
+        return { type: "rhythm_reading", rhythmConfig: buildRhythmTapConfig() };
+      }
+      if (entry.type === "rhythm_dictation") {
+        // Pre-generate pattern + distractors for dictation
+        const cfg = buildRhythmTapConfig();
+        const node = getNodeById(nodeId);
+        const rc = node?.rhythmConfig;
+        const result = resolveByTags(
+          rc?.patternTags || [],
+          rc?.durations || ["q"],
+          { timeSignature: rc?.timeSignature || "4/4" }
+        );
+        if (result) {
+          const beats = binaryPatternToBeats(result.binary);
+          const distractors = generateDistractors(beats, 2, {
+            allowedDurations: rc?.durations || ["q"],
+          });
+          const allChoices = [beats, ...distractors];
+          // Fisher-Yates shuffle
+          for (let i = allChoices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allChoices[i], allChoices[j]] = [allChoices[j], allChoices[i]];
+          }
+          const correctIdx = allChoices.indexOf(beats);
+          return {
+            type: "rhythm_dictation",
+            rhythmConfig: cfg,
+            correctBeats: beats,
+            choices: allChoices,
+            correctIndex: correctIdx,
+          };
+        }
+        // Fallback: use rhythm_tap if no curated pattern available
+        return { type: "rhythm_tap", rhythmConfig: cfg };
+      }
+      // CODE-03: Guard generateQuestions result against empty/undefined
       const dedupSyllables = entry.type === "syllable_matching";
       const generated = generateQuestions(pool, ALL_DURATION_CODES, 1, {
         dedupSyllables,
       });
+      if (!generated || generated.length === 0 || !generated[0]) {
+        // Fallback: use pool[0] as correct with shuffled distractors
+        const correct = pool[0];
+        const distractors = ALL_DURATION_CODES.filter(
+          (c) => c !== correct
+        ).slice(0, 3);
+        return {
+          type: entry.type,
+          correct,
+          choices: [correct, ...distractors].sort(() => Math.random() - 0.5),
+        };
+      }
       return { type: entry.type, ...generated[0] };
     });
 
     setQuestions(allQuestions);
+    currentIndexRef.current = 0; // CODE-01: sync ref on start
     setCurrentIndex(0);
     setResults([]);
     setCardStates(["default", "default", "default", "default"]);
@@ -186,7 +263,7 @@ export default function MixedLessonGame() {
     setFadeKey(0);
     setGameState(GAME_STATES.IN_PROGRESS);
     pauseTimer();
-  }, [buildDurationPool, buildRhythmTapConfig, nodeConfig, pauseTimer]);
+  }, [buildDurationPool, buildRhythmTapConfig, nodeConfig, nodeId, pauseTimer, resumeTimer]);
 
   // Trail auto-start (hasAutoStartedRef pattern, same as existing games)
   useEffect(() => {
@@ -212,7 +289,9 @@ export default function MixedLessonGame() {
     (cardIndex) => {
       if (gameState !== GAME_STATES.IN_PROGRESS) return;
 
-      const currentQuestion = questions[currentIndex];
+      // CODE-01: read index from ref to avoid stale-closure in setTimeout
+      const idx = currentIndexRef.current;
+      const currentQuestion = questions[idx];
       const isCorrect =
         currentQuestion.choices[cardIndex] === currentQuestion.correct;
 
@@ -244,7 +323,8 @@ export default function MixedLessonGame() {
       // Auto-advance with crossfade (D-11, D-14)
       const delay = isCorrect ? CORRECT_DELAY : WRONG_DELAY;
       feedbackTimerRef.current = setTimeout(() => {
-        const nextIndex = currentIndex + 1;
+        // CODE-01: read from ref inside timeout to get current value (not stale closure)
+        const nextIndex = currentIndexRef.current + 1;
         if (nextIndex >= questions.length) {
           playVictorySound();
           setGameState(GAME_STATES.COMPLETE);
@@ -256,6 +336,7 @@ export default function MixedLessonGame() {
           if (typeChanged) {
             setFadeKey((k) => k + 1);
           }
+          currentIndexRef.current = nextIndex; // CODE-01: update ref before state
           setCurrentIndex(nextIndex);
           setCardStates(["default", "default", "default", "default"]);
           setFeedbackMessage("");
@@ -266,7 +347,6 @@ export default function MixedLessonGame() {
     [
       gameState,
       questions,
-      currentIndex,
       playCorrectSound,
       playWrongSound,
       playVictorySound,
@@ -281,25 +361,31 @@ export default function MixedLessonGame() {
       const isCorrect = onTimeTaps >= Math.ceil(totalExpectedTaps / 2);
       setResults((prev) => [...prev, isCorrect]);
 
-      if (isCorrect) {
+      // CODE-01: read index from ref to avoid stale-closure
+      const isLastQuestion = currentIndexRef.current + 1 >= questions.length;
+
+      // Skip correct sound on last question — victory sound will play instead
+      if (isCorrect && !isLastQuestion) {
         playCorrectSound();
-      } else {
+      } else if (!isCorrect) {
         playWrongSound();
       }
 
       // Shorter delay since RhythmTapQuestion already showed per-beat feedback
       feedbackTimerRef.current = setTimeout(() => {
-        const nextIndex = currentIndex + 1;
+        // CODE-01: read from ref inside timeout to get current value (not stale closure)
+        const nextIndex = currentIndexRef.current + 1;
         if (nextIndex >= questions.length) {
           playVictorySound();
           setGameState(GAME_STATES.COMPLETE);
           resumeTimer();
         } else {
           const typeChanged =
-            questions[nextIndex].type !== questions[currentIndex].type;
+            questions[nextIndex].type !== questions[currentIndexRef.current].type;
           if (typeChanged) {
             setFadeKey((k) => k + 1);
           }
+          currentIndexRef.current = nextIndex; // CODE-01: update ref before state
           setCurrentIndex(nextIndex);
           setCardStates(["default", "default", "default", "default"]);
           setFeedbackMessage("");
@@ -309,7 +395,6 @@ export default function MixedLessonGame() {
     },
     [
       questions,
-      currentIndex,
       playCorrectSound,
       playWrongSound,
       playVictorySound,
@@ -361,7 +446,24 @@ export default function MixedLessonGame() {
     );
   }
 
-  const currentQuestion = questions[currentIndex];
+  // CODE-03: Render guard — empty question array during in-progress state
+  if (gameState === GAME_STATES.IN_PROGRESS && questions.length === 0) {
+    return (
+      <div className="fixed inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+        <div className="max-w-sm rounded-xl border border-white/20 bg-white/10 p-6 text-center backdrop-blur-md">
+          <p className="mb-4 text-lg text-white">
+            {t(
+              "game.error.generic",
+              "Something went wrong. Go back to the trail and try again."
+            )}
+          </p>
+          <BackButton to="/trail" />
+        </div>
+      </div>
+    );
+  }
+
+  const currentQuestion = questions[currentIndexRef.current];
   if (!currentQuestion) return null;
 
   // Renderer selection — map question type to renderer component (T-25-04 mitigation)
@@ -391,6 +493,33 @@ export default function MixedLessonGame() {
       case "pulse":
         return (
           <PulseQuestion
+            question={currentQuestion}
+            isLandscape={isLandscape}
+            onComplete={handleRhythmTapComplete}
+            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+          />
+        );
+      case "discovery_intro":
+        return (
+          <DiscoveryIntroQuestion
+            question={currentQuestion}
+            isLandscape={isLandscape}
+            onComplete={handleRhythmTapComplete}
+            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+          />
+        );
+      case "rhythm_reading":
+        return (
+          <RhythmReadingQuestion
+            question={currentQuestion}
+            isLandscape={isLandscape}
+            onComplete={handleRhythmTapComplete}
+            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+          />
+        );
+      case "rhythm_dictation":
+        return (
+          <RhythmDictationQuestion
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
@@ -451,7 +580,7 @@ export default function MixedLessonGame() {
         {/* Question area with crossfade */}
         <div className="flex flex-1 flex-col items-center justify-center gap-4">
           <div
-            key={fadeKey}
+            key={`${fadeKey}-${currentIndex}`}
             className={`flex w-full flex-col items-center gap-4${reducedMotion ? "" : " animate-fadeIn"}`}
           >
             {renderQuestion()}
@@ -487,7 +616,7 @@ export default function MixedLessonGame() {
       {/* Question area with crossfade */}
       <div className="flex flex-1 flex-col items-center justify-center gap-6">
         <div
-          key={fadeKey}
+          key={`${fadeKey}-${currentIndex}`}
           className={`flex w-full flex-col items-center gap-6${reducedMotion ? "" : " animate-fadeIn"}`}
         >
           {renderQuestion()}
