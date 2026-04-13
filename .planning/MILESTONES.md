@@ -1,5 +1,25 @@
 # Project Milestones: PianoApp
 
+## v3.2 Rhythm Trail Rework (Shipped: 2026-04-13)
+
+**Phases completed:** 7 phases (20-26), 16 plans
+
+**Key accomplishments:**
+
+- Curriculum audit of all 56 rhythm nodes: one-concept violations documented, game-type policy locked (mixed_lesson for learning stages, arcade_rhythm for challenge stages)
+- Pattern library: 130+ hand-crafted tagged rhythm patterns in synchronous JS module replacing random generative approach
+- RhythmPatternGenerator service with resolveByTags/resolveByIds, all 56 nodes migrated to patternTags/patternIds
+- PULSE exercise type: tap-with-the-beat metronome-only exercise for Unit 1 Node 1
+- Build validator extended: tag existence, coverage, duration safety, game-type policy enforcement
+- UX polish: 100ms timing forgiveness, game rename (Listen & Tap), "Almost!" feedback, progressive measure length, Kodaly syllables
+- Multi-angle rhythm games: VisualRecognitionRenderer + SyllableMatchingRenderer as stateless question types
+- MixedLessonGame engine: Duolingo-style interleaved question types (rhythm_tap, visual_recognition, syllable_matching, pulse) with crossfade transitions
+- Phase 23 UX regression restored after worktree collateral damage
+
+**Skipped phases:** Phase 27 (verification docs) and Phase 28 (tech debt) — relevant tech debt items carried to v3.3
+
+---
+
 ## v3.1 Trail-First Navigation (Shipped: 2026-04-05)
 
 **Phases completed:** 3 phases, 5 plans, 8 tasks

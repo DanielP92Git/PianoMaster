@@ -247,19 +247,30 @@ These capabilities exist, are working, and have been shipped:
 - POST-01-02: VictoryScreen simplified to Duolingo-style single-CTA flow (trail: "Next Adventure", free play: "Play Again" + "Back to Games", challenge: "Back to Trail"); GameOverScreen uses React Router with smart trail tab routing
 - 10/10 requirements delivered, 5 plans across 3 phases
 
+**v3.2 Rhythm Trail Rework (shipped 2026-04-13):**
+
+- CURR-01-05: Curriculum audit of all 56 rhythm nodes, one-concept policy, game-type assignment, pulse exercise
+- PAT-01-06: 130+ hand-crafted tagged patterns, RhythmPatternGenerator service, build-time validation
+- UX-01-05: 100ms timing forgiveness, game rename, "Almost!" feedback, progressive measures, Kodaly syllables
+- MLE-01-07: MixedLessonGame engine with interleaved question types (rhythm_tap, visual_recognition, syllable_matching, pulse)
+- Phase 23 UX regression restored after worktree collateral damage
+- 23/23 requirements delivered (7 MLE complete, 16 core complete), 16 plans across 7 phases
+
 ### Active
 
-## Current Milestone: v3.2 Rhythm Trail Rework
+## Current Milestone: v3.3 Rhythm Trail Fix & Polish
 
-**Goal:** Rethink and refactor the rhythm trail to deliver a structured, pedagogically sound progression for 8-year-old learners.
+**Goal:** Fix bugs, tune gameplay, and polish the rhythm trail experience based on real-world testing feedback.
 
 **Target features:**
 
-- Curated pattern database per node (replace random generative patterns with hand-crafted progressions)
-- Rhythm node progression audit and restructure (50 nodes across units 1-8)
-- Game type assignment review (right game for right learning stage)
-- Difficulty curve tuning (engaging, not frustrating)
-- Game naming improvements (e.g. "MetronomeTrainer" → kid-friendly name)
+- Fix audio trimming on first playback (warm-up issue)
+- Fix data bugs (unlearned rests, wrong patterns, title/content mismatches)
+- Fix dictation listen button and console errors
+- Implement sustained long-press for half/whole notes (piano-like feel)
+- Tune content variety (shuffle durations, unique boss/speed content)
+- Make boss and speed challenge nodes feel distinct and engaging for kids
+- Fix 3 code bugs carried from v3.2 tech debt (stale closure, score >100%, empty array crash)
 
 **Future candidates:**
 

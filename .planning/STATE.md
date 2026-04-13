@@ -1,56 +1,47 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.2
-milestone_name: Rhythm Trail Rework
-status: executing
-last_updated: "2026-04-13T00:55:00.000Z"
-last_activity: 2026-04-13 -- Phase 26 execution complete
+milestone: v3.3
+milestone_name: Rhythm Trail Fix & Polish
+status: defining_requirements
+last_updated: "2026-04-13T12:00:00.000Z"
+last_activity: 2026-04-13 -- Milestone v3.3 started
 progress:
-  total_phases: 8
-  completed_phases: 6
-  total_plans: 16
-  completed_plans: 16
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-06)
+See: .planning/PROJECT.md (updated 2026-04-13)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 26 — restore-ux-regression (COMPLETE)
+**Current focus:** Defining requirements for v3.3
 
 ## Current Position
 
-Phase: 26 (restore-ux-regression) — COMPLETE
-Plan: 2 of 2
-Status: Phase 26 complete
-Last activity: 2026-04-13 -- Phase 26 execution complete
-
-Progress: [████████░░] 80%
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-04-13 — Milestone v3.3 started
 
 ## Performance Metrics
 
 **Velocity:**
 
 - Total plans completed: ~218 (across all shipped milestones)
-- 22 milestones shipped in 68 days (2026-01-31 to 2026-04-09)
+- 23 milestones shipped in 72 days (2026-01-31 to 2026-04-13)
 
 ## Accumulated Context
 
 ### Decisions
 
-- Phase 20 is a documentation-only audit phase — no source files are modified
-- Pattern library (Phase 21) is a pure addition; no existing files change until Phase 22
-- Phase 22 is a coordinated change: generator + unit files + game components + validator ship together
-- CURR-05 (pulse exercise) ships in Phase 22 alongside unit file rewiring, not Phase 20
-- Node `order` values are immutable for nodes with live user progress — audit must check prod DB
-- Phase 24 adds new game types for low-variety rhythm nodes (visual recognition + syllable matching)
-- Phase 25 added: Unified Mixed Lesson Engine — Duolingo-style interleaved question types within one game session, replacing sequential separate-game-per-exercise model
-- [Phase 20]: 56-node audit complete: 51 exercise type violations, 1 one-concept violation, 5 clean nodes; document LOCKED for Phase 22
-- [Phase 21]: Multi-tag binary-ambiguous patterns (rest vs sustain indistinguishable in binary format) rather than creating duplicates
+- v3.2 phases 27 (verification docs) and 28 (tech debt) skipped — 3 user-facing tech debt bugs carried to v3.3
+- Uncommitted rhythm unit restructure changes on main are foundation for v3.3 work
 
 ### Pending Todos
 
@@ -62,9 +53,9 @@ None.
 
 ## Session Continuity
 
-**Next action:** `/gsd-plan-phase 24` to create implementation plan
+**Next action:** Define requirements and create roadmap for v3.3
 
 ---
 
-_State initialized: 2026-04-06_
-_Last updated: 2026-04-09 -- Phase 24 added to v3.2_
+_State initialized: 2026-04-13_
+_Last updated: 2026-04-13 -- Milestone v3.3 started_
