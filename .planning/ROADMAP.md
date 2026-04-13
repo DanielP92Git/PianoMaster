@@ -90,7 +90,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 #### Phases
 
-- [ ] **Phase 29: Code Quality & Data Fixes** - Fix stale-closure and score-cap bugs, guard empty arrays, correct unit data errors and section titles
+- [x] **Phase 29: Code Quality & Data Fixes** - Fix stale-closure and score-cap bugs, guard empty arrays, correct unit data errors and section titles (completed 2026-04-13)
 - [ ] **Phase 30: Audio Fixes** - Pre-warm audio context, fix dictation listen-button, fix eighths discovery audio sequencing
 - [ ] **Phase 31: Long-Press Sustain** - Implement piano-like sustained press for half/whole notes in listen&tap and pulse games
 - [ ] **Phase 32: Game Design Differentiation** - Tune speed challenge variety and count, redesign boss nodes, differentiate pattern nodes from practice nodes
@@ -205,12 +205,12 @@ Plans:
 **Goal**: Known bugs from v3.2 code review are eliminated and unit data errors that cause wrong patterns or incorrect section labels are corrected
 **Depends on**: Phase 26 (v3.2 complete)
 **Requirements**: CODE-01, CODE-02, CODE-03, DATA-01, DATA-02, DATA-03, DATA-04
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 
 Plans:
 
-- [ ] 29-01-PLAN.md — Fix stale-closure, score-cap, and empty-array bugs in game components
-- [ ] 29-02-PLAN.md — Add rest-aware pattern filtering, fix section titles, ensure duration variety
+- [x] 29-01-PLAN.md — Fix stale-closure, score-cap, and empty-array bugs in game components
+- [x] 29-02-PLAN.md — Add rest-aware pattern filtering, fix section titles, ensure duration variety
 
 **Success Criteria** (what must be TRUE):
 
@@ -277,7 +277,7 @@ Plans:
 | 26. Restore Phase 23 UX Regression | v3.2      | 2/2            | Complete    | 2026-04-13 |
 | 27. Verification & Traceability    | v3.2      | —              | Skipped     | —          |
 | 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
-| 29. Code Quality & Data Fixes      | v3.3      | 0/2            | Planned     | —          |
+| 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete    | 2026-04-13 |
 | 30. Audio Fixes                    | v3.3      | 0/TBD          | Not started | —          |
 | 31. Long-Press Sustain             | v3.3      | 0/TBD          | Not started | —          |
 | 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
