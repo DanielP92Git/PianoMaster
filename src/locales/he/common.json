@@ -776,12 +776,14 @@
       "tapArea": {
         "getReady": "התכונן",
         "tapHere": "הקש כאן",
+        "holdHere": "החזק",
         "listen": "הקשב",
         "accuracy": {
           "perfect": "בול",
           "good": "טוב",
           "fair": "בסדר",
-          "miss": "!כמעט"
+          "miss": "!כמעט",
+          "holdGood": "!כמעט, החזק יותר"
         }
       }
     },

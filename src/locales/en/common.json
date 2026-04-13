@@ -776,12 +776,14 @@
       "tapArea": {
         "getReady": "GET READY",
         "tapHere": "TAP HERE",
+        "holdHere": "HOLD",
         "listen": "LISTEN",
         "accuracy": {
           "perfect": "Perfect",
           "good": "Good",
           "fair": "Fair",
-          "miss": "Almost!"
+          "miss": "Almost!",
+          "holdGood": "Almost, hold longer!"
         }
       }
     },
