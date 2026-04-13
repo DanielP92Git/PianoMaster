@@ -333,17 +333,19 @@ C4 (`pitchShift = -7`) or D4 (`pitchShift = -5`) are both musically appropriate 
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Does `initializeAudioContext` need to be `await`-ed in a useEffect on mount, or only in the user-gesture handler?**
    - What we know: `initializeAudioContext` does not require a user gesture (it only sets up nodes, doesn't call `ctx.resume()` unless the context is suspended)
    - What's unclear: Whether calling it from a `useEffect` on mount could race with the eagerly created context in `AudioContextProvider`
    - Recommendation: Call it from `handleListen` (user-gesture path) for safety. Option B (useEffect) is acceptable if the planner prefers proactive initialization.
+   - RESOLVED: Option A — call in `handleListen` (user-gesture path). Plans 30-01 and 30-02 both use this approach.
 
 2. **Should `schedulePatternPlayback` be made async to own the resume guard?**
    - What we know: Making it async would centralize AUDIO-01 protection for all callers
    - What's unclear: Whether any caller passes a pre-computed `explicitStartTime` that would conflict with an internal `await ctx.resume()` (reading `currentTime` before and after resume could give inconsistent offsets)
    - Recommendation: Leave `schedulePatternPlayback` synchronous. The caller-side guards are sufficient.
+   - RESOLVED: Leave synchronous. Caller-side guards are sufficient per both plans.
 
 ---
 
