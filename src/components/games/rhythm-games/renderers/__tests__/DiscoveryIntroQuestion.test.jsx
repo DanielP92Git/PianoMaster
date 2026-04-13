@@ -143,15 +143,17 @@ describe("DiscoveryIntroQuestion", () => {
   });
 
   it("uses pitch-alternating playNote for 8_pair", async () => {
-    const mockAudioEngine = useAudioEngine();
-    const createPianoSound = mockAudioEngine.createPianoSound;
-
     render(
       <DiscoveryIntroQuestion
         question={make8PairQuestion()}
         onComplete={vi.fn()}
       />
     );
+
+    // Get the createPianoSound spy from the audioEngine instance the component received
+    // useAudioEngine is called once during render — get the return value from that call
+    const componentAudioEngine = useAudioEngine.mock.results[useAudioEngine.mock.results.length - 1].value;
+    const createPianoSound = componentAudioEngine.createPianoSound;
 
     const listenButton = screen.getByText("Listen");
     await act(async () => {
