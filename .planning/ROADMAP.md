@@ -245,8 +245,14 @@ Plans:
 **Goal**: Half and whole notes in listen&tap and pulse exercises require the child to hold their finger down for the note's full duration, giving the game a piano-like physical feel
 **Depends on**: Phase 30
 **Requirements**: PLAY-01
-**Plans**: TBD
+**Plans**: 3 plans
 **UI hint**: yes
+
+Plans:
+
+- [ ] 31-01-PLAN.md — Hold scoring utility, HoldRing component, TapArea extension, i18n keys
+- [ ] 31-02-PLAN.md — RhythmTapQuestion hold integration (listen&tap game)
+- [ ] 31-03-PLAN.md — PulseQuestion hold integration + stretched beat indicator
 
 **Success Criteria** (what must be TRUE):
 
@@ -284,7 +290,7 @@ Plans:
 | 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
 | 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete    | 2026-04-13 |
 | 30. Audio Fixes                    | v3.3      | 2/2            | Complete    | 2026-04-13 |
-| 31. Long-Press Sustain             | v3.3      | 0/TBD          | Not started | —          |
+| 31. Long-Press Sustain             | v3.3      | 0/3            | Planned     | —          |
 | 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
 
 **Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 0/4 complete**
