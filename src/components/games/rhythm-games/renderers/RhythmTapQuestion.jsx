@@ -7,14 +7,29 @@
  *
  * Unlike the stateless card renderers, this component manages its own
  * sub-state machine for the listen-then-tap flow.
+ *
+ * Hold mechanic (Plan 31-02):
+ * - Half and whole note onsets require sustained press with filling ring visual
+ * - Quarter notes remain simple taps (onClick path unchanged)
+ * - rAF ring animation driven via holdRingCircleRef (no React re-render at 60fps)
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
+import { useAccessibility } from "../../../../contexts/AccessibilityContext";
 import { MetronomeDisplay, TapArea } from "../components";
+import FloatingFeedback from "../components/FloatingFeedback";
 import { getPattern, TIME_SIGNATURES } from "../RhythmPatternGenerator";
+import { resolveByTags } from "../../../../data/patterns/RhythmPatternGenerator";
+import {
+  scoreHold,
+  isHoldNote,
+  calcHoldDurationMs,
+} from "../utils/holdScoringUtils";
+import { CIRCUMFERENCE } from "../components/HoldRing";
+import { DURATION_INFO } from "../utils/durationInfo";
 
 // Sub-phases for the rhythm tap flow
 const PHASES = {
@@ -29,9 +44,9 @@ const PHASES = {
 
 // Base timing thresholds (ms) at 120 BPM — same as MetronomeTrainer
 const BASE_TIMING_THRESHOLDS = {
-  PERFECT: 50,
-  GOOD: 75,
-  FAIR: 125,
+  PERFECT: 110,
+  GOOD: 150,
+  FAIR: 220,
 };
 
 const calculateTimingThresholds = (tempo) => {
@@ -42,6 +57,13 @@ const calculateTimingThresholds = (tempo) => {
     FAIR: Math.round(BASE_TIMING_THRESHOLDS.FAIR * scalingFactor),
   };
 };
+
+const SCORING = { PERFECT: 100, GOOD: 75, FAIR: 50, MISS: 0 };
+
+// Compensate for audio output latency: scheduled clicks reach the speaker
+// ~latency ms after their audioContext time. The user taps in sync with
+// what they hear, so subtract this from relativeTime before evaluation.
+const FALLBACK_LATENCY_S = 0.08; // 80ms fallback
 
 // Time signature string → object mapping
 const TIME_SIG_MAP = {
@@ -59,11 +81,21 @@ export default function RhythmTapQuestion({
 }) {
   const { t } = useTranslation("common");
   const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
+  const { reducedMotion = false } = useAccessibility();
   const config = question?.rhythmConfig || {};
   const tempo = config.tempo || 80;
   const audioEngine = useAudioEngine(tempo, {
     sharedAudioContext: audioContextRef.current,
   });
+
+  // Audio output latency compensation (dynamic when available).
+  // baseLatency alone is insufficient — it's just processing latency,
+  // not the full output delay. Only use outputLatency or fallback.
+  const getLatencyCompensation = useCallback(() => {
+    const ctx = audioEngine.audioContextRef?.current;
+    if (ctx?.outputLatency > 0) return ctx.outputLatency;
+    return FALLBACK_LATENCY_S;
+  }, [audioEngine]);
 
   const timeSignature =
     TIME_SIG_MAP[config.timeSignature] || TIME_SIGNATURES.FOUR_FOUR;
@@ -75,6 +107,15 @@ export default function RhythmTapQuestion({
   const [feedback, setFeedback] = useState(null);
   const [beatResults, setBeatResults] = useState([]); // Array of 'PERFECT'|'GOOD'|'FAIR'|'MISS' per expected beat
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
+  const [floatingQuality, setFloatingQuality] = useState(null);
+  const [floatingKey, setFloatingKey] = useState(0);
+
+  // Hold mode state
+  const [isHoldComplete, setIsHoldComplete] = useState(false);
+  const [currentOnsetHold, setCurrentOnsetHold] = useState({
+    isHold: false,
+    holdDurationMs: 0,
+  });
 
   // Refs for timing
   const beatDuration = useRef(60 / tempo);
@@ -87,6 +128,12 @@ export default function RhythmTapQuestion({
   const scheduledOscillatorsRef = useRef([]);
   const hasStartedRef = useRef(false);
   const cleanupDoneRef = useRef(false);
+
+  // Hold mechanic refs
+  const currentOnsetIndexRef = useRef(0);
+  const pressStartTimeRef = useRef(null);
+  const rafIdRef = useRef(null);
+  const holdRingCircleRef = useRef(null);
 
   // Update beat duration when tempo changes
   useEffect(() => {
@@ -209,45 +256,41 @@ export default function RhythmTapQuestion({
     const { pattern } = patternInfoRef.current;
     const currentBeatDur = beatDuration.current;
     const unitsPerBeat = timeSignature.measureLength / timeSignature.beats;
+    const measureDur = beatsPerMeasure * currentBeatDur;
+    const latency = getLatencyCompensation();
 
-    // Find expected beat positions
-    const expectedBeatPositions = [];
+    // Expected beat time offsets within one measure
+    const expectedOffsets = [];
     pattern.forEach((beat, index) => {
       if (beat === 1) {
-        expectedBeatPositions.push(index / unitsPerBeat);
+        expectedOffsets.push((index / unitsPerBeat) * currentBeatDur);
       }
     });
 
-    if (expectedBeatPositions.length === 0) {
+    if (expectedOffsets.length === 0) {
       onComplete(0, 1);
       return;
     }
 
+    const thresholds = calculateTimingThresholds(tempo);
     const results = [];
     let onTimeCount = 0;
 
-    expectedBeatPositions.forEach((expectedBeatPos) => {
+    // For each expected beat, find the best-matching user tap
+    expectedOffsets.forEach((expectedOffset) => {
       let bestAccuracy = "MISS";
+      const expectedTime = expectedOffset + latency;
 
       currentUserTaps.forEach((userTap) => {
-        const rawBeatPos =
-          (userTap.relativeTime / currentBeatDur) % beatsPerMeasure;
-        const userBeatPos =
-          rawBeatPos < 0 ? rawBeatPos + beatsPerMeasure : rawBeatPos;
-        let timingError = Math.abs(userBeatPos - expectedBeatPos);
-        if (timingError > beatsPerMeasure / 2) {
-          timingError = beatsPerMeasure - timingError;
-        }
-        const timingErrorMs = timingError * currentBeatDur * 1000;
-        const thresholds = calculateTimingThresholds(tempo);
+        const errorMs = Math.abs((userTap.relativeTime - expectedTime) * 1000);
 
         let accuracy = "MISS";
-        if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
-        else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";
-        else if (timingErrorMs <= thresholds.FAIR) accuracy = "FAIR";
+        if (errorMs <= thresholds.PERFECT) accuracy = "PERFECT";
+        else if (errorMs <= thresholds.FAIR) accuracy = "GOOD";
 
-        const rank = { PERFECT: 4, GOOD: 3, FAIR: 2, MISS: 1 };
-        if (rank[accuracy] > rank[bestAccuracy]) bestAccuracy = accuracy;
+        const rank = { PERFECT: 4, GOOD: 3, MISS: 1 };
+        if (rank[accuracy] > (rank[bestAccuracy] || 0))
+          bestAccuracy = accuracy;
       });
 
       results.push(bestAccuracy);
@@ -259,19 +302,63 @@ export default function RhythmTapQuestion({
 
     // Report to parent after showing results briefly
     setTimeout(() => {
-      onComplete(onTimeCount, expectedBeatPositions.length);
+      onComplete(onTimeCount, expectedOffsets.length);
     }, 1500);
-  }, [onComplete, tempo, beatsPerMeasure, timeSignature]);
+  }, [onComplete, tempo, beatsPerMeasure, timeSignature, getLatencyCompensation]);
 
-  // Handle user tap
-  const handleTap = useCallback(() => {
-    if (phase === PHASES.GET_READY) return;
-    if (phase !== PHASES.USER_PERFORMANCE) return;
+  // --- Hold mechanic helpers ---
 
-    const tapTime = audioEngine.getCurrentTime();
+  /**
+   * Get info about the current expected onset (is it a hold note? how long?).
+   * Filters out rests from vexDurations to get onset-only index.
+   */
+  const getCurrentOnsetInfo = useCallback(() => {
+    const info = patternInfoRef.current;
+    if (!info?.vexDurations)
+      return { isHold: false, holdDurationMs: 0, durationCode: "q" };
 
-    if (!hasUserStartedTapping) {
-      // Find nearest beat 1 to anchor user performance
+    // Build onset-only index from vexDurations (skip rests)
+    const onsetDurations = info.vexDurations.filter((code) => {
+      const di = DURATION_INFO[code];
+      return di && !di.isRest;
+    });
+
+    const idx = currentOnsetIndexRef.current;
+    if (idx >= onsetDurations.length)
+      return { isHold: false, holdDurationMs: 0, durationCode: "q" };
+
+    const code = onsetDurations[idx];
+    const di = DURATION_INFO[code];
+    if (!di) return { isHold: false, holdDurationMs: 0, durationCode: "q" };
+
+    return {
+      isHold: isHoldNote(di.durationUnits),
+      holdDurationMs: calcHoldDurationMs(di.durationUnits, tempo),
+      durationCode: code,
+    };
+  }, [tempo]);
+
+  /**
+   * Advance the onset index and update currentOnsetHold state for TapArea.
+   */
+  const advanceOnset = useCallback(() => {
+    currentOnsetIndexRef.current += 1;
+    setCurrentOnsetHold(getCurrentOnsetInfo());
+  }, [getCurrentOnsetInfo]);
+
+  /**
+   * Shared first-tap initialization logic.
+   * Called by both handleTap (quarter notes) and handlePressStart (hold notes).
+   * Sets hasUserStartedTapping, anchors userPerformanceStartTimeRef,
+   * and schedules metronome stop + evaluatePerformance.
+   *
+   * @param {Function} stopMetronome
+   * @param {Function} evalPerf
+   * @param {Function} setStarted
+   * @returns {number|null} nearestBeat1Time, or null if too far off
+   */
+  const registerFirstOnset = useCallback(
+    (stopMetronome, evalPerf, setStarted) => {
       const currentTime = audioEngine.getCurrentTime();
       const timeSinceStart = currentTime - metronomeStartTimeRef.current;
       const beatDur = beatDuration.current;
@@ -291,9 +378,9 @@ export default function RhythmTapQuestion({
         prevError < nextError ? prevBeat1Time : nextBeat1Time;
       const timingError = Math.min(prevError, nextError);
 
-      if (timingError > beatDur * 1.2) return; // Too far off
+      if (timingError > beatDur * 1.2) return null; // Too far off
 
-      setHasUserStartedTapping(true);
+      setStarted(true);
       userPerformanceStartTimeRef.current = nearestBeat1Time;
 
       // Stop metronome and evaluate at end of measure
@@ -301,47 +388,74 @@ export default function RhythmTapQuestion({
       const measureEndTime = nearestBeat1Time + measureDuration;
       const delayToEnd = (measureEndTime - currentTime) * 1000;
 
-      setTimeout(() => stopContinuousMetronome(), Math.max(0, delayToEnd));
-      setTimeout(() => evaluatePerformance(), Math.max(200, delayToEnd + 200));
+      setTimeout(() => stopMetronome(), Math.max(0, delayToEnd));
+      setTimeout(() => evalPerf(), Math.max(200, delayToEnd + 200));
+
+      return nearestBeat1Time;
+    },
+    [audioEngine, beatsPerMeasure]
+  );
+
+  // Handle user tap (quarter notes — existing onClick path)
+  const handleTap = useCallback(() => {
+    if (phase === PHASES.GET_READY) return;
+    if (phase !== PHASES.USER_PERFORMANCE) return;
+
+    const tapTime = audioEngine.getCurrentTime();
+
+    if (!hasUserStartedTapping) {
+      const anchored = registerFirstOnset(
+        stopContinuousMetronome,
+        evaluatePerformance,
+        setHasUserStartedTapping
+      );
+      if (anchored === null) return; // Too far off
     }
 
     const relativeTime =
       tapTime - (userPerformanceStartTimeRef.current || tapTime);
     userTapsRef.current.push({ time: tapTime, relativeTime });
 
-    // Immediate per-tap feedback
+    // Immediate per-tap feedback — uses PulseQuestion's proven approach:
+    // compare tapTime directly against expected beat times shifted by latency.
     if (patternInfoRef.current) {
       const { pattern } = patternInfoRef.current;
       const currentBeatDur = beatDuration.current;
       const unitsPerBeat = timeSignature.measureLength / timeSignature.beats;
-      // Ensure positive modulo for beat position (handles slight negative relativeTime from anticipation)
-      const rawBeatPos = (relativeTime / currentBeatDur) % beatsPerMeasure;
-      const userBeatPos =
-        rawBeatPos < 0 ? rawBeatPos + beatsPerMeasure : rawBeatPos;
+      const measureDur = beatsPerMeasure * currentBeatDur;
+      const latency = getLatencyCompensation();
 
-      const expectedBeatPositions = [];
+      // Expected beat time offsets within one measure
+      const expectedOffsets = [];
       pattern.forEach((beat, index) => {
-        if (beat === 1) expectedBeatPositions.push(index / unitsPerBeat);
+        if (beat === 1)
+          expectedOffsets.push((index / unitsPerBeat) * currentBeatDur);
       });
 
-      let bestTimingError = Infinity;
-      expectedBeatPositions.forEach((expectedBeatPos) => {
-        let err = Math.abs(userBeatPos - expectedBeatPos);
-        if (err > beatsPerMeasure / 2) err = beatsPerMeasure - err;
-        if (err < bestTimingError) bestTimingError = err;
-      });
-
-      let accuracy = "MISS";
-      if (bestTimingError < Infinity) {
-        const timingErrorMs = bestTimingError * currentBeatDur * 1000;
-        const thresholds = calculateTimingThresholds(tempo);
-        if (timingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
-        else if (timingErrorMs <= thresholds.GOOD) accuracy = "GOOD";
-        else if (timingErrorMs <= thresholds.FAIR) accuracy = "FAIR";
+      // Find nearest expected beat time (check adjacent measures for edges)
+      const curMeasure = Math.max(0, Math.floor(relativeTime / measureDur));
+      let bestTimingErrorMs = Infinity;
+      for (let m = Math.max(0, curMeasure - 1); m <= curMeasure + 1; m++) {
+        for (const offset of expectedOffsets) {
+          const expectedTime = m * measureDur + offset + latency;
+          const errorMs = Math.abs((relativeTime - expectedTime) * 1000);
+          if (errorMs < bestTimingErrorMs) bestTimingErrorMs = errorMs;
+        }
       }
 
-      setFeedback({ accuracy, points: 0 });
+      const thresholds = calculateTimingThresholds(tempo);
+      let accuracy = "MISS";
+      if (bestTimingErrorMs <= thresholds.PERFECT) accuracy = "PERFECT";
+      else if (bestTimingErrorMs <= thresholds.FAIR) accuracy = "GOOD";
+
+      const points = SCORING[accuracy] || 0;
+      setFeedback({ accuracy, points });
+      setFloatingQuality(accuracy);
+      setFloatingKey((k) => k + 1);
     }
+
+    // Advance onset index so next onset knows correct hold/tap state
+    advanceOnset();
   }, [
     phase,
     audioEngine,
@@ -351,7 +465,128 @@ export default function RhythmTapQuestion({
     evaluatePerformance,
     tempo,
     timeSignature,
+    getLatencyCompensation,
+    registerFirstOnset,
+    advanceOnset,
   ]);
+
+  // Handle press start for hold notes (onPointerDown path)
+  const handlePressStart = useCallback(
+    (e) => {
+      if (phase !== PHASES.USER_PERFORMANCE) return;
+
+      const onsetInfo = getCurrentOnsetInfo();
+
+      if (!onsetInfo.isHold) {
+        // Quarter note — delegate to existing handleTap (onClick path handles this,
+        // but guard here in case called directly)
+        handleTap();
+        return;
+      }
+
+      // Capture audioContext time for onset timing accuracy evaluation
+      const tapTime = audioEngine.getCurrentTime();
+
+      if (!hasUserStartedTapping) {
+        const anchored = registerFirstOnset(
+          stopContinuousMetronome,
+          evaluatePerformance,
+          setHasUserStartedTapping
+        );
+        if (anchored === null) return; // Too far off
+      }
+
+      const relativeTime =
+        tapTime - (userPerformanceStartTimeRef.current || tapTime);
+      // Record onset timing (press-start time, not press-end)
+      userTapsRef.current.push({ time: tapTime, relativeTime });
+
+      // Start hold tracking
+      pressStartTimeRef.current = performance.now();
+      setIsHoldComplete(false);
+
+      // Start sustained piano sound (duration = full note length in seconds)
+      const noteDurationSec = onsetInfo.holdDurationMs / 1000;
+      audioEngine.createPianoSound(
+        audioEngine.getCurrentTime(),
+        0.8,
+        noteDurationSec
+      );
+
+      // Start rAF ring animation (T-31-05: guard pressStartTimeRef.current !== null)
+      const startTime = performance.now();
+      const requiredMs = onsetInfo.holdDurationMs;
+      const animate = () => {
+        if (pressStartTimeRef.current === null) return; // T-31-05: stop when press ends
+        const elapsed = performance.now() - startTime;
+        const progress = Math.min(1, elapsed / requiredMs);
+        if (holdRingCircleRef.current) {
+          const offset = CIRCUMFERENCE * (1 - progress);
+          holdRingCircleRef.current.setAttribute(
+            "stroke-dashoffset",
+            String(offset)
+          );
+        }
+        if (progress < 1) {
+          rafIdRef.current = requestAnimationFrame(animate);
+        }
+      };
+      rafIdRef.current = requestAnimationFrame(animate);
+    },
+    [
+      phase,
+      audioEngine,
+      hasUserStartedTapping,
+      getCurrentOnsetInfo,
+      handleTap,
+      stopContinuousMetronome,
+      evaluatePerformance,
+      registerFirstOnset,
+    ]
+  );
+
+  // Handle press end for hold notes (onPointerUp / onPointerCancel path)
+  const handlePressEnd = useCallback(() => {
+    if (pressStartTimeRef.current === null) return;
+
+    cancelAnimationFrame(rafIdRef.current);
+    const holdMs = performance.now() - pressStartTimeRef.current;
+    pressStartTimeRef.current = null;
+
+    const onsetInfo = getCurrentOnsetInfo();
+    const quality = scoreHold(holdMs, onsetInfo.holdDurationMs);
+
+    // Set ring complete state for green flash (PERFECT only)
+    if (quality === "PERFECT") {
+      setIsHoldComplete(true);
+      setTimeout(() => setIsHoldComplete(false), 200);
+    }
+
+    // Reset ring progress
+    if (holdRingCircleRef.current) {
+      holdRingCircleRef.current.setAttribute(
+        "stroke-dashoffset",
+        String(CIRCUMFERENCE)
+      );
+    }
+
+    // Show per-tap feedback
+    const holdFeedbackLabel =
+      quality === "GOOD"
+        ? t("games.metronomeTrainer.tapArea.accuracy.holdGood")
+        : undefined; // PERFECT and MISS use standard labels
+
+    const points = quality === "PERFECT" ? 2 : quality === "GOOD" ? 1 : 0;
+    setFeedback({ accuracy: quality, points, holdFeedbackLabel });
+    setFloatingQuality(quality);
+    setFloatingKey((k) => k + 1);
+
+    // Clear feedback after delay
+    setTimeout(() => setFeedback(null), 600);
+
+    // Advance to next onset
+    advanceOnset();
+  }, [getCurrentOnsetInfo, advanceOnset, t]);
 
   // Start the rhythm tap flow
   const startFlow = useCallback(async () => {
@@ -365,12 +600,45 @@ export default function RhythmTapQuestion({
       getOrCreateAudioContext();
     }
 
-    // Load pattern
-    const pattern = await getPattern(
-      timeSignature.name,
-      "BEGINNER",
-      config.patterns || ["quarter"]
-    );
+    // Prime the audio pipeline with a silent oscillator so the first
+    // real click isn't swallowed by an uninitialized output buffer.
+    try {
+      const ctx = audioEngine.audioContextRef?.current;
+      if (ctx) {
+        const warmup = ctx.createOscillator();
+        const silentGain = ctx.createGain();
+        silentGain.gain.setValueAtTime(0, ctx.currentTime);
+        warmup.connect(silentGain);
+        silentGain.connect(ctx.destination);
+        warmup.start(ctx.currentTime);
+        warmup.stop(ctx.currentTime + 0.01);
+      }
+    } catch {
+      // Non-critical — first tick may still be quiet
+    }
+
+    // Load pattern — try curated patterns first (guaranteed correct durations),
+    // fall back to generative getPattern() if no curated match
+    let pattern = null;
+    if (config.patternTags?.length > 0) {
+      const result = resolveByTags(config.patternTags, config.durations || ["q"], {
+        timeSignature: timeSignature.name,
+      });
+      if (result) {
+        pattern = {
+          pattern: result.binary,
+          source: "curated",
+          vexDurations: result.vexDurations,
+        };
+      }
+    }
+    if (!pattern) {
+      pattern = await getPattern(
+        timeSignature.name,
+        "BEGINNER",
+        config.patterns || ["quarter"]
+      );
+    }
 
     if (!pattern?.pattern) {
       onComplete(0, 1);
@@ -378,10 +646,11 @@ export default function RhythmTapQuestion({
     }
 
     const beatDur = beatDuration.current;
-    const countInStartTime = audioEngine.getCurrentTime() + 0.1;
+    const countInStartTime = audioEngine.getCurrentTime() + 0.3;
 
     // Reset state
     userTapsRef.current = [];
+    currentOnsetIndexRef.current = 0;
     setHasUserStartedTapping(false);
     setFeedback(null);
     setBeatResults([]);
@@ -399,9 +668,10 @@ export default function RhythmTapQuestion({
       () => {
         setPhase(PHASES.PATTERN_PLAYBACK);
 
-        // Store pattern info
+        // Store pattern info (including vexDurations for hold mechanic)
         patternInfoRef.current = {
           pattern: pattern.pattern,
+          vexDurations: pattern.vexDurations || null,
           startTime: patternStartTime,
           beatDuration: beatDur,
         };
@@ -432,6 +702,8 @@ export default function RhythmTapQuestion({
             () => {
               setPhase(PHASES.USER_PERFORMANCE);
               userPerformanceStartTimeRef.current = nextBeatTime;
+              // Initialize onset hold state for first onset
+              setCurrentOnsetHold(getCurrentOnsetInfo());
             },
             Math.max(0, timeUntilBeat1 * 1000)
           );
@@ -447,6 +719,7 @@ export default function RhythmTapQuestion({
     beatsPerMeasure,
     onComplete,
     startContinuousMetronome,
+    getCurrentOnsetInfo,
   ]);
 
   // Auto-start when not disabled
@@ -456,12 +729,13 @@ export default function RhythmTapQuestion({
     }
   }, [disabled, phase, startFlow]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount — cancel rAF loop (T-31-05) and stop metronome
   useEffect(() => {
     return () => {
       if (!cleanupDoneRef.current) {
         cleanupDoneRef.current = true;
         stopContinuousMetronome();
+        cancelAnimationFrame(rafIdRef.current);
       }
     };
   }, [stopContinuousMetronome]);
@@ -507,7 +781,7 @@ export default function RhythmTapQuestion({
           return (
             <div
               key={i}
-              className={`h-4 w-4 rounded-full ${colorClass}`}
+              className={`h-6 w-6 rounded-full shadow-lg ${colorClass}`}
               aria-label={result === "MISS" ? "missed" : "on time"}
             />
           );
@@ -538,18 +812,33 @@ export default function RhythmTapQuestion({
         isCountIn={phase === PHASES.COUNT_IN}
       />
       <p className="text-center text-sm text-white/70">{getGuidanceText()}</p>
-      <TapArea
-        onTap={handleTap}
-        feedback={feedback}
-        isActive={phase === PHASES.USER_PERFORMANCE}
-        title={
-          phase === PHASES.USER_PERFORMANCE
-            ? t("rhythm.tapHere", "TAP!")
-            : phase === PHASES.COUNT_IN || phase === PHASES.PATTERN_PLAYBACK
-              ? t("rhythm.listen", "Listen...")
-              : t("rhythm.getReady", "Get ready...")
-        }
-      />
+      <div className="relative w-full max-w-md">
+        <TapArea
+          onTap={handleTap}
+          onPressStart={handlePressStart}
+          onPressEnd={handlePressEnd}
+          isHoldNote={
+            phase === PHASES.USER_PERFORMANCE && currentOnsetHold.isHold
+          }
+          holdRingRef={holdRingCircleRef}
+          isHoldComplete={isHoldComplete}
+          reducedMotion={reducedMotion}
+          holdFeedbackLabel={feedback?.holdFeedbackLabel}
+          feedback={feedback}
+          isActive={phase === PHASES.USER_PERFORMANCE}
+          title={
+            phase === PHASES.USER_PERFORMANCE
+              ? undefined // Let TapArea derive from isHoldNote
+              : phase === PHASES.COUNT_IN || phase === PHASES.PATTERN_PLAYBACK
+                ? t("rhythm.listen", "Listen...")
+                : t("rhythm.getReady", "Get ready...")
+          }
+        />
+        <FloatingFeedback
+          quality={floatingQuality}
+          feedbackKey={floatingKey}
+        />
+      </div>
     </div>
   );
 }
