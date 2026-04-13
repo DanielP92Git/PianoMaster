@@ -227,7 +227,12 @@ Plans:
 **Goal**: All audio playback issues in rhythm games are resolved — patterns play on first attempt with no trimming, dictation listen button works on first click, and the eighths discovery plays its full sequence
 **Depends on**: Phase 29
 **Requirements**: AUDIO-01, AUDIO-02, AUDIO-03
-**Plans**: TBD
+**Plans:** 2 plans
+
+Plans:
+
+- [ ] 30-01-PLAN.md — Fix dictation first-click audio (initializeAudioContext guard) + test scaffold
+- [ ] 30-02-PLAN.md — Fix eighths discovery to play 4 pairs with pitch alternation + test scaffold
 
 **Success Criteria** (what must be TRUE):
 
@@ -278,7 +283,7 @@ Plans:
 | 27. Verification & Traceability    | v3.2      | —              | Skipped     | —          |
 | 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
 | 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete    | 2026-04-13 |
-| 30. Audio Fixes                    | v3.3      | 0/TBD          | Not started | —          |
+| 30. Audio Fixes                    | v3.3      | 0/2            | Planned     | —          |
 | 31. Long-Press Sustain             | v3.3      | 0/TBD          | Not started | —          |
 | 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
 
@@ -286,4 +291,4 @@ Plans:
 
 ---
 
-_Last updated: 2026-04-13 -- Phase 29 planned (2 plans, 1 wave)_
+_Last updated: 2026-04-13 -- Phase 30 planned (2 plans, 1 wave)_
