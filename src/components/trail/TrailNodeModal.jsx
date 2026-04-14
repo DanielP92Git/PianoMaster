@@ -9,6 +9,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Sparkles } from "lucide-react";
@@ -21,6 +22,37 @@ import { useUser } from "../../features/authentication/useUser";
 import { translateNodeName } from "../../utils/translateNodeName";
 import { getNodeTypeIcon, getCategoryColors } from "../../utils/nodeTypeStyles";
 import NotePreview from "./NotePreview";
+
+// Notation SVGs for rhythm skill bubbles (fill="currentColor" inherits text-white)
+import QuarterNoteIcon from "../../assets/musicSymbols/quarter-note.svg?react";
+import HalfNoteIcon from "../../assets/musicSymbols/half-note.svg?react";
+import WholeNoteIcon from "../../assets/musicSymbols/whole-note-head.svg?react";
+import EighthNoteIcon from "../../assets/musicSymbols/eighth-note.svg?react";
+import SixteenthNoteIcon from "../../assets/musicSymbols/sixteenth-note.svg?react";
+import DottedQuarterNoteIcon from "../../assets/musicSymbols/dotted-quarter-note.svg?react";
+import DottedHalfNoteIcon from "../../assets/musicSymbols/dotted-half-note.svg?react";
+import QuarterRestIcon from "../../assets/musicSymbols/quarter-rest.svg?react";
+import HalfRestIcon from "../../assets/musicSymbols/half-rest.svg?react";
+import WholeRestIcon from "../../assets/musicSymbols/whole-rest.svg?react";
+import ThreeFourTimeIcon from "../../assets/musicSymbols/three-four_time.svg?react";
+
+// Map rhythm skill IDs -> notation SVG component. Compound/syncopation skills
+// with no single-symbol representation fall back to translated text.
+const SKILL_SVG_MAP = {
+  quarter_note: QuarterNoteIcon,
+  half_note: HalfNoteIcon,
+  whole_note: WholeNoteIcon,
+  eighth_note: EighthNoteIcon,
+  sixteenth_note: SixteenthNoteIcon,
+  dotted_quarter_note: DottedQuarterNoteIcon,
+  dotted_half_note: DottedHalfNoteIcon,
+  quarter_rest: QuarterRestIcon,
+  half_rest: HalfRestIcon,
+  whole_rest: WholeRestIcon,
+  three_four_time: ThreeFourTimeIcon,
+  quarter_note_68: QuarterNoteIcon,
+  eighth_note_68: EighthNoteIcon,
+};
 
 /**
  * Get display name for exercise type
@@ -416,15 +448,15 @@ const TrailNodeModal = ({
     str?.replace(/([A-G])#/g, "$1♯").replace(/([A-G])b(?![a-z])/g, "$1♭") ||
     str;
 
-  return (
-    <div className="fixed inset-0 z-50" dir={isRTL ? "rtl" : "ltr"}>
+  return createPortal(
+    <div className="fixed inset-0 z-[100]" dir={isRTL ? "rtl" : "ltr"}>
       <div
         className="fixed inset-0 bg-black/70"
         onClick={onClose}
         aria-hidden="true"
       />
       <div
-        className={`fixed left-1/2 top-1/2 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-slate-800/95 backdrop-blur-sm ${headerColors.border} modal-scrollbar max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl`}
+        className={`fixed left-1/2 top-1/2 z-[61] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl border bg-slate-800/95 backdrop-blur-sm ${headerColors.border} modal-scrollbar max-h-[90vh] overflow-y-auto overflow-x-hidden shadow-2xl`}
       >
         {/* Category accent strip */}
         <div className={`h-1 w-full rounded-t-2xl ${headerColors.bg}`} />
@@ -498,6 +530,7 @@ const TrailNodeModal = ({
                 : node.skills
               ).map((skill, index) => {
                 const noteMatch = skill.match(/^([A-Ga-g][b#]?)(\d)$/);
+                const SkillSvg = SKILL_SVG_MAP[skill];
                 const displaySkill = noteMatch
                   ? t(`trail:noteNames.${noteMatch[1].toUpperCase()}`, {
                       defaultValue: noteMatch[1],
@@ -511,16 +544,26 @@ const TrailNodeModal = ({
                     : "text-xl sm:text-2xl"; // Short labels (C, D, F♯)
                 const colorIdx = index % bubbleColorSet.length;
                 const bubbleColor = bubbleColorSet[colorIdx];
+                const ariaLabel = displaySkill;
                 return (
                   <div
                     key={index}
-                    className={`relative flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16 ${textSizeClass} select-none font-bold text-white`}
+                    role="img"
+                    aria-label={ariaLabel}
+                    className={`relative flex h-14 w-14 items-center justify-center rounded-full sm:h-16 sm:w-16 ${SkillSvg ? "" : textSizeClass} select-none font-bold text-white`}
                     style={{
                       background: bubbleColor.bg,
                       boxShadow: `inset 0 -4px 8px rgba(0,0,0,0.3), 0 2px 8px rgba(${bubbleColor.shadow}, 0.4)`,
                     }}
                   >
-                    {displaySkill}
+                    {SkillSvg ? (
+                      <SkillSvg
+                        className="h-9 w-auto sm:h-10"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      displaySkill
+                    )}
                     {/* Sparkle decorations */}
                     <span
                       className="pointer-events-none absolute text-[8px] text-white/80"
@@ -830,7 +873,8 @@ const TrailNodeModal = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1823,5 +1823,26 @@
     "missedBanner": "פספסת!",
     "cardProgress": "קלף {{current}} מתוך {{total}}",
     "catchResult": "תפסת {{caught}} מתוך {{total}} דו אמצעי!"
+  },
+  "visualRecognition": {
+    "prompt": "?{{durationName}} איזה מהם"
+  },
+  "syllableMatching": {
+    "prompt": "?איזו הברה זו"
+  },
+  "rhythm": {
+    "duration": {
+      "quarter": "תו רבע",
+      "half": "תו חצי",
+      "whole": "תו שלם",
+      "eighth": "תו שמינית",
+      "sixteenth": "תו שש-עשרה",
+      "dottedQuarter": "תו רבע מנוקד",
+      "dottedHalf": "תו חצי מנוקד",
+      "quarterRest": "שתיקת רבע",
+      "halfRest": "שתיקת חצי",
+      "wholeRest": "שתיקת שלם",
+      "beamedEighths": "שמיניות מחוברות"
+    }
   }
 }

@@ -65,7 +65,7 @@ export default function SyllableMatchingQuestion({
     <>
       {/* Prompt panel with large SVG */}
       <div className="flex flex-col items-center rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-        <div dir="ltr" className="flex items-center justify-center">
+        <div dir="ltr" className="flex items-center justify-center text-white">
           {SvgIcon && (
             <SvgIcon
               className={`${isLandscape ? "h-16" : "h-24"} w-auto`}

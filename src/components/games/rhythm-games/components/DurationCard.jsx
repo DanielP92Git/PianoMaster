@@ -30,6 +30,7 @@ import DottedHalfIcon from "../../../../assets/musicSymbols/dotted-half-note.svg
 import QuarterRestIcon from "../../../../assets/musicSymbols/quarter-rest.svg?react";
 import HalfRestIcon from "../../../../assets/musicSymbols/half-rest.svg?react";
 import WholeRestIcon from "../../../../assets/musicSymbols/whole-rest.svg?react";
+import BeamedEighthsIcon from "../../../../assets/musicSymbols/beamed-eighths.svg?react";
 
 /**
  * Map duration codes to their SVG React components.
@@ -46,6 +47,7 @@ export const SVG_COMPONENTS = {
   qr: QuarterRestIcon,
   hr: HalfRestIcon,
   wr: WholeRestIcon,
+  "8_pair": BeamedEighthsIcon,
 };
 
 /**

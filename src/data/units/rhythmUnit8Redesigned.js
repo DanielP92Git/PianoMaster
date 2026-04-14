@@ -68,14 +68,15 @@ export const rhythmUnit8Nodes = [
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "rhythm_tap" },
+            { type: "discovery_intro", focusDuration: "8" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
             { type: "rhythm_tap" },
-            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
-            { type: "rhythm_tap" },
           ],
         },
       },
@@ -126,13 +127,13 @@ export const rhythmUnit8Nodes = [
         config: {
           questions: [
             { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
             { type: "visual_recognition" },
-            { type: "syllable_matching" },
+            { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
-            { type: "visual_recognition" },
             { type: "syllable_matching" },
+            { type: "rhythm_reading" },
             { type: "rhythm_tap" },
-            { type: "visual_recognition" },
           ],
         },
       },
@@ -181,14 +182,15 @@ export const rhythmUnit8Nodes = [
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "rhythm_tap" },
+            { type: "discovery_intro", focusDuration: "qd" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
             { type: "rhythm_tap" },
-            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
-            { type: "rhythm_tap" },
           ],
         },
       },
@@ -238,13 +240,13 @@ export const rhythmUnit8Nodes = [
         config: {
           questions: [
             { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
             { type: "visual_recognition" },
-            { type: "syllable_matching" },
+            { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
-            { type: "visual_recognition" },
             { type: "syllable_matching" },
+            { type: "rhythm_reading" },
             { type: "rhythm_tap" },
-            { type: "visual_recognition" },
           ],
         },
       },
@@ -295,11 +297,12 @@ export const rhythmUnit8Nodes = [
           questions: [
             { type: "visual_recognition" },
             { type: "rhythm_tap" },
+            { type: "rhythm_dictation" },
             { type: "syllable_matching" },
+            { type: "rhythm_reading" },
             { type: "visual_recognition" },
-            { type: "syllable_matching" },
             { type: "rhythm_tap" },
-            { type: "visual_recognition" },
+            { type: "rhythm_dictation" },
             { type: "syllable_matching" },
           ],
         },
@@ -394,39 +397,24 @@ export const rhythmUnit8Nodes = [
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
     newContentDescription: "Ultimate Rhythm Challenge!",
 
-    // 3 exercises, 5 questions each = 15 total questions (intended design — no violation per audit)
     exercises: [
       {
-        // Exercise 1: 6/8 compound meter review (from Unit 7)
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
+        type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
-          tempo: 75,
-          measuresPerPattern: 2,
-          timeSignature: "6/8",
-          difficulty: "advanced",
-          questionCount: 5,
-        },
-      },
-      {
-        // Exercise 2: Eighth-quarter-eighth syncopation in 4/4
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
-        config: {
-          tempo: 75,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
-          difficulty: "advanced",
-          questionCount: 5,
-        },
-      },
-      {
-        // Exercise 3: Combined challenge — all syncopation patterns at higher tempo
-        type: EXERCISE_TYPES.ARCADE_RHYTHM,
-        config: {
-          tempo: 80,
-          measuresPerPattern: 2,
-          timeSignature: "4/4",
-          difficulty: "advanced",
-          questionCount: 5,
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "rhythm_reading" },
+            { type: "syllable_matching" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+            { type: "rhythm_reading" },
+            { type: "syllable_matching" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
+          ],
         },
       },
     ],

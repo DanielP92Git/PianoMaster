@@ -13,8 +13,8 @@ import {
 } from "./durationInfo.js";
 
 describe("DURATION_INFO lookup", () => {
-  it("has exactly 10 entries", () => {
-    expect(Object.keys(DURATION_INFO)).toHaveLength(10);
+  it("has exactly 11 entries", () => {
+    expect(Object.keys(DURATION_INFO)).toHaveLength(11);
   });
 
   it("contains all expected duration codes", () => {
@@ -65,10 +65,11 @@ describe("DURATION_INFO lookup", () => {
 });
 
 describe("ALL_DURATION_CODES", () => {
-  it("contains all 10 duration codes", () => {
-    expect(ALL_DURATION_CODES).toHaveLength(10);
+  it("contains all 11 duration codes", () => {
+    expect(ALL_DURATION_CODES).toHaveLength(11);
     expect(ALL_DURATION_CODES).toContain("q");
     expect(ALL_DURATION_CODES).toContain("wr");
+    expect(ALL_DURATION_CODES).toContain("8_pair");
   });
 });
 

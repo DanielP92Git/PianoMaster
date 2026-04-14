@@ -1816,5 +1816,26 @@
     "missedBanner": "Missed!",
     "cardProgress": "Card {{current}} of {{total}}",
     "catchResult": "You caught {{caught}} out of {{total}} Middle C!"
+  },
+  "visualRecognition": {
+    "prompt": "Which one is a {{durationName}}?"
+  },
+  "syllableMatching": {
+    "prompt": "What syllable is this?"
+  },
+  "rhythm": {
+    "duration": {
+      "quarter": "Quarter Note",
+      "half": "Half Note",
+      "whole": "Whole Note",
+      "eighth": "Eighth Note",
+      "sixteenth": "Sixteenth Note",
+      "dottedQuarter": "Dotted Quarter Note",
+      "dottedHalf": "Dotted Half Note",
+      "quarterRest": "Quarter Rest",
+      "halfRest": "Half Rest",
+      "wholeRest": "Whole Rest",
+      "beamedEighths": "Beamed Eighths"
+    }
   }
 }

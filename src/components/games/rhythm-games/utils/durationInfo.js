@@ -77,6 +77,13 @@ export const DURATION_INFO = {
     durationUnits: 16,
     isRest: true,
   },
+  "8_pair": {
+    svgFilename: "beamed-eighths",
+    i18nKey: "rhythm.duration.beamedEighths",
+    durationUnits: 4,
+    isRest: false,
+    syllable: "ti-ti",
+  },
 };
 
 /**
@@ -102,10 +109,11 @@ const SYLLABLE_BY_UNITS = {
  * Get the Kodaly syllable for a duration code.
  * Rests always return "sh".
  */
-function getSyllable(code) {
+export function getSyllable(code) {
   const info = DURATION_INFO[code];
   if (!info) return "";
   if (info.isRest) return "sh";
+  if (info.syllable) return info.syllable;
   return SYLLABLE_BY_UNITS[info.durationUnits] || "";
 }
 

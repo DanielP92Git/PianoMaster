@@ -5,6 +5,8 @@
  * Ported from MetronomeTrainer.jsx calculateTimingThresholds (lines 47-64).
  */
 
+import { DURATION_INFO } from "./durationInfo.js";
+
 // Base timing thresholds at 120 BPM (in milliseconds)
 // Matches MetronomeTrainer.jsx BASE_TIMING_THRESHOLDS exactly.
 const BASE_TIMING_THRESHOLDS = {
@@ -243,7 +245,8 @@ function noteCount(beats) {
  * @param {number} [count=2] - Number of distractors to generate
  * @returns {Array<{ durationUnits: number, isRest: boolean }[]>}
  */
-export function generateDistractors(correctBeats, count = 2) {
+export function generateDistractors(correctBeats, count = 2, options = {}) {
+  const { allowedDurations } = options;
   const totalDuration = correctBeats.reduce(
     (sum, b) => sum + b.durationUnits,
     0
@@ -258,9 +261,24 @@ export function generateDistractors(correctBeats, count = 2) {
   }
 
   // Expand all templates and filter out those identical to the correct answer
-  const candidates = templates
+  let candidates = templates
     .map(expandTemplate)
     .filter((t) => beatsFingerprint(t) !== correctFp);
+
+  // Filter out rests if the node hasn't taught them yet
+  if (allowedDurations) {
+    const hasRests = allowedDurations.some(
+      (code) => DURATION_INFO[code]?.isRest
+    );
+    if (!hasRests) {
+      const noRestCandidates = candidates.filter((beats) =>
+        beats.every((b) => !b.isRest)
+      );
+      if (noRestCandidates.length >= count) {
+        candidates = noRestCandidates;
+      }
+    }
+  }
 
   // Score candidates: prefer those with a different note count from the correct
   // answer, then prefer those different from each other
