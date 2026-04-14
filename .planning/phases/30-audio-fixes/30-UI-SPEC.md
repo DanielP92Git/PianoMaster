@@ -54,14 +54,14 @@ Exceptions:
 
 ## Typography
 
-| Role    | Size             | Weight         | Line Height |
-| ------- | ---------------- | -------------- | ----------- |
-| Body    | 16px (text-base) | 400 (regular)  | 1.7         |
-| Label   | 14px (text-sm)   | 500 (medium)   | 1.6         |
-| Heading | 18px (text-lg)   | 600 (semibold) | 1.7         |
-| Display | 20px (text-xl)   | 700 (bold)     | 1.8         |
+| Role              | Size             | Weight         | Line Height |
+| ----------------- | ---------------- | -------------- | ----------- |
+| Body / Label      | 16px (text-base) | 400 (regular)  | 1.7         |
+| Heading / Display | 18px (text-lg)   | 600 (semibold) | 1.7         |
 
-Source: `tailwind.config.js` fontSize extension; observed font classes in `RhythmDictationQuestion.jsx` (`text-lg font-semibold`) and `DiscoveryIntroQuestion.jsx` (`text-xl font-bold`, `text-2xl font-semibold`, `text-lg`).
+Source: Observed font classes in the two affected files: `RhythmDictationQuestion.jsx` uses no explicit weight class beyond default (400); `DiscoveryIntroQuestion.jsx` uses `font-bold` and `font-semibold` for headings.
+
+**Phase scope footnote:** This typography contract is scoped to the two renderers modified in Phase 30 (`RhythmDictationQuestion.jsx` and `DiscoveryIntroQuestion.jsx`). The broader app uses additional weights and sizes outside this phase boundary. Weight 700 (`font-bold`) observed in `DiscoveryIntroQuestion.jsx` is collapsed to 600 (semibold) for contract compliance — no heading in these two files requires a semantic distinction between bold and semibold. Weight 500 (medium) observed in the wider design system is not present in either affected renderer and is excluded from this phase contract.
 
 ---
 

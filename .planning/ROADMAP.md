@@ -92,7 +92,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 - [x] **Phase 29: Code Quality & Data Fixes** - Fix stale-closure and score-cap bugs, guard empty arrays, correct unit data errors and section titles (completed 2026-04-13)
 - [x] **Phase 30: Audio Fixes** - Pre-warm audio context, fix dictation listen-button, fix eighths discovery audio sequencing (completed 2026-04-13)
-- [ ] **Phase 31: Long-Press Sustain** - Implement piano-like sustained press for half/whole notes in listen&tap and pulse games
+- [x] **Phase 31: Long-Press Sustain** - Implement piano-like sustained press for half/whole notes in listen&tap, pulse, and rhythm reading games (completed 2026-04-14)
 - [ ] **Phase 32: Game Design Differentiation** - Tune speed challenge variety and count, redesign boss nodes, differentiate pattern nodes from practice nodes
 
 ## Phase Details
@@ -250,9 +250,9 @@ Plans:
 
 Plans:
 
-- [ ] 31-01-PLAN.md — Hold scoring utility, HoldRing component, TapArea extension, i18n keys
-- [ ] 31-02-PLAN.md — RhythmTapQuestion hold integration (listen&tap game)
-- [ ] 31-03-PLAN.md — PulseQuestion hold integration + stretched beat indicator
+- [x] 31-01-PLAN.md — Hold scoring utility, HoldRing component, TapArea extension, i18n keys
+- [x] 31-02-PLAN.md — RhythmTapQuestion hold integration (listen&tap game)
+- [x] 31-03-PLAN.md — PulseQuestion hold integration + stretched beat indicator
 
 **Success Criteria** (what must be TRUE):
 
@@ -290,10 +290,10 @@ Plans:
 | 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
 | 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete    | 2026-04-13 |
 | 30. Audio Fixes                    | v3.3      | 2/2            | Complete    | 2026-04-13 |
-| 31. Long-Press Sustain             | v3.3      | 0/3            | Planned     | —          |
+| 31. Long-Press Sustain             | v3.3      | 3/3            | Complete    | 2026-04-14 |
 | 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
 
-**Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 0/4 complete**
+**Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 3/4 complete**
 
 ---
 
