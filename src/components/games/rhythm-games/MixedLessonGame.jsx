@@ -164,6 +164,7 @@ export default function MixedLessonGame() {
       tempo: typeof rc.tempo === "object" ? rc.tempo.default : rc.tempo || 80,
       timeSignature: rc.timeSignature || "4/4",
       difficulty: "beginner",
+      nodeType: node.nodeType || null,
     };
   }, [nodeId]);
 
@@ -263,7 +264,14 @@ export default function MixedLessonGame() {
     setFadeKey(0);
     setGameState(GAME_STATES.IN_PROGRESS);
     pauseTimer();
-  }, [buildDurationPool, buildRhythmTapConfig, nodeConfig, nodeId, pauseTimer, resumeTimer]);
+  }, [
+    buildDurationPool,
+    buildRhythmTapConfig,
+    nodeConfig,
+    nodeId,
+    pauseTimer,
+    resumeTimer,
+  ]);
 
   // Trail auto-start (hasAutoStartedRef pattern, same as existing games)
   useEffect(() => {
@@ -381,7 +389,8 @@ export default function MixedLessonGame() {
           resumeTimer();
         } else {
           const typeChanged =
-            questions[nextIndex].type !== questions[currentIndexRef.current].type;
+            questions[nextIndex].type !==
+            questions[currentIndexRef.current].type;
           if (typeChanged) {
             setFadeKey((k) => k + 1);
           }
@@ -393,13 +402,7 @@ export default function MixedLessonGame() {
         }
       }, 500);
     },
-    [
-      questions,
-      playCorrectSound,
-      playWrongSound,
-      playVictorySound,
-      resumeTimer,
-    ]
+    [questions, playCorrectSound, playWrongSound, playVictorySound, resumeTimer]
   );
 
   // Reset game

@@ -27,6 +27,7 @@ import {
   scoreHold,
   isHoldNote,
   calcHoldDurationMs,
+  HOLD_THRESHOLDS,
 } from "../utils/holdScoringUtils";
 import { CIRCUMFERENCE } from "../components/HoldRing";
 import { DURATION_INFO } from "../utils/durationInfo";
@@ -134,6 +135,7 @@ export default function RhythmTapQuestion({
   const pressStartTimeRef = useRef(null);
   const rafIdRef = useRef(null);
   const holdRingCircleRef = useRef(null);
+  const lastHoldEndTimeRef = useRef(0);
 
   // Update beat duration when tempo changes
   useEffect(() => {
@@ -289,8 +291,7 @@ export default function RhythmTapQuestion({
         else if (errorMs <= thresholds.FAIR) accuracy = "GOOD";
 
         const rank = { PERFECT: 4, GOOD: 3, MISS: 1 };
-        if (rank[accuracy] > (rank[bestAccuracy] || 0))
-          bestAccuracy = accuracy;
+        if (rank[accuracy] > (rank[bestAccuracy] || 0)) bestAccuracy = accuracy;
       });
 
       results.push(bestAccuracy);
@@ -304,7 +305,13 @@ export default function RhythmTapQuestion({
     setTimeout(() => {
       onComplete(onTimeCount, expectedOffsets.length);
     }, 1500);
-  }, [onComplete, tempo, beatsPerMeasure, timeSignature, getLatencyCompensation]);
+  }, [
+    onComplete,
+    tempo,
+    beatsPerMeasure,
+    timeSignature,
+    getLatencyCompensation,
+  ]);
 
   // --- Hold mechanic helpers ---
 
@@ -401,7 +408,22 @@ export default function RhythmTapQuestion({
     if (phase === PHASES.GET_READY) return;
     if (phase !== PHASES.USER_PERFORMANCE) return;
 
+    // Guard: suppress click events that fire after a hold release.
+    // Browsers fire click after pointerup; if advanceOnset switched isHoldNote
+    // to false, TapArea re-enables onClick which would overwrite hold feedback.
+    if (performance.now() - lastHoldEndTimeRef.current < 300) return;
+
     const tapTime = audioEngine.getCurrentTime();
+
+    // Play piano sound for tap feedback (quarter notes)
+    if (audioEngine.createPianoSound) {
+      const onsetInfo = getCurrentOnsetInfo();
+      const di = DURATION_INFO[onsetInfo.durationCode];
+      const noteDurSec = di
+        ? (di.durationUnits / 4) * beatDuration.current
+        : beatDuration.current;
+      audioEngine.createPianoSound(tapTime, 0.8, noteDurSec);
+    }
 
     if (!hasUserStartedTapping) {
       const anchored = registerFirstOnset(
@@ -468,6 +490,7 @@ export default function RhythmTapQuestion({
     getLatencyCompensation,
     registerFirstOnset,
     advanceOnset,
+    getCurrentOnsetInfo,
   ]);
 
   // Handle press start for hold notes (onPointerDown path)
@@ -513,13 +536,13 @@ export default function RhythmTapQuestion({
         noteDurationSec
       );
 
-      // Start rAF ring animation (T-31-05: guard pressStartTimeRef.current !== null)
+      // Start rAF ring animation — ring fills to 100% at PERFECT threshold
       const startTime = performance.now();
-      const requiredMs = onsetInfo.holdDurationMs;
+      const ringDurationMs = onsetInfo.holdDurationMs * HOLD_THRESHOLDS.PERFECT;
       const animate = () => {
-        if (pressStartTimeRef.current === null) return; // T-31-05: stop when press ends
+        if (pressStartTimeRef.current === null) return;
         const elapsed = performance.now() - startTime;
-        const progress = Math.min(1, elapsed / requiredMs);
+        const progress = Math.min(1, elapsed / ringDurationMs);
         if (holdRingCircleRef.current) {
           const offset = CIRCUMFERENCE * (1 - progress);
           holdRingCircleRef.current.setAttribute(
@@ -552,6 +575,7 @@ export default function RhythmTapQuestion({
     cancelAnimationFrame(rafIdRef.current);
     const holdMs = performance.now() - pressStartTimeRef.current;
     pressStartTimeRef.current = null;
+    lastHoldEndTimeRef.current = performance.now();
 
     const onsetInfo = getCurrentOnsetInfo();
     const quality = scoreHold(holdMs, onsetInfo.holdDurationMs);
@@ -621,9 +645,13 @@ export default function RhythmTapQuestion({
     // fall back to generative getPattern() if no curated match
     let pattern = null;
     if (config.patternTags?.length > 0) {
-      const result = resolveByTags(config.patternTags, config.durations || ["q"], {
-        timeSignature: timeSignature.name,
-      });
+      const result = resolveByTags(
+        config.patternTags,
+        config.durations || ["q"],
+        {
+          timeSignature: timeSignature.name,
+        }
+      );
       if (result) {
         pattern = {
           pattern: result.binary,
@@ -676,11 +704,28 @@ export default function RhythmTapQuestion({
           beatDuration: beatDur,
         };
 
-        // Play pattern notes
+        // Play pattern notes with actual note durations from vexDurations
+        const vexDurs = pattern.vexDurations || null;
+        const onsetDurations = vexDurs
+          ? vexDurs.filter((code) => {
+              const di = DURATION_INFO[code];
+              return di && !di.isRest;
+            })
+          : null;
+
+        let onsetIdx = 0;
         pattern.pattern.forEach((beat, index) => {
           if (beat === 1) {
             const noteTime = patternStartTime + (index * beatDur) / 4;
-            audioEngine.createPianoSound(noteTime, 0.8, 0.5);
+            let noteDuration = 0.5; // fallback for non-curated patterns
+            if (onsetDurations && onsetIdx < onsetDurations.length) {
+              const di = DURATION_INFO[onsetDurations[onsetIdx]];
+              if (di) {
+                noteDuration = (di.durationUnits / 4) * beatDur;
+              }
+            }
+            audioEngine.createPianoSound(noteTime, 0.8, noteDuration);
+            onsetIdx++;
           }
         });
 
@@ -834,10 +879,7 @@ export default function RhythmTapQuestion({
                 : t("rhythm.getReady", "Get ready...")
           }
         />
-        <FloatingFeedback
-          quality={floatingQuality}
-          feedbackKey={floatingKey}
-        />
+        <FloatingFeedback quality={floatingQuality} feedbackKey={floatingKey} />
       </div>
     </div>
   );

@@ -14,8 +14,8 @@ import {
 } from "./holdScoringUtils.js";
 
 describe("HOLD_THRESHOLDS", () => {
-  it("PERFECT threshold equals 0.7", () => {
-    expect(HOLD_THRESHOLDS.PERFECT).toBe(0.7);
+  it("PERFECT threshold equals 0.6", () => {
+    expect(HOLD_THRESHOLDS.PERFECT).toBe(0.6);
   });
 
   it("GOOD threshold equals 0.4", () => {
@@ -24,7 +24,11 @@ describe("HOLD_THRESHOLDS", () => {
 });
 
 describe("scoreHold", () => {
-  it("returns PERFECT when ratio >= 0.7 (700ms of 1000ms)", () => {
+  it("returns PERFECT when ratio >= 0.6 (600ms of 1000ms)", () => {
+    expect(scoreHold(600, 1000)).toBe("PERFECT");
+  });
+
+  it("returns PERFECT at 70% hold (700ms of 1000ms)", () => {
     expect(scoreHold(700, 1000)).toBe("PERFECT");
   });
 
@@ -36,8 +40,8 @@ describe("scoreHold", () => {
     expect(scoreHold(1200, 1000)).toBe("PERFECT");
   });
 
-  it("returns GOOD when ratio is in 40-69% range (699ms of 1000ms)", () => {
-    expect(scoreHold(699, 1000)).toBe("GOOD");
+  it("returns GOOD just below 60% boundary (599ms of 1000ms)", () => {
+    expect(scoreHold(599, 1000)).toBe("GOOD");
   });
 
   it("returns GOOD for 50% hold (500ms of 1000ms)", () => {

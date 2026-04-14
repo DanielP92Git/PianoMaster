@@ -3,7 +3,8 @@
  *
  * "Tap with the beat" renderer for MixedLessonGame.
  * The very first rhythm exercise — children tap along to a pulsing metronome
- * beat for 4 bars. No music notation, no staff lines, no VexFlow.
+ * beat for 4 bars. Shows VexFlow notation (1 bar of quarter notes, looping)
+ * with a cursor highlighting the current note and per-tap color feedback.
  *
  * State machine: WAITING → COUNT_IN → PLAYING → EVALUATING → DONE
  *
@@ -21,16 +22,19 @@ import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
-import { MetronomeDisplay } from "../components";
+import { MetronomeDisplay, TapArea } from "../components";
 import { HoldRing, CIRCUMFERENCE } from "../components/HoldRing";
 import { TIME_SIGNATURES } from "../RhythmPatternGenerator";
 import {
   scoreHold,
   isHoldNote,
   calcHoldDurationMs,
+  HOLD_THRESHOLDS,
 } from "../utils/holdScoringUtils";
+import RhythmStaffDisplay from "../components/RhythmStaffDisplay";
+import FloatingFeedback from "../components/FloatingFeedback";
 
-// Sub-phases for the pulse flow (simplified from RhythmTapQuestion)
+// Sub-phases for the pulse flow
 const PHASES = {
   WAITING: "waiting",
   COUNT_IN: "count-in",
@@ -42,11 +46,20 @@ const PHASES = {
 // Total measures to tap along with
 const PLAY_MEASURES = 4;
 
-// Base timing thresholds (ms) at 120 BPM — mirrors RhythmTapQuestion
+// Static beats array for 1 measure of 4 quarter notes
+const PULSE_BEATS = [
+  { durationUnits: 4, isRest: false },
+  { durationUnits: 4, isRest: false },
+  { durationUnits: 4, isRest: false },
+  { durationUnits: 4, isRest: false },
+];
+
+// Base timing thresholds (ms) at 120 BPM — wider than RhythmTapQuestion
+// because this is the very first rhythm exercise for young learners.
 const BASE_TIMING_THRESHOLDS = {
-  PERFECT: 50,
-  GOOD: 75,
-  FAIR: 125,
+  PERFECT: 110,
+  GOOD: 150,
+  FAIR: 220,
 };
 
 const calculateTimingThresholds = (tempo) => {
@@ -58,6 +71,13 @@ const calculateTimingThresholds = (tempo) => {
   };
 };
 
+// Compensate for audio output latency: the click is scheduled at time T in
+// audioContext, but the speaker produces sound at T + latency. The user taps
+// in sync with what they hear, so their tap registers ~latency ms "late".
+// Shift the expected beat time forward so tapping with the audible click
+// is evaluated as on-time. Uses audioContext.outputLatency when available.
+const FALLBACK_LATENCY_S = 0.08; // 80ms fallback for devices without outputLatency
+
 // Time signature string → TIME_SIGNATURES object mapping
 const TIME_SIG_MAP = {
   "4/4": TIME_SIGNATURES.FOUR_FOUR,
@@ -66,13 +86,12 @@ const TIME_SIG_MAP = {
   "6/8": TIME_SIGNATURES.SIX_EIGHT,
 };
 
-// Default beats: 4 quarter notes (unchanged behavior for standard pulse exercises)
-const PULSE_BEATS = [
-  { durationUnits: 4, isRest: false },
-  { durationUnits: 4, isRest: false },
-  { durationUnits: 4, isRest: false },
-  { durationUnits: 4, isRest: false },
-];
+// Initial tapResults: all notes white (null quality = default/white in RhythmStaffDisplay)
+const makeResetTapResults = (beatsPerMeasure) =>
+  Array.from({ length: beatsPerMeasure }, (_, i) => ({
+    noteIdx: i,
+    quality: null,
+  }));
 
 export default function PulseQuestion({
   question,
@@ -102,8 +121,20 @@ export default function PulseQuestion({
   // Sub-state machine
   const [phase, setPhase] = useState(PHASES.WAITING);
   const [currentBeat, setCurrentBeat] = useState(1);
-  const [beatNum, setBeatNum] = useState(0); // absolute beat count during PLAYING (0-based)
-  const [tapFlash, setTapFlash] = useState(false); // brief visual flash on tap
+  const [beatNum, setBeatNum] = useState(0);
+  const [tapFlash, setTapFlash] = useState(false);
+
+  // Beat-synced circle pulse (replaces CSS animation to stay in sync)
+  const [beatPulse, setBeatPulse] = useState(false);
+
+  // Notation + feedback state
+  const [tapResults, setTapResults] = useState(() =>
+    makeResetTapResults(beatsPerMeasure)
+  );
+  const [cursorProgress, setCursorProgress] = useState(0);
+  const [floatingQuality, setFloatingQuality] = useState(null);
+  const [floatingKey, setFloatingKey] = useState(0);
+  const [currentMeasure, setCurrentMeasure] = useState(0);
 
   // Hold note state (Phase 31)
   const [isHoldComplete, setIsHoldComplete] = useState(false);
@@ -126,6 +157,13 @@ export default function PulseQuestion({
   const rafIdRef = useRef(null);
   const holdRingCircleRef = useRef(null);
 
+  // New refs for notation + beat-sync
+  const staveBoundsRef = useRef(null);
+  const perBeatResultsRef = useRef([]);
+  const prevMeasureRef = useRef(0);
+  const prevAbsoluteBeatRef = useRef(-1);
+  const beatPulseTimerRef = useRef(null);
+
   // Keep beatDuration ref in sync
   useEffect(() => {
     beatDuration.current = 60 / tempo;
@@ -137,6 +175,20 @@ export default function PulseQuestion({
   const currentHoldDurationMs = currentBeatIsHold
     ? calcHoldDurationMs(currentBeatInfo.durationUnits, tempo)
     : 0;
+
+  // Audio output latency compensation (dynamic when available).
+  // baseLatency alone is insufficient — it's just processing latency,
+  // not the full output delay. Only use outputLatency or fallback.
+  const getLatencyCompensation = useCallback(() => {
+    const ctx = audioEngine.audioContextRef?.current;
+    if (ctx?.outputLatency > 0) return ctx.outputLatency;
+    return FALLBACK_LATENCY_S;
+  }, [audioEngine]);
+
+  // Stave bounds callback
+  const handleStaveBoundsReady = useCallback((bounds) => {
+    staveBoundsRef.current = bounds;
+  }, []);
 
   // Create metronome click sound (mirrors RhythmTapQuestion pattern)
   const createClickSound = useCallback(
@@ -196,7 +248,7 @@ export default function PulseQuestion({
 
   // Start continuous metronome scheduling
   const startContinuousMetronome = useCallback(
-    (startTime) => {
+    (startTime, playingStartTime) => {
       metronomeStartTimeRef.current = startTime;
       if (continuousMetronomeRef.current)
         clearInterval(continuousMetronomeRef.current);
@@ -209,7 +261,7 @@ export default function PulseQuestion({
         200
       );
 
-      // Visual beat tracking
+      // Visual beat tracking + cursor + measure boundary + circle pulse sync
       visualMetronomeRef.current = setInterval(() => {
         const currentTime = audioEngine.getCurrentTime();
         const timeSinceStart = currentTime - startTime;
@@ -218,6 +270,46 @@ export default function PulseQuestion({
         const beatInMeasure =
           (Math.floor(currentBeatFloat) % beatsPerMeasure) + 1;
         setCurrentBeat(beatInMeasure);
+
+        // Sync circle pulse to metronome beat
+        const absoluteBeat = Math.floor(currentBeatFloat);
+        if (absoluteBeat !== prevAbsoluteBeatRef.current && absoluteBeat >= 0) {
+          prevAbsoluteBeatRef.current = absoluteBeat;
+          setBeatPulse(true);
+          if (beatPulseTimerRef.current)
+            clearTimeout(beatPulseTimerRef.current);
+          beatPulseTimerRef.current = setTimeout(
+            () => setBeatPulse(false),
+            150
+          );
+        }
+
+        // Cursor + measure tracking (only during PLAYING)
+        if (playingStartTime && currentTime >= playingStartTime) {
+          const playElapsed = currentTime - playingStartTime;
+          const playBeatFloat = playElapsed / beatDur;
+          const noteIdx = Math.floor(playBeatFloat) % beatsPerMeasure;
+          const measure = Math.min(
+            PLAY_MEASURES - 1,
+            Math.floor(playBeatFloat / beatsPerMeasure)
+          );
+
+          // Update cursor position from note positions
+          const bounds = staveBoundsRef.current;
+          if (bounds?.noteXPositions?.length > 0) {
+            const safeIdx = Math.min(noteIdx, bounds.noteXPositions.length - 1);
+            setCursorProgress(
+              bounds.noteXPositions[safeIdx] / bounds.containerWidth
+            );
+          }
+
+          // Detect measure boundary — reset note colors
+          if (measure !== prevMeasureRef.current) {
+            prevMeasureRef.current = measure;
+            setCurrentMeasure(measure);
+            setTapResults(makeResetTapResults(beatsPerMeasure));
+          }
+        }
       }, 50);
     },
     [audioEngine, beatsPerMeasure, scheduleBeatClicks]
@@ -238,6 +330,10 @@ export default function PulseQuestion({
       clearTimeout(playingTimerRef.current);
       playingTimerRef.current = null;
     }
+    if (beatPulseTimerRef.current) {
+      clearTimeout(beatPulseTimerRef.current);
+      beatPulseTimerRef.current = null;
+    }
     scheduledOscillatorsRef.current
       .filter((info) => info.startTime > currentTime)
       .forEach((info) => {
@@ -250,40 +346,27 @@ export default function PulseQuestion({
     scheduledOscillatorsRef.current = [];
   }, [audioEngine]);
 
-  // Evaluate taps against expected beat positions
+  // Evaluate taps using accumulated per-beat results
   const evaluatePerformance = useCallback(() => {
     setPhase(PHASES.EVALUATING);
     stopContinuousMetronome();
 
-    const currentUserTaps = userTapsRef.current;
-    const playStart = playingStartTimeRef.current;
-    const beatDur = beatDuration.current;
-
-    if (!playStart) {
-      setTimeout(() => onComplete(0, totalPlayBeats), 500);
-      return;
-    }
-
-    // Expected beat positions: beats 0, 1, 2, ... (totalPlayBeats - 1)
-    const thresholds = calculateTimingThresholds(tempo);
-    let onTimeTaps = 0;
-
-    for (let b = 0; b < totalPlayBeats; b++) {
-      const expectedTime = playStart + b * beatDur;
-      // Find nearest user tap
-      let bestErrorMs = Infinity;
-      for (const tap of currentUserTaps) {
-        const errorMs = Math.abs((tap.time - expectedTime) * 1000);
-        if (errorMs < bestErrorMs) bestErrorMs = errorMs;
-      }
-      if (bestErrorMs <= thresholds.FAIR) {
-        onTimeTaps++;
+    // Deduplicate per-beat results — keep best quality per absolute beat
+    const bestPerBeat = new Map();
+    const rank = { PERFECT: 3, GOOD: 2, MISS: 1 };
+    for (const r of perBeatResultsRef.current) {
+      const existing = bestPerBeat.get(r.beat);
+      if (!existing || rank[r.quality] > rank[existing.quality]) {
+        bestPerBeat.set(r.beat, r);
       }
     }
+    const onTimeTaps = [...bestPerBeat.values()].filter(
+      (r) => r.quality !== "MISS"
+    ).length;
 
     setPhase(PHASES.DONE);
     setTimeout(() => onComplete(onTimeTaps, totalPlayBeats), 800);
-  }, [onComplete, tempo, totalPlayBeats, stopContinuousMetronome]);
+  }, [onComplete, totalPlayBeats, stopContinuousMetronome]);
 
   // Handle a user tap (click or touch) — quarter note path, unchanged
   const handleTap = useCallback(() => {
@@ -296,18 +379,58 @@ export default function PulseQuestion({
     setTapFlash(true);
     setTimeout(() => setTapFlash(false), 120);
 
-    // Update beat counter for accessibility label
+    // Per-tap evaluation
     const playStart = playingStartTimeRef.current;
-    if (playStart != null) {
-      const elapsed = tapTime - playStart;
-      const beatDur = beatDuration.current;
-      const beatIndex = Math.max(
-        0,
-        Math.min(totalPlayBeats - 1, Math.floor(elapsed / beatDur))
-      );
-      setBeatNum(beatIndex + 1);
-    }
-  }, [phase, audioEngine, totalPlayBeats]);
+    if (playStart == null) return;
+
+    const beatDur = beatDuration.current;
+    const elapsed = tapTime - playStart;
+    const absoluteBeatFloat = elapsed / beatDur;
+    const nearestBeat = Math.round(absoluteBeatFloat);
+
+    if (nearestBeat < 0 || nearestBeat >= totalPlayBeats) return;
+
+    // Shift expected time forward by audio output latency so tapping
+    // in sync with the audible click evaluates as on-time.
+    const latency = getLatencyCompensation();
+    const expectedTime = playStart + nearestBeat * beatDur + latency;
+    const timingErrorMs = Math.abs((tapTime - expectedTime) * 1000);
+    const thresholds = calculateTimingThresholds(tempo);
+
+    // Use FAIR threshold as GOOD/MISS boundary — generous for first exercise.
+    // PERFECT ≤60ms, GOOD ≤149ms, MISS >149ms (at 65 BPM with scaling).
+    let quality;
+    if (timingErrorMs <= thresholds.PERFECT) quality = "PERFECT";
+    else if (timingErrorMs <= thresholds.FAIR) quality = "GOOD";
+    else quality = "MISS";
+
+    // Note index within current measure (0-based)
+    const noteIdx = nearestBeat % beatsPerMeasure;
+
+    // Update RhythmStaffDisplay note color
+    setTapResults((prev) => {
+      const updated = prev.filter((r) => r.noteIdx !== noteIdx);
+      updated.push({ noteIdx, quality });
+      return updated;
+    });
+
+    // Trigger FloatingFeedback
+    setFloatingQuality(quality);
+    setFloatingKey((k) => k + 1);
+
+    // Track for final scoring
+    perBeatResultsRef.current.push({ beat: nearestBeat, quality });
+
+    // Update beat counter
+    setBeatNum(nearestBeat + 1);
+  }, [
+    phase,
+    audioEngine,
+    totalPlayBeats,
+    tempo,
+    beatsPerMeasure,
+    getLatencyCompensation,
+  ]);
 
   // Handle press start for hold notes (Phase 31)
   const handlePressStart = useCallback(
@@ -355,14 +478,13 @@ export default function PulseQuestion({
         setBeatNum(beatIndex + 1);
       }
 
-      // Start rAF ring animation — drives SVG stroke-dashoffset imperatively
-      // to avoid React re-renders at 60fps (ref-based DOM mutation pattern)
+      // Start rAF ring animation — ring fills to 100% at PERFECT threshold
       const startTime = performance.now();
-      const requiredMs = currentHoldDurationMs;
+      const ringDurationMs = currentHoldDurationMs * HOLD_THRESHOLDS.PERFECT;
 
       const animate = () => {
         const elapsed = performance.now() - startTime;
-        const progress = Math.min(1, elapsed / requiredMs);
+        const progress = Math.min(1, elapsed / ringDurationMs);
         if (holdRingCircleRef.current) {
           const offset = CIRCUMFERENCE * (1 - progress);
           holdRingCircleRef.current.setAttribute(
@@ -433,9 +555,35 @@ export default function PulseQuestion({
       getOrCreateAudioContext();
     }
 
+    // Prime the audio pipeline with a silent oscillator so the first
+    // real click isn't swallowed by an uninitialized output buffer.
+    try {
+      const ctx = audioEngine.audioContextRef?.current;
+      if (ctx) {
+        const warmup = ctx.createOscillator();
+        const silentGain = ctx.createGain();
+        silentGain.gain.setValueAtTime(0, ctx.currentTime);
+        warmup.connect(silentGain);
+        silentGain.connect(ctx.destination);
+        warmup.start(ctx.currentTime);
+        warmup.stop(ctx.currentTime + 0.01);
+      }
+    } catch {
+      // Non-critical — first tick may still be quiet
+    }
+
     userTapsRef.current = [];
     setBeatNum(0);
     setCurrentBeat(1);
+    setBeatPulse(false);
+    setTapResults(makeResetTapResults(beatsPerMeasure));
+    setCursorProgress(0);
+    setFloatingQuality(null);
+    setFloatingKey(0);
+    setCurrentMeasure(0);
+    perBeatResultsRef.current = [];
+    prevMeasureRef.current = 0;
+    prevAbsoluteBeatRef.current = -1;
 
     // Reset hold state for new round (Phase 31)
     pressStartTimeRef.current = null;
@@ -445,14 +593,15 @@ export default function PulseQuestion({
 
     const beatDur = beatDuration.current;
     const countInBeats = beatsPerMeasure; // 1 measure count-in
-    const countInStartTime = audioEngine.getCurrentTime() + 0.1;
+    // 300ms lead time to ensure audio pipeline is fully initialized
+    const countInStartTime = audioEngine.getCurrentTime() + 0.3;
+    const playingStartTime = countInStartTime + countInBeats * beatDur;
 
-    // Start metronome from count-in start
-    startContinuousMetronome(countInStartTime);
+    // Start metronome from count-in start, pass playingStartTime for cursor tracking
+    startContinuousMetronome(countInStartTime, playingStartTime);
     setPhase(PHASES.COUNT_IN);
 
     // Transition to PLAYING after count-in
-    const playingStartTime = countInStartTime + countInBeats * beatDur;
     const countInDurationMs =
       (playingStartTime - audioEngine.getCurrentTime()) * 1000;
 
@@ -514,10 +663,6 @@ export default function PulseQuestion({
   };
 
   const isActive = phase === PHASES.PLAYING;
-  const beatDur = beatDuration.current;
-
-  // CSS animation duration in seconds matches beat interval
-  const animDuration = `${beatDur.toFixed(3)}s`;
   const isAnimating = phase === PHASES.COUNT_IN || phase === PHASES.PLAYING;
 
   // Whether the beats array has any hold notes (determines if stretched indicator is needed)
@@ -528,7 +673,7 @@ export default function PulseQuestion({
 
   return (
     <div
-      className="flex w-full flex-col items-center gap-6"
+      className="flex w-full flex-col items-center gap-4"
       role="main"
       aria-label={t(
         "game.pulse.ariaLabel",
@@ -546,182 +691,87 @@ export default function PulseQuestion({
       )}
 
       {/* Stretched beat indicator (D-08) — only when beats contain half/whole notes */}
-      {hasHoldBeats && (phase === PHASES.COUNT_IN || phase === PHASES.PLAYING) && (
-        <div
-          dir="ltr"
-          style={{
-            display: "grid",
-            gridTemplateColumns: `repeat(${totalColumns}, 1fr)`,
-            gap: "4px",
-            maxWidth: "200px",
-            margin: "0 auto",
-          }}
-          aria-hidden="true"
-        >
-          {beats.map((beat, i) => {
-            const span = beat.durationUnits / 4; // quarter=1, half=2, whole=4
-            const isCurrent = (currentBeat - 1) % beats.length === i;
-            return (
-              <div
-                key={i}
-                style={{ gridColumn: `span ${span}` }}
-                className={`h-3 rounded-full transition-all duration-150 ${
-                  isCurrent
-                    ? phase === PHASES.COUNT_IN
-                      ? "scale-y-110 bg-yellow-400"
-                      : "scale-y-110 bg-blue-400"
-                    : "bg-white/20"
-                }`}
-              />
-            );
-          })}
+      {hasHoldBeats &&
+        (phase === PHASES.COUNT_IN || phase === PHASES.PLAYING) && (
+          <div
+            dir="ltr"
+            style={{
+              display: "grid",
+              gridTemplateColumns: `repeat(${totalColumns}, 1fr)`,
+              gap: "4px",
+              maxWidth: "200px",
+              margin: "0 auto",
+            }}
+            aria-hidden="true"
+          >
+            {beats.map((beat, i) => {
+              const span = beat.durationUnits / 4; // quarter=1, half=2, whole=4
+              const isCurrent = (currentBeat - 1) % beats.length === i;
+              return (
+                <div
+                  key={i}
+                  style={{ gridColumn: `span ${span}` }}
+                  className={`h-3 rounded-full transition-all duration-150 ${
+                    isCurrent
+                      ? phase === PHASES.COUNT_IN
+                        ? "scale-y-110 bg-yellow-400"
+                        : "scale-y-110 bg-blue-400"
+                      : "bg-white/20"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        )}
+
+      {/* VexFlow staff notation — shown from COUNT_IN onwards */}
+      {phase !== PHASES.WAITING && (
+        <div className="w-full max-w-md">
+          <RhythmStaffDisplay
+            beats={PULSE_BEATS}
+            timeSignature={config.timeSignature || "4/4"}
+            cursorProgress={cursorProgress}
+            tapResults={tapResults}
+            showCursor={phase === PHASES.PLAYING}
+            reducedMotion={reducedMotion}
+            onStaveBoundsReady={handleStaveBoundsReady}
+            measures={1}
+          />
         </div>
       )}
 
-      {/* Glass card container */}
-      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-xl border border-white/20 bg-white/10 px-6 py-8 shadow-lg backdrop-blur-md">
-        {/* Pulsing circle — the core visual */}
-        <div
-          className="relative flex items-center justify-center"
-          aria-hidden="true"
-        >
-          {/* Outer glow ring (reduced motion: opacity instead of scale) */}
-          {!reducedMotion && isAnimating && (
-            <div
-              className="absolute rounded-full bg-blue-400/20"
-              style={{
-                width: "160px",
-                height: "160px",
-                animation: `pulse-beat-ring ${animDuration} ease-in-out infinite`,
-              }}
-            />
-          )}
-          {/* Main pulsing circle — extended with hold mode support (Phase 31) */}
-          <div className="relative">
-            <button
-              onPointerDown={
-                currentBeatIsHold && isActive
-                  ? (e) => {
-                      e.currentTarget.setPointerCapture(e.pointerId);
-                      handlePressStart(e);
-                    }
-                  : undefined
-              }
-              onPointerUp={
-                currentBeatIsHold && isActive ? handlePressEnd : undefined
-              }
-              onPointerCancel={
-                currentBeatIsHold && isActive ? handlePressEnd : undefined
-              }
-              onClick={!currentBeatIsHold && isActive ? handleTap : undefined}
-              onTouchStart={
-                !currentBeatIsHold && isActive
-                  ? (e) => {
-                      e.preventDefault();
-                      handleTap();
-                    }
-                  : undefined
-              }
-              disabled={!isActive}
-              style={{
-                ...(currentBeatIsHold ? { touchAction: "none" } : undefined),
-                ...(!reducedMotion && isAnimating
-                  ? { "--beat-dur": animDuration }
-                  : undefined),
-              }}
-              className={[
-                "relative flex h-32 w-32 items-center justify-center rounded-full",
-                "bg-gradient-to-br from-blue-400 to-purple-500",
-                "shadow-lg shadow-blue-500/40",
-                "transition-all duration-100",
-                isActive
-                  ? "cursor-pointer hover:brightness-110 active:scale-95"
-                  : "cursor-default",
-                tapFlash ? "brightness-150" : "",
-                !reducedMotion && isAnimating
-                  ? "animate-[pulse-beat_var(--beat-dur)_ease-in-out_infinite]"
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              aria-label={
-                isActive
-                  ? currentBeatIsHold
-                    ? t(
-                        "games.metronomeTrainer.tapArea.holdHere",
-                        "Hold here"
-                      )
-                    : t("game.pulse.tapButton", "Tap here")
-                  : undefined
-              }
-            >
-              {/* Reduced motion alternative: opacity pulse */}
-              {reducedMotion && isAnimating && (
-                <span
-                  className="absolute inset-0 rounded-full bg-white/30"
-                  style={{
-                    animation: `pulse-beat-opacity ${animDuration} ease-in-out infinite`,
-                  }}
-                />
-              )}
-              {/* HOLD label for hold note beats (D-07) */}
-              {currentBeatIsHold && isActive && (
-                <span className="relative z-10 text-xs font-bold text-white/90">
-                  {t("games.metronomeTrainer.tapArea.holdHere", "HOLD")}
-                </span>
-              )}
-            </button>
-            {/* HoldRing overlay — absolute positioned over the button (Phase 31) */}
-            {currentBeatIsHold && !reducedMotion && (
-              <div className="pointer-events-none absolute inset-0">
-                <HoldRing
-                  ringRef={holdRingCircleRef}
-                  isComplete={isHoldComplete}
-                  reducedMotion={reducedMotion}
-                />
-              </div>
-            )}
-          </div>
-        </div>
+      {/* Guidance text */}
+      <p className="text-center text-sm text-white/70">
+        {holdFeedbackLabel || getGuidanceText()}
+      </p>
 
-        {/* Instruction text / hold feedback */}
-        <p className="text-center text-lg font-semibold text-white">
-          {holdFeedbackLabel || getGuidanceText()}
-        </p>
-
-        {/* Beat counter (shown only during PLAYING) */}
-        {phase === PHASES.PLAYING && (
-          <p
-            className="text-center text-sm text-white/60"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {t("game.pulse.beatCount", "Beat {{current}} of {{total}}", {
-              current: beatNum > 0 ? beatNum : 1,
-              total: totalPlayBeats,
-            })}
-          </p>
-        )}
+      {/* Tap target — same layout as RhythmTapQuestion */}
+      <div className="relative w-full max-w-md">
+        <TapArea
+          onTap={handleTap}
+          onPressStart={handlePressStart}
+          onPressEnd={handlePressEnd}
+          isHoldNote={currentBeatIsHold}
+          holdRingRef={holdRingCircleRef}
+          isHoldComplete={isHoldComplete}
+          reducedMotion={reducedMotion}
+          holdFeedbackLabel={holdFeedbackLabel}
+          feedback={null}
+          isActive={phase === PHASES.PLAYING}
+          title={
+            phase === PHASES.PLAYING
+              ? undefined
+              : phase === PHASES.COUNT_IN
+                ? t("rhythm.listen", "Listen...")
+                : t("rhythm.getReady", "Get ready...")
+          }
+        />
+        <FloatingFeedback
+          quality={floatingQuality}
+          feedbackKey={floatingKey}
+          reducedMotion={reducedMotion}
+        />
       </div>
-
-      {/* Inline keyframe styles — scoped to this component */}
-      <style>{`
-        @keyframes pulse-beat {
-          0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(96,165,250,0.5); }
-          50%  { transform: scale(1.15); box-shadow: 0 0 0 12px rgba(96,165,250,0); }
-          100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(96,165,250,0); }
-        }
-        @keyframes pulse-beat-ring {
-          0%   { transform: scale(1);    opacity: 0.6; }
-          50%  { transform: scale(1.3);  opacity: 0; }
-          100% { transform: scale(1);    opacity: 0; }
-        }
-        @keyframes pulse-beat-opacity {
-          0%   { opacity: 0.5; }
-          50%  { opacity: 0; }
-          100% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }

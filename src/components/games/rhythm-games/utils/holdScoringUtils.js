@@ -15,8 +15,8 @@
  * @type {{ PERFECT: number, GOOD: number }}
  */
 export const HOLD_THRESHOLDS = {
-  PERFECT: 0.7, // 70%+ of required hold duration (per D-03)
-  GOOD: 0.4, // 40-69% (per D-04)
+  PERFECT: 0.6, // 60%+ of required hold duration
+  GOOD: 0.4, // 40-59%
 };
 
 /**
