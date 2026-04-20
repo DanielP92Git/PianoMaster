@@ -46,7 +46,7 @@ export const SCREEN_TRAVEL_TIME = 3.0; // seconds for a tile to travel from top 
 // Internal constants
 // ---------------------------------------------------------------------------
 
-const TOTAL_PATTERNS = 10; // 10 patterns per session
+const TOTAL_PATTERNS = 8; // 8 patterns per session (D-01: 2-3 min target for kids)
 
 // Map VexFlow duration codes to legacy pattern names for getPattern() compatibility (Phase 22 migration)
 const VEX_TO_OLD_NAME = {
@@ -192,6 +192,7 @@ function ArcadeRhythmGame() {
   const currentPatternIndexRef = useRef(0); // ref mirror for currentPatternIndex
   const startPlayingPhaseRef = useRef(null); // latest startPlayingPhase (breaks stale closure chain)
   const startNextPatternRef = useRef(null); // latest startNextPattern (breaks stale closure chain)
+  const lastPatternRef = useRef(null); // Track last pattern's binary signature for D-02 variety enforcement
   const tileLaneRef = useRef(null); // tile lane container (for height measurement)
   const laneHeightRef = useRef(0); // cached lane height for RAF animation
 
@@ -356,21 +357,36 @@ function ArcadeRhythmGame() {
     return times;
   }, []);
 
-  /** Fetch a new pattern and convert to beats */
+  /** Fetch a new pattern and convert to beats (D-02: variety enforcement) */
   const fetchNewPattern = useCallback(async () => {
-    try {
-      const result = await getPattern(
-        timeSignatureStr,
-        difficulty,
-        rhythmPatterns
-      );
-      if (!result || !result.pattern) return null;
-      const beats = binaryPatternToBeats(result.pattern);
-      return beats;
-    } catch (err) {
-      console.warn("[ArcadeRhythmGame] fetchNewPattern error:", err);
-      return null;
+    const MAX_VARIETY_RETRIES = 3;
+    for (let attempt = 0; attempt <= MAX_VARIETY_RETRIES; attempt++) {
+      try {
+        const result = await getPattern(
+          timeSignatureStr,
+          difficulty,
+          rhythmPatterns
+        );
+        if (!result || !result.pattern) return null;
+
+        // D-02: Reject consecutive identical patterns (compare binary signature)
+        const signature = result.pattern.join(",");
+        if (
+          attempt < MAX_VARIETY_RETRIES &&
+          signature === lastPatternRef.current
+        ) {
+          continue; // Re-roll
+        }
+
+        lastPatternRef.current = signature;
+        const beats = binaryPatternToBeats(result.pattern);
+        return beats;
+      } catch (err) {
+        console.warn("[ArcadeRhythmGame] fetchNewPattern error:", err);
+        return null;
+      }
     }
+    return null;
   }, [timeSignatureStr, difficulty, rhythmPatterns]);
 
   // ---------------------------------------------------------------------------
@@ -857,6 +873,7 @@ function ArcadeRhythmGame() {
     tilesRef.current = [];
     tileRefs.current = [];
     scoredRef.current.clear();
+    lastPatternRef.current = null;
 
     const beats = await fetchNewPattern();
     if (beats) {
@@ -907,6 +924,7 @@ function ArcadeRhythmGame() {
     setCombo(0);
     setIsOnFire(false);
     setTiles([]);
+    lastPatternRef.current = null;
     cancelAllTimers();
   }, [nodeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
