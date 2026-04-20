@@ -5,7 +5,7 @@
  * - Introduces durations: Eighth notes (1/2 beat)
  * - Builds on Units 1-2: Quarter notes (1 beat) + Half notes (2 beats) + Whole notes (4 beats)
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 7 nodes with variety (Discovery, Practice, Mix-Up, Speed Round, Mini-Boss)
+ * - 6 nodes with variety (Discovery, Practice, Speed Round, Mini-Boss)
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Feel the difference between walking (quarter) and running (eighth) notes
@@ -23,7 +23,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 3;
 const UNIT_NAME = "Fast Note Friends";
 const CATEGORY = "rhythm";
-const START_ORDER = 114; // After Unit 2's 7 nodes (107-113)
+const START_ORDER = 112; // After Unit 2's 6 nodes (106-111)
 
 /**
  * Unit 3 Nodes
@@ -263,64 +263,7 @@ export const rhythmUnit3Nodes = [
   },
 
   // ============================================
-  // NODE 5: Rhythm Variety (Mix-Up)
-  // ============================================
-  {
-    id: "rhythm_3_5",
-    name: "Rhythm Variety",
-    description: "Play patterns with all your rhythm knowledge",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ["rhythm_3_4"],
-
-    nodeType: NODE_TYPES.MIX_UP,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ["q", "h", "w", "8"],
-      focusDurations: [],
-      contextDurations: ["q", "h", "w", "8"],
-      patternTags: ["quarter-eighth", "quarter-half-whole-eighth"],
-      tempo: { min: 75, max: 85, default: 80 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.EXERCISE_TYPE,
-    newContentDescription: "Pattern Challenge",
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["quarter_note", "half_note", "whole_note", "eighth_note"],
-    xpReward: 65,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 6: Speed Running (Speed Round)
+  // NODE 5: Speed Running (Speed Round)
   // ============================================
   {
     id: "rhythm_3_6",
@@ -329,9 +272,9 @@ export const rhythmUnit3Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ["rhythm_3_5"],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ["rhythm_3_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -367,7 +310,7 @@ export const rhythmUnit3Nodes = [
   },
 
   // ============================================
-  // NODE 7: Running Notes Master (Mini-Boss)
+  // NODE 6: Running Notes Master (Mini-Boss)
   // ============================================
   {
     id: "boss_rhythm_3",
@@ -377,8 +320,8 @@ export const rhythmUnit3Nodes = [
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
+    order: START_ORDER + 5,
+    orderInUnit: 6,
     prerequisites: ["rhythm_3_6"],
 
     nodeType: NODE_TYPES.MINI_BOSS,

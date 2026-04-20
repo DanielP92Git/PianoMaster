@@ -4,7 +4,7 @@
  * Educational psychology-driven design for 8-year-old learners
  * - Introduces: 6/8 compound meter (two big beats per bar)
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 7 nodes: Discovery -> Practice -> Discovery -> Practice -> Mix-Up -> Speed -> Mini-Boss
+ * - 6 nodes: Discovery -> Practice -> Discovery -> Practice -> Speed -> Mini-Boss
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Feel "two big beats per bar" before encountering syncopation in Unit 8
@@ -22,7 +22,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 7;
 const UNIT_NAME = "Big Beats";
 const CATEGORY = "rhythm";
-const START_ORDER = 142; // After Unit 6's 7 nodes (135-141)
+const START_ORDER = 138; // After Unit 6's 6 nodes (132-137)
 
 /**
  * Unit 7 Nodes
@@ -267,65 +267,7 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 5: Compound Cocktail (Mix-Up)
-  // ============================================
-  {
-    id: "rhythm_7_5",
-    name: "Compound Cocktail",
-    description: "All 6/8 rhythms together in a fun mix",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ["rhythm_7_4"],
-
-    nodeType: NODE_TYPES.MIX_UP,
-
-    // All 6/8 durations freely mixed
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.ALL,
-      durations: ["qd", "q", "8"],
-      focusDurations: [],
-      contextDurations: ["qd", "q", "8"],
-      patternTags: ["six-eight"],
-      tempo: { min: 70, max: 80, default: 75 },
-      pitch: "C4",
-      timeSignature: "6/8",
-    },
-
-    newContent: NEW_CONTENT_TYPES.EXERCISE_TYPE,
-    newContentDescription: "All 6/8 Rhythms",
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["68_compound_meter", "quarter_note_68", "eighth_note_68"],
-    xpReward: 85,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 6: Quick Beats (Speed Round)
+  // NODE 5: Quick Beats (Speed Round)
   // ============================================
   {
     id: "rhythm_7_6",
@@ -334,9 +276,9 @@ export const rhythmUnit7Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ["rhythm_7_5"],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ["rhythm_7_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -372,7 +314,7 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 7: Compound Commander (Mini-Boss)
+  // NODE 6: Compound Commander (Mini-Boss)
   // ============================================
   {
     id: "boss_rhythm_7",
@@ -382,8 +324,8 @@ export const rhythmUnit7Nodes = [
     category: "boss", // Mini-Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
+    order: START_ORDER + 5,
+    orderInUnit: 6,
     prerequisites: ["rhythm_7_6"],
 
     // MINI-BOSS node (not a true Boss) — unit checkpoint

@@ -21,7 +21,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 5;
 const UNIT_NAME = "Magic Dots";
 const CATEGORY = "rhythm";
-const START_ORDER = 128; // After Unit 4's 7 nodes (121-127)
+const START_ORDER = 125; // After Unit 4's 7 nodes (118-124)
 
 /**
  * Unit 5 Nodes

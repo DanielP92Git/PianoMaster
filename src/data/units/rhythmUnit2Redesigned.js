@@ -5,7 +5,7 @@
  * - Introduces durations: Whole notes (4 beats)
  * - Builds on Unit 1: Quarter notes (1 beat) + Half notes (2 beats)
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 7 nodes with variety (Discovery, Practice, Mix-Up, Speed Round, Mini-Boss)
+ * - 6 nodes with variety (Discovery, Practice, Speed Round, Mini-Boss)
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Complete basic duration vocabulary, feel the difference between long and short
@@ -23,7 +23,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 2;
 const UNIT_NAME = "Beat Builders";
 const CATEGORY = "rhythm";
-const START_ORDER = 107; // After Unit 1's 7 nodes (100-106)
+const START_ORDER = 106; // After Unit 1's 6 nodes (100-105)
 
 /**
  * Unit 2 Nodes
@@ -262,64 +262,7 @@ export const rhythmUnit2Nodes = [
   },
 
   // ============================================
-  // NODE 5: Duration Mix (Mix-Up)
-  // ============================================
-  {
-    id: "rhythm_2_5",
-    name: "Duration Mix",
-    description: "Mix all basic durations in creative patterns",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ["rhythm_2_4"],
-
-    nodeType: NODE_TYPES.MIX_UP,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.MEDIUM,
-      durations: ["q", "h", "w"],
-      focusDurations: [],
-      contextDurations: ["q", "h", "w"],
-      patternTags: ["quarter-half", "quarter-half-whole"],
-      tempo: { min: 65, max: 75, default: 70 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.EXERCISE_TYPE,
-    newContentDescription: "Pattern Challenge",
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["quarter_note", "half_note", "whole_note"],
-    xpReward: 55,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 6: Speed Basics (Speed Round)
+  // NODE 5: Speed Basics (Speed Round)
   // ============================================
   {
     id: "rhythm_2_6",
@@ -328,9 +271,9 @@ export const rhythmUnit2Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ["rhythm_2_5"],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ["rhythm_2_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -366,7 +309,7 @@ export const rhythmUnit2Nodes = [
   },
 
   // ============================================
-  // NODE 7: Duration Master (Mini-Boss)
+  // NODE 6: Duration Master (Mini-Boss)
   // ============================================
   {
     id: "boss_rhythm_2",
@@ -376,8 +319,8 @@ export const rhythmUnit2Nodes = [
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
+    order: START_ORDER + 5,
+    orderInUnit: 6,
     prerequisites: ["rhythm_2_6"],
 
     nodeType: NODE_TYPES.MINI_BOSS,
