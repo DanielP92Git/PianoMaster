@@ -63,9 +63,9 @@ describe("calculateTimingThresholds - hard node types (PERFECT=50 base)", () => 
     expect(thresholds.PERFECT).toBe(50);
   });
 
-  it("mini_boss node keeps PERFECT=50", () => {
+  it("mini_boss node gets PERFECT=100 (forgiving, per D-07)", () => {
     const thresholds = calculateTimingThresholds(120, "mini_boss");
-    expect(thresholds.PERFECT).toBe(50);
+    expect(thresholds.PERFECT).toBe(100);
   });
 });
 
@@ -96,11 +96,14 @@ describe("EASY_NODE_TYPES export", () => {
     expect(EASY_NODE_TYPES.has("review")).toBe(true);
   });
 
-  it("EASY_NODE_TYPES does NOT contain challenge, boss, speed_round, mini_boss", () => {
+  it("EASY_NODE_TYPES does NOT contain challenge, boss, speed_round", () => {
     expect(EASY_NODE_TYPES.has("challenge")).toBe(false);
     expect(EASY_NODE_TYPES.has("boss")).toBe(false);
     expect(EASY_NODE_TYPES.has("speed_round")).toBe(false);
-    expect(EASY_NODE_TYPES.has("mini_boss")).toBe(false);
+  });
+
+  it("EASY_NODE_TYPES DOES contain mini_boss (forgiving thresholds per D-07)", () => {
+    expect(EASY_NODE_TYPES.has("mini_boss")).toBe(true);
   });
 });
 
