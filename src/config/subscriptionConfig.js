@@ -43,13 +43,12 @@ export const FREE_BASS_NODE_IDS = [
   'bass_1_6',
 ];
 
-/** Rhythm Unit 1 — 6 free nodes */
+/** Rhythm Unit 1 — 5 free nodes (rhythm_1_5 removed in Phase 32) */
 export const FREE_RHYTHM_NODE_IDS = [
   'rhythm_1_1',
   'rhythm_1_2',
   'rhythm_1_3',
   'rhythm_1_4',
-  'rhythm_1_5',
   'rhythm_1_6',
 ];
 
@@ -99,9 +98,9 @@ export const FREE_NODE_IDS = new Set([
 export const FREE_TIER_SUMMARY = {
   treble: { count: 7 },
   bass: { count: 6 },
-  rhythm: { count: 6 },
+  rhythm: { count: 5 },
   ear_training: { count: 6 },
-  total: 25,
+  total: 24,
   bossNodeCount: 5,
 };
 

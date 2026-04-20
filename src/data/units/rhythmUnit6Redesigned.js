@@ -5,7 +5,7 @@
  * - Introduces durations: Sixteenth notes (1/4 beat - groups of 4 per beat)
  * - FINAL UNIT of the rhythm path (Units 1-6)
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 7 nodes with variety and a TRUE BOSS node (not Mini-Boss)
+ * - 6 nodes with variety and a TRUE BOSS node (not Mini-Boss)
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Master the fastest duration, complete the rhythm learning journey
@@ -21,7 +21,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 6;
 const UNIT_NAME = "Speed Champions";
 const CATEGORY = "rhythm";
-const START_ORDER = 135; // After Unit 5's 7 nodes (128-134)
+const START_ORDER = 132; // After Unit 5's 7 nodes (125-131)
 
 /**
  * Unit 6 Nodes
@@ -261,72 +261,7 @@ export const rhythmUnit6Nodes = [
   },
 
   // ============================================
-  // NODE 5: All Rhythms (Mix-Up)
-  // ============================================
-  {
-    id: "rhythm_6_5",
-    name: "All Rhythms",
-    description: "Every duration you have learned",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ["rhythm_6_4"],
-
-    nodeType: NODE_TYPES.MIX_UP,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.ALL,
-      durations: ["q", "h", "w", "8", "16", "qd", "hd"],
-      focusDurations: [],
-      contextDurations: ["q", "h", "w", "8", "16", "qd", "hd"],
-      patternTags: ["sixteenth", "quarter-eighth", "quarter-half-whole-eighth"],
-      tempo: { min: 75, max: 85, default: 80 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.EXERCISE_TYPE,
-    newContentDescription: "Complete Rhythm Review",
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-          ],
-        },
-      },
-    ],
-
-    skills: [
-      "quarter_note",
-      "half_note",
-      "whole_note",
-      "eighth_note",
-      "sixteenth_note",
-      "dotted_quarter_note",
-      "dotted_half_note",
-    ],
-    xpReward: 85,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 6: Speed Master (Speed Round)
+  // NODE 5: Speed Master (Speed Round)
   // ============================================
   {
     id: "rhythm_6_6",
@@ -335,9 +270,9 @@ export const rhythmUnit6Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ["rhythm_6_5"],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ["rhythm_6_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -373,7 +308,7 @@ export const rhythmUnit6Nodes = [
   },
 
   // ============================================
-  // NODE 7: Rhythm Champion (BOSS - True Boss, not Mini-Boss)
+  // NODE 6: Rhythm Champion (BOSS - True Boss, not Mini-Boss)
   // ============================================
   {
     id: "boss_rhythm_6",
@@ -384,8 +319,8 @@ export const rhythmUnit6Nodes = [
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
+    order: START_ORDER + 5,
+    orderInUnit: 6,
     prerequisites: ["rhythm_6_6"],
 
     // TRUE BOSS node (not Mini-Boss) - Trail milestone unlocked!

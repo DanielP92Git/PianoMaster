@@ -5,7 +5,7 @@
  * - Introduces syncopation: eighth-quarter-eighth and dotted quarter-eighth patterns
  * - Capstone unit of the rhythm path — builds on 6/8 compound meter (Unit 7)
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 7 nodes with variety and a TRUE BOSS node mixing 6/8 and 4/4 syncopation
+ * - 6 nodes with variety and a TRUE BOSS node mixing 6/8 and 4/4 syncopation
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Master syncopation patterns, prove mastery of both 6/8 and 4/4 in epic final boss
@@ -21,7 +21,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 8;
 const UNIT_NAME = "Off-Beat Magic";
 const CATEGORY = "rhythm";
-const START_ORDER = 149; // After Unit 7's nodes (142-148)
+const START_ORDER = 144; // After Unit 7's 6 nodes (138-143)
 
 /**
  * Unit 8 Nodes
@@ -261,64 +261,7 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 5: Syncopation Shuffle (Mix-Up)
-  // ============================================
-  {
-    id: "rhythm_8_5",
-    name: "Syncopation Shuffle",
-    description: "Mix all syncopation patterns with half notes",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ["rhythm_8_4"],
-
-    nodeType: NODE_TYPES.MIX_UP,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.ALL,
-      durations: ["qd", "8", "q", "h"], // Add half notes for variety
-      focusDurations: [],
-      contextDurations: ["qd", "8", "q", "h"],
-      patternTags: ["syncopation", "dotted-syncopation"],
-      tempo: { min: 70, max: 80, default: 75 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.EXERCISE_TYPE,
-    newContentDescription: "All Syncopation Patterns",
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
-            { type: "syllable_matching" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["syncopation_eighth_quarter", "syncopation_dotted_quarter"],
-    xpReward: 85,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 6: Rapid Syncopation (Speed Round)
+  // NODE 5: Rapid Syncopation (Speed Round)
   // ============================================
   {
     id: "rhythm_8_6",
@@ -327,9 +270,9 @@ export const rhythmUnit8Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ["rhythm_8_5"],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ["rhythm_8_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -365,7 +308,7 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 7: Rhythm Master (BOSS - True Boss, capstone of ALL rhythm content)
+  // NODE 6: Rhythm Master (BOSS - True Boss, capstone of ALL rhythm content)
   // ============================================
   {
     id: "boss_rhythm_8",
@@ -376,8 +319,8 @@ export const rhythmUnit8Nodes = [
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
+    order: START_ORDER + 5,
+    orderInUnit: 6,
     prerequisites: ["rhythm_8_6"],
 
     // TRUE BOSS node — capstone of ALL rhythm content
