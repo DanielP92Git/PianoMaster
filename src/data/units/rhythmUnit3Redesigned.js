@@ -331,7 +331,8 @@ export const rhythmUnit3Nodes = [
       durations: ["q", "h", "w", "8"],
       focusDurations: [],
       contextDurations: ["q", "h", "w", "8"],
-      patternTags: ["quarter-eighth", "quarter-half-whole-eighth"],
+      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth"], // D-06: cumulative U1-U3
+      patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",

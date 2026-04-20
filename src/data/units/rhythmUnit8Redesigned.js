@@ -328,35 +328,39 @@ export const rhythmUnit8Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.ALL,
-      durations: ["qd", "8", "q", "h"],
+      durations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"], // D-06: cumulative U1-U8 (all durations)
       focusDurations: [],
-      contextDurations: ["qd", "8", "q", "h"],
-      patternTags: ["syncopation", "dotted-syncopation"],
+      contextDurations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"],
+      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth", "quarter-rest", "half-rest", "whole-rest", "dotted-half", "dotted-quarter", "sixteenth", "syncopation", "dotted-syncopation"], // D-06: cumulative U1-U8
+      patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
+      measureCount: 4, // D-08: full BOSS uses 4-bar patterns
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",
+      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
     newContentDescription: "Ultimate Rhythm Challenge!",
 
+    // D-09: Challenge-heavy question mix (dictation + reading emphasis, minimal tap)
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
             { type: "rhythm_reading" },
-            { type: "syllable_matching" },
             { type: "rhythm_dictation" },
-            { type: "rhythm_tap" },
-            { type: "visual_recognition" },
             { type: "rhythm_reading" },
-            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_reading" },
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_reading" },
+            { type: "rhythm_dictation" },
           ],
         },
       },

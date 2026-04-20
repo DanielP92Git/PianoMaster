@@ -609,7 +609,7 @@ export default function RhythmReadingQuestion({
             showCursor={false}
             reducedMotion={reducedMotion}
             onStaveBoundsReady={handleStaveBoundsReady}
-            measures={1}
+            measures={config.measureCount || 1}
           />
         </div>
       )}

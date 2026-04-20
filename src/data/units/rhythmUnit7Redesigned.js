@@ -336,7 +336,8 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      patternTags: ["six-eight"],
+      patternTags: ["six-eight"], // 6/8 is a standalone time signature pool
+      patternTagMode: "any", // D-06: OR-mode for consistency with other boss nodes
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "6/8",

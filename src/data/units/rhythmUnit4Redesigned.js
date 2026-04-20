@@ -392,10 +392,11 @@ export const rhythmUnit4Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ["q", "h", "qr", "hr", "wr"],
+      durations: ["q", "h", "w", "8", "qr", "hr", "wr"], // D-06: cumulative U1-U4
       focusDurations: [],
-      contextDurations: ["q", "h", "qr", "hr", "wr"],
-      patternTags: ["quarter-rest", "half-rest", "whole-rest"],
+      contextDurations: ["q", "h", "w", "8", "qr", "hr", "wr"],
+      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth", "quarter-rest", "half-rest", "whole-rest"], // D-06: cumulative U1-U4
+      patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
       tempo: { min: 70, max: 80, default: 75 },
       pitch: "C4",
       timeSignature: "4/4",

@@ -160,9 +160,11 @@ export default function MixedLessonGame() {
     return {
       patterns,
       patternTags: rc.patternTags || [],
+      patternTagMode: rc.patternTagMode || "all", // D-06: "any" for boss nodes
       durations: rc.durations || ["q"],
       tempo: typeof rc.tempo === "object" ? rc.tempo.default : rc.tempo || 80,
       timeSignature: rc.timeSignature || "4/4",
+      measureCount: rc.measureCount || 1, // D-08: 4 bars for full BOSS
       difficulty: "beginner",
       nodeType: node.nodeType || null,
     };
