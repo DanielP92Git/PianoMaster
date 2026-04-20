@@ -23,7 +23,7 @@ import { EXERCISE_TYPES } from "../constants.js";
 const UNIT_ID = 4;
 const UNIT_NAME = "Quiet Moments";
 const CATEGORY = "rhythm";
-const START_ORDER = 121; // After Unit 3's 7 nodes (114-120)
+const START_ORDER = 118; // After Unit 3's 6 nodes (112-117)
 
 /**
  * Unit 4 Nodes
