@@ -266,7 +266,13 @@ Plans:
 **Goal**: Speed challenge nodes have appropriately varied content and exercise count for kids, boss nodes feel distinctly harder than regular nodes, and rhythm pattern nodes offer a meaningfully different experience from practice nodes
 **Depends on**: Phase 31
 **Requirements**: PLAY-02, PLAY-03, PLAY-04
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 32-01-PLAN.md — Speed challenge session length (8 patterns) and variety enforcement
+- [ ] 32-02-PLAN.md — Remove 6 Mix-Up nodes, cascade renumbering, update subscription config and tests
+- [ ] 32-03-PLAN.md — Boss difficulty tuning (cumulative durations, timing tier, question mix, measureCount) + PEDAGOGY.md
 
 **Success Criteria** (what must be TRUE):
 
@@ -277,24 +283,24 @@ Plans:
 
 ## Progress
 
-| Phase                              | Milestone | Plans Complete | Status      | Completed  |
-| ---------------------------------- | --------- | -------------- | ----------- | ---------- |
-| 20. Curriculum Audit               | v3.2      | 1/1            | Complete    | 2026-04-11 |
-| 21. Pattern Library Construction   | v3.2      | 1/1            | Complete    | 2026-04-11 |
-| 22. Service Layer & Trail Wiring   | v3.2      | 5/5            | Complete    | 2026-04-12 |
-| 23. UX Polish                      | v3.2      | 3/3            | Complete    | 2026-04-09 |
-| 24. Multi-Angle Rhythm Games       | v3.2      | 3/3            | Complete    | 2026-04-09 |
-| 25. Unified Mixed Lesson Engine    | v3.2      | 3/3            | Complete    | 2026-04-09 |
-| 26. Restore Phase 23 UX Regression | v3.2      | 2/2            | Complete    | 2026-04-13 |
-| 27. Verification & Traceability    | v3.2      | —              | Skipped     | —          |
-| 28. Tech Debt Fixes                | v3.2      | —              | Skipped     | —          |
-| 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete    | 2026-04-13 |
-| 30. Audio Fixes                    | v3.3      | 2/2            | Complete    | 2026-04-13 |
-| 31. Long-Press Sustain             | v3.3      | 3/3            | Complete    | 2026-04-14 |
-| 32. Game Design Differentiation    | v3.3      | 0/TBD          | Not started | —          |
+| Phase                              | Milestone | Plans Complete | Status   | Completed  |
+| ---------------------------------- | --------- | -------------- | -------- | ---------- |
+| 20. Curriculum Audit               | v3.2      | 1/1            | Complete | 2026-04-11 |
+| 21. Pattern Library Construction   | v3.2      | 1/1            | Complete | 2026-04-11 |
+| 22. Service Layer & Trail Wiring   | v3.2      | 5/5            | Complete | 2026-04-12 |
+| 23. UX Polish                      | v3.2      | 3/3            | Complete | 2026-04-09 |
+| 24. Multi-Angle Rhythm Games       | v3.2      | 3/3            | Complete | 2026-04-09 |
+| 25. Unified Mixed Lesson Engine    | v3.2      | 3/3            | Complete | 2026-04-09 |
+| 26. Restore Phase 23 UX Regression | v3.2      | 2/2            | Complete | 2026-04-13 |
+| 27. Verification & Traceability    | v3.2      | —              | Skipped  | —          |
+| 28. Tech Debt Fixes                | v3.2      | —              | Skipped  | —          |
+| 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete | 2026-04-13 |
+| 30. Audio Fixes                    | v3.3      | 2/2            | Complete | 2026-04-13 |
+| 31. Long-Press Sustain             | v3.3      | 3/3            | Complete | 2026-04-14 |
+| 32. Game Design Differentiation    | v3.3      | 0/3            | Planned  | —          |
 
 **Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 3/4 complete**
 
 ---
 
-_Last updated: 2026-04-13 -- Phase 30 planned (2 plans, 1 wave)_
+_Last updated: 2026-04-14 -- Phase 32 planned (3 plans, 2 waves)_
