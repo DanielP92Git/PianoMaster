@@ -246,5 +246,95 @@ This convention enables:
 
 ---
 
+## Rhythm Difficulty Levers (Phase 32)
+
+Reference for rhythm trail content authors. Each lever can be tuned independently per node.
+
+### 1. Pool Scope
+
+Controls which patterns a node can draw from.
+
+| Setting         | Meaning                                                             | Example                                         |
+| --------------- | ------------------------------------------------------------------- | ----------------------------------------------- |
+| Unit-local tags | Patterns matching the current unit's duration set only              | Practice nodes: `patternTags: ["quarter-half"]` |
+| Cumulative tags | Patterns from all prior units (OR-mode via `patternTagMode: "any"`) | Boss nodes: cumulative tag list from Units 1..N |
+| Curated IDs     | Specific hand-picked patterns by ID                                 | (Future: `patternIds: ["pat_001", "pat_002"]`)  |
+
+Boss nodes use `patternTagMode: "any"` in `rhythmConfig` to enable OR-mode tag matching
+(any tag matches, not all tags must match). This creates a wider pool from cumulative units.
+
+### 2. Pattern Length
+
+Controls how many bars of notation the child reads per question.
+
+| Setting | Node Types | Config Field                                                |
+| ------- | ---------- | ----------------------------------------------------------- |
+| 1 bar   | Discovery  | `measureCount: 1` (or omit -- default)                      |
+| 2 bars  | Practice   | `measureCount: 2` (or omit -- default from Phase 23 policy) |
+| 4 bars  | Full BOSS  | `measureCount: 4`                                           |
+
+Wired through `rhythmConfig.measureCount` and consumed by RhythmReadingGame, MixedLessonGame
+question renderers (RhythmReadingQuestion, RhythmTapQuestion).
+
+### 3. Timing Tier
+
+Controls how precisely the child must tap to earn PERFECT/GOOD/FAIR feedback.
+
+| Tier             | Node Types                                     | PERFECT Window (at 120 BPM) |
+| ---------------- | ---------------------------------------------- | --------------------------- |
+| Easy             | Discovery, Practice, Mix-Up, Review, Mini-Boss | +/-100ms                    |
+| Default (strict) | Boss, Speed Round                              | +/-50ms                     |
+
+Controlled by `EASY_NODE_TYPES` Set in `rhythmTimingUtils.js`. Nodes in the set
+use `BASE_TIMING_THRESHOLDS_EASY`; all others use `BASE_TIMING_THRESHOLDS` (stricter).
+
+### 4. Question Mix
+
+Controls the distribution of question types in MIXED_LESSON exercises.
+
+| Mix Style       | Emphasis                                                           | Used By             |
+| --------------- | ------------------------------------------------------------------ | ------------------- |
+| Learning-heavy  | visual_recognition, syllable_matching, rhythm_tap                  | Discovery nodes     |
+| Balanced        | rhythm_tap, rhythm_reading, rhythm_dictation, visual_recognition   | Practice, Mini-Boss |
+| Challenge-heavy | rhythm_reading, rhythm_dictation (minimal tap, no visual/syllable) | Full BOSS           |
+
+Edit the `exercises[0].config.questions` array directly in the node definition.
+Reading and dictation are harder because the child must decode notation or reproduce
+from memory; tap is easier because the child follows along with the metronome.
+
+### Rhythm Node Type Difficulty Summary
+
+| Node Type   | Pool Scope | Pattern Length | Timing       | Question Mix    |
+| ----------- | ---------- | -------------- | ------------ | --------------- |
+| Discovery   | Unit-local | 1 bar          | Easy         | Learning-heavy  |
+| Practice    | Unit-local | 2 bars         | Easy         | Balanced        |
+| Speed Round | Unit-local | (arcade game)  | (own timing) | (arcade)        |
+| Mini-Boss   | Cumulative | 2 bars         | Easy         | Balanced        |
+| Boss        | Cumulative | 4 bars         | Strict       | Challenge-heavy |
+
+### Adding New Rhythm Units
+
+When adding a new rhythm unit:
+
+1. Define discovery and practice nodes with unit-local `patternTags`
+2. Set boss node `patternTags` to the cumulative list from all prior units
+3. Set boss node `patternTagMode: "any"` in `rhythmConfig`
+4. For full BOSS: add `measureCount: 4` and use challenge-heavy question mix
+5. Run `npm run verify:trail` to validate prereqs, tags, and durations
+
+### Related Implementation Files
+
+- `src/data/units/rhythmUnit*Redesigned.js` -- Node definitions
+- `src/data/patterns/rhythmPatterns.js` -- Pattern library
+- `src/data/patterns/RhythmPatternGenerator.js` -- resolveByTags, resolveByAnyTag
+- `src/components/games/rhythm-games/utils/rhythmTimingUtils.js` -- EASY_NODE_TYPES, thresholds
+- `src/data/nodeTypes.js` -- NODE_TYPES enum, RHYTHM_COMPLEXITY
+- `scripts/validateTrail.mjs` -- Build-time validator
+
+_Added: Phase 32 (D-16). Tempo remains in `rhythmConfig.tempo` and is not a difficulty lever._
+_`RHYTHM_COMPLEXITY` enum (SIMPLE/MEDIUM/VARIED/ALL) is a legacy field -- see D-17._
+
+---
+
 *Document created: Phase 8 - Design & Data Modeling*
-*Last updated: 2026-02-03*
+*Last updated: 2026-04-20 (Phase 32 difficulty levers added)*
