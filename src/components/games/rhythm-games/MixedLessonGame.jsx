@@ -23,7 +23,7 @@ import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { getNodeById } from "../../../data/skillTrail";
-import { resolveByTags } from "../../../data/patterns/RhythmPatternGenerator";
+import { resolveByTags, resolveByAnyTag } from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { generateDistractors } from "./utils/rhythmTimingUtils";
 import { useSounds } from "../../../features/games/hooks/useSounds";
@@ -207,7 +207,8 @@ export default function MixedLessonGame() {
         const cfg = buildRhythmTapConfig();
         const node = getNodeById(nodeId);
         const rc = node?.rhythmConfig;
-        const result = resolveByTags(
+        const resolver = rc?.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+        const result = resolver(
           rc?.patternTags || [],
           rc?.durations || ["q"],
           { timeSignature: rc?.timeSignature || "4/4" }

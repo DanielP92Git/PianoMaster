@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   resolveByTags,
+  resolveByAnyTag,
   resolveByIds,
   binaryToVexDurations,
   durationsIncludeRests,
@@ -305,6 +306,56 @@ describe("durationsIncludeRests", () => {
 
   it("returns false for empty array", () => {
     expect(durationsIncludeRests([])).toBe(false);
+  });
+});
+
+describe("resolveByAnyTag", () => {
+  it("returns patterns matching any tag (OR semantics)", () => {
+    // "quarter-only" patterns exist and "quarter-half" patterns exist
+    // OR query should return from either pool
+    const result = resolveByAnyTag(["quarter-only", "quarter-half"], ["q", "h"]);
+    expect(result).not.toBeNull();
+    expect(result.vexDurations).toBeDefined();
+  });
+
+  it("returns null when no tags match", () => {
+    const result = resolveByAnyTag(["nonexistent-tag"], ["q"]);
+    expect(result).toBeNull();
+  });
+
+  it("returns object with same shape as resolveByTags", () => {
+    const result = resolveByAnyTag(["quarter-only"], ["q"]);
+    expect(result).not.toBeNull();
+    expect(result).toHaveProperty("patternId");
+    expect(result).toHaveProperty("binary");
+    expect(result).toHaveProperty("timeSignature");
+    expect(result).toHaveProperty("vexDurations");
+    expect(result).toHaveProperty("tags");
+  });
+
+  it("filters by timeSignature option", () => {
+    const result = resolveByAnyTag(["six-eight", "quarter-only"], ["qd", "q"], {
+      timeSignature: "6/8",
+    });
+    if (result) {
+      expect(result.timeSignature).toBe("6/8");
+    }
+  });
+
+  it("wider pool: OR-mode returns patterns when AND-mode returns null for disjoint tags", () => {
+    // AND requires BOTH tags on same pattern — "six-eight" and "quarter-only" never coexist
+    const andResult = resolveByTags(
+      ["six-eight", "quarter-only"],
+      ["q", "qd"]
+    );
+    // OR requires any tag match — should find patterns from either pool
+    const orResult = resolveByAnyTag(
+      ["six-eight", "quarter-only"],
+      ["q", "qd"]
+    );
+    // AND of two disjoint tags returns null; OR should return a pattern
+    expect(andResult).toBeNull();
+    expect(orResult).not.toBeNull();
   });
 });
 

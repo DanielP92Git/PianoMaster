@@ -16,11 +16,13 @@ const BASE_TIMING_THRESHOLDS = {
 };
 
 // Two-tier system (D-03): easy nodes get 100ms PERFECT base, hard nodes keep 50ms
+// D-07: MINI_BOSS retains easy (forgiving) thresholds; "boss" intentionally absent — strict per D-07
 export const EASY_NODE_TYPES = new Set([
   "discovery",
   "practice",
   "mix_up",
   "review",
+  "mini_boss",
 ]);
 
 export const BASE_TIMING_THRESHOLDS_EASY = {

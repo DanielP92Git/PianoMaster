@@ -22,7 +22,7 @@ import { useAccessibility } from "../../../../contexts/AccessibilityContext";
 import { MetronomeDisplay, TapArea } from "../components";
 import FloatingFeedback from "../components/FloatingFeedback";
 import { getPattern, TIME_SIGNATURES } from "../RhythmPatternGenerator";
-import { resolveByTags } from "../../../../data/patterns/RhythmPatternGenerator";
+import { resolveByTags, resolveByAnyTag } from "../../../../data/patterns/RhythmPatternGenerator";
 import {
   scoreHold,
   isHoldNote,
@@ -645,7 +645,8 @@ export default function RhythmTapQuestion({
     // fall back to generative getPattern() if no curated match
     let pattern = null;
     if (config.patternTags?.length > 0) {
-      const result = resolveByTags(
+      const resolver = config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+      const result = resolver(
         config.patternTags,
         config.durations || ["q"],
         {

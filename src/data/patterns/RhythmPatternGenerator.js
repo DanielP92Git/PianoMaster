@@ -263,6 +263,53 @@ export function resolveByTags(tags, durations, options = {}) {
 }
 
 /**
+ * Resolve patterns matching ANY of the given tags (OR semantics).
+ *
+ * Used by boss nodes (D-06) where patternTags lists cumulative tags from
+ * multiple prior units. Unlike resolveByTags (AND), this returns patterns
+ * that match at least one tag, creating a wider pool.
+ *
+ * @param {string[]} tags - Array of tag strings (at least one must match)
+ * @param {string[]} durations - Allowed VexFlow duration codes
+ * @param {Object} [options] - Same options as resolveByTags
+ * @param {boolean} [options.allowRests=false] - Include patterns needing rests
+ * @param {string} [options.timeSignature] - Filter by time signature
+ * @returns {{ patternId, binary, timeSignature, vexDurations, tags } | null}
+ */
+export function resolveByAnyTag(tags, durations, options = {}) {
+  const { allowRests = false, timeSignature: tsFilter } = options;
+
+  let matching = RHYTHM_PATTERNS.filter((p) =>
+    tags.some((tag) => p.tags.includes(tag))
+  );
+
+  if (tsFilter) {
+    matching = matching.filter((p) => p.timeSignature === tsFilter);
+  }
+
+  if (!allowRests) {
+    matching = matching.filter((p) => !patternNeedsRests(p.pattern, durations));
+  }
+
+  if (matching.length === 0) return null;
+
+  const selected = matching[Math.floor(Math.random() * matching.length)];
+  const vexDurations = binaryToVexDurations(
+    selected.pattern,
+    durations,
+    selected.timeSignature
+  );
+
+  return {
+    patternId: selected.id,
+    binary: selected.pattern,
+    timeSignature: selected.timeSignature,
+    vexDurations,
+    tags: selected.tags,
+  };
+}
+
+/**
  * Resolve the first pattern matching any of the provided IDs.
  *
  * @param {string[]} ids - Pattern IDs to search for

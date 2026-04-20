@@ -18,7 +18,7 @@ import { MetronomeDisplay, TapArea } from "../components";
 import RhythmStaffDisplay from "../components/RhythmStaffDisplay";
 import FloatingFeedback from "../components/FloatingFeedback";
 import { TIME_SIGNATURES } from "../RhythmPatternGenerator";
-import { resolveByTags } from "../../../../data/patterns/RhythmPatternGenerator";
+import { resolveByTags, resolveByAnyTag } from "../../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "../utils/rhythmVexflowHelpers";
 import { scoreTap } from "../utils/rhythmScoringUtils";
 import {
@@ -528,7 +528,8 @@ export default function RhythmReadingQuestion({
 
     let loadedBeats = null;
     if (tags.length > 0) {
-      const result = resolveByTags(tags, durations, { timeSignature: ts });
+      const resolver = config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+      const result = resolver(tags, durations, { timeSignature: ts });
       if (result) {
         loadedBeats = binaryPatternToBeats(result.binary);
       }
