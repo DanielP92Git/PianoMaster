@@ -93,7 +93,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 - [x] **Phase 29: Code Quality & Data Fixes** - Fix stale-closure and score-cap bugs, guard empty arrays, correct unit data errors and section titles (completed 2026-04-13)
 - [x] **Phase 30: Audio Fixes** - Pre-warm audio context, fix dictation listen-button, fix eighths discovery audio sequencing (completed 2026-04-13)
 - [x] **Phase 31: Long-Press Sustain** - Implement piano-like sustained press for half/whole notes in listen&tap, pulse, and rhythm reading games (completed 2026-04-14)
-- [ ] **Phase 32: Game Design Differentiation** - Tune speed challenge variety and count, redesign boss nodes, differentiate pattern nodes from practice nodes
+- [x] **Phase 32: Game Design Differentiation** - Tune speed challenge variety and count, redesign boss nodes, differentiate pattern nodes from practice nodes (completed 2026-04-20)
 
 ## Phase Details
 
@@ -270,9 +270,9 @@ Plans:
 
 Plans:
 
-- [ ] 32-01-PLAN.md — Speed challenge session length (8 patterns) and variety enforcement
-- [ ] 32-02-PLAN.md — Remove 6 Mix-Up nodes, cascade renumbering, update subscription config and tests
-- [ ] 32-03-PLAN.md — Boss difficulty tuning (cumulative durations, timing tier, question mix, measureCount) + PEDAGOGY.md
+- [x] 32-01-PLAN.md — Speed challenge session length (8 patterns) and variety enforcement
+- [x] 32-02-PLAN.md — Remove 6 Mix-Up nodes, cascade renumbering, update subscription config and tests
+- [x] 32-03-PLAN.md — Boss difficulty tuning (cumulative durations, timing tier, question mix, measureCount) + PEDAGOGY.md
 
 **Success Criteria** (what must be TRUE):
 
@@ -297,7 +297,7 @@ Plans:
 | 29. Code Quality & Data Fixes      | v3.3      | 2/2            | Complete | 2026-04-13 |
 | 30. Audio Fixes                    | v3.3      | 2/2            | Complete | 2026-04-13 |
 | 31. Long-Press Sustain             | v3.3      | 3/3            | Complete | 2026-04-14 |
-| 32. Game Design Differentiation    | v3.3      | 0/3            | Planned  | —          |
+| 32. Game Design Differentiation    | v3.3      | 3/3            | Complete | 2026-04-20 |
 
 **Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 3/4 complete**
 
