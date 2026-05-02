@@ -301,17 +301,26 @@ Plans:
 
 **Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 3/4 complete**
 
-### Phase 33: Rhythm issues cleanup
+### Phase 33: Rhythm Issues Cleanup
 
-**Goal:** [To be planned]
-**Requirements**: TBD
+**Goal:** Triage and resolve the 13 rhythm UAT issues from Phases 30-32 — verify-first manual UAT, fix only confirmed survivors. Ship rate-limit migration, data audit cleanup (rest pool + section/title drifts), ArcadeRhythmGame migration to tag-based pattern resolution with central duration filter and per-session duration coverage rule, dictation-listen race fix via shared audio prewarm hook. Hold contingent boss UX overlay + cumulative speed-pool tag layers ready to fire only if user retest still reports flatness.
+**Requirements**: AUDIO-01, AUDIO-02, AUDIO-03, DATA-01, DATA-03, DATA-04, PLAY-02, PLAY-03 (cleanup pass over Phases 30/31/32)
 **Depends on:** Phase 32
-**Plans:** 0 plans
+**Plans:** 10 plans
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 33 to break down)
+- [ ] 33-01-PLAN.md — Pre-flight UAT scaffold + verify:trail + boss measureCount audit (Wave 0)
+- [ ] 33-02-PLAN.md — Wave 1 manual UAT execution (Wave 1; gates Wave 2/3)
+- [ ] 33-03-PLAN.md — D-13 prewarm hook + dictation race fix (Wave 2; D-13/D-16/AUDIO-02)
+- [ ] 33-04-PLAN.md — D-08/D-11/D-12 data audit edits (Wave 2; DATA-01/DATA-03)
+- [ ] 33-05-PLAN.md — D-07 rate-limit migration deploy (Wave 2; UAT issue 6)
+- [ ] 33-06-PLAN.md — Stash Chunk A salvage + D-09 + D-10 (Wave 2; DATA-04/PLAY-02)
+- [ ] 33-07-PLAN.md — D-14/D-15 audio buffer hardening (Wave 2 contingent; AUDIO-01/AUDIO-03)
+- [ ] 33-08-PLAN.md — D-18 boss intro overlay + victory VFX (Wave 3 contingent; PLAY-03)
+- [ ] 33-09-PLAN.md — D-19 cumulative speed-pool tags (Wave 3 contingent; PLAY-02)
+- [ ] 33-10-PLAN.md — Final UAT + STATE/ROADMAP/REQUIREMENTS update (Wave 4)
 
 ---
 
-_Last updated: 2026-04-14 -- Phase 32 planned (3 plans, 2 waves)_
+_Last updated: 2026-05-03 -- Phase 33 planned (10 plans, 5 waves; 3 contingent on UAT outcome)_

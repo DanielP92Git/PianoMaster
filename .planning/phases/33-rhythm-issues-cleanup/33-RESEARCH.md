@@ -542,29 +542,29 @@ None.
 
 **If table empty:** Not applicable — multiple assumptions logged.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Are `boss_rhythm_6.rhythmConfig.measureCount` and `boss_rhythm_8.rhythmConfig.measureCount` set to 4?**
+1. **Are `boss_rhythm_6.rhythmConfig.measureCount` and `boss_rhythm_8.rhythmConfig.measureCount` set to 4?** RESOLVED — Plan 33-01 Task 1 audits and Wave 0 fails if not 4.
    - What we know: D-08 says full BOSS = 4 bars; MixedLessonGame reads `rc.measureCount || 1`; we audited rhythmConfigs above but didn't quote the `measureCount` field
    - What's unclear: Whether shipped or stuck at 1
    - Recommendation: First step of plan — read both files, fix if missing
 
-2. **Does `validateTrail.mjs` execute `resolveByTags` against every node and fail on null?**
+2. **Does `validateTrail.mjs` execute `resolveByTags` against every node and fail on null?** RESOLVED — Plan 33-01 Task 1 reads validator output; if it doesn’t exercise per-node tag resolution, captured as backlog (no scope creep this phase).
    - What we know: The script imports `resolveByTags` (line ~19)
    - What's unclear: Whether the loop calls it
    - Recommendation: Plan task 1 — read full validateTrail.mjs and either confirm or extend
 
-3. **Did the rest-filter ever ship correctly for node 1_3?**
+3. **Did the rest-filter ever ship correctly for node 1_3?** RESOLVED — Plan 33-02 (Wave 1 UAT) issue 2/9 is the discrete reproduction step.
    - What we know: `patternNeedsRests` exists and is invoked when `allowRests=false` (default)
    - What's unclear: Whether MixedLessonGame's `rhythm_dictation` call at line 212-217 reaches a code path that bypasses it
    - Recommendation: Discrete UAT step (Issue 2) replays node 1_3 several times; if rests appear, instrument `resolveByTags` to log selected pattern IDs
 
-4. **Should the discovery_intro for `focusDuration: '8'` (Unit 8) be changed to pairs OR pure off-beat demo?**
+4. **Should the discovery_intro for `focusDuration: '8'` (Unit 8) be changed to pairs OR pure off-beat demo?** RESOLVED — defer to user via UAT issue 4; Plan 33-07 carries the conditional fix.
    - What we know: Unit 8 is "Syncopation"; the pedagogical goal is off-beat feel
    - What's unclear: Pedagogy author intent
    - Recommendation: Defer to user during plan-phase. Either (a) reuse `8_pair` to leverage existing 4-pair-with-pitch-alternation, or (b) add a new `mode: 'syncopated'` variant
 
-5. **Will Stash Chunk A's migration introduce regressions in MetronomeTrainer / RhythmDictationGame / RhythmReadingGame (other consumers of OLD `getPattern`)?**
+5. **Will Stash Chunk A's migration introduce regressions in MetronomeTrainer / RhythmDictationGame / RhythmReadingGame (other consumers of OLD `getPattern`)?** RESOLVED — per D-16, NO. Captured as backlog item.
    - What we know: Stash modifies only ArcadeRhythmGame
    - What's unclear: Whether D-09's "single central fix" should also migrate those three
    - Recommendation: Per D-16, only migrate what reproduces a bug. MetronomeTrainer/RhythmDictationGame/RhythmReadingGame have not been seed-issue-implicated. Leave as-is, capture as backlog
