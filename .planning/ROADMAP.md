@@ -301,6 +301,17 @@ Plans:
 
 **Total: 23 milestones shipped, 102 phases, ~218 plans | v3.3: 4 phases, 3/4 complete**
 
+### Phase 33: Rhythm issues cleanup
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 32
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 33 to break down)
+
 ---
 
 _Last updated: 2026-04-14 -- Phase 32 planned (3 plans, 2 waves)_
