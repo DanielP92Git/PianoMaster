@@ -172,3 +172,18 @@ Once the v3.3 build is deployed to Netlify, retest each Wave 1 confirmed-bug ent
 | Issue 13 (boss flatness)           | confirmed-bug                   | Replay boss_rhythm_6 + boss_rhythm_8 — confirm 2-second amber overlay + gold confetti. Mark resolved-by-deploy if rating improves. boss_rhythm_1 (mini_boss) is NOT in scope.                                                                                                                      |
 
 If any new bug surfaces, add it to a new "## Survivors after Wave 2/3" section below this checklist.
+
+## Survivors after Wave 2/3
+
+### Survivor 1: achievement insert references dropped `points` column (FIXED)
+
+- **Surfaced during:** Phase 33 final UAT against deploy SHA `a2ec194`
+- **Console error:**
+  ```
+  POST .../student_achievements ... 400 (Bad Request)
+  Error awarding achievement: { code: 'PGRST204', message: "Could not find the 'points' column of 'student_achievements' in the schema cache" }
+  ```
+- **Root cause:** Migration `20260308000001_drop_points_columns.sql` (Mar 2026) dropped `student_achievements.points` but `achievementService.awardAchievement` (line 190) still tried to insert it. Pre-existing bug surfaced when achievement-awarding paths were exercised — NOT a Phase 33 regression.
+- **Fix:** Removed `points: achievement.points,` from the insert payload in `src/services/achievementService.js`. The `points` field stays on the JS ACHIEVEMENTS const since `awardXP(studentId, achievement.points)` on the next line still needs it.
+- **Commit:** `6deaa26` — fix(achievements): remove dropped 'points' column from insert payload
+- **Status:** Fix-deployed-pending-retest. User should reload deployed app after Netlify rebuilds (~3 min) and confirm no more 400s on achievement awards.
