@@ -5,6 +5,9 @@
 -- Limit: 10 submissions per 5 minutes per student per node
 -- Pattern: Fixed window rate limiting with advisory locks
 -- =============================================
+-- 2026-05-04 (Phase 33 Plan 33-05): Added idempotency guards before each policy creation
+-- so this migration is safe to re-run after a partial-apply. Per .planning RESEARCH §7.
+-- =============================================
 
 -- Table to track rate limits per student per node
 CREATE TABLE IF NOT EXISTS rate_limits (
@@ -23,18 +26,24 @@ CREATE INDEX IF NOT EXISTS idx_rate_limits_student_node
 ALTER TABLE rate_limits ENABLE ROW LEVEL SECURITY;
 
 -- Students can only see/modify their own rate limits
+-- D-07 (Phase 33): DROP IF EXISTS guard so partial-apply recovery doesn't fail
+DROP POLICY IF EXISTS "Students can view own rate limits" ON rate_limits;
 CREATE POLICY "Students can view own rate limits"
   ON rate_limits
   FOR SELECT
   TO authenticated
   USING (student_id = auth.uid());
 
+-- D-07 (Phase 33): DROP IF EXISTS guard so partial-apply recovery doesn't fail
+DROP POLICY IF EXISTS "Students can insert own rate limits" ON rate_limits;
 CREATE POLICY "Students can insert own rate limits"
   ON rate_limits
   FOR INSERT
   TO authenticated
   WITH CHECK (student_id = auth.uid());
 
+-- D-07 (Phase 33): DROP IF EXISTS guard so partial-apply recovery doesn't fail
+DROP POLICY IF EXISTS "Students can update own rate limits" ON rate_limits;
 CREATE POLICY "Students can update own rate limits"
   ON rate_limits
   FOR UPDATE
