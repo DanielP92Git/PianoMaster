@@ -90,6 +90,21 @@ vi.mock("./RhythmPatternGenerator", () => ({
   },
 }));
 
+// D-09 (Phase 33) Stash Chunk A salvage: NEW tag-based resolver path mocks.
+// fetchNewPattern now prefers resolveByTags / resolveByAnyTag when the node has
+// patternTags. Tests that exercise the tag-based path use these stubs; tests that
+// exercise the legacy free-play path still hit the getPattern mock above.
+vi.mock("../../../data/patterns/RhythmPatternGenerator", () => ({
+  resolveByTags: vi.fn(() => ({
+    binary: [1, 1, 1, 1],
+    vexDurations: ["q", "q", "q", "q"],
+  })),
+  resolveByAnyTag: vi.fn(() => ({
+    binary: [1, 1, 1, 1],
+    vexDurations: ["q", "q", "q", "q"],
+  })),
+}));
+
 vi.mock("./utils/rhythmScoringUtils", () => ({
   scoreTap: vi.fn(() => ({
     quality: "PERFECT",

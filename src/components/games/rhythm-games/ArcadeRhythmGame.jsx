@@ -20,6 +20,10 @@ import GameOverScreen from "../GameOverScreen";
 import BackButton from "../../ui/BackButton";
 import { getNodeById } from "../../../data/skillTrail";
 import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
+import {
+  resolveByTags,
+  resolveByAnyTag,
+} from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 // scoreTap not used — arcade game uses wider inline timing windows
 import FloatingFeedback from "./components/FloatingFeedback";
@@ -137,6 +141,20 @@ function ArcadeRhythmGame() {
     return durations.map((d) => VEX_TO_OLD_NAME[d] || d);
   }, [nodeId, nodeConfig]);
 
+  // D-09 + D-10 (Phase 33) Stash Chunk A salvage: derive tag-based resolution surface.
+  // When patternTags is non-empty, prefer resolveByTags / resolveByAnyTag (which now
+  // applies D-09 central duration filter). Falls back to OLD getPattern() when empty
+  // (free-play / untagged path) — preserves backward compatibility.
+  const { patternTags, patternTagMode, nodeDurations } = useMemo(() => {
+    const node = nodeId ? getNodeById(nodeId) : null;
+    const rc = node?.rhythmConfig;
+    return {
+      patternTags: rc?.patternTags ?? [],
+      patternTagMode: rc?.patternTagMode ?? "all",
+      nodeDurations: rc?.durations ?? ["q"],
+    };
+  }, [nodeId]);
+
   // Audio context
   const {
     audioContextRef,
@@ -193,6 +211,8 @@ function ArcadeRhythmGame() {
   const startPlayingPhaseRef = useRef(null); // latest startPlayingPhase (breaks stale closure chain)
   const startNextPatternRef = useRef(null); // latest startNextPattern (breaks stale closure chain)
   const lastPatternRef = useRef(null); // Track last pattern's binary signature for D-02 variety enforcement
+  const seenDurationsRef = useRef(new Set()); // D-10 (Phase 33): per-session duration coverage
+  const patternIndexRef = useRef(0); // D-10 (Phase 33): pattern slot index for end-of-session coverage check
   const tileLaneRef = useRef(null); // tile lane container (for height measurement)
   const laneHeightRef = useRef(0); // cached lane height for RAF animation
 
@@ -357,37 +377,105 @@ function ArcadeRhythmGame() {
     return times;
   }, []);
 
-  /** Fetch a new pattern and convert to beats (D-02: variety enforcement) */
+  /**
+   * Fetch a new pattern and convert to beats.
+   *
+   * D-02 (Phase 32): variety enforcement — reject consecutive identical patterns.
+   * D-09 (Phase 33) Stash Chunk A salvage: prefer tag-based resolveByTags /
+   *   resolveByAnyTag (which apply the central duration filter) when the node
+   *   has patternTags. Falls back to OLD getPattern() for legacy / free-play.
+   * D-10 (Phase 33): per-session duration coverage — if some declared duration
+   *   has not yet appeared and remaining slots == missing.length, force a re-roll
+   *   constrained to a pattern that covers a missing duration. Only active on
+   *   the tag-based path (vexDurations is null on the getPattern fallback).
+   */
   const fetchNewPattern = useCallback(async () => {
     const MAX_VARIETY_RETRIES = 3;
-    for (let attempt = 0; attempt <= MAX_VARIETY_RETRIES; attempt++) {
-      try {
-        const result = await getPattern(
-          timeSignatureStr,
-          difficulty,
-          rhythmPatterns
-        );
-        if (!result || !result.pattern) return null;
 
-        // D-02: Reject consecutive identical patterns (compare binary signature)
-        const signature = result.pattern.join(",");
+    for (let attempt = 0; attempt <= MAX_VARIETY_RETRIES; attempt++) {
+      let result;
+
+      // D-09 (Phase 33) Stash Chunk A salvage: prefer tag-based resolver when
+      // node has patternTags. Falls back to OLD getPattern() for legacy / free-play.
+      if (patternTags.length > 0) {
+        const resolver =
+          patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+        const tagResult = resolver(patternTags, nodeDurations, {
+          timeSignature: timeSignatureStr,
+        });
+        // tagResult shape: { binary, vexDurations, ... } | null
+        result = tagResult
+          ? { pattern: tagResult.binary, vexDurations: tagResult.vexDurations }
+          : null;
+      } else {
+        try {
+          const old = await getPattern(
+            timeSignatureStr,
+            difficulty,
+            rhythmPatterns
+          );
+          result = old?.pattern
+            ? { pattern: old.pattern, vexDurations: null }
+            : null;
+        } catch (err) {
+          console.warn("[ArcadeRhythmGame] getPattern fallback error:", err);
+          return null;
+        }
+      }
+
+      if (!result?.pattern) return null;
+
+      // D-02 (Phase 32): reject consecutive identical patterns (binary signature)
+      const signature = result.pattern.join(",");
+      if (
+        attempt < MAX_VARIETY_RETRIES &&
+        signature === lastPatternRef.current
+      ) {
+        continue; // Re-roll
+      }
+
+      // D-10 (Phase 33): per-session duration coverage. If we are near the end of
+      // the session AND some declared duration has not yet appeared, force a re-roll
+      // constrained to a pattern containing the missing duration. Only applies on
+      // the tag-based path (vexDurations is null on the getPattern fallback).
+      if (result.vexDurations && Array.isArray(result.vexDurations)) {
+        const missing = nodeDurations.filter(
+          (d) => !seenDurationsRef.current.has(d)
+        );
+        const remainingSlots = TOTAL_PATTERNS - patternIndexRef.current;
         if (
           attempt < MAX_VARIETY_RETRIES &&
-          signature === lastPatternRef.current
+          missing.length > 0 &&
+          remainingSlots <= missing.length
         ) {
-          continue; // Re-roll
+          const candidateCovers = result.vexDurations.some((d) =>
+            missing.includes(d)
+          );
+          if (!candidateCovers) {
+            continue; // Re-roll to find a pattern that covers a missing duration
+          }
         }
-
-        lastPatternRef.current = signature;
-        const beats = binaryPatternToBeats(result.pattern);
-        return beats;
-      } catch (err) {
-        console.warn("[ArcadeRhythmGame] fetchNewPattern error:", err);
-        return null;
       }
+
+      // Accept this pattern.
+      lastPatternRef.current = signature;
+      if (result.vexDurations) {
+        result.vexDurations.forEach((d) => seenDurationsRef.current.add(d));
+      }
+      patternIndexRef.current += 1;
+
+      return binaryPatternToBeats(result.pattern);
     }
+
     return null;
-  }, [timeSignatureStr, difficulty, rhythmPatterns]);
+  }, [
+    patternTags,
+    patternTagMode,
+    nodeDurations,
+    timeSignatureStr,
+    difficulty,
+    rhythmPatterns,
+  ]);
 
   // ---------------------------------------------------------------------------
   // Screen shake on miss
@@ -874,6 +962,8 @@ function ArcadeRhythmGame() {
     tileRefs.current = [];
     scoredRef.current.clear();
     lastPatternRef.current = null;
+    seenDurationsRef.current = new Set();
+    patternIndexRef.current = 0;
 
     const beats = await fetchNewPattern();
     if (beats) {
@@ -925,6 +1015,8 @@ function ArcadeRhythmGame() {
     setIsOnFire(false);
     setTiles([]);
     lastPatternRef.current = null;
+    seenDurationsRef.current = new Set();
+    patternIndexRef.current = 0;
     cancelAllTimers();
   }, [nodeId]); // eslint-disable-line react-hooks/exhaustive-deps
 
