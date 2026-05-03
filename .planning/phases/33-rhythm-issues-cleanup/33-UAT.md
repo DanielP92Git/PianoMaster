@@ -81,8 +81,8 @@ created: 2026-05-03
   2. /trail → complete any node (any unit, any node)
   3. Watch console output during and after node completion
 - Expected (per current code, RESEARCH §7): "Rate limit function not found in database. Allowing request. Run migration 20260201000002_add_rate_limiting.sql to enable rate limiting." warning appears. CONFIRMED-BUG by code review — fix is D-07 migration deploy.
-- Mark: [x] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
-- Notes:
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
+- Notes: Migration applied to remote Supabase project (hdltcvgqrtxuxgjdvzzu) via Dashboard SQL Editor on 2026-05-04 (Plan 33-05). Frontend console retest scheduled for 33-10 final UAT pass.
 
 ## Issue 7: Dictation Listen fails on first click inside MixedLessonGame
 
