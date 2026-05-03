@@ -23,7 +23,10 @@ import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { getNodeById } from "../../../data/skillTrail";
-import { resolveByTags, resolveByAnyTag } from "../../../data/patterns/RhythmPatternGenerator";
+import {
+  resolveByTags,
+  resolveByAnyTag,
+} from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { generateDistractors } from "./utils/rhythmTimingUtils";
 import { useSounds } from "../../../features/games/hooks/useSounds";
@@ -32,6 +35,7 @@ import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { BossIntroOverlay } from "./components/BossIntroOverlay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
 
 // Map VexFlow duration codes to legacy pattern names for RhythmTapQuestion/getPattern() compatibility
@@ -76,6 +80,12 @@ export default function MixedLessonGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
+
+  // D-18 (Plan 33-08): Boss intro overlay gating — full BOSS only (NOT mini_boss)
+  // Per PATTERNS §7: gate on node.isBoss && node.nodeType === "boss"
+  const trailNode = nodeId ? getNodeById(nodeId) : null;
+  const isFullBoss = !!(trailNode?.isBoss && trailNode?.nodeType === "boss");
+  const [bossIntroDismissed, setBossIntroDismissed] = useState(!isFullBoss);
 
   // Sounds
   const { playCorrectSound, playWrongSound, playVictorySound } = useSounds();
@@ -209,12 +219,11 @@ export default function MixedLessonGame() {
         const cfg = buildRhythmTapConfig();
         const node = getNodeById(nodeId);
         const rc = node?.rhythmConfig;
-        const resolver = rc?.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
-        const result = resolver(
-          rc?.patternTags || [],
-          rc?.durations || ["q"],
-          { timeSignature: rc?.timeSignature || "4/4" }
-        );
+        const resolver =
+          rc?.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+        const result = resolver(rc?.patternTags || [], rc?.durations || ["q"], {
+          timeSignature: rc?.timeSignature || "4/4",
+        });
         if (result) {
           const beats = binaryPatternToBeats(result.binary);
           const distractors = generateDistractors(beats, 2, {
@@ -566,6 +575,12 @@ export default function MixedLessonGame() {
         className={`fixed inset-0 flex flex-col overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4${reducedMotion ? "" : " animate-fadeIn"}`}
       >
         {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+        {isFullBoss && !bossIntroDismissed && (
+          <BossIntroOverlay
+            bossName={trailNode?.name}
+            onDismiss={() => setBossIntroDismissed(true)}
+          />
+        )}
         {isInterrupted && (
           <AudioInterruptedOverlay
             isVisible={true}
@@ -602,6 +617,12 @@ export default function MixedLessonGame() {
       className={`fixed inset-0 flex flex-col items-center overflow-y-auto bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4${reducedMotion ? "" : " animate-fadeIn"}`}
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
+      {isFullBoss && !bossIntroDismissed && (
+        <BossIntroOverlay
+          bossName={trailNode?.name}
+          onDismiss={() => setBossIntroDismissed(true)}
+        />
+      )}
       {isInterrupted && (
         <AudioInterruptedOverlay
           isVisible={true}

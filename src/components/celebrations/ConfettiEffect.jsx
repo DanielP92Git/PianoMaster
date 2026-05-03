@@ -33,8 +33,9 @@ const TIER_CONFIGS = {
  * @param {Object} props
  * @param {'epic' | 'full'} props.tier - Celebration tier
  * @param {Function} props.onComplete - Called when confetti completes
+ * @param {string[]} [props.colors] - Optional palette override (e.g., BOSS_CONFETTI_COLORS for boss VFX, D-18)
  */
-export function ConfettiEffect({ tier = "full", onComplete }) {
+export function ConfettiEffect({ tier = "full", onComplete, colors }) {
   // Call all hooks unconditionally at the top
   const { reducedMotion } = useAccessibility();
   const [windowSize, setWindowSize] = useState({
@@ -83,8 +84,10 @@ export function ConfettiEffect({ tier = "full", onComplete }) {
     return null;
   }
 
-  // Get configuration for tier
-  const config = TIER_CONFIGS[tier] || TIER_CONFIGS.full;
+  // Get configuration for tier; allow caller to override the palette (D-18 boss VFX)
+  const baseConfig = TIER_CONFIGS[tier] || TIER_CONFIGS.full;
+  const config =
+    colors && colors.length > 0 ? { ...baseConfig, colors } : baseConfig;
 
   const handleConfettiComplete = () => {
     setIsRunning(false);

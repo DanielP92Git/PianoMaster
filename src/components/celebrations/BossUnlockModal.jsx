@@ -15,35 +15,43 @@
  * - Fanfare sound plays on user gesture (Stage 1 Continue click) to satisfy autoplay policy
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import Confetti from 'react-confetti';
-import { Trophy, Crown } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { useAccessibility } from '../../contexts/AccessibilityContext';
-import { getRandomMusicShape } from '../../utils/musicSymbolShapes';
-import { playFanfare } from '../../utils/fanfareSound';
-import { SKILL_NODES, getNodeById } from '../../data/skillTrail';
-import { translateNodeName } from '../../utils/translateNodeName';
+import { useState, useEffect, useRef, useCallback } from "react";
+import Confetti from "react-confetti";
+import { Trophy, Crown } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useAccessibility } from "../../contexts/AccessibilityContext";
+import { getRandomMusicShape } from "../../utils/musicSymbolShapes";
+import { playFanfare } from "../../utils/fanfareSound";
+import { SKILL_NODES, getNodeById } from "../../data/skillTrail";
+import { translateNodeName } from "../../utils/translateNodeName";
 
 // Stage constants
 const STAGES = {
-  CELEBRATION: 'celebration',
-  UNLOCK: 'unlock',
-  PREVIEW: 'preview'
+  CELEBRATION: "celebration",
+  UNLOCK: "unlock",
+  PREVIEW: "preview",
 };
 
 // Auto-advance timeouts per stage (milliseconds)
 const AUTO_ADVANCE_TIMEOUTS = {
   [STAGES.CELEBRATION]: 10000,
   [STAGES.UNLOCK]: 8000,
-  [STAGES.PREVIEW]: 12000
+  [STAGES.PREVIEW]: 12000,
 };
 
 // Continue button appearance delay (milliseconds)
 const CONTINUE_BUTTON_DELAY = 1000;
 
-// Gold/amber/white confetti colors for boss celebrations
-const BOSS_CONFETTI_COLORS = ['#FFD700', '#FFC107', '#FFA000', '#FFFFFF', '#FFE082'];
+// Gold/amber/white confetti colors for boss celebrations.
+// Exported so VictoryScreen + other boss celebrations can reuse the palette (D-18 / Plan 33-08).
+// eslint-disable-next-line react-refresh/only-export-components
+export const BOSS_CONFETTI_COLORS = [
+  "#FFD700",
+  "#FFC107",
+  "#FFA000",
+  "#FFFFFF",
+  "#FFE082",
+];
 
 /**
  * Get congratulatory message based on the node's category
@@ -53,18 +61,23 @@ const BOSS_CONFETTI_COLORS = ['#FFD700', '#FFC107', '#FFA000', '#FFFFFF', '#FFE0
 const getPathCompleteMessage = (nodeId, t) => {
   const node = getNodeById(nodeId);
   if (!node) {
-    return t ? t('trail:boss.pathCompleteMessages.default') : 'You have mastered this path!';
+    return t
+      ? t("trail:boss.pathCompleteMessages.default")
+      : "You have mastered this path!";
   }
 
   const category = node.category;
   if (t) {
     const key = `trail:boss.pathCompleteMessages.${category}`;
-    return t(key, { defaultValue: t('trail:boss.pathCompleteMessages.default') });
+    return t(key, {
+      defaultValue: t("trail:boss.pathCompleteMessages.default"),
+    });
   }
-  if (category === 'treble_clef') return "You've mastered all Treble Clef notes!";
-  if (category === 'bass_clef') return 'Bass Clef Master!';
-  if (category === 'rhythm') return 'Rhythm Champion!';
-  return 'You have mastered this path!';
+  if (category === "treble_clef")
+    return "You've mastered all Treble Clef notes!";
+  if (category === "bass_clef") return "Bass Clef Master!";
+  if (category === "rhythm") return "Rhythm Champion!";
+  return "You have mastered this path!";
 };
 
 /**
@@ -75,11 +88,9 @@ const getPathCompleteMessage = (nodeId, t) => {
 const getUpcomingNodes = (nextNode) => {
   if (!nextNode) return [];
 
-  return SKILL_NODES
-    .filter(n =>
-      n.category === nextNode.category &&
-      n.order >= nextNode.order
-    )
+  return SKILL_NODES.filter(
+    (n) => n.category === nextNode.category && n.order >= nextNode.order
+  )
     .sort((a, b) => a.order - b.order)
     .slice(0, 4);
 };
@@ -90,10 +101,10 @@ const getUpcomingNodes = (nextNode) => {
  * @returns {string} Tailwind bg class
  */
 const getCategoryBgColor = (category) => {
-  if (category === 'treble_clef') return 'bg-blue-500';
-  if (category === 'bass_clef') return 'bg-purple-500';
-  if (category === 'rhythm') return 'bg-emerald-500';
-  return 'bg-yellow-500';
+  if (category === "treble_clef") return "bg-blue-500";
+  if (category === "bass_clef") return "bg-purple-500";
+  if (category === "rhythm") return "bg-emerald-500";
+  return "bg-yellow-500";
 };
 
 /**
@@ -113,15 +124,15 @@ export function BossUnlockModal({
   nextNode,
   stars,
   onClose,
-  onNavigateToNext
+  onNavigateToNext,
 }) {
-  const { t, i18n } = useTranslation(['trail', 'common']);
+  const { t, i18n } = useTranslation(["trail", "common"]);
   const { reducedMotion } = useAccessibility();
   const [stage, setStage] = useState(STAGES.CELEBRATION);
   const [showContinueButton, setShowContinueButton] = useState(false);
   const [windowSize, setWindowSize] = useState({
     width: window.innerWidth,
-    height: window.innerHeight
+    height: window.innerHeight,
   });
 
   // Refs for timeout cleanup
@@ -134,8 +145,8 @@ export function BossUnlockModal({
     const handleResize = () => {
       setWindowSize({ width: window.innerWidth, height: window.innerHeight });
     };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   // Clear all timers helper
@@ -189,12 +200,12 @@ export function BossUnlockModal({
   // Escape key dismisses modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
       }
     };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
   // Advance to next stage
@@ -232,7 +243,7 @@ export function BossUnlockModal({
       >
         <div className="w-full max-w-sm rounded-2xl border border-yellow-500/30 bg-slate-800/95 p-6 text-center backdrop-blur-sm">
           <h2 className="mb-3 text-2xl font-bold text-yellow-400">
-            {t('trail:boss.cleared')}
+            {t("trail:boss.cleared")}
           </h2>
 
           {/* Star display */}
@@ -241,27 +252,31 @@ export function BossUnlockModal({
               <span
                 key={starNum}
                 className={`text-3xl ${
-                  starNum <= stars ? 'text-yellow-400' : 'text-gray-600'
+                  starNum <= stars ? "text-yellow-400" : "text-gray-600"
                 }`}
               >
-                {starNum <= stars ? '\u2B50' : '\u2606'}
+                {starNum <= stars ? "\u2B50" : "\u2606"}
               </span>
             ))}
           </div>
 
-          <p className="mb-2 text-sm text-white/70">{translateNodeName(nodeName, t, i18n)}</p>
+          <p className="mb-2 text-sm text-white/70">
+            {translateNodeName(nodeName, t, i18n)}
+          </p>
 
           {nextNode ? (
             <>
               <p className="mb-4 text-sm text-white/80">
-                {t('trail:boss.next', { name: translateNodeName(nextNode.name, t, i18n) })}
+                {t("trail:boss.next", {
+                  name: translateNodeName(nextNode.name, t, i18n),
+                })}
               </p>
               <button
                 onClick={onNavigateToNext}
                 className="min-h-[48px] w-full rounded-full bg-white px-6 py-3 text-base font-bold text-slate-900 shadow-lg"
                 autoFocus
               >
-                {t('trail:boss.startNextNode')}
+                {t("trail:boss.startNextNode")}
               </button>
             </>
           ) : (
@@ -274,7 +289,7 @@ export function BossUnlockModal({
                 className="min-h-[48px] w-full rounded-full bg-white px-6 py-3 text-base font-bold text-slate-900 shadow-lg"
                 autoFocus
               >
-                {t('trail:boss.backToTrail')}
+                {t("trail:boss.backToTrail")}
               </button>
             </>
           )}
@@ -313,15 +328,16 @@ export function BossUnlockModal({
 
       {/* Content card */}
       <div className="relative z-[10002] w-full max-w-sm rounded-2xl border border-yellow-500/30 bg-slate-800/95 p-6 text-center backdrop-blur-sm">
-
         {/* ===== STAGE 1: CELEBRATION ===== */}
         {stage === STAGES.CELEBRATION && (
           <div className="animate-fade-in">
             <h2
               className="mb-3 text-3xl font-black text-yellow-400"
-              style={{ textShadow: '0 0 20px rgba(255, 215, 0, 0.5)' }}
+              style={{ textShadow: "0 0 20px rgba(255, 215, 0, 0.5)" }}
             >
-              {stars === 3 ? t('trail:boss.perfectVictory') : t('trail:boss.defeated')}
+              {stars === 3
+                ? t("trail:boss.perfectVictory")
+                : t("trail:boss.defeated")}
             </h2>
 
             {/* Star display */}
@@ -331,20 +347,22 @@ export function BossUnlockModal({
                   key={starNum}
                   className={`text-4xl transition-all duration-300 ${
                     starNum <= stars
-                      ? 'animate-bounce text-yellow-400 drop-shadow-lg'
-                      : 'text-gray-600'
+                      ? "animate-bounce text-yellow-400 drop-shadow-lg"
+                      : "text-gray-600"
                   }`}
                   style={{
                     animationDelay: `${starNum * 150}ms`,
-                    animationDuration: '600ms'
+                    animationDuration: "600ms",
                   }}
                 >
-                  {starNum <= stars ? '\u2B50' : '\u2606'}
+                  {starNum <= stars ? "\u2B50" : "\u2606"}
                 </span>
               ))}
             </div>
 
-            <p className="mb-6 text-sm text-white/60">{translateNodeName(nodeName, t, i18n)}</p>
+            <p className="mb-6 text-sm text-white/60">
+              {translateNodeName(nodeName, t, i18n)}
+            </p>
 
             {/* Continue button */}
             <button
@@ -352,13 +370,13 @@ export function BossUnlockModal({
               onClick={handleCelebrationContinue}
               className={`min-h-[48px] rounded-full bg-white px-8 py-3 text-base font-bold text-slate-900 shadow-lg transition-opacity duration-300 ${
                 showContinueButton
-                  ? 'opacity-100'
-                  : 'pointer-events-none opacity-0'
+                  ? "opacity-100"
+                  : "pointer-events-none opacity-0"
               }`}
               tabIndex={showContinueButton ? 0 : -1}
               aria-hidden={!showContinueButton}
             >
-              {t('trail:boss.continue')}
+              {t("trail:boss.continue")}
             </button>
           </div>
         )}
@@ -367,18 +385,20 @@ export function BossUnlockModal({
         {stage === STAGES.UNLOCK && (
           <div className="animate-fade-in">
             {/* Boss icon with golden glow */}
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-[0_0_30px_rgba(234,179,8,0.6)] animate-scale-up">
+            <div className="animate-scale-up mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400 to-amber-500 shadow-[0_0_30px_rgba(234,179,8,0.6)]">
               <Trophy className="h-10 w-10 text-amber-900" />
             </div>
 
             <h2
               className="mb-2 text-2xl font-black text-yellow-400"
-              style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}
+              style={{ textShadow: "0 0 15px rgba(255, 215, 0, 0.4)" }}
             >
-              {t('trail:boss.unitComplete')}
+              {t("trail:boss.unitComplete")}
             </h2>
 
-            <p className="mb-6 text-lg text-white/80">{translateNodeName(nodeName, t, i18n)}</p>
+            <p className="mb-6 text-lg text-white/80">
+              {translateNodeName(nodeName, t, i18n)}
+            </p>
 
             {/* Continue button */}
             <button
@@ -386,13 +406,13 @@ export function BossUnlockModal({
               onClick={advanceStage}
               className={`min-h-[48px] rounded-full bg-white px-8 py-3 text-base font-bold text-slate-900 shadow-lg transition-opacity duration-300 ${
                 showContinueButton
-                  ? 'opacity-100'
-                  : 'pointer-events-none opacity-0'
+                  ? "opacity-100"
+                  : "pointer-events-none opacity-0"
               }`}
               tabIndex={showContinueButton ? 0 : -1}
               aria-hidden={!showContinueButton}
             >
-              {t('trail:boss.continue')}
+              {t("trail:boss.continue")}
             </button>
           </div>
         )}
@@ -404,13 +424,15 @@ export function BossUnlockModal({
               <>
                 <h2
                   className="mb-3 text-2xl font-black text-yellow-400"
-                  style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}
+                  style={{ textShadow: "0 0 15px rgba(255, 215, 0, 0.4)" }}
                 >
-                  {t('trail:boss.newPathUnlocked')}
+                  {t("trail:boss.newPathUnlocked")}
                 </h2>
 
                 <p className="mb-4 text-lg text-white/90">
-                  {t('trail:boss.next', { name: translateNodeName(nextNode.name, t, i18n) })}
+                  {t("trail:boss.next", {
+                    name: translateNodeName(nextNode.name, t, i18n),
+                  })}
                 </p>
 
                 {/* Mini trail preview - upcoming nodes */}
@@ -422,7 +444,7 @@ export function BossUnlockModal({
                         className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
                           index === 0
                             ? `${getCategoryBgColor(node.category)} border-white/60`
-                            : 'border-gray-600 bg-gray-700'
+                            : "border-gray-600 bg-gray-700"
                         }`}
                         title={node.name}
                       >
@@ -440,13 +462,13 @@ export function BossUnlockModal({
                   onClick={onNavigateToNext}
                   className={`min-h-[48px] w-full rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-3 text-base font-bold text-amber-900 shadow-lg transition-opacity duration-300 ${
                     showContinueButton
-                      ? 'opacity-100'
-                      : 'pointer-events-none opacity-0'
+                      ? "opacity-100"
+                      : "pointer-events-none opacity-0"
                   }`}
                   tabIndex={showContinueButton ? 0 : -1}
                   aria-hidden={!showContinueButton}
                 >
-                  {t('trail:boss.startNextNode')}
+                  {t("trail:boss.startNextNode")}
                 </button>
               </>
             ) : (
@@ -458,9 +480,9 @@ export function BossUnlockModal({
 
                 <h2
                   className="mb-3 text-2xl font-black text-yellow-400"
-                  style={{ textShadow: '0 0 15px rgba(255, 215, 0, 0.4)' }}
+                  style={{ textShadow: "0 0 15px rgba(255, 215, 0, 0.4)" }}
                 >
-                  {t('trail:boss.pathComplete')}
+                  {t("trail:boss.pathComplete")}
                 </h2>
 
                 <p className="mb-6 text-base text-white/80">
@@ -473,13 +495,13 @@ export function BossUnlockModal({
                   onClick={onClose}
                   className={`min-h-[48px] w-full rounded-full bg-white px-8 py-3 text-base font-bold text-slate-900 shadow-lg transition-opacity duration-300 ${
                     showContinueButton
-                      ? 'opacity-100'
-                      : 'pointer-events-none opacity-0'
+                      ? "opacity-100"
+                      : "pointer-events-none opacity-0"
                   }`}
                   tabIndex={showContinueButton ? 0 : -1}
                   aria-hidden={!showContinueButton}
                 >
-                  {t('trail:boss.backToTrail')}
+                  {t("trail:boss.backToTrail")}
                 </button>
               </>
             )}

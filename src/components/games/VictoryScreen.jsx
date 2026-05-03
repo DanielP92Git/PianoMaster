@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useVictoryState } from "../../hooks/useVictoryState";
 import { ConfettiEffect } from "../celebrations/ConfettiEffect";
-import { BossUnlockModal } from "../celebrations/BossUnlockModal";
+import {
+  BossUnlockModal,
+  BOSS_CONFETTI_COLORS,
+} from "../celebrations/BossUnlockModal";
 import AccessoryUnlockModal from "../ui/AccessoryUnlockModal";
 import RateLimitBanner from "../ui/RateLimitBanner";
 import { Trophy, Zap } from "lucide-react";
@@ -111,10 +114,12 @@ const VictoryScreen = ({
 
   return (
     <div className="victory-bg fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-2 sm:p-4">
-      {/* Confetti overlay for full/epic celebrations */}
+      {/* Confetti overlay for full/epic celebrations.
+          D-18 (Plan 33-08): boss nodes get gold/amber palette via BOSS_CONFETTI_COLORS. */}
       {showConfetti && (
         <ConfettiEffect
           tier={celebrationData.tier}
+          colors={celebrationData.isBoss ? BOSS_CONFETTI_COLORS : undefined}
           onComplete={() => setShowConfetti(false)}
         />
       )}
