@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.3
 milestone_name: Rhythm Trail Fix & Polish
 status: executing
-last_updated: "2026-05-03T21:53:07.293Z"
+last_updated: "2026-05-03T22:02:19.664Z"
 last_activity: 2026-05-03
 progress:
   total_phases: 10
   completed_phases: 4
   total_plans: 20
-  completed_plans: 15
-  percent: 75
+  completed_plans: 16
+  percent: 80
 ---
 
 # Project State
@@ -25,13 +25,13 @@ See: .planning/PROJECT.md (updated 2026-04-13)
 ## Current Position
 
 Phase: 33 (rhythm-issues-cleanup) — EXECUTING
-Plan: 4 of 10
+Plan: 5 of 10
 Status: Ready to execute
 Last activity: 2026-05-03
 Resume: .planning/phases/33-rhythm-issues-cleanup/33-CONTEXT.md
 
 ```
-Progress: [███████░░░] 70%
+Progress: [████████░░] 80%
 ```
 
 ## Performance Metrics
@@ -52,6 +52,7 @@ Progress: [███████░░░] 70%
 - Phase 31 is standalone: long-press sustain is a significant UX mechanic with its own interaction model
 - Phase 32 groups PLAY-02/03/04 as game design differentiation requiring exploration/iteration
 - [Phase ?]: 33-03: Honored D-13 verbatim — useEnsureAudioReady wraps PulseQuestion.startFlow's proven prewarm sequence
+- [Phase 33]: Plan 33-06: Stash Chunk A salvaged via Option A (reference-only fresh edit). D-09 central duration filter added to both resolveByTags and resolveByAnyTag. ArcadeRhythmGame migrated to tag-based resolver with D-10 per-session coverage. OLD getPattern retained as fallback. Plan 33-09 unblocked.
 
 ### Roadmap Evolution
 
