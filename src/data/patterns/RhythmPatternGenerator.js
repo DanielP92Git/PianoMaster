@@ -244,6 +244,15 @@ export function resolveByTags(tags, durations, options = {}) {
     matching = matching.filter((p) => !patternNeedsRests(p.pattern, durations));
   }
 
+  // D-09 (Phase 33): require the resolved vex output to be a subset of `durations`.
+  // This is the central duration filter — protects pulse, dictation, reading, and tap
+  // simultaneously by catching tag-vs-duration drift at the resolution layer.
+  // See .planning/phases/33-rhythm-issues-cleanup/33-PATTERNS.md §4.
+  matching = matching.filter((p) => {
+    const vex = binaryToVexDurations(p.pattern, durations, p.timeSignature);
+    return vex.every((code) => durations.includes(code));
+  });
+
   if (matching.length === 0) return null;
 
   const selected = matching[Math.floor(Math.random() * matching.length)];
@@ -290,6 +299,16 @@ export function resolveByAnyTag(tags, durations, options = {}) {
   if (!allowRests) {
     matching = matching.filter((p) => !patternNeedsRests(p.pattern, durations));
   }
+
+  // D-09 (Phase 33): require the resolved vex output to be a subset of `durations`.
+  // Mirrors the filter in resolveByTags — applied here for OR-mode (cumulative
+  // boss/speed pools) to ensure tag-vs-duration drift is caught at the resolution
+  // layer regardless of which resolver is used.
+  // See .planning/phases/33-rhythm-issues-cleanup/33-PATTERNS.md §4.
+  matching = matching.filter((p) => {
+    const vex = binaryToVexDurations(p.pattern, durations, p.timeSignature);
+    return vex.every((code) => durations.includes(code));
+  });
 
   if (matching.length === 0) return null;
 
