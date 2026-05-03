@@ -31,7 +31,7 @@ created: 2026-05-03
   4. Tap "Listen" button on the discovery_intro question (FIRST tap of the session)
   5. Listen carefully — count audible quarter-note clicks
 - Expected (per current code, RESEARCH §4): All 4 quarter notes audible from t=0; no clipping; no missing first note. (May still reproduce — fix candidate for D-13/D-14.)
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
 - Notes:
 
 ## Issue 2/9: Node 1_3 still uses unlearned rests
@@ -43,7 +43,7 @@ created: 2026-05-03
   3. Replay the node 5 times total (stochastic pattern selection)
   4. Watch for any rest symbol on staff or any silent-beat in audio
 - Expected (per current code, RESEARCH §3 Unit 1 + §1 Issue 2): No rest symbol shown, no silent beat; only quarter and half notes appear. `patternNeedsRests` filter should have already removed rest-bearing patterns.
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
 - Notes:
 
 ## Issue 4: Eighths discovery first-play (Unit 3 node 3_1 vs Unit 8 node 8_1)
@@ -55,7 +55,7 @@ created: 2026-05-03
   3. /trail → unit 8 → node 8_1 ("Off-Beat Surprise") → tap Listen on discovery_intro
   4. Compare: 8_1 plays 4 plain eighth notes (NOT pairs, NOT pitch-alternating) per RESEARCH §3 Unit 8
 - Expected (per current code, RESEARCH §1 Issue 4 + §3): 3_1 = 4 pairs of beamed eighths with hi-lo pitch alternation. 8_1 = 4 plain single eighths (research flags this as a potential drift; user judges whether it's a bug).
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
 - Notes (specify which node, 3_1 or 8_1, has the issue):
 
 ## Issue 5: Section/content title mismatches across all 8 units
@@ -70,8 +70,8 @@ created: 2026-05-03
      - rhythm_6_4 "Fast and Faster" → name promises tempo contrast; content is duration variety
      - rhythm_8_1 "Off-Beat Surprise" → discovery_intro plays plain eighths, not off-beats
 - Expected (per CONTEXT D-11): User approves or rejects each rename proposal.
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
-- Notes (per node):
+- Mark: [x] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Notes (per node): section 2 name is still "Eighth Notes" while the 1st node is "Meet Whole Notes", same with other sections and 1st node naming problem in rhythm trail
 
 ## Issue 6: Console 404 + rate-limit warning
 
@@ -81,7 +81,7 @@ created: 2026-05-03
   2. /trail → complete any node (any unit, any node)
   3. Watch console output during and after node completion
 - Expected (per current code, RESEARCH §7): "Rate limit function not found in database. Allowing request. Run migration 20260201000002_add_rate_limiting.sql to enable rate limiting." warning appears. CONFIRMED-BUG by code review — fix is D-07 migration deploy.
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [x] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
 - Notes:
 
 ## Issue 7: Dictation Listen fails on first click inside MixedLessonGame
@@ -93,7 +93,7 @@ created: 2026-05-03
   3. Tap "Listen" — FIRST tap, carefully time observation
   4. If sound plays on first tap: resolved. If silent on first tap, sound on Replay/second tap: confirmed-bug.
 - Expected (per current code, RESEARCH §4 Issue 7): Sound plays on first tap. Race in `gainNodeRef` setup may cause silent first tap inside MixedLessonGame mount. Fix is D-13 shared prewarm hook.
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
 - Notes:
 
 ## Issue 8: Pulse game in quarter-only node generates halves
@@ -104,8 +104,8 @@ created: 2026-05-03
   2. Watch the pulse circles — count the beats; confirm all 4 beats are quarter-equal (no double-length stretched indicators)
   3. CRITICAL: User MUST distinguish pulse-game (4 expanding circles, no notation) vs rhythm_tap (notation + tap)
 - Expected (per current code, RESEARCH §1 Issue 8): NOT-A-BUG. PulseQuestion uses hardcoded PULSE_BEATS (4 quarters). User likely confused pulse with rhythm_tap. If user actually saw halves in PulseQuestion specifically, escalate. If in rhythm_tap, that's Issue 10 territory + ArcadeRhythmGame OLD getPattern path.
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
-- Notes (specify game type seen — pulse circles or tap notation):
+- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [x] cannot-reproduce
+- Notes (specify game type seen — pulse circles or tap notation): node never shows pulse game, only tap notation
 
 ## Issue 10: Combined-values nodes not shuffling all expected durations
 
@@ -116,7 +116,7 @@ created: 2026-05-03
   3. Track: did at least 1 pattern contain a HALF note? At least 1 contain only QUARTERS?
   4. Replay 3x to assess statistically
 - Expected (per current code + D-10): At least 1 halves-pattern AND at least 1 quarters-pattern per session. Phase 32 D-02 no-consecutive rule active. May still reproduce as bug if ArcadeRhythmGame path is hit (OLD getPattern); MIXED_LESSON path uses resolveByTags which is broader.
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
 - Notes:
 
 ## Issue 11: Rhythm pattern node feels same as practice — DROPPED PER CONTEXT D-04
@@ -132,7 +132,7 @@ Phase 32 D-11 already removed all 6 Mix-Up nodes. Issue is structurally resolved
   3. Subjective rating (1=very stale, 5=fresh): **\_**
   4. Specifically note: did patterns feel repetitive, or did the no-consecutive rule feel sufficient? (D-05 dropped the "10 exercises too long" subclaim — TOTAL_PATTERNS already 8.)
 - Expected (per RESEARCH §6 D-19 trigger): At U1 there is intrinsic pool ceiling (≤7 distinct binaries with quarter+half tags); some repetition unavoidable. If user rates ≤2 AND replays rhythm_3_6 (Unit 3) AND rates that ≤2 too, fire D-19 (cumulative tags on speed nodes — depends on Stash Chunk A salvage in Plan 33-06).
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Mark: [x] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
 - Notes (rating + free-form):
 
 ## Issue 13: Boss differentiation perception
@@ -148,13 +148,13 @@ Phase 32 D-11 already removed all 6 Mix-Up nodes. Issue is structurally resolved
      - "Even my child didn't notice it was a boss"
      - "I want it to feel like a boss"
 - Expected (per Phase 32 verification, RESEARCH §5): Boss timing tier strict (BOSS removed from EASY_NODE_TYPES), 4-bar patterns, dictation-heavy Q-mix, cumulative duration set. Content levers shipped. User-felt flatness gates D-18 (boss intro overlay + victory VFX in Plan 33-08).
-- Mark: [ ] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
-- Notes (rating + which boss[es] felt flat):
+- Mark: [x] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
+- Notes (rating + which boss[es] felt flat): boss_rhythm_1 rating=1, boss_rhythm_6 rating=3, boss_rhythm_8 rating=3
 
 ---
 
 ## Sign-off
 
-- [ ] All 10 active issue sections marked
-- [ ] Issue 11 acknowledged as DROPPED-PER-CONTEXT (no action)
-- [ ] User's confirmed-bug subset feeds Wave 2 plan triggering (33-03 unconditional, 33-04/05 unconditional, 33-06 unconditional, 33-07 contingent on Issue 1 OR 4 confirmed-bug, 33-08 contingent on Issue 13 confirmed-bug, 33-09 contingent on Issue 12 confirmed-bug)
+- [x] All 10 active issue sections marked
+- [x] Issue 11 acknowledged as DROPPED-PER-CONTEXT (no action)
+- [x] User's confirmed-bug subset feeds Wave 2 plan triggering (33-03 unconditional, 33-04/05 unconditional, 33-06 unconditional, 33-07 contingent on Issue 1 OR 4 confirmed-bug, 33-08 contingent on Issue 13 confirmed-bug, 33-09 contingent on Issue 12 confirmed-bug)
