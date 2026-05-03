@@ -24,7 +24,7 @@ Requirements for rhythm trail bug fixes, gameplay tuning, and polish. Each maps 
 
 - [ ] **PLAY-01**: Half/whole notes in listen&tap and pulse require sustained long press matching note duration (piano-like feel)
 - [ ] **PLAY-02**: Speed Challenge generates varied patterns with appropriate exercise count for kids
-- [ ] **PLAY-03**: Boss nodes deliver a distinctly different, more challenging experience than regular nodes
+- [x] **PLAY-03**: Boss nodes deliver a distinctly different, more challenging experience than regular nodes
 - [ ] **PLAY-04**: Rhythm pattern nodes are differentiated from practice nodes (unique content or replaced)
 
 ### Code Quality
@@ -69,7 +69,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-04     | 29    | Complete |
 | PLAY-01     | 31    | Pending  |
 | PLAY-02     | 32    | Pending  |
-| PLAY-03     | 32    | Pending  |
+| PLAY-03     | 32    | Complete |
 | PLAY-04     | 32    | Pending  |
 | CODE-01     | 29    | Pending  |
 | CODE-02     | 29    | Pending  |
