@@ -269,7 +269,6 @@ export const useAudioEngine = (
       try {
         if (METRONOME_TIMING_DEBUG) {
           console.debug("[createMetronomeClick]", {
-            // eslint-disable-line no-console
             requestedTime: time,
             audioCurrentTime: audioContextRef.current.currentTime,
             deltaSeconds: time - audioContextRef.current.currentTime,
@@ -1203,6 +1202,7 @@ export const useAudioEngine = (
     // Control methods
     initializeAudioContext,
     resumeAudioContext,
+    loadPianoSound,
     cleanup,
 
     // Audio generation
