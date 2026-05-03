@@ -157,8 +157,20 @@ export const RHYTHM_PATTERNS = [
   {
     id: "qhw_44_001",
     timeSignature: "4/4",
-    // D-12: removed "quarter-half" — single onset at slot 0 needs whole-note OR rests in [q,h] context
-    tags: ["quarter-half-whole", "half-rest", "whole-rest", "dotted-half"],
+    // D-12 audit (Phase 33 Plan 33-04): "quarter-half" tag RETAINED.
+    // In [q,h] context (rhythm_1_3) this pattern needs rests, but the runtime
+    // patternNeedsRests filter in resolveByTags blocks it. In [q,h,w] context
+    // (rhythm_2_4) this pattern is rest-free (single onset → whole note) and
+    // is required for whole-note variety. Removing the tag broke the
+    // DATA-04 variety test for rhythm_2_4. Belt-and-suspenders cleanup
+    // does not apply here — runtime filter is the safety net.
+    tags: [
+      "quarter-half",
+      "quarter-half-whole",
+      "half-rest",
+      "whole-rest",
+      "dotted-half",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   },
