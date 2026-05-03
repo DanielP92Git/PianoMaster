@@ -21,6 +21,11 @@
  * pattern [1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0] could represent "h q q" or
  * "q qr q q" depending on rendering context. The game engine (Phase 22)
  * selects appropriate VexFlow rendering based on the node's duration set.
+ *
+ * D-12 (Phase 33 Plan 33-04): rest-bearing patterns removed from quarter-half tag pool.
+ * resolveByTags()'s patternNeedsRests filter is the runtime guard; this is belt-and-suspenders cleanup.
+ * Audit date: 2026-05-03. See .planning/phases/33-rhythm-issues-cleanup/33-RESEARCH.md §3 Unit 1.
+ * Backlog: quarter-only rest-pool audit deferred to follow-up if UAT issue 2/9 surfaces it system-wide.
  */
 
 export const RHYTHM_PATTERNS = [
@@ -94,9 +99,9 @@ export const RHYTHM_PATTERNS = [
   {
     id: "q_44_006",
     timeSignature: "4/4",
+    // D-12: removed "quarter-half" — pattern needs rests in [q,h] context (gap 12 between onsets ∉ {4,8})
     tags: [
       "quarter-only",
-      "quarter-half",
       "quarter-half-whole",
       "quarter-rest",
       "half-rest",
@@ -109,12 +114,8 @@ export const RHYTHM_PATTERNS = [
   {
     id: "q_44_007",
     timeSignature: "4/4",
-    tags: [
-      "quarter-only",
-      "quarter-half",
-      "quarter-half-whole",
-      "quarter-rest",
-    ],
+    // D-12: removed "quarter-half" — pattern has leading rest (first onset at slot 4, not 0)
+    tags: ["quarter-only", "quarter-half-whole", "quarter-rest"],
     measures: 1,
     pattern: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -138,7 +139,8 @@ export const RHYTHM_PATTERNS = [
   {
     id: "qh_44_002",
     timeSignature: "4/4",
-    tags: ["quarter-half", "whole-rest"],
+    // D-12: removed "quarter-half" — pattern has leading rest (first onset at slot 4, not 0)
+    tags: ["whole-rest"],
     measures: 1,
     pattern: [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
   },
@@ -146,7 +148,8 @@ export const RHYTHM_PATTERNS = [
   {
     id: "qh_44_003",
     timeSignature: "4/4",
-    tags: ["quarter-half", "half-rest", "dotted-half"],
+    // D-12: removed "quarter-half" — pattern has trailing rest (gap from onset 4 to end = 12 ∉ {4,8})
+    tags: ["half-rest", "dotted-half"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   },
@@ -154,13 +157,8 @@ export const RHYTHM_PATTERNS = [
   {
     id: "qhw_44_001",
     timeSignature: "4/4",
-    tags: [
-      "quarter-half",
-      "quarter-half-whole",
-      "half-rest",
-      "whole-rest",
-      "dotted-half",
-    ],
+    // D-12: removed "quarter-half" — single onset at slot 0 needs whole-note OR rests in [q,h] context
+    tags: ["quarter-half-whole", "half-rest", "whole-rest", "dotted-half"],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
   },
