@@ -287,6 +287,9 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
+      // D-19 (Phase 33 Plan 33-09): rhythm_7_6 deliberately NOT cumulative.
+      // 6/8 compound meter is a standalone pool; mixing in 4/4 patterns from prior units
+      // doesn't make musical sense. Per RESEARCH §3 Unit 7 line 227.
       patternTags: ["six-eight"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",

@@ -281,7 +281,21 @@ export const rhythmUnit8Nodes = [
       durations: ["qd", "8", "q"],
       focusDurations: [],
       contextDurations: ["qd", "8", "q"],
-      patternTags: ["syncopation", "dotted-syncopation"],
+      // D-19 (Phase 33 Plan 33-09): cumulative speed-pool tags mirror boss D-06.
+      // ArcadeRhythmGame's tag-based resolver (Plan 33-06) draws from this expanded pool.
+      // U7 (six-eight) deliberately excluded — different time signature.
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "dotted-quarter",
+        "syncopation",
+        "dotted-syncopation",
+      ], // D-19: cumulative U1-U6 + U8 (half-rest, whole-rest, dotted-half, sixteenth pruned — incompatible with node durations [qd,8,q])
+      patternTagMode: "any", // D-19: OR-mode for cumulative pool
       tempo: { min: 80, max: 85, default: 83 },
       pitch: "C4",
       timeSignature: "4/4",
@@ -330,8 +344,33 @@ export const rhythmUnit8Nodes = [
       complexity: RHYTHM_COMPLEXITY.ALL,
       durations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"], // D-06: cumulative U1-U8 (all durations)
       focusDurations: [],
-      contextDurations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"],
-      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth", "quarter-rest", "half-rest", "whole-rest", "dotted-half", "dotted-quarter", "sixteenth", "syncopation", "dotted-syncopation"], // D-06: cumulative U1-U8
+      contextDurations: [
+        "q",
+        "h",
+        "w",
+        "8",
+        "16",
+        "qr",
+        "hr",
+        "wr",
+        "hd",
+        "qd",
+      ],
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "half-rest",
+        "whole-rest",
+        "dotted-half",
+        "dotted-quarter",
+        "sixteenth",
+        "syncopation",
+        "dotted-syncopation",
+      ], // D-06: cumulative U1-U8
       patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
       measureCount: 4, // D-08: full BOSS uses 4-bar patterns
       tempo: { min: 75, max: 85, default: 80 },

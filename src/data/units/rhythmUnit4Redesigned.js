@@ -348,7 +348,19 @@ export const rhythmUnit4Nodes = [
       durations: ["q", "h", "w", "qr", "hr", "wr"],
       focusDurations: [],
       contextDurations: ["q", "h", "qr", "hr", "wr"],
-      patternTags: ["quarter-rest", "half-rest", "whole-rest"],
+      // D-19 (Phase 33 Plan 33-09): cumulative speed-pool tags mirror boss D-06.
+      // ArcadeRhythmGame's tag-based resolver (Plan 33-06) draws from this expanded pool.
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "half-rest",
+        "whole-rest",
+      ], // D-19: cumulative U1-U4
+      patternTagMode: "any", // D-19: OR-mode for cumulative pool
       tempo: { min: 85, max: 95, default: 90 }, // Fixed fast tempo
       pitch: "C4",
       timeSignature: "4/4",

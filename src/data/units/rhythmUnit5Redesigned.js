@@ -339,7 +339,20 @@ export const rhythmUnit5Nodes = [
       durations: ["q", "h", "hd", "qd", "8"],
       focusDurations: [],
       contextDurations: ["q", "h", "hd", "qd", "8"],
-      patternTags: ["dotted-half", "dotted-quarter"],
+      // D-19 (Phase 33 Plan 33-09): cumulative speed-pool tags mirror boss D-06.
+      // ArcadeRhythmGame's tag-based resolver (Plan 33-06) draws from this expanded pool.
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "half-rest",
+        "dotted-half",
+        "dotted-quarter",
+      ], // D-19: cumulative U1-U5 (whole-rest pruned — no 'wr' in node durations)
+      patternTagMode: "any", // D-19: OR-mode for cumulative pool
       tempo: { min: 90, max: 100, default: 95 }, // Fixed fast tempo
       pitch: "C4",
       timeSignature: "4/4",
@@ -387,7 +400,18 @@ export const rhythmUnit5Nodes = [
       durations: ["q", "h", "w", "8", "qr", "hr", "wr", "hd", "qd"], // D-06: cumulative U1-U5
       focusDurations: [],
       contextDurations: ["q", "h", "w", "8", "qr", "hr", "wr", "hd", "qd"],
-      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth", "quarter-rest", "half-rest", "whole-rest", "dotted-half", "dotted-quarter"], // D-06: cumulative U1-U5
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "half-rest",
+        "whole-rest",
+        "dotted-half",
+        "dotted-quarter",
+      ], // D-06: cumulative U1-U5
       patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
