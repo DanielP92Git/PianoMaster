@@ -16,14 +16,33 @@ vi.mock("react-i18next", () => ({
   })),
 }));
 
-// Mock useAudioEngine — expose initializeAudioContext for assertion
+// Mock useAudioEngine — exposes the surface that useEnsureAudioReady composes
+// (resumeAudioContext, loadPianoSound, isReady, audioContextRef) plus the legacy
+// initializeAudioContext for backward compatibility.
 vi.mock("../../../../../hooks/useAudioEngine", () => ({
   useAudioEngine: vi.fn(() => ({
-    audioContextRef: { current: null },
-    gainNodeRef: { current: null },
+    audioContextRef: {
+      current: {
+        state: "running",
+        currentTime: 0,
+        createOscillator: vi.fn(() => ({
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+        })),
+        createGain: vi.fn(() => ({
+          gain: { setValueAtTime: vi.fn() },
+          connect: vi.fn(),
+        })),
+        destination: {},
+      },
+    },
+    gainNodeRef: { current: {} },
     getCurrentTime: vi.fn(() => 0),
     initializeAudioContext: vi.fn(() => Promise.resolve(true)),
     resumeAudioContext: vi.fn(() => Promise.resolve(true)),
+    loadPianoSound: vi.fn(() => Promise.resolve(true)),
+    isReady: vi.fn(() => true),
     createPianoSound: vi.fn(),
   })),
 }));
@@ -101,6 +120,43 @@ const mockQuestion = {
   correctIndex: 0,
 };
 
+// Build a mock useAudioEngine return value that satisfies useEnsureAudioReady's
+// post-conditions (isReady() === true, audioContextRef.current present with
+// minimal WebAudio surface for the warmup oscillator).
+function makeReadyMockEngine({ onResume, onLoadPiano } = {}) {
+  return {
+    audioContextRef: {
+      current: {
+        state: "running",
+        currentTime: 0,
+        createOscillator: vi.fn(() => ({
+          connect: vi.fn(),
+          start: vi.fn(),
+          stop: vi.fn(),
+        })),
+        createGain: vi.fn(() => ({
+          gain: { setValueAtTime: vi.fn() },
+          connect: vi.fn(),
+        })),
+        destination: {},
+      },
+    },
+    gainNodeRef: { current: {} },
+    getCurrentTime: vi.fn(() => 0),
+    initializeAudioContext: vi.fn(() => Promise.resolve(true)),
+    resumeAudioContext: vi.fn(() => {
+      onResume?.();
+      return Promise.resolve(true);
+    }),
+    loadPianoSound: vi.fn(() => {
+      onLoadPiano?.();
+      return Promise.resolve(true);
+    }),
+    isReady: vi.fn(() => true),
+    createPianoSound: vi.fn(),
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
@@ -115,45 +171,12 @@ describe("RhythmDictationQuestion", () => {
     vi.useRealTimers();
   });
 
-  it("calls initializeAudioContext before first listen click plays audio", async () => {
-    const mockEngine = {
-      audioContextRef: { current: null },
-      gainNodeRef: { current: null },
-      getCurrentTime: vi.fn(() => 0),
-      initializeAudioContext: vi.fn(() => Promise.resolve(true)),
-      resumeAudioContext: vi.fn(() => Promise.resolve(true)),
-      createPianoSound: vi.fn(),
-    };
-    useAudioEngine.mockReturnValue(mockEngine);
+  // D-13: handleListen now delegates to useEnsureAudioReady which calls
+  // resumeAudioContext + loadPianoSound + warmup oscillator + isReady().
+  // The legacy direct initializeAudioContext call has been removed.
 
-    render(
-      <RhythmDictationQuestion question={mockQuestion} onComplete={vi.fn()} />
-    );
-
-    const listenButton = screen.getByText("Listen");
-    await act(async () => {
-      fireEvent.click(listenButton);
-    });
-
-    expect(mockEngine.initializeAudioContext).toHaveBeenCalled();
-  });
-
-  it("calls resumeAudioContext after initializeAudioContext", async () => {
-    const callOrder = [];
-    const mockEngine = {
-      audioContextRef: { current: null },
-      gainNodeRef: { current: null },
-      getCurrentTime: vi.fn(() => 0),
-      initializeAudioContext: vi.fn(() => {
-        callOrder.push("initializeAudioContext");
-        return Promise.resolve(true);
-      }),
-      resumeAudioContext: vi.fn(() => {
-        callOrder.push("resumeAudioContext");
-        return Promise.resolve(true);
-      }),
-      createPianoSound: vi.fn(),
-    };
+  it("calls ensureAudioReady (resumeAudioContext) on first listen click", async () => {
+    const mockEngine = makeReadyMockEngine();
     useAudioEngine.mockReturnValue(mockEngine);
 
     render(
@@ -166,11 +189,32 @@ describe("RhythmDictationQuestion", () => {
     });
 
     expect(mockEngine.resumeAudioContext).toHaveBeenCalled();
-    // initializeAudioContext must have been called before resumeAudioContext
-    const initIdx = callOrder.indexOf("initializeAudioContext");
+  });
+
+  it("awaits loadPianoSound before scheduling playback (D-13 prewarm)", async () => {
+    const callOrder = [];
+    const mockEngine = makeReadyMockEngine({
+      onResume: () => callOrder.push("resumeAudioContext"),
+      onLoadPiano: () => callOrder.push("loadPianoSound"),
+    });
+    useAudioEngine.mockReturnValue(mockEngine);
+
+    render(
+      <RhythmDictationQuestion question={mockQuestion} onComplete={vi.fn()} />
+    );
+
+    const listenButton = screen.getByText("Listen");
+    await act(async () => {
+      fireEvent.click(listenButton);
+    });
+
+    expect(mockEngine.resumeAudioContext).toHaveBeenCalled();
+    expect(mockEngine.loadPianoSound).toHaveBeenCalled();
+    // resumeAudioContext must have been called before loadPianoSound
     const resumeIdx = callOrder.indexOf("resumeAudioContext");
-    expect(initIdx).toBeGreaterThanOrEqual(0);
-    expect(resumeIdx).toBeGreaterThan(initIdx);
+    const loadIdx = callOrder.indexOf("loadPianoSound");
+    expect(resumeIdx).toBeGreaterThanOrEqual(0);
+    expect(loadIdx).toBeGreaterThan(resumeIdx);
   });
 
   it("renders Listen button in LISTEN_PROMPT phase", () => {

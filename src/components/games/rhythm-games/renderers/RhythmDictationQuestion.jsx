@@ -14,6 +14,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Volume2, RotateCcw } from "lucide-react";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
+import { useEnsureAudioReady } from "../../../../hooks/useEnsureAudioReady";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
 import { useSounds } from "../../../../features/games/hooks/useSounds";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
@@ -50,6 +51,14 @@ export default function RhythmDictationQuestion({
     sharedAudioContext: audioContextRef.current,
   });
 
+  // D-13: shared audio prewarm — replaces inline initializeAudioContext+resumeAudioContext
+  // (was insufficient: didn't await loadPianoSound or run warmup oscillator,
+  // causing UAT issue 7 — first Listen click silent inside MixedLessonGame).
+  const ensureAudioReady = useEnsureAudioReady(
+    audioEngine,
+    getOrCreateAudioContext
+  );
+
   // enginePlayNote wrapper for schedulePatternPlayback
   const enginePlayNote = useCallback(
     (_note, opts) => {
@@ -66,7 +75,11 @@ export default function RhythmDictationQuestion({
 
   // State
   const [phase, setPhase] = useState(PHASES.LISTEN_PROMPT);
-  const [cardStates, setCardStates] = useState(["default", "default", "default"]);
+  const [cardStates, setCardStates] = useState([
+    "default",
+    "default",
+    "default",
+  ]);
   const [isPlaying, setIsPlaying] = useState(false);
   const hasCompletedRef = useRef(false);
   const feedbackTimerRef = useRef(null);
@@ -110,29 +123,39 @@ export default function RhythmDictationQuestion({
         enginePlayNote
       );
 
-      feedbackTimerRef.current = setTimeout(() => {
-        isPlayingRef.current = false;
-        setIsPlaying(false);
-        onDone?.();
-      }, (totalDuration + 0.3) * 1000);
+      feedbackTimerRef.current = setTimeout(
+        () => {
+          isPlayingRef.current = false;
+          setIsPlaying(false);
+          onDone?.();
+        },
+        (totalDuration + 0.3) * 1000
+      );
     },
-    [audioContextRef, getOrCreateAudioContext, correctBeats, tempo, enginePlayNote]
+    [
+      audioContextRef,
+      getOrCreateAudioContext,
+      correctBeats,
+      tempo,
+      enginePlayNote,
+    ]
   );
 
   // Handle "Listen" button tap
   const handleListen = useCallback(async () => {
-    try {
-      await audioEngine.initializeAudioContext(); // D-03/D-04: sets gainNodeRef before scheduling
-      await audioEngine.resumeAudioContext(); // D-01: ensures ctx.state === "running"
-    } catch {
-      getOrCreateAudioContext();
+    // D-13: single source of truth for audio prewarm (await resume + loadPianoSound + warmup).
+    const ready = await ensureAudioReady();
+    if (!ready) {
+      // Audio pipeline not ready (e.g., iOS interrupted state). Surface silently;
+      // the user can tap Listen again or rely on existing AudioInterruptedOverlay
+      // recovery flow.
+      return;
     }
-
     setPhase(PHASES.LISTENING);
     await playPattern(() => {
       setPhase(PHASES.CHOOSING);
     });
-  }, [audioEngine, getOrCreateAudioContext, playPattern]);
+  }, [ensureAudioReady, playPattern]);
 
   // Handle replay during choosing
   const handleReplay = useCallback(() => {
@@ -182,12 +205,18 @@ export default function RhythmDictationQuestion({
     <div
       className="flex w-full flex-col items-center gap-4"
       role="main"
-      aria-label={t("game.rhythmDictation.ariaLabel", "Rhythm dictation exercise")}
+      aria-label={t(
+        "game.rhythmDictation.ariaLabel",
+        "Rhythm dictation exercise"
+      )}
     >
       {/* Instruction text */}
       <p className="text-center text-lg font-semibold text-white">
         {phase === PHASES.LISTEN_PROMPT &&
-          t("game.rhythmDictation.listenPrompt", "Listen to the pattern, then pick the matching notation")}
+          t(
+            "game.rhythmDictation.listenPrompt",
+            "Listen to the pattern, then pick the matching notation"
+          )}
         {phase === PHASES.LISTENING &&
           t("game.rhythmDictation.listening", "Listening...")}
         {phase === PHASES.CHOOSING &&
@@ -204,8 +233,8 @@ export default function RhythmDictationQuestion({
             "flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-5 py-3",
             "text-white transition-colors duration-150",
             isPlaying
-              ? "opacity-60 cursor-default"
-              : "hover:bg-white/20 hover:border-white/40 cursor-pointer",
+              ? "cursor-default opacity-60"
+              : "cursor-pointer hover:border-white/40 hover:bg-white/20",
           ].join(" ")}
           aria-label={
             phase === PHASES.LISTEN_PROMPT
