@@ -10,7 +10,7 @@ Requirements for rhythm trail bug fixes, gameplay tuning, and polish. Each maps 
 ### Audio & Playback
 
 - [ ] **AUDIO-01**: First play of quarter/eighth note presentations plays without audio trimming (audio context pre-warmed)
-- [ ] **AUDIO-02**: Dictation game 'listen' button plays the pattern on first click (not only on 'replay')
+- [x] **AUDIO-02**: Dictation game 'listen' button plays the pattern on first click (not only on 'replay')
 - [ ] **AUDIO-03**: Eighths discovery presentation plays 4 pairs of beamed eighth notes in sequence
 
 ### Data & Curriculum
@@ -58,22 +58,22 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status  |
-| ----------- | ----- | ------- |
-| AUDIO-01    | 30    | Pending |
-| AUDIO-02    | 30    | Pending |
-| AUDIO-03    | 30    | Pending |
-| DATA-01     | 29    | Pending |
-| DATA-02     | 29    | Pending |
-| DATA-03     | 29    | Pending |
-| DATA-04     | 29    | Pending |
-| PLAY-01     | 31    | Pending |
-| PLAY-02     | 32    | Pending |
-| PLAY-03     | 32    | Pending |
-| PLAY-04     | 32    | Pending |
-| CODE-01     | 29    | Pending |
-| CODE-02     | 29    | Pending |
-| CODE-03     | 29    | Pending |
+| Requirement | Phase | Status   |
+| ----------- | ----- | -------- |
+| AUDIO-01    | 30    | Pending  |
+| AUDIO-02    | 30    | Complete |
+| AUDIO-03    | 30    | Pending  |
+| DATA-01     | 29    | Pending  |
+| DATA-02     | 29    | Pending  |
+| DATA-03     | 29    | Pending  |
+| DATA-04     | 29    | Pending  |
+| PLAY-01     | 31    | Pending  |
+| PLAY-02     | 32    | Pending  |
+| PLAY-03     | 32    | Pending  |
+| PLAY-04     | 32    | Pending  |
+| CODE-01     | 29    | Pending  |
+| CODE-02     | 29    | Pending  |
+| CODE-03     | 29    | Pending  |
 
 **Coverage:**
 
