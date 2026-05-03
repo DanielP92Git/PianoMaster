@@ -209,8 +209,10 @@ export const rhythmUnit6Nodes = [
   // ============================================
   {
     id: "rhythm_6_4",
-    name: "Fast and Faster",
-    description: "Practice mixing fast and slow rhythms",
+    // D-11 (Phase 33 Plan 33-04): renamed from "Fast and Faster" — name implied tempo, content is duration variety
+    name: "Mixed Speeds",
+    description:
+      "Practice patterns that mix quarter, half, eighth, and sixteenth notes",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -330,8 +332,31 @@ export const rhythmUnit6Nodes = [
       complexity: RHYTHM_COMPLEXITY.ALL,
       durations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"], // D-06: cumulative U1-U6
       focusDurations: [],
-      contextDurations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"],
-      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth", "quarter-rest", "half-rest", "whole-rest", "dotted-half", "dotted-quarter", "sixteenth"], // D-06: cumulative U1-U6
+      contextDurations: [
+        "q",
+        "h",
+        "w",
+        "8",
+        "16",
+        "qr",
+        "hr",
+        "wr",
+        "hd",
+        "qd",
+      ],
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "half-rest",
+        "whole-rest",
+        "dotted-half",
+        "dotted-quarter",
+        "sixteenth",
+      ], // D-06: cumulative U1-U6
       patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
       measureCount: 4, // D-08: full BOSS uses 4-bar patterns
       tempo: { min: 80, max: 90, default: 85 },

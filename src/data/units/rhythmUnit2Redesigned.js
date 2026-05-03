@@ -182,8 +182,8 @@ export const rhythmUnit2Nodes = [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
+          // D-08 (Phase 33 Plan 33-04): removed inappropriate discovery_intro — rhythm_2_3 is a contrast node, not an intro
           questions: [
-            { type: "discovery_intro", focusDuration: "q" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
             { type: "visual_recognition" },

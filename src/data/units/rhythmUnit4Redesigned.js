@@ -343,7 +343,9 @@ export const rhythmUnit4Nodes = [
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ["q", "h", "qr", "hr", "wr"],
+      // D-08 (Phase 33 Plan 33-04): added 'w' — whole notes were introduced by rhythm_4_5 prereq;
+      // 'whole-rest' tag implies whole-note context.
+      durations: ["q", "h", "w", "qr", "hr", "wr"],
       focusDurations: [],
       contextDurations: ["q", "h", "qr", "hr", "wr"],
       patternTags: ["quarter-rest", "half-rest", "whole-rest"],
@@ -395,7 +397,16 @@ export const rhythmUnit4Nodes = [
       durations: ["q", "h", "w", "8", "qr", "hr", "wr"], // D-06: cumulative U1-U4
       focusDurations: [],
       contextDurations: ["q", "h", "w", "8", "qr", "hr", "wr"],
-      patternTags: ["quarter-only", "quarter-half", "quarter-half-whole", "quarter-eighth", "quarter-half-whole-eighth", "quarter-rest", "half-rest", "whole-rest"], // D-06: cumulative U1-U4
+      patternTags: [
+        "quarter-only",
+        "quarter-half",
+        "quarter-half-whole",
+        "quarter-eighth",
+        "quarter-half-whole-eighth",
+        "quarter-rest",
+        "half-rest",
+        "whole-rest",
+      ], // D-06: cumulative U1-U4
       patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
       tempo: { min: 70, max: 80, default: 75 },
       pitch: "C4",
