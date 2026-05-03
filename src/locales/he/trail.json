@@ -463,6 +463,10 @@
     "startNextNode": "התחילו את השיעור הבא",
     "continue": "המשיכו",
     "backToTrail": "חזרה למסלול",
+    "intro": {
+      "title": "קרב בוס",
+      "subtitle": "תראה מה למדת!"
+    },
     "pathCompleteMessages": {
       "treble_clef": "שלטתם בכל תווי מפתח סול!",
       "bass_clef": "מאסטר מפתח פה!",

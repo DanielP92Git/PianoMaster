@@ -463,6 +463,10 @@
     "startNextNode": "Start Next Node",
     "continue": "Continue",
     "backToTrail": "Back to Trail",
+    "intro": {
+      "title": "BOSS FIGHT",
+      "subtitle": "Show what you've learned!"
+    },
     "pathCompleteMessages": {
       "treble_clef": "You've mastered all Treble Clef notes!",
       "bass_clef": "Bass Clef Master!",
