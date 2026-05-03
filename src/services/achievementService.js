@@ -1,8 +1,5 @@
 import supabase from "./supabase";
-import {
-  getStudentScoreStats,
-  getPracticeSessionStats,
-} from "./apiDatabase";
+import { getStudentScoreStats, getPracticeSessionStats } from "./apiDatabase";
 import { streakService } from "./streakService";
 import { awardXP } from "../utils/xpSystem";
 
@@ -187,7 +184,6 @@ class AchievementService {
             title: achievement.title,
             description: achievement.description,
             icon: achievement.icon,
-            points: achievement.points,
             category: achievement.category,
             earned_at: new Date().toISOString(),
           },
