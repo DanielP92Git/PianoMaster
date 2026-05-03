@@ -306,14 +306,14 @@ Plans:
 **Goal:** Triage and resolve the 13 rhythm UAT issues from Phases 30-32 — verify-first manual UAT, fix only confirmed survivors. Ship rate-limit migration, data audit cleanup (rest pool + section/title drifts), ArcadeRhythmGame migration to tag-based pattern resolution with central duration filter and per-session duration coverage rule, dictation-listen race fix via shared audio prewarm hook. Hold contingent boss UX overlay + cumulative speed-pool tag layers ready to fire only if user retest still reports flatness.
 **Requirements**: AUDIO-01, AUDIO-02, AUDIO-03, DATA-01, DATA-03, DATA-04, PLAY-02, PLAY-03 (cleanup pass over Phases 30/31/32)
 **Depends on:** Phase 32
-**Plans:** 3/10 plans executed
+**Plans:** 4/10 plans executed
 
 Plans:
 
 - [x] 33-01-PLAN.md — Pre-flight UAT scaffold + verify:trail + boss measureCount audit (Wave 0)
 - [x] 33-02-PLAN.md — Wave 1 manual UAT execution (Wave 1; gates Wave 2/3)
 - [x] 33-03-PLAN.md — D-13 prewarm hook + dictation race fix (Wave 2; D-13/D-16/AUDIO-02)
-- [ ] 33-04-PLAN.md — D-08/D-11/D-12 data audit edits (Wave 2; DATA-01/DATA-03)
+- [x] 33-04-PLAN.md — D-08/D-11/D-12 data audit edits (Wave 2; DATA-01/DATA-03)
 - [ ] 33-05-PLAN.md — D-07 rate-limit migration deploy (Wave 2; UAT issue 6)
 - [ ] 33-06-PLAN.md — Stash Chunk A salvage + D-09 + D-10 (Wave 2; DATA-04/PLAY-02)
 - [ ] 33-07-PLAN.md — D-14/D-15 audio buffer hardening (Wave 2 contingent; AUDIO-01/AUDIO-03)

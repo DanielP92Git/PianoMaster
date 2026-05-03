@@ -15,9 +15,9 @@ Requirements for rhythm trail bug fixes, gameplay tuning, and polish. Each maps 
 
 ### Data & Curriculum
 
-- [ ] **DATA-01**: Node 1_3 patterns contain only note values already introduced (no unlearned rests)
+- [x] **DATA-01**: Node 1_3 patterns contain only note values already introduced (no unlearned rests)
 - [ ] **DATA-02**: Pulse game in quarter-only nodes generates only quarter-note patterns (no halves)
-- [ ] **DATA-03**: Section titles accurately match the content and skills of their contained nodes
+- [x] **DATA-03**: Section titles accurately match the content and skills of their contained nodes
 - [ ] **DATA-04**: Combined values practice nodes use all expected duration values in shuffled/random order
 
 ### Gameplay & UX
@@ -63,9 +63,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIO-01    | 30    | Pending  |
 | AUDIO-02    | 30    | Complete |
 | AUDIO-03    | 30    | Pending  |
-| DATA-01     | 29    | Pending  |
+| DATA-01     | 29    | Complete |
 | DATA-02     | 29    | Pending  |
-| DATA-03     | 29    | Pending  |
+| DATA-03     | 29    | Complete |
 | DATA-04     | 29    | Pending  |
 | PLAY-01     | 31    | Pending  |
 | PLAY-02     | 32    | Pending  |
