@@ -9,9 +9,9 @@ Requirements for rhythm trail bug fixes, gameplay tuning, and polish. Each maps 
 
 ### Audio & Playback
 
-- [ ] **AUDIO-01**: First play of quarter/eighth note presentations plays without audio trimming (audio context pre-warmed)
+- [x] **AUDIO-01**: First play of quarter/eighth note presentations plays without audio trimming (audio context pre-warmed) _[verified at Phase 33 retest — Issue 1 marked resolved-by-deploy in 33-UAT.md]_
 - [x] **AUDIO-02**: Dictation game 'listen' button plays the pattern on first click (not only on 'replay')
-- [ ] **AUDIO-03**: Eighths discovery presentation plays 4 pairs of beamed eighth notes in sequence
+- [x] **AUDIO-03**: Eighths discovery presentation plays 4 pairs of beamed eighth notes in sequence _[verified at Phase 33 retest — Issue 4 marked resolved-by-deploy in 33-UAT.md]_
 
 ### Data & Curriculum
 
@@ -58,22 +58,22 @@ Explicitly excluded. Documented to prevent scope creep.
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status   |
-| ----------- | ----- | -------- |
-| AUDIO-01    | 30    | Pending  |
-| AUDIO-02    | 30    | Complete |
-| AUDIO-03    | 30    | Pending  |
-| DATA-01     | 29    | Complete |
-| DATA-02     | 29    | Pending  |
-| DATA-03     | 29    | Complete |
-| DATA-04     | 29    | Complete |
-| PLAY-01     | 31    | Pending  |
-| PLAY-02     | 32    | Complete |
-| PLAY-03     | 32    | Complete |
-| PLAY-04     | 32    | Pending  |
-| CODE-01     | 29    | Pending  |
-| CODE-02     | 29    | Pending  |
-| CODE-03     | 29    | Pending  |
+| Requirement | Phase                                                   | Status   |
+| ----------- | ------------------------------------------------------- | -------- |
+| AUDIO-01    | 30, 33 (verified at Phase 33 retest)                    | Complete |
+| AUDIO-02    | 30, 33                                                  | Complete |
+| AUDIO-03    | 30, 33 (verified at Phase 33 retest)                    | Complete |
+| DATA-01     | 29, 33                                                  | Complete |
+| DATA-02     | 29, 33 (cannot-reproduce — re-triage in next milestone) | Pending  |
+| DATA-03     | 29, 33                                                  | Complete |
+| DATA-04     | 29, 33                                                  | Complete |
+| PLAY-01     | 31                                                      | Pending  |
+| PLAY-02     | 32, 33                                                  | Complete |
+| PLAY-03     | 32, 33                                                  | Complete |
+| PLAY-04     | 32                                                      | Pending  |
+| CODE-01     | 29                                                      | Pending  |
+| CODE-02     | 29                                                      | Pending  |
+| CODE-03     | 29                                                      | Pending  |
 
 **Coverage:**
 

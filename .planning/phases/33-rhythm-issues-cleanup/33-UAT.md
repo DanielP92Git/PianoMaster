@@ -157,4 +157,18 @@ Phase 32 D-11 already removed all 6 Mix-Up nodes. Issue is structurally resolved
 
 - [x] All 10 active issue sections marked
 - [x] Issue 11 acknowledged as DROPPED-PER-CONTEXT (no action)
-- [x] User's confirmed-bug subset feeds Wave 2 plan triggering (33-03 unconditional, 33-04/05 unconditional, 33-06 unconditional, 33-07 contingent on Issue 1 OR 4 confirmed-bug, 33-08 contingent on Issue 13 confirmed-bug, 33-09 contingent on Issue 12 confirmed-bug)
+- [x] User's confirmed-bug subset feeds Wave 2 plan triggering (33-03 unconditional, 33-04/05 unconditional, 33-06 unconditional, 33-07 contingent on Issue 1 OR 4 confirmed-bug → SKIPPED per UAT, 33-08 contingent on Issue 13 confirmed-bug → SHIPPED, 33-09 contingent on Issue 12 confirmed-bug → SHIPPED)
+- [ ] **Final UAT pass against post-Wave-3 deployed build** (Plan 33-10 Task 1) — pending user retest
+
+## Final UAT Retest Checklist (post-deploy)
+
+Once the v3.3 build is deployed to Netlify, retest each Wave 1 confirmed-bug entry against the deployed SHA. Add a new "Final UAT" line to each entry's Notes when retested:
+
+| Entry                              | Wave 1 mark                     | Retest action                                                                                                                                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Issue 5 (section/content titles)   | confirmed-bug                   | Verify rhythm_4_6 → "Speed Silence" name still applies (33-04 didn't rename), rhythm_2_3 → no inappropriate discovery_intro, rhythm_6_4 → "Mixed Speeds". Replay each unit's section names to confirm the "Eighth Notes" vs "Meet Whole Notes" mismatch was deliberate or still needs a follow-up. |
+| Issue 6 (rate-limit warning)       | resolved-by-deploy (pre-marked) | Reload app post-deploy → DevTools console → complete any node → confirm NO "Rate limit function not found" warning, NO 404.                                                                                                                                                                        |
+| Issue 12 (Speed Challenge variety) | confirmed-bug                   | Replay rhythm_3_6 + rhythm_5_6 (and ideally rhythm_8_6) — subjective rating. Mark resolved-by-deploy if rating improves. If U1 rhythm_1_6 still feels stale, that's intrinsic-pool-limited per documentation.                                                                                      |
+| Issue 13 (boss flatness)           | confirmed-bug                   | Replay boss_rhythm_6 + boss_rhythm_8 — confirm 2-second amber overlay + gold confetti. Mark resolved-by-deploy if rating improves. boss_rhythm_1 (mini_boss) is NOT in scope.                                                                                                                      |
+
+If any new bug surfaces, add it to a new "## Survivors after Wave 2/3" section below this checklist.

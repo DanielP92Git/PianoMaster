@@ -1,7 +1,9 @@
 // Service Worker for PianoMaster PWA
 // Based on Web.dev PWA best practices
 
-const CACHE_NAME = "pianomaster-v10";
+// 2026-05-04 (Phase 33 Plan 33-10): bumped from v10 to v11 — Phase 33 UI changes
+// (BossIntroOverlay + VictoryScreen gold-tier confetti for boss nodes).
+const CACHE_NAME = "pianomaster-v11";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
