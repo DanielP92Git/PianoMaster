@@ -610,34 +610,153 @@ _A living document updated after each milestone. Lessons feed forward into futur
 
 ---
 
+## Milestone: v3.2 — Rhythm Trail Rework
+
+**Shipped:** 2026-04-13
+**Phases:** 7 active (20-26) + 2 skipped (27, 28) | **Plans:** 16
+
+### What Was Built
+
+- Curriculum audit of all 56 rhythm nodes with one-concept policy and locked game-type assignment
+- 130+ hand-crafted tagged rhythm patterns in synchronous JS module (replaced random generative approach)
+- RhythmPatternGenerator service with resolveByTags/resolveByIds; all 56 nodes migrated to patternTags/patternIds
+- PULSE exercise type for tap-with-the-beat metronome-only practice (Unit 1 Node 1)
+- Build validator extended: tag existence, coverage, duration safety, game-type policy enforcement
+- UX polish: 100ms timing forgiveness, game rename (Listen & Tap), "Almost!" feedback, progressive measures, Kodaly syllables
+- Multi-angle rhythm games: VisualRecognitionRenderer + SyllableMatchingRenderer
+- MixedLessonGame engine with interleaved question types and crossfade transitions
+- Phase 26 restored 12 source files reverted by worktree collateral damage (commit 13cff54)
+
+### What Worked
+
+- Audit-first phase ordering: Phase 20 curriculum audit produced a reference document that Phase 22 implementation followed exactly — eliminated mid-implementation pedagogical debate
+- Synchronous JS pattern module: simple Vite-bundled import, zero async/JSON loading complexity, fast tests
+- Build validator as ground truth: validateTrail catches duration safety + tag existence + coverage on every commit
+- Restored regression in a single dedicated phase (26) with diff-based recovery rather than re-implementing
+
+### What Was Inefficient
+
+- Worktree collateral damage at commit 13cff54 deleted Phase 23/24/25 files; required Phase 26 to restore
+- Phases 27 and 28 skipped without ceremony (verification docs + tech debt) — CODE-01/02/03 carried as v3.3 work
+- No formal milestone audit run before close (caught structural issues only at v3.3 audit time)
+- SUMMARY.md `requirements-completed` frontmatter missing across many plans — REQUIREMENTS.md and VERIFICATION.md became sole load-bearing sources
+
+### Patterns Established
+
+- Tag-based pattern resolution as preferred curriculum-control mechanism (replaces duration allowlists)
+- One-concept-per-node policy: every pedagogical concept introduced in exactly one Discovery node
+- Build-time pattern coverage validator: catches missing patterns before runtime fallback
+- Crossfade key pattern for MixedLessonGame: must include currentIndex (not just fadeKey) or consecutive same-type questions freeze
+- Worktree diff-check after merging branches to catch unexpected deletions
+
+### Key Lessons
+
+1. Always diff-check the working tree after merging worktree branches — collateral deletions are silent
+2. Skipping verification phases creates load-bearing dependency on REQUIREMENTS.md alone, which drifts from VERIFICATION.md evidence
+3. Audit-first phase pattern (lock decisions before code) works well for content-heavy refactors
+4. Curated patterns + tags scale better than random generation for pedagogical control
+
+### Cost Observations
+
+- Model mix: ~75% opus, ~25% sonnet
+- Sessions: ~6
+- Notable: 9-phase milestone with mid-stream rework (Phase 26 restoration) — net 16 plans across 7 active phases
+
+---
+
+## Milestone: v3.3 — Rhythm Trail Fix & Polish
+
+**Shipped:** 2026-05-04
+**Phases:** 5 (29-33) | **Plans:** 20 (1 skipped per UAT)
+**Stats:** 102 commits, 135 files changed, +20,147 / -1,868 LOC, 22 days
+
+### What Was Built
+
+- Code-quality fixes: stale-closure ref pattern (currentIndexRef), rest-aware score filter (no >100% scores), empty-pool guard
+- Data/curriculum fixes: rest-aware pattern filtering (allowRests/patternNeedsRests with exact-gap matching), section titles corrected for all 8 rhythm units in EN+HE, combined-values duration variety
+- useEnsureAudioReady shared hook (extracted from PulseQuestion's proven prewarm sequence) eliminating dictation listen-button gainNodeRef race
+- Eighths discovery plays all 4 beamed pairs with pitch alternation via local wrapper inside playDemo
+- holdScoringUtils + HoldRing + TapArea hold mode wired into RhythmTapQuestion (sustained piano audio, 3-tier scoring); PulseQuestion structurally wired but dormant pending curriculum hookup
+- Speed challenge: TOTAL_PATTERNS=8 + lastPatternRef no-consecutive dedup + cumulative speed-pool tags (U2-U8 with per-node validator-driven pruning)
+- Boss differentiation: cumulative duration tags + measureCount=4 + dictation-heavy mix + strict timing for boss_rhythm_6/8; 2-second amber/gold "BOSS FIGHT" intro overlay + gold confetti; PEDAGOGY.md authored
+- 6 Mix-Up nodes removed entirely with cascade renumbering and subscriptionConfig FREE_RHYTHM_NODE_IDS in sync
+- ArcadeRhythmGame migrated to tag-based resolveByTags/resolveByAnyTag with D-09 central duration filter and D-10 per-session coverage rule
+- Phase 33 verify-first manual UAT triaged 13 reported issues; rate-limit migration deployed via Dashboard SQL Editor; two post-deploy survivors fixed (SKILL_UNITS, achievements points)
+
+### What Worked
+
+- Verify-first triage in Phase 33: only fix confirmed survivors after retest — Plan 33-07 skipped per D-16 (Issues 1+4 resolved-by-deploy) saved a wave of unneeded work
+- Wave-gated execution: Wave 0 audit + Wave 1 manual UAT gate Wave 2 fixes; Wave 3 contingent fires only if user retest demands it
+- Stash preservation pattern: Chunk A salvaged via reference-only fresh edit; stash@{0} preserved intact for future Chunks B-E
+- Shared prewarm hook (useEnsureAudioReady) extracted from a proven path (PulseQuestion) and ported to broken path (RhythmDictationQuestion) — minimum-risk refactor
+- Tag-based resolver migration in ArcadeRhythmGame ran behind a fallback to OLD getPattern, allowing safe atomic cutover
+- Milestone audit caught 2 blockers + 3 warnings before close; close-out commits closed BLOCKER-1 and WARNING-2 same day
+
+### What Was Inefficient
+
+- Worktree base-staleness hit Plan 33-08 (forked off pre-Wave-3 main); resolved via cherry-pick of 33-08 commits — flagged as recurring concern
+- Two post-deploy survivors (SKILL_UNITS labels, student_achievements.points insert) caught only because user retested — a pre-deploy gate would have caught both
+- No VERIFICATION.md created for Phases 31 or 32 (Phase 33 intentional per CONTEXT D-06; 31/32 were quality risk)
+- Phase 30 VERIFICATION frontmatter `passed` conflicts with body `gaps_found` — file not re-run end-to-end after fix commit 4792b39
+- DATA-02 vacuously satisfied: PulseQuestion uses hardcoded PULSE_BEATS and never calls resolveByTags, so the rest-aware filter is structurally untested for the pulse path — re-triage carried to next milestone
+- PLAY-01 narrowed at close (pulse hold path dormant) rather than extending buildRhythmTapConfig to derive beats from patternTags
+
+### Patterns Established
+
+- useEnsureAudioReady shared hook for AudioContext-dependent components — extract proven prewarm sequence, port to broken paths
+- Verify-first manual UAT pattern: only fix what survives a retest; mark resolved-by-deploy items closed without code changes
+- Wave-gated phase execution: Wave 1 manual UAT gates Wave 2 fixes; Wave 3 contingent layers fire only if retest still reports issues
+- Tag-based resolver with central duration filter (D-09) + per-session coverage rule (D-10) for arcade-style games
+- BossIntroOverlay gating on isBoss only (not MINI_BOSS) — preserves visual differentiation between full and mini boss
+- Stash preservation via fresh-edit reference (Option A): salvage chunks individually, leave stash intact
+
+### Key Lessons
+
+1. Verify-first triage saves wasted work: not every reported issue is a code bug — many resolve via deploy or environment
+2. Pre-deploy UAT gate would catch survivors that post-deploy retest catches — add to launch-readiness checklist
+3. Worktree base-staleness is a recurring concern: rebase or cherry-pick before assuming a worktree branch's base is current
+4. Vacuously-satisfied requirements (filter present but never exercised on intended path) are a documentation trap — explicit traceability note required
+5. Boss UX needs both content levers (cumulative tags, timing tier) AND ceremony (intro overlay, gold confetti) to feel distinct
+6. Cumulative tags pattern scales: applied retroactively across U2-U8 with validator-driven pruning ensures no node violates duration safety
+
+### Cost Observations
+
+- Model mix: ~70% opus, ~30% sonnet (executors largely sonnet)
+- Sessions: ~8
+- Notable: 22-day milestone with 102 commits — extended timeline due to manual UAT cycle and Wave 3 contingent re-fire after retest
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
-| Milestone | Phases | Plans | Key Change                                                                         |
-| --------- | ------ | ----- | ---------------------------------------------------------------------------------- |
-| v1.0      | 4      | 15    | Security hardening — established RLS and auth patterns                             |
-| v1.1      | 1      | 2     | Edge Function + Brevo email pattern                                                |
-| v1.2      | 2      | 4     | Trail system stabilization                                                         |
-| v1.3      | 5      | 14    | Redesign with build-time validation                                                |
-| v1.4      | 6      | 13    | Celebration system + codebase cleanup                                              |
-| v1.5      | 4      | 10    | Visual redesign — CSS-only backgrounds                                             |
-| v1.6      | 5      | 10    | Orientation handling — platform-specific                                           |
-| v1.7      | 5      | 12    | Audio architecture overhaul                                                        |
-| v1.8      | 6      | 13    | Monetization — Lemon Squeezy + content gate                                        |
-| v1.9      | 7      | 15    | Engagement features — parallel execution                                           |
-| v2.0      | 2      | 6     | XP unification — sequential dependency chain                                       |
-| v2.1      | 1      | 2     | Password recovery — smallest milestone                                             |
-| v2.2      | 5      | 9     | Sharps & Flats content — audit-driven gap closure                                  |
-| v2.3      | 6      | 6     | Launch readiness — production features in 1 day                                    |
-| v2.4      | 5      | 10    | Content expansion — dual-track infrastructure + content                            |
-| v2.5      | 4      | 11    | Launch prep — ESLint zero-warning, COPPA hard-delete, QA checklist                 |
-| v2.6      | 2      | 3     | User feedback — backend-first, pattern reuse, 2-day turnaround                     |
-| v2.7      | 5      | 12    | Practice tracking — parallel worktree, TDD services, Edge Function extension       |
-| v2.8      | 2      | 5     | Single-note game + Parent Portal gate-first architecture                           |
-| v2.9      | 5      | 15    | Game variety — 8 new exercise types, data-driven trail tabs                        |
-| v3.0      | 5      | 11    | Cleanup & polish — utility consolidation, UAT-driven bug fixes, audit debt closure |
+| Milestone | Phases | Plans | Key Change                                                                               |
+| --------- | ------ | ----- | ---------------------------------------------------------------------------------------- |
+| v1.0      | 4      | 15    | Security hardening — established RLS and auth patterns                                   |
+| v1.1      | 1      | 2     | Edge Function + Brevo email pattern                                                      |
+| v1.2      | 2      | 4     | Trail system stabilization                                                               |
+| v1.3      | 5      | 14    | Redesign with build-time validation                                                      |
+| v1.4      | 6      | 13    | Celebration system + codebase cleanup                                                    |
+| v1.5      | 4      | 10    | Visual redesign — CSS-only backgrounds                                                   |
+| v1.6      | 5      | 10    | Orientation handling — platform-specific                                                 |
+| v1.7      | 5      | 12    | Audio architecture overhaul                                                              |
+| v1.8      | 6      | 13    | Monetization — Lemon Squeezy + content gate                                              |
+| v1.9      | 7      | 15    | Engagement features — parallel execution                                                 |
+| v2.0      | 2      | 6     | XP unification — sequential dependency chain                                             |
+| v2.1      | 1      | 2     | Password recovery — smallest milestone                                                   |
+| v2.2      | 5      | 9     | Sharps & Flats content — audit-driven gap closure                                        |
+| v2.3      | 6      | 6     | Launch readiness — production features in 1 day                                          |
+| v2.4      | 5      | 10    | Content expansion — dual-track infrastructure + content                                  |
+| v2.5      | 4      | 11    | Launch prep — ESLint zero-warning, COPPA hard-delete, QA checklist                       |
+| v2.6      | 2      | 3     | User feedback — backend-first, pattern reuse, 2-day turnaround                           |
+| v2.7      | 5      | 12    | Practice tracking — parallel worktree, TDD services, Edge Function extension             |
+| v2.8      | 2      | 5     | Single-note game + Parent Portal gate-first architecture                                 |
+| v2.9      | 5      | 15    | Game variety — 8 new exercise types, data-driven trail tabs                              |
+| v3.0      | 5      | 11    | Cleanup & polish — utility consolidation, UAT-driven bug fixes, audit debt closure       |
 | v3.1      | 3      | 5     | Trail-first navigation — trail as primary destination, compact dashboard, post-game flow |
+| v3.2      | 7      | 16    | Rhythm trail rework — curated patterns, MixedLessonGame engine, multi-angle games        |
+| v3.3      | 5      | 20    | Rhythm trail fix & polish — manual UAT triage, hold sustain, boss differentiation        |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -653,3 +772,7 @@ _A living document updated after each milestone. Lessons feed forward into futur
 10. External service verification (email delivery, sender changes) should be explicit human-checkpoint tasks from planning, not discovered during audit
 11. Cleanup milestones should budget for UAT-discovered scope expansion — real-device testing reveals bugs that unit tests miss
 12. iOS gesture gate is a recurring requirement for AudioContext-dependent components — treat as checklist item in game component templates
+13. Verify-first manual UAT (only fix confirmed survivors after retest) saves wasted work in fix-and-polish milestones
+14. Worktree base-staleness is a recurring concern — rebase or cherry-pick before assuming a branch's base is current
+15. Vacuously-satisfied requirements (filter present but unreached) require explicit traceability documentation
+16. Pre-deploy UAT gate catches survivors that post-deploy retest catches — should be a launch-readiness checklist item

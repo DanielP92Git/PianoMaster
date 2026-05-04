@@ -35,10 +35,10 @@ Fixed `DiscoveryIntroQuestion.jsx` to correctly play the eighths discovery demo 
 
 ## Tasks Completed
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Create DiscoveryIntroQuestion test scaffold (RED) | 733c262 | `renderers/__tests__/DiscoveryIntroQuestion.test.jsx` |
-| 2 | Fix playDemo — 8-note beats array + pitch alternation (GREEN) | fa03701 | `renderers/DiscoveryIntroQuestion.jsx`, `__tests__/DiscoveryIntroQuestion.test.jsx` |
+| Task | Name                                                          | Commit  | Files                                                                               |
+| ---- | ------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| 1    | Create DiscoveryIntroQuestion test scaffold (RED)             | 733c262 | `renderers/__tests__/DiscoveryIntroQuestion.test.jsx`                               |
+| 2    | Fix playDemo — 8-note beats array + pitch alternation (GREEN) | fa03701 | `renderers/DiscoveryIntroQuestion.jsx`, `__tests__/DiscoveryIntroQuestion.test.jsx` |
 
 ## Decisions Made
 
@@ -70,6 +70,7 @@ npx vitest run src/components/games/rhythm-games/
 ### Auto-fixed Issues
 
 **1. [Rule 1 - Bug] Test spy capture used wrong mock instance**
+
 - **Found during:** Task 1 → Task 2 GREEN phase
 - **Issue:** Test 2 called `useAudioEngine()` before `render()`, creating a separate mock instance with its own `createPianoSound` spy. The component's `playNoteFn` called `audioEngine.createPianoSound` on the instance returned during `render()`, not the pre-render instance.
 - **Fix:** Replaced `useAudioEngine()` pre-render call with `useAudioEngine.mock.results[lastIndex].value` after render to get the spy from the component's actual audioEngine instance.

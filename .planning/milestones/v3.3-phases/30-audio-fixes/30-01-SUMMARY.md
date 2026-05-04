@@ -42,10 +42,10 @@ Fixed the dictation game's silent first-click bug by calling `initializeAudioCon
 
 ## Tasks Completed
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Create RhythmDictationQuestion test scaffold (TDD RED) | dc7f2c4 | `renderers/__tests__/RhythmDictationQuestion.test.jsx` (created) |
-| 2 | Fix handleListen with initializeAudioContext guard (TDD GREEN) | 0bd485f | `renderers/RhythmDictationQuestion.jsx` (modified) |
+| Task | Name                                                           | Commit  | Files                                                            |
+| ---- | -------------------------------------------------------------- | ------- | ---------------------------------------------------------------- |
+| 1    | Create RhythmDictationQuestion test scaffold (TDD RED)         | dc7f2c4 | `renderers/__tests__/RhythmDictationQuestion.test.jsx` (created) |
+| 2    | Fix handleListen with initializeAudioContext guard (TDD GREEN) | 0bd485f | `renderers/RhythmDictationQuestion.jsx` (modified)               |
 
 ## What Was Built
 
@@ -60,6 +60,7 @@ Fixed the dictation game's silent first-click bug by calling `initializeAudioCon
 ### Test Coverage
 
 4 tests in `RhythmDictationQuestion.test.jsx`:
+
 1. `calls initializeAudioContext before first listen click plays audio` — asserts `mockEngine.initializeAudioContext` was called
 2. `calls resumeAudioContext after initializeAudioContext` — asserts ordering via call order tracking
 3. `renders Listen button in LISTEN_PROMPT phase` — structural test
@@ -70,6 +71,7 @@ Fixed the dictation game's silent first-click bug by calling `initializeAudioCon
 ### Auto-adjusted Test Assertion
 
 **1. [Rule 1 - Bug] Test 4 expectation corrected from "Playing..." to "Listening..."**
+
 - **Found during:** Task 1 RED phase
 - **Issue:** Plan spec said assert `screen.getByText("Playing...")` but the component's "Playing..." text is inside the Listen/Replay button, which is hidden in the `LISTENING` phase. After clicking Listen, `phase` transitions to `LISTENING` (which hides the button), so "Playing..." is never in the DOM.
 - **Fix:** Changed assertion to `screen.getByText("Listening...")` — the instruction `<p>` element that IS visible during LISTENING phase.

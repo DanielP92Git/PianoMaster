@@ -256,21 +256,30 @@ These capabilities exist, are working, and have been shipped:
 - Phase 23 UX regression restored after worktree collateral damage
 - 23/23 requirements delivered (7 MLE complete, 16 core complete), 16 plans across 7 phases
 
+**v3.3 Rhythm Trail Fix & Polish (shipped 2026-05-04):**
+
+- CODE-01-03: Stale-closure ref pattern (currentIndexRef) for MixedLessonGame; rest-aware score filter for ArcadeRhythmGame (no >100% scores); empty-pool guard for crash prevention
+- DATA-01/03/04: Rest-aware pattern filtering (allowRests/patternNeedsRests with exact-gap matching), section titles corrected for all 8 rhythm units, combined-values nodes generate full duration variety
+- AUDIO-01/02/03: useEnsureAudioReady shared hook (extracted from PulseQuestion's proven prewarm sequence) eliminates dictation listen-button gainNodeRef race; eighths discovery plays all 4 beamed pairs with pitch alternation
+- PLAY-01: Hold scoring utility (70%/40% PERFECT/GOOD), HoldRing rAF SVG progress component, pointer-event-based TapArea hold mode, sustained piano audio. Listen&tap path fully wired (RhythmTapQuestion); pulse hold infrastructure preserved for future curriculum nodes (PLAY-01 narrowed at close to listen&tap-only)
+- PLAY-02/03/04: TOTAL_PATTERNS=8 + lastPatternRef no-consecutive dedup + cumulative speed-pool tags (U2-U8); boss content levers for boss_rhythm_6/8 (cumulative tags + measureCount=4 + dictation-heavy mix + strict timing) + 2-second BossIntroOverlay + gold confetti; 6 Mix-Up nodes removed entirely with subscriptionConfig sync (PLAY-04 structurally resolved)
+- ArcadeRhythmGame migrated to tag-based resolveByTags/resolveByAnyTag with D-09 central duration filter and D-10 per-session coverage rule
+- BLOCKER-1 (boss_rhythm_7 invisible) and WARNING-2 ("Mixed Speeds" i18n orphan) closed at milestone-close gate
+- Verify-first manual UAT (Phase 33) closed all confirmed-bug entries across 13 reported issues; rate-limit migration deployed via Dashboard SQL Editor; two post-deploy survivors fixed (SKILL_UNITS labels, student_achievements points column)
+- 13/14 requirements delivered, 1 deferred (DATA-02 pulse hold path filter validation), 20 plans across 5 phases (Plan 33-07 skipped per UAT)
+
 ### Active
 
-## Current Milestone: v3.3 Rhythm Trail Fix & Polish
+## Current Milestone: (none — between milestones)
 
-**Goal:** Fix bugs, tune gameplay, and polish the rhythm trail experience based on real-world testing feedback.
+**Status:** v3.3 archived 2026-05-04. Ready for `/gsd-new-milestone` to start the next milestone cycle.
 
-**Target features:**
+**Carry-over from v3.3 to consider in next milestone scoping:**
 
-- Fix audio trimming on first playback (warm-up issue)
-- Fix data bugs (unlearned rests, wrong patterns, title/content mismatches)
-- Fix dictation listen button and console errors
-- Implement sustained long-press for half/whole notes (piano-like feel)
-- Tune content variety (shuffle durations, unique boss/speed content)
-- Make boss and speed challenge nodes feel distinct and engaging for kids
-- Fix 3 code bugs carried from v3.2 tech debt (stale closure, score >100%, empty array crash)
+- DATA-02 re-triage: pulse hold path filter validation — extend `buildRhythmTapConfig` to derive `beats` from focusDurations/patternTags AND add a pulse exercise to a node with `durations: ['q','h']`, then re-test the filter end-to-end on the pulse path
+- WIP stash `phase-33-WIP` Chunks B/C/D/E (arcade hold-notes + remaining tag-pattern work)
+- WARNING-1: optionally apply useEnsureAudioReady to DiscoveryIntroQuestion if first-play trim resurfaces
+- VERIFICATION.md tech debt for Phases 31, 32 (quality risk; not blocking)
 
 **Future candidates:**
 
@@ -600,4 +609,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-04-13 — Phase 29 code quality & data fixes complete (CODE-01/02/03, DATA-01/02/03/04)_
+_Last updated: 2026-05-04 after v3.3 Rhythm Trail Fix & Polish milestone_

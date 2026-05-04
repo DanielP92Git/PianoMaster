@@ -1,79 +1,71 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.3
-milestone_name: Rhythm Trail Fix & Polish
-status: milestone_complete
-last_updated: "2026-05-03T22:38:57.862Z"
-last_activity: 2026-05-03
+milestone: none
+milestone_name: ""
+status: between_milestones
+last_updated: "2026-05-04T00:00:00.000Z"
+last_activity: 2026-05-04
 progress:
-  total_phases: 10
-  completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
-  percent: 60
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-13)
+See: .planning/PROJECT.md (updated 2026-05-04 after v3.3 milestone)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 33 — rhythm-issues-cleanup
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 33
-Plan: Not started
-Status: Milestone complete
+Phase: —
+Plan: —
+Status: Between milestones
 Last activity: 2026-05-04
-Resume: ready for `/gsd-complete-milestone v3.3`
-
-```
-Progress: [████████████████████] 20/20 plans (100%)
-```
+Resume: ready for `/gsd-new-milestone`
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: ~218 (across all shipped milestones)
-- 23 milestones shipped in 72 days (2026-01-31 to 2026-04-13)
+- Total plans completed: ~238 (across 24 shipped milestones)
+- 24 milestones shipped in 93 days (2026-01-31 to 2026-05-04)
+
+## Deferred Items
+
+Items acknowledged and deferred at v3.3 milestone close on 2026-05-04:
+
+| Category    | Item                                                          | Status                                       |
+| ----------- | ------------------------------------------------------------- | -------------------------------------------- |
+| requirement | DATA-02 — pulse hold path filter validation                   | Deferred to next milestone for re-triage     |
+| stash       | phase-33-WIP — arcade hold-notes + tag-patterns + boss_7 flip | Preserved on main; Chunks B/C/D/E for future |
+| warning     | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook | Functional today; fragile if regresses       |
+| info        | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests) | Likely intentional; unlogged                 |
+| tech-debt   | No VERIFICATION.md for Phases 31, 32 (quality risk)           | Not blocking close; flagged                  |
+| tech-debt   | 8 unhandled rejections in ArcadeRhythmGame.test.js            | Pre-existing; getOrCreateAudioContext mock   |
+| process     | Worktree base-staleness recurring concern                     | Plan 33-08 hit it; cherry-pick recovery      |
+| process     | Pre-deploy gate would have caught two post-deploy survivors   | SKILL_UNITS, achievements points column      |
 
 ## Accumulated Context
 
 ### Decisions
 
-- v3.2 phases 27 (verification docs) and 28 (tech debt) skipped — CODE-01/02/03 carried into v3.3 Phase 29
-- Uncommitted rhythm unit restructure changes on main are foundation for v3.3 work
-- Phase 29 groups CODE + DATA fixes together (all are isolated file-level changes, no shared dependencies)
-- Phase 30 groups all audio bugs (shared audio infrastructure root cause)
-- Phase 31 is standalone: long-press sustain is a significant UX mechanic with its own interaction model
-- Phase 32 groups PLAY-02/03/04 as game design differentiation requiring exploration/iteration
-- [Phase ?]: 33-03: Honored D-13 verbatim — useEnsureAudioReady wraps PulseQuestion.startFlow's proven prewarm sequence
-- [Phase 33]: Plan 33-06: Stash Chunk A salvaged via Option A (reference-only fresh edit). D-09 central duration filter added to both resolveByTags and resolveByAnyTag. ArcadeRhythmGame migrated to tag-based resolver with D-10 per-session coverage. OLD getPattern retained as fallback. Plan 33-09 unblocked.
-- [Phase 33]: Verify-first triage closed all confirmed-bug UAT entries. Rate-limit migration deployed via Dashboard SQL Editor (CLI/MCP auth blocked). ArcadeRhythmGame on tag-based resolver. Data audit cleaned 4 unit drifts + quarter-half rest pool. Boss UX overlay (D-18) shipped for full BOSS only. Cumulative speed-pool tags (D-19) shipped for U2-U8 with per-node validator-driven pruning. Plan 33-07 skipped per D-16 (Issues 1+4 resolved-by-deploy).
-- [Phase 33]: Worktree base drift hit Plan 33-08 (forked off pre-Wave-3 main); resolved via cherry-pick of 33-08 commits onto current main. Plan 33-09 ran inline to avoid recurrence. Worktree base-staleness flagged as recurring concern for future phases.
-
-### Roadmap Evolution
-
-- Phase 33 added: Rhythm issues cleanup (seeded by parent-testing ISSUES.MD; arcade hold-notes WIP stashed for resume)
-- Phase 33 complete — beta-launch ready (post-UAT-retest)
-
-### Pending Todos
-
-- User: run `/gsd-complete-milestone v3.3` to archive the milestone
+(Cleared at v3.3 milestone close. Full history in PROJECT.md "Key Decisions" table and milestone archives.)
 
 ### Blockers/Concerns
 
-- **COPPA deadline:** April 22, 2026
+- **COPPA deadline:** April 22, 2026 (now past — verify all compliance items shipped)
 
 ## Session Continuity
 
-**Next action:** Run `/gsd-complete-milestone v3.3` to close out the milestone. UAT retest complete (2026-05-04, all entries pass). WIP stash `phase-33-WIP: arcade hold-notes + tag-patterns + boss_7 flip` remains intact (Chunk A salvaged via Plan 33-06; Chunks B/C/D/E deferred to future phases).
+**Next action:** Run `/gsd-new-milestone` to start the next milestone cycle (questioning → research → requirements → roadmap).
 
 ---
 
-_State initialized: 2026-04-13_
-_Last updated: 2026-05-04 -- Phase 33 complete; UAT retest passed; v3.3 ready to close_
+_State reset: 2026-05-04 after v3.3 milestone archive_

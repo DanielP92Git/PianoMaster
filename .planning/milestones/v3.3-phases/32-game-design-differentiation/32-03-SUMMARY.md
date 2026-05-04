@@ -6,7 +6,13 @@ tags: [boss-difficulty, pattern-resolution, timing-tiers, pedagogy]
 dependency_graph:
   requires: [6-node-rhythm-units]
   provides: [resolveByAnyTag, boss-difficulty-levers, pedagogy-docs]
-  affects: [MixedLessonGame, RhythmTapQuestion, RhythmReadingQuestion, rhythmTimingUtils]
+  affects:
+    [
+      MixedLessonGame,
+      RhythmTapQuestion,
+      RhythmReadingQuestion,
+      rhythmTimingUtils,
+    ]
 tech_stack:
   added: []
   patterns: [resolver-selection-via-config-field, cumulative-tag-sets]
@@ -51,11 +57,11 @@ Boss nodes tuned with cumulative pattern pools (resolveByAnyTag), strict timing 
 
 ## Task Results
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Add resolveByAnyTag and remove BOSS from easy timing | 0b1f246 | RhythmPatternGenerator.js, .test.js, rhythmTimingUtils.js, MixedLessonGame.jsx, RhythmTapQuestion.jsx, RhythmReadingQuestion.jsx |
-| 2 | Tune all 8 boss nodes with cumulative durations and harder question mixes | 74f26e9 | All 8 rhythmUnit*Redesigned.js, MixedLessonGame.jsx, RhythmReadingQuestion.jsx |
-| 3 | Create PEDAGOGY.md difficulty lever vocabulary | 76a365c | src/data/PEDAGOGY.md |
+| Task | Name                                                                      | Commit  | Files                                                                                                                            |
+| ---- | ------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | Add resolveByAnyTag and remove BOSS from easy timing                      | 0b1f246 | RhythmPatternGenerator.js, .test.js, rhythmTimingUtils.js, MixedLessonGame.jsx, RhythmTapQuestion.jsx, RhythmReadingQuestion.jsx |
+| 2    | Tune all 8 boss nodes with cumulative durations and harder question mixes | 74f26e9 | All 8 rhythmUnit\*Redesigned.js, MixedLessonGame.jsx, RhythmReadingQuestion.jsx                                                  |
+| 3    | Create PEDAGOGY.md difficulty lever vocabulary                            | 76a365c | src/data/PEDAGOGY.md                                                                                                             |
 
 ## Changes Made
 
@@ -93,6 +99,7 @@ Boss nodes tuned with cumulative pattern pools (resolveByAnyTag), strict timing 
 ### Auto-fixed Issues
 
 **1. [Rule 3 - Blocking] measureCount not consumed by MixedLessonGame renderers**
+
 - **Found during:** Task 2
 - **Issue:** `measureCount` was added to boss nodes but neither MixedLessonGame nor its renderers read it
 - **Fix:** Added `measureCount` to `buildRhythmTapConfig()` output; updated RhythmReadingQuestion to use `config.measureCount || 1` for its `measures` prop

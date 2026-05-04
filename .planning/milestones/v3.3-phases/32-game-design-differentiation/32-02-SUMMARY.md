@@ -41,6 +41,7 @@ Deleted 6 aspirational Mix-Up nodes (rhythm_X_5) from rhythm Units 1, 2, 3, 6, 7
 ## Task Results
 
 ### Task 1: Remove Mix-Up nodes from Units 1-3 and cascade START_ORDER
+
 **Commit:** `17832f9`
 **Files:** rhythmUnit1Redesigned.js, rhythmUnit2Redesigned.js, rhythmUnit3Redesigned.js, rhythmUnit4Redesigned.js, rhythmUnit5Redesigned.js
 
@@ -51,6 +52,7 @@ Deleted 6 aspirational Mix-Up nodes (rhythm_X_5) from rhythm Units 1, 2, 3, 6, 7
 - Updated header comments from "7 nodes" to "6 nodes"
 
 ### Task 2: Remove Mix-Up nodes from Units 6-8, update subscriptionConfig, and fix tests
+
 **Commit:** `5fe696e`
 **Files:** rhythmUnit6Redesigned.js, rhythmUnit7Redesigned.js, rhythmUnit8Redesigned.js, subscriptionConfig.js, rhythmUnit7Redesigned.test.js, rhythmUnit8Redesigned.test.js
 
@@ -64,16 +66,16 @@ Deleted 6 aspirational Mix-Up nodes (rhythm_X_5) from rhythm Units 1, 2, 3, 6, 7
 
 ## Order Cascade Summary
 
-| Unit | Old START_ORDER | New START_ORDER | Old Range  | New Range  | Nodes |
-|------|-----------------|-----------------|------------|------------|-------|
-| 1    | 100             | 100             | 100-106    | 100-105    | 7->6  |
-| 2    | 107             | 106             | 107-113    | 106-111    | 7->6  |
-| 3    | 114             | 112             | 114-120    | 112-117    | 7->6  |
-| 4    | 121             | 118             | 121-127    | 118-124    | 7 (unchanged) |
-| 5    | 128             | 125             | 128-134    | 125-131    | 7 (unchanged) |
-| 6    | 135             | 132             | 135-141    | 132-137    | 7->6  |
-| 7    | 142             | 138             | 142-148    | 138-143    | 7->6  |
-| 8    | 149             | 144             | 149-155    | 144-149    | 7->6  |
+| Unit | Old START_ORDER | New START_ORDER | Old Range | New Range | Nodes         |
+| ---- | --------------- | --------------- | --------- | --------- | ------------- |
+| 1    | 100             | 100             | 100-106   | 100-105   | 7->6          |
+| 2    | 107             | 106             | 107-113   | 106-111   | 7->6          |
+| 3    | 114             | 112             | 114-120   | 112-117   | 7->6          |
+| 4    | 121             | 118             | 121-127   | 118-124   | 7 (unchanged) |
+| 5    | 128             | 125             | 128-134   | 125-131   | 7 (unchanged) |
+| 6    | 135             | 132             | 135-141   | 132-137   | 7->6          |
+| 7    | 142             | 138             | 142-148   | 138-143   | 7->6          |
+| 8    | 149             | 144             | 149-155   | 144-149   | 7->6          |
 
 Total rhythm nodes: 56 -> 50 (6 removed)
 

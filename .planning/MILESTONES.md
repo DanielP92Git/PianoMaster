@@ -1,5 +1,27 @@
 # Project Milestones: PianoApp
 
+## v3.3 Rhythm Trail Fix & Polish (Shipped: 2026-05-04)
+
+**Phases completed:** 5 phases (29-33), 20 plans
+**Timeline:** 2026-04-13 → 2026-05-04 (22 days, 102 commits, 135 files changed, +20,147 / -1,868 LOC)
+
+**Key accomplishments:**
+
+- Code-quality bugs eliminated: stale-closure ref pattern (currentIndexRef) for MixedLessonGame question advance, rest-aware score filter for ArcadeRhythmGame (scores cannot exceed 100%), empty-pool guard prevents MixedLessonGame crash on zero-question nodes
+- Data and curriculum fixes: rest-aware pattern filtering (allowRests/patternNeedsRests with exact-gap matching) prevents unlearned rest values, section titles corrected for all 8 rhythm units in EN+HE locales, combined-values nodes generate full duration variety across sessions
+- Audio race conditions resolved: useEnsureAudioReady shared hook (extracted from PulseQuestion's proven prewarm sequence) eliminates the dictation listen-button gainNodeRef race; eighths discovery plays all 4 beamed pairs with pitch alternation
+- Long-press sustain wired end-to-end on listen&tap path: holdScoringUtils (70%/40% PERFECT/GOOD), HoldRing rAF SVG progress component, pointer-event-based TapArea hold mode, sustained piano audio, EN+HE i18n. Pulse hold infrastructure preserved for future curriculum nodes (PLAY-01 narrowed to listen&tap-only)
+- Speed challenge variety: TOTAL_PATTERNS=8 + lastPatternRef no-consecutive dedup + cumulative speed-pool tags applied to U2-U8 with per-node validator-driven pruning
+- Boss differentiation: cumulative duration tags + measureCount=4 + dictation-heavy mix + strict timing tier for boss_rhythm_6/8, plus 2-second amber/gold "BOSS FIGHT" intro overlay and gold-tier confetti on boss VictoryScreen (full BOSS only); PEDAGOGY.md authored
+- 6 Mix-Up nodes removed entirely with cascade renumbering and subscriptionConfig FREE_RHYTHM_NODE_IDS in sync (PLAY-04 structurally resolved by deletion)
+- ArcadeRhythmGame migrated to tag-based resolveByTags/resolveByAnyTag with D-09 central duration filter and D-10 per-session coverage rule (OLD getPattern retained as fallback)
+- Phase 33 verify-first manual UAT closed all confirmed-bug entries across 13 reported issues; Plan 33-07 skipped per D-16 (Issues 1+4 resolved-by-deploy); rate-limit migration deployed via Dashboard SQL Editor (CLI/MCP auth blocked); two post-deploy survivors fixed (SKILL_UNITS labels ad8856b, student_achievements points column 6deaa26); BLOCKER-1 (boss_rhythm_7 invisible on TrailMap) and WARNING-2 ("Mixed Speeds" i18n orphan) closed at milestone-close gate
+- WIP stash `phase-33-WIP: arcade hold-notes + tag-patterns + boss_7 flip` preserved on main; Chunk A salvaged via Plan 33-06; Chunks B/C/D/E deferred to future phases
+
+**Known deferred items at close:** 1 (DATA-02 — pulse hold path filter validation; vacuously satisfied via patternNeedsRests but PulseQuestion uses hardcoded PULSE_BEATS and never calls resolveByTags. Re-triage planned for next milestone. See STATE.md Deferred Items.)
+
+---
+
 ## v3.2 Rhythm Trail Rework (Shipped: 2026-04-13)
 
 **Phases completed:** 7 phases (20-26), 16 plans

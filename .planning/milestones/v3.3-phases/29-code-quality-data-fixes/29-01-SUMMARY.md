@@ -39,10 +39,10 @@ requirements:
 
 ## Tasks Completed
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Fix stale-closure + empty-array bugs in MixedLessonGame (CODE-01+CODE-03) | c744f9e | MixedLessonGame.jsx, MixedLessonGame.test.jsx |
-| 2 | Fix ArcadeRhythmGame score exceeding 100% (CODE-02) | 9feb2ad | ArcadeRhythmGame.jsx |
+| Task | Name                                                                      | Commit  | Files                                         |
+| ---- | ------------------------------------------------------------------------- | ------- | --------------------------------------------- |
+| 1    | Fix stale-closure + empty-array bugs in MixedLessonGame (CODE-01+CODE-03) | c744f9e | MixedLessonGame.jsx, MixedLessonGame.test.jsx |
+| 2    | Fix ArcadeRhythmGame score exceeding 100% (CODE-02)                       | 9feb2ad | ArcadeRhythmGame.jsx                          |
 
 ## What Was Built
 
@@ -59,6 +59,7 @@ Additionally, `currentIndexRef.current` is explicitly set to `0` in `startGame` 
 When a rhythm node has no `rhythmConfig` or empty `focusDurations`/`durations`, `buildDurationPool()` returns `[]`. The previous code fell through to `generateQuestions([], ...)` which would return malformed questions with `undefined` choices, causing a crash when the renderer tried to map over them.
 
 Fix:
+
 1. Early return to `COMPLETE` state in `startGame` when `pool.length === 0`
 2. Guard on `generateQuestions` result: if empty/undefined, construct a safe fallback question
 3. Render guard: `IN_PROGRESS && questions.length === 0` shows the existing error fallback UI
@@ -68,6 +69,7 @@ Fix:
 `scoredRef` is a `Set` of tile indices that tracks all scored tiles. The RAF loop adds rest tile indices to `scoredRef` when they exit the hit zone (so they don't trigger duplicate MISS events). At score tally time, `hitCount = scoredRef.current.size` counted ALL entries including rest tiles, while `nonRestCount = beatTimes.length` only counted non-rest beats. This made `hitCount > nonRestCount` when rest tiles were present, yielding score > 100%.
 
 Fix:
+
 1. Replace `scoredRef.current.size` with `[...scoredRef.current].filter(idx => !tilesRef.current[idx]?.isRest).length`
 2. Wrap the final score in `Math.min(100, ...)` as a secondary safety cap
 
@@ -100,10 +102,10 @@ None. Score changes are client-side display only; XP awards are server-side via 
 
 ## Self-Check: PASSED
 
-| Item | Status |
-|------|--------|
-| src/components/games/rhythm-games/MixedLessonGame.jsx | FOUND |
-| src/components/games/rhythm-games/ArcadeRhythmGame.jsx | FOUND |
-| .planning/phases/29-code-quality-data-fixes/29-01-SUMMARY.md | FOUND |
-| Commit c744f9e (Task 1) | FOUND |
-| Commit 9feb2ad (Task 2) | FOUND |
+| Item                                                         | Status |
+| ------------------------------------------------------------ | ------ |
+| src/components/games/rhythm-games/MixedLessonGame.jsx        | FOUND  |
+| src/components/games/rhythm-games/ArcadeRhythmGame.jsx       | FOUND  |
+| .planning/phases/29-code-quality-data-fixes/29-01-SUMMARY.md | FOUND  |
+| Commit c744f9e (Task 1)                                      | FOUND  |
+| Commit 9feb2ad (Task 2)                                      | FOUND  |

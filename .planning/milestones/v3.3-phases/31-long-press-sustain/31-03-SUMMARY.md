@@ -45,9 +45,9 @@ metrics:
 
 ## Tasks Completed
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Add hold-press detection and stretched beat indicator to PulseQuestion | 6f07cf2 | PulseQuestion.jsx |
+| Task | Name                                                                   | Commit  | Files             |
+| ---- | ---------------------------------------------------------------------- | ------- | ----------------- |
+| 1    | Add hold-press detection and stretched beat indicator to PulseQuestion | 6f07cf2 | PulseQuestion.jsx |
 
 ## Task 2: Awaiting Human Verification
 
@@ -58,22 +58,26 @@ metrics:
 Long-press sustain mechanic in the pulse game (PulseQuestion.jsx). The following was implemented:
 
 **Hold mechanic (activates when beat.durationUnits >= 8):**
+
 - `handlePressStart`: records `pressStartTimeRef`, starts rAF ring animation driving `holdRingCircleRef` stroke-dashoffset, calls `audioEngine.createPianoSound` with full note duration, records onset tap time
 - `handlePressEnd`: cancels rAF, calls `scoreHold(holdMs, currentHoldDurationMs)`, triggers green flash (`setIsHoldComplete(true)`) for PERFECT, shows "Almost, hold longer!" feedback label for GOOD
 - Button uses `onPointerDown` + `setPointerCapture` for reliable cross-device hold tracking; `touchAction: none` prevents scroll
 - HoldRing SVG overlay absolutely positioned over the pulse button; driven imperatively via `holdRingCircleRef`
 
 **Stretched beat indicator (D-08):**
+
 - CSS grid with `gridTemplateColumns: repeat(N, 1fr)` where N = total quarter-note columns
 - Each beat cell uses `gridColumn: span (durationUnits/4)` — half note spans 2, whole spans 4
 - Renders only when `beats.some(b => isHoldNote(b.durationUnits))` — zero change for default quarter exercises
 - Standard MetronomeDisplay still renders for quarter-only exercises
 
 **Quarter-note exercises unchanged:**
+
 - `onClick` + `onTouchStart` path untouched when `currentBeatIsHold === false`
 - `PULSE_BEATS` constant (all quarters) used as fallback when `config.beats` is absent
 
 **Cleanup:**
+
 - `cancelAnimationFrame(rafIdRef.current)` added to unmount cleanup useEffect (T-31-08 mitigated)
 - Hold state reset in `startFlow` when starting new round
 
@@ -102,12 +106,18 @@ Long-press sustain mechanic in the pulse game (PulseQuestion.jsx). The following
 ### PulseQuestion.jsx changes summary
 
 **New imports:**
+
 ```javascript
 import { HoldRing, CIRCUMFERENCE } from "../components/HoldRing";
-import { scoreHold, isHoldNote, calcHoldDurationMs } from "../utils/holdScoringUtils";
+import {
+  scoreHold,
+  isHoldNote,
+  calcHoldDurationMs,
+} from "../utils/holdScoringUtils";
 ```
 
 **New state/refs:**
+
 - `isHoldComplete` (state) — triggers green ring flash
 - `holdFeedbackLabel` (state) — "Almost, hold longer!" text
 - `pressStartTimeRef` (ref) — press start timestamp (performance.now())
@@ -115,6 +125,7 @@ import { scoreHold, isHoldNote, calcHoldDurationMs } from "../utils/holdScoringU
 - `holdRingCircleRef` (ref) — SVG circle element for imperative stroke-dashoffset updates
 
 **Derived values (inline, not memoized):**
+
 - `beats = config.beats || PULSE_BEATS` — dynamic beat array
 - `currentBeatInfo = beats[(currentBeat-1) % beats.length]` — info for active beat
 - `currentBeatIsHold = isHoldNote(currentBeatInfo.durationUnits)` — tap vs hold mode
@@ -156,10 +167,10 @@ import { scoreHold, isHoldNote, calcHoldDurationMs } from "../utils/holdScoringU
 
 ## Threat Mitigations Applied
 
-| Threat | Applied |
-|--------|---------|
-| T-31-08 (rAF loop leak) | `cancelAnimationFrame(rafIdRef.current)` in unmount cleanup + `pressStartTimeRef.current !== null` check in animate loop |
-| T-31-09 (config.beats injection) | `const beats = config.beats || PULSE_BEATS` — invalid/missing config falls back to safe default; `isHoldNote()` numeric check prevents non-numeric durationUnits from activating hold mode |
+| Threat                           | Applied                                                                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T-31-08 (rAF loop leak)          | `cancelAnimationFrame(rafIdRef.current)` in unmount cleanup + `pressStartTimeRef.current !== null` check in animate loop |
+| T-31-09 (config.beats injection) | `const beats = config.beats                                                                                              |     | PULSE_BEATS`— invalid/missing config falls back to safe default;`isHoldNote()` numeric check prevents non-numeric durationUnits from activating hold mode |
 
 ## Known Stubs
 

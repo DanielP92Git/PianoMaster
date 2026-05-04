@@ -50,11 +50,11 @@ metrics:
 
 ## Tasks Completed
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Create holdScoringUtils with TDD | 5adeac2 | holdScoringUtils.js, holdScoringUtils.test.js |
-| 2 | Create HoldRing SVG and extend TapArea | 2292789 | HoldRing.jsx, TapArea.jsx, index.js |
-| 3 | Add i18n keys for HOLD and holdGood | e3d81a7 | en/common.json, he/common.json |
+| Task | Name                                   | Commit  | Files                                         |
+| ---- | -------------------------------------- | ------- | --------------------------------------------- |
+| 1    | Create holdScoringUtils with TDD       | 5adeac2 | holdScoringUtils.js, holdScoringUtils.test.js |
+| 2    | Create HoldRing SVG and extend TapArea | 2292789 | HoldRing.jsx, TapArea.jsx, index.js           |
+| 3    | Add i18n keys for HOLD and holdGood    | e3d81a7 | en/common.json, he/common.json                |
 
 ## What Was Built
 
@@ -63,6 +63,7 @@ metrics:
 RED phase: 25 tests written covering all boundary conditions — scoreHold thresholds (70%/40%), edge cases (zero duration, negative hold, zero required), isHoldNote boundaries (durationUnits 1/2/4/6/8/12/16), calcHoldDurationMs at 80 and 120 BPM. All failed before implementation.
 
 GREEN phase: Minimal implementation to pass all 25 tests:
+
 - `HOLD_THRESHOLDS = { PERFECT: 0.7, GOOD: 0.4 }` (per D-03, D-04)
 - `scoreHold(actualMs, requiredMs)` — guards zero/negative, returns PERFECT/GOOD/MISS
 - `isHoldNote(durationUnits)` — true when >= 8 (half, dotted half, whole; per D-06)
@@ -71,12 +72,14 @@ GREEN phase: Minimal implementation to pass all 25 tests:
 ### Task 2: HoldRing.jsx + TapArea.jsx extension
 
 **HoldRing.jsx:** SVG ring with track circle (rgba(255,255,255,0.20)) and progress circle. Supports two update patterns:
+
 1. Imperative: `ringRef` prop — parent drives `stroke-dashoffset` via rAF at 60fps without re-rendering React tree
 2. Declarative: `progress` prop (0-1) — useEffect updates DOM attribute
 
 `isComplete=true` switches stroke from `#818cf8` (indigo-400) to `#4ade80` (green-400) with 0.15s ease transition (per D-01). `reducedMotion=true` returns null. Exports `CIRCUMFERENCE` constant for parent rAF loops. `aria-hidden="true"` (cosmetic element).
 
 **TapArea.jsx:** Extended with 7 new optional props, all backward-compatible:
+
 - `isHoldNote`, `onPressStart`, `onPressEnd`, `holdRingRef`, `isHoldComplete`, `reducedMotion`, `holdFeedbackLabel`
 
 Hold mode activates only when `isHoldNote=true`. Uses `onPointerDown` (with `setPointerCapture` for reliable tracking) / `onPointerUp` / `onPointerCancel`. `touchAction: none` prevents scroll during hold. Existing `onClick` path for quarter notes is completely unchanged. Button has `relative` class for HoldRing absolute overlay.
@@ -88,6 +91,7 @@ Hold mode activates only when `isHoldNote=true`. Uses `onPointerDown` (with `set
 ### Task 3: i18n Keys
 
 Added under `games.metronomeTrainer.tapArea` in both locales:
+
 - `holdHere`: "HOLD" (en) / "החזק" (he)
 - `accuracy.holdGood`: "Almost, hold longer!" (en) / "!כמעט, החזק יותר" (he)
 

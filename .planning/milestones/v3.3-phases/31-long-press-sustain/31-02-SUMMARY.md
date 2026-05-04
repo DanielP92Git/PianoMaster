@@ -46,9 +46,9 @@ metrics:
 
 ## Tasks Completed
 
-| Task | Name | Commit | Files |
-|------|------|--------|-------|
-| 1 | Store vexDurations and track current onset index | 116e367 | RhythmTapQuestion.jsx |
+| Task | Name                                             | Commit  | Files                 |
+| ---- | ------------------------------------------------ | ------- | --------------------- |
+| 1    | Store vexDurations and track current onset index | 116e367 | RhythmTapQuestion.jsx |
 
 ## Task 2: Awaiting Human Verification
 
@@ -78,18 +78,21 @@ metrics:
 ### Task 1: Hold-Press Infrastructure in RhythmTapQuestion.jsx
 
 **New imports:**
+
 - `scoreHold`, `isHoldNote`, `calcHoldDurationMs` from holdScoringUtils
 - `CIRCUMFERENCE` from HoldRing
 - `DURATION_INFO` from durationInfo
 - `useAccessibility` from AccessibilityContext (for `reducedMotion`)
 
 **New refs:**
+
 - `currentOnsetIndexRef` — tracks which onset the child is currently on (advances per tap/hold-complete)
 - `pressStartTimeRef` — records `performance.now()` at press-down for hold duration calculation
 - `rafIdRef` — stores requestAnimationFrame ID for cleanup (T-31-05 DoS mitigation)
 - `holdRingCircleRef` — passed to TapArea as holdRingRef; parent drives stroke-dashoffset at 60fps
 
 **New state:**
+
 - `isHoldComplete` — triggers green ring state on PERFECT hold
 - `currentOnsetHold` — `{ isHold, holdDurationMs }` for current expected onset; drives TapArea display
 
@@ -100,6 +103,7 @@ metrics:
 **registerFirstOnset():** Extracted shared helper containing the first-tap measure-anchor logic (find nearest beat 1, schedule metronome stop + evaluatePerformance). Called by both `handleTap` and `handlePressStart`.
 
 **handlePressStart():**
+
 1. Delegates quarter notes to `handleTap()` if onset is not a hold note
 2. For hold notes: records audioContext tapTime in userTapsRef (onset timing, not press duration)
 3. Calls registerFirstOnset() on first onset
@@ -108,6 +112,7 @@ metrics:
 6. Starts rAF loop that drives `holdRingCircleRef` stroke-dashoffset — guarded by `pressStartTimeRef.current !== null` (T-31-05)
 
 **handlePressEnd():**
+
 1. Cancels rAF, measures hold duration via `performance.now() - pressStartTimeRef`
 2. Calls `scoreHold(holdMs, requiredMs)` → 'PERFECT' | 'GOOD' | 'MISS'
 3. Sets `isHoldComplete=true` for 200ms on PERFECT (green ring flash)
@@ -116,12 +121,14 @@ metrics:
 6. Calls `advanceOnset()` to move to next onset
 
 **handleTap() updates:**
+
 - Refactored to use `registerFirstOnset()` instead of inline first-tap logic
 - Calls `advanceOnset()` after recording tap so onset index stays in sync for mixed patterns
 
 **Cleanup:** `cancelAnimationFrame(rafIdRef.current)` added to unmount useEffect (T-31-05 rAF loop leak mitigation).
 
 **TapArea props update:**
+
 - `isHoldNote={phase === PHASES.USER_PERFORMANCE && currentOnsetHold.isHold}` — only show HOLD state during active performance
 - `holdRingRef={holdRingCircleRef}` — ref-driven rAF animation
 - `isHoldComplete={isHoldComplete}` — green ring state
@@ -134,6 +141,7 @@ metrics:
 ### Auto-fixed: reducedMotion source
 
 **[Rule 1 - Bug] Used useAccessibility() instead of useMotionTokens()**
+
 - **Found during:** Task 1
 - **Issue:** Plan suggested `const { reducedMotion } = useMotionTokens()` but `useMotionTokens` returns `{ reduce, snappy, soft, fade }` — no `reducedMotion` field. The established pattern in rhythm games (`ArcadeRhythmGame.jsx`) is `const { reducedMotion = false } = useAccessibility()`.
 - **Fix:** Import and use `useAccessibility` from `AccessibilityContext` as per the established pattern.
@@ -143,6 +151,7 @@ metrics:
 ### Auto-added: registerFirstOnset() helper
 
 **[Rule 2 - Missing critical functionality] Extracted shared first-tap anchor logic**
+
 - **Found during:** Task 1
 - **Issue:** Both `handleTap` (quarter notes) and `handlePressStart` (hold notes) need identical first-onset measure-anchor logic. Duplicating ~15 lines would create a correctness risk (one path could diverge from the other).
 - **Fix:** Extracted `registerFirstOnset(stopMetronome, evalPerf, setStarted)` helper called by both handlers.

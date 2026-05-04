@@ -5,11 +5,19 @@ subsystem: rhythm-data
 tags: [data, curriculum, i18n, pattern-generation, testing]
 dependency_graph:
   requires: []
-  provides: [rest-aware-pattern-filtering, correct-unit-i18n, combined-values-variety]
-  affects: [MixedLessonGame, RhythmTapQuestion, trail section headers, validateTrail]
+  provides:
+    [rest-aware-pattern-filtering, correct-unit-i18n, combined-values-variety]
+  affects:
+    [MixedLessonGame, RhythmTapQuestion, trail section headers, validateTrail]
 tech_stack:
   added: []
-  patterns: [allowRests-option, durationsIncludeRests-utility, patternNeedsRests-helper, variety-smoke-test]
+  patterns:
+    [
+      allowRests-option,
+      durationsIncludeRests-utility,
+      patternNeedsRests-helper,
+      variety-smoke-test,
+    ]
 key_files:
   created: []
   modified:
@@ -40,11 +48,11 @@ metrics:
 
 ## Tasks Completed
 
-| # | Task | Commit | Files |
-|---|------|--------|-------|
-| 1 | Add rest-aware filtering to resolveByTags (DATA-01 + DATA-02) | `0555518` | RhythmPatternGenerator.js, .test.js |
-| 2 | Fix section title mismatches and missing i18n keys (DATA-03) | `0064261` | en/trail.json, he/trail.json |
-| 3 | Ensure combined-values nodes use all durations with variety (DATA-04) | `9134abe` | rhythmUnit1/2/3Redesigned.js, test, validateTrail.mjs |
+| #   | Task                                                                  | Commit    | Files                                                 |
+| --- | --------------------------------------------------------------------- | --------- | ----------------------------------------------------- |
+| 1   | Add rest-aware filtering to resolveByTags (DATA-01 + DATA-02)         | `0555518` | RhythmPatternGenerator.js, .test.js                   |
+| 2   | Fix section title mismatches and missing i18n keys (DATA-03)          | `0064261` | en/trail.json, he/trail.json                          |
+| 3   | Ensure combined-values nodes use all durations with variety (DATA-04) | `9134abe` | rhythmUnit1/2/3Redesigned.js, test, validateTrail.mjs |
 
 ## What Was Built
 
@@ -57,6 +65,7 @@ metrics:
 Key insight: the algorithm requires **exact gap matching** (not greedy fill), because `binaryToVexDurations` places exactly ONE note per onset and fills the remainder with rests. So gap=8 with only `["q"]` available still needs a rest (q + qr), even though greedy fill could place two quarters.
 
 **New exports:**
+
 - `durationsIncludeRests(durations)` — utility for callers to detect rest-enabled nodes
 - `resolveByTags` now accepts `options.allowRests` (default `false`)
 - `resolveByIds` now accepts `options.allowRests` (default `false`)
@@ -68,17 +77,20 @@ Key insight: the algorithm requires **exact gap matching** (not greedy fill), be
 **Changes in both en/trail.json and he/trail.json:**
 
 Added 4 missing entries:
+
 - `Beat Builders` → "Beat Builders" / "בוני הביט"
 - `Fast Note Friends` → "Fast Note Friends" / "חברים מהירים"
 - `Quiet Moments` → "Quiet Moments" / "רגעי שקט"
 - `Big Beats` → "Big Beats" / "פעימות גדולות"
 
 Removed 5 stale entries (old unit names that no longer match any data file):
+
 - `Steady Beat`, `Eighth Notes`, `Whole Notes & Rests`, `Dotted & Syncopation`, `Six-Eight Time`
 
 ### Task 3: Combined-Values Variety + validateTrail Fix
 
 **PatternTags changes:**
+
 - `rhythm_1_4`: `["quarter-half"]` → `["quarter-only", "quarter-half"]` — adds pure quarter patterns for contrast
 - `rhythm_2_4`: `["quarter-half-whole"]` → `["quarter-half", "quarter-half-whole"]` — ensures both h and w appear
 - `rhythm_3_4`: `["quarter-half-whole-eighth"]` → `["quarter-eighth", "quarter-half-whole-eighth"]` — ensures eighth-note patterns appear
@@ -92,6 +104,7 @@ Removed 5 stale entries (old unit names that no longer match any data file):
 ### Auto-fixed Issues
 
 **1. [Rule 1 - Bug] patternNeedsRests used greedy-fill instead of exact-gap matching**
+
 - **Found during:** Task 1 GREEN phase — tests 1/2/4/5 still failing after first implementation
 - **Issue:** Initial `patternNeedsRests` used greedy fill (subtract largest fitting duration repeatedly), which allowed gap=8 with `["q"]` through the filter. But `binaryToVexDurations` places ONE note at each onset — gap=8 with only q available still generates a rest.
 - **Fix:** Rewrote `patternNeedsRests` to use exact-gap matching via a Set: each gap must exactly equal one available note duration slot size.
@@ -99,6 +112,7 @@ Removed 5 stale entries (old unit names that no longer match any data file):
 - **Commit:** `0555518`
 
 **2. [Rule 3 - Blocking] validateTrail.mjs broke after allowRests defaulted to false**
+
 - **Found during:** Task 3 verify — `npm run verify:trail` errored on 8 rest-tagged nodes
 - **Issue:** `validateTrail.mjs` called `resolveByTags` without `allowRests`, which now defaults to `false`. Rest-tagged nodes (quarter-rest, half-rest, whole-rest) have patterns that inherently produce rests — all filtered out → null → validation error.
 - **Fix:** Updated the duration safety check in `validateTrail.mjs` to pass `allowRests: true` with a comment explaining the rationale.
@@ -123,16 +137,16 @@ None — no new network endpoints, auth paths, or schema changes introduced.
 
 ## Self-Check: PASSED
 
-| Item | Status |
-|------|--------|
-| RhythmPatternGenerator.js exists | FOUND |
-| en/trail.json exists | FOUND |
-| he/trail.json exists | FOUND |
-| 29-02-SUMMARY.md exists | FOUND |
-| Commit 0555518 (Task 1) | FOUND |
-| Commit 0064261 (Task 2) | FOUND |
-| Commit 9134abe (Task 3) | FOUND |
-| durationsIncludeRests exported | FOUND |
-| allowRests option in RhythmPatternGenerator | FOUND |
-| Beat Builders in en/trail.json | FOUND |
-| Big Beats in he/trail.json | FOUND |
+| Item                                        | Status |
+| ------------------------------------------- | ------ |
+| RhythmPatternGenerator.js exists            | FOUND  |
+| en/trail.json exists                        | FOUND  |
+| he/trail.json exists                        | FOUND  |
+| 29-02-SUMMARY.md exists                     | FOUND  |
+| Commit 0555518 (Task 1)                     | FOUND  |
+| Commit 0064261 (Task 2)                     | FOUND  |
+| Commit 9134abe (Task 3)                     | FOUND  |
+| durationsIncludeRests exported              | FOUND  |
+| allowRests option in RhythmPatternGenerator | FOUND  |
+| Beat Builders in en/trail.json              | FOUND  |
+| Big Beats in he/trail.json                  | FOUND  |
