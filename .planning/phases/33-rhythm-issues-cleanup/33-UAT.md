@@ -158,7 +158,7 @@ Phase 32 D-11 already removed all 6 Mix-Up nodes. Issue is structurally resolved
 - [x] All 10 active issue sections marked
 - [x] Issue 11 acknowledged as DROPPED-PER-CONTEXT (no action)
 - [x] User's confirmed-bug subset feeds Wave 2 plan triggering (33-03 unconditional, 33-04/05 unconditional, 33-06 unconditional, 33-07 contingent on Issue 1 OR 4 confirmed-bug → SKIPPED per UAT, 33-08 contingent on Issue 13 confirmed-bug → SHIPPED, 33-09 contingent on Issue 12 confirmed-bug → SHIPPED)
-- [ ] **Final UAT pass against post-Wave-3 deployed build** (Plan 33-10 Task 1) — pending user retest
+- [x] **Final UAT pass against post-Wave-3 deployed build** (Plan 33-10 Task 1) — user retested 2026-05-04, all entries pass (Issues 5/6/12/13 + Survivors 1/2)
 
 ## Final UAT Retest Checklist (post-deploy)
 
