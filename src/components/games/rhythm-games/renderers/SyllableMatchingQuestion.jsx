@@ -16,13 +16,10 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import DurationCard, { SVG_COMPONENTS } from "../components/DurationCard";
-import { DURATION_INFO } from "../utils/durationInfo";
 import {
-  SYLLABLE_MAP_EN,
-  SYLLABLE_MAP_HE,
-  REST_SYLLABLE_EN,
-  REST_SYLLABLE_HE,
-} from "../utils/rhythmVexflowHelpers";
+  DURATION_INFO,
+  getSyllable as getDurationSyllable,
+} from "../utils/durationInfo";
 
 /**
  * @param {Object} props
@@ -41,17 +38,12 @@ export default function SyllableMatchingQuestion({
 }) {
   const { t, i18n } = useTranslation("common");
 
-  // Syllable lookup helper
+  // Syllable lookup helper — delegates to durationInfo.getSyllable so the
+  // info.syllable override (e.g., "8_pair" → "ti-ti") is honored. Without this
+  // delegation, two cards could render the same syllable text when the dedup
+  // pass in generateQuestions misses an override-only collision (bug 2).
   const getSyllable = useCallback(
-    (code) => {
-      const info = DURATION_INFO[code];
-      if (!info) return code;
-      const lang = i18n.language;
-      if (info.isRest)
-        return lang === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
-      const map = lang === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
-      return map[info.durationUnits] || code;
-    },
+    (code) => getDurationSyllable(code, i18n.language) || code,
     [i18n.language]
   );
 

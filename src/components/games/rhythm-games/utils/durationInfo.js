@@ -77,6 +77,8 @@ export const DURATION_INFO = {
     durationUnits: 16,
     isRest: true,
   },
+  // syllable override: "ti-ti" — see getSyllable(). syllableHe TBD pending
+  // user-confirmed Nikud (memory.md: Hebrew syllables require explicit approval).
   "8_pair": {
     svgFilename: "beamed-eighths",
     i18nKey: "rhythm.duration.beamedEighths",
@@ -92,8 +94,11 @@ export const DURATION_INFO = {
 export const ALL_DURATION_CODES = Object.keys(DURATION_INFO);
 
 /**
- * Inline syllable map (do NOT import from rhythmVexflowHelpers — it imports VexFlow
- * which is browser-only). Maps durationUnits to Kodaly syllable text.
+ * Inline syllable maps (do NOT import from rhythmVexflowHelpers — it imports
+ * VexFlow which is browser-only, and this file must stay Node-safe for
+ * scripts/validateTrail.mjs). Hebrew strings are re-declared here from
+ * SYLLABLE_MAP_HE / REST_SYLLABLE_HE in rhythmVexflowHelpers.js — do NOT alter
+ * Nikud diacritics without user approval (memory.md).
  */
 const SYLLABLE_BY_UNITS = {
   16: "ta-a-a-a",
@@ -105,16 +110,44 @@ const SYLLABLE_BY_UNITS = {
   1: "ti-ka",
 };
 
+const SYLLABLE_BY_UNITS_HE = {
+  16: "טָה-אָה-אָה-אָה",
+  12: "טָה-אָה-אָה",
+  8: "טָה-אָה",
+  6: "טָה-אָה",
+  4: "טָה",
+  2: "טִי",
+  1: "טִי-כָּה",
+};
+
+const REST_EN = "sh";
+const REST_HE = "הָס"; // הָס
+
 /**
  * Get the Kodaly syllable for a duration code.
- * Rests always return "sh".
+ *
+ * @param {string} code - Duration code (e.g., "q", "8_pair")
+ * @param {"en"|"he"} [language="en"] - Display language
+ * @returns {string} Kodaly syllable text
+ *
+ * Resolution order:
+ * 1. Rests → REST_EN/REST_HE
+ * 2. Per-entry override (info.syllable / info.syllableHe).
+ *    When language is "he" but info.syllableHe is absent, fall back to
+ *    info.syllable (English) so we don't accidentally collide with the
+ *    units-based Hebrew map (e.g., "8_pair" must NOT render as "טָה").
+ * 3. Otherwise, look up by durationUnits in the language-specific map.
  */
-export function getSyllable(code) {
+export function getSyllable(code, language = "en") {
   const info = DURATION_INFO[code];
   if (!info) return "";
-  if (info.isRest) return "sh";
-  if (info.syllable) return info.syllable;
-  return SYLLABLE_BY_UNITS[info.durationUnits] || "";
+  const isHe = language === "he";
+  if (info.isRest) return isHe ? REST_HE : REST_EN;
+  if (info.syllable) {
+    return isHe && info.syllableHe ? info.syllableHe : info.syllable;
+  }
+  const map = isHe ? SYLLABLE_BY_UNITS_HE : SYLLABLE_BY_UNITS;
+  return map[info.durationUnits] || "";
 }
 
 /**
