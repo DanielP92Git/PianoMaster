@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-04 after v3.3 milestone)
 Phase: —
 Plan: —
 Status: Between milestones
-Last activity: 2026-05-04
+Last activity: 2026-05-04 - Completed quick task 260504-jbu: three rhythm trail bug fixes
 Resume: ready for `/gsd-new-milestone`
 
 ## Performance Metrics
@@ -61,6 +61,12 @@ Items acknowledged and deferred at v3.3 milestone close on 2026-05-04:
 ### Blockers/Concerns
 
 - **COPPA deadline:** April 22, 2026 (now past — verify all compliance items shipped)
+
+### Quick Tasks Completed
+
+| #          | Description                                                                                           | Date       | Commit  | Directory                                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| 260504-jbu | Fix three rhythm trail bugs: mobile intro card, duplicate "ta" syllable, notation tap metronome stuck | 2026-05-04 | a033830 | [260504-jbu-fix-three-rhythm-trail-bugs-1-meet-the-q](./quick/260504-jbu-fix-three-rhythm-trail-bugs-1-meet-the-q/) |
 
 ## Session Continuity
 
