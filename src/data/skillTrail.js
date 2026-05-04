@@ -243,43 +243,47 @@ export const UNITS = {
   RHYTHM_2: {
     id: "rhythm_unit_2",
     category: NODE_CATEGORIES.RHYTHM,
-    name: "Eighth Notes",
-    description: "Master faster rhythms with eighth notes",
+    name: "Whole Notes",
+    description: "Learn to hold notes for 4 full beats",
     order: 2,
-    theme: "Quick Steps",
-    icon: "⚡",
+    theme: "Long & Steady",
+    icon: "🎵",
     reward: {
+      // reward.id kept stable to preserve existing user data — display name
+      // updated to match actual unit content (whole notes, not eighth notes).
       type: "accessory",
       id: "eighth_note_badge",
-      name: "Eighth Note Badge",
+      name: "Whole Note Badge",
     },
   },
   RHYTHM_3: {
     id: "rhythm_unit_3",
     category: NODE_CATEGORIES.RHYTHM,
-    name: "Whole Notes & Rests",
-    description: "Learn to count longer notes and silences",
+    name: "Eighth Notes",
+    description: "Master faster rhythms with eighth notes",
     order: 3,
-    theme: "Patience & Silence",
-    icon: "🎶",
+    theme: "Quick Steps",
+    icon: "⚡",
     reward: {
+      // reward.id kept stable to preserve existing user data.
       type: "accessory",
       id: "rest_master_badge",
-      name: "Rest Master Badge",
+      name: "Eighth Note Badge",
     },
   },
   RHYTHM_4: {
     id: "rhythm_unit_4",
     category: NODE_CATEGORIES.RHYTHM,
-    name: "Dotted & Syncopation",
-    description: "Master advanced rhythms and syncopated patterns",
+    name: "Rests",
+    description: "Learn to count silences — quarter, half, and whole rests",
     order: 4,
-    theme: "Rhythm Mastery",
-    icon: "🎼",
+    theme: "Patience & Silence",
+    icon: "🎶",
     reward: {
+      // reward.id kept stable to preserve existing user data.
       type: "accessory",
       id: "syncopation_badge",
-      name: "Syncopation Badge",
+      name: "Rest Master Badge",
     },
   },
   RHYTHM_5: {
