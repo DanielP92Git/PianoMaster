@@ -374,7 +374,7 @@ export const rhythmUnit7Nodes = [
     skills: ["68_compound_meter", "dotted_quarter_note", "eighth_note"],
     xpReward: 150,
     accessoryUnlock: "compound_badge",
-    isBoss: false, // MINI_BOSS does NOT set isBoss: true
+    isBoss: true, // MINI_BOSS still flagged isBoss for TrailMap visibility; nodeType:MINI_BOSS preserves overlay/timing distinction
     isReview: false,
     reviewsUnits: [],
   },

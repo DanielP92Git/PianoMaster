@@ -71,7 +71,7 @@ describe("Rhythm Unit 7 — 6/8 Compound Meter", () => {
     expect(last.id).toBe("boss_rhythm_7");
     expect(last.nodeType).toBe(NODE_TYPES.MINI_BOSS);
     expect(last.category).toBe("boss");
-    expect(last.isBoss).toBe(false);
+    expect(last.isBoss).toBe(true);
   });
 
   it("regular nodes use rhythm category", () => {
