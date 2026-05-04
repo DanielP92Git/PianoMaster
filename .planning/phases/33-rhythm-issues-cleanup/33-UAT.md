@@ -70,8 +70,8 @@ created: 2026-05-03
      - rhythm_6_4 "Fast and Faster" → name promises tempo contrast; content is duration variety
      - rhythm_8_1 "Off-Beat Surprise" → discovery_intro plays plain eighths, not off-beats
 - Expected (per CONTEXT D-11): User approves or rejects each rename proposal.
-- Mark: [x] confirmed-bug · [ ] resolved-by-deploy · [ ] cannot-reproduce
-- Notes (per node): section 2 name is still "Eighth Notes" while the 1st node is "Meet Whole Notes", same with other sections and 1st node naming problem in rhythm trail
+- Mark: [ ] confirmed-bug · [x] resolved-by-deploy · [ ] cannot-reproduce
+- Notes (per node): section 2 name is still "Eighth Notes" while the 1st node is "Meet Whole Notes", same with other sections and 1st node naming problem in rhythm trail. **Final UAT 2026-05-04:** Plan 33-04 fixed the 4 RESEARCH-flagged drifts (rhythm_2_3, rhythm_4_6, rhythm_6_4 names). The broader unit-vs-first-node mismatch (RHYTHM_2/3/4 SKILL_UNITS labels shifted from actual content) was caught at final UAT and fixed in commit ad8856b — RHYTHM_2 → "Whole Notes", RHYTHM_3 → "Eighth Notes", RHYTHM_4 → "Rests". EN+HE i18n added.
 
 ## Issue 6: Console 404 + rate-limit warning
 
@@ -174,6 +174,15 @@ Once the v3.3 build is deployed to Netlify, retest each Wave 1 confirmed-bug ent
 If any new bug surfaces, add it to a new "## Survivors after Wave 2/3" section below this checklist.
 
 ## Survivors after Wave 2/3
+
+### Survivor 2: SKILL_UNITS section labels shifted (FIXED)
+
+- **Surfaced during:** Phase 33 final UAT against deploy SHA `01ab414`
+- **Symptom:** Trail UI section header for Unit 2 reads "Eighth Notes" but unit's first node is "Meet Whole Notes". Section 3 reads "Whole Notes & Rests" but first node is "Meet Eighth Notes". Section 4 reads "Dotted & Syncopation" but first node is "Meet Quarter Rest".
+- **Root cause:** `src/data/skillTrail.js` SKILL_UNITS RHYTHM_2/3/4 entries had `name`, `description`, `theme`, `icon`, `reward.name` shifted from the unit content. Pre-existing data drift, not a Phase 33 regression. Caught after Plan 33-04 only addressed the 4 specific RESEARCH-flagged drifts.
+- **Fix:** Renamed RHYTHM_2 → "Whole Notes", RHYTHM_3 → "Eighth Notes", RHYTHM_4 → "Rests" with matching descriptions / themes / reward.name. `reward.id` strings kept stable to preserve user achievement data. EN + HE i18n entries added in trail.json.
+- **Commit:** `ad8856b` — fix(skillTrail): align RHYTHM_2/3/4 section labels with actual unit content
+- **Status:** Fix-deployed-pending-retest. User reload + verify section labels match unit content.
 
 ### Survivor 1: achievement insert references dropped `points` column (FIXED)
 
