@@ -190,4 +190,42 @@ describe("SyllableMatchingQuestion", () => {
       expect(card.getAttribute("data-state")).toBe(state);
     });
   });
+
+  it("renders '8_pair' distractor as 'ti-ti' (not 'ta') when correct is 'q' (regression: bug-2)", () => {
+    // Force a question where the bug previously surfaced:
+    // 8_pair has durationUnits=4 → would map to "ta" via SYLLABLE_MAP_EN[4],
+    // colliding with q's "ta". Fixed by routing through getSyllable() in
+    // durationInfo.js, which honors info.syllable = "ti-ti".
+    const question = {
+      correct: "q",
+      choices: ["q", "8_pair", "h", "w"],
+    };
+    const cardStates = ["default", "default", "default", "default"];
+
+    render(
+      <SyllableMatchingQuestion
+        question={question}
+        cardStates={cardStates}
+        isLandscape={false}
+        onSelect={() => {}}
+        disabled={false}
+      />
+    );
+
+    // Card 0 ("q") → "ta"; card 1 ("8_pair") → "ti-ti"
+    expect(screen.getByTestId("duration-card-0")).toHaveAttribute(
+      "data-text",
+      "ta"
+    );
+    expect(screen.getByTestId("duration-card-1")).toHaveAttribute(
+      "data-text",
+      "ti-ti"
+    );
+
+    // No two cards share the same text
+    const texts = [0, 1, 2, 3].map((i) =>
+      screen.getByTestId(`duration-card-${i}`).getAttribute("data-text")
+    );
+    expect(new Set(texts).size).toBe(4);
+  });
 });

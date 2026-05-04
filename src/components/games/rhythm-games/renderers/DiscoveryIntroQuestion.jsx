@@ -20,7 +20,7 @@ import { schedulePatternPlayback } from "../utils/rhythmTimingUtils";
 
 export default function DiscoveryIntroQuestion({
   question,
-  isLandscape: _isLandscape,
+  isLandscape,
   onComplete,
   disabled,
 }) {
@@ -34,7 +34,9 @@ export default function DiscoveryIntroQuestion({
   const info = DURATION_INFO[focusDuration];
   const SvgIcon = SVG_COMPONENTS[focusDuration];
   const syllable = getSyllable(focusDuration);
-  const durationName = info ? t(`rhythm.duration.${info.i18nKey?.split(".").pop()}`, info.i18nKey) : "";
+  const durationName = info
+    ? t(`rhythm.duration.${info.i18nKey?.split(".").pop()}`, info.i18nKey)
+    : "";
 
   // Use a moderate tempo for the audio demo
   const audioEngine = useAudioEngine(80, {
@@ -76,7 +78,11 @@ export default function DiscoveryIntroQuestion({
 
     // Defensive: ensure context is running
     if (ctx.state !== "running") {
-      try { await ctx.resume(); } catch { /* ignore */ }
+      try {
+        await ctx.resume();
+      } catch {
+        /* ignore */
+      }
     }
 
     const units = info?.durationUnits || 4;
@@ -112,10 +118,16 @@ export default function DiscoveryIntroQuestion({
         }));
       } else if (units === 4) {
         // Quarter: play 4 quarter notes
-        beats = Array.from({ length: 4 }, () => ({ durationUnits: 4, isRest: false }));
+        beats = Array.from({ length: 4 }, () => ({
+          durationUnits: 4,
+          isRest: false,
+        }));
       } else if (units === 2) {
         // Single eighth: play 4 eighth notes
-        beats = Array.from({ length: 4 }, () => ({ durationUnits: 2, isRest: false }));
+        beats = Array.from({ length: 4 }, () => ({
+          durationUnits: 2,
+          isRest: false,
+        }));
       } else {
         // Half, whole, dotted: play 1 note of that duration
         beats = [{ durationUnits: units, isRest: false }];
@@ -140,10 +152,23 @@ export default function DiscoveryIntroQuestion({
         };
       }
 
-      const { totalDuration } = schedulePatternPlayback(beats, 80, ctx, playNoteFn);
+      const { totalDuration } = schedulePatternPlayback(
+        beats,
+        80,
+        ctx,
+        playNoteFn
+      );
       setTimeout(() => setIsPlaying(false), (totalDuration + 0.3) * 1000);
     }
-  }, [isPlaying, audioEngine, audioContextRef, getOrCreateAudioContext, focusDuration, info, enginePlayNote]);
+  }, [
+    isPlaying,
+    audioEngine,
+    audioContextRef,
+    getOrCreateAudioContext,
+    focusDuration,
+    info,
+    enginePlayNote,
+  ]);
 
   const handleGotIt = useCallback(() => {
     if (hasCompletedRef.current || disabled) return;
@@ -153,74 +178,115 @@ export default function DiscoveryIntroQuestion({
 
   if (!info || !SvgIcon) return null;
 
+  // Landscape-aware class sets — landscape compresses paddings/gaps and switches
+  // to a horizontal split so the card fits ≤420px-tall mobile-landscape viewports.
+  const wrapperClass = isLandscape
+    ? "flex w-full flex-col items-center gap-2"
+    : "flex w-full flex-col items-center gap-6";
+  const cardClass = isLandscape
+    ? "flex w-full max-w-2xl flex-row items-center gap-6 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 shadow-lg backdrop-blur-md"
+    : "flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/20 bg-white/10 px-8 py-10 shadow-lg backdrop-blur-md";
+  const rightColClass = isLandscape ? "flex flex-1 flex-col gap-2" : "contents";
+  const titleClass = isLandscape
+    ? "text-left text-lg font-bold text-white"
+    : "text-center text-xl font-bold text-white";
+  const svgClass = isLandscape ? "h-24 w-16" : "h-40 w-28";
+  const nameClass = isLandscape
+    ? "text-left text-xl font-semibold text-indigo-300"
+    : "text-center text-2xl font-semibold text-indigo-300";
+  const syllableClass = isLandscape
+    ? "text-left text-base text-white/70"
+    : "text-center text-lg text-white/70";
+  const listenBtnPadding = isLandscape ? "px-4 py-2" : "px-5 py-3";
+  const listenBtnAlign = isLandscape ? " self-start" : "";
+  const gotItBtnSize = isLandscape
+    ? "mt-1 w-full py-2.5 text-base"
+    : "mt-2 w-full py-4 text-lg";
+
+  // Title element — kept first in DOM order via the `title` variable so the
+  // horizontal layout still renders the heading before name/syllable for SR users.
+  const title = (
+    <h2 className={titleClass}>
+      {t("game.discovery.meetNew", "Meet the {{name}}!", {
+        name: durationName,
+      })}
+    </h2>
+  );
+
   return (
     <div
-      className="flex w-full flex-col items-center gap-6"
+      className={wrapperClass}
       role="main"
       aria-label={t("game.discovery.ariaLabel", "Meet a new rhythm")}
     >
       {/* Glass card */}
-      <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/20 bg-white/10 px-8 py-10 shadow-lg backdrop-blur-md">
-        {/* Title */}
-        <h2 className="text-center text-xl font-bold text-white">
-          {t("game.discovery.meetNew", "Meet the {{name}}!", { name: durationName })}
-        </h2>
-
-        {/* Large SVG icon */}
+      <div className={cardClass}>
+        {/* Large SVG icon (left column in landscape, top in portrait) */}
         <div
           dir="ltr"
           className={`flex items-center justify-center text-white${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
-          <SvgIcon className="h-40 w-28" aria-hidden="true" />
+          <SvgIcon className={svgClass} aria-hidden="true" />
         </div>
 
-        {/* Duration name */}
-        <p className="text-center text-2xl font-semibold text-indigo-300">
-          {durationName}
-        </p>
+        {/* Right column wrapper (landscape) — title + name + syllable + buttons.
+            In portrait, `contents` makes this wrapper transparent so children
+            participate in the parent flex column directly. */}
+        <div className={rightColClass}>
+          {/* Title */}
+          {title}
 
-        {/* Kodaly syllable */}
-        <p className="text-center text-lg text-white/70">
-          {t("game.discovery.syllable", "Say: \"{{syllable}}\"", { syllable })}
-        </p>
+          {/* Duration name */}
+          <p className={nameClass}>{durationName}</p>
 
-        {/* Audio demo button */}
-        <button
-          onClick={playDemo}
-          disabled={isPlaying}
-          className={[
-            "flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-5 py-3",
-            "text-white transition-colors duration-150",
-            isPlaying
-              ? "opacity-60 cursor-default"
-              : "hover:bg-white/20 hover:border-white/40 cursor-pointer",
-          ].join(" ")}
-          aria-label={t("game.discovery.listenButton", "Listen to the sound")}
-        >
-          <Volume2 className="h-5 w-5" />
-          <span className="font-medium">
-            {isPlaying
-              ? t("game.discovery.playing", "Playing...")
-              : t("game.discovery.listen", "Listen")}
-          </span>
-        </button>
+          {/* Kodaly syllable */}
+          <p className={syllableClass}>
+            {t("game.discovery.syllable", 'Say: "{{syllable}}"', { syllable })}
+          </p>
 
-        {/* Got it button */}
-        <button
-          onClick={handleGotIt}
-          disabled={disabled}
-          className={[
-            "mt-2 w-full rounded-xl py-4 text-lg font-bold text-white",
-            "bg-gradient-to-r from-green-500 to-emerald-500",
-            "shadow-lg shadow-green-500/30",
-            "transition-all duration-150",
-            disabled
-              ? "opacity-50 cursor-default"
-              : "hover:brightness-110 active:scale-[0.97] cursor-pointer",
-          ].join(" ")}
-        >
-          {t("game.discovery.gotIt", "Got it!")}
-        </button>
+          {/* Audio demo button */}
+          <button
+            onClick={playDemo}
+            disabled={isPlaying}
+            className={[
+              "flex items-center gap-2 rounded-lg border border-white/20 bg-white/10",
+              listenBtnPadding,
+              "text-white transition-colors duration-150",
+              isPlaying
+                ? "cursor-default opacity-60"
+                : "cursor-pointer hover:border-white/40 hover:bg-white/20",
+              listenBtnAlign.trim(),
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            aria-label={t("game.discovery.listenButton", "Listen to the sound")}
+          >
+            <Volume2 className="h-5 w-5" />
+            <span className="font-medium">
+              {isPlaying
+                ? t("game.discovery.playing", "Playing...")
+                : t("game.discovery.listen", "Listen")}
+            </span>
+          </button>
+
+          {/* Got it button */}
+          <button
+            onClick={handleGotIt}
+            disabled={disabled}
+            className={[
+              gotItBtnSize,
+              "rounded-xl font-bold text-white",
+              "bg-gradient-to-r from-green-500 to-emerald-500",
+              "shadow-lg shadow-green-500/30",
+              "transition-all duration-150",
+              disabled
+                ? "cursor-default opacity-50"
+                : "cursor-pointer hover:brightness-110 active:scale-[0.97]",
+            ].join(" ")}
+          >
+            {t("game.discovery.gotIt", "Got it!")}
+          </button>
+        </div>
       </div>
     </div>
   );

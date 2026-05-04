@@ -22,7 +22,10 @@ import { useAccessibility } from "../../../../contexts/AccessibilityContext";
 import { MetronomeDisplay, TapArea } from "../components";
 import FloatingFeedback from "../components/FloatingFeedback";
 import { getPattern, TIME_SIGNATURES } from "../RhythmPatternGenerator";
-import { resolveByTags, resolveByAnyTag } from "../../../../data/patterns/RhythmPatternGenerator";
+import {
+  resolveByTags,
+  resolveByAnyTag,
+} from "../../../../data/patterns/RhythmPatternGenerator";
 import {
   scoreHold,
   isHoldNote,
@@ -177,7 +180,12 @@ export default function RhythmTapQuestion({
     [audioEngine]
   );
 
-  // Start continuous metronome
+  // Start continuous metronome.
+  //
+  // Mirrors the working pattern in MetronomeTrainer.startContinuousMetronome
+  // (lines ~359–516): defers the visual loop until startTime arrives so the
+  // first ~300ms of negative timeSinceStart can't render beat=0, and uses a
+  // 50ms scheduling cadence for responsive stop/start.
   const startContinuousMetronome = useCallback(
     (startTime) => {
       const beatDur = beatDuration.current;
@@ -204,21 +212,43 @@ export default function RhythmTapQuestion({
         }
       };
 
+      // Initial scheduling (queues a few beats ahead of startTime).
       scheduleBeats(audioEngine.getCurrentTime());
+
+      // 50ms cadence (was 200ms) — keeps the schedule queue topped up and
+      // matches MetronomeTrainer for responsive stop behavior.
       continuousMetronomeRef.current = setInterval(
         () => scheduleBeats(audioEngine.getCurrentTime()),
-        200
+        50
       );
 
-      // Visual beat tracking
-      visualMetronomeRef.current = setInterval(() => {
+      // Defer the visual loop until startTime actually arrives, so
+      // timeSinceStart is non-negative when updateVisualBeat first runs.
+      // Previously the immediate setInterval ran with timeSinceStart < 0
+      // for ~300ms; Math.floor(-x) is -1, (-1 % N) is -1, so
+      // beatInMeasure was 0 — display rendered no highlighted circle.
+      const firstBeatDelay = (startTime - audioEngine.getCurrentTime()) * 1000;
+
+      const updateVisualBeat = () => {
         const currentTime = audioEngine.getCurrentTime();
-        const timeSinceStart = currentTime - startTime;
-        const currentBeatFloat = timeSinceStart / beatDur;
-        const beatInMeasure =
-          (Math.floor(currentBeatFloat) % beatsPerMeasure) + 1; // 1-based for MetronomeDisplay
+        // Belt-and-braces clamp: if setTimeout fires a hair early, ensure
+        // beatInMeasure is at least 1 (never 0).
+        const timeSinceStart = Math.max(0, currentTime - startTime);
+        const totalBeatsCompleted = Math.floor(timeSinceStart / beatDur);
+        const beatInMeasure = (totalBeatsCompleted % beatsPerMeasure) + 1;
         setCurrentBeat(beatInMeasure);
-      }, 50);
+      };
+
+      setTimeout(
+        () => {
+          // Bail if the audio scheduler was already stopped during count-in
+          // (e.g., user navigated away). Prevents a stray visual loop.
+          if (continuousMetronomeRef.current === null) return;
+          updateVisualBeat(); // initial frame at startTime
+          visualMetronomeRef.current = setInterval(updateVisualBeat, 50);
+        },
+        Math.max(0, firstBeatDelay)
+      );
     },
     [audioEngine, beatsPerMeasure, createClickSound]
   );
@@ -618,6 +648,10 @@ export default function RhythmTapQuestion({
     hasStartedRef.current = true;
 
     try {
+      // Idempotent: useAudioEngine.initializeAudioContext checks
+      // audioContextRef.current first, but calling it explicitly here
+      // guarantees gainNodeRef.current is set before any clicks are scheduled.
+      await audioEngine.initializeAudioContext?.();
       await audioEngine.resumeAudioContext();
     } catch {
       // Try to create context on user gesture
@@ -641,18 +675,28 @@ export default function RhythmTapQuestion({
       // Non-critical — first tick may still be quiet
     }
 
+    // Wait briefly for audioEngine.isReady() — initializeAudioContext is async
+    // and createClickSound early-returns when audioContextRef/gainNodeRef are
+    // not yet set. Without this guard, the first scheduled clicks can be
+    // silently dropped (bug 3).
+    for (let i = 0; i < 10 && !audioEngine.isReady(); i++) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    if (!audioEngine.isReady()) {
+      // Fail soft — report 0 score and exit; do not let the lesson silently hang.
+      onComplete(0, 1);
+      return;
+    }
+
     // Load pattern — try curated patterns first (guaranteed correct durations),
     // fall back to generative getPattern() if no curated match
     let pattern = null;
     if (config.patternTags?.length > 0) {
-      const resolver = config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
-      const result = resolver(
-        config.patternTags,
-        config.durations || ["q"],
-        {
-          timeSignature: timeSignature.name,
-        }
-      );
+      const resolver =
+        config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+      const result = resolver(config.patternTags, config.durations || ["q"], {
+        timeSignature: timeSignature.name,
+      });
       if (result) {
         pattern = {
           pattern: result.binary,
@@ -675,7 +719,11 @@ export default function RhythmTapQuestion({
     }
 
     const beatDur = beatDuration.current;
-    const countInStartTime = audioEngine.getCurrentTime() + 0.3;
+    // Match MetronomeTrainer's lead-in (was 0.3s — needlessly enlarged the
+    // negative-timeSinceStart window). The 50ms scheduling cadence and
+    // deferred visual loop in startContinuousMetronome handle the smaller
+    // headroom safely.
+    const countInStartTime = audioEngine.getCurrentTime() + 0.1;
 
     // Reset state
     userTapsRef.current = [];
