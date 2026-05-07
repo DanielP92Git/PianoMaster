@@ -270,14 +270,23 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-## Current Milestone: (none — between milestones)
+## Current Milestone: v3.4 Rhythm Games Responsive UX
 
-**Status:** v3.3 archived 2026-05-04. Ready for `/gsd-new-milestone` to start the next milestone cycle.
+**Goal:** Drop the route-based landscape lock for rhythm games and make each renderer responsive across phone-portrait, phone-landscape, tablet-portrait, and tablet-landscape — so vertical-card-stack games (dictation) stop scrolling, and tablets get layouts that use the extra space.
 
-**Carry-over from v3.3 to consider in next milestone scoping:**
+**Target features:**
 
-- DATA-02 re-triage: pulse hold path filter validation — extend `buildRhythmTapConfig` to derive `beats` from focusDurations/patternTags AND add a pulse exercise to a node with `durations: ['q','h']`, then re-test the filter end-to-end on the pulse path
-- WIP stash `phase-33-WIP` Chunks B/C/D/E (arcade hold-notes + remaining tag-pattern work)
+- Content-driven rotate prompt replaces `LANDSCAPE_ROUTES` mechanism for rhythm games (fires only when notation pattern genuinely doesn't fit, not because route is rhythm)
+- Responsive renderers across all 4 orientation/size quadrants — no scroll on phone-portrait, no wasted whitespace on tablet-landscape
+- Tablet-optimized 2-column layouts for cards-based renderers (dictation, syllable-matching, visual-recognition)
+- ArcadeRhythmGame portrait support (separate phase — spike vertical lanes vs. always-landscape-with-prompt)
+
+**Scope:** Rhythm-only (7 routes). Notes-master and ear-training remain landscape-locked, deferred to a future milestone.
+
+**Carry-over from v3.3 (deferred, NOT in v3.4 scope):**
+
+- DATA-02 re-triage: pulse hold path filter validation
+- WIP stash `phase-33-WIP` Chunks B/C/D/E (arcade hold-notes + remaining tag-pattern work) — partially relevant to Phase 35 ArcadeRhythmGame, researcher should review
 - WARNING-1: optionally apply useEnsureAudioReady to DiscoveryIntroQuestion if first-play trim resurfaces
 - VERIFICATION.md tech debt for Phases 31, 32 (quality risk; not blocking)
 
@@ -609,4 +618,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-05-04 after v3.3 Rhythm Trail Fix & Polish milestone_
+_Last updated: 2026-05-07 — v3.4 Rhythm Games Responsive UX milestone started_
