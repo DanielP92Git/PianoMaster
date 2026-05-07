@@ -67,36 +67,36 @@
 
 ## Traceability
 
-Empty initially; populated during roadmap creation.
-
-| Requirement | Phase | Status  |
-| ----------- | ----- | ------- |
-| INFRA-01    | TBD   | Pending |
-| INFRA-02    | TBD   | Pending |
-| INFRA-03    | TBD   | Pending |
-| INFRA-04    | TBD   | Pending |
-| CORE-01     | TBD   | Pending |
-| CORE-02     | TBD   | Pending |
-| CORE-03     | TBD   | Pending |
-| CORE-04     | TBD   | Pending |
-| CORE-05     | TBD   | Pending |
-| NOTATION-01 | TBD   | Pending |
-| NOTATION-02 | TBD   | Pending |
-| NOTATION-03 | TBD   | Pending |
-| WRAPPER-01  | TBD   | Pending |
-| WRAPPER-02  | TBD   | Pending |
-| WRAPPER-03  | TBD   | Pending |
-| TABLET-01   | TBD   | Pending |
-| ARCADE-01   | TBD   | Pending |
-| ARCADE-02   | TBD   | Pending |
+| Requirement | Phase    | Status  |
+| ----------- | -------- | ------- |
+| INFRA-01    | Phase 34 | Pending |
+| INFRA-02    | Phase 34 | Pending |
+| INFRA-03    | Phase 34 | Pending |
+| INFRA-04    | Phase 34 | Pending |
+| CORE-01     | Phase 34 | Pending |
+| CORE-02     | Phase 34 | Pending |
+| CORE-03     | Phase 34 | Pending |
+| CORE-04     | Phase 34 | Pending |
+| CORE-05     | Phase 34 | Pending |
+| NOTATION-01 | Phase 34 | Pending |
+| NOTATION-02 | Phase 34 | Pending |
+| NOTATION-03 | Phase 34 | Pending |
+| WRAPPER-01  | Phase 34 | Pending |
+| WRAPPER-02  | Phase 34 | Pending |
+| WRAPPER-03  | Phase 34 | Pending |
+| TABLET-01   | Phase 34 | Pending |
+| ARCADE-01   | Phase 35 | Pending |
+| ARCADE-02   | Phase 35 | Pending |
 
 **Coverage:**
 
 - v3.4 requirements: 18 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 18 ⚠️ (will be resolved by gsd-roadmapper)
+- Mapped to phases: 18 ✓
+- Unmapped: 0
+- Phase 34 covers 16 requirements (INFRA-01..04, CORE-01..05, NOTATION-01..03, WRAPPER-01..03, TABLET-01)
+- Phase 35 covers 2 requirements (ARCADE-01, ARCADE-02), hard dependency on Phase 34's INFRA-02
 
 ---
 
 _Requirements defined: 2026-05-07_
-_Last updated: 2026-05-07 — initial v3.4 definition_
+_Last updated: 2026-05-07 — traceability mapped during roadmap creation (Phases 34-35)_
