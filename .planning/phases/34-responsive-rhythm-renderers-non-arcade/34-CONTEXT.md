@@ -52,6 +52,12 @@ Resolves the apparent conflict between CORE-02/04 ("1×4 on wider viewports") an
 - **D-16: Provider mounts in `AppLayout.jsx`.** Single source of truth, wraps every routed page that has the sidebar/header/overlay surface. RotatePromptOverlay (currently rendered from App.jsx) reads from the provider via context.
 - **D-17: No special API extensions for Phase 35.** The basic boolean API supports both Phase 35 outcomes: ship vertical lanes (declare false on phone-portrait, true elsewhere via inline conditional in the component) OR rotate prompt (declare true unconditionally). Phase 35 adds no infrastructure — only consumption.
 
+### Plan-Phase Augmentations (added during planning)
+
+- **D-18: RhythmGameSettings glass-converted unconditionally.** The component currently uses `bg-white text-gray-700 border-gray-300` (pre-glass-migration era). Even if the surrounding `<Modal>` partially masks it, the legacy classes do not match the design system and Phase 34 ships a glass-pattern conversion (per CLAUDE.md Glass Card Pattern). Implemented in Plan 05 Task 2. Resolves RESEARCH § Open Question 1.
+- **D-19: `useLandscapeLock` becomes context-aware.** Hook reads `useNeedsLandscape()` internally and gates the Android-PWA fullscreen + `screen.orientation.lock('landscape')` calls on `ctxNeedsLandscape === true`. Caller signature unchanged — all existing `useLandscapeLock()` call sites remain. Implemented in Plan 03 Task 2. Resolves RESEARCH § Open Question 3.
+- **D-20: OrientationController defaults to `portrait-primary` on rhythm routes after removal from `LANDSCAPE_ROUTES`.** Combined with D-19 (no Android PWA lock when content says portrait-OK), this delivers a coherent portrait-by-default rhythm experience. Resolves RESEARCH § Open Question 2.
+
 ### Claude's Discretion
 
 - Exact threshold value within the "moderate" bucket (D-02) — researcher confirms 8 vs 9 vs 10 against actual VexFlow rendering at iPhone SE width. The picked value gets the unit test (NOTATION-03).

@@ -730,19 +730,19 @@ describe("needsLandscape helper", () => {
 | A4  | RhythmGameSettings rendering in light-theme (`bg-white text-gray-700`) is a visible bug                                                                                                                          | 13-Component Audit | The component is wrapped in `<Modal>` which may inject a different surface. UAT-confirm before fixing.                                                                                                                              |
 | A5  | Removing 7 rhythm paths from `LANDSCAPE_ROUTES` and switching `OrientationController` to `lockOrientation('portrait-primary')` for those paths is desired (rhythm should NOT force-lock landscape going forward) | Pitfall 2          | If user actually wants rhythm to keep `landscape-primary` lock on Android while delegating prompt to context, decision needs to flip. Discuss-phase D-13 reads as "remove from array entirely" → this is the correct interpretation |
 
-## Open Questions
+## Open Questions (RESOLVED during plan-phase)
 
-1. **Should `RhythmGameSettings` modal be glass-pattern-converted?**
+1. **Should `RhythmGameSettings` modal be glass-pattern-converted?** **RESOLVED: D-18 — IN SCOPE.** Glass conversion is included in Plan 05 Task 2.
    - What we know: It uses `bg-white text-gray-700` directly. Code-style matches CSS-class-pre-glass-migration era.
    - What's unclear: Whether the surrounding `<Modal>` overrides the surface, or whether this component is genuinely visually broken.
    - Recommendation: UAT step "open Settings modal during a rhythm game" — if it looks fine, mark out-of-scope; if broken, log into audit punch list.
 
-2. **Should `OrientationController` lock orientation to `'portrait-primary'` on rhythm routes after removal?**
+2. **Should `OrientationController` lock orientation to `'portrait-primary'` on rhythm routes after removal?** **RESOLVED: D-20 — Yes, portrait-primary default is correct after rhythm route removal.**
    - What we know: Today, when route is in `LANDSCAPE_ROUTES`, controller calls `lockOrientation('landscape-primary')`. After removal, it calls `lockOrientation('portrait-primary')`.
    - What's unclear: Whether the user wants rhythm to stop force-locking landscape on Android PWA (where the `useLandscapeLock` hook ALSO calls `screen.orientation.lock('landscape')`). Answer is yes per D-15/D-17 — rhythm becomes content-driven.
    - Recommendation: Audit `useLandscapeLock` calls in rhythm wrappers — they currently force landscape on Android PWA. For Phase 34 content-driven model, those calls should also become conditional on context. **Flag for planner attention** — this could be a missed coordination point.
 
-3. **Does `useLandscapeLock` need a context-driven variant?**
+3. **Does `useLandscapeLock` need a context-driven variant?** **RESOLVED: D-19 — Hook becomes context-aware. Implemented in Plan 03 Task 2.**
    - What we know: All 6 rhythm wrappers + ArcadeRhythmGame call `useLandscapeLock()` unconditionally. On Android PWA this enters fullscreen + locks orientation.
    - What's unclear: If a renderer declares `needsLandscape=false` for a short pattern but the wrapper still calls `useLandscapeLock()`, Android PWA will force landscape regardless of content-driven decision.
    - Recommendation: Either (a) gate `useLandscapeLock` on context (`useLandscapeLock(needsLandscape)`), or (b) accept this asymmetry — Android PWA is rare, content-driven UX is iOS-Safari-focused. Option (b) is faster to ship and matches D-12 ship-don't-gold-plate; option (a) is more "correct." **Defer decision to discuss/plan.** Could become a deferred follow-up.

@@ -79,7 +79,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 **Requirements**: INFRA-01, INFRA-02, INFRA-03, INFRA-04, CORE-01, CORE-02, CORE-03, CORE-04, CORE-05, NOTATION-01, NOTATION-02, NOTATION-03, WRAPPER-01, WRAPPER-02, WRAPPER-03, TABLET-01
 **Success Criteria** (what must be TRUE):
 
-1. On iPhone SE portrait (375×667), the rhythm dictation game shows the staff plus all 4 choice cards as a 2×2 grid with no vertical scroll required to see or tap any card
+1. On iPhone SE portrait (375×667), the rhythm dictation game shows the staff plus all 3 choice cards in a 2×2 grid (last card spans 2 columns) with no vertical scroll required to see or tap any card
 2. Opening any short-pattern rhythm reading or rhythm tap exercise on a phone in portrait renders the notation inline with no rotate prompt; long-pattern variants surface the rotate prompt only because the pattern truly does not fit
 3. On a tablet (≥768px) in either orientation, the rotate prompt never appears for any rhythm game, regardless of pattern length or current orientation
 4. On tablet-landscape, cards-based renderers (dictation, syllable-matching, visual-recognition) lay out as a real 2-column grid that fills the available width — not a centered single column with whitespace gutters
