@@ -85,7 +85,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 4. On tablet-landscape, cards-based renderers (dictation, syllable-matching, visual-recognition) lay out as a real 2-column grid that fills the available width — not a centered single column with whitespace gutters
 5. The rhythm game setup screens (`RhythmGameSetup`, `RhythmGameSettings`) and supporting overlays (`CountdownOverlay`, `BossIntroOverlay`, `FloatingFeedback`, `MetronomeDisplay`, `TapArea`) render and remain interactive in all 4 quadrants without clipping, overflow, or hidden controls
 
-**Plans:** 5/6 plans executed
+**Plans:** 9 plans (6 original + 3 gap-closure + 1 UAT-delta); 5 executed, 1 routed-to-gap-closure (34-06), 4 awaiting execution
 
 Plans:
 
@@ -94,7 +94,11 @@ Plans:
 - [x] 34-03-PLAN.md — Wiring: AppLayout provider mount, App.jsx LANDSCAPE_ROUTES rhythm removal, useLandscapeLock context-aware (INFRA-01, INFRA-04, D-19)
 - [x] 34-04-PLAN.md — 7 renderer declarations + card grids + 6 wrapper gate composition + TapArea widths (CORE-01..05, NOTATION-01/02, INFRA-03, WRAPPER-01, TABLET-01)
 - [x] 34-05-PLAN.md — Supporting components responsive bumps + RhythmGameSettings glass conversion (D-18) (WRAPPER-02, WRAPPER-03)
-- [ ] 34-06-PLAN.md — Manual UAT walkthrough + ship-gate sign-off (D-12; covers all SC #1-5)
+- [-] 34-06-PLAN.md — Manual UAT walkthrough + ship-gate sign-off (D-12; covers all SC #1-5) — UAT routed 3 gap categories to gap-closure (see 34-UAT.md)
+- [ ] 34-07-PLAN.md — GAP 1: standalone RhythmDictationGame wrapper 2x2 grid + col-span-2 (CORE-02/04/05, TABLET-01)
+- [ ] 34-08-PLAN.md — GAP 2: dev-only ?measures URL param helper for UAT long-pattern verification (NOTATION-01/02)
+- [ ] 34-09-PLAN.md — GAP 3: investigate RhythmGameSetup/RhythmGameSettings + minimal wrapper-level fix; mark dead RhythmGameSettings @deprecated (WRAPPER-02/03, D-10/D-18 boundary respected)
+- [ ] 34-10-PLAN.md — UAT delta walkthrough re-tests failed rows + newly-affected regression (D-12; ship gate)
       **UI hint**: yes
 
 ### Phase 35: ArcadeRhythmGame Portrait
