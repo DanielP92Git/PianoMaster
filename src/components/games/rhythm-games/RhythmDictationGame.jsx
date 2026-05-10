@@ -700,21 +700,29 @@ export function RhythmDictationGame() {
             </div>
           )}
 
-          {/* Choice cards — vertical stack (D-06) */}
+          {/* Choice cards — 2x2 grid with col-span-2 fallback for last odd card (D-06, SC #1) */}
           {showCards && choices.length === 3 && (
-            <div className="flex flex-col gap-3">
+            <div className="mx-auto grid w-full max-w-md grid-cols-2 gap-3 md:max-w-2xl md:gap-4 lg:max-w-4xl lg:gap-6">
               {choices.map((choiceBeats, idx) => (
-                <DictationChoiceCard
+                <div
                   key={idx}
-                  beats={choiceBeats}
-                  timeSignature={timeSignature}
-                  cardIndex={idx}
-                  state={cardStates[idx] ?? "default"}
-                  onSelect={handleCardSelect}
-                  disabled={isInFeedback}
-                  showSyllables={effectiveShowSyllables}
-                  language={syllableLanguage}
-                />
+                  className={
+                    idx === choices.length - 1 && choices.length % 2 === 1
+                      ? "col-span-2"
+                      : undefined
+                  }
+                >
+                  <DictationChoiceCard
+                    beats={choiceBeats}
+                    timeSignature={timeSignature}
+                    cardIndex={idx}
+                    state={cardStates[idx] ?? "default"}
+                    onSelect={handleCardSelect}
+                    disabled={isInFeedback}
+                    showSyllables={effectiveShowSyllables}
+                    language={syllableLanguage}
+                  />
+                </div>
               ))}
             </div>
           )}
