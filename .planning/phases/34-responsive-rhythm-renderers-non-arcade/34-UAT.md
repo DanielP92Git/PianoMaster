@@ -27,11 +27,11 @@ Steps:
 4. Confirm no vertical scroll required to see all 3 cards
 5. Tap each card to confirm tappable (no hidden controls); the col-span-2 third card MUST be fully tappable across its width
 
-| Field      | Value           |
-| ---------- | --------------- |
-| Result     | ☐ pass / ☐ fail |
-| Notes      |                 |
-| Screenshot | (optional path) |
+| Field      | Value                                                    |
+| ---------- | -------------------------------------------------------- |
+| Result     | ☐ pass / x fail                                          |
+| Notes      | it works in rhythm trail but not in game modes free game |
+| Screenshot | ![alt text](image.png) ![alt text](image-1.png)          |
 
 ### SC #2 — Phone-portrait: short patterns render inline; long patterns surface prompt
 
@@ -47,14 +47,14 @@ Steps:
 2. Open long-pattern exercise → assert rotate prompt overlay APPEARS
 3. Repeat for `/rhythm-mode/rhythm-tap-game` and `/rhythm-mode/mixed-lesson` (latter contains a mix; flip between renderers and observe overlay correctly appearing/disappearing per renderer's content)
 
-| Sub-test                                        | Result          | Notes |
-| ----------------------------------------------- | --------------- | ----- |
-| reading short → no prompt                       | ☐ pass / ☐ fail |       |
-| reading long → prompt                           | ☐ pass / ☐ fail |       |
-| tap short → no prompt                           | ☐ pass / ☐ fail |       |
-| tap long → prompt                               | ☐ pass / ☐ fail |       |
-| mixed-lesson swap (long→short) → prompt clears  | ☐ pass / ☐ fail |       |
-| mixed-lesson swap (short→long) → prompt appears | ☐ pass / ☐ fail |       |
+| Sub-test                                        | Result          | Notes                                   |
+| ----------------------------------------------- | --------------- | --------------------------------------- |
+| reading short → no prompt                       | x pass / ☐ fail |                                         |
+| reading long → prompt                           | ☐ pass / x fail | I have no way to control pattern length |
+| tap short → no prompt                           | x pass / ☐ fail |                                         |
+| tap long → prompt                               | ☐ pass / x fail | I have no way to control pattern length |
+| mixed-lesson swap (long→short) → prompt clears  | x pass / ☐ fail | I have no way to control pattern length |
+| mixed-lesson swap (short→long) → prompt appears | x pass / ☐ fail | I have no way to control pattern length |
 
 ### SC #3 — Tablet (≥768): rotate prompt NEVER appears for any rhythm game
 
@@ -68,15 +68,15 @@ Steps for each orientation (portrait + landscape):
 
 | Route                                | tablet-portrait | tablet-landscape |
 | ------------------------------------ | --------------- | ---------------- |
-| rhythm-dictation-game                | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
-| rhythm-reading-game (short)          | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
+| rhythm-dictation-game                | x pass / ☐ fail | x pass / ☐ fail  |
+| rhythm-reading-game (short)          | x pass / ☐ fail | x pass / ☐ fail  |
 | rhythm-reading-game (long)           | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
 | rhythm-tap-game (long)               | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
-| syllable-matching-game               | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
-| visual-recognition-game              | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
-| metronome-trainer                    | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
-| mixed-lesson                         | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
-| arcade-rhythm-game (Phase 35 target) | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
+| syllable-matching-game               | x pass / ☐ fail | x pass / ☐ fail  |
+| visual-recognition-game              | x pass / ☐ fail | x pass / ☐ fail  |
+| metronome-trainer                    | x pass / ☐ fail | x pass / ☐ fail  |
+| mixed-lesson                         | x pass / ☐ fail | x pass / ☐ fail  |
+| arcade-rhythm-game (Phase 35 target) | x pass / ☐ fail | x pass / ☐ fail  |
 
 ### SC #4 — Tablet-landscape: cards renderers fill width as real 2-col
 
@@ -90,9 +90,9 @@ Steps:
 
 | Route              | Result          | Notes |
 | ------------------ | --------------- | ----- |
-| dictation          | ☐ pass / ☐ fail |       |
-| syllable           | ☐ pass / ☐ fail |       |
-| visual-recognition | ☐ pass / ☐ fail |       |
+| dictation          | x pass / ☐ fail |       |
+| syllable           | x pass / ☐ fail |       |
+| visual-recognition | x pass / ☐ fail |       |
 
 ### SC #5 — Setup screens + 5 supporting overlays render & remain interactive at all 4 quadrants
 
@@ -110,13 +110,13 @@ For each component × each quadrant:
 
 | Component                       | phone-portrait | phone-landscape | tablet-portrait | tablet-landscape |
 | ------------------------------- | -------------- | --------------- | --------------- | ---------------- |
-| RhythmGameSetup                 | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
-| RhythmGameSettings (glass D-18) | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
-| CountdownOverlay                | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
-| BossIntroOverlay                | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
-| FloatingFeedback                | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
-| MetronomeDisplay                | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
-| TapArea                         | ☐ / ☐          | ☐ / ☐           | ☐ / ☐           | ☐ / ☐            |
+| RhythmGameSetup                 | ☐ / x          | ☐ / x           | ☐ / x           | ☐ / x            |
+| RhythmGameSettings (glass D-18) | ☐ / x          | ☐ / x           | ☐ / x           | ☐ / x            |
+| CountdownOverlay                | x / ☐          | x / ☐           | x / ☐           | x / ☐            |
+| BossIntroOverlay                | x / ☐          | x / ☐           | x / ☐           | x / ☐            |
+| FloatingFeedback                | x / ☐          | x / ☐           | x / ☐           | x / ☐            |
+| MetronomeDisplay                | x / ☐          | x / ☐           | x / ☐           | x / ☐            |
+| TapArea                         | x / ☐          | x / ☐           | x / ☐           | x / ☐            |
 
 (Cells: left ☐ = pass, right ☐ = fail)
 
@@ -126,12 +126,12 @@ Per RESEARCH Pitfall 1: non-rhythm games MUST keep firing the rotate prompt on p
 
 | Route                                     | phone-portrait expects prompt | Result          |
 | ----------------------------------------- | ----------------------------- | --------------- |
-| /notes-master-mode/notes-recognition-game | yes                           | ☐ pass / ☐ fail |
-| /notes-master-mode/memory-game            | yes                           | ☐ pass / ☐ fail |
-| /notes-master-mode/sight-reading-game     | yes                           | ☐ pass / ☐ fail |
-| /notes-master-mode/note-speed-cards       | yes                           | ☐ pass / ☐ fail |
-| /ear-training-mode/note-comparison-game   | yes                           | ☐ pass / ☐ fail |
-| /ear-training-mode/interval-game          | yes                           | ☐ pass / ☐ fail |
+| /notes-master-mode/notes-recognition-game | yes                           | x pass / ☐ fail |
+| /notes-master-mode/memory-game            | yes                           | x pass / ☐ fail |
+| /notes-master-mode/sight-reading-game     | yes                           | x pass / ☐ fail |
+| /notes-master-mode/note-speed-cards       | yes                           | x pass / ☐ fail |
+| /ear-training-mode/note-comparison-game   | yes                           | x pass / ☐ fail |
+| /ear-training-mode/interval-game          | yes                           | x pass / ☐ fail |
 
 ## Deferred Items Discovered During UAT
 
@@ -148,4 +148,4 @@ Per RESEARCH Pitfall 1: non-rhythm games MUST keep firing the rotate prompt on p
 - [ ] Pre-UAT gate (test:run, build, lint Phase 34 scope) all green
 - [ ] Threshold of 9 beats validated against actual content (UAT confirmation per RESEARCH MEDIUM confidence)
 
-Signed: ****\_\_\_\_**** on ****\_\_\_\_****
+Signed: \***\*\_\_\_\_\*\*** on \***\*\_\_\_\_\*\***
