@@ -16,10 +16,12 @@ import { Volume2, RotateCcw } from "lucide-react";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useEnsureAudioReady } from "../../../../hooks/useEnsureAudioReady";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 import { useSounds } from "../../../../features/games/hooks/useSounds";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { DictationChoiceCard } from "../components/DictationChoiceCard";
 import { schedulePatternPlayback } from "../utils/rhythmTimingUtils";
+import { needsLandscape as computeNeedsLandscape } from "../utils/needsLandscape";
 
 const PHASES = {
   LISTEN_PROMPT: "listen-prompt",
@@ -46,6 +48,13 @@ export default function RhythmDictationQuestion({
   const correctBeats = question?.correctBeats;
   const choices = question?.choices || [];
   const correctIndex = question?.correctIndex ?? -1;
+
+  // Content-driven landscape declaration (CORE-04). Long patterns trigger the
+  // rotate prompt; short ones stay in portrait via NeedsLandscapeContext.
+  const declaredNeedsLandscape = correctBeats
+    ? computeNeedsLandscape(correctBeats, config?.timeSignature || "4/4")
+    : false;
+  useDeclareNeedsLandscape(declaredNeedsLandscape);
 
   const audioEngine = useAudioEngine(tempo, {
     sharedAudioContext: audioContextRef.current,
@@ -257,21 +266,29 @@ export default function RhythmDictationQuestion({
         </button>
       )}
 
-      {/* Choice cards — always visible so user sees what they're picking */}
-      <div className="flex w-full max-w-md flex-col gap-3">
-        {choices.map((choiceBeats, idx) => (
-          <DictationChoiceCard
-            key={idx}
-            beats={choiceBeats}
-            timeSignature={config.timeSignature || "4/4"}
-            cardIndex={idx}
-            state={cardStates[idx]}
-            onSelect={handleCardSelect}
-            disabled={phase !== PHASES.CHOOSING}
-            showSyllables={false}
-            language={syllableLanguage}
-          />
-        ))}
+      {/* Choice cards — 3-card 2x2 grid; last odd card spans both columns
+          (D-05/D-06; tablet widths bumped via TABLET-01). Wrapper <div>
+          carries the col-span because DictationChoiceCard does not accept
+          a passthrough className (Plan 05 owns the card component). */}
+      <div className="grid w-full max-w-md grid-cols-2 gap-3 md:max-w-2xl md:gap-4 lg:max-w-4xl lg:gap-6">
+        {choices.map((choiceBeats, idx) => {
+          const isOddLast =
+            idx === choices.length - 1 && choices.length % 2 === 1;
+          return (
+            <div key={idx} className={isOddLast ? "col-span-2" : undefined}>
+              <DictationChoiceCard
+                beats={choiceBeats}
+                timeSignature={config.timeSignature || "4/4"}
+                cardIndex={idx}
+                state={cardStates[idx]}
+                onSelect={handleCardSelect}
+                disabled={phase !== PHASES.CHOOSING}
+                showSyllables={false}
+                language={syllableLanguage}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Volume2 } from "lucide-react";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { SVG_COMPONENTS } from "../components/DurationCard";
 import { DURATION_INFO, getSyllable } from "../utils/durationInfo";
@@ -25,6 +26,8 @@ export default function DiscoveryIntroQuestion({
   disabled,
 }) {
   const { t } = useTranslation("common");
+  // Single intro card always fits portrait — declare false (CORE-01).
+  useDeclareNeedsLandscape(false);
   const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
   const { reduce: reducedMotion } = useMotionTokens();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -184,13 +187,16 @@ export default function DiscoveryIntroQuestion({
     ? "flex w-full flex-col items-center gap-2"
     : "flex w-full flex-col items-center gap-6";
   const cardClass = isLandscape
-    ? "flex w-full max-w-2xl flex-row items-center gap-6 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 shadow-lg backdrop-blur-md"
-    : "flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/20 bg-white/10 px-8 py-10 shadow-lg backdrop-blur-md";
+    ? "flex w-full max-w-2xl flex-row items-center gap-6 rounded-2xl border border-white/20 bg-white/10 px-6 py-4 shadow-lg backdrop-blur-md md:max-w-3xl lg:max-w-4xl"
+    : "flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/20 bg-white/10 px-8 py-10 shadow-lg backdrop-blur-md md:max-w-md lg:max-w-lg";
   const rightColClass = isLandscape ? "flex flex-1 flex-col gap-2" : "contents";
   const titleClass = isLandscape
     ? "text-left text-lg font-bold text-white"
     : "text-center text-xl font-bold text-white";
-  const svgClass = isLandscape ? "h-24 w-16" : "h-40 w-28";
+  // SVG bumps for tablet (D-07, CORE-01). Literal class strings for purge safety.
+  const svgClass = isLandscape
+    ? "h-24 w-16 md:h-40 md:w-28 lg:h-48 lg:w-32"
+    : "h-40 w-28 md:h-56 md:w-40 lg:h-64 lg:w-44";
   const nameClass = isLandscape
     ? "text-left text-xl font-semibold text-indigo-300"
     : "text-center text-2xl font-semibold text-indigo-300";

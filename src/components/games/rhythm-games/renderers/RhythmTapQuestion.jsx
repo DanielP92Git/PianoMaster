@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
 import { useAccessibility } from "../../../../contexts/AccessibilityContext";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 import { MetronomeDisplay, TapArea } from "../components";
 import FloatingFeedback from "../components/FloatingFeedback";
 import { getPattern, TIME_SIGNATURES } from "../RhythmPatternGenerator";
@@ -34,6 +35,7 @@ import {
 } from "../utils/holdScoringUtils";
 import { CIRCUMFERENCE } from "../components/HoldRing";
 import { DURATION_INFO } from "../utils/durationInfo";
+import { needsLandscape as computeNeedsLandscape } from "../utils/needsLandscape";
 
 // Sub-phases for the rhythm tap flow
 const PHASES = {
@@ -104,6 +106,17 @@ export default function RhythmTapQuestion({
   const timeSignature =
     TIME_SIG_MAP[config.timeSignature] || TIME_SIGNATURES.FOUR_FOUR;
   const beatsPerMeasure = timeSignature.beats;
+
+  // Content-driven landscape declaration (CORE-04). RhythmTapQuestion has
+  // async-loaded patterns (patternInfoRef), so we derive from configured
+  // measureCount upfront — same threshold semantics via the helper's
+  // measures-only path.
+  const declaredNeedsLandscape = computeNeedsLandscape(
+    null,
+    config?.timeSignature || "4/4",
+    config?.measureCount || 1
+  );
+  useDeclareNeedsLandscape(declaredNeedsLandscape);
 
   // Sub-state machine
   const [phase, setPhase] = useState(PHASES.INITIALIZING);
@@ -906,7 +919,7 @@ export default function RhythmTapQuestion({
         isCountIn={phase === PHASES.COUNT_IN}
       />
       <p className="text-center text-sm text-white/70">{getGuidanceText()}</p>
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md md:max-w-2xl lg:max-w-3xl">
         <TapArea
           onTap={handleTap}
           onPressStart={handlePressStart}

@@ -20,6 +20,7 @@ import {
   DURATION_INFO,
   getSyllable as getDurationSyllable,
 } from "../utils/durationInfo";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 
 /**
  * @param {Object} props
@@ -32,11 +33,16 @@ import {
 export default function SyllableMatchingQuestion({
   question,
   cardStates,
-  isLandscape,
+  // isLandscape no longer used — Tailwind landscape: variant drives grid.
+  // Kept as accepted prop for backward compatibility with existing callers.
+  isLandscape: _isLandscape,
   onSelect,
   disabled,
 }) {
   const { t, i18n } = useTranslation("common");
+
+  // Card grid always fits portrait (2x2) — declare false (CORE-05).
+  useDeclareNeedsLandscape(false);
 
   // Syllable lookup helper — delegates to durationInfo.getSyllable so the
   // info.syllable override (e.g., "8_pair" → "ti-ti") is honored. Without this
@@ -49,10 +55,6 @@ export default function SyllableMatchingQuestion({
 
   const SvgIcon = SVG_COMPONENTS[question.correct];
 
-  const gridClass = isLandscape
-    ? "grid grid-cols-4 gap-3 w-full max-w-2xl"
-    : "grid grid-cols-2 gap-4 w-full max-w-sm";
-
   return (
     <>
       {/* Prompt panel with large SVG */}
@@ -60,7 +62,7 @@ export default function SyllableMatchingQuestion({
         <div dir="ltr" className="flex items-center justify-center text-white">
           {SvgIcon && (
             <SvgIcon
-              className={`${isLandscape ? "h-16" : "h-24"} w-auto`}
+              className="h-24 w-auto landscape:max-md:h-16"
               aria-label={t(DURATION_INFO[question.correct].i18nKey)}
             />
           )}
@@ -70,8 +72,9 @@ export default function SyllableMatchingQuestion({
         </p>
       </div>
 
-      {/* Card grid */}
-      <div className={gridClass}>
+      {/* Card grid — 2x2 phone-portrait, 1x4 phone-landscape, 2x2 tablet
+          (D-05/D-06; literal classes for Tailwind purge per RESEARCH Pitfall 5). */}
+      <div className="grid w-full max-w-md grid-cols-2 gap-3 md:max-w-2xl md:grid-cols-2 md:gap-4 lg:max-w-4xl lg:grid-cols-2 lg:gap-6 landscape:max-md:grid-cols-4">
         {question.choices.map((choice, i) => {
           const syllable = getSyllable(choice);
           return (

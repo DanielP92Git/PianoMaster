@@ -19,6 +19,7 @@ import { useSounds } from "../../../features/games/hooks/useSounds";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { useNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
 
@@ -42,8 +43,11 @@ export default function VisualRecognitionGame() {
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
 
-  // iOS/non-PWA: rotate prompt overlay
-  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
+  // iOS/non-PWA: rotate prompt overlay — gated on context (INFRA-03/WRAPPER-01).
+  // Cards always fit portrait, so the active renderer declares false.
+  const { shouldShowPrompt: legacyGate, dismissPrompt } = useRotatePrompt();
+  const ctxNeedsLandscape = useNeedsLandscape();
+  const shouldShowPrompt = legacyGate && ctxNeedsLandscape;
 
   // Trail navigation state
   const nodeConfig = location.state?.nodeConfig || null;

@@ -21,6 +21,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { MetronomeDisplay, TapArea } from "../components";
 import { HoldRing, CIRCUMFERENCE } from "../components/HoldRing";
@@ -102,6 +103,9 @@ export default function PulseQuestion({
   const { t } = useTranslation("common");
   const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
   const { reduce: reducedMotion } = useMotionTokens();
+
+  // Pulse always renders 1 measure of beats — declare false (CORE-02).
+  useDeclareNeedsLandscape(false);
 
   const config = question?.rhythmConfig || {};
   const tempo = config.tempo || 65;
@@ -746,7 +750,7 @@ export default function PulseQuestion({
       </p>
 
       {/* Tap target — same layout as RhythmTapQuestion */}
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md md:max-w-2xl lg:max-w-3xl">
         <TapArea
           onTap={handleTap}
           onPressStart={handlePressStart}

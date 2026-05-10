@@ -15,6 +15,7 @@
 import { useTranslation } from "react-i18next";
 import DurationCard from "../components/DurationCard";
 import { DURATION_INFO } from "../utils/durationInfo";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 
 /**
  * @param {Object} props
@@ -27,18 +28,19 @@ import { DURATION_INFO } from "../utils/durationInfo";
 export default function VisualRecognitionQuestion({
   question,
   cardStates,
-  isLandscape,
+  // isLandscape no longer used — Tailwind landscape: variant drives grid.
+  // Kept as accepted prop for backward compatibility with existing callers.
+  isLandscape: _isLandscape,
   onSelect,
   disabled,
 }) {
   const { t } = useTranslation("common");
 
+  // Card grid always fits portrait (2x2) — declare false (CORE-05).
+  useDeclareNeedsLandscape(false);
+
   const durationName = t(DURATION_INFO[question.correct].i18nKey);
   const promptText = t("visualRecognition.prompt", { durationName });
-
-  const gridClass = isLandscape
-    ? "grid grid-cols-4 gap-3 w-full max-w-2xl"
-    : "grid grid-cols-2 gap-4 w-full max-w-sm";
 
   return (
     <>
@@ -49,8 +51,9 @@ export default function VisualRecognitionQuestion({
         </h2>
       </div>
 
-      {/* Card grid */}
-      <div className={gridClass}>
+      {/* Card grid — 2x2 phone-portrait, 1x4 phone-landscape, 2x2 tablet
+          (D-05/D-06; literal classes for Tailwind purge per RESEARCH Pitfall 5). */}
+      <div className="grid w-full max-w-md grid-cols-2 gap-3 md:max-w-2xl md:grid-cols-2 md:gap-4 lg:max-w-4xl lg:grid-cols-2 lg:gap-6 landscape:max-md:grid-cols-4">
         {question.choices.map((choice, i) => (
           <DurationCard
             key={`${question.correct}-${i}`}

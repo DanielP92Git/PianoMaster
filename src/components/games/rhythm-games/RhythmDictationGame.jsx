@@ -9,6 +9,7 @@ import { useAudioEngine } from "../../../hooks/useAudioEngine";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { useNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import VictoryScreen from "../VictoryScreen";
@@ -57,10 +58,14 @@ export function RhythmDictationGame() {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
-  const syllableLanguage = i18n.language?.startsWith('he') ? 'he' : 'en';
+  const syllableLanguage = i18n.language?.startsWith("he") ? "he" : "en";
 
   // --- Orientation prompt (portrait-primary, landscape-compatible per UI-SPEC) ---
-  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
+  // Gated on context (INFRA-03/WRAPPER-01): renderer declares needsLandscape;
+  // prompt only fires when both legacy gate and active renderer ask for it.
+  const { shouldShowPrompt: legacyGate, dismissPrompt } = useRotatePrompt();
+  const ctxNeedsLandscape = useNeedsLandscape();
+  const shouldShowPrompt = legacyGate && ctxNeedsLandscape;
 
   // --- Trail state (from TrailNodeModal navigation) ---
   const nodeId = location.state?.nodeId ?? null;
@@ -146,19 +151,19 @@ export function RhythmDictationGame() {
 
   // Syllable toggle — persists in localStorage (D-20)
   const [showSyllables, setShowSyllables] = useState(() => {
-    const stored = localStorage.getItem('syllablesEnabled');
-    return stored === null ? true : stored === 'true';
+    const stored = localStorage.getItem("syllablesEnabled");
+    return stored === null ? true : stored === "true";
   });
 
   // Discovery nodes enforce syllables (no toggle visible) per D-19
   const trailNodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
-  const isDiscoveryNode = trailNodeType === 'discovery';
+  const isDiscoveryNode = trailNodeType === "discovery";
   const effectiveShowSyllables = isDiscoveryNode ? true : showSyllables;
 
   const handleSyllableToggle = useCallback(() => {
-    setShowSyllables(prev => {
+    setShowSyllables((prev) => {
       const next = !prev;
-      localStorage.setItem('syllablesEnabled', String(next));
+      localStorage.setItem("syllablesEnabled", String(next));
       return next;
     });
   }, []);
@@ -769,13 +774,15 @@ export function RhythmDictationGame() {
             <button
               onClick={handleSyllableToggle}
               aria-pressed={showSyllables}
-              aria-label={showSyllables
-                ? t('games.rhythmReading.syllableToggle.hide')
-                : t('games.rhythmReading.syllableToggle.show')}
+              aria-label={
+                showSyllables
+                  ? t("games.rhythmReading.syllableToggle.hide")
+                  : t("games.rhythmReading.syllableToggle.show")
+              }
               className={`min-h-[44px] rounded-lg px-2 py-2 text-sm font-medium transition-colors ${
                 showSyllables
-                  ? 'bg-white/10 text-indigo-300'
-                  : 'text-white/50 hover:text-white/80'
+                  ? "bg-white/10 text-indigo-300"
+                  : "text-white/50 hover:text-white/80"
               }`}
             >
               ta
