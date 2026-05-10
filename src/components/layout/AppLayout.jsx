@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import MobileTabsNav from "./MobileTabsNav";
+import { NeedsLandscapeProvider } from "../../contexts/NeedsLandscapeContext";
 
 export default function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -72,42 +73,44 @@ export default function AppLayout() {
       dir={direction}
       lang={language}
     >
-      {!isGameRoute && !isDashboard && !isTrailPage && (
-        <Header
-          onMenuClick={toggleSidebar}
-          pageTitle={pageTitle}
-          showMenuButton={false}
-          overlay={isDashboard}
-        />
-      )}
-      {!isGameRoute && (
-        <div className="hidden xl:block">
-          <Sidebar
-            isOpen={isSidebarOpen}
-            isGameRoute={isGameRoute}
-            onClose={() => setIsSidebarOpen(false)}
-            onToggle={toggleSidebar}
+      <NeedsLandscapeProvider>
+        {!isGameRoute && !isDashboard && !isTrailPage && (
+          <Header
+            onMenuClick={toggleSidebar}
+            pageTitle={pageTitle}
+            showMenuButton={false}
+            overlay={isDashboard}
           />
-        </div>
-      )}
-      <main
-        className={`${
-          !isGameRoute
-            ? direction === "rtl"
-              ? isDashboard || isTrailPage
-                ? "pt-0 xl:pr-[19rem]"
-                : "pt-2 xl:pr-[19rem]"
-              : isDashboard || isTrailPage
-                ? "pt-0 xl:pl-[19rem]"
-                : "pt-2 xl:pl-[19rem]"
-            : ""
-        } flex-1 ${
-          !isGameRoute ? "pb-20 xl:pb-0" : ""
-        } ${isGameRoute ? "min-h-0 w-full overflow-hidden" : ""}`}
-      >
-        <Outlet />
-      </main>
-      {!isGameRoute && <MobileTabsNav />}
+        )}
+        {!isGameRoute && (
+          <div className="hidden xl:block">
+            <Sidebar
+              isOpen={isSidebarOpen}
+              isGameRoute={isGameRoute}
+              onClose={() => setIsSidebarOpen(false)}
+              onToggle={toggleSidebar}
+            />
+          </div>
+        )}
+        <main
+          className={`${
+            !isGameRoute
+              ? direction === "rtl"
+                ? isDashboard || isTrailPage
+                  ? "pt-0 xl:pr-[19rem]"
+                  : "pt-2 xl:pr-[19rem]"
+                : isDashboard || isTrailPage
+                  ? "pt-0 xl:pl-[19rem]"
+                  : "pt-2 xl:pl-[19rem]"
+              : ""
+          } flex-1 ${
+            !isGameRoute ? "pb-20 xl:pb-0" : ""
+          } ${isGameRoute ? "min-h-0 w-full overflow-hidden" : ""}`}
+        >
+          <Outlet />
+        </main>
+        {!isGameRoute && <MobileTabsNav />}
+      </NeedsLandscapeProvider>
     </div>
   );
 }

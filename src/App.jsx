@@ -266,20 +266,16 @@ function OrientationController() {
   const [dismissedKey, setDismissedKey] = React.useState(null);
   const dismissedKeyRef = useRef(null);
 
+  // Phase 34 (D-13): rhythm routes removed; rhythm games now declare landscape
+  // need via NeedsLandscapeContext (content-driven). Notes-master + ear-training
+  // remain on the legacy route-based array until NM-01/ET-01 ship.
   const LANDSCAPE_ROUTES = [
     "/notes-master-mode/notes-recognition-game",
     "/notes-master-mode/memory-game",
     "/notes-master-mode/sight-reading-game",
-    "/rhythm-mode/metronome-trainer",
     "/notes-master-mode/note-speed-cards",
-    "/rhythm-mode/rhythm-reading-game",
-    "/rhythm-mode/rhythm-dictation-game",
-    "/rhythm-mode/arcade-rhythm-game",
     "/ear-training-mode/note-comparison-game",
     "/ear-training-mode/interval-game",
-    "/rhythm-mode/visual-recognition-game",
-    "/rhythm-mode/syllable-matching-game",
-    "/rhythm-mode/mixed-lesson",
   ];
 
   const isLandscapeRoute = LANDSCAPE_ROUTES.includes(location.pathname);
