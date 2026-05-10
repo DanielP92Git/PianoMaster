@@ -1,25 +1,44 @@
 import { useEffect } from "react";
 import { isAndroidDevice, isInStandaloneMode } from "../utils/pwaDetection";
+import { useNeedsLandscape } from "../contexts/NeedsLandscapeContext";
 
 /**
  * Android PWA landscape lock hook.
  *
- * On Android PWA, enters fullscreen and locks orientation to landscape.
- * On iOS, desktop, or non-PWA contexts, does nothing.
+ * On Android PWA, enters fullscreen and locks orientation to landscape — but
+ * only when content has declared `needsLandscape === true` via
+ * NeedsLandscapeContext (D-19). On iOS, desktop, non-PWA contexts, or when
+ * content says portrait is OK, does nothing.
  *
  * Handles the fullscreen prerequisite, orientation lock sequence, Escape key
- * edge case, and proper cleanup on unmount.
+ * edge case, and proper cleanup on unmount (or when context flips back to
+ * false — effect cleanup runs before the next effect body).
+ *
+ * Caller signature unchanged: `useLandscapeLock()` (no arguments). All call
+ * sites remain identical; gating happens internally via context.
  */
 export function useLandscapeLock() {
+  const ctxNeedsLandscape = useNeedsLandscape();
+
   useEffect(() => {
     // Platform guard: only proceed on Android PWA
     if (!isAndroidDevice() || !isInStandaloneMode()) {
       return;
     }
 
+    // D-19: only lock when content declares it needs landscape
+    if (!ctxNeedsLandscape) {
+      return;
+    }
+
     // API support guard
-    if (!document.documentElement.requestFullscreen || !screen.orientation?.lock) {
-      console.warn("Landscape lock not supported: missing fullscreen or orientation API");
+    if (
+      !document.documentElement.requestFullscreen ||
+      !screen.orientation?.lock
+    ) {
+      console.warn(
+        "Landscape lock not supported: missing fullscreen or orientation API"
+      );
       return;
     }
 
@@ -29,7 +48,9 @@ export function useLandscapeLock() {
     const lockOrientation = async () => {
       try {
         // Step 1: Enter fullscreen (required for orientation lock on Android)
-        await document.documentElement.requestFullscreen({ navigationUI: "hide" });
+        await document.documentElement.requestFullscreen({
+          navigationUI: "hide",
+        });
         didEnterFullscreen = true;
 
         // Step 2: Lock to landscape after fullscreen
@@ -69,5 +90,5 @@ export function useLandscapeLock() {
         });
       }
     };
-  }, []); // Run once on mount, cleanup on unmount
+  }, [ctxNeedsLandscape]); // Re-run when context flips; cleanup releases lock
 }
