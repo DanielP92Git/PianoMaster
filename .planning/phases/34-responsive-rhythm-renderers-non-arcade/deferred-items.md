@@ -20,3 +20,7 @@ Phase 34 Plan 01 verified locally that ALL 25 of its own new assertions pass and
 ## Pre-existing lint parsing error (observed during 34-04)
 
 `src/components/settings/ParentZoneEntryCard.test.jsx:32` — `Parsing error: Cannot use keyword 'await' outside an async function`. Pre-existing (last touched 40df51d). Out of Plan 04 scope (renderer/wrapper rhythm work). Future quick task: wrap the offending test fn in `async`.
+
+## Flaky probabilistic test (observed during 34-08)
+
+`src/data/units/rhythmUnit8Redesigned.test.js > rhythm_2_4 (...) produces q, h, and w over 20 samples` intermittently fails when run as part of the full suite (`npm run test:run`) because it asserts a probabilistic outcome over a finite number of random samples. Passes consistently when run in isolation. Pre-existing — unrelated to Plan 34-08 (helper + RhythmReadingGame override only). Future quick task: increase sample count or seed the RNG.

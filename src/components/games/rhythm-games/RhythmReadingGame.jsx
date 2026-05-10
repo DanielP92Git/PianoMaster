@@ -16,6 +16,7 @@ import { getNodeById } from "../../../data/skillTrail";
 import { getPattern, TIME_SIGNATURES } from "./RhythmPatternGenerator";
 import { resolveByTags } from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
+import { getMeasuresOverride } from "./utils/measuresOverride";
 import { scoreTap } from "./utils/rhythmScoringUtils";
 import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
 import FloatingFeedback from "./components/FloatingFeedback";
@@ -67,7 +68,8 @@ export function RhythmReadingGame() {
   const trailExerciseIndex = location.state?.exerciseIndex ?? null;
   const trailTotalExercises = location.state?.totalExercises ?? null;
   const trailExerciseType = location.state?.exerciseType ?? null;
-  const trailMeasureCount = nodeConfig?.measureCount ?? 1;
+  const trailMeasureCount =
+    nodeConfig?.measureCount ?? getMeasuresOverride() ?? 1;
   const trailNodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
 
   // Audio contexts
