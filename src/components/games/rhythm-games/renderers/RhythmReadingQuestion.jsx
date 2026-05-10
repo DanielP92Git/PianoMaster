@@ -13,14 +13,19 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
+import { useDeclareNeedsLandscape } from "../../../../contexts/NeedsLandscapeContext";
 import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { MetronomeDisplay, TapArea } from "../components";
 import RhythmStaffDisplay from "../components/RhythmStaffDisplay";
 import FloatingFeedback from "../components/FloatingFeedback";
 import { TIME_SIGNATURES } from "../RhythmPatternGenerator";
-import { resolveByTags, resolveByAnyTag } from "../../../../data/patterns/RhythmPatternGenerator";
+import {
+  resolveByTags,
+  resolveByAnyTag,
+} from "../../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "../utils/rhythmVexflowHelpers";
 import { scoreTap } from "../utils/rhythmScoringUtils";
+import { needsLandscape as computeNeedsLandscape } from "../utils/needsLandscape";
 import {
   scoreHold,
   isHoldNote,
@@ -74,6 +79,17 @@ export default function RhythmReadingQuestion({
   const [tapFlash, setTapFlash] = useState(false);
   const [isHoldComplete, setIsHoldComplete] = useState(false);
   const [holdFeedbackLabel, setHoldFeedbackLabel] = useState(null);
+
+  // Content-driven landscape declaration (CORE-04). Derive from beats once
+  // loaded; falls back to false when still initializing.
+  const declaredNeedsLandscape = beats
+    ? computeNeedsLandscape(
+        beats,
+        config?.timeSignature || "4/4",
+        config?.measureCount || 1
+      )
+    : false;
+  useDeclareNeedsLandscape(declaredNeedsLandscape);
 
   // Refs
   const hasStartedRef = useRef(false);
@@ -528,7 +544,8 @@ export default function RhythmReadingQuestion({
 
     let loadedBeats = null;
     if (tags.length > 0) {
-      const resolver = config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
+      const resolver =
+        config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
       const result = resolver(tags, durations, { timeSignature: ts });
       if (result) {
         loadedBeats = binaryPatternToBeats(result.binary);
@@ -620,7 +637,7 @@ export default function RhythmReadingQuestion({
       </p>
 
       {/* Tap target — same layout as RhythmTapQuestion */}
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full max-w-md md:max-w-2xl lg:max-w-3xl">
         <TapArea
           onTap={handleTap}
           onPressStart={handlePressStart}

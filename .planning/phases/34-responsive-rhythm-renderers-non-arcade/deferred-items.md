@@ -16,3 +16,7 @@ Root cause: `src/services/supabase.js` throws at import time when `VITE_SUPABASE
 Recommendation: future quick task to either (a) mock supabase in `src/test/setupTests.js`, or (b) provide stub `VITE_SUPABASE_*` values in vitest env config.
 
 Phase 34 Plan 01 verified locally that ALL 25 of its own new assertions pass and lint is clean on the 4 new files.
+
+## Pre-existing lint parsing error (observed during 34-04)
+
+`src/components/settings/ParentZoneEntryCard.test.jsx:32` — `Parsing error: Cannot use keyword 'await' outside an async function`. Pre-existing (last touched 40df51d). Out of Plan 04 scope (renderer/wrapper rhythm work). Future quick task: wrap the offending test fn in `async`.

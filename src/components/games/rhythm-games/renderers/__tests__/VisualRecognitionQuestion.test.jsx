@@ -119,20 +119,34 @@ describe("VisualRecognitionQuestion", () => {
     });
   });
 
-  it("uses landscape grid class when isLandscape is true", () => {
-    const { container } = render(
-      <VisualRecognitionQuestion {...defaultProps} isLandscape={true} />
-    );
-    const grid = container.querySelector(".grid-cols-4");
-    expect(grid).toBeTruthy();
-  });
-
-  it("uses portrait grid class when isLandscape is false", () => {
+  // Phase 34 Plan 04: orientation-driven grid is now Tailwind-only
+  // (landscape:max-md:grid-cols-4) instead of JS-driven gridClass swap.
+  // Verify both base (grid-cols-2) and landscape variant literal exist
+  // in the rendered class string regardless of the isLandscape prop.
+  it("renders responsive grid with both portrait base and landscape variant", () => {
     const { container } = render(
       <VisualRecognitionQuestion {...defaultProps} isLandscape={false} />
     );
-    const grid = container.querySelector(".grid-cols-2");
+    const grid = container.querySelector(
+      "[class*='grid-cols-2'][class*='landscape:max-md:grid-cols-4']"
+    );
     expect(grid).toBeTruthy();
+  });
+
+  it("does not respond to isLandscape prop (Tailwind-driven now)", () => {
+    const { container: portraitContainer } = render(
+      <VisualRecognitionQuestion {...defaultProps} isLandscape={false} />
+    );
+    const { container: landscapeContainer } = render(
+      <VisualRecognitionQuestion {...defaultProps} isLandscape={true} />
+    );
+    const portraitGrid = portraitContainer.querySelector(
+      "[class*='landscape:max-md:grid-cols-4']"
+    );
+    const landscapeGrid = landscapeContainer.querySelector(
+      "[class*='landscape:max-md:grid-cols-4']"
+    );
+    expect(portraitGrid?.className).toEqual(landscapeGrid?.className);
   });
 
   it("passes card states to DurationCard", () => {
