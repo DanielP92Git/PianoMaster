@@ -307,20 +307,39 @@ export function RhythmReadingGame() {
           return { beats, binaryPattern: result.binary };
         }
       }
-      // Fallback: legacy getPattern (non-trail / free-practice mode)
-      const result = await getPattern(
-        timeSignatureStr,
-        difficulty,
-        rhythmPatterns
-      );
-      if (!result || !result.pattern) return null;
-      const beats = binaryPatternToBeats(result.pattern);
-      return { beats, binaryPattern: result.pattern };
+      // Fallback: legacy getPattern (non-trail / free-practice mode).
+      // Generate `trailMeasureCount` measures and concatenate beats so the
+      // playable content matches the multi-measure stave drawn by
+      // RhythmStaffDisplay (#34-08 GAP 2 fix — UAT-helper used to wire the
+      // override to display layout only, leaving the beats array at 1 measure).
+      const measures = Math.max(1, trailMeasureCount || 1);
+      const concatenatedBeats = [];
+      const concatenatedBinary = [];
+      for (let i = 0; i < measures; i++) {
+        const result = await getPattern(
+          timeSignatureStr,
+          difficulty,
+          rhythmPatterns
+        );
+        if (!result || !result.pattern) {
+          if (i === 0) return null;
+          break; // partial success — return what we have
+        }
+        concatenatedBeats.push(...binaryPatternToBeats(result.pattern));
+        concatenatedBinary.push(...result.pattern);
+      }
+      return { beats: concatenatedBeats, binaryPattern: concatenatedBinary };
     } catch (err) {
       console.warn("[RhythmReadingGame] fetchNewPattern error:", err);
       return null;
     }
-  }, [timeSignatureStr, difficulty, rhythmPatterns, nodeConfig]);
+  }, [
+    timeSignatureStr,
+    difficulty,
+    rhythmPatterns,
+    nodeConfig,
+    trailMeasureCount,
+  ]);
 
   /**
    * Start continuous metronome lookahead scheduler.
