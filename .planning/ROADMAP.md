@@ -67,7 +67,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 ### v3.4 Rhythm Games Responsive UX (Phases 34-35) — ACTIVE
 
-- [ ] **Phase 34: Responsive Rhythm Renderers (Non-Arcade)** — Drop route-based landscape lock for rhythm games and make non-arcade renderers responsive across all 4 phone/tablet × portrait/landscape quadrants
+- [x] **Phase 34: Responsive Rhythm Renderers (Non-Arcade)** — Drop route-based landscape lock for rhythm games and make non-arcade renderers responsive across all 4 phone/tablet × portrait/landscape quadrants (completed 2026-05-10)
 - [ ] **Phase 35: ArcadeRhythmGame Portrait** — Spike vertical-lane prototype for ArcadeRhythmGame on phone-portrait, then ship vertical-lane redesign OR declare `needsLandscape=true` based on spike outcome
 
 ## Phase Details
@@ -85,7 +85,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 4. On tablet-landscape, cards-based renderers (dictation, syllable-matching, visual-recognition) lay out as a real 2-column grid that fills the available width — not a centered single column with whitespace gutters
 5. The rhythm game setup screens (`RhythmGameSetup`, `RhythmGameSettings`) and supporting overlays (`CountdownOverlay`, `BossIntroOverlay`, `FloatingFeedback`, `MetronomeDisplay`, `TapArea`) render and remain interactive in all 4 quadrants without clipping, overflow, or hidden controls
 
-**Plans:** 9 plans (6 original + 3 gap-closure + 1 UAT-delta); 5 executed, 1 routed-to-gap-closure (34-06), 4 awaiting execution
+**Plans:** 10/10 plans complete
 
 Plans:
 
@@ -95,10 +95,10 @@ Plans:
 - [x] 34-04-PLAN.md — 7 renderer declarations + card grids + 6 wrapper gate composition + TapArea widths (CORE-01..05, NOTATION-01/02, INFRA-03, WRAPPER-01, TABLET-01)
 - [x] 34-05-PLAN.md — Supporting components responsive bumps + RhythmGameSettings glass conversion (D-18) (WRAPPER-02, WRAPPER-03)
 - [-] 34-06-PLAN.md — Manual UAT walkthrough + ship-gate sign-off (D-12; covers all SC #1-5) — UAT routed 3 gap categories to gap-closure (see 34-UAT.md)
-- [ ] 34-07-PLAN.md — GAP 1: standalone RhythmDictationGame wrapper 2x2 grid + col-span-2 (CORE-02/04/05, TABLET-01)
-- [ ] 34-08-PLAN.md — GAP 2: dev-only ?measures URL param helper for UAT long-pattern verification (NOTATION-01/02)
-- [ ] 34-09-PLAN.md — GAP 3: investigate RhythmGameSetup/RhythmGameSettings + minimal wrapper-level fix; mark dead RhythmGameSettings @deprecated (WRAPPER-02/03, D-10/D-18 boundary respected)
-- [ ] 34-10-PLAN.md — UAT delta walkthrough re-tests failed rows + newly-affected regression (D-12; ship gate)
+- [x] 34-07-PLAN.md — GAP 1: standalone RhythmDictationGame wrapper 2x2 grid + col-span-2 (CORE-02/04/05, TABLET-01)
+- [x] 34-08-PLAN.md — GAP 2: dev-only ?measures URL param helper for UAT long-pattern verification (NOTATION-01/02)
+- [x] 34-09-PLAN.md — GAP 3: investigate RhythmGameSetup/RhythmGameSettings + minimal wrapper-level fix; mark dead RhythmGameSettings @deprecated (WRAPPER-02/03, D-10/D-18 boundary respected)
+- [x] 34-10-PLAN.md — UAT delta walkthrough re-tests failed rows + newly-affected regression (D-12; ship gate)
       **UI hint**: yes
 
 ### Phase 35: ArcadeRhythmGame Portrait
@@ -118,10 +118,10 @@ Plans:
 
 **Total: 24 milestones shipped, 107 phases, ~238 plans | Active: v3.4 (Phases 34-35, 0/2 phases complete)**
 
-| Phase                                        | Plans Complete | Status      | Completed |
-| -------------------------------------------- | -------------- | ----------- | --------- |
-| 34. Responsive Rhythm Renderers (Non-Arcade) | 5/6            | In Progress |           |
-| 35. ArcadeRhythmGame Portrait                | 0/0            | Not started | -         |
+| Phase                                        | Plans Complete | Status      | Completed  |
+| -------------------------------------------- | -------------- | ----------- | ---------- |
+| 34. Responsive Rhythm Renderers (Non-Arcade) | 10/10          | Complete    | 2026-05-10 |
+| 35. ArcadeRhythmGame Portrait                | 0/0            | Not started | -          |
 
 ---
 
