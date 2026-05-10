@@ -41,6 +41,18 @@ const getDifficultyInfo = (difficulty, t) => {
 /**
  * Rhythm game settings modal component
  * Provides configuration options for difficulty, time signature, tempo, etc.
+ *
+ * @deprecated Phase 34 UAT GAP 3 investigation (2026-05-10) confirmed this
+ * component has ZERO consumers in the running app. It is exported via
+ * `components/index.js` but no rhythm game wrapper opens it as a settings
+ * cog modal — settings cogs in rhythm games either link to /settings or use
+ * inline state (see MetronomeTrainer line ~1308 which uses RhythmGameSetup,
+ * not RhythmGameSettings). Glass conversion was completed in Plan 05 per
+ * D-18 (locked decision) but no UI wires it up.
+ *
+ * Removable in a future cleanup pass — left in place during gap-closure to
+ * avoid scope creep. See `.planning/phases/34-responsive-rhythm-renderers-non-arcade/deferred-items.md`
+ * for tracking.
  */
 export function RhythmGameSettings({
   isOpen,
