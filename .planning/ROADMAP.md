@@ -85,15 +85,15 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 4. On tablet-landscape, cards-based renderers (dictation, syllable-matching, visual-recognition) lay out as a real 2-column grid that fills the available width — not a centered single column with whitespace gutters
 5. The rhythm game setup screens (`RhythmGameSetup`, `RhythmGameSettings`) and supporting overlays (`CountdownOverlay`, `BossIntroOverlay`, `FloatingFeedback`, `MetronomeDisplay`, `TapArea`) render and remain interactive in all 4 quadrants without clipping, overflow, or hidden controls
 
-**Plans:** 3/6 plans executed
+**Plans:** 5/6 plans executed
 
 Plans:
 
 - [x] 34-01-PLAN.md — Wave 0 infrastructure: needsLandscape helper + test, NeedsLandscapeContext provider + hooks + lifecycle test (NOTATION-03, INFRA-02)
 - [x] 34-02-PLAN.md — 13-component audit punch list across 4 quadrants (D-08/D-09; informs Plans 04 and 05)
 - [x] 34-03-PLAN.md — Wiring: AppLayout provider mount, App.jsx LANDSCAPE_ROUTES rhythm removal, useLandscapeLock context-aware (INFRA-01, INFRA-04, D-19)
-- [ ] 34-04-PLAN.md — 7 renderer declarations + card grids + 6 wrapper gate composition + TapArea widths (CORE-01..05, NOTATION-01/02, INFRA-03, WRAPPER-01, TABLET-01)
-- [ ] 34-05-PLAN.md — Supporting components responsive bumps + RhythmGameSettings glass conversion (D-18) (WRAPPER-02, WRAPPER-03)
+- [x] 34-04-PLAN.md — 7 renderer declarations + card grids + 6 wrapper gate composition + TapArea widths (CORE-01..05, NOTATION-01/02, INFRA-03, WRAPPER-01, TABLET-01)
+- [x] 34-05-PLAN.md — Supporting components responsive bumps + RhythmGameSettings glass conversion (D-18) (WRAPPER-02, WRAPPER-03)
 - [ ] 34-06-PLAN.md — Manual UAT walkthrough + ship-gate sign-off (D-12; covers all SC #1-5)
       **UI hint**: yes
 
@@ -116,7 +116,7 @@ Plans:
 
 | Phase                                        | Plans Complete | Status      | Completed |
 | -------------------------------------------- | -------------- | ----------- | --------- |
-| 34. Responsive Rhythm Renderers (Non-Arcade) | 3/6            | In Progress |           |
+| 34. Responsive Rhythm Renderers (Non-Arcade) | 5/6            | In Progress |           |
 | 35. ArcadeRhythmGame Portrait                | 0/0            | Not started | -         |
 
 ---
