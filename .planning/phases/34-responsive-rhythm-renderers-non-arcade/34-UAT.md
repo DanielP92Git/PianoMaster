@@ -140,6 +140,123 @@ Per RESEARCH Pitfall 1: non-rhythm games MUST keep firing the rotate prompt on p
 - ESLint full-repo run blocked by stale worktree built assets at `.claude/worktrees/agent-a2e6e6b2/dist/`. Suggested fix: add `.claude/worktrees/` to ESLint ignore patterns. Phase 34 scope lint clean (0 errors).
 - (add UAT-discovered items here as you walk)
 
+## UAT Delta (Gap Closure) — Pre-Delta Gate
+
+Re-run after Plans 34-07, 34-08, 34-09 shipped (gap-closure for original UAT failures).
+
+| Command                         | Status                                                                                                                                          |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:run`              | ✓ pass — 1685/1685 tests passed (13 todo, 0 failed), 48.81s                                                                                     |
+| `npm run build`                 | ✓ pass — `built in 28.37s`                                                                                                                      |
+| `npm run lint` (Phase 34 scope) | ✓ pass — 0 errors, 6 pre-existing warnings (exhaustive-deps + unused-vars in MetronomeTrainer/RhythmDictation/RhythmReading; predates Phase 34) |
+
+All three MUST be green before delta walkthrough begins. If any fail, STOP and re-open the relevant gap-closure plan. **Status: all green — proceed.**
+
+## UAT Delta (Gap Closure) — Walkthrough
+
+**Verified:** _(YYYY-MM-DD when walkthrough runs)_
+**Devices used:** iPhone SE (375×667) — DevTools emulator / real device; iPad (1024×768) — DevTools emulator / real device
+
+Re-tests ONLY the rows that failed in the original UAT (rows 30-34, SC #2 long-pattern rows, SC #3 long-pattern tablet rows, SC #5 RhythmGameSetup + RhythmGameSettings rows) plus newly-affected rows from gap-closure plans.
+
+### Delta SC #1 — GAP 1: free-play dictation 2x2 grid (Plan 07)
+
+Route: `/rhythm-mode/rhythm-dictation-game` (free-play entry — NO trail nav state)
+Device: iPhone SE 375×667 portrait
+
+Steps:
+
+1. Open route in free-play (NOT via trail). Wait for first prompt.
+2. Visually confirm: 1 staff at top, 3 cards in 2×2 grid (first 2 cards row 1; third card spans both columns row 2)
+3. Confirm no vertical scroll
+4. Tap each card to confirm tappable; the col-span-2 third card MUST be fully tappable across its full width
+
+| Field  | Value           |
+| ------ | --------------- |
+| Result | ☐ pass / ☐ fail |
+| Notes  |                 |
+
+### Delta SC #1 — Regression: trail-entry mixed-lesson dictation (no Plan-07 impact expected)
+
+Plan 07 modified `RhythmDictationGame.jsx` (the wrapper) but NOT `RhythmDictationQuestion.jsx` (the renderer used by MixedLessonGame). Verify trail entry still passes the original 2x2 grid test (no regression).
+
+Route: navigate from Trail → mixed-lesson node containing a Dictation question
+Device: iPhone SE 375×667 portrait
+
+| Field  | Value           |
+| ------ | --------------- |
+| Result | ☐ pass / ☐ fail |
+| Notes  |                 |
+
+### Delta SC #2 — GAP 2: long-pattern rows (Plan 08, ?measures=4 URL param)
+
+Use the dev-only URL param to force long patterns:
+
+- Short → no `?measures` param OR `?measures=1`
+- Long → `?measures=4`
+
+Devices: phone-portrait (iPhone SE 375×667)
+
+| Sub-test                                        | Result          | Notes                                                                                  |
+| ----------------------------------------------- | --------------- | -------------------------------------------------------------------------------------- |
+| reading short (no param) → no prompt            | ☐ pass / ☐ fail |                                                                                        |
+| reading long (`?measures=4`) → prompt           | ☐ pass / ☐ fail |                                                                                        |
+| tap short (no param) → no prompt                | ☐ pass / ☐ fail | "tap" is via reading game per existing UAT note                                        |
+| tap long (`?measures=4`) → prompt               | ☐ pass / ☐ fail |                                                                                        |
+| mixed-lesson swap (long→short) → prompt clears  | ☐ pass / ☐ fail | mixed-lesson uses trail node config; swap behavior should still work without ?measures |
+| mixed-lesson swap (short→long) → prompt appears | ☐ pass / ☐ fail |                                                                                        |
+
+Note: mixed-lesson rows in the original UAT were marked "fail" only because the user could not control pattern length from free-play; mixed-lesson swap behavior is exercised by navigating between trail nodes with different measure counts. If this is impractical, mark "skipped — trail node content does not exhibit the swap" and continue.
+
+### Delta SC #3 — GAP 2: long-pattern tablet rows (Plan 08)
+
+Same `?measures=4` URL param. Tablet quadrants must NEVER show overlay regardless of pattern length.
+
+Devices: iPad 768×1024 portrait + 1024×768 landscape
+
+| Route                                                  | tablet-portrait | tablet-landscape |
+| ------------------------------------------------------ | --------------- | ---------------- |
+| rhythm-reading-game (long, `?measures=4`)              | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
+| rhythm-tap-game (long, via reading game `?measures=4`) | ☐ pass / ☐ fail | ☐ pass / ☐ fail  |
+
+### Delta SC #5 — GAP 3: RhythmGameSetup + RhythmGameSettings (Plan 09)
+
+Route: `/rhythm-mode/metronome-trainer` (the only route that surfaces RhythmGameSetup)
+
+Plan 09 classification (from `34-09-SUMMARY.md`): **Class C** — visually awkward but functional. All 4 quadrants verified by human walkthrough during Plan 09 Task 1; verbatim verifier report: _"all 4 look good"_. Per Plan 09 plan instruction, Class C means the cells re-mark as PASS with reclassification note.
+
+| Component                                   | phone-portrait                                        | phone-landscape               | tablet-portrait               | tablet-landscape              |
+| ------------------------------------------- | ----------------------------------------------------- | ----------------------------- | ----------------------------- | ----------------------------- |
+| RhythmGameSetup                             | ✓ pass (reclassified Class C)                         | ✓ pass (reclassified Class C) | ✓ pass (reclassified Class C) | ✓ pass (reclassified Class C) |
+| RhythmGameSettings (dead code, @deprecated) | N/A — no UI consumer; row obsolete per Plan 09 Task 3 | N/A                           | N/A                           | N/A                           |
+
+Plan 09 Classification: ☐ Class A / ☐ Class B / **☑ Class C** — see `34-09-SUMMARY.md`
+
+### Newly-Affected Regression Check — MetronomeTrainer setup phase
+
+Plan 09 did NOT apply a wrapper fix (Class C → no-op), so the in-game render path is unchanged. This row remains a sanity spot-check only.
+
+Steps:
+
+1. Open `/rhythm-mode/metronome-trainer` (free-play entry)
+2. Complete setup → Start → confirm in-game state renders correctly at iPhone SE portrait (countdown overlay, beat circles, tap area all visible and interactive)
+
+| Field  | Value           |
+| ------ | --------------- |
+| Result | ☐ pass / ☐ fail |
+| Notes  |                 |
+
+## UAT Delta Sign-Off
+
+- [ ] All delta rows above pass OR are explicitly classified as deferred (with deferred-items.md entry)
+- [ ] No regressions in original passing rows (random spot-check 3 rows from original UAT — none broken)
+- [ ] Pre-Delta Gate (test:run, build, lint Phase 34 scope) all green ✓ (recorded above)
+- [ ] Plan 09 classification result recorded above (A / B / **C**) ✓
+
+Signed: \***\*\_\_\_\_\*\*** on \***\*\_\_\_\_\*\***
+
+---
+
 ## UAT Sign-Off
 
 - [ ] All 5 ROADMAP Success Criteria pass
