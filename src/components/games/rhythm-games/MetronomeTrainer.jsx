@@ -17,6 +17,7 @@ import { getNodeById } from "../../../data/skillTrail";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { useNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
@@ -50,8 +51,10 @@ export function MetronomeTrainer() {
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
 
-  // iOS/non-PWA: rotate prompt overlay
-  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
+  // iOS/non-PWA: rotate prompt overlay — gated on context (INFRA-03/WRAPPER-01).
+  const { shouldShowPrompt: legacyGate, dismissPrompt } = useRotatePrompt();
+  const ctxNeedsLandscape = useNeedsLandscape();
+  const shouldShowPrompt = legacyGate && ctxNeedsLandscape;
 
   // Get nodeId from trail navigation (if coming from trail)
   const nodeId = location.state?.nodeId || null;
