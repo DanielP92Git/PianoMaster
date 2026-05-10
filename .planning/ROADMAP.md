@@ -111,18 +111,26 @@ Plans:
 1. A throwaway vertical-lanes prototype of ArcadeRhythmGame has been run on a real phone in portrait, and the spike outcome (ship vertical lanes vs. fall back to rotate prompt) is documented as a recorded decision
 2. On phone-portrait, opening ArcadeRhythmGame either plays in a vertical-lane layout without orientation change OR shows the rotate prompt via the Phase 34 `NeedsLandscapeContext` mechanism — never a broken horizontal-lanes layout that spills off-screen
 3. On tablet-landscape (and on phone-landscape if the rotate-prompt path is chosen), ArcadeRhythmGame continues to render with the existing horizontal-lanes layout — no regression for the orientation it was originally designed for
-   **Plans**: TBD
-   **UI hint**: yes
+   **Plans:** 4 plans
+
+Plans:
+
+- [ ] 35-01-PLAN.md — Correct ROADMAP SC #3 wording per D-11 (horizontal-lanes -> single vertical-lane)
+- [ ] 35-02-PLAN.md — Add ?spike-portrait dev URL flag instrument to ArcadeRhythmGame.jsx (ARCADE-01)
+- [ ] 35-03-PLAN.md — Manual portrait feel-test on real phones + author 35-SPIKE.md verdict (ARCADE-01)
+- [ ] 35-04-PLAN.md — Ship the chosen path (SHIP-VERTICAL or ROTATE-PROMPT) per 35-SPIKE.md verdict; remove spike instrument (ARCADE-02)
+
+  **UI hint**: yes
 
 ## Progress
 
 **Total: 24 milestones shipped, 107 phases, ~238 plans | Active: v3.4 (Phases 34-35, 0/2 phases complete)**
 
-| Phase                                        | Plans Complete | Status      | Completed  |
-| -------------------------------------------- | -------------- | ----------- | ---------- |
-| 34. Responsive Rhythm Renderers (Non-Arcade) | 10/10          | Complete    | 2026-05-10 |
-| 35. ArcadeRhythmGame Portrait                | 0/0            | Not started | -          |
+| Phase                                        | Plans Complete | Status   | Completed  |
+| -------------------------------------------- | -------------- | -------- | ---------- |
+| 34. Responsive Rhythm Renderers (Non-Arcade) | 10/10          | Complete | 2026-05-10 |
+| 35. ArcadeRhythmGame Portrait                | 0/4            | Planned  | -          |
 
 ---
 
-_Last updated: 2026-05-07 -- v3.4 roadmap drafted (Phases 34-35)_
+_Last updated: 2026-05-10 -- Phase 35 planned (4 plans: docs fix, spike instrument, manual feel-test, conditional ship)_

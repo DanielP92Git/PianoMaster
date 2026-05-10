@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v3.4
 milestone_name: Rhythm Games Responsive UX
-status: Phase 35 context gathered; ready for /gsd-plan-phase 35
-last_updated: "2026-05-10T20:30:00.000Z"
-last_activity: 2026-05-10 -- Phase 35 discuss-phase complete (35-CONTEXT.md + 35-DISCUSSION-LOG.md committed @ 9bb229e). 14 decisions captured across 4 areas; key surprise = current ArcadeRhythmGame is already single vertical lane, so spike collapses to unlock-and-feel-test behind ?spike-portrait dev flag.
+status: Ready for /gsd-plan-phase 35
+last_updated: "2026-05-10T19:49:32.669Z"
+last_activity: "2026-05-10 -- 35-CONTEXT.md committed @ 9bb229e. 14 decisions captured across Spike scope, Decision criteria, Tablet behavior, Fallback cleanup. Surprise surfaced during discussion: existing ArcadeRhythmGame is already single full-width vertical lane, so spike collapses to unlock-and-feel-test behind ?spike-portrait dev URL flag (no redesign needed unless feel-test fails)."
 progress:
   total_phases: 2
   completed_phases: 1
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-04 after v3.3 milestone)
 
 Phase: 35 (arcaderhythmgame-portrait) — CONTEXT GATHERED
 Plan: 0 of 0 (planning not yet started)
-Resume file: .planning/phases/35-arcaderhythmgame-portrait/35-CONTEXT.md
+Resume file: .planning/phases/35-arcaderhythmgame-portrait/35-UI-SPEC.md
 Status: Ready for /gsd-plan-phase 35
 Last activity: 2026-05-10 -- 35-CONTEXT.md committed @ 9bb229e. 14 decisions captured across Spike scope, Decision criteria, Tablet behavior, Fallback cleanup. Surprise surfaced during discussion: existing ArcadeRhythmGame is already single full-width vertical lane, so spike collapses to unlock-and-feel-test behind ?spike-portrait dev URL flag (no redesign needed unless feel-test fails).
 
