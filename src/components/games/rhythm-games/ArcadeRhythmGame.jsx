@@ -13,6 +13,7 @@ import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
+import { useDeclareNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay";
 import VictoryScreen from "../VictoryScreen";
@@ -117,7 +118,14 @@ function ArcadeRhythmGame() {
   const location = useLocation();
   const { t } = useTranslation("common");
 
-  // Android PWA: fullscreen + orientation lock
+  // Android PWA: fullscreen + orientation lock.
+  // TODO(Phase 35): replace with content-driven declaration once vertical-lanes
+  // / rotate-prompt strategy is decided. Until then, declare true unconditionally
+  // so useLandscapeLock (now context-gated per Plan 03 Task 2 / D-19) keeps
+  // firing the Android PWA fullscreen + orientation lock that previously came
+  // from LANDSCAPE_ROUTES (W2 — Android PWA regression guard between Phases 34
+  // and 35).
+  useDeclareNeedsLandscape(true);
   useLandscapeLock();
 
   // iOS/non-PWA: rotate prompt overlay
