@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * FloatingFeedback
@@ -12,8 +12,12 @@ import { useTranslation } from 'react-i18next';
  * - feedbackKey: unique key to trigger new animation on each tap (passed via key prop)
  * - reducedMotion: boolean from AccessibilityContext
  */
-export function FloatingFeedback({ quality, feedbackKey, reducedMotion = false }) {
-  const { t } = useTranslation('common');
+export function FloatingFeedback({
+  quality,
+  feedbackKey,
+  reducedMotion = false,
+}) {
+  const { t } = useTranslation("common");
   const [visible, setVisible] = useState(false);
   const [animating, setAnimating] = useState(false);
   const timeoutRef = useRef(null);
@@ -50,47 +54,53 @@ export function FloatingFeedback({ quality, feedbackKey, reducedMotion = false }
   if (!visible || !quality) return null;
 
   const colorClass =
-    quality === 'PERFECT'
-      ? 'text-green-400'
-      : quality === 'GOOD'
-        ? 'text-yellow-400'
-        : 'text-red-400';
+    quality === "PERFECT"
+      ? "text-green-400"
+      : quality === "GOOD"
+        ? "text-yellow-400"
+        : "text-red-400";
 
   const labelMap = {
-    PERFECT: t('games.rhythmReading.tapArea.accuracy.perfect'),
-    GOOD: t('games.rhythmReading.tapArea.accuracy.good'),
-    MISS: t('games.rhythmReading.tapArea.accuracy.miss'),
+    PERFECT: t("games.rhythmReading.tapArea.accuracy.perfect"),
+    GOOD: t("games.rhythmReading.tapArea.accuracy.good"),
+    MISS: t("games.rhythmReading.tapArea.accuracy.miss"),
   };
 
   const label = labelMap[quality] || quality;
 
   const baseStyle = {
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    bottom: '100%',
-    marginBottom: '8px',
-    pointerEvents: 'none',
-    transition: animating ? 'transform 800ms ease-out, opacity 800ms ease-out' : 'none',
+    position: "absolute",
+    left: "50%",
+    transform: "translateX(-50%)",
+    bottom: "100%",
+    marginBottom: "8px",
+    pointerEvents: "none",
+    transition: animating
+      ? "transform 800ms ease-out, opacity 800ms ease-out"
+      : "none",
   };
 
   const animatedStyle = animating
     ? {
         opacity: 0,
         transform: reducedMotion
-          ? 'translateX(-50%) translateY(0)' // no vertical motion for reduced-motion
-          : 'translateX(-50%) translateY(-40px)',
+          ? "translateX(-50%) translateY(0)" // no vertical motion for reduced-motion
+          : "translateX(-50%) translateY(-40px)",
       }
     : {
         opacity: 1,
-        transform: 'translateX(-50%) translateY(0)',
+        transform: "translateX(-50%) translateY(0)",
       };
 
   return (
     // aria-live region so screen readers announce tap results
-    <div aria-live="polite" aria-atomic="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+    <div
+      aria-live="polite"
+      aria-atomic="true"
+      style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+    >
       <span
-        className={`text-3xl font-bold ${colorClass}`}
+        className={`text-3xl font-bold md:text-4xl ${colorClass}`}
         style={{ ...baseStyle, ...animatedStyle }}
       >
         {label}

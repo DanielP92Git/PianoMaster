@@ -71,7 +71,7 @@ export function RhythmGameSettings({
       <div className="space-y-6">
         {/* Difficulty Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-white/70">
             {t("gameSettings.steps.labels.difficulty")}
           </label>
           <div className="grid grid-cols-1 gap-2">
@@ -83,10 +83,10 @@ export function RhythmGameSettings({
                   onClick={() =>
                     setLocalSettings((prev) => ({ ...prev, difficulty }))
                   }
-                  className={`p-3 rounded-lg border text-sm font-medium transition-all ${
+                  className={`rounded-lg border p-3 text-sm font-medium transition-all ${
                     localSettings.difficulty === difficulty
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white text-gray-700 border-gray-300 hover:border-blue-300"
+                      ? "border-indigo-400 bg-indigo-500/30 text-white"
+                      : "border-white/20 bg-white/5 text-white hover:border-white/40 hover:bg-white/10"
                   }`}
                 >
                   <div className="font-semibold">{diffInfo.name}</div>
@@ -101,7 +101,7 @@ export function RhythmGameSettings({
 
         {/* Time Signature */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-white/70">
             {t("gameSettings.steps.labels.timeSignature")}
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -111,10 +111,10 @@ export function RhythmGameSettings({
                 onClick={() =>
                   setLocalSettings((prev) => ({ ...prev, timeSignature }))
                 }
-                className={`p-3 rounded-lg border text-sm font-medium transition-all ${
+                className={`rounded-lg border p-3 text-sm font-medium transition-all ${
                   localSettings.timeSignature.name === timeSignature.name
-                    ? "bg-blue-500 text-white border-blue-500"
-                    : "bg-white text-gray-700 border-gray-300 hover:border-blue-300"
+                    ? "border-indigo-400 bg-indigo-500/30 text-white"
+                    : "border-white/20 bg-white/5 text-white hover:border-white/40 hover:bg-white/10"
                 }`}
               >
                 {timeSignature.name}
@@ -125,7 +125,7 @@ export function RhythmGameSettings({
 
         {/* Tempo Range */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-medium text-white/70">
             {t("gameSettings.tempo.label", {
               tempo: localSettings.tempo,
             })}
@@ -141,9 +141,9 @@ export function RhythmGameSettings({
                 tempo: parseInt(e.target.value),
               }))
             }
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            className="h-2 w-full cursor-pointer appearance-none rounded-lg bg-white/15"
           />
-          <div className="flex justify-between text-xs text-gray-500 mt-1">
+          <div className="mt-1 flex justify-between text-xs text-white/60">
             <span>{t("gameSettings.tempo.min", { value: 60 })}</span>
             <span>{t("gameSettings.tempo.max", { value: 180 })}</span>
           </div>

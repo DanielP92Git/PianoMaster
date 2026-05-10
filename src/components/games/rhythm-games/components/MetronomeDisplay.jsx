@@ -36,9 +36,7 @@ export function MetronomeDisplay({
         return (
           <div
             key={beat}
-            className={`flex items-center justify-center rounded-full border-2 font-bold transition-all duration-150
-              h-9 w-9 text-xs sm:h-10 sm:w-10 sm:text-sm
-            ${
+            className={`flex h-9 w-9 items-center justify-center rounded-full border-2 text-xs font-bold transition-all duration-150 sm:h-10 sm:w-10 sm:text-sm md:h-12 md:w-12 md:text-base ${
               isCurrentBeat
                 ? isCountIn
                   ? "scale-150 border-yellow-500 bg-yellow-500 text-black shadow-xl"
