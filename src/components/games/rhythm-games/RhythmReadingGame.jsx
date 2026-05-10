@@ -7,7 +7,11 @@ import { useSounds } from "../../../features/games/hooks/useSounds";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
-import { useNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
+import {
+  useNeedsLandscape,
+  useDeclareNeedsLandscape,
+} from "../../../contexts/NeedsLandscapeContext";
+import { needsLandscape as computeNeedsLandscape } from "./utils/needsLandscape";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay";
 import VictoryScreen from "../VictoryScreen";
@@ -61,6 +65,13 @@ export function RhythmReadingGame() {
   const ctxNeedsLandscape = useNeedsLandscape();
   const shouldShowPrompt = legacyGate && ctxNeedsLandscape;
 
+  // Free-play standalone wrapper declares needsLandscape itself (#34-08/10).
+  // Renderer pipeline (MixedLessonGame → RhythmReadingQuestion) declares it
+  // from the renderer side; here we mirror that behavior so direct entry to
+  // /rhythm-mode/rhythm-reading-game also surfaces the prompt for long
+  // patterns. Computed from trailMeasureCount + timeSignature; the helper
+  // uses the measures-only path which is independent of beat content shape.
+
   // Trail state extraction from location.state
   const nodeId = location.state?.nodeId ?? null;
   const nodeConfig = location.state?.nodeConfig ?? null;
@@ -71,6 +82,14 @@ export function RhythmReadingGame() {
   const trailMeasureCount =
     nodeConfig?.measureCount ?? getMeasuresOverride() ?? 1;
   const trailNodeType = nodeId ? (getNodeById(nodeId)?.nodeType ?? null) : null;
+
+  // Read timeSignature early (full extraction is below) so we can declare
+  // needsLandscape before the rest of the component runs.
+  const tsForDeclaration =
+    nodeConfig?.timeSignature ?? nodeConfig?.config?.timeSignature ?? "4/4";
+  useDeclareNeedsLandscape(
+    computeNeedsLandscape(undefined, tsForDeclaration, trailMeasureCount)
+  );
 
   // Audio contexts
   const {
