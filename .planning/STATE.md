@@ -62,7 +62,6 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 | tech-debt | 8 unhandled rejections in ArcadeRhythmGame.test.js (pre-existing getOrCreateAudioContext mock) | v3.3   |
 | process   | Worktree base-staleness recurring concern                                                      | v3.3   |
 | process   | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
-| infra     | Pre-existing test env failures (4 files require VITE_SUPABASE_URL)                             | v3.4   |
 | infra     | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
 
 ## Resolved Items
@@ -72,6 +71,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 **35-VALIDATION.md backfill (closed 2026-05-12)** — Nyquist validation strategy authored retroactively for Phase 35. `nyquist_compliant: true`. ARCADE-02 covered by existing `ArcadeRhythmGame.test.js` (12/12 passing) + grep-based source-of-truth checks recorded in 35-VERIFICATION.md; ARCADE-01 is a spike requirement (manual-only by nature, verdict artifact in 35-SPIKE.md).
 
 **phase-33-WIP stash triage (closed 2026-05-12)** — Stash inspected and dropped. Chunks C (tag-based pattern resolution) and E (`boss_rhythm_7` `isBoss` flip) already on main via Phase 33 Plan 06 / BLOCKER-1 close. Chunks B (arcade hold-notes) + D (dynamic tile heights) are substantive unfinished feature work, captured in `.planning/BACKLOG-arcade-hold-notes-WIP.md` for future milestone scoping. Recommended approach when revisited: re-derive from PulseQuestion's shipped hold pattern rather than re-applying the (now-rebase-stale) diff.
+
+**VITE_SUPABASE_URL test env failure (closed 2026-05-12)** — Added stub Supabase env values to `vitest.config.js` (`test.env: { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY }`). Verified by temporarily removing `.env` and running the previously-failing test files (`NoteSpeedCards.test.js`, `NotesRecognitionGame.autogrow.test.js`, `SightReadingGame.micRestart.test.jsx`) — all 24 tests green. Full suite remains green (1685/1685). Tests should never make real Supabase calls; stubs make tests deterministic regardless of `.env` presence.
 
 ## Session Continuity
 
