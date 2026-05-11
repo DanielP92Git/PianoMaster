@@ -56,7 +56,6 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 | Category  | Item                                                                                           | Origin |
 | --------- | ---------------------------------------------------------------------------------------------- | ------ |
-| stash     | phase-33-WIP — arcade hold-notes + tag-patterns + boss_7 flip (Chunks B/C/D/E)                 | v3.3   |
 | warning   | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook                                  | v3.3   |
 | info      | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests)                                  | v3.3   |
 | tech-debt | No VERIFICATION.md for Phases 31, 32                                                           | v3.3   |
@@ -71,6 +70,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 **DATA-02 (closed 2026-05-12)** — pulse hold path filter validation. Re-triage confirmed no action needed: `PulseQuestion.jsx` uses a hardcoded `PULSE_BEATS` constant (4 quarter notes) and never invokes `resolveByTags`. `MixedLessonGame.buildRhythmTapConfig()` does not emit a `beats` field for `pulse` questions, and `allowRests` / `patternNeedsRests` propagate only through the dictation path. The filter is structurally inapplicable to PulseQuestion.
 
 **35-VALIDATION.md backfill (closed 2026-05-12)** — Nyquist validation strategy authored retroactively for Phase 35. `nyquist_compliant: true`. ARCADE-02 covered by existing `ArcadeRhythmGame.test.js` (12/12 passing) + grep-based source-of-truth checks recorded in 35-VERIFICATION.md; ARCADE-01 is a spike requirement (manual-only by nature, verdict artifact in 35-SPIKE.md).
+
+**phase-33-WIP stash triage (closed 2026-05-12)** — Stash inspected and dropped. Chunks C (tag-based pattern resolution) and E (`boss_rhythm_7` `isBoss` flip) already on main via Phase 33 Plan 06 / BLOCKER-1 close. Chunks B (arcade hold-notes) + D (dynamic tile heights) are substantive unfinished feature work, captured in `.planning/BACKLOG-arcade-hold-notes-WIP.md` for future milestone scoping. Recommended approach when revisited: re-derive from PulseQuestion's shipped hold pattern rather than re-applying the (now-rebase-stale) diff.
 
 ## Session Continuity
 
