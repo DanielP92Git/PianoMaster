@@ -68,7 +68,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 ### v3.4 Rhythm Games Responsive UX (Phases 34-35) — ACTIVE
 
 - [x] **Phase 34: Responsive Rhythm Renderers (Non-Arcade)** — Drop route-based landscape lock for rhythm games and make non-arcade renderers responsive across all 4 phone/tablet × portrait/landscape quadrants (completed 2026-05-10)
-- [ ] **Phase 35: ArcadeRhythmGame Portrait** — Spike vertical-lane prototype for ArcadeRhythmGame on phone-portrait, then ship vertical-lane redesign OR declare `needsLandscape=true` based on spike outcome
+- [x] **Phase 35: ArcadeRhythmGame Portrait** — Spike vertical-lane prototype for ArcadeRhythmGame on phone-portrait, then ship vertical-lane redesign OR declare `needsLandscape=true` based on spike outcome (completed 2026-05-11)
 
 ## Phase Details
 
@@ -111,14 +111,14 @@ Plans:
 1. A throwaway vertical-lanes prototype of ArcadeRhythmGame has been run on a real phone in portrait, and the spike outcome (ship vertical lanes vs. fall back to rotate prompt) is documented as a recorded decision
 2. On phone-portrait, opening ArcadeRhythmGame either plays in a vertical-lane layout without orientation change OR shows the rotate prompt via the Phase 34 `NeedsLandscapeContext` mechanism — never a broken horizontal-lanes layout that spills off-screen
 3. On tablet-landscape (and on phone-landscape if the rotate-prompt path is chosen), ArcadeRhythmGame continues to render with the existing single vertical-lane layout — no regression for the rendering it was originally designed for (wording corrected per 35-CONTEXT.md D-11; the original "horizontal-lanes" framing was a documentation slip — the code has always been single vertical-lane)
-   **Plans:** 2/4 plans executed
+   **Plans:** 4/4 plans complete
 
 Plans:
 
 - [x] 35-01-PLAN.md — Correct ROADMAP SC #3 wording per D-11 (horizontal-lanes -> single vertical-lane)
 - [x] 35-02-PLAN.md — Add ?spike-portrait dev URL flag instrument to ArcadeRhythmGame.jsx (ARCADE-01)
-- [ ] 35-03-PLAN.md — Manual portrait feel-test on real phones + author 35-SPIKE.md verdict (ARCADE-01)
-- [ ] 35-04-PLAN.md — Ship the chosen path (SHIP-VERTICAL or ROTATE-PROMPT) per 35-SPIKE.md verdict; remove spike instrument (ARCADE-02)
+- [x] 35-03-PLAN.md — Manual portrait feel-test on real phones + author 35-SPIKE.md verdict (ARCADE-01)
+- [x] 35-04-PLAN.md — Ship the chosen path (SHIP-VERTICAL or ROTATE-PROMPT) per 35-SPIKE.md verdict; remove spike instrument (ARCADE-02)
 
   **UI hint**: yes
 
@@ -126,10 +126,10 @@ Plans:
 
 **Total: 24 milestones shipped, 107 phases, ~238 plans | Active: v3.4 (Phases 34-35, 0/2 phases complete)**
 
-| Phase                                        | Plans Complete | Status      | Completed  |
-| -------------------------------------------- | -------------- | ----------- | ---------- |
-| 34. Responsive Rhythm Renderers (Non-Arcade) | 10/10          | Complete    | 2026-05-10 |
-| 35. ArcadeRhythmGame Portrait                | 2/4            | In Progress |            |
+| Phase                                        | Plans Complete | Status   | Completed  |
+| -------------------------------------------- | -------------- | -------- | ---------- |
+| 34. Responsive Rhythm Renderers (Non-Arcade) | 10/10          | Complete | 2026-05-10 |
+| 35. ArcadeRhythmGame Portrait                | 4/4            | Complete | 2026-05-11 |
 
 ---
 
