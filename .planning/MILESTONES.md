@@ -28,7 +28,7 @@
 | deferred | UnifiedGameSettings cross-cutting responsive concerns (D-10 OOS)                  | Future shared-setup-screen milestone                                     |
 | deferred | Notes-master and ear-training responsive (NM-01, ET-01)                           | Future milestone using same NeedsLandscapeContext infra                  |
 | bug      | ArcadeRhythmGame mid-game rotation regression (laneHeightRef cache not refreshed) | Pre-existing, lower risk under ROTATE-PROMPT path; 35-SPIKE.md Follow-up |
-| process  | DATA-02 (pulse hold path filter validation) carried from v3.3                     | Unrelated to responsive work; future quick task                          |
+| process  | DATA-02 (pulse hold path filter validation) carried from v3.3                     | Closed 2026-05-12 post-v3.4 — filter inapplicable; see STATE.md Resolved |
 
 **Audit:** `gaps_found` status (10 unsatisfied per strict 3-source matrix) — see `milestones/v3.4-MILESTONE-AUDIT.md`. All gaps are process/documentation gaps; functional verification complete via owner-signed UAT delta walkthrough.
 

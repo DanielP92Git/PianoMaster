@@ -55,18 +55,21 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Carried from prior milestones (still open):**
 
-| Category    | Item                                                                                           | Origin |
-| ----------- | ---------------------------------------------------------------------------------------------- | ------ |
-| requirement | DATA-02 — pulse hold path filter validation                                                    | v3.3   |
-| stash       | phase-33-WIP — arcade hold-notes + tag-patterns + boss_7 flip (Chunks B/C/D/E)                 | v3.3   |
-| warning     | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook                                  | v3.3   |
-| info        | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests)                                  | v3.3   |
-| tech-debt   | No VERIFICATION.md for Phases 31, 32                                                           | v3.3   |
-| tech-debt   | 8 unhandled rejections in ArcadeRhythmGame.test.js (pre-existing getOrCreateAudioContext mock) | v3.3   |
-| process     | Worktree base-staleness recurring concern                                                      | v3.3   |
-| process     | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
-| infra       | Pre-existing test env failures (4 files require VITE_SUPABASE_URL)                             | v3.4   |
-| infra       | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
+| Category  | Item                                                                                           | Origin |
+| --------- | ---------------------------------------------------------------------------------------------- | ------ |
+| stash     | phase-33-WIP — arcade hold-notes + tag-patterns + boss_7 flip (Chunks B/C/D/E)                 | v3.3   |
+| warning   | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook                                  | v3.3   |
+| info      | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests)                                  | v3.3   |
+| tech-debt | No VERIFICATION.md for Phases 31, 32                                                           | v3.3   |
+| tech-debt | 8 unhandled rejections in ArcadeRhythmGame.test.js (pre-existing getOrCreateAudioContext mock) | v3.3   |
+| process   | Worktree base-staleness recurring concern                                                      | v3.3   |
+| process   | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
+| infra     | Pre-existing test env failures (4 files require VITE_SUPABASE_URL)                             | v3.4   |
+| infra     | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
+
+## Resolved Items
+
+**DATA-02 (closed 2026-05-12)** — pulse hold path filter validation. Re-triage confirmed no action needed: `PulseQuestion.jsx` uses a hardcoded `PULSE_BEATS` constant (4 quarter notes) and never invokes `resolveByTags`. `MixedLessonGame.buildRhythmTapConfig()` does not emit a `beats` field for `pulse` questions, and `allowRests` / `patternNeedsRests` propagate only through the dictation path. The filter is structurally inapplicable to PulseQuestion.
 
 ## Session Continuity
 
