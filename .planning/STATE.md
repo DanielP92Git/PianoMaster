@@ -1,82 +1,81 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.4
-milestone_name: Rhythm Games Responsive UX
-status: milestone_complete
-last_updated: "2026-05-11T09:20:04.504Z"
-last_activity: 2026-05-11 -- Phase 35 execution started
+milestone: null
+milestone_name: null
+status: between_milestones
+last_updated: "2026-05-12T10:00:00Z"
+last_activity: 2026-05-12 -- v3.4 milestone shipped and archived
 progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 14
-  completed_plans: 10
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-04 after v3.3 milestone)
+See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 35 — arcaderhythmgame-portrait
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 35
-Plan: Not started
-Resume file: .planning/phases/35-arcaderhythmgame-portrait/35-UI-SPEC.md
-Status: Milestone complete
-Last activity: 2026-05-11
+Phase: none
+Plan: none
+Status: between_milestones (v3.4 shipped 2026-05-12)
+Last activity: 2026-05-12
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: ~238 (across 24 shipped milestones)
-- 24 milestones shipped in 93 days (2026-01-31 to 2026-05-04)
+- Total plans completed: ~252 (across 25 shipped milestones)
+- 25 milestones shipped in 102 days (2026-01-31 to 2026-05-12)
 
 ## Deferred Items
 
-Items acknowledged and deferred at v3.3 milestone close on 2026-05-04:
+Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
-| Category    | Item                                                          | Status                                       |
-| ----------- | ------------------------------------------------------------- | -------------------------------------------- |
-| requirement | DATA-02 — pulse hold path filter validation                   | Deferred to next milestone for re-triage     |
-| stash       | phase-33-WIP — arcade hold-notes + tag-patterns + boss_7 flip | Preserved on main; Chunks B/C/D/E for future |
-| warning     | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook | Functional today; fragile if regresses       |
-| info        | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests) | Likely intentional; unlogged                 |
-| tech-debt   | No VERIFICATION.md for Phases 31, 32 (quality risk)           | Not blocking close; flagged                  |
-| tech-debt   | 8 unhandled rejections in ArcadeRhythmGame.test.js            | Pre-existing; getOrCreateAudioContext mock   |
-| process     | Worktree base-staleness recurring concern                     | Plan 33-08 hit it; cherry-pick recovery      |
-| process     | Pre-deploy gate would have caught two post-deploy survivors   | SKILL_UNITS, achievements points column      |
+| Category  | Item                                                                                                 | Status                                                                   |
+| --------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| process   | No formal 34-VERIFICATION.md — UAT delta serves as gate                                              | Functional verification complete via owner-signed UAT walkthrough        |
+| process   | 9 of 16 Phase 34 requirements not listed in any plan SUMMARY `requirements-completed`                | Audit cross-reference gap; functional verification complete              |
+| process   | No 35-VALIDATION.md (nyquist not formally recorded for Phase 35)                                     | Phase 34 VALIDATION exists with `nyquist_compliant: true`                |
+| cleanup   | RhythmGameSettings.jsx dead code (@deprecated, no UI consumer)                                       | Removable in future cleanup pass                                         |
+| deferred  | UnifiedGameSettings cross-cutting responsive concerns (D-10 OOS)                                     | Future shared-setup-screen milestone                                     |
+| deferred  | Notes-master responsive (NM-01) — NotesRecognitionGame, MemoryGame, SightReadingGame, NoteSpeedCards | Future milestone using same NeedsLandscapeContext infra                  |
+| deferred  | Ear-training responsive (ET-01) — NoteComparisonGame, IntervalGame                                   | Quick task candidate (small surface)                                     |
+| bug       | ArcadeRhythmGame mid-game rotation regression (laneHeightRef cache not refreshed)                    | Pre-existing, lower risk under ROTATE-PROMPT path; 35-SPIKE.md Follow-up |
+| tech-debt | Card-internal staff cropping in trail-mode dictation entry                                           | Renderer-level concern, deferred                                         |
+| flake     | rhythmUnit8Redesigned.test.js > rhythm_2_4 probabilistic flake                                       | Pre-existing; future RNG seed quick task                                 |
 
-## Accumulated Context
+**Carried from prior milestones (still open):**
 
-### Decisions
-
-- **2026-05-07** — v3.4 phase split locked: Phase 34 covers all non-arcade responsive work (16 reqs); Phase 35 covers ArcadeRhythmGame portrait (ARCADE-01 spike + ARCADE-02 ship outcome). Hard dependency: Phase 35 consumes Phase 34's INFRA-02 (`NeedsLandscapeContext`). Split rationale: Phase 35 has a real spike-then-decide step (vertical-lane redesign vs always-landscape-with-prompt) that could go two ways; isolating it de-risks the parent phase.
-- **2026-05-10** — Phase 35 context: spike is unlock-and-feel-test (not a redesign) because existing ArcadeRhythmGame is already single full-width vertical lane. Spike lives behind `?spike-portrait` dev URL flag. Subjective feel-test by owner; verdict recorded in 35-SPIKE.md; on-the-fence defaults to rotate-prompt. Tablet (≥768px) always plays in any orientation regardless of phone spike outcome. ROADMAP SC #3 wording ("horizontal-lanes layout") gets corrected to "vertical-lane layout" as an early planning task. See `.planning/phases/35-arcaderhythmgame-portrait/35-CONTEXT.md` for 14 decisions.
-
-### Blockers/Concerns
-
-- **COPPA deadline:** April 22, 2026 (now past — verify all compliance items shipped)
-
-### Quick Tasks Completed
-
-| #          | Description                                                                                           | Date       | Commit  | Directory                                                                                                           |
-| ---------- | ----------------------------------------------------------------------------------------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
-| 260504-jbu | Fix three rhythm trail bugs: mobile intro card, duplicate "ta" syllable, notation tap metronome stuck | 2026-05-04 | a033830 | [260504-jbu-fix-three-rhythm-trail-bugs-1-meet-the-q](./quick/260504-jbu-fix-three-rhythm-trail-bugs-1-meet-the-q/) |
+| Category    | Item                                                                                           | Origin |
+| ----------- | ---------------------------------------------------------------------------------------------- | ------ |
+| requirement | DATA-02 — pulse hold path filter validation                                                    | v3.3   |
+| stash       | phase-33-WIP — arcade hold-notes + tag-patterns + boss_7 flip (Chunks B/C/D/E)                 | v3.3   |
+| warning     | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook                                  | v3.3   |
+| info        | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests)                                  | v3.3   |
+| tech-debt   | No VERIFICATION.md for Phases 31, 32                                                           | v3.3   |
+| tech-debt   | 8 unhandled rejections in ArcadeRhythmGame.test.js (pre-existing getOrCreateAudioContext mock) | v3.3   |
+| process     | Worktree base-staleness recurring concern                                                      | v3.3   |
+| process     | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
+| infra       | Pre-existing test env failures (4 files require VITE_SUPABASE_URL)                             | v3.4   |
+| infra       | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
 
 ## Session Continuity
 
-**Next action:** Phase 35 context is gathered. Continue with:
+**Next action:** v3.4 shipped and archived. Options:
 
-- Run `/clear` then `/gsd-plan-phase 35` to break the spike + ship work into plans (researcher will read 35-CONTEXT.md and Phase 34 D-15..D-19 from `34-CONTEXT.md` before planning)
-- Phase 34 is complete (10/10 plans + UAT delta signed off). `/gsd-progress` can be used to close Phase 34 in ROADMAP if not already marked
-- Address the Phase 34 deferred items in `.planning/phases/34-responsive-rhythm-renderers-non-arcade/deferred-items.md` if you want to clear that backlog before Phase 35 planning
+- `/gsd-new-milestone` — start next milestone cycle (questioning → research → requirements → roadmap)
+- `/gsd-explore` — Socratic ideation if next milestone direction is uncertain
+- Address carried backlog items as quick tasks before starting next milestone
 
 ---
 
-_State updated: 2026-05-10 — Phase 35 context gathered (35-CONTEXT.md @ 9bb229e). 14 decisions across 4 areas locked. Spike collapses to unlock-and-feel-test (current code is already vertical-lane). Ready for /gsd-plan-phase 35._
+_State updated: 2026-05-12 — v3.4 Rhythm Games Responsive UX milestone shipped and archived. 25 milestones total. Ready for next milestone planning._

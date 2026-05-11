@@ -1,5 +1,41 @@
 # Project Milestones: PianoApp
 
+## v3.4 Rhythm Games Responsive UX (Shipped: 2026-05-12)
+
+**Delivered:** Drop the route-based landscape lock for rhythm games; replace with content-driven `NeedsLandscapeContext` infrastructure so the rotate prompt fires only when notation patterns genuinely don't fit. Tablets (≥768px) never see the prompt regardless of orientation. ArcadeRhythmGame ships the ROTATE-PROMPT verdict from a spike feel-test.
+
+**Phases completed:** 2 phases (34-35), 14 plans
+**Timeline:** 2026-05-04 → 2026-05-12 (8 days, 80 commits, 82 files changed, +11,562 / −325 LOC)
+
+**Key accomplishments:**
+
+- Infrastructure: `NeedsLandscapeContext` provider + `useDeclareNeedsLandscape` hook + `needsLandscape` pure helper (9-beat threshold, time-signature aware). Rhythm routes removed from `LANDSCAPE_ROUTES`. `useLandscapeLock` made context-aware so Android PWA orientation lock no-ops when context declares false. `useRotatePrompt` gated by `(needsLandscape && viewport<768 && portrait)` — added 768px `useIsTabletOrLarger` gate so tablets never see prompt
+- Non-notation renderers responsive: DiscoveryIntroQuestion (CORE-01), SyllableMatching + DictationChoiceCard 2×2/1×4 (CORE-02), PulseQuestion full-viewport tap zone (CORE-03), VisualRecognition 2×2/1×4 (CORE-04), RhythmDictation staff + 2×2 cards with col-span-2 (CORE-05). Cards-based renderers use real 2-col fill on tablet-landscape (TABLET-01)
+- Notation renderers content-driven: RhythmReading + RhythmTap compute `needsLandscape` from pattern length × time-signature factor. Short patterns render inline on phone-portrait; long patterns trigger prompt on phone only; tablet always renders inline regardless of pattern length
+- Wrappers audited: 6 standalone game wrappers fixed for hardcoded landscape assumptions. RhythmGameSetup walked across 4 quadrants (Plan 09 Class C — no functional blocker); RhythmGameSettings revealed as dead code with no UI consumer and marked @deprecated. Supporting components (CountdownOverlay, BossIntroOverlay, FloatingFeedback, MetronomeDisplay, TapArea) responsive bumps applied
+- UAT-in-dev as ship gate: 34-UAT.md delta walkthrough signed off 2026-05-10 with all 5 ROADMAP SCs PASS. Three inline fixes applied during walkthrough (`af97088` measures override wires pattern generation, `84697d7` declares needsLandscape from standalone RhythmReadingGame wrapper, `89ebee9` suppresses prompt on tablets ≥768px) rather than spawning another gap-closure cycle
+- ArcadeRhythmGame portrait: spike-then-decide approach behind `?spike-portrait` dev URL flag. Owner-accepted Chrome DevTools emulation deviation documented in 35-SPIKE.md. Verdict: ROTATE-PROMPT (D-12 tie-break — lower risk, reuses Phase 34 infra). Plan 04 ships Branch B: `useDeclareNeedsLandscape(isPhoneViewport)` where `isPhoneViewport = !matchMedia("(min-width: 768px)").matches`. Spike instrument fully removed from source and production bundle (verified 0 hits in dist/). 35-VERIFICATION.md confirms 8/8 must-haves
+- Phase 35 SC #3 wording correction: original "horizontal-lanes layout" framing in ROADMAP corrected to "single vertical-lane layout" per D-11 — code had always been single vertical-lane; the spike collapses to unlock-and-feel-test rather than redesign
+
+**Known deferred items at close:** 7 (all process/documentation tech debt, not functional gaps)
+
+| Category | Item                                                                              | Status                                                                   |
+| -------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| process  | No formal 34-VERIFICATION.md — UAT delta sign-off serves as gate                  | Functional verification complete via UAT                                 |
+| process  | 9 of 16 Phase 34 reqs not listed in any plan SUMMARY frontmatter                  | Audit cross-reference gap; functional verification complete              |
+| process  | No 35-VALIDATION.md (nyquist not formally recorded for Phase 35)                  | Phase 34 VALIDATION exists with nyquist_compliant: true                  |
+| cleanup  | RhythmGameSettings.jsx dead code (@deprecated, no UI consumer)                    | Removable in future cleanup pass                                         |
+| deferred | UnifiedGameSettings cross-cutting responsive concerns (D-10 OOS)                  | Future shared-setup-screen milestone                                     |
+| deferred | Notes-master and ear-training responsive (NM-01, ET-01)                           | Future milestone using same NeedsLandscapeContext infra                  |
+| bug      | ArcadeRhythmGame mid-game rotation regression (laneHeightRef cache not refreshed) | Pre-existing, lower risk under ROTATE-PROMPT path; 35-SPIKE.md Follow-up |
+| process  | DATA-02 (pulse hold path filter validation) carried from v3.3                     | Unrelated to responsive work; future quick task                          |
+
+**Audit:** `gaps_found` status (10 unsatisfied per strict 3-source matrix) — see `milestones/v3.4-MILESTONE-AUDIT.md`. All gaps are process/documentation gaps; functional verification complete via owner-signed UAT delta walkthrough.
+
+**Git range:** post-v3.3 tag (`af8a233` HEAD)
+
+---
+
 ## v3.3 Rhythm Trail Fix & Polish (Shipped: 2026-05-04)
 
 **Phases completed:** 5 phases (29-33), 20 plans
@@ -647,4 +683,4 @@
 
 ---
 
-_Last updated: 2026-03-15_
+_Last updated: 2026-05-12 — v3.4 milestone archived_

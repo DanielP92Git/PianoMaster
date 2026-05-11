@@ -727,36 +727,92 @@ _A living document updated after each milestone. Lessons feed forward into futur
 
 ---
 
+## Milestone: v3.4 — Rhythm Games Responsive UX
+
+**Shipped:** 2026-05-12
+**Phases:** 2 | **Plans:** 14
+
+### What Was Built
+
+- `NeedsLandscapeContext` provider + `useDeclareNeedsLandscape` hook + content-driven `needsLandscape` pure helper (9-beat threshold)
+- 7 rhythm renderers (5 non-notation, 2 notation) made responsive across phone/tablet × portrait/landscape quadrants
+- 6 standalone wrappers fixed for hardcoded landscape assumptions; RhythmGameSettings revealed as dead code, @deprecated
+- Cards renderers (dictation, syllable-matching, visual-recognition) real 2-col fill on tablet-landscape
+- ArcadeRhythmGame portrait via ROTATE-PROMPT verdict from spike feel-test — declares `needsLandscape=isPhoneViewport`; tablet plays in any orientation
+- 768px tablet gate (`useIsTabletOrLarger`) ensures tablets never see prompt
+- UAT-in-dev as ship gate with three inline fixes applied during the walkthrough itself
+
+### What Worked
+
+- **Spike-then-decide for ArcadeRhythmGame portrait**: `?spike-portrait` dev URL flag let owner feel-test vertical lanes without committing to a redesign. On-the-fence default to ROTATE-PROMPT (lower risk) was the right tie-break per D-12; ship path was clean
+- **Inline-fix-during-UAT pattern**: Three small bugs (`af97088`, `84697d7`, `89ebee9`) discovered mid-walkthrough were patched atomically rather than spawning yet another gap-closure cycle. Saved a full plan iteration
+- **Content-driven prompt heuristic beats route-based gate**: pure helper + context hook + caller composition is testable and avoids brittle URL allowlists
+- **Pre-checkpoint code review prevented false-positive UAT failures**: Plan 09's investigation of GAP 3 (RhythmGameSetup row failing across 4 quadrants) found no actual blocker — Class C reclassification saved a no-op edit pass
+- **Phase split de-risked Phase 35**: Carving ArcadeRhythmGame into its own phase isolated the spike-then-decide risk from the broader Phase 34 work
+
+### What Was Inefficient
+
+- **Plan SUMMARY frontmatter discipline**: 9 of 16 Phase 34 requirements weren't recorded in any plan's `requirements-completed` field, so the 3-source audit cross-reference flagged them as orphans even though all were UAT-verified. The functional work was complete; the bookkeeping was incomplete
+- **No formal 34-VERIFICATION.md**: UAT delta sign-off was used as the verification gate, but the audit tooling expects a VERIFICATION.md and degrades to "missing" without one. Should have either run `/gsd-verify-work` to produce a formal doc or codified UAT-as-verification more explicitly
+- **Free-play vs trail-mode wiring drift**: GAP 1 (dictation 2x2 grid worked in trail mode but not free-play) and inline fix `84697d7` (free-play wrapper never declared needsLandscape) both stem from the same underlying issue — renderer-pipeline declarations don't automatically apply to standalone wrappers. Catching this in audit Plan 02 would have saved a gap-closure plan
+- **No 35-VALIDATION.md generated**: Phase 35 nyquist compliance wasn't formally recorded (Phase 34 has one). Skipped because the spike-then-decide structure didn't fit the standard validation template
+
+### Patterns Established
+
+- **`NeedsLandscapeContext` default-value variant**: Returns `false` outside provider (no throw) — safe to consume from non-rhythm subtrees that don't mount the provider
+- **`?spike-portrait` dev URL flag**: Owner-triggerable instrument with explicit removal task in the ship plan. Verified-zero in production bundle by grep on dist/
+- **Verdict-box-first SPIKE.md**: Header `## Verdict: ROTATE-PROMPT` at line 3 with 5 required sections in fixed order — drives downstream Plan branch selection (Branch A vs Branch B) deterministically
+- **UAT-in-dev as ship gate (D-12)**: Walkthrough produces signed delta; inline fixes during walkthrough are atomic commits referenced in the delta entry
+- **Content-driven landscape declaration**: Pure helper for the threshold + context hook for runtime + per-renderer caller composition. Threshold tested in isolation; lifecycle tested via Provider
+
+### Key Lessons
+
+1. **Verify SUMMARY frontmatter as a wave gate, not an afterthought**: Missing `requirements-completed` makes audits noisier than they need to be. Treat as a wave-completion checklist item
+2. **UAT-as-verification needs codification**: Either run `/gsd-verify-work` to produce a formal VERIFICATION.md, or document UAT-as-verification explicitly so audits don't treat absence as a gap
+3. **Standalone wrappers and renderer pipelines need parallel coverage**: Free-play wrapper bugs hide behind trail-mode tests when both use the same renderer. Audit punch lists should call out wrapper-renderer separation
+4. **Spike-then-decide with explicit tie-break beats agonizing**: D-12 "on-the-fence defaults to lower-risk path" turned a potentially open-ended portrait redesign into a clean ROTATE-PROMPT ship in one plan
+5. **Inline UAT fixes save plan iteration cost**: When walkthrough surfaces small, isolated bugs, patching inline (with atomic commits) beats spawning another gap-closure cycle. Document the inline fixes in the UAT sign-off
+6. **Dev URL flags are a low-cost spike instrument**: `?spike-portrait` gave the owner a feel-test surface without committing to a redesign. Explicit removal task in the ship plan prevents leakage
+7. **Pre-checkpoint code review can prevent false-positive UAT failures**: Plan 09's investigation prevented a no-op edit pass on MetronomeTrainer. Worth budgeting investigation time when UAT failures cluster on cross-cutting components
+
+### Cost Observations
+
+- Sessions: ~6
+- Notable: 8-day milestone with 80 commits and 14 plans — Phase 34 was the bulk; Phase 35 was a tight spike-and-ship
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
-| Milestone | Phases | Plans | Key Change                                                                               |
-| --------- | ------ | ----- | ---------------------------------------------------------------------------------------- |
-| v1.0      | 4      | 15    | Security hardening — established RLS and auth patterns                                   |
-| v1.1      | 1      | 2     | Edge Function + Brevo email pattern                                                      |
-| v1.2      | 2      | 4     | Trail system stabilization                                                               |
-| v1.3      | 5      | 14    | Redesign with build-time validation                                                      |
-| v1.4      | 6      | 13    | Celebration system + codebase cleanup                                                    |
-| v1.5      | 4      | 10    | Visual redesign — CSS-only backgrounds                                                   |
-| v1.6      | 5      | 10    | Orientation handling — platform-specific                                                 |
-| v1.7      | 5      | 12    | Audio architecture overhaul                                                              |
-| v1.8      | 6      | 13    | Monetization — Lemon Squeezy + content gate                                              |
-| v1.9      | 7      | 15    | Engagement features — parallel execution                                                 |
-| v2.0      | 2      | 6     | XP unification — sequential dependency chain                                             |
-| v2.1      | 1      | 2     | Password recovery — smallest milestone                                                   |
-| v2.2      | 5      | 9     | Sharps & Flats content — audit-driven gap closure                                        |
-| v2.3      | 6      | 6     | Launch readiness — production features in 1 day                                          |
-| v2.4      | 5      | 10    | Content expansion — dual-track infrastructure + content                                  |
-| v2.5      | 4      | 11    | Launch prep — ESLint zero-warning, COPPA hard-delete, QA checklist                       |
-| v2.6      | 2      | 3     | User feedback — backend-first, pattern reuse, 2-day turnaround                           |
-| v2.7      | 5      | 12    | Practice tracking — parallel worktree, TDD services, Edge Function extension             |
-| v2.8      | 2      | 5     | Single-note game + Parent Portal gate-first architecture                                 |
-| v2.9      | 5      | 15    | Game variety — 8 new exercise types, data-driven trail tabs                              |
-| v3.0      | 5      | 11    | Cleanup & polish — utility consolidation, UAT-driven bug fixes, audit debt closure       |
-| v3.1      | 3      | 5     | Trail-first navigation — trail as primary destination, compact dashboard, post-game flow |
-| v3.2      | 7      | 16    | Rhythm trail rework — curated patterns, MixedLessonGame engine, multi-angle games        |
-| v3.3      | 5      | 20    | Rhythm trail fix & polish — manual UAT triage, hold sustain, boss differentiation        |
+| Milestone | Phases | Plans | Key Change                                                                                |
+| --------- | ------ | ----- | ----------------------------------------------------------------------------------------- |
+| v1.0      | 4      | 15    | Security hardening — established RLS and auth patterns                                    |
+| v1.1      | 1      | 2     | Edge Function + Brevo email pattern                                                       |
+| v1.2      | 2      | 4     | Trail system stabilization                                                                |
+| v1.3      | 5      | 14    | Redesign with build-time validation                                                       |
+| v1.4      | 6      | 13    | Celebration system + codebase cleanup                                                     |
+| v1.5      | 4      | 10    | Visual redesign — CSS-only backgrounds                                                    |
+| v1.6      | 5      | 10    | Orientation handling — platform-specific                                                  |
+| v1.7      | 5      | 12    | Audio architecture overhaul                                                               |
+| v1.8      | 6      | 13    | Monetization — Lemon Squeezy + content gate                                               |
+| v1.9      | 7      | 15    | Engagement features — parallel execution                                                  |
+| v2.0      | 2      | 6     | XP unification — sequential dependency chain                                              |
+| v2.1      | 1      | 2     | Password recovery — smallest milestone                                                    |
+| v2.2      | 5      | 9     | Sharps & Flats content — audit-driven gap closure                                         |
+| v2.3      | 6      | 6     | Launch readiness — production features in 1 day                                           |
+| v2.4      | 5      | 10    | Content expansion — dual-track infrastructure + content                                   |
+| v2.5      | 4      | 11    | Launch prep — ESLint zero-warning, COPPA hard-delete, QA checklist                        |
+| v2.6      | 2      | 3     | User feedback — backend-first, pattern reuse, 2-day turnaround                            |
+| v2.7      | 5      | 12    | Practice tracking — parallel worktree, TDD services, Edge Function extension              |
+| v2.8      | 2      | 5     | Single-note game + Parent Portal gate-first architecture                                  |
+| v2.9      | 5      | 15    | Game variety — 8 new exercise types, data-driven trail tabs                               |
+| v3.0      | 5      | 11    | Cleanup & polish — utility consolidation, UAT-driven bug fixes, audit debt closure        |
+| v3.1      | 3      | 5     | Trail-first navigation — trail as primary destination, compact dashboard, post-game flow  |
+| v3.2      | 7      | 16    | Rhythm trail rework — curated patterns, MixedLessonGame engine, multi-angle games         |
+| v3.3      | 5      | 20    | Rhythm trail fix & polish — manual UAT triage, hold sustain, boss differentiation         |
+| v3.4      | 2      | 14    | Rhythm games responsive UX — content-driven NeedsLandscapeContext, spike-then-ship arcade |
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -776,3 +832,7 @@ _A living document updated after each milestone. Lessons feed forward into futur
 14. Worktree base-staleness is a recurring concern — rebase or cherry-pick before assuming a branch's base is current
 15. Vacuously-satisfied requirements (filter present but unreached) require explicit traceability documentation
 16. Pre-deploy UAT gate catches survivors that post-deploy retest catches — should be a launch-readiness checklist item
+17. SUMMARY frontmatter `requirements-completed` discipline matters — missing entries make milestone audits noisier than they need to be even when functional verification is complete
+18. UAT-as-verification needs codification — if a milestone uses UAT walkthrough as its gate, either run `/gsd-verify-work` to produce a formal VERIFICATION.md or document UAT-as-verification explicitly so audits don't treat absence as a gap
+19. Spike-then-decide with explicit tie-break (e.g., "on-the-fence defaults to lower-risk path") prevents agonizing over open-ended exploration phases
+20. Inline UAT fixes (atomic commits during walkthrough) beat spawning another gap-closure plan for small isolated bugs — document inline fixes in the UAT sign-off

@@ -268,25 +268,38 @@ These capabilities exist, are working, and have been shipped:
 - Verify-first manual UAT (Phase 33) closed all confirmed-bug entries across 13 reported issues; rate-limit migration deployed via Dashboard SQL Editor; two post-deploy survivors fixed (SKILL_UNITS labels, student_achievements points column)
 - 13/14 requirements delivered, 1 deferred (DATA-02 pulse hold path filter validation), 20 plans across 5 phases (Plan 33-07 skipped per UAT)
 
+**v3.4 Rhythm Games Responsive UX (shipped 2026-05-12):**
+
+- INFRA-01-04: `NeedsLandscapeContext` provider + `useDeclareNeedsLandscape` hook + `needsLandscape` pure helper (9-beat threshold, time-signature aware). Rhythm routes removed from `LANDSCAPE_ROUTES`. `useLandscapeLock` context-aware. `useRotatePrompt` gated by `(needsLandscape && viewport<768 && portrait)` — tablets ≥768px never see prompt
+- CORE-01-05: Non-notation renderers responsive across 4 quadrants — DiscoveryIntroQuestion, SyllableMatching + DictationChoiceCard 2×2/1×4, PulseQuestion full-viewport tap zone, VisualRecognition 2×2/1×4, RhythmDictation staff + 2×2 cards with col-span-2
+- NOTATION-01-03: RhythmReading + RhythmTap compute `needsLandscape` from pattern length × time-signature factor. Short patterns render inline on phone-portrait; long patterns trigger prompt on phone only; tablet always renders inline regardless of pattern length. needsLandscape.js helper extracted with unit test
+- WRAPPER-01-03: 6 standalone game wrappers fixed for hardcoded landscape assumptions. RhythmGameSetup Class C (no functional blocker). RhythmGameSettings revealed as dead code (@deprecated, no UI consumer). Supporting components (CountdownOverlay, BossIntroOverlay, FloatingFeedback, MetronomeDisplay, TapArea) responsive bumps applied
+- TABLET-01: Cards-based renderers (dictation, syllable-matching, visual-recognition) use real 2-col fill on tablet-landscape (not centered with whitespace gutters)
+- ARCADE-01-02: ArcadeRhythmGame spike via `?spike-portrait` dev URL flag. Verdict ROTATE-PROMPT per 35-SPIKE.md. Ships `useDeclareNeedsLandscape(isPhoneViewport)` where `isPhoneViewport = !matchMedia("(min-width: 768px)").matches`. Spike instrument fully removed from source and production bundle
+- UAT-in-dev as ship gate: 34-UAT.md delta walkthrough signed off 2026-05-10 with all 5 ROADMAP SCs PASS. Three inline fixes applied during walkthrough (`af97088`, `84697d7`, `89ebee9`) rather than spawning gap-closure cycle
+- 18/18 requirements delivered, 14 plans across 2 phases (Phase 34: 10 plans, Phase 35: 4 plans)
+
 ### Active
 
-## Current Milestone: v3.4 Rhythm Games Responsive UX
+## Planning Next Milestone
 
-**Goal:** Drop the route-based landscape lock for rhythm games and make each renderer responsive across phone-portrait, phone-landscape, tablet-portrait, and tablet-landscape — so vertical-card-stack games (dictation) stop scrolling, and tablets get layouts that use the extra space.
+Last shipped: v3.4 Rhythm Games Responsive UX (2026-05-12).
 
-**Target features:**
+**Carry-over from v3.4 (deferred, NOT in next milestone scope unless explicitly added):**
 
-- Content-driven rotate prompt replaces `LANDSCAPE_ROUTES` mechanism for rhythm games (fires only when notation pattern genuinely doesn't fit, not because route is rhythm)
-- Responsive renderers across all 4 orientation/size quadrants — no scroll on phone-portrait, no wasted whitespace on tablet-landscape
-- Tablet-optimized 2-column layouts for cards-based renderers (dictation, syllable-matching, visual-recognition)
-- ArcadeRhythmGame portrait support (separate phase — spike vertical lanes vs. always-landscape-with-prompt)
+- Notes-master responsive (NM-01): NotesRecognitionGame, MemoryGame, SightReadingGame, NoteSpeedCards — same NeedsLandscapeContext infra available
+- Ear-training responsive (ET-01): NoteComparisonGame, IntervalGame — small surface, quick task candidate
+- UnifiedGameSettings cross-cutting responsive (D-10 OOS): shared setup screen milestone needed covering notes-master + ear-training consumers
+- RhythmGameSettings cleanup: dead code @deprecated, removable in next cleanup pass
+- ArcadeRhythmGame mid-game rotation regression: `laneHeightRef.current` cache not refreshed on resize/orientationchange (pre-existing, lower risk under ROTATE-PROMPT path; 35-SPIKE.md Follow-up)
+- No 35-VALIDATION.md (nyquist not formally recorded for Phase 35)
+- No formal 34-VERIFICATION.md (UAT delta serves as gate; documentation tech debt)
+- Pre-existing test env failures (4 files require VITE_SUPABASE_URL); ParentZoneEntryCard.test.jsx parse error; rhythmUnit8Redesigned probabilistic flake
 
-**Scope:** Rhythm-only (7 routes). Notes-master and ear-training remain landscape-locked, deferred to a future milestone.
+**Still open from earlier milestones:**
 
-**Carry-over from v3.3 (deferred, NOT in v3.4 scope):**
-
-- DATA-02 re-triage: pulse hold path filter validation
-- WIP stash `phase-33-WIP` Chunks B/C/D/E (arcade hold-notes + remaining tag-pattern work) — partially relevant to Phase 35 ArcadeRhythmGame, researcher should review
+- DATA-02 (carried from v3.3 — pulse hold path filter validation)
+- WIP stash `phase-33-WIP` Chunks B/C/D/E (arcade hold-notes + remaining tag-pattern work — partially overlaps Phase 35 work, may need re-triage)
 - WARNING-1: optionally apply useEnsureAudioReady to DiscoveryIntroQuestion if first-play trim resurfaces
 - VERIFICATION.md tech debt for Phases 31, 32 (quality risk; not blocking)
 
@@ -618,4 +631,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-05-07 — v3.4 Rhythm Games Responsive UX milestone started_
+_Last updated: 2026-05-12 — v3.4 Rhythm Games Responsive UX milestone shipped_
