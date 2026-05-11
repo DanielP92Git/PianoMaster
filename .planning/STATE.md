@@ -44,7 +44,6 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 | --------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | process   | No formal 34-VERIFICATION.md — UAT delta serves as gate                                              | Functional verification complete via owner-signed UAT walkthrough        |
 | process   | 9 of 16 Phase 34 requirements not listed in any plan SUMMARY `requirements-completed`                | Audit cross-reference gap; functional verification complete              |
-| process   | No 35-VALIDATION.md (nyquist not formally recorded for Phase 35)                                     | Phase 34 VALIDATION exists with `nyquist_compliant: true`                |
 | cleanup   | RhythmGameSettings.jsx dead code (@deprecated, no UI consumer)                                       | Removable in future cleanup pass                                         |
 | deferred  | UnifiedGameSettings cross-cutting responsive concerns (D-10 OOS)                                     | Future shared-setup-screen milestone                                     |
 | deferred  | Notes-master responsive (NM-01) — NotesRecognitionGame, MemoryGame, SightReadingGame, NoteSpeedCards | Future milestone using same NeedsLandscapeContext infra                  |
@@ -70,6 +69,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 ## Resolved Items
 
 **DATA-02 (closed 2026-05-12)** — pulse hold path filter validation. Re-triage confirmed no action needed: `PulseQuestion.jsx` uses a hardcoded `PULSE_BEATS` constant (4 quarter notes) and never invokes `resolveByTags`. `MixedLessonGame.buildRhythmTapConfig()` does not emit a `beats` field for `pulse` questions, and `allowRests` / `patternNeedsRests` propagate only through the dictation path. The filter is structurally inapplicable to PulseQuestion.
+
+**35-VALIDATION.md backfill (closed 2026-05-12)** — Nyquist validation strategy authored retroactively for Phase 35. `nyquist_compliant: true`. ARCADE-02 covered by existing `ArcadeRhythmGame.test.js` (12/12 passing) + grep-based source-of-truth checks recorded in 35-VERIFICATION.md; ARCADE-01 is a spike requirement (manual-only by nature, verdict artifact in 35-SPIKE.md).
 
 ## Session Continuity
 
