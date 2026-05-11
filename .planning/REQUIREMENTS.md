@@ -40,8 +40,8 @@
 
 ### ArcadeRhythmGame Portrait — Separate Phase
 
-- [ ] **ARCADE-01**: Spike vertical lanes (top-down scrolling) on phone-portrait — ~10-min throwaway prototype to feel-test timing/visual experience
-- [ ] **ARCADE-02**: Based on spike outcome, either ship vertical-lane redesign (with horizontal lanes preserved on tablet-landscape) OR declare `needsLandscape=true` and rely on rotate prompt from INFRA-02/03
+- [x] **ARCADE-01**: Spike vertical lanes (top-down scrolling) on phone-portrait — ~10-min throwaway prototype to feel-test timing/visual experience
+- [x] **ARCADE-02**: Based on spike outcome, either ship vertical-lane redesign (with horizontal lanes preserved on tablet-landscape) OR declare `needsLandscape=true` and rely on rotate prompt from INFRA-02/03
 
 ## Future Requirements (deferred)
 
@@ -67,26 +67,26 @@
 
 ## Traceability
 
-| Requirement | Phase    | Status  |
-| ----------- | -------- | ------- |
-| INFRA-01    | Phase 34 | Pending |
-| INFRA-02    | Phase 34 | Pending |
-| INFRA-03    | Phase 34 | Pending |
-| INFRA-04    | Phase 34 | Pending |
-| CORE-01     | Phase 34 | Pending |
-| CORE-02     | Phase 34 | Pending |
-| CORE-03     | Phase 34 | Pending |
-| CORE-04     | Phase 34 | Pending |
-| CORE-05     | Phase 34 | Pending |
-| NOTATION-01 | Phase 34 | Pending |
-| NOTATION-02 | Phase 34 | Pending |
-| NOTATION-03 | Phase 34 | Pending |
-| WRAPPER-01  | Phase 34 | Pending |
-| WRAPPER-02  | Phase 34 | Pending |
-| WRAPPER-03  | Phase 34 | Pending |
-| TABLET-01   | Phase 34 | Pending |
-| ARCADE-01   | Phase 35 | Pending |
-| ARCADE-02   | Phase 35 | Pending |
+| Requirement | Phase    | Status   |
+| ----------- | -------- | -------- |
+| INFRA-01    | Phase 34 | Pending  |
+| INFRA-02    | Phase 34 | Pending  |
+| INFRA-03    | Phase 34 | Pending  |
+| INFRA-04    | Phase 34 | Pending  |
+| CORE-01     | Phase 34 | Pending  |
+| CORE-02     | Phase 34 | Pending  |
+| CORE-03     | Phase 34 | Pending  |
+| CORE-04     | Phase 34 | Pending  |
+| CORE-05     | Phase 34 | Pending  |
+| NOTATION-01 | Phase 34 | Pending  |
+| NOTATION-02 | Phase 34 | Pending  |
+| NOTATION-03 | Phase 34 | Pending  |
+| WRAPPER-01  | Phase 34 | Pending  |
+| WRAPPER-02  | Phase 34 | Pending  |
+| WRAPPER-03  | Phase 34 | Pending  |
+| TABLET-01   | Phase 34 | Pending  |
+| ARCADE-01   | Phase 35 | Complete |
+| ARCADE-02   | Phase 35 | Complete |
 
 **Coverage:**
 
