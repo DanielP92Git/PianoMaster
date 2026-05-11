@@ -32,13 +32,6 @@ The main game components have been removed to allow for a fresh start with the i
 - **Timing accuracy display** (Perfect/Good/Fair/Miss)
 - **Customizable** title and subtitle
 
-#### `RhythmGameSettings.jsx`
-
-- **Settings modal** for game configuration
-- **Difficulty selection** with descriptions
-- **Time signature** and tempo controls
-- **Adaptive difficulty** toggle
-
 #### `PatternDisplay.jsx`
 
 - **Pattern visualization** with beat indicators
@@ -114,7 +107,6 @@ src/components/games/rhythm-games/
 ├── components/              # 🎨 Ready-to-use UI components
 │   ├── MetronomeDisplay.jsx # Visual metronome
 │   ├── TapArea.jsx         # Interactive tap area
-│   ├── RhythmGameSettings.jsx # Settings modal
 │   ├── PatternDisplay.jsx  # Pattern visualization
 │   ├── GameControls.jsx    # Control buttons
 │   ├── RhythmGameSetup.jsx # Full-screen setup
@@ -147,7 +139,6 @@ const pattern = await generator.generatePattern(
 import {
   MetronomeDisplay,
   TapArea,
-  RhythmGameSettings,
   PatternDisplay,
   RhythmGameSetup
 } from './components';
