@@ -125,7 +125,24 @@ function ArcadeRhythmGame() {
   // firing the Android PWA fullscreen + orientation lock that previously came
   // from LANDSCAPE_ROUTES (W2 — Android PWA regression guard between Phases 34
   // and 35).
-  useDeclareNeedsLandscape(true);
+  //
+  // Phase 35 spike instrument (D-02, Plan 35-02): when ?spike-portrait is
+  // present in dev, the declaration becomes false (unlocking portrait
+  // feel-test). Without the flag (or in production builds), behavior is
+  // identical to the line above this block — declare true unconditionally.
+  // This entire instrument block is removed in Plan 35-04 once the spike
+  // verdict ships (D-12 rotate-prompt or D-13 ship-vertical).
+  const spikePortraitEnabled = useMemo(() => {
+    if (!import.meta.env.DEV) return false;
+    if (typeof window === "undefined" || !window.location) return false;
+    try {
+      return new URLSearchParams(window.location.search).has("spike-portrait");
+    } catch {
+      return false;
+    }
+  }, []);
+  const needsLandscapeValue = spikePortraitEnabled ? false : true;
+  useDeclareNeedsLandscape(needsLandscapeValue);
   useLandscapeLock();
 
   // iOS/non-PWA: rotate prompt overlay
