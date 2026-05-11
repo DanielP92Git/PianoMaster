@@ -118,31 +118,27 @@ function ArcadeRhythmGame() {
   const location = useLocation();
   const { t } = useTranslation("common");
 
-  // Android PWA: fullscreen + orientation lock.
-  // TODO(Phase 35): replace with content-driven declaration once vertical-lanes
-  // / rotate-prompt strategy is decided. Until then, declare true unconditionally
-  // so useLandscapeLock (now context-gated per Plan 03 Task 2 / D-19) keeps
-  // firing the Android PWA fullscreen + orientation lock that previously came
-  // from LANDSCAPE_ROUTES (W2 — Android PWA regression guard between Phases 34
-  // and 35).
-  //
-  // Phase 35 spike instrument (D-02, Plan 35-02): when ?spike-portrait is
-  // present in dev, the declaration becomes false (unlocking portrait
-  // feel-test). Without the flag (or in production builds), behavior is
-  // identical to the line above this block — declare true unconditionally.
-  // This entire instrument block is removed in Plan 35-04 once the spike
-  // verdict ships (D-12 rotate-prompt or D-13 ship-vertical).
-  const spikePortraitEnabled = useMemo(() => {
-    if (!import.meta.env.DEV) return false;
-    if (typeof window === "undefined" || !window.location) return false;
-    try {
-      return new URLSearchParams(window.location.search).has("spike-portrait");
-    } catch {
-      return false;
-    }
+  // Phase 35 final declaration (Plan 35-04, rotate-prompt path per
+  // 35-SPIKE.md verdict). Phone-portrait surfaces the rotate prompt via
+  // Phase 34's NeedsLandscapeContext + RotatePromptOverlay; tablets play
+  // in any orientation (D-09 tablet-never-prompts). Viewport-aware
+  // declaration:
+  //   - Phone (<768px): declare true → rotate prompt shown on portrait,
+  //     game plays in landscape; Android PWA orientation lock fires
+  //     (Phase 34 D-19 gates it on ctxNeedsLandscape === true)
+  //   - Tablet (≥768px): declare false → no rotate prompt regardless
+  //     of orientation; Android lock skipped (D-19)
+  // Inline matchMedia per D-10 + D-14 (no extracted helper for a binary
+  // viewport check). Read once on mount via useMemo — orientation/viewport
+  // changes mid-session don't re-flip the declaration; the user has
+  // already started a session at one viewport class and rotation is
+  // handled by RotatePromptOverlay's own gate.
+  // See: .planning/phases/35-arcaderhythmgame-portrait/35-SPIKE.md
+  const isPhoneViewport = useMemo(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return false;
+    return !window.matchMedia("(min-width: 768px)").matches;
   }, []);
-  const needsLandscapeValue = spikePortraitEnabled ? false : true;
-  useDeclareNeedsLandscape(needsLandscapeValue);
+  useDeclareNeedsLandscape(isPhoneViewport);
   useLandscapeLock();
 
   // iOS/non-PWA: rotate prompt overlay
