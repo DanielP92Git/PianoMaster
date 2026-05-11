@@ -110,7 +110,7 @@ Plans:
 
 1. A throwaway vertical-lanes prototype of ArcadeRhythmGame has been run on a real phone in portrait, and the spike outcome (ship vertical lanes vs. fall back to rotate prompt) is documented as a recorded decision
 2. On phone-portrait, opening ArcadeRhythmGame either plays in a vertical-lane layout without orientation change OR shows the rotate prompt via the Phase 34 `NeedsLandscapeContext` mechanism — never a broken horizontal-lanes layout that spills off-screen
-3. On tablet-landscape (and on phone-landscape if the rotate-prompt path is chosen), ArcadeRhythmGame continues to render with the existing horizontal-lanes layout — no regression for the orientation it was originally designed for
+3. On tablet-landscape (and on phone-landscape if the rotate-prompt path is chosen), ArcadeRhythmGame continues to render with the existing single vertical-lane layout — no regression for the rendering it was originally designed for (wording corrected per 35-CONTEXT.md D-11; the original "horizontal-lanes" framing was a documentation slip — the code has always been single vertical-lane)
    **Plans:** 4 plans
 
 Plans:
