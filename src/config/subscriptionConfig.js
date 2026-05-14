@@ -24,42 +24,43 @@
 
 /** Treble clef Unit 1 — 7 free nodes */
 export const FREE_TREBLE_NODE_IDS = [
-  'treble_1_1',
-  'treble_1_2',
-  'treble_1_3',
-  'treble_1_4',
-  'treble_1_5',
-  'treble_1_6',
-  'treble_1_7',
+  "treble_1_1",
+  "treble_1_2",
+  "treble_1_3",
+  "treble_1_4",
+  "treble_1_5",
+  "treble_1_6",
+  "treble_1_7",
 ];
 
 /** Bass clef Unit 1 — 6 free nodes */
 export const FREE_BASS_NODE_IDS = [
-  'bass_1_1',
-  'bass_1_2',
-  'bass_1_3',
-  'bass_1_4',
-  'bass_1_5',
-  'bass_1_6',
+  "bass_1_1",
+  "bass_1_2",
+  "bass_1_3",
+  "bass_1_4",
+  "bass_1_5",
+  "bass_1_6",
 ];
 
-/** Rhythm Unit 1 — 5 free nodes (rhythm_1_5 removed in Phase 32) */
+/** Rhythm Unit 1 — 4 free nodes (rhythm_1_5 removed Phase 32; rhythm_1_2 merged into rhythm_1_1) */
+// NOTE: The Postgres is_free_node() mirror still listing rhythm_1_2 is harmless
+// and intentionally left alone per the no-migration decision for this merge.
 export const FREE_RHYTHM_NODE_IDS = [
-  'rhythm_1_1',
-  'rhythm_1_2',
-  'rhythm_1_3',
-  'rhythm_1_4',
-  'rhythm_1_6',
+  "rhythm_1_1",
+  "rhythm_1_3",
+  "rhythm_1_4",
+  "rhythm_1_6",
 ];
 
 /** Ear training Unit 1 — 6 free nodes (boss is paywalled per D-08) */
 export const FREE_EAR_TRAINING_NODE_IDS = [
-  'ear_1_1',
-  'ear_1_2',
-  'ear_1_3',
-  'ear_1_4',
-  'ear_1_5',
-  'ear_1_6',
+  "ear_1_1",
+  "ear_1_2",
+  "ear_1_3",
+  "ear_1_4",
+  "ear_1_5",
+  "ear_1_6",
 ];
 
 // ─── Paywall Boss Node IDs ───────────────────────────────────────────────────
@@ -69,11 +70,11 @@ export const FREE_EAR_TRAINING_NODE_IDS = [
  * These are the mini-boss challenges at the end of each Unit 1 path.
  */
 export const PAYWALL_BOSS_NODE_IDS = [
-  'boss_treble_1',
-  'boss_bass_1',
-  'boss_rhythm_1',
-  'boss_ear_1',
-  'boss_ear_2',
+  "boss_treble_1",
+  "boss_bass_1",
+  "boss_rhythm_1",
+  "boss_ear_1",
+  "boss_ear_2",
 ];
 
 // ─── Derived Lookups ─────────────────────────────────────────────────────────
@@ -98,9 +99,9 @@ export const FREE_NODE_IDS = new Set([
 export const FREE_TIER_SUMMARY = {
   treble: { count: 7 },
   bass: { count: 6 },
-  rhythm: { count: 5 },
+  rhythm: { count: 4 },
   ear_training: { count: 6 },
-  total: 24,
+  total: 23,
   bossNodeCount: 5,
 };
 

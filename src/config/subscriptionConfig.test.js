@@ -59,19 +59,19 @@ describe("subscriptionConfig — ear training free tier", () => {
     );
   });
 
-  it("FREE_NODE_IDS Set has 24 total entries (7+6+5+6)", () => {
+  it("FREE_NODE_IDS Set has 23 total entries (7+6+4+6)", () => {
     const expected =
       FREE_TREBLE_NODE_IDS.length +
       FREE_BASS_NODE_IDS.length +
       FREE_RHYTHM_NODE_IDS.length +
       FREE_EAR_TRAINING_NODE_IDS.length;
     expect(FREE_NODE_IDS.size).toBe(expected);
-    expect(FREE_NODE_IDS.size).toBe(24);
+    expect(FREE_NODE_IDS.size).toBe(23);
   });
 
   it("FREE_TIER_SUMMARY reflects ear training addition", () => {
     expect(FREE_TIER_SUMMARY.ear_training).toEqual({ count: 6 });
-    expect(FREE_TIER_SUMMARY.total).toBe(24);
+    expect(FREE_TIER_SUMMARY.total).toBe(23);
     expect(FREE_TIER_SUMMARY.bossNodeCount).toBe(5);
   });
 });
