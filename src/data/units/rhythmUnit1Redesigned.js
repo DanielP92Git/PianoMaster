@@ -5,7 +5,7 @@
  * - Introduces durations: Quarter notes (1 beat), then Half notes (2 beats)
  * - Each node introduces exactly ONE new element
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 6 nodes with variety (Discovery, Practice, Speed Round, Mini-Boss)
+ * - 5 nodes with variety (Discovery, Practice, Speed Round, Mini-Boss)
  *
  * Duration: 25-30 minutes (3-4 min per node)
  * Goal: Build confidence with steady beat, establish that learning is FUN
@@ -27,16 +27,16 @@ const START_ORDER = 100;
 
 /**
  * Unit 1 Nodes
- * Psychological journey: Curiosity -> Discovery -> Application -> Expansion -> Joy -> Speed -> Mastery
+ * Psychological journey: Discovery + Practice -> Expansion -> Application -> Speed -> Mastery
  */
 export const rhythmUnit1Nodes = [
   // ============================================
-  // NODE 1: Meet Quarter Notes (Discovery)
+  // NODE 1: Quarter Notes (Discovery)
   // ============================================
   {
     id: "rhythm_1_1",
-    name: "Meet Quarter Notes",
-    description: "Learn to play steady quarter notes",
+    name: "Quarter Notes",
+    description: "Discover and practice steady quarter notes",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -54,7 +54,7 @@ export const rhythmUnit1Nodes = [
       focusDurations: ["q"], // NEW: Quarter notes are being introduced
       contextDurations: [], // No previous durations yet
       patternTags: ["quarter-only"],
-      tempo: { min: 60, max: 70, default: 65 },
+      tempo: { min: 60, max: 75, default: 68 }, // Blended range from the two merged nodes
       pitch: "C4",
       timeSignature: "4/4",
     },
@@ -63,7 +63,7 @@ export const rhythmUnit1Nodes = [
     newContent: NEW_CONTENT_TYPES.RHYTHM,
     newContentDescription: "Quarter Notes (1 beat)",
 
-    // Exercises — Discovery intro + pulse (first rhythm exercise ever)
+    // Exercises — Discovery intro + a richer practice mix (merged rhythm_1_1 + rhythm_1_2)
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
@@ -72,69 +72,17 @@ export const rhythmUnit1Nodes = [
             { type: "discovery_intro", focusDuration: "q" },
             { type: "syllable_matching" },
             { type: "visual_recognition" },
-            { type: "pulse" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
           ],
         },
       },
     ],
 
     // Progression
-    skills: ["quarter_note"],
-    xpReward: 40,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 2: Practice Quarter Notes (Practice)
-  // ============================================
-  {
-    id: "rhythm_1_2",
-    name: "Practice Quarter Notes",
-    description: "Build confidence with steady quarter notes",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 1,
-    orderInUnit: 2,
-    prerequisites: ["rhythm_1_1"],
-
-    nodeType: NODE_TYPES.PRACTICE,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.SIMPLE,
-      durations: ["q"],
-      focusDurations: [], // No new durations
-      contextDurations: ["q"],
-      patternTags: ["quarter-only"],
-      tempo: { min: 65, max: 75, default: 70 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.NONE,
-    newContentDescription: null,
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_dictation" },
-            { type: "rhythm_tap" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "rhythm_tap" },
-          ],
-        },
-      },
-    ],
-
     skills: ["quarter_note"],
     xpReward: 45,
     accessoryUnlock: null,
@@ -144,7 +92,7 @@ export const rhythmUnit1Nodes = [
   },
 
   // ============================================
-  // NODE 3: Meet Half Notes (Discovery)
+  // NODE 2: Meet Half Notes (Discovery)
   // ============================================
   {
     id: "rhythm_1_3",
@@ -153,9 +101,9 @@ export const rhythmUnit1Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 2,
-    orderInUnit: 3,
-    prerequisites: ["rhythm_1_2"],
+    order: START_ORDER + 1,
+    orderInUnit: 2,
+    prerequisites: ["rhythm_1_1"],
 
     nodeType: NODE_TYPES.DISCOVERY,
 
@@ -201,7 +149,7 @@ export const rhythmUnit1Nodes = [
   },
 
   // ============================================
-  // NODE 4: Practice Quarters and Halves (Practice)
+  // NODE 3: Practice Quarters and Halves (Practice)
   // ============================================
   {
     id: "rhythm_1_4",
@@ -210,8 +158,8 @@ export const rhythmUnit1Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 3,
-    orderInUnit: 4,
+    order: START_ORDER + 2,
+    orderInUnit: 3,
     prerequisites: ["rhythm_1_3"],
 
     nodeType: NODE_TYPES.PRACTICE,
@@ -257,7 +205,7 @@ export const rhythmUnit1Nodes = [
   },
 
   // ============================================
-  // NODE 5: Speed Challenge (Speed Round)
+  // NODE 4: Speed Challenge (Speed Round)
   // ============================================
   {
     id: "rhythm_1_6",
@@ -266,8 +214,8 @@ export const rhythmUnit1Nodes = [
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
+    order: START_ORDER + 3,
+    orderInUnit: 4,
     prerequisites: ["rhythm_1_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
@@ -304,7 +252,7 @@ export const rhythmUnit1Nodes = [
   },
 
   // ============================================
-  // NODE 6: Basic Beats Master (Mini-Boss)
+  // NODE 5: Basic Beats Master (Mini-Boss)
   // ============================================
   {
     id: "boss_rhythm_1",
@@ -314,8 +262,8 @@ export const rhythmUnit1Nodes = [
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
+    order: START_ORDER + 4,
+    orderInUnit: 5,
     prerequisites: ["rhythm_1_6"],
 
     nodeType: NODE_TYPES.MINI_BOSS,
