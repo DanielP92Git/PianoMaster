@@ -56,6 +56,17 @@ export const useAudioEngine = (
    */
   const initializeAudioContext = useCallback(async () => {
     try {
+      // Idempotent: if we already have a live context + gain node, reuse it.
+      // Without this, every caller (and every mount-effect re-run) re-creates
+      // the context and re-fires the async sound loads, racing with cleanup().
+      if (
+        audioContextRef.current &&
+        audioContextRef.current.state !== "closed" &&
+        gainNodeRef.current
+      ) {
+        return true;
+      }
+
       let context;
 
       if (sharedAudioContext && sharedAudioContext.state !== "closed") {
@@ -157,8 +168,10 @@ export const useAudioEngine = (
         }
 
         const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer =
-          await audioContextRef.current.decodeAudioData(arrayBuffer);
+        // The fetch above is an async gap — cleanup() may have nulled the ref.
+        const ctx = audioContextRef.current;
+        if (!ctx || ctx.state === "closed") return false;
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
         pianoSoundBufferRef.current = audioBuffer;
         pianoSoundLoadedRef.current = true;
@@ -195,8 +208,10 @@ export const useAudioEngine = (
         }
 
         const arrayBuffer = await response.arrayBuffer();
-        const audioBuffer =
-          await audioContextRef.current.decodeAudioData(arrayBuffer);
+        // The fetch above is an async gap — cleanup() may have nulled the ref.
+        const ctx = audioContextRef.current;
+        if (!ctx || ctx.state === "closed") return false;
+        const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
 
         tapSoundBufferRef.current = audioBuffer;
         tapSoundLoadedRef.current = true;

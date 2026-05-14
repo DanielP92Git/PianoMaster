@@ -554,6 +554,9 @@ export default function PulseQuestion({
     hasStartedRef.current = true;
 
     try {
+      // Explicitly initialize first — guarantees gainNodeRef.current is set
+      // before any metronome clicks are scheduled (mirrors RhythmTapQuestion).
+      await audioEngine.initializeAudioContext?.();
       await audioEngine.resumeAudioContext();
     } catch {
       getOrCreateAudioContext();
@@ -574,6 +577,18 @@ export default function PulseQuestion({
       }
     } catch {
       // Non-critical — first tick may still be quiet
+    }
+
+    // Wait briefly for audioEngine.isReady() — initializeAudioContext is async
+    // and createClickSound early-returns when audioContextRef/gainNodeRef are
+    // not yet set. Without this guard, the count-in clicks are silently dropped.
+    for (let i = 0; i < 10 && !audioEngine.isReady(); i++) {
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    if (!audioEngine.isReady()) {
+      // Fail soft — don't let the lesson hang silently.
+      onComplete(0, 1);
+      return;
     }
 
     userTapsRef.current = [];
@@ -629,6 +644,7 @@ export default function PulseQuestion({
     totalPlayBeats,
     startContinuousMetronome,
     evaluatePerformance,
+    onComplete,
   ]);
 
   // Auto-start when not disabled (hasStartedRef pattern)
