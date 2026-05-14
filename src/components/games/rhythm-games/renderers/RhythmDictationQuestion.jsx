@@ -106,7 +106,14 @@ export default function RhythmDictationQuestion({
   // Play the correct pattern audio
   const playPattern = useCallback(
     async (onDone) => {
-      let ctx = audioContextRef.current;
+      // Schedule against the SAME context the engine plays on. createPianoSound
+      // (via enginePlayNote) plays on audioEngine's internal context, so note
+      // start times must be computed from THAT context's clock. The provider's
+      // shared context can diverge from the engine's context (e.g. the engine
+      // fell back to its own owned context), and scheduling against the wrong
+      // clock places notes in the past → silent first playback.
+      let ctx =
+        audioEngine?.audioContextRef?.current || audioContextRef.current;
       if (!ctx) ctx = getOrCreateAudioContext();
       if (!ctx || !correctBeats || correctBeats.length === 0) {
         onDone?.();
@@ -147,6 +154,7 @@ export default function RhythmDictationQuestion({
       correctBeats,
       tempo,
       enginePlayNote,
+      audioEngine,
     ]
   );
 

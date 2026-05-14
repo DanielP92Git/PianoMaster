@@ -24,6 +24,14 @@ import { useCallback } from "react";
 export function useEnsureAudioReady(audioEngine, getOrCreateAudioContext) {
   return useCallback(async () => {
     try {
+      // Explicitly initialize first — guarantees gainNodeRef.current is set.
+      // resumeAudioContext() only triggers initializeAudioContext internally
+      // when audioContextRef.current is null; it never ensures the gain node
+      // exists, so isReady() can return false. Mirrors PulseQuestion.startFlow
+      // (the proven good pattern) and restores the ordering from commit 0bd485f.
+      if (typeof audioEngine.initializeAudioContext === "function") {
+        await audioEngine.initializeAudioContext();
+      }
       await audioEngine.resumeAudioContext();
       if (typeof audioEngine.loadPianoSound === "function") {
         await audioEngine.loadPianoSound();

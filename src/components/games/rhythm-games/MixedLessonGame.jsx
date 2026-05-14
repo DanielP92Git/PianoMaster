@@ -389,11 +389,18 @@ export default function MixedLessonGame() {
       // CODE-01: read index from ref to avoid stale-closure
       const isLastQuestion = currentIndexRef.current + 1 >= questions.length;
 
+      // RhythmDictationQuestion plays its own selection-feedback sounds (to
+      // match the standalone game UX), so the parent must not duplicate them.
+      const ownsFeedbackSound =
+        questions[currentIndexRef.current]?.type === "rhythm_dictation";
+
       // Skip correct sound on last question — victory sound will play instead
-      if (isCorrect && !isLastQuestion) {
-        playCorrectSound();
-      } else if (!isCorrect) {
-        playWrongSound();
+      if (!ownsFeedbackSound) {
+        if (isCorrect && !isLastQuestion) {
+          playCorrectSound();
+        } else if (!isCorrect) {
+          playWrongSound();
+        }
       }
 
       // Shorter delay since RhythmTapQuestion already showed per-beat feedback
