@@ -59,16 +59,14 @@ export function TapArea({
             }
           : undefined
       }
-      onPointerUp={
-        isHoldNote && isActive ? (e) => onPressEnd?.(e) : undefined
-      }
+      onPointerUp={isHoldNote && isActive ? (e) => onPressEnd?.(e) : undefined}
       onPointerCancel={
         isHoldNote && isActive ? (e) => onPressEnd?.(e) : undefined
       }
       onClick={!isHoldNote && isActive ? onTap : undefined}
       disabled={!isActive}
       style={isHoldNote ? { touchAction: "none" } : undefined}
-      className={`relative flex h-full max-h-96 w-full max-w-md flex-col items-center justify-center rounded-3xl bg-white/10 font-bold text-white backdrop-blur-md transition-all duration-200 ${className} ${
+      className={`relative mx-auto flex h-full max-h-96 w-full max-w-md flex-col items-center justify-center rounded-3xl bg-white/10 font-bold text-white backdrop-blur-md transition-all duration-200 ${className} ${
         isActive
           ? "cursor-pointer hover:bg-white/20 active:scale-95"
           : "cursor-not-allowed opacity-50"
