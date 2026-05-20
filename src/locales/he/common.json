@@ -190,8 +190,8 @@
       "pointsBreakdown": "{{gameplay}} XP ממשחקים + {{achievements}} XP מהישגים",
       "nextAchievement": "ההישג הבא",
       "almostThere": "כמעט שם!",
-      "keepGoing": "!המשיכו",
-      "allUnlocked": "!כל ההישגים נפתחו",
+      "keepGoing": "המשיכו!",
+      "allUnlocked": "כל ההישגים נפתחו!",
       "description": "עקבו אחרי התקדמותכם ופתחו תגי הישגים",
       "recentAchievements": "הישגים אחרונים",
       "achievements": "הישגי",
@@ -600,8 +600,8 @@
       "scaleControls": "גודל"
     },
     "unlockAnimation": {
-      "newAccessoryUnlocked": "!אביזר חדש נפתח",
-      "unlockedMessage": "!פתחתם את {{name}}",
+      "newAccessoryUnlocked": "אביזר חדש נפתח!",
+      "unlockedMessage": "פתחתם את {{name}}!",
       "equipNow": "לקנות עכשיו",
       "viewLater": "לצפות מאוחר יותר",
       "equipFailed": "לא הצלחנו להלביש את האביזר. נסו שוב."
@@ -782,8 +782,8 @@
           "perfect": "בול",
           "good": "טוב",
           "fair": "בסדר",
-          "miss": "!כמעט",
-          "holdGood": "!כמעט, החזק יותר"
+          "miss": "כמעט!",
+          "holdGood": "כמעט, החזק יותר!"
         }
       }
     },
@@ -800,9 +800,9 @@
       "tapArea": {
         "tapHere": "הקש",
         "accuracy": {
-          "perfect": "!מושלם",
-          "good": "!טוב",
-          "miss": "!כמעט"
+          "perfect": "מושלם!",
+          "good": "טוב!",
+          "miss": "כמעט!"
         }
       },
       "syllableToggle": {
@@ -810,8 +810,8 @@
         "hide": "הסתר הברות"
       },
       "countdown": {
-        "getReady": "!היכונו",
-        "go": "!קדימה"
+        "getReady": "היכונו!",
+        "go": "קדימה!"
       },
       "errors": {
         "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
@@ -826,11 +826,11 @@
       "title": "שמיעת קצב",
       "progressLabel": "תרגיל {{current}} מתוך {{total}}",
       "startGame": "התחל משחק",
-      "listening": "...הקשב",
+      "listening": "הקשב...",
       "playAgain": "נגן שוב",
       "chooseRhythm": "בחר את הקצב ששמעת",
-      "correct": "!נכון",
-      "wrong": "!נסה שוב",
+      "correct": "נכון!",
+      "wrong": "נסה שוב!",
       "errors": {
         "audioUnavailable": "שמע לא זמין. הקש לנסות שוב.",
         "patternError": "משהו השתבש. חזור ונסה שוב."
@@ -845,11 +845,11 @@
         "higher": "גבוה יותר ▲",
         "lower": "נמוך יותר ▼"
       },
-      "listening": "...הקשב",
+      "listening": "הקשב...",
       "playAgain": "נגן שוב",
       "startGame": "התחל להאזין",
-      "correct": "!נכון",
-      "wrong": "!נסה שוב",
+      "correct": "נכון!",
+      "wrong": "נסה שוב!",
       "progress": "{{total}} / {{current}}",
       "jumpedOver": "דילג על {{note}}",
       "jumpedOverMultiple": "{{count}} צלילים באמצע",
@@ -867,11 +867,11 @@
       "skipHint": "קפיצה אחת",
       "leap": "קפיצה גדולה",
       "leapHint": "רחוק",
-      "listening": "...הקשב",
+      "listening": "הקשב...",
       "playAgain": "נגן שוב",
       "startGame": "התחל להאזין",
-      "correct": "!נכון",
-      "wrong": "!נסה שוב",
+      "correct": "נכון!",
+      "wrong": "נסה שוב!",
       "progress": "{{total}} / {{current}}",
       "jumpedOver": "דילג על {{note}}",
       "jumpedOverMultiple": "{{count}} צלילים באמצע",
@@ -1155,7 +1155,7 @@
       "reviewChallenge": "אתגר חזרה",
       "reviewChallengeDesc": "שחקו שוב ושלטו בצומת מיומנות קודם",
       "playChallenge": "שחק",
-      "completed": "!האתגר הושלם",
+      "completed": "האתגר הושלם!",
       "earnedXp": "XP {{xp}}+ הרווחת",
       "comeBackTomorrow": "אתגר חדש מחר!",
       "bonusXp": "בונוס אתגר: +{{xp}} XP",
@@ -1416,9 +1416,9 @@
     "continueToNode": "המשיכו ל\"{{name}}\"",
     "backToTrail": "חזרה למסלול",
     "continueLearning": "המשיכו ללמוד",
-    "youAreNow": "!{{title}} עכשיו אתה",
-    "prestigeUnlocked": "!יוקרה נפתחה",
-    "prestigeEntry": "!הגעת לרמה הגבוהה ביותר! ברוכים הבאים לרמת מאסטרו",
+    "youAreNow": "עכשיו אתה {{title}}!",
+    "prestigeUnlocked": "יוקרה נפתחה!",
+    "prestigeEntry": "הגעת לרמה הגבוהה ביותר! ברוכים הבאים לרמת מאסטרו!",
     "personalBest": "שיא אישי חדש!",
     "nextAdventure": "להרפתקה הבאה"
   },
@@ -1648,7 +1648,7 @@
     "questionProgress": "שאלה {{current}} מתוך {{total}}"
   },
   "onboarding": {
-    "step1Title": "!ברוכים הבאים ל-PianoMaster",
+    "step1Title": "ברוכים הבאים ל-PianoMaster!",
     "step1Desc": "המסע המוזיקלי שלכם מתחיל כאן. בואו נראה לכם את הדרך!",
     "step2Title": "עקבו אחרי שביל הלמידה",
     "step2Desc": "השלימו צמתי מיומנויות כדי לפתוח תווים ואתגרים חדשים. כל צומת בונה על מה שלמדתם.",
@@ -1658,7 +1658,7 @@
     "step4Desc": "קבלו עד 3 כוכבים בכל תרגיל. צברו XP כדי לעלות רמה ולפתוח הישגים!",
     "skip": "דלג",
     "next": "הבא",
-    "letsGo": "!בואו נתחיל"
+    "letsGo": "בואו נתחיל!"
   },
   "privacy": {
     "backHome": "חזרה להגדרות",
@@ -1809,8 +1809,8 @@
   },
   "noteSpeedCards": {
     "headline": "תפסו את {{noteName}}!",
-    "subheadline": ".הקישו על המסך כשאתם רואים את דו האמצעי על החמשה",
-    "startButton": "!יאללה",
+    "subheadline": "הקישו על המסך כשאתם רואים את דו האמצעי על החמשה.",
+    "startButton": "יאללה!",
     "tapHint": "הקש כשאתה רואה את {{noteName}}!",
     "scoreLabel": "נתפסו",
     "comboLabel": "רצף",
@@ -1825,10 +1825,10 @@
     "catchResult": "תפסת {{caught}} מתוך {{total}} דו אמצעי!"
   },
   "visualRecognition": {
-    "prompt": "?{{durationName}} איזה מהם"
+    "prompt": "איך נראה {{durationName}}?"
   },
   "syllableMatching": {
-    "prompt": "?איזו הברה זו"
+    "prompt": "איך אומרים?"
   },
   "rhythm": {
     "duration": {
@@ -1839,10 +1839,63 @@
       "sixteenth": "תו שש-עשרה",
       "dottedQuarter": "תו רבע מנוקד",
       "dottedHalf": "תו חצי מנוקד",
-      "quarterRest": "שתיקת רבע",
-      "halfRest": "שתיקת חצי",
-      "wholeRest": "שתיקת שלם",
+      "quarterRest": "הפסקת רבע",
+      "halfRest": "הפסקת חצי",
+      "wholeRest": "הפסקת שלם",
       "beamedEighths": "שמיניות מחוברות"
+    },
+    "countIn": "הקשיבו לפעמה...",
+    "listenToPattern": "הקשיבו למקצב",
+    "getReady": "התכוננו...",
+    "tapAlong": "הקישו יחד!",
+    "evaluating": "...",
+    "listen": "הקשיבו...",
+    "niceTapping": "יפה הקשתם!"
+  },
+  "game": {
+    "feedback": {
+      "correct": "נכון!",
+      "wrong": "לא מדויק — התשובה הנכונה מסומנת"
+    },
+    "error": {
+      "generic": "משהו השתבש. חזרו למסלול ונסו שוב."
+    },
+    "discovery": {
+      "meetNew": "הכירו את {{name}}!",
+      "ariaLabel": "הכירו קצב חדש",
+      "syllable": "אמרו: \"{{syllable}}\"",
+      "listenButton": "הקשיבו לצליל",
+      "playing": "מתנגן...",
+      "listen": "הקשיבו",
+      "gotIt": "הבנתי!"
+    },
+    "pulse": {
+      "instruction": "הקישו עם הפעמה!",
+      "ariaLabel": "תרגיל פעימה — הקישו עם הפעמה"
+    },
+    "rhythmReading": {
+      "tapInstruction": "קראו והקישו את הקצב!",
+      "ariaLabel": "תרגיל קריאת קצב"
+    },
+    "rhythmDictation": {
+      "ariaLabel": "תרגיל הכתבת קצב",
+      "listenPrompt": "הקשיבו למקצב, ואז בחרו את התווים המתאימים",
+      "listening": "מקשיבים...",
+      "choosePrompt": "איזה מקצב שמעתם?",
+      "listenButton": "הקשיבו למקצב",
+      "replayButton": "נגנו שוב את המקצב",
+      "playingLabel": "מתנגן...",
+      "listenLabel": "הקשיבו",
+      "replayLabel": "שוב"
+    }
+  },
+  "mixedLesson": {
+    "progressLabel": "התקדמות בשיעור"
+  },
+  "boss": {
+    "intro": {
+      "title": "קרב בוס",
+      "subtitle": "הראו מה שלמדתם!"
     }
   }
 }

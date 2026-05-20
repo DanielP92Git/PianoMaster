@@ -1836,6 +1836,59 @@
       "halfRest": "Half Rest",
       "wholeRest": "Whole Rest",
       "beamedEighths": "Beamed Eighths"
+    },
+    "countIn": "Listen to the beat...",
+    "listenToPattern": "Listen to the pattern",
+    "getReady": "Get ready...",
+    "tapAlong": "Tap along!",
+    "evaluating": "...",
+    "listen": "Listen...",
+    "niceTapping": "Nice tapping!"
+  },
+  "game": {
+    "feedback": {
+      "correct": "Correct!",
+      "wrong": "Not quite — the correct answer is highlighted"
+    },
+    "error": {
+      "generic": "Something went wrong. Go back to the trail and try again."
+    },
+    "discovery": {
+      "meetNew": "Meet the {{name}}!",
+      "ariaLabel": "Meet a new rhythm",
+      "syllable": "Say: \"{{syllable}}\"",
+      "listenButton": "Listen to the sound",
+      "playing": "Playing...",
+      "listen": "Listen",
+      "gotIt": "Got it!"
+    },
+    "pulse": {
+      "instruction": "Tap with the beat!",
+      "ariaLabel": "Pulse exercise — tap with the beat"
+    },
+    "rhythmReading": {
+      "tapInstruction": "Read and tap the rhythm!",
+      "ariaLabel": "Rhythm reading exercise"
+    },
+    "rhythmDictation": {
+      "ariaLabel": "Rhythm dictation exercise",
+      "listenPrompt": "Listen to the pattern, then pick the matching notation",
+      "listening": "Listening...",
+      "choosePrompt": "Which pattern did you hear?",
+      "listenButton": "Listen to the pattern",
+      "replayButton": "Replay pattern",
+      "playingLabel": "Playing...",
+      "listenLabel": "Listen",
+      "replayLabel": "Replay"
+    }
+  },
+  "mixedLesson": {
+    "progressLabel": "Lesson progress"
+  },
+  "boss": {
+    "intro": {
+      "title": "BOSS FIGHT",
+      "subtitle": "Show what you've learned!"
     }
   }
 }
