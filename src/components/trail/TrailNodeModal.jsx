@@ -35,9 +35,10 @@ import QuarterRestIcon from "../../assets/musicSymbols/quarter-rest.svg?react";
 import HalfRestIcon from "../../assets/musicSymbols/half-rest.svg?react";
 import WholeRestIcon from "../../assets/musicSymbols/whole-rest.svg?react";
 import ThreeFourTimeIcon from "../../assets/musicSymbols/three-four_time.svg?react";
+import SixEightTimeIcon from "../../assets/musicSymbols/six-eight_time.svg?react";
 
-// Map rhythm skill IDs -> notation SVG component. Compound/syncopation skills
-// with no single-symbol representation fall back to translated text.
+// Map rhythm skill IDs -> notation SVG component. Skills with no single-symbol
+// representation (e.g. syncopation) fall back to translated text.
 const SKILL_SVG_MAP = {
   quarter_note: QuarterNoteIcon,
   half_note: HalfNoteIcon,
@@ -50,6 +51,7 @@ const SKILL_SVG_MAP = {
   half_rest: HalfRestIcon,
   whole_rest: WholeRestIcon,
   three_four_time: ThreeFourTimeIcon,
+  "68_compound_meter": SixEightTimeIcon,
   quarter_note_68: QuarterNoteIcon,
   eighth_note_68: EighthNoteIcon,
 };
