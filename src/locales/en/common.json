@@ -1823,6 +1823,9 @@
   "syllableMatching": {
     "prompt": "What syllable is this?"
   },
+  "countSubdivision": {
+    "prompt": "How many eighth notes make a {{durationName}}?"
+  },
   "rhythm": {
     "duration": {
       "quarter": "Quarter Note",

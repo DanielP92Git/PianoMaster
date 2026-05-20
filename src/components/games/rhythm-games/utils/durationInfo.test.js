@@ -10,6 +10,7 @@ import {
   DURATION_INFO,
   ALL_DURATION_CODES,
   generateQuestions,
+  generateCountSubdivisionQuestion,
 } from "./durationInfo.js";
 
 describe("DURATION_INFO lookup", () => {
@@ -159,5 +160,41 @@ describe("generateQuestions", () => {
   it("returns default 5 questions when questionCount not specified", () => {
     const questions = generateQuestions(["q", "h"], ALL_DURATION_CODES);
     expect(questions).toHaveLength(5);
+  });
+});
+
+describe("generateCountSubdivisionQuestion", () => {
+  it("answers 3 for a dotted quarter counted in eighth notes", () => {
+    const q = generateCountSubdivisionQuestion("qd", "8");
+    expect(q.correct).toBe(3);
+    expect(q.target).toBe("qd");
+    expect(q.subdivision).toBe("8");
+  });
+
+  it("defaults to qd/8 when no arguments are given", () => {
+    const q = generateCountSubdivisionQuestion();
+    expect(q.correct).toBe(3);
+    expect(q.target).toBe("qd");
+    expect(q.subdivision).toBe("8");
+  });
+
+  it("returns 4 unique numeric choices including the correct answer", () => {
+    const q = generateCountSubdivisionQuestion("qd", "8");
+    expect(q.choices).toHaveLength(4);
+    expect(q.choices).toContain(3);
+    expect(new Set(q.choices).size).toBe(4);
+    q.choices.forEach((c) => expect(typeof c).toBe("number"));
+  });
+
+  it("never includes zero or negative distractors", () => {
+    const q = generateCountSubdivisionQuestion("qd", "8");
+    q.choices.forEach((c) => expect(c).toBeGreaterThan(0));
+  });
+
+  it("computes the answer from durationUnits for other relationships", () => {
+    // dotted half (12 units) / eighth (2 units) = 6
+    expect(generateCountSubdivisionQuestion("hd", "8").correct).toBe(6);
+    // quarter (4 units) / eighth (2 units) = 2
+    expect(generateCountSubdivisionQuestion("q", "8").correct).toBe(2);
   });
 });

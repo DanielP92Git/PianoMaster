@@ -210,3 +210,40 @@ export function generateQuestions(
 
   return questions;
 }
+
+/**
+ * Generate a subdivision-counting question — "How many {subdivision} notes
+ * make a {target} note?" The answer is computed from durationUnits, so the
+ * helper is generic across note relationships (only "qd"/"8" is used today).
+ *
+ * @param {string} [target="qd"] - Duration code being counted into (e.g., "qd")
+ * @param {string} [subdivision="8"] - Duration code of the subdivision (e.g., "8")
+ * @returns {{ correct: number, choices: number[], target: string, subdivision: string }}
+ */
+export function generateCountSubdivisionQuestion(
+  target = "qd",
+  subdivision = "8"
+) {
+  const targetUnits = DURATION_INFO[target]?.durationUnits || 6;
+  const subUnits = DURATION_INFO[subdivision]?.durationUnits || 2;
+  const correct = Math.round(targetUnits / subUnits); // qd/8 -> 3
+
+  // Plausible distractors near the correct answer (qd/8 -> [2, 4, 6])
+  const distractors = [
+    ...new Set([correct - 1, correct + 1, correct * 2]),
+  ].filter((n) => n > 0 && n !== correct);
+
+  // Pad to 3 distractors if the candidates collided (edge case for small values)
+  let n = correct + 3;
+  while (distractors.length < 3) {
+    if (n !== correct && !distractors.includes(n)) distractors.push(n);
+    n++;
+  }
+
+  return {
+    correct,
+    choices: shuffle([correct, ...distractors.slice(0, 3)]),
+    target,
+    subdivision,
+  };
+}

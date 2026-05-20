@@ -1830,6 +1830,9 @@
   "syllableMatching": {
     "prompt": "איך אומרים?"
   },
+  "countSubdivision": {
+    "prompt": "כמה תווי שמינית מרכיבים {{durationName}}?"
+  },
   "rhythm": {
     "duration": {
       "quarter": "תו רבע",

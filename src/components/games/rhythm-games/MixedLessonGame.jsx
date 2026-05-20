@@ -11,9 +11,14 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
-import { generateQuestions, ALL_DURATION_CODES } from "./utils/durationInfo";
+import {
+  generateQuestions,
+  generateCountSubdivisionQuestion,
+  ALL_DURATION_CODES,
+} from "./utils/durationInfo";
 import VisualRecognitionQuestion from "./renderers/VisualRecognitionQuestion";
 import SyllableMatchingQuestion from "./renderers/SyllableMatchingQuestion";
+import CountSubdivisionQuestion from "./renderers/CountSubdivisionQuestion";
 import RhythmTapQuestion from "./renderers/RhythmTapQuestion";
 import PulseQuestion from "./renderers/PulseQuestion";
 import DiscoveryIntroQuestion from "./renderers/DiscoveryIntroQuestion";
@@ -216,6 +221,12 @@ export default function MixedLessonGame() {
       }
       if (entry.type === "discovery_intro") {
         return { type: "discovery_intro", focusDuration: entry.focusDuration };
+      }
+      if (entry.type === "count_subdivision") {
+        return {
+          type: "count_subdivision",
+          ...generateCountSubdivisionQuestion(entry.target, entry.subdivision),
+        };
       }
       if (entry.type === "rhythm_reading") {
         return { type: "rhythm_reading", rhythmConfig: buildRhythmTapConfig() };
@@ -511,6 +522,8 @@ export default function MixedLessonGame() {
         return <VisualRecognitionQuestion {...rendererProps} />;
       case "syllable_matching":
         return <SyllableMatchingQuestion {...rendererProps} />;
+      case "count_subdivision":
+        return <CountSubdivisionQuestion {...rendererProps} />;
       case "rhythm_tap":
         return (
           <RhythmTapQuestion

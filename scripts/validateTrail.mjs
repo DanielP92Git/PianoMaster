@@ -392,7 +392,7 @@ function validateMultiAngleGames() {
  */
 const RENDERER_TYPES = new Set([
   'visual_recognition', 'syllable_matching', 'rhythm_tap', 'pulse',
-  'discovery_intro', 'rhythm_reading', 'rhythm_dictation'
+  'discovery_intro', 'rhythm_reading', 'rhythm_dictation', 'count_subdivision'
 ]);
 
 function validateMixedLessons() {
