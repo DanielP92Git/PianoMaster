@@ -14,6 +14,9 @@ vi.mock("react-i18next", () => ({
     },
     i18n: { language: "en" },
   })),
+  // <Trans> stub — renders the `defaults` string (falls back to i18nKey).
+  // Tests don't assert on the title text, so plain-text output is sufficient.
+  Trans: ({ defaults, i18nKey }) => <>{defaults || i18nKey}</>,
 }));
 
 // Mock useAudioEngine — returns stub that avoids real Web Audio API
@@ -55,7 +58,10 @@ vi.mock("../../../../../utils/useMotionTokens", () => ({
 
 // Mock schedulePatternPlayback so we can capture beats and playNote arguments
 vi.mock("../../utils/rhythmTimingUtils", () => ({
-  schedulePatternPlayback: vi.fn(() => ({ startTime: 0.1, totalDuration: 2.0 })),
+  schedulePatternPlayback: vi.fn(() => ({
+    startTime: 0.1,
+    totalDuration: 2.0,
+  })),
 }));
 
 // Mock DurationCard — provide SVG_COMPONENTS with stub components for needed keys
@@ -152,7 +158,8 @@ describe("DiscoveryIntroQuestion", () => {
 
     // Get the createPianoSound spy from the audioEngine instance the component received
     // useAudioEngine is called once during render — get the return value from that call
-    const componentAudioEngine = useAudioEngine.mock.results[useAudioEngine.mock.results.length - 1].value;
+    const componentAudioEngine =
+      useAudioEngine.mock.results[useAudioEngine.mock.results.length - 1].value;
     const createPianoSound = componentAudioEngine.createPianoSound;
 
     const listenButton = screen.getByText("Listen");

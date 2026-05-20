@@ -33,6 +33,8 @@ vi.mock("../../../../../hooks/useAudioEngine", () => ({
     getCurrentTime: vi.fn(() => 0),
     resumeAudioContext: vi.fn(() => Promise.resolve()),
     createPianoSound: vi.fn(),
+    // isReady() gates the count-in wait loop — return true so it exits at once.
+    isReady: vi.fn(() => true),
   })),
 }));
 
