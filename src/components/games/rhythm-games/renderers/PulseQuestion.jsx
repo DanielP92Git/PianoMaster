@@ -34,6 +34,7 @@ import {
 } from "../utils/holdScoringUtils";
 import RhythmStaffDisplay from "../components/RhythmStaffDisplay";
 import FloatingFeedback from "../components/FloatingFeedback";
+import { getMeterTiming, isStrongSubdivision } from "../utils/meterUtils";
 
 // Sub-phases for the pulse flow
 const PHASES = {
@@ -229,25 +230,26 @@ export default function PulseQuestion({
     [audioEngine]
   );
 
-  // Schedule metronome clicks ahead of time
+  // Schedule metronome clicks ahead of time. For 6/8 these land on eighth-note
+  // subdivisions (6 per measure) with accents on positions 1 and 4; simple
+  // meters tick once per beat with an accent on the downbeat.
   const scheduleBeatClicks = useCallback(
     (startTime) => {
       const beatDur = beatDuration.current;
+      const { subdivisionDur } = getMeterTiming(timeSignature, beatDur);
       const currentTime = audioEngine.getCurrentTime();
       const timeSinceStart = currentTime - startTime;
-      const totalBeatsFloat = timeSinceStart / beatDur;
-      const totalBeatsCompleted = Math.floor(totalBeatsFloat);
-      for (let i = 0; i < 3; i++) {
-        const beatNumber = totalBeatsCompleted + i;
-        const beatTime = startTime + beatNumber * beatDur;
+      const completedSubdivisions = Math.floor(timeSinceStart / subdivisionDur);
+      for (let i = 0; i < 5; i++) {
+        const subdivisionNumber = completedSubdivisions + i;
+        const beatTime = startTime + subdivisionNumber * subdivisionDur;
         if (beatTime > currentTime + 0.05) {
-          const isDownbeat = beatNumber % beatsPerMeasure === 0;
-          const frequency = isDownbeat ? 700 : 550;
-          createClickSound(beatTime, frequency, 0.12);
+          const strong = isStrongSubdivision(subdivisionNumber, timeSignature);
+          createClickSound(beatTime, strong ? 700 : 550, strong ? 0.14 : 0.1);
         }
       }
     },
-    [audioEngine, beatsPerMeasure, createClickSound]
+    [audioEngine, timeSignature, createClickSound]
   );
 
   // Start continuous metronome scheduling
@@ -270,13 +272,17 @@ export default function PulseQuestion({
         const currentTime = audioEngine.getCurrentTime();
         const timeSinceStart = currentTime - startTime;
         const beatDur = beatDuration.current;
-        const currentBeatFloat = timeSinceStart / beatDur;
+        const { displayCount, subdivisionDur } = getMeterTiming(
+          timeSignature,
+          beatDur
+        );
+        const currentSubdivisionFloat = timeSinceStart / subdivisionDur;
         const beatInMeasure =
-          (Math.floor(currentBeatFloat) % beatsPerMeasure) + 1;
+          (Math.floor(Math.max(0, currentSubdivisionFloat)) % displayCount) + 1;
         setCurrentBeat(beatInMeasure);
 
-        // Sync circle pulse to metronome beat
-        const absoluteBeat = Math.floor(currentBeatFloat);
+        // Sync circle pulse to metronome subdivision
+        const absoluteBeat = Math.floor(currentSubdivisionFloat);
         if (absoluteBeat !== prevAbsoluteBeatRef.current && absoluteBeat >= 0) {
           prevAbsoluteBeatRef.current = absoluteBeat;
           setBeatPulse(true);
@@ -316,7 +322,7 @@ export default function PulseQuestion({
         }
       }, 50);
     },
-    [audioEngine, beatsPerMeasure, scheduleBeatClicks]
+    [audioEngine, beatsPerMeasure, timeSignature, scheduleBeatClicks]
   );
 
   // Stop metronome intervals and cancel future oscillators
@@ -611,10 +617,10 @@ export default function PulseQuestion({
     setHoldFeedbackLabel(null);
 
     const beatDur = beatDuration.current;
-    const countInBeats = beatsPerMeasure; // 1 measure count-in
+    const { measureDur } = getMeterTiming(timeSignature, beatDur);
     // 300ms lead time to ensure audio pipeline is fully initialized
     const countInStartTime = audioEngine.getCurrentTime() + 0.3;
-    const playingStartTime = countInStartTime + countInBeats * beatDur;
+    const playingStartTime = countInStartTime + measureDur; // 1 measure count-in
 
     // Start metronome from count-in start, pass playingStartTime for cursor tracking
     startContinuousMetronome(countInStartTime, playingStartTime);
@@ -641,6 +647,7 @@ export default function PulseQuestion({
     audioEngine,
     getOrCreateAudioContext,
     beatsPerMeasure,
+    timeSignature,
     totalPlayBeats,
     startContinuousMetronome,
     evaluatePerformance,

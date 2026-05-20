@@ -26,6 +26,7 @@ import { getNodeById } from "../../../data/skillTrail";
 import {
   resolveByTags,
   resolveByAnyTag,
+  durationsIncludeRests,
 } from "../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
 import { generateDistractors } from "./utils/rhythmTimingUtils";
@@ -226,8 +227,10 @@ export default function MixedLessonGame() {
         const rc = node?.rhythmConfig;
         const resolver =
           rc?.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
-        const result = resolver(rc?.patternTags || [], rc?.durations || ["q"], {
+        const dictDurations = rc?.durations || ["q"];
+        const result = resolver(rc?.patternTags || [], dictDurations, {
           timeSignature: rc?.timeSignature || "4/4",
+          allowRests: durationsIncludeRests(dictDurations),
         });
         if (result) {
           const beats = binaryPatternToBeats(result.binary);

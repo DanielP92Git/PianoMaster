@@ -22,8 +22,10 @@ import { TIME_SIGNATURES } from "../RhythmPatternGenerator";
 import {
   resolveByTags,
   resolveByAnyTag,
+  durationsIncludeRests,
 } from "../../../../data/patterns/RhythmPatternGenerator";
 import { binaryPatternToBeats } from "../utils/rhythmVexflowHelpers";
+import { getMeterTiming, isStrongSubdivision } from "../utils/meterUtils";
 import { scoreTap } from "../utils/rhythmScoringUtils";
 import { needsLandscape as computeNeedsLandscape } from "../utils/needsLandscape";
 import {
@@ -63,7 +65,6 @@ export default function RhythmReadingQuestion({
   const tempo = config.tempo || 80;
   const timeSignature =
     TIME_SIG_MAP[config.timeSignature] || TIME_SIGNATURES.FOUR_FOUR;
-  const beatsPerMeasure = timeSignature.beats;
 
   const audioEngine = useAudioEngine(tempo, {
     sharedAudioContext: audioContextRef.current,
@@ -164,23 +165,26 @@ export default function RhythmReadingQuestion({
     [audioEngine]
   );
 
-  // Schedule metronome clicks
+  // Schedule metronome clicks. For 6/8 these land on eighth-note subdivisions
+  // (6 per measure) with accents on positions 1 and 4; simple meters tick once
+  // per beat with an accent on the downbeat.
   const scheduleBeatClicks = useCallback(
     (startTime) => {
       const bd = beatDuration.current;
+      const { subdivisionDur } = getMeterTiming(timeSignature, bd);
       const currentTime = audioEngine.getCurrentTime();
       const elapsed = currentTime - startTime;
-      const completedBeats = Math.floor(elapsed / bd);
-      for (let i = 0; i < 3; i++) {
-        const beatNumber = completedBeats + i;
-        const beatTime = startTime + beatNumber * bd;
+      const completedSubdivisions = Math.floor(elapsed / subdivisionDur);
+      for (let i = 0; i < 5; i++) {
+        const subdivisionNumber = completedSubdivisions + i;
+        const beatTime = startTime + subdivisionNumber * subdivisionDur;
         if (beatTime > currentTime + 0.05) {
-          const isDownbeat = beatNumber % beatsPerMeasure === 0;
-          createClickSound(beatTime, isDownbeat ? 700 : 550, 0.12);
+          const strong = isStrongSubdivision(subdivisionNumber, timeSignature);
+          createClickSound(beatTime, strong ? 700 : 550, strong ? 0.14 : 0.1);
         }
       }
     },
-    [audioEngine, beatsPerMeasure, createClickSound]
+    [audioEngine, timeSignature, createClickSound]
   );
 
   // Start continuous metronome
@@ -195,11 +199,17 @@ export default function RhythmReadingQuestion({
         const currentTime = audioEngine.getCurrentTime();
         const elapsed = currentTime - startTime;
         const bd = beatDuration.current;
-        const beatInMeasure = (Math.floor(elapsed / bd) % beatsPerMeasure) + 1;
+        const { displayCount, subdivisionDur } = getMeterTiming(
+          timeSignature,
+          bd
+        );
+        const beatInMeasure =
+          (Math.floor(Math.max(0, elapsed) / subdivisionDur) % displayCount) +
+          1;
         setCurrentBeat(beatInMeasure);
       }, 50);
     },
-    [audioEngine, beatsPerMeasure, scheduleBeatClicks]
+    [audioEngine, timeSignature, scheduleBeatClicks]
   );
 
   // Stop metronome
@@ -446,8 +456,12 @@ export default function RhythmReadingQuestion({
       }
 
       const bd = beatDuration.current;
+      const { displayCount, subdivisionDur, measureDur } = getMeterTiming(
+        timeSignature,
+        bd
+      );
       const countInStartTime = audioEngine.getCurrentTime() + 0.3;
-      const playingStartTime = countInStartTime + beatsPerMeasure * bd;
+      const playingStartTime = countInStartTime + measureDur;
 
       // Reset
       nextBeatIndexRef.current = 0;
@@ -461,7 +475,7 @@ export default function RhythmReadingQuestion({
 
       // Pre-compute beat times so taps are accepted before the first beat
       patternStartTimeRef.current = playingStartTime;
-      measureDurationRef.current = beatsPerMeasure * bd;
+      measureDurationRef.current = measureDur;
       const { times } = buildBeatTimes(beatsArr, tempo, playingStartTime);
       scheduledBeatTimesRef.current = times;
 
@@ -494,7 +508,8 @@ export default function RhythmReadingQuestion({
 
             // Update MetronomeDisplay beat (clamp for pre-start period)
             if (elapsed >= 0) {
-              const beatIdx = Math.floor(elapsed / bd) % beatsPerMeasure;
+              const beatIdx =
+                Math.floor(elapsed / subdivisionDur) % displayCount;
               setCurrentBeat(beatIdx + 1);
             }
 
@@ -525,7 +540,7 @@ export default function RhythmReadingQuestion({
     [
       audioEngine,
       getOrCreateAudioContext,
-      beatsPerMeasure,
+      timeSignature,
       tempo,
       buildBeatTimes,
       startContinuousMetronome,
@@ -546,18 +561,28 @@ export default function RhythmReadingQuestion({
     if (tags.length > 0) {
       const resolver =
         config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
-      const result = resolver(tags, durations, { timeSignature: ts });
+      const result = resolver(tags, durations, {
+        timeSignature: ts,
+        allowRests: durationsIncludeRests(durations),
+      });
       if (result) {
         loadedBeats = binaryPatternToBeats(result.binary);
       }
     }
 
     if (!loadedBeats) {
-      // Fallback: generate simple quarter-note pattern
-      loadedBeats = Array.from({ length: beatsPerMeasure }, () => ({
-        durationUnits: 4,
-        isRest: false,
-      }));
+      // Fallback: generate a simple pattern that fills exactly one measure.
+      // 6/8 fills with two dotted quarters (6 units each); simple meters with
+      // one quarter note (4 units) per beat.
+      loadedBeats = timeSignature.isCompound
+        ? [
+            { durationUnits: 6, isRest: false },
+            { durationUnits: 6, isRest: false },
+          ]
+        : Array.from({ length: timeSignature.beats }, () => ({
+            durationUnits: 4,
+            isRest: false,
+          }));
     }
 
     setBeats(loadedBeats);

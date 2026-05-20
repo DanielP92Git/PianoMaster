@@ -26,6 +26,7 @@ import { getPattern, TIME_SIGNATURES } from "../RhythmPatternGenerator";
 import {
   resolveByTags,
   resolveByAnyTag,
+  durationsIncludeRests,
 } from "../../../../data/patterns/RhythmPatternGenerator";
 import {
   scoreHold,
@@ -36,6 +37,11 @@ import {
 import { CIRCUMFERENCE } from "../components/HoldRing";
 import { DURATION_INFO } from "../utils/durationInfo";
 import { needsLandscape as computeNeedsLandscape } from "../utils/needsLandscape";
+import {
+  getMeterTiming,
+  isStrongSubdivision,
+  isStrongOnset,
+} from "../utils/meterUtils";
 
 // Sub-phases for the rhythm tap flow
 const PHASES = {
@@ -105,7 +111,6 @@ export default function RhythmTapQuestion({
 
   const timeSignature =
     TIME_SIG_MAP[config.timeSignature] || TIME_SIGNATURES.FOUR_FOUR;
-  const beatsPerMeasure = timeSignature.beats;
 
   // Content-driven landscape declaration (CORE-04). RhythmTapQuestion has
   // async-loaded patterns (patternInfoRef), so we derive from configured
@@ -202,6 +207,10 @@ export default function RhythmTapQuestion({
   const startContinuousMetronome = useCallback(
     (startTime) => {
       const beatDur = beatDuration.current;
+      const { displayCount, subdivisionDur } = getMeterTiming(
+        timeSignature,
+        beatDur
+      );
       metronomeStartTimeRef.current = startTime;
 
       if (continuousMetronomeRef.current)
@@ -209,18 +218,22 @@ export default function RhythmTapQuestion({
       if (visualMetronomeRef.current) clearInterval(visualMetronomeRef.current);
       scheduledOscillatorsRef.current = [];
 
+      // For 6/8 these clicks land on eighth-note subdivisions (6 per measure)
+      // with accents on positions 1 and 4; simple meters tick once per beat.
       const scheduleBeats = (currentTime) => {
         const timeSinceStart = currentTime - startTime;
-        const totalBeatsFloat = timeSinceStart / beatDur;
-        const totalBeatsCompleted = Math.floor(totalBeatsFloat);
-        for (let i = 0; i < 3; i++) {
-          const beatNumber = totalBeatsCompleted + i;
-          const beatTime = startTime + beatNumber * beatDur;
+        const completedSubdivisions = Math.floor(
+          timeSinceStart / subdivisionDur
+        );
+        for (let i = 0; i < 5; i++) {
+          const subdivisionNumber = completedSubdivisions + i;
+          const beatTime = startTime + subdivisionNumber * subdivisionDur;
           if (beatTime > currentTime + 0.05) {
-            const isDownbeat = beatNumber % beatsPerMeasure === 0;
-            const volume = 0.12;
-            const frequency = isDownbeat ? 700 : 550;
-            createClickSound(beatTime, frequency, volume);
+            const strong = isStrongSubdivision(
+              subdivisionNumber,
+              timeSignature
+            );
+            createClickSound(beatTime, strong ? 700 : 550, strong ? 0.14 : 0.1);
           }
         }
       };
@@ -247,8 +260,8 @@ export default function RhythmTapQuestion({
         // Belt-and-braces clamp: if setTimeout fires a hair early, ensure
         // beatInMeasure is at least 1 (never 0).
         const timeSinceStart = Math.max(0, currentTime - startTime);
-        const totalBeatsCompleted = Math.floor(timeSinceStart / beatDur);
-        const beatInMeasure = (totalBeatsCompleted % beatsPerMeasure) + 1;
+        const totalSubdivisions = Math.floor(timeSinceStart / subdivisionDur);
+        const beatInMeasure = (totalSubdivisions % displayCount) + 1;
         setCurrentBeat(beatInMeasure);
       };
 
@@ -263,7 +276,7 @@ export default function RhythmTapQuestion({
         Math.max(0, firstBeatDelay)
       );
     },
-    [audioEngine, beatsPerMeasure, createClickSound]
+    [audioEngine, timeSignature, createClickSound]
   );
 
   // Stop metronome
@@ -300,15 +313,16 @@ export default function RhythmTapQuestion({
 
     const { pattern } = patternInfoRef.current;
     const currentBeatDur = beatDuration.current;
-    const unitsPerBeat = timeSignature.measureLength / timeSignature.beats;
-    const measureDur = beatsPerMeasure * currentBeatDur;
+    const sixteenthDur = currentBeatDur / 4;
     const latency = getLatencyCompensation();
 
-    // Expected beat time offsets within one measure
+    // Expected onset offsets within one measure. Pattern arrays are indexed in
+    // sixteenth-note slots, so each onset offset is index * sixteenthDur —
+    // matching how the pattern is actually played back.
     const expectedOffsets = [];
     pattern.forEach((beat, index) => {
       if (beat === 1) {
-        expectedOffsets.push((index / unitsPerBeat) * currentBeatDur);
+        expectedOffsets.push(index * sixteenthDur);
       }
     });
 
@@ -348,13 +362,7 @@ export default function RhythmTapQuestion({
     setTimeout(() => {
       onComplete(onTimeCount, expectedOffsets.length);
     }, 1500);
-  }, [
-    onComplete,
-    tempo,
-    beatsPerMeasure,
-    timeSignature,
-    getLatencyCompensation,
-  ]);
+  }, [onComplete, tempo, getLatencyCompensation]);
 
   // --- Hold mechanic helpers ---
 
@@ -412,15 +420,15 @@ export default function RhythmTapQuestion({
       const currentTime = audioEngine.getCurrentTime();
       const timeSinceStart = currentTime - metronomeStartTimeRef.current;
       const beatDur = beatDuration.current;
-      const totalBeatsFloat = timeSinceStart / beatDur;
-      const currentMeasureFloat = totalBeatsFloat / beatsPerMeasure;
+      const { measureDur } = getMeterTiming(timeSignature, beatDur);
+      const currentMeasureFloat = timeSinceStart / measureDur;
       const prevMeasure = Math.floor(currentMeasureFloat);
       const nextMeasure = Math.ceil(currentMeasureFloat);
 
       const prevBeat1Time =
-        metronomeStartTimeRef.current + prevMeasure * beatsPerMeasure * beatDur;
+        metronomeStartTimeRef.current + prevMeasure * measureDur;
       const nextBeat1Time =
-        metronomeStartTimeRef.current + nextMeasure * beatsPerMeasure * beatDur;
+        metronomeStartTimeRef.current + nextMeasure * measureDur;
 
       const prevError = Math.abs(currentTime - prevBeat1Time);
       const nextError = Math.abs(currentTime - nextBeat1Time);
@@ -434,8 +442,7 @@ export default function RhythmTapQuestion({
       userPerformanceStartTimeRef.current = nearestBeat1Time;
 
       // Stop metronome and evaluate at end of measure
-      const measureDuration = beatsPerMeasure * beatDur;
-      const measureEndTime = nearestBeat1Time + measureDuration;
+      const measureEndTime = nearestBeat1Time + measureDur;
       const delayToEnd = (measureEndTime - currentTime) * 1000;
 
       setTimeout(() => stopMetronome(), Math.max(0, delayToEnd));
@@ -443,7 +450,7 @@ export default function RhythmTapQuestion({
 
       return nearestBeat1Time;
     },
-    [audioEngine, beatsPerMeasure]
+    [audioEngine, timeSignature]
   );
 
   // Handle user tap (quarter notes — existing onClick path)
@@ -486,15 +493,14 @@ export default function RhythmTapQuestion({
     if (patternInfoRef.current) {
       const { pattern } = patternInfoRef.current;
       const currentBeatDur = beatDuration.current;
-      const unitsPerBeat = timeSignature.measureLength / timeSignature.beats;
-      const measureDur = beatsPerMeasure * currentBeatDur;
+      const sixteenthDur = currentBeatDur / 4;
+      const { measureDur } = getMeterTiming(timeSignature, currentBeatDur);
       const latency = getLatencyCompensation();
 
-      // Expected beat time offsets within one measure
+      // Expected onset offsets within one measure (pattern indexed in sixteenths)
       const expectedOffsets = [];
       pattern.forEach((beat, index) => {
-        if (beat === 1)
-          expectedOffsets.push((index / unitsPerBeat) * currentBeatDur);
+        if (beat === 1) expectedOffsets.push(index * sixteenthDur);
       });
 
       // Find nearest expected beat time (check adjacent measures for edges)
@@ -525,7 +531,6 @@ export default function RhythmTapQuestion({
     phase,
     audioEngine,
     hasUserStartedTapping,
-    beatsPerMeasure,
     stopContinuousMetronome,
     evaluatePerformance,
     tempo,
@@ -707,8 +712,10 @@ export default function RhythmTapQuestion({
     if (config.patternTags?.length > 0) {
       const resolver =
         config.patternTagMode === "any" ? resolveByAnyTag : resolveByTags;
-      const result = resolver(config.patternTags, config.durations || ["q"], {
+      const tapDurations = config.durations || ["q"];
+      const result = resolver(config.patternTags, tapDurations, {
         timeSignature: timeSignature.name,
+        allowRests: durationsIncludeRests(tapDurations),
       });
       if (result) {
         pattern = {
@@ -750,9 +757,9 @@ export default function RhythmTapQuestion({
     startContinuousMetronome(countInStartTime);
     setPhase(PHASES.COUNT_IN);
 
-    // After count-in (1 measure), play the pattern
-    const countInBeats = beatsPerMeasure;
-    const patternStartTime = countInStartTime + countInBeats * beatDur;
+    // After count-in (one full measure), play the pattern
+    const { measureDur } = getMeterTiming(timeSignature, beatDur);
+    const patternStartTime = countInStartTime + measureDur;
 
     setTimeout(
       () => {
@@ -786,7 +793,10 @@ export default function RhythmTapQuestion({
                 noteDuration = (di.durationUnits / 4) * beatDur;
               }
             }
-            audioEngine.createPianoSound(noteTime, 0.8, noteDuration);
+            // Accent strong beats (1 and 4 in 6/8; the downbeat in simple
+            // meters) so the played-back pattern conveys the metric feel.
+            const noteVolume = isStrongOnset(index, timeSignature) ? 0.95 : 0.7;
+            audioEngine.createPianoSound(noteTime, noteVolume, noteDuration);
             onsetIdx++;
           }
         });
@@ -801,7 +811,7 @@ export default function RhythmTapQuestion({
           const nextBeatTime =
             patternStartTime +
             (pattern.pattern.length * beatDur) / 4 +
-            beatDur * beatsPerMeasure;
+            measureDur;
           const timeUntilBeat1 =
             nextBeatTime - audioEngine.getCurrentTime() - 0.2;
 
@@ -823,7 +833,6 @@ export default function RhythmTapQuestion({
     getOrCreateAudioContext,
     timeSignature,
     config.patterns,
-    beatsPerMeasure,
     onComplete,
     startContinuousMetronome,
     getCurrentOnsetInfo,

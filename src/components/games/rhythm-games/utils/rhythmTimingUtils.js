@@ -6,6 +6,7 @@
  */
 
 import { DURATION_INFO } from "./durationInfo.js";
+import { isStrongOnset } from "./meterUtils.js";
 
 // Base timing thresholds at 120 BPM (in milliseconds)
 // Matches MetronomeTrainer.jsx BASE_TIMING_THRESHOLDS exactly.
@@ -352,10 +353,17 @@ function fallbackDistractors(correctBeats, totalDuration, count) {
  * Uses `audioContext.currentTime + 0.1` as the start time to give the audio
  * scheduler a small buffer before the first note fires.
  *
+ * When `timeSignature` is supplied, onsets on strong beats (1 and 4 in 6/8;
+ * the downbeat in simple meters) are given a higher `velocity` opt so the
+ * played-back pattern conveys the metric feel. Omitting it leaves the opts
+ * shape unchanged (back-compat for callers that don't read velocity).
+ *
  * @param {{ durationUnits: number, isRest: boolean }[]} beats
  * @param {number} tempo - Tempo in BPM
  * @param {AudioContext} audioContext - Web Audio API context
  * @param {function} playNote - usePianoSampler().playNote callback
+ * @param {number} [explicitStartTime] - Override the computed start time
+ * @param {object} [timeSignature] - TIME_SIGNATURES entry for accent placement
  * @returns {{ startTime: number, totalDuration: number }}
  */
 export function schedulePatternPlayback(
@@ -363,21 +371,28 @@ export function schedulePatternPlayback(
   tempo,
   audioContext,
   playNote,
-  explicitStartTime
+  explicitStartTime,
+  timeSignature = null
 ) {
   const beatDuration = 60 / tempo; // seconds per quarter note
   const sixteenthDuration = beatDuration / 4; // seconds per sixteenth note
   const startTime = explicitStartTime ?? audioContext.currentTime + 0.1;
   let offset = 0;
+  let slot = 0; // running sixteenth-note slot index for accent placement
 
   beats.forEach((beat) => {
     if (!beat.isRest) {
-      playNote("C4", {
+      const opts = {
         startTime: startTime + offset,
         duration: sixteenthDuration * beat.durationUnits * 0.95, // tiny gap between notes
-      });
+      };
+      if (timeSignature) {
+        opts.velocity = isStrongOnset(slot, timeSignature) ? 0.95 : 0.7;
+      }
+      playNote("C4", opts);
     }
     offset += sixteenthDuration * beat.durationUnits;
+    slot += beat.durationUnits;
   });
 
   return { startTime, totalDuration: offset };

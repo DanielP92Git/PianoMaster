@@ -376,7 +376,6 @@ export const rhythmUnit8Nodes = [
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,

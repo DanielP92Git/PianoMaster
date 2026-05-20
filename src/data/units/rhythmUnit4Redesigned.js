@@ -58,7 +58,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     // UI display hints
@@ -119,7 +118,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.NONE,
@@ -176,7 +174,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.RHYTHM,
@@ -234,7 +231,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.NONE,
@@ -292,7 +288,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.RHYTHM,
@@ -364,7 +359,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 85, max: 95, default: 90 }, // Fixed fast tempo
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
@@ -423,7 +417,6 @@ export const rhythmUnit4Nodes = [
       tempo: { min: 70, max: 80, default: 75 },
       pitch: "C4",
       timeSignature: "4/4",
-      includeRests: true,
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,

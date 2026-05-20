@@ -22,6 +22,7 @@ import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { DictationChoiceCard } from "../components/DictationChoiceCard";
 import { schedulePatternPlayback } from "../utils/rhythmTimingUtils";
 import { needsLandscape as computeNeedsLandscape } from "../utils/needsLandscape";
+import { TIME_SIGNATURES } from "../RhythmPatternGenerator";
 
 const PHASES = {
   LISTEN_PROMPT: "listen-prompt",
@@ -29,6 +30,13 @@ const PHASES = {
   CHOOSING: "choosing",
   FEEDBACK: "feedback",
   DONE: "done",
+};
+
+const TIME_SIG_MAP = {
+  "4/4": TIME_SIGNATURES.FOUR_FOUR,
+  "3/4": TIME_SIGNATURES.THREE_FOUR,
+  "2/4": TIME_SIGNATURES.TWO_FOUR,
+  "6/8": TIME_SIGNATURES.SIX_EIGHT,
 };
 
 export default function RhythmDictationQuestion({
@@ -45,6 +53,8 @@ export default function RhythmDictationQuestion({
 
   const config = question?.rhythmConfig || {};
   const tempo = config.tempo || 80;
+  const timeSignature =
+    TIME_SIG_MAP[config.timeSignature] || TIME_SIGNATURES.FOUR_FOUR;
   const correctBeats = question?.correctBeats;
   const choices = question?.choices || [];
   const correctIndex = question?.correctIndex ?? -1;
@@ -68,13 +78,14 @@ export default function RhythmDictationQuestion({
     getOrCreateAudioContext
   );
 
-  // enginePlayNote wrapper for schedulePatternPlayback
+  // enginePlayNote wrapper for schedulePatternPlayback. Reads opts.velocity so
+  // strong-beat accents (1 and 4 in 6/8) carry through to the piano sound.
   const enginePlayNote = useCallback(
     (_note, opts) => {
       if (audioEngine?.createPianoSound) {
         audioEngine.createPianoSound(
           opts?.startTime,
-          0.8,
+          opts?.velocity ?? 0.8,
           opts?.duration ?? 0.5
         );
       }
@@ -136,7 +147,9 @@ export default function RhythmDictationQuestion({
         correctBeats,
         tempo,
         ctx,
-        enginePlayNote
+        enginePlayNote,
+        undefined,
+        timeSignature
       );
 
       feedbackTimerRef.current = setTimeout(
@@ -155,6 +168,7 @@ export default function RhythmDictationQuestion({
       tempo,
       enginePlayNote,
       audioEngine,
+      timeSignature,
     ]
   );
 

@@ -54,8 +54,11 @@ vi.mock("../../RhythmPatternGenerator", () => ({
       beats: 2,
       name: "6/8",
       measureLength: 12,
+      subdivision: 12,
       strongBeats: [0, 3],
+      weakBeats: [1, 2, 4, 5],
       subdivisions: 6,
+      isCompound: true,
     },
   },
 }));
