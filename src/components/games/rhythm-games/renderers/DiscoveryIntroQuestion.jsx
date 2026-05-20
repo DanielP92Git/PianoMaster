@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Volume2 } from "lucide-react";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
 import { useAudioContext } from "../../../../contexts/AudioContextProvider";
@@ -25,9 +25,10 @@ export default function DiscoveryIntroQuestion({
   onComplete,
   disabled,
 }) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   // Single intro card always fits portrait — declare false (CORE-01).
   useDeclareNeedsLandscape(false);
+  const syllableLanguage = i18n.language?.startsWith("he") ? "he" : "en";
   const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
   const { reduce: reducedMotion } = useMotionTokens();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -36,7 +37,7 @@ export default function DiscoveryIntroQuestion({
   const focusDuration = question?.focusDuration;
   const info = DURATION_INFO[focusDuration];
   const SvgIcon = SVG_COMPONENTS[focusDuration];
-  const syllable = getSyllable(focusDuration);
+  const syllable = getSyllable(focusDuration, syllableLanguage);
   const durationName = info
     ? t(`rhythm.duration.${info.i18nKey?.split(".").pop()}`, info.i18nKey)
     : "";
@@ -191,17 +192,14 @@ export default function DiscoveryIntroQuestion({
     : "flex w-full max-w-sm flex-col items-center gap-5 rounded-2xl border border-white/20 bg-white/10 px-8 py-10 shadow-lg backdrop-blur-md md:max-w-md lg:max-w-lg";
   const rightColClass = isLandscape ? "flex flex-1 flex-col gap-2" : "contents";
   const titleClass = isLandscape
-    ? "text-left text-lg font-bold text-white"
+    ? "text-start text-lg font-bold text-white"
     : "text-center text-xl font-bold text-white";
   // SVG bumps for tablet (D-07, CORE-01). Literal class strings for purge safety.
   const svgClass = isLandscape
     ? "h-24 w-16 md:h-40 md:w-28 lg:h-48 lg:w-32"
     : "h-40 w-28 md:h-56 md:w-40 lg:h-64 lg:w-44";
-  const nameClass = isLandscape
-    ? "text-left text-xl font-semibold text-indigo-300"
-    : "text-center text-2xl font-semibold text-indigo-300";
   const syllableClass = isLandscape
-    ? "text-left text-base text-white/70"
+    ? "text-start text-base text-white/70"
     : "text-center text-lg text-white/70";
   const listenBtnPadding = isLandscape ? "px-4 py-2" : "px-5 py-3";
   const listenBtnAlign = isLandscape ? " self-start" : "";
@@ -210,12 +208,17 @@ export default function DiscoveryIntroQuestion({
     : "mt-2 w-full py-4 text-lg";
 
   // Title element — kept first in DOM order via the `title` variable so the
-  // horizontal layout still renders the heading before name/syllable for SR users.
+  // horizontal layout still renders the heading before the syllable for SR users.
+  // The duration name inside the title is accent-colored via a <Trans> tag.
   const title = (
     <h2 className={titleClass}>
-      {t("game.discovery.meetNew", "Meet the {{name}}!", {
-        name: durationName,
-      })}
+      <Trans
+        t={t}
+        i18nKey="game.discovery.meetNew"
+        defaults="Meet the <accent>{{name}}</accent>!"
+        values={{ name: durationName }}
+        components={{ accent: <span className="text-indigo-300" /> }}
+      />
     </h2>
   );
 
@@ -241,9 +244,6 @@ export default function DiscoveryIntroQuestion({
         <div className={rightColClass}>
           {/* Title */}
           {title}
-
-          {/* Duration name */}
-          <p className={nameClass}>{durationName}</p>
 
           {/* Kodaly syllable */}
           <p className={syllableClass}>

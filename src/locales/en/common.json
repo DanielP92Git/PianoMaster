@@ -1854,7 +1854,7 @@
       "generic": "Something went wrong. Go back to the trail and try again."
     },
     "discovery": {
-      "meetNew": "Meet the {{name}}!",
+      "meetNew": "Meet the <accent>{{name}}</accent>!",
       "ariaLabel": "Meet a new rhythm",
       "syllable": "Say: \"{{syllable}}\"",
       "listenButton": "Listen to the sound",

@@ -1861,7 +1861,7 @@
       "generic": "משהו השתבש. חזרו למסלול ונסו שוב."
     },
     "discovery": {
-      "meetNew": "הכירו את {{name}}!",
+      "meetNew": "הכירו את <accent>{{name}}</accent>!",
       "ariaLabel": "הכירו קצב חדש",
       "syllable": "אמרו: \"{{syllable}}\"",
       "listenButton": "הקשיבו לצליל",
