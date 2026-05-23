@@ -18,6 +18,7 @@ const VALID_TAGS = new Set([
   "sixteenth",
   "six-eight",
   "syncopation",
+  "long-syncopation",
   "dotted-syncopation",
 ]);
 
@@ -47,7 +48,7 @@ describe("RHYTHM_PATTERNS", () => {
     });
   });
 
-  it("all 15 tags are covered by at least one pattern", () => {
+  it("all 16 tags are covered by at least one pattern", () => {
     const usedTags = new Set();
     RHYTHM_PATTERNS.forEach((p) => {
       p.tags.forEach((t) => usedTags.add(t));

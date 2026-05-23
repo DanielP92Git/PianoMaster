@@ -2,12 +2,13 @@
  * Rhythm Unit 8: "Off-Beat Magic" (Redesigned)
  *
  * Educational psychology-driven design for 8-year-old learners
- * - Introduces syncopation: eighth-quarter-eighth and dotted quarter-eighth patterns
+ * - Introduces syncopation on a gentle ramp: long-value (q-h-q) -> short-value
+ *   (8-q-8) -> dotted (qd-8) -> mixed -> speed -> capstone boss
  * - Capstone unit of the rhythm path — builds on 6/8 compound meter (Unit 7)
  * - Single pitch (C4) throughout for pure rhythm focus
- * - 6 nodes with variety and a TRUE BOSS node mixing 6/8 and 4/4 syncopation
+ * - 8 nodes with variety and a TRUE BOSS node mixing 6/8 and 4/4 syncopation
  *
- * Duration: 25-30 minutes (3-4 min per node)
+ * Duration: 30-35 minutes (3-4 min per node)
  * Goal: Master syncopation patterns, prove mastery of both 6/8 and 4/4 in epic final boss
  */
 
@@ -19,23 +20,25 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 8;
-const UNIT_NAME = "Off-Beat Magic";
+const UNIT_NAME = "Syncopation";
 const CATEGORY = "rhythm";
 const START_ORDER = 144; // After Unit 7's 6 nodes (138-143)
 
 /**
  * Unit 8 Nodes
- * Psychological journey: Syncopation Discovery -> Practice -> Dotted Discovery -> Practice -> Mix-Up -> Speed -> TRUE BOSS
+ * Psychological journey: Long-Syncopation Discovery -> Practice -> Short-Syncopation Discovery ->
+ *   Practice -> Dotted Discovery -> Mixed Practice -> Speed -> TRUE BOSS
  * NOTE: This unit's final node is NODE_TYPES.BOSS (true boss) as the capstone of ALL rhythm content
  */
 export const rhythmUnit8Nodes = [
   // ============================================
-  // NODE 1: Off-Beat Surprise (Discovery)
+  // NODE 1: Hold Across the Beat (q-h-q Discovery)
   // ============================================
   {
     id: "rhythm_8_1",
-    name: "Off-Beat Surprise",
-    description: "Discover the magic of playing between the beats",
+    name: "Hold Across the Beat",
+    description:
+      "Discover syncopation using long notes — a half held over beat 3",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -43,14 +46,128 @@ export const rhythmUnit8Nodes = [
     orderInUnit: 1,
     prerequisites: ["boss_rhythm_7"], // Requires completing Unit 7
 
-    // Node type classification
+    nodeType: NODE_TYPES.DISCOVERY,
+
+    // Rhythm configuration: quarter-half-quarter syncopation (gentle on-ramp)
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.VARIED,
+      durations: ["q", "h"],
+      focusDurations: ["h"], // The half note carrying across beat 3 is the focus
+      contextDurations: ["q"], // Quarters frame the half
+      patternTags: ["long-syncopation"],
+      tempo: { min: 58, max: 65, default: 62 },
+      pitch: "C4",
+      timeSignature: "4/4",
+    },
+
+    newContent: NEW_CONTENT_TYPES.RHYTHM,
+    newContentDescription: "Syncopation: Hold across the beat!",
+
+    exercises: [
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: "discovery_intro", focusDuration: "h" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
+            { type: "visual_recognition" },
+            { type: "syllable_matching" },
+          ],
+        },
+      },
+    ],
+
+    skills: ["syncopation_long_value"],
+    xpReward: 70,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: [],
+  },
+
+  // ============================================
+  // NODE 2: Long-Value Practice (q-h-q Practice)
+  // ============================================
+  {
+    id: "rhythm_8_2",
+    name: "Long-Note Off-Beats",
+    description:
+      "Practice holding through the strong beat with quarters and halves",
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 1,
+    orderInUnit: 2,
+    prerequisites: ["rhythm_8_1"],
+
+    nodeType: NODE_TYPES.PRACTICE,
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.VARIED,
+      durations: ["q", "h"],
+      focusDurations: [],
+      contextDurations: ["q", "h"],
+      patternTags: ["long-syncopation"],
+      tempo: { min: 65, max: 72, default: 70 },
+      pitch: "C4",
+      timeSignature: "4/4",
+    },
+
+    newContent: NEW_CONTENT_TYPES.NONE,
+    newContentDescription: null,
+
+    exercises: [
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
+            { type: "visual_recognition" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_tap" },
+            { type: "syllable_matching" },
+            { type: "rhythm_reading" },
+            { type: "rhythm_tap" },
+          ],
+        },
+      },
+    ],
+
+    skills: ["syncopation_long_value"],
+    xpReward: 75,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: [],
+  },
+
+  // ============================================
+  // NODE 3: Off-Beat Surprise (8-q-8 Discovery)
+  // ============================================
+  {
+    id: "rhythm_8_3",
+    name: "Intro to Syncopation",
+    description: "Discover syncopation — accents between the beats",
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 2,
+    orderInUnit: 3,
+    prerequisites: ["rhythm_8_2"],
+
     nodeType: NODE_TYPES.DISCOVERY,
 
     // Rhythm configuration: eighth-quarter-eighth syncopation
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
       durations: ["8", "q"],
-      focusDurations: ["8"], // NEW: Eighth notes for syncopation
+      focusDurations: ["8"], // Eighth notes for syncopation
       contextDurations: ["q"], // Quarters for contrast
       patternTags: ["syncopation"],
       tempo: { min: 65, max: 70, default: 67 },
@@ -58,11 +175,9 @@ export const rhythmUnit8Nodes = [
       timeSignature: "4/4",
     },
 
-    // UI display hints
     newContent: NEW_CONTENT_TYPES.RHYTHM,
     newContentDescription: "Syncopation: Tap between the beats!",
 
-    // Exercises
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
@@ -82,7 +197,6 @@ export const rhythmUnit8Nodes = [
       },
     ],
 
-    // Progression
     skills: ["syncopation_eighth_quarter"],
     xpReward: 75,
     accessoryUnlock: null,
@@ -92,18 +206,18 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 2: Between the Beats (Practice)
+  // NODE 4: Between the Beats (8-q-8 Practice)
   // ============================================
   {
-    id: "rhythm_8_2",
+    id: "rhythm_8_4",
     name: "Between the Beats",
     description: "Practice tapping on the off-beats",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 1,
-    orderInUnit: 2,
-    prerequisites: ["rhythm_8_1"],
+    order: START_ORDER + 3,
+    orderInUnit: 4,
+    prerequisites: ["rhythm_8_3"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -113,7 +227,7 @@ export const rhythmUnit8Nodes = [
       focusDurations: [],
       contextDurations: ["8", "q"],
       patternTags: ["syncopation"],
-      tempo: { min: 65, max: 75, default: 70 },
+      tempo: { min: 68, max: 75, default: 72 },
       pitch: "C4",
       timeSignature: "4/4",
     },
@@ -148,25 +262,25 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 3: Dotted Groove (Discovery)
+  // NODE 5: Dotted Groove (Dotted-Quarter-Eighth Discovery)
   // ============================================
   {
-    id: "rhythm_8_3",
-    name: "Dotted Groove",
-    description: "Learn the dotted quarter-eighth syncopation pattern",
+    id: "rhythm_8_5",
+    name: "Dotted-Quarter–Eighth Syncopation",
+    description: "Practice the dotted-quarter–eighth syncopation pattern",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 2,
-    orderInUnit: 3,
-    prerequisites: ["rhythm_8_2"],
+    order: START_ORDER + 4,
+    orderInUnit: 5,
+    prerequisites: ["rhythm_8_4"],
 
     nodeType: NODE_TYPES.DISCOVERY,
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
       durations: ["qd", "8", "q"], // Introduce dotted quarter-eighth pattern
-      focusDurations: ["qd"], // NEW: Dotted quarter being introduced
+      focusDurations: ["qd"], // Dotted quarter being introduced
       contextDurations: ["8", "q"],
       patternTags: ["dotted-syncopation"],
       tempo: { min: 65, max: 75, default: 70 },
@@ -205,18 +319,18 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 4: Swing and Sway (Practice)
+  // NODE 6: Swing and Sway (Mixed Syncopation Practice)
   // ============================================
   {
-    id: "rhythm_8_4",
-    name: "Swing and Sway",
-    description: "Practice the dotted quarter groove",
+    id: "rhythm_8_6",
+    name: "Syncopation in Phrases",
+    description: "Practice syncopation patterns in musical phrases",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 3,
-    orderInUnit: 4,
-    prerequisites: ["rhythm_8_3"],
+    order: START_ORDER + 5,
+    orderInUnit: 6,
+    prerequisites: ["rhythm_8_5"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -261,18 +375,18 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 5: Rapid Syncopation (Speed Round)
+  // NODE 7: Rapid Syncopation (Speed Round)
   // ============================================
   {
-    id: "rhythm_8_6",
-    name: "Rapid Syncopation",
-    description: "How fast can you tap those syncopated rhythms?",
+    id: "rhythm_8_7",
+    name: "Syncopation Speed Drill",
+    description: "How fast can you play syncopated rhythms?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 4,
-    orderInUnit: 5,
-    prerequisites: ["rhythm_8_4"],
+    order: START_ORDER + 6,
+    orderInUnit: 7,
+    prerequisites: ["rhythm_8_6"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -293,6 +407,7 @@ export const rhythmUnit8Nodes = [
         "quarter-rest",
         "dotted-quarter",
         "syncopation",
+        "long-syncopation",
         "dotted-syncopation",
       ], // D-19: cumulative U1-U6 + U8 (half-rest, whole-rest, dotted-half, sixteenth pruned — incompatible with node durations [qd,8,q])
       patternTagMode: "any", // D-19: OR-mode for cumulative pool
@@ -322,20 +437,20 @@ export const rhythmUnit8Nodes = [
   },
 
   // ============================================
-  // NODE 6: Rhythm Master (BOSS - True Boss, capstone of ALL rhythm content)
+  // NODE 8: Rhythm Master (BOSS - True Boss, capstone of ALL rhythm content)
   // ============================================
   {
     id: "boss_rhythm_8",
-    name: "Rhythm Master",
-    description: "Prove your mastery of 6/8 compound meter AND syncopation!",
+    name: "Syncopation Boss",
+    description: "Master syncopation and combine it with 6/8!",
     unlockHint:
       "Master all syncopation patterns to face the ultimate rhythm challenge!",
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 5,
-    orderInUnit: 6,
-    prerequisites: ["rhythm_8_6"],
+    order: START_ORDER + 7,
+    orderInUnit: 8,
+    prerequisites: ["rhythm_8_7"],
 
     // TRUE BOSS node — capstone of ALL rhythm content
     nodeType: NODE_TYPES.BOSS,
@@ -369,6 +484,7 @@ export const rhythmUnit8Nodes = [
         "dotted-quarter",
         "sixteenth",
         "syncopation",
+        "long-syncopation",
         "dotted-syncopation",
       ], // D-06: cumulative U1-U8
       patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
@@ -406,6 +522,7 @@ export const rhythmUnit8Nodes = [
 
     skills: [
       "68_compound_meter",
+      "syncopation_long_value",
       "syncopation_eighth_quarter",
       "syncopation_dotted_quarter",
     ],
