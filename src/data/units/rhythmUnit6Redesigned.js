@@ -19,7 +19,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 6;
-const UNIT_NAME = "Speed Champions";
+const UNIT_NAME = "Sixteenth Notes";
 const CATEGORY = "rhythm";
 const START_ORDER = 132; // After Unit 5's 7 nodes (125-131)
 
@@ -210,9 +210,8 @@ export const rhythmUnit6Nodes = [
   {
     id: "rhythm_6_4",
     // D-11 (Phase 33 Plan 33-04): renamed from "Fast and Faster" — name implied tempo, content is duration variety
-    name: "Mixed Speeds",
-    description:
-      "Practice patterns that mix quarter, half, eighth, and sixteenth notes",
+    name: "All-Duration Mix",
+    description: "Mix quarter, half, eighth, and sixteenth notes in patterns",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -267,8 +266,8 @@ export const rhythmUnit6Nodes = [
   // ============================================
   {
     id: "rhythm_6_6",
-    name: "Speed Master",
-    description: "The ultimate speed challenge!",
+    name: "All-Duration Speed Drill",
+    description: "How fast can you play every duration?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -326,8 +325,8 @@ export const rhythmUnit6Nodes = [
   // ============================================
   {
     id: "boss_rhythm_6",
-    name: "Rhythm Champion",
-    description: "Prove your mastery of ALL rhythms!",
+    name: "All-Rhythm Boss",
+    description: "Master every classical rhythm!",
     unlockHint:
       "Complete all lessons in this unit to unlock the ultimate challenge!",
     category: "boss", // Boss nodes have their own category

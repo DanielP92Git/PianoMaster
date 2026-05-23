@@ -20,7 +20,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 7;
-const UNIT_NAME = "Big Beats";
+const UNIT_NAME = "6/8 Compound Meter";
 const CATEGORY = "rhythm";
 const START_ORDER = 138; // After Unit 6's 6 nodes (132-137)
 
@@ -35,8 +35,8 @@ export const rhythmUnit7Nodes = [
   // ============================================
   {
     id: "rhythm_7_1",
-    name: "Two Big Beats",
-    description: "Feel the swing of 6/8 time — two big beats per bar",
+    name: "Dotted-Quarter Pulse in 6/8",
+    description: "Feel the two dotted-quarter pulses of 6/8 time",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -97,8 +97,8 @@ export const rhythmUnit7Nodes = [
   // ============================================
   {
     id: "rhythm_7_2",
-    name: "Feel the Pulse",
-    description: "Build confidence with the 6/8 groove",
+    name: "Counting Six Eighths",
+    description: "Count six eighth notes per bar in 6/8",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -154,8 +154,9 @@ export const rhythmUnit7Nodes = [
   // ============================================
   {
     id: "rhythm_7_3",
-    name: "Adding Quarters",
-    description: "Quarter notes fit two eighth-note subdivisions in 6/8",
+    name: "Quarters in 6/8",
+    description:
+      "Add quarter notes — two eighth-note subdivisions each — to the 6/8 pulse",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -212,7 +213,7 @@ export const rhythmUnit7Nodes = [
   // ============================================
   {
     id: "rhythm_7_4",
-    name: "Mixing It Up",
+    name: "Eighths in 6/8",
     description: "Add eighth notes — the natural subdivision of 6/8",
     category: CATEGORY,
     unit: UNIT_ID,
@@ -271,8 +272,8 @@ export const rhythmUnit7Nodes = [
   // ============================================
   {
     id: "rhythm_7_6",
-    name: "Quick Beats",
-    description: "Fast 6/8 patterns — how quick can you go?",
+    name: "6/8 Speed Drill",
+    description: "How fast can you play 6/8 patterns?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -321,8 +322,8 @@ export const rhythmUnit7Nodes = [
   // ============================================
   {
     id: "boss_rhythm_7",
-    name: "Compound Commander",
-    description: "Prove your mastery of 6/8 compound meter!",
+    name: "6/8 Compound Meter Boss",
+    description: "Master 6/8 compound meter!",
     unlockHint: "Complete all 6/8 lessons to unlock this challenge!",
     category: "boss", // Mini-Boss nodes have their own category
     unit: UNIT_ID,

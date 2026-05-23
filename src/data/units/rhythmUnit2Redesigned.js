@@ -21,7 +21,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 2;
-const UNIT_NAME = "Beat Builders";
+const UNIT_NAME = "Whole Notes";
 const CATEGORY = "rhythm";
 const START_ORDER = 106; // After Unit 1's 6 nodes (100-105)
 
@@ -153,8 +153,8 @@ export const rhythmUnit2Nodes = [
   // ============================================
   {
     id: "rhythm_2_3",
-    name: "Long and Short",
-    description: "Feel the difference between long and short notes",
+    name: "Whole vs. Quarter Contrast",
+    description: "Feel the contrast between whole notes and quarter notes",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -266,8 +266,8 @@ export const rhythmUnit2Nodes = [
   // ============================================
   {
     id: "rhythm_2_6",
-    name: "Speed Basics",
-    description: "How fast can you play all basic durations?",
+    name: "Basic Durations Speed Drill",
+    description: "How fast can you play whole, half, and quarter notes?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -316,8 +316,8 @@ export const rhythmUnit2Nodes = [
   // ============================================
   {
     id: "boss_rhythm_2",
-    name: "Duration Master",
-    description: "Prove your mastery of all basic durations!",
+    name: "Basic Durations Boss",
+    description: "Master whole, half, and quarter notes!",
     unlockHint: "Complete all lessons in this unit to unlock the challenge!",
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,

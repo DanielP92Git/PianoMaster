@@ -21,7 +21,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 4;
-const UNIT_NAME = "Quiet Moments";
+const UNIT_NAME = "Rests";
 const CATEGORY = "rhythm";
 const START_ORDER = 118; // After Unit 3's 6 nodes (112-117)
 
@@ -325,8 +325,8 @@ export const rhythmUnit4Nodes = [
   // ============================================
   {
     id: "rhythm_4_6",
-    name: "Speed Silence",
-    description: "How fast can you count silence?",
+    name: "Rests Speed Drill",
+    description: "How fast can you count rests?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -386,8 +386,8 @@ export const rhythmUnit4Nodes = [
   // ============================================
   {
     id: "boss_rhythm_4",
-    name: "Silence Master",
-    description: "Prove your mastery of counting silence!",
+    name: "Rests Boss",
+    description: "Master quarter, half, and whole rests!",
     unlockHint: "Complete all lessons in this unit to unlock the challenge!",
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,

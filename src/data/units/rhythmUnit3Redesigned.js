@@ -21,7 +21,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 3;
-const UNIT_NAME = "Fast Note Friends";
+const UNIT_NAME = "Eighth Notes";
 const CATEGORY = "rhythm";
 const START_ORDER = 112; // After Unit 2's 6 nodes (106-111)
 
@@ -153,9 +153,8 @@ export const rhythmUnit3Nodes = [
   // ============================================
   {
     id: "rhythm_3_3",
-    name: "Running and Walking",
-    description:
-      "Feel the difference between walking (quarter) and running (eighth)",
+    name: "Walking Quarters & Running Eighths",
+    description: "Compare walking quarter notes with running eighth notes",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -211,8 +210,8 @@ export const rhythmUnit3Nodes = [
   // ============================================
   {
     id: "rhythm_3_4",
-    name: "Mix It Up",
-    description: "Practice mixing quarters, halves, and eighths",
+    name: "Quarters, Halves & Eighths Mix",
+    description: "Mix quarter, half, and eighth notes in patterns",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -267,8 +266,8 @@ export const rhythmUnit3Nodes = [
   // ============================================
   {
     id: "rhythm_3_6",
-    name: "Speed Running",
-    description: "How fast can you play running notes?",
+    name: "Eighth-Note Speed Drill",
+    description: "How fast can you play eighth-note runs?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -323,8 +322,8 @@ export const rhythmUnit3Nodes = [
   // ============================================
   {
     id: "boss_rhythm_3",
-    name: "Running Notes Master",
-    description: "Prove your mastery of running notes!",
+    name: "Eighth-Note Boss",
+    description: "Master eighth notes and combined patterns!",
     unlockHint: "Complete all lessons in this unit to unlock the challenge!",
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
