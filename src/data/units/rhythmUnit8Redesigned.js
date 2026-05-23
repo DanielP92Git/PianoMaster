@@ -19,7 +19,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 8;
-const UNIT_NAME = "Off-Beat Magic";
+const UNIT_NAME = "Syncopation";
 const CATEGORY = "rhythm";
 const START_ORDER = 144; // After Unit 7's 6 nodes (138-143)
 
@@ -34,8 +34,8 @@ export const rhythmUnit8Nodes = [
   // ============================================
   {
     id: "rhythm_8_1",
-    name: "Off-Beat Surprise",
-    description: "Discover the magic of playing between the beats",
+    name: "Intro to Syncopation",
+    description: "Discover syncopation — accents between the beats",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -152,8 +152,8 @@ export const rhythmUnit8Nodes = [
   // ============================================
   {
     id: "rhythm_8_3",
-    name: "Dotted Groove",
-    description: "Learn the dotted quarter-eighth syncopation pattern",
+    name: "Dotted-Quarter–Eighth Syncopation",
+    description: "Practice the dotted-quarter–eighth syncopation pattern",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -209,8 +209,8 @@ export const rhythmUnit8Nodes = [
   // ============================================
   {
     id: "rhythm_8_4",
-    name: "Swing and Sway",
-    description: "Practice the dotted quarter groove",
+    name: "Syncopation in Phrases",
+    description: "Practice syncopation patterns in musical phrases",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -265,8 +265,8 @@ export const rhythmUnit8Nodes = [
   // ============================================
   {
     id: "rhythm_8_6",
-    name: "Rapid Syncopation",
-    description: "How fast can you tap those syncopated rhythms?",
+    name: "Syncopation Speed Drill",
+    description: "How fast can you play syncopated rhythms?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -326,8 +326,8 @@ export const rhythmUnit8Nodes = [
   // ============================================
   {
     id: "boss_rhythm_8",
-    name: "Rhythm Master",
-    description: "Prove your mastery of 6/8 compound meter AND syncopation!",
+    name: "Syncopation Boss",
+    description: "Master syncopation and combine it with 6/8!",
     unlockHint:
       "Master all syncopation patterns to face the ultimate rhythm challenge!",
     category: "boss", // Boss nodes have their own category

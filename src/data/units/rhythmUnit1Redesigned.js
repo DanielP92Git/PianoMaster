@@ -21,7 +21,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 1;
-const UNIT_NAME = "Rhythm Starters";
+const UNIT_NAME = "Quarter & Half Notes";
 const CATEGORY = "rhythm";
 const START_ORDER = 100;
 
@@ -209,8 +209,8 @@ export const rhythmUnit1Nodes = [
   // ============================================
   {
     id: "rhythm_1_6",
-    name: "Speed Challenge",
-    description: "How fast can you play quarters and halves?",
+    name: "Quarter & Half Speed Drill",
+    description: "How fast can you play quarter and half notes?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -256,8 +256,8 @@ export const rhythmUnit1Nodes = [
   // ============================================
   {
     id: "boss_rhythm_1",
-    name: "Basic Beats Master",
-    description: "Prove your mastery of quarters and halves!",
+    name: "Quarter & Half Boss",
+    description: "Master quarter and half notes!",
     unlockHint: "Complete all rhythm lessons above to unlock this challenge!",
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,

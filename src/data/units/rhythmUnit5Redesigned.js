@@ -19,7 +19,7 @@ import {
 import { EXERCISE_TYPES } from "../constants.js";
 
 const UNIT_ID = 5;
-const UNIT_NAME = "Magic Dots";
+const UNIT_NAME = "Dotted Notes & 3/4 Time";
 const CATEGORY = "rhythm";
 const START_ORDER = 125; // After Unit 4's 7 nodes (118-124)
 
@@ -323,8 +323,8 @@ export const rhythmUnit5Nodes = [
   // ============================================
   {
     id: "rhythm_5_6",
-    name: "Speed Dots",
-    description: "How fast can you play dotted rhythms?",
+    name: "Dotted-Note Speed Drill",
+    description: "How fast can you play dotted-note rhythms?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -383,8 +383,8 @@ export const rhythmUnit5Nodes = [
   // ============================================
   {
     id: "boss_rhythm_5",
-    name: "Dotted Notes Master",
-    description: "Prove your mastery of dotted notes and 3/4 time!",
+    name: "Dotted Notes & 3/4 Boss",
+    description: "Master dotted notes and 3/4 time!",
     unlockHint: "Complete all lessons in this unit to unlock the challenge!",
     category: "boss", // Boss nodes have their own category
     unit: UNIT_ID,
