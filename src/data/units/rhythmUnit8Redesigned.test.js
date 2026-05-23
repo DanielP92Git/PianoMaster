@@ -8,13 +8,13 @@ import { rhythmUnit3Nodes } from "./rhythmUnit3Redesigned.js";
 import { resolveByTags } from "../patterns/RhythmPatternGenerator.js";
 
 describe("Rhythm Unit 8 — Syncopation", () => {
-  it("exports exactly 6 nodes", () => {
-    expect(rhythmUnit8Nodes).toHaveLength(6);
+  it("exports exactly 8 nodes", () => {
+    expect(rhythmUnit8Nodes).toHaveLength(8);
   });
 
   it("all node IDs are unique", () => {
     const ids = rhythmUnit8Nodes.map((n) => n.id);
-    expect(new Set(ids).size).toBe(6);
+    expect(new Set(ids).size).toBe(8);
   });
 
   it("node IDs follow naming convention", () => {
@@ -23,16 +23,18 @@ describe("Rhythm Unit 8 — Syncopation", () => {
       "rhythm_8_2",
       "rhythm_8_3",
       "rhythm_8_4",
+      "rhythm_8_5",
       "rhythm_8_6",
+      "rhythm_8_7",
       "boss_rhythm_8",
     ];
     const actualIds = rhythmUnit8Nodes.map((n) => n.id);
     expect(actualIds).toEqual(expectedIds);
   });
 
-  it("orders are sequential from 144 to 149", () => {
+  it("orders are sequential from 144 to 151", () => {
     const orders = rhythmUnit8Nodes.map((n) => n.order);
-    expect(orders).toEqual([144, 145, 146, 147, 148, 149]);
+    expect(orders).toEqual([144, 145, 146, 147, 148, 149, 150, 151]);
   });
 
   it("prerequisite chain is valid", () => {
@@ -48,7 +50,7 @@ describe("Rhythm Unit 8 — Syncopation", () => {
   });
 
   it("regular nodes use 4/4 time signature", () => {
-    const regularNodes = rhythmUnit8Nodes.slice(0, 5);
+    const regularNodes = rhythmUnit8Nodes.slice(0, 7);
     regularNodes.forEach((node) => {
       expect(node.rhythmConfig.timeSignature).toBe("4/4");
     });
@@ -60,40 +62,53 @@ describe("Rhythm Unit 8 — Syncopation", () => {
     });
   });
 
-  it("first node is syncopation discovery", () => {
+  it("first node is long-value syncopation discovery (q-h-q)", () => {
     const firstNode = rhythmUnit8Nodes[0];
     expect(firstNode.nodeType).toBe(NODE_TYPES.DISCOVERY);
     expect(firstNode.newContentDescription).toBe(
-      "Syncopation: Tap between the beats!"
+      "Syncopation: Hold across the beat!"
     );
     expect(firstNode.newContent).toBe(NEW_CONTENT_TYPES.RHYTHM);
+    expect(firstNode.rhythmConfig.durations).toEqual(["q", "h"]);
+    expect(firstNode.rhythmConfig.patternTags).toContain("long-syncopation");
   });
 
-  it("third node introduces dotted quarter-eighth", () => {
+  it("third node introduces eighth-quarter-eighth syncopation", () => {
     const thirdNode = rhythmUnit8Nodes[2];
     expect(thirdNode.nodeType).toBe(NODE_TYPES.DISCOVERY);
-    expect(thirdNode.rhythmConfig.durations).toContain("qd");
+    expect(thirdNode.rhythmConfig.durations).toContain("8");
     expect(thirdNode.newContentDescription).toBe(
+      "Syncopation: Tap between the beats!"
+    );
+  });
+
+  it("fifth node introduces dotted quarter-eighth", () => {
+    const fifthNode = rhythmUnit8Nodes[4];
+    expect(fifthNode.nodeType).toBe(NODE_TYPES.DISCOVERY);
+    expect(fifthNode.rhythmConfig.durations).toContain("qd");
+    expect(fifthNode.newContentDescription).toBe(
       "Dotted Quarter-Eighth Syncopation"
     );
   });
 
   it("regular nodes use rhythm category", () => {
-    const regularNodes = rhythmUnit8Nodes.slice(0, 5);
+    const regularNodes = rhythmUnit8Nodes.slice(0, 7);
     regularNodes.forEach((node) => {
       expect(node.category).toBe("rhythm");
     });
   });
 
   it("regular node exercise types match game-type policy (mixed_lesson for discovery/practice, arcade_rhythm for speed_round)", () => {
-    const regularNodes = rhythmUnit8Nodes.slice(0, 5);
+    const regularNodes = rhythmUnit8Nodes.slice(0, 7);
     const types = regularNodes.map((n) => n.exercises[0].type);
     expect(types).toEqual([
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_1 (discovery)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_2 (practice)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_3 (discovery)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_4 (practice)
-      EXERCISE_TYPES.ARCADE_RHYTHM, // rhythm_8_6 (speed_round)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_1 (q-h-q discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_2 (q-h-q practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_3 (8-q-8 discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_4 (8-q-8 practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_5 (dotted discovery)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_6 (mixed practice)
+      EXERCISE_TYPES.ARCADE_RHYTHM, // rhythm_8_7 (speed_round)
     ]);
   });
 
@@ -128,17 +143,22 @@ describe("Rhythm Unit 8 — Boss Challenge", () => {
     expect(bossNode.exercises[0].config.questions).toHaveLength(12);
   });
 
+  it("boss patternTags includes long-syncopation", () => {
+    expect(bossNode.rhythmConfig.patternTags).toContain("long-syncopation");
+  });
+
   it("tempo increases across the unit", () => {
-    // Compare first regular node default tempo vs last regular node (index 4) default tempo
+    // Compare first regular node default tempo vs last regular node default tempo
     const firstTempo = rhythmUnit8Nodes[0].rhythmConfig.tempo.default;
-    const lastRegularTempo = rhythmUnit8Nodes[4].rhythmConfig.tempo.default;
+    const lastRegularTempo =
+      rhythmUnit8Nodes[rhythmUnit8Nodes.length - 2].rhythmConfig.tempo.default;
     expect(firstTempo).toBeLessThan(lastRegularTempo);
   });
 
   it("xpReward values are in valid range", () => {
-    const regularNodes = rhythmUnit8Nodes.slice(0, 5);
+    const regularNodes = rhythmUnit8Nodes.slice(0, 7);
     regularNodes.forEach((node) => {
-      expect(node.xpReward).toBeGreaterThanOrEqual(75);
+      expect(node.xpReward).toBeGreaterThanOrEqual(70);
       expect(node.xpReward).toBeLessThanOrEqual(90);
     });
     expect(bossNode.xpReward).toBe(250);

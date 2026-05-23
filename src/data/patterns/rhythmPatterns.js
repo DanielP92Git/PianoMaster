@@ -41,7 +41,13 @@ export const RHYTHM_PATTERNS = [
   {
     id: "q_44_001",
     timeSignature: "4/4",
-    tags: ["quarter-only", "quarter-half", "quarter-half-whole", "dotted-half"],
+    tags: [
+      "quarter-only",
+      "quarter-half",
+      "quarter-half-whole",
+      "dotted-half",
+      "long-syncopation",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -55,6 +61,7 @@ export const RHYTHM_PATTERNS = [
       "quarter-half-whole",
       "quarter-rest",
       "dotted-half",
+      "long-syncopation",
     ],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
@@ -63,12 +70,14 @@ export const RHYTHM_PATTERNS = [
   {
     id: "q_44_003",
     timeSignature: "4/4",
+    // q h q — canonical long-value syncopation (half on beat 2 crosses beat 3)
     tags: [
       "quarter-only",
       "quarter-half",
       "quarter-half-whole",
       "quarter-rest",
       "dotted-half",
+      "long-syncopation",
     ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
@@ -83,6 +92,7 @@ export const RHYTHM_PATTERNS = [
       "quarter-half-whole",
       "quarter-rest",
       "dotted-half",
+      "long-syncopation",
     ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -131,7 +141,13 @@ export const RHYTHM_PATTERNS = [
   {
     id: "qh_44_001",
     timeSignature: "4/4",
-    tags: ["quarter-half", "quarter-half-whole", "quarter-rest", "dotted-half"],
+    tags: [
+      "quarter-half",
+      "quarter-half-whole",
+      "quarter-rest",
+      "dotted-half",
+      "long-syncopation",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
   },
