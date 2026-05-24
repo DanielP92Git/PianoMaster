@@ -18,6 +18,8 @@ import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { SVG_COMPONENTS } from "../components/DurationCard";
 import { DURATION_INFO, getSyllable } from "../utils/durationInfo";
 import { schedulePatternPlayback } from "../utils/rhythmTimingUtils";
+import { binaryPatternToBeats } from "../utils/rhythmVexflowHelpers";
+import { RhythmStaffDisplay } from "../components/RhythmStaffDisplay";
 import BeamedSixteenthsIcon from "../../../../assets/musicSymbols/beamed-sixteenths.svg?react";
 
 // Discovery intro shows the duration the way kids will encounter it in music.
@@ -42,17 +44,23 @@ export default function DiscoveryIntroQuestion({
   const [isPlaying, setIsPlaying] = useState(false);
   const hasCompletedRef = useRef(false);
 
+  // A discovery card teaches either a single duration (focusDuration) OR a
+  // rhythmic figure (focusPattern). The pattern path renders a VexFlow staff
+  // and plays back the figure as audio at the node tempo. Used by Unit 8 to
+  // introduce q-h-q and the syncopated 8-q-8 family — both of which are
+  // multi-note figures, not single durations the child hasn't seen.
+  const focusPattern = question?.focusPattern;
   const focusDuration = question?.focusDuration;
   const info = DURATION_INFO[focusDuration];
   const SvgIcon =
     DISCOVERY_SVG_OVERRIDES[focusDuration] || SVG_COMPONENTS[focusDuration];
   const isWideGlyph = focusDuration === "16";
 
-  // Per-duration text overrides for discovery slides where the rhythm pattern
-  // (not the single note value) is being taught — e.g. "16" introduces the
-  // beamed group "ta-fa-te-fe", not the single-note "ti-ka" syllable.
-  const titleOverrideKey = `game.discovery.titleOverride.${focusDuration}`;
-  const syllableOverrideKey = `game.discovery.syllableOverride.${focusDuration}`;
+  // Override key resolves from focusPattern.id when in pattern mode, else
+  // from focusDuration. e.g. "qhq" → game.discovery.titleOverride.qhq.
+  const overrideKey = focusPattern?.id || focusDuration;
+  const titleOverrideKey = `game.discovery.titleOverride.${overrideKey}`;
+  const syllableOverrideKey = `game.discovery.syllableOverride.${overrideKey}`;
   const hasTitleOverride = i18n.exists(titleOverrideKey, { ns: "common" });
   const hasSyllableOverride = i18n.exists(syllableOverrideKey, {
     ns: "common",
@@ -63,8 +71,17 @@ export default function DiscoveryIntroQuestion({
     ? t(`rhythm.duration.${info.i18nKey?.split(".").pop()}`, info.i18nKey)
     : "";
 
-  // Use a moderate tempo for the audio demo
-  const audioEngine = useAudioEngine(80, {
+  // Beats for the pattern path — derived once from the binary array. Empty
+  // array when in single-duration mode (the existing code path).
+  const patternBeats = focusPattern
+    ? binaryPatternToBeats(focusPattern.binary)
+    : null;
+  const patternTempo = focusPattern?.tempo || 80;
+  const patternTimeSignature = focusPattern?.timeSignature || "4/4";
+
+  // Use a moderate tempo for the audio demo (pattern mode uses node tempo
+  // so the kid hears the figure at the speed they'll be tapping it).
+  const audioEngine = useAudioEngine(patternTempo, {
     sharedAudioContext: audioContextRef.current,
   });
 
@@ -108,6 +125,18 @@ export default function DiscoveryIntroQuestion({
       } catch {
         /* ignore */
       }
+    }
+
+    // Pattern path — play the figure (q-h-q, syn-syn, ...) at node tempo.
+    if (patternBeats) {
+      const { totalDuration } = schedulePatternPlayback(
+        patternBeats,
+        patternTempo,
+        ctx,
+        enginePlayNote
+      );
+      setTimeout(() => setIsPlaying(false), (totalDuration + 0.3) * 1000);
+      return;
     }
 
     const units = info?.durationUnits || 4;
@@ -193,6 +222,8 @@ export default function DiscoveryIntroQuestion({
     focusDuration,
     info,
     enginePlayNote,
+    patternBeats,
+    patternTempo,
   ]);
 
   const handleGotIt = useCallback(() => {
@@ -201,7 +232,8 @@ export default function DiscoveryIntroQuestion({
     onComplete(1, 1);
   }, [onComplete, disabled]);
 
-  if (!info || !SvgIcon) return null;
+  // Need either a pattern to render via VexFlow or a single-duration SVG.
+  if (!patternBeats && (!info || !SvgIcon)) return null;
 
   // Landscape-aware class sets — landscape compresses paddings/gaps and switches
   // to a horizontal split so the card fits ≤420px-tall mobile-landscape viewports.
@@ -264,12 +296,28 @@ export default function DiscoveryIntroQuestion({
     >
       {/* Glass card */}
       <div className={cardClass}>
-        {/* Large SVG icon (left column in landscape, top in portrait) */}
+        {/* Figure preview (left column in landscape, top in portrait).
+            Pattern mode renders a VexFlow staff; single-duration mode renders
+            the existing SVG glyph. */}
         <div
           dir="ltr"
           className={`flex items-center justify-center text-white${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
-          <SvgIcon className={svgClass} aria-hidden="true" />
+          {patternBeats ? (
+            <div
+              className={
+                isLandscape ? "w-72 md:w-80 lg:w-96" : "w-72 md:w-80 lg:w-96"
+              }
+              aria-hidden="true"
+            >
+              <RhythmStaffDisplay
+                beats={patternBeats}
+                timeSignature={patternTimeSignature}
+              />
+            </div>
+          ) : (
+            <SvgIcon className={svgClass} aria-hidden="true" />
+          )}
         </div>
 
         {/* Right column wrapper (landscape) — title + name + syllable + buttons.

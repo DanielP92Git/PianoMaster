@@ -1865,10 +1865,14 @@
       "listen": "Listen",
       "gotIt": "Got it!",
       "titleOverride": {
-        "16": "Meet the <accent>four sixteenth notes</accent> rhythm"
+        "16": "Meet the <accent>four sixteenth notes</accent> rhythm",
+        "qhq": "Meet the <accent>hold-across</accent> rhythm!",
+        "synsyn": "Meet the <accent>off-beat</accent> rhythm!"
       },
       "syllableOverride": {
-        "16": "ta-fa-te-fe"
+        "16": "ta-fa-te-fe",
+        "qhq": "ta — ta-a — ta",
+        "synsyn": "and-a-TA  and-a-TA"
       }
     },
     "pulse": {
