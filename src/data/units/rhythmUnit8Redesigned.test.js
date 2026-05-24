@@ -82,13 +82,30 @@ describe("Rhythm Unit 8 — Syncopation", () => {
     );
   });
 
-  it("fifth node introduces dotted quarter-eighth", () => {
+  it("fifth node is combined q-h-q + 8-q-8 practice (2 bars)", () => {
     const fifthNode = rhythmUnit8Nodes[4];
-    expect(fifthNode.nodeType).toBe(NODE_TYPES.DISCOVERY);
-    expect(fifthNode.rhythmConfig.durations).toContain("qd");
-    expect(fifthNode.newContentDescription).toBe(
-      "Dotted Quarter-Eighth Syncopation"
+    expect(fifthNode.nodeType).toBe(NODE_TYPES.PRACTICE);
+    expect(fifthNode.rhythmConfig.durations).toEqual(["q", "h", "8"]);
+    expect(fifthNode.rhythmConfig.measureCount).toBe(2);
+    expect(fifthNode.rhythmConfig.patternTags).toEqual(
+      expect.arrayContaining(["long-syncopation", "syncopation"])
     );
+    expect(fifthNode.rhythmConfig.patternTagMode).toBe("any");
+  });
+
+  it("longer-phrase nodes (2, 4, 5, 6) use measureCount 2", () => {
+    [1, 3, 4, 5].forEach((idx) => {
+      expect(rhythmUnit8Nodes[idx].rhythmConfig.measureCount).toBe(2);
+    });
+  });
+
+  it("dotted syncopation is no longer taught in Unit 8", () => {
+    rhythmUnit8Nodes.forEach((node) => {
+      expect(node.rhythmConfig.patternTags || []).not.toContain(
+        "dotted-syncopation"
+      );
+      expect(node.skills || []).not.toContain("syncopation_dotted_quarter");
+    });
   });
 
   it("regular nodes use rhythm category", () => {
@@ -103,11 +120,11 @@ describe("Rhythm Unit 8 — Syncopation", () => {
     const types = regularNodes.map((n) => n.exercises[0].type);
     expect(types).toEqual([
       EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_1 (q-h-q discovery)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_2 (q-h-q practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_2 (q-h-q longer, 2 bars)
       EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_3 (8-q-8 discovery)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_4 (8-q-8 practice)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_5 (dotted discovery)
-      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_6 (mixed practice)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_4 (8-q-8 longer, 2 bars)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_5 (combined q-h-q + 8-q-8)
+      EXERCISE_TYPES.MIXED_LESSON, // rhythm_8_6 (mixed syncopation practice)
       EXERCISE_TYPES.ARCADE_RHYTHM, // rhythm_8_7 (speed_round)
     ]);
   });
