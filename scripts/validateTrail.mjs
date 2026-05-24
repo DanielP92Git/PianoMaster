@@ -392,7 +392,10 @@ function validateMultiAngleGames() {
  */
 const RENDERER_TYPES = new Set([
   'visual_recognition', 'syllable_matching', 'rhythm_tap', 'pulse',
-  'discovery_intro', 'rhythm_reading', 'rhythm_dictation', 'count_subdivision'
+  'discovery_intro', 'rhythm_reading', 'rhythm_dictation', 'count_subdivision',
+  // compose_rhythm: creative tile-composition question (Unit 8 Node 5).
+  // Registered by quick task 260524-l3r.
+  'compose_rhythm',
 ]);
 
 function validateMixedLessons() {
@@ -429,9 +432,22 @@ function validateMixedLessons() {
         }
       }
 
-      // Rule 4: question count should be 8-10 (soft warning), 10-12 for boss/mini_boss
+      // Rule 4: question count should be 8-10 (soft warning), 10-12 for boss/mini_boss.
+      // compose_rhythm creative milestone allows shorter node — see quick task 260524-l3r.
+      // When a node has any `compose_rhythm` question entry, the per-node minimum
+      // drops to 5 (1 compose + 4 verification questions).
       const isBossLike = node.nodeType === 'mini_boss' || node.nodeType === 'boss';
-      const minQ = isBossLike ? 10 : node.nodeType === 'discovery' ? 4 : 8;
+      const hasComposeRhythm = questions.some((q) => q.type === 'compose_rhythm');
+      let minQ;
+      if (isBossLike) {
+        minQ = 10;
+      } else if (hasComposeRhythm) {
+        minQ = 5;
+      } else if (node.nodeType === 'discovery') {
+        minQ = 4;
+      } else {
+        minQ = 8;
+      }
       const maxQ = isBossLike ? 12 : 10;
       if (questions.length < minQ || questions.length > maxQ) {
         console.warn(`  WARNING: Node "${node.id}" mixed_lesson has ${questions.length} questions (expected ${minQ}-${maxQ})`);
@@ -611,6 +627,9 @@ function validateMeasureCountPolicy() {
   const SKIP_EXERCISE_TYPES = new Set([
     'pulse', 'visual_recognition', 'syllable_matching',
     'mixed_lesson', 'note_recognition', 'memory_game',
+    // compose_rhythm tiles are pre-authored per-question, not measure-count-driven
+    // (quick task 260524-l3r).
+    'compose_rhythm',
   ]);
 
   const errors = [];
