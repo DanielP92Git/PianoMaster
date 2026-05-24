@@ -1863,7 +1863,13 @@
       "listenButton": "Listen to the sound",
       "playing": "Playing...",
       "listen": "Listen",
-      "gotIt": "Got it!"
+      "gotIt": "Got it!",
+      "titleOverride": {
+        "16": "Meet the <accent>four sixteenth notes</accent> rhythm"
+      },
+      "syllableOverride": {
+        "16": "ta-fa-te-fe"
+      }
     },
     "pulse": {
       "instruction": "Tap with the beat!",
@@ -1893,5 +1899,15 @@
       "title": "BOSS FIGHT",
       "subtitle": "Show what you've learned!"
     }
+  },
+  "compose": {
+    "instruction": "Pick 2 tiles to build your rhythm",
+    "palette": "Your tiles",
+    "slot": {
+      "empty": "Tap a tile",
+      "filled": "Tap to remove"
+    },
+    "play": "Play your rhythm",
+    "done": "I'm done!"
   }
 }
