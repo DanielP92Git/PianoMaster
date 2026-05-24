@@ -286,11 +286,12 @@
     "Eighths in 6/8": "Eighths in 6/8",
     "6/8 Speed Drill": "6/8 Speed Drill",
     "6/8 Compound Meter Boss": "6/8 Compound Meter Boss",
-    "Intro to Syncopation": "Intro to Syncopation",
-    "Between the Beats": "Between the Beats",
-    "Dotted-Quarter–Eighth Syncopation": "Dotted-Quarter–Eighth Syncopation",
-    "Syncopation in Phrases": "Syncopation in Phrases",
-    "Syncopation Speed Drill": "Syncopation Speed Drill",
+    "Hold-Across Warm-Up": "Hold-Across Warm-Up",
+    "Surprise Beat: Listen & Echo": "Surprise Beat: Listen & Echo",
+    "Read the Off-Beat": "Read the Off-Beat",
+    "Body Split": "Body Split",
+    "Build a Syncopation": "Build a Syncopation",
+    "Off-Beat Speed Drill": "Off-Beat Speed Drill",
     "Syncopation Boss": "Syncopation Boss"
   },
   "descriptions": {
@@ -414,12 +415,13 @@
     "Eighths in 6/8": "Add eighth notes — the natural subdivision of 6/8",
     "6/8 Speed Drill": "How fast can you play 6/8 patterns?",
     "6/8 Compound Meter Boss": "Master 6/8 compound meter!",
-    "Intro to Syncopation": "Discover syncopation — accents between the beats",
-    "Between the Beats": "Practice the eighth-quarter-eighth syncopation pattern",
-    "Dotted-Quarter–Eighth Syncopation": "Practice the dotted-quarter–eighth syncopation pattern",
-    "Syncopation in Phrases": "Practice syncopation patterns in musical phrases",
-    "Syncopation Speed Drill": "How fast can you play syncopated rhythms?",
-    "Syncopation Boss": "Master syncopation and combine it with 6/8!"
+    "Hold-Across Warm-Up": "Re-ground in 4/4 with long notes that hover over the beat",
+    "Surprise Beat: Listen & Echo": "Hear an off-beat surprise — a sound where the beat isn't!",
+    "Read the Off-Beat": "Spot the syncopated bar — detective mode",
+    "Body Split": "Tap the pulse and the off-beat together",
+    "Build a Syncopation": "Pick tiles, build a 2-bar phrase, hear it play!",
+    "Off-Beat Speed Drill": "How fast can you tap syncopated rhythms?",
+    "Syncopation Boss": "Master off-beat magic — capstone of the unit!"
   },
   "unlockHints": {
     "First Steps Challenge": "Complete all 7 lessons above to unlock this challenge!",
@@ -440,7 +442,16 @@
     "Accidentals Master": "Beat both the Sharp Star and Flat Star to face the ultimate accidentals challenge!",
     "Key Signature Master": "Complete all key signature lessons to face the ultimate challenge!",
     "6/8 Compound Meter Boss": "Complete all compound meter lessons to unlock this challenge!",
-    "Syncopation Boss": "Master both compound meter and syncopation to face the ultimate rhythm challenge!"
+    "Syncopation Boss": "Master off-beat magic to face the syncopation boss!"
+  },
+  "unit8Nodes": {
+    "rhythm_8_1": "Hold-Across Warm-Up",
+    "rhythm_8_2": "Surprise Beat: Listen & Echo",
+    "rhythm_8_3": "Read the Off-Beat",
+    "rhythm_8_4": "Body Split",
+    "rhythm_8_5": "Build a Syncopation",
+    "rhythm_8_6": "Off-Beat Speed Drill",
+    "boss_rhythm_8": "Syncopation Boss"
   },
   "boss": {
     "cleared": "Boss Cleared!",
