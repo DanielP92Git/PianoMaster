@@ -1863,7 +1863,13 @@
       "listenButton": "Listen to the sound",
       "playing": "Playing...",
       "listen": "Listen",
-      "gotIt": "Got it!"
+      "gotIt": "Got it!",
+      "titleOverride": {
+        "16": "Meet the <accent>four sixteenth notes</accent> rhythm"
+      },
+      "syllableOverride": {
+        "16": "ta-fa-te-fe"
+      }
     },
     "pulse": {
       "instruction": "Tap with the beat!",

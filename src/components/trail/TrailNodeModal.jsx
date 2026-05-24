@@ -28,7 +28,8 @@ import QuarterNoteIcon from "../../assets/musicSymbols/quarter-note.svg?react";
 import HalfNoteIcon from "../../assets/musicSymbols/half-note.svg?react";
 import WholeNoteIcon from "../../assets/musicSymbols/whole-note-head.svg?react";
 import EighthNoteIcon from "../../assets/musicSymbols/eighth-note.svg?react";
-import SixteenthNoteIcon from "../../assets/musicSymbols/sixteenth-note.svg?react";
+import BeamedEighthsIcon from "../../assets/musicSymbols/beamed-eighths.svg?react";
+import BeamedSixteenthsIcon from "../../assets/musicSymbols/beamed-sixteenths.svg?react";
 import DottedQuarterNoteIcon from "../../assets/musicSymbols/dotted-quarter-note.svg?react";
 import DottedHalfNoteIcon from "../../assets/musicSymbols/dotted-half-note.svg?react";
 import QuarterRestIcon from "../../assets/musicSymbols/quarter-rest.svg?react";
@@ -43,8 +44,8 @@ const SKILL_SVG_MAP = {
   quarter_note: QuarterNoteIcon,
   half_note: HalfNoteIcon,
   whole_note: WholeNoteIcon,
-  eighth_note: EighthNoteIcon,
-  sixteenth_note: SixteenthNoteIcon,
+  eighth_note: BeamedEighthsIcon,
+  sixteenth_note: BeamedSixteenthsIcon,
   dotted_quarter_note: DottedQuarterNoteIcon,
   dotted_half_note: DottedHalfNoteIcon,
   quarter_rest: QuarterRestIcon,
@@ -54,6 +55,15 @@ const SKILL_SVG_MAP = {
   "68_compound_meter": SixEightTimeIcon,
   quarter_note_68: QuarterNoteIcon,
   eighth_note_68: EighthNoteIcon,
+};
+
+// Head-only SVGs (no stem in viewBox) appear oversized at the default
+// stemmed-note height. Render them smaller so visual weight matches stemmed notes.
+const SKILL_SVG_SIZE_OVERRIDE = {
+  whole_note: "h-5 w-auto sm:h-6",
+  whole_rest: "h-5 w-auto sm:h-6",
+  half_rest: "h-5 w-auto sm:h-6",
+  sixteenth_note: "h-6 w-auto sm:h-7",
 };
 
 /**
@@ -560,7 +570,9 @@ const TrailNodeModal = ({
                   >
                     {SkillSvg ? (
                       <SkillSvg
-                        className="h-9 w-auto sm:h-10"
+                        className={
+                          SKILL_SVG_SIZE_OVERRIDE[skill] || "h-9 w-auto sm:h-10"
+                        }
                         aria-hidden="true"
                       />
                     ) : (

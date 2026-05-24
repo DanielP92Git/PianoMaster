@@ -1870,7 +1870,13 @@
       "listenButton": "הקשיבו לצליל",
       "playing": "מתנגן...",
       "listen": "הקשיבו",
-      "gotIt": "הבנתי!"
+      "gotIt": "הבנתי!",
+      "titleOverride": {
+        "16": "הכירו את המקצב <accent>ארבע שֵׁשׁ-עֶשְׂרִיּוֹת</accent>"
+      },
+      "syllableOverride": {
+        "16": "טָה-פָה-טֶה-פֶה"
+      }
     },
     "pulse": {
       "instruction": "הקישו עם הפעמה!",

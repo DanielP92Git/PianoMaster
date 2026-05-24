@@ -12,7 +12,7 @@ vi.mock("react-i18next", () => ({
       if (typeof fallback === "string") return fallback;
       return key;
     },
-    i18n: { language: "en" },
+    i18n: { language: "en", exists: () => false },
   })),
   // <Trans> stub — renders the `defaults` string (falls back to i18nKey).
   // Tests don't assert on the title text, so plain-text output is sufficient.

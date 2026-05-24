@@ -18,6 +18,14 @@ import { useMotionTokens } from "../../../../utils/useMotionTokens";
 import { SVG_COMPONENTS } from "../components/DurationCard";
 import { DURATION_INFO, getSyllable } from "../utils/durationInfo";
 import { schedulePatternPlayback } from "../utils/rhythmTimingUtils";
+import BeamedSixteenthsIcon from "../../../../assets/musicSymbols/beamed-sixteenths.svg?react";
+
+// Discovery intro shows the duration the way kids will encounter it in music.
+// Sixteenths always appear beamed in beginner curricula, so override the
+// single-flag glyph from SVG_COMPONENTS for the "16" focus.
+const DISCOVERY_SVG_OVERRIDES = {
+  16: BeamedSixteenthsIcon,
+};
 
 export default function DiscoveryIntroQuestion({
   question,
@@ -36,8 +44,21 @@ export default function DiscoveryIntroQuestion({
 
   const focusDuration = question?.focusDuration;
   const info = DURATION_INFO[focusDuration];
-  const SvgIcon = SVG_COMPONENTS[focusDuration];
-  const syllable = getSyllable(focusDuration, syllableLanguage);
+  const SvgIcon =
+    DISCOVERY_SVG_OVERRIDES[focusDuration] || SVG_COMPONENTS[focusDuration];
+  const isWideGlyph = focusDuration === "16";
+
+  // Per-duration text overrides for discovery slides where the rhythm pattern
+  // (not the single note value) is being taught — e.g. "16" introduces the
+  // beamed group "ta-fa-te-fe", not the single-note "ti-ka" syllable.
+  const titleOverrideKey = `game.discovery.titleOverride.${focusDuration}`;
+  const syllableOverrideKey = `game.discovery.syllableOverride.${focusDuration}`;
+  const hasTitleOverride = i18n.exists(titleOverrideKey, { ns: "common" });
+  const hasSyllableOverride = i18n.exists(syllableOverrideKey, {
+    ns: "common",
+  });
+  const baseSyllable = getSyllable(focusDuration, syllableLanguage);
+  const syllable = hasSyllableOverride ? t(syllableOverrideKey) : baseSyllable;
   const durationName = info
     ? t(`rhythm.duration.${info.i18nKey?.split(".").pop()}`, info.i18nKey)
     : "";
@@ -195,9 +216,14 @@ export default function DiscoveryIntroQuestion({
     ? "text-start text-lg font-bold text-white"
     : "text-center text-xl font-bold text-white";
   // SVG bumps for tablet (D-07, CORE-01). Literal class strings for purge safety.
-  const svgClass = isLandscape
-    ? "h-24 w-16 md:h-40 md:w-28 lg:h-48 lg:w-32"
-    : "h-40 w-28 md:h-56 md:w-40 lg:h-64 lg:w-44";
+  // Wide glyphs (e.g. 4 beamed sixteenths, aspect ~1.6) need a horizontal box.
+  const svgClass = isWideGlyph
+    ? isLandscape
+      ? "h-16 w-40 md:h-24 md:w-56 lg:h-28 lg:w-64"
+      : "h-20 w-48 md:h-28 md:w-64 lg:h-32 lg:w-72"
+    : isLandscape
+      ? "h-24 w-16 md:h-40 md:w-28 lg:h-48 lg:w-32"
+      : "h-40 w-28 md:h-56 md:w-40 lg:h-64 lg:w-44";
   const syllableClass = isLandscape
     ? "text-start text-base text-white/70"
     : "text-center text-lg text-white/70";
@@ -212,13 +238,21 @@ export default function DiscoveryIntroQuestion({
   // The duration name inside the title is accent-colored via a <Trans> tag.
   const title = (
     <h2 className={titleClass}>
-      <Trans
-        t={t}
-        i18nKey="game.discovery.meetNew"
-        defaults="Meet the <accent>{{name}}</accent>!"
-        values={{ name: durationName }}
-        components={{ accent: <span className="text-indigo-300" /> }}
-      />
+      {hasTitleOverride ? (
+        <Trans
+          t={t}
+          i18nKey={titleOverrideKey}
+          components={{ accent: <span className="text-indigo-300" /> }}
+        />
+      ) : (
+        <Trans
+          t={t}
+          i18nKey="game.discovery.meetNew"
+          defaults="Meet the <accent>{{name}}</accent>!"
+          values={{ name: durationName }}
+          components={{ accent: <span className="text-indigo-300" /> }}
+        />
+      )}
     </h2>
   );
 
