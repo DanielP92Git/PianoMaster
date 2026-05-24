@@ -113,7 +113,19 @@ export const rhythmUnit8Nodes = [
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "discovery_intro", focusDuration: "h" },
+            {
+              type: "discovery_intro",
+              focusDuration: "h",
+              // Pattern mode — render q-h-q on a staff (canonical q_44_003
+              // binary) and play it back at the node tempo so the child
+              // experiences the figure, not the lone half note already taught
+              // in Unit 1.
+              focusPattern: {
+                id: "qhq",
+                binary: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                tempo: 62,
+              },
+            },
             { type: "pulse" },
             { type: "rhythm_tap" },
             { type: "visual_recognition" },
@@ -170,7 +182,19 @@ export const rhythmUnit8Nodes = [
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "discovery_intro", focusDuration: "8" },
+            {
+              type: "discovery_intro",
+              focusDuration: "8",
+              // Pattern mode — render the canonical "syn-co-pa syn-co-pa"
+              // bar (syn_44_002 binary: 8r-8-q twice) and play it back at
+              // node tempo. This is the figure the child is about to
+              // recognize and echo, not a lone eighth note.
+              focusPattern: {
+                id: "synsyn",
+                binary: [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+                tempo: 67,
+              },
+            },
             { type: "rhythm_tap" },
             { type: "rhythm_tap" },
             { type: "visual_recognition" },

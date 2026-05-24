@@ -64,6 +64,36 @@ vi.mock("../../utils/rhythmTimingUtils", () => ({
   })),
 }));
 
+// Mock the VexFlow helpers — pattern mode converts a binary array to beats
+// and renders RhythmStaffDisplay; tests just need to verify the function is
+// called with the right binary, not the actual VexFlow output.
+vi.mock("../../utils/rhythmVexflowHelpers", () => ({
+  binaryPatternToBeats: vi.fn((binary) =>
+    // Mirror the real algorithm closely enough for assertions: each `1` starts
+    // a beat, each `0` extends it by one sixteenth unit.
+    binary.reduce((acc, cell, i) => {
+      if (cell === 1 || (cell === 0 && i === 0)) {
+        acc.push({ durationUnits: 1, isRest: cell === 0 });
+      } else {
+        acc[acc.length - 1].durationUnits += 1;
+      }
+      return acc;
+    }, [])
+  ),
+}));
+
+// Mock RhythmStaffDisplay — pattern-mode renders a staff; tests just verify
+// the wrapper is present in the DOM with the right beats prop.
+vi.mock("../../components/RhythmStaffDisplay", () => ({
+  RhythmStaffDisplay: ({ beats, timeSignature }) => (
+    <div
+      data-testid="rhythm-staff"
+      data-beat-count={beats?.length}
+      data-time-signature={timeSignature}
+    />
+  ),
+}));
+
 // Mock DurationCard — provide SVG_COMPONENTS with stub components for needed keys
 vi.mock("../../components/DurationCard", () => ({
   SVG_COMPONENTS: {
@@ -223,5 +253,51 @@ describe("DiscoveryIntroQuestion", () => {
     );
 
     expect(screen.getByText("Got it!")).toBeInTheDocument();
+  });
+
+  // -------------------------------------------------------------------------
+  // focusPattern path — pattern-mode discovery cards for Unit 8 (q-h-q,
+  // syn-syn) render a VexFlow staff and play the figure at node tempo
+  // instead of showing a single-duration SVG glyph.
+  // -------------------------------------------------------------------------
+
+  it("renders RhythmStaffDisplay (not SVG icon) when focusPattern is provided", () => {
+    const qhqBinary = [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
+    render(
+      <DiscoveryIntroQuestion
+        question={{
+          focusDuration: "h",
+          focusPattern: { id: "qhq", binary: qhqBinary, tempo: 62 },
+        }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    expect(screen.getByTestId("rhythm-staff")).toBeInTheDocument();
+    expect(screen.queryByTestId("duration-icon")).not.toBeInTheDocument();
+  });
+
+  it("plays the focusPattern binary at the focusPattern tempo", async () => {
+    const synsynBinary = [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0];
+    render(
+      <DiscoveryIntroQuestion
+        question={{
+          focusDuration: "8",
+          focusPattern: { id: "synsyn", binary: synsynBinary, tempo: 67 },
+        }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    const listenButton = screen.getByText("Listen");
+    await act(async () => {
+      fireEvent.click(listenButton);
+    });
+
+    expect(schedulePatternPlayback).toHaveBeenCalledOnce();
+    const [beats, tempo, , playNoteFn] = schedulePatternPlayback.mock.calls[0];
+    expect(beats.length).toBeGreaterThan(0);
+    expect(tempo).toBe(67);
+    expect(typeof playNoteFn).toBe("function");
   });
 });

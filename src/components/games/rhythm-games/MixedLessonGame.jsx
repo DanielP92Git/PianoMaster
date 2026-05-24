@@ -231,7 +231,11 @@ export default function MixedLessonGame() {
         };
       }
       if (entry.type === "discovery_intro") {
-        return { type: "discovery_intro", focusDuration: entry.focusDuration };
+        return {
+          type: "discovery_intro",
+          focusDuration: entry.focusDuration,
+          focusPattern: entry.focusPattern,
+        };
       }
       if (entry.type === "count_subdivision") {
         return {
