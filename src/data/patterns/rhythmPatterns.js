@@ -38,14 +38,23 @@ export const RHYTHM_PATTERNS = [
   // ============================================================================
 
   // q q q q  -- 4 onsets
+  // Tagged `syncopation-heavy` (quick task 260524-l3r) as a calm on-the-beat
+  // contrast bar in the Unit 8 boss pool; ~73% of boss bars stay syncopated.
   {
     id: "q_44_001",
     timeSignature: "4/4",
-    tags: ["quarter-only", "quarter-half", "quarter-half-whole", "dotted-half"],
+    tags: [
+      "quarter-only",
+      "quarter-half",
+      "quarter-half-whole",
+      "dotted-half",
+      "syncopation-heavy",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
   // h/q+qr  q  q  -- 3 onsets (beats 1, 3, 4)
+  // Tagged `syncopation-heavy` (quick task 260524-l3r) as a contrast bar.
   {
     id: "q_44_002",
     timeSignature: "4/4",
@@ -55,6 +64,7 @@ export const RHYTHM_PATTERNS = [
       "quarter-half-whole",
       "quarter-rest",
       "dotted-half",
+      "syncopation-heavy",
     ],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
@@ -63,19 +73,21 @@ export const RHYTHM_PATTERNS = [
   {
     id: "q_44_003",
     timeSignature: "4/4",
-    // q h q — canonical long-value syncopation (half on beat 2 crosses beat 3)
+    // q h q — the agogic-accent / hold-across gesture (half on beat 2 crosses beat 3).
+    // Note: the legacy `long-syncopation` tag was dropped per quick task 260524-l3r —
+    // Unit 8 reframes q-h-q as "Hold Across the Beat," not syncopation.
     tags: [
       "quarter-only",
       "quarter-half",
       "quarter-half-whole",
       "quarter-rest",
       "dotted-half",
-      "long-syncopation",
     ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
   },
   // q  q  h/q+qr  -- 3 onsets (beats 1, 2, 3)
+  // Tagged `syncopation-heavy` (quick task 260524-l3r) as a contrast bar.
   {
     id: "q_44_004",
     timeSignature: "4/4",
@@ -85,6 +97,7 @@ export const RHYTHM_PATTERNS = [
       "quarter-half-whole",
       "quarter-rest",
       "dotted-half",
+      "syncopation-heavy",
     ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -130,10 +143,17 @@ export const RHYTHM_PATTERNS = [
     pattern: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
   // h  h  /  q+qr  q+qr  -- 2 onsets (beats 1, 3)
+  // Tagged `syncopation-heavy` (quick task 260524-l3r) as a calm contrast bar.
   {
     id: "qh_44_001",
     timeSignature: "4/4",
-    tags: ["quarter-half", "quarter-half-whole", "quarter-rest", "dotted-half"],
+    tags: [
+      "quarter-half",
+      "quarter-half-whole",
+      "quarter-rest",
+      "dotted-half",
+      "syncopation-heavy",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
   },
@@ -224,10 +244,12 @@ export const RHYTHM_PATTERNS = [
     pattern: [1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
   // 8 8 q q q  (2+2+4+4+4 = 16)
+  // Tagged `syncopation-heavy` (quick task 260524-l3r) as a contrast bar
+  // (eighth-pair pickup but no off-beat accent).
   {
     id: "qe_44_003",
     timeSignature: "4/4",
-    tags: ["quarter-eighth", "quarter-half-whole-eighth"],
+    tags: ["quarter-eighth", "quarter-half-whole-eighth", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -240,10 +262,11 @@ export const RHYTHM_PATTERNS = [
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
   },
   // q q q 8 8  (4+4+4+2+2 = 16)
+  // Tagged `syncopation-heavy` (quick task 260524-l3r) as a contrast bar.
   {
     id: "qe_44_005",
     timeSignature: "4/4",
-    tags: ["quarter-eighth"],
+    tags: ["quarter-eighth", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0],
   },
@@ -446,7 +469,12 @@ export const RHYTHM_PATTERNS = [
   {
     id: "dq_44_002",
     timeSignature: "4/4",
-    tags: ["dotted-quarter", "syncopation", "dotted-syncopation"],
+    tags: [
+      "dotted-quarter",
+      "syncopation",
+      "dotted-syncopation",
+      "syncopation-heavy",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -462,7 +490,12 @@ export const RHYTHM_PATTERNS = [
   {
     id: "dq_44_004",
     timeSignature: "4/4",
-    tags: ["dotted-quarter", "syncopation", "dotted-syncopation"],
+    tags: [
+      "dotted-quarter",
+      "syncopation",
+      "dotted-syncopation",
+      "syncopation-heavy",
+    ],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -505,7 +538,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_001",
     timeSignature: "4/4",
-    tags: ["syncopation", "quarter-eighth"],
+    tags: ["syncopation", "quarter-eighth", "syncopation-heavy"],
     measures: 1,
     pattern: [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -513,7 +546,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_002",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -521,7 +554,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_003",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
   },
@@ -529,7 +562,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_004",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -537,7 +570,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_005",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -545,7 +578,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_006",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
   },
@@ -553,7 +586,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_007",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -561,7 +594,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_008",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
   },
@@ -569,7 +602,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_009",
     timeSignature: "4/4",
-    tags: ["syncopation", "dotted-syncopation"],
+    tags: ["syncopation", "dotted-syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -577,7 +610,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_010",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0],
   },
@@ -809,7 +842,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_011",
     timeSignature: "4/4",
-    tags: ["syncopation", "quarter-eighth"],
+    tags: ["syncopation", "quarter-eighth", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
   },
@@ -817,7 +850,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_012",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -1093,7 +1126,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_013",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0],
   },
@@ -1102,7 +1135,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "syn_44_014",
     timeSignature: "4/4",
-    tags: ["syncopation"],
+    tags: ["syncopation", "syncopation-heavy"],
     measures: 1,
     pattern: [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
