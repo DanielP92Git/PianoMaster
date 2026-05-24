@@ -24,6 +24,7 @@ import PulseQuestion from "./renderers/PulseQuestion";
 import DiscoveryIntroQuestion from "./renderers/DiscoveryIntroQuestion";
 import RhythmReadingQuestion from "./renderers/RhythmReadingQuestion";
 import RhythmDictationQuestion from "./renderers/RhythmDictationQuestion";
+import ComposeRhythmQuestion from "./renderers/ComposeRhythmQuestion";
 import BackButton from "../../ui/BackButton";
 import VictoryScreen from "../VictoryScreen";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
@@ -218,6 +219,16 @@ export default function MixedLessonGame() {
       }
       if (entry.type === "pulse") {
         return { type: "pulse", rhythmConfig: buildRhythmTapConfig() };
+      }
+      if (entry.type === "compose_rhythm") {
+        // Pre-authored tile palette — passes through unchanged. Tempo comes
+        // from the node's rhythmConfig (quick task 260524-l3r).
+        return {
+          type: "compose_rhythm",
+          tiles: entry.tiles,
+          slotCount: entry.slotCount ?? 2,
+          tempo: buildRhythmTapConfig().tempo,
+        };
       }
       if (entry.type === "discovery_intro") {
         return { type: "discovery_intro", focusDuration: entry.focusDuration };
@@ -563,6 +574,15 @@ export default function MixedLessonGame() {
       case "rhythm_dictation":
         return (
           <RhythmDictationQuestion
+            question={currentQuestion}
+            isLandscape={isLandscape}
+            onComplete={handleRhythmTapComplete}
+            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+          />
+        );
+      case "compose_rhythm":
+        return (
+          <ComposeRhythmQuestion
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}

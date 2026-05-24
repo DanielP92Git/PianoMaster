@@ -18,7 +18,10 @@ const VALID_TAGS = new Set([
   "sixteenth",
   "six-eight",
   "syncopation",
-  "long-syncopation",
+  // `long-syncopation` was dropped by quick task 260524-l3r — the q-h-q
+  // gesture (q_44_003) is now tagged only as `quarter-half`/etc, since
+  // Unit 8 reframes it as "Hold Across the Beat," not syncopation.
+  "syncopation-heavy",
   "dotted-syncopation",
 ]);
 
@@ -48,7 +51,7 @@ describe("RHYTHM_PATTERNS", () => {
     });
   });
 
-  it("all 16 tags are covered by at least one pattern", () => {
+  it("all valid tags are covered by at least one pattern", () => {
     const usedTags = new Set();
     RHYTHM_PATTERNS.forEach((p) => {
       p.tags.forEach((t) => usedTags.add(t));

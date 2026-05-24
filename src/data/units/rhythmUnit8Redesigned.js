@@ -1,19 +1,30 @@
 /**
- * Rhythm Unit 8: "Off-Beat Magic" (Redesigned)
+ * Rhythm Unit 8: "Off-Beat Magic" (Redesigned, v2 — quick task 260524-l3r)
  *
- * Educational psychology-driven design for 8-year-old learners
- * - 5-step syncopation ramp:
- *     1. q-h-q discovery + practice (strict, 1 bar)
- *     2. q-h-q longer (2 bars, mixed with basic q+h shapes)
- *     3. 8-q-8 discovery + practice (1 bar)
- *     4. 8-q-8 longer (2 bars, mixed with basic q+h shapes)
- *     5. q-h-q + 8-q-8 combined (2 bars, mixed with basic q+h shapes)
- * - Capstone unit of the rhythm path — builds on 6/8 compound meter (Unit 7)
- * - Single pitch (C4) throughout for pure rhythm focus
- * - 8 nodes total: 5 syncopation core + Mixed Practice + Speed Round + TRUE BOSS
+ * Pedagogically-correct syncopation unit for 8-year-old learners.
+ * Locked PEDAGOGY-REVIEW design (Kodaly/Gordon/Orff/Dalcroze synthesis):
  *
- * Duration: 30-35 minutes (3-4 min per node)
- * Goal: Master syncopation patterns, prove mastery of both 6/8 and 4/4 in epic final boss
+ *   Node 1  rhythm_8_1   "Hold-Across Warm-Up"          DISCOVERY    q-h-q, 1 bar, 60-66 BPM
+ *   Node 2  rhythm_8_2   "Surprise Beat: Listen & Echo" DISCOVERY    8-q-8, 1 bar, 64-70 BPM
+ *   Node 3  rhythm_8_3   "Read the Off-Beat"            PRACTICE     mixed, 2 bars, 70-78 BPM
+ *   Node 4  rhythm_8_4   "Body Split"                   PRACTICE     8-q-8, 2 bars, 66-74 BPM
+ *   Node 5  rhythm_8_5   "Build a Syncopation"          PRACTICE     compose tiles, 72-78 BPM
+ *   Node 6  rhythm_8_6   "Off-Beat Speed Drill"         SPEED_ROUND  arcade, 80-88 BPM
+ *   Node 7  boss_rhythm_8 "Syncopation Boss"            BOSS         strict syncopation-heavy, 4 bars
+ *
+ * Design highlights:
+ *   - Q-H-Q is reframed as "Hold Across the Beat" — NOT syncopation in
+ *     child-facing copy (decision A). The word "syncopation" / "סינ-קו-פה"
+ *     is reserved for Node 2 (8-q-8 discovery), Node 5 (compose), and Boss.
+ *   - Each node specializes in ONE dominant modality (listen, read, split,
+ *     compose, speed) — fixes the identical-question-manifold complaint.
+ *   - Boss draws strictly [q, h, 8] against the curated `syncopation-heavy`
+ *     pool (16 syncopated + 6 contrast bars = ~73% syncopation density).
+ *   - Boss drops `68_compound_meter` skill — this is the syncopation
+ *     capstone, not a rhythm-grandmaster finale.
+ *   - XP arc: 60 / 80 / 85 / 85 / 100 / 90 / 250 (creative spike on Node 5).
+ *
+ * Duration: ~25-30 minutes total (3-4 min per regular node + 5-6 min boss).
  */
 
 import {
@@ -28,21 +39,49 @@ const UNIT_NAME = "Syncopation";
 const CATEGORY = "rhythm";
 const START_ORDER = 144; // After Unit 7's 6 nodes (138-143)
 
-/**
- * Unit 8 Nodes
- * Psychological journey: q-h-q Discovery -> q-h-q Longer 2-bar -> 8-q-8 Discovery ->
- *   8-q-8 Longer 2-bar -> Combined 2-bar -> Mixed Practice -> Speed -> TRUE BOSS
- * NOTE: This unit's final node is NODE_TYPES.BOSS (true boss) as the capstone of ALL rhythm content
- */
+// ── Node 5 compose tile palette ────────────────────────────────────────────
+// 4 tiles, each = 1 bar of 4/4 (16 sixteenth-note units). Tap notes are `1`,
+// sustains/silences `0` per the project's binaryPatternToBeats semantics
+// (see src/components/games/rhythm-games/utils/rhythmVexflowHelpers.js).
+//
+// Tile lengths (must each sum to 16):
+//   tile_qqqq  : q q q q              → 4+4+4+4 = 16
+//   tile_qhq   : q h q (hold-across)  → 4+8+4   = 16
+//   tile_8q8qq : 8-q-8 q q            → 2+4+2+4+4 = 16
+//   tile_q8q8q : q 8-q-8 q            → 4+2+4+2+4 = 16
+const NODE_5_COMPOSE_TILES = [
+  {
+    id: "tile_qqqq",
+    binary: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    label: "q q q q",
+  },
+  {
+    id: "tile_qhq",
+    binary: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    label: "q h q",
+  },
+  {
+    id: "tile_8q8qq",
+    binary: [0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    label: "8-q-8 q q",
+  },
+  {
+    id: "tile_q8q8q",
+    binary: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    label: "q 8-q-8 q",
+  },
+];
+
 export const rhythmUnit8Nodes = [
-  // ============================================
-  // NODE 1: Hold Across the Beat (q-h-q Discovery, strict)
-  // ============================================
+  // ============================================================================
+  // NODE 1: Hold-Across Warm-Up (q-h-q, DISCOVERY)
+  // Reframes q-h-q as "hold across the beat" — re-grounds 4/4 pulse after Unit 7's 6/8.
+  // ============================================================================
   {
     id: "rhythm_8_1",
-    name: "Hold Across the Beat",
+    name: "Hold-Across Warm-Up",
     description:
-      "Discover syncopation using long notes — a half held over beat 3",
+      "Re-ground in 4/4 with long notes that hover over the beat (q-h-q)",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -52,36 +91,32 @@ export const rhythmUnit8Nodes = [
 
     nodeType: NODE_TYPES.DISCOVERY,
 
-    // Strict q-h-q: long-syncopation tag is scoped to ONLY q_44_003 in the pattern
-    // library, so every rendered bar in this node is the canonical q | h | q.
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
       durations: ["q", "h"],
       focusDurations: ["h"],
       contextDurations: ["q"],
-      patternTags: ["long-syncopation"],
-      tempo: { min: 58, max: 65, default: 62 },
+      patternTags: ["quarter-half"],
+      tempo: { min: 60, max: 66, default: 63 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
     newContent: NEW_CONTENT_TYPES.RHYTHM,
-    newContentDescription: "Syncopation: Hold across the beat!",
+    newContentDescription:
+      "Hold across the beat — long notes that hover over the pulse",
 
-    // Discovery mix biased toward listen-and-tap + notation reading so the
-    // games immediately practice the q-h-q rhythm the intro just taught.
+    // Listen → feel → see → echo (6 questions; visual_recognition included to
+    // satisfy validateMultiAngleGames for a 2-duration node).
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
             { type: "discovery_intro", focusDuration: "h" },
+            { type: "pulse" },
             { type: "rhythm_tap" },
             { type: "visual_recognition" },
-            { type: "rhythm_reading" },
-            { type: "syllable_matching" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_reading" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
           ],
@@ -90,87 +125,28 @@ export const rhythmUnit8Nodes = [
     ],
 
     skills: ["syncopation_long_value"],
-    xpReward: 70,
+    xpReward: 60,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
     reviewsUnits: [],
   },
 
-  // ============================================
-  // NODE 2: Long-Value Phrases (q-h-q Practice, 2 bars + basic q+h)
-  // ============================================
+  // ============================================================================
+  // NODE 2: Surprise Beat — Listen & Echo (8-q-8, DISCOVERY, listen-first)
+  // The headline syncopation moment — the "feeling moment" the previous unit lacked.
+  // ============================================================================
   {
     id: "rhythm_8_2",
-    name: "Long-Note Off-Beats",
+    name: "Surprise Beat: Listen & Echo",
     description:
-      "Practice 2-bar phrases mixing q-h-q syncopation with basic quarter/half rhythms",
+      "Hear an off-beat surprise — a sound where the beat isn't (8-q-8)",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 1,
     orderInUnit: 2,
     prerequisites: ["rhythm_8_1"],
-
-    nodeType: NODE_TYPES.PRACTICE,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ["q", "h"],
-      focusDurations: [],
-      contextDurations: ["q", "h"],
-      // OR-pool: q-h-q syncopation (long-syncopation) + non-syncopated q+h shapes
-      // (quarter-half). Each of the 2 bars is drawn independently.
-      patternTags: ["long-syncopation", "quarter-half"],
-      patternTagMode: "any",
-      measureCount: 2,
-      tempo: { min: 65, max: 72, default: 70 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.NONE,
-    newContentDescription: null,
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_dictation" },
-            { type: "rhythm_tap" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "rhythm_tap" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["syncopation_long_value"],
-    xpReward: 75,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 3: Between the Beats (8-q-8 Discovery)
-  // ============================================
-  {
-    id: "rhythm_8_3",
-    name: "Intro to Syncopation",
-    description: "Discover syncopation — accents between the beats",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 2,
-    orderInUnit: 3,
-    prerequisites: ["rhythm_8_2"],
 
     nodeType: NODE_TYPES.DISCOVERY,
 
@@ -179,17 +155,16 @@ export const rhythmUnit8Nodes = [
       durations: ["8", "q"],
       focusDurations: ["8"],
       contextDurations: ["q"],
-      patternTags: ["syncopation"],
-      tempo: { min: 65, max: 70, default: 67 },
+      patternTags: ["syncopation"], // strict — no fallback
+      tempo: { min: 64, max: 70, default: 67 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
     newContent: NEW_CONTENT_TYPES.RHYTHM,
-    newContentDescription: "Syncopation: Tap between the beats!",
+    newContentDescription: "Syncopation: a sound where the beat isn't!",
 
-    // Discovery mix biased toward listen-and-tap + notation reading so the
-    // games immediately practice the 8-q-8 rhythm the intro just taught.
+    // Listen-first arc — taps before the notation reveal, then echo + read.
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
@@ -197,74 +172,11 @@ export const rhythmUnit8Nodes = [
           questions: [
             { type: "discovery_intro", focusDuration: "8" },
             { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
             { type: "visual_recognition" },
-            { type: "rhythm_reading" },
             { type: "syllable_matching" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
-            { type: "rhythm_tap" },
-            { type: "rhythm_reading" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["syncopation_eighth_quarter"],
-    xpReward: 75,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 4: Short-Value Phrases (8-q-8 Practice, 2 bars + basic q+h)
-  // ============================================
-  {
-    id: "rhythm_8_4",
-    name: "Between the Beats",
-    description:
-      "Practice 2-bar phrases mixing 8-q-8 syncopation with basic quarter/half rhythms",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 3,
-    orderInUnit: 4,
-    prerequisites: ["rhythm_8_3"],
-
-    nodeType: NODE_TYPES.PRACTICE,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.VARIED,
-      durations: ["q", "h", "8"],
-      focusDurations: [],
-      contextDurations: ["q", "h", "8"],
-      // OR-pool: 8-q-8 syncopation + non-syncopated q-only and q+h shapes for
-      // breathing room. Each of the 2 bars is drawn independently.
-      patternTags: ["syncopation", "quarter-only", "quarter-half"],
-      patternTagMode: "any",
-      measureCount: 2,
-      tempo: { min: 68, max: 75, default: 72 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.NONE,
-    newContentDescription: null,
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_dictation" },
-            { type: "rhythm_tap" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "rhythm_tap" },
           ],
         },
       },
@@ -278,14 +190,139 @@ export const rhythmUnit8Nodes = [
     reviewsUnits: [],
   },
 
-  // ============================================
-  // NODE 5: Combined Syncopation (q-h-q + 8-q-8, 2 bars + basic q+h)
-  // ============================================
+  // ============================================================================
+  // NODE 3: Read the Off-Beat (PRACTICE, reading + detective)
+  // Pure notation fluency for 8-q-8. No tap questions — visual-recognition is
+  // re-framed as "detective mode": which bar has the off-beat?
+  // ============================================================================
+  {
+    id: "rhythm_8_3",
+    name: "Read the Off-Beat",
+    description: "Spot the syncopated bar — detective mode",
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 2,
+    orderInUnit: 3,
+    prerequisites: ["rhythm_8_2"],
+
+    nodeType: NODE_TYPES.PRACTICE,
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.VARIED,
+      durations: ["q", "h", "8"],
+      focusDurations: [],
+      contextDurations: ["q", "h", "8"],
+      // OR-pool: syncopated 8-q-8 + calm q+h bars. Each of the 2 bars is drawn
+      // independently so the child must SPOT the syncopated one.
+      patternTags: ["syncopation", "quarter-half"],
+      patternTagMode: "any",
+      measureCount: 2,
+      tempo: { min: 70, max: 78, default: 74 },
+      pitch: "C4",
+      timeSignature: "4/4",
+    },
+
+    newContent: NEW_CONTENT_TYPES.NONE,
+    newContentDescription: null,
+
+    // 6 questions: reading-heavy with 2 detective `visual_recognition` interleaved.
+    exercises: [
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: "rhythm_reading" },
+            { type: "visual_recognition" },
+            { type: "rhythm_reading" },
+            { type: "rhythm_reading" },
+            { type: "visual_recognition" },
+            { type: "rhythm_reading" },
+          ],
+        },
+      },
+    ],
+
+    skills: ["syncopation_eighth_quarter"],
+    xpReward: 85,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: [],
+  },
+
+  // ============================================================================
+  // NODE 4: Body Split (PRACTICE, pulse + tap)
+  // Dalcroze-style bodily integration — child taps off-beat with the metronome
+  // as their persistent pulse. Visual-pulse renderer enhancement DEFERRED per
+  // CONTEXT.md decision D — ships as plain `pulse` + `rhythm_tap` for now.
+  // ============================================================================
+  {
+    id: "rhythm_8_4",
+    name: "Body Split",
+    description: "Tap the pulse and the off-beat together",
+    category: CATEGORY,
+    unit: UNIT_ID,
+    unitName: UNIT_NAME,
+    order: START_ORDER + 3,
+    orderInUnit: 4,
+    prerequisites: ["rhythm_8_3"],
+
+    nodeType: NODE_TYPES.PRACTICE,
+
+    rhythmConfig: {
+      complexity: RHYTHM_COMPLEXITY.VARIED,
+      durations: ["q", "8"],
+      focusDurations: [],
+      contextDurations: ["q", "8"],
+      patternTags: ["syncopation"], // strict
+      patternTagMode: "any",
+      measureCount: 2,
+      tempo: { min: 66, max: 74, default: 70 },
+      pitch: "C4",
+      timeSignature: "4/4",
+    },
+
+    newContent: NEW_CONTENT_TYPES.NONE,
+    newContentDescription: null,
+
+    // Pulse opens the node (re-grounds the beat), then tap-dominant practice.
+    // Final `visual_recognition` satisfies validateMultiAngleGames AND gives
+    // a brief detective break from the kinaesthetic tap focus.
+    exercises: [
+      {
+        type: EXERCISE_TYPES.MIXED_LESSON,
+        config: {
+          questions: [
+            { type: "pulse" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_tap" },
+            { type: "visual_recognition" },
+          ],
+        },
+      },
+    ],
+
+    skills: ["syncopation_eighth_quarter"],
+    xpReward: 85,
+    accessoryUnlock: null,
+    isBoss: false,
+    isReview: false,
+    reviewsUnits: [],
+  },
+
+  // ============================================================================
+  // NODE 5: Build a Syncopation (PRACTICE / creative milestone)
+  // The single most morale-changing node in the unit — child arranges tiles
+  // into a 2-bar phrase and hears it play back. 5 questions total
+  // (1 compose + 2 tap echo + 2 reading verify).
+  // ============================================================================
   {
     id: "rhythm_8_5",
-    name: "Combined Syncopation",
-    description:
-      "Combine long-value and short-value syncopation in 2-bar phrases",
+    name: "Build a Syncopation",
+    description: "Pick tiles, build a 2-bar phrase, hear it play!",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
@@ -300,18 +337,11 @@ export const rhythmUnit8Nodes = [
       durations: ["q", "h", "8"],
       focusDurations: [],
       contextDurations: ["q", "h", "8"],
-      // OR-pool: both syncopation families + simple value shapes. Each of the
-      // 2 bars is drawn independently, producing phrases like
-      //   | q h q | 8-q-8 q q |   or   | 8-q-8 q q | h h |.
-      patternTags: [
-        "long-syncopation",
-        "syncopation",
-        "quarter-only",
-        "quarter-half",
-      ],
+      // OR-pool for the 4 verify questions; the compose entry is pre-authored.
+      patternTags: ["syncopation", "quarter-half"],
       patternTagMode: "any",
       measureCount: 2,
-      tempo: { min: 70, max: 78, default: 74 },
+      tempo: { min: 72, max: 78, default: 75 },
       pitch: "C4",
       timeSignature: "4/4",
     },
@@ -319,104 +349,50 @@ export const rhythmUnit8Nodes = [
     newContent: NEW_CONTENT_TYPES.NONE,
     newContentDescription: null,
 
+    // 5 questions: compose milestone, then echo + read verification.
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
+            {
+              type: "compose_rhythm",
+              slotCount: 2,
+              tiles: NODE_5_COMPOSE_TILES,
+            },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
-            { type: "syllable_matching" },
             { type: "rhythm_reading" },
-            { type: "rhythm_tap" },
           ],
         },
       },
     ],
 
     skills: ["syncopation_long_value", "syncopation_eighth_quarter"],
-    xpReward: 85,
+    xpReward: 100,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
     reviewsUnits: [],
   },
 
-  // ============================================
-  // NODE 6: Syncopation in Phrases (Mixed Syncopation Practice, strict)
-  // ============================================
+  // ============================================================================
+  // NODE 6: Off-Beat Speed Drill (SPEED_ROUND, ARCADE)
+  // Speed + endurance on the new gesture. Tag pool tightened from previous
+  // 8-tag cumulative to just syncopation + quarter-eighth so arcade tiles
+  // skew syncopated.
+  // ============================================================================
   {
     id: "rhythm_8_6",
-    name: "Syncopation in Phrases",
-    description: "Pure syncopation phrases — every bar carries q-h-q or 8-q-8",
+    name: "Off-Beat Speed Drill",
+    description: "How fast can you tap syncopated rhythms?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 5,
     orderInUnit: 6,
     prerequisites: ["rhythm_8_5"],
-
-    nodeType: NODE_TYPES.PRACTICE,
-
-    rhythmConfig: {
-      complexity: RHYTHM_COMPLEXITY.ALL,
-      durations: ["q", "h", "8"],
-      focusDurations: [],
-      contextDurations: ["q", "h", "8"],
-      // Strict syncopation pool — no basic q+h fallback bars.
-      patternTags: ["long-syncopation", "syncopation"],
-      patternTagMode: "any",
-      measureCount: 2,
-      tempo: { min: 72, max: 80, default: 76 },
-      pitch: "C4",
-      timeSignature: "4/4",
-    },
-
-    newContent: NEW_CONTENT_TYPES.NONE,
-    newContentDescription: null,
-
-    exercises: [
-      {
-        type: EXERCISE_TYPES.MIXED_LESSON,
-        config: {
-          questions: [
-            { type: "rhythm_tap" },
-            { type: "rhythm_reading" },
-            { type: "visual_recognition" },
-            { type: "rhythm_dictation" },
-            { type: "rhythm_tap" },
-            { type: "syllable_matching" },
-            { type: "rhythm_reading" },
-            { type: "rhythm_tap" },
-          ],
-        },
-      },
-    ],
-
-    skills: ["syncopation_long_value", "syncopation_eighth_quarter"],
-    xpReward: 85,
-    accessoryUnlock: null,
-    isBoss: false,
-    isReview: false,
-    reviewsUnits: [],
-  },
-
-  // ============================================
-  // NODE 7: Rapid Syncopation (Speed Round)
-  // ============================================
-  {
-    id: "rhythm_8_7",
-    name: "Syncopation Speed Drill",
-    description: "How fast can you play syncopated rhythms?",
-    category: CATEGORY,
-    unit: UNIT_ID,
-    unitName: UNIT_NAME,
-    order: START_ORDER + 6,
-    orderInUnit: 7,
-    prerequisites: ["rhythm_8_6"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -425,27 +401,15 @@ export const rhythmUnit8Nodes = [
       durations: ["q", "h", "8"],
       focusDurations: [],
       contextDurations: ["q", "h", "8"],
-      // D-19 cumulative speed-pool — minus dotted-syncopation/dotted-quarter
-      // (the dotted-quarter intro node was removed in favor of the combined
-      // q-h-q + 8-q-8 node). U7 six-eight excluded — different time signature.
-      patternTags: [
-        "quarter-only",
-        "quarter-half",
-        "quarter-half-whole",
-        "quarter-eighth",
-        "quarter-half-whole-eighth",
-        "quarter-rest",
-        "long-syncopation",
-        "syncopation",
-      ],
+      patternTags: ["syncopation", "quarter-eighth"],
       patternTagMode: "any",
-      tempo: { min: 80, max: 85, default: 83 },
+      tempo: { min: 80, max: 88, default: 84 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
-    newContentDescription: "Syncopation Speed Challenge",
+    newContentDescription: "Syncopation Speed Drill",
 
     exercises: [
       {
@@ -464,69 +428,44 @@ export const rhythmUnit8Nodes = [
     reviewsUnits: [],
   },
 
-  // ============================================
-  // NODE 8: Rhythm Master (BOSS — capstone of ALL rhythm content)
-  // ============================================
+  // ============================================================================
+  // NODE 7: Syncopation Boss (BOSS — strict syncopation capstone)
+  // Strict [q,h,8] against the curated `syncopation-heavy` pool — ~73% of
+  // bars carry syncopation. Drops the previous "kitchen-sink rhythm finale"
+  // framing; this is the syncopation skill capstone only.
+  // ============================================================================
   {
     id: "boss_rhythm_8",
     name: "Syncopation Boss",
-    description: "Master syncopation and combine it with 6/8!",
-    unlockHint:
-      "Master all syncopation patterns to face the ultimate rhythm challenge!",
+    description: "Master off-beat magic — the capstone of the unit!",
+    unlockHint: "Master off-beat magic to face the syncopation boss!",
     category: "boss",
     unit: UNIT_ID,
     unitName: UNIT_NAME,
-    order: START_ORDER + 7,
-    orderInUnit: 8,
-    prerequisites: ["rhythm_8_7"],
+    order: START_ORDER + 6,
+    orderInUnit: 7,
+    prerequisites: ["rhythm_8_6"],
 
     nodeType: NODE_TYPES.BOSS,
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.ALL,
-      // Cumulative U1-U8 durations — qd retained because dotted quarter is
-      // still introduced in earlier units (Unit 5/6/7). dotted-syncopation
-      // tag dropped since Unit 8 no longer teaches that specific gesture.
-      durations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"],
+      // Strict syncopation-capstone duration set (decision D: drop dotted/sixteenth/rest).
+      durations: ["q", "h", "8"],
       focusDurations: [],
-      contextDurations: [
-        "q",
-        "h",
-        "w",
-        "8",
-        "16",
-        "qr",
-        "hr",
-        "wr",
-        "hd",
-        "qd",
-      ],
-      patternTags: [
-        "quarter-only",
-        "quarter-half",
-        "quarter-half-whole",
-        "quarter-eighth",
-        "quarter-half-whole-eighth",
-        "quarter-rest",
-        "half-rest",
-        "whole-rest",
-        "dotted-half",
-        "dotted-quarter",
-        "sixteenth",
-        "long-syncopation",
-        "syncopation",
-      ],
+      contextDurations: ["q", "h", "8"],
+      patternTags: ["syncopation-heavy"],
       patternTagMode: "any",
       measureCount: 4, // D-08: full BOSS uses 4-bar patterns
-      tempo: { min: 75, max: 85, default: 80 },
+      tempo: { min: 78, max: 88, default: 84 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
-    newContentDescription: "Ultimate Rhythm Challenge!",
+    newContentDescription: "Syncopation Capstone!",
 
-    // Challenge-heavy question mix (dictation + reading emphasis, minimal tap)
+    // 10 questions — reading/dictation-heavy mix.
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
@@ -540,20 +479,14 @@ export const rhythmUnit8Nodes = [
             { type: "rhythm_reading" },
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
+            { type: "visual_recognition" },
             { type: "rhythm_reading" },
-            { type: "rhythm_dictation" },
-            { type: "rhythm_reading" },
-            { type: "rhythm_dictation" },
           ],
         },
       },
     ],
 
-    skills: [
-      "68_compound_meter",
-      "syncopation_long_value",
-      "syncopation_eighth_quarter",
-    ],
+    skills: ["syncopation_long_value", "syncopation_eighth_quarter"],
     xpReward: 250,
     accessoryUnlock: "advanced_rhythm_badge",
     isBoss: true,

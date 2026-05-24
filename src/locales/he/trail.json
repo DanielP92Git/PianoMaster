@@ -286,12 +286,13 @@
     "Eighths in 6/8": "שמיניות במקצב 6/8",
     "6/8 Speed Drill": "תרגיל מהירות: 6/8",
     "6/8 Compound Meter Boss": "בוס מקצב מורכב 6/8",
-    "Intro to Syncopation": "הכרת הסינקופה",
-    "Between the Beats": "בין הפעימות",
-    "Dotted-Quarter–Eighth Syncopation": "סינקופת רבע מנוקד–שמינית",
-    "Syncopation in Phrases": "סינקופה במשפטים מוזיקליים",
-    "Syncopation Speed Drill": "תרגיל מהירות: סינקופה",
-    "Syncopation Boss": "בוס הסינקופה"
+    "Hold-Across Warm-Up": "החזקה מעל הפעמה",
+    "Surprise Beat: Listen & Echo": "פעמה מפתיעה: סינ-קו-פה",
+    "Read the Off-Beat": "קוראים את הלא-בפעמה",
+    "Body Split": "פיצול גוף",
+    "Build a Syncopation": "בונים סינ-קו-פה",
+    "Off-Beat Speed Drill": "מרוץ הלא-בפעמה",
+    "Syncopation Boss": "מנהיג הסינ-קו-פה"
   },
   "descriptions": {
     "Meet Middle C": "למדו את התו הראשון שלכם בפסנתר",
@@ -416,12 +417,13 @@
     "Eighths in 6/8": "הוסיפו שמיניות — החלוקה הטבעית של 6/8",
     "6/8 Speed Drill": "כמה מהר תנגנו תבניות 6/8?",
     "6/8 Compound Meter Boss": "שלטו במקצב מורכב 6/8!",
-    "Intro to Syncopation": "גלו את הסינקופה — הדגשות בין הפעימות",
-    "Between the Beats": "תרגלו את תבנית הסינקופה שמינית-רבע-שמינית",
-    "Dotted-Quarter–Eighth Syncopation": "תרגלו את תבנית הסינקופה רבע מנוקד–שמינית",
-    "Syncopation in Phrases": "תרגלו תבניות סינקופה במשפטים מוזיקליים",
-    "Syncopation Speed Drill": "כמה מהר תנגנו קצבים מסונקפים?",
-    "Syncopation Boss": "שלטו בסינקופה ושלבו אותה עם מקצב 6/8!"
+    "Hold-Across Warm-Up": "מתיישבים מחדש במקצב 4/4 עם תווים ארוכים שמרחפים מעל הפעמה",
+    "Surprise Beat: Listen & Echo": "תשמעו פעמה מפתיעה — סינ-קו-פה: צליל בדיוק במקום שאין בו פעמה!",
+    "Read the Off-Beat": "מזהים איזו תיבה היא הלא-בפעמה — מצב בלש",
+    "Body Split": "מתופפים את הפעמה ואת הלא-בפעמה ביחד",
+    "Build a Syncopation": "בוחרים אריחים, בונים משפט של שתי תיבות, ושומעים אותו מתנגן!",
+    "Off-Beat Speed Drill": "כמה מהר תוכלו לתופף קצבים של לא-בפעמה?",
+    "Syncopation Boss": "שלטו בקסם של הלא-בפעמה — שיא היחידה!"
   },
   "unlockHints": {
     "First Steps Challenge": "השלימו את כל 7 השיעורים למעלה כדי לפתוח את האתגר!",
@@ -442,7 +444,16 @@
     "Accidentals Master": "הביסו את כוכב הדיאזים וכוכב הבמולים כדי להתמודד עם אתגר סימני ההיתק הגדול!",
     "Key Signature Master": "השלימו את כל שיעורי סימני המפתח כדי להתמודד עם האתגר הגדול!",
     "6/8 Compound Meter Boss": "השלימו את כל שיעורי המקצב המורכב כדי לפתוח את האתגר!",
-    "Syncopation Boss": "שלטו במקצב מורכב ובסינקופה כדי להתמודד עם אתגר הקצב הגדול!"
+    "Syncopation Boss": "שלטו בקסם של הלא-בפעמה כדי להתמודד עם מנהיג הסינ-קו-פה!"
+  },
+  "unit8Nodes": {
+    "rhythm_8_1": "Hold-Across Warm-Up",
+    "rhythm_8_2": "Surprise Beat: Listen & Echo",
+    "rhythm_8_3": "Read the Off-Beat",
+    "rhythm_8_4": "Body Split",
+    "rhythm_8_5": "Build a Syncopation",
+    "rhythm_8_6": "Off-Beat Speed Drill",
+    "boss_rhythm_8": "Syncopation Boss"
   },
   "boss": {
     "cleared": "הבוס הובס!",
