@@ -116,6 +116,8 @@ describe("QuickStatsGrid", () => {
     expect(screen.getByText("6")).toBeInTheDocument();
   });
 
+  // HIDDEN-V1: total drops from 178 → 172 while Rhythm Unit 8 is unlinked.
+  // Restore both 172 → 178 when re-enabling Unit 8 (see project_rhythm_unit8_hidden memory).
   it("REQ-04: calculates nodesCompleted as count where stars > 0", () => {
     // 3 nodes with stars > 0 (stars: 3, 1, 2) — node with stars: 0 excluded
     render(
@@ -126,10 +128,10 @@ describe("QuickStatsGrid", () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText("3/180")).toBeInTheDocument();
+    expect(screen.getByText("3/172")).toBeInTheDocument();
   });
 
-  it('REQ-04: formats nodes as "N/180"', () => {
+  it('REQ-04: formats nodes as "N/172"', () => {
     const progressData = [
       { node_id: "treble_1_1", stars: 1 },
       { node_id: "treble_1_2", stars: 1 },
@@ -142,7 +144,7 @@ describe("QuickStatsGrid", () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText("2/180")).toBeInTheDocument();
+    expect(screen.getByText("2/172")).toBeInTheDocument();
   });
 
   it("D-08: renders level value from xpData.levelData.level", () => {
