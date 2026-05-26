@@ -5,52 +5,55 @@
  *
  * Treble Units 1-7: Redesigned (C4 to C5, including sharps, flats, and key signatures)
  * Bass Units 1-7: Redesigned (C4 to C3, including sharps, flats, and key signatures)
- * Rhythm Units 1-8: Redesigned (quarter notes to sixteenths, 6/8 compound meter, syncopation)
+ * Rhythm Units 1-7: Redesigned (quarter notes to sixteenths, 6/8 compound meter)
+ *   NOTE: Rhythm Unit 8 (syncopation, "Off-Beat Magic") is built but HIDDEN pending
+ *   re-enable in a future release. Grep `HIDDEN-V1` below to restore.
  * Ear Training Units 1-2: Sound Direction (pitch comparison) and Interval Explorer (interval identification)
  *
  * All units follow consistent NODE_TYPES pattern with pedagogical scaffolding.
  */
 
-import trebleUnit1Nodes from './units/trebleUnit1Redesigned.js';
-import trebleUnit2Nodes from './units/trebleUnit2Redesigned.js';
-import trebleUnit3Nodes from './units/trebleUnit3Redesigned.js';
+import trebleUnit1Nodes from "./units/trebleUnit1Redesigned.js";
+import trebleUnit2Nodes from "./units/trebleUnit2Redesigned.js";
+import trebleUnit3Nodes from "./units/trebleUnit3Redesigned.js";
 
 // Treble accidentals units (sharps and flats)
-import trebleUnit4Nodes from './units/trebleUnit4Redesigned.js';
-import trebleUnit5Nodes from './units/trebleUnit5Redesigned.js';
+import trebleUnit4Nodes from "./units/trebleUnit4Redesigned.js";
+import trebleUnit5Nodes from "./units/trebleUnit5Redesigned.js";
 
 // Key signature treble units
-import trebleUnit6Nodes from './units/trebleUnit6Redesigned.js';
-import trebleUnit7Nodes from './units/trebleUnit7Redesigned.js';
+import trebleUnit6Nodes from "./units/trebleUnit6Redesigned.js";
+import trebleUnit7Nodes from "./units/trebleUnit7Redesigned.js";
 
 // Redesigned bass clef units
-import bassUnit1Nodes from './units/bassUnit1Redesigned.js';
-import bassUnit2Nodes from './units/bassUnit2Redesigned.js';
-import bassUnit3Nodes from './units/bassUnit3Redesigned.js';
+import bassUnit1Nodes from "./units/bassUnit1Redesigned.js";
+import bassUnit2Nodes from "./units/bassUnit2Redesigned.js";
+import bassUnit3Nodes from "./units/bassUnit3Redesigned.js";
 
 // Bass accidentals units (sharps and flats)
-import bassUnit4Nodes from './units/bassUnit4Redesigned.js';
-import bassUnit5Nodes from './units/bassUnit5Redesigned.js';
+import bassUnit4Nodes from "./units/bassUnit4Redesigned.js";
+import bassUnit5Nodes from "./units/bassUnit5Redesigned.js";
 
 // Key signature bass units
-import bassUnit6Nodes from './units/bassUnit6Redesigned.js';
-import bassUnit7Nodes from './units/bassUnit7Redesigned.js';
+import bassUnit6Nodes from "./units/bassUnit6Redesigned.js";
+import bassUnit7Nodes from "./units/bassUnit7Redesigned.js";
 
 // Redesigned rhythm units
-import rhythmUnit1Nodes from './units/rhythmUnit1Redesigned.js';
-import rhythmUnit2Nodes from './units/rhythmUnit2Redesigned.js';
-import rhythmUnit3Nodes from './units/rhythmUnit3Redesigned.js';
-import rhythmUnit4Nodes from './units/rhythmUnit4Redesigned.js';
-import rhythmUnit5Nodes from './units/rhythmUnit5Redesigned.js';
-import rhythmUnit6Nodes from './units/rhythmUnit6Redesigned.js';
+import rhythmUnit1Nodes from "./units/rhythmUnit1Redesigned.js";
+import rhythmUnit2Nodes from "./units/rhythmUnit2Redesigned.js";
+import rhythmUnit3Nodes from "./units/rhythmUnit3Redesigned.js";
+import rhythmUnit4Nodes from "./units/rhythmUnit4Redesigned.js";
+import rhythmUnit5Nodes from "./units/rhythmUnit5Redesigned.js";
+import rhythmUnit6Nodes from "./units/rhythmUnit6Redesigned.js";
 
 // Advanced rhythm units
-import rhythmUnit7Nodes from './units/rhythmUnit7Redesigned.js';
-import rhythmUnit8Nodes from './units/rhythmUnit8Redesigned.js';
+import rhythmUnit7Nodes from "./units/rhythmUnit7Redesigned.js";
+// HIDDEN-V1: Unit 8 (syncopation, "Off-Beat Magic") temporarily disabled — re-enable for next release
+// import rhythmUnit8Nodes from './units/rhythmUnit8Redesigned.js';
 
 // Ear training units
-import earTrainingUnit1Nodes from './units/earTrainingUnit1.js';
-import earTrainingUnit2Nodes from './units/earTrainingUnit2.js';
+import earTrainingUnit1Nodes from "./units/earTrainingUnit1.js";
+import earTrainingUnit2Nodes from "./units/earTrainingUnit2.js";
 
 // Combine all nodes
 export const EXPANDED_NODES = [
@@ -58,8 +61,8 @@ export const EXPANDED_NODES = [
   ...trebleUnit1Nodes,
   ...trebleUnit2Nodes,
   ...trebleUnit3Nodes,
-  ...trebleUnit4Nodes,    // Treble sharps (F#4, C#4, G#4)
-  ...trebleUnit5Nodes,    // Treble flats (Bb4, Eb4, Ab4, Db4) + accidentals boss
+  ...trebleUnit4Nodes, // Treble sharps (F#4, C#4, G#4)
+  ...trebleUnit5Nodes, // Treble flats (Bb4, Eb4, Ab4, Db4) + accidentals boss
   // Key signature units
   ...trebleUnit6Nodes,
   ...trebleUnit7Nodes,
@@ -68,8 +71,8 @@ export const EXPANDED_NODES = [
   ...bassUnit1Nodes,
   ...bassUnit2Nodes,
   ...bassUnit3Nodes,
-  ...bassUnit4Nodes,      // Bass sharps (F#3, C#3, G#3)
-  ...bassUnit5Nodes,      // Bass flats (Bb3, Eb3, Ab3, Db3) + accidentals boss
+  ...bassUnit4Nodes, // Bass sharps (F#3, C#3, G#3)
+  ...bassUnit5Nodes, // Bass flats (Bb3, Eb3, Ab3, Db3) + accidentals boss
   // Bass key signature units
   ...bassUnit6Nodes,
   ...bassUnit7Nodes,
@@ -83,7 +86,7 @@ export const EXPANDED_NODES = [
   ...rhythmUnit6Nodes,
   // Advanced rhythm units
   ...rhythmUnit7Nodes,
-  ...rhythmUnit8Nodes,
+  // HIDDEN-V1: ...rhythmUnit8Nodes,
 
   // Ear training units
   ...earTrainingUnit1Nodes,
@@ -95,8 +98,8 @@ export const EXPANDED_TREBLE_NODES = [
   ...trebleUnit1Nodes,
   ...trebleUnit2Nodes,
   ...trebleUnit3Nodes,
-  ...trebleUnit4Nodes,    // Treble sharps (F#4, C#4, G#4)
-  ...trebleUnit5Nodes,    // Treble flats (Bb4, Eb4, Ab4, Db4) + accidentals boss
+  ...trebleUnit4Nodes, // Treble sharps (F#4, C#4, G#4)
+  ...trebleUnit5Nodes, // Treble flats (Bb4, Eb4, Ab4, Db4) + accidentals boss
   ...trebleUnit6Nodes,
   ...trebleUnit7Nodes,
 ];
@@ -104,8 +107,8 @@ export const EXPANDED_BASS_NODES = [
   ...bassUnit1Nodes,
   ...bassUnit2Nodes,
   ...bassUnit3Nodes,
-  ...bassUnit4Nodes,      // Bass sharps (F#3, C#3, G#3)
-  ...bassUnit5Nodes,      // Bass flats (Bb3, Eb3, Ab3, Db3) + accidentals boss
+  ...bassUnit4Nodes, // Bass sharps (F#3, C#3, G#3)
+  ...bassUnit5Nodes, // Bass flats (Bb3, Eb3, Ab3, Db3) + accidentals boss
   ...bassUnit6Nodes,
   ...bassUnit7Nodes,
 ];
@@ -117,7 +120,7 @@ export const EXPANDED_RHYTHM_NODES = [
   ...rhythmUnit5Nodes,
   ...rhythmUnit6Nodes,
   ...rhythmUnit7Nodes,
-  ...rhythmUnit8Nodes,
+  // HIDDEN-V1: ...rhythmUnit8Nodes,
 ];
 
 export const EXPANDED_EAR_TRAINING_NODES = [

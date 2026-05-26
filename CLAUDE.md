@@ -21,6 +21,7 @@ npm run verify:trail     # Validate trail node data (prereqs, cycles, XP, types)
 **Testing a single file:** `npx vitest run src/path/to/file.test.js`
 
 ### Pre-commit & Build Hooks
+
 - **Husky + lint-staged**: Pre-commit hook runs ESLint + Prettier on staged files
 - **prebuild**: `npm run build` automatically runs `scripts/validateTrail.mjs` first — build fails if trail data has errors (broken prereqs, cycles, duplicate IDs, invalid XP)
 
@@ -29,6 +30,7 @@ npm run verify:trail     # Validate trail node data (prereqs, cycles, XP, types)
 This is a **piano learning PWA** built with React 18 + Vite for 8-year-old learners. Features multiple music education games, user progression tracking, and teacher/student role differentiation.
 
 ### Tech Stack
+
 - **Frontend:** React 18, Vite 6, React Router v7
 - **State:** Redux Toolkit (minimal — rhythm only), React Context (feature-scoped), TanStack React Query v5
 - **Backend:** Supabase (auth, database, real-time subscriptions)
@@ -39,11 +41,13 @@ This is a **piano learning PWA** built with React 18 + Vite for 8-year-old learn
 - **Monitoring:** Sentry (error tracking), Umami (analytics)
 
 ### Build Conventions
+
 - **SVG imports:** Use `import Icon from './icon.svg?react'` (via vite-plugin-svgr) — the `?react` suffix is required
 - **App version:** `__APP_VERSION__` global is injected from package.json at build time via Vite `define`
 - **Source maps:** Enabled in production builds (for Sentry)
 
 ### Key Directory Structure
+
 ```
 src/
 ├── components/
@@ -84,6 +88,7 @@ supabase/
 ## VexFlow Implementation
 
 VexFlow renders music notation as SVG. Key guidelines:
+
 - **One measure per Stave** — each `Stave` represents one bar
 - **Use SVG backend:** `new Renderer(div, Renderer.Backends.SVG)`
 - **Automatic beaming:** Use `Beam.generateBeams(notes, config?)` instead of manual beams
@@ -98,6 +103,7 @@ See `docs/vexflow-notation/vexflow-guidelines.md` for detailed patterns.
 The app uses **glassmorphism** on a purple gradient background (`bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900` in AppLayout.jsx).
 
 ### Glass Card Pattern (primary)
+
 - **Container:** `bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg`
 - **Nested elements:** `bg-white/5 border-white/10` or `bg-white/10 border-white/20`
 - **Text colors:** `text-white` (primary), `text-white/70` (secondary), `text-white/60` (tertiary)
@@ -106,6 +112,7 @@ The app uses **glassmorphism** on a purple gradient background (`bg-gradient-to-
 - **Hover states:** `hover:bg-white/5` or `hover:bg-white/10`
 
 ### CSS Card Classes (legacy — in index.css)
+
 - `.card` = `bg-white/80 border-gray-200` — avoid on purple bg pages
 - `.card-glass-legacy` = `bg-white/10 backdrop-blur-md border-white/20` — matches glass pattern
 
@@ -114,6 +121,7 @@ See `docs/DESIGN_SYSTEM.md` for additional patterns.
 ## Routing
 
 Protected routes require authentication. Teachers auto-redirect to `/teacher`. Key routes:
+
 - `/` — Dashboard (role-specific)
 - `/trail` — Skill progression trail (full-viewport overlay)
 - `/notes-master-mode/*` — Note learning games
@@ -129,6 +137,7 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 - `/consent/verify` — **Public route** (no auth). Parent email verification for COPPA consent
 
 ### Layout Patterns
+
 - **Full-viewport overlays** (Trail Map): `fixed inset-0 overflow-y-auto`, AppLayout hides sidebar/header
 - **Game routes** (`/notes-master-mode/*`, `/rhythm-mode/*`, `/ear-training-mode/*`): Hide sidebar/header for distraction-free gameplay
 - **CRITICAL: When adding a new game route**, add it to BOTH arrays: `LANDSCAPE_ROUTES` in `App.jsx` AND `gameRoutes` in `AppLayout.jsx`. Missing either causes sidebar/header to show during gameplay or landscape lock to fail.
@@ -138,6 +147,7 @@ Protected routes require authentication. Teachers auto-redirect to `/teacher`. K
 The teacher dashboard (`/teacher/*`) provides class management across four tabs. All tabs use the glassmorphism design system.
 
 ### Tabs & Components
+
 - **Students** (`TeacherDashboard.jsx`): Collapsible student cards (closed by default), stat summary grid (2x2 mobile, 4-across desktop), search/sort/filter toolbar
 - **Analytics** (`AnalyticsDashboard.jsx`): Class performance charts, top performers, practice activity timeline, performance distribution
 - **Recordings** (`RecordingsReview.jsx`): Two-level collapsible — grouped by student (Level 1), each recording expandable (Level 2) with audio player + review
@@ -145,6 +155,7 @@ The teacher dashboard (`/teacher/*`) provides class management across four tabs.
 - **Notifications** (`NotificationCenter.jsx`): **Currently disabled** — tab and route commented out. Search `TODO: re-enable when ready` in `TeacherDashboard.jsx` to restore
 
 ### UI Patterns
+
 - **Collapsible cards**: `expandedX` Set state + `toggleExpanded(id)` pattern (used in students, recordings)
 - **Select All / Delete**: Consistent text-style buttons across all tabs (not `Button` component)
 - **Action buttons**: Icon-only (`p-1 text-white/40 hover:bg-blue-500/20`) matching student card pattern
@@ -152,17 +163,20 @@ The teacher dashboard (`/teacher/*`) provides class management across four tabs.
 - **Dropdown options**: Global CSS rule (`select option { background-color: #1e1b4b; color: #fff; }`) in `index.css`
 
 ### Audio Player (`AudioPlayer.jsx`)
+
 - Play/pause only (no skip/stop buttons)
 - `knownDuration` prop for DB-sourced duration (webm files often lack metadata duration)
 - `PracticeSessionPlayer` passes `session?.duration_seconds || session?.duration` to handle both field names
 
 ### Key Services
+
 - `src/services/apiTeacher.js` — All teacher API functions (CRUD students, recordings, assignments, notifications)
 - `useAccountStatus` hook skips query for teachers (`{ enabled: isStudent }`) to avoid 406 errors
 
 ## Game Session Flow
 
 Games follow a consistent session model:
+
 1. **Pre-game setup:** Configure settings (clef, time signature, difficulty)
 2. **Session state:** `idle` → `in-progress` → `complete`
 3. **Exercise tracking:** 10 exercises per session with scoring
@@ -171,37 +185,47 @@ Games follow a consistent session model:
 
 ## Gamification Trail System
 
-A Duolingo-style skill progression with 93 nodes across three parallel learning paths.
+A Duolingo-style skill progression with 86 active nodes across three parallel learning paths. (7 additional Rhythm Unit 8 "Off-Beat Magic" syncopation nodes are built but currently HIDDEN pending re-enable in a future release — see "Hidden Content: Rhythm Unit 8" below.)
 
 ### Core Concepts
-- **Skill Nodes**: 93 units (Treble: 23, Bass: 22, Rhythm: 36, Boss: 12)
+
+- **Skill Nodes**: 86 active units (Treble: 23, Bass: 22, Rhythm: 29, Boss: 11). Rhythm Unit 8 (7 nodes incl. `boss_rhythm_8`) is hidden — would restore counts to Rhythm: 36 / Boss: 12 / total 93.
 - **Star Rating**: 0-3 stars (60%=1, 80%=2, 95%=3)
 - **XP System**: 30 static levels (Beginner → Transcendent) + infinite prestige tiers (3000 XP each beyond level 30)
 - **Daily Goals**: 3 random goals per day (complete_exercises, earn_three_stars, practice_new_node, perfect_score, maintain_streak)
 - **Prerequisites**: Nodes unlock progressively
 - **Sequential Exercises**: Nodes can have multiple exercises completed in order; node stars = minimum across all
 
+### Hidden Content: Rhythm Unit 8 (Syncopation)
+
+Rhythm Unit 8 ("Off-Beat Magic" — 7 nodes covering syncopation) is built and tested but **unlinked from the trail** while shipping the initial release. The unit file (`src/data/units/rhythmUnit8Redesigned.js`), its test (`rhythmUnit8Redesigned.test.js`), the `RHYTHM_8` entry in `src/data/skillTrail.js`, and all `rhythm_8_*` / `boss_rhythm_8` locale keys in `src/locales/{en,he}/trail.json` remain in the repo. To re-enable, grep for `HIDDEN-V1` in `src/data/expandedNodes.js` and uncomment the import + two spreads (one in `EXPANDED_NODES`, one in `EXPANDED_RHYTHM_NODES`), then update this CLAUDE.md section's node counts back to 93. Rhythm trail currently ends at `boss_rhythm_7` ("Sixteenth Note Speed Boss"). No downstream content depends on Unit 8, so hiding it doesn't break unlock chains.
+
 ### Data Layer
+
 - `src/data/constants.js` — `NODE_CATEGORIES` (TREBLE_CLEF, BASS_CLEF, RHYTHM, BOSS), `EXERCISE_TYPES` (NOTE_RECOGNITION, SIGHT_READING, RHYTHM, MEMORY_GAME, BOSS_CHALLENGE)
-- `src/data/skillTrail.js` — `SKILL_NODES` array (93 nodes), `getNodeById()`, `getNodesByCategory()`, `getBossNodes()`, `getNextNodeInCategory()`, `isNodeUnlocked()`, `getUnlockedNodes()`
+- `src/data/skillTrail.js` — `SKILL_NODES` array (86 active nodes; 93 when Unit 8 is re-enabled), `getNodeById()`, `getNodesByCategory()`, `getBossNodes()`, `getNextNodeInCategory()`, `isNodeUnlocked()`, `getUnlockedNodes()`
 - `src/data/expandedNodes.js` — Aggregates unit files from `src/data/units/`
 - `src/data/units/` — trebleUnit1-3Redesigned.js, bassUnit1-3Redesigned.js, rhythmUnit1-6Redesigned.js
 
 ### Services
+
 - `src/services/skillProgressService.js` — CRUD for student node/exercise progress, unlock checks, recommendations
 - `src/services/dailyGoalsService.js` — Daily goal generation and progress calculation
 - `src/utils/xpSystem.js` — XP levels (30 static + infinite prestige tiers at 3000 XP each), level calculation, XP awards
 
 ### Config
+
 - `src/config/subscriptionConfig.js` — `FREE_NODE_IDS` Set (19 IDs), `isFreeNode()`, must sync with Postgres `is_free_node()`
 
 ### Content Gate (Defense in Depth)
+
 1. **React UI** — `isFreeNode()` from subscriptionConfig (fast UX, shows paywall)
 2. **Database RLS** — `is_free_node(node_id) OR has_active_subscription(auth.uid())` (ground truth)
 
 Non-trail games pass `node_id: null` which always passes.
 
 ### Trail Node Structure
+
 ```javascript
 {
   id: 'treble_c_e', name: 'C, D, E', category: 'treble_clef', order: 2,
@@ -212,16 +236,20 @@ Non-trail games pass `node_id: null` which always passes.
 ```
 
 ### Navigation State for Trail Games
+
 Pass via `location.state`: `{ nodeId, nodeConfig, exerciseIndex, totalExercises, exerciseType }`
 
 ### Game Component Integration
+
 All four game components accept trail state and auto-start via `hasAutoStartedRef` pattern:
+
 - `NotesRecognitionGame.jsx` — `handleNextExercise` callback
 - `SightReadingGame.jsx` — `handleNextTrailExercise` callback
 - `MetronomeTrainer.jsx` — `handleNextExercise` callback
 - `MemoryGame.jsx` — `handleNextExercise` callback (exercise type: `memory_game`)
 
 ### VictoryScreen Trail Behavior
+
 - Calls `updateExerciseProgress()` when `exerciseIndex` provided (else `updateNodeProgress()`)
 - Shows "Next Exercise (X left)" when `exercisesRemaining > 0`
 - Shows "Back to Trail" when node is complete
@@ -229,6 +257,7 @@ All four game components accept trail state and auto-start via `hasAutoStartedRe
 - Applies comeback multiplier when streak bonus is active
 
 ### Key Database Concepts
+
 - **`student_skill_progress`**: Per-node stars (0-3), best score, `exercise_progress` JSONB array
 - **`parent_subscriptions`**: Status enum: `on_trial|active|paused|past_due|unpaid|cancelled|expired`
 - **`students_score.node_id`**: `NULL` for non-trail games (always allowed by RLS)
@@ -245,6 +274,7 @@ Web Push notifications to encourage daily practice. COPPA-compliant with parent 
 - **iOS PWA**: Detects non-standalone mode, shows "install first" warning
 
 ### Environment Variables
+
 - **Edge Functions**: `CRON_SECRET`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`
 - **Client**: `VITE_VAPID_PUBLIC_KEY`
 
@@ -259,6 +289,7 @@ Required env: `CRON_SECRET`, `BREVO_API_KEY`, `SENDER_EMAIL`, `SENDER_NAME`, `WE
 Prevents frustrating streak loss with grace windows, freezes, weekend pass, and comeback bonuses.
 
 ### Architecture
+
 - **Grace Window**: 36 hours from last practice (not midnight cutoff)
 - **Streak Freezes**: 0-3 inventory, earned every 7-day milestone, auto-consumed when grace expires
 - **Weekend Pass**: Parent-gated toggle in Settings; skips Friday/Saturday (Israeli Shabbat)
@@ -268,6 +299,7 @@ Prevents frustrating streak loss with grace windows, freezes, weekend pass, and 
 ## Notes Recognition Engagement
 
 Arcade-style mechanics for `NotesRecognitionGame.jsx`:
+
 - **Combo System**: Correct answers increment combo; wrong answer resets with shake
 - **Lives System**: 3 lives per session; 0 lives triggers `GameOverScreen`
 - **On-Fire Mode**: Triggered at combo threshold; fire icon + glow effect; respects reduced-motion
@@ -287,6 +319,7 @@ Automatic inactivity logout for child safety on shared devices. Games must call 
 ## PWA & Service Worker
 
 ### Service Worker (`public/sw.js`)
+
 - **Cache version**: `pianomaster-v7` (bump to force refresh)
 - **Static assets** (`/assets/*`): Cache-first (safe due to Vite content-hashing)
 - **Navigation**: Network-first with cache fallback (ensures latest `index.html` after deploy), offline page as last resort
@@ -296,6 +329,7 @@ Automatic inactivity logout for child safety on shared devices. Games must call 
 - **Push notifications**: Handles `push` and `notificationclick` events
 
 ### Image Optimization
+
 Hero images use `<picture>` with WebP format + preload hints in `index.html`.
 
 ## Accessibility
@@ -307,6 +341,7 @@ Via `AccessibilityContext`: high contrast, reduced motion, screen reader optimiz
 Vitest with JSDOM. Setup: `src/test/setupTests.js`.
 
 ### Conventions
+
 - Test files live either as `*.test.{js,jsx}` siblings or in `__tests__/` directories next to source
 - Uses `@testing-library/react` + `@testing-library/jest-dom` for component tests
 - Utility/service tests are plain Vitest (no DOM needed)
@@ -314,6 +349,7 @@ Vitest with JSDOM. Setup: `src/test/setupTests.js`.
 ## Security
 
 See `docs/SECURITY_GUIDELINES.md` for comprehensive security patterns. Key principles:
+
 - **COPPA/GDPR-K**: PII minimization, parent consent gate for notifications/emails
 - **RLS everywhere**: All Supabase tables use Row Level Security; `auth.uid()` verification in service functions
 - **Defense in depth**: Content gates enforced in both React UI (`isFreeNode()`) and database RLS
