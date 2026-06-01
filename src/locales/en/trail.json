@@ -54,7 +54,14 @@
       "Steady Beat": "Steady Beat",
       "Six-Eight Time": "Six-Eight Time",
       "Key Signatures: Sharps": "Key Signatures: Sharps",
-      "Key Signatures: Mixed": "Key Signatures: Mixed"
+      "Key Signatures: Mixed": "Key Signatures: Mixed",
+      "Quarter + Quarter Rest": "Quarter + Quarter Rest",
+      "Half + Half Rest": "Half + Half Rest",
+      "Whole + Whole Rest": "Whole + Whole Rest",
+      "Dotted Half Notes": "Dotted Half Notes",
+      "Dotted Quarter Notes": "Dotted Quarter Notes",
+      "Three-Four Time": "Three-Four Time",
+      "Rhythm Review": "Rhythm Review"
     }
   },
   "tabs": {

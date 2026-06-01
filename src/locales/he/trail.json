@@ -54,7 +54,14 @@
       "Steady Beat": "פעימה יציבה",
       "Six-Eight Time": "מקצב 6/8",
       "Key Signatures: Sharps": "סימני מפתח: דיאזים",
-      "Key Signatures: Mixed": "סימני מפתח: מעורב"
+      "Key Signatures: Mixed": "סימני מפתח: מעורב",
+      "Quarter + Quarter Rest": "רבע ושתיקת רבע",
+      "Half + Half Rest": "חצי ושתיקת חצי",
+      "Whole + Whole Rest": "שלם ושתיקה שלמה",
+      "Dotted Half Notes": "חצי מנוקד",
+      "Dotted Quarter Notes": "רבע מנוקד",
+      "Three-Four Time": "משקל שלוש-רבעים",
+      "Rhythm Review": "סיכום הקצב"
     }
   },
   "tabs": {
