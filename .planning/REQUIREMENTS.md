@@ -12,9 +12,9 @@
 
 ### Pedagogical Principles (data restructure)
 
-- [ ] **REQ-01**: Pulse-first ordering principle — quarter note is the first rhythmic-content node a learner encounters (after any intro/scaffolding); halves and wholes are introduced as extensions of the pulse; eighths and sixteenths as subdivisions
-- [ ] **REQ-02**: Rests-woven principle — each rest type (quarter, half, whole rest) is introduced in or immediately adjacent to its matching duration unit; no aggregate "Rests" unit
-- [ ] **REQ-03**: Concept-per-unit principle — no unit mixes two distinct learning concepts (a "concept" = duration intro / rest intro / dotted-note intro / meter intro); meters live in dedicated meter units; aggregate bosses sit in their own review unit
+- [x] **REQ-01**: Pulse-first ordering principle — quarter note is the first rhythmic-content node a learner encounters (after any intro/scaffolding); halves and wholes are introduced as extensions of the pulse; eighths and sixteenths as subdivisions
+- [x] **REQ-02**: Rests-woven principle — each rest type (quarter, half, whole rest) is introduced in or immediately adjacent to its matching duration unit; no aggregate "Rests" unit
+- [x] **REQ-03**: Concept-per-unit principle — no unit mixes two distinct learning concepts (a "concept" = duration intro / rest intro / dotted-note intro / meter intro); meters live in dedicated meter units; aggregate bosses sit in their own review unit
 
 ### Scaffolding & Engine
 
@@ -23,7 +23,7 @@
 
 ### Lockstep Updates Across Dependent Artifacts
 
-- [ ] **REQ-05**: Locale keys (`src/locales/{en,he}/trail.json`), paywall config (`FREE_NODE_IDS` JS Set ↔ Postgres `is_free_node()`), validator (`scripts/validateTrail.mjs` — new lint rules for principles 1–3), and rhythm-related tests all updated in lockstep with the data restructure
+- [x] **REQ-05**: Locale keys (`src/locales/{en,he}/trail.json`), paywall config (`FREE_NODE_IDS` JS Set ↔ Postgres `is_free_node()`), validator (`scripts/validateTrail.mjs` — new lint rules for principles 1–3), and rhythm-related tests all updated in lockstep with the data restructure
 
 ### Data Migration
 

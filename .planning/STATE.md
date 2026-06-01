@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.5
 milestone_name: Rhythm Pedagogy
 status: executing
-last_updated: "2026-06-01T18:38:20.434Z"
-last_activity: 2026-06-01 -- Phase 1 planning complete
+last_updated: "2026-06-01T18:52:32.558Z"
+last_activity: 2026-06-01
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 10
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 10
 ---
 
 # Project State
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Planning next milestone
+**Current focus:** Phase 01 — refactor-rhythm-trail-pedagogical-ordering-restructure-units
 
 ## Current Position
 
-Phase: 1 (rhythm trail pedagogical restructure)
-Plan: none
+Phase: 01 (refactor-rhythm-trail-pedagogical-ordering-restructure-units) — EXECUTING
+Plan: 2 of 10
 Status: Ready to execute
-Last activity: 2026-06-01 -- Phase 1 planning complete
+Last activity: 2026-06-01
 
 ### Quick Tasks Completed
 
@@ -71,6 +71,19 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 | process   | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
 | infra     | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
 
+### Phase 01 Execution Metrics
+
+| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                           |
+| ----- | -------- | ----- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01-01 | 6 min    | 3     | 5     | Wave 0 validation layer (3 new lint rules + 7 sibling unit tests + 2 parity gates). `validateConceptPerUnit` RED on today's data by design; `freeNodes.parity` RED until 01-04. |
+
+## Decisions (Phase 01)
+
+- **01-01:** Console.error spy per-test (not `hasErrors` module flag) for validator rule assertions — prevents state leak across describe blocks
+- **01-01:** Extend `vitest.config.js` `include` glob to discover `scripts/**/__tests__/*.{test,spec}.{js,mjs}` — Rule 3 deviation, sibling-test pattern for script-level validators
+- **01-01:** Meter-unit branch in `validateConceptPerUnit` uses strict allowlist `{q, qd, 8}` against any non-4/4 timeSignature — no separate meter family map
+- **01-01:** U10 hard exemption (`unit === 10` skip) in `validateConceptPerUnit` per D-11 single cumulative review boss
+
 ## Resolved Items
 
 **DATA-02 (closed 2026-05-12)** — pulse hold path filter validation. Re-triage confirmed no action needed: `PulseQuestion.jsx` uses a hardcoded `PULSE_BEATS` constant (4 quarter notes) and never invokes `resolveByTags`. `MixedLessonGame.buildRhythmTapConfig()` does not emit a `beats` field for `pulse` questions, and `allowRests` / `patternNeedsRests` propagate only through the dictation path. The filter is structurally inapplicable to PulseQuestion.
@@ -83,10 +96,14 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** v3.5 Rhythm Pedagogy milestone opened. Phase 1 SPEC.md + CONTEXT.md committed and registered in ROADMAP.md with 7 locked requirements (REQ-01…REQ-07).
+**Next action:** Phase 01 Plan 01-01 complete (Wave 0 validation layer shipped). Ready to execute Plan 01-02.
 
-- `/gsd-plan-phase 1` — generate PLAN.md files for Phase 1 (research → plan → checker → done)
+- Three new lint rules in `scripts/validateTrail.mjs` (exported, named): `validatePulseFirst`, `validateRestsWoven`, `validateConceptPerUnit`
+- 7-test sibling suite at `scripts/__tests__/validateTrail.principles.test.mjs` (all green)
+- EN/HE scaffolding-card parity gate at `src/locales/__tests__/scaffolding-card-parity.test.js` (vacuously green)
+- `FREE_NODE_IDS` ↔ SQL whitelist parity gate at `src/config/__tests__/freeNodes.parity.test.js` (intentionally RED — Wave 1/4 drives green per D-12)
+- `validateConceptPerUnit` currently RED on today's data (3 violations: U1, U4, U5) — by design per Task 1 done note; Wave 1/2 drives green
 
 ---
 
-_State updated: 2026-06-01 — v3.5 Rhythm Pedagogy milestone opened. Phase 1 (Rhythm Trail Pedagogical Restructure) registered in ROADMAP.md. Ready to plan._
+_State updated: 2026-06-01 — Plan 01-01 complete. Wave 0 validation layer in place. Ready to execute Plan 01-02._
