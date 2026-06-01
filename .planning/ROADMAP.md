@@ -52,7 +52,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 Phase summary:
 
-- [ ] Phase 1: Rhythm Trail Pedagogical Restructure (0/0 plans) -- planning
+- [ ] Phase 1: Rhythm Trail Pedagogical Restructure (0/10 plans) -- planned (4 waves)
 
 ### Phase 1: Rhythm Trail Pedagogical Restructure
 
@@ -60,7 +60,20 @@ Phase summary:
 **Depends on**: Nothing (first phase of v3.5; data restructure + scaffolding UI in `DiscoveryIntroQuestion.jsx`; standalone of Treble / Bass / Ear)
 **Spec**: `.planning/phases/01-refactor-rhythm-trail-pedagogical-ordering-restructure-units/01-SPEC.md`
 **Context**: `.planning/phases/01-refactor-rhythm-trail-pedagogical-ordering-restructure-units/01-CONTEXT.md`
-**Plans**: TBD (pending `/gsd-plan-phase 1`)
+**Plans**: 10 plans across 4 waves (planned 2026-06-01)
+
+Plans:
+
+- [ ] 01-01-PLAN.md — Wave 0: Validator lint rules + parity tests scaffolding
+- [ ] 01-02-PLAN.md — Wave 1: Hidden Unit 8 rename (rhythm*8*_ → rhythm*synco*_)
+- [ ] 01-03-PLAN.md — Wave 1: Locale infrastructure (EN+HE scaffolding cards + unit names)
+- [ ] 01-04-PLAN.md — Wave 1: Supabase migration + FREE_NODE_IDS update
+- [ ] 01-05-PLAN.md — Wave 2: Unit data U1-U3 (Quarter, Half, Whole + matching rests)
+- [ ] 01-06-PLAN.md — Wave 2: Unit data U4-U5 (Eighths, Sixteenths)
+- [ ] 01-07-PLAN.md — Wave 2: Unit data U6-U8 (Dotted Half, Dotted Quarter, 3/4 Meter)
+- [ ] 01-08-PLAN.md — Wave 2: Unit data U9-U10 + expandedNodes.js + skillTrail.js UNITS map wire-up
+- [ ] 01-09-PLAN.md — Wave 3: DiscoveryIntroQuestion.jsx multi-card pagination extension
+- [ ] 01-10-PLAN.md — Wave 3: PWA cache bump + OLD file cleanup + [BLOCKING] supabase db push + UAT walkthrough
 
 **Requirements** (locked in 01-SPEC.md):
 
@@ -90,4 +103,4 @@ Phase summary:
 
 ---
 
-_Last updated: 2026-06-01 -- v3.5 Rhythm Pedagogy milestone opened; Phase 1 registered_
+_Last updated: 2026-06-01 -- Phase 1 planned: 10 plans across 4 waves (/gsd-plan-phase 1 complete)_
