@@ -272,6 +272,7 @@ const rhythmUnit2Nodes = [
       focusDurations: [],
       contextDurations: ["q", "h", "hr"],
       patternTags: ["quarter-half", "half-rest"],
+      patternTagMode: "any", // Speed round spans both tags; AND-mode would resolve 0 patterns.
       tempo: { min: 85, max: 95, default: 90 },
       pitch: "C4",
       timeSignature: "4/4",

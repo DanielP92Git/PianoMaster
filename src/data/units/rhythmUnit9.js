@@ -270,6 +270,7 @@ export const rhythmUnit9Nodes = [
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
       patternTags: ["six-eight-basic", "six-eight-qd-eighths"],
+      patternTagMode: "any", // Speed round spans both tags; AND-mode would resolve 0 patterns.
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "6/8",
