@@ -1,15 +1,22 @@
-/**
- * Rhythm Unit 6: "Sixteenth Notes" (Redesigned)
- *
- * Educational psychology-driven design for 8-year-old learners
- * - Introduces durations: Sixteenth notes (1/4 beat - groups of 4 per beat)
- * - FINAL UNIT of the rhythm path (Units 1-6)
- * - Single pitch (C4) throughout for pure rhythm focus
- * - 6 nodes with variety and a TRUE BOSS node (not Mini-Boss)
- *
- * Duration: 25-30 minutes (3-4 min per node)
- * Goal: Master the fastest duration, complete the rhythm learning journey
- */
+// src/data/units/rhythmUnit5.js
+// Phase 1 v3.5 — Unit 5: Sixteenth Notes (second subdivision per D-01, D-05).
+// 6-node NON-DURATION arc per D-02: Intro → Practice → Discovery (mixed contrast)
+// → Practice → Speed → Mini-Boss.
+// orderInUnit=3 is a mixed-contrast DISCOVERY with empty focusDurations
+// (no new concept introduced — pairs sixteenths with prior q/8 for ear training).
+//
+// Pattern tag inventory (verified against src/data/patterns/rhythmPatterns.js
+// on 2026-06-01):
+//   - "sixteenth": sixteenth-bearing patterns (rhythm_5_1..5_4, boss_rhythm_5)
+//   - "quarter-eighth": prior-subdivision contrast patterns (rhythm_5_3, rhythm_5_4)
+//   - Cumulative U1–U5 tags on rhythm_5_5 + boss_rhythm_5 via patternTagMode "any"
+//
+// Concept family per D-14 validateConceptPerUnit: focusDurations stay within
+// {16}. Only rhythm_5_1 carries a non-empty focusDurations array.
+//
+// XP arc (per 01-RESEARCH §"XP totals"): sixteenths technically harder than
+// eighths, so per-node XP is slightly higher than U4 (rhythm_5_1=60 vs
+// rhythm_4_1=55; boss_rhythm_5=130 vs boss_rhythm_4=120).
 
 import {
   NODE_TYPES,
@@ -18,51 +25,43 @@ import {
 } from "../nodeTypes.js";
 import { EXERCISE_TYPES } from "../constants.js";
 
-const UNIT_ID = 6;
+const UNIT_ID = 5;
 const UNIT_NAME = "Sixteenth Notes";
 const CATEGORY = "rhythm";
-const START_ORDER = 132; // After Unit 5's 7 nodes (125-131)
+const START_ORDER = 140;
 
-/**
- * Unit 6 Nodes
- * Psychological journey: Sixteenths -> Practice -> Mix with Eighths -> More Practice -> All Rhythms -> Speed -> BOSS
- * NOTE: This unit's final node is NODE_TYPES.BOSS (true boss, not Mini-Boss) as the trail milestone
- */
-export const rhythmUnit6Nodes = [
+export const rhythmUnit5Nodes = [
   // ============================================
-  // NODE 1: Meet Sixteenth Notes (Discovery)
+  // NODE 1: Meet Sixteenth Notes (Discovery — concept anchor)
   // ============================================
   {
-    id: "rhythm_6_1",
+    id: "rhythm_5_1",
     name: "Meet Sixteenth Notes",
-    description: "Learn to play four notes per beat",
+    description:
+      "Four fast notes per beat — the smallest classical subdivision",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER,
     orderInUnit: 1,
-    prerequisites: ["boss_rhythm_5"], // Requires completing Unit 5
+    prerequisites: ["boss_rhythm_4"],
 
-    // Node type classification
     nodeType: NODE_TYPES.DISCOVERY,
 
-    // Rhythm configuration with sixteenth notes
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.ALL,
       durations: ["q", "16"],
-      focusDurations: ["16"], // NEW: Sixteenth notes being introduced
-      contextDurations: ["q"], // Quarters for contrast
+      focusDurations: ["16"], // NEW: sixteenth subdivision concept
+      contextDurations: ["q"],
       patternTags: ["sixteenth"],
       tempo: { min: 75, max: 85, default: 80 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
-    // UI display hints
     newContent: NEW_CONTENT_TYPES.RHYTHM,
-    newContentDescription: "Sixteenth Notes (1/4 beat)",
+    newContentDescription: "Sixteenth Notes (1/4 beat — four per pulse)",
 
-    // Exercises
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
@@ -82,9 +81,8 @@ export const rhythmUnit6Nodes = [
       },
     ],
 
-    // Progression
-    skills: ["sixteenth_note"],
-    xpReward: 75,
+    skills: ["quarter_note", "sixteenth_note"],
+    xpReward: 60,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -95,15 +93,15 @@ export const rhythmUnit6Nodes = [
   // NODE 2: Practice Sixteenth Notes (Practice)
   // ============================================
   {
-    id: "rhythm_6_2",
+    id: "rhythm_5_2",
     name: "Practice Sixteenth Notes",
-    description: "Groups of four - one beat at a time",
+    description: "Groups of four — one beat at a time",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 1,
     orderInUnit: 2,
-    prerequisites: ["rhythm_6_1"],
+    prerequisites: ["rhythm_5_1"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -139,8 +137,8 @@ export const rhythmUnit6Nodes = [
       },
     ],
 
-    skills: ["sixteenth_note"],
-    xpReward: 80,
+    skills: ["quarter_note", "sixteenth_note"],
+    xpReward: 65,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -148,25 +146,30 @@ export const rhythmUnit6Nodes = [
   },
 
   // ============================================
-  // NODE 3: Sixteenths and Eighths (Discovery)
+  // NODE 3: Mixed Contrast — Eighths and Sixteenths (Discovery, no new concept)
   // ============================================
+  // Non-duration arc: this Discovery is contrast/integration — pairs sixteenths
+  // with prior q/8 durations for ear training. focusDurations: [] enforces
+  // the "no new concept added" rule per D-14 validateConceptPerUnit. No
+  // discovery_intro card here (REQ-04 scaffolding is only on the concept-anchor
+  // Discovery, rhythm_5_1).
   {
-    id: "rhythm_6_3",
-    name: "Sixteenths and Eighths",
-    description: "Mix sixteenth notes with eighth notes",
+    id: "rhythm_5_3",
+    name: "Eighths and Sixteenths",
+    description: "Tell apart 2-per-beat eighths from 4-per-beat sixteenths",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 2,
     orderInUnit: 3,
-    prerequisites: ["rhythm_6_2"],
+    prerequisites: ["rhythm_5_2"],
 
     nodeType: NODE_TYPES.DISCOVERY,
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.ALL,
       durations: ["q", "8", "16"],
-      focusDurations: [], // Mixing known durations
+      focusDurations: [],
       contextDurations: ["q", "8", "16"],
       patternTags: ["sixteenth", "quarter-eighth"],
       tempo: { min: 75, max: 85, default: 80 },
@@ -175,7 +178,7 @@ export const rhythmUnit6Nodes = [
     },
 
     newContent: NEW_CONTENT_TYPES.EXERCISE_TYPE,
-    newContentDescription: "Duration Mixing",
+    newContentDescription: "Subdivision Contrast",
 
     exercises: [
       {
@@ -183,21 +186,20 @@ export const rhythmUnit6Nodes = [
         config: {
           questions: [
             { type: "visual_recognition" },
-            { type: "visual_recognition" },
             { type: "syllable_matching" },
             { type: "visual_recognition" },
-            { type: "syllable_matching" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
+            { type: "rhythm_reading" },
           ],
         },
       },
     ],
 
-    skills: ["eighth_note", "sixteenth_note"],
-    xpReward: 80,
+    skills: ["quarter_note", "eighth_note", "sixteenth_note"],
+    xpReward: 65,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -205,11 +207,10 @@ export const rhythmUnit6Nodes = [
   },
 
   // ============================================
-  // NODE 4: Fast and Faster (Practice)
+  // NODE 4: All-Duration Mix (Practice)
   // ============================================
   {
-    id: "rhythm_6_4",
-    // D-11 (Phase 33 Plan 33-04): renamed from "Fast and Faster" — name implied tempo, content is duration variety
+    id: "rhythm_5_4",
     name: "All-Duration Mix",
     description: "Mix quarter, half, eighth, and sixteenth notes in patterns",
     category: CATEGORY,
@@ -217,7 +218,7 @@ export const rhythmUnit6Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 3,
     orderInUnit: 4,
-    prerequisites: ["rhythm_6_3"],
+    prerequisites: ["rhythm_5_3"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -254,7 +255,7 @@ export const rhythmUnit6Nodes = [
     ],
 
     skills: ["quarter_note", "half_note", "eighth_note", "sixteenth_note"],
-    xpReward: 85,
+    xpReward: 70,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -262,18 +263,18 @@ export const rhythmUnit6Nodes = [
   },
 
   // ============================================
-  // NODE 5: Speed Master (Speed Round)
+  // NODE 5: Sixteenth-Note Speed Drill (Speed Round)
   // ============================================
   {
-    id: "rhythm_6_6",
-    name: "All-Duration Speed Drill",
-    description: "How fast can you play every duration?",
+    id: "rhythm_5_5",
+    name: "Sixteenth-Note Speed Drill",
+    description: "How fast can you play every classical subdivision?",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 4,
     orderInUnit: 5,
-    prerequisites: ["rhythm_6_4"],
+    prerequisites: ["rhythm_5_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -282,26 +283,23 @@ export const rhythmUnit6Nodes = [
       durations: ["q", "h", "8", "16"],
       focusDurations: [],
       contextDurations: ["q", "h", "8", "16"],
-      // D-19 (Phase 33 Plan 33-09): cumulative speed-pool tags mirror boss D-06.
-      // ArcadeRhythmGame's tag-based resolver (Plan 33-06) draws from this expanded pool.
+      // Cumulative U1-U5 speed pool (mirrors mini-boss cumulative D-06 pattern).
       patternTags: [
         "quarter-only",
         "quarter-half",
         "quarter-half-whole",
         "quarter-eighth",
         "quarter-half-whole-eighth",
-        "quarter-rest",
-        "dotted-half",
         "sixteenth",
-      ], // D-19: cumulative U1-U6 (half-rest, whole-rest, dotted-quarter pruned — incompatible with node durations [q,h,8,16])
-      patternTagMode: "any", // D-19: OR-mode for cumulative pool
-      tempo: { min: 95, max: 105, default: 100 }, // Fastest tempo in rhythm path
+      ],
+      patternTagMode: "any",
+      tempo: { min: 95, max: 105, default: 100 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
-    newContentDescription: "Ultimate Speed Challenge",
+    newContentDescription: "Subdivision Speed Challenge",
 
     exercises: [
       {
@@ -313,7 +311,7 @@ export const rhythmUnit6Nodes = [
     ],
 
     skills: ["quarter_note", "half_note", "eighth_note", "sixteenth_note"],
-    xpReward: 90,
+    xpReward: 75,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -321,81 +319,63 @@ export const rhythmUnit6Nodes = [
   },
 
   // ============================================
-  // NODE 6: Rhythm Champion (BOSS - True Boss, not Mini-Boss)
+  // NODE 6: Sixteenth-Note Boss (Mini-Boss)
   // ============================================
   {
-    id: "boss_rhythm_6",
-    name: "All-Rhythm Boss",
-    description: "Master every classical rhythm!",
-    unlockHint:
-      "Complete all lessons in this unit to unlock the ultimate challenge!",
-    category: "boss", // Boss nodes have their own category
+    id: "boss_rhythm_5",
+    name: "Sixteenth-Note Boss",
+    description: "Master every classical subdivision!",
+    unlockHint: "Complete all rhythm lessons above to unlock this challenge!",
+    category: "boss",
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 5,
     orderInUnit: 6,
-    prerequisites: ["rhythm_6_6"],
+    prerequisites: ["rhythm_5_5"],
 
-    // TRUE BOSS node (not Mini-Boss) - Trail milestone unlocked!
-    nodeType: NODE_TYPES.BOSS,
+    nodeType: NODE_TYPES.MINI_BOSS,
 
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.ALL,
-      durations: ["q", "h", "w", "8", "16", "qr", "hr", "wr", "hd", "qd"], // D-06: cumulative U1-U6
+      durations: ["q", "h", "w", "8", "16"],
       focusDurations: [],
-      contextDurations: [
-        "q",
-        "h",
-        "w",
-        "8",
-        "16",
-        "qr",
-        "hr",
-        "wr",
-        "hd",
-        "qd",
-      ],
+      contextDurations: ["q", "h", "w", "8", "16"],
+      // Cumulative boss pool (U1–U5) per D-06 OR-mode.
       patternTags: [
         "quarter-only",
         "quarter-half",
         "quarter-half-whole",
         "quarter-eighth",
         "quarter-half-whole-eighth",
-        "quarter-rest",
-        "half-rest",
-        "whole-rest",
-        "dotted-half",
-        "dotted-quarter",
         "sixteenth",
-      ], // D-06: cumulative U1-U6
-      patternTagMode: "any", // D-06: OR-mode for cumulative boss patterns
-      measureCount: 4, // D-08: full BOSS uses 4-bar patterns
+      ],
+      patternTagMode: "any",
+      measureCount: 4,
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "4/4",
     },
 
     newContent: NEW_CONTENT_TYPES.CHALLENGE_TYPE,
-    newContentDescription: "Rhythm Path Complete!",
+    newContentDescription: "Unit Challenge",
 
-    // D-09: Challenge-heavy question mix (dictation + reading emphasis, minimal tap)
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "rhythm_reading" },
-            { type: "rhythm_dictation" },
-            { type: "rhythm_reading" },
             { type: "rhythm_tap" },
-            { type: "rhythm_dictation" },
+            { type: "visual_recognition" },
             { type: "rhythm_reading" },
+            { type: "syllable_matching" },
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
+            { type: "visual_recognition" },
             { type: "rhythm_reading" },
+            { type: "syllable_matching" },
             { type: "rhythm_dictation" },
+            { type: "rhythm_tap" },
             { type: "rhythm_reading" },
-            { type: "rhythm_dictation" },
           ],
         },
       },
@@ -407,15 +387,13 @@ export const rhythmUnit6Nodes = [
       "whole_note",
       "eighth_note",
       "sixteenth_note",
-      "dotted_quarter_note",
-      "dotted_half_note",
     ],
-    xpReward: 200, // Highest XP reward in rhythm path
-    accessoryUnlock: "rhythm_champion_badge",
+    xpReward: 130,
+    accessoryUnlock: "rhythm_badge_5",
     isBoss: true,
     isReview: false,
     reviewsUnits: [],
   },
 ];
 
-export default rhythmUnit6Nodes;
+export default rhythmUnit5Nodes;

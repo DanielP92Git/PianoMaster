@@ -8,7 +8,7 @@
  * Always reports onComplete(1, 1) — informational, always "correct."
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Volume2 } from "lucide-react";
 import { useAudioEngine } from "../../../../hooks/useAudioEngine";
@@ -27,6 +27,26 @@ import BeamedSixteenthsIcon from "../../../../assets/musicSymbols/beamed-sixteen
 // single-flag glyph from SVG_COMPONENTS for the "16" focus.
 const DISCOVERY_SVG_OVERRIDES = {
   16: BeamedSixteenthsIcon,
+};
+
+// REQ-04 (Phase 1 v3.5): Default card sequence per focusDuration concept.
+// 2-4 cards per D-07. Inline `question.cards` overrides this default.
+// Rests skip 'sound' (silence is the point). Meters skip 'sound' (structural,
+// no single-note demo). Pattern mode (focusPattern.id) bypasses pagination
+// entirely — see cardKinds derivation in the component body.
+const CONCEPT_CARDS = {
+  q: ["meet", "sound", "music", "ready"],
+  qr: ["meet", "music", "ready"],
+  h: ["meet", "sound", "music", "ready"],
+  hr: ["meet", "music", "ready"],
+  w: ["meet", "sound", "music", "ready"],
+  wr: ["meet", "music", "ready"],
+  "8_pair": ["meet", "sound", "music", "ready"],
+  16: ["meet", "sound", "music", "ready"],
+  hd: ["meet", "sound", "music", "ready"],
+  qd: ["meet", "sound", "music", "ready"],
+  "3_4": ["meet", "music", "ready"],
+  "6_8": ["meet", "music", "ready"],
 };
 
 export default function DiscoveryIntroQuestion({
@@ -51,7 +71,31 @@ export default function DiscoveryIntroQuestion({
   // multi-note figures, not single durations the child hasn't seen.
   const focusPattern = question?.focusPattern;
   const focusDuration = question?.focusDuration;
+  const focusPatternId = focusPattern?.id ?? null;
   const info = DURATION_INFO[focusDuration];
+
+  // REQ-04: Multi-card pagination state. Pattern mode (focusPattern.id =
+  // qhq/synsyn, hidden Unit 8 syncopation) preserves the legacy single-card
+  // behavior — pagination only triggers when focusPattern is absent.
+  // Card sequence resolution priority:
+  //   1. inline question.cards (caller override — wins everywhere)
+  //   2. CONCEPT_CARDS[focusDuration] (default per-concept arc)
+  //   3. ["meet"] fallback (unknown concept → single hero card)
+  const cardKinds = focusPatternId
+    ? ["meet"] // REQ-04: pattern mode kept single-card per D-PATTERNS §2 preserve-list
+    : question?.cards?.map((c) => c.kind) ||
+      CONCEPT_CARDS[focusDuration] || ["meet"];
+
+  const [cardIndex, setCardIndex] = useState(0);
+  // REQ-04: reset pagination when the question prop changes — avoids stale
+  // cardIndex across MixedLessonGame re-renders within the same renderer.
+  useEffect(() => {
+    setCardIndex(0);
+    hasCompletedRef.current = false;
+  }, [focusDuration, focusPatternId]);
+
+  const isLastCard = cardIndex >= cardKinds.length - 1;
+  const currentKind = cardKinds[cardIndex] ?? "meet";
   const SvgIcon =
     DISCOVERY_SVG_OVERRIDES[focusDuration] || SVG_COMPONENTS[focusDuration];
   const isWideGlyph = focusDuration === "16";
@@ -226,11 +270,20 @@ export default function DiscoveryIntroQuestion({
     patternTempo,
   ]);
 
-  const handleGotIt = useCallback(() => {
-    if (hasCompletedRef.current || disabled) return;
-    hasCompletedRef.current = true;
-    onComplete(1, 1);
-  }, [onComplete, disabled]);
+  // REQ-04: Unified primary handler — advances cardIndex on non-final cards,
+  // completes the question on the final card. hasCompletedRef guards re-entry
+  // (existing behavior preserved). Single-card mode (cardKinds.length === 1)
+  // calls onComplete on first click, matching today's handleGotIt contract.
+  const handleNext = useCallback(() => {
+    if (disabled) return;
+    if (hasCompletedRef.current) return;
+    if (isLastCard) {
+      hasCompletedRef.current = true;
+      onComplete(1, 1);
+    } else {
+      setCardIndex((i) => i + 1);
+    }
+  }, [isLastCard, onComplete, disabled]);
 
   // Need either a pattern to render via VexFlow or a single-duration SVG.
   if (!patternBeats && (!info || !SvgIcon)) return null;
@@ -332,34 +385,41 @@ export default function DiscoveryIntroQuestion({
             {t("game.discovery.syllable", 'Say: "{{syllable}}"', { syllable })}
           </p>
 
-          {/* Audio demo button */}
-          <button
-            onClick={playDemo}
-            disabled={isPlaying}
-            className={[
-              "flex items-center gap-2 rounded-lg border border-white/20 bg-white/10",
-              listenBtnPadding,
-              "text-white transition-colors duration-150",
-              isPlaying
-                ? "cursor-default opacity-60"
-                : "cursor-pointer hover:border-white/40 hover:bg-white/20",
-              listenBtnAlign.trim(),
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            aria-label={t("game.discovery.listenButton", "Listen to the sound")}
-          >
-            <Volume2 className="h-5 w-5" />
-            <span className="font-medium">
-              {isPlaying
-                ? t("game.discovery.playing", "Playing...")
-                : t("game.discovery.listen", "Listen")}
-            </span>
-          </button>
+          {/* REQ-04: Audio demo button shown on 'sound' cards only (multi-card
+              mode) OR pattern mode (legacy single-card Unit 8 syncopation). */}
+          {(focusPatternId || currentKind === "sound") && (
+            <button
+              onClick={playDemo}
+              disabled={isPlaying}
+              className={[
+                "flex items-center gap-2 rounded-lg border border-white/20 bg-white/10",
+                listenBtnPadding,
+                "text-white transition-colors duration-150",
+                isPlaying
+                  ? "cursor-default opacity-60"
+                  : "cursor-pointer hover:border-white/40 hover:bg-white/20",
+                listenBtnAlign.trim(),
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-label={t(
+                "game.discovery.listenButton",
+                "Listen to the sound"
+              )}
+            >
+              <Volume2 className="h-5 w-5" />
+              <span className="font-medium">
+                {isPlaying
+                  ? t("game.discovery.playing", "Playing...")
+                  : t("game.discovery.listen", "Listen")}
+              </span>
+            </button>
+          )}
 
-          {/* Got it button */}
+          {/* REQ-04: Primary CTA — advances cardIndex on non-final cards,
+              completes on final card. Label switches Next → Got it! on final. */}
           <button
-            onClick={handleGotIt}
+            onClick={handleNext}
             disabled={disabled}
             className={[
               gotItBtnSize,
@@ -372,8 +432,37 @@ export default function DiscoveryIntroQuestion({
                 : "cursor-pointer hover:brightness-110 active:scale-[0.97]",
             ].join(" ")}
           >
-            {t("game.discovery.gotIt", "Got it!")}
+            {/* REQ-04: label flips Next (non-final) → Got it! (final). Legacy
+                `game.discovery.gotIt` retained as the final-card label so
+                trail-mode users see the same wording they always have. */}
+            {isLastCard
+              ? t("game.discovery.gotIt", "Got it!")
+              : t("game.discovery.cards.nextButton", { defaultValue: "Next" })}
           </button>
+
+          {/* REQ-04: Card progress indicator (multi-card scaffolding only).
+              Pill highlights the current card; dots show remaining steps. */}
+          {cardKinds.length > 1 && (
+            <div
+              className="mt-2 flex justify-center gap-2"
+              aria-label={t("game.discovery.cards.ariaProgress", {
+                defaultValue: "Card {{current}} of {{total}}",
+                current: cardIndex + 1,
+                total: cardKinds.length,
+              })}
+            >
+              {cardKinds.map((_, i) => (
+                <span
+                  key={i}
+                  className={
+                    i === cardIndex
+                      ? "h-2 w-6 rounded-full bg-indigo-400"
+                      : "h-2 w-2 rounded-full bg-white/30"
+                  }
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

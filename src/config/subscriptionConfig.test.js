@@ -34,8 +34,9 @@ describe("subscriptionConfig — ear training free tier", () => {
     expect(PAYWALL_BOSS_NODE_IDS).toContain("boss_ear_2");
   });
 
-  it("PAYWALL_BOSS_NODE_IDS has exactly 5 entries", () => {
-    expect(PAYWALL_BOSS_NODE_IDS).toHaveLength(5);
+  it("PAYWALL_BOSS_NODE_IDS has exactly 4 entries (boss_rhythm_1 moved to free tier per Phase 1 v3.5 D-12)", () => {
+    expect(PAYWALL_BOSS_NODE_IDS).toHaveLength(4);
+    expect(PAYWALL_BOSS_NODE_IDS).not.toContain("boss_rhythm_1");
   });
 
   it("isFreeNode returns true for all 6 ear training free nodes", () => {
@@ -59,19 +60,21 @@ describe("subscriptionConfig — ear training free tier", () => {
     );
   });
 
-  it("FREE_NODE_IDS Set has 23 total entries (7+6+4+6)", () => {
+  it("FREE_NODE_IDS Set has 25 total entries (7+6+5+1 boss_rhythm_1+6) per Phase 1 v3.5 D-12", () => {
     const expected =
       FREE_TREBLE_NODE_IDS.length +
       FREE_BASS_NODE_IDS.length +
       FREE_RHYTHM_NODE_IDS.length +
+      1 + // boss_rhythm_1 free per D-12
       FREE_EAR_TRAINING_NODE_IDS.length;
     expect(FREE_NODE_IDS.size).toBe(expected);
-    expect(FREE_NODE_IDS.size).toBe(23);
+    expect(FREE_NODE_IDS.size).toBe(25);
   });
 
-  it("FREE_TIER_SUMMARY reflects ear training addition", () => {
+  it("FREE_TIER_SUMMARY reflects Phase 1 v3.5 rhythm restructure (D-12)", () => {
     expect(FREE_TIER_SUMMARY.ear_training).toEqual({ count: 6 });
-    expect(FREE_TIER_SUMMARY.total).toBe(23);
-    expect(FREE_TIER_SUMMARY.bossNodeCount).toBe(5);
+    expect(FREE_TIER_SUMMARY.rhythm).toEqual({ count: 6 });
+    expect(FREE_TIER_SUMMARY.total).toBe(25);
+    expect(FREE_TIER_SUMMARY.bossNodeCount).toBe(4);
   });
 });

@@ -2,14 +2,10 @@ import { describe, it, expect } from "vitest";
 import { rhythmUnit8Nodes } from "./rhythmUnit8Redesigned.js";
 import { NODE_TYPES, NEW_CONTENT_TYPES } from "../nodeTypes.js";
 import { EXERCISE_TYPES } from "../constants.js";
-import { rhythmUnit1Nodes } from "./rhythmUnit1Redesigned.js";
-import { rhythmUnit2Nodes } from "./rhythmUnit2Redesigned.js";
-import { rhythmUnit3Nodes } from "./rhythmUnit3Redesigned.js";
-import { resolveByTags } from "../patterns/RhythmPatternGenerator.js";
 
 // ─── Asserts the 7-node monomodal design from quick task 260524-l3r ─────────
 
-describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
+describe("Rhythm Unit Syncopation (HIDDEN, renamed from rhythm_8_*)", () => {
   it("exports exactly 7 nodes", () => {
     expect(rhythmUnit8Nodes).toHaveLength(7);
   });
@@ -21,13 +17,13 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
 
   it("node IDs match the locked design", () => {
     const expectedIds = [
-      "rhythm_8_1",
-      "rhythm_8_2",
-      "rhythm_8_3",
-      "rhythm_8_4",
-      "rhythm_8_5",
-      "rhythm_8_6",
-      "boss_rhythm_8",
+      "rhythm_synco_1",
+      "rhythm_synco_2",
+      "rhythm_synco_3",
+      "rhythm_synco_4",
+      "rhythm_synco_5",
+      "rhythm_synco_6",
+      "boss_rhythm_synco",
     ];
     expect(rhythmUnit8Nodes.map((n) => n.id)).toEqual(expectedIds);
   });
@@ -38,7 +34,7 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
     ]);
   });
 
-  it("prerequisite chain walks boss_rhythm_7 → rhythm_8_1 → ... → boss_rhythm_8", () => {
+  it("prerequisite chain walks boss_rhythm_7 → rhythm_synco_1 → ... → boss_rhythm_synco", () => {
     expect(rhythmUnit8Nodes[0].prerequisites).toEqual(["boss_rhythm_7"]);
     for (let i = 1; i < rhythmUnit8Nodes.length; i++) {
       expect(rhythmUnit8Nodes[i].prerequisites).toEqual([
@@ -86,7 +82,7 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
 
   it("node 5 contains exactly one compose_rhythm question with 4-6 tiles and slotCount=2", () => {
     const n = rhythmUnit8Nodes[4];
-    expect(n.id).toBe("rhythm_8_5");
+    expect(n.id).toBe("rhythm_synco_5");
     const questions = n.exercises[0].config.questions;
     const composeEntries = questions.filter((q) => q.type === "compose_rhythm");
     expect(composeEntries).toHaveLength(1);
@@ -105,14 +101,14 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
 
   it("node 6 is SPEED_ROUND with ARCADE_RHYTHM exercise type", () => {
     const n = rhythmUnit8Nodes[5];
-    expect(n.id).toBe("rhythm_8_6");
+    expect(n.id).toBe("rhythm_synco_6");
     expect(n.nodeType).toBe(NODE_TYPES.SPEED_ROUND);
     expect(n.exercises[0].type).toBe(EXERCISE_TYPES.ARCADE_RHYTHM);
   });
 
   it("boss has correct id, isBoss flag, XP reward and accessory unlock", () => {
     const boss = rhythmUnit8Nodes[6];
-    expect(boss.id).toBe("boss_rhythm_8");
+    expect(boss.id).toBe("boss_rhythm_synco");
     expect(boss.isBoss).toBe(true);
     expect(boss.nodeType).toBe(NODE_TYPES.BOSS);
     expect(boss.xpReward).toBe(250);
@@ -166,56 +162,8 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
   });
 });
 
-describe("Combined-values node variety (DATA-04)", () => {
-  // 100 samples — with ~uniform pattern selection across N durations,
-  // P(missing any duration) is ~N·((N-1)/N)^100, astronomically small.
-  // 20 samples was occasionally flaky in full-suite runs.
-  const SAMPLES = 100;
-
-  function collectDurationCodes(patternTags, durations) {
-    const seen = new Set();
-    for (let i = 0; i < SAMPLES; i++) {
-      const result = resolveByTags(patternTags, durations);
-      if (result) {
-        result.vexDurations
-          .filter((d) => !d.endsWith("r"))
-          .forEach((d) => seen.add(d));
-      }
-    }
-    return seen;
-  }
-
-  it("rhythm_1_4 (quarter-only + quarter-half, durations q+h) produces both q and h over 100 samples", () => {
-    const node = rhythmUnit1Nodes.find((n) => n.id === "rhythm_1_4");
-    expect(node).toBeDefined();
-    const seen = collectDurationCodes(
-      node.rhythmConfig.patternTags,
-      node.rhythmConfig.durations
-    );
-    expect(seen.has("q")).toBe(true);
-    expect(seen.has("h")).toBe(true);
-  });
-
-  it("rhythm_2_4 (quarter-half + quarter-half-whole, durations q+h+w) produces q, h, and w over 100 samples", () => {
-    const node = rhythmUnit2Nodes.find((n) => n.id === "rhythm_2_4");
-    expect(node).toBeDefined();
-    const seen = collectDurationCodes(
-      node.rhythmConfig.patternTags,
-      node.rhythmConfig.durations
-    );
-    expect(seen.has("q")).toBe(true);
-    expect(seen.has("h")).toBe(true);
-    expect(seen.has("w")).toBe(true);
-  });
-
-  it("rhythm_3_4 (quarter-eighth + quarter-half-whole-eighth, durations q+h+w+8) produces q and 8 over 100 samples", () => {
-    const node = rhythmUnit3Nodes.find((n) => n.id === "rhythm_3_4");
-    expect(node).toBeDefined();
-    const seen = collectDurationCodes(
-      node.rhythmConfig.patternTags,
-      node.rhythmConfig.durations
-    );
-    expect(seen.has("q")).toBe(true);
-    expect(seen.has("8")).toBe(true);
-  });
-});
+// DATA-04 "Combined-values node variety" block removed in Phase 1 v3.5 (Plan 10
+// Task 2 / Option 2): the assertions read OLD-semantics rhythm_{1,2,3}_4 IDs
+// from the deleted rhythmUnit{1,2,3}Redesigned.js files. The same variety
+// invariant is now covered by Plan 08's rhythmUnits.difficulty.test.js against
+// the v3.5 unit files.

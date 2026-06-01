@@ -279,11 +279,25 @@ These capabilities exist, are working, and have been shipped:
 - UAT-in-dev as ship gate: 34-UAT.md delta walkthrough signed off 2026-05-10 with all 5 ROADMAP SCs PASS. Three inline fixes applied during walkthrough (`af97088`, `84697d7`, `89ebee9`) rather than spawning gap-closure cycle
 - 18/18 requirements delivered, 14 plans across 2 phases (Phase 34: 10 plans, Phase 35: 4 plans)
 
+**v3.5 Rhythm Pedagogy Restructure (code-complete 2026-06-02 — owner gates pending):**
+
+- REQ-01..03 (Pulse-first / Rests-woven / Concept-per-unit): 29-node rhythm trail rebuilt as 10 units / 55 nodes; `scripts/validateTrail.mjs` enforces all three principles as lint rules (4 OK checks at HEAD)
+- REQ-04 (Scaffolding): 12 Duolingo-style concept-card blocks (meet/sound/music/ready) under `game.discovery.cards.*` in EN+HE; `DiscoveryIntroQuestion.jsx` paginates 2–4 swipable cards per discovery node; outer MixedLessonGame contract unchanged
+- REQ-05 (Lockstep): Locale parity 89/89 EN↔HE; `FREE_NODE_IDS` mirrors Postgres `is_free_node()` D-12 whitelist (6 free U1 nodes); 10 new unit display names; UNITS map RHYTHM_1..10 + RHYTHM_SYNCO wired
+- REQ-06 (Migration): `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` authored — atomic rhythm-row DELETE from student_skill_progress + is_free_node() body swap; `students.total_xp` preserved
+- REQ-07 (Engine scope): Renderer changes scoped to DiscoveryIntroQuestion only; pattern-mode legacy preserved for hidden syncopation re-enable; rhythm-game tests 233/233 green
+- Hidden syncopation renamed `rhythm_8_*` → `rhythm_synco_*` freeing the `rhythm_8_*` namespace for the new U8 (3/4 Meter) unit; HIDDEN-V1 markers + 4-step re-enable checklist preserved
+- 7/7 must-haves verified at code layer (01-VERIFICATION.md). Owner gates pending in 01-HUMAN-UAT.md: D-13 `supabase db push` + SC-9 device UAT walkthrough rhythm_1_1 → boss_rhythm_10
+- 10 plans across 4 waves; post-merge gap closure (commit `de61952`) added two missing six-eight sub-tags to rhythmPatterns VALID_TAGS and made QuickStatsGrid test denominator dynamic
+
 ### Active
+
+- v3.5 owner gates: `supabase db push` (D-13) + UAT walkthrough (SC-9) — tracked in `.planning/phases/01-refactor-rhythm-trail-pedagogical-ordering-restructure-units/01-HUMAN-UAT.md`; surfaces in `/gsd-progress` until `/gsd-verify-work 01` flips both to resolved.
 
 ## Planning Next Milestone
 
 Last shipped: v3.4 Rhythm Games Responsive UX (2026-05-12).
+v3.5 Rhythm Pedagogy Restructure code-complete (2026-06-02) — awaiting owner gates before shipping.
 
 **Carry-over from v3.4 (deferred, NOT in next milestone scope unless explicitly added):**
 
@@ -631,4 +645,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-05-12 — v3.4 Rhythm Games Responsive UX milestone shipped_
+_Last updated: 2026-06-02 — v3.5 Rhythm Pedagogy Restructure (Phase 01) code-complete; D-13 + SC-9 owner gates remain_

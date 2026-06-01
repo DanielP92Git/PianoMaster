@@ -43,15 +43,23 @@ export const FREE_BASS_NODE_IDS = [
   "bass_1_6",
 ];
 
-/** Rhythm Unit 1 — 4 free nodes (rhythm_1_5 removed Phase 32; rhythm_1_2 merged into rhythm_1_1) */
-// NOTE: The Postgres is_free_node() mirror still listing rhythm_1_2 is harmless
-// and intentionally left alone per the no-migration decision for this merge.
+/** Rhythm Unit 1 — 5 content + 1 boss = 6 free nodes total per Phase 1 v3.5 D-12.
+ * Synced with Postgres is_free_node() via supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql.
+ * The boss_rhythm_1 ID lives in FREE_BOSS_RHYTHM_NODE_IDS (see below) so it composes through the same
+ * FREE_NODE_IDS Set without polluting per-category arrays.
+ */
 export const FREE_RHYTHM_NODE_IDS = [
   "rhythm_1_1",
+  "rhythm_1_2",
   "rhythm_1_3",
   "rhythm_1_4",
-  "rhythm_1_6",
+  "rhythm_1_5",
 ];
+
+/** Rhythm Unit 1 boss — free per D-12 (entire U1 free for new restructure).
+ * Phase 1 v3.5: composed into FREE_NODE_IDS so all 6 U1 IDs gate-through identically.
+ */
+export const FREE_BOSS_RHYTHM_NODE_IDS = ["boss_rhythm_1"];
 
 /** Ear training Unit 1 — 6 free nodes (boss is paywalled per D-08) */
 export const FREE_EAR_TRAINING_NODE_IDS = [
@@ -72,7 +80,7 @@ export const FREE_EAR_TRAINING_NODE_IDS = [
 export const PAYWALL_BOSS_NODE_IDS = [
   "boss_treble_1",
   "boss_bass_1",
-  "boss_rhythm_1",
+  // boss_rhythm_1 moved to FREE_BOSS_RHYTHM_NODE_IDS per Phase 1 v3.5 D-12 (entire U1 free).
   "boss_ear_1",
   "boss_ear_2",
 ];
@@ -87,6 +95,7 @@ export const FREE_NODE_IDS = new Set([
   ...FREE_TREBLE_NODE_IDS,
   ...FREE_BASS_NODE_IDS,
   ...FREE_RHYTHM_NODE_IDS,
+  ...FREE_BOSS_RHYTHM_NODE_IDS, // Phase 1 v3.5 D-12: boss_rhythm_1 free with rest of U1
   ...FREE_EAR_TRAINING_NODE_IDS,
 ]);
 
@@ -99,10 +108,11 @@ export const FREE_NODE_IDS = new Set([
 export const FREE_TIER_SUMMARY = {
   treble: { count: 7 },
   bass: { count: 6 },
-  rhythm: { count: 4 },
+  // Phase 1 v3.5: rhythm restructure — all U1 (5 content + boss) free per D-12.
+  rhythm: { count: 6 },
   ear_training: { count: 6 },
-  total: 23,
-  bossNodeCount: 5,
+  total: 25,
+  bossNodeCount: 4,
 };
 
 // ─── Gate Function ───────────────────────────────────────────────────────────

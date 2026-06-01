@@ -601,6 +601,219 @@ function validateGameTypePolicy() {
   else console.error(`  Found ${errorCount} game-type policy violation(s)`);
 }
 
+// ============================================
+// PEDAGOGY PRINCIPLE RULES (Phase 01, D-14)
+// ============================================
+//
+// These three rules enforce the falsifiable pedagogy principles from
+// `.planning/phases/01-refactor-rhythm-trail-pedagogical-ordering-restructure-units/01-SPEC.md`:
+//   REQ-01: Pulse-first      → quarter is the first rhythmic-content node
+//   REQ-02: Rests-woven      → every rest has a preceding matching duration introducer
+//   REQ-03: Concept-per-unit → no unit mixes two distinct concept families
+//
+// Exported as named functions so the sibling unit test suite
+// (`scripts/__tests__/validateTrail.principles.test.mjs`) can exercise each rule
+// in isolation with mocked SKILL_NODES fixtures.
+
+/**
+ * Concept families used by `validateConceptPerUnit`.
+ * Each family is a Set of `focusDurations` codes that legitimately co-occur
+ * within a single rhythm unit. A unit whose nodes' combined focusDurations
+ * intersect MORE THAN ONE family is a violation.
+ *
+ * Meter units are detected separately via `rhythmConfig.timeSignature !== '4/4'`
+ * (the dotted_quarter family doubles as the 6/8 meter pulse, so meter units
+ * are treated as their own family).
+ */
+const CONCEPT_FAMILIES = {
+  q_qr: new Set(['q', 'qr']),
+  h_hr: new Set(['h', 'hr']),
+  w_wr: new Set(['w', 'wr']),
+  eighths: new Set(['8', '8_pair']),
+  sixteenths: new Set(['16']),
+  dotted_half: new Set(['hd']),
+  dotted_quarter: new Set(['qd']),
+};
+
+/** Rest → matching duration map used by `validateRestsWoven`. */
+const REST_TO_DURATION = { qr: 'q', hr: 'h', wr: 'w' };
+
+/**
+ * REQ-01 — Pulse-first rule.
+ *
+ * The first rhythm-category node (sorted by `order` ascending) must introduce
+ * the quarter note (`focusDurations` includes `'q'`). This anchors the entire
+ * curriculum on the pulse and prevents accidentally leading with a duration
+ * that doesn't establish beat-feel.
+ */
+export function validatePulseFirst() {
+  console.log('\nChecking pulse-first principle (REQ-01)...');
+  let errorCount = 0;
+
+  const rhythmNodes = SKILL_NODES
+    .filter((n) => n.category === 'rhythm')
+    .sort((a, b) => a.order - b.order);
+
+  if (rhythmNodes.length === 0) {
+    // No rhythm nodes loaded — nothing to check (test fixtures may be empty).
+    console.log('  Pulse-first: OK (no rhythm nodes)');
+    return;
+  }
+
+  const first = rhythmNodes[0];
+  const focus = first?.rhythmConfig?.focusDurations;
+  if (!focus?.includes('q')) {
+    console.error(
+      `  ERROR: First rhythm node "${first?.id}" must introduce quarter (focusDurations including 'q'), got ${JSON.stringify(focus)}`
+    );
+    hasErrors = true;
+    errorCount++;
+  }
+
+  if (errorCount === 0) console.log('  Pulse-first: OK');
+  else console.error(`  Found ${errorCount} pulse-first violation(s)`);
+}
+
+/**
+ * REQ-02 — Rests-woven rule.
+ *
+ * For every rhythm/boss-rhythm node whose `focusDurations` introduces a rest
+ * (`qr`, `hr`, or `wr`), there must be a preceding rhythm/boss-rhythm node
+ * (by `order` ascending) whose `focusDurations` introduces the matching
+ * duration. This guarantees rests are introduced *after* and *adjacent to*
+ * their matching duration — never aggregated into a late "rests only" unit.
+ */
+export function validateRestsWoven() {
+  console.log('\nChecking rests-woven principle (REQ-02)...');
+  let errorCount = 0;
+
+  const rhythmNodes = SKILL_NODES
+    .filter(
+      (n) =>
+        n.category === 'rhythm' ||
+        (n.category === 'boss' && typeof n.id === 'string' && n.id.startsWith('boss_rhythm_'))
+    )
+    .sort((a, b) => a.order - b.order);
+
+  for (let i = 0; i < rhythmNodes.length; i++) {
+    const node = rhythmNodes[i];
+    const focus = node.rhythmConfig?.focusDurations || [];
+    for (const rest of Object.keys(REST_TO_DURATION)) {
+      if (!focus.includes(rest)) continue;
+      const matchingDur = REST_TO_DURATION[rest];
+      let found = false;
+      for (let j = i - 1; j >= 0; j--) {
+        const prev = rhythmNodes[j];
+        if ((prev.rhythmConfig?.focusDurations || []).includes(matchingDur)) {
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        console.error(
+          `  ERROR: Rest "${rest}" in node "${node.id}" has no preceding duration "${matchingDur}" introduction`
+        );
+        hasErrors = true;
+        errorCount++;
+      }
+    }
+  }
+
+  if (errorCount === 0) console.log('  Rests-woven: OK');
+  else console.error(`  Found ${errorCount} rests-woven violation(s)`);
+}
+
+/**
+ * REQ-03 — Concept-per-unit rule.
+ *
+ * Within a single rhythm unit, the union of all `focusDurations` across the
+ * unit's nodes must fit within a single concept family from `CONCEPT_FAMILIES`
+ * (or be a meter unit, identified by a non-`4/4` timeSignature). This blocks
+ * authoring patterns like today's Unit 5 that mixes dotted halves + dotted
+ * quarters + 3/4 meter in one unit.
+ *
+ * Exemptions:
+ *   - Unit 10 (Rhythm Review) is a single cumulative BOSS by design.
+ *   - Meter units (any node with timeSignature !== '4/4') are treated as their
+ *     own family — only pulse-related durations (q, qd, 8) may appear inside.
+ */
+export function validateConceptPerUnit() {
+  console.log('\nChecking concept-per-unit principle (REQ-03)...');
+  let errorCount = 0;
+
+  // Group rhythm + boss_rhythm_* nodes by their `unit` property.
+  const byUnit = new Map();
+  for (const node of SKILL_NODES) {
+    const isRhythmCategory = node.category === 'rhythm';
+    const isRhythmBoss =
+      node.category === 'boss' &&
+      typeof node.id === 'string' &&
+      node.id.startsWith('boss_rhythm_');
+    if (!isRhythmCategory && !isRhythmBoss) continue;
+    const key = node.unit;
+    if (key === undefined || key === null) continue;
+    if (!byUnit.has(key)) byUnit.set(key, []);
+    byUnit.get(key).push(node);
+  }
+
+  // 'q'/'qd'/'8' = pulse durations allowed in any meter unit.
+  // '3_4'/'6_8' = meter tokens themselves, set as focusDurations by U8 (3/4) and U9 (6/8) per D-02.
+  const METER_ALLOWED = new Set(['q', 'qd', '8', '3_4', '6_8']);
+
+  for (const [unit, nodes] of byUnit) {
+    // U10 exemption — cumulative review boss is intentionally cross-concept.
+    if (unit === 10) continue;
+
+    const allFocus = new Set();
+    for (const n of nodes) {
+      for (const f of n.rhythmConfig?.focusDurations || []) allFocus.add(f);
+    }
+    const tsSet = new Set(
+      nodes.map((n) => n.rhythmConfig?.timeSignature).filter(Boolean)
+    );
+
+    // Skip units with no focusDurations at all (e.g. boss-only single-node
+    // units whose pattern selection is purely tag-driven).
+    if (allFocus.size === 0) continue;
+
+    // Meter-unit branch: any non-4/4 timeSignature present in unit nodes.
+    const isMeterUnit = [...tsSet].some((ts) => ts && ts !== '4/4');
+    if (isMeterUnit) {
+      const illegal = [...allFocus].filter((d) => !METER_ALLOWED.has(d));
+      if (illegal.length > 0) {
+        console.error(
+          `  ERROR: Unit ${unit} is a meter unit but contains non-pulse focusDurations ${JSON.stringify(illegal)} (allowed: ${JSON.stringify([...METER_ALLOWED])})`
+        );
+        hasErrors = true;
+        errorCount++;
+      }
+      continue;
+    }
+
+    // Concept-family branch: count distinct families intersecting allFocus.
+    const matchedFamilies = [];
+    for (const [familyName, familySet] of Object.entries(CONCEPT_FAMILIES)) {
+      for (const f of allFocus) {
+        if (familySet.has(f)) {
+          matchedFamilies.push(familyName);
+          break;
+        }
+      }
+    }
+
+    if (matchedFamilies.length > 1) {
+      console.error(
+        `  ERROR: Unit ${unit} mixes concept families {${matchedFamilies.join(', ')}} (focusDurations: ${[...allFocus].join(',')})`
+      );
+      hasErrors = true;
+      errorCount++;
+    }
+  }
+
+  if (errorCount === 0) console.log('  Concept-per-unit: OK');
+  else console.error(`  Found ${errorCount} concept-per-unit violation(s)`);
+}
+
 /**
  * Validate that each rhythm node's measureCount matches its nodeType policy.
  * Policy (from Phase 23 D-12):
@@ -687,6 +900,9 @@ validatePatternTagExistence();
 validatePatternTagCoverage();
 validateDurationSafety();
 validateGameTypePolicy();
+validatePulseFirst();
+validateRestsWoven();
+validateConceptPerUnit();
 validateMeasureCountPolicy();
 
 console.log('\n' + '='.repeat(50));

@@ -185,27 +185,33 @@ Games follow a consistent session model:
 
 ## Gamification Trail System
 
-A Duolingo-style skill progression with 86 active nodes across three parallel learning paths. (7 additional Rhythm Unit 8 "Off-Beat Magic" syncopation nodes are built but currently HIDDEN pending re-enable in a future release — see "Hidden Content: Rhythm Unit 8" below.)
+A Duolingo-style skill progression with 106 active nodes across three parallel learning paths. (7 additional Rhythm "Off-Beat Magic" syncopation nodes — renamed to `rhythm_synco_*` in Phase 1 v3.5 — are built but currently HIDDEN pending re-enable in a future release.)
 
 ### Core Concepts
 
-- **Skill Nodes**: 86 active units (Treble: 23, Bass: 22, Rhythm: 29, Boss: 11). Rhythm Unit 8 (7 nodes incl. `boss_rhythm_8`) is hidden — would restore counts to Rhythm: 36 / Boss: 12 / total 93.
+- **Skill Nodes**: 106 active units (Treble: 23, Bass: 22, Rhythm: 55, Boss: 12). Hidden syncopation unit (7 nodes incl. `boss_rhythm_synco`) is hidden — would restore counts to Rhythm: 62 / Boss: 13 / total 113.
 - **Star Rating**: 0-3 stars (60%=1, 80%=2, 95%=3)
 - **XP System**: 30 static levels (Beginner → Transcendent) + infinite prestige tiers (3000 XP each beyond level 30)
 - **Daily Goals**: 3 random goals per day (complete_exercises, earn_three_stars, practice_new_node, perfect_score, maintain_streak)
 - **Prerequisites**: Nodes unlock progressively
 - **Sequential Exercises**: Nodes can have multiple exercises completed in order; node stars = minimum across all
 
-### Hidden Content: Rhythm Unit 8 (Syncopation)
+### Hidden Content: Rhythm Syncopation Unit (renamed Phase 1 v3.5)
 
-Rhythm Unit 8 ("Off-Beat Magic" — 7 nodes covering syncopation) is built and tested but **unlinked from the trail** while shipping the initial release. The unit file (`src/data/units/rhythmUnit8Redesigned.js`), its test (`rhythmUnit8Redesigned.test.js`), the `RHYTHM_8` entry in `src/data/skillTrail.js`, and all `rhythm_8_*` / `boss_rhythm_8` locale keys in `src/locales/{en,he}/trail.json` remain in the repo. To re-enable, grep for `HIDDEN-V1` in `src/data/expandedNodes.js` and uncomment the import + two spreads (one in `EXPANDED_NODES`, one in `EXPANDED_RHYTHM_NODES`), then update this CLAUDE.md section's node counts back to 93. Rhythm trail currently ends at `boss_rhythm_7` ("Sixteenth Note Speed Boss"). No downstream content depends on Unit 8, so hiding it doesn't break unlock chains.
+The Syncopation unit ("Off-Beat Magic" — 7 nodes covering syncopation) is built and tested but **unlinked from the trail** while shipping the v3.5 pedagogical restructure. In Phase 1 v3.5 the unit's internal node IDs were renamed `rhythm_8_*` → `rhythm_synco_*` and `boss_rhythm_8` → `boss_rhythm_synco` to free the `rhythm_8_*` numeric namespace for the new U8 (3/4 Meter) unit.
+
+Preserved hidden assets: the unit file (`src/data/units/rhythmUnit8Redesigned.js`), its test (`rhythmUnit8Redesigned.test.js`), the `UNITS.RHYTHM_SYNCO` entry in `src/data/skillTrail.js` (pre-authored for re-enable), and all locale keys mapped to the renamed IDs.
+
+To re-enable: grep for `HIDDEN-V1` in `src/data/expandedNodes.js` and uncomment (1) the `rhythmUnit8SyncoNodes` import line (note renamed binding to avoid collision with new U8's `rhythmUnit8Nodes`), (2) both spread lines (one in `EXPANDED_NODES`, one in `EXPANDED_RHYTHM_NODES`). Then update this CLAUDE.md section's node counts to Rhythm: 62 / Boss: 13 / total 113.
+
+Rhythm trail currently ends at `boss_rhythm_10` ("Rhythm Master" — cumulative review boss). No downstream content depends on the syncopation unit, so hiding it doesn't break unlock chains.
 
 ### Data Layer
 
 - `src/data/constants.js` — `NODE_CATEGORIES` (TREBLE_CLEF, BASS_CLEF, RHYTHM, BOSS), `EXERCISE_TYPES` (NOTE_RECOGNITION, SIGHT_READING, RHYTHM, MEMORY_GAME, BOSS_CHALLENGE)
-- `src/data/skillTrail.js` — `SKILL_NODES` array (86 active nodes; 93 when Unit 8 is re-enabled), `getNodeById()`, `getNodesByCategory()`, `getBossNodes()`, `getNextNodeInCategory()`, `isNodeUnlocked()`, `getUnlockedNodes()`
+- `src/data/skillTrail.js` — `SKILL_NODES` array (106 active nodes; 113 when syncopation is re-enabled), `getNodeById()`, `getNodesByCategory()`, `getBossNodes()`, `getNextNodeInCategory()`, `isNodeUnlocked()`, `getUnlockedNodes()`
 - `src/data/expandedNodes.js` — Aggregates unit files from `src/data/units/`
-- `src/data/units/` — trebleUnit1-3Redesigned.js, bassUnit1-3Redesigned.js, rhythmUnit1-6Redesigned.js
+- `src/data/units/` — trebleUnit1-3Redesigned.js, bassUnit1-3Redesigned.js, rhythmUnit1-10.js
 
 ### Services
 

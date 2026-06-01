@@ -54,7 +54,14 @@
       "Steady Beat": "פעימה יציבה",
       "Six-Eight Time": "מקצב 6/8",
       "Key Signatures: Sharps": "סימני מפתח: דיאזים",
-      "Key Signatures: Mixed": "סימני מפתח: מעורב"
+      "Key Signatures: Mixed": "סימני מפתח: מעורב",
+      "Quarter + Quarter Rest": "רבע ושתיקת רבע",
+      "Half + Half Rest": "חצי ושתיקת חצי",
+      "Whole + Whole Rest": "שלם ושתיקה שלמה",
+      "Dotted Half Notes": "חצי מנוקד",
+      "Dotted Quarter Notes": "רבע מנוקד",
+      "Three-Four Time": "משקל שלוש-רבעים",
+      "Rhythm Review": "סיכום הקצב"
     }
   },
   "tabs": {
@@ -447,13 +454,13 @@
     "Syncopation Boss": "שלטו בקסם של הלא-בפעמה כדי להתמודד עם מנהיג הסינ-קו-פה!"
   },
   "unit8Nodes": {
-    "rhythm_8_1": "Hold-Across Warm-Up",
-    "rhythm_8_2": "Surprise Beat: Listen & Echo",
-    "rhythm_8_3": "Read the Off-Beat",
-    "rhythm_8_4": "Body Split",
-    "rhythm_8_5": "Build a Syncopation",
-    "rhythm_8_6": "Off-Beat Speed Drill",
-    "boss_rhythm_8": "Syncopation Boss"
+    "rhythm_synco_1": "Hold-Across Warm-Up",
+    "rhythm_synco_2": "Surprise Beat: Listen & Echo",
+    "rhythm_synco_3": "Read the Off-Beat",
+    "rhythm_synco_4": "Body Split",
+    "rhythm_synco_5": "Build a Syncopation",
+    "rhythm_synco_6": "Off-Beat Speed Drill",
+    "boss_rhythm_synco": "Syncopation Boss"
   },
   "boss": {
     "cleared": "הבוס הובס!",

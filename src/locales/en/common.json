@@ -1873,6 +1873,207 @@
         "16": "ta-fa-te-fe",
         "qhq": "ta — ta-a — ta",
         "synsyn": "and-a-TA  and-a-TA"
+      },
+      "cards": {
+        "nextButton": "Next",
+        "finalButton": "Got it!",
+        "ariaProgress": "Card {{current}} of {{total}}",
+        "q": {
+          "meet": {
+            "title": "Meet the <accent>Quarter Note</accent>!",
+            "body": "This little note is the steady heartbeat of music. It lasts one beat — like one footstep when you walk."
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear four steady quarter notes. Say <accent>ta</accent> with each one!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Here are four quarter notes on a staff. Each one gets one beat."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some quarter-note rhythms yourself."
+          }
+        },
+        "qr": {
+          "meet": {
+            "title": "Meet the <accent>Quarter Rest</accent>!",
+            "body": "A rest is silence in music — a pause as long as one beat. The quarter rest tells you to wait quietly for one beat."
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "This little squiggle is the quarter rest. When you see it, take a one-beat break."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Try some rhythms that mix quarter notes and quarter rests."
+          }
+        },
+        "h": {
+          "meet": {
+            "title": "Meet the <accent>Half Note</accent>!",
+            "body": "This note is twice as long as a quarter — it lasts two beats, like one big step that counts to two."
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear two steady half notes. Say <accent>ta-a</accent> and hold each one for two beats."
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Here are two half notes on a staff. Each one gets two beats."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some half-note rhythms yourself."
+          }
+        },
+        "hr": {
+          "meet": {
+            "title": "Meet the <accent>Half Rest</accent>!",
+            "body": "The half rest is silence for two beats — a longer pause than the quarter rest. Sit still and count to two!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "The half rest looks like a little hat sitting on the middle line of the staff."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Try rhythms that mix half notes and half rests."
+          }
+        },
+        "w": {
+          "meet": {
+            "title": "Meet the <accent>Whole Note</accent>!",
+            "body": "This is the longest note we'll learn — it lasts four whole beats, like one long held breath."
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear a whole note. Say <accent>ta-a-a-a</accent> and hold for all four beats!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Here's a whole note on a staff. Just one note for the whole bar!"
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some whole-note rhythms yourself."
+          }
+        },
+        "wr": {
+          "meet": {
+            "title": "Meet the <accent>Whole Rest</accent>!",
+            "body": "The whole rest is silence for the whole bar — total quiet for four beats. Time to listen!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "The whole rest hangs down from the middle line — like a little hat hanging upside down."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Try rhythms that mix whole notes and whole rests."
+          }
+        },
+        "8_pair": {
+          "meet": {
+            "title": "Meet the <accent>Eighth Notes</accent>!",
+            "body": "Two eighth notes share one beat — fast little steps! They come in pairs joined by a beam."
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear pairs of eighth notes. Say <accent>ti-ti</accent> with each pair!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Here are eighth notes on a staff. See how two of them join with a line on top? That's the beam."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some eighth-note rhythms yourself."
+          }
+        },
+        "16": {
+          "meet": {
+            "title": "Meet the <accent>Sixteenth Notes</accent>!",
+            "body": "Four sixteenth notes share one beat — super speedy! They join together with two beams on top."
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear four sixteenth notes. Say <accent>ta-fa-te-fe</accent> — fast and even!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Here are four sixteenth notes on a staff. Two beams on top mean extra fast!"
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some sixteenth-note rhythms yourself."
+          }
+        },
+        "hd": {
+          "meet": {
+            "title": "Meet the <accent>Dotted Half Note</accent>!",
+            "body": "The little dot adds half a note's value. A dotted half note lasts THREE beats — half plus one more."
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear a dotted half note. Hold it for three steady beats!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Look for the little dot right next to the note head. That dot means \"add half more.\""
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some dotted-half rhythms yourself."
+          }
+        },
+        "qd": {
+          "meet": {
+            "title": "Meet the <accent>Dotted Quarter Note</accent>!",
+            "body": "The dot adds half a beat — so a dotted quarter lasts one-and-a-half beats. A bit longer than a regular quarter!"
+          },
+          "sound": {
+            "title": "How it sounds",
+            "body": "Tap Listen to hear a dotted quarter note. Feel how it stretches just past one beat."
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "Look for the little dot right next to the quarter-note head. That dot adds half a beat."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to try some dotted-quarter rhythms yourself."
+          }
+        },
+        "3_4": {
+          "meet": {
+            "title": "Meet <accent>Three-Four Time</accent>!",
+            "body": "In 3/4 time, every bar has three beats — like a waltz: ONE-two-three, ONE-two-three."
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "See the 3/4 at the start of the staff? That's the time signature — three quarter-note beats per bar."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to feel the three-beat groove yourself."
+          }
+        },
+        "6_8": {
+          "meet": {
+            "title": "Meet <accent>Six-Eight Time</accent>!",
+            "body": "In 6/8 time, you feel TWO big beats per bar, and each big beat is worth three little ones. It feels like skipping!"
+          },
+          "music": {
+            "title": "How it looks in music",
+            "body": "See the 6/8 at the start of the staff? That's the time signature — count it in two big beats."
+          },
+          "ready": {
+            "title": "You're ready!",
+            "body": "Time to feel the skipping 6/8 groove yourself."
+          }
+        }
       }
     },
     "pulse": {

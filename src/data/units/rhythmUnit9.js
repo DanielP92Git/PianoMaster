@@ -1,15 +1,14 @@
 /**
- * Rhythm Unit 7: "Big Beats" (Redesigned)
+ * Rhythm Unit 9: "Six-Eight Time" (Phase 1 v3.5 — pedagogical restructure)
  *
- * Educational psychology-driven design for 8-year-old learners
- * - Introduces: 6/8 compound meter (two big beats per bar)
- * - Single pitch (C4) throughout for pure rhythm focus
- * - 6 nodes: Discovery -> Practice -> Discovery -> Practice -> Speed -> Mini-Boss
+ * Second meter unit — compound 6/8 meter (two big beats per bar).
+ * Repositions today's 6/8 content (was OLD U7) as the second meter unit,
+ * following 3/4 (U8) in the new pedagogical order.
  *
- * Duration: 25-30 minutes (3-4 min per node)
- * Goal: Feel "two big beats per bar" before encountering syncopation in Unit 8
+ * 6-node arc per D-02 (non-duration unit):
+ *   Discovery → Practice → Discovery (mixed contrast) → Practice → Speed → Mini-Boss
  *
- * Prerequisite: boss_rhythm_6 (completes Unit 6 — Speed Champions)
+ * Prerequisite: boss_rhythm_8 (3/4 Meter mini-boss).
  */
 
 import {
@@ -19,73 +18,62 @@ import {
 } from "../nodeTypes.js";
 import { EXERCISE_TYPES } from "../constants.js";
 
-const UNIT_ID = 7;
-const UNIT_NAME = "6/8 Compound Meter";
+const UNIT_ID = 9;
+const UNIT_NAME = "Six-Eight Time";
 const CATEGORY = "rhythm";
-const START_ORDER = 138; // After Unit 6's 6 nodes (132-137)
+const START_ORDER = 180; // After U8 (170-175)
 
-/**
- * Unit 7 Nodes
- * Psychological journey: Discover compound meter -> Build confidence -> Add quarters ->
- * Mix all 6/8 durations -> Mix-Up game -> Speed challenge -> Mini-Boss
- */
-export const rhythmUnit7Nodes = [
+export const rhythmUnit9Nodes = [
   // ============================================
-  // NODE 1: Two Big Beats (Discovery)
+  // NODE 1: 6/8 Meter Intro (Discovery)
   // ============================================
   {
-    id: "rhythm_7_1",
-    name: "Dotted-Quarter Pulse in 6/8",
-    description: "Feel the two dotted-quarter pulses of 6/8 time",
+    id: "rhythm_9_1",
+    name: "Meet 6/8 Time",
+    description: "Feel the two big beats — compound meter introduced",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER,
     orderInUnit: 1,
-    prerequisites: ["boss_rhythm_6"],
+    prerequisites: ["boss_rhythm_8"],
 
-    // Node type classification
     nodeType: NODE_TYPES.DISCOVERY,
 
-    // Rhythm configuration — dotted-quarter only, very slow for discovery
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.SIMPLE,
-      durations: ["qd"],
-      focusDurations: ["qd"], // NEW: Dotted-quarter as the primary 6/8 beat
+      durations: ["qd", "q", "8"],
+      focusDurations: ["6_8"], // Meter concept ID — DiscoveryIntroQuestion looks up cards["6_8"]
       contextDurations: [],
-      patternTags: ["six-eight"],
-      tempo: { min: 55, max: 60, default: 58 },
+      patternTags: ["six-eight-basic"],
+      tempo: { min: 55, max: 65, default: 60 },
       pitch: "C4",
       timeSignature: "6/8",
     },
 
-    // UI display hints
     newContent: NEW_CONTENT_TYPES.RHYTHM,
     newContentDescription: "6/8 Time: Two big beats per bar",
 
-    // Exercises
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "discovery_intro", focusDuration: "qd" },
+            { type: "discovery_intro", focusDuration: "6_8" },
             { type: "visual_recognition" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
-            { type: "visual_recognition" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
+            { type: "syllable_matching" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
             { type: "visual_recognition" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
           ],
         },
       },
     ],
 
-    // Progression
     skills: ["68_compound_meter"],
-    xpReward: 75,
+    xpReward: 80,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -93,28 +81,27 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 2: Feel the Pulse (Practice)
+  // NODE 2: 6/8 Practice
   // ============================================
   {
-    id: "rhythm_7_2",
-    name: "Counting Six Eighths",
-    description: "Count six eighth notes per bar in 6/8",
+    id: "rhythm_9_2",
+    name: "6/8 Pulse Practice",
+    description: "Count six eighth notes per bar in 6/8 time",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 1,
     orderInUnit: 2,
-    prerequisites: ["rhythm_7_1"],
+    prerequisites: ["rhythm_9_1"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
-    // Still dotted-quarter only — building confidence before introducing new durations
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.SIMPLE,
-      durations: ["qd"],
+      durations: ["qd", "q", "8"],
       focusDurations: [],
-      contextDurations: ["qd"],
-      patternTags: ["six-eight"],
+      contextDurations: ["qd", "q", "8"],
+      patternTags: ["six-eight-basic"],
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -133,7 +120,7 @@ export const rhythmUnit7Nodes = [
             { type: "visual_recognition" },
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
+            { type: "syllable_matching" },
             { type: "rhythm_reading" },
             { type: "rhythm_tap" },
           ],
@@ -142,7 +129,7 @@ export const rhythmUnit7Nodes = [
     ],
 
     skills: ["68_compound_meter"],
-    xpReward: 80,
+    xpReward: 85,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -150,58 +137,55 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 3: Adding Quarters (Discovery)
+  // NODE 3: 6/8 with Eighth Subdivisions (Discovery)
   // ============================================
   {
-    id: "rhythm_7_3",
-    name: "Quarters in 6/8",
-    description:
-      "Add quarter notes — two eighth-note subdivisions each — to the 6/8 pulse",
+    id: "rhythm_9_3",
+    name: "Eighths in 6/8",
+    description: "Add eighth-note subdivisions — three per big beat",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 2,
     orderInUnit: 3,
-    prerequisites: ["rhythm_7_2"],
+    prerequisites: ["rhythm_9_2"],
 
     nodeType: NODE_TYPES.DISCOVERY,
 
-    // Introduce quarter notes in 6/8 (2 eighth-note subdivisions)
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.MEDIUM,
-      durations: ["qd", "q"],
-      focusDurations: ["q"], // NEW: Quarter notes in 6/8
-      contextDurations: ["qd"],
-      patternTags: ["six-eight"],
+      durations: ["qd", "q", "8"],
+      focusDurations: [],
+      contextDurations: ["qd", "q", "8"],
+      patternTags: ["six-eight-qd-eighths"],
       tempo: { min: 60, max: 70, default: 65 },
       pitch: "C4",
       timeSignature: "6/8",
     },
 
-    newContent: NEW_CONTENT_TYPES.RHYTHM,
-    newContentDescription: "Quarter Notes in 6/8",
+    newContent: NEW_CONTENT_TYPES.NONE,
+    newContentDescription: null,
 
     exercises: [
       {
         type: EXERCISE_TYPES.MIXED_LESSON,
         config: {
           questions: [
-            { type: "discovery_intro", focusDuration: "q" },
-            { type: "visual_recognition" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
             { type: "visual_recognition" },
             { type: "syllable_matching" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
             { type: "visual_recognition" },
-            { type: "syllable_matching" },
+            { type: "rhythm_dictation" },
+            { type: "rhythm_tap" },
+            { type: "rhythm_reading" },
           ],
         },
       },
     ],
 
-    skills: ["68_compound_meter", "quarter_note_68"],
-    xpReward: 80,
+    skills: ["68_compound_meter", "eighth_note_68"],
+    xpReward: 85,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -209,30 +193,27 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 4: Mixing It Up (Practice)
+  // NODE 4: Mixed 6/8 Practice
   // ============================================
   {
-    id: "rhythm_7_4",
-    name: "Eighths in 6/8",
-    description: "Add eighth notes — the natural subdivision of 6/8",
+    id: "rhythm_9_4",
+    name: "Mixed 6/8 Patterns",
+    description: "Mix dotted-quarter, quarter, and eighth in 6/8",
     category: CATEGORY,
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 3,
     orderInUnit: 4,
-    prerequisites: ["rhythm_7_3"],
+    prerequisites: ["rhythm_9_3"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
-    // Add eighth notes — the subdivision unit in 6/8 time
-    // ONE-CONCEPT FIX: focusDurations cleared (eighth notes already known from Unit 3;
-    // their use in 6/8 is contextual reinforcement, not a new concept)
     rhythmConfig: {
       complexity: RHYTHM_COMPLEXITY.VARIED,
       durations: ["qd", "q", "8"],
-      focusDurations: [], // FIXED: was ['8'] — eighth notes already known from Unit 3
+      focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      patternTags: ["six-eight"],
+      patternTags: ["six-eight-basic", "six-eight-qd-eighths"],
       tempo: { min: 65, max: 75, default: 70 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -251,7 +232,7 @@ export const rhythmUnit7Nodes = [
             { type: "visual_recognition" },
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
+            { type: "syllable_matching" },
             { type: "rhythm_reading" },
             { type: "rhythm_tap" },
           ],
@@ -260,7 +241,7 @@ export const rhythmUnit7Nodes = [
     ],
 
     skills: ["68_compound_meter", "eighth_note_68"],
-    xpReward: 80,
+    xpReward: 90,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -268,10 +249,10 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 5: Quick Beats (Speed Round)
+  // NODE 5: 6/8 Speed Round
   // ============================================
   {
-    id: "rhythm_7_6",
+    id: "rhythm_9_5",
     name: "6/8 Speed Drill",
     description: "How fast can you play 6/8 patterns?",
     category: CATEGORY,
@@ -279,7 +260,7 @@ export const rhythmUnit7Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 4,
     orderInUnit: 5,
-    prerequisites: ["rhythm_7_4"],
+    prerequisites: ["rhythm_9_4"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -288,10 +269,7 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      // D-19 (Phase 33 Plan 33-09): rhythm_7_6 deliberately NOT cumulative.
-      // 6/8 compound meter is a standalone pool; mixing in 4/4 patterns from prior units
-      // doesn't make musical sense. Per RESEARCH §3 Unit 7 line 227.
-      patternTags: ["six-eight"],
+      patternTags: ["six-eight-basic", "six-eight-qd-eighths"],
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -309,8 +287,8 @@ export const rhythmUnit7Nodes = [
       },
     ],
 
-    skills: ["68_compound_meter", "quarter_note_68", "eighth_note_68"],
-    xpReward: 90,
+    skills: ["68_compound_meter", "eighth_note_68"],
+    xpReward: 95,
     accessoryUnlock: null,
     isBoss: false,
     isReview: false,
@@ -318,21 +296,20 @@ export const rhythmUnit7Nodes = [
   },
 
   // ============================================
-  // NODE 6: Compound Commander (Mini-Boss)
+  // NODE 6: 6/8 Mini-Boss
   // ============================================
   {
-    id: "boss_rhythm_7",
-    name: "6/8 Compound Meter Boss",
+    id: "boss_rhythm_9",
+    name: "6/8 Meter Boss",
     description: "Master 6/8 compound meter!",
     unlockHint: "Complete all 6/8 lessons to unlock this challenge!",
-    category: "boss", // Mini-Boss nodes have their own category
+    category: "boss",
     unit: UNIT_ID,
     unitName: UNIT_NAME,
     order: START_ORDER + 5,
     orderInUnit: 6,
-    prerequisites: ["rhythm_7_6"],
+    prerequisites: ["rhythm_9_5"],
 
-    // MINI-BOSS node (not a true Boss) — unit checkpoint
     nodeType: NODE_TYPES.MINI_BOSS,
 
     rhythmConfig: {
@@ -340,8 +317,8 @@ export const rhythmUnit7Nodes = [
       durations: ["qd", "q", "8"],
       focusDurations: [],
       contextDurations: ["qd", "q", "8"],
-      patternTags: ["six-eight"], // 6/8 is a standalone time signature pool
-      patternTagMode: "any", // D-06: OR-mode for consistency with other boss nodes
+      patternTags: ["six-eight-basic", "six-eight-qd-eighths"],
+      patternTagMode: "any",
       tempo: { min: 80, max: 90, default: 85 },
       pitch: "C4",
       timeSignature: "6/8",
@@ -358,7 +335,6 @@ export const rhythmUnit7Nodes = [
             { type: "rhythm_tap" },
             { type: "visual_recognition" },
             { type: "rhythm_reading" },
-            { type: "count_subdivision", target: "qd", subdivision: "8" },
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
             { type: "visual_recognition" },
@@ -367,18 +343,19 @@ export const rhythmUnit7Nodes = [
             { type: "rhythm_dictation" },
             { type: "rhythm_tap" },
             { type: "rhythm_reading" },
+            { type: "rhythm_dictation" },
           ],
         },
       },
     ],
 
-    skills: ["68_compound_meter", "dotted_quarter_note", "eighth_note"],
-    xpReward: 150,
-    accessoryUnlock: "compound_badge",
-    isBoss: true, // MINI_BOSS still flagged isBoss for TrailMap visibility; nodeType:MINI_BOSS preserves overlay/timing distinction
+    skills: ["68_compound_meter", "dotted_quarter_note", "eighth_note_68"],
+    xpReward: 170,
+    accessoryUnlock: "rhythm_six_eight_badge",
+    isBoss: true,
     isReview: false,
     reviewsUnits: [],
   },
 ];
 
-export default rhythmUnit7Nodes;
+export default rhythmUnit9Nodes;

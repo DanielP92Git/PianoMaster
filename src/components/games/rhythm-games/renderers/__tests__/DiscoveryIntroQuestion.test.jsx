@@ -9,7 +9,12 @@ import React from "react";
 vi.mock("react-i18next", () => ({
   useTranslation: vi.fn(() => ({
     t: (key, fallback, _opts) => {
+      // Pattern A: t(key, "fallback string")
       if (typeof fallback === "string") return fallback;
+      // Pattern B: t(key, { defaultValue: "..." }) — REQ-04 pagination uses this
+      if (fallback && typeof fallback === "object" && fallback.defaultValue) {
+        return fallback.defaultValue;
+      }
       return key;
     },
     i18n: { language: "en", exists: () => false },
@@ -123,6 +128,11 @@ vi.mock("../../utils/durationInfo", () => ({
       isRest: false,
       i18nKey: "rhythm.duration.quarter",
     },
+    h: {
+      durationUnits: 8,
+      isRest: false,
+      i18nKey: "rhythm.duration.half",
+    },
   },
   getSyllable: vi.fn(() => "ti-ti"),
 }));
@@ -141,8 +151,18 @@ import DiscoveryIntroQuestion from "../DiscoveryIntroQuestion";
 // ---------------------------------------------------------------------------
 // Question fixtures
 // ---------------------------------------------------------------------------
-const make8PairQuestion = () => ({ focusDuration: "8_pair" });
-const makeQuarterQuestion = () => ({ focusDuration: "q" });
+// REQ-04: pagination — fixtures pin a single 'sound' card so the existing
+// audio-scheduling tests land directly on the Listen card. Without this,
+// CONCEPT_CARDS["8_pair"]/CONCEPT_CARDS["q"] would default to 4 cards and the
+// first one (meet) would not show the Listen button.
+const make8PairQuestion = () => ({
+  focusDuration: "8_pair",
+  cards: [{ kind: "sound" }],
+});
+const makeQuarterQuestion = () => ({
+  focusDuration: "q",
+  cards: [{ kind: "sound" }],
+});
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -299,5 +319,161 @@ describe("DiscoveryIntroQuestion", () => {
     expect(beats.length).toBeGreaterThan(0);
     expect(tempo).toBe(67);
     expect(typeof playNoteFn).toBe("function");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// REQ-04 pagination tests (Phase 1 v3.5)
+// ---------------------------------------------------------------------------
+// Multi-card scaffolding flow: 2-4 swipable cards per discovery_intro question.
+// CONCEPT_CARDS map provides defaults; inline question.cards overrides.
+// onComplete(1, 1) only fires on the final card.
+// Pattern mode (focusPattern.id) is unaffected — preserved as single-card.
+
+describe("pagination (Phase 1 v3.5 — REQ-04)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  function makeQuestion(overrides = {}) {
+    return { focusDuration: "q", ...overrides };
+  }
+
+  it("paginates through CONCEPT_CARDS sequence for focusDuration='q' (4 cards)", async () => {
+    const onComplete = vi.fn();
+    render(
+      <DiscoveryIntroQuestion
+        question={makeQuestion()}
+        onComplete={onComplete}
+      />
+    );
+
+    // Card 1 (meet) — Next visible, not yet complete
+    let nextBtn = screen.getByRole("button", { name: /next/i });
+    expect(nextBtn).toBeInTheDocument();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    await act(async () => {
+      fireEvent.click(nextBtn); // → card 2 (sound)
+    });
+    expect(onComplete).not.toHaveBeenCalled();
+
+    nextBtn = screen.getByRole("button", { name: /next/i });
+    await act(async () => {
+      fireEvent.click(nextBtn); // → card 3 (music)
+    });
+    expect(onComplete).not.toHaveBeenCalled();
+
+    nextBtn = screen.getByRole("button", { name: /next/i });
+    await act(async () => {
+      fireEvent.click(nextBtn); // → card 4 (ready, final)
+    });
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Final card — primary button switches to "Got it!"
+    const finalBtn = screen.getByRole("button", { name: /got it/i });
+    expect(finalBtn).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.click(finalBtn);
+    });
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith(1, 1);
+  });
+
+  it("respects inline question.cards over CONCEPT_CARDS default", async () => {
+    const onComplete = vi.fn();
+    const question = makeQuestion({
+      focusDuration: "q",
+      cards: [{ kind: "meet" }, { kind: "ready" }], // 2 cards (overrides default 4)
+    });
+    render(
+      <DiscoveryIntroQuestion question={question} onComplete={onComplete} />
+    );
+
+    // Card 1 (meet) — Next
+    const nextBtn = screen.getByRole("button", { name: /next/i });
+    await act(async () => {
+      fireEvent.click(nextBtn);
+    });
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Card 2 (ready, final) — Got it!
+    const finalBtn = screen.getByRole("button", { name: /got it/i });
+    await act(async () => {
+      fireEvent.click(finalBtn);
+    });
+    expect(onComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("clicking Next on non-final card does NOT call onComplete", async () => {
+    const onComplete = vi.fn();
+    render(
+      <DiscoveryIntroQuestion
+        question={makeQuestion()}
+        onComplete={onComplete}
+      />
+    );
+    const nextBtn = screen.getByRole("button", { name: /next/i });
+    await act(async () => {
+      fireEvent.click(nextBtn);
+    });
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("calls onComplete(1, 1) exactly once on final card (guards against double-fire)", async () => {
+    const onComplete = vi.fn();
+    const question = makeQuestion({
+      focusDuration: "q",
+      cards: [{ kind: "ready" }], // single-card override → final from start
+    });
+    render(
+      <DiscoveryIntroQuestion question={question} onComplete={onComplete} />
+    );
+
+    const btn = screen.getByRole("button", { name: /got it/i });
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    // Try a second click — hasCompletedRef guards re-entry.
+    await act(async () => {
+      fireEvent.click(btn);
+    });
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith(1, 1);
+  });
+
+  it("resets cardIndex when focusDuration changes", async () => {
+    const onComplete = vi.fn();
+    const { rerender } = render(
+      <DiscoveryIntroQuestion
+        question={makeQuestion({ focusDuration: "q" })}
+        onComplete={onComplete}
+      />
+    );
+
+    // Advance to card 2 in 'q'
+    const nextBtn = screen.getByRole("button", { name: /next/i });
+    await act(async () => {
+      fireEvent.click(nextBtn);
+    });
+
+    // Re-render with new focusDuration 'h' — cardIndex should reset to 0
+    rerender(
+      <DiscoveryIntroQuestion
+        question={makeQuestion({ focusDuration: "h" })}
+        onComplete={onComplete}
+      />
+    );
+
+    // Should be back on card 1 (Next visible, NOT Got it!)
+    expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /got it/i })
+    ).not.toBeInTheDocument();
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });
