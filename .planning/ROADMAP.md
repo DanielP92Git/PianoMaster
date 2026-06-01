@@ -72,8 +72,8 @@ Plans:
 - [x] 01-06-PLAN.md — Wave 2: Unit data U4-U5 (Eighths, Sixteenths)
 - [x] 01-07-PLAN.md — Wave 2: Unit data U6-U8 (Dotted Half, Dotted Quarter, 3/4 Meter)
 - [x] 01-08-PLAN.md — Wave 2: Unit data U9-U10 + expandedNodes.js + skillTrail.js UNITS map wire-up
-- [ ] 01-09-PLAN.md — Wave 3: DiscoveryIntroQuestion.jsx multi-card pagination extension
-- [ ] 01-10-PLAN.md — Wave 3: PWA cache bump + OLD file cleanup + [BLOCKING] supabase db push + UAT walkthrough
+- [x] 01-09-PLAN.md — Wave 3: DiscoveryIntroQuestion.jsx multi-card pagination extension
+- [x] 01-10-PLAN.md — Wave 3: PWA cache bump + OLD file cleanup + [BLOCKING] supabase db push + UAT walkthrough
 
 **Requirements** (locked in 01-SPEC.md):
 
