@@ -68,10 +68,10 @@ Plans:
 - [x] 01-02-PLAN.md — Wave 1: Hidden Unit 8 rename (rhythm*8*_ → rhythm*synco*_)
 - [x] 01-03-PLAN.md — Wave 1: Locale infrastructure (EN+HE scaffolding cards + unit names)
 - [x] 01-04-PLAN.md — Wave 1: Supabase migration + FREE_NODE_IDS update
-- [ ] 01-05-PLAN.md — Wave 2: Unit data U1-U3 (Quarter, Half, Whole + matching rests)
-- [ ] 01-06-PLAN.md — Wave 2: Unit data U4-U5 (Eighths, Sixteenths)
-- [ ] 01-07-PLAN.md — Wave 2: Unit data U6-U8 (Dotted Half, Dotted Quarter, 3/4 Meter)
-- [ ] 01-08-PLAN.md — Wave 2: Unit data U9-U10 + expandedNodes.js + skillTrail.js UNITS map wire-up
+- [x] 01-05-PLAN.md — Wave 2: Unit data U1-U3 (Quarter, Half, Whole + matching rests)
+- [x] 01-06-PLAN.md — Wave 2: Unit data U4-U5 (Eighths, Sixteenths)
+- [x] 01-07-PLAN.md — Wave 2: Unit data U6-U8 (Dotted Half, Dotted Quarter, 3/4 Meter)
+- [x] 01-08-PLAN.md — Wave 2: Unit data U9-U10 + expandedNodes.js + skillTrail.js UNITS map wire-up
 - [ ] 01-09-PLAN.md — Wave 3: DiscoveryIntroQuestion.jsx multi-card pagination extension
 - [ ] 01-10-PLAN.md — Wave 3: PWA cache bump + OLD file cleanup + [BLOCKING] supabase db push + UAT walkthrough
 
