@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v3.5
 milestone_name: Rhythm Pedagogy
 status: executing
-last_updated: "2026-06-01T18:52:32.558Z"
+last_updated: "2026-06-01T18:59:56.779Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 10
-  completed_plans: 1
-  percent: 10
+  completed_plans: 2
+  percent: 20
 ---
 
 # Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 ## Current Position
 
 Phase: 01 (refactor-rhythm-trail-pedagogical-ordering-restructure-units) — EXECUTING
-Plan: 2 of 10
+Plan: 3 of 10
 Status: Ready to execute
 Last activity: 2026-06-01
 
@@ -73,9 +73,10 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ### Phase 01 Execution Metrics
 
-| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                           |
-| ----- | -------- | ----- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01-01 | 6 min    | 3     | 5     | Wave 0 validation layer (3 new lint rules + 7 sibling unit tests + 2 parity gates). `validateConceptPerUnit` RED on today's data by design; `freeNodes.parity` RED until 01-04. |
+| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                                                 |
+| ----- | -------- | ----- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01-01 | 6 min    | 3     | 5     | Wave 0 validation layer (3 new lint rules + 7 sibling unit tests + 2 parity gates). `validateConceptPerUnit` RED on today's data by design; `freeNodes.parity` RED until 01-04.                                       |
+| 01-02 | 3 min    | 2     | 5     | Hidden Syncopation unit IDs renamed rhythm*8*_ → rhythm*synco*_ per D-10. Frees rhythm*8*\* numeric namespace for new U8 (3/4 Meter) in Wave 2. HIDDEN-V1 markers preserved with expanded 4-step re-enable checklist. |
 
 ## Decisions (Phase 01)
 
@@ -83,6 +84,9 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - **01-01:** Extend `vitest.config.js` `include` glob to discover `scripts/**/__tests__/*.{test,spec}.{js,mjs}` — Rule 3 deviation, sibling-test pattern for script-level validators
 - **01-01:** Meter-unit branch in `validateConceptPerUnit` uses strict allowlist `{q, qd, 8}` against any non-4/4 timeSignature — no separate meter family map
 - **01-01:** U10 hard exemption (`unit === 10` skip) in `validateConceptPerUnit` per D-11 single cumulative review boss
+- **01-02:** Top-of-file rename history comment in `rhythmUnit8Redesigned.js` documents the rhythm*8*_ → rhythm*synco*_ migration + D-10 source decision
+- **01-02:** HIDDEN-V1 lead comment expanded from single sentence to 4-step re-enable checklist (uncomment import, uncomment both spreads, add RHYTHM_SYNCO UNITS entry pre-authored by Plan 08, update CLAUDE.md node counts)
+- **01-02:** trail.json EN+HE unit8Nodes block keys renamed in lockstep with source (not removed) — they are direct ID references, not display-name keys, so leaving them in place would collide with new U8 namespace
 
 ## Resolved Items
 
@@ -96,14 +100,17 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Phase 01 Plan 01-01 complete (Wave 0 validation layer shipped). Ready to execute Plan 01-02.
+**Next action:** Phase 01 Plan 01-02 complete (hidden Syncopation rename to rhythm*synco*\*). Ready to execute Plan 01-03.
 
-- Three new lint rules in `scripts/validateTrail.mjs` (exported, named): `validatePulseFirst`, `validateRestsWoven`, `validateConceptPerUnit`
-- 7-test sibling suite at `scripts/__tests__/validateTrail.principles.test.mjs` (all green)
-- EN/HE scaffolding-card parity gate at `src/locales/__tests__/scaffolding-card-parity.test.js` (vacuously green)
-- `FREE_NODE_IDS` ↔ SQL whitelist parity gate at `src/config/__tests__/freeNodes.parity.test.js` (intentionally RED — Wave 1/4 drives green per D-12)
-- `validateConceptPerUnit` currently RED on today's data (3 violations: U1, U4, U5) — by design per Task 1 done note; Wave 1/2 drives green
+- Hidden Syncopation unit IDs renamed: `rhythm_8_1..6` → `rhythm_synco_1..6`, `boss_rhythm_8` → `boss_rhythm_synco`
+- `rhythm_8_*` / `boss_rhythm_8` numeric namespace is now FREE across src/, scripts/, supabase/, public/ (only 2 doc references remain — rename-history comment + describe label, neither a code-path ID reference)
+- HIDDEN-V1 markers in `src/data/expandedNodes.js` preserved with expanded 4-step re-enable checklist naming Plan 08 as RHYTHM_SYNCO UNITS pre-author
+- trail.json EN+HE `unit8Nodes` block keys renamed in lockstep
+- `npm run verify:trail` introduces ZERO new failures (still RED on pre-existing U1/U4/U5 concept-per-unit + 3 orphan-tag warnings — both Wave 0 known states from Plan 01-01)
+
+**Stopped at:** Completed 01-02-PLAN.md (hidden Syncopation rename)
+**Resume file:** None — proceed to Plan 01-03
 
 ---
 
-_State updated: 2026-06-01 — Plan 01-01 complete. Wave 0 validation layer in place. Ready to execute Plan 01-02._
+_State updated: 2026-06-01 — Plan 01-02 complete. rhythm_8_\* namespace freed for Wave 2 U8 (3/4 Meter). Ready to execute Plan 01-03.\_
