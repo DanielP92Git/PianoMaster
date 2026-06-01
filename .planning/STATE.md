@@ -62,16 +62,15 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 **Carried from prior milestones (still open):**
 
-| Category     | Item                                                                                           | Origin  |
-| ------------ | ---------------------------------------------------------------------------------------------- | ------- | ------- |
-| warning      | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook                                  | v3.3    |
-| info         | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests)                                  | v3.3    |
-| tech-debt    | No VERIFICATION.md for Phases 31, 32                                                           | v3.3    |
-| tech-debt    | 8 unhandled rejections in ArcadeRhythmGame.test.js (pre-existing getOrCreateAudioContext mock) | v3.3    |
-| process      | Worktree base-staleness recurring concern                                                      | v3.3    |
-| process      | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3    |
-| infra        | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4    |
-| Phase 01 P03 | 4min                                                                                           | 3 tasks | 4 files |
+| Category  | Item                                                                                           | Origin |
+| --------- | ---------------------------------------------------------------------------------------------- | ------ |
+| warning   | WARNING-1 — DiscoveryIntroQuestion not on shared prewarm hook                                  | v3.3   |
+| info      | INFO-1 — dictation→rhythm_tap silent fallback (no allowRests)                                  | v3.3   |
+| tech-debt | No VERIFICATION.md for Phases 31, 32                                                           | v3.3   |
+| tech-debt | 8 unhandled rejections in ArcadeRhythmGame.test.js (pre-existing getOrCreateAudioContext mock) | v3.3   |
+| process   | Worktree base-staleness recurring concern                                                      | v3.3   |
+| process   | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
+| infra     | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
 
 ### Phase 01 Execution Metrics
 
