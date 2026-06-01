@@ -17,6 +17,10 @@ const VALID_TAGS = new Set([
   "dotted-quarter",
   "sixteenth",
   "six-eight",
+  // U9 (6/8 Meter) sub-tags introduced by Phase 1 v3.5 plan 01-08.1
+  // (commit 69929c3 fix(01-08.1): multi-tag six-eight patterns with U9 sub-tags).
+  "six-eight-basic",
+  "six-eight-qd-eighths",
   "syncopation",
   // `long-syncopation` was dropped by quick task 260524-l3r — the q-h-q
   // gesture (q_44_003) is now tagged only as `quarter-half`/etc, since

@@ -15,6 +15,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import QuickStatsGrid from "./QuickStatsGrid";
+import SKILL_NODES from "../../data/skillTrail";
+
+// Derive total dynamically — Phase 1 v3.5 restructured the rhythm trail and the
+// hidden-syncopation re-enable changes the count, so a hard-coded total drifts.
+const TOTAL_NODES = SKILL_NODES.length;
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -116,8 +121,9 @@ describe("QuickStatsGrid", () => {
     expect(screen.getByText("6")).toBeInTheDocument();
   });
 
-  // HIDDEN-V1: total drops from 178 → 172 while Rhythm Unit 8 is unlinked.
-  // Restore both 172 → 178 when re-enabling Unit 8 (see project_rhythm_unit8_hidden memory).
+  // Denominator is the live SKILL_NODES.length so the assertion follows trail
+  // restructures (Phase 1 v3.5 swapped the OLD rhythm trail for the new units)
+  // and hidden-content re-enables without manual sync.
   it("REQ-04: calculates nodesCompleted as count where stars > 0", () => {
     // 3 nodes with stars > 0 (stars: 3, 1, 2) — node with stars: 0 excluded
     render(
@@ -128,10 +134,10 @@ describe("QuickStatsGrid", () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText("3/172")).toBeInTheDocument();
+    expect(screen.getByText(`3/${TOTAL_NODES}`)).toBeInTheDocument();
   });
 
-  it('REQ-04: formats nodes as "N/172"', () => {
+  it('REQ-04: formats nodes as "N/TOTAL"', () => {
     const progressData = [
       { node_id: "treble_1_1", stars: 1 },
       { node_id: "treble_1_2", stars: 1 },
@@ -144,7 +150,7 @@ describe("QuickStatsGrid", () => {
         isLoading={false}
       />
     );
-    expect(screen.getByText("2/172")).toBeInTheDocument();
+    expect(screen.getByText(`2/${TOTAL_NODES}`)).toBeInTheDocument();
   });
 
   it("D-08: renders level value from xpData.levelData.level", () => {
