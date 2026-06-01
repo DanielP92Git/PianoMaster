@@ -2,10 +2,6 @@ import { describe, it, expect } from "vitest";
 import { rhythmUnit8Nodes } from "./rhythmUnit8Redesigned.js";
 import { NODE_TYPES, NEW_CONTENT_TYPES } from "../nodeTypes.js";
 import { EXERCISE_TYPES } from "../constants.js";
-import { rhythmUnit1Nodes } from "./rhythmUnit1Redesigned.js";
-import { rhythmUnit2Nodes } from "./rhythmUnit2Redesigned.js";
-import { rhythmUnit3Nodes } from "./rhythmUnit3Redesigned.js";
-import { resolveByTags } from "../patterns/RhythmPatternGenerator.js";
 
 // ─── Asserts the 7-node monomodal design from quick task 260524-l3r ─────────
 
@@ -166,56 +162,8 @@ describe("Rhythm Unit Syncopation (HIDDEN, renamed from rhythm_8_*)", () => {
   });
 });
 
-describe("Combined-values node variety (DATA-04)", () => {
-  // 100 samples — with ~uniform pattern selection across N durations,
-  // P(missing any duration) is ~N·((N-1)/N)^100, astronomically small.
-  // 20 samples was occasionally flaky in full-suite runs.
-  const SAMPLES = 100;
-
-  function collectDurationCodes(patternTags, durations) {
-    const seen = new Set();
-    for (let i = 0; i < SAMPLES; i++) {
-      const result = resolveByTags(patternTags, durations);
-      if (result) {
-        result.vexDurations
-          .filter((d) => !d.endsWith("r"))
-          .forEach((d) => seen.add(d));
-      }
-    }
-    return seen;
-  }
-
-  it("rhythm_1_4 (quarter-only + quarter-half, durations q+h) produces both q and h over 100 samples", () => {
-    const node = rhythmUnit1Nodes.find((n) => n.id === "rhythm_1_4");
-    expect(node).toBeDefined();
-    const seen = collectDurationCodes(
-      node.rhythmConfig.patternTags,
-      node.rhythmConfig.durations
-    );
-    expect(seen.has("q")).toBe(true);
-    expect(seen.has("h")).toBe(true);
-  });
-
-  it("rhythm_2_4 (quarter-half + quarter-half-whole, durations q+h+w) produces q, h, and w over 100 samples", () => {
-    const node = rhythmUnit2Nodes.find((n) => n.id === "rhythm_2_4");
-    expect(node).toBeDefined();
-    const seen = collectDurationCodes(
-      node.rhythmConfig.patternTags,
-      node.rhythmConfig.durations
-    );
-    expect(seen.has("q")).toBe(true);
-    expect(seen.has("h")).toBe(true);
-    expect(seen.has("w")).toBe(true);
-  });
-
-  it("rhythm_3_4 (quarter-eighth + quarter-half-whole-eighth, durations q+h+w+8) produces q and 8 over 100 samples", () => {
-    const node = rhythmUnit3Nodes.find((n) => n.id === "rhythm_3_4");
-    expect(node).toBeDefined();
-    const seen = collectDurationCodes(
-      node.rhythmConfig.patternTags,
-      node.rhythmConfig.durations
-    );
-    expect(seen.has("q")).toBe(true);
-    expect(seen.has("8")).toBe(true);
-  });
-});
+// DATA-04 "Combined-values node variety" block removed in Phase 1 v3.5 (Plan 10
+// Task 2 / Option 2): the assertions read OLD-semantics rhythm_{1,2,3}_4 IDs
+// from the deleted rhythmUnit{1,2,3}Redesigned.js files. The same variety
+// invariant is now covered by Plan 08's rhythmUnits.difficulty.test.js against
+// the v3.5 unit files.
