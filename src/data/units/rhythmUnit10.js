@@ -54,11 +54,11 @@ const rhythmUnit10Nodes = [
         "hd",
         "qd",
       ],
-      // Cumulative union of patternTags used across U1–U9. After Plans 05/06/07
-      // ship, this list can be re-validated by:
-      //   grep -h "patternTags:" src/data/units/rhythmUnit{1..9}.js | \
-      //     grep -oE '"[a-z0-9-]+(?:-[a-z0-9-]+)*"' | sort -u
-      // Verified against today's tag inventory plus six-eight-basic/six-eight-qd-eighths from U9.
+      // Cumulative union of 4/4 patternTags used across U1–U7. boss_rhythm_10
+      // runs in 4/4 — 3/4 (U8) and 6/8 (U9) tags removed per 01-WAVE2-GAPS Class C
+      // (option C1). A future iteration may split this into per-meter boss nodes
+      // (C2) or extend boss schema with per-exercise timeSig (C3) — tracked in
+      // .planning/phases/01.../01-WAVE2-GAPS.md.
       patternTags: [
         "quarter-only",
         "quarter-half",
@@ -71,10 +71,6 @@ const rhythmUnit10Nodes = [
         "dotted-half",
         "dotted-quarter",
         "sixteenth",
-        "three-four-basic",
-        "three-four-with-dotted-half",
-        "six-eight-basic",
-        "six-eight-qd-eighths",
       ],
       patternTagMode: "any",
       measureCount: 4, // BOSS uses 4-bar patterns
