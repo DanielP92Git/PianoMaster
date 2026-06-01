@@ -58,14 +58,14 @@ END $$;
 -- ───────────────────────────────────────────────────────────────────────────
 -- (b) Replace is_free_node() body with new free-tier whitelist
 -- ───────────────────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.is_free_node(node_id TEXT)
+CREATE OR REPLACE FUNCTION public.is_free_node(p_node_id TEXT)
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  RETURN node_id = ANY(ARRAY[
+  RETURN p_node_id = ANY(ARRAY[
     -- Treble Unit 1 (unchanged from prior migration)
     'treble_1_1','treble_1_2','treble_1_3','treble_1_4',
     'treble_1_5','treble_1_6','treble_1_7',
