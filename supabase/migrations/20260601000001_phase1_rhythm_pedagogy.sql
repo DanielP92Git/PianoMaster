@@ -44,7 +44,7 @@ BEGIN
   ) THEN
     DELETE FROM student_unit_progress
      WHERE unit_id LIKE 'rhythm_unit_%';
-    RAISE NOTICE 'Cleaned student_unit_progress rhythm_unit_% rows';
+    RAISE NOTICE 'Cleaned student_unit_progress rhythm_unit_%% rows';
   ELSE
     RAISE NOTICE 'student_unit_progress table not present — skipped';
   END IF;
