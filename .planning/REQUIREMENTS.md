@@ -18,7 +18,7 @@
 
 ### Scaffolding & Engine
 
-- [ ] **REQ-04**: Intro/scaffolding nodes — every new rhythmic concept has a dedicated intro/scaffolding node with kid-friendly explainer UI (visuals + text) that the child must acknowledge before any exercise begins; analogous to Duolingo lesson-intro slides
+- [x] **REQ-04**: Intro/scaffolding nodes — every new rhythmic concept has a dedicated intro/scaffolding node with kid-friendly explainer UI (visuals + text) that the child must acknowledge before any exercise begins; analogous to Duolingo lesson-intro slides
 - [ ] **REQ-07**: Rhythm game engine changes permitted, but bounded to pedagogical necessity — engine modifications (MetronomeTrainer, MixedLessonGame, ArcadeRhythmGame, PulseQuestion, DictationQuestion, DiscoveryIntroQuestion, adjacent renderers) allowed _only_ when a spec principle requires them; each change traceable to a principle in CONTEXT.md/PLAN.md
 
 ### Lockstep Updates Across Dependent Artifacts

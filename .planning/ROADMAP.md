@@ -66,7 +66,7 @@ Plans:
 
 - [x] 01-01-PLAN.md — Wave 0: Validator lint rules + parity tests scaffolding
 - [x] 01-02-PLAN.md — Wave 1: Hidden Unit 8 rename (rhythm*8*_ → rhythm*synco*_)
-- [ ] 01-03-PLAN.md — Wave 1: Locale infrastructure (EN+HE scaffolding cards + unit names)
+- [x] 01-03-PLAN.md — Wave 1: Locale infrastructure (EN+HE scaffolding cards + unit names)
 - [ ] 01-04-PLAN.md — Wave 1: Supabase migration + FREE_NODE_IDS update
 - [ ] 01-05-PLAN.md — Wave 2: Unit data U1-U3 (Quarter, Half, Whole + matching rests)
 - [ ] 01-06-PLAN.md — Wave 2: Unit data U4-U5 (Eighths, Sixteenths)
