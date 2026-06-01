@@ -756,7 +756,9 @@ export function validateConceptPerUnit() {
     byUnit.get(key).push(node);
   }
 
-  const METER_ALLOWED = new Set(['q', 'qd', '8']);
+  // 'q'/'qd'/'8' = pulse durations allowed in any meter unit.
+  // '3_4'/'6_8' = meter tokens themselves, set as focusDurations by U8 (3/4) and U9 (6/8) per D-02.
+  const METER_ALLOWED = new Set(['q', 'qd', '8', '3_4', '6_8']);
 
   for (const [unit, nodes] of byUnit) {
     // U10 exemption — cumulative review boss is intentionally cross-concept.
