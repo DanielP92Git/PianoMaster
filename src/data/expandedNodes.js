@@ -48,7 +48,8 @@ import rhythmUnit6Nodes from "./units/rhythmUnit6Redesigned.js";
 
 // Advanced rhythm units
 import rhythmUnit7Nodes from "./units/rhythmUnit7Redesigned.js";
-// HIDDEN-V1: Unit 8 (syncopation, "Off-Beat Magic") temporarily disabled — re-enable for next release
+// HIDDEN-V1: Syncopation unit ("Off-Beat Magic", renamed to rhythm_synco_*/boss_rhythm_synco per Phase 1 v3.5 D-10) — temporarily disabled — re-enable for future release.
+// To re-enable: (1) uncomment the import below; (2) uncomment both spread lines in EXPANDED_NODES + EXPANDED_RHYTHM_NODES; (3) add RHYTHM_SYNCO entry to UNITS map in skillTrail.js (pre-authored by Phase 1 Plan 08); (4) update CLAUDE.md node counts.
 // import rhythmUnit8Nodes from './units/rhythmUnit8Redesigned.js';
 
 // Ear training units
@@ -86,7 +87,7 @@ export const EXPANDED_NODES = [
   ...rhythmUnit6Nodes,
   // Advanced rhythm units
   ...rhythmUnit7Nodes,
-  // HIDDEN-V1: ...rhythmUnit8Nodes,
+  // HIDDEN-V1: ...rhythmUnit8Nodes (rhythm_synco_*),
 
   // Ear training units
   ...earTrainingUnit1Nodes,
@@ -120,7 +121,7 @@ export const EXPANDED_RHYTHM_NODES = [
   ...rhythmUnit5Nodes,
   ...rhythmUnit6Nodes,
   ...rhythmUnit7Nodes,
-  // HIDDEN-V1: ...rhythmUnit8Nodes,
+  // HIDDEN-V1: ...rhythmUnit8Nodes (rhythm_synco_*),
 ];
 
 export const EXPANDED_EAR_TRAINING_NODES = [

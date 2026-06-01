@@ -445,13 +445,13 @@
     "Syncopation Boss": "Master off-beat magic to face the syncopation boss!"
   },
   "unit8Nodes": {
-    "rhythm_8_1": "Hold-Across Warm-Up",
-    "rhythm_8_2": "Surprise Beat: Listen & Echo",
-    "rhythm_8_3": "Read the Off-Beat",
-    "rhythm_8_4": "Body Split",
-    "rhythm_8_5": "Build a Syncopation",
-    "rhythm_8_6": "Off-Beat Speed Drill",
-    "boss_rhythm_8": "Syncopation Boss"
+    "rhythm_synco_1": "Hold-Across Warm-Up",
+    "rhythm_synco_2": "Surprise Beat: Listen & Echo",
+    "rhythm_synco_3": "Read the Off-Beat",
+    "rhythm_synco_4": "Body Split",
+    "rhythm_synco_5": "Build a Syncopation",
+    "rhythm_synco_6": "Off-Beat Speed Drill",
+    "boss_rhythm_synco": "Syncopation Boss"
   },
   "boss": {
     "cleared": "Boss Cleared!",
