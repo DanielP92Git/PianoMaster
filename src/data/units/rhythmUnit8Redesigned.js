@@ -1,16 +1,17 @@
+// IDs renamed rhythm_8_* → rhythm_synco_* per D-10 (Phase 1 v3.5) to free numeric namespace for new U8 (3/4 Meter). HIDDEN-V1 marker in expandedNodes.js preserved.
 /**
  * Rhythm Unit 8: "Off-Beat Magic" (Redesigned, v2 — quick task 260524-l3r)
  *
  * Pedagogically-correct syncopation unit for 8-year-old learners.
  * Locked PEDAGOGY-REVIEW design (Kodaly/Gordon/Orff/Dalcroze synthesis):
  *
- *   Node 1  rhythm_8_1   "Hold-Across Warm-Up"          DISCOVERY    q-h-q, 1 bar, 60-66 BPM
- *   Node 2  rhythm_8_2   "Surprise Beat: Listen & Echo" DISCOVERY    8-q-8, 1 bar, 64-70 BPM
- *   Node 3  rhythm_8_3   "Read the Off-Beat"            PRACTICE     mixed, 2 bars, 70-78 BPM
- *   Node 4  rhythm_8_4   "Body Split"                   PRACTICE     8-q-8, 2 bars, 66-74 BPM
- *   Node 5  rhythm_8_5   "Build a Syncopation"          PRACTICE     compose tiles, 72-78 BPM
- *   Node 6  rhythm_8_6   "Off-Beat Speed Drill"         SPEED_ROUND  arcade, 80-88 BPM
- *   Node 7  boss_rhythm_8 "Syncopation Boss"            BOSS         strict syncopation-heavy, 4 bars
+ *   Node 1  rhythm_synco_1   "Hold-Across Warm-Up"          DISCOVERY    q-h-q, 1 bar, 60-66 BPM
+ *   Node 2  rhythm_synco_2   "Surprise Beat: Listen & Echo" DISCOVERY    8-q-8, 1 bar, 64-70 BPM
+ *   Node 3  rhythm_synco_3   "Read the Off-Beat"            PRACTICE     mixed, 2 bars, 70-78 BPM
+ *   Node 4  rhythm_synco_4   "Body Split"                   PRACTICE     8-q-8, 2 bars, 66-74 BPM
+ *   Node 5  rhythm_synco_5   "Build a Syncopation"          PRACTICE     compose tiles, 72-78 BPM
+ *   Node 6  rhythm_synco_6   "Off-Beat Speed Drill"         SPEED_ROUND  arcade, 80-88 BPM
+ *   Node 7  boss_rhythm_synco "Syncopation Boss"            BOSS         strict syncopation-heavy, 4 bars
  *
  * Design highlights:
  *   - Q-H-Q is reframed as "Hold Across the Beat" — NOT syncopation in
@@ -78,7 +79,7 @@ export const rhythmUnit8Nodes = [
   // Reframes q-h-q as "hold across the beat" — re-grounds 4/4 pulse after Unit 7's 6/8.
   // ============================================================================
   {
-    id: "rhythm_8_1",
+    id: "rhythm_synco_1",
     name: "Hold-Across Warm-Up",
     description:
       "Re-ground in 4/4 with long notes that hover over the beat (q-h-q)",
@@ -149,7 +150,7 @@ export const rhythmUnit8Nodes = [
   // The headline syncopation moment — the "feeling moment" the previous unit lacked.
   // ============================================================================
   {
-    id: "rhythm_8_2",
+    id: "rhythm_synco_2",
     name: "Surprise Beat: Listen & Echo",
     description:
       "Hear an off-beat surprise — a sound where the beat isn't (8-q-8)",
@@ -158,7 +159,7 @@ export const rhythmUnit8Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 1,
     orderInUnit: 2,
-    prerequisites: ["rhythm_8_1"],
+    prerequisites: ["rhythm_synco_1"],
 
     nodeType: NODE_TYPES.DISCOVERY,
 
@@ -220,7 +221,7 @@ export const rhythmUnit8Nodes = [
   // re-framed as "detective mode": which bar has the off-beat?
   // ============================================================================
   {
-    id: "rhythm_8_3",
+    id: "rhythm_synco_3",
     name: "Read the Off-Beat",
     description: "Spot the syncopated bar — detective mode",
     category: CATEGORY,
@@ -228,7 +229,7 @@ export const rhythmUnit8Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 2,
     orderInUnit: 3,
-    prerequisites: ["rhythm_8_2"],
+    prerequisites: ["rhythm_synco_2"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -282,7 +283,7 @@ export const rhythmUnit8Nodes = [
   // CONTEXT.md decision D — ships as plain `pulse` + `rhythm_tap` for now.
   // ============================================================================
   {
-    id: "rhythm_8_4",
+    id: "rhythm_synco_4",
     name: "Body Split",
     description: "Tap the pulse and the off-beat together",
     category: CATEGORY,
@@ -290,7 +291,7 @@ export const rhythmUnit8Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 3,
     orderInUnit: 4,
-    prerequisites: ["rhythm_8_3"],
+    prerequisites: ["rhythm_synco_3"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -344,7 +345,7 @@ export const rhythmUnit8Nodes = [
   // (1 compose + 2 tap echo + 2 reading verify).
   // ============================================================================
   {
-    id: "rhythm_8_5",
+    id: "rhythm_synco_5",
     name: "Build a Syncopation",
     description: "Pick tiles, build a 2-bar phrase, hear it play!",
     category: CATEGORY,
@@ -352,7 +353,7 @@ export const rhythmUnit8Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 4,
     orderInUnit: 5,
-    prerequisites: ["rhythm_8_4"],
+    prerequisites: ["rhythm_synco_4"],
 
     nodeType: NODE_TYPES.PRACTICE,
 
@@ -408,7 +409,7 @@ export const rhythmUnit8Nodes = [
   // skew syncopated.
   // ============================================================================
   {
-    id: "rhythm_8_6",
+    id: "rhythm_synco_6",
     name: "Off-Beat Speed Drill",
     description: "How fast can you tap syncopated rhythms?",
     category: CATEGORY,
@@ -416,7 +417,7 @@ export const rhythmUnit8Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 5,
     orderInUnit: 6,
-    prerequisites: ["rhythm_8_5"],
+    prerequisites: ["rhythm_synco_5"],
 
     nodeType: NODE_TYPES.SPEED_ROUND,
 
@@ -459,7 +460,7 @@ export const rhythmUnit8Nodes = [
   // framing; this is the syncopation skill capstone only.
   // ============================================================================
   {
-    id: "boss_rhythm_8",
+    id: "boss_rhythm_synco",
     name: "Syncopation Boss",
     description: "Master off-beat magic — the capstone of the unit!",
     unlockHint: "Master off-beat magic to face the syncopation boss!",
@@ -468,7 +469,7 @@ export const rhythmUnit8Nodes = [
     unitName: UNIT_NAME,
     order: START_ORDER + 6,
     orderInUnit: 7,
-    prerequisites: ["rhythm_8_6"],
+    prerequisites: ["rhythm_synco_6"],
 
     nodeType: NODE_TYPES.BOSS,
 
