@@ -720,83 +720,83 @@ export const RHYTHM_PATTERNS = [
   // Available durations: qd (6), q (4), 8th (2)
   // ============================================================================
 
-  // qd qd  (two dotted quarters = 6+6 = 12)
+  // qd qd  (two dotted quarters = 6+6 = 12) — pure pulse foundation
   {
     id: "se_68_001",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
   },
-  // 8 8 8 8 8 8  (six eighths = 2*6 = 12)
+  // 8 8 8 8 8 8  (six eighths = 2*6 = 12) — full eighth subdivision
   {
     id: "se_68_002",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-qd-eighths"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
   },
-  // qd 8 8 8  (6+2+2+2 = 12)
+  // qd 8 8 8  (6+2+2+2 = 12) — qd + three eighths (the canonical qd-eighths cell)
   {
     id: "se_68_003",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-qd-eighths"],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
   },
-  // 8 8 8 qd  (2+2+2+6 = 12)
+  // 8 8 8 qd  (2+2+2+6 = 12) — three eighths + qd
   {
     id: "se_68_004",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-qd-eighths"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0],
   },
-  // q 8 qd  (4+2+6 = 12)
+  // q 8 qd  (4+2+6 = 12) — q-8 cell + qd
   {
     id: "se_68_005",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
   },
-  // qd q 8  (6+4+2 = 12)
+  // qd q 8  (6+4+2 = 12) — qd + q-8 cell
   {
     id: "se_68_006",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0],
   },
-  // 8 q 8 q  (2+4+2+4 = 12)
+  // 8 q 8 q  (2+4+2+4 = 12) — paired 8-q cells
   {
     id: "se_68_007",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
-  // q 8 q 8  (4+2+4+2 = 12)
+  // q 8 q 8  (4+2+4+2 = 12) — paired q-8 cells
   {
     id: "se_68_008",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
   },
-  // 8 8 8 q 8  (2+2+2+4+2 = 12)
+  // 8 8 8 q 8  (2+2+2+4+2 = 12) — eighth run + q-8 ending
   {
     id: "se_68_009",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-qd-eighths"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0],
   },
-  // 8 q 8 8 8  (2+4+2+2+2 = 12)
+  // 8 q 8 8 8  (2+4+2+2+2 = 12) — q sandwiched by eighth runs
   {
     id: "se_68_010",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-qd-eighths"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0],
   },
@@ -1040,7 +1040,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "se_68_013",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
@@ -1049,7 +1049,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "se_68_014",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
   },
@@ -1173,11 +1173,11 @@ export const RHYTHM_PATTERNS = [
     measures: 1,
     pattern: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
   },
-  // 8 8 q 8 8  (2+2+4+2+2 = 12) in 6/8
+  // 8 8 q 8 8  (2+2+4+2+2 = 12) in 6/8 — symmetric eighth-quarter-eighth
   {
     id: "se_68_016",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-qd-eighths"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
   },
@@ -1185,7 +1185,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "se_68_017",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0],
   },
@@ -1193,7 +1193,7 @@ export const RHYTHM_PATTERNS = [
   {
     id: "se_68_018",
     timeSignature: "6/8",
-    tags: ["six-eight"],
+    tags: ["six-eight", "six-eight-basic"],
     measures: 1,
     pattern: [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },
