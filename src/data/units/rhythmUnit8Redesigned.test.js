@@ -9,7 +9,7 @@ import { resolveByTags } from "../patterns/RhythmPatternGenerator.js";
 
 // ─── Asserts the 7-node monomodal design from quick task 260524-l3r ─────────
 
-describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
+describe("Rhythm Unit Syncopation (HIDDEN, renamed from rhythm_8_*)", () => {
   it("exports exactly 7 nodes", () => {
     expect(rhythmUnit8Nodes).toHaveLength(7);
   });
@@ -21,13 +21,13 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
 
   it("node IDs match the locked design", () => {
     const expectedIds = [
-      "rhythm_8_1",
-      "rhythm_8_2",
-      "rhythm_8_3",
-      "rhythm_8_4",
-      "rhythm_8_5",
-      "rhythm_8_6",
-      "boss_rhythm_8",
+      "rhythm_synco_1",
+      "rhythm_synco_2",
+      "rhythm_synco_3",
+      "rhythm_synco_4",
+      "rhythm_synco_5",
+      "rhythm_synco_6",
+      "boss_rhythm_synco",
     ];
     expect(rhythmUnit8Nodes.map((n) => n.id)).toEqual(expectedIds);
   });
@@ -38,7 +38,7 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
     ]);
   });
 
-  it("prerequisite chain walks boss_rhythm_7 → rhythm_8_1 → ... → boss_rhythm_8", () => {
+  it("prerequisite chain walks boss_rhythm_7 → rhythm_synco_1 → ... → boss_rhythm_synco", () => {
     expect(rhythmUnit8Nodes[0].prerequisites).toEqual(["boss_rhythm_7"]);
     for (let i = 1; i < rhythmUnit8Nodes.length; i++) {
       expect(rhythmUnit8Nodes[i].prerequisites).toEqual([
@@ -86,7 +86,7 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
 
   it("node 5 contains exactly one compose_rhythm question with 4-6 tiles and slotCount=2", () => {
     const n = rhythmUnit8Nodes[4];
-    expect(n.id).toBe("rhythm_8_5");
+    expect(n.id).toBe("rhythm_synco_5");
     const questions = n.exercises[0].config.questions;
     const composeEntries = questions.filter((q) => q.type === "compose_rhythm");
     expect(composeEntries).toHaveLength(1);
@@ -105,14 +105,14 @@ describe("Rhythm Unit 8 — Syncopation (v2, 7-node monomodal)", () => {
 
   it("node 6 is SPEED_ROUND with ARCADE_RHYTHM exercise type", () => {
     const n = rhythmUnit8Nodes[5];
-    expect(n.id).toBe("rhythm_8_6");
+    expect(n.id).toBe("rhythm_synco_6");
     expect(n.nodeType).toBe(NODE_TYPES.SPEED_ROUND);
     expect(n.exercises[0].type).toBe(EXERCISE_TYPES.ARCADE_RHYTHM);
   });
 
   it("boss has correct id, isBoss flag, XP reward and accessory unlock", () => {
     const boss = rhythmUnit8Nodes[6];
-    expect(boss.id).toBe("boss_rhythm_8");
+    expect(boss.id).toBe("boss_rhythm_synco");
     expect(boss.isBoss).toBe(true);
     expect(boss.nodeType).toBe(NODE_TYPES.BOSS);
     expect(boss.xpReward).toBe(250);
