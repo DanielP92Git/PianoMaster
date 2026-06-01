@@ -27,7 +27,7 @@
 
 ### Data Migration
 
-- [ ] **REQ-06**: Clean-slate rhythm progress wipe — Supabase migration deletes `student_skill_progress` rows where `node_id LIKE 'rhythm_%' OR node_id LIKE 'boss_rhythm_%'`; `students_score.total_xp` is _never_ touched; no per-node mapping logic
+- [x] **REQ-06**: Clean-slate rhythm progress wipe — Supabase migration deletes `student_skill_progress` rows where `node_id LIKE 'rhythm_%' OR node_id LIKE 'boss_rhythm_%'`; `students_score.total_xp` is _never_ touched; no per-node mapping logic _(Plan 01-04: migration authored at `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql`; application gated to Plan 01-10 `supabase db push` with owner sign-off per D-13)_
 
 ## Phase Mapping
 

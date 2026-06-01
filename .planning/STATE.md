@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.5
 milestone_name: Rhythm Pedagogy
 status: executing
-stopped_at: Completed 01-03-PLAN.md (scaffolding card + unit-name locale infrastructure)
-last_updated: "2026-06-01T19:10:07.311Z"
+stopped_at: Completed 01-04-PLAN.md (atomic Supabase migration + FREE_NODE_IDS D-12 sync)
+last_updated: "2026-06-01T19:17:14Z"
 last_activity: 2026-06-01
 progress:
   total_phases: 1
   completed_phases: 0
   total_plans: 10
-  completed_plans: 3
-  percent: 30
+  completed_plans: 4
+  percent: 40
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 ## Current Position
 
 Phase: 01 (refactor-rhythm-trail-pedagogical-ordering-restructure-units) — EXECUTING
-Plan: 4 of 10
+Plan: 5 of 10
 Status: Ready to execute
 Last activity: 2026-06-01
 
@@ -74,11 +74,12 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ### Phase 01 Execution Metrics
 
-| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                                                                                                                                    |
-| ----- | -------- | ----- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01-01 | 6 min    | 3     | 5     | Wave 0 validation layer (3 new lint rules + 7 sibling unit tests + 2 parity gates). `validateConceptPerUnit` RED on today's data by design; `freeNodes.parity` RED until 01-04.                                                                                                                          |
-| 01-02 | 3 min    | 2     | 5     | Hidden Syncopation unit IDs renamed rhythm*8*_ → rhythm*synco*_ per D-10. Frees rhythm*8*\* numeric namespace for new U8 (3/4 Meter) in Wave 2. HIDDEN-V1 markers preserved with expanded 4-step re-enable checklist.                                                                                    |
-| 01-03 | 4 min    | 3     | 4     | Scaffolding card + unit-name locale infrastructure. EN+HE `game.discovery.cards.*` tree authored for all 12 concepts (89 paths each, exact parity). 7 new unit display names added to EN+HE trail.json (3 pre-existing preserved). Parity test substantively GREEN (was vacuous). Kodaly nikud verbatim. |
+| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----- | -------- | ----- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 01-01 | 6 min    | 3     | 5     | Wave 0 validation layer (3 new lint rules + 7 sibling unit tests + 2 parity gates). `validateConceptPerUnit` RED on today's data by design; `freeNodes.parity` RED until 01-04.                                                                                                                                                                                                                                                      |
+| 01-02 | 3 min    | 2     | 5     | Hidden Syncopation unit IDs renamed rhythm*8*_ → rhythm*synco*_ per D-10. Frees rhythm*8*\* numeric namespace for new U8 (3/4 Meter) in Wave 2. HIDDEN-V1 markers preserved with expanded 4-step re-enable checklist.                                                                                                                                                                                                                |
+| 01-03 | 4 min    | 3     | 4     | Scaffolding card + unit-name locale infrastructure. EN+HE `game.discovery.cards.*` tree authored for all 12 concepts (89 paths each, exact parity). 7 new unit display names added to EN+HE trail.json (3 pre-existing preserved). Parity test substantively GREEN (was vacuous). Kodaly nikud verbatim.                                                                                                                             |
+| 01-04 | 7 min    | 2     | 3     | Atomic Supabase migration authored (BEGIN/COMMIT wraps scoped rhythm wipe + `is_free_node()` body swap with 6-ID U1 whitelist per D-12). JS FREE_RHYTHM_NODE_IDS updated 4→5 IDs; new FREE_BOSS_RHYTHM_NODE_IDS export spread into FREE_NODE_IDS Set. freeNodes.parity test RED→GREEN. Migration committed to repo, NOT applied (Plan 01-10 owner-gated). Pre-existing subscriptionConfig.test.js stale assertions updated (Rule 1). |
 
 ## Decisions (Phase 01)
 
@@ -94,6 +95,10 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - **01-03:** Reused user-confirmed Hebrew Kodaly nikud verbatim in card body text (טָה, טָה-אָה, טי-טי, טָה-פָה-טֶה-פֶה) — never invented new diacritics. `game.discovery.syllableOverride.*` subtree verified byte-identical via git diff (zero deletions, only additions of identical nikud forms in new contexts)
 - **01-03:** Orphan unit display names (Quarter & Half Notes, Rests, Dotted Notes & 3/4 Time, Syncopation, Steady Beat) deliberately NOT removed — they may still be referenced by current rhythm unit data files that Wave 2 replaces. Plan 01-10 cleanup will sweep when Wave 2 has fully landed
 - **01-03:** TDD RED→GREEN split commits for locale parity (EN-only RED commit `ad52a47` → HE counterparts GREEN commit `edf5fac`) — makes the parity gate's enforcement visible in git history as a permanent audit trail
+- **01-04:** Case A boss-routing chosen (new FREE_BOSS_RHYTHM_NODE_IDS sub-export spread into FREE_NODE_IDS) over Case B (inline ID in Set construction) — smallest structural delta from existing per-category-array pattern; extensible for future free-boss additions without re-architecting
+- **01-04:** Pre-existing subscriptionConfig.test.js Rule 1 fix — three hardcoded assertions (`PAYWALL_BOSS_NODE_IDS.toHaveLength(5)`, `FREE_NODE_IDS.size === 23`, `FREE_TIER_SUMMARY.total === 23`/`bossNodeCount === 5`) pinned pre-D-12 counts and would block CI; updated in lockstep with Task 1 commit `a8f40aa`
+- **01-04:** Migration filename uses `20260601000001` timestamp per plan instructions (today is 2026-06-01); single atomic transaction per D-13 (rhythm wipe + is_free_node body swap inseparable so partial-apply impossible)
+- **01-04:** Defense-in-depth `RAISE EXCEPTION` post-flight invariant — if any rhythm rows survive DELETE the transaction aborts; complements pre-flight RAISE NOTICE counts as a forensic audit pair
 
 ## Resolved Items
 
@@ -107,14 +112,24 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Phase 01 Plan 01-03 complete (scaffolding card + unit-name locale infrastructure). Ready to execute Plan 01-04.
+**Next action:** Phase 01 Plan 01-04 complete (atomic Supabase migration + FREE_NODE_IDS D-12 sync). Ready to execute Plan 01-05 (Wave 2: Unit data U1-U3).
+
+- `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` authored — BEGIN/COMMIT transaction, scoped DELETE on `student_skill_progress WHERE node_id LIKE 'rhythm_%' OR LIKE 'boss_rhythm_%'`, conditional `student_unit_progress` cleanup, `CREATE OR REPLACE is_free_node()` with 25-ID whitelist (D-12), pre/post-flight DO blocks with `RAISE EXCEPTION` invariant trip-wire
+- Migration committed to repo at canonical path but NOT YET APPLIED — Plan 01-10 owner-gated `supabase db push` per D-13 deploy ordering
+- `src/config/subscriptionConfig.js` updated in lockstep: `FREE_RHYTHM_NODE_IDS` = 5 IDs (1_1..1_5); new `FREE_BOSS_RHYTHM_NODE_IDS = ['boss_rhythm_1']`; `boss_rhythm_1` removed from `PAYWALL_BOSS_NODE_IDS`; `FREE_NODE_IDS` Set spreads `FREE_BOSS_RHYTHM_NODE_IDS`
+- `FREE_TIER_SUMMARY`: rhythm 4→6, total 23→25, bossNodeCount 5→4
+- `freeNodes.parity.test.js` GREEN (was RED after Plan 01-01) — JS Set membership exactly mirrors SQL whitelist
+- `subscriptionConfig.test.js` 3 stale assertions updated to D-12 invariants (Rule 1 — would have broken CI otherwise)
+- `npx vitest run src/config/` → 10/10 green
+- Wave 2 (01-05..01-08) unit-data plans can reference `boss_rhythm_1` as free + `rhythm_1_5` as new U1 terminus; Plan 01-10 has migration artifact ready to apply
+
+**Plan 01-03 context (still current):**
 
 - `game.discovery.cards.*` tree authored in EN + HE common.json for all 12 concepts (q, qr, h, hr, w, wr, 8_pair, 16, hd, qd, 3_4, 6_8) — 89 paths each, exact key-for-key parity verified
 - 7 new unit display names added to EN + HE trail.json (3 pre-existing preserved: Eighth Notes, Sixteenth Notes, Six-Eight Time)
 - scaffolding-card-parity test transitioned from vacuously-passing → substantively-passing (was 0/0 paths, now 89/89 each)
 - Kodaly nikud forms reused verbatim from `syllableOverride.*` in new card body text; `syllableOverride` subtree byte-identical
-- `rhythm_synco_*` namespace from Plan 01-02 preserved (7 grep matches in each trail.json — matches baseline)
-- Wave 2 (01-05..01-08) unit-data plans inherit all 10 unit display-name strings as ready-to-reference constants; Wave 3 (01-09) DiscoveryIntroQuestion pagination has all 12-concept × 3-4-card content available
+- `rhythm_synco_*` namespace from Plan 01-02 preserved
 
 **Hidden Syncopation context (from 01-02, still current):**
 
@@ -124,9 +139,9 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - trail.json EN+HE `unit8Nodes` block keys renamed in lockstep
 - `npm run verify:trail` introduces ZERO new failures (still RED on pre-existing U1/U4/U5 concept-per-unit + 3 orphan-tag warnings — both Wave 0 known states from Plan 01-01)
 
-**Stopped at:** Completed 01-02-PLAN.md (hidden Syncopation rename)
+**Stopped at:** Completed 01-04-PLAN.md (atomic Supabase migration + FREE_NODE_IDS D-12 sync)
 **Resume file:** None
 
 ---
 
-_State updated: 2026-06-01 — Plan 01-03 complete. Scaffolding card tree (12 concepts × 2–4 cards) + 10 unit display names authored in EN+HE locales. Parity test substantively GREEN. Ready to execute Plan 01-04._
+_State updated: 2026-06-01 — Plan 01-04 complete. Atomic Supabase migration authored (rhythm wipe + is_free_node() body swap per D-13). JS FREE_NODE_IDS Set synced with SQL whitelist; freeNodes.parity test GREEN. Migration NOT applied (Plan 01-10 owner-gated). Ready to execute Plan 01-05 (Wave 2: Unit data U1-U3)._

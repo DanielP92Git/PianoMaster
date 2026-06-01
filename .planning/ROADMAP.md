@@ -52,7 +52,7 @@ See individual milestone archives in `.planning/milestones/` for full phase brea
 
 Phase summary:
 
-- [ ] Phase 1: Rhythm Trail Pedagogical Restructure (0/10 plans) -- planned (4 waves)
+- [ ] Phase 1: Rhythm Trail Pedagogical Restructure (4/10 plans) -- executing (4 waves)
 
 ### Phase 1: Rhythm Trail Pedagogical Restructure
 
@@ -67,7 +67,7 @@ Plans:
 - [x] 01-01-PLAN.md — Wave 0: Validator lint rules + parity tests scaffolding
 - [x] 01-02-PLAN.md — Wave 1: Hidden Unit 8 rename (rhythm*8*_ → rhythm*synco*_)
 - [x] 01-03-PLAN.md — Wave 1: Locale infrastructure (EN+HE scaffolding cards + unit names)
-- [ ] 01-04-PLAN.md — Wave 1: Supabase migration + FREE_NODE_IDS update
+- [x] 01-04-PLAN.md — Wave 1: Supabase migration + FREE_NODE_IDS update
 - [ ] 01-05-PLAN.md — Wave 2: Unit data U1-U3 (Quarter, Half, Whole + matching rests)
 - [ ] 01-06-PLAN.md — Wave 2: Unit data U4-U5 (Eighths, Sixteenths)
 - [ ] 01-07-PLAN.md — Wave 2: Unit data U6-U8 (Dotted Half, Dotted Quarter, 3/4 Meter)
@@ -99,8 +99,8 @@ Plans:
 
 ## Progress
 
-**Total: 25 milestones shipped, 109 phases, ~252 plans | Active: v3.5 Rhythm Pedagogy — Phase 1 planning**
+**Total: 25 milestones shipped, 109 phases, ~252 plans | Active: v3.5 Rhythm Pedagogy — Phase 1 executing (4/10 plans complete)**
 
 ---
 
-_Last updated: 2026-06-01 -- Phase 1 planned: 10 plans across 4 waves (/gsd-plan-phase 1 complete)_
+_Last updated: 2026-06-01 -- Phase 1 Plan 01-04 complete (atomic migration authored + FREE_NODE_IDS synced; freeNodes.parity GREEN)_
