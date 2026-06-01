@@ -3,7 +3,8 @@
 
 // 2026-05-04 (Phase 33 Plan 33-10): bumped from v10 to v11 — Phase 33 UI changes
 // (BossIntroOverlay + VictoryScreen gold-tier confetti for boss nodes).
-const CACHE_NAME = "pianomaster-v11";
+// v12 (2026-06-01): Phase 1 v3.5 — rhythm trail restructure. Forces re-fetch of new rhythmUnit*.js + locale JSON.
+const CACHE_NAME = "pianomaster-v12";
 const ACCESSORY_CACHE_NAME = "pianomaster-accessories-v2";
 const CACHE_WHITELIST = [CACHE_NAME, ACCESSORY_CACHE_NAME];
 const OFFLINE_URL = "/offline.html";
