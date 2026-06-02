@@ -406,6 +406,10 @@ describe("MixedLessonGame — CODE-01: stale-closure fix", () => {
     // First question is rhythm_tap
     expect(screen.getByTestId("rhythm-tap-question")).toBeInTheDocument();
 
+    // Unlock audio via the tap-to-start gate (audio-driven lessons show it
+    // before the count-in so the AudioContext is resumed from a user gesture).
+    fireEvent.click(screen.getByRole("button", { name: "Tap to start" }));
+
     // Fire the tap complete callback (simulates rhythm_tap completion)
     fireEvent.click(screen.getByTestId("rt-complete"));
 
