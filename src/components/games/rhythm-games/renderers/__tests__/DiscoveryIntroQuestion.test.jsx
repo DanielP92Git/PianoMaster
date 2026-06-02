@@ -24,15 +24,25 @@ vi.mock("react-i18next", () => ({
   Trans: ({ defaults, i18nKey }) => <>{defaults || i18nKey}</>,
 }));
 
+// Stable audio spies shared across every useAudioEngine() instance. The mock
+// returns a fresh object each render, so capturing a spy off a specific render's
+// instance is fragile (the closure inside playDemo may reference a different
+// render's object). Hoisted spies make instance identity irrelevant.
+const audioSpies = vi.hoisted(() => ({
+  createPianoSound: vi.fn(),
+  createMetronomeClick: vi.fn(),
+}));
+
 // Mock useAudioEngine — returns stub that avoids real Web Audio API
 vi.mock("../../../../../hooks/useAudioEngine", () => ({
   useAudioEngine: vi.fn(() => ({
     audioContextRef: { current: null },
-    gainNodeRef: { current: null },
+    gainNodeRef: { current: {} },
     getCurrentTime: vi.fn(() => 0),
     initializeAudioContext: vi.fn(() => Promise.resolve(true)),
     resumeAudioContext: vi.fn(() => Promise.resolve(true)),
-    createPianoSound: vi.fn(),
+    createPianoSound: audioSpies.createPianoSound,
+    createMetronomeClick: audioSpies.createMetronomeClick,
   })),
 }));
 
@@ -95,11 +105,13 @@ vi.mock("../../utils/rhythmVexflowHelpers", () => ({
 // Mock RhythmStaffDisplay — pattern/meter modes render a staff; tests just
 // verify the wrapper is present in the DOM with the right beats prop.
 vi.mock("../../components/RhythmStaffDisplay", () => ({
-  RhythmStaffDisplay: ({ beats, timeSignature }) => (
+  RhythmStaffDisplay: ({ beats, timeSignature, measures, activeNoteIndex }) => (
     <div
       data-testid="rhythm-staff"
       data-beat-count={beats?.length}
       data-time-signature={timeSignature}
+      data-measures={measures}
+      data-active-note-index={activeNoteIndex == null ? "" : activeNoteIndex}
     />
   ),
 }));
@@ -112,6 +124,9 @@ vi.mock("../../components/DurationCard", () => ({
     quarter: (props) => <svg data-testid="duration-icon" {...props} />,
     h: (props) => <svg data-testid="duration-icon" {...props} />,
     w: (props) => <svg data-testid="duration-icon" {...props} />,
+    qr: (props) => <svg data-testid="duration-icon" {...props} />,
+    hr: (props) => <svg data-testid="duration-icon" {...props} />,
+    wr: (props) => <svg data-testid="duration-icon" {...props} />,
   },
 }));
 
@@ -138,6 +153,21 @@ vi.mock("../../utils/durationInfo", () => ({
       isRest: false,
       i18nKey: "rhythm.duration.half",
     },
+    qr: {
+      durationUnits: 4,
+      isRest: true,
+      i18nKey: "rhythm.duration.quarterRest",
+    },
+    hr: {
+      durationUnits: 8,
+      isRest: true,
+      i18nKey: "rhythm.duration.halfRest",
+    },
+    wr: {
+      durationUnits: 16,
+      isRest: true,
+      i18nKey: "rhythm.duration.wholeRest",
+    },
   },
   getSyllable: vi.fn(() => "ti-ti"),
 }));
@@ -146,7 +176,6 @@ vi.mock("../../utils/durationInfo", () => ({
 // Import mocks for capturing call arguments
 // ---------------------------------------------------------------------------
 import { schedulePatternPlayback } from "../../utils/rhythmTimingUtils";
-import { useAudioEngine } from "../../../../../hooks/useAudioEngine";
 
 // ---------------------------------------------------------------------------
 // Import component under test — after all mocks
@@ -216,12 +245,8 @@ describe("DiscoveryIntroQuestion — playback (final card)", () => {
 
     await gotoPlaybackCard();
 
-    // Capture the createPianoSound spy from the LATEST audioEngine instance —
-    // navigation re-renders the component, and the mock returns a fresh spy
-    // each render, so grab it after reaching the playback card.
-    const componentAudioEngine =
-      useAudioEngine.mock.results[useAudioEngine.mock.results.length - 1].value;
-    const createPianoSound = componentAudioEngine.createPianoSound;
+    // Stable spy shared across all render instances (see audioSpies).
+    const createPianoSound = audioSpies.createPianoSound;
 
     const listenButton = screen.getByText("Listen");
     await act(async () => {
@@ -389,6 +414,137 @@ describe("DiscoveryIntroQuestion — figure (staff) modes", () => {
     const [beats, tempo] = schedulePatternPlayback.mock.calls[0];
     expect(beats).toHaveLength(6); // six eighths
     expect(tempo).toBe(112);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Rest context figures — rests play a metronome-backed context figure on the
+// playback card ONLY; cards 1-2 keep the big standalone rest glyph.
+// ---------------------------------------------------------------------------
+
+describe("DiscoveryIntroQuestion — rest context playback", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("shows the glyph (not a staff) on notation/syllable cards for a rest", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "hr" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    // Card 1 (notation)
+    expect(screen.getByTestId("duration-icon")).toBeInTheDocument();
+    expect(screen.queryByTestId("rhythm-staff")).not.toBeInTheDocument();
+
+    // Card 2 (syllable)
+    await clickNext();
+    expect(screen.getByTestId("duration-icon")).toBeInTheDocument();
+    expect(screen.queryByTestId("rhythm-staff")).not.toBeInTheDocument();
+  });
+
+  it("shows the context staff (not the glyph) on the playback card for hr", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "hr" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await gotoPlaybackCard();
+    const staff = screen.getByTestId("rhythm-staff");
+    expect(staff).toBeInTheDocument();
+    expect(staff).toHaveAttribute("data-beat-count", "3"); // q q hr
+    expect(staff).toHaveAttribute("data-time-signature", "4/4");
+    expect(staff).toHaveAttribute("data-measures", "1");
+    expect(screen.queryByTestId("duration-icon")).not.toBeInTheDocument();
+  });
+
+  it("uses a 4-beat single-measure figure for qr", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "qr" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await gotoPlaybackCard();
+    const staff = screen.getByTestId("rhythm-staff");
+    expect(staff).toHaveAttribute("data-beat-count", "4"); // q qr q q
+    expect(staff).toHaveAttribute("data-measures", "1");
+  });
+
+  it("uses a 5-symbol two-measure figure for wr (4 quarters | whole rest)", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "wr" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await gotoPlaybackCard();
+    const staff = screen.getByTestId("rhythm-staff");
+    expect(staff).toHaveAttribute("data-beat-count", "5"); // q q q q + wr
+    expect(staff).toHaveAttribute("data-measures", "2");
+  });
+
+  it("plays the context figure (with a rest) and 4 metronome clicks for hr", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "hr" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await gotoPlaybackCard();
+
+    const createMetronomeClick = audioSpies.createMetronomeClick;
+
+    const listenButton = screen.getByText("Listen");
+    await act(async () => {
+      fireEvent.click(listenButton);
+    });
+
+    expect(schedulePatternPlayback).toHaveBeenCalledOnce();
+    const [beats, tempo] = schedulePatternPlayback.mock.calls[0];
+    expect(tempo).toBe(80);
+    expect(beats).toHaveLength(3); // q q hr
+    expect(beats.some((b) => b.isRest === true)).toBe(true);
+
+    // q(1) + q(1) + hr(2) = 4 quarter-beats → 4 clicks.
+    expect(createMetronomeClick).toHaveBeenCalledTimes(4);
+    // First click is the downbeat.
+    expect(createMetronomeClick.mock.calls[0][1]).toBe(true);
+  });
+
+  it("plays 8 metronome clicks across the two-bar wr figure", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "wr" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await gotoPlaybackCard();
+
+    const createMetronomeClick = audioSpies.createMetronomeClick;
+
+    const listenButton = screen.getByText("Listen");
+    await act(async () => {
+      fireEvent.click(listenButton);
+    });
+
+    // 4 quarters (4 beats) + whole rest (4 beats) = 8 quarter-beats.
+    expect(createMetronomeClick).toHaveBeenCalledTimes(8);
+    // Downbeats at the start of each bar (beat 0 and beat 4).
+    expect(createMetronomeClick.mock.calls[0][1]).toBe(true);
+    expect(createMetronomeClick.mock.calls[4][1]).toBe(true);
   });
 });
 

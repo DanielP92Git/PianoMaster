@@ -1883,7 +1883,8 @@
         },
         "playback": {
           "title": "How it sounds",
-          "body": "Tap the Listen button to hear it, then try to feel the beat."
+          "body": "Tap the Listen button to hear it, then try to feel the beat.",
+          "restBody": "This beat is silent — listen to the clicks keep the beat going, and watch the rest light up!"
         }
       },
       "cards": {

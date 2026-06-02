@@ -49,6 +49,23 @@ const METER_FIGURES = {
   "6_8": { units: [2, 2, 2, 2, 2, 2], timeSignature: "6/8", tempo: 112 }, // six eighths (2 groups of 3)
 };
 
+// A rest is silent, so playing it alone teaches nothing. On the playback card we
+// put each rest in a tiny musical context and play it against a steady metronome
+// so the child hears the pulse continue through the silence while the rest symbol
+// is highlighted. Beats are { durationUnits, isRest }: q=4, qr=4(rest), h=8,
+// hr=8(rest), wr=16(rest). Each figure fills whole 4/4 measure(s).
+const N = (durationUnits) => ({ durationUnits, isRest: false });
+const R = (durationUnits) => ({ durationUnits, isRest: true });
+const REST_CONTEXT_FIGURES = {
+  qr: { beats: [N(4), R(4), N(4), N(4)], timeSignature: "4/4", measures: 1 }, // ♩ 𝄽 ♩ ♩
+  hr: { beats: [N(4), N(4), R(8)], timeSignature: "4/4", measures: 1 }, // ♩ ♩ 𝄼
+  wr: {
+    beats: [N(4), N(4), N(4), N(4), R(16)],
+    timeSignature: "4/4",
+    measures: 2,
+  }, // ♩♩♩♩ | 𝄻
+};
+
 export default function DiscoveryIntroQuestion({
   question,
   isLandscape,
@@ -62,7 +79,11 @@ export default function DiscoveryIntroQuestion({
   const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
   const { reduce: reducedMotion } = useMotionTokens();
   const [isPlaying, setIsPlaying] = useState(false);
+  // Index of the symbol currently sounding during rest-context playback (recolor).
+  const [activeNoteIndex, setActiveNoteIndex] = useState(null);
   const hasCompletedRef = useRef(false);
+  // Pending setTimeout ids for rest-context highlight stepping + end cleanup.
+  const restTimersRef = useRef([]);
 
   // A discovery card teaches either a single duration (focusDuration), a meter
   // concept (3/4, 6/8 via METER_FIGURES), or a rhythmic figure (focusPattern).
@@ -71,16 +92,34 @@ export default function DiscoveryIntroQuestion({
   const focusDuration = question?.focusDuration;
   const focusPatternId = focusPattern?.id ?? null;
   const info = DURATION_INFO[focusDuration];
+  // Rests get a metronome-backed context figure on the playback card (only).
+  const restFigure = info?.isRest ? REST_CONTEXT_FIGURES[focusDuration] : null;
 
   // Multi-card pagination state — every instance walks the same 3 steps.
   const cardKinds = STEPS;
   const [cardIndex, setCardIndex] = useState(0);
+  // Clear any pending rest-context highlight timers and reset the highlight.
+  const clearRestTimers = useCallback(() => {
+    restTimersRef.current.forEach(clearTimeout);
+    restTimersRef.current = [];
+    setActiveNoteIndex(null);
+  }, []);
+
   // Reset pagination when the question prop changes — avoids stale cardIndex
   // across MixedLessonGame re-renders within the same renderer.
   useEffect(() => {
     setCardIndex(0);
     hasCompletedRef.current = false;
-  }, [focusDuration, focusPatternId]);
+    clearRestTimers();
+  }, [focusDuration, focusPatternId, clearRestTimers]);
+
+  // Leaving a card mid-playback should cancel the highlight stepping.
+  useEffect(() => {
+    clearRestTimers();
+  }, [cardIndex, clearRestTimers]);
+
+  // Cancel timers on unmount.
+  useEffect(() => () => restTimersRef.current.forEach(clearTimeout), []);
 
   const isLastCard = cardIndex >= cardKinds.length - 1;
   const currentKind = cardKinds[cardIndex] ?? "notation";
@@ -191,8 +230,61 @@ export default function DiscoveryIntroQuestion({
     const isBeamedPair = focusDuration === "8_pair";
     const isRest = info?.isRest;
 
-    if (isRest) {
-      // For rests, play a short click then silence for the duration
+    if (isRest && restFigure) {
+      // Rests are silent, so play a short context figure against a steady
+      // metronome — the child hears the pulse continue through the silence while
+      // the rest symbol is highlighted. Notes sound; rests are silent offsets.
+      clearRestTimers();
+      const LEAD = 0.15;
+      const startTime = ctx.currentTime + LEAD;
+      const beatDur = 60 / figureTempo;
+
+      const { totalDuration } = schedulePatternPlayback(
+        restFigure.beats,
+        figureTempo,
+        ctx,
+        enginePlayNote,
+        startTime
+      );
+
+      // Steady metronome click on every quarter-beat (incl. silent rest beats).
+      const numerator =
+        parseInt(restFigure.timeSignature.split("/")[0], 10) || 4;
+      const totalUnits = restFigure.beats.reduce(
+        (s, b) => s + b.durationUnits,
+        0
+      );
+      const quarterBeats = Math.round(totalUnits / 4);
+      for (let b = 0; b < quarterBeats; b++) {
+        audioEngine.createMetronomeClick?.(
+          startTime + b * beatDur,
+          b % numerator === 0
+        );
+      }
+
+      // Step the symbol highlight at each beat-symbol onset (aligned to LEAD).
+      let acc = 0;
+      restFigure.beats.forEach((beat, i) => {
+        const onsetSec = (acc / 4) * beatDur;
+        const id = setTimeout(
+          () => setActiveNoteIndex(i),
+          (LEAD + onsetSec) * 1000
+        );
+        restTimersRef.current.push(id);
+        acc += beat.durationUnits;
+      });
+
+      const endId = setTimeout(
+        () => {
+          setActiveNoteIndex(null);
+          setIsPlaying(false);
+        },
+        (LEAD + totalDuration) * 1000 + 300
+      );
+      restTimersRef.current.push(endId);
+      return;
+    } else if (isRest) {
+      // Fallback (rest code without a context figure): short click then silence.
       const masterGain = audioEngine.gainNodeRef?.current;
       if (masterGain) {
         const now = ctx.currentTime + 0.05;
@@ -272,6 +364,8 @@ export default function DiscoveryIntroQuestion({
     enginePlayNote,
     figureBeats,
     figureTempo,
+    restFigure,
+    clearRestTimers,
   ]);
 
   // Unified primary handler — advances cardIndex on non-final cards, completes
@@ -388,10 +482,15 @@ export default function DiscoveryIntroQuestion({
     );
     cardBody = (
       <p className={bodyClass}>
-        {t(
-          "game.discovery.steps.playback.body",
-          "Tap the Listen button to hear it, then try to feel the beat."
-        )}
+        {info?.isRest
+          ? t(
+              "game.discovery.steps.playback.restBody",
+              "This beat is silent — listen to the clicks keep the beat going, and watch the rest light up!"
+            )
+          : t(
+              "game.discovery.steps.playback.body",
+              "Tap the Listen button to hear it, then try to feel the beat."
+            )}
       </p>
     );
   }
@@ -406,12 +505,23 @@ export default function DiscoveryIntroQuestion({
       <div className={cardClass}>
         {/* Figure preview (left column in landscape, top in portrait).
             Meter/pattern modes render a VexFlow staff; single-duration mode
-            renders the SVG glyph. Shown on every step for continuity. */}
+            renders the SVG glyph. Rests show their context figure on the
+            playback card only (cards 1-2 keep the big standalone glyph). */}
         <div
           dir="ltr"
           className={`flex items-center justify-center text-white${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
-          {figureBeats ? (
+          {restFigure && currentKind === "playback" ? (
+            <div className="w-72 md:w-80 lg:w-96" aria-hidden="true">
+              <RhythmStaffDisplay
+                beats={restFigure.beats}
+                timeSignature={restFigure.timeSignature}
+                measures={restFigure.measures}
+                activeNoteIndex={activeNoteIndex}
+                reducedMotion={reducedMotion}
+              />
+            </div>
+          ) : figureBeats ? (
             <div className="w-72 md:w-80 lg:w-96" aria-hidden="true">
               <RhythmStaffDisplay
                 beats={figureBeats}

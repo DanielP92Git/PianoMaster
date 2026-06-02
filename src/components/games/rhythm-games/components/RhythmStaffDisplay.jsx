@@ -21,6 +21,8 @@ import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamG
  * - measures: number 1-4 — number of staves to render (D-13)
  * - showSyllables: boolean — render Kodaly syllables below notes (D-16/D-17)
  * - language: 'en' | 'he' — syllable language (D-16/D-17)
+ * - activeNoteIndex: number|null — recolor the symbol at this index (discovery
+ *   playback highlight). Not meant to be combined with tapResults.
  */
 export function RhythmStaffDisplay({
   beats,
@@ -30,9 +32,10 @@ export function RhythmStaffDisplay({
   showCursor = false,
   reducedMotion = false,
   onStaveBoundsReady = null,
-  measures = 1,          // NEW: number of staves to render (1-4)
+  measures = 1, // NEW: number of staves to render (1-4)
   showSyllables = false, // NEW: render Kodaly syllables below notes
-  language = 'en',       // NEW: 'en' or 'he' for syllable text
+  language = "en", // NEW: 'en' or 'he' for syllable text
+  activeNoteIndex = null, // NEW: recolor the currently-playing symbol (discovery)
 }) {
   const containerRef = useRef(null);
   const cursorDivRef = useRef(null);
@@ -100,7 +103,13 @@ export function RhythmStaffDisplay({
    * Render a single stave into a container element.
    * Returns { allNotes, stave } for bounds reporting and color updates.
    */
-  const renderSingleStave = (container, staveBeats, timeSig, showTimeSig, syllableOpts) => {
+  const renderSingleStave = (
+    container,
+    staveBeats,
+    timeSig,
+    showTimeSig,
+    syllableOpts
+  ) => {
     const containerWidth = container.offsetWidth || 400;
     const staveWidth = containerWidth - 20;
     const staveHeight = 120;
@@ -147,7 +156,10 @@ export function RhythmStaffDisplay({
         if (!el.getAttribute("fill") || el.getAttribute("fill") === "black") {
           el.setAttribute("fill", "white");
         }
-        if (!el.getAttribute("stroke") || el.getAttribute("stroke") === "black") {
+        if (
+          !el.getAttribute("stroke") ||
+          el.getAttribute("stroke") === "black"
+        ) {
           el.setAttribute("stroke", "white");
         }
       });
@@ -178,7 +190,10 @@ export function RhythmStaffDisplay({
         const staveWidth = containerWidth - 20;
         const staveHeight = 120;
 
-        const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
+        const renderer = new Renderer(
+          containerRef.current,
+          Renderer.Backends.SVG
+        );
         renderer.resize(containerWidth, staveHeight);
         const ctx = renderer.getContext();
         ctx.setFillStyle("#ffffff");
@@ -208,9 +223,16 @@ export function RhythmStaffDisplay({
 
         // Expose stave note-area bounds for beat-accurate cursor
         if (onStaveBoundsReady) {
-          const currentContainerWidth = containerRef.current?.offsetWidth || containerWidth;
+          const currentContainerWidth =
+            containerRef.current?.offsetWidth || containerWidth;
           const noteXPositions = notes
-            .map((note) => { try { return note.getAbsoluteX(); } catch { return null; } })
+            .map((note) => {
+              try {
+                return note.getAbsoluteX();
+              } catch {
+                return null;
+              }
+            })
             .filter((x) => x !== null);
           onStaveBoundsReady({
             noteStartX: stave.getNoteStartX(),
@@ -221,19 +243,29 @@ export function RhythmStaffDisplay({
         }
 
         noteElementsRef.current = notes.map((note) => {
-          try { return note.getElem ? note.getElem() : null; } catch { return null; }
+          try {
+            return note.getElem ? note.getElem() : null;
+          } catch {
+            return null;
+          }
         });
 
         // Style SVG
         const svgEl = containerRef.current.querySelector("svg");
         if (svgEl) {
           svgEl.querySelectorAll("path, line, rect").forEach((el) => {
-            if (!el.getAttribute("fill") || el.getAttribute("fill") === "black") el.setAttribute("fill", "white");
-            if (!el.getAttribute("stroke") || el.getAttribute("stroke") === "black") el.setAttribute("stroke", "white");
+            if (!el.getAttribute("fill") || el.getAttribute("fill") === "black")
+              el.setAttribute("fill", "white");
+            if (
+              !el.getAttribute("stroke") ||
+              el.getAttribute("stroke") === "black"
+            )
+              el.setAttribute("stroke", "white");
           });
-          svgEl.querySelectorAll("text").forEach((el) => el.setAttribute("fill", "white"));
+          svgEl
+            .querySelectorAll("text")
+            .forEach((el) => el.setAttribute("fill", "white"));
         }
-
       } else {
         // --- Multi-stave rendering (D-13) ---
         // Split beats into measure-sized chunks
@@ -268,7 +300,11 @@ export function RhythmStaffDisplay({
 
             // Record note elements for color updates
             const noteElems = notes.map((note) => {
-              try { return note.getElem ? note.getElem() : null; } catch { return null; }
+              try {
+                return note.getElem ? note.getElem() : null;
+              } catch {
+                return null;
+              }
             });
             allNoteElements = allNoteElements.concat(noteElems);
 
@@ -278,7 +314,13 @@ export function RhythmStaffDisplay({
               if (onStaveBoundsReady) {
                 const currentContainerWidth = staveDiv.offsetWidth || 400;
                 const noteXPositions = notes
-                  .map((note) => { try { return note.getAbsoluteX(); } catch { return null; } })
+                  .map((note) => {
+                    try {
+                      return note.getAbsoluteX();
+                    } catch {
+                      return null;
+                    }
+                  })
                   .filter((x) => x !== null);
                 onStaveBoundsReady({
                   noteStartX: stave.getNoteStartX(),
@@ -289,7 +331,10 @@ export function RhythmStaffDisplay({
               }
             }
           } catch (err) {
-            console.warn(`[RhythmStaffDisplay] VexFlow render error (stave ${i}):`, err);
+            console.warn(
+              `[RhythmStaffDisplay] VexFlow render error (stave ${i}):`,
+              err
+            );
           }
         }
 
@@ -335,6 +380,34 @@ export function RhythmStaffDisplay({
       }
     });
   }, [tapResults]);
+
+  // Recolor the currently-playing symbol (discovery playback). Additive: when
+  // activeNoteIndex is null every glyph stays white, so existing callers that
+  // never pass this prop are unaffected. Not intended to be combined with
+  // tapResults (discovery never passes tapResults, so there is no conflict).
+  useEffect(() => {
+    const setColor = (noteEl, color) => {
+      if (!noteEl) return;
+      try {
+        noteEl.querySelectorAll("path, .vf-notehead path").forEach((el) => {
+          el.setAttribute("fill", color);
+          el.setAttribute("stroke", color);
+        });
+      } catch {
+        // Note element may not have querySelectorAll in test environments
+      }
+    };
+
+    // Reset all symbols to white, then accent the active one.
+    noteElementsRef.current.forEach((noteEl) => setColor(noteEl, "#ffffff"));
+    if (
+      activeNoteIndex != null &&
+      activeNoteIndex >= 0 &&
+      activeNoteIndex < noteElementsRef.current.length
+    ) {
+      setColor(noteElementsRef.current[activeNoteIndex], "#818cf8"); // indigo-400
+    }
+  }, [activeNoteIndex]);
 
   // Update cursor position directly via DOM (not React state — Pitfall 3: avoid re-renders)
   useEffect(() => {
