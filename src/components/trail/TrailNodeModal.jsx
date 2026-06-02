@@ -854,7 +854,7 @@ const TrailNodeModal = ({
                   onClick={onClose}
                   className="flex-1 rounded-full bg-white/10 px-6 py-3 text-base font-semibold text-white/70 transition-colors hover:bg-white/15"
                 >
-                  {t("common:actions.cancel", { defaultValue: "Cancel" })}
+                  {t("common.actions.cancel", { defaultValue: "Cancel" })}
                 </button>
                 <button
                   onClick={handleStartPractice}
