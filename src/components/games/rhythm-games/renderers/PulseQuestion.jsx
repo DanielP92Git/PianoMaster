@@ -102,7 +102,7 @@ export default function PulseQuestion({
   disabled,
 }) {
   const { t } = useTranslation("common");
-  const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
+  const { audioContextRef } = useAudioContext();
   const { reduce: reducedMotion } = useMotionTokens();
 
   // Pulse always renders 1 measure of beats — declare false (CORE-02).
@@ -559,13 +559,15 @@ export default function PulseQuestion({
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
 
-    try {
-      // Explicitly initialize first — guarantees gainNodeRef.current is set
-      // before any metronome clicks are scheduled (mirrors RhythmTapQuestion).
-      await audioEngine.initializeAudioContext?.();
-      await audioEngine.resumeAudioContext();
-    } catch {
-      getOrCreateAudioContext();
+    // Guarantee the AudioContext is RUNNING before scheduling — a suspended
+    // context has a frozen clock, so count-in clicks never fire and the beat
+    // display never advances. If audio can't unlock yet, reset the guard so the
+    // count-in retries once unlocked rather than silently failing the exercise.
+    await audioEngine.initializeAudioContext?.();
+    const running = await audioEngine.ensureRunning();
+    if (!running) {
+      hasStartedRef.current = false;
+      return;
     }
 
     // Prime the audio pipeline with a silent oscillator so the first
@@ -583,18 +585,6 @@ export default function PulseQuestion({
       }
     } catch {
       // Non-critical — first tick may still be quiet
-    }
-
-    // Wait briefly for audioEngine.isReady() — initializeAudioContext is async
-    // and createClickSound early-returns when audioContextRef/gainNodeRef are
-    // not yet set. Without this guard, the count-in clicks are silently dropped.
-    for (let i = 0; i < 10 && !audioEngine.isReady(); i++) {
-      await new Promise((r) => setTimeout(r, 20));
-    }
-    if (!audioEngine.isReady()) {
-      // Fail soft — don't let the lesson hang silently.
-      onComplete(0, 1);
-      return;
     }
 
     userTapsRef.current = [];
@@ -618,8 +608,8 @@ export default function PulseQuestion({
 
     const beatDur = beatDuration.current;
     const { measureDur } = getMeterTiming(timeSignature, beatDur);
-    // 300ms lead time to ensure audio pipeline is fully initialized
-    const countInStartTime = audioEngine.getCurrentTime() + 0.3;
+    // Small uniform lead-in — ensureRunning() already guarantees a live clock.
+    const countInStartTime = audioEngine.getCurrentTime() + 0.15;
     const playingStartTime = countInStartTime + measureDur; // 1 measure count-in
 
     // Start metronome from count-in start, pass playingStartTime for cursor tracking
@@ -645,13 +635,11 @@ export default function PulseQuestion({
     );
   }, [
     audioEngine,
-    getOrCreateAudioContext,
     beatsPerMeasure,
     timeSignature,
     totalPlayBeats,
     startContinuousMetronome,
     evaluatePerformance,
-    onComplete,
   ]);
 
   // Auto-start when not disabled (hasStartedRef pattern)

@@ -253,6 +253,41 @@ export const useAudioEngine = (
   }, [initializeAudioContext]);
 
   /**
+   * Ensure the AudioContext exists, is initialized, and is actually RUNNING.
+   *
+   * Resolves true only when state === "running" (i.e. currentTime is advancing),
+   * so callers can safely compute countInStartTime from getCurrentTime() and
+   * schedule clicks. Handles both "suspended" and "interrupted" states.
+   *
+   * Polls the STATE (not a timer) so it can never proceed against a frozen
+   * clock, and re-issues resume() each tick — a user gesture landing mid-wait
+   * (e.g. the tap-to-start overlay) lets the next resume() through.
+   *
+   * @param {number} timeoutMs - max time to wait for the running state
+   * @returns {Promise<boolean>}
+   */
+  const ensureRunning = useCallback(
+    async (timeoutMs = 1500) => {
+      if (!audioContextRef.current) {
+        const ok = await initializeAudioContext();
+        if (!ok) return false;
+      }
+      const ctx = audioContextRef.current;
+      if (!ctx || ctx.state === "closed") return false;
+      if (ctx.state !== "running") ctx.resume().catch(() => {});
+
+      const deadline = performance.now() + timeoutMs;
+      while (audioContextRef.current?.state !== "running") {
+        if (performance.now() > deadline) return false;
+        audioContextRef.current?.resume().catch(() => {});
+        await new Promise((r) => setTimeout(r, 30));
+      }
+      return true;
+    },
+    [initializeAudioContext]
+  );
+
+  /**
    * Get current audio time
    */
   const getCurrentTime = useCallback(() => {
@@ -1212,6 +1247,7 @@ export const useAudioEngine = (
 
     // Status checks
     isReady,
+    ensureRunning,
     getCurrentTime,
 
     // Control methods

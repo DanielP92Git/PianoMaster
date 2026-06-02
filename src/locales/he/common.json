@@ -1853,7 +1853,9 @@
     "tapAlong": "הקישו יחד!",
     "evaluating": "...",
     "listen": "הקשיבו...",
-    "niceTapping": "יפה הקשתם!"
+    "niceTapping": "יפה הקשתם!",
+    "tapToStart": "הקישו כדי להתחיל",
+    "tapToStartHint": "הקישו בכל מקום כדי להתחיל"
   },
   "game": {
     "feedback": {

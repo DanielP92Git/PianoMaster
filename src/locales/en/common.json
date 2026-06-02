@@ -1846,7 +1846,9 @@
     "tapAlong": "Tap along!",
     "evaluating": "...",
     "listen": "Listen...",
-    "niceTapping": "Nice tapping!"
+    "niceTapping": "Nice tapping!",
+    "tapToStart": "Tap to start",
+    "tapToStartHint": "Tap anywhere to begin"
   },
   "game": {
     "feedback": {
