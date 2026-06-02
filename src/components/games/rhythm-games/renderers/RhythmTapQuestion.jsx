@@ -92,7 +92,7 @@ export default function RhythmTapQuestion({
   disabled,
 }) {
   const { t } = useTranslation("common");
-  const { audioContextRef, getOrCreateAudioContext } = useAudioContext();
+  const { audioContextRef } = useAudioContext();
   const { reducedMotion = false } = useAccessibility();
   const config = question?.rhythmConfig || {};
   const tempo = config.tempo || 80;
@@ -665,15 +665,16 @@ export default function RhythmTapQuestion({
     if (hasStartedRef.current) return;
     hasStartedRef.current = true;
 
-    try {
-      // Idempotent: useAudioEngine.initializeAudioContext checks
-      // audioContextRef.current first, but calling it explicitly here
-      // guarantees gainNodeRef.current is set before any clicks are scheduled.
-      await audioEngine.initializeAudioContext?.();
-      await audioEngine.resumeAudioContext();
-    } catch {
-      // Try to create context on user gesture
-      getOrCreateAudioContext();
+    // Guarantee the AudioContext is actually RUNNING before scheduling. While
+    // suspended its clock is frozen, so clicks scheduled at currentTime+offset
+    // never fire and the visual loop never advances (the count-in bug). If it
+    // can't reach "running" (no gesture yet), reset the start guard so the
+    // count-in retries once audio unlocks — never silently skip the exercise.
+    await audioEngine.initializeAudioContext?.();
+    const running = await audioEngine.ensureRunning();
+    if (!running) {
+      hasStartedRef.current = false;
+      return;
     }
 
     // Prime the audio pipeline with a silent oscillator so the first
@@ -691,19 +692,6 @@ export default function RhythmTapQuestion({
       }
     } catch {
       // Non-critical — first tick may still be quiet
-    }
-
-    // Wait briefly for audioEngine.isReady() — initializeAudioContext is async
-    // and createClickSound early-returns when audioContextRef/gainNodeRef are
-    // not yet set. Without this guard, the first scheduled clicks can be
-    // silently dropped (bug 3).
-    for (let i = 0; i < 10 && !audioEngine.isReady(); i++) {
-      await new Promise((r) => setTimeout(r, 20));
-    }
-    if (!audioEngine.isReady()) {
-      // Fail soft — report 0 score and exit; do not let the lesson silently hang.
-      onComplete(0, 1);
-      return;
     }
 
     // Load pattern — try curated patterns first (guaranteed correct durations),
@@ -739,11 +727,10 @@ export default function RhythmTapQuestion({
     }
 
     const beatDur = beatDuration.current;
-    // Match MetronomeTrainer's lead-in (was 0.3s — needlessly enlarged the
-    // negative-timeSinceStart window). The 50ms scheduling cadence and
-    // deferred visual loop in startContinuousMetronome handle the smaller
-    // headroom safely.
-    const countInStartTime = audioEngine.getCurrentTime() + 0.1;
+    // Small uniform lead-in. ensureRunning() guarantees a live clock, so the
+    // old larger headroom (0.3s) that compensated for frozen-clock risk is
+    // unnecessary. The 50ms scheduling cadence + deferred visual loop handle it.
+    const countInStartTime = audioEngine.getCurrentTime() + 0.15;
 
     // Reset state
     userTapsRef.current = [];
@@ -830,7 +817,6 @@ export default function RhythmTapQuestion({
     );
   }, [
     audioEngine,
-    getOrCreateAudioContext,
     timeSignature,
     config.patterns,
     onComplete,

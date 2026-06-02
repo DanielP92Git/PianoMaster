@@ -67,6 +67,18 @@ const GAME_STATES = {
   COMPLETE: "complete",
 };
 
+// Question types that drive the Web Audio engine (count-in / playback / taps).
+// A lesson containing any of these must unlock audio via a user gesture before
+// its count-in can run (autoplay policy). Card-only lessons skip the gate.
+const AUDIO_QUESTION_TYPES = new Set([
+  "rhythm_tap",
+  "pulse",
+  "discovery_intro",
+  "rhythm_reading",
+  "rhythm_dictation",
+  "compose_rhythm",
+]);
+
 const CORRECT_DELAY = 800;
 const WRONG_DELAY = 1200;
 
@@ -103,7 +115,18 @@ export default function MixedLessonGame() {
   const { playCorrectSound, playWrongSound, playVictorySound } = useSounds();
 
   // Audio context for rhythm_tap questions (provided by AudioContextProvider wrapper)
-  const { isInterrupted, handleTapToResume } = useAudioContext();
+  const {
+    isInterrupted,
+    handleTapToResume,
+    audioContextRef,
+    getOrCreateAudioContext,
+  } = useAudioContext();
+
+  // Audio unlock gate — the lesson auto-starts with no in-subtree user gesture,
+  // and the AudioContext is created suspended (autoplay policy). A tap-to-start
+  // overlay supplies the gesture so resume() succeeds (required on iOS Safari);
+  // the count-in is gated until this flips true.
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
 
   // Session timeout controls — use refs to avoid re-render cycles
   const pauseTimerRef = useRef(() => {});
@@ -117,6 +140,15 @@ export default function MixedLessonGame() {
   }
   const pauseTimer = useCallback((...a) => pauseTimerRef.current(...a), []);
   const resumeTimer = useCallback((...a) => resumeTimerRef.current(...a), []);
+
+  // Unlock audio from a real user gesture. CRITICAL: resume() must be called
+  // synchronously (no await before it) so iOS Safari accepts it as
+  // gesture-originated. See AudioContextProvider.jsx handleTapToResume.
+  const unlockAudio = useCallback(() => {
+    const ctx = audioContextRef.current || getOrCreateAudioContext();
+    if (ctx && ctx.state !== "running") ctx.resume().catch(() => {});
+    setAudioUnlocked(true);
+  }, [audioContextRef, getOrCreateAudioContext]);
 
   // Game state
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
@@ -522,6 +554,28 @@ export default function MixedLessonGame() {
   const currentQuestion = questions[currentIndexRef.current];
   if (!currentQuestion) return null;
 
+  // Does this lesson contain any audio-driven question? Drives the tap-to-start
+  // gate — card-only lessons don't need it.
+  const lessonNeedsAudio = questions.some((q) =>
+    AUDIO_QUESTION_TYPES.has(q.type)
+  );
+  const showTapToStart =
+    lessonNeedsAudio &&
+    gameState === GAME_STATES.IN_PROGRESS &&
+    !audioUnlocked &&
+    !shouldShowPrompt && // let RotatePromptOverlay take priority
+    !isInterrupted && // let AudioInterruptedOverlay take priority
+    (!isFullBoss || bossIntroDismissed); // BossIntro dismiss doubles as unlock
+
+  // Audio-driven renderers must not auto-start their count-in until the user
+  // is actually viewing the game (no blocking overlay) and audio is unlocked.
+  const gameVisible =
+    gameState === GAME_STATES.IN_PROGRESS &&
+    audioUnlocked &&
+    !shouldShowPrompt && // RotatePromptOverlay up
+    !isInterrupted && // AudioInterruptedOverlay up
+    (!isFullBoss || bossIntroDismissed); // BossIntroOverlay up
+
   // Renderer selection — map question type to renderer component (T-25-04 mitigation)
   const rendererProps = {
     question: currentQuestion,
@@ -545,7 +599,7 @@ export default function MixedLessonGame() {
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
-            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+            disabled={!gameVisible}
           />
         );
       case "pulse":
@@ -554,7 +608,7 @@ export default function MixedLessonGame() {
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
-            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+            disabled={!gameVisible}
           />
         );
       case "discovery_intro":
@@ -563,7 +617,7 @@ export default function MixedLessonGame() {
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
-            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+            disabled={!gameVisible}
           />
         );
       case "rhythm_reading":
@@ -572,7 +626,7 @@ export default function MixedLessonGame() {
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
-            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+            disabled={!gameVisible}
           />
         );
       case "rhythm_dictation":
@@ -581,7 +635,7 @@ export default function MixedLessonGame() {
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
-            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+            disabled={!gameVisible}
           />
         );
       case "compose_rhythm":
@@ -590,7 +644,7 @@ export default function MixedLessonGame() {
             question={currentQuestion}
             isLandscape={isLandscape}
             onComplete={handleRhythmTapComplete}
-            disabled={gameState !== GAME_STATES.IN_PROGRESS}
+            disabled={!gameVisible}
           />
         );
       default:
@@ -620,6 +674,30 @@ export default function MixedLessonGame() {
     </div>
   );
 
+  // Tap-to-start overlay — supplies the user gesture that unlocks audio so the
+  // count-in is never silent (autoplay policy / iOS Safari).
+  const renderTapToStart = () =>
+    showTapToStart ? (
+      <button
+        type="button"
+        onClick={unlockAudio}
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-indigo-950/70 backdrop-blur-md"
+        aria-label={t("rhythm.tapToStart", "Tap to start")}
+      >
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-white/20 bg-white/10 px-10 py-8 shadow-lg backdrop-blur-md">
+          <span className="text-5xl" aria-hidden="true">
+            🎵
+          </span>
+          <span className="text-2xl font-bold text-white">
+            {t("rhythm.tapToStart", "Tap to start")}
+          </span>
+          <span className="text-sm text-white/70">
+            {t("rhythm.tapToStartHint", "Tap anywhere to begin")}
+          </span>
+        </div>
+      </button>
+    ) : null;
+
   // Landscape layout
   if (isLandscape) {
     return (
@@ -630,7 +708,10 @@ export default function MixedLessonGame() {
         {isFullBoss && !bossIntroDismissed && (
           <BossIntroOverlay
             bossName={trailNode?.name}
-            onDismiss={() => setBossIntroDismissed(true)}
+            onDismiss={() => {
+              unlockAudio();
+              setBossIntroDismissed(true);
+            }}
           />
         )}
         {isInterrupted && (
@@ -640,6 +721,7 @@ export default function MixedLessonGame() {
             onRestartExercise={() => navigate("/trail")}
           />
         )}
+        {renderTapToStart()}
         <div aria-live="polite" className="sr-only">
           {feedbackMessage}
         </div>
@@ -672,7 +754,10 @@ export default function MixedLessonGame() {
       {isFullBoss && !bossIntroDismissed && (
         <BossIntroOverlay
           bossName={trailNode?.name}
-          onDismiss={() => setBossIntroDismissed(true)}
+          onDismiss={() => {
+            unlockAudio();
+            setBossIntroDismissed(true);
+          }}
         />
       )}
       {isInterrupted && (
@@ -682,6 +767,7 @@ export default function MixedLessonGame() {
           onRestartExercise={() => navigate("/trail")}
         />
       )}
+      {renderTapToStart()}
       <div aria-live="polite" className="sr-only">
         {feedbackMessage}
       </div>
