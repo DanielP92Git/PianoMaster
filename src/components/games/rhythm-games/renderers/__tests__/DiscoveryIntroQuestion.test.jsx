@@ -11,7 +11,7 @@ vi.mock("react-i18next", () => ({
     t: (key, fallback, _opts) => {
       // Pattern A: t(key, "fallback string")
       if (typeof fallback === "string") return fallback;
-      // Pattern B: t(key, { defaultValue: "..." }) — REQ-04 pagination uses this
+      // Pattern B: t(key, { defaultValue: "..." }) — pagination uses this
       if (fallback && typeof fallback === "object" && fallback.defaultValue) {
         return fallback.defaultValue;
       }
@@ -54,6 +54,11 @@ vi.mock("../../../../../contexts/AudioContextProvider", () => ({
   })),
 }));
 
+// Mock NeedsLandscapeContext
+vi.mock("../../../../../contexts/NeedsLandscapeContext", () => ({
+  useDeclareNeedsLandscape: vi.fn(),
+}));
+
 // Mock useMotionTokens
 vi.mock("../../../../../utils/useMotionTokens", () => ({
   useMotionTokens: vi.fn(() => ({
@@ -87,8 +92,8 @@ vi.mock("../../utils/rhythmVexflowHelpers", () => ({
   ),
 }));
 
-// Mock RhythmStaffDisplay — pattern-mode renders a staff; tests just verify
-// the wrapper is present in the DOM with the right beats prop.
+// Mock RhythmStaffDisplay — pattern/meter modes render a staff; tests just
+// verify the wrapper is present in the DOM with the right beats prop.
 vi.mock("../../components/RhythmStaffDisplay", () => ({
   RhythmStaffDisplay: ({ beats, timeSignature }) => (
     <div
@@ -149,25 +154,27 @@ import { useAudioEngine } from "../../../../../hooks/useAudioEngine";
 import DiscoveryIntroQuestion from "../DiscoveryIntroQuestion";
 
 // ---------------------------------------------------------------------------
-// Question fixtures
+// Helpers — every intro now walks the same 3 steps:
+//   1. notation  2. syllable  3. playback (Listen + Got it!)
+// The Listen button lives on the final (playback) card, so the audio tests
+// advance two cards before clicking it.
 // ---------------------------------------------------------------------------
-// REQ-04: pagination — fixtures pin a single 'sound' card so the existing
-// audio-scheduling tests land directly on the Listen card. Without this,
-// CONCEPT_CARDS["8_pair"]/CONCEPT_CARDS["q"] would default to 4 cards and the
-// first one (meet) would not show the Listen button.
-const make8PairQuestion = () => ({
-  focusDuration: "8_pair",
-  cards: [{ kind: "sound" }],
-});
-const makeQuarterQuestion = () => ({
-  focusDuration: "q",
-  cards: [{ kind: "sound" }],
-});
+async function clickNext() {
+  const nextBtn = screen.getByRole("button", { name: /next/i });
+  await act(async () => {
+    fireEvent.click(nextBtn);
+  });
+}
+
+async function gotoPlaybackCard() {
+  await clickNext(); // notation → syllable
+  await clickNext(); // syllable → playback
+}
 
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe("DiscoveryIntroQuestion", () => {
+describe("DiscoveryIntroQuestion — playback (final card)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -179,11 +186,12 @@ describe("DiscoveryIntroQuestion", () => {
   it("schedules 8 eighth notes for 8_pair focusDuration", async () => {
     render(
       <DiscoveryIntroQuestion
-        question={make8PairQuestion()}
+        question={{ focusDuration: "8_pair" }}
         onComplete={vi.fn()}
       />
     );
 
+    await gotoPlaybackCard();
     const listenButton = screen.getByText("Listen");
     await act(async () => {
       fireEvent.click(listenButton);
@@ -201,13 +209,16 @@ describe("DiscoveryIntroQuestion", () => {
   it("uses pitch-alternating playNote for 8_pair", async () => {
     render(
       <DiscoveryIntroQuestion
-        question={make8PairQuestion()}
+        question={{ focusDuration: "8_pair" }}
         onComplete={vi.fn()}
       />
     );
 
-    // Get the createPianoSound spy from the audioEngine instance the component received
-    // useAudioEngine is called once during render — get the return value from that call
+    await gotoPlaybackCard();
+
+    // Capture the createPianoSound spy from the LATEST audioEngine instance —
+    // navigation re-renders the component, and the mock returns a fresh spy
+    // each render, so grab it after reaching the playback card.
     const componentAudioEngine =
       useAudioEngine.mock.results[useAudioEngine.mock.results.length - 1].value;
     const createPianoSound = componentAudioEngine.createPianoSound;
@@ -245,11 +256,12 @@ describe("DiscoveryIntroQuestion", () => {
   it("schedules 4 quarter notes for quarter focusDuration (no pitch alternation)", async () => {
     render(
       <DiscoveryIntroQuestion
-        question={makeQuarterQuestion()}
+        question={{ focusDuration: "q" }}
         onComplete={vi.fn()}
       />
     );
 
+    await gotoPlaybackCard();
     const listenButton = screen.getByText("Listen");
     await act(async () => {
       fireEvent.click(listenButton);
@@ -264,22 +276,44 @@ describe("DiscoveryIntroQuestion", () => {
     });
   });
 
-  it("renders Got it! button", () => {
+  it("renders Got it! button on the final card", async () => {
     render(
       <DiscoveryIntroQuestion
-        question={make8PairQuestion()}
+        question={{ focusDuration: "q" }}
         onComplete={vi.fn()}
       />
     );
 
+    await gotoPlaybackCard();
     expect(screen.getByText("Got it!")).toBeInTheDocument();
   });
 
-  // -------------------------------------------------------------------------
-  // focusPattern path — pattern-mode discovery cards for Unit 8 (q-h-q,
-  // syn-syn) render a VexFlow staff and play the figure at node tempo
-  // instead of showing a single-duration SVG glyph.
-  // -------------------------------------------------------------------------
+  it("does NOT show the Listen button on non-playback cards", () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "q" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    // Card 1 (notation) — no Listen button yet.
+    expect(screen.queryByText("Listen")).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Figure path (staff) — meters and patterns render a VexFlow staff instead of
+// a single-duration glyph, on every card.
+// ---------------------------------------------------------------------------
+
+describe("DiscoveryIntroQuestion — figure (staff) modes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
 
   it("renders RhythmStaffDisplay (not SVG icon) when focusPattern is provided", () => {
     const qhqBinary = [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0];
@@ -309,6 +343,7 @@ describe("DiscoveryIntroQuestion", () => {
       />
     );
 
+    await gotoPlaybackCard();
     const listenButton = screen.getByText("Listen");
     await act(async () => {
       fireEvent.click(listenButton);
@@ -320,17 +355,49 @@ describe("DiscoveryIntroQuestion", () => {
     expect(tempo).toBe(67);
     expect(typeof playNoteFn).toBe("function");
   });
+
+  it("renders a staff for the 3/4 meter concept (no glyph, no DURATION_INFO)", () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "3_4" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    const staff = screen.getByTestId("rhythm-staff");
+    expect(staff).toBeInTheDocument();
+    expect(staff).toHaveAttribute("data-time-signature", "3/4");
+    expect(staff).toHaveAttribute("data-beat-count", "3"); // three quarters
+    expect(screen.queryByTestId("duration-icon")).not.toBeInTheDocument();
+  });
+
+  it("plays the 6/8 meter bar at its meter tempo", async () => {
+    render(
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "6_8" }}
+        onComplete={vi.fn()}
+      />
+    );
+
+    await gotoPlaybackCard();
+    const listenButton = screen.getByText("Listen");
+    await act(async () => {
+      fireEvent.click(listenButton);
+    });
+
+    expect(schedulePatternPlayback).toHaveBeenCalledOnce();
+    const [beats, tempo] = schedulePatternPlayback.mock.calls[0];
+    expect(beats).toHaveLength(6); // six eighths
+    expect(tempo).toBe(112);
+  });
 });
 
 // ---------------------------------------------------------------------------
-// REQ-04 pagination tests (Phase 1 v3.5)
-// ---------------------------------------------------------------------------
-// Multi-card scaffolding flow: 2-4 swipable cards per discovery_intro question.
-// CONCEPT_CARDS map provides defaults; inline question.cards overrides.
+// Pagination — uniform 3-step flow (notation → syllable → playback).
 // onComplete(1, 1) only fires on the final card.
-// Pattern mode (focusPattern.id) is unaffected — preserved as single-card.
+// ---------------------------------------------------------------------------
 
-describe("pagination (Phase 1 v3.5 — REQ-04)", () => {
+describe("pagination (3-step flow)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -339,39 +406,24 @@ describe("pagination (Phase 1 v3.5 — REQ-04)", () => {
     vi.clearAllMocks();
   });
 
-  function makeQuestion(overrides = {}) {
-    return { focusDuration: "q", ...overrides };
-  }
-
-  it("paginates through CONCEPT_CARDS sequence for focusDuration='q' (4 cards)", async () => {
+  it("walks notation → syllable → playback, completing only on the final card", async () => {
     const onComplete = vi.fn();
     render(
       <DiscoveryIntroQuestion
-        question={makeQuestion()}
+        question={{ focusDuration: "q" }}
         onComplete={onComplete}
       />
     );
 
-    // Card 1 (meet) — Next visible, not yet complete
-    let nextBtn = screen.getByRole("button", { name: /next/i });
-    expect(nextBtn).toBeInTheDocument();
+    // Card 1 (notation) — Next visible, not yet complete
+    expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
     expect(onComplete).not.toHaveBeenCalled();
 
-    await act(async () => {
-      fireEvent.click(nextBtn); // → card 2 (sound)
-    });
+    await clickNext(); // → card 2 (syllable)
     expect(onComplete).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /next/i })).toBeInTheDocument();
 
-    nextBtn = screen.getByRole("button", { name: /next/i });
-    await act(async () => {
-      fireEvent.click(nextBtn); // → card 3 (music)
-    });
-    expect(onComplete).not.toHaveBeenCalled();
-
-    nextBtn = screen.getByRole("button", { name: /next/i });
-    await act(async () => {
-      fireEvent.click(nextBtn); // → card 4 (ready, final)
-    });
+    await clickNext(); // → card 3 (playback, final)
     expect(onComplete).not.toHaveBeenCalled();
 
     // Final card — primary button switches to "Got it!"
@@ -384,56 +436,28 @@ describe("pagination (Phase 1 v3.5 — REQ-04)", () => {
     expect(onComplete).toHaveBeenCalledWith(1, 1);
   });
 
-  it("respects inline question.cards over CONCEPT_CARDS default", async () => {
-    const onComplete = vi.fn();
-    const question = makeQuestion({
-      focusDuration: "q",
-      cards: [{ kind: "meet" }, { kind: "ready" }], // 2 cards (overrides default 4)
-    });
-    render(
-      <DiscoveryIntroQuestion question={question} onComplete={onComplete} />
-    );
-
-    // Card 1 (meet) — Next
-    const nextBtn = screen.getByRole("button", { name: /next/i });
-    await act(async () => {
-      fireEvent.click(nextBtn);
-    });
-    expect(onComplete).not.toHaveBeenCalled();
-
-    // Card 2 (ready, final) — Got it!
-    const finalBtn = screen.getByRole("button", { name: /got it/i });
-    await act(async () => {
-      fireEvent.click(finalBtn);
-    });
-    expect(onComplete).toHaveBeenCalledTimes(1);
-  });
-
-  it("clicking Next on non-final card does NOT call onComplete", async () => {
+  it("clicking Next on a non-final card does NOT call onComplete", async () => {
     const onComplete = vi.fn();
     render(
       <DiscoveryIntroQuestion
-        question={makeQuestion()}
+        question={{ focusDuration: "q" }}
         onComplete={onComplete}
       />
     );
-    const nextBtn = screen.getByRole("button", { name: /next/i });
-    await act(async () => {
-      fireEvent.click(nextBtn);
-    });
+    await clickNext();
     expect(onComplete).not.toHaveBeenCalled();
   });
 
-  it("calls onComplete(1, 1) exactly once on final card (guards against double-fire)", async () => {
+  it("calls onComplete(1, 1) exactly once (guards against double-fire)", async () => {
     const onComplete = vi.fn();
-    const question = makeQuestion({
-      focusDuration: "q",
-      cards: [{ kind: "ready" }], // single-card override → final from start
-    });
     render(
-      <DiscoveryIntroQuestion question={question} onComplete={onComplete} />
+      <DiscoveryIntroQuestion
+        question={{ focusDuration: "q" }}
+        onComplete={onComplete}
+      />
     );
 
+    await gotoPlaybackCard();
     const btn = screen.getByRole("button", { name: /got it/i });
     await act(async () => {
       fireEvent.click(btn);
@@ -450,21 +474,18 @@ describe("pagination (Phase 1 v3.5 — REQ-04)", () => {
     const onComplete = vi.fn();
     const { rerender } = render(
       <DiscoveryIntroQuestion
-        question={makeQuestion({ focusDuration: "q" })}
+        question={{ focusDuration: "q" }}
         onComplete={onComplete}
       />
     );
 
     // Advance to card 2 in 'q'
-    const nextBtn = screen.getByRole("button", { name: /next/i });
-    await act(async () => {
-      fireEvent.click(nextBtn);
-    });
+    await clickNext();
 
     // Re-render with new focusDuration 'h' — cardIndex should reset to 0
     rerender(
       <DiscoveryIntroQuestion
-        question={makeQuestion({ focusDuration: "h" })}
+        question={{ focusDuration: "h" }}
         onComplete={onComplete}
       />
     );

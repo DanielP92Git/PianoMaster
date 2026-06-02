@@ -1872,7 +1872,19 @@
       "syllableOverride": {
         "16": "ta-fa-te-fe",
         "qhq": "ta — ta-a — ta",
-        "synsyn": "and-a-TA  and-a-TA"
+        "synsyn": "and-a-TA  and-a-TA",
+        "3_4": "1 – 2 – 3",
+        "6_8": "1-2-3 – 4-5-6"
+      },
+      "steps": {
+        "syllable": {
+          "title": "How to say it",
+          "body": "Say it out loud with the beat — saying the rhythm helps you feel it!"
+        },
+        "playback": {
+          "title": "How it sounds",
+          "body": "Tap the Listen button to hear it, then try to feel the beat."
+        }
       },
       "cards": {
         "nextButton": "Next",
