@@ -2,10 +2,16 @@
  * DiscoveryIntroQuestion.jsx
  *
  * Informational intro card renderer for MixedLessonGame discovery nodes.
- * Shows the new duration concept with its SVG icon, name, Kodaly syllable,
- * and an audio demo button. Child taps "Got it!" to proceed.
  *
- * Always reports onComplete(1, 1) — informational, always "correct."
+ * Uniform 3-step flow (one card per step) for EVERY rhythm intro instance —
+ * single durations, rests, meters (3/4, 6/8), and pattern figures (q-h-q,
+ * syncopation). The three steps, in order:
+ *   1. notation — see the new value the way it looks in music (glyph or staff)
+ *   2. syllable — say it out loud (Kodaly syllable / count)
+ *   3. playback — hear it (Listen) and confirm (Got it!)
+ *
+ * Always reports onComplete(1, 1) on the final card — informational, always
+ * "correct."
  */
 
 import { useState, useCallback, useEffect, useRef } from "react";
@@ -29,24 +35,18 @@ const DISCOVERY_SVG_OVERRIDES = {
   16: BeamedSixteenthsIcon,
 };
 
-// REQ-04 (Phase 1 v3.5): Default card sequence per focusDuration concept.
-// 2-4 cards per D-07. Inline `question.cards` overrides this default.
-// Rests skip 'sound' (silence is the point). Meters skip 'sound' (structural,
-// no single-note demo). Pattern mode (focusPattern.id) bypasses pagination
-// entirely — see cardKinds derivation in the component body.
-const CONCEPT_CARDS = {
-  q: ["meet", "sound", "music", "ready"],
-  qr: ["meet", "music", "ready"],
-  h: ["meet", "sound", "music", "ready"],
-  hr: ["meet", "music", "ready"],
-  w: ["meet", "sound", "music", "ready"],
-  wr: ["meet", "music", "ready"],
-  "8_pair": ["meet", "sound", "music", "ready"],
-  16: ["meet", "sound", "music", "ready"],
-  hd: ["meet", "sound", "music", "ready"],
-  qd: ["meet", "sound", "music", "ready"],
-  "3_4": ["meet", "music", "ready"],
-  "6_8": ["meet", "music", "ready"],
+// Every rhythm intro walks the same three steps so the experience is identical
+// across units (D-07 / user-confirmed restructure). One card per step.
+const STEPS = ["notation", "syllable", "playback"];
+
+// Meter concepts (3/4, 6/8) are not single durations — they have no glyph and
+// no DURATION_INFO entry. Render them as a representative one-bar figure on a
+// staff so the notation card has something to show, and play that bar on the
+// playback card. The staff also carries the time signature, which IS the new
+// thing the child is meeting.
+const METER_FIGURES = {
+  "3_4": { units: [4, 4, 4], timeSignature: "3/4", tempo: 96 }, // three quarters
+  "6_8": { units: [2, 2, 2, 2, 2, 2], timeSignature: "6/8", tempo: 112 }, // six eighths (2 groups of 3)
 };
 
 export default function DiscoveryIntroQuestion({
@@ -64,68 +64,72 @@ export default function DiscoveryIntroQuestion({
   const [isPlaying, setIsPlaying] = useState(false);
   const hasCompletedRef = useRef(false);
 
-  // A discovery card teaches either a single duration (focusDuration) OR a
-  // rhythmic figure (focusPattern). The pattern path renders a VexFlow staff
-  // and plays back the figure as audio at the node tempo. Used by Unit 8 to
-  // introduce q-h-q and the syncopated 8-q-8 family — both of which are
-  // multi-note figures, not single durations the child hasn't seen.
+  // A discovery card teaches either a single duration (focusDuration), a meter
+  // concept (3/4, 6/8 via METER_FIGURES), or a rhythmic figure (focusPattern).
+  // Meters and patterns render a VexFlow staff; single durations render a glyph.
   const focusPattern = question?.focusPattern;
   const focusDuration = question?.focusDuration;
   const focusPatternId = focusPattern?.id ?? null;
   const info = DURATION_INFO[focusDuration];
 
-  // REQ-04: Multi-card pagination state. Pattern mode (focusPattern.id =
-  // qhq/synsyn, hidden Unit 8 syncopation) preserves the legacy single-card
-  // behavior — pagination only triggers when focusPattern is absent.
-  // Card sequence resolution priority:
-  //   1. inline question.cards (caller override — wins everywhere)
-  //   2. CONCEPT_CARDS[focusDuration] (default per-concept arc)
-  //   3. ["meet"] fallback (unknown concept → single hero card)
-  const cardKinds = focusPatternId
-    ? ["meet"] // REQ-04: pattern mode kept single-card per D-PATTERNS §2 preserve-list
-    : question?.cards?.map((c) => c.kind) ||
-      CONCEPT_CARDS[focusDuration] || ["meet"];
-
+  // Multi-card pagination state — every instance walks the same 3 steps.
+  const cardKinds = STEPS;
   const [cardIndex, setCardIndex] = useState(0);
-  // REQ-04: reset pagination when the question prop changes — avoids stale
-  // cardIndex across MixedLessonGame re-renders within the same renderer.
+  // Reset pagination when the question prop changes — avoids stale cardIndex
+  // across MixedLessonGame re-renders within the same renderer.
   useEffect(() => {
     setCardIndex(0);
     hasCompletedRef.current = false;
   }, [focusDuration, focusPatternId]);
 
   const isLastCard = cardIndex >= cardKinds.length - 1;
-  const currentKind = cardKinds[cardIndex] ?? "meet";
+  const currentKind = cardKinds[cardIndex] ?? "notation";
   const SvgIcon =
     DISCOVERY_SVG_OVERRIDES[focusDuration] || SVG_COMPONENTS[focusDuration];
   const isWideGlyph = focusDuration === "16";
 
-  // Override key resolves from focusPattern.id when in pattern mode, else
-  // from focusDuration. e.g. "qhq" → game.discovery.titleOverride.qhq.
-  const overrideKey = focusPattern?.id || focusDuration;
+  // --- Figure (staff) derivation: pattern OR meter both render on a staff ---
+  const patternBeats = focusPattern
+    ? binaryPatternToBeats(focusPattern.binary)
+    : null;
+  const meterFigure = METER_FIGURES[focusDuration] || null;
+  const meterBeats = meterFigure
+    ? meterFigure.units.map((d) => ({ durationUnits: d, isRest: false }))
+    : null;
+  const figureBeats = patternBeats || meterBeats;
+  const figureTimeSignature = patternBeats
+    ? focusPattern?.timeSignature || "4/4"
+    : meterFigure?.timeSignature || "4/4";
+  // Pattern mode uses node tempo so the kid hears the figure at tapping speed;
+  // meters use a child-friendly default; single durations use a moderate 80.
+  const figureTempo = focusPattern?.tempo || meterFigure?.tempo || 80;
+
+  // --- Title / syllable resolution (per-concept copy where it exists) ---
+  // titleOverride wins (preserves 16/qhq/synsyn wording); else the per-concept
+  // "meet" card title (covers all single durations, rests, and meters); else
+  // the generic "Meet the {{name}}!".
+  const overrideKey = focusPatternId || focusDuration;
   const titleOverrideKey = `game.discovery.titleOverride.${overrideKey}`;
   const syllableOverrideKey = `game.discovery.syllableOverride.${overrideKey}`;
+  const meetTitleKey = `game.discovery.cards.${focusDuration}.meet.title`;
+  const meetBodyKey = `game.discovery.cards.${focusDuration}.meet.body`;
   const hasTitleOverride = i18n.exists(titleOverrideKey, { ns: "common" });
   const hasSyllableOverride = i18n.exists(syllableOverrideKey, {
     ns: "common",
   });
+  const hasMeetTitle =
+    !focusPatternId && i18n.exists(meetTitleKey, { ns: "common" });
+  const hasMeetBody =
+    !focusPatternId && i18n.exists(meetBodyKey, { ns: "common" });
+
   const baseSyllable = getSyllable(focusDuration, syllableLanguage);
   const syllable = hasSyllableOverride ? t(syllableOverrideKey) : baseSyllable;
   const durationName = info
     ? t(`rhythm.duration.${info.i18nKey?.split(".").pop()}`, info.i18nKey)
     : "";
 
-  // Beats for the pattern path — derived once from the binary array. Empty
-  // array when in single-duration mode (the existing code path).
-  const patternBeats = focusPattern
-    ? binaryPatternToBeats(focusPattern.binary)
-    : null;
-  const patternTempo = focusPattern?.tempo || 80;
-  const patternTimeSignature = focusPattern?.timeSignature || "4/4";
-
-  // Use a moderate tempo for the audio demo (pattern mode uses node tempo
-  // so the kid hears the figure at the speed they'll be tapping it).
-  const audioEngine = useAudioEngine(patternTempo, {
+  // Use figureTempo so the demo plays patterns/meters at the right speed.
+  const audioEngine = useAudioEngine(figureTempo, {
     sharedAudioContext: audioContextRef.current,
   });
 
@@ -143,7 +147,7 @@ export default function DiscoveryIntroQuestion({
     [audioEngine]
   );
 
-  // Play a demo sound for the duration using real piano samples
+  // Play a demo sound for the value using real piano samples
   const playDemo = useCallback(async () => {
     if (isPlaying) return;
     setIsPlaying(true);
@@ -171,11 +175,11 @@ export default function DiscoveryIntroQuestion({
       }
     }
 
-    // Pattern path — play the figure (q-h-q, syn-syn, ...) at node tempo.
-    if (patternBeats) {
+    // Figure path — play the bar (q-h-q, syn-syn, 3/4, 6/8, ...) at its tempo.
+    if (figureBeats) {
       const { totalDuration } = schedulePatternPlayback(
-        patternBeats,
-        patternTempo,
+        figureBeats,
+        figureTempo,
         ctx,
         enginePlayNote
       );
@@ -266,14 +270,12 @@ export default function DiscoveryIntroQuestion({
     focusDuration,
     info,
     enginePlayNote,
-    patternBeats,
-    patternTempo,
+    figureBeats,
+    figureTempo,
   ]);
 
-  // REQ-04: Unified primary handler — advances cardIndex on non-final cards,
-  // completes the question on the final card. hasCompletedRef guards re-entry
-  // (existing behavior preserved). Single-card mode (cardKinds.length === 1)
-  // calls onComplete on first click, matching today's handleGotIt contract.
+  // Unified primary handler — advances cardIndex on non-final cards, completes
+  // the question on the final card. hasCompletedRef guards re-entry.
   const handleNext = useCallback(() => {
     if (disabled) return;
     if (hasCompletedRef.current) return;
@@ -285,8 +287,8 @@ export default function DiscoveryIntroQuestion({
     }
   }, [isLastCard, onComplete, disabled]);
 
-  // Need either a pattern to render via VexFlow or a single-duration SVG.
-  if (!patternBeats && (!info || !SvgIcon)) return null;
+  // Need either a figure (pattern/meter staff) or a single-duration glyph.
+  if (!figureBeats && (!info || !SvgIcon)) return null;
 
   // Landscape-aware class sets — landscape compresses paddings/gaps and switches
   // to a horizontal split so the card fits ≤420px-tall mobile-landscape viewports.
@@ -300,6 +302,9 @@ export default function DiscoveryIntroQuestion({
   const titleClass = isLandscape
     ? "text-start text-lg font-bold text-white"
     : "text-center text-xl font-bold text-white";
+  const bodyClass = isLandscape
+    ? "text-start text-sm text-white/70"
+    : "text-center text-base text-white/70";
   // SVG bumps for tablet (D-07, CORE-01). Literal class strings for purge safety.
   // Wide glyphs (e.g. 4 beamed sixteenths, aspect ~1.6) need a horizontal box.
   const svgClass = isWideGlyph
@@ -309,24 +314,30 @@ export default function DiscoveryIntroQuestion({
     : isLandscape
       ? "h-24 w-16 md:h-40 md:w-28 lg:h-48 lg:w-32"
       : "h-40 w-28 md:h-56 md:w-40 lg:h-64 lg:w-44";
+  // Syllable is the hero of the syllable card — render it large and bold.
   const syllableClass = isLandscape
-    ? "text-start text-base text-white/70"
-    : "text-center text-lg text-white/70";
+    ? "text-start text-xl font-bold text-white"
+    : "text-center text-2xl font-bold text-white";
   const listenBtnPadding = isLandscape ? "px-4 py-2" : "px-5 py-3";
   const listenBtnAlign = isLandscape ? " self-start" : "";
   const gotItBtnSize = isLandscape
     ? "mt-1 w-full py-2.5 text-base"
     : "mt-2 w-full py-4 text-lg";
 
-  // Title element — kept first in DOM order via the `title` variable so the
-  // horizontal layout still renders the heading before the syllable for SR users.
-  // The duration name inside the title is accent-colored via a <Trans> tag.
-  const title = (
+  // Notation card title — titleOverride > per-concept meet.title > generic.
+  // Kept first in DOM order so the horizontal layout reads heading-first for SR.
+  const notationTitle = (
     <h2 className={titleClass}>
       {hasTitleOverride ? (
         <Trans
           t={t}
           i18nKey={titleOverrideKey}
+          components={{ accent: <span className="text-indigo-300" /> }}
+        />
+      ) : hasMeetTitle ? (
+        <Trans
+          t={t}
+          i18nKey={meetTitleKey}
           components={{ accent: <span className="text-indigo-300" /> }}
         />
       ) : (
@@ -341,6 +352,50 @@ export default function DiscoveryIntroQuestion({
     </h2>
   );
 
+  // Per-step heading + supporting copy.
+  let cardTitle;
+  let cardBody;
+  if (currentKind === "notation") {
+    cardTitle = notationTitle;
+    cardBody = hasMeetBody ? (
+      <p className={bodyClass}>
+        <Trans
+          t={t}
+          i18nKey={meetBodyKey}
+          components={{ accent: <span className="text-indigo-300" /> }}
+        />
+      </p>
+    ) : null;
+  } else if (currentKind === "syllable") {
+    cardTitle = (
+      <h2 className={titleClass}>
+        {t("game.discovery.steps.syllable.title", "How to say it")}
+      </h2>
+    );
+    cardBody = (
+      <p className={bodyClass}>
+        {t(
+          "game.discovery.steps.syllable.body",
+          "Say it out loud with the beat — saying the rhythm helps you feel it!"
+        )}
+      </p>
+    );
+  } else {
+    cardTitle = (
+      <h2 className={titleClass}>
+        {t("game.discovery.steps.playback.title", "How it sounds")}
+      </h2>
+    );
+    cardBody = (
+      <p className={bodyClass}>
+        {t(
+          "game.discovery.steps.playback.body",
+          "Tap the Listen button to hear it, then try to feel the beat."
+        )}
+      </p>
+    );
+  }
+
   return (
     <div
       className={wrapperClass}
@@ -350,22 +405,17 @@ export default function DiscoveryIntroQuestion({
       {/* Glass card */}
       <div className={cardClass}>
         {/* Figure preview (left column in landscape, top in portrait).
-            Pattern mode renders a VexFlow staff; single-duration mode renders
-            the existing SVG glyph. */}
+            Meter/pattern modes render a VexFlow staff; single-duration mode
+            renders the SVG glyph. Shown on every step for continuity. */}
         <div
           dir="ltr"
           className={`flex items-center justify-center text-white${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
-          {patternBeats ? (
-            <div
-              className={
-                isLandscape ? "w-72 md:w-80 lg:w-96" : "w-72 md:w-80 lg:w-96"
-              }
-              aria-hidden="true"
-            >
+          {figureBeats ? (
+            <div className="w-72 md:w-80 lg:w-96" aria-hidden="true">
               <RhythmStaffDisplay
-                beats={patternBeats}
-                timeSignature={patternTimeSignature}
+                beats={figureBeats}
+                timeSignature={figureTimeSignature}
               />
             </div>
           ) : (
@@ -373,21 +423,27 @@ export default function DiscoveryIntroQuestion({
           )}
         </div>
 
-        {/* Right column wrapper (landscape) — title + name + syllable + buttons.
+        {/* Right column wrapper (landscape) — title + body + step content.
             In portrait, `contents` makes this wrapper transparent so children
             participate in the parent flex column directly. */}
         <div className={rightColClass}>
-          {/* Title */}
-          {title}
+          {/* Per-step heading */}
+          {cardTitle}
 
-          {/* Kodaly syllable */}
-          <p className={syllableClass}>
-            {t("game.discovery.syllable", 'Say: "{{syllable}}"', { syllable })}
-          </p>
+          {/* Per-step supporting copy */}
+          {cardBody}
 
-          {/* REQ-04: Audio demo button shown on 'sound' cards only (multi-card
-              mode) OR pattern mode (legacy single-card Unit 8 syncopation). */}
-          {(focusPatternId || currentKind === "sound") && (
+          {/* Step 2: Kodaly syllable / count — the hero of the syllable card. */}
+          {currentKind === "syllable" && (
+            <p className={syllableClass}>
+              {t("game.discovery.syllable", 'Say: "{{syllable}}"', {
+                syllable,
+              })}
+            </p>
+          )}
+
+          {/* Step 3: audio demo button. */}
+          {currentKind === "playback" && (
             <button
               onClick={playDemo}
               disabled={isPlaying}
@@ -416,8 +472,8 @@ export default function DiscoveryIntroQuestion({
             </button>
           )}
 
-          {/* REQ-04: Primary CTA — advances cardIndex on non-final cards,
-              completes on final card. Label switches Next → Got it! on final. */}
+          {/* Primary CTA — advances cardIndex on non-final cards, completes on
+              final card. Label switches Next → Got it! on the final step. */}
           <button
             onClick={handleNext}
             disabled={disabled}
@@ -432,16 +488,12 @@ export default function DiscoveryIntroQuestion({
                 : "cursor-pointer hover:brightness-110 active:scale-[0.97]",
             ].join(" ")}
           >
-            {/* REQ-04: label flips Next (non-final) → Got it! (final). Legacy
-                `game.discovery.gotIt` retained as the final-card label so
-                trail-mode users see the same wording they always have. */}
             {isLastCard
               ? t("game.discovery.gotIt", "Got it!")
               : t("game.discovery.cards.nextButton", { defaultValue: "Next" })}
           </button>
 
-          {/* REQ-04: Card progress indicator (multi-card scaffolding only).
-              Pill highlights the current card; dots show remaining steps. */}
+          {/* Card progress indicator. Pill highlights the current step. */}
           {cardKinds.length > 1 && (
             <div
               className="mt-2 flex justify-center gap-2"

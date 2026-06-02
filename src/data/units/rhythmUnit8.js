@@ -11,8 +11,9 @@
 //
 // rhythm_8_1 first question is { type: 'discovery_intro', focusDuration: '3_4' }.
 // '3_4' is a META concept ID (not a DURATION_INFO code) — DiscoveryIntroQuestion
-// looks it up in its CONCEPT_CARDS map (per Plan 09 extension) which mirrors
-// common.json's `game.discovery.cards["3_4"]` block authored in Plan 03.
+// renders it via its METER_FIGURES map (a representative 3/4 bar on a VexFlow
+// staff) and draws its notation-card title/body from common.json's
+// `game.discovery.cards["3_4"]` block.
 //
 // Allowed durations in 3/4: q (1 beat), h (2 beats), hd (3 beats — full measure).
 // Waltz-friendly note values. dotted-half fills the bar.
