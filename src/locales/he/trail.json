@@ -70,7 +70,9 @@
     "bass": "מפתח פה",
     "rhythm": "קצב",
     "ear_training": "פיתוח שמיעה",
-    "ear_trainingPanel": "מסלול לימוד פיתוח שמיעה"
+    "ear_trainingPanel": "מסלול לימוד פיתוח שמיעה",
+    "comingSoon": "בקרוב!",
+    "comingSoonHint": "מסלול זה ייפתח בעדכון עתידי."
   },
   "node": {
     "startHere": "התחילו כאן!",

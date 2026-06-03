@@ -307,9 +307,17 @@ const TrailMap = () => {
         })}
       >
         {activeNodes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-lg text-white/50">
-              {t(`tabs.${activeTab}Panel`, { defaultValue: "Coming soon!" })}
+          <div className="flex flex-col items-center justify-center gap-2 py-20 text-center">
+            <span className="text-4xl" aria-hidden="true">
+              🔒
+            </span>
+            <p className="text-xl font-bold text-white/80">
+              {t("tabs.comingSoon", { defaultValue: "Coming Soon!" })}
+            </p>
+            <p className="text-sm text-white/50">
+              {t("tabs.comingSoonHint", {
+                defaultValue: "This path will unlock in a future update.",
+              })}
             </p>
           </div>
         ) : (
