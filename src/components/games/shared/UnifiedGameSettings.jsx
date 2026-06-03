@@ -14,6 +14,7 @@ import { useIsMobile } from "../../../hooks/useIsMobile";
 import trebleClefImage from "../../../assets/noteImages/treble/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass/bass-clef.svg";
 import { RhythmPatternPreview } from "../sight-reading-game/components/RhythmPatternPreview";
+import { StaticRhythmPreview } from "../sight-reading-game/components/StaticRhythmPreview";
 import { KeySignatureSelection } from "../sight-reading-game/components/KeySignatureSelection";
 import {
   SIMPLE_NOTE_PATTERNS,
@@ -398,35 +399,43 @@ export function UnifiedGameSettings({
     return (
       <>
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 landscape:p-3 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm landscape:p-3"
           initial={reduce ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={fade}
         >
           <motion.div
-            className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] landscape:max-w-5xl landscape:max-h-[85vh]"
+            className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 shadow-[0_8px_32px_rgba(0,0,0,0.12)] landscape:max-h-[85vh] landscape:max-w-5xl"
             initial={reduce ? false : { opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0 } : { opacity: 0, y: 20, scale: 0.96 }}
             transition={soft}
           >
-            <div className={`flex flex-1 items-center justify-center overflow-hidden ${
-              currentStepConfig?.component === "NoteSelection"
-                ? "px-0 py-4 landscape:py-3"
-                : "p-4 landscape:p-3"
-            }`}>
+            <div
+              className={`flex flex-1 items-center justify-center overflow-hidden ${
+                currentStepConfig?.component === "NoteSelection"
+                  ? "px-0 py-4 landscape:py-3"
+                  : "p-4 landscape:p-3"
+              }`}
+            >
               <div className="flex h-full w-full flex-col items-stretch gap-3 sm:flex-row">
                 {/* Settings Container */}
                 <div className="flex flex-1 items-center overflow-hidden">
-                  <div className={`flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 backdrop-blur-md ${
-                    currentStepConfig?.component === "NoteSelection"
-                      ? "px-0 py-2.5 landscape:py-2 sm:py-3"
-                      : "p-2.5 landscape:p-2 sm:p-3"
-                  }`}>
-                    <h2 className={`mb-1.5 flex-shrink-0 text-center text-base font-bold text-white landscape:mb-1 landscape:text-base sm:text-lg ${
-                      currentStepConfig?.component === "NoteSelection" ? "px-2.5 landscape:px-2 sm:px-3" : ""
-                    }`}>
+                  <div
+                    className={`flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 backdrop-blur-md ${
+                      currentStepConfig?.component === "NoteSelection"
+                        ? "px-0 py-2.5 sm:py-3 landscape:py-2"
+                        : "p-2.5 sm:p-3 landscape:p-2"
+                    }`}
+                  >
+                    <h2
+                      className={`mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:text-lg landscape:mb-1 landscape:text-base ${
+                        currentStepConfig?.component === "NoteSelection"
+                          ? "px-2.5 sm:px-3 landscape:px-2"
+                          : ""
+                      }`}
+                    >
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
                         total: effectiveSteps.length,
@@ -448,7 +457,7 @@ export function UnifiedGameSettings({
                     </div>
 
                     {/* Mobile Navigation Buttons (inside the main card) */}
-                    <div className="mt-3 flex max-w-2xl mx-auto w-full flex-shrink-0 flex-wrap items-center gap-2 sm:hidden sm:landscape:flex lg:landscape:hidden landscape:mt-1">
+                    <div className="mx-auto mt-3 flex w-full max-w-2xl flex-shrink-0 flex-wrap items-center gap-2 sm:hidden landscape:mt-1 sm:landscape:flex lg:landscape:hidden">
                       {currentStep < effectiveSteps.length ? (
                         <button
                           onClick={handleNextStep}
@@ -587,19 +596,23 @@ export function UnifiedGameSettings({
   return (
     <>
       <div className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 text-white supports-[height:100svh]:h-[100svh] landscape:items-center landscape:justify-center">
-        <div className={`flex flex-1 items-center justify-center overflow-hidden ${
-          currentStepConfig?.component === "NoteSelection"
-            ? "px-0 py-2 landscape:py-3 sm:py-4"
-            : "p-2 landscape:p-3 sm:p-4"
-        }`}>
-          <div className="flex h-full min-h-0 w-full max-w-5xl flex-col items-stretch gap-3 landscape:max-w-6xl sm:flex-row">
+        <div
+          className={`flex flex-1 items-center justify-center overflow-hidden ${
+            currentStepConfig?.component === "NoteSelection"
+              ? "px-0 py-2 sm:py-4 landscape:py-3"
+              : "p-2 sm:p-4 landscape:p-3"
+          }`}
+        >
+          <div className="flex h-full min-h-0 w-full max-w-5xl flex-col items-stretch gap-3 sm:flex-row landscape:max-w-6xl">
             {/* Settings Container - Full width on mobile */}
             <div className="flex min-h-0 flex-1 items-center overflow-hidden">
-              <div className={`flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 backdrop-blur-md ${
-                currentStepConfig?.component === "NoteSelection"
-                  ? "px-0 py-2.5 landscape:py-2 sm:py-3"
-                  : "p-2.5 landscape:p-2 sm:p-3"
-              }`}>
+              <div
+                className={`flex h-full w-full flex-col rounded-xl border border-white/20 bg-white/10 backdrop-blur-md ${
+                  currentStepConfig?.component === "NoteSelection"
+                    ? "px-0 py-2.5 sm:py-3 landscape:py-2"
+                    : "p-2.5 sm:p-3 landscape:p-2"
+                }`}
+              >
                 {/* Desktop: Back button, title, and NoteSelection controls in one line */}
                 {currentStepConfig?.component === "NoteSelection" ? (
                   <NoteSelectionHeader
@@ -630,7 +643,7 @@ export function UnifiedGameSettings({
                       </h2>
                       <div className="w-[110px] flex-shrink-0" />
                     </div>
-                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white landscape:mb-1 landscape:text-base sm:hidden sm:text-lg">
+                    <h2 className="mb-1.5 flex-shrink-0 text-center text-base font-bold text-white sm:hidden sm:text-lg landscape:mb-1 landscape:text-base">
                       {t("gameSettings.steps.progress", {
                         current: currentStep,
                         total: effectiveSteps.length,
@@ -654,7 +667,7 @@ export function UnifiedGameSettings({
                 </div>
 
                 {/* Mobile Navigation Buttons (inside the main card) */}
-                <div className="mt-3 flex max-w-2xl mx-auto w-full flex-shrink-0 items-center gap-2 px-2.5 sm:hidden sm:landscape:flex sm:px-3 lg:landscape:hidden landscape:mt-1">
+                <div className="mx-auto mt-3 flex w-full max-w-2xl flex-shrink-0 items-center gap-2 px-2.5 sm:hidden sm:px-3 landscape:mt-1 sm:landscape:flex lg:landscape:hidden">
                   {currentStep < effectiveSteps.length ? (
                     <button
                       onClick={handleNextStep}
@@ -830,7 +843,9 @@ function NoteSelectionHeader({
   const selectedCount = settings.selectedNotes?.length || 0;
   const getNoteId = useCallback(
     (note) =>
-      noteIdField === "note" ? note.note || note.pitch : note.pitch || note.note,
+      noteIdField === "note"
+        ? note.note || note.pitch
+        : note.pitch || note.note,
     [noteIdField]
   );
 
@@ -1375,7 +1390,6 @@ function NoteSelection({
 
   // Note: rows calculation was removed (dead code — rows were computed but never consumed)
 
-
   const totalSelectableNotes = useMemo(
     () => getAllNoteIds().length,
     [getAllNoteIds]
@@ -1515,13 +1529,13 @@ function NoteSelection({
       )}
 
       {/* Scrollable note cards container */}
-      <div className="min-h-0 flex-1 overflow-x-visible overflow-y-hidden">
+      <div className="min-h-0 flex-1 overflow-y-hidden overflow-x-visible">
         {(() => {
           const isHebrew = i18n.language === "he";
 
           const renderRow = (rowNotes, { rowKey, rowRef }) => (
             <div
-              className={`min-h-0 flex-1 overflow-x-visible overflow-y-hidden ${
+              className={`min-h-0 flex-1 overflow-y-hidden overflow-x-visible ${
                 clefFilter ? "note-selection-split-row" : ""
               }`}
             >
@@ -1618,7 +1632,7 @@ function NoteSelection({
                   );
                 })}
                 {/* End spacer to preserve scroll padding (browsers collapse flex container end-padding) */}
-                <div className="flex-shrink-0 w-1" aria-hidden="true" />
+                <div className="w-1 flex-shrink-0" aria-hidden="true" />
               </div>
             </div>
           );
@@ -1712,6 +1726,7 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
   // Use rhythm pattern archetypes for visual notation-based selection
   const notePatternOptions = SIMPLE_NOTE_PATTERNS.map((pattern) => ({
     id: pattern.durationId,
+    patternId: pattern.id,
     label: pattern.label,
     aria: pattern.label,
     events: pattern.events,
@@ -1719,6 +1734,7 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
 
   const restPatternOptions = SIMPLE_REST_PATTERNS.map((pattern) => ({
     id: pattern.durationId,
+    patternId: pattern.id,
     label: pattern.label,
     aria: pattern.label,
     events: pattern.events,
@@ -1830,8 +1846,9 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
                     }`}
                     title={opt.aria}
                   >
-                    <RhythmPatternPreview
+                    <StaticRhythmPreview
                       events={opt.events}
+                      patternId={opt.patternId}
                       width={allowRests ? 84 : 76}
                       height={allowRests ? 60 : 54}
                       noteColor={selected ? "#ffffff" : "rgba(255,255,255,0.9)"}
@@ -2016,8 +2033,9 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
                         }`}
                         title={opt.aria}
                       >
-                        <RhythmPatternPreview
+                        <StaticRhythmPreview
                           events={opt.events}
+                          patternId={opt.patternId}
                           width={84}
                           height={60}
                           noteColor={
@@ -2049,7 +2067,9 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
 // Step Component: Bars Per Exercise Selection (Phase 2: 1/2/4/8 bars)
 function BarsPerExerciseSelection({ settings, updateSetting, config }) {
   const { t } = useTranslation("common");
-  const options = Array.isArray(config?.options) ? config.options : [1, 2, 4, 8];
+  const options = Array.isArray(config?.options)
+    ? config.options
+    : [1, 2, 4, 8];
   const enabled = Array.isArray(config?.enabledOptions)
     ? new Set(config.enabledOptions)
     : new Set([1, 2, 4, 8]);
