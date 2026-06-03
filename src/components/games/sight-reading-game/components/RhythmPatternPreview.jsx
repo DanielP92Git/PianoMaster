@@ -43,218 +43,246 @@ export function RhythmPatternPreview({
       return;
     }
 
-    // Clear previous rendering
-    container.innerHTML = "";
+    let cancelled = false;
 
-    try {
-      // Render at a larger size for better readability on mobile
-      const renderWidth = 200;
-      const renderHeight = 100;
-      // Zoom factor so glyphs/stems are clearly legible in small tiles.
-      // Implemented via viewBox "center crop" (not context transforms) because
-      // VexFlow's SVG context doesn't expose translate/scale.
-      // Higher values = larger notation, but too high clips stems.
-      // With stems up, we need moderate zoom to avoid clipping.
-      const ZOOM = 1.2;
+    const renderPreview = () => {
+      if (cancelled || !container) return;
 
-      // Create SVG renderer at larger size
-      const renderer = new Renderer(container, Renderer.Backends.SVG);
-      renderer.resize(renderWidth, renderHeight);
-      rendererRef.current = renderer;
+      // Clear previous rendering
+      container.innerHTML = "";
 
-      const context = renderer.getContext();
+      try {
+        // Render at a larger size for better readability on mobile
+        const renderWidth = 200;
+        const renderHeight = 100;
+        // Zoom factor so glyphs/stems are clearly legible in small tiles.
+        // Implemented via viewBox "center crop" (not context transforms) because
+        // VexFlow's SVG context doesn't expose translate/scale.
+        // Higher values = larger notation, but too high clips stems.
+        // With stems up, we need moderate zoom to avoid clipping.
+        const ZOOM = 1.2;
 
-      // Create a stave for positioning but don't draw it (no staff lines needed)
-      const staveWidth = renderWidth - 20;
-      const staveX = 10;
-      // Stave y is the *top* of the stave. With stems pointing up, we need more space above,
-      // so position the stave slightly lower (larger Y value) to avoid clipping stems.
-      // (VexFlow stave height is roughly ~40px for a standard 5-line stave.)
-      const staveY = Math.max(0, Math.round((renderHeight - 40) / 2) + 8);
+        // Create SVG renderer at larger size
+        const renderer = new Renderer(container, Renderer.Backends.SVG);
+        renderer.resize(renderWidth, renderHeight);
+        rendererRef.current = renderer;
 
-      const stave = new Stave(staveX, staveY, staveWidth);
-      stave.setContext(context);
-      // Don't draw the stave - we only want the rhythm notation
+        const context = renderer.getContext();
 
-      // Build StaveNotes from events
-      // According to VexFlow documentation (https://www.vexflow.com/build/docs/stem.html):
-      // - Stem.UP = 1 (stem points upward, rendered to the right of notehead)
-      // - Stem.DOWN = -1 (stem points downward, rendered to the left of notehead)
-      // For rhythm-only displays, always use Stem.UP for consistency (per vexflow-guidelines.md)
-      //
-      // IMPORTANT: Use a note BELOW the middle line (line 3) so VexFlow's automatic
-      // stem direction calculation gives UP. According to vexflow-tutorial.md lines 172-176:
-      // - VexFlow sums line positions: if sum >= 0, uses Stem.DOWN; if sum < 0, uses Stem.UP
-      // - b/4 is on line 3 (middle line), so sum=0 → Stem.DOWN (unwanted)
-      // - g/4 is on line 2, so sum=-1 → Stem.UP (correct)
-      const defaultKey = "g/4"; // Below middle line for automatic Stem.UP
-      const staveNotes = events.map((event) => {
-        const isRest = event.type === "rest";
-        const baseDuration = event.duration || "q";
-        const isDotted = event.dotted || false;
+        // Create a stave for positioning but don't draw it (no staff lines needed)
+        const staveWidth = renderWidth - 20;
+        const staveX = 10;
+        // Stave y is the *top* of the stave. With stems pointing up, we need more space above,
+        // so position the stave slightly lower (larger Y value) to avoid clipping stems.
+        // (VexFlow stave height is roughly ~40px for a standard 5-line stave.)
+        const staveY = Math.max(0, Math.round((renderHeight - 40) / 2) + 8);
 
-        // Build duration string
-        let duration = baseDuration;
-        if (isRest) {
-          duration = `${baseDuration}r`;
-        }
+        const stave = new Stave(staveX, staveY, staveWidth);
+        stave.setContext(context);
+        // Don't draw the stave - we only want the rhythm notation
 
-        const noteConfig = {
-          keys: [isRest ? "b/4" : defaultKey],
-          duration,
-          clef: "treble",
-        };
+        // Build StaveNotes from events
+        // According to VexFlow documentation (https://www.vexflow.com/build/docs/stem.html):
+        // - Stem.UP = 1 (stem points upward, rendered to the right of notehead)
+        // - Stem.DOWN = -1 (stem points downward, rendered to the left of notehead)
+        // For rhythm-only displays, always use Stem.UP for consistency (per vexflow-guidelines.md)
+        //
+        // IMPORTANT: Use a note BELOW the middle line (line 3) so VexFlow's automatic
+        // stem direction calculation gives UP. According to vexflow-tutorial.md lines 172-176:
+        // - VexFlow sums line positions: if sum >= 0, uses Stem.DOWN; if sum < 0, uses Stem.UP
+        // - b/4 is on line 3 (middle line), so sum=0 → Stem.DOWN (unwanted)
+        // - g/4 is on line 2, so sum=-1 → Stem.UP (correct)
+        const defaultKey = "g/4"; // Below middle line for automatic Stem.UP
+        const staveNotes = events.map((event) => {
+          const isRest = event.type === "rest";
+          const baseDuration = event.duration || "q";
+          const isDotted = event.dotted || false;
 
-        const note = new StaveNote(noteConfig);
+          // Build duration string
+          let duration = baseDuration;
+          if (isRest) {
+            duration = `${baseDuration}r`;
+          }
 
-        // Set stem direction UP for all non-rest notes BEFORE beaming.
-        // This ensures all notes have the correct direction before beam generation.
-        if (!isRest) {
-          note.setStemDirection(Stem.UP);
-        }
+          const noteConfig = {
+            keys: [isRest ? "b/4" : defaultKey],
+            duration,
+            clef: "treble",
+          };
 
-        // Add dot if needed
-        if (isDotted && !isRest) {
-          Dot.buildAndAttach([note], { all: true });
-        }
+          const note = new StaveNote(noteConfig);
 
-        return note;
-      });
+          // Set stem direction UP for all non-rest notes BEFORE beaming.
+          // This ensures all notes have the correct direction before beam generation.
+          if (!isRest) {
+            note.setStemDirection(Stem.UP);
+          }
 
-      // Generate beams with stem_direction: Stem.UP to force all beamed notes to use UP.
-      // According to VexFlow Beam API (https://www.vexflow.com/build/docs/beam.html):
-      // - Using stem_direction in config forces the direction for all beamed notes
-      // - When notes are beamed, flags are automatically removed (replaced by beams)
-      // For compound time signatures (6/8, 9/8, 12/8), add explicit groups for 3+3 beaming.
-      const beamGroups = beamGroupsForTimeSignature(timeSignature);
-      const beams = Beam.generateBeams(staveNotes, {
-        stem_direction: Stem.UP,
-        ...(beamGroups ? { groups: beamGroups } : {}),
-      });
+          // Add dot if needed
+          if (isDotted && !isRest) {
+            Dot.buildAndAttach([note], { all: true });
+          }
 
-      // Force stem direction UP on each beam object directly.
-      // This ensures the beam's internal stem_direction property is set correctly.
-      beams.forEach((beam) => {
-        beam.stem_direction = Stem.UP;
-      });
+          return note;
+        });
 
-      // For non-beamed notes, set stem direction to UP.
-      // Beamed notes are handled by the beam's stem_direction.
-      const beamedNotes = new Set(beams.flatMap((b) => b.getNotes()));
-      staveNotes.forEach((note, idx) => {
-        const event = events[idx];
-        // Only set stem direction on actual notes (not rests) that aren't beamed
-        // Rests don't have stems per VexFlow documentation
-        if (event?.type !== "rest" && !beamedNotes.has(note)) {
-          note.setStemDirection(Stem.UP);
-        }
-      });
+        // Generate beams with stem_direction: Stem.UP to force all beamed notes to use UP.
+        // According to VexFlow Beam API (https://www.vexflow.com/build/docs/beam.html):
+        // - Using stem_direction in config forces the direction for all beamed notes
+        // - When notes are beamed, flags are automatically removed (replaced by beams)
+        // For compound time signatures (6/8, 9/8, 12/8), add explicit groups for 3+3 beaming.
+        const beamGroups = beamGroupsForTimeSignature(timeSignature);
+        const beams = Beam.generateBeams(staveNotes, {
+          stem_direction: Stem.UP,
+          ...(beamGroups ? { groups: beamGroups } : {}),
+        });
 
-      // Create voice and format
-      // Calculate total duration in quarter notes for voice
-      const totalTicks = events.reduce((sum, e) => {
-        const durationTicks = {
-          w: 16,
-          h: 8,
-          q: 4,
-          8: 2,
-          16: 1,
-        };
-        const base = durationTicks[e.duration] || 4;
-        return sum + (e.dotted ? base * 1.5 : base);
-      }, 0);
+        // Force stem direction UP on each beam object directly.
+        // This ensures the beam's internal stem_direction property is set correctly.
+        beams.forEach((beam) => {
+          beam.stem_direction = Stem.UP;
+        });
 
-      // Use soft mode to allow partial measures
-      const voice = new Voice({
-        num_beats: Math.max(1, Math.ceil(totalTicks / 4)),
-        beat_value: 4,
-      }).setMode(Voice.Mode.SOFT);
+        // For non-beamed notes, set stem direction to UP.
+        // Beamed notes are handled by the beam's stem_direction.
+        const beamedNotes = new Set(beams.flatMap((b) => b.getNotes()));
+        staveNotes.forEach((note, idx) => {
+          const event = events[idx];
+          // Only set stem direction on actual notes (not rests) that aren't beamed
+          // Rests don't have stems per VexFlow documentation
+          if (event?.type !== "rest" && !beamedNotes.has(note)) {
+            note.setStemDirection(Stem.UP);
+          }
+        });
 
-      voice.addTickables(staveNotes);
+        // Create voice and format
+        // Calculate total duration in quarter notes for voice
+        const totalTicks = events.reduce((sum, e) => {
+          const durationTicks = {
+            w: 16,
+            h: 8,
+            q: 4,
+            8: 2,
+            16: 1,
+          };
+          const base = durationTicks[e.duration] || 4;
+          return sum + (e.dotted ? base * 1.5 : base);
+        }, 0);
 
-      // Format and draw with appropriate spacing
-      const formatWidth = staveWidth - 10;
-      const formatter = new Formatter();
-      formatter.joinVoices([voice]).format([voice], formatWidth, {
-        align_rests: true,
-      });
-      voice.draw(context, stave);
+        // Use soft mode to allow partial measures
+        const voice = new Voice({
+          num_beats: Math.max(1, Math.ceil(totalTicks / 4)),
+          beat_value: 4,
+        }).setMode(Voice.Mode.SOFT);
 
-      // Draw beams
-      beams.forEach((beam) => beam.setContext(context).draw());
+        voice.addTickables(staveNotes);
 
-      // Fit the rendered SVG to the requested size using viewBox-based scaling.
-      // IMPORTANT: avoid CSS transform scaling here — transforms don't affect flex layout size,
-      // which can cause the (scaled) content to be clipped out of the visible container.
-      const svg = container.querySelector("svg");
-      if (svg) {
-        // Get the bounding box of the actual rendered content to center it.
-        // VexFlow renders content starting from staveX, so we need to find
-        // where the content actually is and center the viewBox on it.
-        const bbox = svg.getBBox();
-        const safeZoom = Number.isFinite(ZOOM) && ZOOM > 0 ? ZOOM : 1;
+        // Format and draw with appropriate spacing
+        const formatWidth = staveWidth - 10;
+        const formatter = new Formatter();
+        formatter.joinVoices([voice]).format([voice], formatWidth, {
+          align_rests: true,
+        });
+        voice.draw(context, stave);
 
-        // Add padding around the content
-        const padding = 4;
-        const contentX = bbox.x - padding;
-        const contentY = bbox.y - padding;
-        const contentW = bbox.width + padding * 2;
-        const contentH = bbox.height + padding * 2;
+        // Draw beams
+        beams.forEach((beam) => beam.setContext(context).draw());
 
-        // Apply zoom by expanding the viewBox (smaller zoom = larger viewBox = smaller content)
-        const viewBoxW = contentW / safeZoom;
-        const viewBoxH = contentH / safeZoom;
-        // Center the zoomed viewBox on the content center
-        const contentCenterX = contentX + contentW / 2;
-        const contentCenterY = contentY + contentH / 2;
-        const viewBoxX = contentCenterX - viewBoxW / 2;
-        const viewBoxY = contentCenterY - viewBoxH / 2;
+        // Fit the rendered SVG to the requested size using viewBox-based scaling.
+        // IMPORTANT: avoid CSS transform scaling here — transforms don't affect flex layout size,
+        // which can cause the (scaled) content to be clipped out of the visible container.
+        const svg = container.querySelector("svg");
+        if (svg) {
+          // Get the bounding box of the actual rendered content to center it.
+          // VexFlow renders content starting from staveX, so we need to find
+          // where the content actually is and center the viewBox on it.
+          const bbox = svg.getBBox();
+          const safeZoom = Number.isFinite(ZOOM) && ZOOM > 0 ? ZOOM : 1;
 
-        svg.setAttribute(
-          "viewBox",
-          `${viewBoxX} ${viewBoxY} ${viewBoxW} ${viewBoxH}`
-        );
-        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-        svg.style.width = "100%";
-        svg.style.height = "100%";
-        svg.style.display = "block";
+          // Add padding around the content
+          const padding = 4;
+          const contentX = bbox.x - padding;
+          const contentY = bbox.y - padding;
+          const contentW = bbox.width + padding * 2;
+          const contentH = bbox.height + padding * 2;
 
-        // Apply color styling to all note elements.
-        // IMPORTANT: Only override stroke on elements that originally use stroke.
-        // Setting stroke on fill-only elements (like stem rects) causes iOS Safari
-        // to render an extra border that creates visible gaps between stems and noteheads.
-        if (noteColor) {
-          const elements = svg.querySelectorAll("path, text, rect, line");
-          elements.forEach((el) => {
-            if (el.tagName === "text") {
-              el.style.fill = noteColor;
-            } else {
-              const origStroke = el.getAttribute("stroke");
-              const origFill = el.getAttribute("fill");
-              // Always recolor fill (harmless on fill="none" elements)
-              el.style.fill = noteColor;
-              if (origFill === "none") {
-                // Stroke-based element (stems) — VexFlow inherits stroke from
-                // parent <g> so getAttribute("stroke") returns null. Set explicitly.
-                el.style.stroke = noteColor;
-              } else if (origStroke && origStroke !== "none") {
-                // Element has explicit visible stroke — recolor it
-                el.style.stroke = noteColor;
+          // Apply zoom by expanding the viewBox (smaller zoom = larger viewBox = smaller content)
+          const viewBoxW = contentW / safeZoom;
+          const viewBoxH = contentH / safeZoom;
+          // Center the zoomed viewBox on the content center
+          const contentCenterX = contentX + contentW / 2;
+          const contentCenterY = contentY + contentH / 2;
+          const viewBoxX = contentCenterX - viewBoxW / 2;
+          const viewBoxY = contentCenterY - viewBoxH / 2;
+
+          svg.setAttribute(
+            "viewBox",
+            `${viewBoxX} ${viewBoxY} ${viewBoxW} ${viewBoxH}`
+          );
+          svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+          svg.style.width = "100%";
+          svg.style.height = "100%";
+          svg.style.display = "block";
+
+          // Apply color styling to all note elements.
+          // IMPORTANT: Only override stroke on elements that originally use stroke.
+          // Setting stroke on fill-only elements (like stem rects) causes iOS Safari
+          // to render an extra border that creates visible gaps between stems and noteheads.
+          if (noteColor) {
+            const elements = svg.querySelectorAll("path, text, rect, line");
+            elements.forEach((el) => {
+              if (el.tagName === "text") {
+                el.style.fill = noteColor;
               } else {
-                // Fill-based element with no visible stroke — prevent iOS Safari
-                // gap between stems and noteheads
-                el.style.stroke = "none";
+                const origStroke = el.getAttribute("stroke");
+                const origFill = el.getAttribute("fill");
+                // Always recolor fill (harmless on fill="none" elements)
+                el.style.fill = noteColor;
+                if (origFill === "none") {
+                  // Stroke-based element (stems) — VexFlow inherits stroke from
+                  // parent <g> so getAttribute("stroke") returns null. Set explicitly.
+                  el.style.stroke = noteColor;
+                } else if (origStroke && origStroke !== "none") {
+                  // Element has explicit visible stroke — recolor it
+                  el.style.stroke = noteColor;
+                } else {
+                  // Fill-based element with no visible stroke — prevent iOS Safari
+                  // gap between stems and noteheads
+                  el.style.stroke = "none";
+                }
               }
-            }
-          });
+            });
+          }
         }
+      } catch (err) {
+        console.error("RhythmPatternPreview render error:", err);
       }
-    } catch (err) {
-      console.error("RhythmPatternPreview render error:", err);
+    };
+
+    // Initial render — synchronous, and may run before the music font is ready.
+    renderPreview();
+
+    // VexFlow 5 renders noteheads as <text> glyphs in the Bravura web font,
+    // which the `vexflow` entry point loads asynchronously (FontFace API). If
+    // that font isn't ready on first paint, the browser lays the notehead glyph
+    // out with fallback metrics — leaving it visibly detached from the
+    // (correctly positioned) stem — and this effect would never re-run on its
+    // own. Re-render once the music font is ready so noteheads snap onto stems.
+    const fonts = typeof document !== "undefined" ? document.fonts : null;
+    let bravuraReady = true;
+    try {
+      bravuraReady =
+        typeof fonts?.check === "function" ? fonts.check("30pt Bravura") : true;
+    } catch {
+      bravuraReady = false;
+    }
+    if (fonts?.ready && !bravuraReady) {
+      fonts.ready.then(() => renderPreview()).catch(() => {});
     }
 
     return () => {
       // Cleanup
+      cancelled = true;
       if (container) {
         container.innerHTML = "";
       }
