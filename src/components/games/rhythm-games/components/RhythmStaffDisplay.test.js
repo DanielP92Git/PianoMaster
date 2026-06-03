@@ -1,7 +1,7 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi } from "vitest";
 
 // Mock vexflow before any component imports
-vi.mock('vexflow', () => ({
+vi.mock("vexflow", () => ({
   Renderer: vi.fn(() => ({
     resize: vi.fn(),
     getContext: vi.fn(() => ({
@@ -15,7 +15,7 @@ vi.mock('vexflow', () => ({
     draw: vi.fn().mockReturnThis(),
   })),
   StaveNote: vi.fn(() => ({
-    getElem: vi.fn(() => null),
+    getSVGElement: vi.fn(() => null),
     setStemDirection: vi.fn().mockReturnThis(),
     addModifier: vi.fn().mockReturnThis(),
   })),
@@ -37,31 +37,33 @@ vi.mock('vexflow', () => ({
 }));
 
 // Mock i18next
-vi.mock('react-i18next', () => ({
+vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key) => key,
-    i18n: { language: 'en' },
+    i18n: { language: "en" },
   }),
 }));
 
-describe('RhythmStaffDisplay smoke tests', () => {
-  it('can import RhythmStaffDisplay without errors', async () => {
-    const mod = await import('./RhythmStaffDisplay.jsx');
+describe("RhythmStaffDisplay smoke tests", () => {
+  it("can import RhythmStaffDisplay without errors", async () => {
+    const mod = await import("./RhythmStaffDisplay.jsx");
     expect(mod.default).toBeDefined();
   });
 
-  it('can import FloatingFeedback without errors', async () => {
-    const mod = await import('./FloatingFeedback.jsx');
+  it("can import FloatingFeedback without errors", async () => {
+    const mod = await import("./FloatingFeedback.jsx");
     expect(mod.default).toBeDefined();
   });
 
-  it('can import CountdownOverlay without errors', async () => {
-    const mod = await import('./CountdownOverlay.jsx');
+  it("can import CountdownOverlay without errors", async () => {
+    const mod = await import("./CountdownOverlay.jsx");
     expect(mod.default).toBeDefined();
   });
 
-  it('beatsToVexNotes returns an array', async () => {
-    const { beatsToVexNotes } = await import('../utils/rhythmVexflowHelpers.js');
+  it("beatsToVexNotes returns an array", async () => {
+    const { beatsToVexNotes } = await import(
+      "../utils/rhythmVexflowHelpers.js"
+    );
     const result = beatsToVexNotes([{ durationUnits: 4, isRest: false }]);
     expect(Array.isArray(result)).toBe(true);
     expect(result.length).toBe(1);

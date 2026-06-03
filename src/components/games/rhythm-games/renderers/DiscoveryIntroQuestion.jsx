@@ -417,6 +417,13 @@ export default function DiscoveryIntroQuestion({
   const gotItBtnSize = isLandscape
     ? "mt-1 w-full py-2.5 text-base"
     : "mt-2 w-full py-4 text-lg";
+  // Staff figure wrapper. Portrait must be fluid (w-full) so the staff shrinks to
+  // the card's content width on narrow phones — fixed widths (w-72 = 288px) overflow
+  // the card's right edge once the content area drops below that. Landscape keeps
+  // fixed sizing since the horizontal split has room and avoids stretching.
+  const figureWrapperClass = isLandscape
+    ? "w-72 md:w-80 lg:w-96"
+    : "w-full max-w-sm";
 
   // Notation card title — titleOverride > per-concept meet.title > generic.
   // Kept first in DOM order so the horizontal layout reads heading-first for SR.
@@ -512,7 +519,7 @@ export default function DiscoveryIntroQuestion({
           className={`flex items-center justify-center text-white${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
           {restFigure && currentKind === "playback" ? (
-            <div className="w-72 md:w-80 lg:w-96" aria-hidden="true">
+            <div className={figureWrapperClass} aria-hidden="true">
               <RhythmStaffDisplay
                 beats={restFigure.beats}
                 timeSignature={restFigure.timeSignature}
@@ -522,7 +529,7 @@ export default function DiscoveryIntroQuestion({
               />
             </div>
           ) : figureBeats ? (
-            <div className="w-72 md:w-80 lg:w-96" aria-hidden="true">
+            <div className={figureWrapperClass} aria-hidden="true">
               <RhythmStaffDisplay
                 beats={figureBeats}
                 timeSignature={figureTimeSignature}
