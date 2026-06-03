@@ -244,7 +244,10 @@ export function RhythmStaffDisplay({
 
         noteElementsRef.current = notes.map((note) => {
           try {
-            return note.getElem ? note.getElem() : null;
+            // VexFlow 5 exposes the note's drawn <g> via getSVGElement() — the
+            // legacy getElem() was removed, so calling it left every entry null
+            // and silently disabled all note recoloring (highlight + tapResults).
+            return note.getSVGElement ? note.getSVGElement() : null;
           } catch {
             return null;
           }
@@ -301,7 +304,10 @@ export function RhythmStaffDisplay({
             // Record note elements for color updates
             const noteElems = notes.map((note) => {
               try {
-                return note.getElem ? note.getElem() : null;
+                // VexFlow 5 exposes the note's drawn <g> via getSVGElement() — the
+                // legacy getElem() was removed, so calling it left every entry null
+                // and silently disabled all note recoloring (highlight + tapResults).
+                return note.getSVGElement ? note.getSVGElement() : null;
               } catch {
                 return null;
               }
