@@ -1338,11 +1338,8 @@
       "restValuesLabel": "Allowed rest values",
       "noteValuesRequired": "Select at least one note value to continue.",
       "restValuesRequired": "Select at least one rest value (or disable rests) to continue.",
-      "complexityLabel": "Rhythm complexity",
-      "simpleLabel": "Simple rhythm",
-      "complexLabel": "Complex rhythm",
-      "simpleHint": "Pairs eighth notes together (no syncopation).",
-      "complexHint": "Allows syncopated groupings (e.g. 1/8–1/4–1/8)."
+      "simpleLabel": "Simple rhythms",
+      "complexLabel": "Complex rhythms"
     },
     "tempo": {
       "label": "Tempo: {{tempo}} BPM",

@@ -1868,11 +1868,6 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
           </div>
 
           <div className={allowRests ? "space-y-2" : "space-y-1"}>
-            <div className="text-center text-[11px] font-semibold text-white/80 sm:text-xs">
-              {t("gameSettings.rhythmSettings.complexityLabel", {
-                defaultValue: "Rhythm complexity",
-              })}
-            </div>
             <div className="flex justify-center">
               <div className="inline-flex overflow-hidden rounded-full border border-white/20 bg-white/10">
                 <button
@@ -1888,7 +1883,7 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
                   }`}
                 >
                   {t("gameSettings.rhythmSettings.simpleLabel", {
-                    defaultValue: "Simple rhythm",
+                    defaultValue: "Simple rhythms",
                   })}
                 </button>
                 <button
@@ -1904,21 +1899,10 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
                   }`}
                 >
                   {t("gameSettings.rhythmSettings.complexLabel", {
-                    defaultValue: "Complex rhythm",
+                    defaultValue: "Complex rhythms",
                   })}
                 </button>
               </div>
-            </div>
-            <div className="text-center text-[11px] font-medium text-white/60">
-              {rhythmComplexity === "simple"
-                ? t("gameSettings.rhythmSettings.simpleHint", {
-                    defaultValue:
-                      "Pairs eighth notes together (no syncopation).",
-                  })
-                : t("gameSettings.rhythmSettings.complexHint", {
-                    defaultValue:
-                      "Select which syncopated patterns to include:",
-                  })}
             </div>
             {rhythmComplexity === "complex" ? (
               <div className="mt-1 flex flex-wrap justify-center gap-1.5 sm:gap-2">
