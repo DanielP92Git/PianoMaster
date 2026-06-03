@@ -193,17 +193,12 @@ export function RhythmPatternPreview({
         // which can cause the (scaled) content to be clipped out of the visible container.
         const svg = container.querySelector("svg");
         if (svg) {
-          // VexFlow 5 draws noteheads as SVG <text> glyphs and stems as <path>
-          // lines. With the browser's default alphabetic baseline the glyph can
-          // render offset from where VexFlow places the stem, leaving a visible
-          // gap between notehead and stem. Pin the notehead text to a centered
-          // baseline so it sits on the stem. Set this BEFORE getBBox so the crop
-          // accounts for the corrected glyph position.
-          svg.querySelectorAll("text").forEach((t) => {
-            if (!t.getAttribute("dominant-baseline")) {
-              t.setAttribute("dominant-baseline", "central");
-            }
-          });
+          // NOTE: Do NOT set dominant-baseline on the notehead <text> glyphs.
+          // VexFlow 5 renders noteheads as SVG <text> anchored at the default
+          // alphabetic baseline and calibrates every y coordinate (including the
+          // stem's bottom endpoint) to that baseline. Forcing dominant-baseline
+          // (e.g. "central") shifts the glyph up by ~half its height, detaching
+          // it from the stem — the exact gap this preview previously showed.
 
           // Get the bounding box of the actual rendered content to center it.
           // VexFlow renders content starting from staveX, so we need to find
