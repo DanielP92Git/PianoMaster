@@ -13,7 +13,7 @@ import { useTranslation } from "react-i18next";
 import { useIsMobile } from "../../../hooks/useIsMobile";
 import trebleClefImage from "../../../assets/noteImages/treble/treble-clef.svg";
 import bassClefImage from "../../../assets/noteImages/bass/bass-clef.svg";
-import { RhythmPatternPreview } from "../sight-reading-game/components/RhythmPatternPreview";
+import { ComplexRhythmPreview } from "../sight-reading-game/components/ComplexRhythmPreview";
 import { StaticRhythmPreview } from "../sight-reading-game/components/StaticRhythmPreview";
 import { KeySignatureSelection } from "../sight-reading-game/components/KeySignatureSelection";
 import {
@@ -1943,7 +1943,7 @@ function TimeSignatureSelection({ settings, updateSetting, config }) {
                       }`}
                       title={pattern.label}
                     >
-                      <RhythmPatternPreview
+                      <ComplexRhythmPreview
                         events={pattern.events}
                         width={pattern.totalUnits > 4 ? 110 : 84}
                         height={54}
