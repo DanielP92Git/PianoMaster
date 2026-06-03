@@ -1344,11 +1344,8 @@
       "restValuesLabel": "ערכי הפסקות מותרים",
       "noteValuesRequired": "בחרו לפחות ערך תו אחד כדי להמשיך.",
       "restValuesRequired": "בחרו לפחות ערך הפסקה אחד (או בטלו הפסקות) כדי להמשיך.",
-      "complexityLabel": "מורכבות קצב",
-      "simpleLabel": "קצב פשוט",
-      "complexLabel": "קצב מורכב",
-      "simpleHint": "מקבץ שמיניות בזוגות (ללא סינקופות).",
-      "complexHint": "מאפשר תבניות סינקופיות (למשל 1/8–1/4–1/8)."
+      "simpleLabel": "מקצבים פשוטים",
+      "complexLabel": "מקצבים מורכבים"
     },
     "tempo": {
       "label": "טמפו: {{tempo}} BPM",
