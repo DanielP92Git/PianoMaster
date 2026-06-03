@@ -6,7 +6,7 @@ import { useUser } from "../../features/authentication/useUser";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { streakService } from "../../services/streakService";
 import { useModal } from "../../contexts/ModalContext";
-import { Bell, X, Mic, Headphones } from "lucide-react";
+import { Bell, X, Mic } from "lucide-react";
 import { toast } from "react-hot-toast";
 import AudioRecorder from "../ui/AudioRecorder";
 import AudioPlayer from "../ui/AudioPlayer";
@@ -534,19 +534,6 @@ function Dashboard() {
       }),
       hasIndicator: false,
     },
-    {
-      key: "recordings",
-      to: "/practice-sessions",
-      element: "link",
-      borderColor: "border-blue-400/40",
-      bgColor: "bg-blue-500/15",
-      glowShadow: "shadow-[0_0_20px_rgba(59,130,246,0.25)]",
-      icon: <Headphones className="h-7 w-7 text-blue-300" />,
-      label: t("dashboard.practiceTools.cards.recordings.short", {
-        defaultValue: "Recordings",
-      }),
-      hasIndicator: false,
-    },
   ];
 
   const MotionOrDiv = reducedMotion ? "div" : motion.div;
@@ -565,7 +552,7 @@ function Dashboard() {
         {/* GREETING BAR */}
         {isStudent && (
           <div
-            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg px-4 py-3 flex items-center gap-3"
+            className="flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-4 py-3 shadow-lg backdrop-blur-md"
             style={{ direction: isRTL ? "rtl" : "ltr" }}
           >
             {/* Avatar — 48px, linked to /avatars */}
