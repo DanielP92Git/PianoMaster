@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useRef,
@@ -55,7 +54,7 @@ export function VexFlowStaffDisplay({
   clef = "treble",
   performanceResults = [],
   gamePhase,
-  keySignature = null,  // VexFlow key string: 'G', 'D', 'A', 'F', 'Bb', 'Eb', or null
+  keySignature = null, // VexFlow key string: 'G', 'D', 'A', 'F', 'Bb', 'Eb', or null
 }) {
   // Generate unique ID for this component instance
   const uniqueId = useId();
@@ -177,34 +176,37 @@ export function VexFlowStaffDisplay({
     }
   }, [pattern?.notes, clef]);
 
-  const makeSvgResponsive = useCallback((svgWidth, svgHeight, totalBars = 1) => {
-    if (!vexContainerRef.current) return;
-    const svg = vexContainerRef.current.querySelector("svg");
-    if (!svg) return;
-    // ViewBox should match the renderer dimensions we initialized VexFlow with.
-    // We already apply visual enlargement via `context.scale(STAFF_SCALE, STAFF_SCALE)`;
-    // scaling the viewBox again would double-apply the scale and shrink the staff.
-    svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+  const makeSvgResponsive = useCallback(
+    (svgWidth, svgHeight, totalBars = 1) => {
+      if (!vexContainerRef.current) return;
+      const svg = vexContainerRef.current.querySelector("svg");
+      if (!svg) return;
+      // ViewBox should match the renderer dimensions we initialized VexFlow with.
+      // We already apply visual enlargement via `context.scale(STAFF_SCALE, STAFF_SCALE)`;
+      // scaling the viewBox again would double-apply the scale and shrink the staff.
+      svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
 
-    // CRITICAL FIX: For multi-bar patterns, use actual pixel width instead of percentage
-    // to prevent SVG scaling/squeezing. Container will scroll horizontally instead.
-    if (totalBars > 1) {
-      svg.setAttribute("preserveAspectRatio", "xMinYMid meet"); // Left-align, center vertically
-      svg.style.width = `${svgWidth}px`; // Use actual pixel width - no scaling
-      svg.style.maxWidth = "none"; // Remove max-width constraint
-      svg.style.height = "auto"; // Let height follow aspect ratio
-      svg.style.display = "block";
-      svg.style.overflow = "visible";
-    } else {
-      // Single bar: fit to container (original responsive behavior)
-      svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
-      svg.style.width = "100%";
-      svg.style.maxWidth = "100%";
-      svg.style.height = "auto"; // Let height follow aspect ratio
-      svg.style.display = "block";
-      svg.style.overflow = "visible";
-    }
-  }, []);
+      // CRITICAL FIX: For multi-bar patterns, use actual pixel width instead of percentage
+      // to prevent SVG scaling/squeezing. Container will scroll horizontally instead.
+      if (totalBars > 1) {
+        svg.setAttribute("preserveAspectRatio", "xMinYMid meet"); // Left-align, center vertically
+        svg.style.width = `${svgWidth}px`; // Use actual pixel width - no scaling
+        svg.style.maxWidth = "none"; // Remove max-width constraint
+        svg.style.height = "auto"; // Let height follow aspect ratio
+        svg.style.display = "block";
+        svg.style.overflow = "visible";
+      } else {
+        // Single bar: fit to container (original responsive behavior)
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
+        svg.style.width = "100%";
+        svg.style.maxWidth = "100%";
+        svg.style.height = "auto"; // Let height follow aspect ratio
+        svg.style.display = "block";
+        svg.style.overflow = "visible";
+      }
+    },
+    []
+  );
 
   /**
    * Fit the SVG viewBox to the rendered notation bounds (prevents internal SVG cropping).
@@ -279,11 +281,14 @@ export function VexFlowStaffDisplay({
       const shouldRenderSingleBar = false;
       const currentBarIndex = 0;
 
-      const expectedDuration = beatsPerMeasure * (shouldRenderSingleBar ? 1 : totalBars);
+      const expectedDuration =
+        beatsPerMeasure * (shouldRenderSingleBar ? 1 : totalBars);
 
       // DEBUG: Log pattern details
 
-      const durationDiff = expectedDuration - (shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration);
+      const durationDiff =
+        expectedDuration -
+        (shouldRenderSingleBar ? beatsPerMeasure : pattern.totalDuration);
 
       // More lenient epsilon for floating point comparison
       if (Math.abs(durationDiff) > 0.001) {
@@ -293,18 +298,23 @@ export function VexFlowStaffDisplay({
           // Voice.Mode.SOFT will handle the incomplete measure gracefully without
           // throwing errors. We DO NOT add visual padding rests here.
           if (import.meta.env.DEV) {
-            console.debug("[VexFlowStaffDisplay] Pattern shorter than expected - relying on SOFT mode", { // eslint-disable-line no-console
-              expectedDuration,
-              actualDuration: pattern.totalDuration,
-              deficit: durationDiff,
-            });
+            console.debug(
+              "[VexFlowStaffDisplay] Pattern shorter than expected - relying on SOFT mode",
+              {
+                // eslint-disable-line no-console
+                expectedDuration,
+                actualDuration: pattern.totalDuration,
+                deficit: durationDiff,
+              }
+            );
           }
         } else {
           console.warn(`Pattern is ${Math.abs(durationDiff)} beats too long!`);
         }
       } else {
         if (import.meta.env.DEV) {
-          console.debug("[VexFlowStaffDisplay]", { // eslint-disable-line no-console
+          console.debug("[VexFlowStaffDisplay]", {
+            // eslint-disable-line no-console
             pattern,
             durationDiff,
           });
@@ -347,17 +357,19 @@ export function VexFlowStaffDisplay({
       const STAVE_X = 50;
 
       // For single bar, use responsive width; for multi-bar, use fixed width per bar
-      const BASE_STAVE_WIDTH = totalBars === 1
-        ? Math.max(responsiveWidth - 100, 240)
-        : FIXED_STAVE_WIDTH_PER_BAR * totalBars;
+      const BASE_STAVE_WIDTH =
+        totalBars === 1
+          ? Math.max(responsiveWidth - 100, 240)
+          : FIXED_STAVE_WIDTH_PER_BAR * totalBars;
 
       const requiredStaveWidth = BASE_STAVE_WIDTH;
 
       // Canvas width should accommodate the full notation width for multi-bar patterns
       // This enables horizontal scroll when patterns are wider than container
-      const canvasWidth = totalBars === 1
-        ? Math.max(requiredStaveWidth + 100, responsiveWidth || staffWidth)
-        : requiredStaveWidth + 100; // For multi-bar, always use calculated width
+      const canvasWidth =
+        totalBars === 1
+          ? Math.max(requiredStaveWidth + 100, responsiveWidth || staffWidth)
+          : requiredStaveWidth + 100; // For multi-bar, always use calculated width
 
       // Add padding to renderer size to prevent clipping (MOST IMPORTANT FIX)
       const PADDING_X = 100;
@@ -402,7 +414,12 @@ export function VexFlowStaffDisplay({
         return { key, accidental };
       };
 
-      const buildStaveNote = ({ pitchStr, duration, targetClef, skipManualAccidental = false }) => {
+      const buildStaveNote = ({
+        pitchStr,
+        duration,
+        targetClef,
+        skipManualAccidental = false,
+      }) => {
         const isRest = String(duration || "").endsWith("r");
         let cleanDuration = String(duration || "q").replace(/r$/, "");
 
@@ -432,14 +449,14 @@ export function VexFlowStaffDisplay({
           // Add accidental glyph (e.g., b or #) when present in pitch string.
           note.addModifier(new Accidental(parsedPitch.accidental), 0);
         }
-        
+
         // Add dot modifier if this is a dotted note
         if (isDotted) {
           for (let i = 0; i < noteConfig.keys.length; i++) {
             note.addModifier(new Dot(), i);
           }
         }
-        
+
         // Note: Stem direction and length are set AFTER beaming via Beam.generateBeams()
         // for beamed notes. For non-beamed notes, stem direction is set below.
         return note;
@@ -487,20 +504,29 @@ export function VexFlowStaffDisplay({
         const yBass = yTreble + staffGap;
 
         // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
-        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y, totalBars);
+        makeSvgResponsive(
+          canvasWidth + PADDING_X,
+          canvasHeight + PADDING_Y,
+          totalBars
+        );
 
         const allEvents = Array.isArray(pattern.notes) ? pattern.notes : [];
         const events = shouldRenderSingleBar
-          ? allEvents.filter((e) => Number(e?.barIndex ?? 0) === currentBarIndex)
+          ? allEvents.filter(
+              (e) => Number(e?.barIndex ?? 0) === currentBarIndex
+            )
           : allEvents;
         const durations =
           Array.isArray(pattern.vexflowNotes) &&
           pattern.vexflowNotes.length === allEvents.length
-            ? (shouldRenderSingleBar
-                ? pattern.vexflowNotes
-                    .filter((_, i) => Number(allEvents?.[i]?.barIndex ?? 0) === currentBarIndex)
-                    .map((n) => n?.duration || "q")
-                : pattern.vexflowNotes.map((n) => n?.duration || "q"))
+            ? shouldRenderSingleBar
+              ? pattern.vexflowNotes
+                  .filter(
+                    (_, i) =>
+                      Number(allEvents?.[i]?.barIndex ?? 0) === currentBarIndex
+                  )
+                  .map((n) => n?.duration || "q")
+              : pattern.vexflowNotes.map((n) => n?.duration || "q")
             : events.map(() => "q");
 
         // Grand staff rendering (multiple staves for multi-bar with proper barline config)
@@ -510,7 +536,7 @@ export function VexFlowStaffDisplay({
 
           // Create all stave pairs first
           for (let barIdx = 0; barIdx < totalBars; barIdx++) {
-            const xPos = STAVE_X + (barIdx * staveWidthPerBar);
+            const xPos = STAVE_X + barIdx * staveWidthPerBar;
 
             const trebleStave = new Stave(xPos, yTreble, staveWidthPerBar);
             const bassStave = new Stave(xPos, yBass, staveWidthPerBar);
@@ -518,12 +544,12 @@ export function VexFlowStaffDisplay({
             // Only first bar gets clef, key signature, and time signature
             if (barIdx === 0) {
               trebleStave.addClef("treble");
-              if (activeKeySignature && activeKeySignature !== 'C') {
+              if (activeKeySignature && activeKeySignature !== "C") {
                 trebleStave.addKeySignature(activeKeySignature);
               }
               trebleStave.addTimeSignature(pattern.timeSignature);
               bassStave.addClef("bass");
-              if (activeKeySignature && activeKeySignature !== 'C') {
+              if (activeKeySignature && activeKeySignature !== "C") {
                 bassStave.addKeySignature(activeKeySignature);
               }
               bassStave.addTimeSignature(pattern.timeSignature);
@@ -596,36 +622,44 @@ export function VexFlowStaffDisplay({
 
               if (event.type === "rest") {
                 if (eventClef === "treble") {
-                  trebleTickables.push(buildStaveNote({
-                    pitchStr: null,
-                    duration: `${duration.replace(/r$/, "")}r`,
-                    targetClef: "treble",
-                  }));
+                  trebleTickables.push(
+                    buildStaveNote({
+                      pitchStr: null,
+                      duration: `${duration.replace(/r$/, "")}r`,
+                      targetClef: "treble",
+                    })
+                  );
                   bassTickables.push(buildSpacerRest(duration, "bass"));
                 } else {
                   trebleTickables.push(buildSpacerRest(duration, "treble"));
-                  bassTickables.push(buildStaveNote({
-                    pitchStr: null,
-                    duration: `${duration.replace(/r$/, "")}r`,
-                    targetClef: "bass",
-                  }));
+                  bassTickables.push(
+                    buildStaveNote({
+                      pitchStr: null,
+                      duration: `${duration.replace(/r$/, "")}r`,
+                      targetClef: "bass",
+                    })
+                  );
                 }
               } else if (eventClef === "treble") {
-                trebleTickables.push(buildStaveNote({
-                  pitchStr: event.pitch,
-                  duration,
-                  targetClef: "treble",
-                  skipManualAccidental: true,
-                }));
+                trebleTickables.push(
+                  buildStaveNote({
+                    pitchStr: event.pitch,
+                    duration,
+                    targetClef: "treble",
+                    skipManualAccidental: true,
+                  })
+                );
                 bassTickables.push(buildSpacerRest(duration, "bass"));
               } else {
                 trebleTickables.push(buildSpacerRest(duration, "treble"));
-                bassTickables.push(buildStaveNote({
-                  pitchStr: event.pitch,
-                  duration,
-                  targetClef: "bass",
-                  skipManualAccidental: true,
-                }));
+                bassTickables.push(
+                  buildStaveNote({
+                    pitchStr: event.pitch,
+                    duration,
+                    targetClef: "bass",
+                    skipManualAccidental: true,
+                  })
+                );
               }
             });
 
@@ -639,20 +673,32 @@ export function VexFlowStaffDisplay({
             const trebleNotesOnly = trebleTickables.filter((tick, idx) => {
               const event = barEvents[idx];
               const eventClef = String(event?.clef || "treble").toLowerCase();
-              return event?.type === "note" && eventClef === "treble" && !noBeamIndicesForBar.has(idx);
+              return (
+                event?.type === "note" &&
+                eventClef === "treble" &&
+                !noBeamIndicesForBar.has(idx)
+              );
             });
             const bassNotesOnly = bassTickables.filter((tick, idx) => {
               const event = barEvents[idx];
               const eventClef = String(event?.clef || "treble").toLowerCase();
-              return event?.type === "note" && eventClef === "bass" && !noBeamIndicesForBar.has(idx);
+              return (
+                event?.type === "note" &&
+                eventClef === "bass" &&
+                !noBeamIndicesForBar.has(idx)
+              );
             });
 
             const trebleBeams = Beam.generateBeams(trebleNotesOnly, beamConfig);
             const bassBeams = Beam.generateBeams(bassNotesOnly, beamConfig);
 
             // Set stem direction for non-beamed notes
-            const beamedTrebleNotes = new Set(trebleBeams.flatMap((b) => b.getNotes()));
-            const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
+            const beamedTrebleNotes = new Set(
+              trebleBeams.flatMap((b) => b.getNotes())
+            );
+            const beamedBassNotes = new Set(
+              bassBeams.flatMap((b) => b.getNotes())
+            );
 
             trebleTickables.forEach((tick, idx) => {
               const event = barEvents[idx];
@@ -660,7 +706,9 @@ export function VexFlowStaffDisplay({
               const eventClef = String(event?.clef || "treble").toLowerCase();
               if (eventClef !== "treble") return;
               if (!beamedTrebleNotes.has(tick)) {
-                tick.setStemDirection(getStemDirectionForPitch(event.pitch, "treble"));
+                tick.setStemDirection(
+                  getStemDirectionForPitch(event.pitch, "treble")
+                );
               }
             });
 
@@ -670,7 +718,9 @@ export function VexFlowStaffDisplay({
               const eventClef = String(event?.clef || "treble").toLowerCase();
               if (eventClef !== "bass") return;
               if (!beamedBassNotes.has(tick)) {
-                tick.setStemDirection(getStemDirectionForPitch(event.pitch, "bass"));
+                tick.setStemDirection(
+                  getStemDirectionForPitch(event.pitch, "bass")
+                );
               }
             });
 
@@ -690,13 +740,17 @@ export function VexFlowStaffDisplay({
             // Apply accidentals after all tickables are added, before formatter.
             // Uses key signature when set, otherwise 'C' for bar-level carry-through
             // (first sharp in bar shows #, subsequent same-note sharps suppressed).
-            Accidental.applyAccidentals([trebleVoice], activeKeySignature || 'C');
-            Accidental.applyAccidentals([bassVoice], activeKeySignature || 'C');
+            Accidental.applyAccidentals(
+              [trebleVoice],
+              activeKeySignature || "C"
+            );
+            Accidental.applyAccidentals([bassVoice], activeKeySignature || "C");
 
             // Calculate formatter width for this bar
-            const barFormatterWidth = barIdx === 0
-              ? Math.max(staveWidthPerBar - 100, 100)
-              : Math.max(staveWidthPerBar - 20, 100);
+            const barFormatterWidth =
+              barIdx === 0
+                ? Math.max(staveWidthPerBar - 100, 100)
+                : Math.max(staveWidthPerBar - 20, 100);
 
             // Handle wrong pitch overlay
             let wrongTrebleVoice = null;
@@ -708,30 +762,54 @@ export function VexFlowStaffDisplay({
               );
 
               if (wrongPitchResults.length > 0) {
-                const wrongTrebleTickables = barEvents.map((event, localIdx) => {
-                  const globalIdx = barEventIndices[localIdx];
-                  const duration = durations[globalIdx] || "q";
-                  const eventClef = String(event?.clef || "treble").toLowerCase();
-                  const result = wrongPitchResults.find((r) => r.noteIndex === globalIdx);
+                const wrongTrebleTickables = barEvents.map(
+                  (event, localIdx) => {
+                    const globalIdx = barEventIndices[localIdx];
+                    const duration = durations[globalIdx] || "q";
+                    const eventClef = String(
+                      event?.clef || "treble"
+                    ).toLowerCase();
+                    const result = wrongPitchResults.find(
+                      (r) => r.noteIndex === globalIdx
+                    );
 
-                  if (result && event.type !== "rest" && eventClef === "treble") {
-                    const wrong = buildStaveNote({
-                      pitchStr: result.detected,
-                      duration,
-                      targetClef: "treble",
-                    });
-                    wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
-                    wrong.setStemDirection(getStemDirectionForPitch(result.detected, "treble"));
-                    return wrong;
+                    if (
+                      result &&
+                      event.type !== "rest" &&
+                      eventClef === "treble"
+                    ) {
+                      const wrong = buildStaveNote({
+                        pitchStr: result.detected,
+                        duration,
+                        targetClef: "treble",
+                      });
+                      wrong.setStyle({
+                        fillStyle: "#EF4444",
+                        strokeStyle: "#EF4444",
+                      });
+                      wrong.setStemDirection(
+                        getStemDirectionForPitch(result.detected, "treble")
+                      );
+                      wrong.setStemStyle({ strokeStyle: "transparent" });
+                      wrong.setFlagStyle({
+                        fillStyle: "transparent",
+                        strokeStyle: "transparent",
+                      });
+                      return wrong;
+                    }
+                    return buildSpacerRest(duration, "treble");
                   }
-                  return buildSpacerRest(duration, "treble");
-                });
+                );
 
                 const wrongBassTickables = barEvents.map((event, localIdx) => {
                   const globalIdx = barEventIndices[localIdx];
                   const duration = durations[globalIdx] || "q";
-                  const eventClef = String(event?.clef || "treble").toLowerCase();
-                  const result = wrongPitchResults.find((r) => r.noteIndex === globalIdx);
+                  const eventClef = String(
+                    event?.clef || "treble"
+                  ).toLowerCase();
+                  const result = wrongPitchResults.find(
+                    (r) => r.noteIndex === globalIdx
+                  );
 
                   if (result && event.type !== "rest" && eventClef === "bass") {
                     const wrong = buildStaveNote({
@@ -739,8 +817,18 @@ export function VexFlowStaffDisplay({
                       duration,
                       targetClef: "bass",
                     });
-                    wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
-                    wrong.setStemDirection(getStemDirectionForPitch(result.detected, "bass"));
+                    wrong.setStyle({
+                      fillStyle: "#EF4444",
+                      strokeStyle: "#EF4444",
+                    });
+                    wrong.setStemDirection(
+                      getStemDirectionForPitch(result.detected, "bass")
+                    );
+                    wrong.setStemStyle({ strokeStyle: "transparent" });
+                    wrong.setFlagStyle({
+                      fillStyle: "transparent",
+                      strokeStyle: "transparent",
+                    });
                     return wrong;
                   }
                   return buildSpacerRest(duration, "bass");
@@ -762,14 +850,22 @@ export function VexFlowStaffDisplay({
 
             // Format and draw
             if (wrongTrebleVoice) {
-              new Formatter().joinVoices([trebleVoice, wrongTrebleVoice]).format([trebleVoice, wrongTrebleVoice], barFormatterWidth);
+              new Formatter()
+                .joinVoices([trebleVoice, wrongTrebleVoice])
+                .format([trebleVoice, wrongTrebleVoice], barFormatterWidth);
             } else {
-              new Formatter().joinVoices([trebleVoice]).format([trebleVoice], barFormatterWidth);
+              new Formatter()
+                .joinVoices([trebleVoice])
+                .format([trebleVoice], barFormatterWidth);
             }
             if (wrongBassVoice) {
-              new Formatter().joinVoices([bassVoice, wrongBassVoice]).format([bassVoice, wrongBassVoice], barFormatterWidth);
+              new Formatter()
+                .joinVoices([bassVoice, wrongBassVoice])
+                .format([bassVoice, wrongBassVoice], barFormatterWidth);
             } else {
-              new Formatter().joinVoices([bassVoice]).format([bassVoice], barFormatterWidth);
+              new Formatter()
+                .joinVoices([bassVoice])
+                .format([bassVoice], barFormatterWidth);
             }
 
             trebleVoice.draw(context, trebleStave);
@@ -789,7 +885,7 @@ export function VexFlowStaffDisplay({
           // Single bar grand staff
           const trebleStave = new Stave(STAVE_X, yTreble, TOTAL_STAVE_WIDTH);
           trebleStave.addClef("treble");
-          if (activeKeySignature && activeKeySignature !== 'C') {
+          if (activeKeySignature && activeKeySignature !== "C") {
             trebleStave.addKeySignature(activeKeySignature);
           }
           trebleStave.addTimeSignature(pattern.timeSignature);
@@ -798,7 +894,7 @@ export function VexFlowStaffDisplay({
 
           const bassStave = new Stave(STAVE_X, yBass, TOTAL_STAVE_WIDTH);
           bassStave.addClef("bass");
-          if (activeKeySignature && activeKeySignature !== 'C') {
+          if (activeKeySignature && activeKeySignature !== "C") {
             bassStave.addKeySignature(activeKeySignature);
           }
           bassStave.addTimeSignature(pattern.timeSignature);
@@ -885,19 +981,31 @@ export function VexFlowStaffDisplay({
           const trebleNotesOnly = trebleTickables.filter((tick, idx) => {
             const event = events[idx];
             const eventClef = String(event?.clef || "treble").toLowerCase();
-            return event?.type === "note" && eventClef === "treble" && !noBeamIndices.has(idx);
+            return (
+              event?.type === "note" &&
+              eventClef === "treble" &&
+              !noBeamIndices.has(idx)
+            );
           });
           const bassNotesOnly = bassTickables.filter((tick, idx) => {
             const event = events[idx];
             const eventClef = String(event?.clef || "treble").toLowerCase();
-            return event?.type === "note" && eventClef === "bass" && !noBeamIndices.has(idx);
+            return (
+              event?.type === "note" &&
+              eventClef === "bass" &&
+              !noBeamIndices.has(idx)
+            );
           });
 
           const trebleBeams = Beam.generateBeams(trebleNotesOnly, beamConfig);
           const bassBeams = Beam.generateBeams(bassNotesOnly, beamConfig);
 
-          const beamedTrebleNotes = new Set(trebleBeams.flatMap((b) => b.getNotes()));
-          const beamedBassNotes = new Set(bassBeams.flatMap((b) => b.getNotes()));
+          const beamedTrebleNotes = new Set(
+            trebleBeams.flatMap((b) => b.getNotes())
+          );
+          const beamedBassNotes = new Set(
+            bassBeams.flatMap((b) => b.getNotes())
+          );
 
           trebleTickables.forEach((tick, idx) => {
             const event = events[idx];
@@ -905,7 +1013,9 @@ export function VexFlowStaffDisplay({
             const eventClef = String(event?.clef || "treble").toLowerCase();
             if (eventClef !== "treble") return;
             if (!beamedTrebleNotes.has(tick)) {
-              tick.setStemDirection(getStemDirectionForPitch(event.pitch, "treble"));
+              tick.setStemDirection(
+                getStemDirectionForPitch(event.pitch, "treble")
+              );
             }
           });
 
@@ -915,7 +1025,9 @@ export function VexFlowStaffDisplay({
             const eventClef = String(event?.clef || "treble").toLowerCase();
             if (eventClef !== "bass") return;
             if (!beamedBassNotes.has(tick)) {
-              tick.setStemDirection(getStemDirectionForPitch(event.pitch, "bass"));
+              tick.setStemDirection(
+                getStemDirectionForPitch(event.pitch, "bass")
+              );
             }
           });
 
@@ -932,12 +1044,15 @@ export function VexFlowStaffDisplay({
           bassVoice.addTickables(bassTickables);
 
           // Apply accidentals after all tickables are added, before formatter.
-          Accidental.applyAccidentals([trebleVoice], activeKeySignature || 'C');
-          Accidental.applyAccidentals([bassVoice], activeKeySignature || 'C');
+          Accidental.applyAccidentals([trebleVoice], activeKeySignature || "C");
+          Accidental.applyAccidentals([bassVoice], activeKeySignature || "C");
 
-          const isFeedback = gamePhase === "feedback" && performanceResults.length > 0;
+          const isFeedback =
+            gamePhase === "feedback" && performanceResults.length > 0;
           const wrongPitchResults = isFeedback
-            ? performanceResults.filter((r) => r.timingStatus === "wrong_pitch" && r.detected)
+            ? performanceResults.filter(
+                (r) => r.timingStatus === "wrong_pitch" && r.detected
+              )
             : [];
 
           let wrongTrebleVoice = null;
@@ -954,8 +1069,18 @@ export function VexFlowStaffDisplay({
                   duration,
                   targetClef: "treble",
                 });
-                wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
-                wrong.setStemDirection(getStemDirectionForPitch(result.detected, "treble"));
+                wrong.setStyle({
+                  fillStyle: "#EF4444",
+                  strokeStyle: "#EF4444",
+                });
+                wrong.setStemDirection(
+                  getStemDirectionForPitch(result.detected, "treble")
+                );
+                wrong.setStemStyle({ strokeStyle: "transparent" });
+                wrong.setFlagStyle({
+                  fillStyle: "transparent",
+                  strokeStyle: "transparent",
+                });
                 return wrong;
               }
               return buildSpacerRest(duration, "treble");
@@ -971,8 +1096,18 @@ export function VexFlowStaffDisplay({
                   duration,
                   targetClef: "bass",
                 });
-                wrong.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
-                wrong.setStemDirection(getStemDirectionForPitch(result.detected, "bass"));
+                wrong.setStyle({
+                  fillStyle: "#EF4444",
+                  strokeStyle: "#EF4444",
+                });
+                wrong.setStemDirection(
+                  getStemDirectionForPitch(result.detected, "bass")
+                );
+                wrong.setStemStyle({ strokeStyle: "transparent" });
+                wrong.setFlagStyle({
+                  fillStyle: "transparent",
+                  strokeStyle: "transparent",
+                });
                 return wrong;
               }
               return buildSpacerRest(duration, "bass");
@@ -992,14 +1127,22 @@ export function VexFlowStaffDisplay({
           }
 
           if (wrongTrebleVoice) {
-            new Formatter().joinVoices([trebleVoice, wrongTrebleVoice]).format([trebleVoice, wrongTrebleVoice], formatterWidth);
+            new Formatter()
+              .joinVoices([trebleVoice, wrongTrebleVoice])
+              .format([trebleVoice, wrongTrebleVoice], formatterWidth);
           } else {
-            new Formatter().joinVoices([trebleVoice]).format([trebleVoice], formatterWidth);
+            new Formatter()
+              .joinVoices([trebleVoice])
+              .format([trebleVoice], formatterWidth);
           }
           if (wrongBassVoice) {
-            new Formatter().joinVoices([bassVoice, wrongBassVoice]).format([bassVoice, wrongBassVoice], formatterWidth);
+            new Formatter()
+              .joinVoices([bassVoice, wrongBassVoice])
+              .format([bassVoice, wrongBassVoice], formatterWidth);
           } else {
-            new Formatter().joinVoices([bassVoice]).format([bassVoice], formatterWidth);
+            new Formatter()
+              .joinVoices([bassVoice])
+              .format([bassVoice], formatterWidth);
           }
 
           trebleVoice.draw(context, trebleStave);
@@ -1030,21 +1173,30 @@ export function VexFlowStaffDisplay({
         const yPosition = Math.max(ledgerLineSpaceTop, verticalCenter);
 
         // IMPORTANT: do NOT scale the viewBox; the context is already scaled.
-        makeSvgResponsive(canvasWidth + PADDING_X, canvasHeight + PADDING_Y, totalBars);
+        makeSvgResponsive(
+          canvasWidth + PADDING_X,
+          canvasHeight + PADDING_Y,
+          totalBars
+        );
 
         // Get all events for rendering
         const allEvents = Array.isArray(pattern.notes) ? pattern.notes : [];
         const events = shouldRenderSingleBar
-          ? allEvents.filter((e) => Number(e?.barIndex ?? 0) === currentBarIndex)
+          ? allEvents.filter(
+              (e) => Number(e?.barIndex ?? 0) === currentBarIndex
+            )
           : allEvents;
         const durations =
           Array.isArray(pattern.vexflowNotes) &&
           pattern.vexflowNotes.length === allEvents.length
-            ? (shouldRenderSingleBar
-                ? pattern.vexflowNotes
-                    .filter((_, i) => Number(allEvents?.[i]?.barIndex ?? 0) === currentBarIndex)
-                    .map((n) => n?.duration || "q")
-                : pattern.vexflowNotes.map((n) => n?.duration || "q"))
+            ? shouldRenderSingleBar
+              ? pattern.vexflowNotes
+                  .filter(
+                    (_, i) =>
+                      Number(allEvents?.[i]?.barIndex ?? 0) === currentBarIndex
+                  )
+                  .map((n) => n?.duration || "q")
+              : pattern.vexflowNotes.map((n) => n?.duration || "q")
             : events.map(() => "q");
 
         if (totalBars > 1) {
@@ -1053,13 +1205,13 @@ export function VexFlowStaffDisplay({
           const staveWidthPerBar = FIXED_STAVE_WIDTH_PER_BAR;
 
           for (let barIdx = 0; barIdx < totalBars; barIdx++) {
-            const xPos = STAVE_X + (barIdx * staveWidthPerBar);
+            const xPos = STAVE_X + barIdx * staveWidthPerBar;
             const stave = new Stave(xPos, yPosition, staveWidthPerBar);
 
             // Only first bar gets clef, key signature, and time signature
             if (barIdx === 0) {
               stave.addClef(clef);
-              if (activeKeySignature && activeKeySignature !== 'C') {
+              if (activeKeySignature && activeKeySignature !== "C") {
                 stave.addKeySignature(activeKeySignature);
               }
               stave.addTimeSignature(pattern.timeSignature);
@@ -1096,19 +1248,23 @@ export function VexFlowStaffDisplay({
               const duration = durations[globalIdx] || "q";
 
               if (event.type === "rest") {
-                barStaveNotes.push(buildStaveNote({
-                  pitchStr: null,
-                  duration: `${duration.replace(/r$/, "")}r`,
-                  targetClef: clef,
-                }));
+                barStaveNotes.push(
+                  buildStaveNote({
+                    pitchStr: null,
+                    duration: `${duration.replace(/r$/, "")}r`,
+                    targetClef: clef,
+                  })
+                );
                 barPitchStrings.push(null);
               } else {
-                barStaveNotes.push(buildStaveNote({
-                  pitchStr: event.pitch,
-                  duration,
-                  targetClef: clef,
-                  skipManualAccidental: true,
-                }));
+                barStaveNotes.push(
+                  buildStaveNote({
+                    pitchStr: event.pitch,
+                    duration,
+                    targetClef: clef,
+                    skipManualAccidental: true,
+                  })
+                );
                 barPitchStrings.push(event.pitch);
               }
             });
@@ -1121,7 +1277,8 @@ export function VexFlowStaffDisplay({
             );
 
             const autoBeamNotes = barStaveNotes.filter(
-              (note, idx) => !noBeamIndicesForBar.has(idx) && barEvents[idx]?.type === "note"
+              (note, idx) =>
+                !noBeamIndicesForBar.has(idx) && barEvents[idx]?.type === "note"
             );
             const barBeams = Beam.generateBeams(autoBeamNotes, beamConfig);
 
@@ -1143,12 +1300,13 @@ export function VexFlowStaffDisplay({
             voice.addTickables(barStaveNotes);
 
             // Apply accidentals after all tickables are added, before formatter.
-            Accidental.applyAccidentals([voice], activeKeySignature || 'C');
+            Accidental.applyAccidentals([voice], activeKeySignature || "C");
 
             // Calculate formatter width for this bar
-            const barFormatterWidth = barIdx === 0
-              ? Math.max(staveWidthPerBar - 100, 100)
-              : Math.max(staveWidthPerBar - 20, 100);
+            const barFormatterWidth =
+              barIdx === 0
+                ? Math.max(staveWidthPerBar - 100, 100)
+                : Math.max(staveWidthPerBar - 20, 100);
 
             // Handle wrong pitch overlay
             let wrongVoice = null;
@@ -1161,7 +1319,9 @@ export function VexFlowStaffDisplay({
                 const wrongStaveNotes = barEvents.map((event, localIdx) => {
                   const globalIdx = barEventIndices[localIdx];
                   const duration = durations[globalIdx] || "q";
-                  const result = wrongPitchResults.find((r) => r.noteIndex === globalIdx);
+                  const result = wrongPitchResults.find(
+                    (r) => r.noteIndex === globalIdx
+                  );
 
                   if (result && event.type !== "rest") {
                     const playedNote = result.detected;
@@ -1175,10 +1335,23 @@ export function VexFlowStaffDisplay({
                       clef: clef,
                     });
                     if (parsedPlayed?.accidental) {
-                      wrongNote.addModifier(new Accidental(parsedPlayed.accidental), 0);
+                      wrongNote.addModifier(
+                        new Accidental(parsedPlayed.accidental),
+                        0
+                      );
                     }
-                    wrongNote.setStemDirection(getStemDirectionForPitch(playedNote, clef));
-                    wrongNote.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                    wrongNote.setStemDirection(
+                      getStemDirectionForPitch(playedNote, clef)
+                    );
+                    wrongNote.setStyle({
+                      fillStyle: "#EF4444",
+                      strokeStyle: "#EF4444",
+                    });
+                    wrongNote.setStemStyle({ strokeStyle: "transparent" });
+                    wrongNote.setFlagStyle({
+                      fillStyle: "transparent",
+                      strokeStyle: "transparent",
+                    });
                     return wrongNote;
                   }
                   return buildSpacerRest(duration, clef);
@@ -1194,12 +1367,16 @@ export function VexFlowStaffDisplay({
 
             // Format and draw
             if (wrongVoice) {
-              new Formatter().joinVoices([voice, wrongVoice]).format([voice, wrongVoice], barFormatterWidth);
+              new Formatter()
+                .joinVoices([voice, wrongVoice])
+                .format([voice, wrongVoice], barFormatterWidth);
               voice.draw(context, stave);
               barBeams.forEach((beam) => beam.setContext(context).draw());
               wrongVoice.draw(context, stave);
             } else {
-              new Formatter().joinVoices([voice]).format([voice], barFormatterWidth);
+              new Formatter()
+                .joinVoices([voice])
+                .format([voice], barFormatterWidth);
               voice.draw(context, stave);
               barBeams.forEach((beam) => beam.setContext(context).draw());
             }
@@ -1208,7 +1385,7 @@ export function VexFlowStaffDisplay({
           // Single bar: original behavior
           const stave = new Stave(STAVE_X, yPosition, TOTAL_STAVE_WIDTH);
           stave.addClef(clef);
-          if (activeKeySignature && activeKeySignature !== 'C') {
+          if (activeKeySignature && activeKeySignature !== "C") {
             stave.addKeySignature(activeKeySignature);
           }
           stave.addTimeSignature(pattern.timeSignature);
@@ -1245,7 +1422,8 @@ export function VexFlowStaffDisplay({
           });
 
           const autoBeamNotes = staveNotes.filter(
-            (note, idx) => !noBeamIndices.has(idx) && events[idx]?.type === "note"
+            (note, idx) =>
+              !noBeamIndices.has(idx) && events[idx]?.type === "note"
           );
           const beams = Beam.generateBeams(autoBeamNotes, beamConfig);
 
@@ -1266,7 +1444,7 @@ export function VexFlowStaffDisplay({
           voice.addTickables(staveNotes);
 
           // Apply accidentals after all tickables are added, before formatter.
-          Accidental.applyAccidentals([voice], activeKeySignature || 'C');
+          Accidental.applyAccidentals([voice], activeKeySignature || "C");
 
           // Handle wrong pitch overlay
           let wrongVoice = null;
@@ -1278,7 +1456,9 @@ export function VexFlowStaffDisplay({
             if (wrongPitchResults.length > 0) {
               const wrongStaveNotes = events.map((event, idx) => {
                 const duration = durations[idx] || "q";
-                const result = wrongPitchResults.find((r) => r.noteIndex === idx);
+                const result = wrongPitchResults.find(
+                  (r) => r.noteIndex === idx
+                );
 
                 if (result && event.type !== "rest") {
                   const playedNote = result.detected;
@@ -1292,10 +1472,23 @@ export function VexFlowStaffDisplay({
                     clef: clef,
                   });
                   if (parsedPlayed?.accidental) {
-                    wrongNote.addModifier(new Accidental(parsedPlayed.accidental), 0);
+                    wrongNote.addModifier(
+                      new Accidental(parsedPlayed.accidental),
+                      0
+                    );
                   }
-                  wrongNote.setStemDirection(getStemDirectionForPitch(playedNote, clef));
-                  wrongNote.setStyle({ fillStyle: "#EF4444", strokeStyle: "#EF4444" });
+                  wrongNote.setStemDirection(
+                    getStemDirectionForPitch(playedNote, clef)
+                  );
+                  wrongNote.setStyle({
+                    fillStyle: "#EF4444",
+                    strokeStyle: "#EF4444",
+                  });
+                  wrongNote.setStemStyle({ strokeStyle: "transparent" });
+                  wrongNote.setFlagStyle({
+                    fillStyle: "transparent",
+                    strokeStyle: "transparent",
+                  });
                   return wrongNote;
                 }
                 return buildSpacerRest(duration, clef);
@@ -1311,7 +1504,9 @@ export function VexFlowStaffDisplay({
 
           // Format and draw
           if (wrongVoice) {
-            new Formatter().joinVoices([voice, wrongVoice]).format([voice, wrongVoice], formatterWidth);
+            new Formatter()
+              .joinVoices([voice, wrongVoice])
+              .format([voice, wrongVoice], formatterWidth);
             voice.draw(context, stave);
             beams.forEach((beam) => beam.setContext(context).draw());
             wrongVoice.draw(context, stave);
@@ -1326,7 +1521,8 @@ export function VexFlowStaffDisplay({
       // Extract note elements for highlighting
       notesRef.current = extractNoteElements();
       if (import.meta.env.DEV) {
-        console.debug("[VexFlowStaffDisplay]", { // eslint-disable-line no-console
+        console.debug("[VexFlowStaffDisplay]", {
+          // eslint-disable-line no-console
           notesRef: notesRef.current.length,
         });
       }
@@ -1495,7 +1691,8 @@ export function VexFlowStaffDisplay({
       justLeftFeedback
     ) {
       if (import.meta.env.DEV) {
-        console.debug("[VexFlowStaffDisplay]", { // eslint-disable-line no-console
+        console.debug("[VexFlowStaffDisplay]", {
+          // eslint-disable-line no-console
           patternChanged,
           clefChanged,
           containerEmpty,
@@ -1585,12 +1782,16 @@ export function VexFlowStaffDisplay({
             const noteRect = currentNoteElement.getBoundingClientRect();
 
             // Calculate note position relative to container's scroll position
-            const noteLeftRelativeToContainer = noteRect.left - containerRect.left + container.scrollLeft;
+            const noteLeftRelativeToContainer =
+              noteRect.left - containerRect.left + container.scrollLeft;
 
             // Target scroll position: position note at 30% from left edge
             // This gives users preview of upcoming notes while keeping current note visible
             const viewportWidth = containerRect.width;
-            let newTarget = Math.max(0, noteLeftRelativeToContainer - (viewportWidth * 0.3));
+            let newTarget = Math.max(
+              0,
+              noteLeftRelativeToContainer - viewportWidth * 0.3
+            );
 
             // Calculate maximum scroll position to prevent over-scrolling
             // The last measure should have the same padding from the right edge as the first measure has from the left edge
@@ -1604,7 +1805,10 @@ export function VexFlowStaffDisplay({
 
               // Maximum scroll = total content width - viewport width + left padding
               // This ensures the last measure is at the same distance from right edge as first measure is from left edge
-              const maxAllowedScroll = Math.max(0, contentWidth - viewportWidth + leftPadding);
+              const maxAllowedScroll = Math.max(
+                0,
+                contentWidth - viewportWidth + leftPadding
+              );
 
               // Clamp the target scroll position to not exceed maximum
               newTarget = Math.min(newTarget, maxAllowedScroll);
@@ -1617,7 +1821,10 @@ export function VexFlowStaffDisplay({
               targetScrollRef.current = newTarget;
             }
           } catch (err) {
-            console.warn("Failed to calculate scroll position for current note:", err);
+            console.warn(
+              "Failed to calculate scroll position for current note:",
+              err
+            );
           }
         }
       }
@@ -1654,7 +1861,7 @@ export function VexFlowStaffDisplay({
     // Reset to start of pattern for feedback review
     container.scrollTo({
       left: 0,
-      behavior: 'smooth',
+      behavior: "smooth",
     });
   }, [gamePhase]);
 
