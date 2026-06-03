@@ -657,6 +657,7 @@
     "backToModes": "משחקי תרגול",
     "score": "ניקוד",
     "time": "זמן",
+    "comingSoon": "בקרוב",
     "actions": {
       "start": "התחל משחק",
       "pause": "עצור",
@@ -709,6 +710,10 @@
       "sightReading": {
         "name": "קריאה מהירה",
         "description": "נגנו תבניות מוזיקליות בקצב ובצלילים הנכונים"
+      },
+      "earTraining": {
+        "name": "פיתוח שמיעה",
+        "description": "אמנו את האוזן לזהות תווים ומרווחים"
       },
       "notesReading": {
         "name": "קריאת תווים",

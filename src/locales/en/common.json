@@ -656,6 +656,7 @@
   "games": {
     "score": "Score",
     "time": "Time",
+    "comingSoon": "Coming Soon",
     "backToModes": "Game Modes",
     "actions": {
       "start": "Start Game",
@@ -709,6 +710,10 @@
       "sightReading": {
         "name": "Sight Reading",
         "description": "Play patterns with accurate pitch and timing"
+      },
+      "earTraining": {
+        "name": "Ear Training",
+        "description": "Train your ear to recognize notes and intervals"
       },
       "notesReading": {
         "name": "Notes Reading",

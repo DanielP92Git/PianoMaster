@@ -61,9 +61,11 @@ import rhythmUnit10Nodes from "./units/rhythmUnit10.js";
 // To re-enable: (1) uncomment the import below; (2) uncomment both spread lines in EXPANDED_NODES + EXPANDED_RHYTHM_NODES; (3) UNITS.RHYTHM_SYNCO entry already exists in skillTrail.js (pre-authored by Phase 1 Plan 08 Task 4); (4) update CLAUDE.md node counts.
 // import rhythmUnit8SyncoNodes from './units/rhythmUnit8Redesigned.js';
 
-// Ear training units
-import earTrainingUnit1Nodes from "./units/earTrainingUnit1.js";
-import earTrainingUnit2Nodes from "./units/earTrainingUnit2.js";
+// HIDDEN-V1: Ear training units (Unit 1 "Sound Direction" / pitch comparison, Unit 2 "Interval Explorer" / interval ID) — temporarily disabled — re-enable for future release.
+// Presented as "Coming Soon" in the trail tab (TrailMap empty-state) and on the standalone games screen (PracticeModes card).
+// To re-enable: (1) uncomment both imports below; (2) uncomment both spread lines in EXPANDED_NODES; (3) restore the EXPANDED_EAR_TRAINING_NODES array; (4) remove the comingSoon branch in PracticeModes.jsx. UNITS.EAR_1/EAR_2, the ear_training tab config, routes, and unit files are all preserved.
+// import earTrainingUnit1Nodes from "./units/earTrainingUnit1.js";
+// import earTrainingUnit2Nodes from "./units/earTrainingUnit2.js";
 
 // Combine all nodes
 export const EXPANDED_NODES = [
@@ -100,9 +102,9 @@ export const EXPANDED_NODES = [
   ...rhythmUnit10Nodes,
   // HIDDEN-V1: ...rhythmUnit8SyncoNodes (rhythm_synco_*),
 
-  // Ear training units
-  ...earTrainingUnit1Nodes,
-  ...earTrainingUnit2Nodes,
+  // HIDDEN-V1: Ear training units — temporarily disabled (see import block above).
+  // ...earTrainingUnit1Nodes,
+  // ...earTrainingUnit2Nodes,
 ];
 
 // Export by category for easy integration
@@ -138,10 +140,11 @@ export const EXPANDED_RHYTHM_NODES = [
   // HIDDEN-V1: ...rhythmUnit8SyncoNodes (rhythm_synco_*),
 ];
 
-export const EXPANDED_EAR_TRAINING_NODES = [
-  ...earTrainingUnit1Nodes,
-  ...earTrainingUnit2Nodes,
-];
+// HIDDEN-V1: Ear training nodes — temporarily disabled (see import block above). Empty array keeps downstream imports resolving.
+// To re-enable, restore:
+//   ...earTrainingUnit1Nodes,
+//   ...earTrainingUnit2Nodes,
+export const EXPANDED_EAR_TRAINING_NODES = [];
 
 // Update prerequisites to link between units
 // Note: All unit prerequisites are now set in their redesigned files

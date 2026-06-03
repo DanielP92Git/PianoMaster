@@ -70,7 +70,9 @@
     "bass": "Bass",
     "rhythm": "Rhythm",
     "ear_training": "Ear Training",
-    "ear_trainingPanel": "Ear Training learning path"
+    "ear_trainingPanel": "Ear Training learning path",
+    "comingSoon": "Coming Soon!",
+    "comingSoonHint": "This path will unlock in a future update."
   },
   "node": {
     "startHere": "Start Here!",
