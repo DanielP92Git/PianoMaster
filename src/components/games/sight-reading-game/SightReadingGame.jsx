@@ -162,7 +162,6 @@ const logMetronomeTiming = (label, payload = {}) => {
       ? Number(performance.now().toFixed(2))
       : null;
   console.debug("[MetronomeTiming]", {
-    // eslint-disable-line no-console
     timestamp,
     ...payload,
   });
@@ -305,6 +304,7 @@ export function SightReadingGame() {
   const countInEndAudioTimeRef = useRef(null); // AudioContext seconds at count-in end (scheduled)
   const countInEndWallClockMsRef = useRef(null); // Date.now() ms at count-in end (scheduled)
   const performanceStartAudioTimeRef = useRef(null); // AudioContext seconds at performance start (preferred timing baseline)
+  const forcePerformanceWallClockRef = useRef(false); // true when count-in was force-completed on a stalled audio clock; performance then runs on the wall clock
 
   // Input mode state: "keyboard" or "mic"
   const [inputMode, setInputMode] = useState(() => {
@@ -648,6 +648,12 @@ export function SightReadingGame() {
 
   // Helper: Get elapsed time from performance start in ms
   const getElapsedMsFromPerformanceStart = useCallback(() => {
+    // Forced wall-clock mode: count-in was force-completed because the audio clock
+    // stalled, so AudioContext time is unreliable — measure elapsed from the wall clock.
+    if (forcePerformanceWallClockRef.current && wallClockStartTimeRef.current) {
+      return Math.max(0, Date.now() - wallClockStartTimeRef.current);
+    }
+
     // Prefer audio clock baseline (metronome is scheduled on AudioContext time).
     if (
       typeof performanceStartAudioTimeRef.current === "number" &&
@@ -960,7 +966,6 @@ export function SightReadingGame() {
       }
       lastScoredRef.current = { pitch: event.pitch, time: now };
       handleNoteDetectedRef.current(event.pitch, event.frequency ?? 440);
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render; it is only used for debug logging (getCurrentTime); adding it would invalidate this hot-path callback on every render
     },
     [micTiming]
   );
@@ -1574,7 +1579,6 @@ export function SightReadingGame() {
       if (!canScoreNow(phase)) {
         if (import.meta.env.DEV) {
           console.debug("[NoteDetection]", {
-            // eslint-disable-line no-console
             blocked: true,
             phase,
             timingState: timingStateRef.current,
@@ -1594,7 +1598,6 @@ export function SightReadingGame() {
         const firstWindow = timingWindows[0];
         if (import.meta.env.DEV) {
           console.debug("[NoteDetection]", {
-            // eslint-disable-line no-console
             note: detectedNote,
             elapsed: elapsedTimeMs.toFixed(0),
             firstWindow: [
@@ -1764,7 +1767,6 @@ export function SightReadingGame() {
       if (elapsedTimeMs - lastTime < DEBOUNCE_MS) {
         if (import.meta.env.DEV) {
           console.debug("[NoteDetection]", {
-            // eslint-disable-line no-console
             debounced: true,
             noteIndex: matchingNoteIndex + 1,
             elapsed: (elapsedTimeMs - lastTime).toFixed(0),
@@ -1860,7 +1862,6 @@ export function SightReadingGame() {
 
         if (import.meta.env.DEV) {
           console.debug("[NoteDetection]", {
-            // eslint-disable-line no-console
             correct: true,
             noteIndex: matchingNoteIndex + 1,
             detectedNote,
@@ -1910,7 +1911,6 @@ export function SightReadingGame() {
         // Record wrong pitch (per PRD: show RED feedback)
         if (import.meta.env.DEV) {
           console.debug("[NoteDetection]", {
-            // eslint-disable-line no-console
             wrong: true,
             noteIndex: matchingNoteIndex + 1,
             expected: matchingEvent.pitch,
@@ -2391,7 +2391,6 @@ export function SightReadingGame() {
   useEffect(() => {
     if (METRONOME_TIMING_DEBUG) {
       console.debug("[ScoreSyncStatus]", {
-        // eslint-disable-line no-console
         scoreSyncStatus,
       });
     }
@@ -2567,277 +2566,292 @@ export function SightReadingGame() {
   ]);
 
   // Count-in complete handler
-  const handleCountInComplete = useCallback(async () => {
-    if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
-      logMetronomeTiming("handleCountInComplete ignored", {
-        reason: "not in count-in phase",
-        phase: gamePhaseRef.current,
-      });
-      return;
-    }
-
-    clearCountInTimeouts();
-
-    // Guard: if count-in completion is triggered while AudioContext time is still
-    // behind the scheduled end, wait until the audio clock reaches the target.
-    // This prevents large negative drift when the audio clock stalls/resumes.
-    const scheduledEndAudio = countInEndAudioTimeRef.current;
-    if (typeof scheduledEndAudio === "number") {
-      const audioNow = audioEngine.getCurrentTime();
-      if (audioNow + COUNT_IN_AUDIO_GUARD_EARLY_MS / 1000 < scheduledEndAudio) {
-        // #region agent log
-        __srLog({
-          sessionId: "debug-session",
-          runId: "mic-latency-pre2",
-          hypothesisId: "Hsync",
-          location:
-            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-          message: "countIn.complete.guardSuggestWait",
-          data: {
-            scheduledEndAudio,
-            audioNow,
-            remainingMs: Math.round((scheduledEndAudio - audioNow) * 1000),
-          },
-          timestamp: Date.now(),
+  const handleCountInComplete = useCallback(
+    async (options) => {
+      const force = options?.force === true;
+      if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
+        logMetronomeTiming("handleCountInComplete ignored", {
+          reason: "not in count-in phase",
+          phase: gamePhaseRef.current,
         });
-        // #endregion
-        if (countInRafRef.current.completion) {
-          cancelAnimationFrame(countInRafRef.current.completion);
-        }
-        const waitUntilAudioCatchesUp = () => {
-          if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
-            countInRafRef.current.completion = null;
-            return;
+        return;
+      }
+
+      clearCountInTimeouts();
+
+      // Guard: if count-in completion is triggered while AudioContext time is still
+      // behind the scheduled end, wait until the audio clock reaches the target.
+      // This prevents large negative drift when the audio clock stalls/resumes.
+      const scheduledEndAudio = countInEndAudioTimeRef.current;
+      if (!force && typeof scheduledEndAudio === "number") {
+        const audioNow = audioEngine.getCurrentTime();
+        if (
+          audioNow + COUNT_IN_AUDIO_GUARD_EARLY_MS / 1000 <
+          scheduledEndAudio
+        ) {
+          // #region agent log
+          __srLog({
+            sessionId: "debug-session",
+            runId: "mic-latency-pre2",
+            hypothesisId: "Hsync",
+            location:
+              "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+            message: "countIn.complete.guardSuggestWait",
+            data: {
+              scheduledEndAudio,
+              audioNow,
+              remainingMs: Math.round((scheduledEndAudio - audioNow) * 1000),
+            },
+            timestamp: Date.now(),
+          });
+          // #endregion
+          if (countInRafRef.current.completion) {
+            cancelAnimationFrame(countInRafRef.current.completion);
           }
-          if (audioEngine.getCurrentTime() >= scheduledEndAudio) {
-            countInRafRef.current.completion = null;
-            handleCountInComplete();
-            return;
-          }
+          const waitUntilAudioCatchesUp = () => {
+            if (gamePhaseRef.current !== GAME_PHASES.COUNT_IN) {
+              countInRafRef.current.completion = null;
+              return;
+            }
+            if (audioEngine.getCurrentTime() >= scheduledEndAudio) {
+              countInRafRef.current.completion = null;
+              handleCountInComplete();
+              return;
+            }
+            countInRafRef.current.completion = requestAnimationFrame(
+              waitUntilAudioCatchesUp
+            );
+          };
           countInRafRef.current.completion = requestAnimationFrame(
             waitUntilAudioCatchesUp
           );
-        };
-        countInRafRef.current.completion = requestAnimationFrame(
-          waitUntilAudioCatchesUp
-        );
-        return;
+          return;
+        }
       }
-    }
 
-    // Ensure we have a scheduled performance start time established earlier
-    const now = Date.now();
-    let scheduledTarget = wallClockStartTimeRef.current;
-    if (typeof scheduledTarget !== "number") {
-      scheduledTarget = now;
-      wallClockStartTimeRef.current = now;
-    }
-    // #region agent log
-    __srLog({
-      sessionId: "debug-session",
-      runId: "mic-latency-pre2",
-      hypothesisId: "Hsync",
-      location:
-        "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-      message: "countIn.complete.callback",
-      data: {
-        scheduledWallStartMs: scheduledTarget,
-        scheduledWallStartMsRef: countInEndWallClockMsRef.current,
-        scheduledAudioEnd: countInEndAudioTimeRef.current,
-        nowWallMs: now,
-        driftWallMs:
-          typeof scheduledTarget === "number" ? now - scheduledTarget : null,
-        audioNow: audioEngine.getCurrentTime(),
-        audioDriftMs:
-          typeof countInEndAudioTimeRef.current === "number"
-            ? Math.round(
-                (audioEngine.getCurrentTime() -
-                  countInEndAudioTimeRef.current) *
-                  1000
-              )
-            : null,
-      },
-      timestamp: Date.now(),
-    });
-    // #endregion
-    logMetronomeTiming("handleCountInComplete invoked", {
-      scheduledStart: scheduledTarget,
-      actualCallback: now,
-      driftMs: now - scheduledTarget,
-      audioContextTime: audioEngine.getCurrentTime(),
-    });
-
-    // IMPORTANT: Do NOT re-base performance start to callback wall time.
-    // Use the scheduled count-in end (wall + audio) so scoring aligns with metronome.
-    if (typeof countInEndWallClockMsRef.current === "number") {
-      wallClockStartTimeRef.current = countInEndWallClockMsRef.current;
-    } else {
-      wallClockStartTimeRef.current = scheduledTarget;
-    }
-    if (typeof countInEndAudioTimeRef.current === "number") {
-      performanceStartAudioTimeRef.current = countInEndAudioTimeRef.current;
-    } else {
-      performanceStartAudioTimeRef.current = audioEngine.getCurrentTime();
-    }
-
-    // Downbeat click exactly at performance start so beat 1 is audible.
-    // If the guide metronome is enabled, it will schedule this downbeat itself.
-    if (PLAY_PERFORMANCE_DOWNBEAT_CLICK && !metronomeEnabled) {
-      const downbeatAt = performanceStartAudioTimeRef.current + 0.01;
-      audioEngine.createMetronomeClick(downbeatAt, true, 2);
+      // Ensure we have a scheduled performance start time established earlier
+      const now = Date.now();
+      let scheduledTarget = wallClockStartTimeRef.current;
+      if (typeof scheduledTarget !== "number") {
+        scheduledTarget = now;
+        wallClockStartTimeRef.current = now;
+      }
       // #region agent log
       __srLog({
         sessionId: "debug-session",
-        runId: "metronome-align-pre",
-        hypothesisId: "Hbeat",
+        runId: "mic-latency-pre2",
+        hypothesisId: "Hsync",
         location:
           "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-        message: "performance.downbeatClickScheduled",
+        message: "countIn.complete.callback",
         data: {
-          downbeatAt,
-          performanceStartAudioTime: performanceStartAudioTimeRef.current,
+          scheduledWallStartMs: scheduledTarget,
+          scheduledWallStartMsRef: countInEndWallClockMsRef.current,
+          scheduledAudioEnd: countInEndAudioTimeRef.current,
+          nowWallMs: now,
+          driftWallMs:
+            typeof scheduledTarget === "number" ? now - scheduledTarget : null,
           audioNow: audioEngine.getCurrentTime(),
-          metronomeEnabled,
+          audioDriftMs:
+            typeof countInEndAudioTimeRef.current === "number"
+              ? Math.round(
+                  (audioEngine.getCurrentTime() -
+                    countInEndAudioTimeRef.current) *
+                    1000
+                )
+              : null,
         },
         timestamp: Date.now(),
       });
       // #endregion
+      logMetronomeTiming("handleCountInComplete invoked", {
+        scheduledStart: scheduledTarget,
+        actualCallback: now,
+        driftMs: now - scheduledTarget,
+        audioContextTime: audioEngine.getCurrentTime(),
+      });
 
-      if (AUDIO_OUTPUT_LATENCY_COMP_DEBUG) {
-        const ctx = audioEngine.audioContextRef?.current;
-        const outputLatencyMs =
-          typeof ctx?.outputLatency === "number"
-            ? Math.round(ctx.outputLatency * 1000)
-            : null;
-        const baseLatencyMs =
-          typeof ctx?.baseLatency === "number"
-            ? Math.round(ctx.baseLatency * 1000)
-            : null;
+      // IMPORTANT: Do NOT re-base performance start to callback wall time.
+      // Use the scheduled count-in end (wall + audio) so scoring aligns with metronome.
+      if (typeof countInEndWallClockMsRef.current === "number") {
+        wallClockStartTimeRef.current = countInEndWallClockMsRef.current;
+      } else {
+        wallClockStartTimeRef.current = scheduledTarget;
+      }
+      if (typeof countInEndAudioTimeRef.current === "number") {
+        performanceStartAudioTimeRef.current = countInEndAudioTimeRef.current;
+      } else {
+        performanceStartAudioTimeRef.current = audioEngine.getCurrentTime();
+      }
+
+      // Forced completion = the audio clock stalled and the safety net fired. The
+      // AudioContext time can't be trusted to advance, so drive the performance phase
+      // off the wall clock (starting now) — otherwise the timeline would freeze too.
+      if (force) {
+        forcePerformanceWallClockRef.current = true;
+        wallClockStartTimeRef.current = Date.now();
+      }
+
+      // Downbeat click exactly at performance start so beat 1 is audible.
+      // If the guide metronome is enabled, it will schedule this downbeat itself.
+      if (PLAY_PERFORMANCE_DOWNBEAT_CLICK && !metronomeEnabled) {
+        const downbeatAt = performanceStartAudioTimeRef.current + 0.01;
+        audioEngine.createMetronomeClick(downbeatAt, true, 2);
         // #region agent log
         __srLog({
           sessionId: "debug-session",
-          runId: "audio-latency-pre",
-          hypothesisId: "Hout",
+          runId: "metronome-align-pre",
+          hypothesisId: "Hbeat",
           location:
             "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-          message: "audioContext.latency",
+          message: "performance.downbeatClickScheduled",
           data: {
-            outputLatencyMs,
-            baseLatencyMs,
-            sampleRate:
-              typeof ctx?.sampleRate === "number" ? ctx.sampleRate : null,
-            state: typeof ctx?.state === "string" ? ctx.state : null,
+            downbeatAt,
+            performanceStartAudioTime: performanceStartAudioTimeRef.current,
+            audioNow: audioEngine.getCurrentTime(),
             metronomeEnabled,
           },
           timestamp: Date.now(),
         });
         // #endregion
-      }
-    }
 
-    stopCountInVisualization();
-    gamePhaseRef.current = GAME_PHASES.PERFORMANCE;
-    flushSync(() => {
-      setGamePhase(GAME_PHASES.PERFORMANCE);
-    });
-    // Note: timing state is already EARLY_WINDOW from count-in, will transition to LIVE via schedulePerformanceLiveActivation
-    resetPerformanceLiveState();
-
-    schedulePerformanceLiveActivation();
-    // Defer timeline scheduling to the next frame so Safari can paint the phase flip first.
-    requestAnimationFrame(() => {
-      if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) return;
-      try {
-        schedulePerformanceTimeline();
-      } catch (error) {
-        // #region agent log
-        __srLog({
-          sessionId: "debug-session",
-          runId: "timeline-audio-pre",
-          hypothesisId: "Hwall",
-          location:
-            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-          message: "timeline.error",
-          data: { error: String(error?.message || error) },
-          timestamp: Date.now(),
-        });
-        // #endregion
-      }
-    });
-
-    if (metronomeEnabled) {
-      startMetronomePlayback(performanceStartAudioTimeRef.current);
-    }
-
-    // Only start microphone if mic input mode is selected (do not block performance start)
-    if (inputMode === "mic") {
-      // If we already requested mic start in the EARLY_WINDOW during COUNT_IN, don't double-request here.
-      if (micEarlyWindowStartRequestedRef.current) {
-        return;
-      }
-      // #region agent log
-      __srLog({
-        sessionId: "debug-session",
-        runId: "mic-start-fix-pre",
-        hypothesisId: "Hstart",
-        location:
-          "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-        message: "mic.startListening.requested",
-        data: {
-          nowWallMs: Date.now(),
-          audioNow: audioEngine.getCurrentTime(),
-          phase: gamePhaseRef.current,
-        },
-        timestamp: Date.now(),
-      });
-      // #endregion
-      startListeningSync()
-        .then(() => {
+        if (AUDIO_OUTPUT_LATENCY_COMP_DEBUG) {
+          const ctx = audioEngine.audioContextRef?.current;
+          const outputLatencyMs =
+            typeof ctx?.outputLatency === "number"
+              ? Math.round(ctx.outputLatency * 1000)
+              : null;
+          const baseLatencyMs =
+            typeof ctx?.baseLatency === "number"
+              ? Math.round(ctx.baseLatency * 1000)
+              : null;
           // #region agent log
           __srLog({
             sessionId: "debug-session",
-            runId: "mic-start-fix-pre",
-            hypothesisId: "Hstart",
+            runId: "audio-latency-pre",
+            hypothesisId: "Hout",
             location:
               "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
-            message: "mic.startListening.resolved",
+            message: "audioContext.latency",
             data: {
-              nowWallMs: Date.now(),
-              audioNow: audioEngine.getCurrentTime(),
-              phase: gamePhaseRef.current,
+              outputLatencyMs,
+              baseLatencyMs,
+              sampleRate:
+                typeof ctx?.sampleRate === "number" ? ctx.sampleRate : null,
+              state: typeof ctx?.state === "string" ? ctx.state : null,
+              metronomeEnabled,
             },
             timestamp: Date.now(),
           });
           // #endregion
-        })
-        .catch((error) => {
-          console.error("❌ Failed to start microphone:", error);
-          const isPermissionDenied =
-            error?.name === "NotAllowedError" ||
-            error?.name === "PermissionDeniedError" ||
-            error?.message?.toLowerCase().includes("permission");
-          setMicError((prev) => ({
-            type: isPermissionDenied ? "permission_denied" : "mic_stopped",
-            retryCount: (prev?.retryCount ?? 0) + 1,
-          }));
-          pauseTimer();
-          // Fall back to display mode
-          setGamePhase(GAME_PHASES.DISPLAY);
+        }
+      }
+
+      stopCountInVisualization();
+      gamePhaseRef.current = GAME_PHASES.PERFORMANCE;
+      flushSync(() => {
+        setGamePhase(GAME_PHASES.PERFORMANCE);
+      });
+      // Note: timing state is already EARLY_WINDOW from count-in, will transition to LIVE via schedulePerformanceLiveActivation
+      resetPerformanceLiveState();
+
+      schedulePerformanceLiveActivation();
+      // Defer timeline scheduling to the next frame so Safari can paint the phase flip first.
+      requestAnimationFrame(() => {
+        if (gamePhaseRef.current !== GAME_PHASES.PERFORMANCE) return;
+        try {
+          schedulePerformanceTimeline();
+        } catch (error) {
+          // #region agent log
+          __srLog({
+            sessionId: "debug-session",
+            runId: "timeline-audio-pre",
+            hypothesisId: "Hwall",
+            location:
+              "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+            message: "timeline.error",
+            data: { error: String(error?.message || error) },
+            timestamp: Date.now(),
+          });
+          // #endregion
+        }
+      });
+
+      if (metronomeEnabled) {
+        startMetronomePlayback(performanceStartAudioTimeRef.current);
+      }
+
+      // Only start microphone if mic input mode is selected (do not block performance start)
+      if (inputMode === "mic") {
+        // If we already requested mic start in the EARLY_WINDOW during COUNT_IN, don't double-request here.
+        if (micEarlyWindowStartRequestedRef.current) {
+          return;
+        }
+        // #region agent log
+        __srLog({
+          sessionId: "debug-session",
+          runId: "mic-start-fix-pre",
+          hypothesisId: "Hstart",
+          location:
+            "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+          message: "mic.startListening.requested",
+          data: {
+            nowWallMs: Date.now(),
+            audioNow: audioEngine.getCurrentTime(),
+            phase: gamePhaseRef.current,
+          },
+          timestamp: Date.now(),
         });
-    }
-  }, [
-    audioEngine,
-    inputMode,
-    pauseTimer,
-    startListeningSync,
-    schedulePerformanceTimeline,
-    stopCountInVisualization,
-    clearCountInTimeouts,
-    schedulePerformanceLiveActivation,
-    resetPerformanceLiveState,
-    metronomeEnabled,
-    startMetronomePlayback,
-  ]);
+        // #endregion
+        startListeningSync()
+          .then(() => {
+            // #region agent log
+            __srLog({
+              sessionId: "debug-session",
+              runId: "mic-start-fix-pre",
+              hypothesisId: "Hstart",
+              location:
+                "src/components/games/sight-reading-game/SightReadingGame.jsx:handleCountInComplete",
+              message: "mic.startListening.resolved",
+              data: {
+                nowWallMs: Date.now(),
+                audioNow: audioEngine.getCurrentTime(),
+                phase: gamePhaseRef.current,
+              },
+              timestamp: Date.now(),
+            });
+            // #endregion
+          })
+          .catch((error) => {
+            console.error("❌ Failed to start microphone:", error);
+            const isPermissionDenied =
+              error?.name === "NotAllowedError" ||
+              error?.name === "PermissionDeniedError" ||
+              error?.message?.toLowerCase().includes("permission");
+            setMicError((prev) => ({
+              type: isPermissionDenied ? "permission_denied" : "mic_stopped",
+              retryCount: (prev?.retryCount ?? 0) + 1,
+            }));
+            pauseTimer();
+            // Fall back to display mode
+            setGamePhase(GAME_PHASES.DISPLAY);
+          });
+      }
+    },
+    [
+      audioEngine,
+      inputMode,
+      pauseTimer,
+      startListeningSync,
+      schedulePerformanceTimeline,
+      stopCountInVisualization,
+      clearCountInTimeouts,
+      schedulePerformanceLiveActivation,
+      resetPerformanceLiveState,
+      metronomeEnabled,
+      startMetronomePlayback,
+    ]
+  );
 
   /**
    * Begin performance with an existing pattern (no pattern generation)
@@ -2867,6 +2881,9 @@ export function SightReadingGame() {
       }
 
       // Reset state for new performance
+      // Assume a healthy audio clock for this exercise; the safety-net path re-enables
+      // wall-clock mode only if the count-in actually stalls.
+      forcePerformanceWallClockRef.current = false;
       setCurrentBeat(0);
       setCurrentNoteIndex(0);
       setPerformanceResults([]);
@@ -3115,7 +3132,9 @@ export function SightReadingGame() {
           }
           stopCountInVisualization();
           setCurrentBeat(0);
-          handleCountInComplete();
+          // Force completion on the wall clock: the audio clock has stalled, so a
+          // plain handleCountInComplete() would re-defer on the same frozen clock.
+          handleCountInComplete({ force: true });
         }
       }, safetyTimeoutMs);
     } catch (error) {
