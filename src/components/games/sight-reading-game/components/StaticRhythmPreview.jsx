@@ -36,9 +36,16 @@ import WholeRestIcon from "../../../../assets/musicSymbols/whole-rest.svg?react"
 import EighthRestIcon from "../../../../assets/musicSymbols/eight-rest.svg?react";
 import SixteenthRestIcon from "../../../../assets/musicSymbols/sixteenth-rest.svg?react";
 
-// Stable-id → { Component, count } map (preferred path).
+// Stable-id → { Component, count, scale? } map (preferred path).
+//
+// `scale` (0–1, default 1) shrinks a glyph relative to the tile height. The
+// stemmed note assets (quarter/half/eighths) are ~657px tall in their viewBox
+// but their notehead is only the bottom ~26% — the rest is stem. The whole
+// note asset is JUST a notehead (~150px tall viewBox), so at height:100% it
+// fills the whole tile and dwarfs the other noteheads. Scale it down so its
+// head matches the visual size of the other noteheads.
 const GLYPH_BY_PATTERN_ID = {
-  whole: { Component: WholeNoteIcon, count: 1 },
+  whole: { Component: WholeNoteIcon, count: 1, scale: 0.34 },
   half: { Component: HalfNoteIcon, count: 1 },
   quarter: { Component: QuarterNoteIcon, count: 1 },
   pairedEighths: { Component: BeamedEighthsIcon, count: 1 },
@@ -120,7 +127,8 @@ export function StaticRhythmPreview({
     );
   }
 
-  const { Component, count } = resolved;
+  const { Component, count, scale = 1 } = resolved;
+  const glyphHeight = `${Math.round(scale * 100)}%`;
 
   return (
     <div
@@ -144,7 +152,7 @@ export function StaticRhythmPreview({
         <Component
           key={i}
           aria-hidden="true"
-          style={{ height: "100%", width: "auto", display: "block" }}
+          style={{ height: glyphHeight, width: "auto", display: "block" }}
         />
       ))}
     </div>
