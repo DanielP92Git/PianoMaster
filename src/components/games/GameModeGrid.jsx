@@ -8,7 +8,9 @@ import { prepareGameLandscape } from "../../utils/pwa";
  * - Shows max 3 cards per row on mobile (default)
  * - If less than 3 cards, they span the full width evenly
  * - Maintains consistent layout across all game mode screens
- * - Supports column layout for portrait mode via `layout="column"` prop
+ * - `layout="column"`: stacks cards in a single column on small/portrait
+ *   screens, then switches to a responsive grid from the `sm` breakpoint up
+ *   (avoids vertical scrolling on desktop). Mirrors the PracticeModes grid.
  */
 export function GameModeGrid({ games, layout = "grid" }) {
   const { t } = useTranslation("common");
@@ -37,11 +39,22 @@ export function GameModeGrid({ games, layout = "grid" }) {
     }
   };
 
+  // Column layout: single stacked column on small/portrait screens, switching
+  // to a responsive grid on larger screens so cards fit without scrolling.
+  // Class strings are kept literal so Tailwind's static scanner picks them up.
+  const getColumnClass = () => {
+    if (games.length >= 3) {
+      return "flex flex-col gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3";
+    } else if (games.length === 2) {
+      return "flex flex-col gap-3 sm:grid sm:grid-cols-2";
+    } else {
+      return "flex flex-col gap-3";
+    }
+  };
+
   // Use column layout if specified
   const containerClass =
-    layout === "column"
-      ? "flex flex-col gap-3"
-      : `grid ${getGridClass()} gap-3`;
+    layout === "column" ? getColumnClass() : `grid ${getGridClass()} gap-3`;
 
   return (
     <div className={containerClass}>
