@@ -4,9 +4,30 @@ import svgr from "vite-plugin-svgr";
 import { visualizer } from "rollup-plugin-visualizer";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { readFileSync } from "fs";
+import { execSync } from "child_process";
+import path from "path";
 const pkg = JSON.parse(readFileSync("./package.json", "utf8"));
 
+// Load .env from the main repository root, even when running inside a git
+// worktree (.claude/worktrees/*). The .env file is gitignored and lives only
+// in the main checkout, so worktrees would otherwise be missing it and crash
+// with "Missing VITE_SUPABASE_URL". `git rev-parse --git-common-dir` returns
+// the shared .git dir (absolute from a worktree, ".git" from the main repo);
+// its parent is the main repo root. Falls back to cwd if git is unavailable
+// (e.g. CI/Netlify, where env vars come from the platform, not .env files).
+function resolveEnvDir() {
+  try {
+    const gitCommonDir = execSync("git rev-parse --git-common-dir", {
+      encoding: "utf8",
+    }).trim();
+    return path.dirname(path.resolve(gitCommonDir));
+  } catch {
+    return process.cwd();
+  }
+}
+
 export default defineConfig({
+  envDir: resolveEnvDir(),
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
