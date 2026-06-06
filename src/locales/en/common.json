@@ -833,6 +833,8 @@
       "title": "Rhythm Dictation",
       "progressLabel": "Exercise {{current}} of {{total}}",
       "startGame": "Start Game",
+      "getReady": "Get ready to listen",
+      "listenButton": "Listen to the pattern",
       "listening": "Listen...",
       "playAgain": "Play Again",
       "chooseRhythm": "Choose the rhythm you heard",

@@ -833,6 +833,8 @@
       "title": "שמיעת קצב",
       "progressLabel": "תרגיל {{current}} מתוך {{total}}",
       "startGame": "התחל משחק",
+      "getReady": "התכוננו להקשיב",
+      "listenButton": "הקשיבו למקצב",
       "listening": "הקשב...",
       "playAgain": "נגן שוב",
       "chooseRhythm": "בחר את הקצב ששמעת",
