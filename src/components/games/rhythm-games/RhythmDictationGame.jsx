@@ -601,20 +601,27 @@ export function RhythmDictationGame() {
   // ---------------------------------------------------------------------------
   if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
+      <div
+        className="flex min-h-screen flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
+        dir={i18n.dir()}
+      >
         {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
-        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-          <h1 className="text-xl font-bold text-white">
-            {t("games.rhythmDictation.title")}
-          </h1>
-          <button
-            onClick={handleStartGame}
-            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
-          >
-            {t("games.metronomeTrainer.startGame", {
-              defaultValue: "Start Game",
-            })}
-          </button>
+        {/* Header — BackButton on the inline-start (right in RTL/Hebrew) */}
+        <header className="flex h-12 items-center px-4 py-2">
+          <BackButton to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"} />
+        </header>
+        <div className="flex flex-1 items-center justify-center p-4">
+          <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
+            <h1 className="text-xl font-bold text-white">
+              {t("games.rhythmDictation.title")}
+            </h1>
+            <button
+              onClick={handleStartGame}
+              className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
+            >
+              {t("games.actions.start", "Start Game")}
+            </button>
+          </div>
         </div>
       </div>
     );
