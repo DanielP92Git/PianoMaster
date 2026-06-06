@@ -880,9 +880,10 @@ export function RhythmReadingGame() {
   return (
     <div
       className="flex min-h-screen flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
-      dir="ltr"
+      dir={i18n.dir()}
     >
-      {/* Header bar */}
+      {/* Header bar — chrome follows document direction so BackButton sits on
+          the inline-start (right in RTL/Hebrew), consistent with other games */}
       <header className="flex h-12 items-center justify-between px-4 py-2 text-white/80">
         <BackButton to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"} />
         <div className="text-sm font-medium">
@@ -893,7 +894,9 @@ export function RhythmReadingGame() {
         </div>
       </header>
 
-      <main className="flex flex-1 flex-col gap-4 px-4 pb-4">
+      {/* Play area stays LTR — music notation and the left-to-right cursor sweep
+          are direction-independent regardless of UI language */}
+      <main className="flex flex-1 flex-col gap-4 px-4 pb-4" dir="ltr">
         {/* Syllable toggle — hidden on Discovery nodes where syllables are enforced (D-19) */}
         {!isDiscoveryNode && (
           <div className="flex justify-end px-1">
@@ -911,7 +914,7 @@ export function RhythmReadingGame() {
                   : "text-white/50 hover:text-white/80"
               }`}
             >
-              ta
+              {t("games.rhythmReading.syllableToggle.label")}
             </button>
           </div>
         )}

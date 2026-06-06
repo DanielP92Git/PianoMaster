@@ -811,6 +811,7 @@
         }
       },
       "syllableToggle": {
+        "label": "Rhythm syllables",
         "show": "Show syllables",
         "hide": "Hide syllables"
       },
@@ -823,6 +824,7 @@
         "patternError": "Something went wrong. Go back and try again."
       },
       "syllableToggle": {
+        "label": "Rhythm syllables",
         "show": "Show syllables",
         "hide": "Hide syllables"
       }
@@ -831,6 +833,8 @@
       "title": "Rhythm Dictation",
       "progressLabel": "Exercise {{current}} of {{total}}",
       "startGame": "Start Game",
+      "getReady": "Get ready to listen",
+      "listenButton": "Listen to the pattern",
       "listening": "Listen...",
       "playAgain": "Play Again",
       "chooseRhythm": "Choose the rhythm you heard",

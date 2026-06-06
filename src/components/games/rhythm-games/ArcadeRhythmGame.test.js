@@ -32,7 +32,7 @@ vi.mock("react-router-dom", () => ({
 vi.mock("react-i18next", () => ({
   useTranslation: vi.fn(() => ({
     t: (k) => k,
-    i18n: { language: "en" },
+    i18n: { language: "en", dir: () => "ltr" },
   })),
 }));
 

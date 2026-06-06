@@ -511,35 +511,11 @@ export default function IntervalGame() {
   }
 
   // ---------------------------------------------------------------------------
-  // Render: SETUP phase (non-trail standalone mode)
-  // ---------------------------------------------------------------------------
-  if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
-        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
-        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-          <h1 className="text-center text-xl font-bold text-white">
-            {t("games.intervalGame.title", { defaultValue: "Interval Game" })}
-          </h1>
-          <p className="text-center text-sm text-white/70">
-            {t("games.intervalGame.description", {
-              defaultValue:
-                "Listen to two notes and identify how far apart they are.",
-            })}
-          </p>
-          <button
-            onClick={handleStartGame}
-            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
-          >
-            {t("games.intervalGame.startGame", { defaultValue: "Start Game" })}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Render: main game (LISTENING / CHOOSING / FEEDBACK)
+  // Render: main game (SETUP / LISTENING / CHOOSING / FEEDBACK)
+  // SETUP has no separate intro page — the game layout renders immediately with
+  // an inline Start button (standalone) or a loading indicator (trail auto-start).
+  // The Start tap is kept as the gesture that unlocks the AudioContext, since the
+  // first interval auto-plays on entering LISTENING.
   // ---------------------------------------------------------------------------
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
@@ -571,129 +547,154 @@ export default function IntervalGame() {
           </div>
         </div>
 
-        {/* Audio status row with replay button */}
-        <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Volume2
-              size={20}
-              className={
-                isPlaying ? "animate-pulse text-indigo-300" : "text-white/60"
-              }
-            />
-            {feedbackText ? (
-              <span
-                aria-live="polite"
-                className="font-rounded text-sm text-white/80"
-              >
-                {feedbackText}
-              </span>
-            ) : (
-              <span
-                className="font-rounded text-sm text-white/40"
-                aria-hidden="true"
-              >
-                {gamePhase === GAME_PHASES.CHOOSING
-                  ? t("games.intervalGame.playAgain", {
-                      defaultValue: "Play Again",
-                    })
-                  : ""}
-              </span>
-            )}
-          </div>
-
-          {/* Replay button — visible during LISTENING and CHOOSING */}
-          {(gamePhase === GAME_PHASES.LISTENING ||
-            gamePhase === GAME_PHASES.CHOOSING) && (
-            <button
-              onClick={handleReplay}
-              disabled={isPlaying}
-              aria-label={t("games.intervalGame.playAgain", {
-                defaultValue: "Play Again",
-              })}
-              className={`flex items-center gap-1 rounded-xl px-4 py-2 font-rounded text-sm transition-all ${
-                isPlaying
-                  ? "cursor-not-allowed bg-indigo-500/50 opacity-50"
-                  : "cursor-pointer bg-indigo-500 text-white hover:bg-indigo-400"
-              }`}
-            >
-              <Volume2 size={16} />
-              <span>
-                {t("games.intervalGame.playAgain", {
-                  defaultValue: "Play Again",
-                })}
-              </span>
-            </button>
-          )}
-        </div>
-
-        {/* Question heading */}
-        <div className="py-2 text-center">
-          <h2 className="text-lg font-bold text-white">
-            {t("games.intervalGame.question", {
-              defaultValue: "How far apart are the notes?",
-            })}
-          </h2>
-        </div>
-
-        {/* Feedback announcement (sr-only live region for screen readers) */}
-        <div aria-live="polite" className="sr-only">
-          {feedbackText}
-        </div>
-
-        {/* Answer buttons — vertical stack (D-07) */}
-        <div className="flex w-full flex-col gap-3">
-          {["step", "skip", "leap"].map((choice) => (
-            <button
-              key={choice}
-              onClick={() => handleAnswer(choice)}
-              disabled={gamePhase !== GAME_PHASES.CHOOSING}
-              className={`flex min-h-[64px] w-full items-center justify-between rounded-xl px-5 ${getButtonState(choice)}`}
-              aria-label={`${t(`games.intervalGame.${choice}`, { defaultValue: choice })} — ${t(`games.intervalGame.${choice}Hint`, { defaultValue: "" })}`}
-            >
-              <span className="text-base font-bold text-white">
-                {t(`games.intervalGame.${choice}`, {
+        {/* SETUP — inline start (standalone) / loading (trail auto-start) */}
+        {gamePhase === GAME_PHASES.SETUP &&
+          (!nodeConfig ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10">
+              <p className="max-w-sm text-center font-rounded text-base text-white/80">
+                {t("games.intervalGame.description", {
                   defaultValue:
-                    choice.charAt(0).toUpperCase() + choice.slice(1),
+                    "Listen to two notes and identify how far apart they are.",
+                })}
+              </p>
+              <button
+                onClick={handleStartGame}
+                className="rounded-xl bg-indigo-500 px-8 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
+              >
+                {t("games.intervalGame.startGame", {
+                  defaultValue: "Start Game",
+                })}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <span className="animate-pulse text-sm text-white/60">
+                {t("games.intervalGame.listening", {
+                  defaultValue: "Loading...",
                 })}
               </span>
-              <span className="text-sm text-white/60">
-                {t(`games.intervalGame.${choice}Hint`, {
-                  defaultValue:
-                    choice === "step"
-                      ? "next door"
-                      : choice === "skip"
-                        ? "jump one"
-                        : "far apart",
-                })}
-              </span>
-            </button>
+            </div>
           ))}
-        </div>
 
-        {/* Piano keyboard reveal (D-08) */}
-        {gamePhase === GAME_PHASES.FEEDBACK && currentQuestion && (
-          <div aria-live="assertive">
-            <PianoKeyboardReveal
-              note1={currentQuestion.note1}
-              note2={currentQuestion.note2}
-              showInBetween={true}
-              intervalLabel={intervalLabel}
-              subLabel={subLabel}
-              visible={showKeyboard}
-              reducedMotion={reducedMotion}
-            />
-          </div>
-        )}
+        {/* Gameplay UI — hidden during SETUP */}
+        {gamePhase !== GAME_PHASES.SETUP && (
+          <>
+            {/* Audio status row with replay button */}
+            <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
+              <div className="flex items-center gap-2">
+                <Volume2
+                  size={20}
+                  className={
+                    isPlaying
+                      ? "animate-pulse text-indigo-300"
+                      : "text-white/60"
+                  }
+                />
+                {feedbackText ? (
+                  <span
+                    aria-live="polite"
+                    className="font-rounded text-sm text-white/80"
+                  >
+                    {feedbackText}
+                  </span>
+                ) : (
+                  <span
+                    className="font-rounded text-sm text-white/40"
+                    aria-hidden="true"
+                  >
+                    {gamePhase === GAME_PHASES.CHOOSING
+                      ? t("games.intervalGame.playAgain", {
+                          defaultValue: "Play Again",
+                        })
+                      : ""}
+                  </span>
+                )}
+              </div>
 
-        {/* Loading state while awaiting first question in trail mode */}
-        {gamePhase === GAME_PHASES.SETUP && nodeConfig && (
-          <div className="flex items-center justify-center py-8">
-            <span className="animate-pulse text-sm text-white/60">
-              {t("games.intervalGame.listening", {
-                defaultValue: "Loading...",
-              })}
-            </span>
-          </div>
+              {/* Replay button — visible during LISTENING and CHOOSING */}
+              {(gamePhase === GAME_PHASES.LISTENING ||
+                gamePhase === GAME_PHASES.CHOOSING) && (
+                <button
+                  onClick={handleReplay}
+                  disabled={isPlaying}
+                  aria-label={t("games.intervalGame.playAgain", {
+                    defaultValue: "Play Again",
+                  })}
+                  className={`flex items-center gap-1 rounded-xl px-4 py-2 font-rounded text-sm transition-all ${
+                    isPlaying
+                      ? "cursor-not-allowed bg-indigo-500/50 opacity-50"
+                      : "cursor-pointer bg-indigo-500 text-white hover:bg-indigo-400"
+                  }`}
+                >
+                  <Volume2 size={16} />
+                  <span>
+                    {t("games.intervalGame.playAgain", {
+                      defaultValue: "Play Again",
+                    })}
+                  </span>
+                </button>
+              )}
+            </div>
+
+            {/* Question heading */}
+            <div className="py-2 text-center">
+              <h2 className="text-lg font-bold text-white">
+                {t("games.intervalGame.question", {
+                  defaultValue: "How far apart are the notes?",
+                })}
+              </h2>
+            </div>
+
+            {/* Feedback announcement (sr-only live region for screen readers) */}
+            <div aria-live="polite" className="sr-only">
+              {feedbackText}
+            </div>
+
+            {/* Answer buttons — vertical stack (D-07) */}
+            <div className="flex w-full flex-col gap-3">
+              {["step", "skip", "leap"].map((choice) => (
+                <button
+                  key={choice}
+                  onClick={() => handleAnswer(choice)}
+                  disabled={gamePhase !== GAME_PHASES.CHOOSING}
+                  className={`flex min-h-[64px] w-full items-center justify-between rounded-xl px-5 ${getButtonState(choice)}`}
+                  aria-label={`${t(`games.intervalGame.${choice}`, { defaultValue: choice })} — ${t(`games.intervalGame.${choice}Hint`, { defaultValue: "" })}`}
+                >
+                  <span className="text-base font-bold text-white">
+                    {t(`games.intervalGame.${choice}`, {
+                      defaultValue:
+                        choice.charAt(0).toUpperCase() + choice.slice(1),
+                    })}
+                  </span>
+                  <span className="text-sm text-white/60">
+                    {t(`games.intervalGame.${choice}Hint`, {
+                      defaultValue:
+                        choice === "step"
+                          ? "next door"
+                          : choice === "skip"
+                            ? "jump one"
+                            : "far apart",
+                    })}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Piano keyboard reveal (D-08) */}
+            {gamePhase === GAME_PHASES.FEEDBACK && currentQuestion && (
+              <div aria-live="assertive">
+                <PianoKeyboardReveal
+                  note1={currentQuestion.note1}
+                  note2={currentQuestion.note2}
+                  showInBetween={true}
+                  intervalLabel={intervalLabel}
+                  subLabel={subLabel}
+                  visible={showKeyboard}
+                  reducedMotion={reducedMotion}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -464,6 +464,19 @@ export function RhythmDictationGame() {
     generateQuestion(0, tempo, timeSignature);
   }, [tempo, timeSignature, generateQuestion]);
 
+  // ---------------------------------------------------------------------------
+  // Standalone auto-start (non-trail): skip the SETUP intro and load straight
+  // to the READY "Listen to the pattern" prompt — matching the trail flow.
+  // generateQuestion plays no audio, so no gesture gate is needed here (the
+  // Listen tap unlocks the AudioContext before playback begins).
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (!nodeConfig && !hasAutoStartedRef.current) {
+      handleStartGame();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time standalone auto-start guarded by hasAutoStartedRef
+  }, [nodeConfig]);
+
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
   const handleGestureStart = useCallback(async () => {
     // Create AudioContext if it doesn't exist yet (iOS needs user gesture to create)
@@ -597,31 +610,10 @@ export function RhythmDictationGame() {
   }
 
   // ---------------------------------------------------------------------------
-  // Render: SETUP phase (non-trail standalone mode)
-  // ---------------------------------------------------------------------------
-  if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
-        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
-        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-          <h1 className="text-xl font-bold text-white">
-            {t("games.rhythmDictation.title")}
-          </h1>
-          <button
-            onClick={handleStartGame}
-            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
-          >
-            {t("games.metronomeTrainer.startGame", {
-              defaultValue: "Start Game",
-            })}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // Render: main game (READY / LISTENING / CHOOSING / FEEDBACK)
+  // SETUP has no separate intro page — standalone auto-starts into the game
+  // layout (see standalone auto-start effect above); the brief async gap before
+  // the first question resolves is covered by the loading indicator below.
   // ---------------------------------------------------------------------------
   const isInFeedback = gamePhase === GAME_PHASES.FEEDBACK;
   // Choice cards visible during LISTENING (so user can study options while hearing pattern),
@@ -728,7 +720,7 @@ export function RhythmDictationGame() {
           )}
 
           {/* Loading state while generating first question */}
-          {gamePhase === GAME_PHASES.SETUP && nodeConfig && (
+          {gamePhase === GAME_PHASES.SETUP && (
             <div className="flex items-center justify-center py-8">
               <span className="animate-pulse text-sm text-white/60">
                 {t("games.rhythmDictation.listening", {

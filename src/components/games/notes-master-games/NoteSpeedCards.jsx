@@ -238,7 +238,6 @@ export function NoteSpeedCards() {
     defaultValue: targetNote,
   });
   const headline = t("noteSpeedCards.headline", { noteName });
-  const subheadline = t("noteSpeedCards.subheadline", { noteName });
 
   // ── Start game (with countdown) ─────────────────────────────────────────
   const startGame = useCallback(() => {
@@ -294,9 +293,12 @@ export function NoteSpeedCards() {
     comboRef.current = 0;
   }, [nodeId]);
 
-  // Auto-start when navigated from trail
+  // Auto-start on mount — both trail (nodeConfig) and standalone. There is no
+  // separate "Start Game" intro screen: NoteSpeedCards plays no audio before
+  // gameplay, so no user gesture is needed to begin. The game loads directly
+  // into the 3-2-1 countdown, then gameplay.
   useEffect(() => {
-    if (nodeConfig && !hasAutoStartedRef.current) {
+    if (!hasAutoStartedRef.current) {
       hasAutoStartedRef.current = true;
       setTimeout(() => startGame(), 50);
     }
@@ -557,6 +559,8 @@ export function NoteSpeedCards() {
   const currentNoteObj = currentCard ? getNoteObj(currentCard.pitch) : null;
 
   // ── Render: Idle state ────────────────────────────────────────────────────
+  // Brief placeholder shown only for the moment between mount and auto-start
+  // (see auto-start effect above) — no separate "Start Game" intro screen.
   if (gameState === "idle") {
     return (
       <div className="relative flex h-[100svh] flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
@@ -568,24 +572,9 @@ export function NoteSpeedCards() {
           <BackButton to={trailBackPath} name="Back to Trail" />
         </div>
 
-        {/* Idle card */}
-        <div
-          className={`mx-6 flex flex-col items-center gap-6 rounded-3xl border border-white/20 p-8 shadow-xl ${glassBase} backdrop-blur-md`}
-        >
-          <h1 className="text-center font-rounded text-2xl font-bold text-white">
-            {headline}
-          </h1>
-          <p className={`text-center text-base ${secondaryText}`}>
-            {subheadline}
-          </p>
-
-          <button
-            onClick={startGame}
-            className="cursor-pointer rounded-2xl border border-white/20 bg-white/10 px-10 py-4 font-playful text-xl font-bold text-white backdrop-blur-md transition-colors hover:bg-white/20 active:scale-95"
-          >
-            {t("noteSpeedCards.startButton")}
-          </button>
-        </div>
+        <span className="animate-pulse text-center font-rounded text-xl font-bold text-white/80">
+          {headline}
+        </span>
       </div>
     );
   }
