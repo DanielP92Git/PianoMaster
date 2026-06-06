@@ -27,7 +27,8 @@
 - ✅ **v3.2 Rhythm Trail Rework** — Phases 20-28 (shipped 2026-04-13)
 - ✅ **v3.3 Rhythm Trail Fix & Polish** — Phases 29-33 (shipped 2026-05-04)
 - ✅ **v3.4 Rhythm Games Responsive UX** — Phases 34-35 (shipped 2026-05-12)
-- 🚧 **v3.5 Rhythm Pedagogy** — Phase 1 (in progress)
+- 🚧 **v3.5 Rhythm Pedagogy** — Phase 1 (code-complete, owner UAT pending)
+- 📋 **v3.6 Game Screen UI Unification** — Phase 36 (planning)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -97,10 +98,45 @@ Plans:
 8. `src/locales/he/trail.json` contains a Hebrew translation for every new English explainer string
 9. Owner walkthrough on a real student account: complete every rhythm node from new first node through new terminus without confusion / softlocks / paywall breaks
 
+## 📋 v3.6 Game Screen UI Unification (planning)
+
+Phase summary:
+
+- [ ] Phase 36: Game Screen UI Unification (0 plans) -- spec seeded, awaiting discuss/plan
+
+> Numbering note: this phase uses **36** (continuing the global 34/35 sequence from v3.4) rather
+> than restarting at 01, to avoid a `.planning/phases/01-*` directory-glob collision with v3.5's
+> Phase 01. Milestone-roll (archive v3.5 / update STATE.md) deferred to `/gsd-complete-milestone`
+> once v3.5 owner UAT passes.
+
+### Phase 36: Game Screen UI Unification
+
+**Goal**: Bring the other game screens up to the polished UI standard set by **NotesRecognitionGame**
+by extracting its inline HUD/shell (progress bar, score pill, lives/hearts, combo + on-fire,
+timer, speed-bonus, tier-up, nav, feedback) into reusable shared components under
+`src/components/games/shared/`, and adopting them across the other games where they fit —
+component-based reuse, not forced uniformity. Games with fundamentally different mechanics
+(staff-based sight-reading, tile/card grids, fixed-length ear-training) adopt only the suitable
+subset. ArcadeRhythmGame's existing inline lives/combo/on-fire are de-duplicated onto the shared
+components. No game-mechanics changes; HUD presentation only.
+**Depends on**: Nothing hard. v3.5 owner UAT is independent; this phase touches game-screen UI, not rhythm trail data.
+**Spec**: `.planning/phases/36-game-screen-ui-unification/36-SPEC.md`
+**Plans**: TBD — to be created after `/gsd-discuss-phase 36`
+
+**Requirements** (seeded in 36-SPEC.md — confirm in discuss):
+
+- **REQ-01**: Extract NotesRecognition's inline HUD into shared components; refactor it to consume them with zero regression
+- **REQ-02**: Per-game adoption matrix — each game adopts only the HUD subset that fits its mechanics
+- **REQ-03**: De-duplicate ArcadeRhythmGame's inline lives/combo/on-fire onto shared components
+- **REQ-04**: Design-system visual consistency; unify MixedLessonGame's divergent progress bar
+- **REQ-05**: Consistent VictoryScreen/GameOverScreen wiring for games that adopt a lives/score model
+- **REQ-06**: No regressions — tests pass, landscape-lock intact, reduced-motion + RTL parity
+- **REQ-07**: i18n parity (en+he) for any new HUD strings
+
 ## Progress
 
-**Total: 25 milestones shipped, 109 phases, ~252 plans | Active: v3.5 Rhythm Pedagogy — Phase 1 executing (4/10 plans complete)**
+**Total: 25 milestones shipped, 109 phases, ~252 plans | Active: v3.5 Rhythm Pedagogy (Phase 1 code-complete, owner UAT pending) · v3.6 Game Screen UI Unification (Phase 36 spec seeded)**
 
 ---
 
-_Last updated: 2026-06-01 -- Phase 1 Plan 01-04 complete (atomic migration authored + FREE_NODE_IDS synced; freeNodes.parity GREEN)_
+_Last updated: 2026-06-06 -- v3.6 milestone seeded; Phase 36 (Game Screen UI Unification) SPEC drafted from UI audit, ready for `/gsd-discuss-phase 36`_
