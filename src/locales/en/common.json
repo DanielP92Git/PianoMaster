@@ -811,6 +811,7 @@
         }
       },
       "syllableToggle": {
+        "label": "Rhythm syllables",
         "show": "Show syllables",
         "hide": "Hide syllables"
       },
@@ -823,6 +824,7 @@
         "patternError": "Something went wrong. Go back and try again."
       },
       "syllableToggle": {
+        "label": "Rhythm syllables",
         "show": "Show syllables",
         "hide": "Hide syllables"
       }

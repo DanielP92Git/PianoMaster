@@ -116,7 +116,7 @@ function getTimeSignatureObject(timeSigStr) {
 function ArcadeRhythmGame() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 
   // Phase 35 final declaration (Plan 35-04, rotate-prompt path per
   // 35-SPIKE.md verdict). Phone-portrait surfaces the rotate prompt via
@@ -1121,7 +1121,7 @@ function ArcadeRhythmGame() {
       className={`fixed inset-0 flex flex-col bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 ${
         isShaking && !reducedMotion ? "animate-[shake_400ms_ease-in-out]" : ""
       }`}
-      dir="ltr"
+      dir={i18n.dir()}
       onPointerDown={isPlaying ? handleHitZoneTap : undefined}
       style={
         isShaking && !reducedMotion
@@ -1188,9 +1188,10 @@ function ArcadeRhythmGame() {
       </header>
 
       {/* ------------------------------------------------------------------ */}
-      {/* Main game area */}
+      {/* Main game area — kept LTR; the falling-tile lane and hit-zone math are
+          direction-independent regardless of UI language */}
       {/* ------------------------------------------------------------------ */}
-      <main className="relative flex-1 overflow-hidden">
+      <main className="relative flex-1 overflow-hidden" dir="ltr">
         {/* On-fire aria-live announcement */}
         {isOnFire && (
           <span className="sr-only" aria-live="polite" aria-atomic="true">

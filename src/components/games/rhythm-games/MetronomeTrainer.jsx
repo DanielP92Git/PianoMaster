@@ -46,7 +46,7 @@ const SCORING = {
 export function MetronomeTrainer() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 
   // Android PWA: fullscreen + orientation lock
   useLandscapeLock();
@@ -1373,7 +1373,7 @@ export function MetronomeTrainer() {
   return (
     <div
       className="flex h-screen flex-col overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900"
-      dir="rtl"
+      dir={i18n.dir()}
     >
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
