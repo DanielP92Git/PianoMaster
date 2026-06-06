@@ -426,7 +426,7 @@
         },
         "pushOptIn": {
           "title": "אל תפספס/י זמן תרגול!",
-          "subtitle": "הפעל/י תזכורות כדי לקבל דחיפה יומית כשהגיע הזמן לתרגל.",
+          "subtitle": "הפעל/י תזכורות כדי לקבל התראה יומית כשהגיע הזמן לתרגל.",
           "goToSettings": "הפעלה",
           "dismiss": "לא עכשיו"
         }
@@ -1161,7 +1161,7 @@
       "title": "אתגר יומי",
       "speedRound": "סיבוב מהיר",
       "speedRoundDesc": "ענו על {{count}} שאלות ב-{{time}} שניות!",
-      "reviewChallenge": "אתגר חזרה",
+      "reviewChallenge": "תרגול חוזר",
       "reviewChallengeDesc": "שחקו שוב ושלטו בצומת מיומנות קודם",
       "playChallenge": "שחק",
       "completed": "האתגר הושלם!",
