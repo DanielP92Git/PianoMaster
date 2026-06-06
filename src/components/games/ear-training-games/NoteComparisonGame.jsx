@@ -399,42 +399,11 @@ export default function NoteComparisonGame() {
   }
 
   // ---------------------------------------------------------------------------
-  // Render: SETUP phase (non-trail standalone mode)
-  // ---------------------------------------------------------------------------
-  if (gamePhase === GAME_PHASES.SETUP && !nodeConfig) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4">
-        {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
-        <div className="flex w-full max-w-lg flex-col gap-4 rounded-xl border border-white/20 bg-white/10 p-6 backdrop-blur-md">
-          <h1 className="text-xl font-bold text-white">
-            {t("games.noteComparison.title", {
-              defaultValue: "Higher or Lower?",
-            })}
-          </h1>
-          <p className="text-sm text-white/70">
-            {t("games.noteComparison.description", {
-              defaultValue:
-                "Listen to two notes and decide which one is higher!",
-            })}
-          </p>
-          <button
-            onClick={() => {
-              hasAutoStartedRef.current = true;
-              startGame(null);
-            }}
-            className="rounded-xl bg-indigo-500 px-6 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
-          >
-            {t("games.noteComparison.startGame", {
-              defaultValue: "Start Game",
-            })}
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Render: main game (LISTENING / CHOOSING / FEEDBACK)
+  // Render: main game (SETUP / LISTENING / CHOOSING / FEEDBACK)
+  // SETUP has no separate intro page — the game layout renders immediately with
+  // an inline Start button (standalone) or a loading indicator (trail auto-start).
+  // The Start tap is kept as the gesture that unlocks the AudioContext, since the
+  // first note pair auto-plays on entering LISTENING.
   // ---------------------------------------------------------------------------
   const higherState = getButtonState("higher");
   const lowerState = getButtonState("lower");
@@ -474,142 +443,168 @@ export default function NoteComparisonGame() {
           </div>
         </div>
 
-        {/* Audio status row */}
-        <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
-          <div className="flex items-center gap-2">
-            <Volume2
-              size={20}
-              className={
-                gamePhase === GAME_PHASES.LISTENING
-                  ? "animate-pulse text-indigo-300"
-                  : "text-white/60"
-              }
-            />
-            {gamePhase === GAME_PHASES.LISTENING && (
-              <span
-                aria-live="polite"
-                className="font-rounded text-sm text-white/80"
+        {/* SETUP — inline start (standalone) / loading (trail auto-start) */}
+        {gamePhase === GAME_PHASES.SETUP &&
+          (!nodeConfig ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-4 py-10">
+              <p className="max-w-sm text-center font-rounded text-base text-white/80">
+                {t("games.noteComparison.description", {
+                  defaultValue:
+                    "Listen to two notes and decide which one is higher!",
+                })}
+              </p>
+              <button
+                onClick={() => {
+                  hasAutoStartedRef.current = true;
+                  startGame(null);
+                }}
+                className="rounded-xl bg-indigo-500 px-8 py-3 font-bold text-white transition-colors hover:bg-indigo-400"
               >
+                {t("games.noteComparison.startGame", {
+                  defaultValue: "Start Game",
+                })}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-8">
+              <span className="animate-pulse text-sm text-white/60">
                 {t("games.noteComparison.listening", {
-                  defaultValue: "Listen...",
+                  defaultValue: "Loading...",
                 })}
               </span>
-            )}
-          </div>
+            </div>
+          ))}
 
-          {/* Replay button — visible during CHOOSING phase */}
-          {gamePhase === GAME_PHASES.CHOOSING && (
-            <button
-              onClick={handleReplay}
-              aria-label={t("games.noteComparison.playAgain", {
-                defaultValue: "Play Again",
-              })}
-              className="flex cursor-pointer items-center gap-1 rounded-xl bg-indigo-500 px-4 py-2 font-rounded text-sm text-white transition-all hover:bg-indigo-400"
-            >
-              <Volume2 size={20} />
-              <span>
-                {t("games.noteComparison.playAgain", {
-                  defaultValue: "Play Again",
-                })}
-              </span>
-            </button>
-          )}
-        </div>
+        {/* Gameplay UI — hidden during SETUP */}
+        {gamePhase !== GAME_PHASES.SETUP && (
+          <>
+            {/* Audio status row */}
+            <div className="flex h-12 items-center justify-between rounded-xl bg-white/5 px-4 py-2">
+              <div className="flex items-center gap-2">
+                <Volume2
+                  size={20}
+                  className={
+                    gamePhase === GAME_PHASES.LISTENING
+                      ? "animate-pulse text-indigo-300"
+                      : "text-white/60"
+                  }
+                />
+                {gamePhase === GAME_PHASES.LISTENING && (
+                  <span
+                    aria-live="polite"
+                    className="font-rounded text-sm text-white/80"
+                  >
+                    {t("games.noteComparison.listening", {
+                      defaultValue: "Listen...",
+                    })}
+                  </span>
+                )}
+              </div>
 
-        {/* Question prompt */}
-        <div className="py-2 text-center">
-          <p className="font-rounded text-base text-white/80">
-            {t("games.noteComparison.question", {
-              defaultValue: "Is the second note higher or lower?",
-            })}
-          </p>
-        </div>
-
-        {/* HIGHER / LOWER answer buttons */}
-        <div className="grid w-full grid-cols-2 gap-3">
-          {/* HIGHER button */}
-          <button
-            onClick={() => handleAnswer("higher")}
-            disabled={
-              gamePhase === GAME_PHASES.LISTENING ||
-              gamePhase === GAME_PHASES.FEEDBACK
-            }
-            aria-label={t("games.noteComparison.higher", {
-              defaultValue: "Higher",
-            })}
-            className={`flex min-h-[64px] w-full flex-col items-center justify-center gap-1 ${STATE_CLASSES[higherState]}`}
-          >
-            <ArrowUp size={28} className="text-white" />
-            <span className="text-base font-bold text-white">
-              {t("games.noteComparison.higher", { defaultValue: "HIGHER" })}
-            </span>
-          </button>
-
-          {/* LOWER button */}
-          <button
-            onClick={() => handleAnswer("lower")}
-            disabled={
-              gamePhase === GAME_PHASES.LISTENING ||
-              gamePhase === GAME_PHASES.FEEDBACK
-            }
-            aria-label={t("games.noteComparison.lower", {
-              defaultValue: "Lower",
-            })}
-            className={`flex min-h-[64px] w-full flex-col items-center justify-center gap-1 ${STATE_CLASSES[lowerState]}`}
-          >
-            <ArrowDown size={28} className="text-white" />
-            <span className="text-base font-bold text-white">
-              {t("games.noteComparison.lower", { defaultValue: "LOWER" })}
-            </span>
-          </button>
-        </div>
-
-        {/* FEEDBACK phase: keyboard reveal + direction label (PITCH-04) */}
-        {gamePhase === GAME_PHASES.FEEDBACK && currentPair && (
-          <div className="mt-2 flex flex-col items-center gap-3">
-            {/* Screen-reader feedback announcement */}
-            <div aria-live="assertive" className="sr-only">
-              {answerCorrect
-                ? t("games.noteComparison.correct", {
-                    defaultValue: "Correct!",
-                  })
-                : t("games.noteComparison.wrong", {
-                    defaultValue: "Try again!",
+              {/* Replay button — visible during CHOOSING phase */}
+              {gamePhase === GAME_PHASES.CHOOSING && (
+                <button
+                  onClick={handleReplay}
+                  aria-label={t("games.noteComparison.playAgain", {
+                    defaultValue: "Play Again",
                   })}
+                  className="flex cursor-pointer items-center gap-1 rounded-xl bg-indigo-500 px-4 py-2 font-rounded text-sm text-white transition-all hover:bg-indigo-400"
+                >
+                  <Volume2 size={20} />
+                  <span>
+                    {t("games.noteComparison.playAgain", {
+                      defaultValue: "Play Again",
+                    })}
+                  </span>
+                </button>
+              )}
             </div>
 
-            {/* Piano keyboard slides in from bottom (D-05) */}
-            <PianoKeyboardReveal
-              note1={currentPair.note1}
-              note2={currentPair.note2}
-              showInBetween={false}
-              visible={showKeyboard}
-              reducedMotion={reducedMotion}
-            />
+            {/* Question prompt */}
+            <div className="py-2 text-center">
+              <p className="font-rounded text-base text-white/80">
+                {t("games.noteComparison.question", {
+                  defaultValue: "Is the second note higher or lower?",
+                })}
+              </p>
+            </div>
 
-            {/* Direction label (text-3xl bold per UI-SPEC) */}
-            {showKeyboard && (
-              <div className="flex animate-floatUp flex-col items-center gap-1">
-                <span
-                  aria-live="polite"
-                  className="text-3xl font-bold text-white"
-                >
-                  {directionLabel}
+            {/* HIGHER / LOWER answer buttons */}
+            <div className="grid w-full grid-cols-2 gap-3">
+              {/* HIGHER button */}
+              <button
+                onClick={() => handleAnswer("higher")}
+                disabled={
+                  gamePhase === GAME_PHASES.LISTENING ||
+                  gamePhase === GAME_PHASES.FEEDBACK
+                }
+                aria-label={t("games.noteComparison.higher", {
+                  defaultValue: "Higher",
+                })}
+                className={`flex min-h-[64px] w-full flex-col items-center justify-center gap-1 ${STATE_CLASSES[higherState]}`}
+              >
+                <ArrowUp size={28} className="text-white" />
+                <span className="text-base font-bold text-white">
+                  {t("games.noteComparison.higher", { defaultValue: "HIGHER" })}
                 </span>
+              </button>
+
+              {/* LOWER button */}
+              <button
+                onClick={() => handleAnswer("lower")}
+                disabled={
+                  gamePhase === GAME_PHASES.LISTENING ||
+                  gamePhase === GAME_PHASES.FEEDBACK
+                }
+                aria-label={t("games.noteComparison.lower", {
+                  defaultValue: "Lower",
+                })}
+                className={`flex min-h-[64px] w-full flex-col items-center justify-center gap-1 ${STATE_CLASSES[lowerState]}`}
+              >
+                <ArrowDown size={28} className="text-white" />
+                <span className="text-base font-bold text-white">
+                  {t("games.noteComparison.lower", { defaultValue: "LOWER" })}
+                </span>
+              </button>
+            </div>
+
+            {/* FEEDBACK phase: keyboard reveal + direction label (PITCH-04) */}
+            {gamePhase === GAME_PHASES.FEEDBACK && currentPair && (
+              <div className="mt-2 flex flex-col items-center gap-3">
+                {/* Screen-reader feedback announcement */}
+                <div aria-live="assertive" className="sr-only">
+                  {answerCorrect
+                    ? t("games.noteComparison.correct", {
+                        defaultValue: "Correct!",
+                      })
+                    : t("games.noteComparison.wrong", {
+                        defaultValue: "Try again!",
+                      })}
+                </div>
+
+                {/* Piano keyboard slides in from bottom (D-05) */}
+                <PianoKeyboardReveal
+                  note1={currentPair.note1}
+                  note2={currentPair.note2}
+                  showInBetween={false}
+                  visible={showKeyboard}
+                  reducedMotion={reducedMotion}
+                />
+
+                {/* Direction label (text-3xl bold per UI-SPEC) */}
+                {showKeyboard && (
+                  <div className="flex animate-floatUp flex-col items-center gap-1">
+                    <span
+                      aria-live="polite"
+                      className="text-3xl font-bold text-white"
+                    >
+                      {directionLabel}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
-
-        {/* Loading state while trail auto-starts */}
-        {gamePhase === GAME_PHASES.SETUP && nodeConfig && (
-          <div className="flex items-center justify-center py-8">
-            <span className="animate-pulse text-sm text-white/60">
-              {t("games.noteComparison.listening", {
-                defaultValue: "Loading...",
-              })}
-            </span>
-          </div>
+          </>
         )}
       </div>
     </div>
