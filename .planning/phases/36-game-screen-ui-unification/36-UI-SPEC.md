@@ -5,6 +5,7 @@ status: draft
 shadcn_initialized: false
 preset: none
 created: 2026-06-08
+revised: 2026-06-08
 ---
 
 # Phase 36 — UI Design Contract
@@ -63,12 +64,17 @@ Exceptions:
 
 All HUD components render on the dark glassmorphism surface. No light-mode fallback needed for game screens.
 
-| Role            | Size                                 | Weight         | Line Height | Usage                                   |
-| --------------- | ------------------------------------ | -------------- | ----------- | --------------------------------------- |
-| HUD label       | 12px (text-xs) → 14px sm (text-sm)   | semibold (600) | 1.5         | "XP", "Time", "Combo", progress text    |
-| HUD value       | 14px (text-sm) → 16px sm (text-base) | bold (700)     | 1.6         | Score number, combo count, timer digits |
-| Feedback badge  | 14px (text-sm) → 16px sm (text-base) | bold (700)     | 1.5         | "FAST!", "New note unlocked!"           |
-| Tier-up display | 30px (text-3xl) → 36px sm (text-4xl) | black (900)    | 1.2         | "DOUBLE XP!", "TRIPLE XP!"              |
+**Declared sizes (4):** 12px · 14px · 16px · 30px  
+**Declared weights (2):** semibold (600) · bold (700)
+
+| Role            | Size                                     | Weight         | Line Height | Usage                                                             |
+| --------------- | ---------------------------------------- | -------------- | ----------- | ----------------------------------------------------------------- |
+| HUD label       | 12px (`text-xs`) → 14px sm (`text-sm`)   | semibold (600) | 1.5         | "XP", "Time", "Combo", progress text                              |
+| HUD value       | 14px (`text-sm`) → 16px sm (`text-base`) | bold (700)     | 1.6         | Score number, combo count, timer digits                           |
+| Feedback badge  | 14px (`text-sm`) → 16px sm (`text-base`) | bold (700)     | 1.5         | "FAST!", "New note unlocked!"                                     |
+| Tier-up display | 30px (`text-3xl`) at all viewports       | bold (700)     | 1.2         | "DOUBLE XP!", "TRIPLE XP!" — size alone provides visual hierarchy |
+
+Note on tier-up display: the reference implementation uses a responsive `text-3xl sm:text-4xl` pair, but the 30→36px delta is marginal and the large size at 30px already dominates the overlay. The contract declares `text-3xl` (30px) at all viewports to cap the declared size count at 4. Executor must NOT introduce `text-4xl` on tier-up elements.
 
 Monospace font for numeric values: `font-mono tracking-wide` — preserves fixed-width digits so the score pill does not reflow as numbers change.
 
@@ -148,6 +154,20 @@ No destructive confirmation dialogs in this phase. The exit/back navigation (`Ba
 
 ---
 
+## Visual Hierarchy
+
+Primary focal point on the game screen: the note-display / answer area at center (largest interactive region, occupies the majority of vertical space).
+
+Secondary: ProgressBar at top of the screen — spans full width, always visible, communicates session advancement.
+
+Tertiary: HUD stat pills (score, combo, lives, timer) — compact, fixed height, visually recessive relative to the answer area.
+
+Decorative: Background blur orbs and on-fire background shift — never compete with the primary focal point.
+
+This hierarchy must be preserved when shared HUD components are adopted into other games. The answer/content area of each game remains the primary focal point; HUD elements must not grow in prominence.
+
+---
+
 ## Component Inventory
 
 Each shared HUD component to be extracted into `src/components/games/shared/hud/`:
@@ -167,14 +187,14 @@ Pause/Settings button: inline per-game (game-specific labels differ: "Pause" in 
 
 ### Engagement Layer (fast-recall games only — D-02)
 
-| Component         | Source classes (reference)                                                                                                                                                             | Props contract                                                                      |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `LivesDisplay`    | `Heart` icon: active `fill-red-400 text-red-400 h-5 w-5 sm:h-6 sm:w-6`; spent `text-white/30 opacity-30`; exit animation `scale: [1, 1.4, 0]`                                          | `lives: number`, `maxLives: number` (default 3)                                     |
-| `ComboPill`       | `rounded-full border px-3 py-1.5 backdrop-blur-md`; tiers: neutral/amber/yellow; Zap icon tinted per tier; shake on wrong `x: [0,-6,6,-4,4,0]`; scale on correct `scale: [1, 1.18, 1]` | `combo: number`                                                                     |
-| `OnFireBadge`     | `h-10 w-10` flame PNG `src/assets/icons/flame.png`; `animate-pulse` (disabled when reducedMotion); AnimatePresence fade+scale                                                          | `active: boolean`                                                                   |
-| `OnFireSplash`    | `fixed inset-0 z-[70] flex items-center justify-center`; flame `h-24 w-24 sm:h-28 sm:w-28 drop-shadow-[0_0_16px_rgba(251,146,60,0.6)]`; scale-bounce + fade                            | `show: boolean`                                                                     |
-| `SpeedBonusFlash` | `rounded-full bg-amber-400/20 px-4 py-1 text-sm font-bold text-amber-300 backdrop-blur-sm`; AnimatePresence fade+scale 0.35s                                                           | `show: boolean`, `key: number` (force remount per flash)                            |
-| `TierUpPopup`     | `fixed inset-0 z-[70]`; `rounded-2xl bg-gradient-to-br from-amber-500/90 to-yellow-500/90 px-8 py-5`; `text-3xl font-black text-white sm:text-4xl`; flies to score pill position       | `multiplier: 2\|3`, `targetRef: React.RefObject` (score pill ref for fly-to target) |
+| Component         | Source classes (reference)                                                                                                                                                             | Props contract                                                                                                                                                                                                            |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `LivesDisplay`    | `Heart` icon: active `fill-red-400 text-red-400 h-5 w-5 sm:h-6 sm:w-6`; spent `text-white/30 opacity-30`; exit animation `scale: [1, 1.4, 0]`                                          | `lives: number`, `maxLives: number` (default 3); **accessibility:** outer wrapper must carry `aria-label` e.g. `"2 of 3 lives remaining"` derived from `lives` and `maxLives` — matches the pattern used by `OnFireBadge` |
+| `ComboPill`       | `rounded-full border px-3 py-1.5 backdrop-blur-md`; tiers: neutral/amber/yellow; Zap icon tinted per tier; shake on wrong `x: [0,-6,6,-4,4,0]`; scale on correct `scale: [1, 1.18, 1]` | `combo: number`                                                                                                                                                                                                           |
+| `OnFireBadge`     | `h-10 w-10` flame PNG `src/assets/icons/flame.png`; `animate-pulse` (disabled when reducedMotion); AnimatePresence fade+scale                                                          | `active: boolean`; carries `aria-label="ON FIRE!"` (from `games.engagement.onFire` locale key)                                                                                                                            |
+| `OnFireSplash`    | `fixed inset-0 z-[70] flex items-center justify-center`; flame `h-24 w-24 sm:h-28 sm:w-28 drop-shadow-[0_0_16px_rgba(251,146,60,0.6)]`; scale-bounce + fade                            | `show: boolean`                                                                                                                                                                                                           |
+| `SpeedBonusFlash` | `rounded-full bg-amber-400/20 px-4 py-1 text-sm font-bold text-amber-300 backdrop-blur-sm`; AnimatePresence fade+scale 0.35s                                                           | `show: boolean`, `key: number` (force remount per flash)                                                                                                                                                                  |
+| `TierUpPopup`     | `fixed inset-0 z-[70]`; `rounded-2xl bg-gradient-to-br from-amber-500/90 to-yellow-500/90 px-8 py-5`; `text-3xl font-bold text-white`; flies to score pill position                    | `multiplier: 2\|3`, `targetRef: React.RefObject` (score pill ref for fly-to target)                                                                                                                                       |
 
 ### Adoption matrix (which games get which layer)
 
@@ -305,4 +325,5 @@ No third-party component registries are used or introduced in this phase. All sh
 
 _Phase: 36-game-screen-ui-unification_
 _UI-SPEC created: 2026-06-08 by gsd-ui-researcher_
+_UI-SPEC revised: 2026-06-08 — fixed typography (4 sizes, 2 weights); added visual hierarchy section; added LivesDisplay aria-label contract_
 _Sources: 36-CONTEXT.md (13 decisions), 36-SPEC.md (7 requirements + gap matrix), NotesRecognitionGame.jsx (reference implementation), tailwind.config.js, src/index.css, AppLayout.jsx, src/locales/en/common.json_
