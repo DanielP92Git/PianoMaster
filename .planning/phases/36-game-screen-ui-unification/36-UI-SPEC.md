@@ -1,11 +1,12 @@
 ---
 phase: 36
 slug: game-screen-ui-unification
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-06-08
 revised: 2026-06-08
+reviewed_at: 2026-06-08
 ---
 
 # Phase 36 — UI Design Contract
