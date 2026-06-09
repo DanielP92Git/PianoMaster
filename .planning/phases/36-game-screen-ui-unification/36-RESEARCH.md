@@ -1020,27 +1020,27 @@ test only tests `buildInitialTrailPool`). The regression guarantee for Wave 1 re
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **TimerDisplay extraction (D-04 discretion)**
    - What we know: `TimerDisplay` is already a named inline component with a clean single-prop contract (`formattedTime`). Extracting it is trivial.
    - What's unclear: Whether the single-consumer case warrants the overhead of a separate file.
-   - Recommendation: Extract it. The consistent pattern (all HUD pieces in `hud/`) is worth the trivial cost.
+   - RESOLVED: Extract it. The consistent pattern (all HUD pieces in `hud/`) is worth the trivial cost.
 
 2. **OnFireBadge + OnFireSplash: one component or two?**
    - What we know: `OnFireBadge` (40px inline badge, always-visible when `isOnFire`) and `OnFireSplash` (96px fullscreen overlay, shown briefly on activation) are distinct elements with different props (`active: boolean` vs `show: boolean`).
    - What's unclear: Whether merging them saves complexity.
-   - Recommendation: Keep two components. They have different render positions (inline vs fixed), different z-indices, and different lifecycles. One file each.
+   - RESOLVED: Keep two components. They have different render positions (inline vs fixed), different z-indices, and different lifecycles. One file each.
 
 3. **ComboPill `combo >= 2` guard in ArcadeRhythmGame**
    - What we know: ArcadeRhythmGame conditionally renders the combo badge `{combo >= 2 && <ComboPill .../>}`. NotesRecognitionGame renders it always.
    - What's unclear: Should this guard live inside `ComboPill` as a `hideBelow` prop, or remain in the parent?
-   - Recommendation: Keep it in the parent game. Components should not decide when to hide themselves based on thresholds — that's game-specific behavior.
+   - RESOLVED: Keep it in the parent game. Components should not decide when to hide themselves based on thresholds — that's game-specific behavior.
 
 4. **ProgressBar locale key prop for MixedLessonGame**
    - What we know: `ProgressBar` uses `t("noteRecognition.questionProgress")` which reads "Question N of N". MixedLessonGame uses `t("mixedLesson.progressLabel")` for aria-label.
    - What's unclear: The aria-label role attribute is currently on the bar container in MixedLessonGame, but is not in the shared ProgressBar.
-   - Recommendation: Add `aria-label` to the shared `ProgressBar` container, with value derived from `t("noteRecognition.questionProgress", { current, total })`. The MixedLessonGame bar drops its own aria-label in favor of the shared one. This is acceptable since the content ("Question N of N" or "N of N") is semantically equivalent.
+   - RESOLVED: Add `aria-label` to the shared `ProgressBar` container, with value derived from `t("noteRecognition.questionProgress", { current, total })`. The MixedLessonGame bar drops its own aria-label in favor of the shared one. This is acceptable since the content ("Question N of N" or "N of N") is semantically equivalent.
 
 ---
 
