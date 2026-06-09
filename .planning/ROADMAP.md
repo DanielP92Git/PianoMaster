@@ -125,16 +125,36 @@ components. No game-mechanics changes; HUD presentation only.
 
 Plans:
 
+**Wave 1**
+
 - [ ] 36-01-PLAN.md — Wave 0: base-shell HUD contract tests (ProgressBar/ScorePill, RED)
+
+**Wave 2** _(blocked on Wave 1 completion)_
+
 - [ ] 36-02-PLAN.md — Wave 1: extract base-shell components + refactor NotesRecognition (reference)
+
+**Wave 3** _(blocked on Wave 2 completion)_
+
 - [ ] 36-03-PLAN.md — Wave 1 gate: owner verifies NotesRecognition zero-regression
+
+**Wave 4** _(blocked on Wave 3 completion)_
+
 - [ ] 36-04-PLAN.md — Wave 2 rollout A: SightReading + Memory adopt base shell
 - [ ] 36-05-PLAN.md — Wave 2 rollout B: RhythmReading + RhythmDictation adopt base shell
 - [ ] 36-06-PLAN.md — Wave 2 rollout C: MixedLesson (unify progress bar) + Metronome adopt base shell
+
+**Wave 5** _(blocked on Wave 4 completion)_
+
 - [ ] 36-07-PLAN.md — Wave 3: engagement tests + extract LivesDisplay/ComboPill/OnFireBadge/OnFireSplash
+
+**Wave 6** _(blocked on Wave 5 completion)_
+
 - [ ] 36-08-PLAN.md — Wave 3: extract SpeedBonusFlash/TierUpPopup + refactor NotesRecognition engagement
 - [ ] 36-09-PLAN.md — Wave 3: de-duplicate ArcadeRhythmGame onto shared lives/combo/on-fire
 - [ ] 36-10-PLAN.md — Wave 3: ear-training (NoteComparison + Interval) gain combo/on-fire (no lives)
+
+**Wave 7** _(blocked on Wave 6 completion)_
+
 - [ ] 36-11-PLAN.md — Phase gate: full suite + owner walkthrough of all 10 game screens
 
 **Requirements** (seeded in 36-SPEC.md — confirm in discuss):

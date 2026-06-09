@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.5
 milestone_name: Rhythm Pedagogy
-status: completed
-stopped_at: Phase 36 context gathered
-last_updated: "2026-06-08T10:25:32.626Z"
-last_activity: 2026-06-01
+status: executing
+stopped_at: Phase 36 UI-SPEC approved
+last_updated: "2026-06-09T22:08:18.675Z"
+last_activity: 2026-06-09 -- Phase 36 planning complete
 progress:
   total_phases: 1
   completed_phases: 1
@@ -27,8 +27,8 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 
 Phase: 01
 Plan: Not started
-Status: Milestone complete
-Last activity: 2026-06-01
+Status: Ready to execute
+Last activity: 2026-06-09 -- Phase 36 planning complete
 
 ### Quick Tasks Completed
 
@@ -139,8 +139,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - trail.json EN+HE `unit8Nodes` block keys renamed in lockstep
 - `npm run verify:trail` introduces ZERO new failures (still RED on pre-existing U1/U4/U5 concept-per-unit + 3 orphan-tag warnings — both Wave 0 known states from Plan 01-01)
 
-**Stopped at:** Phase 36 context gathered
-**Resume file:** .planning/phases/36-game-screen-ui-unification/36-CONTEXT.md
+**Stopped at:** Phase 36 UI-SPEC approved
+**Resume file:** .planning/phases/36-game-screen-ui-unification/36-UI-SPEC.md
 
 ---
 
