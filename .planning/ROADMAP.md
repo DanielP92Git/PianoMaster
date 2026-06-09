@@ -102,7 +102,7 @@ Plans:
 
 Phase summary:
 
-- [ ] Phase 36: Game Screen UI Unification (0 plans) -- spec seeded, awaiting discuss/plan
+- [ ] Phase 36: Game Screen UI Unification (11 plans) -- planned
 
 > Numbering note: this phase uses **36** (continuing the global 34/35 sequence from v3.4) rather
 > than restarting at 01, to avoid a `.planning/phases/01-*` directory-glob collision with v3.5's
@@ -121,7 +121,21 @@ subset. ArcadeRhythmGame's existing inline lives/combo/on-fire are de-duplicated
 components. No game-mechanics changes; HUD presentation only.
 **Depends on**: Nothing hard. v3.5 owner UAT is independent; this phase touches game-screen UI, not rhythm trail data.
 **Spec**: `.planning/phases/36-game-screen-ui-unification/36-SPEC.md`
-**Plans**: TBD — to be created after `/gsd-discuss-phase 36`
+**Plans**: 11 plans across 7 execution waves
+
+Plans:
+
+- [ ] 36-01-PLAN.md — Wave 0: base-shell HUD contract tests (ProgressBar/ScorePill, RED)
+- [ ] 36-02-PLAN.md — Wave 1: extract base-shell components + refactor NotesRecognition (reference)
+- [ ] 36-03-PLAN.md — Wave 1 gate: owner verifies NotesRecognition zero-regression
+- [ ] 36-04-PLAN.md — Wave 2 rollout A: SightReading + Memory adopt base shell
+- [ ] 36-05-PLAN.md — Wave 2 rollout B: RhythmReading + RhythmDictation adopt base shell
+- [ ] 36-06-PLAN.md — Wave 2 rollout C: MixedLesson (unify progress bar) + Metronome adopt base shell
+- [ ] 36-07-PLAN.md — Wave 3: engagement tests + extract LivesDisplay/ComboPill/OnFireBadge/OnFireSplash
+- [ ] 36-08-PLAN.md — Wave 3: extract SpeedBonusFlash/TierUpPopup + refactor NotesRecognition engagement
+- [ ] 36-09-PLAN.md — Wave 3: de-duplicate ArcadeRhythmGame onto shared lives/combo/on-fire
+- [ ] 36-10-PLAN.md — Wave 3: ear-training (NoteComparison + Interval) gain combo/on-fire (no lives)
+- [ ] 36-11-PLAN.md — Phase gate: full suite + owner walkthrough of all 10 game screens
 
 **Requirements** (seeded in 36-SPEC.md — confirm in discuss):
 
@@ -139,4 +153,4 @@ components. No game-mechanics changes; HUD presentation only.
 
 ---
 
-_Last updated: 2026-06-06 -- v3.6 milestone seeded; Phase 36 (Game Screen UI Unification) SPEC drafted from UI audit, ready for `/gsd-discuss-phase 36`_
+_Last updated: 2026-06-10 -- Phase 36 (Game Screen UI Unification) planned: 11 plans across 7 waves (base-shell extraction + reference refactor, base-shell rollout to 6 games, engagement-layer extraction + ArcadeRhythm de-dup + ear-training engagement)._
