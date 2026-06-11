@@ -131,7 +131,7 @@ Plans:
 
 **Wave 2** _(blocked on Wave 1 completion)_
 
-- [ ] 36-02-PLAN.md — Wave 1: extract base-shell components + refactor NotesRecognition (reference)
+- [x] 36-02-PLAN.md — Wave 1: extract base-shell components + refactor NotesRecognition (reference)
 
 **Wave 3** _(blocked on Wave 2 completion)_
 
