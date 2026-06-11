@@ -127,7 +127,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 36-01-PLAN.md — Wave 0: base-shell HUD contract tests (ProgressBar/ScorePill, RED)
+- [x] 36-01-PLAN.md — Wave 0: base-shell HUD contract tests (ProgressBar/ScorePill, RED)
 
 **Wave 2** _(blocked on Wave 1 completion)_
 
