@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Clock3, Loader2, Heart, Zap } from "lucide-react";
+import { Loader2, Heart, Zap } from "lucide-react";
 import flameIcon from "../../../assets/icons/flame.png";
 import { AnimatePresence, motion } from "framer-motion";
 import BackButton from "../../ui/BackButton";
@@ -30,6 +30,9 @@ import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
+import { TimerDisplay } from "../shared/hud/TimerDisplay";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -291,22 +294,6 @@ const accidentalRank = (noteObj) => {
   return 0; // natural first
 };
 
-// Simple timer display component
-const TimerDisplay = ({ formattedTime }) => {
-  const { t } = useTranslation("common");
-  return (
-    <div className="flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md">
-      <Clock3 className="h-4 w-4 text-white/80" />
-      <span className="text-xs font-semibold text-white/80 sm:text-sm">
-        {t("games.time")}
-      </span>
-      <span className="font-mono text-sm font-bold tracking-wide sm:text-base">
-        {formattedTime || "00:00"}
-      </span>
-    </div>
-  );
-};
-
 const StageCard = ({ children, className = "" }) => (
   <div
     // NOTE: `backdrop-blur` + an extra "sheen" overlay can cause flickering/white banding
@@ -316,59 +303,6 @@ const StageCard = ({ children, className = "" }) => (
     <div className="relative">{children}</div>
   </div>
 );
-
-// Progress bar component to track answered questions
-const ProgressBar = ({ current, total }) => {
-  const { t } = useTranslation("common");
-  const { soft } = useMotionTokens();
-  const progressPercent = Math.min(100, (current / total) * 100);
-  return (
-    <div className="w-full">
-      <div className="relative h-4 w-full overflow-hidden rounded-full bg-white/10 shadow-inner">
-        <div className="pointer-events-none absolute inset-0 rounded-full ring-1 ring-white/10" />
-        <motion.div
-          className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-gradient-to-r from-indigo-400 via-violet-400 to-fuchsia-400 shadow-[0_4px_16px_rgba(99,102,241,0.2)]"
-          animate={{ scaleX: progressPercent / 100 }}
-          initial={false}
-          transition={soft}
-          style={{ willChange: "transform" }}
-        />
-
-        {/* Checkpoints */}
-        {[0, 25, 50, 75, 100].map((p) => {
-          const isStart = p === 0;
-          const isEnd = p === 100;
-          const xClass = isStart
-            ? "translate-x-0"
-            : isEnd
-              ? "-translate-x-full"
-              : "-translate-x-1/2";
-
-          return (
-            <span
-              key={p}
-              className={`absolute top-1/2 h-2.5 w-2.5 ${xClass} -translate-y-1/2 rounded-full border ${
-                progressPercent >= p
-                  ? "border-white/40 bg-white/80"
-                  : "border-white/20 bg-white/10"
-              }`}
-              style={{ left: isStart ? "0%" : isEnd ? "100%" : `${p}%` }}
-            />
-          );
-        })}
-      </div>
-
-      <div className="mt-2 text-xs font-semibold text-white/75">
-        <span>
-          {t("noteRecognition.questionProgress", {
-            current: Math.min(total, Math.max(1, current + 1)),
-            total,
-          })}
-        </span>
-      </div>
-    </div>
-  );
-};
 
 // === Engagement constants (outside component to avoid re-creation) ===
 const COMBO_TIERS = [
@@ -2355,59 +2289,16 @@ export function NotesRecognitionGame() {
                 <div className="flex flex-1 items-center justify-center gap-2">
                   {/* Score pill — glows when multiplier active */}
                   {(() => {
-                    const tier = [...COMBO_TIERS]
-                      .reverse()
-                      .find((t) => combo >= t.min);
-                    const mult = tier?.multiplier ?? 1;
-                    const pillBorder =
-                      mult >= 3
-                        ? "border-yellow-400/40"
-                        : mult >= 2
-                          ? "border-amber-400/30"
-                          : "border-white/20";
-                    const pillBg =
-                      mult >= 3
-                        ? "bg-yellow-500/20"
-                        : mult >= 2
-                          ? "bg-amber-500/15"
-                          : "bg-white/10";
+                    const comboTier = combo >= 8 ? 2 : combo >= 3 ? 1 : 0;
                     return (
-                      <div ref={scorePillRef} className="relative">
-                        <div
-                          className={`flex items-center gap-2 rounded-full border ${pillBorder} ${pillBg} px-3 py-1.5 text-white shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md transition-colors duration-300 motion-reduce:transition-none`}
-                        >
-                          <span className="text-xs font-semibold text-white/80 sm:text-sm">
-                            XP
-                          </span>
-                          <span className="font-mono text-sm font-bold tracking-wide sm:text-base">
-                            {progress.score}
-                          </span>
-                        </div>
-                        {/* Floating +score animation */}
-                        <AnimatePresence>
-                          {floatingScore !== null && (
-                            <motion.span
-                              key={floatingScoreKey}
-                              initial={
-                                reduce ? { opacity: 1 } : { opacity: 1, y: 0 }
-                              }
-                              animate={
-                                reduce ? { opacity: 0 } : { opacity: 0, y: -28 }
-                              }
-                              transition={{ duration: 0.55 }}
-                              className={`pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 font-mono font-bold drop-shadow-md ${
-                                (tier?.multiplier ?? 1) >= 3
-                                  ? "text-base text-yellow-300 sm:text-lg"
-                                  : (tier?.multiplier ?? 1) >= 2
-                                    ? "text-sm text-amber-300 sm:text-base"
-                                    : "text-sm text-white sm:text-base"
-                              }`}
-                            >
-                              +{floatingScore}
-                            </motion.span>
-                          )}
-                        </AnimatePresence>
-                      </div>
+                      <ScorePill
+                        ref={scorePillRef}
+                        value={progress.score}
+                        label="XP"
+                        comboTint={comboTier}
+                        floatingScore={floatingScore}
+                        floatingScoreKey={floatingScoreKey}
+                      />
                     );
                   })()}
 
