@@ -135,7 +135,7 @@ Plans:
 
 **Wave 3** _(blocked on Wave 2 completion)_
 
-- [ ] 36-03-PLAN.md — Wave 1 gate: owner verifies NotesRecognition zero-regression
+- [x] 36-03-PLAN.md — Wave 1 gate: owner verifies NotesRecognition zero-regression
 
 **Wave 4** _(blocked on Wave 3 completion)_
 
