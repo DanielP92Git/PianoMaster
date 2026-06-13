@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Loader2, Heart, Zap } from "lucide-react";
-import flameIcon from "../../../assets/icons/flame.png";
+import { Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import BackButton from "../../ui/BackButton";
 import { Firework } from "../../animations/Firework";
@@ -28,11 +27,16 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
 import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
-import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
 import { TimerDisplay } from "../shared/hud/TimerDisplay";
+import { LivesDisplay } from "../shared/hud/LivesDisplay";
+import { ComboPill } from "../shared/hud/ComboPill";
+import { OnFireBadge } from "../shared/hud/OnFireBadge";
+import { OnFireSplash } from "../shared/hud/OnFireSplash";
+import { SpeedBonusFlash } from "../shared/hud/SpeedBonusFlash";
+import { TierUpPopup } from "../shared/hud/TierUpPopup";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -347,7 +351,6 @@ export function buildInitialTrailPool(nodeId) {
 
 export function NotesRecognitionGame() {
   const { soft, snappy, fade, reduce } = useMotionTokens();
-  const { reducedMotion: appReducedMotion } = useAccessibility();
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
@@ -661,12 +664,10 @@ export function NotesRecognitionGame() {
   const livesRef = useRef(INITIAL_LIVES);
   const [speedBonusKey, setSpeedBonusKey] = useState(0);
   const [showSpeedBonus, setShowSpeedBonus] = useState(false);
-  const [comboShake, setComboShake] = useState(false);
   const questionStartTimeRef = useRef(null);
   const [tierUpMultiplier, setTierUpMultiplier] = useState(null);
   const [tierUpTarget, setTierUpTarget] = useState({ x: 0, y: "-45vh" });
   const prevTierRef = useRef(1);
-  const comboPillRef = useRef(null);
   const scorePillRef = useRef(null);
   const [floatingScore, setFloatingScore] = useState(null);
   const [floatingScoreKey, setFloatingScoreKey] = useState(0);
@@ -1086,7 +1087,6 @@ export function NotesRecognitionGame() {
     livesRef.current = INITIAL_LIVES;
     setLives(INITIAL_LIVES);
     setShowSpeedBonus(false);
-    setComboShake(false);
     // Reset on-fire and auto-grow state
     isOnFireRef.current = false;
     setIsOnFire(false);
@@ -1715,11 +1715,7 @@ export function NotesRecognitionGame() {
           }
         }
       } else {
-        // Wrong answer: shake combo, reset, deduct life
-        if (comboRef.current > 0) {
-          setComboShake(true);
-          setTimeout(() => setComboShake(false), 300);
-        }
+        // Wrong answer: reset combo, deduct life
         comboRef.current = 0;
         setCombo(0);
         prevTierRef.current = 1;
@@ -2159,26 +2155,7 @@ export function NotesRecognitionGame() {
       </div>
 
       {/* On-fire activation splash — big flame icon */}
-      <AnimatePresence>
-        {showFireSplash && (
-          <motion.div
-            key="fire-splash"
-            initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.5 }}
-            animate={
-              reduce ? { opacity: 1 } : { opacity: 1, scale: [1, 1.15, 1] }
-            }
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center"
-          >
-            <img
-              src={flameIcon}
-              alt=""
-              className="h-24 w-24 drop-shadow-[0_0_16px_rgba(251,146,60,0.6)] sm:h-28 sm:w-28"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <OnFireSplash show={showFireSplash} />
 
       {progress.showFireworks && <Firework />}
 
@@ -2303,61 +2280,10 @@ export function NotesRecognitionGame() {
                   })()}
 
                   {/* On-fire badge — inline, left of streak pill */}
-                  <AnimatePresence>
-                    {isOnFire && (
-                      <motion.div
-                        key="fire-badge"
-                        initial={reduce ? false : { opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={
-                          reduce ? { opacity: 0 } : { opacity: 0, scale: 0.8 }
-                        }
-                        transition={{ duration: 0.3 }}
-                        className={
-                          reduce || appReducedMotion ? "" : "animate-pulse"
-                        }
-                      >
-                        <img src={flameIcon} alt="" className="h-10 w-10" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <OnFireBadge active={isOnFire} />
 
                   {/* Streak counter — always visible, lightning bolt + number */}
-                  <motion.div
-                    ref={comboPillRef}
-                    animate={
-                      comboShake
-                        ? { x: [0, -6, 6, -4, 4, 0] }
-                        : combo > 0
-                          ? { scale: [1, 1.18, 1] }
-                          : undefined
-                    }
-                    transition={
-                      reduce
-                        ? undefined
-                        : { type: "tween", duration: 0.22, ease: "easeInOut" }
-                    }
-                    className={`flex items-center gap-1 rounded-full border px-3 py-1.5 shadow-[0_2px_12px_rgba(0,0,0,0.08)] backdrop-blur-md transition-colors duration-300 motion-reduce:transition-none ${
-                      combo >= 8
-                        ? "border-yellow-400/40 bg-yellow-500/20"
-                        : combo >= 3
-                          ? "border-amber-400/30 bg-amber-500/15"
-                          : "border-white/20 bg-white/10"
-                    }`}
-                  >
-                    <Zap
-                      className={`h-4 w-4 ${
-                        combo >= 8
-                          ? "fill-yellow-300 text-yellow-300"
-                          : combo >= 3
-                            ? "fill-amber-300 text-amber-300"
-                            : "text-white/70"
-                      }`}
-                    />
-                    <span className="font-mono text-sm font-bold tracking-wide text-white sm:text-base">
-                      {combo}
-                    </span>
-                  </motion.div>
+                  <ComboPill combo={combo} />
 
                   {settings.timedMode ? (
                     <TimerDisplay formattedTime={formattedTime} />
@@ -2367,37 +2293,7 @@ export function NotesRecognitionGame() {
                 {!progress.isFinished && (
                   <div className="flex flex-shrink-0 items-center gap-2">
                     {/* Lives hearts */}
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: INITIAL_LIVES }).map((_, i) => (
-                        <AnimatePresence key={i} mode="wait">
-                          {i < lives ? (
-                            <motion.div
-                              key={`heart-${i}-alive`}
-                              initial={false}
-                              exit={
-                                reduce
-                                  ? undefined
-                                  : { scale: [1, 1.4, 0], opacity: [1, 1, 0] }
-                              }
-                              transition={{ duration: 0.3 }}
-                            >
-                              <Heart className="h-5 w-5 fill-red-400 text-red-400 sm:h-6 sm:w-6" />
-                            </motion.div>
-                          ) : (
-                            <motion.div
-                              key={`heart-${i}-dead`}
-                              initial={
-                                reduce ? undefined : { scale: 0, opacity: 0 }
-                              }
-                              animate={{ scale: 1, opacity: 0.3 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <Heart className="h-5 w-5 text-white/30 sm:h-6 sm:w-6" />
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      ))}
-                    </div>
+                    <LivesDisplay lives={lives} totalLives={INITIAL_LIVES} />
 
                     <button
                       onClick={handlePauseGame}
@@ -2423,22 +2319,7 @@ export function NotesRecognitionGame() {
             </div>
 
             {/* Speed bonus flash — centered below progress bar */}
-            <div className="pointer-events-none flex h-7 items-center justify-center">
-              <AnimatePresence>
-                {showSpeedBonus && (
-                  <motion.span
-                    key={speedBonusKey}
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    transition={{ duration: 0.35 }}
-                    className="rounded-full bg-amber-400/20 px-4 py-1 text-sm font-bold text-amber-300 backdrop-blur-sm sm:text-base"
-                  >
-                    {t("games.engagement.fast")}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </div>
+            <SpeedBonusFlash show={showSpeedBonus} flashKey={speedBonusKey} />
 
             {/* New note unlocked banner (auto-grow, trail mode only) */}
             <AnimatePresence>
@@ -2459,46 +2340,7 @@ export function NotesRecognitionGame() {
             </AnimatePresence>
 
             {/* Tier-up popup — splash in center then shrink to score pill */}
-            <AnimatePresence>
-              {tierUpMultiplier && (
-                <motion.div
-                  key={`tier-${tierUpMultiplier}`}
-                  initial={
-                    reduce
-                      ? { opacity: 1 }
-                      : { opacity: 0, scale: 0.5, x: 0, y: 0 }
-                  }
-                  animate={
-                    reduce
-                      ? { opacity: [1, 1, 0] }
-                      : {
-                          opacity: [0, 1, 1, 1],
-                          scale: [0.5, 1, 1, 0.3],
-                          x: [0, 0, 0, tierUpTarget.x],
-                          y: [0, 0, 0, tierUpTarget.y],
-                        }
-                  }
-                  transition={
-                    reduce
-                      ? { duration: 1.2 }
-                      : {
-                          duration: 1.2,
-                          times: [0, 0.15, 0.6, 1],
-                          ease: "easeInOut",
-                        }
-                  }
-                  className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center"
-                >
-                  <div className="rounded-2xl bg-gradient-to-br from-amber-500/90 to-yellow-500/90 px-8 py-5 text-center shadow-2xl shadow-amber-500/30 backdrop-blur-sm">
-                    <div className="text-3xl font-black text-white drop-shadow-lg sm:text-4xl">
-                      {tierUpMultiplier >= 3
-                        ? t("games.engagement.triplePoints")
-                        : t("games.engagement.doublePoints")}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <TierUpPopup multiplier={tierUpMultiplier} target={tierUpTarget} />
 
             {/* Audio Input Status */}
             {isListening && (
