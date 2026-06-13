@@ -26,6 +26,8 @@ import RhythmStaffDisplay from "./components/RhythmStaffDisplay";
 import FloatingFeedback from "./components/FloatingFeedback";
 import { MetronomeDisplay } from "./components";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
 
 // Game phases FSM
 const GAME_PHASES = {
@@ -884,14 +886,19 @@ export function RhythmReadingGame() {
     >
       {/* Header bar — chrome follows document direction so BackButton sits on
           the inline-start (right in RTL/Hebrew), consistent with other games */}
-      <header className="flex h-12 items-center justify-between px-4 py-2 text-white/80">
+      <header className="flex h-12 items-center gap-2 px-4 py-2 text-white/80">
         <BackButton to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"} />
-        <div className="text-sm font-medium">
-          {t("games.rhythmReading.title")} &mdash;{" "}
-          <span dir="ltr">
-            {currentExercise + 1} / {totalExercises}
-          </span>
+        <div className="min-w-0 flex-1 px-2">
+          <ProgressBar current={currentExercise} total={totalExercises} />
         </div>
+        <ScorePill
+          value={
+            exerciseScores.length > 0
+              ? Math.round(totalScore / exerciseScores.length)
+              : 0
+          }
+          label={t("games.score")}
+        />
       </header>
 
       {/* Play area stays LTR — music notation and the left-to-right cursor sweep
