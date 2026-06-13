@@ -149,9 +149,9 @@ Plans:
 
 **Wave 6** _(blocked on Wave 5 completion)_
 
-- [ ] 36-08-PLAN.md — Wave 3: extract SpeedBonusFlash/TierUpPopup + refactor NotesRecognition engagement
-- [ ] 36-09-PLAN.md — Wave 3: de-duplicate ArcadeRhythmGame onto shared lives/combo/on-fire
-- [ ] 36-10-PLAN.md — Wave 3: ear-training (NoteComparison + Interval) gain combo/on-fire (no lives)
+- [x] 36-08-PLAN.md — Wave 3: extract SpeedBonusFlash/TierUpPopup + refactor NotesRecognition engagement
+- [x] 36-09-PLAN.md — Wave 3: de-duplicate ArcadeRhythmGame onto shared lives/combo/on-fire
+- [x] 36-10-PLAN.md — Wave 3: ear-training (NoteComparison + Interval) gain combo/on-fire (no lives)
 
 **Wave 7** _(blocked on Wave 6 completion)_
 

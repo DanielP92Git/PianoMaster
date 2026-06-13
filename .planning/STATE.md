@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 ## Current Position
 
 Phase: 36 (game-screen-ui-unification) — EXECUTING
-Plan: 7 of 11 (Wave 5 complete)
-Status: Executing Phase 36 — Wave 6 next (36-08/09/10 engagement adoption)
-Last activity: 2026-06-14 -- Wave 5 merged (36-07 engagement-layer extraction, RED→GREEN); test gate green (1916 pass)
+Plan: 10 of 11 (Wave 6 complete)
+Status: Executing Phase 36 — Wave 7 = BLOCKING owner walkthrough checkpoint (36-11)
+Last activity: 2026-06-14 -- Wave 6 merged (36-08 NotesRecognition full migration, 36-09 ArcadeRhythm de-dup, 36-10 ear-training combo/on-fire); build+test gate green (1916 pass)
 
 ### Quick Tasks Completed
 
