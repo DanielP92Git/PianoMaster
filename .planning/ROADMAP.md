@@ -139,9 +139,9 @@ Plans:
 
 **Wave 4** _(blocked on Wave 3 completion)_
 
-- [ ] 36-04-PLAN.md — Wave 2 rollout A: SightReading + Memory adopt base shell
-- [ ] 36-05-PLAN.md — Wave 2 rollout B: RhythmReading + RhythmDictation adopt base shell
-- [ ] 36-06-PLAN.md — Wave 2 rollout C: MixedLesson (unify progress bar) + Metronome adopt base shell
+- [x] 36-04-PLAN.md — Wave 2 rollout A: SightReading + Memory adopt base shell
+- [x] 36-05-PLAN.md — Wave 2 rollout B: RhythmReading + RhythmDictation adopt base shell
+- [x] 36-06-PLAN.md — Wave 2 rollout C: MixedLesson (unify progress bar) + Metronome adopt base shell
 
 **Wave 5** _(blocked on Wave 4 completion)_
 
