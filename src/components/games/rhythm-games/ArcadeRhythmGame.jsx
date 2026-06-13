@@ -7,7 +7,8 @@ import React, {
 } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Heart, Zap, Flame } from "lucide-react";
+import { ComboPill } from "../shared/hud/ComboPill";
+import { LivesDisplay } from "../shared/hud/LivesDisplay";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
@@ -1154,36 +1155,10 @@ function ArcadeRhythmGame() {
         {/* Lives + combo */}
         <div className="flex items-center gap-3">
           {/* Combo badge */}
-          {combo >= 2 && (
-            <div
-              className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-sm font-bold ${
-                isOnFire
-                  ? "border-orange-400/40 bg-orange-400/20 text-orange-300"
-                  : "border-yellow-400/40 bg-yellow-400/20 text-yellow-300"
-              }`}
-            >
-              {isOnFire && <Flame className="h-3 w-3" />}
-              {combo}
-              <Zap className="h-3 w-3" />
-            </div>
-          )}
+          {combo >= 2 && <ComboPill combo={combo} isOnFire={isOnFire} />}
 
           {/* Lives hearts */}
-          <div
-            className="flex items-center gap-1"
-            aria-label={`${lives} lives remaining`}
-            role="group"
-          >
-            {Array.from({ length: INITIAL_LIVES }).map((_, i) => (
-              <Heart
-                key={i}
-                className={`h-5 w-5 ${
-                  i < lives ? "fill-red-400 text-red-400" : "text-white/30"
-                }`}
-                aria-hidden="true"
-              />
-            ))}
-          </div>
+          <LivesDisplay lives={lives} totalLives={INITIAL_LIVES} />
         </div>
       </header>
 
