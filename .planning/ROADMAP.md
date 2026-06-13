@@ -145,7 +145,7 @@ Plans:
 
 **Wave 5** _(blocked on Wave 4 completion)_
 
-- [ ] 36-07-PLAN.md — Wave 3: engagement tests + extract LivesDisplay/ComboPill/OnFireBadge/OnFireSplash
+- [x] 36-07-PLAN.md — Wave 3: engagement tests + extract LivesDisplay/ComboPill/OnFireBadge/OnFireSplash
 
 **Wave 6** _(blocked on Wave 5 completion)_
 

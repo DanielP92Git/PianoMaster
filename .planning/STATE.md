@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 ## Current Position
 
 Phase: 36 (game-screen-ui-unification) — EXECUTING
-Plan: 6 of 11 (Wave 4 complete)
-Status: Executing Phase 36 — Wave 5 next (36-07 engagement extraction)
-Last activity: 2026-06-14 -- Wave 4 merged (36-04/05/06 base-shell rollout); build+test gate green (1910 pass)
+Plan: 7 of 11 (Wave 5 complete)
+Status: Executing Phase 36 — Wave 6 next (36-08/09/10 engagement adoption)
+Last activity: 2026-06-14 -- Wave 5 merged (36-07 engagement-layer extraction, RED→GREEN); test gate green (1916 pass)
 
 ### Quick Tasks Completed
 
