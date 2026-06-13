@@ -8,7 +8,7 @@ import { useMotionTokens } from "../../../../utils/useMotionTokens";
  *
  * Combo pill with internal shake/scale animation and optional on-fire styling.
  * Animation is encapsulated — the component detects combo changes via prevComboRef
- * internally (D-10). Parent must NOT pass a comboShake or shouldShake prop.
+ * internally (D-10). No animation-trigger props accepted from the parent.
  *
  * @param {number}  props.combo    - Current combo count
  * @param {boolean} [props.isOnFire] - When true, shows Flame icon instead of Zap
