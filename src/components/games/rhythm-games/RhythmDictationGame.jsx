@@ -27,6 +27,8 @@ import {
 } from "./utils/rhythmTimingUtils";
 import { DictationChoiceCard } from "./components/DictationChoiceCard";
 import { getNodeById } from "../../../data/skillTrail";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
@@ -760,14 +762,13 @@ export function RhythmDictationGame() {
           )}
 
           {/* Progress */}
-          <span dir="ltr" className="font-rounded text-xs text-white/70">
-            {currentQuestion + 1}/{TOTAL_QUESTIONS}
-          </span>
+          <ProgressBar current={currentQuestion} total={TOTAL_QUESTIONS} />
 
           {/* Score */}
-          <span className="font-rounded text-xs text-indigo-300">
-            {correctCount} ✓
-          </span>
+          <ScorePill
+            value={questionScores.filter((s) => s === 1).length}
+            label={t("games.score")}
+          />
 
           {/* Syllable toggle — hidden on Discovery nodes (D-19: enforced) */}
           {!isDiscoveryNode && (
