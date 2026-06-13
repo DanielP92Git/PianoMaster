@@ -51,6 +51,8 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 import { useTranslation } from "react-i18next";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
 
 // #region agent log (debug-mode instrumentation — dev only)
 const __srLog = import.meta.env.DEV
@@ -210,7 +212,6 @@ export function SightReadingGame() {
   const {
     totalExercises: sessionTotalExercises,
     currentExerciseNumber,
-    progressFraction,
     isSessionComplete,
     isVictory,
     percentage: sessionPercentage,
@@ -798,7 +799,6 @@ export function SightReadingGame() {
     sessionMaxScore > 0
       ? `${Math.round(sessionTotalScore)}/${Math.round(sessionMaxScore)}`
       : "0/0";
-  const progressPercentage = Math.min(progressFraction * 100, 100);
   const totalPossibleSessionScore =
     sessionMaxScore > 0
       ? Math.round(sessionMaxScore)
@@ -3495,44 +3495,20 @@ export function SightReadingGame() {
       />
 
       {/* Progress Bar - Center */}
-      <div className="min-w-0 flex-1">
-        <div className="rounded-xl border-white/10 px-2 py-1.5 text-white shadow-lg sm:px-3">
-          <div className="mb-1 flex items-center justify-between text-xs font-semibold">
-            <span className="truncate">
-              {t("sightReading.exercise", {
-                current: Math.min(currentExerciseNumber, sessionTotalExercises),
-                total: sessionTotalExercises,
-              })}
-            </span>
-            <span
-              className={`ml-2 text-[10px] sm:text-xs ${
-                isSessionComplete
-                  ? isVictory
-                    ? "text-emerald-300"
-                    : "text-amber-300"
-                  : "text-white/70"
-              }`}
-            >
-              {isSessionComplete ? (isVictory ? "Victory" : "Complete") : ``}
-            </span>
-          </div>
-          <div className="h-1 overflow-hidden rounded-full bg-white/20">
-            <div
-              className={`h-full transition-all duration-300 ${
-                isSessionComplete
-                  ? isVictory
-                    ? "bg-emerald-400"
-                    : "bg-rose-400"
-                  : "bg-indigo-300"
-              }`}
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
+      <div className="min-w-0 flex-1 px-2 sm:px-3">
+        <ProgressBar
+          current={currentExerciseNumber - 1}
+          total={sessionTotalExercises}
+        />
       </div>
 
-      {/* Right Controls: BPM + Icons */}
+      {/* Right Controls: Score + BPM + Icons */}
       <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        {/* Score Pill */}
+        <ScorePill
+          value={Math.round(sessionTotalScore)}
+          label={t("games.score")}
+        />
         {/* BPM Pill */}
         <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
           {gameSettings.tempo} BPM

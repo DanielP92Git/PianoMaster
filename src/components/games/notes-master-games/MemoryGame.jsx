@@ -28,6 +28,8 @@ import { normalizeSelectedNotes } from "../shared/noteSelectionUtils";
 import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
 
 const trebleNotes = TREBLE_NOTES;
 const bassNotes = BASS_NOTES;
@@ -890,12 +892,7 @@ export function MemoryGame() {
                 <span className="font-mono">{formattedTime}</span>
               </div>
             )}
-            <div className="flex items-center gap-1 rounded-lg border border-white/20 bg-white/10 px-2 py-1 backdrop-blur-sm sm:gap-2 sm:px-3 sm:py-1.5">
-              <span className="text-sm text-white/70 sm:text-base md:text-lg">
-                XP:
-              </span>
-              <span className="font-mono">{score}</span>
-            </div>
+            <ScorePill value={score} label="XP" />
           </div>
         )}
 
@@ -909,6 +906,16 @@ export function MemoryGame() {
           </button>
         )}
       </div>
+
+      {/* Pairs progress bar — visible while game is active */}
+      {gameStarted && !gameFinished && (
+        <div className="px-3 pb-1 sm:px-4">
+          <ProgressBar
+            current={matchedIndexes.length / 2}
+            total={cards.length / 2}
+          />
+        </div>
+      )}
 
       {showFireworks && <Firework />}
       {showMatchFirework && (
