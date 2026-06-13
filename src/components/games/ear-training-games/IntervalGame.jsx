@@ -31,6 +31,10 @@ import {
 } from "./earTrainingUtils";
 import { PianoKeyboardReveal } from "./components/PianoKeyboardReveal";
 import { getNodeById } from "../../../data/skillTrail";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
+import { ComboPill } from "../shared/hud/ComboPill";
+import { OnFireBadge } from "../shared/hud/OnFireBadge";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
@@ -49,6 +53,7 @@ const NOTE_GAP = 0.25; // gap between note1 and note2
 const CORRECT_PAUSE_MS = 1500;
 const WRONG_PAUSE_MS = 2000;
 const DEFAULT_ASCENDING_RATIO = 0.6; // D-10: ~60% ascending first
+const ON_FIRE_THRESHOLD = 5;
 
 // ---------------------------------------------------------------------------
 // Button state CSS classes (from 09-UI-SPEC.md)
@@ -129,6 +134,10 @@ export default function IntervalGame() {
 
   // Keyboard reveal
   const [showKeyboard, setShowKeyboard] = useState(false);
+
+  // Engagement state (D-08: no lives — combo/on-fire only)
+  const [combo, setCombo] = useState(0);
+  const [isOnFire, setIsOnFire] = useState(false);
 
   // Audio status
   const [isPlaying, setIsPlaying] = useState(false);
@@ -305,6 +314,11 @@ export default function IntervalGame() {
           t("games.intervalGame.correct", { defaultValue: "Correct!" })
         );
         setQuestionScores((prev) => [...prev, 1]);
+        setCombo((prev) => {
+          const next = prev + 1;
+          if (next >= ON_FIRE_THRESHOLD && !isOnFire) setIsOnFire(true);
+          return next;
+        });
 
         feedbackTimeoutRef.current = setTimeout(() => {
           advanceQuestion();
@@ -315,6 +329,8 @@ export default function IntervalGame() {
           t("games.intervalGame.wrong", { defaultValue: "Try again!" })
         );
         setQuestionScores((prev) => [...prev, 0]);
+        setCombo(0); // D-08: no life deducted, no early GameOver
+        setIsOnFire(false);
 
         feedbackTimeoutRef.current = setTimeout(() => {
           advanceQuestion();
@@ -322,7 +338,7 @@ export default function IntervalGame() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps -- advanceQuestion defined below (stable ref pattern)
-    [gamePhase, currentQuestion, playCorrectSound, playWrongSound, t]
+    [gamePhase, currentQuestion, isOnFire, playCorrectSound, playWrongSound, t]
   );
 
   // ---------------------------------------------------------------------------
@@ -362,6 +378,8 @@ export default function IntervalGame() {
     hasAutoStartedRef.current = true;
     setQuestionIndex(0);
     setQuestionScores([]);
+    setCombo(0);
+    setIsOnFire(false);
     generateQuestion(0);
   }, [generateQuestion]);
 
@@ -453,6 +471,8 @@ export default function IntervalGame() {
     setFeedbackText("");
     setIsPlaying(false);
     isPlayingRef.current = false;
+    setCombo(0);
+    setIsOnFire(false);
     if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
   }, []);
 
@@ -530,22 +550,23 @@ export default function IntervalGame() {
       />
 
       <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
-        {/* Header bar */}
-        <div className="flex h-12 items-center justify-between">
+        {/* HUD header */}
+        <div className="flex items-center justify-between gap-2">
           <BackButton
             to={nodeId ? "/trail?path=ear_training" : "/ear-training-mode"}
           />
           <div className="flex items-center gap-2">
-            {/* Progress counter — dir=ltr to prevent digit reversal in RTL */}
-            <span dir="ltr" className="font-rounded text-sm text-white/70">
-              {questionIndex + 1} / {TOTAL_QUESTIONS}
-            </span>
-            {/* Score */}
-            <span className="font-rounded text-sm text-indigo-300">
-              {correctCount} ✓
-            </span>
+            <ScorePill
+              value={correctCount}
+              label={t("games.score")}
+              comboTint={combo >= 8 ? 2 : combo >= 3 ? 1 : 0}
+            />
+            <OnFireBadge active={isOnFire} />
+            <ComboPill combo={combo} />
           </div>
         </div>
+        {/* Progress bar */}
+        <ProgressBar current={questionScores.length} total={TOTAL_QUESTIONS} />
 
         {/* SETUP — inline start (standalone) / loading (trail auto-start) */}
         {gamePhase === GAME_PHASES.SETUP &&

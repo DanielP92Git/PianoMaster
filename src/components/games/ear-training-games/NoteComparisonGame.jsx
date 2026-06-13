@@ -17,6 +17,10 @@ import VictoryScreen from "../VictoryScreen";
 import { PianoKeyboardReveal } from "./components/PianoKeyboardReveal";
 import { generateNotePair, getTierForQuestion } from "./earTrainingUtils";
 import { getNodeById } from "../../../data/skillTrail";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
+import { ComboPill } from "../shared/hud/ComboPill";
+import { OnFireBadge } from "../shared/hud/OnFireBadge";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
@@ -34,6 +38,7 @@ const NOTE_DURATION = 0.6; // seconds per note
 const NOTE_GAP = 0.25; // silence between notes
 const CORRECT_PAUSE_MS = 1500;
 const WRONG_PAUSE_MS = 2000;
+const ON_FIRE_THRESHOLD = 5;
 
 // Button state classes (mirroring DictationChoiceCard verbatim)
 const STATE_CLASSES = {
@@ -106,6 +111,10 @@ export default function NoteComparisonGame() {
   const [answerCorrect, setAnswerCorrect] = useState(null); // boolean
   const [showKeyboard, setShowKeyboard] = useState(false);
 
+  // --- Engagement state (D-08: no lives — combo/on-fire only) ---
+  const [combo, setCombo] = useState(0);
+  const [isOnFire, setIsOnFire] = useState(false);
+
   // Auto-start guard
   const hasAutoStartedRef = useRef(false);
   const feedbackTimeoutRef = useRef(null);
@@ -172,6 +181,8 @@ export default function NoteComparisonGame() {
       setSelectedAnswer(null);
       setAnswerCorrect(null);
       setShowKeyboard(false);
+      setCombo(0);
+      setIsOnFire(false);
       pauseTimer();
 
       playNotePair(pair.note1, pair.note2, () => {
@@ -228,8 +239,15 @@ export default function NoteComparisonGame() {
       if (isCorrect) {
         setCorrectCount((c) => c + 1);
         playCorrectSound();
+        setCombo((prev) => {
+          const next = prev + 1;
+          if (next >= ON_FIRE_THRESHOLD && !isOnFire) setIsOnFire(true);
+          return next;
+        });
       } else {
         playWrongSound();
+        setCombo(0); // D-08: no life deducted, no early GameOver
+        setIsOnFire(false);
       }
 
       // D-05 reveal sequence: keyboard slides in after 100ms
@@ -246,6 +264,7 @@ export default function NoteComparisonGame() {
       gamePhase,
       currentPair,
       currentQuestion,
+      isOnFire,
       playCorrectSound,
       playWrongSound,
       nextQuestion,
@@ -272,6 +291,8 @@ export default function NoteComparisonGame() {
     setSelectedAnswer(null);
     setAnswerCorrect(null);
     setShowKeyboard(false);
+    setCombo(0);
+    setIsOnFire(false);
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -426,22 +447,23 @@ export default function NoteComparisonGame() {
       />
 
       <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
-        {/* Header bar */}
-        <div className="flex h-12 items-center justify-between">
+        {/* HUD header */}
+        <div className="flex items-center justify-between gap-2">
           <BackButton
             to={nodeId ? "/trail?path=ear_training" : "/ear-training-mode"}
           />
           <div className="flex items-center gap-2">
-            {/* Progress counter — dir=ltr to prevent digit reversal in RTL */}
-            <span dir="ltr" className="font-rounded text-sm text-white/70">
-              {currentQuestion + 1} / {TOTAL_QUESTIONS}
-            </span>
-            {/* Score */}
-            <span className="font-rounded text-sm text-indigo-300">
-              {correctCount} ✓
-            </span>
+            <ScorePill
+              value={correctCount}
+              label={t("games.score")}
+              comboTint={combo >= 8 ? 2 : combo >= 3 ? 1 : 0}
+            />
+            <OnFireBadge active={isOnFire} />
+            <ComboPill combo={combo} />
           </div>
         </div>
+        {/* Progress bar */}
+        <ProgressBar current={currentQuestion} total={TOTAL_QUESTIONS} />
 
         {/* SETUP — inline start (standalone) / loading (trail auto-start) */}
         {gamePhase === GAME_PHASES.SETUP &&
