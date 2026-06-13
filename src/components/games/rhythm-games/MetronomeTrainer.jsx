@@ -22,6 +22,8 @@ import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import Button from "../../ui/Button";
 import { calculateTimingThresholds } from "./utils/rhythmTimingUtils";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
 
 // Game phases
 const GAME_PHASES = {
@@ -1412,13 +1414,26 @@ export function MetronomeTrainer() {
             {gameSettings.difficulty}
           </p>
         </div>
-        <div className="whitespace-nowrap text-right text-xs text-white">
-          {t("games.metronomeTrainer.progressLabel", {
-            current: displayExerciseNumber,
-            total: exerciseProgress.totalExercises,
-          })}
-        </div>
+        {nodeId ? (
+          <ScorePill value={sessionStats.totalScore} label={t("games.score")} />
+        ) : (
+          <div className="whitespace-nowrap text-right text-xs text-white">
+            {t("games.metronomeTrainer.progressLabel", {
+              current: displayExerciseNumber,
+              total: exerciseProgress.totalExercises,
+            })}
+          </div>
+        )}
       </div>
+      {/* Trail-mode progress bar — shown only when launched from the trail */}
+      {nodeId && (
+        <div className="px-4 pb-2">
+          <ProgressBar
+            current={exerciseProgress.currentExercise}
+            total={exerciseProgress.totalExercises}
+          />
+        </div>
+      )}
 
       {/* Main Game Area - Side by Side */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row landscape:flex-row landscape:gap-2">
