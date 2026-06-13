@@ -207,6 +207,24 @@ vi.mock("../renderers/RhythmDictationQuestion", () => ({
 
 vi.mock("../../../../data/patterns/RhythmPatternGenerator", () => ({
   resolveByTags: vi.fn(() => null),
+  resolveByAnyTag: vi.fn(() => null),
+  durationsIncludeRests: vi.fn(() => false),
+}));
+
+vi.mock("../../shared/hud/ProgressBar", () => ({
+  ProgressBar: ({ current, total }) => (
+    <div data-testid="progress-bar">
+      {current}/{total}
+    </div>
+  ),
+}));
+
+vi.mock("../../shared/hud/ScorePill", () => ({
+  ScorePill: ({ value, label }) => (
+    <div data-testid="score-pill">
+      {label}: {value}
+    </div>
+  ),
 }));
 
 vi.mock("../utils/rhythmVexflowHelpers", () => ({
@@ -257,13 +275,11 @@ describe("MixedLessonGame", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders progress bar with correct fraction", () => {
+  it("renders shared ProgressBar with correct fraction", () => {
     render(<MixedLessonGame />);
-    const progressBar = screen.getByRole("progressbar");
+    const progressBar = screen.getByTestId("progress-bar");
     expect(progressBar).toBeInTheDocument();
-    expect(progressBar).toHaveAttribute("aria-valuemax", "4");
-    expect(progressBar).toHaveAttribute("aria-valuenow", "0");
-    expect(screen.getByText("0/4")).toBeInTheDocument();
+    expect(progressBar.textContent).toBe("0/4");
   });
 
   it("advances to next question on correct answer", async () => {
@@ -275,8 +291,8 @@ describe("MixedLessonGame", () => {
     // Advance past feedback delay
     await act(() => vi.advanceTimersByTime(800));
 
-    // Should now show 1/4 in progress
-    expect(screen.getByText("1/4")).toBeInTheDocument();
+    // Should now show 1/4 in shared ProgressBar
+    expect(screen.getByTestId("progress-bar").textContent).toBe("1/4");
   });
 
   it("shows VictoryScreen after all questions answered", async () => {
@@ -417,7 +433,7 @@ describe("MixedLessonGame — CODE-01: stale-closure fix", () => {
     await act(() => vi.advanceTimersByTime(600));
 
     // Should advance to question index 1 (visual_recognition), NOT skip to index 2
-    expect(screen.getByText("1/3")).toBeInTheDocument();
+    expect(screen.getByTestId("progress-bar").textContent).toBe("1/3");
     expect(
       screen.getByTestId("visual-recognition-question")
     ).toBeInTheDocument();

@@ -45,6 +45,8 @@ import { useNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { BossIntroOverlay } from "./components/BossIntroOverlay";
 import { useMotionTokens } from "../../../utils/useMotionTokens";
+import { ProgressBar } from "../shared/hud/ProgressBar";
+import { ScorePill } from "../shared/hud/ScorePill";
 
 // Map VexFlow duration codes to legacy pattern names for RhythmTapQuestion/getPattern() compatibility
 const VEX_TO_OLD_NAME = {
@@ -652,28 +654,6 @@ export default function MixedLessonGame() {
     }
   };
 
-  // Progress bar (D-10, UI-SPEC section 2)
-  const renderProgressBar = () => (
-    <div className="flex flex-1 items-center gap-3">
-      <div
-        className="h-2 flex-1 overflow-hidden rounded-full bg-white/15"
-        role="progressbar"
-        aria-valuenow={currentIndex}
-        aria-valuemin={0}
-        aria-valuemax={questions.length}
-        aria-label={t("mixedLesson.progressLabel", "Lesson progress")}
-      >
-        <div
-          className={`h-full rounded-full bg-green-400${reducedMotion ? "" : " transition-[width] duration-300 ease-in-out"}`}
-          style={{ width: `${(currentIndex / questions.length) * 100}%` }}
-        />
-      </div>
-      <span className="whitespace-nowrap text-sm font-bold text-white/70">
-        {currentIndex}/{questions.length}
-      </span>
-    </div>
-  );
-
   // Tap-to-start overlay — supplies the user gesture that unlocks audio so the
   // count-in is never silent (autoplay policy / iOS Safari).
   const renderTapToStart = () =>
@@ -729,7 +709,13 @@ export default function MixedLessonGame() {
         {/* Top bar */}
         <div className="mb-4 flex items-center gap-4">
           <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
-          {renderProgressBar()}
+          <div className="min-w-0 flex-1">
+            <ProgressBar current={currentIndex} total={questions.length} />
+          </div>
+          <ScorePill
+            value={results.filter(Boolean).length}
+            label={t("games.score")}
+          />
         </div>
 
         {/* Question area with crossfade */}
@@ -775,7 +761,13 @@ export default function MixedLessonGame() {
       {/* Top bar */}
       <div className="mb-4 flex w-full items-center gap-4">
         <BackButton to={nodeId ? "/trail" : "/rhythm-mode"} />
-        {renderProgressBar()}
+        <div className="min-w-0 flex-1">
+          <ProgressBar current={currentIndex} total={questions.length} />
+        </div>
+        <ScorePill
+          value={results.filter(Boolean).length}
+          label={t("games.score")}
+        />
       </div>
 
       {/* Question area with crossfade */}
