@@ -20,7 +20,7 @@ import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { useNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
-import Button from "../../ui/Button";
+import { GameActionButton } from "../shared/hud/GameActionButton";
 import { calculateTimingThresholds } from "./utils/rhythmTimingUtils";
 import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
@@ -1440,24 +1440,25 @@ export function MetronomeTrainer() {
       {/* Bottom Controls — session stats now surface on the VictoryScreen,
           matching the other games (no live in-game stats footer). */}
       <div className="flex-shrink-0 space-y-3 px-4 pb-4">
-        {/* Navigation Buttons (feedback phase only) */}
+        {/* Navigation Buttons (feedback phase only) — shared GameActionButton,
+            matching SightReading's FeedbackSummary style across all games. */}
         {gamePhase === GAME_PHASES.FEEDBACK &&
           !exerciseProgress.isGameComplete && (
-            <div className="flex justify-center gap-3">
-              <Button
+            <div className="mx-auto flex w-full max-w-xs gap-2.5">
+              <GameActionButton
+                tone="advance"
                 onClick={nextPattern}
-                variant="primary"
-                className="px-6 py-2 text-sm sm:text-base"
+                className="flex-1"
               >
                 {t("games.metronomeTrainer.buttons.nextPattern")}
-              </Button>
-              <Button
+              </GameActionButton>
+              <GameActionButton
+                tone="neutral"
                 onClick={endSession}
-                variant="outline"
-                className="px-6 py-2 text-sm sm:text-base"
+                className="flex-1"
               >
                 {t("games.metronomeTrainer.buttons.endSession")}
-              </Button>
+              </GameActionButton>
             </div>
           )}
       </div>
