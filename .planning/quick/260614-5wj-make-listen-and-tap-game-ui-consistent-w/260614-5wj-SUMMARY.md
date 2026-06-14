@@ -75,10 +75,33 @@ is play/pause transport, not results nav).
 Verified: `eslint` clean on all three files; `vitest run` rhythm-games +
 sight-reading → **28 files / 342 tests pass**.
 
+## Follow-up — "End Session" → "Try Again" (owner request)
+
+The owner asked for the secondary feedback-phase button to say and function as
+**Try Again** (replay the same pattern) instead of **End Session**. This also makes
+Listen & Tap's feedback buttons mirror SightReading's `FeedbackSummary` exactly:
+**Try Again** (retry/green) + **Next Pattern** (advance/indigo).
+
+Mechanics (`MetronomeTrainer.jsx`):
+- A pattern is already scored by the time the FEEDBACK phase shows, so a naive
+  replay would double-count. `tryAgainPattern` snapshots the pre-attempt
+  `sessionStats` (new `sessionStatsRef` mirror) + `exerciseProgress` inside
+  `evaluatePerformance`, then rolls them back on retry so the replay **replaces**
+  the attempt. The same pattern object is remembered in `lastPatternRef` at each
+  launch site (`startGame`, `nextPattern`) and re-run through the count-in.
+- Removed the now-unused `endSession` callback. Exit is still available via the
+  header back button.
+- i18n: `metronomeTrainer.buttons.endSession` → `buttons.tryAgain` in en ("Try
+  Again") + he ("נסה שוב").
+
+Verified: JSON valid, `eslint` clean, `vitest run` rhythm-games → 22 files / 241
+tests pass.
+
 ## Commits
 
 - `df2bdff4` — feat(36/quick): unify Listen & Tap (MetronomeTrainer) HUD with other games
 - `b8977261` — feat(36/quick): unify mid-game feedback buttons via shared GameActionButton
+- `7a4ee730` — feat(36/quick): replace Listen & Tap "End Session" with "Try Again" (replay pattern)
 
 ## Follow-ups (optional, not done)
 

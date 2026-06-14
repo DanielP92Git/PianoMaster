@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 Phase: 36
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-06-14 - Quick task 260614-5wj: unify Listen & Tap HUD + shared GameActionButton feedback buttons across games
+Last activity: 2026-06-14 - Quick task 260614-5wj: unify Listen & Tap HUD + shared GameActionButton; "End Session" → "Try Again" (replay pattern)
 
 ### Quick Tasks Completed
 
