@@ -35,6 +35,7 @@ import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
 import { ComboPill } from "../shared/hud/ComboPill";
 import { OnFireBadge } from "../shared/hud/OnFireBadge";
+import { StreakBrightnessOverlay } from "../shared/hud/StreakBrightnessOverlay";
 
 // ---------------------------------------------------------------------------
 // Game phase finite-state machine
@@ -538,7 +539,10 @@ export default function IntervalGame() {
   // first interval auto-plays on entering LISTENING.
   // ---------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900">
+      {/* Streak brightness — screen lightens with the combo, snaps dark on a miss */}
+      <StreakBrightnessOverlay combo={combo} />
+
       {/* iOS rotate prompt */}
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
 
@@ -549,7 +553,7 @@ export default function IntervalGame() {
         onRestartExercise={handleReset}
       />
 
-      <div className="mx-auto flex max-w-lg flex-col gap-3 p-4">
+      <div className="relative z-10 mx-auto flex max-w-lg flex-col gap-3 p-4">
         {/* HUD header */}
         <div className="flex items-center justify-between gap-2">
           <BackButton

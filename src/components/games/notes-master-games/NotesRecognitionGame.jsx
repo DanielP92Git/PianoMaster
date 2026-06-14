@@ -37,6 +37,7 @@ import { OnFireBadge } from "../shared/hud/OnFireBadge";
 import { OnFireSplash } from "../shared/hud/OnFireSplash";
 import { SpeedBonusFlash } from "../shared/hud/SpeedBonusFlash";
 import { TierUpPopup } from "../shared/hud/TierUpPopup";
+import { StreakBrightnessOverlay } from "../shared/hud/StreakBrightnessOverlay";
 
 // Use comprehensive note definitions from Sight Reading game
 const trebleNotes = TREBLE_NOTES;
@@ -2153,6 +2154,9 @@ export function NotesRecognitionGame() {
         <div className="absolute left-1/2 top-1/3 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-white/5 blur-3xl" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_55%)]" />
       </div>
+
+      {/* Streak brightness — screen lightens with the combo, snaps dark on a miss */}
+      <StreakBrightnessOverlay combo={combo} />
 
       {/* On-fire activation splash — big flame icon */}
       <OnFireSplash show={showFireSplash} />
