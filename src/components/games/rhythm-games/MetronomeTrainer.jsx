@@ -287,6 +287,9 @@ export function MetronomeTrainer() {
   const visualMetronomeRef = useRef(null);
   const metronomeStartTimeRef = useRef(null);
   const patternInfoRef = useRef(null); // Store pattern info immediately
+  const sessionStatsRef = useRef(sessionStats); // Mirror of sessionStats for "Try Again" rollback
+  const preAttemptSnapshotRef = useRef(null); // Pre-scoring snapshot, restored on "Try Again"
+  const lastPatternRef = useRef(null); // Last launched pattern object, replayed on "Try Again"
   const userTapsRef = useRef([]); // Track user taps in real-time for evaluation
   const scheduledOscillatorsRef = useRef([]); // Track scheduled oscillators for manual stopping
   const [hasUserStartedTapping, setHasUserStartedTapping] = useState(false);
@@ -296,6 +299,12 @@ export function MetronomeTrainer() {
   useEffect(() => {
     beatDuration.current = 60 / gameSettings.tempo; // seconds per beat
   }, [gameSettings.tempo]);
+
+  // Keep a ref mirror of sessionStats so "Try Again" can snapshot the
+  // pre-attempt score before evaluatePerformance mutates it.
+  useEffect(() => {
+    sessionStatsRef.current = sessionStats;
+  }, [sessionStats]);
 
   /**
    * Create custom metronome sound with specific frequency and volume
@@ -745,6 +754,7 @@ export function MetronomeTrainer() {
         }
 
         setCurrentPattern(pattern);
+        lastPatternRef.current = pattern; // Remember for "Try Again" replay
         setCurrentBeat(0);
         setUserTaps([]);
         setExpectedTaps([]);
@@ -816,6 +826,18 @@ export function MetronomeTrainer() {
   const evaluatePerformance = useCallback(() => {
     // Metronome is already stopped at measure end
     setGamePhase(GAME_PHASES.FEEDBACK);
+
+    // Snapshot pre-attempt score/progress so "Try Again" can roll this
+    // attempt back and replay the same pattern in place (no double-counting).
+    preAttemptSnapshotRef.current = {
+      sessionStats: sessionStatsRef.current,
+      exerciseProgress: {
+        currentExercise: exerciseProgress.currentExercise,
+        totalExercises: exerciseProgress.totalExercises,
+        exerciseScores: exerciseProgress.exerciseScores,
+        isGameComplete: false,
+      },
+    };
 
     // Use ref for real-time user taps data
     const currentUserTaps = userTapsRef.current;
@@ -1204,6 +1226,7 @@ export function MetronomeTrainer() {
       }
 
       setCurrentPattern(pattern);
+      lastPatternRef.current = pattern; // Remember for "Try Again" replay
       setCurrentBeat(0);
       setUserTaps([]);
       setExpectedTaps([]);
@@ -1263,11 +1286,48 @@ export function MetronomeTrainer() {
   }, [stopContinuousMetronome]);
 
   /**
-   * End session and show summary
+   * Try again — replay the SAME pattern. Rolls back the score/progress recorded
+   * for the just-completed attempt so the retry replaces it (no double-counting),
+   * then re-runs the count-in for the same pattern.
    */
-  const endSession = useCallback(() => {
-    setGamePhase(GAME_PHASES.SESSION_COMPLETE);
-  }, []);
+  const tryAgainPattern = useCallback(() => {
+    const pattern = lastPatternRef.current;
+    if (!pattern) {
+      // No pattern to replay — fall back to advancing.
+      nextPattern();
+      return;
+    }
+
+    // Undo the attempt that was just scored.
+    const snapshot = preAttemptSnapshotRef.current;
+    if (snapshot?.sessionStats) {
+      setSessionStats(snapshot.sessionStats);
+    }
+    if (snapshot?.exerciseProgress) {
+      setExerciseProgress(snapshot.exerciseProgress);
+    }
+    preAttemptSnapshotRef.current = null;
+
+    // Replay the same pattern (no new getPattern, no progress advance).
+    stopContinuousMetronome();
+    setCurrentBeat(0);
+    setUserTaps([]);
+    setExpectedTaps([]);
+    setFeedback(null);
+    setHasUserStartedTapping(false);
+    userTapsRef.current = [];
+
+    setGamePhase(GAME_PHASES.COUNT_IN);
+    const countInStartTime = audioEngine.getCurrentTime() + 0.1;
+    startContinuousMetronome(countInStartTime);
+    startCountInWithPattern(pattern, countInStartTime);
+  }, [
+    nextPattern,
+    stopContinuousMetronome,
+    audioEngine,
+    startContinuousMetronome,
+    startCountInWithPattern,
+  ]);
 
   // Show setup screen (for free play mode only)
   if (gamePhase === GAME_PHASES.SETUP) {
@@ -1446,18 +1506,18 @@ export function MetronomeTrainer() {
           !exerciseProgress.isGameComplete && (
             <div className="mx-auto flex w-full max-w-xs gap-2.5">
               <GameActionButton
+                tone="retry"
+                onClick={tryAgainPattern}
+                className="flex-1"
+              >
+                {t("games.metronomeTrainer.buttons.tryAgain")}
+              </GameActionButton>
+              <GameActionButton
                 tone="advance"
                 onClick={nextPattern}
                 className="flex-1"
               >
                 {t("games.metronomeTrainer.buttons.nextPattern")}
-              </GameActionButton>
-              <GameActionButton
-                tone="neutral"
-                onClick={endSession}
-                className="flex-1"
-              >
-                {t("games.metronomeTrainer.buttons.endSession")}
               </GameActionButton>
             </div>
           )}

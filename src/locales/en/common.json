@@ -767,7 +767,7 @@
         "playAgain": "Play Again",
         "home": "Home",
         "nextPattern": "Next Pattern",
-        "endSession": "End Session"
+        "tryAgain": "Try Again"
       },
       "guidance": {
         "countIn": "Listen for the strong beat - tap to start!",
