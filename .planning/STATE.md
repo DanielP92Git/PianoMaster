@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 
 ## Current Position
 
-Phase: 36 (game-screen-ui-unification) — EXECUTING
-Plan: 10 of 11 (Wave 6 complete)
-Status: Executing Phase 36 — Wave 7 = BLOCKING owner walkthrough checkpoint (36-11)
-Last activity: 2026-06-14 -- Wave 6 merged (36-08 NotesRecognition full migration, 36-09 ArcadeRhythm de-dup, 36-10 ear-training combo/on-fire); build+test gate green (1916 pass)
+Phase: 36 (game-screen-ui-unification) — COMPLETE
+Plan: 11 of 11 (all waves complete)
+Status: Phase 36 COMPLETE — owner walkthrough approved 2026-06-14
+Last activity: 2026-06-14 -- Phase 36 complete: 11/11 plans, 9 shared HUD components adopted across all 10 game screens; full suite green (1916 pass), lint 0 errors, build clean
 
 ### Quick Tasks Completed
 

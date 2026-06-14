@@ -155,7 +155,7 @@ Plans:
 
 **Wave 7** _(blocked on Wave 6 completion)_
 
-- [ ] 36-11-PLAN.md — Phase gate: full suite + owner walkthrough of all 10 game screens
+- [x] 36-11-PLAN.md — Phase gate: full suite + owner walkthrough of all 10 game screens
 
 **Requirements** (seeded in 36-SPEC.md — confirm in discuss):
 
