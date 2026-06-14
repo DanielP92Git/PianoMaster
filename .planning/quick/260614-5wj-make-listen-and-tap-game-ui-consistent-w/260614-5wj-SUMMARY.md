@@ -53,9 +53,32 @@ them is optional locale cleanup, not required since no new strings were added).
 - `npx vitest run src/components/games/rhythm-games` → **22 files / 241 tests pass**.
 - Pre-commit hook (lint-staged: eslint --fix + prettier) passed on commit.
 
-## Commit
+## Follow-up — mid-game feedback buttons (owner request)
+
+After walkthrough, the owner preferred SightReading's `FeedbackSummary` action
+buttons (solid green→emerald "Try Again" + indigo→violet "Next") over Listen &
+Tap's generic `<Button variant="primary">` (blue gradient) + `variant="outline"`
+(hollow) feedback-phase buttons, and asked to make the style consistent across all
+games. Survey confirmed `FeedbackSummary` (SightReading) was the only place that
+style existed and `MetronomeTrainer` was the only divergent game (`GameControls`
+is play/pause transport, not results nav).
+
+- **New** `src/components/games/shared/hud/GameActionButton.jsx` — single source of
+  truth for the solid gradient pill: tones `retry` (green→emerald), `advance`
+  (indigo→violet), `neutral` (slate, for secondary/exit).
+- `FeedbackSummary.jsx` refactored to consume it — pixel-identical (it is the
+  reference style; zero visual regression).
+- `MetronomeTrainer.jsx` FEEDBACK-phase buttons now use it: **Next Pattern** =
+  `advance`, **End Session** = `neutral` (replaces blue `primary` + hollow
+  `outline`). Removed the now-unused `Button` import.
+
+Verified: `eslint` clean on all three files; `vitest run` rhythm-games +
+sight-reading → **28 files / 342 tests pass**.
+
+## Commits
 
 - `df2bdff4` — feat(36/quick): unify Listen & Tap (MetronomeTrainer) HUD with other games
+- `b8977261` — feat(36/quick): unify mid-game feedback buttons via shared GameActionButton
 
 ## Follow-ups (optional, not done)
 
