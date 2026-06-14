@@ -1365,12 +1365,6 @@ export function MetronomeTrainer() {
     return t("games.metronomeTrainer.guidance.default");
   };
 
-  const displayExerciseNumber = Math.min(
-    exerciseProgress.currentExercise +
-      (gamePhase === GAME_PHASES.SESSION_COMPLETE ? 0 : 1),
-    Math.max(1, exerciseProgress.totalExercises || 1)
-  );
-
   // Main game interface - New compact layout
   return (
     <div
@@ -1395,45 +1389,18 @@ export function MetronomeTrainer() {
         />
       )}
 
-      {/* Compact Header */}
-      <div className="flex flex-shrink-0 items-center justify-between px-4 py-2 landscape:py-1">
-        {/* Only show back button during gameplay (not on session complete screen) */}
-        {gamePhase !== GAME_PHASES.SESSION_COMPLETE && (
-          <BackButton
-            to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"}
-            name={nodeId ? "Trail" : t("games.backToModes")}
-            className="text-sm text-white/80 hover:text-white"
-          />
-        )}
-        <div className="text-center text-white">
-          <h1 className="text-base font-bold sm:text-lg">
-            {t("games.metronomeTrainer.headerTitle")}
-          </h1>
-          <p className="text-xs">
-            {gameSettings.timeSignature.name} • {gameSettings.tempo} BPM •{" "}
-            {gameSettings.difficulty}
-          </p>
-        </div>
-        {nodeId ? (
-          <ScorePill value={sessionStats.totalScore} label={t("games.score")} />
-        ) : (
-          <div className="whitespace-nowrap text-right text-xs text-white">
-            {t("games.metronomeTrainer.progressLabel", {
-              current: displayExerciseNumber,
-              total: exerciseProgress.totalExercises,
-            })}
-          </div>
-        )}
-      </div>
-      {/* Trail-mode progress bar — shown only when launched from the trail */}
-      {nodeId && (
-        <div className="px-4 pb-2">
+      {/* Unified compact header — matches RhythmReadingGame / RhythmDictationGame:
+          BackButton + shared ProgressBar + ScorePill, shown in every mode. */}
+      <header className="flex h-12 flex-shrink-0 items-center gap-2 px-4 py-2 text-white/80 landscape:h-auto landscape:py-1">
+        <BackButton to={nodeId ? "/trail?path=rhythm" : "/rhythm-mode"} />
+        <div className="min-w-0 flex-1 px-2">
           <ProgressBar
             current={exerciseProgress.currentExercise}
             total={exerciseProgress.totalExercises}
           />
         </div>
-      )}
+        <ScorePill value={sessionStats.totalScore} label={t("games.score")} />
+      </header>
 
       {/* Main Game Area - Side by Side */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 sm:flex-row landscape:flex-row landscape:gap-2">
@@ -1470,36 +1437,9 @@ export function MetronomeTrainer() {
         </div>
       </div>
 
-      {/* Bottom Stats + Controls */}
+      {/* Bottom Controls — session stats now surface on the VictoryScreen,
+          matching the other games (no live in-game stats footer). */}
       <div className="flex-shrink-0 space-y-3 px-4 pb-4">
-        {/* Compact Stats Row */}
-        <div className="flex justify-around text-center text-xs text-white sm:text-sm">
-          <div>
-            <div className="text-lg font-bold text-blue-400 sm:text-2xl">
-              {sessionStats.patternsCompleted}
-            </div>
-            <div>{t("games.metronomeTrainer.stats.patterns")}</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-green-400 sm:text-2xl">
-              {sessionStats.totalScore}
-            </div>
-            <div>XP</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-yellow-400 sm:text-2xl">
-              {sessionStats.maxCombo}
-            </div>
-            <div>{t("games.metronomeTrainer.stats.maxCombo")}</div>
-          </div>
-          <div>
-            <div className="text-lg font-bold text-purple-400 sm:text-2xl">
-              {sessionStats.perfectTaps + sessionStats.goodTaps}
-            </div>
-            <div>{t("games.metronomeTrainer.stats.goodTaps")}</div>
-          </div>
-        </div>
-
         {/* Navigation Buttons (feedback phase only) */}
         {gamePhase === GAME_PHASES.FEEDBACK &&
           !exerciseProgress.isGameComplete && (
