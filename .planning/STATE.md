@@ -28,14 +28,15 @@ See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 Phase: 36
 Plan: Not started
 Status: Milestone complete
-Last activity: 2026-06-14
+Last activity: 2026-06-14 - Completed quick task 260614-5wj: unify Listen & Tap (MetronomeTrainer) HUD with other games
 
 ### Quick Tasks Completed
 
-| #          | Description                                                                     | Date       | Commit  | Directory                                                                                                           |
-| ---------- | ------------------------------------------------------------------------------- | ---------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
-| 260514-w1y | Merge rhythm trail nodes 1_1 and 1_2 into a single quarter-notes discovery node | 2026-05-14 | 8500313 | [260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int](./quick/260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int/) |
-| 260524-l3r | Refactor Rhythm Unit 8 syncopation pedagogy and engagement (gsd-quick --full)   | 2026-05-24 | 28b92d4 | [260524-l3r-refactor-rhythm-unit-8-syncopation-pedag](./quick/260524-l3r-refactor-rhythm-unit-8-syncopation-pedag/) |
+| #          | Description                                                                     | Date       | Commit   | Directory                                                                                                           |
+| ---------- | ------------------------------------------------------------------------------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
+| 260514-w1y | Merge rhythm trail nodes 1_1 and 1_2 into a single quarter-notes discovery node | 2026-05-14 | 8500313  | [260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int](./quick/260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int/) |
+| 260524-l3r | Refactor Rhythm Unit 8 syncopation pedagogy and engagement (gsd-quick --full)   | 2026-05-24 | 28b92d4  | [260524-l3r-refactor-rhythm-unit-8-syncopation-pedag](./quick/260524-l3r-refactor-rhythm-unit-8-syncopation-pedag/) |
+| 260614-5wj | Unify Listen & Tap (MetronomeTrainer) HUD with other games per Phase 36         | 2026-06-14 | df2bdff4 | [260614-5wj-make-listen-and-tap-game-ui-consistent-w](./quick/260614-5wj-make-listen-and-tap-game-ui-consistent-w/) |
 
 ## Performance Metrics
 
