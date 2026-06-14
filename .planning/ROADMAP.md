@@ -102,7 +102,7 @@ Plans:
 
 Phase summary:
 
-- [ ] Phase 36: Game Screen UI Unification (11 plans) -- planned
+- [x] Phase 36: Game Screen UI Unification (11 plans) -- planned (completed 2026-06-14)
 
 > Numbering note: this phase uses **36** (continuing the global 34/35 sequence from v3.4) rather
 > than restarting at 01, to avoid a `.planning/phases/01-*` directory-glob collision with v3.5's
