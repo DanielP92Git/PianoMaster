@@ -9,6 +9,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ComboPill } from "../shared/hud/ComboPill";
 import { LivesDisplay } from "../shared/hud/LivesDisplay";
+import { StreakBrightnessOverlay } from "../shared/hud/StreakBrightnessOverlay";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
@@ -1167,6 +1168,11 @@ function ArcadeRhythmGame() {
           direction-independent regardless of UI language */}
       {/* ------------------------------------------------------------------ */}
       <main className="relative flex-1 overflow-hidden" dir="ltr">
+        {/* Streak brightness — playfield lightens with the combo, snaps dark on
+            a miss. Smaller cap than the quiz games so the opaque falling tiles,
+            hit-zone line, and feedback (all rendered after this) keep contrast. */}
+        <StreakBrightnessOverlay combo={combo} maxOpacity={0.1} />
+
         {/* On-fire aria-live announcement */}
         {isOnFire && (
           <span className="sr-only" aria-live="polite" aria-atomic="true">
