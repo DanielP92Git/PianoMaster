@@ -12,7 +12,7 @@ import { usePitchDetection } from "./usePitchDetection";
  * ARMED  — a candidate note is accumulating onset confidence (frames counted).
  * ACTIVE — a note is currently held (noteOn emitted, waiting for noteOff or change).
  */
-const FSM = { IDLE: 'IDLE', ARMED: 'ARMED', ACTIVE: 'ACTIVE' };
+const FSM = { IDLE: "IDLE", ARMED: "ARMED", ACTIVE: "ACTIVE" };
 
 /**
  * Mic note event model (JS shape):
@@ -34,7 +34,7 @@ const FSM = { IDLE: 'IDLE', ARMED: 'ARMED', ACTIVE: 'ACTIVE' };
 export function useMicNoteInput({
   isActive = false,
   noteFrequencies,
-  rmsThreshold = 0.015,
+  rmsThreshold = 0.01,
   tolerance = 0.02,
   onNoteEvent,
   /**
@@ -134,7 +134,6 @@ export function useMicNoteInput({
         s.candidateNote = note;
         s.candidateFrames = 1;
         s.candidateStartedAt = now;
-
       } else if (s.fsmState === FSM.ARMED) {
         // -----------------------------------------------------------------------
         // ARMED: accumulating onset confidence for a candidate note
@@ -169,7 +168,6 @@ export function useMicNoteInput({
           s.candidateFrames = 1;
           s.candidateStartedAt = now;
         }
-
       } else if (s.fsmState === FSM.ACTIVE) {
         // -----------------------------------------------------------------------
         // ACTIVE: note is currently held
@@ -300,10 +298,13 @@ export function useMicNoteInput({
    *
    * Existing callers that pass no arguments are unaffected.
    */
-  const startListeningWrapped = useCallback(async (overrides = {}) => {
-    resetInternalState("startListening");
-    await startListening(overrides);
-  }, [resetInternalState, startListening]);
+  const startListeningWrapped = useCallback(
+    async (overrides = {}) => {
+      resetInternalState("startListening");
+      await startListening(overrides);
+    },
+    [resetInternalState, startListening]
+  );
 
   const stopListeningWrapped = useCallback(() => {
     stopListening();

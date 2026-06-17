@@ -25,7 +25,10 @@ import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
-import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
+import {
+  calcMicTimingFromBpm,
+  MIC_INPUT_PRESETS,
+} from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
 import { ProgressBar } from "../shared/hud/ProgressBar";
@@ -1989,6 +1992,10 @@ export function NotesRecognitionGame() {
     (event) => {
       if (event.type !== "noteOn") return;
 
+      // Don't score once the game is ending (ref, not state — the mic callback
+      // chain lags React renders and a stray note could otherwise slip through).
+      if (isGameEndingRef.current) return;
+
       const now = performance.now();
       const last = lastScoredRef.current;
       const minScoreInterval = micTiming.minInterOnMs || 80;
@@ -2029,6 +2036,9 @@ export function NotesRecognitionGame() {
   } = useMicNoteInput({
     isActive: false, // Manual control via startAudioInput / stopAudioInput
     onNoteEvent: handleMicNoteEvent,
+    // Tuned RMS gate so ambient/room noise can't be scored as a wrong answer
+    // (a false hit here costs a life). Spread micTiming after — it has no rmsThreshold.
+    rmsThreshold: MIC_INPUT_PRESETS.notesRecognition.rmsThreshold,
     ...micTiming,
     // NOTE: analyserNode/sampleRate NOT passed here at render time.
     // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).
