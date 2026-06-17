@@ -5,8 +5,29 @@
  * Full integration testing would require mocking Web Audio API and microphone.
  */
 
-import { renderHook } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { usePitchDetection } from "../usePitchDetection";
+
+/**
+ * Build a mock shared AnalyserNode (Mode A) whose time-domain data is a pure
+ * sine at `freq`. A pure sine has near-1 clarity regardless of amplitude, so
+ * amplitude controls only the RMS level — exactly what we need to exercise the
+ * RMS gate independently of the clarity gate. RMS of a sine = amplitude/√2.
+ */
+function makeSineAnalyser(
+  amplitude,
+  { freq = 262, sampleRate = 44100, fftSize = 2048 } = {}
+) {
+  return {
+    fftSize,
+    context: { sampleRate },
+    getFloatTimeDomainData: (buf) => {
+      for (let i = 0; i < buf.length; i++) {
+        buf[i] = amplitude * Math.sin((2 * Math.PI * freq * i) / sampleRate);
+      }
+    },
+  };
+}
 
 describe("usePitchDetection", () => {
   test("hook initializes with default values", () => {
@@ -75,5 +96,66 @@ describe("usePitchDetection", () => {
     // These should be null when not listening
     expect(result.current.audioContext).toBeNull();
     expect(result.current.analyser).toBeNull();
+  });
+});
+
+describe("usePitchDetection RMS/volume gate", () => {
+  // Run the detect loop exactly once: stub rAF so it does not recurse.
+  const origRaf = global.requestAnimationFrame;
+  const origCaf = global.cancelAnimationFrame;
+  beforeEach(() => {
+    global.requestAnimationFrame = vi.fn(() => 1);
+    global.cancelAnimationFrame = vi.fn();
+  });
+  afterEach(() => {
+    global.requestAnimationFrame = origRaf;
+    global.cancelAnimationFrame = origCaf;
+  });
+
+  const baseOpts = {
+    noteFrequencies: { C4: 261.63 },
+    tolerance: 0.05,
+    rmsThreshold: 0.01,
+  };
+
+  test("low-volume input (below rmsThreshold) does NOT emit a pitch, but still reports level", async () => {
+    const onPitchDetected = vi.fn();
+    const onLevelChange = vi.fn();
+    const { result } = renderHook(() =>
+      usePitchDetection({ ...baseOpts, onPitchDetected, onLevelChange })
+    );
+
+    // amplitude 0.005 → RMS ≈ 0.0035 (< 0.01), but pure sine → high clarity.
+    // This is the regression case: ambient noise must NOT be scored as a note.
+    const analyser = makeSineAnalyser(0.005);
+    await act(async () => {
+      await result.current.startListening({
+        analyserNode: analyser,
+        sampleRate: 44100,
+      });
+    });
+
+    expect(onLevelChange).toHaveBeenCalled();
+    expect(onPitchDetected).not.toHaveBeenCalled();
+  });
+
+  test("above-threshold input DOES emit a pitch", async () => {
+    const onPitchDetected = vi.fn();
+    const onLevelChange = vi.fn();
+    const { result } = renderHook(() =>
+      usePitchDetection({ ...baseOpts, onPitchDetected, onLevelChange })
+    );
+
+    // amplitude 0.2 → RMS ≈ 0.14 (> 0.01) → real played note should register.
+    const analyser = makeSineAnalyser(0.2);
+    await act(async () => {
+      await result.current.startListening({
+        analyserNode: analyser,
+        sampleRate: 44100,
+      });
+    });
+
+    expect(onPitchDetected).toHaveBeenCalled();
+    expect(onPitchDetected.mock.calls[0][0]).toBe("C4");
   });
 });

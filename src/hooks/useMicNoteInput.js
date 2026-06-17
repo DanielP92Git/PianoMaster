@@ -34,7 +34,7 @@ const FSM = { IDLE: "IDLE", ARMED: "ARMED", ACTIVE: "ACTIVE" };
 export function useMicNoteInput({
   isActive = false,
   noteFrequencies,
-  rmsThreshold = 0.015,
+  rmsThreshold = 0.01,
   tolerance = 0.02,
   onNoteEvent,
   /**
