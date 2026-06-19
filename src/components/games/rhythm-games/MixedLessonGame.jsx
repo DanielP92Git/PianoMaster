@@ -130,6 +130,19 @@ export default function MixedLessonGame() {
   // the count-in is gated until this flips true.
   const [audioUnlocked, setAudioUnlocked] = useState(false);
 
+  // Keep-alive source — a silent, zero-gain oscillator started inside the
+  // unlock gesture and left running for the whole lesson. It keeps the shared
+  // AudioContext's clock advancing across exercise transitions. de7669ee fixed
+  // the FIRST count-in (the tap-to-start gesture resumes the context), but on
+  // the exercise-to-exercise transition there is no fresh gesture: the idle
+  // context can drift to suspended/interrupted, or report "running" with a
+  // frozen clock, so the next count-in schedules clicks against a stalled clock
+  // (no tick, beat stuck on 1) while the wall-clock phase timers advance anyway.
+  // A continuously running source holds the graph active and the clock moving.
+  // Scoped to this component (NOT the app-wide provider) so other audio
+  // features are unaffected. (Phase 1 UAT Bug 1.)
+  const keepAliveRef = useRef(null);
+
   // Session timeout controls — use refs to avoid re-render cycles
   const pauseTimerRef = useRef(() => {});
   const resumeTimerRef = useRef(() => {});
@@ -149,8 +162,40 @@ export default function MixedLessonGame() {
   const unlockAudio = useCallback(() => {
     const ctx = audioContextRef.current || getOrCreateAudioContext();
     if (ctx && ctx.state !== "running") ctx.resume().catch(() => {});
+    // Start the silent keep-alive once, here inside the real user gesture.
+    // Best-effort: any failure must not block the unlock.
+    if (ctx && !keepAliveRef.current) {
+      try {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0; // inaudible
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        keepAliveRef.current = { osc, gain };
+      } catch {
+        keepAliveRef.current = null;
+      }
+    }
     setAudioUnlocked(true);
   }, [audioContextRef, getOrCreateAudioContext]);
+
+  // Tear down the keep-alive source when the lesson unmounts.
+  useEffect(() => {
+    return () => {
+      const node = keepAliveRef.current;
+      if (node) {
+        try {
+          node.osc.stop();
+          node.osc.disconnect();
+          node.gain.disconnect();
+        } catch {
+          // already stopped / context closed — ignore
+        }
+        keepAliveRef.current = null;
+      }
+    };
+  }, []);
 
   // Game state
   const [gameState, setGameState] = useState(GAME_STATES.IDLE);
