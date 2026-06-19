@@ -11,6 +11,7 @@ import {
   ALL_DURATION_CODES,
   generateQuestions,
   generateCountSubdivisionQuestion,
+  getSyllable,
 } from "./durationInfo.js";
 
 describe("DURATION_INFO lookup", () => {
@@ -71,6 +72,38 @@ describe("ALL_DURATION_CODES", () => {
     expect(ALL_DURATION_CODES).toContain("q");
     expect(ALL_DURATION_CODES).toContain("wr");
     expect(ALL_DURATION_CODES).toContain("8_pair");
+  });
+});
+
+describe("getSyllable", () => {
+  // User-confirmed Nikud (2026-06-19) — do not alter without approval (memory.md).
+  const TA_TE_HE = "טָה-טֶה"; // טָה-טֶה
+  const HALF_REST_HE = "הָא-אָס"; // הָא-אָס
+  const WHOLE_REST_HE = "הָא-אָ-אָ-אָס"; // הָא-אָ-אָ-אָס
+  const QUARTER_REST_HE = "הָס"; // הָס
+
+  it('eighth-pair card shows "ti-ti" in English', () => {
+    expect(getSyllable("8_pair", "en")).toBe("ti-ti");
+  });
+
+  it("eighth-pair card shows confirmed Hebrew (not English fallback)", () => {
+    // Regression: 8_pair previously had no syllableHe and rendered "ti-ti" in HE.
+    expect(getSyllable("8_pair", "he")).toBe(TA_TE_HE);
+    expect(getSyllable("8_pair", "he")).not.toBe("ti-ti");
+  });
+
+  it("Hebrew rest syllables are duration-aware", () => {
+    expect(getSyllable("qr", "he")).toBe(QUARTER_REST_HE);
+    expect(getSyllable("hr", "he")).toBe(HALF_REST_HE);
+    expect(getSyllable("wr", "he")).toBe(WHOLE_REST_HE);
+    // Half and whole must be distinct (the bug was a single flat "הָס").
+    expect(getSyllable("hr", "he")).not.toBe(getSyllable("wr", "he"));
+  });
+
+  it('English rests stay flat "sh" regardless of duration', () => {
+    expect(getSyllable("qr", "en")).toBe("sh");
+    expect(getSyllable("hr", "en")).toBe("sh");
+    expect(getSyllable("wr", "en")).toBe("sh");
   });
 });
 

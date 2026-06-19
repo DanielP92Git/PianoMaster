@@ -77,14 +77,15 @@ export const DURATION_INFO = {
     durationUnits: 16,
     isRest: true,
   },
-  // syllable override: "ti-ti" — see getSyllable(). syllableHe TBD pending
-  // user-confirmed Nikud (memory.md: Hebrew syllables require explicit approval).
+  // syllable override: "ti-ti" (EN) / "טָה-טֶה" (HE — user-confirmed Nikud
+  // 2026-06-19; memory.md requires explicit approval for Hebrew syllables).
   "8_pair": {
     svgFilename: "beamed-eighths",
     i18nKey: "rhythm.duration.beamedEighths",
     durationUnits: 4,
     isRest: false,
     syllable: "ti-ti",
+    syllableHe: "טָה-טֶה",
   },
 };
 
@@ -121,7 +122,17 @@ const SYLLABLE_BY_UNITS_HE = {
 };
 
 const REST_EN = "sh";
-const REST_HE = "הָס"; // הָס
+const REST_HE = "הָס"; // הָס — default / quarter-rest fallback
+
+// Duration-aware Hebrew rest syllables (parallel to the note syllables: half =
+// 2-part, whole = 4-part). User-confirmed Nikud 2026-06-19. Mirrors
+// REST_SYLLABLE_MAP_HE in rhythmVexflowHelpers.js — do NOT alter Nikud without
+// user approval (memory.md).
+const REST_BY_UNITS_HE = {
+  16: "הָא-אָ-אָ-אָס", // whole rest
+  8: "הָא-אָס", // half rest
+  4: "הָס", // quarter rest
+};
 
 /**
  * Get the Kodaly syllable for a duration code.
@@ -131,7 +142,8 @@ const REST_HE = "הָס"; // הָס
  * @returns {string} Kodaly syllable text
  *
  * Resolution order:
- * 1. Rests → REST_EN/REST_HE
+ * 1. Rests → REST_EN (flat) / duration-aware Hebrew (REST_BY_UNITS_HE,
+ *    falling back to REST_HE for durations without a specific entry).
  * 2. Per-entry override (info.syllable / info.syllableHe).
  *    When language is "he" but info.syllableHe is absent, fall back to
  *    info.syllable (English) so we don't accidentally collide with the
@@ -142,7 +154,10 @@ export function getSyllable(code, language = "en") {
   const info = DURATION_INFO[code];
   if (!info) return "";
   const isHe = language === "he";
-  if (info.isRest) return isHe ? REST_HE : REST_EN;
+  if (info.isRest) {
+    if (!isHe) return REST_EN;
+    return REST_BY_UNITS_HE[info.durationUnits] || REST_HE;
+  }
   if (info.syllable) {
     return isHe && info.syllableHe ? info.syllableHe : info.syllable;
   }

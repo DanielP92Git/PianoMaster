@@ -86,7 +86,29 @@ export const SYLLABLE_MAP_HE = {
 };
 
 export const REST_SYLLABLE_EN = "sh";
-export const REST_SYLLABLE_HE = "\u05D4\u05B8\u05E1";
+export const REST_SYLLABLE_HE = "\u05D4\u05B8\u05E1"; // default / quarter-rest fallback
+
+/**
+ * Duration-aware Hebrew rest syllables (parallel to SYLLABLE_MAP_HE: half =
+ * 2-part, whole = 4-part). User-confirmed Nikud 2026-06-19. Mirrored in
+ * durationInfo.js REST_BY_UNITS_HE \u2014 do not alter Nikud without user approval.
+ */
+export const REST_SYLLABLE_MAP_HE = {
+  16: "\u05D4\u05B8\u05D0-\u05D0\u05B8-\u05D0\u05B8-\u05D0\u05B8\u05E1", // whole rest \u2014 \u05D4\u05B8\u05D0-\u05D0\u05B8-\u05D0\u05B8-\u05D0\u05B8\u05E1
+  8: "\u05D4\u05B8\u05D0-\u05D0\u05B8\u05E1", // half rest \u2014 \u05D4\u05B8\u05D0-\u05D0\u05B8\u05E1
+  4: "\u05D4\u05B8\u05E1", // quarter rest \u2014 \u05D4\u05B8\u05E1
+};
+
+/**
+ * Resolve the rest syllable for a beat. Hebrew is duration-aware; English is
+ * the flat "sh" for every rest.
+ */
+function getRestSyllable(durationUnits, language) {
+  if (language === "he") {
+    return REST_SYLLABLE_MAP_HE[durationUnits] || REST_SYLLABLE_HE;
+  }
+  return REST_SYLLABLE_EN;
+}
 
 /**
  * Convert beat objects into VexFlow StaveNote objects for rhythm-only display.
@@ -122,10 +144,8 @@ export function beatsToVexNotes(
       if (showSyllables) {
         const syllableMap =
           language === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
-        const restSyllable =
-          language === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
         const syllableText = beat.isRest
-          ? restSyllable
+          ? getRestSyllable(beat.durationUnits, language)
           : syllableMap[beat.durationUnits] || "";
         if (syllableText) {
           const fontFamily = language === "he" ? "Heebo" : "sans-serif";
@@ -155,10 +175,8 @@ export function beatsToVexNotes(
 
     if (showSyllables) {
       const syllableMap = language === "he" ? SYLLABLE_MAP_HE : SYLLABLE_MAP_EN;
-      const restSyllable =
-        language === "he" ? REST_SYLLABLE_HE : REST_SYLLABLE_EN;
       const syllableText = beat.isRest
-        ? restSyllable
+        ? getRestSyllable(beat.durationUnits, language)
         : syllableMap[beat.durationUnits] || "";
       if (syllableText) {
         const fontFamily = language === "he" ? "Heebo" : "sans-serif";
