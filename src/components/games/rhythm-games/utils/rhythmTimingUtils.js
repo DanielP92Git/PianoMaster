@@ -65,6 +65,61 @@ export function calculateTimingThresholds(tempo, nodeType = null) {
 }
 
 /**
+ * Leading-rest offset (seconds) before the first sounding note in a pattern.
+ * Sums the durationUnits of any rest beats that precede the first note.
+ *
+ * @param {{ durationUnits: number, isRest: boolean }[]} beats
+ * @param {number} tempo - Tempo in BPM
+ * @returns {number} seconds of silence before the first onset (0 if it starts on a note)
+ */
+export function leadingRestOffset(beats, tempo) {
+  const sixteenthDuration = 60 / tempo / 4;
+  let units = 0;
+  for (const beat of beats || []) {
+    if (!beat.isRest) break;
+    units += beat.durationUnits;
+  }
+  return sixteenthDuration * units;
+}
+
+/**
+ * Anchor a beat pattern so the FIRST SOUNDING note lands exactly on the user's
+ * first tap — used by the read-and-tap flow where the count-in loops until the
+ * kid is ready. Patterns that begin with one or more rests are shifted earlier
+ * by the leading-rest duration, so the first tap maps to the first NOTE (the
+ * confirmed behavior), never to the silent downbeat.
+ *
+ * Invariant: times[0] === firstTapTime for any pattern (with or without a
+ * leading rest), because the first non-rest onset sits exactly leadingRestOffset
+ * after patternStartTime.
+ *
+ * @param {{ durationUnits: number, isRest: boolean }[]} beats
+ * @param {number} tempo - Tempo in BPM
+ * @param {number} firstTapTime - AudioContext time of the user's first tap (seconds)
+ * @returns {{ patternStartTime: number, leadingRestOffset: number, times: number[], totalDuration: number }}
+ *   - patternStartTime: implied measure-start time (= firstTapTime when no leading rest)
+ *   - times: onset time for each NON-REST beat (times[0] === firstTapTime)
+ *   - totalDuration: full pattern duration in seconds
+ */
+export function anchorPatternToFirstTap(beats, tempo, firstTapTime) {
+  const sixteenthDuration = 60 / tempo / 4;
+  const offset0 = leadingRestOffset(beats, tempo);
+  const patternStartTime = firstTapTime - offset0;
+  const times = [];
+  let offset = 0;
+  (beats || []).forEach((beat) => {
+    if (!beat.isRest) times.push(patternStartTime + offset);
+    offset += sixteenthDuration * beat.durationUnits;
+  });
+  return {
+    patternStartTime,
+    leadingRestOffset: offset0,
+    times,
+    totalDuration: offset,
+  };
+}
+
+/**
  * Serialize beats to a fingerprint string for deduplication.
  */
 function beatsFingerprint(beats) {
