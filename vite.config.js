@@ -26,8 +26,10 @@ function resolveEnvDir() {
   }
 }
 
+const mainRepoRoot = resolveEnvDir();
+
 export default defineConfig({
-  envDir: resolveEnvDir(),
+  envDir: mainRepoRoot,
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
@@ -69,5 +71,13 @@ export default defineConfig({
     host: "localhost",
     strictPort: true, // This will fail if port 5174 is not available
     https: false, // Enable HTTPS for PWA install prompts on mobile devices
+    fs: {
+      // Allow serving files from the main repo root in addition to the worktree
+      // root. Git worktrees (.claude/worktrees/*) have no node_modules of their
+      // own, so dependencies — including the @fontsource font files served via
+      // /@fs/ — resolve up to the main checkout. Without this, Vite blocks those
+      // files with 403 Forbidden because they live outside the worktree root.
+      allow: [process.cwd(), mainRepoRoot],
+    },
   },
 });
