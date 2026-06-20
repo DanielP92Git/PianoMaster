@@ -516,7 +516,7 @@ export default function DiscoveryIntroQuestion({
             playback card only (cards 1-2 keep the big standalone glyph). */}
         <div
           dir="ltr"
-          className={`flex items-center justify-center text-white${!reducedMotion ? " animate-fadeIn" : ""}`}
+          className={`flex items-center justify-center text-white${isLandscape ? "" : " w-full"}${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
           {restFigure && currentKind === "playback" ? (
             <div className={figureWrapperClass} aria-hidden="true">
