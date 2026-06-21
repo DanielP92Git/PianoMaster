@@ -11,8 +11,7 @@ import { PitchDetector } from "pitchy";
  * where `performance` is undefined (e.g. some Jest/Node setups).
  */
 const __PERF_MARKS =
-  typeof performance !== "undefined" &&
-  typeof performance.mark === "function";
+  typeof performance !== "undefined" && typeof performance.mark === "function";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -90,7 +89,7 @@ export function frequencyToNote(hz) {
  * @param {Function} [options.onPitchDetected=null] - (note, frequency) => void
  * @param {Function} [options.onLevelChange=null] - (level) => void
  * @param {Object}  [options.noteFrequencies] - Legacy param (ignored by pitchy path)
- * @param {number}  [options.rmsThreshold=0.01] - Legacy param (kept for compat)
+ * @param {number}  [options.rmsThreshold=0.01] - Min RMS audio level to emit a pitch (silence gate)
  * @param {number}  [options.tolerance=0.05] - Legacy param (kept for compat)
  * @param {AnalyserNode|null} [options.analyserNode=null] - Shared analyser (ARCH-02)
  * @param {number|null} [options.sampleRate=null] - Sample rate of shared analyser
@@ -104,8 +103,11 @@ export function usePitchDetection({
   onLevelChange = null,
   // Legacy params kept for backward compat — ignored by pitchy path
   noteFrequencies: _noteFrequencies,
-  rmsThreshold = 0.01,
   tolerance: _tolerance = 0.05,
+  // Minimum RMS audio level required to emit a detected pitch. Gates out
+  // silence/low-volume noise in the pitchy detect loop (also used by the
+  // deprecated autocorrelation shim).
+  rmsThreshold = 0.01,
   // NEW: shared analyser from AudioContextProvider (ARCH-02)
   analyserNode = null,
   sampleRate = null,
@@ -249,7 +251,9 @@ export function usePitchDetection({
           isSharedModeRef.current = true;
           currentAnalyserRef.current = effectiveAnalyser;
           currentSampleRateRef.current =
-            effectiveSampleRate || effectiveAnalyser.context?.sampleRate || 44100;
+            effectiveSampleRate ||
+            effectiveAnalyser.context?.sampleRate ||
+            44100;
 
           initDetector(effectiveAnalyser);
           setAnalyser(effectiveAnalyser);
@@ -268,7 +272,8 @@ export function usePitchDetection({
             },
           });
 
-          const context = new (window.AudioContext || window.webkitAudioContext)();
+          const context = new (window.AudioContext ||
+            window.webkitAudioContext)();
           const source = context.createMediaStreamSource(stream);
           const analyserNode_self = context.createAnalyser();
 
@@ -295,7 +300,11 @@ export function usePitchDetection({
         const currentSampleRate = currentSampleRateRef.current;
 
         const detectLoop = () => {
-          if (!currentAnalyser || !detectorRef.current || !inputBufferRef.current)
+          if (
+            !currentAnalyser ||
+            !detectorRef.current ||
+            !inputBufferRef.current
+          )
             return;
 
           // Full fftSize buffer (pitchy requires this, not frequencyBinCount)
@@ -303,7 +312,11 @@ export function usePitchDetection({
           currentAnalyser.getFloatTimeDomainData(inputBufferRef.current);
           if (__PERF_MARKS) performance.mark("getAudioData-end");
           if (__PERF_MARKS)
-            performance.measure("getAudioData", "getAudioData-start", "getAudioData-end");
+            performance.measure(
+              "getAudioData",
+              "getAudioData-start",
+              "getAudioData-end"
+            );
 
           // RMS audio level
           let sum = 0;
@@ -323,10 +336,21 @@ export function usePitchDetection({
           );
           if (__PERF_MARKS) performance.mark("findPitch-end");
           if (__PERF_MARKS)
-            performance.measure("findPitch", "findPitch-start", "findPitch-end");
+            performance.measure(
+              "findPitch",
+              "findPitch-start",
+              "findPitch-end"
+            );
 
           // ALGO-02: clarity gate — reject weak/ambiguous detections
-          if (clarity >= clarityThreshold && pitch > 0) {
+          // RMS gate — reject silence/low-volume noise that incidentally scores high
+          // clarity. Without this, ambient room noise (fan, talking, typing) can emit a
+          // false pitch and be scored as a wrong answer in the games.
+          if (
+            clarity >= clarityThreshold &&
+            pitch > 0 &&
+            level >= rmsThreshold
+          ) {
             const note = frequencyToNote(pitch);
             setDetectedFrequency(pitch);
             setDetectedNote(note);
@@ -348,7 +372,15 @@ export function usePitchDetection({
         throw error;
       }
     },
-    [analyserNode, sampleRate, clarityThreshold, initDetector, onLevelChange, onPitchDetected]
+    [
+      analyserNode,
+      sampleRate,
+      clarityThreshold,
+      rmsThreshold,
+      initDetector,
+      onLevelChange,
+      onPitchDetected,
+    ]
   );
 
   // ---------------------------------------------------------------------------

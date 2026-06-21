@@ -494,6 +494,13 @@ export default function MixedLessonGame() {
       const isCorrect = onTimeTaps >= Math.ceil(totalExpectedTaps / 2);
       setResults((prev) => [...prev, isCorrect]);
 
+      // Leaving the intro card ("Got it!") is the user gesture that unlocks audio
+      // for the upcoming count-in. Resume synchronously inside this gesture (iOS).
+      // Intro-first nodes skip the Tap-to-start overlay, so this is the unlock.
+      if (questions[currentIndexRef.current]?.type === "discovery_intro") {
+        unlockAudio();
+      }
+
       // CODE-01: read index from ref to avoid stale-closure
       const isLastQuestion = currentIndexRef.current + 1 >= questions.length;
 
@@ -534,7 +541,14 @@ export default function MixedLessonGame() {
         }
       }, 500);
     },
-    [questions, playCorrectSound, playWrongSound, playVictorySound, resumeTimer]
+    [
+      questions,
+      playCorrectSound,
+      playWrongSound,
+      playVictorySound,
+      resumeTimer,
+      unlockAudio,
+    ]
   );
 
   // Reset game
@@ -601,6 +615,12 @@ export default function MixedLessonGame() {
   const currentQuestion = questions[currentIndexRef.current];
   if (!currentQuestion) return null;
 
+  // Nodes that open with a teaching card supply the audio-unlock gesture through
+  // the intro itself (Listen / "Got it!"), so the Tap-to-start overlay is
+  // redundant — only nodes that jump straight into a game need it.
+  const startsWithIntro = questions[0]?.type === "discovery_intro";
+  const onIntroCard = currentQuestion?.type === "discovery_intro";
+
   // Does this lesson contain any audio-driven question? Drives the tap-to-start
   // gate — card-only lessons don't need it.
   const lessonNeedsAudio = questions.some((q) =>
@@ -608,6 +628,7 @@ export default function MixedLessonGame() {
   );
   const showTapToStart =
     lessonNeedsAudio &&
+    !startsWithIntro && // intro screen supplies the gesture; no overlay needed
     gameState === GAME_STATES.IN_PROGRESS &&
     !audioUnlocked &&
     !shouldShowPrompt && // let RotatePromptOverlay take priority
@@ -616,9 +637,11 @@ export default function MixedLessonGame() {
 
   // Audio-driven renderers must not auto-start their count-in until the user
   // is actually viewing the game (no blocking overlay) and audio is unlocked.
+  // The intro card manages its own audio (Listen resumes the context) and has no
+  // count-in, so it stays interactive before the audio gate is unlocked.
   const gameVisible =
     gameState === GAME_STATES.IN_PROGRESS &&
-    audioUnlocked &&
+    (audioUnlocked || onIntroCard) &&
     !shouldShowPrompt && // RotatePromptOverlay up
     !isInterrupted && // AudioInterruptedOverlay up
     (!isFullBoss || bossIntroDismissed); // BossIntroOverlay up

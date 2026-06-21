@@ -194,7 +194,19 @@ vi.mock("../renderers/PulseQuestion", () => ({
 }));
 
 vi.mock("../renderers/DiscoveryIntroQuestion", () => ({
-  default: ({ question, onComplete, disabled }) => null,
+  default: ({ onComplete, disabled }) => (
+    <div
+      data-testid="discovery-intro-question"
+      data-disabled={String(disabled)}
+    >
+      <button
+        data-testid="di-complete"
+        onClick={() => !disabled && onComplete(1, 1)}
+      >
+        Got it!
+      </button>
+    </div>
+  ),
 }));
 
 vi.mock("../renderers/RhythmReadingQuestion", () => ({
@@ -437,6 +449,42 @@ describe("MixedLessonGame — CODE-01: stale-closure fix", () => {
     expect(
       screen.getByTestId("visual-recognition-question")
     ).toBeInTheDocument();
+  });
+
+  it("intro-first node skips the Tap-to-start overlay and shows an interactive intro", async () => {
+    const { useLocation } = await import("react-router-dom");
+    useLocation.mockReturnValueOnce({
+      state: {
+        nodeId: "rhythm_1_1",
+        nodeConfig: {
+          questions: [
+            { type: "discovery_intro", focusDuration: "q" },
+            { type: "rhythm_tap" },
+          ],
+        },
+        exerciseIndex: 0,
+        totalExercises: 1,
+        exerciseType: "mixed_lesson",
+      },
+    });
+
+    render(<MixedLessonGame />);
+
+    // Intro supplies the audio-unlock gesture, so NO Tap-to-start overlay shows.
+    expect(
+      screen.queryByRole("button", { name: "Tap to start" })
+    ).not.toBeInTheDocument();
+
+    // The intro card renders and is interactive (not blocked by the audio gate).
+    const intro = screen.getByTestId("discovery-intro-question");
+    expect(intro).toBeInTheDocument();
+    expect(intro.getAttribute("data-disabled")).toBe("false");
+
+    // Completing the intro ("Got it!") unlocks audio and advances to the game.
+    fireEvent.click(screen.getByTestId("di-complete"));
+    await act(() => vi.advanceTimersByTime(600));
+
+    expect(screen.getByTestId("rhythm-tap-question")).toBeInTheDocument();
   });
 });
 
