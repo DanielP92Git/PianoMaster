@@ -77,6 +77,13 @@ const SCORING = { PERFECT: 100, GOOD: 75, FAIR: 50, MISS: 0 };
 // what they hear, so subtract this from relativeTime before evaluation.
 const FALLBACK_LATENCY_S = 0.08; // 80ms fallback
 
+// Count-in auto-start retry. A remounted audio question (2nd+ question in a
+// MixedLessonGame) can briefly observe a not-yet-running shared AudioContext;
+// without a retry the count-in bails permanently and the game freezes. Re-arm
+// the start effect a few times so it self-heals once the context is running.
+const MAX_START_RETRIES = 6;
+const START_RETRY_MS = 150;
+
 // Time signature string → object mapping
 const TIME_SIG_MAP = {
   "4/4": TIME_SIGNATURES.FOUR_FOUR,
@@ -150,6 +157,11 @@ export default function RhythmTapQuestion({
   const scheduledOscillatorsRef = useRef([]);
   const hasStartedRef = useRef(false);
   const cleanupDoneRef = useRef(false);
+
+  // Count-in auto-start retry plumbing — see MAX_START_RETRIES note above.
+  const [startRetryTick, setStartRetryTick] = useState(0);
+  const startRetryCountRef = useRef(0);
+  const startRetryTimerRef = useRef(null);
 
   // Hold mechanic refs
   const currentOnsetIndexRef = useRef(0);
@@ -674,8 +686,22 @@ export default function RhythmTapQuestion({
     const running = await audioEngine.ensureRunning();
     if (!running) {
       hasStartedRef.current = false;
+      if (import.meta.env.DEV) {
+        console.info("[rhythm count-in] context not running, retrying", {
+          attempt: startRetryCountRef.current,
+          ctxState: audioEngine.audioContextRef?.current?.state,
+        });
+      }
+      if (startRetryCountRef.current < MAX_START_RETRIES) {
+        startRetryCountRef.current += 1;
+        startRetryTimerRef.current = setTimeout(
+          () => setStartRetryTick((n) => n + 1),
+          START_RETRY_MS
+        );
+      }
       return;
     }
+    startRetryCountRef.current = 0; // running — reset budget for future remounts
 
     // Prime the audio pipeline with a silent oscillator so the first
     // real click isn't swallowed by an uninitialized output buffer.
@@ -824,12 +850,13 @@ export default function RhythmTapQuestion({
     getCurrentOnsetInfo,
   ]);
 
-  // Auto-start when not disabled
+  // Auto-start when not disabled. startRetryTick re-arms this after a transient
+  // not-running AudioContext so the count-in self-heals (see startFlow).
   useEffect(() => {
     if (!disabled && phase === PHASES.INITIALIZING) {
       startFlow();
     }
-  }, [disabled, phase, startFlow]);
+  }, [disabled, phase, startFlow, startRetryTick]);
 
   // Cleanup on unmount — cancel rAF loop (T-31-05) and stop metronome
   useEffect(() => {
@@ -838,6 +865,8 @@ export default function RhythmTapQuestion({
         cleanupDoneRef.current = true;
         stopContinuousMetronome();
         cancelAnimationFrame(rafIdRef.current);
+        if (startRetryTimerRef.current)
+          clearTimeout(startRetryTimerRef.current);
       }
     };
   }, [stopContinuousMetronome]);

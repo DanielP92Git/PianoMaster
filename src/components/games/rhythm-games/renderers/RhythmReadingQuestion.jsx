@@ -52,6 +52,13 @@ const TIME_SIG_MAP = {
   "6/8": TIME_SIGNATURES.SIX_EIGHT,
 };
 
+// Count-in auto-start retry. A remounted audio question (2nd+ question in a
+// MixedLessonGame) can briefly observe a not-yet-running shared AudioContext;
+// without a retry the count-in bails permanently and the game freezes. Re-arm
+// the start effect a few times so it self-heals once the context is running.
+const MAX_START_RETRIES = 6;
+const START_RETRY_MS = 150;
+
 export default function RhythmReadingQuestion({
   question,
   isLandscape: _isLandscape,
@@ -97,6 +104,11 @@ export default function RhythmReadingQuestion({
   const hasStartedRef = useRef(false);
   const hasAnchoredRef = useRef(false); // pattern anchored to the user's first tap (Bug 2)
   const cleanupDoneRef = useRef(false);
+
+  // Count-in auto-start retry plumbing — see MAX_START_RETRIES note above.
+  const [startRetryTick, setStartRetryTick] = useState(0);
+  const startRetryCountRef = useRef(0);
+  const startRetryTimerRef = useRef(null);
   const patternStartTimeRef = useRef(0);
   const scheduledBeatTimesRef = useRef([]);
   const nextBeatIndexRef = useRef(0);
@@ -513,8 +525,22 @@ export default function RhythmReadingQuestion({
     const running = await audioEngine.ensureRunning();
     if (!running) {
       hasStartedRef.current = false;
+      if (import.meta.env.DEV) {
+        console.info("[rhythm count-in] context not running, retrying", {
+          attempt: startRetryCountRef.current,
+          ctxState: audioEngine.audioContextRef?.current?.state,
+        });
+      }
+      if (startRetryCountRef.current < MAX_START_RETRIES) {
+        startRetryCountRef.current += 1;
+        startRetryTimerRef.current = setTimeout(
+          () => setStartRetryTick((n) => n + 1),
+          START_RETRY_MS
+        );
+      }
       return;
     }
+    startRetryCountRef.current = 0; // running — reset budget for future remounts
 
     // Prime audio pipeline
     try {
@@ -606,8 +632,10 @@ export default function RhythmReadingQuestion({
 
     setBeats(loadedBeats);
     startFlow();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time start
-  }, [disabled]);
+    // startRetryTick re-arms this after a transient not-running AudioContext so
+    // the count-in self-heals (see startFlow).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only disabled + retry tick drive (re)start
+  }, [disabled, startRetryTick]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -620,6 +648,8 @@ export default function RhythmReadingQuestion({
           rafIdRef.current = null;
         }
         cancelAnimationFrame(holdRafIdRef.current);
+        if (startRetryTimerRef.current)
+          clearTimeout(startRetryTimerRef.current);
       }
     };
   }, [stopContinuousMetronome]);
