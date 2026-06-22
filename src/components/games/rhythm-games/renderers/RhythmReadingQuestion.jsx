@@ -109,6 +109,32 @@ export default function RhythmReadingQuestion({
   const [startRetryTick, setStartRetryTick] = useState(0);
   const startRetryCountRef = useRef(0);
   const startRetryTimerRef = useRef(null);
+
+  // TEMP DEBUG (remove before merge): on-screen count-in freeze diagnostics.
+  // Production preview strips import.meta.env.DEV logs, so surface live state.
+  const phaseRef = useRef(phase);
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
+  const disabledRef = useRef(disabled);
+  useEffect(() => {
+    disabledRef.current = disabled;
+  }, [disabled]);
+  const [dbgHud, setDbgHud] = useState("");
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDbgHud(
+        `READ ph:${phaseRef.current} ` +
+          `shared:${audioContextRef.current?.state ?? "null"} ` +
+          `eng:${audioEngine.audioContextRef?.current?.state ?? "null"} ` +
+          `start:${hasStartedRef.current} retry:${startRetryCountRef.current} ` +
+          `mInt:${continuousMetronomeRef.current !== null} ` +
+          `vInt:${visualMetronomeRef.current !== null} dis:${String(disabledRef.current)}`
+      );
+    }, 250);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const patternStartTimeRef = useRef(0);
   const scheduledBeatTimesRef = useRef([]);
   const nextBeatIndexRef = useRef(0);
@@ -525,12 +551,12 @@ export default function RhythmReadingQuestion({
     const running = await audioEngine.ensureRunning();
     if (!running) {
       hasStartedRef.current = false;
-      if (import.meta.env.DEV) {
-        console.info("[rhythm count-in] context not running, retrying", {
-          attempt: startRetryCountRef.current,
-          ctxState: audioEngine.audioContextRef?.current?.state,
-        });
-      }
+      // TEMP: un-gated (production preview) to capture device behavior.
+      console.info("[rhythm count-in] READ context not running, retrying", {
+        attempt: startRetryCountRef.current,
+        shared: audioContextRef.current?.state,
+        eng: audioEngine.audioContextRef?.current?.state,
+      });
       if (startRetryCountRef.current < MAX_START_RETRIES) {
         startRetryCountRef.current += 1;
         startRetryTimerRef.current = setTimeout(
@@ -681,6 +707,25 @@ export default function RhythmReadingQuestion({
       role="main"
       aria-label={t("game.rhythmReading.ariaLabel", "Rhythm reading exercise")}
     >
+      {/* TEMP DEBUG (remove before merge): count-in freeze diagnostics */}
+      <div
+        style={{
+          position: "fixed",
+          top: 4,
+          left: 4,
+          zIndex: 99999,
+          background: "rgba(0,0,0,0.8)",
+          color: "#0f0",
+          font: "10px monospace",
+          padding: "3px 5px",
+          borderRadius: 4,
+          pointerEvents: "none",
+          whiteSpace: "pre-wrap",
+          maxWidth: "60vw",
+        }}
+      >
+        {dbgHud}
+      </div>
       {/* Metronome display */}
       <MetronomeDisplay
         currentBeat={currentBeat}
