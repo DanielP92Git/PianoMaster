@@ -162,7 +162,6 @@ export default function PulseQuestion({
   const playingTimerRef = useRef(null);
   const scheduledOscillatorsRef = useRef([]);
   const hasStartedRef = useRef(false);
-  const cleanupDoneRef = useRef(false);
 
   // Count-in auto-start retry plumbing — see MAX_START_RETRIES note above.
   const [startRetryTick, setStartRetryTick] = useState(0);
@@ -367,6 +366,14 @@ export default function PulseQuestion({
       });
     scheduledOscillatorsRef.current = [];
   }, [audioEngine]);
+
+  // Stable ref to the latest stop fn. stopContinuousMetronome closes over the
+  // per-render `audioEngine` object, so its identity changes every render. The
+  // unmount cleanup below must NOT depend on it — listing it made the cleanup
+  // fire on ordinary re-renders, tearing down the live metronome intervals
+  // mid-exercise (the count-in freeze on 2nd+ audio questions).
+  const stopContinuousMetronomeRef = useRef(stopContinuousMetronome);
+  stopContinuousMetronomeRef.current = stopContinuousMetronome;
 
   // Evaluate taps using accumulated per-beat results
   const evaluatePerformance = useCallback(() => {
@@ -676,18 +683,16 @@ export default function PulseQuestion({
     }
   }, [disabled, phase, startFlow, startRetryTick]);
 
-  // Cleanup on unmount — cancel rAF loop (T-31-08) and metronome
+  // Cleanup on unmount ONLY — cancel rAF loop (T-31-08) and metronome. Empty
+  // deps so this fires exactly once on real unmount; the stop fn is read through
+  // a ref to avoid the identity-churn bug described above.
   useEffect(() => {
     return () => {
-      if (!cleanupDoneRef.current) {
-        cleanupDoneRef.current = true;
-        stopContinuousMetronome();
-        cancelAnimationFrame(rafIdRef.current);
-        if (startRetryTimerRef.current)
-          clearTimeout(startRetryTimerRef.current);
-      }
+      stopContinuousMetronomeRef.current();
+      cancelAnimationFrame(rafIdRef.current);
+      if (startRetryTimerRef.current) clearTimeout(startRetryTimerRef.current);
     };
-  }, [stopContinuousMetronome]);
+  }, []);
 
   // Guidance text by phase
   const getGuidanceText = () => {

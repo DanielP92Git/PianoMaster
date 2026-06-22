@@ -103,7 +103,6 @@ export default function RhythmReadingQuestion({
   // Refs
   const hasStartedRef = useRef(false);
   const hasAnchoredRef = useRef(false); // pattern anchored to the user's first tap (Bug 2)
-  const cleanupDoneRef = useRef(false);
 
   // Count-in auto-start retry plumbing — see MAX_START_RETRIES note above.
   const [startRetryTick, setStartRetryTick] = useState(0);
@@ -263,6 +262,14 @@ export default function RhythmReadingQuestion({
       });
     scheduledOscillatorsRef.current = [];
   }, [audioEngine]);
+
+  // Stable ref to the latest stop fn. stopContinuousMetronome closes over the
+  // per-render `audioEngine` object, so its identity changes every render. The
+  // unmount cleanup below must NOT depend on it — listing it made the cleanup
+  // fire on ordinary re-renders, tearing down the live metronome intervals
+  // mid-exercise (the count-in freeze on 2nd+ audio questions).
+  const stopContinuousMetronomeRef = useRef(stopContinuousMetronome);
+  stopContinuousMetronomeRef.current = stopContinuousMetronome;
 
   // Stave bounds callback
   const handleStaveBoundsReady = useCallback((bounds) => {
@@ -663,22 +670,20 @@ export default function RhythmReadingQuestion({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only disabled + retry tick drive (re)start
   }, [disabled, startRetryTick]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount ONLY. Empty deps so this fires exactly once on real
+  // unmount; the stop fn is read through a ref to avoid the identity-churn bug
+  // described above.
   useEffect(() => {
     return () => {
-      if (!cleanupDoneRef.current) {
-        cleanupDoneRef.current = true;
-        stopContinuousMetronome();
-        if (rafIdRef.current) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-        cancelAnimationFrame(holdRafIdRef.current);
-        if (startRetryTimerRef.current)
-          clearTimeout(startRetryTimerRef.current);
+      stopContinuousMetronomeRef.current();
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
       }
+      cancelAnimationFrame(holdRafIdRef.current);
+      if (startRetryTimerRef.current) clearTimeout(startRetryTimerRef.current);
     };
-  }, [stopContinuousMetronome]);
+  }, []);
 
   // Guidance text
   const getGuidanceText = () => {
