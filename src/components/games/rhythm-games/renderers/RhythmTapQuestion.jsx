@@ -162,32 +162,6 @@ export default function RhythmTapQuestion({
   const startRetryCountRef = useRef(0);
   const startRetryTimerRef = useRef(null);
 
-  // TEMP DEBUG (remove before merge): on-screen count-in freeze diagnostics.
-  // Production preview strips import.meta.env.DEV logs, so surface live state.
-  const phaseRef = useRef(phase);
-  useEffect(() => {
-    phaseRef.current = phase;
-  }, [phase]);
-  const disabledRef = useRef(disabled);
-  useEffect(() => {
-    disabledRef.current = disabled;
-  }, [disabled]);
-  const [dbgHud, setDbgHud] = useState("");
-  useEffect(() => {
-    const id = setInterval(() => {
-      setDbgHud(
-        `TAP ph:${phaseRef.current} ` +
-          `shared:${audioContextRef.current?.state ?? "null"} ` +
-          `eng:${audioEngine.audioContextRef?.current?.state ?? "null"} ` +
-          `start:${hasStartedRef.current} retry:${startRetryCountRef.current} ` +
-          `mInt:${continuousMetronomeRef.current !== null} ` +
-          `vInt:${visualMetronomeRef.current !== null} dis:${String(disabledRef.current)}`
-      );
-    }, 250);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Hold mechanic refs
   const currentOnsetIndexRef = useRef(0);
   const pressStartTimeRef = useRef(null);
@@ -719,12 +693,13 @@ export default function RhythmTapQuestion({
     const running = await audioEngine.ensureRunning();
     if (!running) {
       hasStartedRef.current = false;
-      // TEMP: un-gated (production preview) to capture device behavior.
-      console.info("[rhythm count-in] TAP context not running, retrying", {
-        attempt: startRetryCountRef.current,
-        shared: audioContextRef.current?.state,
-        eng: audioEngine.audioContextRef?.current?.state,
-      });
+      if (import.meta.env.DEV) {
+        console.info("[rhythm count-in] TAP context not running, retrying", {
+          attempt: startRetryCountRef.current,
+          shared: audioContextRef.current?.state,
+          eng: audioEngine.audioContextRef?.current?.state,
+        });
+      }
       if (startRetryCountRef.current < MAX_START_RETRIES) {
         startRetryCountRef.current += 1;
         startRetryTimerRef.current = setTimeout(
@@ -963,25 +938,6 @@ export default function RhythmTapQuestion({
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      {/* TEMP DEBUG (remove before merge): count-in freeze diagnostics */}
-      <div
-        style={{
-          position: "fixed",
-          top: 4,
-          left: 4,
-          zIndex: 99999,
-          background: "rgba(0,0,0,0.8)",
-          color: "#0f0",
-          font: "10px monospace",
-          padding: "3px 5px",
-          borderRadius: 4,
-          pointerEvents: "none",
-          whiteSpace: "pre-wrap",
-          maxWidth: "60vw",
-        }}
-      >
-        {dbgHud}
-      </div>
       <MetronomeDisplay
         currentBeat={currentBeat}
         timeSignature={timeSignature}
