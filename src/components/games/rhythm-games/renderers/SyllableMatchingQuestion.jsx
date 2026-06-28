@@ -45,7 +45,7 @@ export default function SyllableMatchingQuestion({
   useDeclareNeedsLandscape(false);
 
   // Syllable lookup helper — delegates to durationInfo.getSyllable so the
-  // info.syllable override (e.g., "8_pair" → "ti-ti") is honored. Without this
+  // info.syllable override (e.g., "8_pair" → "ta-te") is honored. Without this
   // delegation, two cards could render the same syllable text when the dedup
   // pass in generateQuestions misses an override-only collision (bug 2).
   const getSyllable = useCallback(

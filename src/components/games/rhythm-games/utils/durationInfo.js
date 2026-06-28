@@ -77,14 +77,15 @@ export const DURATION_INFO = {
     durationUnits: 16,
     isRest: true,
   },
-  // syllable override: "ti-ti" (EN) / "טָה-טֶה" (HE — user-confirmed Nikud
-  // 2026-06-19; memory.md requires explicit approval for Hebrew syllables).
+  // syllable override: "ta-te" (EN) / "טָה-טֶה" (HE — user-confirmed Nikud).
+  // Uses the "te" eighth-note convention (v3.5 owner UAT), consistent with the
+  // 16th override "ta-fa-te-fe". memory.md requires approval for Hebrew syllables.
   "8_pair": {
     svgFilename: "beamed-eighths",
     i18nKey: "rhythm.duration.beamedEighths",
     durationUnits: 4,
     isRest: false,
-    syllable: "ti-ti",
+    syllable: "ta-te",
     syllableHe: "טָה-טֶה",
   },
 };

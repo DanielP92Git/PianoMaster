@@ -60,6 +60,43 @@ export function binaryPatternToBeats(binaryPattern) {
   return beats;
 }
 
+// Map a resolved VexFlow duration code (note or rest) to sixteenth-note units.
+const VEX_CODE_TO_UNITS = {
+  w: 16,
+  hd: 12,
+  h: 8,
+  qd: 6,
+  q: 4,
+  "8d": 3,
+  8: 2,
+  16: 1,
+  wr: 16,
+  hr: 8,
+  qr: 4,
+  "8r": 2,
+  "16r": 1,
+};
+const VEX_REST_CODES = new Set(["wr", "hr", "qr", "8r", "16r"]);
+
+/**
+ * Convert a resolver's `vexDurations` (e.g. ["q","qr","q","q"]) into beat
+ * objects. Unlike binaryPatternToBeats — which derives durations from the raw
+ * literal onset gaps — these codes have already been quantized to the node's
+ * allowed durations by binaryToVexDurations(). Render from THIS when a resolved
+ * pattern carries vexDurations, so the displayed/played rhythm never exceeds the
+ * durations the node is allowed to teach (e.g. a quarter-only boss never shows
+ * a half or eighth that a loosely-tagged source pattern happened to contain).
+ *
+ * @param {string[]} vexDurations - Duration/rest codes from the tag resolver
+ * @returns {{ durationUnits: number, isRest: boolean }[]}
+ */
+export function vexDurationsToBeats(vexDurations) {
+  return (vexDurations || []).map((code) => ({
+    durationUnits: VEX_CODE_TO_UNITS[code] ?? 4,
+    isRest: VEX_REST_CODES.has(code),
+  }));
+}
+
 /**
  * Kodaly syllable maps for rhythm notation display.
  *

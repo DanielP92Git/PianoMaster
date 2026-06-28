@@ -24,7 +24,10 @@ import {
   resolveByAnyTag,
   durationsIncludeRests,
 } from "../../../../data/patterns/RhythmPatternGenerator";
-import { binaryPatternToBeats } from "../utils/rhythmVexflowHelpers";
+import {
+  binaryPatternToBeats,
+  vexDurationsToBeats,
+} from "../utils/rhythmVexflowHelpers";
 import { getMeterTiming, isStrongSubdivision } from "../utils/meterUtils";
 import { scoreTap } from "../utils/rhythmScoringUtils";
 import { anchorPatternToFirstTap } from "../utils/rhythmTimingUtils";
@@ -585,7 +588,12 @@ export default function RhythmReadingQuestion({
         allowRests: durationsIncludeRests(durations),
       });
       if (result) {
-        loadedBeats = binaryPatternToBeats(result.binary);
+        // Prefer the resolver's vexDurations (quantized to the node's allowed
+        // durations) over the literal binary, so a node never displays a
+        // duration it can't teach (e.g. a quarter-only boss showing a half).
+        loadedBeats = result.vexDurations
+          ? vexDurationsToBeats(result.vexDurations)
+          : binaryPatternToBeats(result.binary);
       }
     }
 

@@ -82,8 +82,10 @@ describe("getSyllable", () => {
   const WHOLE_REST_HE = "הָא-אָ-אָ-אָס"; // הָא-אָ-אָ-אָס
   const QUARTER_REST_HE = "הָס"; // הָס
 
-  it('eighth-pair card shows "ti-ti" in English', () => {
-    expect(getSyllable("8_pair", "en")).toBe("ti-ti");
+  it('eighth-pair card shows "ta-te" in English', () => {
+    // v3.5 owner UAT: eighths use the "te" convention (EN "ta-te"), consistent
+    // with the 16th override "ta-fa-te-fe".
+    expect(getSyllable("8_pair", "en")).toBe("ta-te");
   });
 
   it("eighth-pair card shows confirmed Hebrew (not English fallback)", () => {

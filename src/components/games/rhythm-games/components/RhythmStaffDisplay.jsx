@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Renderer, Stave, Voice, Formatter, Beam, Stem } from "vexflow";
 import { beatsToVexNotes } from "../utils/rhythmVexflowHelpers";
 import { beamGroupsForTimeSignature } from "../../sight-reading-game/utils/beamGroupUtils";
@@ -42,6 +42,24 @@ export function RhythmStaffDisplay({
   const noteElementsRef = useRef([]);
   // For multi-stave, track which measure is "active" (contains the cursor)
   const staveContainerRefs = useRef([]);
+  // Observed container width. The render effect reads offsetWidth directly, but
+  // when the staff mounts mid-fade (e.g. discovery cards) offsetWidth is 0 and
+  // the draw fell back to a hardcoded 400px, overflowing narrow portrait screens
+  // and never re-measuring. Feeding an observed width back into the effect deps
+  // forces a redraw at the real width once layout settles.
+  const [measuredWidth, setMeasuredWidth] = useState(0);
+
+  // Re-measure on container resize (and once layout settles after mount).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver((entries) => {
+      const w = Math.round(entries[0]?.contentRect?.width ?? 0);
+      if (w > 0) setMeasuredWidth((prev) => (prev === w ? prev : w));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   // Parse time signature string into beats numerator/denominator
   const parseTimeSignature = (timeSig) => {
@@ -186,7 +204,12 @@ export function RhythmStaffDisplay({
     try {
       if (effectiveMeasures <= 1) {
         // --- Single stave (original behavior) ---
-        const containerWidth = containerRef.current.offsetWidth || 400;
+        // Prefer the live offsetWidth; fall back to the last observed width
+        // (ResizeObserver) and only then to 400 (JSDOM/tests, where offsetWidth
+        // is always 0). This keeps the staff within its container on narrow
+        // portrait screens instead of drawing a fixed 400px and overflowing.
+        const containerWidth =
+          containerRef.current.offsetWidth || measuredWidth || 400;
         const staveWidth = containerWidth - 20;
         const staveHeight = 120;
 
@@ -350,7 +373,7 @@ export function RhythmStaffDisplay({
     } catch (err) {
       console.warn("[RhythmStaffDisplay] VexFlow render error:", err);
     }
-  }, [beats, timeSignature, measures, showSyllables, language]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [beats, timeSignature, measures, showSyllables, language, measuredWidth]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update note colors based on tap results
   useEffect(() => {
@@ -430,7 +453,7 @@ export function RhythmStaffDisplay({
         <div
           ref={containerRef}
           style={{ width: "100%", minHeight: "120px" }}
-          className={measures > 1 ? "overflow-y-auto" : ""}
+          className={measures > 1 ? "overflow-y-auto" : "overflow-x-hidden"}
         />
 
         {/* Cursor overlay line — spans first/active stave only */}

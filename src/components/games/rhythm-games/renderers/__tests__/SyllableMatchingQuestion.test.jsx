@@ -205,11 +205,12 @@ describe("SyllableMatchingQuestion", () => {
     });
   });
 
-  it("renders '8_pair' distractor as 'ti-ti' (not 'ta') when correct is 'q' (regression: bug-2)", () => {
+  it("renders '8_pair' distractor as 'ta-te' (not 'ta') when correct is 'q' (regression: bug-2)", () => {
     // Force a question where the bug previously surfaced:
     // 8_pair has durationUnits=4 → would map to "ta" via SYLLABLE_MAP_EN[4],
     // colliding with q's "ta". Fixed by routing through getSyllable() in
-    // durationInfo.js, which honors info.syllable = "ti-ti".
+    // durationInfo.js, which honors info.syllable = "ta-te" (the "te"
+    // eighth-note convention, v3.5 owner-confirmed).
     const question = {
       correct: "q",
       choices: ["q", "8_pair", "h", "w"],
@@ -226,14 +227,14 @@ describe("SyllableMatchingQuestion", () => {
       />
     );
 
-    // Card 0 ("q") → "ta"; card 1 ("8_pair") → "ti-ti"
+    // Card 0 ("q") → "ta"; card 1 ("8_pair") → "ta-te"
     expect(screen.getByTestId("duration-card-0")).toHaveAttribute(
       "data-text",
       "ta"
     );
     expect(screen.getByTestId("duration-card-1")).toHaveAttribute(
       "data-text",
-      "ti-ti"
+      "ta-te"
     );
 
     // No two cards share the same text

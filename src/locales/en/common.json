@@ -1879,6 +1879,7 @@
       },
       "syllableOverride": {
         "16": "ta-fa-te-fe",
+        "qd": "ta-a-te",
         "qhq": "ta — ta-a — ta",
         "synsyn": "and-a-TA  and-a-TA",
         "3_4": "1 – 2 – 3",
@@ -2002,7 +2003,7 @@
           },
           "sound": {
             "title": "How it sounds",
-            "body": "Tap Listen to hear pairs of eighth notes. Say <accent>ti-ti</accent> with each pair!"
+            "body": "Tap Listen to hear pairs of eighth notes. Say <accent>ta-te</accent> with each pair!"
           },
           "music": {
             "title": "How it looks in music",
@@ -2052,7 +2053,7 @@
         "qd": {
           "meet": {
             "title": "Meet the <accent>Dotted Quarter Note</accent>!",
-            "body": "The dot adds half a beat — so a dotted quarter lasts one-and-a-half beats. A bit longer than a regular quarter!"
+            "body": "The dot makes the quarter longer — hold it for one-and-a-half beats, then a quick eighth note finishes the beat. Say it: ta-a-te!"
           },
           "sound": {
             "title": "How it sounds",

@@ -590,6 +590,31 @@ select option {
   }
 }
 
+/* Rhythm tap feedback (FloatingFeedback). translateX(-50%) is baked into every
+   frame so the toast stays horizontally centered while it floats/fades. */
+@keyframes floatUpFade {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-40px);
+  }
+}
+
+/* Reduced-motion variant: fade only, no vertical travel. */
+@keyframes fadeOnly {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 @keyframes gradient {
   0% {
     background-position: 0% 50%;
