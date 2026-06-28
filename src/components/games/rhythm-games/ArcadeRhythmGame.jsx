@@ -1281,11 +1281,11 @@ function ArcadeRhythmGame() {
           className="absolute bottom-32 left-0 right-0"
           style={{ pointerEvents: "none" }}
         >
-          {/* key={feedbackKey} remounts a fresh instance per tap so every
-              scored tap re-runs the float-up animation — even two identical
-              qualities in a row (which otherwise didn't visibly restart). */}
+          {/* FloatingFeedback keeps an internal queue of self-removing CSS
+              toasts keyed off feedbackKey changes, so every scored tap shows —
+              including two identical qualities in a row. No key-remount needed
+              (that was racy under the RAF/audio load on slower phones). */}
           <FloatingFeedback
-            key={feedbackKey}
             quality={latestFeedback}
             feedbackKey={feedbackKey}
             reducedMotion={reducedMotion}
