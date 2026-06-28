@@ -773,12 +773,23 @@ function ArcadeRhythmGame() {
   // Tap scoring
   // ---------------------------------------------------------------------------
   const handleHitZoneTap = useCallback(() => {
-    if (gamePhaseRef.current !== GAME_PHASES.PLAYING) return;
-
+    const phase = gamePhaseRef.current;
     const ctx = audioContextRef.current;
     if (!ctx) return;
 
-    playTapClick();
+    // Audible acknowledgment for any in-session tap — including the count-in and
+    // the gap between patterns — so a tap never feels dead even when there's
+    // nothing to score yet. Judgment text stays gated to active play below, so
+    // the child isn't shown "MISS" before the music starts.
+    if (
+      phase === GAME_PHASES.PLAYING ||
+      phase === GAME_PHASES.COUNTDOWN ||
+      phase === GAME_PHASES.FEEDBACK
+    ) {
+      playTapClick();
+    }
+
+    if (phase !== GAME_PHASES.PLAYING) return;
 
     const tapTime = ctx.currentTime;
     if (scheduledBeatTimesRef.current.length === 0) return;
@@ -1270,7 +1281,11 @@ function ArcadeRhythmGame() {
           className="absolute bottom-32 left-0 right-0"
           style={{ pointerEvents: "none" }}
         >
+          {/* key={feedbackKey} remounts a fresh instance per tap so every
+              scored tap re-runs the float-up animation — even two identical
+              qualities in a row (which otherwise didn't visibly restart). */}
           <FloatingFeedback
+            key={feedbackKey}
             quality={latestFeedback}
             feedbackKey={feedbackKey}
             reducedMotion={reducedMotion}
