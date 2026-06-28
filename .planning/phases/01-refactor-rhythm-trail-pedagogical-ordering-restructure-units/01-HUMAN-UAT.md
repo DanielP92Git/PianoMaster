@@ -1,14 +1,14 @@
 ---
-status: partial
+status: complete
 phase: 01-refactor-rhythm-trail-pedagogical-ordering-restructure-units
 source: [01-VERIFICATION.md]
 started: 2026-06-02T00:36:00Z
-updated: 2026-06-02T00:36:00Z
+updated: 2026-06-29T00:00:00Z
 ---
 
 ## Current Test
 
-[awaiting human testing — Task 4 (supabase db push, D-13) must run BEFORE Task 5 (UAT walkthrough)]
+[testing complete]
 
 ## Tests
 
@@ -31,7 +31,17 @@ points at the prod project ref and record `SELECT SUM(total_xp) FROM students;`.
 Only after all post-push checks pass: trigger Netlify deploy and confirm
 `pianomaster-v12` appears in the deployed `public/sw.js`.
 
-result: [pending]
+result: pass
+verified: 2026-06-28
+notes: |
+Migration applied via Supabase Dashboard SQL Editor (not CLI — D-13 method deviation,
+intent satisfied: owner-executed, checklist signed off). All 7 post-push DB checks PASSED:
+rhythm/boss_rhythm rows = 0; total_xp = 72607 unchanged from pre-push baseline;
+is_free_node TRUE for rhythm_1_1/rhythm_1_5/boss_rhythm_1, FALSE for rhythm_1_6/rhythm_2_1.
+Live site serves pianomaster-v12 (https://my-pianomaster.netlify.app/sw.js).
+DEVIATION: code deploy preceded the migration (reverse of D-13 ordering). Transient
+paywall-gate inconsistency possible during the pre-migration window; end-state consistent,
+no XP/data loss. Window now closed.
 
 ### 2. Owner UAT walkthrough — full rhythm trail rhythm_1_1 → boss_rhythm_10 (SC-9)
 
@@ -50,14 +60,22 @@ device signed in as a real student account:
 - `/trail` UI: 10 rhythm units render with U10 as terminus; hidden syncopation unit invisible
 - Non-rhythm regression spot-check: Treble Unit 1 + Bass Unit 1 progression intact
 
-result: [pending]
+result: pass
+verified: 2026-06-29
+notes: |
+Owner-confirmed all walkthrough items pass on a real device. XP-preservation item:
+authoritatively verified at the data layer in Test 1 (SELECT SUM(total_xp) FROM students
+= 72607, unchanged across migration; migration renamed node IDs only, never touched
+students.total_xp). Per-account UI sanity: no XP reset — XP tracked normally throughout
+the trail walkthrough. XP shown on Dashboard XPProgressCard (within-level progress, not
+raw cumulative total).
 
 ## Summary
 
 total: 2
-passed: 0
+passed: 2
 issues: 0
-pending: 2
+pending: 0
 skipped: 0
 blocked: 0
 
