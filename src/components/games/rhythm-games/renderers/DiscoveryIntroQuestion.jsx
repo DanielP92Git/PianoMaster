@@ -66,6 +66,15 @@ const REST_CONTEXT_FIGURES = {
   }, // ♩♩♩♩ | 𝄻
 };
 
+// Some single durations are best understood inside a tiny rhythmic figure rather
+// than as a lone glyph. The dotted quarter almost always pairs with an eighth
+// (the "ta-a-te" figure), so we render it on a staff as ♩. ♪ ♩. ♪ — a complete
+// 4/4 bar that makes the dotted-quarter→eighth pairing the visible focus. Beats
+// are { durationUnits, isRest }: dotted-quarter=6, eighth=2 (6+2+6+2 = 16).
+const DURATION_FIGURES = {
+  qd: { beats: [N(6), N(2), N(6), N(2)], timeSignature: "4/4", measures: 1 }, // ♩. ♪ ♩. ♪
+};
+
 export default function DiscoveryIntroQuestion({
   question,
   isLandscape,
@@ -135,13 +144,18 @@ export default function DiscoveryIntroQuestion({
   const meterBeats = meterFigure
     ? meterFigure.units.map((d) => ({ durationUnits: d, isRest: false }))
     : null;
-  const figureBeats = patternBeats || meterBeats;
+  // Single durations that teach better as a figure (e.g. qd → ♩. ♪) render a
+  // staff like meters/patterns instead of the lone glyph.
+  const durationFigure = DURATION_FIGURES[focusDuration] || null;
+  const durationFigureBeats = durationFigure?.beats || null;
+  const figureBeats = patternBeats || meterBeats || durationFigureBeats;
   const figureTimeSignature = patternBeats
     ? focusPattern?.timeSignature || "4/4"
-    : meterFigure?.timeSignature || "4/4";
+    : meterFigure?.timeSignature || durationFigure?.timeSignature || "4/4";
   // Pattern mode uses node tempo so the kid hears the figure at tapping speed;
   // meters use a child-friendly default; single durations use a moderate 80.
-  const figureTempo = focusPattern?.tempo || meterFigure?.tempo || 80;
+  const figureTempo =
+    focusPattern?.tempo || meterFigure?.tempo || durationFigure?.tempo || 80;
 
   // --- Title / syllable resolution (per-concept copy where it exists) ---
   // titleOverride wins (preserves 16/qhq/synsyn wording); else the per-concept
@@ -516,7 +530,7 @@ export default function DiscoveryIntroQuestion({
             playback card only (cards 1-2 keep the big standalone glyph). */}
         <div
           dir="ltr"
-          className={`flex items-center justify-center text-white${isLandscape ? "" : " w-full"}${!reducedMotion ? " animate-fadeIn" : ""}`}
+          className={`flex min-w-0 items-center justify-center text-white${isLandscape ? "" : " w-full"}${!reducedMotion ? " animate-fadeIn" : ""}`}
         >
           {restFigure && currentKind === "playback" ? (
             <div className={figureWrapperClass} aria-hidden="true">

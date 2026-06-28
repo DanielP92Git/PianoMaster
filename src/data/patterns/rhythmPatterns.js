@@ -500,10 +500,13 @@ export const RHYTHM_PATTERNS = [
     pattern: [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
   },
   // 8 qd q q  (2+6+4+4 = 16)
+  // NOTE: contains an eighth + dotted quarter and NO rest — must NOT carry the
+  // "quarter-rest" tag (that leaked this eighth-bearing pattern into boss_rhythm_1's
+  // quarter/quarter-rest dictation pool, before eighths are taught in Unit 4).
   {
     id: "dq_44_005",
     timeSignature: "4/4",
-    tags: ["dotted-quarter", "dotted-syncopation", "quarter-rest"],
+    tags: ["dotted-quarter", "dotted-syncopation"],
     measures: 1,
     pattern: [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
   },

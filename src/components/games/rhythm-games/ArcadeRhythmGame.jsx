@@ -13,10 +13,7 @@ import { StreakBrightnessOverlay } from "../shared/hud/StreakBrightnessOverlay";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { useAccessibility } from "../../../contexts/AccessibilityContext";
 import { useSessionTimeout } from "../../../contexts/SessionTimeoutContext";
-import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
-import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { useDeclareNeedsLandscape } from "../../../contexts/NeedsLandscapeContext";
-import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay";
 import VictoryScreen from "../VictoryScreen";
 import GameOverScreen from "../GameOverScreen";
@@ -120,31 +117,14 @@ function ArcadeRhythmGame() {
   const location = useLocation();
   const { t, i18n } = useTranslation("common");
 
-  // Phase 35 final declaration (Plan 35-04, rotate-prompt path per
-  // 35-SPIKE.md verdict). Phone-portrait surfaces the rotate prompt via
-  // Phase 34's NeedsLandscapeContext + RotatePromptOverlay; tablets play
-  // in any orientation (D-09 tablet-never-prompts). Viewport-aware
-  // declaration:
-  //   - Phone (<768px): declare true → rotate prompt shown on portrait,
-  //     game plays in landscape; Android PWA orientation lock fires
-  //     (Phase 34 D-19 gates it on ctxNeedsLandscape === true)
-  //   - Tablet (≥768px): declare false → no rotate prompt regardless
-  //     of orientation; Android lock skipped (D-19)
-  // Inline matchMedia per D-10 + D-14 (no extracted helper for a binary
-  // viewport check). Read once on mount via useMemo — orientation/viewport
-  // changes mid-session don't re-flip the declaration; the user has
-  // already started a session at one viewport class and rotation is
-  // handled by RotatePromptOverlay's own gate.
-  // See: .planning/phases/35-arcaderhythmgame-portrait/35-SPIKE.md
-  const isPhoneViewport = useMemo(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return false;
-    return !window.matchMedia("(min-width: 768px)").matches;
-  }, []);
-  useDeclareNeedsLandscape(isPhoneViewport);
-  useLandscapeLock();
-
-  // iOS/non-PWA: rotate prompt overlay
-  const { shouldShowPrompt, dismissPrompt } = useRotatePrompt();
+  // The arcade game is a PORTRAIT game (owner UAT decision, v3.5 gap-closure).
+  // This reverses the Phase 35 D-12 "ROTATE-PROMPT" verdict: the speed-rounds
+  // and the cumulative-review boss (boss_rhythm_10) all play in portrait with no
+  // rotate prompt. Declaring false also makes the Android-PWA landscape lock a
+  // no-op (Phase 34 D-19 gates it on ctxNeedsLandscape === true), so no rotate
+  // machinery is needed here. The Phase 35 mid-game-rotation laneHeightRef known
+  // issue is moot under fixed portrait.
+  useDeclareNeedsLandscape(false);
 
   // Trail state extraction from location.state
   const nodeId = location.state?.nodeId ?? null;
@@ -1281,10 +1261,13 @@ function ArcadeRhythmGame() {
         )}
 
         {/* ---------------------------------------------------------------- */}
-        {/* Floating feedback (above hit zone) */}
+        {/* Floating feedback (above hit zone). Anchored at bottom-32 (not      */}
+        {/* bottom-12) so on real phones it clears the browser/OS bottom bar    */}
+        {/* — at 48px the feedback landed under the Android chrome and was      */}
+        {/* invisible despite taps registering.                                 */}
         {/* ---------------------------------------------------------------- */}
         <div
-          className="absolute bottom-12 left-0 right-0"
+          className="absolute bottom-32 left-0 right-0"
           style={{ pointerEvents: "none" }}
         >
           <FloatingFeedback
@@ -1325,11 +1308,6 @@ function ArcadeRhythmGame() {
           hasAutoStartedRef.current = false;
         }}
       />
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Rotate prompt for iOS/non-PWA */}
-      {/* ------------------------------------------------------------------ */}
-      {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
     </div>
   );
 }
