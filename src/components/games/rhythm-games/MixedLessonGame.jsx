@@ -34,7 +34,10 @@ import {
   resolveByAnyTag,
   durationsIncludeRests,
 } from "../../../data/patterns/RhythmPatternGenerator";
-import { binaryPatternToBeats } from "./utils/rhythmVexflowHelpers";
+import {
+  binaryPatternToBeats,
+  vexDurationsToBeats,
+} from "./utils/rhythmVexflowHelpers";
 import { generateDistractors } from "./utils/rhythmTimingUtils";
 import { useSounds } from "../../../features/games/hooks/useSounds";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
@@ -338,7 +341,14 @@ export default function MixedLessonGame() {
           allowRests: durationsIncludeRests(dictDurations),
         });
         if (result) {
-          const beats = binaryPatternToBeats(result.binary);
+          // Render from the resolver's vexDurations (already quantized to this
+          // node's allowed durations) so the dictation never shows a duration
+          // the node can't teach — e.g. a quarter-only boss showing a half or
+          // eighth that a loosely-tagged source pattern happened to contain.
+          // Fall back to the literal binary only when vexDurations is absent.
+          const beats = result.vexDurations
+            ? vexDurationsToBeats(result.vexDurations)
+            : binaryPatternToBeats(result.binary);
           const distractors = generateDistractors(beats, 2, {
             allowedDurations: rc?.durations || ["q"],
           });
