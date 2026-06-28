@@ -1,5 +1,29 @@
 # Project Milestones: PianoApp
 
+## v3.6 Game Screen UI Unification (Shipped: 2026-06-14)
+
+**Delivered:** Extracted NotesRecognitionGame's inline HUD/shell into reusable shared components and adopted them across the other game screens (subset-per-mechanics), de-duplicating ArcadeRhythmGame's inline lives/combo/on-fire and unifying MixedLessonGame's progress bar. HUD presentation only — no game-mechanics changes.
+
+**Phases completed:** 1 phase (36), 11 plans across 7 waves
+**Timeline:** 2026-06-11 → 2026-06-14 (4 days, ~58 commits, ~45 files changed core range, +2,546 / −551 LOC)
+
+**Key accomplishments:**
+
+- Base-shell extraction (TDD): `ProgressBar` + `ScorePill` extracted to `src/components/games/shared/hud/` behind RED contract tests; NotesRecognitionGame refactored as the reference consumer with zero regression, gated by an owner verification (36-03 APPROVED) before any rollout
+- Base-shell rollout (Wave 2): SightReading + Memory, RhythmReading + RhythmDictation, MixedLesson (divergent progress bar unified) + Metronome all adopt the shared base shell — each game takes only the subset that fits its mechanics
+- Engagement-layer extraction (Wave 3): `LivesDisplay`, `ComboPill`, `OnFireBadge`, `OnFireSplash`, `SpeedBonusFlash`, `TierUpPopup` extracted behind contract tests; NotesRecognitionGame migrated to consume all six shared engagement components
+- ArcadeRhythmGame de-dup: inline lives/combo/on-fire removed and pointed at shared `LivesDisplay` + `ComboPill`; ear-training games (NoteComparison + Interval) gained shared combo/on-fire (no lives)
+- Phase gate (36-11): full suite green + owner walkthrough of all 10 game screens APPROVED
+- Post-phase quick follow-ups folded in: Listen & Tap (MetronomeTrainer) HUD unified, mid-game feedback buttons unified via shared `GameActionButton`, "End Session" → "Try Again" replay pattern
+
+**Known deferred items at close:** None specific to v3.6 (this phase reduced duplication; HUD presentation only). The v3.5 Phase 01 owner gates — production migration (D-13) + 55-node UAT walkthrough (SC-9) — remain open under the still-in-progress v3.5 milestone, unrelated to this phase.
+
+**Audit:** No formal `v3.6-MILESTONE-AUDIT.md` — owner walkthrough of all 10 game screens (36-11) served as the acceptance gate.
+
+**Git range:** `6e6b85c5` (test(36-01)) → `7a4ee730` (feat(36/quick) Try Again). Shipped on `main`.
+
+---
+
 ## v3.4 Rhythm Games Responsive UX (Shipped: 2026-05-12)
 
 **Delivered:** Drop the route-based landscape lock for rhythm games; replace with content-driven `NeedsLandscapeContext` infrastructure so the rotate prompt fires only when notation patterns genuinely don't fit. Tablets (≥768px) never see the prompt regardless of orientation. ArcadeRhythmGame ships the ROTATE-PROMPT verdict from a spike feel-test.

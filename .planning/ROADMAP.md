@@ -27,8 +27,8 @@
 - ✅ **v3.2 Rhythm Trail Rework** — Phases 20-28 (shipped 2026-04-13)
 - ✅ **v3.3 Rhythm Trail Fix & Polish** — Phases 29-33 (shipped 2026-05-04)
 - ✅ **v3.4 Rhythm Games Responsive UX** — Phases 34-35 (shipped 2026-05-12)
+- ✅ **v3.6 Game Screen UI Unification** — Phase 36 (shipped 2026-06-14)
 - 🚧 **v3.5 Rhythm Pedagogy** — Phase 1 (code-complete, owner UAT pending)
-- 📋 **v3.6 Game Screen UI Unification** — Phase 36 (planning)
 
 See `.planning/milestones/` for archived details of each milestone.
 
@@ -98,79 +98,27 @@ Plans:
 8. `src/locales/he/trail.json` contains a Hebrew translation for every new English explainer string
 9. Owner walkthrough on a real student account: complete every rhythm node from new first node through new terminus without confusion / softlocks / paywall breaks
 
-## 📋 v3.6 Game Screen UI Unification (planning)
+<details>
+<summary>✅ v3.6 Game Screen UI Unification (Phase 36) — SHIPPED 2026-06-14</summary>
 
-Phase summary:
+- [x] Phase 36: Game Screen UI Unification (11/11 plans across 7 waves) — completed 2026-06-14
 
-- [x] Phase 36: Game Screen UI Unification (11 plans) -- planned (completed 2026-06-14)
+Extracted NotesRecognition's inline HUD/shell into reusable shared components
+(`src/components/games/shared/hud/`: ProgressBar, ScorePill, LivesDisplay, ComboPill,
+OnFireBadge, OnFireSplash, SpeedBonusFlash, TierUpPopup, TimerDisplay, GameActionButton,
+StreakBrightnessOverlay) and adopted them across the other game screens (subset-per-mechanics).
+De-duplicated ArcadeRhythmGame's inline lives/combo/on-fire and unified MixedLessonGame's
+progress bar. Owner walkthrough of all 10 game screens APPROVED. HUD presentation only — no
+game-mechanics changes.
 
-> Numbering note: this phase uses **36** (continuing the global 34/35 sequence from v3.4) rather
-> than restarting at 01, to avoid a `.planning/phases/01-*` directory-glob collision with v3.5's
-> Phase 01. Milestone-roll (archive v3.5 / update STATE.md) deferred to `/gsd-complete-milestone`
-> once v3.5 owner UAT passes.
+Full details: `.planning/milestones/v3.6-ROADMAP.md` · Requirements: `.planning/milestones/v3.6-REQUIREMENTS.md`
 
-### Phase 36: Game Screen UI Unification
-
-**Goal**: Bring the other game screens up to the polished UI standard set by **NotesRecognitionGame**
-by extracting its inline HUD/shell (progress bar, score pill, lives/hearts, combo + on-fire,
-timer, speed-bonus, tier-up, nav, feedback) into reusable shared components under
-`src/components/games/shared/`, and adopting them across the other games where they fit —
-component-based reuse, not forced uniformity. Games with fundamentally different mechanics
-(staff-based sight-reading, tile/card grids, fixed-length ear-training) adopt only the suitable
-subset. ArcadeRhythmGame's existing inline lives/combo/on-fire are de-duplicated onto the shared
-components. No game-mechanics changes; HUD presentation only.
-**Depends on**: Nothing hard. v3.5 owner UAT is independent; this phase touches game-screen UI, not rhythm trail data.
-**Spec**: `.planning/phases/36-game-screen-ui-unification/36-SPEC.md`
-**Plans**: 11 plans across 7 execution waves
-
-Plans:
-
-**Wave 1**
-
-- [x] 36-01-PLAN.md — Wave 0: base-shell HUD contract tests (ProgressBar/ScorePill, RED)
-
-**Wave 2** _(blocked on Wave 1 completion)_
-
-- [x] 36-02-PLAN.md — Wave 1: extract base-shell components + refactor NotesRecognition (reference)
-
-**Wave 3** _(blocked on Wave 2 completion)_
-
-- [x] 36-03-PLAN.md — Wave 1 gate: owner verifies NotesRecognition zero-regression
-
-**Wave 4** _(blocked on Wave 3 completion)_
-
-- [x] 36-04-PLAN.md — Wave 2 rollout A: SightReading + Memory adopt base shell
-- [x] 36-05-PLAN.md — Wave 2 rollout B: RhythmReading + RhythmDictation adopt base shell
-- [x] 36-06-PLAN.md — Wave 2 rollout C: MixedLesson (unify progress bar) + Metronome adopt base shell
-
-**Wave 5** _(blocked on Wave 4 completion)_
-
-- [x] 36-07-PLAN.md — Wave 3: engagement tests + extract LivesDisplay/ComboPill/OnFireBadge/OnFireSplash
-
-**Wave 6** _(blocked on Wave 5 completion)_
-
-- [x] 36-08-PLAN.md — Wave 3: extract SpeedBonusFlash/TierUpPopup + refactor NotesRecognition engagement
-- [x] 36-09-PLAN.md — Wave 3: de-duplicate ArcadeRhythmGame onto shared lives/combo/on-fire
-- [x] 36-10-PLAN.md — Wave 3: ear-training (NoteComparison + Interval) gain combo/on-fire (no lives)
-
-**Wave 7** _(blocked on Wave 6 completion)_
-
-- [x] 36-11-PLAN.md — Phase gate: full suite + owner walkthrough of all 10 game screens
-
-**Requirements** (seeded in 36-SPEC.md — confirm in discuss):
-
-- **REQ-01**: Extract NotesRecognition's inline HUD into shared components; refactor it to consume them with zero regression
-- **REQ-02**: Per-game adoption matrix — each game adopts only the HUD subset that fits its mechanics
-- **REQ-03**: De-duplicate ArcadeRhythmGame's inline lives/combo/on-fire onto shared components
-- **REQ-04**: Design-system visual consistency; unify MixedLessonGame's divergent progress bar
-- **REQ-05**: Consistent VictoryScreen/GameOverScreen wiring for games that adopt a lives/score model
-- **REQ-06**: No regressions — tests pass, landscape-lock intact, reduced-motion + RTL parity
-- **REQ-07**: i18n parity (en+he) for any new HUD strings
+</details>
 
 ## Progress
 
-**Total: 25 milestones shipped, 109 phases, ~252 plans | Active: v3.5 Rhythm Pedagogy (Phase 1 code-complete, owner UAT pending) · v3.6 Game Screen UI Unification (Phase 36 spec seeded)**
+**Total: 26 milestones shipped, 110 phases, ~263 plans | Active: v3.5 Rhythm Pedagogy (Phase 1 code-complete, owner UAT pending)**
 
 ---
 
-_Last updated: 2026-06-10 -- Phase 36 (Game Screen UI Unification) planned: 11 plans across 7 waves (base-shell extraction + reference refactor, base-shell rollout to 6 games, engagement-layer extraction + ArcadeRhythm de-dup + ear-training engagement)._
+_Last updated: 2026-06-28 -- v3.6 Game Screen UI Unification (Phase 36, 11 plans) shipped and archived to `.planning/milestones/v3.6-*`. v3.5 Rhythm Pedagogy remains the active milestone (Phase 01 code-complete, blocked on owner production migration D-13 + 55-node UAT walkthrough)._

@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.5
 milestone_name: Rhythm Pedagogy
-status: milestone_complete
-stopped_at: Phase 36 UI-SPEC approved
-last_updated: "2026-06-11T15:48:07.721Z"
-last_activity: 2026-06-11 -- Phase 36 execution started
+status: in_progress
+stopped_at: Phase 01 code-complete (10/10 plans) — owner prod migration (supabase db push, D-13) + 55-node UAT walkthrough pending
+last_updated: "2026-06-28T00:00:00.000Z"
+last_activity: 2026-06-14 -- Quick task 260614-5wj: unify Listen & Tap HUD + shared GameActionButton (Try Again replay)
 progress:
   total_phases: 1
-  completed_phases: 2
+  completed_phases: 1
   total_plans: 10
   completed_plans: 10
-  percent: 200
+  percent: 100
 ---
 
 # Project State
@@ -21,14 +21,17 @@ progress:
 See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 36 — game-screen-ui-unification
+**Current focus:** v3.5 Phase 01 — Rhythm Trail Pedagogical Restructure (code-complete; owner UAT + prod migration pending)
 
 ## Current Position
 
-Phase: 36
-Plan: Not started
-Status: Milestone complete
+Active milestone: v3.5 Rhythm Pedagogy
+Phase: 01 — Rhythm Trail Pedagogical Restructure
+Plans: 10/10 complete (code-layer verified 7/7 must-haves; 01-VERIFICATION status `human_needed`)
+Status: Code-complete — BLOCKED on owner-only gates (production `supabase db push` per D-13, then 55-node UAT walkthrough). 01-HUMAN-UAT status `partial`.
 Last activity: 2026-06-14 - Quick task 260614-5wj: unify Listen & Tap HUD + shared GameActionButton; "End Session" → "Try Again" (replay pattern)
+
+> **v3.6 shipped 2026-06-28:** v3.6 Game Screen UI Unification (Phase 36, 11/11 plans, owner-APPROVED) was rolled up and archived to `.planning/milestones/v3.6-*` and tagged `v3.6`. v3.5 remains the active in-progress milestone (this STATE).
 
 ### Quick Tasks Completed
 
@@ -113,7 +116,14 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Phase 01 Plan 01-04 complete (atomic Supabase migration + FREE_NODE_IDS D-12 sync). Ready to execute Plan 01-05 (Wave 2: Unit data U1-U3).
+**Next action (owner-gated):** Phase 01 is code-complete (all 10 plans executed; 01-08 wired the new U1-U10 unit data into `expandedNodes.js` + `skillTrail.js`; 01-09 extended `DiscoveryIntroQuestion.jsx` multi-card pagination; 01-10 bumped PWA cache + cleaned old files). The two remaining gates are OWNER-ONLY and cannot be done by an agent:
+
+1. **Production migration (D-13):** `supabase db push` of `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` — must run BEFORE the Netlify code deploy. Record pre-push `SELECT SUM(total_xp) FROM students;`, then verify post-flight: rhythm rows in `student_skill_progress` = 0, total_xp unchanged, `is_free_node()` whitelist correct (rhythm_1_1..1_5 + boss_rhythm_1 TRUE; rhythm_1_6/rhythm_2_1 FALSE).
+2. **Owner UAT walkthrough (SC-9):** all 55 rhythm nodes `rhythm_1_1` → `boss_rhythm_10` on a real device — scaffolding cards, paywall (U1 free / U2+ paid), Hebrew RTL nikud, XP preservation, hidden syncopation invisible, Treble/Bass regression spot-check.
+
+Resume via `/gsd-verify-work 01` to walk the checklist. The historical Plan 01-04 context below is retained for reference only.
+
+**Historical (Plan 01-04, superseded by 01-05..01-10):**
 
 - `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` authored — BEGIN/COMMIT transaction, scoped DELETE on `student_skill_progress WHERE node_id LIKE 'rhythm_%' OR LIKE 'boss_rhythm_%'`, conditional `student_unit_progress` cleanup, `CREATE OR REPLACE is_free_node()` with 25-ID whitelist (D-12), pre/post-flight DO blocks with `RAISE EXCEPTION` invariant trip-wire
 - Migration committed to repo at canonical path but NOT YET APPLIED — Plan 01-10 owner-gated `supabase db push` per D-13 deploy ordering
@@ -145,4 +155,4 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ---
 
-_State updated: 2026-06-01 — Plan 01-04 complete. Atomic Supabase migration authored (rhythm wipe + is_free_node() body swap per D-13). JS FREE_NODE_IDS Set synced with SQL whitelist; freeNodes.parity test GREEN. Migration NOT applied (Plan 01-10 owner-gated). Ready to execute Plan 01-05 (Wave 2: Unit data U1-U3)._
+_State updated: 2026-06-28 — Reconciled against disk via /gsd-progress, then closed v3.6. Corrected stale frontmatter (was status: milestone_complete / percent: 200 / "ready to execute Plan 01-05" — all superseded). Reality: v3.5 Phase 01 is 10/10 plans code-complete, blocked only on owner-gated production migration (D-13) + 55-node UAT walkthrough (01-VERIFICATION: human_needed, 01-HUMAN-UAT: partial). v3.6 Phase 36 (Game Screen UI Unification) shipped + archived to `.planning/milestones/v3.6-*` and tagged `v3.6`; v3.5 remains the active milestone._

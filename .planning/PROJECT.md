@@ -290,6 +290,15 @@ These capabilities exist, are working, and have been shipped:
 - 7/7 must-haves verified at code layer (01-VERIFICATION.md). Owner gates pending in 01-HUMAN-UAT.md: D-13 `supabase db push` + SC-9 device UAT walkthrough rhythm_1_1 → boss_rhythm_10
 - 10 plans across 4 waves; post-merge gap closure (commit `de61952`) added two missing six-eight sub-tags to rhythmPatterns VALID_TAGS and made QuickStatsGrid test denominator dynamic
 
+**v3.6 Game Screen UI Unification (shipped 2026-06-14):**
+
+- REQ-01/02: Extracted NotesRecognitionGame's inline HUD/shell into reusable shared components (`src/components/games/shared/hud/`: ProgressBar, ScorePill, LivesDisplay, ComboPill, OnFireBadge, OnFireSplash, SpeedBonusFlash, TierUpPopup, TimerDisplay, GameActionButton, StreakBrightnessOverlay) and adopted them across the other game screens with a per-game subset-per-mechanics matrix; NotesRecognition refactored as the reference consumer with zero regression
+- REQ-03/04: De-duplicated ArcadeRhythmGame's inline lives/combo/on-fire onto the shared components; unified MixedLessonGame's divergent progress bar onto the shared ProgressBar
+- REQ-05/06/07: Consistent VictoryScreen/GameOverScreen wiring for lives/score games; full suite green + landscape-lock/reduced-motion/RTL parity preserved; en+he i18n parity for new HUD strings
+- Wave-gated rollout (7 waves) with an owner reference-refactor gate (36-03) before fan-out; ear-training games gained shared combo/on-fire (no lives). HUD presentation only — no game-mechanics changes
+- Post-phase quick follow-ups folded in: Listen & Tap (MetronomeTrainer) HUD unified, mid-game feedback buttons unified via shared GameActionButton, "End Session" → "Try Again" replay pattern
+- 11 plans across 7 waves; owner walkthrough of all 10 game screens APPROVED (36-11)
+
 ### Active
 
 - v3.5 owner gates: `supabase db push` (D-13) + UAT walkthrough (SC-9) — tracked in `.planning/phases/01-refactor-rhythm-trail-pedagogical-ordering-restructure-units/01-HUMAN-UAT.md`; surfaces in `/gsd-progress` until `/gsd-verify-work 01` flips both to resolved.
@@ -645,4 +654,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-02 — v3.5 Rhythm Pedagogy Restructure (Phase 01) code-complete; D-13 + SC-9 owner gates remain_
+_Last updated: 2026-06-28 — v3.6 Game Screen UI Unification (Phase 36) shipped and archived. v3.5 Rhythm Pedagogy Restructure (Phase 01) remains code-complete with D-13 + SC-9 owner gates outstanding._
