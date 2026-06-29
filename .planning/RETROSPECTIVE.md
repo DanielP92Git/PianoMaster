@@ -782,6 +782,60 @@ _A living document updated after each milestone. Lessons feed forward into futur
 
 ---
 
+## Milestone: v3.5 — Rhythm Pedagogy
+
+**Shipped:** 2026-06-29
+**Phases:** 1 (Phase 01) | **Plans:** 10 (across 4 waves)
+
+### What Was Built
+
+- 29-node rhythm trail rebuilt as a 10-unit / 55-node pedagogical order anchored by three falsifiable principles — Pulse-first, Rests-woven, Concept-per-unit
+- All three principles encoded as `scripts/validateTrail.mjs` lint rules (pulse-first ordering, rests-woven adjacency, concept-per-unit) — pedagogy enforced at build time
+- 12 Duolingo-style intro/scaffolding concept-card blocks (meet/sound/music/ready arc) in EN+HE under `game.discovery.cards.*`; `DiscoveryIntroQuestion.jsx` extended to paginate 2–4 swipable cards per discovery node
+- 10 new unit data files (`rhythmUnit1..10.js`) wired through `expandedNodes.js` + `skillTrail.js` UNITS map (RHYTHM_1..10 + pre-authored RHYTHM_SYNCO)
+- Atomic Supabase migration (scoped rhythm-row DELETE + `is_free_node()` body swap) applied to production; `total_xp` preserved untouched
+- Hidden Syncopation unit renamed `rhythm_8_*` → `rhythm_synco_*` to free the numeric namespace for the new 3/4 Meter unit
+- `FREE_NODE_IDS` ↔ Postgres `is_free_node()` parity (D-12, all 6 U1 nodes free) gated by a parity test
+
+### What Worked
+
+- **Pedagogy-as-lint-rules**: encoding the three principles as `validateTrail.mjs` checks made the abstract curriculum goals falsifiable and enforced on every commit — the validator was RED-by-design on old data and went GREEN as the restructure landed, giving a visible build-time gate instead of relying on review judgment
+- **Wave-gated execution**: Wave 0 (validator + parity scaffolding) → Wave 1 (rename + locale + migration) → Wave 2 (unit data) → Wave 3 (renderer + cleanup) gave a clean dependency chain; TDD RED→GREEN split commits for locale parity left an auditable trail
+- **Parity test for JS↔SQL paywall**: the `freeNodes.parity` test caught the FREE_NODE_IDS ↔ is_free_node() relationship as a hard gate rather than a manual cross-check
+- **Clean-slate wipe over ID mapping**: leaning on the beta-stage userbase to justify a no-mapping migration (total_xp preserved) avoided building throwaway compatibility shims
+- **Rename-not-delete for hidden content**: renaming `rhythm_8_*` → `rhythm_synco_*` (with HIDDEN-V1 markers + 4-step re-enable checklist preserved) freed the namespace cleanly without losing the built syncopation unit
+
+### What Was Inefficient
+
+- **Verification flag never flipped**: 01-VERIFICATION.md stayed `human_needed` even after the SC-9 UAT passed (commit `5e3f9e86`, 2 pass/0 issues) — the milestone audit had to supersede it, and `audit-open` surfaced it as a (stale) open item at close
+- **Deploy ordering inverted (D-13)**: the code deploy preceded the production migration, opening a transient paywall-gate inconsistency window (end-state consistent, no data loss). The intended order was migration-first
+- **Migration applied via Dashboard SQL Editor** rather than `supabase db push` CLI (recurring across recent milestones — CLI/MCP auth friction)
+- **Wave 2 post-merge integration gaps**: six-eight sub-tags, meter-unit allowlist, and boss_rhythm_10 scope needed 01-08.1 follow-up commits after the worktree merges — surfaced only by the full suite, not the per-plan tests
+- **REQ-07 traceability checkbox stale** (`[ ]` despite verified-passed) — corrected during the audit, same drift pattern seen in prior milestones
+
+### Patterns Established
+
+- **Pedagogical principle as a build-time validator rule** — express each falsifiable curriculum principle as a `validateTrail.mjs` lint check; let it run RED on legacy data and drive the restructure GREEN
+- **JS↔SQL config parity test** — pin `FREE_NODE_IDS` to the Postgres `is_free_node()` whitelist with a dedicated parity test so the two never drift
+- **Variable scaffolding card-count per concept** — duration concepts get the full meet/sound/music/ready arc; rests skip 'sound' (rest = silence) and meters skip it (structural), staying within a 2–4 card envelope while every card stays semantically meaningful
+- **Rename-don't-delete for hidden/disabled content** — free a namespace by renaming with preserved re-enable markers rather than deleting built assets
+- **Atomic migration with post-flight invariant trip-wire** — `RAISE EXCEPTION` if any target rows survive the DELETE, paired with pre-flight `RAISE NOTICE` counts as a forensic audit pair
+
+### Key Lessons
+
+1. **Flip verification status as part of UAT close** — a passed UAT that doesn't update 01-VERIFICATION.md leaves a stale `human_needed` flag that audits and `audit-open` will keep surfacing; treat the status flip as a UAT-completion step
+2. **Migration-before-deploy ordering needs an enforced gate** — D-13 inverted again; a pre-deploy checklist gate (or CI guard) would close the transient-inconsistency window for good
+3. **Encoding pedagogy as validator rules makes curriculum refactors safe** — falsifiable build-time checks turn "is this pedagogically coherent?" from a review debate into a green/red signal
+4. **Full-suite runs catch worktree-merge integration gaps that per-plan tests miss** — budget a post-merge full-suite pass as a wave gate when units are authored in parallel worktrees
+5. **JS↔SQL parity is a recurring content-gate risk** — a parity test is cheaper than a paywall-leak incident
+
+### Cost Observations
+
+- Sessions: spanned ~28 days (2026-06-01 → 2026-06-29), overlapping the out-of-order v3.6 close (2026-06-14)
+- Notable: single-phase, 10-plan content+data restructure; ~114 phase-01 commits; the long calendar span reflects owner-gated production migration + device UAT waiting on owner availability, not active build time
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
@@ -813,6 +867,9 @@ _A living document updated after each milestone. Lessons feed forward into futur
 | v3.2      | 7      | 16    | Rhythm trail rework — curated patterns, MixedLessonGame engine, multi-angle games         |
 | v3.3      | 5      | 20    | Rhythm trail fix & polish — manual UAT triage, hold sustain, boss differentiation         |
 | v3.4      | 2      | 14    | Rhythm games responsive UX — content-driven NeedsLandscapeContext, spike-then-ship arcade |
+| v3.5      | 1      | 10    | Rhythm pedagogy restructure — principles-as-validator-rules, clean-slate migration        |
+
+_(v3.6 Game Screen UI Unification — 1 phase / 11 plans, shipped 2026-06-14 out of order — is archived under `.planning/milestones/v3.6-*` but predates this retrospective's v3.5 entry chronologically by version number.)_
 
 ### Top Lessons (Verified Across Milestones)
 
@@ -836,3 +893,6 @@ _A living document updated after each milestone. Lessons feed forward into futur
 18. UAT-as-verification needs codification — if a milestone uses UAT walkthrough as its gate, either run `/gsd-verify-work` to produce a formal VERIFICATION.md or document UAT-as-verification explicitly so audits don't treat absence as a gap
 19. Spike-then-decide with explicit tie-break (e.g., "on-the-fence defaults to lower-risk path") prevents agonizing over open-ended exploration phases
 20. Inline UAT fixes (atomic commits during walkthrough) beat spawning another gap-closure plan for small isolated bugs — document inline fixes in the UAT sign-off
+21. Flip VERIFICATION.md status as part of UAT close — a passed UAT that leaves the status `human_needed` keeps surfacing as a stale open item in `audit-open` and milestone audits
+22. Encode falsifiable pedagogy/curriculum principles as build-time validator rules — turns "is this coherent?" into a green/red gate and lets the restructure drive a RED-on-legacy-data check to GREEN
+23. Migration-before-deploy ordering (D-13) keeps inverting — a pre-deploy checklist/CI gate is needed to close the transient content-gate inconsistency window for good
