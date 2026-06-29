@@ -95,6 +95,13 @@ const makeResetTapResults = (beatsPerMeasure) =>
     quality: null,
   }));
 
+// Count-in auto-start retry. A remounted audio question (2nd+ question in a
+// MixedLessonGame) can briefly observe a not-yet-running shared AudioContext;
+// without a retry the count-in bails permanently and the game freezes. Re-arm
+// the start effect a few times so it self-heals once the context is running.
+const MAX_START_RETRIES = 6;
+const START_RETRY_MS = 150;
+
 export default function PulseQuestion({
   question,
   isLandscape: _isLandscape,
@@ -155,7 +162,11 @@ export default function PulseQuestion({
   const playingTimerRef = useRef(null);
   const scheduledOscillatorsRef = useRef([]);
   const hasStartedRef = useRef(false);
-  const cleanupDoneRef = useRef(false);
+
+  // Count-in auto-start retry plumbing — see MAX_START_RETRIES note above.
+  const [startRetryTick, setStartRetryTick] = useState(0);
+  const startRetryCountRef = useRef(0);
+  const startRetryTimerRef = useRef(null);
 
   // Hold note refs (Phase 31) — rAF-driven, no React state updates at 60fps
   const pressStartTimeRef = useRef(null);
@@ -355,6 +366,14 @@ export default function PulseQuestion({
       });
     scheduledOscillatorsRef.current = [];
   }, [audioEngine]);
+
+  // Stable ref to the latest stop fn. stopContinuousMetronome closes over the
+  // per-render `audioEngine` object, so its identity changes every render. The
+  // unmount cleanup below must NOT depend on it — listing it made the cleanup
+  // fire on ordinary re-renders, tearing down the live metronome intervals
+  // mid-exercise (the count-in freeze on 2nd+ audio questions).
+  const stopContinuousMetronomeRef = useRef(stopContinuousMetronome);
+  stopContinuousMetronomeRef.current = stopContinuousMetronome;
 
   // Evaluate taps using accumulated per-beat results
   const evaluatePerformance = useCallback(() => {
@@ -567,8 +586,22 @@ export default function PulseQuestion({
     const running = await audioEngine.ensureRunning();
     if (!running) {
       hasStartedRef.current = false;
+      if (import.meta.env.DEV) {
+        console.info("[rhythm count-in] context not running, retrying", {
+          attempt: startRetryCountRef.current,
+          ctxState: audioEngine.audioContextRef?.current?.state,
+        });
+      }
+      if (startRetryCountRef.current < MAX_START_RETRIES) {
+        startRetryCountRef.current += 1;
+        startRetryTimerRef.current = setTimeout(
+          () => setStartRetryTick((n) => n + 1),
+          START_RETRY_MS
+        );
+      }
       return;
     }
+    startRetryCountRef.current = 0; // running — reset budget for future remounts
 
     // Prime the audio pipeline with a silent oscillator so the first
     // real click isn't swallowed by an uninitialized output buffer.
@@ -642,23 +675,24 @@ export default function PulseQuestion({
     evaluatePerformance,
   ]);
 
-  // Auto-start when not disabled (hasStartedRef pattern)
+  // Auto-start when not disabled (hasStartedRef pattern). startRetryTick re-arms
+  // this after a transient not-running AudioContext so the count-in self-heals.
   useEffect(() => {
     if (!disabled && phase === PHASES.WAITING) {
       startFlow();
     }
-  }, [disabled, phase, startFlow]);
+  }, [disabled, phase, startFlow, startRetryTick]);
 
-  // Cleanup on unmount — cancel rAF loop (T-31-08) and metronome
+  // Cleanup on unmount ONLY — cancel rAF loop (T-31-08) and metronome. Empty
+  // deps so this fires exactly once on real unmount; the stop fn is read through
+  // a ref to avoid the identity-churn bug described above.
   useEffect(() => {
     return () => {
-      if (!cleanupDoneRef.current) {
-        cleanupDoneRef.current = true;
-        stopContinuousMetronome();
-        cancelAnimationFrame(rafIdRef.current);
-      }
+      stopContinuousMetronomeRef.current();
+      cancelAnimationFrame(rafIdRef.current);
+      if (startRetryTimerRef.current) clearTimeout(startRetryTimerRef.current);
     };
-  }, [stopContinuousMetronome]);
+  }, []);
 
   // Guidance text by phase
   const getGuidanceText = () => {
