@@ -24,6 +24,13 @@ vi.mock("react-i18next", () => ({
   })),
 }));
 
+// Shared, controllable ensureRunning mock so a test can simulate a transient
+// not-running AudioContext (the count-in freeze regression). Hoisted so it can
+// be referenced inside the hoisted vi.mock factory below.
+const { ensureRunningMock } = vi.hoisted(() => ({
+  ensureRunningMock: vi.fn(() => Promise.resolve(true)),
+}));
+
 // Mock useAudioEngine — returns stub that avoids real Web Audio API
 // Path is relative to this test file (__tests__/ is one level deeper than renderers/)
 vi.mock("../../../../../hooks/useAudioEngine", () => ({
@@ -36,8 +43,8 @@ vi.mock("../../../../../hooks/useAudioEngine", () => ({
     createPianoSound: vi.fn(),
     // isReady() gates the count-in wait loop — return true so it exits at once.
     isReady: vi.fn(() => true),
-    // ensureRunning() gates the count-in — resolve true so scheduling proceeds.
-    ensureRunning: vi.fn(() => Promise.resolve(true)),
+    // ensureRunning() gates the count-in — controllable per test (default true).
+    ensureRunning: ensureRunningMock,
   })),
 }));
 
@@ -150,10 +157,16 @@ const defaultProps = {
   disabled: true, // disabled=true prevents auto-start flow (no timers)
 };
 
+// Mirrors START_RETRY_MS in PulseQuestion.jsx (count-in auto-start retry delay).
+const START_RETRY_MS = 150;
+
 describe("PulseQuestion", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     defaultProps.onComplete.mockClear();
+    // Default: AudioContext is running so the count-in proceeds immediately.
+    ensureRunningMock.mockReset();
+    ensureRunningMock.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -267,5 +280,43 @@ describe("PulseQuestion", () => {
     const { container } = render(<PulseQuestion {...defaultProps} />);
     expect(container).toBeTruthy();
     expect(screen.getByTestId("tap-area")).toBeInTheDocument();
+  });
+
+  // Regression: a remounted audio question (2nd+ in a MixedLessonGame) can briefly
+  // observe a not-yet-running shared AudioContext. The start must retry rather than
+  // bail permanently, otherwise the count-in/playback freezes forever.
+  it("retries the count-in after a transient not-running AudioContext (no permanent freeze)", async () => {
+    // 1st start attempt: context not running → bail + schedule retry.
+    // Retry attempt: running → count-in proceeds.
+    ensureRunningMock.mockReset();
+    ensureRunningMock.mockResolvedValueOnce(false).mockResolvedValue(true);
+
+    const onComplete = vi.fn();
+    render(
+      <PulseQuestion
+        question={defaultQuestion}
+        isLandscape={false}
+        onComplete={onComplete}
+        disabled={false}
+      />
+    );
+
+    // Flush the initial (failed) start attempt.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    // Still WAITING — count-in did not start, but it did NOT permanently bail.
+    expect(screen.getByText("Tap with the beat!")).toBeInTheDocument();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Fire the retry timer; the second attempt sees a running context.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(START_RETRY_MS);
+    });
+
+    // Count-in now running → guidance switches to the count-in text.
+    expect(screen.getByText("Listen to the beat...")).toBeInTheDocument();
+    expect(ensureRunningMock).toHaveBeenCalledTimes(2);
   });
 });

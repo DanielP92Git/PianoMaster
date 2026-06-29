@@ -55,6 +55,13 @@ const TIME_SIG_MAP = {
   "6/8": TIME_SIGNATURES.SIX_EIGHT,
 };
 
+// Count-in auto-start retry. A remounted audio question (2nd+ question in a
+// MixedLessonGame) can briefly observe a not-yet-running shared AudioContext;
+// without a retry the count-in bails permanently and the game freezes. Re-arm
+// the start effect a few times so it self-heals once the context is running.
+const MAX_START_RETRIES = 6;
+const START_RETRY_MS = 150;
+
 export default function RhythmReadingQuestion({
   question,
   isLandscape: _isLandscape,
@@ -99,7 +106,11 @@ export default function RhythmReadingQuestion({
   // Refs
   const hasStartedRef = useRef(false);
   const hasAnchoredRef = useRef(false); // pattern anchored to the user's first tap (Bug 2)
-  const cleanupDoneRef = useRef(false);
+
+  // Count-in auto-start retry plumbing — see MAX_START_RETRIES note above.
+  const [startRetryTick, setStartRetryTick] = useState(0);
+  const startRetryCountRef = useRef(0);
+  const startRetryTimerRef = useRef(null);
   const patternStartTimeRef = useRef(0);
   const scheduledBeatTimesRef = useRef([]);
   const nextBeatIndexRef = useRef(0);
@@ -228,6 +239,14 @@ export default function RhythmReadingQuestion({
       });
     scheduledOscillatorsRef.current = [];
   }, [audioEngine]);
+
+  // Stable ref to the latest stop fn. stopContinuousMetronome closes over the
+  // per-render `audioEngine` object, so its identity changes every render. The
+  // unmount cleanup below must NOT depend on it — listing it made the cleanup
+  // fire on ordinary re-renders, tearing down the live metronome intervals
+  // mid-exercise (the count-in freeze on 2nd+ audio questions).
+  const stopContinuousMetronomeRef = useRef(stopContinuousMetronome);
+  stopContinuousMetronomeRef.current = stopContinuousMetronome;
 
   // Stave bounds callback
   const handleStaveBoundsReady = useCallback((bounds) => {
@@ -516,8 +535,23 @@ export default function RhythmReadingQuestion({
     const running = await audioEngine.ensureRunning();
     if (!running) {
       hasStartedRef.current = false;
+      if (import.meta.env.DEV) {
+        console.info("[rhythm count-in] READ context not running, retrying", {
+          attempt: startRetryCountRef.current,
+          shared: audioContextRef.current?.state,
+          eng: audioEngine.audioContextRef?.current?.state,
+        });
+      }
+      if (startRetryCountRef.current < MAX_START_RETRIES) {
+        startRetryCountRef.current += 1;
+        startRetryTimerRef.current = setTimeout(
+          () => setStartRetryTick((n) => n + 1),
+          START_RETRY_MS
+        );
+      }
       return;
     }
+    startRetryCountRef.current = 0; // running — reset budget for future remounts
 
     // Prime audio pipeline
     try {
@@ -614,23 +648,25 @@ export default function RhythmReadingQuestion({
 
     setBeats(loadedBeats);
     startFlow();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time start
-  }, [disabled]);
+    // startRetryTick re-arms this after a transient not-running AudioContext so
+    // the count-in self-heals (see startFlow).
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional: only disabled + retry tick drive (re)start
+  }, [disabled, startRetryTick]);
 
-  // Cleanup on unmount
+  // Cleanup on unmount ONLY. Empty deps so this fires exactly once on real
+  // unmount; the stop fn is read through a ref to avoid the identity-churn bug
+  // described above.
   useEffect(() => {
     return () => {
-      if (!cleanupDoneRef.current) {
-        cleanupDoneRef.current = true;
-        stopContinuousMetronome();
-        if (rafIdRef.current) {
-          cancelAnimationFrame(rafIdRef.current);
-          rafIdRef.current = null;
-        }
-        cancelAnimationFrame(holdRafIdRef.current);
+      stopContinuousMetronomeRef.current();
+      if (rafIdRef.current) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
       }
+      cancelAnimationFrame(holdRafIdRef.current);
+      if (startRetryTimerRef.current) clearTimeout(startRetryTimerRef.current);
     };
-  }, [stopContinuousMetronome]);
+  }, []);
 
   // Guidance text
   const getGuidanceText = () => {
