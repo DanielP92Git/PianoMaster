@@ -1,5 +1,34 @@
 # Project Milestones: PianoApp
 
+## v3.5 Rhythm Pedagogy (Shipped: 2026-06-29)
+
+**Delivered:** Restructured the active rhythm trail into a pedagogically coherent 10-unit / 55-node order anchored by three falsifiable principles — Pulse-first, Rests-woven, Concept-per-unit — enforced as build-time validator lint rules, and added 12 kid-friendly Duolingo-style intro/scaffolding screens (one per rhythmic concept). Existing student rhythm progress wiped on deploy via an atomic Supabase migration; `students_score.total_xp` preserved untouched. Rhythm-only — Treble / Bass / Ear-training unchanged.
+
+**Phases completed:** 1 phase (01), 10 plans across 4 waves
+**Timeline:** 2026-06-01 → 2026-06-29 (~28 days, ~114 phase-01 commits, ~59 rhythm/trail-source files changed, +6,219 / −2,178 LOC; span includes the out-of-order v3.6 close on 2026-06-14)
+
+**Key accomplishments:**
+
+- Pedagogical reorder (REQ-01/02/03): 29-node rhythm trail rebuilt as 10 units / 55 nodes — quarter is the first content node, rests woven beside their matching durations, one concept per unit. All three principles encoded as `scripts/validateTrail.mjs` lint rules (pedagogy enforced at build time, not by review)
+- Scaffolding (REQ-04): 12 Duolingo-style concept-card blocks (meet/sound/music/ready arc) under `game.discovery.cards.*` in EN+HE; `DiscoveryIntroQuestion.jsx` paginates 2–4 swipable cards per discovery node; outer MixedLessonGame contract unchanged; Hebrew Kodaly nikud reused verbatim from user-confirmed `syllableOverride.*` (zero invented diacritics)
+- Lockstep updates (REQ-05): 89/89 EN↔HE locale parity; `FREE_NODE_IDS` JS Set mirrors Postgres `is_free_node()` whitelist exactly (D-12, all 6 U1 nodes free), gated by a parity test; 10 new unit display names; UNITS map RHYTHM_1..10 + RHYTHM_SYNCO wired
+- Clean-slate migration (REQ-06): atomic `20260601000001_phase1_rhythm_pedagogy.sql` (scoped rhythm-row DELETE + `is_free_node()` body swap) applied to production 2026-06-28 — all 7 post-push DB checks passed (rhythm/boss_rhythm rows = 0, total_xp = 72607 unchanged, whitelist correct)
+- Engine scope (REQ-07): renderer changes scoped to `DiscoveryIntroQuestion` only; pattern-mode legacy preserved for hidden-syncopation re-enable; rhythm-game tests green
+- Hidden Syncopation renamed `rhythm_8_*` → `rhythm_synco_*` freeing the numeric namespace for the new U8 (3/4 Meter); HIDDEN-V1 markers + 4-step re-enable checklist preserved
+- Owner gates closed: production migration (D-13) applied 2026-06-28; SC-9 device UAT walkthrough `rhythm_1_1` → `boss_rhythm_10` passed 2026-06-29 (2 passed, 0 issues)
+
+**Known deferred items at close:** 12 acknowledged (see STATE.md Deferred Items, v3.5 subsection) — all pre-existing or stale-status, none a functional v3.5 gap: 1 stale verification flag (01-VERIFICATION.md `human_needed`, superseded by passed milestone audit + completed UAT), 1 unrelated teacher-dashboard debug session (`assignment-update-400`, from 2026-04-08), 10 historical completed quick tasks whose status fields are unparseable (`[missing]`). Plus net-new tech debt: stale `subscriptionConfig.js` header comment; `student_daily_goals.node_id` stale refs self-heal on regeneration.
+
+**Audit:** `.planning/milestones/v3.5-MILESTONE-AUDIT.md` — **PASSED** (Requirements 7/7, Phases 1/1, Integration 5/5, Flows 5/5; Nyquist compliant; security 13/13 threats closed, 0 open).
+
+**Deviations (resolved):** D-13 deploy ordering inverted (code preceded migration — transient paywall-gate window, end-state consistent, no XP/data loss); migration applied via Dashboard SQL Editor rather than `supabase db push` CLI (intent satisfied, owner-signed checklist).
+
+**Git range:** `6061fa79` (docs(v3.5) open milestone) → `5e3f9e86` (test(01) complete UAT — 2 passed, 0 issues). Shipped on `main`.
+
+> **Note on ordering:** v3.6 (Game Screen UI Unification) shipped + was tagged earlier, on 2026-06-14, while v3.5 was still blocked on owner gates. v3.5 is therefore chronologically the most recent close (2026-06-29) despite the lower version number.
+
+---
+
 ## v3.6 Game Screen UI Unification (Shipped: 2026-06-14)
 
 **Delivered:** Extracted NotesRecognitionGame's inline HUD/shell into reusable shared components and adopted them across the other game screens (subset-per-mechanics), de-duplicating ArcadeRhythmGame's inline lives/combo/on-fire and unifying MixedLessonGame's progress bar. HUD presentation only — no game-mechanics changes.

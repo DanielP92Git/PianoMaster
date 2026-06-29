@@ -279,15 +279,16 @@ These capabilities exist, are working, and have been shipped:
 - UAT-in-dev as ship gate: 34-UAT.md delta walkthrough signed off 2026-05-10 with all 5 ROADMAP SCs PASS. Three inline fixes applied during walkthrough (`af97088`, `84697d7`, `89ebee9`) rather than spawning gap-closure cycle
 - 18/18 requirements delivered, 14 plans across 2 phases (Phase 34: 10 plans, Phase 35: 4 plans)
 
-**v3.5 Rhythm Pedagogy Restructure (code-complete 2026-06-02 — owner gates pending):**
+**v3.5 Rhythm Pedagogy Restructure (shipped 2026-06-29):**
 
-- REQ-01..03 (Pulse-first / Rests-woven / Concept-per-unit): 29-node rhythm trail rebuilt as 10 units / 55 nodes; `scripts/validateTrail.mjs` enforces all three principles as lint rules (4 OK checks at HEAD)
+- REQ-01..03 (Pulse-first / Rests-woven / Concept-per-unit): 29-node rhythm trail rebuilt as 10 units / 55 nodes; `scripts/validateTrail.mjs` enforces all three principles as lint rules (pedagogy enforced at build time)
 - REQ-04 (Scaffolding): 12 Duolingo-style concept-card blocks (meet/sound/music/ready) under `game.discovery.cards.*` in EN+HE; `DiscoveryIntroQuestion.jsx` paginates 2–4 swipable cards per discovery node; outer MixedLessonGame contract unchanged
 - REQ-05 (Lockstep): Locale parity 89/89 EN↔HE; `FREE_NODE_IDS` mirrors Postgres `is_free_node()` D-12 whitelist (6 free U1 nodes); 10 new unit display names; UNITS map RHYTHM_1..10 + RHYTHM_SYNCO wired
-- REQ-06 (Migration): `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` authored — atomic rhythm-row DELETE from student_skill_progress + is_free_node() body swap; `students.total_xp` preserved
-- REQ-07 (Engine scope): Renderer changes scoped to DiscoveryIntroQuestion only; pattern-mode legacy preserved for hidden syncopation re-enable; rhythm-game tests 233/233 green
+- REQ-06 (Migration): `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` applied to production 2026-06-28 — atomic rhythm-row DELETE from student_skill_progress + is_free_node() body swap; `total_xp` preserved (post-push: rhythm rows = 0, total_xp = 72607 unchanged, whitelist correct)
+- REQ-07 (Engine scope): Renderer changes scoped to DiscoveryIntroQuestion only; pattern-mode legacy preserved for hidden syncopation re-enable; rhythm-game tests green
 - Hidden syncopation renamed `rhythm_8_*` → `rhythm_synco_*` freeing the `rhythm_8_*` namespace for the new U8 (3/4 Meter) unit; HIDDEN-V1 markers + 4-step re-enable checklist preserved
-- 7/7 must-haves verified at code layer (01-VERIFICATION.md). Owner gates pending in 01-HUMAN-UAT.md: D-13 `supabase db push` + SC-9 device UAT walkthrough rhythm_1_1 → boss_rhythm_10
+- 7/7 must-haves verified (01-VERIFICATION.md code layer); owner gates closed — D-13 production migration applied 2026-06-28, SC-9 device UAT walkthrough rhythm_1_1 → boss_rhythm_10 passed 2026-06-29 (2 passed, 0 issues)
+- Milestone audit PASSED (7/7 reqs, 1/1 phase, 5/5 integration, 5/5 flows; Nyquist compliant; 13/13 threats closed)
 - 10 plans across 4 waves; post-merge gap closure (commit `de61952`) added two missing six-eight sub-tags to rhythmPatterns VALID_TAGS and made QuickStatsGrid test denominator dynamic
 
 **v3.6 Game Screen UI Unification (shipped 2026-06-14):**
@@ -301,12 +302,13 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-- v3.5 owner gates: `supabase db push` (D-13) + UAT walkthrough (SC-9) — tracked in `.planning/phases/01-refactor-rhythm-trail-pedagogical-ordering-restructure-units/01-HUMAN-UAT.md`; surfaces in `/gsd-progress` until `/gsd-verify-work 01` flips both to resolved.
+- _None._ v3.5 Rhythm Pedagogy shipped 2026-06-29 (owner gates closed). Awaiting next-milestone definition via `/gsd-new-milestone`.
 
 ## Planning Next Milestone
 
-Last shipped: v3.4 Rhythm Games Responsive UX (2026-05-12).
-v3.5 Rhythm Pedagogy Restructure code-complete (2026-06-02) — awaiting owner gates before shipping.
+Last shipped: v3.5 Rhythm Pedagogy (2026-06-29). Prior: v3.6 Game Screen UI Unification (2026-06-14, closed out-of-order), v3.4 Rhythm Games Responsive UX (2026-05-12).
+
+No active milestone — define the next one with `/gsd-new-milestone`. Strong candidates from carry-over below: notes-master responsive (NM-01) and ear-training responsive (ET-01), both able to reuse the `NeedsLandscapeContext` infra; or rhythm content expansion (eighth/sixteenth/dotted rest intro nodes, syncopation unit re-enable).
 
 **Carry-over from v3.4 (deferred, NOT in next milestone scope unless explicitly added):**
 
@@ -632,6 +634,12 @@ Explicitly excluded:
 | Deferred queries (enabled: !gateOpen)                   | Prevents data fetching before parent passes math gate                               | Good    |
 | Weekend pass no sub-gate in portal                      | Page-level gate covers all sections per D-13; individual gates removed              | Good    |
 | buildInitialTrailPool for auto-grow                     | Uses focusNotes/contextNotes from node config instead of walking forward nodes      | Good    |
+| Pedagogy principles as validateTrail.mjs lint rules     | Pulse-first/Rests-woven/Concept-per-unit enforced at build, not by review (v3.5)    | Good    |
+| Clean-slate rhythm wipe, no ID mapping (v3.5)           | Beta-stage userbase; atomic migration deletes rhythm rows, total_xp never touched   | Good    |
+| All 6 U1 rhythm nodes free; JS↔SQL parity test (D-12)  | FREE_NODE_IDS mirrors Postgres is_free_node() exactly, gated by parity test (v3.5)  | Good    |
+| Migration before code deploy (D-13)                     | supabase db push must precede Netlify deploy to avoid paywall-gate inconsistency    | Good    |
+| Hidden Syncopation renamed not deleted (v3.5)           | rhythm*8*_ → rhythm*synco*_ frees numeric namespace for new 3/4 Meter unit          | Good    |
+| Variable scaffolding card-count 3 vs 4 (v3.5)           | Duration concepts get full meet/sound/music/ready arc; rests/meters skip 'sound'    | Good    |
 
 ## Evolution
 
@@ -654,4 +662,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-28 — v3.6 Game Screen UI Unification (Phase 36) shipped and archived. v3.5 Rhythm Pedagogy Restructure (Phase 01) remains code-complete with D-13 + SC-9 owner gates outstanding._
+_Last updated: 2026-06-29 — v3.5 Rhythm Pedagogy (Phase 01) shipped and archived (owner gates D-13 + SC-9 closed; milestone audit PASSED). No active milestone; next via `/gsd-new-milestone`._

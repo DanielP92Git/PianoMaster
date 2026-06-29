@@ -2,10 +2,10 @@
 gsd_state_version: 1.0
 milestone: v3.5
 milestone_name: Rhythm Pedagogy
-status: in_progress
-stopped_at: Phase 01 code-complete (10/10 plans) — owner prod migration (supabase db push, D-13) + 55-node UAT walkthrough pending
-last_updated: "2026-06-28T00:00:00.000Z"
-last_activity: 2026-06-14 -- Quick task 260614-5wj: unify Listen & Tap HUD + shared GameActionButton (Try Again replay)
+status: milestone_complete
+stopped_at: v3.5 shipped 2026-06-29 — Phase 01 (10/10 plans), owner gates D-13 + SC-9 closed, milestone audit PASSED, tagged v3.5. No active milestone.
+last_updated: "2026-06-29T00:00:00.000Z"
+last_activity: 2026-06-29 -- v3.5 Rhythm Pedagogy milestone completed and archived
 progress:
   total_phases: 1
   completed_phases: 1
@@ -18,20 +18,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-12 after v3.4 milestone)
+See: .planning/PROJECT.md (updated 2026-06-29 after v3.5 milestone)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v3.5 Phase 01 — Rhythm Trail Pedagogical Restructure (code-complete; owner UAT + prod migration pending)
+**Current focus:** No active milestone — v3.5 shipped 2026-06-29. Define the next one via `/gsd-new-milestone`.
 
 ## Current Position
 
-Active milestone: v3.5 Rhythm Pedagogy
-Phase: 01 — Rhythm Trail Pedagogical Restructure
-Plans: 10/10 complete (code-layer verified 7/7 must-haves; 01-VERIFICATION status `human_needed`)
-Status: Code-complete — BLOCKED on owner-only gates (production `supabase db push` per D-13, then 55-node UAT walkthrough). 01-HUMAN-UAT status `partial`.
-Last activity: 2026-06-14 - Quick task 260614-5wj: unify Listen & Tap HUD + shared GameActionButton; "End Session" → "Try Again" (replay pattern)
+Active milestone: _None_ — v3.5 Rhythm Pedagogy SHIPPED 2026-06-29 (tagged `v3.5`).
+Last phase: 01 — Rhythm Trail Pedagogical Restructure (10/10 plans, all 7 reqs satisfied)
+Status: Milestone complete and archived. Owner gates closed (D-13 production migration applied 2026-06-28; SC-9 device UAT passed 2026-06-29, 2 passed/0 issues). Milestone audit PASSED.
+Last activity: 2026-06-29 - v3.5 milestone completed, archived to `.planning/milestones/v3.5-*`, ROADMAP/PROJECT updated, tagged `v3.5`.
 
-> **v3.6 shipped 2026-06-28:** v3.6 Game Screen UI Unification (Phase 36, 11/11 plans, owner-APPROVED) was rolled up and archived to `.planning/milestones/v3.6-*` and tagged `v3.6`. v3.5 remains the active in-progress milestone (this STATE).
+> **Out-of-order closes:** v3.6 Game Screen UI Unification shipped + tagged 2026-06-14 while v3.5 was blocked on owner gates. v3.5 is therefore the chronologically most recent close (2026-06-29) despite the lower version number. Both archived under `.planning/milestones/`.
 
 ### Quick Tasks Completed
 
@@ -49,6 +48,27 @@ Last activity: 2026-06-14 - Quick task 260614-5wj: unify Listen & Tap HUD + shar
 - 25 milestones shipped in 102 days (2026-01-31 to 2026-05-12)
 
 ## Deferred Items
+
+Items acknowledged and deferred at **v3.5 milestone close on 2026-06-29** (artifact audit `audit-open`, 12 items — all pre-existing or stale-status; none a functional v3.5 gap):
+
+| Category     | Item                                                            | Status                                                                                                    |
+| ------------ | --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| verification | Phase 01 `01-VERIFICATION.md` flagged `human_needed`            | Stale flag — superseded by passed v3.5 milestone audit + completed SC-9 UAT (`5e3f9e86`, 2 pass/0 issues) |
+| debug        | `assignment-update-400` debug session [investigating]           | Unrelated teacher-dashboard `assign_to` column bug from 2026-04-08; long-standing carry-over              |
+| quick_task   | `1-fix-sight-reading-feedback-panel-spacing` [missing]          | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260326-mrm-add-install-app-button-to-settings-insta` [missing] | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260326-s6x-fix-sight-reading-pattern-generation-for` [missing] | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260326-td5-fix-sight-reading-sharp-pattern-generati` [missing] | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260326-wo7-add-note-staff-image-and-mini-keyboard-i` [missing] | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260504-jbu-fix-three-rhythm-trail-bugs-1-meet-the-q` [missing] | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260514-w1y-merge-rhythm-trail-nodes-1-1-and-1-2-int` [missing] | Completed (commit 8500313, logged in Quick Tasks table); auditor status field unparseable                 |
+| quick_task   | `260523-ugm-insert-q-h-q-syncopation-as-gentler-intr` [missing] | Historical quick task; status field unparseable                                                           |
+| quick_task   | `260524-l3r-refactor-rhythm-unit-8-syncopation-pedag` [missing] | Completed (commit 28b92d4, logged in Quick Tasks table); auditor status field unparseable                 |
+| quick_task   | `260614-5wj-make-listen-and-tap-game-ui-consistent-w` [missing] | Completed (commit df2bdff4, logged in Quick Tasks table); auditor status field unparseable                |
+
+Net-new tech debt from v3.5 (non-blocking): stale `subscriptionConfig.js` header comment citing `rhythmUnit1Redesigned.js` (IDs correct); `student_daily_goals.node_id` stale rhythm refs not cleaned by migration (self-heal on next regeneration).
+
+---
 
 Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
