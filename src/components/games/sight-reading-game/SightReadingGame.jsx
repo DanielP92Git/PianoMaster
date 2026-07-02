@@ -53,6 +53,10 @@ import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 import { useTranslation } from "react-i18next";
 import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
+import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
+import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
+import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
+import { AnimatePresence } from "framer-motion";
 
 // #region agent log (debug-mode instrumentation — dev only)
 const __srLog = import.meta.env.DEV
@@ -352,6 +356,8 @@ export function SightReadingGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, trailEnableFlats, trailEnableSharps, trailKeySignature intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
+  // Trail-mode in-game settings overlay (gear icon). Free-play uses returnToSetup instead.
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const isFeedbackPhase = gamePhase === GAME_PHASES.FEEDBACK;
   const isBothClefs = String(gameSettings.clef || "").toLowerCase() === "both";
   const shouldShowKeyboard = !isFeedbackPhase && showKeyboard;
@@ -2565,6 +2571,93 @@ export function SightReadingGame() {
     startSession,
   ]);
 
+  // Trail-mode settings gear: open a focused in-game settings overlay instead of
+  // returnToSetup (which hangs on the SETUP loading spinner while nodeConfig is set).
+  // Defined as plain arrow consts (not useCallback) because they reference startGame,
+  // which is declared later — safe here since it's only invoked at runtime, never in
+  // a dependency array evaluated during render.
+  const openSettingsModal = () => {
+    // Stop audio/mic so nothing plays or is detected behind the overlay
+    audioEngine.stopScheduler();
+    rhythmPlayback.stop();
+    stopCountInVisualization();
+    stopListeningSync();
+    setShowSettingsModal(true);
+  };
+
+  const handleApplySettings = (newSettings) => {
+    setShowSettingsModal(false);
+    // startGame applies the (curriculum notes/clef preserved) settings and regenerates
+    // the pattern, so the exercise restarts at the new tempo/rhythm.
+    startGame(newSettings);
+  };
+
+  const handleCancelSettings = () => {
+    setShowSettingsModal(false);
+    // Restart the current exercise unchanged (fresh count-in) rather than resuming
+    // mid-pattern, which would be fragile for a running metronome/count-in.
+    startGame(gameSettings);
+  };
+
+  // Trail-mode in-game settings overlay (gear icon). Exposes speed + rhythm only —
+  // the node's curriculum clef/notes stay locked (not shown as steps). Defined as a
+  // shared const because it must render in both the main gameplay fragment and the
+  // session-complete "encouragement" early return (both have a settings trigger).
+  const settingsModalOverlay = (
+    <AnimatePresence>
+      {showSettingsModal && (
+        <UnifiedGameSettings
+          key="sight-reading-settings-modal"
+          gameType="sight-reading"
+          isModal={true}
+          steps={[
+            {
+              id: "tempo",
+              title: "gameSettings.steps.labels.tempo",
+              component: "TempoSelection",
+              config: { minTempo: 60, maxTempo: 180 },
+            },
+            {
+              id: "timeSignature",
+              title: "gameSettings.steps.labels.rhythmSettings",
+              component: "TimeSignatureSelection",
+              config: {
+                timeSignatures: [
+                  TIME_SIGNATURES.FOUR_FOUR,
+                  TIME_SIGNATURES.THREE_FOUR,
+                  TIME_SIGNATURES.TWO_FOUR,
+                ],
+                showRhythmOptions: true,
+              },
+            },
+            {
+              id: "barsPerExercise",
+              title: "gameSettings.steps.labels.barsPerExercise",
+              component: "BarsPerExerciseSelection",
+              config: { options: [1, 2, 4, 8], enabledOptions: [1, 2, 4, 8] },
+            },
+          ]}
+          initialSettings={{
+            ...gameSettings,
+            // The TimeSignature step (showRhythmOptions) requires rhythmSettings to
+            // be populated or its Start button stays disabled. Trail settings carry
+            // no rhythmSettings, so inject the same defaults PreGameSetup uses.
+            rhythmSettings: gameSettings.rhythmSettings ?? {
+              allowedNoteDurations: ["q", "8"],
+              allowRests: false,
+              allowedRestDurations: ["q", "8"],
+              enabledComplexPatterns: getAllComplexPatternIds(),
+            },
+            rhythmComplexity: gameSettings.rhythmComplexity ?? "simple",
+          }}
+          onStart={handleApplySettings}
+          onCancel={handleCancelSettings}
+          backRoute="/notes-master-mode"
+        />
+      )}
+    </AnimatePresence>
+  );
+
   // Count-in complete handler
   const handleCountInComplete = useCallback(
     async (options) => {
@@ -3436,7 +3529,9 @@ export function SightReadingGame() {
                 {t("sightReading.tryAgain")}
               </button>
               <button
-                onClick={returnToSetup}
+                onClick={() =>
+                  nodeConfig ? openSettingsModal() : returnToSetup()
+                }
                 className="flex-1 rounded-2xl border border-indigo-200 bg-white py-3 font-semibold text-indigo-700 transition-colors hover:bg-indigo-50"
               >
                 {t("sightReading.changeSettings")}
@@ -3450,6 +3545,7 @@ export function SightReadingGame() {
             </div>
           </div>
         </div>
+        {settingsModalOverlay}
       </div>
     );
   }
@@ -3554,7 +3650,7 @@ export function SightReadingGame() {
           />
         </button>
         <button
-          onClick={returnToSetup}
+          onClick={() => (nodeConfig ? openSettingsModal() : returnToSetup())}
           className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20 sm:p-2"
           title="Change settings"
         >
@@ -3876,6 +3972,8 @@ export function SightReadingGame() {
           </div>
         </div>
       )}
+
+      {settingsModalOverlay}
     </>
   );
 }
