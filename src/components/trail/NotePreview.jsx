@@ -13,17 +13,17 @@
  *   node {object}  Full trail node object (may be any nodeType; component self-gates)
  */
 
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import MiniKeyboard from './MiniKeyboard';
+import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import MiniKeyboard from "./MiniKeyboard";
 
 const NotePreview = ({ node }) => {
-  const { t, i18n } = useTranslation('trail');
+  const { t, i18n } = useTranslation("trail");
   const [noteComponents, setNoteComponents] = useState(null);
-  const isHebrew = i18n.language === 'he';
+  const isHebrew = i18n.language?.startsWith("he");
 
   const focusNotes = node?.noteConfig?.focusNotes;
-  const clef = node?.noteConfig?.clef || 'treble';
+  const clef = node?.noteConfig?.clef || "treble";
 
   // Only load for Discovery nodes that have focusNotes
   useEffect(() => {
@@ -33,11 +33,11 @@ const NotePreview = ({ node }) => {
 
     import(
       /* webpackChunkName: "game-settings" */
-      '../games/sight-reading-game/constants/gameSettings'
+      "../games/sight-reading-game/constants/gameSettings"
     )
       .then((mod) => {
         if (cancelled) return;
-        const notes = clef === 'bass' ? mod.BASS_NOTES : mod.TREBLE_NOTES;
+        const notes = clef === "bass" ? mod.BASS_NOTES : mod.TREBLE_NOTES;
         setNoteComponents(notes);
       })
       .catch(() => {
@@ -62,48 +62,48 @@ const NotePreview = ({ node }) => {
     : null;
 
   return (
-    <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-5">
+    <div className="mb-5 rounded-xl border border-white/10 bg-white/5 p-3">
       {/* Staff preview heading */}
-      <p className="text-xs font-semibold text-white/60 text-center mb-2 uppercase tracking-wide">
-        {t('modal.notePreview', { defaultValue: 'On the Staff' })}
+      <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-white/60">
+        {t("modal.notePreview", { defaultValue: "On the Staff" })}
       </p>
 
       {/* Staff SVG images */}
-      <div className="flex justify-center gap-4 mb-3">
-        {svgItems === null ? (
-          // Loading placeholder — matches the size of a note SVG
-          focusNotes.map((pitch) => (
-            <div
-              key={pitch}
-              className="w-20 h-28 rounded-lg bg-white/5 animate-pulse"
-              aria-hidden="true"
-            />
-          ))
-        ) : (
-          svgItems.map(({ pitch, ImageComponent }) =>
-            ImageComponent ? (
+      <div className="mb-3 flex justify-center gap-4">
+        {svgItems === null
+          ? // Loading placeholder — matches the size of a note SVG
+            focusNotes.map((pitch) => (
               <div
                 key={pitch}
-                className="w-20 h-28 flex items-center justify-center [&_svg]:w-full [&_svg]:h-full"
-              >
-                <ImageComponent aria-hidden="true" />
-              </div>
-            ) : (
-              // No image for this pitch — render a labelled placeholder
-              <div
-                key={pitch}
-                className="w-20 h-28 flex items-center justify-center rounded-lg bg-white/5"
-              >
-                <span className="text-white/40 text-xs font-medium">{pitch}</span>
-              </div>
-            )
-          )
-        )}
+                className="h-28 w-20 animate-pulse rounded-lg bg-white/5"
+                aria-hidden="true"
+              />
+            ))
+          : svgItems.map(({ pitch, ImageComponent }) =>
+              ImageComponent ? (
+                <div
+                  key={pitch}
+                  className="flex h-28 w-20 items-center justify-center [&_svg]:h-full [&_svg]:w-full"
+                >
+                  <ImageComponent aria-hidden="true" />
+                </div>
+              ) : (
+                // No image for this pitch — render a labelled placeholder
+                <div
+                  key={pitch}
+                  className="flex h-28 w-20 items-center justify-center rounded-lg bg-white/5"
+                >
+                  <span className="text-xs font-medium text-white/40">
+                    {pitch}
+                  </span>
+                </div>
+              )
+            )}
       </div>
 
       {/* Keyboard preview heading */}
-      <p className="text-xs font-semibold text-white/60 text-center mb-2 uppercase tracking-wide">
-        {t('modal.keyboardPreview', { defaultValue: 'On the Piano' })}
+      <p className="mb-2 text-center text-xs font-semibold uppercase tracking-wide text-white/60">
+        {t("modal.keyboardPreview", { defaultValue: "On the Piano" })}
       </p>
 
       {/* Mini keyboard */}
