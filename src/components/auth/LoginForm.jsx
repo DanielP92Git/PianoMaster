@@ -21,7 +21,7 @@ function LoginForm() {
   const { login, isPending } = useLogin();
   const { t, i18n } = useTranslation("common");
   const isRTL = i18n.dir() === "rtl";
-  const isHebrew = i18n.language === "he";
+  const isHebrew = i18n.language?.startsWith("he");
   const {
     resetPassword,
     isPending: isResetPending,
