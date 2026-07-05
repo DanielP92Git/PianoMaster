@@ -3,6 +3,8 @@
  * Implements scoring logic from PRD (lines 371-383, 959-1017)
  */
 
+import { calculateStarsFromPercentage } from "../../../../services/skillProgressService";
+
 /**
  * Calculate pitch accuracy percentage
  * @param {Array} performanceResults - Array of note performance results
@@ -30,13 +32,17 @@ export function calculateRhythmAccuracy(performanceResults) {
     return 0;
   }
 
-  // Count notes with good timing (perfect or good status)
-  const onTimeNotes = performanceResults.filter((result) => {
-    const status = result.timingStatus;
-    return status === "perfect" || status === "good";
-  }).length;
+  // Weight by the same per-status score useTimingAnalysis assigns when scoring each note
+  // (perfect=1.0, good=0.8, okay=0.5, early/late=0.3; missed/wrong-pitch carry no timing
+  // object and contribute 0). Previously this only counted perfect/good, while
+  // getDetailedBreakdown counts okay as correct too — an all-"okay" performance could show
+  // "all correct" in the breakdown yet score 0% rhythm accuracy here.
+  const totalTimingScore = performanceResults.reduce(
+    (sum, result) => sum + (result.timing?.score ?? 0),
+    0
+  );
 
-  return (onTimeNotes / performanceResults.length) * 100;
+  return (totalTimingScore / performanceResults.length) * 100;
 }
 
 /**
@@ -52,20 +58,41 @@ export function calculateOverallScore(pitchAccuracy, rhythmAccuracy) {
 
 /**
  * Get performance rating based on score
+ * Delegates thresholds to calculateStarsFromPercentage (skillProgressService.js) so the
+ * in-game rating always agrees with what the trail persists — this used to threshold at
+ * 90/75/60 while the trail used 95/80/60, so e.g. a 92% run could show 3 stars here but
+ * save as 2 stars on the trail.
  * @param {number} score - Overall score (0-100)
  * @returns {Object} { stars: number, label: string }
  */
 export function getPerformanceRating(score) {
-  if (score >= 90) {
-    return { stars: 3, labelKey: "sightReading.feedback.excellent", label: "Excellent!" };
+  const stars = calculateStarsFromPercentage(score);
+  if (stars === 3) {
+    return {
+      stars: 3,
+      labelKey: "sightReading.feedback.excellent",
+      label: "Excellent!",
+    };
   }
-  if (score >= 75) {
-    return { stars: 2, labelKey: "sightReading.feedback.goodJob", label: "Good Job!" };
+  if (stars === 2) {
+    return {
+      stars: 2,
+      labelKey: "sightReading.feedback.goodJob",
+      label: "Good Job!",
+    };
   }
-  if (score >= 60) {
-    return { stars: 1, labelKey: "sightReading.feedback.keepPracticing", label: "Keep Practicing!" };
+  if (stars === 1) {
+    return {
+      stars: 1,
+      labelKey: "sightReading.feedback.keepPracticing",
+      label: "Keep Practicing!",
+    };
   }
-  return { stars: 0, labelKey: "sightReading.feedback.tryAgain", label: "Try Again!" };
+  return {
+    stars: 0,
+    labelKey: "sightReading.feedback.tryAgain",
+    label: "Try Again!",
+  };
 }
 
 /**
@@ -159,4 +186,3 @@ export function getEncouragingMessage(score) {
     Math.floor(Math.random() * messagesForCategory.length)
   ];
 }
-

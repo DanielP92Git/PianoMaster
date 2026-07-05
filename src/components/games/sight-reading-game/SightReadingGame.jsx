@@ -320,6 +320,25 @@ export function SightReadingGame() {
   // Sync keyboard visibility with input mode
   const [showKeyboard, setShowKeyboard] = useState(true); // Toggle for on-screen keyboard - default to true for better UX
 
+  // Build settings from trail node configuration.
+  // Use accidental flags derived from the notePool (passed via location.state from TrailNodeModal).
+  // This ensures trail sessions override user game settings per curriculum intent.
+  // Shared by both auto-start paths (normal + iOS suspended-context gesture gate below) so they
+  // can't drift apart — the gesture path previously omitted enableSharps/enableFlats.
+  const buildTrailSettingsFromNode = useCallback(
+    (config) => ({
+      ...DEFAULT_SETTINGS,
+      clef: config?.clef || "treble",
+      selectedNotes: config?.notePool || [],
+      measuresPerPattern: config?.measuresPerPattern || 1,
+      timeSignature: config?.timeSignature || "4/4",
+      enableSharps: trailEnableSharps,
+      enableFlats: trailEnableFlats,
+      keySignature: trailKeySignature,
+    }),
+    [trailEnableSharps, trailEnableFlats, trailKeySignature]
+  );
+
   // Auto-configure and auto-start from trail node
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
@@ -332,19 +351,7 @@ export function SightReadingGame() {
 
       hasAutoConfigured.current = true;
 
-      // Build settings from node configuration.
-      // Use accidental flags derived from the notePool (passed via location.state from TrailNodeModal).
-      // This ensures trail sessions override user game settings per curriculum intent.
-      const trailSettings = {
-        ...DEFAULT_SETTINGS,
-        clef: nodeConfig.clef || "treble",
-        selectedNotes: nodeConfig.notePool || [],
-        measuresPerPattern: nodeConfig.measuresPerPattern || 1,
-        timeSignature: nodeConfig.timeSignature || "4/4",
-        enableSharps: trailEnableSharps,
-        enableFlats: trailEnableFlats,
-        keySignature: trailKeySignature,
-      };
+      const trailSettings = buildTrailSettingsFromNode(nodeConfig);
 
       setGameSettings(trailSettings);
 
@@ -353,7 +360,7 @@ export function SightReadingGame() {
         startGame(trailSettings);
       }, 100);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, trailEnableFlats, trailEnableSharps, trailKeySignature intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, buildTrailSettingsFromNode intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   // Trail-mode in-game settings overlay (gear icon). Free-play uses returnToSetup instead.
@@ -615,6 +622,9 @@ export function SightReadingGame() {
   const timingWindowsRef = useRef([]);
   const performanceResultsRef = useRef([]); // Ref for real-time performance results access
   const performanceLiveTimeoutRef = useRef(null);
+  // Handle for the deferred "preview the melody" playback scheduled in loadExercisePattern.
+  // Must be cancellable so a fast Next -> Start doesn't play the answer over the count-in.
+  const previewPlaybackTimeoutRef = useRef(null);
   const lastDetectionTimesRef = useRef({}); // Per-note debouncing: key=noteIndex, value=lastDetectionMs
   // Track wrong-pitch attempts per note so we can still allow correction within the window.
   const wrongPitchSeenRef = useRef({}); // key=noteIndex, value=boolean
@@ -728,12 +738,25 @@ export function SightReadingGame() {
   });
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [scoreSyncStatus, setScoreSyncStatus] = useState("idle");
+  // Tracks which currentPattern object already had its score submitted. Unlike scoreSubmitted
+  // (reset on every FEEDBACK re-entry, including "Try Again" replays of the same exercise),
+  // this ref persists across replays of the same pattern instance and only "resets" naturally
+  // when a new pattern object is generated for a genuinely new exercise.
+  const scoredPatternRef = useRef(null);
   const abortPerformanceForPenalty = useCallback(() => {
     if (penaltyLockRef.current) return;
     penaltyLockRef.current = true;
     stopMetronomePlayback();
     performanceTimeoutsRef.current.forEach((id) => clearTimeout(id));
     performanceTimeoutsRef.current = [];
+    // Stop the audio-clock-driven performance timeline immediately. Without this it keeps
+    // ticking after the phase change below (ref update is async), marks remaining notes
+    // missed, and calls completePerformance() -> FEEDBACK -> score auto-submit behind
+    // the penalty modal.
+    if (performanceTimelineRafRef.current) {
+      cancelAnimationFrame(performanceTimelineRafRef.current);
+      performanceTimelineRafRef.current = null;
+    }
     rhythmPlayback.stop();
     audioEngine.stopScheduler();
     if (inputMode === "mic") {
@@ -743,6 +766,9 @@ export function SightReadingGame() {
     micEarlyWindowStartRequestedRef.current = false;
     pendingMicLatencyMsRef.current = null;
     setTimingState(TIMING_STATE.OFF);
+    // Leave PERFORMANCE so no FEEDBACK-phase effect can fire while the penalty modal is
+    // showing (mirrors the DISPLAY phase replayPattern already returns to on "Try Again").
+    setGamePhase(GAME_PHASES.DISPLAY);
   }, [audioEngine, inputMode, rhythmPlayback, stopMetronomePlayback]);
 
   const registerGuessPenalty = useCallback(
@@ -1471,30 +1497,49 @@ export function SightReadingGame() {
       return;
     }
 
-    if (scoreSubmitted) {
+    // scoreSubmitted alone isn't enough: it gets reset to false every time the stats effect
+    // above re-runs, which also happens when "Try Again" replays the same pattern and reaches
+    // FEEDBACK a second time. Guard on pattern identity too so replays can't insert extra rows.
+    if (scoreSubmitted || scoredPatternRef.current === currentPattern) {
       return;
     }
 
     let isMounted = true;
+    // Claim before the async gap so a concurrent effect re-run (or a same-pattern replay that
+    // reaches FEEDBACK again while this is in flight) can't race a second submission through.
+    scoredPatternRef.current = currentPattern;
     const submitScore = async () => {
       setScoreSyncStatus("saving");
       try {
         const normalizedScore = Number.isFinite(summaryStats.overallScore)
           ? Math.round(summaryStats.overallScore)
           : 0;
-        await updateStudentScore(studentId, normalizedScore, "sight_reading");
+        const result = await updateStudentScore(
+          studentId,
+          normalizedScore,
+          "sight_reading",
+          nodeId
+        );
+
+        if (!isMounted) return;
+
+        if (result?.rateLimited) {
+          // Expected anti-farming guard (10 submissions/5min/node) — not an error.
+          setScoreSyncStatus("skipped");
+          return;
+        }
 
         // Invalidate queries to update score display
         queryClient.invalidateQueries(["student-scores", studentId]);
         queryClient.invalidateQueries(["point-balance", studentId]);
         queryClient.invalidateQueries(["gamesPlayed"]);
 
-        if (!isMounted) return;
         setScoreSubmitted(true);
         setScoreSyncStatus("saved");
       } catch (error) {
         console.error("Failed to save sight reading score:", error);
         if (!isMounted) return;
+        scoredPatternRef.current = null; // allow retry — this attempt never actually saved
         setScoreSyncStatus("error");
         toast.error("Couldn't save your sight reading score.");
       }
@@ -1512,6 +1557,8 @@ export function SightReadingGame() {
     studentId,
     scoreSubmitted,
     queryClient,
+    currentPattern,
+    nodeId,
   ]);
 
   const recordPerformanceResult = useCallback((newResult) => {
@@ -2224,6 +2271,10 @@ export function SightReadingGame() {
         rhythmPlayback.stop();
         stopMetronomePlayback();
         setShowKeyboard(inputMode === "keyboard");
+        if (previewPlaybackTimeoutRef.current) {
+          clearTimeout(previewPlaybackTimeoutRef.current);
+          previewPlaybackTimeoutRef.current = null;
+        }
 
         const pattern = await generatePattern(
           gameSettings.difficulty,
@@ -2257,7 +2308,8 @@ export function SightReadingGame() {
 
         setGamePhase(GAME_PHASES.DISPLAY);
 
-        setTimeout(() => {
+        previewPlaybackTimeoutRef.current = setTimeout(() => {
+          previewPlaybackTimeoutRef.current = null;
           rhythmPlayback.play(pattern.notes, (index) => {
             setCurrentNoteIndex(index);
           });
@@ -2305,7 +2357,20 @@ export function SightReadingGame() {
 
         // If we have a known target start (performance start), align the first click to it.
         if (typeof startAtAudioTime === "number" && startAtAudioTime > 0) {
-          metronomeNextClickTimeRef.current = startAtAudioTime + 0.01;
+          // startAtAudioTime is the *performance's* start time, not "now" — when the metronome
+          // is toggled on mid-performance it can be well in the past. Fast-forward to the next
+          // future beat boundary on that same grid so the click train lands on-beat instead of
+          // restarting from the stale start (which would offset every subsequent click by a
+          // constant, permanently-wrong amount). For a fresh performance start, startAtAudioTime
+          // is already ~now, so this reduces to the original startAtAudioTime + 0.01 behavior.
+          const audioNowForAlign = audioEngine.getCurrentTime();
+          const intervalSec = intervalMs / 1000;
+          const beatsElapsed = Math.max(
+            0,
+            Math.ceil((audioNowForAlign - startAtAudioTime) / intervalSec)
+          );
+          metronomeNextClickTimeRef.current =
+            startAtAudioTime + beatsElapsed * intervalSec + 0.01;
           // #region agent log
           __srLog({
             sessionId: "debug-session",
@@ -2316,8 +2381,9 @@ export function SightReadingGame() {
             message: "metronome.startAligned",
             data: {
               startAtAudioTime,
+              beatsElapsed,
               firstClickAt: metronomeNextClickTimeRef.current,
-              audioNow: audioEngine.getCurrentTime(),
+              audioNow: audioNowForAlign,
               intervalMs,
             },
             timestamp: Date.now(),
@@ -2950,7 +3016,13 @@ export function SightReadingGame() {
    * Begin performance with an existing pattern (no pattern generation)
    * Used when restarting from DISPLAY phase ("Start Playing" button)
    */
+  const isStartingPerformanceRef = useRef(false);
+  const [isStartingPerformance, setIsStartingPerformance] = useState(false);
   const beginPerformanceWithPattern = useCallback(async () => {
+    // Guard against a double-tap re-entering this function during the async audio-context
+    // resume/stable-clock wait below (up to ~1s on iOS) — without it, two invocations would
+    // each schedule their own metronome click train and count-in/scoring timeline.
+    if (isStartingPerformanceRef.current) return;
     const pattern = currentPatternRef.current;
 
     if (!pattern) {
@@ -2958,7 +3030,18 @@ export function SightReadingGame() {
       return;
     }
 
+    isStartingPerformanceRef.current = true;
+    setIsStartingPerformance(true);
     try {
+      // Cancel the deferred pattern preview (scheduled by loadExercisePattern) so a fast
+      // Next -> Start doesn't play the melody over the count-in, whether it's still pending
+      // or already playing.
+      if (previewPlaybackTimeoutRef.current) {
+        clearTimeout(previewPlaybackTimeoutRef.current);
+        previewPlaybackTimeoutRef.current = null;
+      }
+      rhythmPlayback.stop();
+
       // Reset mic warm-up flag for THIS performance.
       // Without this, the second exercise / Try Again path can skip calling startListening()
       // (because the EARLY_WINDOW start in the previous run set the flag to true).
@@ -3235,6 +3318,9 @@ export function SightReadingGame() {
       alert(error.message || "Failed to start performance. Please try again.");
       setGamePhase(GAME_PHASES.DISPLAY);
       audioEngine.stopScheduler();
+    } finally {
+      isStartingPerformanceRef.current = false;
+      setIsStartingPerformance(false);
     }
   }, [
     audioEngine,
@@ -3250,6 +3336,7 @@ export function SightReadingGame() {
     gameSettings.timeSignature?.beats,
     resetPerformanceLiveState,
     startListeningSync,
+    rhythmPlayback,
   ]);
 
   /**
@@ -3326,19 +3413,18 @@ export function SightReadingGame() {
     }
     setNeedsGestureToStart(false);
     hasAutoConfigured.current = true;
-    const trailSettings = {
-      ...DEFAULT_SETTINGS,
-      clef: nodeConfig?.clef || "treble",
-      selectedNotes: nodeConfig?.notePool || [],
-      measuresPerPattern: nodeConfig?.measuresPerPattern || 1,
-      timeSignature: nodeConfig?.timeSignature || "4/4",
-      keySignature: trailKeySignature,
-    };
+    const trailSettings = buildTrailSettingsFromNode(nodeConfig);
     setGameSettings(trailSettings);
     setTimeout(() => startGame(trailSettings), 50);
-  }, [audioContextRef, nodeConfig, startGame, trailKeySignature]);
+  }, [audioContextRef, nodeConfig, startGame, buildTrailSettingsFromNode]);
 
-  // IOS-01/03: Freeze session timer when AudioContext is interrupted
+  // IOS-01/03: Freeze session timer when AudioContext is interrupted.
+  // Resuming is owned entirely by the phase-based effect above (it already resumes whenever
+  // gamePhase leaves an active phase, regardless of isInterrupted) — this effect must only
+  // pause, never resume. Otherwise clearing an interruption mid-performance would resume the
+  // child-safety inactivity timer during active gameplay, since gamePhase itself hasn't changed
+  // and the phase effect wouldn't re-run to re-pause it. gamePhase is in the deps so this
+  // doesn't act on a stale phase captured from the last time isInterrupted changed.
   useEffect(() => {
     if (
       isInterrupted &&
@@ -3346,14 +3432,8 @@ export function SightReadingGame() {
       gamePhase !== GAME_PHASES.FEEDBACK
     ) {
       pauseTimer();
-    } else if (
-      !isInterrupted &&
-      gamePhase !== GAME_PHASES.SETUP &&
-      gamePhase !== GAME_PHASES.FEEDBACK
-    ) {
-      resumeTimer();
     }
-  }, [isInterrupted]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isInterrupted, gamePhase, pauseTimer]);
 
   // Enforce phase-specific mic behavior (PRD-aligned)
   // NOTE: This effect reads micIsListeningRef.current (a synchronous ref) instead of
@@ -3426,6 +3506,10 @@ export function SightReadingGame() {
       if (performanceLiveTimeoutRef.current) {
         clearTimeout(performanceLiveTimeoutRef.current);
         performanceLiveTimeoutRef.current = null;
+      }
+      if (previewPlaybackTimeoutRef.current) {
+        clearTimeout(previewPlaybackTimeoutRef.current);
+        previewPlaybackTimeoutRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -3677,7 +3761,7 @@ export function SightReadingGame() {
       <div className="my-2 flex-shrink-0 text-center">
         <button
           onClick={() => beginPerformanceWithPattern()}
-          disabled={!currentPattern}
+          disabled={!currentPattern || isStartingPerformance}
           className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
         >
           {t("sightReading.startPlaying")}
