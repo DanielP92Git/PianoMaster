@@ -383,8 +383,8 @@ export function NotesRecognitionGame() {
   const challengeConfig = location.state?.challengeConfig ?? null;
   const challengeId = location.state?.challengeId ?? null;
   const challengeXpReward = location.state?.xpReward ?? null;
-  const isRTL = i18n.language === "he";
-  const useHebrewNoteLabels = i18n.language === "he";
+  const isRTL = i18n.language?.startsWith("he");
+  const useHebrewNoteLabels = i18n.language?.startsWith("he");
   const SHOW_LISTEN_BUTTON = true;
   const [isNavigating] = useState(false);
   const [preloadedSounds, setPreloadedSounds] = useState({});

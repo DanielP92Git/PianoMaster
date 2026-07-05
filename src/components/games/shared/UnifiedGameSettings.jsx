@@ -120,7 +120,7 @@ export function UnifiedGameSettings({
     const baseConfig = noteStep?.config || {};
     const clefKey = String(settings.clef || "Treble").toLowerCase();
 
-    const isHebrew = i18n.language === "he";
+    const isHebrew = i18n.language?.startsWith("he");
     const trebleLabel = isHebrew ? "מפתח סול" : "Treble";
     const bassLabel = isHebrew ? "מפתח פה" : "Bass";
 
@@ -1531,7 +1531,7 @@ function NoteSelection({
       {/* Scrollable note cards container */}
       <div className="min-h-0 flex-1 overflow-y-hidden overflow-x-visible">
         {(() => {
-          const isHebrew = i18n.language === "he";
+          const isHebrew = i18n.language?.startsWith("he");
 
           const renderRow = (rowNotes, { rowKey, rowRef }) => (
             <div

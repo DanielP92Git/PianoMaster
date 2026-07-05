@@ -49,7 +49,11 @@ export default function SyllableMatchingQuestion({
   // delegation, two cards could render the same syllable text when the dedup
   // pass in generateQuestions misses an override-only collision (bug 2).
   const getSyllable = useCallback(
-    (code) => getDurationSyllable(code, i18n.language) || code,
+    (code) =>
+      getDurationSyllable(
+        code,
+        i18n.language?.startsWith("he") ? "he" : "en"
+      ) || code,
     [i18n.language]
   );
 
