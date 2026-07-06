@@ -1514,26 +1514,14 @@ export function SightReadingGame() {
         const normalizedScore = Number.isFinite(summaryStats.overallScore)
           ? Math.round(summaryStats.overallScore)
           : 0;
-        const result = await updateStudentScore(
-          studentId,
-          normalizedScore,
-          "sight_reading",
-          nodeId
-        );
-
-        if (!isMounted) return;
-
-        if (result?.rateLimited) {
-          // Expected anti-farming guard (10 submissions/5min/node) — not an error.
-          setScoreSyncStatus("skipped");
-          return;
-        }
+        await updateStudentScore(studentId, normalizedScore, "sight_reading");
 
         // Invalidate queries to update score display
         queryClient.invalidateQueries(["student-scores", studentId]);
         queryClient.invalidateQueries(["point-balance", studentId]);
         queryClient.invalidateQueries(["gamesPlayed"]);
 
+        if (!isMounted) return;
         setScoreSubmitted(true);
         setScoreSyncStatus("saved");
       } catch (error) {
@@ -1558,7 +1546,6 @@ export function SightReadingGame() {
     scoreSubmitted,
     queryClient,
     currentPattern,
-    nodeId,
   ]);
 
   const recordPerformanceResult = useCallback((newResult) => {
