@@ -31,10 +31,10 @@ export async function getStudentScores(studentId) {
  * @param {string} nodeId - Optional trail node ID (if playing from trail)
  * @param {Object} options - Optional configuration
  * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
- * @param {string} options.existingScoreId - If provided, update this row's score in place instead
- *   of inserting a new one (e.g. a same-exercise "Try Again" retry improving on a prior attempt).
- *   If that row no longer exists (0 rows matched), falls back to inserting a fresh row so the
- *   latest score is still recorded rather than lost.
+ * @param {string} options.existingScoreId - If provided, upsert the score onto this row (keyed by
+ *   its id) instead of inserting a new one — e.g. a same-exercise "Try Again" retry improving on a
+ *   prior attempt. Keeps exactly one students_score row per exercise instance; if that row is gone
+ *   at write time, the score is re-inserted at the same id rather than as a duplicate.
  * @returns {Promise<Object>} Object with newScore, or { rateLimited: true, resetTime, newScore: null }
  */
 export async function updateStudentScore(
@@ -58,28 +58,35 @@ export async function updateStudentScore(
       }
     }
 
-    // Retry path: update the existing row in place so a "Try Again" retry's improved score
-    // replaces the first attempt's, keeping one row per pattern instance. Use maybeSingle() (not
-    // single()) so a 0-row match resolves to null instead of throwing PGRST116 — the target row can
-    // be absent at update time (e.g. cleared by a trail/dev reset since it was inserted). When it's
-    // gone, fall through to an insert below so the latest score is still recorded rather than lost.
+    // Retry path: a "Try Again" on the same pattern instance already has a saved row. Upsert keyed
+    // on that row's id so the improved score REPLACES the first attempt's in place — keeping exactly
+    // one students_score row per instance (games-played and daily-goals both count rows, so a
+    // duplicate would inflate them). If the row is gone at write time (e.g. a trail/dev reset cleared
+    // it), the upsert re-inserts it at the SAME id rather than as a new row, so retries can't
+    // proliferate duplicates. Upsert returns an array (Accept: application/json), so the write is
+    // always HTTP 200 — unlike .update()...maybeSingle(), which on a PATCH still sends the
+    // pgrst.object Accept header and surfaces a raw 406 in the browser (postgrest-js only rewrites
+    // the JS-facing status, not the already-logged network response). RLS ("student_id =
+    // auth.uid()") is the ground-truth scoping for both the update and insert branches of the upsert.
     if (options.existingScoreId) {
-      const { data: updated, error: updateError } = await supabase
+      const { data: upserted, error: upsertError } = await supabase
         .from("students_score")
-        .update({ score })
-        .eq("id", options.existingScoreId)
-        .eq("student_id", studentId)
-        .select()
-        .maybeSingle();
+        .upsert([
+          {
+            id: options.existingScoreId,
+            student_id: studentId,
+            score: score,
+            game_type: gameType,
+          },
+        ])
+        .select();
 
-      if (updateError) throw updateError;
-      if (updated) {
-        return {
-          rateLimited: false,
-          newScore: updated,
-        };
-      }
-      // else: the row no longer exists — fall through to the insert below.
+      if (upsertError) throw upsertError;
+
+      return {
+        rateLimited: false,
+        newScore: upserted?.[0] ?? null,
+      };
     }
 
     const { data: inserted, error: insertError } = await supabase
