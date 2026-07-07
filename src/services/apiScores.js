@@ -24,16 +24,24 @@ export async function getStudentScores(studentId) {
 }
 
 /**
- * Update (insert) a student score
+ * Update (insert or update) a student score
  * @param {string} studentId - The student's ID
  * @param {number} score - Score value
  * @param {string} gameType - Type of game played
  * @param {string} nodeId - Optional trail node ID (if playing from trail)
  * @param {Object} options - Optional configuration
  * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
+ * @param {string} options.existingScoreId - If provided, update this row's score instead of
+ *   inserting a new one (e.g. a same-exercise retry improving on a prior attempt)
  * @returns {Promise<Object>} Object with newScore, or { rateLimited: true, resetTime, newScore: null }
  */
-export async function updateStudentScore(studentId, score, gameType, nodeId = null, options = {}) {
+export async function updateStudentScore(
+  studentId,
+  score,
+  gameType,
+  nodeId = null,
+  options = {}
+) {
   try {
     // If nodeId is provided and not skipping rate limit, check rate limit
     // Note: Teacher check is done by the caller before calling this function
@@ -43,23 +51,30 @@ export async function updateStudentScore(studentId, score, gameType, nodeId = nu
         return {
           rateLimited: true,
           resetTime: rateLimitResult.resetTime,
-          newScore: null
+          newScore: null,
         };
       }
     }
 
-    // Insert new score
-    const { data: scoreData, error: scoreError } = await supabase
-      .from("students_score")
-      .insert([
-        {
-          student_id: studentId,
-          score: score,
-          game_type: gameType,
-        },
-      ])
-      .select()
-      .single();
+    const { data: scoreData, error: scoreError } = options.existingScoreId
+      ? await supabase
+          .from("students_score")
+          .update({ score })
+          .eq("id", options.existingScoreId)
+          .eq("student_id", studentId)
+          .select()
+          .single()
+      : await supabase
+          .from("students_score")
+          .insert([
+            {
+              student_id: studentId,
+              score: score,
+              game_type: gameType,
+            },
+          ])
+          .select()
+          .single();
 
     if (scoreError) throw scoreError;
 

@@ -738,11 +738,17 @@ export function SightReadingGame() {
   });
   const [scoreSubmitted, setScoreSubmitted] = useState(false);
   const [scoreSyncStatus, setScoreSyncStatus] = useState("idle");
-  // Tracks which currentPattern object already had its score submitted. Unlike scoreSubmitted
-  // (reset on every FEEDBACK re-entry, including "Try Again" replays of the same exercise),
-  // this ref persists across replays of the same pattern instance and only "resets" naturally
-  // when a new pattern object is generated for a genuinely new exercise.
+  // Tracks which currentPattern object currently has a saved students_score row, and the id of
+  // that row, so a "Try Again" retry on the same pattern updates the existing row (reflecting the
+  // student's latest attempt) instead of leaving it frozen on the first attempt's score.
   const scoredPatternRef = useRef(null);
+  const scoredRowIdRef = useRef(null);
+  // Tracks which summaryStats object already had its score submitted/attempted. Unlike
+  // scoreSubmitted (reset on every FEEDBACK re-entry, including "Try Again" replays of the same
+  // exercise), this compares object identity so a duplicate effect re-run for the SAME attempt
+  // (summaryStats unchanged) is blocked, while a genuinely new attempt (a fresh summaryStats
+  // object, whether first-try or after a retry) is allowed through.
+  const scoredStatsRef = useRef(null);
   const abortPerformanceForPenalty = useCallback(() => {
     if (penaltyLockRef.current) return;
     penaltyLockRef.current = true;
@@ -1499,22 +1505,36 @@ export function SightReadingGame() {
 
     // scoreSubmitted alone isn't enough: it gets reset to false every time the stats effect
     // above re-runs, which also happens when "Try Again" replays the same pattern and reaches
-    // FEEDBACK a second time. Guard on pattern identity too so replays can't insert extra rows.
-    if (scoreSubmitted || scoredPatternRef.current === currentPattern) {
+    // FEEDBACK a second time. Guard on summaryStats identity too so a duplicate re-run for the
+    // SAME attempt can't submit twice — a genuinely new attempt always has a fresh object.
+    if (scoreSubmitted || scoredStatsRef.current === summaryStats) {
       return;
     }
 
     let isMounted = true;
-    // Claim before the async gap so a concurrent effect re-run (or a same-pattern replay that
-    // reaches FEEDBACK again while this is in flight) can't race a second submission through.
-    scoredPatternRef.current = currentPattern;
+    // Claim before the async gap so a concurrent effect re-run for the same summaryStats can't
+    // race a second submission through.
+    scoredStatsRef.current = summaryStats;
+    // If this pattern instance already has a saved row from an earlier attempt, update it
+    // instead of inserting a duplicate — this is what makes a "Try Again" retry's improved (or
+    // changed) score actually reflected in the log, rather than freezing on the first attempt.
+    const existingScoreId =
+      scoredPatternRef.current === currentPattern
+        ? scoredRowIdRef.current
+        : null;
     const submitScore = async () => {
       setScoreSyncStatus("saving");
       try {
         const normalizedScore = Number.isFinite(summaryStats.overallScore)
           ? Math.round(summaryStats.overallScore)
           : 0;
-        await updateStudentScore(studentId, normalizedScore, "sight_reading");
+        const result = await updateStudentScore(
+          studentId,
+          normalizedScore,
+          "sight_reading",
+          null,
+          existingScoreId ? { existingScoreId } : undefined
+        );
 
         // Invalidate queries to update score display
         queryClient.invalidateQueries(["student-scores", studentId]);
@@ -1522,12 +1542,16 @@ export function SightReadingGame() {
         queryClient.invalidateQueries(["gamesPlayed"]);
 
         if (!isMounted) return;
+        scoredPatternRef.current = currentPattern;
+        if (result?.newScore?.id) {
+          scoredRowIdRef.current = result.newScore.id;
+        }
         setScoreSubmitted(true);
         setScoreSyncStatus("saved");
       } catch (error) {
         console.error("Failed to save sight reading score:", error);
         if (!isMounted) return;
-        scoredPatternRef.current = null; // allow retry — this attempt never actually saved
+        scoredStatsRef.current = null; // allow retry — this attempt never actually saved
         setScoreSyncStatus("error");
         toast.error("Couldn't save your sight reading score.");
       }
