@@ -32,15 +32,17 @@ describe("updateStudentScore", () => {
     return { insertMock, selectMock, singleMock };
   };
 
-  // Mirrors supabase.from('students_score').update({...}).eq('id', ...).eq('student_id', ...).select().single()
+  // Mirrors supabase.from('students_score').update({...}).eq('id', ...).eq('student_id', ...).select().maybeSingle()
   const mockUpdateChain = (resolvedValue) => {
-    const singleMock = vi.fn().mockResolvedValue(resolvedValue);
-    const selectMock = vi.fn().mockReturnValue({ single: singleMock });
+    const maybeSingleMock = vi.fn().mockResolvedValue(resolvedValue);
+    const selectMock = vi
+      .fn()
+      .mockReturnValue({ maybeSingle: maybeSingleMock });
     const eq2Mock = vi.fn().mockReturnValue({ select: selectMock });
     const eq1Mock = vi.fn().mockReturnValue({ eq: eq2Mock });
     const updateMock = vi.fn().mockReturnValue({ eq: eq1Mock });
     supabase.from.mockReturnValue({ update: updateMock });
-    return { updateMock, eq1Mock, eq2Mock, selectMock, singleMock };
+    return { updateMock, eq1Mock, eq2Mock, selectMock, maybeSingleMock };
   };
 
   it("inserts a new row when no existingScoreId is given", async () => {
@@ -92,6 +94,49 @@ describe("updateStudentScore", () => {
     expect(result).toEqual({
       rateLimited: false,
       newScore: { id: "row-1", student_id: "student-1", score: 95 },
+    });
+  });
+
+  it("falls back to insert when the existing row is gone (update matches 0 rows)", async () => {
+    // Update chain resolves { data: null } — maybeSingle() returns null for a 0-row match instead
+    // of throwing PGRST116, which is what lets us fall back to an insert rather than losing the score.
+    const updMaybeSingle = vi
+      .fn()
+      .mockResolvedValue({ data: null, error: null });
+    const updSelect = vi.fn().mockReturnValue({ maybeSingle: updMaybeSingle });
+    const updEq2 = vi.fn().mockReturnValue({ select: updSelect });
+    const updEq1 = vi.fn().mockReturnValue({ eq: updEq2 });
+    const updateMock = vi.fn().mockReturnValue({ eq: updEq1 });
+
+    // Insert chain resolves the freshly-created row.
+    const insSingle = vi.fn().mockResolvedValue({
+      data: { id: "row-new", student_id: "student-1", score: 95 },
+      error: null,
+    });
+    const insSelect = vi.fn().mockReturnValue({ single: insSingle });
+    const insertMock = vi.fn().mockReturnValue({ select: insSelect });
+
+    supabase.from
+      .mockReturnValueOnce({ update: updateMock })
+      .mockReturnValueOnce({ insert: insertMock });
+
+    const result = await updateStudentScore(
+      "student-1",
+      95,
+      "sight_reading",
+      null,
+      { existingScoreId: "stale-row" }
+    );
+
+    expect(updateMock).toHaveBeenCalledWith({ score: 95 });
+    expect(updEq1).toHaveBeenCalledWith("id", "stale-row");
+    expect(updEq2).toHaveBeenCalledWith("student_id", "student-1");
+    expect(insertMock).toHaveBeenCalledWith([
+      { student_id: "student-1", score: 95, game_type: "sight_reading" },
+    ]);
+    expect(result).toEqual({
+      rateLimited: false,
+      newScore: { id: "row-new", student_id: "student-1", score: 95 },
     });
   });
 
