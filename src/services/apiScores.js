@@ -31,10 +31,12 @@ export async function getStudentScores(studentId) {
  * @param {string} nodeId - Optional trail node ID (if playing from trail)
  * @param {Object} options - Optional configuration
  * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
- * @param {string} options.existingScoreId - If provided, upsert the score onto this row (keyed by
- *   its id) instead of inserting a new one — e.g. a same-exercise "Try Again" retry improving on a
- *   prior attempt. Keeps exactly one students_score row per exercise instance; if that row is gone
- *   at write time, the score is re-inserted at the same id rather than as a duplicate.
+ * @param {string} options.existingScoreId - If provided, update this row's score in place (keyed by
+ *   id, scoped to the student) instead of inserting a new one — e.g. a same-exercise "Try Again"
+ *   retry improving on a prior attempt. Keeps one students_score row per exercise instance (rather
+ *   than a duplicate that would inflate games-played / daily-goal counts). Requires the
+ *   students_score UPDATE RLS policy (migration 20260707120000). If the row is gone at write time
+ *   (0 rows matched), falls back to inserting a fresh row so the latest score isn't lost.
  * @returns {Promise<Object>} Object with newScore, or { rateLimited: true, resetTime, newScore: null }
  */
 export async function updateStudentScore(
@@ -58,35 +60,33 @@ export async function updateStudentScore(
       }
     }
 
-    // Retry path: a "Try Again" on the same pattern instance already has a saved row. Upsert keyed
-    // on that row's id so the improved score REPLACES the first attempt's in place — keeping exactly
-    // one students_score row per instance (games-played and daily-goals both count rows, so a
-    // duplicate would inflate them). If the row is gone at write time (e.g. a trail/dev reset cleared
-    // it), the upsert re-inserts it at the SAME id rather than as a new row, so retries can't
-    // proliferate duplicates. Upsert returns an array (Accept: application/json), so the write is
-    // always HTTP 200 — unlike .update()...maybeSingle(), which on a PATCH still sends the
-    // pgrst.object Accept header and surfaces a raw 406 in the browser (postgrest-js only rewrites
-    // the JS-facing status, not the already-logged network response). RLS ("student_id =
-    // auth.uid()") is the ground-truth scoping for both the update and insert branches of the upsert.
+    // Retry path: a "Try Again" on the same pattern instance already has a saved row. Update it in
+    // place so the improved score replaces the first attempt's, keeping one row per instance. Use a
+    // plain array .select() (NOT .single()/.maybeSingle()): on a PATCH those send the pgrst.object
+    // Accept header, so a 0-row match returns a raw HTTP 406 that the browser logs even though
+    // postgrest-js swallows it. An array .select() returns HTTP 200 with [] instead — no 406 noise —
+    // and lets us fall back to an insert if the row is genuinely gone (e.g. a trail/dev reset cleared
+    // it) so the latest score isn't lost. The in-place update itself only works because of the
+    // students_score UPDATE RLS policy (migration 20260707120000); without it the update matches 0
+    // rows and every retry silently falls through to a duplicate insert. A plain update (unlike an
+    // upsert) touches only the ownership-scoped UPDATE policy, so it works for all users — an
+    // upsert's ON CONFLICT DO UPDATE would also re-check the subscription-gated INSERT policy.
     if (options.existingScoreId) {
-      const { data: upserted, error: upsertError } = await supabase
+      const { data: updated, error: updateError } = await supabase
         .from("students_score")
-        .upsert([
-          {
-            id: options.existingScoreId,
-            student_id: studentId,
-            score: score,
-            game_type: gameType,
-          },
-        ])
+        .update({ score })
+        .eq("id", options.existingScoreId)
+        .eq("student_id", studentId)
         .select();
 
-      if (upsertError) throw upsertError;
-
-      return {
-        rateLimited: false,
-        newScore: upserted?.[0] ?? null,
-      };
+      if (updateError) throw updateError;
+      if (updated && updated.length > 0) {
+        return {
+          rateLimited: false,
+          newScore: updated[0],
+        };
+      }
+      // else: no row matched (row gone) — fall through to the insert below.
     }
 
     const { data: inserted, error: insertError } = await supabase
