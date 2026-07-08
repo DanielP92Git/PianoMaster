@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useMemo } from "react";
 
 const RHYTHM_DEBUG = import.meta.env.DEV;
 
@@ -159,7 +159,8 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
         // Update visual highlighting
         if (onBeatCallbackRef.current) {
           if (RHYTHM_DEBUG) {
-            console.debug("[RhythmPlayback]", { // eslint-disable-line no-console
+            console.debug("[RhythmPlayback]", {
+              // eslint-disable-line no-console
               currentIndex,
               elapsedTime,
               audioCurrentTime: currentTime,
@@ -188,5 +189,9 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
     };
   }, [stop]);
 
-  return { play, stop };
+  // Memoized so `rhythmPlayback` keeps a stable identity across renders (play/stop
+  // are useCallback-stable). Without this the fresh object literal churned every
+  // render and cascaded through callbacks that depend on it, defeating downstream
+  // React.memo (e.g. the keyboard re-rendered on every game render). PERF-4.
+  return useMemo(() => ({ play, stop }), [play, stop]);
 }
