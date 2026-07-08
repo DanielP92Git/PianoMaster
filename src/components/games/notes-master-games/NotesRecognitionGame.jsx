@@ -25,6 +25,7 @@ import { useLandscapeLock } from "../../../hooks/useLandscapeLock";
 import { useRotatePrompt } from "../../../hooks/useRotatePrompt";
 import { RotatePromptOverlay } from "../../orientation/RotatePromptOverlay";
 import { useMicNoteInput } from "../../../hooks/useMicNoteInput";
+import { useMicSignal } from "../../../hooks/useMicSignal";
 import { calcMicTimingFromBpm } from "../../../hooks/micInputPresets";
 import { useAudioContext } from "../../../contexts/AudioContextProvider";
 import { AudioInterruptedOverlay } from "../shared/AudioInterruptedOverlay.jsx";
@@ -2022,10 +2023,10 @@ export function NotesRecognitionGame() {
 
   // useMicNoteInput: shared audio pipeline with manual control (isActive: false)
   const {
-    audioLevel,
     isListening,
     startListening: startMicListening,
     stopListening: stopMicListening,
+    subscribe: micSubscribe,
   } = useMicNoteInput({
     isActive: false, // Manual control via startAudioInput / stopAudioInput
     onNoteEvent: handleMicNoteEvent,
@@ -2034,6 +2035,10 @@ export function NotesRecognitionGame() {
     // They are null until requestMic() completes. Pass at call time instead (ARCH-04 race fix).
   });
   isListeningRef.current = isListening;
+
+  // Throttled, isolated audio-level subscription (PERF-1): drives the release
+  // detector + volume meter below without re-rendering this component at 60Hz.
+  const { level: audioLevel } = useMicSignal(micSubscribe);
 
   // Start audio input — requests mic from shared provider, then starts detection
   const startAudioInput = useCallback(async () => {

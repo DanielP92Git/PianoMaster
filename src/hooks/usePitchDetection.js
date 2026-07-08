@@ -11,8 +11,7 @@ import { PitchDetector } from "pitchy";
  * where `performance` is undefined (e.g. some Jest/Node setups).
  */
 const __PERF_MARKS =
-  typeof performance !== "undefined" &&
-  typeof performance.mark === "function";
+  typeof performance !== "undefined" && typeof performance.mark === "function";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -118,15 +117,63 @@ export function usePitchDetection({
   const [analyser, setAnalyser] = useState(null);
   const [microphone, setMicrophone] = useState(null);
   const [isListening, setIsListening] = useState(false);
-  const [detectedNote, setDetectedNote] = useState(null);
-  const [detectedFrequency, setDetectedFrequency] = useState(-1);
-  const [audioLevel, setAudioLevel] = useState(0);
 
   // ---------------------------------------------------------------------------
   // Refs
   // ---------------------------------------------------------------------------
   const animationFrameRef = useRef(null);
   const stopListeningRef = useRef(null);
+
+  // PERF-1: real-time detection values live in refs, NOT useState, so the 60Hz
+  // detect loop never triggers a React re-render of the consuming component tree.
+  // Consumers that need to *display* these values subscribe (see `subscribe`)
+  // and re-render themselves in isolation; game logic already reads the live
+  // values through the onPitchDetected / onLevelChange callbacks below.
+  const audioLevelRef = useRef(0);
+  const detectedNoteRef = useRef(null);
+  const detectedFrequencyRef = useRef(-1);
+
+  /** Set of subscriber callbacks notified once per detect-loop frame. */
+  const subscribersRef = useRef(null);
+  if (subscribersRef.current === null) subscribersRef.current = new Set();
+
+  /**
+   * Subscribe to real-time mic signal updates (level/note/frequency) without
+   * re-rendering the whole component. The callback receives a fresh
+   * `{ level, note, frequency }` snapshot each detect frame (and a zeroed
+   * snapshot on stop). Returns an unsubscribe function.
+   */
+  const subscribe = useCallback((cb) => {
+    if (typeof cb !== "function") return () => {};
+    subscribersRef.current.add(cb);
+    // Prime with the current values so a late subscriber isn't stuck at defaults.
+    cb({
+      level: audioLevelRef.current,
+      note: detectedNoteRef.current,
+      frequency: detectedFrequencyRef.current,
+    });
+    return () => {
+      subscribersRef.current.delete(cb);
+    };
+  }, []);
+
+  /** Notify all subscribers with the current ref values (allocates only when needed). */
+  const notifySubscribers = useCallback(() => {
+    const subs = subscribersRef.current;
+    if (!subs.size) return;
+    const snapshot = {
+      level: audioLevelRef.current,
+      note: detectedNoteRef.current,
+      frequency: detectedFrequencyRef.current,
+    };
+    subs.forEach((cb) => {
+      try {
+        cb(snapshot);
+      } catch {
+        /* a broken subscriber must not kill the detect loop */
+      }
+    });
+  }, []);
 
   /** pitchy PitchDetector instance — created once per analyser setup. */
   const detectorRef = useRef(null);
@@ -249,7 +296,9 @@ export function usePitchDetection({
           isSharedModeRef.current = true;
           currentAnalyserRef.current = effectiveAnalyser;
           currentSampleRateRef.current =
-            effectiveSampleRate || effectiveAnalyser.context?.sampleRate || 44100;
+            effectiveSampleRate ||
+            effectiveAnalyser.context?.sampleRate ||
+            44100;
 
           initDetector(effectiveAnalyser);
           setAnalyser(effectiveAnalyser);
@@ -268,7 +317,8 @@ export function usePitchDetection({
             },
           });
 
-          const context = new (window.AudioContext || window.webkitAudioContext)();
+          const context = new (window.AudioContext ||
+            window.webkitAudioContext)();
           const source = context.createMediaStreamSource(stream);
           const analyserNode_self = context.createAnalyser();
 
@@ -295,7 +345,11 @@ export function usePitchDetection({
         const currentSampleRate = currentSampleRateRef.current;
 
         const detectLoop = () => {
-          if (!currentAnalyser || !detectorRef.current || !inputBufferRef.current)
+          if (
+            !currentAnalyser ||
+            !detectorRef.current ||
+            !inputBufferRef.current
+          )
             return;
 
           // Full fftSize buffer (pitchy requires this, not frequencyBinCount)
@@ -303,7 +357,11 @@ export function usePitchDetection({
           currentAnalyser.getFloatTimeDomainData(inputBufferRef.current);
           if (__PERF_MARKS) performance.mark("getAudioData-end");
           if (__PERF_MARKS)
-            performance.measure("getAudioData", "getAudioData-start", "getAudioData-end");
+            performance.measure(
+              "getAudioData",
+              "getAudioData-start",
+              "getAudioData-end"
+            );
 
           // RMS audio level
           let sum = 0;
@@ -312,7 +370,7 @@ export function usePitchDetection({
             sum += inputBufferRef.current[i] * inputBufferRef.current[i];
           }
           const level = Math.sqrt(sum / len);
-          setAudioLevel(level);
+          audioLevelRef.current = level;
           if (onLevelChange) onLevelChange(level);
 
           // McLeod Pitch Method via pitchy (ALGO-01)
@@ -323,20 +381,28 @@ export function usePitchDetection({
           );
           if (__PERF_MARKS) performance.mark("findPitch-end");
           if (__PERF_MARKS)
-            performance.measure("findPitch", "findPitch-start", "findPitch-end");
+            performance.measure(
+              "findPitch",
+              "findPitch-start",
+              "findPitch-end"
+            );
 
           // ALGO-02: clarity gate — reject weak/ambiguous detections
           if (clarity >= clarityThreshold && pitch > 0) {
             const note = frequencyToNote(pitch);
-            setDetectedFrequency(pitch);
-            setDetectedNote(note);
+            detectedFrequencyRef.current = pitch;
+            detectedNoteRef.current = note;
             if (onPitchDetected && note) {
               onPitchDetected(note, pitch);
             }
           } else {
-            setDetectedFrequency(-1);
-            setDetectedNote(null);
+            detectedFrequencyRef.current = -1;
+            detectedNoteRef.current = null;
           }
+
+          // Fan out to any display subscribers (volume meter, mic debug panel).
+          // No-op allocation when there are none. PERF-1.
+          notifySubscribers();
 
           animationFrameRef.current = requestAnimationFrame(detectLoop);
         };
@@ -348,7 +414,15 @@ export function usePitchDetection({
         throw error;
       }
     },
-    [analyserNode, sampleRate, clarityThreshold, initDetector, onLevelChange, onPitchDetected]
+    [
+      analyserNode,
+      sampleRate,
+      clarityThreshold,
+      initDetector,
+      onLevelChange,
+      onPitchDetected,
+      notifySubscribers,
+    ]
   );
 
   // ---------------------------------------------------------------------------
@@ -394,14 +468,17 @@ export function usePitchDetection({
     detectorRef.current = null;
     inputBufferRef.current = null;
 
+    // Zero the real-time refs and notify subscribers so meters/debug clear. PERF-1.
+    audioLevelRef.current = 0;
+    detectedNoteRef.current = null;
+    detectedFrequencyRef.current = -1;
+    notifySubscribers();
+
     setIsListening(false);
     setAudioContext(null);
     setAnalyser(null);
     setMicrophone(null);
-    setDetectedNote(null);
-    setDetectedFrequency(-1);
-    setAudioLevel(0);
-  }, [microphone, audioContext]);
+  }, [microphone, audioContext, notifySubscribers]);
 
   // Store stopListening in ref for cleanup effects
   useEffect(() => {
@@ -434,11 +511,16 @@ export function usePitchDetection({
   // ---------------------------------------------------------------------------
 
   return {
-    // State
-    detectedNote,
-    detectedFrequency,
-    audioLevel,
+    // Real-time values are ref-backed (PERF-1). These fields are point-in-time
+    // snapshots (updated on the next render, not live); consumers that need live
+    // updates without re-rendering the parent should use `subscribe` instead.
+    detectedNote: detectedNoteRef.current,
+    detectedFrequency: detectedFrequencyRef.current,
+    audioLevel: audioLevelRef.current,
     isListening,
+
+    // Real-time subscription API (PERF-1): cb => ({ level, note, frequency })
+    subscribe,
 
     // Controls
     startListening, // async (overrides?: { analyserNode?, sampleRate? }) => void

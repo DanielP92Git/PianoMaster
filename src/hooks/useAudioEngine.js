@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 
 const METRONOME_TIMING_DEBUG = import.meta.env.DEV;
 
@@ -1228,82 +1228,139 @@ export const useAudioEngine = (
     setIsInitialized(false);
   }, [stopScheduler]);
 
-  // Initialize on mount
+  // Initialize on mount (mount-only — the engine must persist for the whole
+  // session; listing initializeAudioContext/cleanup as deps let identity churn
+  // tear down and re-create the AudioContext mid-session). PERF-8.
+  const initializeAudioContextRef = useRef(initializeAudioContext);
+  const cleanupRef = useRef(cleanup);
+  initializeAudioContextRef.current = initializeAudioContext;
+  cleanupRef.current = cleanup;
   useEffect(() => {
-    initializeAudioContext();
-
+    initializeAudioContextRef.current();
     // Cleanup on unmount
-    return cleanup;
-  }, [initializeAudioContext, cleanup]);
+    return () => cleanupRef.current();
+  }, []);
 
-  // Public API
-  return {
-    // State
-    tempo,
-    isPlaying,
-    isInitialized,
-    audioSupported,
-    error,
+  // Public API — memoized so consumers that list `audioEngine` in effect deps
+  // don't re-run setup/teardown every render. Members are useCallback/ref-stable;
+  // only the state values below actually change identity. PERF-4.
+  return useMemo(
+    () => ({
+      // State
+      tempo,
+      isPlaying,
+      isInitialized,
+      audioSupported,
+      error,
 
-    // Status checks
-    isReady,
-    ensureRunning,
-    getCurrentTime,
+      // Status checks
+      isReady,
+      ensureRunning,
+      getCurrentTime,
 
-    // Control methods
-    initializeAudioContext,
-    resumeAudioContext,
-    loadPianoSound,
-    cleanup,
+      // Control methods
+      initializeAudioContext,
+      resumeAudioContext,
+      loadPianoSound,
+      cleanup,
 
-    // Audio generation
-    createMetronomeClick,
-    createMetronomeSound: createMetronomeClick, // Alias for consistency
-    playMetronomeClick,
-    createPatternSound,
-    playPatternSound,
-    createPianoSound,
-    playPianoSound,
-    createTapSound,
-    createTapSoundSynthetic,
-    playRhythmPattern,
+      // Audio generation
+      createMetronomeClick,
+      createMetronomeSound: createMetronomeClick, // Alias for consistency
+      playMetronomeClick,
+      createPatternSound,
+      playPatternSound,
+      createPianoSound,
+      playPianoSound,
+      createTapSound,
+      createTapSoundSynthetic,
+      playRhythmPattern,
 
-    // Timing and scheduling
-    getBeatDuration,
-    scheduleEvent,
-    removeScheduledEvent,
-    clearScheduledEvents,
-    startScheduler,
-    stopScheduler,
-    scheduleMetronome,
-    scheduleRhythmSequence,
+      // Timing and scheduling
+      getBeatDuration,
+      scheduleEvent,
+      removeScheduledEvent,
+      clearScheduledEvents,
+      startScheduler,
+      stopScheduler,
+      scheduleMetronome,
+      scheduleRhythmSequence,
 
-    // Tempo control
-    setTempoValue,
-    adjustTempo,
-    bpmToMilliseconds,
-    getNoteDurations,
-    getTempoInfo,
+      // Tempo control
+      setTempoValue,
+      adjustTempo,
+      bpmToMilliseconds,
+      getNoteDurations,
+      getTempoInfo,
 
-    // Latency compensation
-    getPreciseCurrentTime,
-    applyLatencyCompensation,
-    setLatencyCompensation,
-    measureLatency,
-    calibrateLatency,
-    getLatencyInfo,
-    latencyOffset,
+      // Latency compensation
+      getPreciseCurrentTime,
+      applyLatencyCompensation,
+      setLatencyCompensation,
+      measureLatency,
+      calibrateLatency,
+      getLatencyInfo,
+      latencyOffset,
 
-    // Internal refs (for extension by other subtasks)
-    audioContextRef,
-    gainNodeRef,
-    lookaheadTime,
-    scheduleAheadTime,
-    nextBeatTimeRef,
-    currentBeatRef,
-    scheduledEventsRef,
-    isRunningRef,
-  };
+      // Internal refs (for extension by other subtasks)
+      audioContextRef,
+      gainNodeRef,
+      lookaheadTime,
+      scheduleAheadTime,
+      nextBeatTimeRef,
+      currentBeatRef,
+      scheduledEventsRef,
+      isRunningRef,
+    }),
+    [
+      // State (identity actually changes)
+      tempo,
+      isPlaying,
+      isInitialized,
+      audioSupported,
+      error,
+      latencyOffset,
+      // Stable callbacks (useCallback) — listed for correctness
+      isReady,
+      ensureRunning,
+      getCurrentTime,
+      initializeAudioContext,
+      resumeAudioContext,
+      loadPianoSound,
+      cleanup,
+      createMetronomeClick,
+      playMetronomeClick,
+      createPatternSound,
+      playPatternSound,
+      createPianoSound,
+      playPianoSound,
+      createTapSound,
+      createTapSoundSynthetic,
+      playRhythmPattern,
+      getBeatDuration,
+      scheduleEvent,
+      removeScheduledEvent,
+      clearScheduledEvents,
+      startScheduler,
+      stopScheduler,
+      scheduleMetronome,
+      scheduleRhythmSequence,
+      setTempoValue,
+      adjustTempo,
+      bpmToMilliseconds,
+      getNoteDurations,
+      getTempoInfo,
+      getPreciseCurrentTime,
+      applyLatencyCompensation,
+      setLatencyCompensation,
+      measureLatency,
+      calibrateLatency,
+      getLatencyInfo,
+      // Stable constants/refs
+      lookaheadTime,
+      scheduleAheadTime,
+    ]
+  );
 };
 
 export default useAudioEngine;

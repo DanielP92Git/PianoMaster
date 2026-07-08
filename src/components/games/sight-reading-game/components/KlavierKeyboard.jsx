@@ -311,7 +311,7 @@ const CustomLabel = () => {
  * Interactive piano keyboard with dynamic range based on selected notes.
  * Shows relevant octaves while keeping C4 (middle C) highlighted for orientation.
  */
-export function KlavierKeyboard({
+function KlavierKeyboardBase({
   visible = true,
   onNotePlayed,
   selectedNotes = [],
@@ -376,7 +376,7 @@ export function KlavierKeyboard({
   return (
     <div
       ref={containerRef}
-      className="flex h-full w-full flex-col rounded-lg bg-transparent p-2 md:bg-gray-800/50 md:backdrop-blur-sm"
+      className="md:bg-gray-800/50 flex h-full w-full flex-col rounded-lg bg-transparent p-2 md:backdrop-blur-sm"
       style={{ touchAction: "manipulation" }}
       dir="ltr" // Force LTR for piano keyboard - prevents RTL inheritance issues
     >
@@ -399,3 +399,10 @@ export function KlavierKeyboard({
     </div>
   );
 }
+
+/**
+ * Memoized so parent re-renders don't reconcile the full keyboard (one DOM node
+ * per key). Props: `visible`/`onNotePlayed` (stable useCallback) and `selectedNotes`
+ * (stabilized via EMPTY_ARRAY at the call site). PERF-2.
+ */
+export const KlavierKeyboard = React.memo(KlavierKeyboardBase);
