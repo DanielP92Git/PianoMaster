@@ -60,6 +60,12 @@ describe("subscriptionConfig — ear training free tier", () => {
     );
   });
 
+  it("isFreeNode returns true for null/undefined (non-trail games always pass, mirrors the NULL-safe Postgres gate)", () => {
+    expect(isFreeNode(null)).toBe(true);
+    expect(isFreeNode(undefined)).toBe(true);
+    expect(isFreeNode()).toBe(true);
+  });
+
   it("FREE_NODE_IDS Set has 25 total entries (7+6+5+1 boss_rhythm_1+6) per Phase 1 v3.5 D-12", () => {
     const expected =
       FREE_TREBLE_NODE_IDS.length +

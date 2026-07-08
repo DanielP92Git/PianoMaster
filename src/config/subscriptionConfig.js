@@ -120,9 +120,16 @@ export const FREE_TIER_SUMMARY = {
 /**
  * Returns true if the given node ID is accessible on the free tier.
  *
- * @param {string} nodeId - Trail node ID (e.g. 'treble_1_1', 'boss_treble_1')
+ * A null/undefined nodeId means "no trail node" — i.e. a non-trail game
+ * (NotesRecognition, MemoryGame, free practice) — which is always allowed on
+ * the free tier. This mirrors the Postgres is_free_node() gate, where a NULL
+ * node_id passes the students_score INSERT check (migration 20260708120000).
+ * Without this guard, non-trail scores from free/non-subscriber users would be
+ * blocked by the subscription branch of that gate.
+ *
+ * @param {string} [nodeId] - Trail node ID (e.g. 'treble_1_1', 'boss_treble_1'), or null for non-trail games
  * @returns {boolean}
  */
 export function isFreeNode(nodeId) {
-  return FREE_NODE_IDS.has(nodeId);
+  return nodeId == null || FREE_NODE_IDS.has(nodeId);
 }
