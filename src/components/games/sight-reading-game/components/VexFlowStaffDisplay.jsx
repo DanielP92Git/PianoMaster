@@ -1,4 +1,5 @@
 import {
+  memo,
   useEffect,
   useRef,
   useCallback,
@@ -48,7 +49,7 @@ const getStemDirectionForPitch = (pitch, clef) => {
  * @param {string} clef - 'treble' or 'bass' (default: 'treble')
  * @param {Array} performanceResults - Array of performance results for each note (optional, for feedback)
  */
-export function VexFlowStaffDisplay({
+function VexFlowStaffDisplayBase({
   pattern,
   currentNoteIndex,
   clef = "treble",
@@ -301,7 +302,6 @@ export function VexFlowStaffDisplay({
             console.debug(
               "[VexFlowStaffDisplay] Pattern shorter than expected - relying on SOFT mode",
               {
-                // eslint-disable-line no-console
                 expectedDuration,
                 actualDuration: pattern.totalDuration,
                 deficit: durationDiff,
@@ -314,7 +314,6 @@ export function VexFlowStaffDisplay({
       } else {
         if (import.meta.env.DEV) {
           console.debug("[VexFlowStaffDisplay]", {
-            // eslint-disable-line no-console
             pattern,
             durationDiff,
           });
@@ -1522,7 +1521,6 @@ export function VexFlowStaffDisplay({
       notesRef.current = extractNoteElements();
       if (import.meta.env.DEV) {
         console.debug("[VexFlowStaffDisplay]", {
-          // eslint-disable-line no-console
           notesRef: notesRef.current.length,
         });
       }
@@ -1692,7 +1690,6 @@ export function VexFlowStaffDisplay({
     ) {
       if (import.meta.env.DEV) {
         console.debug("[VexFlowStaffDisplay]", {
-          // eslint-disable-line no-console
           patternChanged,
           clefChanged,
           containerEmpty,
@@ -1932,3 +1929,11 @@ export function VexFlowStaffDisplay({
     </div>
   );
 }
+
+/**
+ * Memoized so the parent (SightReadingGame) re-rendering — e.g. from unrelated
+ * state — does not force a full VexFlow redraw. Props are primitives/stable refs;
+ * the component re-renders only when pattern, currentNoteIndex, performanceResults,
+ * gamePhase, clef, or keySignature actually change. PERF-2.
+ */
+export const VexFlowStaffDisplay = memo(VexFlowStaffDisplayBase);

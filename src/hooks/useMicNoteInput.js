@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { usePitchDetection } from "./usePitchDetection";
 
 // ---------------------------------------------------------------------------
@@ -12,7 +12,7 @@ import { usePitchDetection } from "./usePitchDetection";
  * ARMED  — a candidate note is accumulating onset confidence (frames counted).
  * ACTIVE — a note is currently held (noteOn emitted, waiting for noteOff or change).
  */
-const FSM = { IDLE: 'IDLE', ARMED: 'ARMED', ACTIVE: 'ACTIVE' };
+const FSM = { IDLE: "IDLE", ARMED: "ARMED", ACTIVE: "ACTIVE" };
 
 /**
  * Mic note event model (JS shape):
@@ -134,7 +134,6 @@ export function useMicNoteInput({
         s.candidateNote = note;
         s.candidateFrames = 1;
         s.candidateStartedAt = now;
-
       } else if (s.fsmState === FSM.ARMED) {
         // -----------------------------------------------------------------------
         // ARMED: accumulating onset confidence for a candidate note
@@ -169,7 +168,6 @@ export function useMicNoteInput({
           s.candidateFrames = 1;
           s.candidateStartedAt = now;
         }
-
       } else if (s.fsmState === FSM.ACTIVE) {
         // -----------------------------------------------------------------------
         // ACTIVE: note is currently held
@@ -268,26 +266,20 @@ export function useMicNoteInput({
     [emit, offMs]
   );
 
-  const {
-    audioLevel,
-    isListening,
-    startListening,
-    stopListening,
-    detectedNote,
-    detectedFrequency,
-  } = usePitchDetection({
-    isActive,
-    noteFrequencies,
-    rmsThreshold,
-    tolerance,
-    onPitchDetected: handlePitchDetected,
-    onLevelChange: handleLevelChange,
-    // Pass through shared analyser props (ARCH-03).
-    // usePitchDetection ignores these if null (falls back to getUserMedia).
-    analyserNode,
-    sampleRate,
-    clarityThreshold,
-  });
+  const { isListening, startListening, stopListening, subscribe } =
+    usePitchDetection({
+      isActive,
+      noteFrequencies,
+      rmsThreshold,
+      tolerance,
+      onPitchDetected: handlePitchDetected,
+      onLevelChange: handleLevelChange,
+      // Pass through shared analyser props (ARCH-03).
+      // usePitchDetection ignores these if null (falls back to getUserMedia).
+      analyserNode,
+      sampleRate,
+      clarityThreshold,
+    });
 
   /**
    * Wrapped startListening that resets internal stability state first, then
@@ -300,17 +292,24 @@ export function useMicNoteInput({
    *
    * Existing callers that pass no arguments are unaffected.
    */
-  const startListeningWrapped = useCallback(async (overrides = {}) => {
-    resetInternalState("startListening");
-    await startListening(overrides);
-  }, [resetInternalState, startListening]);
+  const startListeningWrapped = useCallback(
+    async (overrides = {}) => {
+      resetInternalState("startListening");
+      await startListening(overrides);
+    },
+    [resetInternalState, startListening]
+  );
 
   const stopListeningWrapped = useCallback(() => {
     stopListening();
     resetInternalState("stopListening");
   }, [resetInternalState, stopListening]);
 
-  const debug = useMemo(() => {
+  // Live FSM debug snapshot. Stable callback (reads the internal stateRef on
+  // demand) so the dev mic-debug panel can poll it from its own subscription
+  // without the hook re-rendering the whole game. Detected note/frequency/level
+  // come from the pitch `subscribe` stream (PERF-1).
+  const getDebug = useCallback(() => {
     const s = stateRef.current;
     return {
       fsmState: s.fsmState,
@@ -321,16 +320,15 @@ export function useMicNoteInput({
       lastEmitAt: s.lastEmitAt,
       lastFrequency: s.lastFrequency,
       lastAudioLevel: s.lastAudioLevel,
-      detectedNote,
-      detectedFrequency,
     };
-  }, [detectedFrequency, detectedNote]);
+  }, []);
 
   return {
-    audioLevel,
     isListening,
     startListening: startListeningWrapped,
     stopListening: stopListeningWrapped,
-    debug,
+    // Real-time subscription (PERF-1): cb => ({ level, note, frequency })
+    subscribe,
+    getDebug,
   };
 }

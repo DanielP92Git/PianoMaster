@@ -17,6 +17,7 @@ import { KlavierKeyboard } from "./components/KlavierKeyboard";
 import { FeedbackSummary } from "./components/FeedbackSummary";
 import { SightReadingLayout } from "./components/SightReadingLayout";
 import { MicErrorOverlay } from "./components/MicErrorOverlay";
+import { MicVolumeMeter, MicDebugPanel } from "./components/MicOverlays";
 import { MetronomeDisplay } from "../rhythm-games/components/MetronomeDisplay";
 import { usePatternGeneration } from "./hooks/usePatternGeneration";
 import { useRhythmPlayback } from "./hooks/useRhythmPlayback";
@@ -80,6 +81,10 @@ const GAME_PHASES = {
   PERFORMANCE: "performance",
   FEEDBACK: "feedback",
 };
+
+// Stable empty-array identity so memoized children (KlavierKeyboard) don't see a
+// fresh `[]` prop every render. PERF-5.
+const EMPTY_ARRAY = [];
 
 const TIMING_STATE = {
   OFF: "off",
@@ -272,7 +277,6 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     setCurrentBeat(0);
     setCurrentNoteIndex(-1);
-    setStaffScrollProgress(0);
     setTimingState(TIMING_STATE.OFF);
     setPerformanceResults([]);
     setSummaryStats(null);
@@ -282,13 +286,10 @@ export function SightReadingGame() {
     setExerciseRecorded(false);
   }, [nodeId]);
 
-  // Continuous horizontal staff scroll progress (0–1) during performance phase.
   const measuresPerPattern = Math.max(
     1,
     Number(gameSettings.measuresPerPattern || 1)
   );
-  const [staffScrollProgress, setStaffScrollProgress] = useState(0);
-  const staffScrollRafRef = useRef(null);
 
   // Unified timing state: replaces scoringActive + isPerformanceLive
   const [timingState, setTimingState] = useState(TIMING_STATE.OFF);
@@ -373,58 +374,6 @@ export function SightReadingGame() {
   useEffect(() => {
     gamePhaseRef.current = gamePhase;
   }, [gamePhase]);
-
-  // Reset staff scroll progress when pattern or phase changes.
-  useEffect(() => {
-    setStaffScrollProgress(0);
-  }, [currentPattern?.easyscoreString, gamePhase]);
-
-  // Continuous staff scroll animation during performance phase (time-based RAF for smooth motion).
-  useEffect(() => {
-    if (gamePhase !== GAME_PHASES.PERFORMANCE) return;
-    if (!currentPattern?.notes?.length) return;
-    // Only scroll for multi-bar patterns.
-    if (measuresPerPattern <= 1) return;
-
-    const totalBeats = currentPattern.totalDuration;
-    const secondsPerBeat = 60 / gameSettings.tempo;
-    const totalSeconds = totalBeats * secondsPerBeat;
-
-    const animate = () => {
-      // Wait until performance actually started (audioContext time recorded).
-      if (
-        typeof performanceStartAudioTimeRef.current !== "number" ||
-        performanceStartAudioTimeRef.current <= 0
-      ) {
-        staffScrollRafRef.current = requestAnimationFrame(animate);
-        return;
-      }
-
-      const audioNow = audioEngine.getCurrentTime();
-      const elapsed = audioNow - performanceStartAudioTimeRef.current;
-      const progress = Math.min(1, Math.max(0, elapsed / totalSeconds));
-      setStaffScrollProgress(progress);
-
-      if (progress < 1 && gamePhaseRef.current === GAME_PHASES.PERFORMANCE) {
-        staffScrollRafRef.current = requestAnimationFrame(animate);
-      }
-    };
-
-    staffScrollRafRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (staffScrollRafRef.current) {
-        cancelAnimationFrame(staffScrollRafRef.current);
-        staffScrollRafRef.current = null;
-      }
-    };
-  }, [
-    gamePhase,
-    currentPattern,
-    measuresPerPattern,
-    gameSettings.tempo,
-    audioEngine,
-  ]);
 
   // Compact landscape detection (for very short, wide screens like mobile landscape).
   // Used to tighten vertical spacing so feedback + buttons fit without scrolling.
@@ -1015,13 +964,18 @@ export function SightReadingGame() {
     return window.localStorage?.getItem("debug-mic") === "1";
   }, []);
 
-  const { audioLevel, isListening, startListening, stopListening, debug } =
-    useMicNoteInput({
-      isActive: false, // Manual control
-      noteFrequencies,
-      ...micTiming,
-      onNoteEvent: handleNoteEvent,
-    });
+  const {
+    isListening,
+    startListening,
+    stopListening,
+    subscribe: micSubscribe,
+    getDebug: getMicDebug,
+  } = useMicNoteInput({
+    isActive: false, // Manual control
+    noteFrequencies,
+    ...micTiming,
+    onNoteEvent: handleNoteEvent,
+  });
 
   // Sync ref: tracks mic listening state synchronously so that reads in the same
   // render tick (e.g. phase-enforcement effect) see the current value instead of
@@ -1299,8 +1253,6 @@ export function SightReadingGame() {
     // before transitioning to FEEDBACK phase (prevents race condition where
     // last note shows as "active" instead of its actual result color)
     setTimeout(() => {
-      // Ensure the multi-bar scroll reaches the final double barline before feedback shows.
-      setStaffScrollProgress(1);
       // #region agent log
       __srLog({
         sessionId: "debug-session",
@@ -3549,7 +3501,7 @@ export function SightReadingGame() {
         onStart={startGame}
         micStatus={{
           isListening,
-          audioLevel,
+          subscribe: micSubscribe,
           startListening: startListeningSync,
           stopListening: stopListeningSync,
         }}
@@ -3797,7 +3749,7 @@ export function SightReadingGame() {
       <KlavierKeyboard
         visible={showKeyboard}
         onNotePlayed={handleKeyboardNoteInput}
-        selectedNotes={gameSettings.selectedNotes || []}
+        selectedNotes={gameSettings.selectedNotes || EMPTY_ARRAY}
       />
     </div>
   ) : null;
@@ -3814,9 +3766,6 @@ export function SightReadingGame() {
         clef={gameSettings.clef.toLowerCase()}
         performanceResults={performanceResults}
         gamePhase={gamePhase}
-        scrollProgress={
-          gamePhase === GAME_PHASES.PERFORMANCE ? staffScrollProgress : 0
-        }
         keySignature={gameSettings.keySignature || null}
       />
     </div>
@@ -3877,40 +3826,11 @@ export function SightReadingGame() {
       {shouldShowPrompt && <RotatePromptOverlay onDismiss={dismissPrompt} />}
       <div className="relative">
         {showMicDebug && (
-          <div className="pointer-events-none absolute bottom-2 right-2 z-50 w-[260px] rounded-xl border border-white/15 bg-black/40 p-3 text-xs text-white backdrop-blur">
-            <div className="mb-1 flex items-center justify-between">
-              <div className="font-semibold">Mic Debug</div>
-              <div className="text-white/70">
-                {isListening ? "listening" : "stopped"}
-              </div>
-            </div>
-            <div className="space-y-1 text-white/90">
-              <div className="flex justify-between">
-                <span className="text-white/70">audioLevel</span>
-                <span>{Number(audioLevel || 0).toFixed(4)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">detected</span>
-                <span>
-                  {debug?.detectedNote ?? "—"}{" "}
-                  {debug?.detectedFrequency > 0
-                    ? `(${debug.detectedFrequency.toFixed(1)}Hz)`
-                    : ""}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">current</span>
-                <span>{debug?.currentNote ?? "—"}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-white/70">candidate</span>
-                <span>
-                  {debug?.candidateNote ?? "—"}{" "}
-                  {debug?.candidateFrames ? `(${debug.candidateFrames})` : ""}
-                </span>
-              </div>
-            </div>
-          </div>
+          <MicDebugPanel
+            subscribe={micSubscribe}
+            getDebug={getMicDebug}
+            isListening={isListening}
+          />
         )}
 
         {/* Overlays that must not affect layout flow */}
@@ -4022,19 +3942,7 @@ export function SightReadingGame() {
       />
 
       {/* Volume meter — appears briefly after mic recovery to confirm audio is active */}
-      {showVolumeMeter && (
-        <div className="fixed right-3 top-3 z-40 flex items-center gap-1.5 rounded-full bg-white/80 px-2 py-1 shadow-sm backdrop-blur-sm transition-opacity">
-          <div
-            className="h-2 rounded-full bg-green-500 transition-all duration-75"
-            style={{
-              width: `${Math.min(100, (audioLevel || 0) * 400)}%`,
-              maxWidth: "64px",
-              minWidth: "4px",
-            }}
-          />
-          <span className="text-xs text-gray-600">mic</span>
-        </div>
-      )}
+      {showVolumeMeter && <MicVolumeMeter subscribe={micSubscribe} />}
 
       {/* Anti-cheat Penalty Modal */}
       {showPenaltyModal && (
