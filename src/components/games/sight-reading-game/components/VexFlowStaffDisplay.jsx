@@ -27,6 +27,7 @@ import {
 } from "vexflow";
 import { beamGroupsForTimeSignature } from "../utils/beamGroupUtils";
 import { noteNameToMidi } from "../../../../utils/noteUtils";
+import { FEEDBACK_COLORS } from "../constants/feedbackPalette";
 
 const STEM_REFERENCE_MIDI = {
   treble: noteNameToMidi("B4"),
@@ -38,6 +39,70 @@ const getStemDirectionForPitch = (pitch, clef) => {
   if (midi === null) return Stem.UP;
   const reference = STEM_REFERENCE_MIDI[clef] ?? STEM_REFERENCE_MIDI["treble"];
   return midi > reference ? Stem.DOWN : Stem.UP;
+};
+
+const NOTE_COLOR_BLACK = {
+  fill: "#000000",
+  stroke: "#000000",
+  class: "",
+  animate: false,
+};
+
+/**
+ * Map a single note's performance result to a colorblind-safe notehead color.
+ * Shared palette (constants/feedbackPalette.js): correct=green, early=amber (rush),
+ * late=blue (drag), wrong-pitch expected=gray, missed=gray. The actual wrong note
+ * that was played is drawn separately in red by renderStaff.
+ * `undefined` result (not played yet) → black, so upcoming notes never reveal the answer.
+ */
+const colorForResult = (result) => {
+  if (!result) return NOTE_COLOR_BLACK;
+
+  if (result.timingStatus === "missed") {
+    return {
+      fill: FEEDBACK_COLORS.missed,
+      stroke: FEEDBACK_COLORS.missed,
+      class: "vf-note-missed",
+      animate: false,
+    };
+  }
+
+  // Wrong pitch: gray the expected (target) note so it reads as "you should have
+  // played this here" — distinct from green (correct). Played note shown in red separately.
+  if (!result.isCorrect || result.timingStatus === "wrong_pitch") {
+    return {
+      fill: FEEDBACK_COLORS.expected,
+      stroke: FEEDBACK_COLORS.expected,
+      class: "vf-note-incorrect",
+      animate: false,
+    };
+  }
+
+  // Correct pitch, timing rushed vs dragged — two distinct hues (rush vs drag skill).
+  if (result.timingStatus === "early") {
+    return {
+      fill: FEEDBACK_COLORS.early,
+      stroke: FEEDBACK_COLORS.early,
+      class: "vf-note-early",
+      animate: false,
+    };
+  }
+  if (result.timingStatus === "late") {
+    return {
+      fill: FEEDBACK_COLORS.late,
+      stroke: FEEDBACK_COLORS.late,
+      class: "vf-note-late",
+      animate: false,
+    };
+  }
+
+  // perfect / good / okay — correct pitch, acceptable timing
+  return {
+    fill: FEEDBACK_COLORS.correct,
+    stroke: FEEDBACK_COLORS.correct,
+    class: "vf-note-correct",
+    animate: false,
+  };
 };
 
 /**
@@ -1552,78 +1617,22 @@ function VexFlowStaffDisplayBase({
   ]);
 
   /**
-   * Get color based on performance result (improved UX)
-   * - GREEN: Correct pitch + perfect/good timing, OR expected note when wrong pitch played
-   * - YELLOW/ORANGE: Correct pitch + early/late/okay timing
-   * - RED (separate note): Wrong pitch played (shown as additional note on staff)
-   * - DARK ORANGE/AMBER: Missed (no detection within window) - distinct from not attempted
-   * - LIGHT GRAY: Not attempted yet
-   * - PURPLE: Currently expected (active)
+   * Get color based on performance result (colorblind-safe palette).
+   * Notes are colored during BOTH performance (instant reinforcement of the note the
+   * child just played) and feedback. Notes without a result yet stay black, so upcoming
+   * notes never reveal the answer. See colorForResult / FEEDBACK_COLORS for the palette.
    */
   const getNoteColor = useCallback(
     (noteIndex) => {
-      // IMPORTANT: No highlighting during performance (kids mode UX).
-      // Only apply feedback coloring once the exercise is finished (feedback phase).
-      if (gamePhase !== "feedback") {
-        return {
-          fill: "#000000",
-          stroke: "#000000",
-          class: "",
-          animate: false,
-        };
+      // Only color during live play and post-exercise feedback; keep the staff plain
+      // black in display/count-in phases.
+      if (gamePhase !== "feedback" && gamePhase !== "performance") {
+        return NOTE_COLOR_BLACK;
       }
 
-      // Find the performance result for this specific note by matching noteIndex
+      // Match this note's result by noteIndex; undefined = not played yet (black).
       const result = performanceResults.find((r) => r.noteIndex === noteIndex);
-
-      // No result yet - black (default music notation color)
-      if (!result) {
-        return {
-          fill: "#000000",
-          stroke: "#000000",
-          class: "",
-          animate: false,
-        }; // Black - not attempted (standard musical notation)
-      }
-
-      // Missed note - distinct dark orange/amber color
-      if (result.timingStatus === "missed") {
-        return {
-          fill: "#ee24ccac",
-          stroke: "#ee24ccac",
-          class: "vf-note-missed",
-          animate: false,
-        }; // Dark orange/amber - missed (you didn't play this note)
-      }
-
-      // Wrong pitch - GREEN for expected note (clearer UX - shows what was expected)
-      // The played wrong note is shown in RED separately
-      if (!result.isCorrect || result.timingStatus === "wrong_pitch") {
-        return {
-          fill: "#10B981ac",
-          stroke: "#10B981ac",
-          class: "vf-note-incorrect",
-          animate: false,
-        }; // Green - expected note (what you should have played)
-      }
-
-      // Correct pitch with perfect/good timing - green
-      if (result.timingStatus === "perfect" || result.timingStatus === "good") {
-        return {
-          fill: "#10B981",
-          stroke: "#10B981",
-          class: "vf-note-correct",
-          animate: false,
-        }; // Green - correct
-      }
-
-      // Correct pitch but timing off (early/late/okay) - yellow/orange
-      return {
-        fill: "#F59E0B",
-        stroke: "#F59E0B",
-        class: "vf-note-timing-off",
-        animate: false,
-      }; // Yellow/Orange - timing issue
+      return colorForResult(result);
     },
     [performanceResults, gamePhase]
   );
