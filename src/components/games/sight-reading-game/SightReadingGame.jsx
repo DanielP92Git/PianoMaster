@@ -1359,33 +1359,9 @@ export function SightReadingGame() {
         entry.total === 0 ? 0 : Math.round((entry.correct / entry.total) * 100);
     });
 
-    const perNoteEntries = Object.entries(perNoteAccuracy).map(
-      ([pitch, data]) => ({
-        pitch,
-        ...data,
-      })
-    );
-
-    const coachingCandidates = perNoteEntries
-      .filter((entry) => entry.total > 0)
-      .sort((a, b) => {
-        if (a.accuracy === b.accuracy) {
-          return b.total - a.total;
-        }
-        return a.accuracy - b.accuracy;
-      });
-
-    const focusNotes = coachingCandidates.slice(0, 2);
-    // Data-only coaching payload; FeedbackSummary renders the localized headline/detail
-    // (i18n keys sightReading.coaching.*) so text isn't hardcoded English here.
-    const coaching =
-      focusNotes.length === 0
-        ? null
-        : {
-            focusNotes,
-            // "strong" = even the weakest focus note is already solid → reinforce vs. focus.
-            strong: focusNotes[0].accuracy >= 90,
-          };
+    // perNoteAccuracy is retained on summaryStats for future per-note mastery tracking
+    // (deep-audit Phase D), but is intentionally not surfaced in the child-facing summary —
+    // the post-exercise panel is kept minimal (stars + accuracy bars + status breakdown).
 
     const patternPitches = currentPattern.notes
       .filter((event) => event.type === "note" && event.pitch)
@@ -1409,7 +1385,6 @@ export function SightReadingGame() {
       baseScore,
       penaltyPoints: penaltyPointsTotal,
       perNoteAccuracy,
-      coaching,
       metadata,
     });
     setScoreSubmitted(false);
@@ -3867,12 +3842,9 @@ export function SightReadingGame() {
       {showInputModeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="mx-4 max-w-md rounded-lg bg-white p-6">
-            <h3 className="mb-4 text-xl font-bold">
+            <h3 className="mb-6 text-xl font-bold">
               {t("sightReading.inputMode.title")}
             </h3>
-            <p className="mb-6 text-gray-600">
-              {t("sightReading.inputMode.subtitle")}
-            </p>
             <div className="flex flex-col gap-3">
               <button
                 onClick={async () => {
@@ -3885,7 +3857,7 @@ export function SightReadingGame() {
                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50"
                 }`}
               >
-                <div className="text-left">
+                <div className="text-start">
                   <div className="mb-1 font-semibold">
                     {t("sightReading.inputMode.keyboardTitle")}
                   </div>
@@ -3912,7 +3884,7 @@ export function SightReadingGame() {
                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50"
                 }`}
               >
-                <div className="text-left">
+                <div className="text-start">
                   <div className="mb-1 font-semibold">
                     {t("sightReading.inputMode.micTitle")}
                   </div>
@@ -3981,7 +3953,7 @@ export function SightReadingGame() {
               onClick={handlePenaltyTryAgain}
               className="w-full flex-shrink-0 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2.5 font-semibold text-white shadow-lg transition-transform hover:scale-[1.01]"
             >
-              {t("sightReading.tryAgain")}
+              {t("sightReading.penalty.tryAgain")}
             </button>
             <p className="flex-shrink-0 text-xs text-gray-400">
               {t("sightReading.penalty.hint")}

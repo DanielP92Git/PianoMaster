@@ -55,13 +55,6 @@ const summaryStats = {
   pitchAccuracy: 83,
   rhythmAccuracy: 70,
   overallScore: 80,
-  coaching: {
-    strong: false,
-    focusNotes: [
-      { pitch: "D4", label: "Re", accuracy: 50 },
-      { pitch: "E4", label: "Mi", accuracy: 60 },
-    ],
-  },
 };
 
 describe("FeedbackSummary (Phase C feedback wiring)", () => {
@@ -105,41 +98,5 @@ describe("FeedbackSummary (Phase C feedback wiring)", () => {
     ).toBeInTheDocument();
     // The "correct" chip shows a count of 2.
     expect(screen.getByText("2")).toBeInTheDocument();
-  });
-
-  it("renders coaching focus notes from summaryStats", () => {
-    render(
-      <FeedbackSummary
-        performanceResults={performanceResults}
-        summaryStats={summaryStats}
-        onTryAgain={() => {}}
-        onNextPattern={() => {}}
-      />
-    );
-    expect(
-      screen.getByText("sightReading.coaching.heading")
-    ).toBeInTheDocument();
-    // strong=false → "focusOn" headline, interpolated with both note labels.
-    expect(
-      screen.getByText("sightReading.coaching.focusOn(notes=Re & Mi)")
-    ).toBeInTheDocument();
-    // Per-note accuracy detail joins each focus note.
-    expect(
-      screen.getByText(/coaching\.noteAccuracy\(note=Re,accuracy=50\)/)
-    ).toBeInTheDocument();
-  });
-
-  it("omits the coaching block when no coaching is provided", () => {
-    render(
-      <FeedbackSummary
-        performanceResults={performanceResults}
-        summaryStats={{ ...summaryStats, coaching: null }}
-        onTryAgain={() => {}}
-        onNextPattern={() => {}}
-      />
-    );
-    expect(
-      screen.queryByText("sightReading.coaching.heading")
-    ).not.toBeInTheDocument();
   });
 });

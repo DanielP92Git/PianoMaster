@@ -1652,7 +1652,7 @@
       "wrongNote": "Wrong Note!"
     },
     "summary": {
-      "pitch": "Pitch",
+      "pitch": "Notes",
       "rhythm": "Rhythm",
       "correct": "Correct",
       "tooEarly": "Too Early",
@@ -1660,25 +1660,19 @@
       "missed": "Missed",
       "wrongNotes": "Wrong Notes"
     },
-    "coaching": {
-      "heading": "What to practice next",
-      "focusOn": "Focus on {{notes}} next.",
-      "strong": "Nice work! Keep reinforcing {{notes}}.",
-      "noteAccuracy": "{{note}}: {{accuracy}}%"
-    },
     "inputMode": {
-      "title": "Choose Input Mode",
-      "subtitle": "Select how you want to play the notes:",
+      "title": "Select how you want to play the notes",
       "keyboardTitle": "On-screen keyboard only",
       "keyboardDesc": "Play using the on-screen piano keyboard",
       "micTitle": "Microphone input",
-      "micDesc": "Play your real instrument (clap/tap input)",
+      "micDesc": "Play your real instrument",
       "cancel": "Cancel"
     },
     "penalty": {
       "title": "No Cheating, Maestro!",
-      "body": "Rapid key presses were detected and points were deducted. Please restart the pattern and play only the highlighted notes in time.",
-      "hint": "Tap \"Start Playing\" after resetting to begin the count-in again."
+      "body": "I noticed you pressed a lot of keys in a row. You lost some points. Restart the pattern and play only the notes on the staff, in time.",
+      "hint": "Tap \"Start Playing\" after resetting to begin the count-in again.",
+      "tryAgain": "Try Again"
     },
     "controls": {
       "toggleMetronome": "Toggle metronome",

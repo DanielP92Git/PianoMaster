@@ -34,9 +34,9 @@ function AccuracyBar({ label, value, color }) {
 
 /**
  * FeedbackSummary Component
- * Post-exercise feedback: rating + stars, pitch/rhythm accuracy bars, a per-status
- * note breakdown, and coaching focus-notes ("Focus on Re & Mi next"). All feedback the
- * game already computes (summaryStats) is now surfaced instead of discarded.
+ * Post-exercise feedback, deliberately minimal for an 8-year-old audience: rating +
+ * stars, Notes/Rhythm accuracy bars, and a per-status note breakdown (only statuses
+ * that occurred). Surfaces the accuracy the game already computes (summaryStats).
  */
 export function FeedbackSummary({
   performanceResults,
@@ -111,11 +111,6 @@ export function FeedbackSummary({
     [breakdown]
   );
 
-  const coaching = summaryStats?.coaching;
-  const focusNotesText = coaching?.focusNotes
-    ?.map((note) => note.label)
-    .join(" & ");
-
   return (
     <div className="w-full">
       <div className="relative w-full rounded-2xl border border-white/20 bg-white/10 px-4 py-3 shadow-2xl backdrop-blur-md sm:px-5 sm:py-3.5">
@@ -184,32 +179,6 @@ export function FeedbackSummary({
                   {t(`sightReading.summary.${chip.key}`)}
                 </span>
               ))}
-            </div>
-          )}
-
-          {/* Coaching: which notes to practice next */}
-          {coaching && focusNotesText && (
-            <div className="w-full max-w-xs rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-indigo-300">
-                {t("sightReading.coaching.heading")}
-              </p>
-              <p className="mt-0.5 text-sm font-semibold text-white">
-                {coaching.strong
-                  ? t("sightReading.coaching.strong", { notes: focusNotesText })
-                  : t("sightReading.coaching.focusOn", {
-                      notes: focusNotesText,
-                    })}
-              </p>
-              <p className="mt-0.5 text-xs text-white/70">
-                {coaching.focusNotes
-                  .map((note) =>
-                    t("sightReading.coaching.noteAccuracy", {
-                      note: note.label,
-                      accuracy: note.accuracy,
-                    })
-                  )
-                  .join(" • ")}
-              </p>
             </div>
           )}
 
