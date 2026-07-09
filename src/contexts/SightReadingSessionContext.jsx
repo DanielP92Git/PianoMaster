@@ -3,11 +3,13 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
 const TOTAL_EXERCISES_PER_SESSION = 10;
 const DEFAULT_MAX_SCORE_PER_EXERCISE = 100;
+const ON_FIRE_THRESHOLD = 5; // reuse NotesRecognitionGame's constant (D-06)
 
 const createInitialState = () => ({
   totalExercises: TOTAL_EXERCISES_PER_SESSION,
@@ -22,16 +24,47 @@ const SightReadingSessionContext = createContext(null);
 export function SightReadingSessionProvider({ children }) {
   const [state, setState] = useState(() => createInitialState());
 
+  const [combo, setCombo] = useState(0);
+  const comboRef = useRef(0);
+  const [isOnFire, setIsOnFire] = useState(false);
+  const isOnFireRef = useRef(false);
+
+  const incrementCombo = useCallback(() => {
+    comboRef.current += 1;
+    setCombo(comboRef.current);
+    if (comboRef.current >= ON_FIRE_THRESHOLD && !isOnFireRef.current) {
+      isOnFireRef.current = true;
+      setIsOnFire(true);
+    }
+  }, []);
+
+  const resetCombo = useCallback(() => {
+    comboRef.current = 0;
+    setCombo(0);
+    if (isOnFireRef.current) {
+      isOnFireRef.current = false;
+      setIsOnFire(false);
+    }
+  }, []);
+
   const startSession = useCallback(() => {
     setState(() => ({
       ...createInitialState(),
       status: "in-progress",
       sessionId: Date.now(),
     }));
+    comboRef.current = 0;
+    setCombo(0);
+    isOnFireRef.current = false;
+    setIsOnFire(false);
   }, []);
 
   const resetSession = useCallback(() => {
     setState(() => createInitialState());
+    comboRef.current = 0;
+    setCombo(0);
+    isOnFireRef.current = false;
+    setIsOnFire(false);
   }, []);
 
   const recordExerciseResult = useCallback(
@@ -120,6 +153,10 @@ export function SightReadingSessionProvider({ children }) {
       resetSession,
       recordExerciseResult,
       goToNextExercise,
+      combo,
+      isOnFire,
+      incrementCombo,
+      resetCombo,
     };
   }, [
     state,
@@ -127,6 +164,10 @@ export function SightReadingSessionProvider({ children }) {
     resetSession,
     recordExerciseResult,
     goToNextExercise,
+    combo,
+    isOnFire,
+    incrementCombo,
+    resetCombo,
   ]);
 
   return (
