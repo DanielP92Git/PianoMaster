@@ -310,7 +310,7 @@ These capabilities exist, are working, and have been shipped:
 
 **Target features (owner-agreed 3-phase split):**
 
-- **P1 — Engagement HUD parity (no DB):** combo / lives / on-fire, reusing the shared HUD components extracted in v3.6 (`UX-4`).
+- **P1 — Engagement HUD parity (no DB):** combo / lives / on-fire, reusing the shared HUD components extracted in v3.6 (`UX-4`). Validated in Phase 01 (2026-07-09) — live session-wide combo + on-fire HUD shipped; lives/game-over deferred (no business upside for subscription-gated content; see 01-CONTEXT.md D-01/D-02).
 - **P2 — Practice tooling (no DB):** "hear it again" + played-vs-correct replay (feature 5); Practice vs Test mode with lenient/strict timing tolerances (feature 6); Review-mistakes mode stepping through only wrong/missed notes (feature 7).
 - **P3 — Adaptive pedagogy (needs Supabase):** in-session progressive difficulty (feature 8); adaptive tempo (feature 9); persist per-note mastery via a JSONB addition on progress rows (feature 10) — gets its own `/gsd-secure-phase` pass.
 
@@ -674,4 +674,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-09 — v3.7 Sight-Reading Engagement & Pedagogy milestone opened (Phase D of the sight-reading deep audit). Scope: engagement HUD parity, practice tooling, adaptive per-note-mastery pedagogy. Requirements in `.planning/REQUIREMENTS.md`; roadmap in `.planning/ROADMAP.md`._
+_Last updated: 2026-07-10 — Phase 01 (Engagement HUD Parity) complete: live session-wide combo/on-fire HUD shipped, lives/game-over deferred. Requirements in `.planning/REQUIREMENTS.md`; roadmap in `.planning/ROADMAP.md`._
