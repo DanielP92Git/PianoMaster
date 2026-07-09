@@ -41,7 +41,7 @@ Phase D of the sight-reading deep audit (Phases A/B/C — correctness, performan
 already shipped as PRs #10/#11/#12 on `main`). Turns the hardened sight-reading game into an elite
 learning experience: engagement HUD parity, practice tooling, and adaptive per-note-mastery pedagogy.
 
-- [ ] **Phase 01: Engagement HUD Parity** - Combo/lives/on-fire HUD parity with sibling games (client-only, reuses v3.6 shared HUD components)
+- [ ] **Phase 01: Engagement HUD Parity** - Combo/on-fire positive-engagement HUD parity with sibling games (client-only, reuses v3.6 shared HUD components; lives/game-over deferred 2026-07-09)
 - [ ] **Phase 02: Practice Tooling** - Replay, played-vs-correct comparison, Practice/Test mode, Review-mistakes (client-only)
 - [ ] **Phase 03: Adaptive Pedagogy** - In-session adaptive difficulty/tempo + cross-session per-note mastery persistence (needs Supabase, own `/gsd-secure-phase` pass)
 
@@ -105,14 +105,16 @@ extracted in v3.6 (`src/components/games/shared/hud/`) — no new mechanics inve
 
 **Depends on**: Nothing (first phase; builds on the already-merged Phases A–C sight-reading refactor on `main`)
 
-**Requirements**: HUD-01, HUD-02, HUD-03, I18N-01 (cross-cutting)
+**Requirements**: HUD-01, HUD-03, I18N-01 (cross-cutting). _HUD-02 deferred — see below._
+
+**Scope note (2026-07-09 discussion):** Phase 01 is now **positive-only**. HUD-02 (lives + `GameOverScreen`) was **deferred**: sight-reading is high-cognitive-load; a fail state punishes rather than motivates, and lives carry no business upside (subscription-gated content, not a hearts economy). Combo is refined to **session-wide** and **live note-by-note**. See `phases/01-engagement-hud-parity/01-CONTEXT.md`.
 
 **Success Criteria** (what must be TRUE):
 
-1. Player sees a live combo counter (`ComboPill`) that increments on consecutive correct notes and visibly resets on a miss.
-2. Player has a session-level lives indicator (`LivesDisplay`); when lives reach 0, the shared `GameOverScreen` path is shown instead of the bespoke sight-reading loss screen.
+1. Player sees a live combo counter (`ComboPill`) that increments on consecutive correct notes and visibly resets on a miss. The combo is **session-wide** (spans exercises) and updates **live, note-by-note**.
+2. ~~Player has a session-level lives indicator (`LivesDisplay`); when lives reach 0, the shared `GameOverScreen` path is shown instead of the bespoke sight-reading loss screen.~~ **DEFERRED (HUD-02).** No lives/game-over this phase; the existing gentle encouragement screen is retained.
 3. Player sees an on-fire badge/splash celebration (`OnFireBadge`/`OnFireSplash`) when their combo crosses the engagement threshold, and it is suppressed when `prefers-reduced-motion` is set.
-4. All new HUD strings (combo, lives, on-fire, game-over copy) render correctly in Hebrew with RTL layout, matching the English source 1:1 (no missing keys, no untranslated fallback).
+4. All new HUD strings (combo, on-fire) render correctly in Hebrew with RTL layout, matching the English source 1:1 (no missing keys, no untranslated fallback) — reusing the shared `games.engagement` keys.
 
 **Plans**: TBD
 
