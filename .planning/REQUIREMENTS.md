@@ -11,7 +11,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Engagement HUD (P1 — no DB)
 
-- [ ] **HUD-01**: Player sees a live combo counter that increments on consecutive correct notes and resets on a miss, using the shared `ComboPill` component from v3.6. _(Refined in Phase 01 discussion: combo is **session-wide**, spanning exercises, and updates **live note-by-note**.)_
+- [x] **HUD-01**: Player sees a live combo counter that increments on consecutive correct notes and resets on a miss, using the shared `ComboPill` component from v3.6. _(Refined in Phase 01 discussion: combo is **session-wide**, spanning exercises, and updates **live note-by-note**.)_
 - [ ] ~~**HUD-02**: Player has a session-level lives system rendered with the shared `LivesDisplay`; depletion routes to the shared `GameOverScreen` path instead of the bespoke sight-reading loss screen.~~ **DEFERRED** (Phase 01 discussion, 2026-07-09) — dropped from v3.7. Sight-reading is high-cognitive-load; a fail/game-over loop punishes rather than motivates, and lives carry no business upside here (monetization is subscription-gated content, not an energy/hearts economy). Positive-only (combo + on-fire) chosen instead; the gentle encouragement screen is retained. Reconsider only as _gentle streak/star pressure_, never hearts + game-over. See `phases/01-engagement-hud-parity/01-CONTEXT.md` D-01/D-02.
 - [ ] **HUD-03**: Player sees an on-fire state (badge + splash) when the combo crosses a threshold, respecting `prefers-reduced-motion`.
 
@@ -61,7 +61,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase       | Status                |
 | ----------- | ----------- | --------------------- |
-| HUD-01      | Phase 01    | Pending               |
+| HUD-01      | Phase 01    | Complete              |
 | HUD-02      | —           | Deferred (2026-07-09) |
 | HUD-03      | Phase 01    | Pending               |
 | PRAC-01     | Phase 02    | Pending               |

@@ -118,7 +118,7 @@ extracted in v3.6 (`src/components/games/shared/hud/`) — no new mechanics inve
 
 **Plans**: 2 plans across 2 waves
 
-- [ ] 01-01-PLAN.md — Session-wide combo/on-fire state in `SightReadingSessionContext` + HUD-02 deferral doc (Wave 1)
+- [x] 01-01-PLAN.md — Session-wide combo/on-fire state in `SightReadingSessionContext` + HUD-02 deferral doc (Wave 1)
 - [ ] 01-02-PLAN.md — Wire combo/on-fire HUD (ComboPill/OnFireBadge/OnFireSplash) into `SightReadingGame` (Wave 2)
 
 ---
@@ -171,7 +171,7 @@ practice can target them, all while keeping a child's mastery data locked to tha
 
 | Phase                     | Plans Complete | Status      | Completed |
 | ------------------------- | -------------- | ----------- | --------- |
-| 01. Engagement HUD Parity | 0/2            | Not started | -         |
+| 01. Engagement HUD Parity | 1/2            | In Progress | -         |
 | 02. Practice Tooling      | 0/TBD          | Not started | -         |
 | 03. Adaptive Pedagogy     | 0/TBD          | Not started | -         |
 

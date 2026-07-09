@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v3.7
 milestone_name: Sight-Reading Engagement & Pedagogy
 status: executing
-stopped_at: Phase 01 context gathered
-last_updated: "2026-07-09T19:39:05.881Z"
-last_activity: 2026-07-09 -- Phase 01 planning complete
+stopped_at: Phase 01 Plan 01 complete
+last_updated: "2026-07-09T19:53:43.720Z"
+last_activity: 2026-07-09
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 2
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-09 after v3.7 milestone opened)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** v3.7 Sight-Reading Engagement & Pedagogy — Phase 01 (Engagement HUD Parity), next via `/gsd-plan-phase 01`.
+**Current focus:** Phase 01 — engagement-hud-parity
 
 ## Current Position
 
-Phase: 01 of 03 (Engagement HUD Parity) — not yet planned
-Plan: — of — in current phase
+Phase: 01 (engagement-hud-parity) — EXECUTING
+Plan: 2 of 2
 Status: Ready to execute
-Last activity: 2026-07-09 -- Phase 01 planning complete
+Last activity: 2026-07-09
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█████░░░░░] 50%
 
 ### Quick Tasks Completed
 
@@ -46,6 +46,12 @@ Progress: [░░░░░░░░░░] 0%
 
 - Total plans completed: ~252 (across 27 shipped milestones)
 - 27 milestones shipped in 102 days (2026-01-31 to 2026-06-29, plus v3.6 out-of-order close on 2026-06-14)
+
+### Phase 01 Execution Metrics (v3.7)
+
+| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                     |
+| ----- | -------- | ----- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01-01 | 6 min    | 3     | 2     | Session-wide combo/on-fire state added to `SightReadingSessionContext` (ref+state double-write, D-06). Task 3 (HUD-02 deferral) already satisfied from context-gathering, no edit needed. |
 
 ## Deferred Items
 
@@ -110,6 +116,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - **Roadmap:** 3-phase split is owner-agreed and fixed (P1 HUD parity → P2 practice tooling → P3 adaptive pedagogy). Phase numbering restarts at 01 for this milestone (milestone-scoped numbering convention).
 - **Roadmap:** I18N-01 attached as a cross-cutting success criterion on all 3 phases rather than its own phase — every phase ships its own new strings in EN+HE.
 - **Roadmap:** Phase 03 is the only phase touching Supabase (JSONB per-note-mastery field); it gets its own `/gsd-secure-phase` pass before merge, mirroring the security rigor applied to `student_skill_progress` elsewhere in the codebase.
+- **01-01:** Combo/isOnFire kept as sibling `useState`/`useRef` pairs outside the existing state blob in `SightReadingSessionContext`, matching `NotesRecognitionGame`'s precedent rather than nesting inside `createInitialState()`.
+- **01-01:** `ON_FIRE_THRESHOLD = 5` defined locally in `SightReadingSessionContext.jsx` (D-06) — reused verbatim from `NotesRecognitionGame`'s module-level constant rather than imported (not exported there).
 
 ## Resolved Items
 
@@ -131,8 +139,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - Hidden Syncopation renamed `rhythm_8_*` → `rhythm_synco_*`; HIDDEN-V1 4-step re-enable checklist in `src/data/expandedNodes.js`.
 - `game.discovery.cards.*` EN+HE tree authored for all 12 rhythm concepts (89 paths each, exact parity), Kodaly nikud reused verbatim.
 
-**Stopped at:** Phase 01 context gathered
-**Resume file:** .planning/phases/01-engagement-hud-parity/01-CONTEXT.md
+**Stopped at:** Phase 01 Plan 01 complete
+**Resume file:** .planning/phases/01-engagement-hud-parity/01-02-PLAN.md
 
 ---
 
