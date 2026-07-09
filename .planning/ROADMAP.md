@@ -29,10 +29,21 @@
 - ✅ **v3.4 Rhythm Games Responsive UX** — Phases 34-35 (shipped 2026-05-12)
 - ✅ **v3.6 Game Screen UI Unification** — Phase 36 (shipped 2026-06-14)
 - ✅ **v3.5 Rhythm Pedagogy** — Phase 1 (shipped 2026-06-29)
+- 🚧 **v3.7 Sight-Reading Engagement & Pedagogy** — Phases 01-03 (in progress, started 2026-07-09)
 
 See `.planning/milestones/` for archived details of each milestone.
 
 ## Phases
+
+### Active: v3.7 Sight-Reading Engagement & Pedagogy
+
+Phase D of the sight-reading deep audit (Phases A/B/C — correctness, performance, feedback wiring —
+already shipped as PRs #10/#11/#12 on `main`). Turns the hardened sight-reading game into an elite
+learning experience: engagement HUD parity, practice tooling, and adaptive per-note-mastery pedagogy.
+
+- [ ] **Phase 01: Engagement HUD Parity** - Combo/lives/on-fire HUD parity with sibling games (client-only, reuses v3.6 shared HUD components)
+- [ ] **Phase 02: Practice Tooling** - Replay, played-vs-correct comparison, Practice/Test mode, Review-mistakes (client-only)
+- [ ] **Phase 03: Adaptive Pedagogy** - In-session adaptive difficulty/tempo + cross-session per-note mastery persistence (needs Supabase, own `/gsd-secure-phase` pass)
 
 <details>
 <summary>v1.0 through v3.3 -- See milestones/ for archived details</summary>
@@ -84,10 +95,81 @@ Full details: `.planning/milestones/v3.6-ROADMAP.md` · Requirements: `.planning
 
 </details>
 
-## Progress
+## Phase Details
 
-**Total: 27 milestones shipped, 111 phases, ~273 plans | No active milestone — next via `/gsd-new-milestone`**
+### Phase 01: Engagement HUD Parity
+
+**Goal**: Sight-reading players get the same combo / lives / on-fire engagement feedback loop as the
+sibling games (Notes Recognition, Arcade Rhythm), by reusing the shared HUD components already
+extracted in v3.6 (`src/components/games/shared/hud/`) — no new mechanics invented, just parity.
+
+**Depends on**: Nothing (first phase; builds on the already-merged Phases A–C sight-reading refactor on `main`)
+
+**Requirements**: HUD-01, HUD-02, HUD-03, I18N-01 (cross-cutting)
+
+**Success Criteria** (what must be TRUE):
+
+1. Player sees a live combo counter (`ComboPill`) that increments on consecutive correct notes and visibly resets on a miss.
+2. Player has a session-level lives indicator (`LivesDisplay`); when lives reach 0, the shared `GameOverScreen` path is shown instead of the bespoke sight-reading loss screen.
+3. Player sees an on-fire badge/splash celebration (`OnFireBadge`/`OnFireSplash`) when their combo crosses the engagement threshold, and it is suppressed when `prefers-reduced-motion` is set.
+4. All new HUD strings (combo, lives, on-fire, game-over copy) render correctly in Hebrew with RTL layout, matching the English source 1:1 (no missing keys, no untranslated fallback).
+
+**Plans**: TBD
 
 ---
 
-_Last updated: 2026-06-29 -- v3.5 Rhythm Pedagogy (Phase 01, 10 plans) shipped and archived to `.planning/milestones/v3.5-*` (owner gates D-13 + SC-9 closed; milestone audit PASSED). No active milestone._
+### Phase 02: Practice Tooling
+
+**Goal**: The sight-reading game becomes an effective deliberate-practice tool, not just a scored
+run — players can hear the exercise again, compare their playing to the correct rendition, choose
+how strictly they're graded, and revisit only what they got wrong.
+
+**Depends on**: Phase 01 (ships after HUD parity; reuses `useRhythmPlayback` auto-play infra, `timingStatus` early/late, `useTimingAnalysis`/`TIMING_STATUS_MAP` tolerances, and `performanceResults` with `noteIndex` already present in the Phase A–C codebase)
+
+**Requirements**: PRAC-01, PRAC-02, PRAC-03, PRAC-04, I18N-01 (cross-cutting)
+
+**Success Criteria** (what must be TRUE):
+
+1. During the read/display phase, the player can tap "hear it again" to replay the exercise audio on demand, any number of times, beyond the single existing auto-play.
+2. In the feedback phase, the player can trigger a played-vs-correct comparison playback (their rendition, then the correct one, or vice versa).
+3. Before starting an exercise, the player can choose Practice mode (lenient timing tolerance, pitch-focused grading) or Test mode (strict timing tolerance) — the choice visibly changes how notes are graded.
+4. After finishing an exercise, the player can enter a Review-mistakes mode that steps through only the wrong/missed notes from that attempt (not the full exercise again).
+5. All new controls and labels (replay button, mode toggle, review-mistakes UI) ship in EN+HE with correct RTL mirroring and no locale-parity gaps.
+
+**Plans**: TBD
+
+---
+
+### Phase 03: Adaptive Pedagogy
+
+**Goal**: The game adapts in real time to how the player is doing — widening or narrowing
+difficulty and tempo within a session — and remembers per-note weaknesses across sessions so future
+practice can target them, all while keeping a child's mastery data locked to that child alone.
+
+**Depends on**: Phase 02 (the practice/test mode flag from Phase 02 naturally precedes the adaptivity hooks built here); needs its own Supabase migration and a dedicated `/gsd-secure-phase` pass before merge (this phase touches the DB — the only one of the three that does)
+
+**Requirements**: ADAPT-01, ADAPT-02, ADAPT-03, ADAPT-04, I18N-01 (cross-cutting)
+
+**Success Criteria** (what must be TRUE):
+
+1. Within a session, sustained correct streaks widen the note range / add rests / raise tempo, and a run of misses eases difficulty back down — observably, not just internally logged.
+2. Tempo visibly slows after a run of misses and speeds back up after a run of successes.
+3. After finishing a session and returning in a later session, the game can surface/target notes the player has historically struggled with, based on a per-note accuracy value persisted via a new JSONB field on the student's progress row (the `perNoteAccuracy` value already computed per exercise today, currently discarded, is now persisted).
+4. The persisted per-note mastery field can only be read and written by the authenticated owning student, verified under RLS mirroring the existing `student_skill_progress` protections (defense-in-depth: JS gate + DB RLS) — confirmed by a `/gsd-secure-phase` pass before this phase is considered done.
+5. All new adaptive-coaching and mode-related strings ship in EN+HE with RTL correctness.
+
+**Plans**: TBD
+
+## Progress
+
+**Total: 27 milestones shipped, 111 phases, ~273 plans | Active: v3.7 Sight-Reading Engagement & Pedagogy (3 phases, 0/3 complete)**
+
+| Phase                     | Plans Complete | Status      | Completed |
+| ------------------------- | -------------- | ----------- | --------- |
+| 01. Engagement HUD Parity | 0/TBD          | Not started | -         |
+| 02. Practice Tooling      | 0/TBD          | Not started | -         |
+| 03. Adaptive Pedagogy     | 0/TBD          | Not started | -         |
+
+---
+
+_Last updated: 2026-07-09 -- v3.7 Sight-Reading Engagement & Pedagogy roadmap created (3 phases, 12/12 v1 requirements mapped). Phase 01 next via `/gsd-plan-phase 01`._

@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v3.7
 milestone_name: Sight-Reading Engagement & Pedagogy
 status: planning
-last_updated: "2026-07-09T18:05:59.163Z"
+last_updated: "2026-07-09T19:00:00.000Z"
 last_activity: 2026-07-09
 progress:
-  total_phases: 0
+  total_phases: 3
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,17 +17,19 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-06-29 after v3.5 milestone)
+See: .planning/PROJECT.md (updated 2026-07-09 after v3.7 milestone opened)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** No active milestone — v3.5 shipped 2026-06-29. Define the next one via `/gsd-new-milestone`.
+**Current focus:** v3.7 Sight-Reading Engagement & Pedagogy — Phase 01 (Engagement HUD Parity), next via `/gsd-plan-phase 01`.
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-07-09 — Milestone v3.7 started
+Phase: 01 of 03 (Engagement HUD Parity) — not yet planned
+Plan: — of — in current phase
+Status: Roadmap created, ready to plan Phase 01
+Last activity: 2026-07-09 — v3.7 roadmap created (3 phases, 12/12 v1 requirements mapped, 0/0 gaps)
+
+Progress: [░░░░░░░░░░] 0%
 
 ### Quick Tasks Completed
 
@@ -41,8 +43,8 @@ Last activity: 2026-07-09 — Milestone v3.7 started
 
 **Velocity:**
 
-- Total plans completed: ~252 (across 25 shipped milestones)
-- 25 milestones shipped in 102 days (2026-01-31 to 2026-05-12)
+- Total plans completed: ~252 (across 27 shipped milestones)
+- 27 milestones shipped in 102 days (2026-01-31 to 2026-06-29, plus v3.6 out-of-order close on 2026-06-14)
 
 ## Deferred Items
 
@@ -93,7 +95,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 | process   | Pre-deploy gate would have caught two post-deploy survivors                                    | v3.3   |
 | infra     | Pre-existing lint parse error: ParentZoneEntryCard.test.jsx:32 (await outside async)           | v3.4   |
 
-### Phase 01 Execution Metrics
+### Phase 01 Execution Metrics (v3.5, historical)
 
 | Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ----- | -------- | ----- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -102,24 +104,11 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 | 01-03 | 4 min    | 3     | 4     | Scaffolding card + unit-name locale infrastructure. EN+HE `game.discovery.cards.*` tree authored for all 12 concepts (89 paths each, exact parity). 7 new unit display names added to EN+HE trail.json (3 pre-existing preserved). Parity test substantively GREEN (was vacuous). Kodaly nikud verbatim.                                                                                                                             |
 | 01-04 | 7 min    | 2     | 3     | Atomic Supabase migration authored (BEGIN/COMMIT wraps scoped rhythm wipe + `is_free_node()` body swap with 6-ID U1 whitelist per D-12). JS FREE_RHYTHM_NODE_IDS updated 4→5 IDs; new FREE_BOSS_RHYTHM_NODE_IDS export spread into FREE_NODE_IDS Set. freeNodes.parity test RED→GREEN. Migration committed to repo, NOT applied (Plan 01-10 owner-gated). Pre-existing subscriptionConfig.test.js stale assertions updated (Rule 1). |
 
-## Decisions (Phase 01)
+## Decisions (v3.7)
 
-- **01-01:** Console.error spy per-test (not `hasErrors` module flag) for validator rule assertions — prevents state leak across describe blocks
-- **01-01:** Extend `vitest.config.js` `include` glob to discover `scripts/**/__tests__/*.{test,spec}.{js,mjs}` — Rule 3 deviation, sibling-test pattern for script-level validators
-- **01-01:** Meter-unit branch in `validateConceptPerUnit` uses strict allowlist `{q, qd, 8}` against any non-4/4 timeSignature — no separate meter family map
-- **01-01:** U10 hard exemption (`unit === 10` skip) in `validateConceptPerUnit` per D-11 single cumulative review boss
-- **01-02:** Top-of-file rename history comment in `rhythmUnit8Redesigned.js` documents the rhythm*8*_ → rhythm*synco*_ migration + D-10 source decision
-- **01-02:** HIDDEN-V1 lead comment expanded from single sentence to 4-step re-enable checklist (uncomment import, uncomment both spreads, add RHYTHM_SYNCO UNITS entry pre-authored by Plan 08, update CLAUDE.md node counts)
-- **01-02:** trail.json EN+HE unit8Nodes block keys renamed in lockstep with source (not removed) — they are direct ID references, not display-name keys, so leaving them in place would collide with new U8 namespace
-- **01-03:** Auto-selected option-a in Task 1 checkpoint — planner front-loaded a complete q example in EN+HE with kid-friendly voice; sequential executor mode with no human-loop available made option-a the recommended path per checkpoint protocol
-- **01-03:** Variable card-count per concept (3 vs 4) — duration concepts get full 4-card arc (meet/sound/music/ready); rests (qr/hr/wr) and meters (3_4/6_8) skip 'sound' (rest = silence, meter is structural). Honors D-07 2–4 envelope while keeping every card semantically meaningful
-- **01-03:** Reused user-confirmed Hebrew Kodaly nikud verbatim in card body text (טָה, טָה-אָה, טי-טי, טָה-פָה-טֶה-פֶה) — never invented new diacritics. `game.discovery.syllableOverride.*` subtree verified byte-identical via git diff (zero deletions, only additions of identical nikud forms in new contexts)
-- **01-03:** Orphan unit display names (Quarter & Half Notes, Rests, Dotted Notes & 3/4 Time, Syncopation, Steady Beat) deliberately NOT removed — they may still be referenced by current rhythm unit data files that Wave 2 replaces. Plan 01-10 cleanup will sweep when Wave 2 has fully landed
-- **01-03:** TDD RED→GREEN split commits for locale parity (EN-only RED commit `ad52a47` → HE counterparts GREEN commit `edf5fac`) — makes the parity gate's enforcement visible in git history as a permanent audit trail
-- **01-04:** Case A boss-routing chosen (new FREE_BOSS_RHYTHM_NODE_IDS sub-export spread into FREE_NODE_IDS) over Case B (inline ID in Set construction) — smallest structural delta from existing per-category-array pattern; extensible for future free-boss additions without re-architecting
-- **01-04:** Pre-existing subscriptionConfig.test.js Rule 1 fix — three hardcoded assertions (`PAYWALL_BOSS_NODE_IDS.toHaveLength(5)`, `FREE_NODE_IDS.size === 23`, `FREE_TIER_SUMMARY.total === 23`/`bossNodeCount === 5`) pinned pre-D-12 counts and would block CI; updated in lockstep with Task 1 commit `a8f40aa`
-- **01-04:** Migration filename uses `20260601000001` timestamp per plan instructions (today is 2026-06-01); single atomic transaction per D-13 (rhythm wipe + is_free_node body swap inseparable so partial-apply impossible)
-- **01-04:** Defense-in-depth `RAISE EXCEPTION` post-flight invariant — if any rhythm rows survive DELETE the transaction aborts; complements pre-flight RAISE NOTICE counts as a forensic audit pair
+- **Roadmap:** 3-phase split is owner-agreed and fixed (P1 HUD parity → P2 practice tooling → P3 adaptive pedagogy). Phase numbering restarts at 01 for this milestone (milestone-scoped numbering convention).
+- **Roadmap:** I18N-01 attached as a cross-cutting success criterion on all 3 phases rather than its own phase — every phase ships its own new strings in EN+HE.
+- **Roadmap:** Phase 03 is the only phase touching Supabase (JSONB per-note-mastery field); it gets its own `/gsd-secure-phase` pass before merge, mirroring the security rigor applied to `student_skill_progress` elsewhere in the codebase.
 
 ## Resolved Items
 
@@ -133,43 +122,17 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action (owner-gated):** Phase 01 is code-complete (all 10 plans executed; 01-08 wired the new U1-U10 unit data into `expandedNodes.js` + `skillTrail.js`; 01-09 extended `DiscoveryIntroQuestion.jsx` multi-card pagination; 01-10 bumped PWA cache + cleaned old files). The two remaining gates are OWNER-ONLY and cannot be done by an agent:
+**Next action:** Plan Phase 01 (Engagement HUD Parity) via `/gsd-plan-phase 01`. Phases 02 and 03 follow in order; Phase 03 additionally requires a `/gsd-secure-phase` pass before merge (JSONB per-note-mastery field on the student progress row, under RLS).
 
-1. **Production migration (D-13):** `supabase db push` of `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` — must run BEFORE the Netlify code deploy. Record pre-push `SELECT SUM(total_xp) FROM students;`, then verify post-flight: rhythm rows in `student_skill_progress` = 0, total_xp unchanged, `is_free_node()` whitelist correct (rhythm_1_1..1_5 + boss_rhythm_1 TRUE; rhythm_1_6/rhythm_2_1 FALSE).
-2. **Owner UAT walkthrough (SC-9):** all 55 rhythm nodes `rhythm_1_1` → `boss_rhythm_10` on a real device — scaffolding cards, paywall (U1 free / U2+ paid), Hebrew RTL nikud, XP preservation, hidden syncopation invisible, Treble/Bass regression spot-check.
+**Historical context (v3.5 Phase 01, retained for reference):**
 
-Resume via `/gsd-verify-work 01` to walk the checklist. The historical Plan 01-04 context below is retained for reference only.
+- `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` applied to production 2026-06-28 — rhythm wipe + `is_free_node()` body swap, `total_xp` preserved.
+- Hidden Syncopation renamed `rhythm_8_*` → `rhythm_synco_*`; HIDDEN-V1 4-step re-enable checklist in `src/data/expandedNodes.js`.
+- `game.discovery.cards.*` EN+HE tree authored for all 12 rhythm concepts (89 paths each, exact parity), Kodaly nikud reused verbatim.
 
-**Historical (Plan 01-04, superseded by 01-05..01-10):**
-
-- `supabase/migrations/20260601000001_phase1_rhythm_pedagogy.sql` authored — BEGIN/COMMIT transaction, scoped DELETE on `student_skill_progress WHERE node_id LIKE 'rhythm_%' OR LIKE 'boss_rhythm_%'`, conditional `student_unit_progress` cleanup, `CREATE OR REPLACE is_free_node()` with 25-ID whitelist (D-12), pre/post-flight DO blocks with `RAISE EXCEPTION` invariant trip-wire
-- Migration committed to repo at canonical path but NOT YET APPLIED — Plan 01-10 owner-gated `supabase db push` per D-13 deploy ordering
-- `src/config/subscriptionConfig.js` updated in lockstep: `FREE_RHYTHM_NODE_IDS` = 5 IDs (1_1..1_5); new `FREE_BOSS_RHYTHM_NODE_IDS = ['boss_rhythm_1']`; `boss_rhythm_1` removed from `PAYWALL_BOSS_NODE_IDS`; `FREE_NODE_IDS` Set spreads `FREE_BOSS_RHYTHM_NODE_IDS`
-- `FREE_TIER_SUMMARY`: rhythm 4→6, total 23→25, bossNodeCount 5→4
-- `freeNodes.parity.test.js` GREEN (was RED after Plan 01-01) — JS Set membership exactly mirrors SQL whitelist
-- `subscriptionConfig.test.js` 3 stale assertions updated to D-12 invariants (Rule 1 — would have broken CI otherwise)
-- `npx vitest run src/config/` → 10/10 green
-- Wave 2 (01-05..01-08) unit-data plans can reference `boss_rhythm_1` as free + `rhythm_1_5` as new U1 terminus; Plan 01-10 has migration artifact ready to apply
-
-**Plan 01-03 context (still current):**
-
-- `game.discovery.cards.*` tree authored in EN + HE common.json for all 12 concepts (q, qr, h, hr, w, wr, 8_pair, 16, hd, qd, 3_4, 6_8) — 89 paths each, exact key-for-key parity verified
-- 7 new unit display names added to EN + HE trail.json (3 pre-existing preserved: Eighth Notes, Sixteenth Notes, Six-Eight Time)
-- scaffolding-card-parity test transitioned from vacuously-passing → substantively-passing (was 0/0 paths, now 89/89 each)
-- Kodaly nikud forms reused verbatim from `syllableOverride.*` in new card body text; `syllableOverride` subtree byte-identical
-- `rhythm_synco_*` namespace from Plan 01-02 preserved
-
-**Hidden Syncopation context (from 01-02, still current):**
-
-- Hidden Syncopation unit IDs renamed: `rhythm_8_1..6` → `rhythm_synco_1..6`, `boss_rhythm_8` → `boss_rhythm_synco`
-- `rhythm_8_*` / `boss_rhythm_8` numeric namespace is now FREE across src/, scripts/, supabase/, public/ (only 2 doc references remain — rename-history comment + describe label, neither a code-path ID reference)
-- HIDDEN-V1 markers in `src/data/expandedNodes.js` preserved with expanded 4-step re-enable checklist naming Plan 08 as RHYTHM_SYNCO UNITS pre-author
-- trail.json EN+HE `unit8Nodes` block keys renamed in lockstep
-- `npm run verify:trail` introduces ZERO new failures (still RED on pre-existing U1/U4/U5 concept-per-unit + 3 orphan-tag warnings — both Wave 0 known states from Plan 01-01)
-
-**Stopped at:** Phase 36 UI-SPEC approved
-**Resume file:** .planning/phases/36-game-screen-ui-unification/36-UI-SPEC.md
+**Stopped at:** v3.7 roadmap created (this session)
+**Resume file:** None — resume via `/gsd-plan-phase 01`
 
 ---
 
-_State updated: 2026-06-28 — Reconciled against disk via /gsd-progress, then closed v3.6. Corrected stale frontmatter (was status: milestone_complete / percent: 200 / "ready to execute Plan 01-05" — all superseded). Reality: v3.5 Phase 01 is 10/10 plans code-complete, blocked only on owner-gated production migration (D-13) + 55-node UAT walkthrough (01-VERIFICATION: human_needed, 01-HUMAN-UAT: partial). v3.6 Phase 36 (Game Screen UI Unification) shipped + archived to `.planning/milestones/v3.6-*` and tagged `v3.6`; v3.5 remains the active milestone._
+_State updated: 2026-07-09 — v3.7 Sight-Reading Engagement & Pedagogy roadmap created: 3 phases (01 Engagement HUD Parity, 02 Practice Tooling, 03 Adaptive Pedagogy), 12/12 v1 requirements mapped, 0 gaps. Next: `/gsd-plan-phase 01`._
