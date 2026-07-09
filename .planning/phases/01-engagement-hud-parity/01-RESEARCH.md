@@ -451,9 +451,9 @@ already-installed dependencies).
 **If this table is empty:** N/A — see above; none of these are compliance/security/retention-policy
 claims, all are low-risk implementation-detail defaults the planner can adjust freely.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should "Try Again" (replay same exercise) preserve or reset combo?**
+1. **Should "Try Again" (replay same exercise) preserve or reset combo?** — RESOLVED: preserve combo. `resetCombo` fires only at session boundaries (`startSession`/`resetSession`); `replayPattern()` deliberately does not, so a retry keeps the streak (Plan 01 Task 2, D-05).
    - What we know: `replayPattern()` does not call `resetSession()`/`startSession()` — only
      `handleStartNewSession()` and `returnToSetup()` do. Per current context wiring, combo would
      naturally persist through a Try Again.
@@ -462,14 +462,14 @@ claims, all are low-risk implementation-detail defaults the planner can adjust f
    - Recommendation: Default to persisting combo through Try Again (matches the "session-wide" spirit
      and requires zero extra code) unless the planner or a quick owner check-in decides otherwise.
 
-2. **Should combo/on-fire be echoed on the `VictoryScreen` or the inline encouragement screen?**
+2. **Should combo/on-fire be echoed on the `VictoryScreen` or the inline encouragement screen?** — RESOLVED: no echo. Combo/on-fire live on the gameplay HUD only; the summary screens are left untouched this phase (Claude discretion, not required — Plan 02 scope).
    - What we know: CONTEXT.md explicitly marks this as "Claude's Discretion... not required."
    - What's unclear: No strong signal either way from the phase goal (parity is about the _live
      gameplay_ HUD, not the summary screens).
    - Recommendation: Skip it for this phase (simplest, satisfies all locked success criteria); revisit
      only if a future phase wants richer session summaries.
 
-3. **On-fire re-tuning if session-wide scope makes threshold=5 trivial**
+3. **On-fire re-tuning if session-wide scope makes threshold=5 trivial** — RESOLVED: ship at threshold=5 (D-06 default); `ON_FIRE_THRESHOLD` is a single named constant, and 01-VALIDATION.md carries a manual-verification row to re-tune post-playtest if needed.
    - What we know: D-06 explicitly flags this as a possible follow-up but defaults to reuse.
    - What's unclear: Whether 5 will actually feel too easy — this is an empirical/UX question that
      can't be resolved by static code research; needs a playtest or owner judgment call after
