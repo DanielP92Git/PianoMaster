@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.7
 milestone_name: Sight-Reading Engagement & Pedagogy
-status: executing
-stopped_at: Phase 01 Plan 01 complete
-last_updated: "2026-07-09T19:53:43.720Z"
+status: verifying
+stopped_at: Phase 01 complete (Plans 01-01, 01-02) — ready for verification
+last_updated: "2026-07-09T20:19:39.193Z"
 last_activity: 2026-07-09
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
-  percent: 50
+  completed_plans: 2
+  percent: 100
 ---
 
 # Project State
@@ -27,10 +27,10 @@ See: .planning/PROJECT.md (updated 2026-07-09 after v3.7 milestone opened)
 
 Phase: 01 (engagement-hud-parity) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-09
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ### Quick Tasks Completed
 
@@ -49,9 +49,10 @@ Progress: [█████░░░░░] 50%
 
 ### Phase 01 Execution Metrics (v3.7)
 
-| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                     |
-| ----- | -------- | ----- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 01-01 | 6 min    | 3     | 2     | Session-wide combo/on-fire state added to `SightReadingSessionContext` (ref+state double-write, D-06). Task 3 (HUD-02 deferral) already satisfied from context-gathering, no edit needed. |
+| Plan  | Duration | Tasks | Files | Notes                                                                                                                                                                                                                              |
+| ----- | -------- | ----- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 01-01 | 6 min    | 3     | 2     | Session-wide combo/on-fire state added to `SightReadingSessionContext` (ref+state double-write, D-06). Task 3 (HUD-02 deferral) already satisfied from context-gathering, no edit needed.                                          |
+| 01-02 | 15 min   | 2     | 3     | Wired `incrementCombo()`/`resetCombo()` into the two existing record sites in `SightReadingGame.jsx`; rendered `ComboPill`/`OnFireBadge`/`OnFireSplash` in HUD + root. No fire sound (mic-safety). Full suite green (1975 passed). |
 
 ## Deferred Items
 
@@ -118,6 +119,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - **Roadmap:** Phase 03 is the only phase touching Supabase (JSONB per-note-mastery field); it gets its own `/gsd-secure-phase` pass before merge, mirroring the security rigor applied to `student_skill_progress` elsewhere in the codebase.
 - **01-01:** Combo/isOnFire kept as sibling `useState`/`useRef` pairs outside the existing state blob in `SightReadingSessionContext`, matching `NotesRecognitionGame`'s precedent rather than nesting inside `createInitialState()`.
 - **01-01:** `ON_FIRE_THRESHOLD = 5` defined locally in `SightReadingSessionContext.jsx` (D-06) — reused verbatim from `NotesRecognitionGame`'s module-level constant rather than imported (not exported there).
+- **01-02:** No fire sound wired for the on-fire celebration — sight-reading runs continuous mic pitch-detection during PERFORMANCE, and an audible oscillator blip (as used in `NotesRecognitionGame`) risks a phantom mic detection / false note; the splash + badge deliver the celebration safely without touching audio.
+- **01-02:** `isOnFire` passed to `ComboPill` (diverges from `NotesRecognitionGame`'s own usage, which omits it) — surfaces a double signal (dedicated `OnFireBadge` + `ComboPill`'s own flame-icon swap), intentional per "maximum motivational juice" framing (RESEARCH.md).
 
 ## Resolved Items
 
@@ -131,7 +134,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Plan Phase 01 (Engagement HUD Parity) via `/gsd-plan-phase 01`. Phases 02 and 03 follow in order; Phase 03 additionally requires a `/gsd-secure-phase` pass before merge (JSONB per-note-mastery field on the student progress row, under RLS).
+**Next action:** Phase 01 (Engagement HUD Parity) is fully executed (Plans 01-01, 01-02) and ready for verification. Run `/gsd-verify-phase 01` (or equivalent phase-close step), then plan Phase 02 (Practice Tooling) via `/gsd-plan-phase 02`. Phase 03 additionally requires a `/gsd-secure-phase` pass before merge (JSONB per-note-mastery field on the student progress row, under RLS).
 
 **Historical context (v3.5 Phase 01, retained for reference):**
 
@@ -139,8 +142,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - Hidden Syncopation renamed `rhythm_8_*` → `rhythm_synco_*`; HIDDEN-V1 4-step re-enable checklist in `src/data/expandedNodes.js`.
 - `game.discovery.cards.*` EN+HE tree authored for all 12 rhythm concepts (89 paths each, exact parity), Kodaly nikud reused verbatim.
 
-**Stopped at:** Phase 01 Plan 01 complete
-**Resume file:** .planning/phases/01-engagement-hud-parity/01-02-PLAN.md
+**Stopped at:** Phase 01 complete (Plans 01-01, 01-02) — ready for verification
+**Resume file:** None
 
 ---
 

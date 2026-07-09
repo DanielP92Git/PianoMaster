@@ -13,7 +13,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 - [x] **HUD-01**: Player sees a live combo counter that increments on consecutive correct notes and resets on a miss, using the shared `ComboPill` component from v3.6. _(Refined in Phase 01 discussion: combo is **session-wide**, spanning exercises, and updates **live note-by-note**.)_
 - [ ] ~~**HUD-02**: Player has a session-level lives system rendered with the shared `LivesDisplay`; depletion routes to the shared `GameOverScreen` path instead of the bespoke sight-reading loss screen.~~ **DEFERRED** (Phase 01 discussion, 2026-07-09) — dropped from v3.7. Sight-reading is high-cognitive-load; a fail/game-over loop punishes rather than motivates, and lives carry no business upside here (monetization is subscription-gated content, not an energy/hearts economy). Positive-only (combo + on-fire) chosen instead; the gentle encouragement screen is retained. Reconsider only as _gentle streak/star pressure_, never hearts + game-over. See `phases/01-engagement-hud-parity/01-CONTEXT.md` D-01/D-02.
-- [ ] **HUD-03**: Player sees an on-fire state (badge + splash) when the combo crosses a threshold, respecting `prefers-reduced-motion`.
+- [x] **HUD-03**: Player sees an on-fire state (badge + splash) when the combo crosses a threshold, respecting `prefers-reduced-motion`.
 
 ### Practice Tooling (P2 — no DB)
 
@@ -31,7 +31,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Cross-cutting
 
-- [ ] **I18N-01**: All new player-facing strings (HUD labels, replay / mode-toggle / review-mistakes controls, coaching copy) ship in EN + HE with RTL correctness and EN↔HE locale parity, gated like prior milestones.
+- [x] **I18N-01**: All new player-facing strings (HUD labels, replay / mode-toggle / review-mistakes controls, coaching copy) ship in EN + HE with RTL correctness and EN↔HE locale parity, gated like prior milestones.
 
 ## v2 Requirements
 
@@ -63,7 +63,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ----------- | ----------- | --------------------- |
 | HUD-01      | Phase 01    | Complete              |
 | HUD-02      | —           | Deferred (2026-07-09) |
-| HUD-03      | Phase 01    | Pending               |
+| HUD-03      | Phase 01    | Complete              |
 | PRAC-01     | Phase 02    | Pending               |
 | PRAC-02     | Phase 02    | Pending               |
 | PRAC-03     | Phase 02    | Pending               |
@@ -72,7 +72,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ADAPT-02    | Phase 03    | Pending               |
 | ADAPT-03    | Phase 03    | Pending               |
 | ADAPT-04    | Phase 03    | Pending               |
-| I18N-01     | Phase 01–03 | Pending               |
+| I18N-01     | Phase 01–03 | Complete              |
 
 **Coverage:**
 
