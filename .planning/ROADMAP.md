@@ -141,7 +141,17 @@ how strictly they're graded, and revisit only what they got wrong.
 4. After finishing an exercise, the player can enter a Review-mistakes mode that steps through only the wrong/missed notes from that attempt (not the full exercise again).
 5. All new controls and labels (replay button, mode toggle, review-mistakes UI) ship in EN+HE with correct RTL mirroring and no locale-parity gaps.
 
-**Plans**: TBD
+**Plans**: 9 plans across 5 waves
+
+- [ ] 02-01-PLAN.md — Grading-mode logic core: gradingModes constants, mode-aware timing + score (Wave 1)
+- [ ] 02-02-PLAN.md — Comparison building blocks: buildPlayedRendition + VexFlow playback highlight (Wave 1)
+- [ ] 02-03-PLAN.md — Session mode state (lock) + review-drill hook + ReviewDrillPanel (Wave 1)
+- [ ] 02-04-PLAN.md — i18n strings (EN+HE) + sightReading parity gate (Wave 1)
+- [ ] 02-05-PLAN.md — Practice persistence suppression: useVictoryState + VictoryScreen (Wave 1)
+- [ ] 02-06-PLAN.md — Feedback panel two-row (D-23) + SightReadingLayout review phase (Wave 2)
+- [ ] 02-07-PLAN.md — Mode wiring in SightReadingGame: pill, lock, grading + persistence gate (Wave 3)
+- [ ] 02-08-PLAN.md — Replay (PRAC-01) + comparison playback (PRAC-02) wiring (Wave 4)
+- [ ] 02-09-PLAN.md — Review-mistakes wiring: REVIEW phase, input routing, drill (Wave 5)
 
 ---
 
@@ -172,7 +182,7 @@ practice can target them, all while keeping a child's mastery data locked to tha
 | Phase                     | Plans Complete | Status      | Completed  |
 | ------------------------- | -------------- | ----------- | ---------- |
 | 01. Engagement HUD Parity | 2/2            | Complete    | 2026-07-09 |
-| 02. Practice Tooling      | 0/TBD          | Not started | -          |
+| 02. Practice Tooling      | 0/9            | Not started | -          |
 | 03. Adaptive Pedagogy     | 0/TBD          | Not started | -          |
 
 ---
