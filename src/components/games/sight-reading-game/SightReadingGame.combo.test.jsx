@@ -13,7 +13,6 @@ const resetComboSpy = vi.hoisted(() => vi.fn());
 // Populated by the mocked useSightReadingSession hook on every render so tests can
 // drive combo state directly without re-running the full note-detection pipeline.
 let capturedIncrementCombo = null;
-let capturedResetCombo = null;
 // Populated by the mocked useMicNoteInput hook so tests can simulate a detected note.
 let capturedOnNoteEvent = null;
 
@@ -74,6 +73,10 @@ vi.mock("../../../services/apiScores", () => ({
   updateStudentScore: vi.fn(),
 }));
 
+vi.mock("../../../contexts/AccessibilityContext", () => ({
+  useAccessibility: vi.fn(() => ({ reducedMotion: false })),
+}));
+
 // Stateful mock: uses REAL React state internally (this hook runs inside
 // SightReadingGame's render, so calling useState/useCallback here is valid) so that
 // incrementCombo/resetCombo behave exactly like the real context (Plan 01) and drive
@@ -101,7 +104,6 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
     }, []);
 
     capturedIncrementCombo = incrementCombo;
-    capturedResetCombo = resetCombo;
 
     return {
       totalExercises: 3,
@@ -253,7 +255,6 @@ describe("SightReadingGame (combo integration)", () => {
     incrementComboSpy.mockClear();
     resetComboSpy.mockClear();
     capturedIncrementCombo = null;
-    capturedResetCombo = null;
     capturedOnNoteEvent = null;
   });
 
@@ -287,19 +288,18 @@ describe("SightReadingGame (combo integration)", () => {
   test("persists across exercises (not reset by goToNextExercise)", async () => {
     await startPerformance();
 
-    // Drive combo up directly via the captured hook function (bypasses the
-    // note-detection pipeline — this test targets render/persistence, not scoring).
+    // Score the note correctly (via the real detection pipeline, as in the first test)
+    // so no pending note is left to miss when the exercise timeline completes below —
+    // this test targets the next-exercise transition, not the miss/reset path.
     await act(async () => {
-      capturedIncrementCombo();
-      capturedIncrementCombo();
-      capturedIncrementCombo();
+      capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
     });
 
     expect(screen.getByRole("status", { name: "Combo" })).toHaveTextContent(
-      "3"
+      "1"
     );
 
-    // Let the exercise complete (no note played) to reach the FEEDBACK phase.
+    // Let the exercise complete (already-scored note, no miss) to reach FEEDBACK.
     await act(async () => {
       await vi.advanceTimersByTimeAsync(3000);
     });
@@ -311,7 +311,7 @@ describe("SightReadingGame (combo integration)", () => {
 
     // goToNextExercise is a mocked no-op — combo must survive the advance (D-05).
     expect(screen.getByRole("status", { name: "Combo" })).toHaveTextContent(
-      "3"
+      "1"
     );
   });
 

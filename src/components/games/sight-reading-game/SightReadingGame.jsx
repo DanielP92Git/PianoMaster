@@ -55,6 +55,9 @@ import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 import { useTranslation } from "react-i18next";
 import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
+import { ComboPill } from "../shared/hud/ComboPill";
+import { OnFireBadge } from "../shared/hud/OnFireBadge";
+import { OnFireSplash } from "../shared/hud/OnFireSplash";
 import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
 import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
@@ -232,7 +235,27 @@ export function SightReadingGame() {
     resetSession,
     recordExerciseResult: recordSessionExercise,
     goToNextExercise,
+    combo,
+    isOnFire,
+    incrementCombo,
+    resetCombo,
   } = useSightReadingSession();
+
+  // One-shot on-fire splash: fires only on the false -> true transition (D-08). No fire
+  // sound here — sight-reading runs continuous mic pitch-detection during PERFORMANCE, and
+  // an audible blip risks a phantom mic detection / false note; the splash + badge deliver
+  // the celebration safely.
+  const [showFireSplash, setShowFireSplash] = useState(false);
+  const prevIsOnFireRef = useRef(isOnFire);
+  useEffect(() => {
+    if (isOnFire && !prevIsOnFireRef.current) {
+      setShowFireSplash(true);
+      const t = setTimeout(() => setShowFireSplash(false), 1500);
+      prevIsOnFireRef.current = isOnFire;
+      return () => clearTimeout(t);
+    }
+    prevIsOnFireRef.current = isOnFire;
+  }, [isOnFire]);
 
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
   const [gameSettings, setGameSettings] = useState(DEFAULT_SETTINGS);
@@ -1856,6 +1879,7 @@ export function SightReadingGame() {
           });
         }
         recordPerformanceResult(result);
+        incrementCombo();
         // Clear wrong-pitch tracking for this note once correctly scored.
         wrongPitchSeenRef.current[matchingNoteIndex] = false;
         lastWrongPitchRef.current[matchingNoteIndex] = null;
@@ -1942,6 +1966,7 @@ export function SightReadingGame() {
       evaluateTiming,
       showTimingFeedback,
       recordPerformanceResult,
+      incrementCombo,
       canScoreNow,
       getElapsedMsFromPerformanceStart,
       trackFailedAttemptForAntiCheat,
@@ -2133,6 +2158,7 @@ export function SightReadingGame() {
         // #endregion
 
         recordPerformanceResult(missed);
+        resetCombo();
         // Clear wrong-pitch tracking once this note is finalized.
         wrongPitchSeenRef.current[i] = false;
         lastWrongPitchRef.current[i] = null;
@@ -2183,6 +2209,7 @@ export function SightReadingGame() {
     getElapsedMsFromPerformanceStart,
     inputMode,
     recordPerformanceResult,
+    resetCombo,
   ]);
 
   const loadExercisePattern = useCallback(
@@ -3608,6 +3635,15 @@ export function SightReadingGame() {
 
       {/* Right Controls: Score + BPM + Icons */}
       <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        {/* Combo / On-Fire (HUD-01, HUD-03) */}
+        {isOnFire && (
+          <div aria-label={t("games.engagement.onFire")}>
+            <OnFireBadge active={isOnFire} />
+          </div>
+        )}
+        <div role="status" aria-label={t("games.engagement.combo")}>
+          <ComboPill combo={combo} isOnFire={isOnFire} />
+        </div>
         {/* Score Pill */}
         <ScorePill
           value={Math.round(sessionTotalScore)}
@@ -3837,6 +3873,8 @@ export function SightReadingGame() {
           feedbackPanel={feedbackPanel}
         />
       </div>
+
+      <OnFireSplash show={showFireSplash} />
 
       {/* Input Mode Selection Modal */}
       {showInputModeModal && (
