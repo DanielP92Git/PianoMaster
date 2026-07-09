@@ -1648,6 +1648,59 @@
       "goodJob": "כל הכבוד!",
       "keepPracticing": "המשיכו לתרגל!",
       "tryAgain": "נסו שוב!"
+    },
+    "bpm": "{{value}} BPM",
+    "timing": {
+      "perfect": "מושלם!",
+      "good": "טוב",
+      "okay": "בסדר",
+      "early": "מוקדם מדי",
+      "late": "מאוחר מדי",
+      "wrongNote": "תו שגוי!"
+    },
+    "summary": {
+      "pitch": "צלילים",
+      "rhythm": "קצב",
+      "correct": "נכון",
+      "tooEarly": "מוקדם",
+      "tooLate": "מאוחר",
+      "missed": "הוחמצו",
+      "wrongNotes": "תווים שגויים"
+    },
+    "inputMode": {
+      "title": "בחרו כיצד לנגן את התווים",
+      "keyboardTitle": "מקלדת על המסך בלבד",
+      "keyboardDesc": "נגנו באמצעות פסנתר המסך",
+      "micTitle": "קלט מיקרופון",
+      "micDesc": "נגנו בכלי הנגינה האמיתי שלכם",
+      "cancel": "ביטול"
+    },
+    "penalty": {
+      "title": "בלי לרמות, מאסטרו!",
+      "body": "זיהיתי שהקשת על הרבה קלידים ברצף. ירדו לך נקודות. התחל את התבנית מחדש ונגן רק את התווים שעל החמשה בזמן.",
+      "hint": "הקישו \"התחילו לנגן\" אחרי האיפוס כדי להתחיל את הספירה מחדש.",
+      "tryAgain": "נסה שוב"
+    },
+    "controls": {
+      "toggleMetronome": "הפעלה/כיבוי מטרונום",
+      "switchToMic": "מעבר למיקרופון",
+      "switchToKeyboard": "מעבר למקלדת"
+    },
+    "session": {
+      "victoryTitle": "ניצחון בסבב!",
+      "completeTitle": "הסבב הושלם",
+      "finalXp": "נקודות: {{percent}}% ({{score}})",
+      "victorySubtitle": "עקביות מדהימה לאורך כל {{count}} התרגילים.",
+      "completeSubtitle": "המשיכו! כוונו ל-70% לפחות בסבב הבא.",
+      "startNew": "התחילו סבב חדש",
+      "eyebrow": "הסבב הושלם",
+      "keepGoing": "המשיכו כך!",
+      "encourageBody": "סיימתם את כל {{count}} התרגילים. אתם רק כמה נקודות מפתיחת חגיגת הניצחון.",
+      "totalXp": "{{score}} נקודות בסך הכול • כוונו ל-70% כדי לנצח."
+    },
+    "errors": {
+      "startPerformance": "התחלת הנגינה נכשלה. נסו שוב.",
+      "startGame": "התחלת המשחק נכשלה. נסו שוב."
     }
   },
   "noteRecognition": {

@@ -35,6 +35,7 @@ import {
   calculateOverallScore,
 } from "./utils/scoreCalculator";
 import { FIRST_NOTE_EARLY_MS, NOTE_LATE_MS } from "./constants/timingConstants";
+import { TIMING_FEEDBACK } from "./constants/feedbackPalette";
 import { useUser } from "../../../features/authentication/useUser";
 import { updateStudentScore } from "../../../services/apiScores";
 import toast from "react-hot-toast";
@@ -637,7 +638,8 @@ export function SightReadingGame() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- audioEngine is a new object reference each render (returned from useAudioEngine); adding it would invalidate this callback on every render; audioEngine.getCurrentTime() accesses an internal AudioContext ref that is stable
   }, []);
 
-  const [, setTimingFeedback] = useState(null); // { message, color, timestamp }
+  const [timingFeedback, setTimingFeedback] = useState(null); // { status, timestamp }
+  const timingFeedbackTimeoutRef = useRef(null);
   const [summaryStats, setSummaryStats] = useState(null);
   const guessPenaltyRef = useRef(0);
   const failedAttemptTrackerRef = useRef([]);
@@ -1278,55 +1280,44 @@ export function SightReadingGame() {
   /**
    * Show timing feedback message with color-coded styling
    */
+  // Live per-note feedback: store only the timing status; the banner reads styling +
+  // localized label from TIMING_FEEDBACK at render time (constants/feedbackPalette.js).
   const showTimingFeedback = useCallback((timing) => {
-    // Map timing status to colors and emojis
-    const feedbackMap = {
-      perfect: {
-        message: "🎯 Perfect!",
-        color: "text-green-400",
-        bg: "bg-green-500/20",
-      },
-      good: {
-        message: "✓ Good",
-        color: "text-green-300",
-        bg: "bg-green-500/15",
-      },
-      okay: {
-        message: "~ Okay",
-        color: "text-yellow-400",
-        bg: "bg-yellow-500/20",
-      },
-      early: {
-        message: "⏩ Too Early",
-        color: "text-orange-400",
-        bg: "bg-orange-500/20",
-      },
-      late: {
-        message: "⏪ Too Late",
-        color: "text-orange-400",
-        bg: "bg-orange-500/20",
-      },
-      wrong_pitch: {
-        message: "✗ Wrong Note!",
-        color: "text-red-400",
-        bg: "bg-red-500/20",
-      },
-    };
+    const status = TIMING_FEEDBACK[timing?.status] ? timing.status : "okay";
 
-    const feedback = feedbackMap[timing.status] || feedbackMap.okay;
+    setTimingFeedback({ status, timestamp: Date.now() });
 
-    setTimingFeedback({
-      message: feedback.message,
-      color: feedback.color,
-      bg: feedback.bg,
-      timestamp: Date.now(),
-    });
-
-    // Auto-hide feedback after 1.5 seconds
-    setTimeout(() => {
+    // Auto-hide after 1.5s; clear any pending hide so rapid notes don't blank early.
+    if (timingFeedbackTimeoutRef.current) {
+      clearTimeout(timingFeedbackTimeoutRef.current);
+    }
+    timingFeedbackTimeoutRef.current = setTimeout(() => {
       setTimingFeedback(null);
+      timingFeedbackTimeoutRef.current = null;
     }, 1500);
   }, []);
+
+  // Clear the live per-note banner (and its pending hide timer) whenever we leave the
+  // PERFORMANCE phase, so a last-note message doesn't linger into feedback/setup.
+  useEffect(() => {
+    if (gamePhase !== GAME_PHASES.PERFORMANCE) {
+      if (timingFeedbackTimeoutRef.current) {
+        clearTimeout(timingFeedbackTimeoutRef.current);
+        timingFeedbackTimeoutRef.current = null;
+      }
+      setTimingFeedback(null);
+    }
+  }, [gamePhase]);
+
+  // Clear the hide timer on unmount (avoids setState-after-unmount on fast navigation).
+  useEffect(
+    () => () => {
+      if (timingFeedbackTimeoutRef.current) {
+        clearTimeout(timingFeedbackTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (gamePhase !== GAME_PHASES.FEEDBACK || !currentPattern) {
@@ -1368,41 +1359,9 @@ export function SightReadingGame() {
         entry.total === 0 ? 0 : Math.round((entry.correct / entry.total) * 100);
     });
 
-    const perNoteEntries = Object.entries(perNoteAccuracy).map(
-      ([pitch, data]) => ({
-        pitch,
-        ...data,
-      })
-    );
-
-    const coachingCandidates = perNoteEntries
-      .filter((entry) => entry.total > 0)
-      .sort((a, b) => {
-        if (a.accuracy === b.accuracy) {
-          return b.total - a.total;
-        }
-        return a.accuracy - b.accuracy;
-      });
-
-    const focusNotes = coachingCandidates.slice(0, 2);
-    const coaching =
-      focusNotes.length === 0
-        ? null
-        : {
-            focusNotes,
-            headline:
-              focusNotes[0].accuracy >= 90
-                ? `Nice work! Keep reinforcing ${focusNotes[0].label}.`
-                : `Focus on ${focusNotes
-                    .map((note) => note.label)
-                    .join(" & ")} next.`,
-            detail:
-              focusNotes.length === 1
-                ? `${focusNotes[0].label}: ${focusNotes[0].accuracy}% accuracy`
-                : focusNotes
-                    .map((note) => `${note.label}: ${note.accuracy}% accuracy`)
-                    .join(" • "),
-          };
+    // perNoteAccuracy is retained on summaryStats for future per-note mastery tracking
+    // (deep-audit Phase D), but is intentionally not surfaced in the child-facing summary —
+    // the post-exercise panel is kept minimal (stars + accuracy bars + status breakdown).
 
     const patternPitches = currentPattern.notes
       .filter((event) => event.type === "note" && event.pitch)
@@ -1426,7 +1385,6 @@ export function SightReadingGame() {
       baseScore,
       penaltyPoints: penaltyPointsTotal,
       perNoteAccuracy,
-      coaching,
       metadata,
     });
     setScoreSubmitted(false);
@@ -3278,7 +3236,7 @@ export function SightReadingGame() {
       }, safetyTimeoutMs);
     } catch (error) {
       console.error("Error beginning performance:", error);
-      alert(error.message || "Failed to start performance. Please try again.");
+      alert(error.message || t("sightReading.errors.startPerformance"));
       setGamePhase(GAME_PHASES.DISPLAY);
       audioEngine.stopScheduler();
     } finally {
@@ -3300,6 +3258,7 @@ export function SightReadingGame() {
     resetPerformanceLiveState,
     startListeningSync,
     rhythmPlayback,
+    t,
   ]);
 
   /**
@@ -3357,13 +3316,13 @@ export function SightReadingGame() {
         setGamePhase(GAME_PHASES.DISPLAY);
       } catch (error) {
         console.error("Error starting game:", error);
-        alert(error.message || "Failed to start game. Please try again.");
+        alert(error.message || t("sightReading.errors.startGame"));
         setGamePhase(GAME_PHASES.SETUP);
         audioEngine.stopScheduler();
         rhythmPlayback.stop();
       }
     },
-    [gameSettings, audioEngine, generatePattern, rhythmPlayback]
+    [gameSettings, audioEngine, generatePattern, rhythmPlayback, t]
   );
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
@@ -3537,14 +3496,15 @@ export function SightReadingGame() {
           <div className="w-full max-w-2xl space-y-6 rounded-3xl border border-white/40 bg-white/95 p-6 text-center shadow-2xl backdrop-blur-xl sm:p-8">
             <div className="space-y-2">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-indigo-400">
-                Session Complete
+                {t("sightReading.session.eyebrow")}
               </p>
               <h2 className="bg-gradient-to-r from-amber-500 via-pink-500 to-purple-600 bg-clip-text text-3xl font-extrabold text-transparent sm:text-4xl">
-                Keep Going!
+                {t("sightReading.session.keepGoing")}
               </h2>
               <p className="text-base text-gray-600 sm:text-lg">
-                You finished all 10 exercises. You&apos;re only a few points
-                away from unlocking the victory celebration.
+                {t("sightReading.session.encourageBody", {
+                  count: sessionTotalExercises,
+                })}
               </p>
             </div>
 
@@ -3559,8 +3519,9 @@ export function SightReadingGame() {
                 {t("sightReading.finalScore")}
               </p>
               <p className="text-sm text-gray-600">
-                {sessionScoreSummary} total XP &bull; Aim for 70% to achieve
-                victory.
+                {t("sightReading.session.totalXp", {
+                  score: sessionScoreSummary,
+                })}
               </p>
             </div>
 
@@ -3654,7 +3615,7 @@ export function SightReadingGame() {
         />
         {/* BPM Pill */}
         <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
-          {gameSettings.tempo} BPM
+          {t("sightReading.bpm", { value: gameSettings.tempo })}
         </div>
 
         {/* Input Mode Selector Button - shows icon of mode you can switch TO */}
@@ -3669,8 +3630,8 @@ export function SightReadingGame() {
             } ${isFeedbackPhase ? "cursor-not-allowed opacity-60" : ""}`}
             title={
               inputMode === "keyboard"
-                ? "Switch to microphone"
-                : "Switch to keyboard"
+                ? t("sightReading.controls.switchToMic")
+                : t("sightReading.controls.switchToKeyboard")
             }
           >
             {inputMode === "keyboard" ? (
@@ -3687,7 +3648,7 @@ export function SightReadingGame() {
               ? "bg-fuchsia-500 hover:bg-fuchsia-600"
               : "bg-white/10 hover:bg-white/20"
           }`}
-          title="Toggle metronome"
+          title={t("sightReading.controls.toggleMetronome")}
           disabled={gamePhase === GAME_PHASES.COUNT_IN}
         >
           <img
@@ -3699,7 +3660,7 @@ export function SightReadingGame() {
         <button
           onClick={() => (nodeConfig ? openSettingsModal() : returnToSetup())}
           className="rounded-lg bg-white/10 p-1.5 transition-colors hover:bg-white/20 sm:p-2"
-          title="Change settings"
+          title={t("sightReading.changeSettings")}
         >
           <Settings className="h-4 w-4 text-white sm:h-5 sm:w-5" />
         </button>
@@ -3735,6 +3696,25 @@ export function SightReadingGame() {
         <p className="text-sm font-semibold text-gray-700 sm:text-base">
           {t("sightReading.listenCountIn")}
         </p>
+      </div>
+    ) : gamePhase === GAME_PHASES.PERFORMANCE ? (
+      // Live per-note feedback banner. Fixed height reserves space so the staff/keyboard
+      // don't jump as the pill appears and clears. Styling + label come from TIMING_FEEDBACK.
+      <div className="my-2 flex h-9 flex-shrink-0 items-center justify-center">
+        {timingFeedback && TIMING_FEEDBACK[timingFeedback.status] && (
+          <span
+            key={timingFeedback.timestamp}
+            className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1 text-sm font-bold shadow-sm transition-opacity duration-150 sm:text-base ${
+              TIMING_FEEDBACK[timingFeedback.status].color
+            } ${TIMING_FEEDBACK[timingFeedback.status].bg}`}
+            aria-live="polite"
+          >
+            <span aria-hidden="true">
+              {TIMING_FEEDBACK[timingFeedback.status].icon}
+            </span>
+            {t(TIMING_FEEDBACK[timingFeedback.status].labelKey)}
+          </span>
+        )}
       </div>
     ) : null;
 
@@ -3795,15 +3775,22 @@ export function SightReadingGame() {
             }`}
           >
             <p className="text-lg font-bold">
-              {isVictory ? "Session Victory!" : "Session Complete"}
+              {isVictory
+                ? t("sightReading.session.victoryTitle")
+                : t("sightReading.session.completeTitle")}
             </p>
             <p className="text-sm">
-              Final XP: {sessionPercentageDisplay}% ({sessionScoreSummary})
+              {t("sightReading.session.finalXp", {
+                percent: sessionPercentageDisplay,
+                score: sessionScoreSummary,
+              })}
             </p>
             <p className="mt-1 text-sm text-slate-600">
               {isVictory
-                ? "Amazing consistency across all 10 exercises."
-                : "Keep going! Aim for at least 70% on your next run."}
+                ? t("sightReading.session.victorySubtitle", {
+                    count: sessionTotalExercises,
+                  })
+                : t("sightReading.session.completeSubtitle")}
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2">
@@ -3811,7 +3798,7 @@ export function SightReadingGame() {
               onClick={handleStartNewSession}
               className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
             >
-              Start New Session
+              {t("sightReading.session.startNew")}
             </button>
           </div>
         </div>
@@ -3855,10 +3842,9 @@ export function SightReadingGame() {
       {showInputModeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="mx-4 max-w-md rounded-lg bg-white p-6">
-            <h3 className="mb-4 text-xl font-bold">Choose Input Mode</h3>
-            <p className="mb-6 text-gray-600">
-              Select how you want to play the notes:
-            </p>
+            <h3 className="mb-6 text-xl font-bold">
+              {t("sightReading.inputMode.title")}
+            </h3>
             <div className="flex flex-col gap-3">
               <button
                 onClick={async () => {
@@ -3871,12 +3857,12 @@ export function SightReadingGame() {
                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50"
                 }`}
               >
-                <div className="text-left">
+                <div className="text-start">
                   <div className="mb-1 font-semibold">
-                    On-screen keyboard only
+                    {t("sightReading.inputMode.keyboardTitle")}
                   </div>
                   <div className="text-sm text-gray-600">
-                    Play using the on-screen piano keyboard
+                    {t("sightReading.inputMode.keyboardDesc")}
                   </div>
                 </div>
               </button>
@@ -3898,10 +3884,12 @@ export function SightReadingGame() {
                     : "border-gray-300 bg-white text-gray-700 hover:border-purple-400 hover:bg-purple-50"
                 }`}
               >
-                <div className="text-left">
-                  <div className="mb-1 font-semibold">Microphone input</div>
+                <div className="text-start">
+                  <div className="mb-1 font-semibold">
+                    {t("sightReading.inputMode.micTitle")}
+                  </div>
                   <div className="text-sm text-gray-600">
-                    Play your real instrument (clap/tap input)
+                    {t("sightReading.inputMode.micDesc")}
                   </div>
                 </div>
               </button>
@@ -3910,7 +3898,7 @@ export function SightReadingGame() {
               onClick={() => setShowInputModeModal(false)}
               className="mt-4 w-full rounded bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
             >
-              Cancel
+              {t("sightReading.inputMode.cancel")}
             </button>
           </div>
         </div>
@@ -3955,22 +3943,20 @@ export function SightReadingGame() {
             />
             <div className="flex-shrink-0">
               <h3 className="text-lg font-bold text-purple-700 sm:text-xl">
-                No Cheating, Maestro!
+                {t("sightReading.penalty.title")}
               </h3>
               <p className="mt-1 text-xs text-gray-600 sm:text-sm">
-                Rapid key presses were detected and points were deducted. Please
-                restart the pattern and play only the highlighted notes in time.
+                {t("sightReading.penalty.body")}
               </p>
             </div>
             <button
               onClick={handlePenaltyTryAgain}
               className="w-full flex-shrink-0 rounded-2xl bg-gradient-to-r from-purple-600 to-indigo-600 py-2.5 font-semibold text-white shadow-lg transition-transform hover:scale-[1.01]"
             >
-              {t("sightReading.tryAgain")}
+              {t("sightReading.penalty.tryAgain")}
             </button>
             <p className="flex-shrink-0 text-xs text-gray-400">
-              Tap &quot;Start Playing&quot; after resetting to begin the
-              count-in again.
+              {t("sightReading.penalty.hint")}
             </p>
           </div>
         </div>

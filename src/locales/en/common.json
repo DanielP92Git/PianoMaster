@@ -1641,6 +1641,59 @@
       "goodJob": "Good Job!",
       "keepPracticing": "Keep Practicing!",
       "tryAgain": "Try Again!"
+    },
+    "bpm": "{{value}} BPM",
+    "timing": {
+      "perfect": "Perfect!",
+      "good": "Good",
+      "okay": "Okay",
+      "early": "Too Early",
+      "late": "Too Late",
+      "wrongNote": "Wrong Note!"
+    },
+    "summary": {
+      "pitch": "Notes",
+      "rhythm": "Rhythm",
+      "correct": "Correct",
+      "tooEarly": "Too Early",
+      "tooLate": "Too Late",
+      "missed": "Missed",
+      "wrongNotes": "Wrong Notes"
+    },
+    "inputMode": {
+      "title": "Select how you want to play the notes",
+      "keyboardTitle": "On-screen keyboard only",
+      "keyboardDesc": "Play using the on-screen piano keyboard",
+      "micTitle": "Microphone input",
+      "micDesc": "Play your real instrument",
+      "cancel": "Cancel"
+    },
+    "penalty": {
+      "title": "No Cheating, Maestro!",
+      "body": "I noticed you pressed a lot of keys in a row. You lost some points. Restart the pattern and play only the notes on the staff, in time.",
+      "hint": "Tap \"Start Playing\" after resetting to begin the count-in again.",
+      "tryAgain": "Try Again"
+    },
+    "controls": {
+      "toggleMetronome": "Toggle metronome",
+      "switchToMic": "Switch to microphone",
+      "switchToKeyboard": "Switch to keyboard"
+    },
+    "session": {
+      "victoryTitle": "Session Victory!",
+      "completeTitle": "Session Complete",
+      "finalXp": "Final XP: {{percent}}% ({{score}})",
+      "victorySubtitle": "Amazing consistency across all {{count}} exercises.",
+      "completeSubtitle": "Keep going! Aim for at least 70% on your next run.",
+      "startNew": "Start New Session",
+      "eyebrow": "Session Complete",
+      "keepGoing": "Keep Going!",
+      "encourageBody": "You finished all {{count}} exercises. You're only a few points away from unlocking the victory celebration.",
+      "totalXp": "{{score}} total XP • Aim for 70% to achieve victory."
+    },
+    "errors": {
+      "startPerformance": "Failed to start performance. Please try again.",
+      "startGame": "Failed to start game. Please try again."
     }
   },
   "noteRecognition": {
