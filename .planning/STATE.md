@@ -3,8 +3,9 @@ gsd_state_version: 1.0
 milestone: v3.7
 milestone_name: Sight-Reading Engagement & Pedagogy
 status: planning
-last_updated: "2026-07-09T19:00:00.000Z"
-last_activity: 2026-07-09
+stopped_at: Phase 01 context gathered
+last_updated: "2026-07-09T18:49:49.265Z"
+last_activity: 2026-07-09 — v3.7 roadmap created (3 phases, 12/12 v1 requirements mapped, 0/0 gaps)
 progress:
   total_phases: 3
   completed_phases: 0
@@ -130,8 +131,8 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 - Hidden Syncopation renamed `rhythm_8_*` → `rhythm_synco_*`; HIDDEN-V1 4-step re-enable checklist in `src/data/expandedNodes.js`.
 - `game.discovery.cards.*` EN+HE tree authored for all 12 rhythm concepts (89 paths each, exact parity), Kodaly nikud reused verbatim.
 
-**Stopped at:** v3.7 roadmap created (this session)
-**Resume file:** None — resume via `/gsd-plan-phase 01`
+**Stopped at:** Phase 01 context gathered
+**Resume file:** .planning/phases/01-engagement-hud-parity/01-CONTEXT.md
 
 ---
 
