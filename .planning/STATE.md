@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v3.7
 milestone_name: Sight-Reading Engagement & Pedagogy
-status: verifying
+status: ready_to_plan
 stopped_at: Phase 01 complete (Plans 01-01, 01-02) — ready for verification
 last_updated: "2026-07-09T20:19:39.193Z"
 last_activity: 2026-07-09
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 2
   completed_plans: 2
-  percent: 100
+  percent: 67
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-07-09 after v3.7 milestone opened)
 
 ## Current Position
 
-Phase: 01 (engagement-hud-parity) — EXECUTING
-Plan: 2 of 2
-Status: Phase complete — ready for verification
+Phase: 02
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-07-09
 
 Progress: [██████████] 100%
