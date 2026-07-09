@@ -80,7 +80,7 @@ vi.mock("../../../contexts/AccessibilityContext", () => ({
 // Stateful mock: uses REAL React state internally (this hook runs inside
 // SightReadingGame's render, so calling useState/useCallback here is valid) so that
 // incrementCombo/resetCombo behave exactly like the real context (Plan 01) and drive
-// genuine re-renders — needed to exercise ComboPill/OnFireBadge/OnFireSplash's own
+// genuine re-renders — needed to exercise ComboPill/OnFireBadge's own
 // combo-transition effects faithfully.
 vi.mock("../../../contexts/SightReadingSessionContext", () => ({
   SIGHT_READING_SESSION_CONSTANTS: { DEFAULT_MAX_SCORE_PER_EXERCISE: 1000 },
@@ -315,7 +315,7 @@ describe("SightReadingGame (combo integration)", () => {
     );
   });
 
-  test("renders ComboPill + OnFireBadge + OnFireSplash at combo >= 5 and on-fire", async () => {
+  test("renders ComboPill + OnFireBadge at combo >= 5 and on-fire", async () => {
     await startPerformance();
 
     await act(async () => {

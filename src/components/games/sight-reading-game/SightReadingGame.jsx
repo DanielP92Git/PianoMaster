@@ -57,7 +57,6 @@ import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
 import { ComboPill } from "../shared/hud/ComboPill";
 import { OnFireBadge } from "../shared/hud/OnFireBadge";
-import { OnFireSplash } from "../shared/hud/OnFireSplash";
 import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
 import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
@@ -240,22 +239,6 @@ export function SightReadingGame() {
     incrementCombo,
     resetCombo,
   } = useSightReadingSession();
-
-  // One-shot on-fire splash: fires only on the false -> true transition (D-08). No fire
-  // sound here — sight-reading runs continuous mic pitch-detection during PERFORMANCE, and
-  // an audible blip risks a phantom mic detection / false note; the splash + badge deliver
-  // the celebration safely.
-  const [showFireSplash, setShowFireSplash] = useState(false);
-  const prevIsOnFireRef = useRef(isOnFire);
-  useEffect(() => {
-    if (isOnFire && !prevIsOnFireRef.current) {
-      setShowFireSplash(true);
-      const t = setTimeout(() => setShowFireSplash(false), 1500);
-      prevIsOnFireRef.current = isOnFire;
-      return () => clearTimeout(t);
-    }
-    prevIsOnFireRef.current = isOnFire;
-  }, [isOnFire]);
 
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
   const [gameSettings, setGameSettings] = useState(DEFAULT_SETTINGS);
@@ -749,7 +732,15 @@ export function SightReadingGame() {
     // Leave PERFORMANCE so no FEEDBACK-phase effect can fire while the penalty modal is
     // showing (mirrors the DISPLAY phase replayPattern already returns to on "Try Again").
     setGamePhase(GAME_PHASES.DISPLAY);
-  }, [audioEngine, inputMode, rhythmPlayback, stopMetronomePlayback]);
+    // Keep the combo/on-fire HUD consistent with the score-side penalty (WR-01).
+    resetCombo();
+  }, [
+    audioEngine,
+    inputMode,
+    rhythmPlayback,
+    stopMetronomePlayback,
+    resetCombo,
+  ]);
 
   const registerGuessPenalty = useCallback(
     (context) => {
@@ -3873,8 +3864,6 @@ export function SightReadingGame() {
           feedbackPanel={feedbackPanel}
         />
       </div>
-
-      <OnFireSplash show={showFireSplash} />
 
       {/* Input Mode Selection Modal */}
       {showInputModeModal && (
