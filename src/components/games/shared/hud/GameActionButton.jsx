@@ -9,18 +9,20 @@ import React from "react";
  * pill — the style the owner standardised on — so every game's feedback/nav
  * buttons look identical.
  *
- * Tones:
- * - `retry`   green → emerald  (try again / replay the same exercise)
- * - `advance` indigo → violet  (next pattern / next exercise — the primary CTA)
- * - `neutral` slate            (end session / secondary exit)
+ * Tones (color follows CTA weight, not hue preference — on the purple app
+ * background green pops and indigo/violet recedes, so the primary action gets
+ * green and the secondary action gets indigo/violet):
+ * - `advance` green → emerald   (next pattern / next exercise — the primary CTA, gets the pop)
+ * - `retry`   indigo → violet   (try again / replay the same exercise — secondary, recedes)
+ * - `neutral` slate             (end session / secondary exit)
  *
  * Layout (width / flex) is left to the caller via `className` so the same pill
  * works in a full-width split row (`flex-1`) or a centred row.
  */
 const TONES = {
-  retry:
-    "bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 focus:ring-green-400/50",
   advance:
+    "bg-gradient-to-br from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 focus:ring-green-400/50",
+  retry:
     "bg-gradient-to-br from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 focus:ring-indigo-400/50",
   neutral:
     "bg-gradient-to-br from-slate-500 to-slate-600 hover:from-slate-400 hover:to-slate-500 focus:ring-slate-400/50",
