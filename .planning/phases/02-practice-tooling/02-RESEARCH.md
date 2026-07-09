@@ -736,24 +736,24 @@ The relevant "current approaches" in this codebase, for planner orientation:
 | A4  | A small additive `playbackHighlightIndex` prop on `VexFlowStaffDisplay` is the right way to satisfy D-14's "seen" without disturbing feedback result-coloring | Pitfall 6     | If VexFlow group styling fights the outline approach, fall back to audio-only pass-1 + a "now playing: yours/correct" label; D-14's visual promise weakens [ASSUMED]                                         |
 | A5  | The review drill needs no time limit and no attempt cap per note (untimed per D-16); a child stuck on one pitch can replay the target or exit                 | Review design | If a child can soft-lock (e.g., mic can't hear the target pitch), need an escape hatch — recommend a per-note "skip" affordance regardless [ASSUMED]                                                         |
 
-## Open Questions
+## Open Questions (RESOLVED — dispositions recorded at planning, 2026-07-10)
 
-1. **Practice mode and the streak (A3)** — the one place D-01's blanket "never persists" collides
+1. **Practice mode and the streak (A3)** — **RESOLVED (planning):** strict D-01 reading adopted — Practice does NOT extend the streak; the streak effect is gated behind `suppressPersistence` in Plan 02-05 Task 1 (under-claiming is reversible; surface to owner at UAT if it feels wrong). — the one place D-01's blanket "never persists" collides
    with a motivation system the owner cares about. What we know: streak update fires inside
    `useVictoryState` at ≥80% session score. Recommendation: surface to owner at plan review;
    default to NOT extending (strict D-01 reading) since under-claiming is reversible.
-2. **Divider between comparison passes** (owner-delegated) — recommendation: a single soft
+2. **Divider between comparison passes** — **RESOLVED (planning):** left to executor discretion in Plan 02-08 Task 2 (optional soft tick/label using `sightReading.compare.yours`/`.correct`; "keep it simple if unsure"). — recommendation: a single soft
    metronome-style tick + ~400ms gap, plus the on-screen "yours / correct" label switching; purely
    additive, no new audio infra (`audioEngine.createMetronomeClick` exists, :2269).
-3. **Review target-pitch autoplay** (owner-delegated) — recommendation: play the target once
+3. **Review target-pitch autoplay** — **RESOLVED (planning):** auto-audition once on entering each mistake (Plan 02-03 Task 2), with the mic phantom-detect guard (delay-until-listening or ~500ms handler gate) mandated in Plan 02-09 Task 2. — recommendation: play the target once
    automatically on entering each mistake (recall support for an 8-year-old), plus a replay-target
    button; in mic mode, delay the autoplay until after mic is listening to avoid the tone being
    picked up as input — or gate the review handler for ~500ms after autoplay (same phantom-note
    concern that led Phase 01 to drop the fire sound).
-4. **Penalty modal in Practice** (owner-delegated) — recommendation: suppress modal and penalty
+4. **Penalty modal in Practice** — **RESOLVED (planning):** recommendation adopted verbatim in Plan 02-07 Task 2 item 7 — modal + penaltyPoints display suppressed in Practice, anti-cheat tracking keeps running. — recommendation: suppress modal and penalty
    display in Practice (Pitfall 9); keep anti-cheat tracking code running (zero-cost, avoids
    divergent code paths).
-5. **D-15 (wrong-pitch timeDiff)** — recommendation: close it; verified one-line-shaped change at
+5. **D-15 (wrong-pitch timeDiff)** — **RESOLVED (planning): intentionally left OPEN/unclosed** per CONTEXT.md D-15 "optional" framing — wrong-pitch notes replay at the metronomically-expected position this phase; the cheap `{pitch, timeDiff}` close remains a documented follow-up. — recommendation: close it; verified one-line-shaped change at
    :1924 (`lastWrongPitchRef.current[i] = { pitch: detectedNote, timeDiff }`) plus reading the
    object in the sweep (:2113-2115) and in `buildPlayedRendition`. No new hot-path state.
 
