@@ -302,7 +302,19 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-- _None._ v3.5 Rhythm Pedagogy shipped 2026-06-29 (owner gates closed). Awaiting next-milestone definition via `/gsd-new-milestone`.
+- **v3.7 Sight-Reading Engagement & Pedagogy** — see `## Current Milestone` below and `.planning/REQUIREMENTS.md`. Turns the correctness/perf/feedback-hardened sight-reading game (Phases A–C, PRs #10/#11/#12) into an elite learning experience: engagement HUD parity, practice tooling (replay / practice-vs-test / review-mistakes), and adaptive per-note-mastery pedagogy.
+
+## Current Milestone: v3.7 Sight-Reading Engagement & Pedagogy
+
+**Goal:** Turn the now-correct, performant, feedback-wired sight-reading game into an elite learning experience — engagement parity with the sibling games plus adaptive, mastery-driven pedagogy. (Phase D of the sight-reading deep audit; Phases A/B/C shipped as PRs #10/#11/#12.)
+
+**Target features (owner-agreed 3-phase split):**
+
+- **P1 — Engagement HUD parity (no DB):** combo / lives / on-fire, reusing the shared HUD components extracted in v3.6 (`UX-4`).
+- **P2 — Practice tooling (no DB):** "hear it again" + played-vs-correct replay (feature 5); Practice vs Test mode with lenient/strict timing tolerances (feature 6); Review-mistakes mode stepping through only wrong/missed notes (feature 7).
+- **P3 — Adaptive pedagogy (needs Supabase):** in-session progressive difficulty (feature 8); adaptive tempo (feature 9); persist per-note mastery via a JSONB addition on progress rows (feature 10) — gets its own `/gsd-secure-phase` pass.
+
+**Key context:** Source plan `~/.claude/plans/analyze-the-entire-codebase-valiant-hejlsberg.md` (Phase D, §"Missing Features" 5–10). P1/P2 are pure client work reusing existing infra — `timingStatus` already carries early/late, `performanceResults` carries `noteIndex`, and `perNoteAccuracy` is already computed per exercise then discarded. Only P3 touches the DB.
 
 ## Planning Next Milestone
 
@@ -662,4 +674,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-29 — v3.5 Rhythm Pedagogy (Phase 01) shipped and archived (owner gates D-13 + SC-9 closed; milestone audit PASSED). No active milestone; next via `/gsd-new-milestone`._
+_Last updated: 2026-07-09 — v3.7 Sight-Reading Engagement & Pedagogy milestone opened (Phase D of the sight-reading deep audit). Scope: engagement HUD parity, practice tooling, adaptive per-note-mastery pedagogy. Requirements in `.planning/REQUIREMENTS.md`; roadmap in `.planning/ROADMAP.md`._

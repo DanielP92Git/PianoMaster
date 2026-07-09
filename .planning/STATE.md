@@ -1,17 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v3.5
-milestone_name: Rhythm Pedagogy
-status: milestone_complete
-stopped_at: v3.5 shipped 2026-06-29 — Phase 01 (10/10 plans), owner gates D-13 + SC-9 closed, milestone audit PASSED, tagged v3.5. No active milestone.
-last_updated: "2026-06-29T00:00:00.000Z"
-last_activity: 2026-06-29 -- v3.5 Rhythm Pedagogy milestone completed and archived
+milestone: v3.7
+milestone_name: Sight-Reading Engagement & Pedagogy
+status: planning
+last_updated: "2026-07-09T18:05:59.163Z"
+last_activity: 2026-07-09
 progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 10
-  completed_plans: 10
-  percent: 100
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
+  percent: 0
 ---
 
 # Project State
@@ -25,12 +24,10 @@ See: .planning/PROJECT.md (updated 2026-06-29 after v3.5 milestone)
 
 ## Current Position
 
-Active milestone: _None_ — v3.5 Rhythm Pedagogy SHIPPED 2026-06-29 (tagged `v3.5`).
-Last phase: 01 — Rhythm Trail Pedagogical Restructure (10/10 plans, all 7 reqs satisfied)
-Status: Milestone complete and archived. Owner gates closed (D-13 production migration applied 2026-06-28; SC-9 device UAT passed 2026-06-29, 2 passed/0 issues). Milestone audit PASSED.
-Last activity: 2026-06-29 - v3.5 milestone completed, archived to `.planning/milestones/v3.5-*`, ROADMAP/PROJECT updated, tagged `v3.5`.
-
-> **Out-of-order closes:** v3.6 Game Screen UI Unification shipped + tagged 2026-06-14 while v3.5 was blocked on owner gates. v3.5 is therefore the chronologically most recent close (2026-06-29) despite the lower version number. Both archived under `.planning/milestones/`.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-07-09 — Milestone v3.7 started
 
 ### Quick Tasks Completed
 
