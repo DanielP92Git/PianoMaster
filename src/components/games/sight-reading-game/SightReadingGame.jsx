@@ -119,6 +119,12 @@ const MIC_FIRST_NOTE_LATE_GRACE_MS = 400;
 const ANTI_CHEAT_WINDOW_MS = 1500;
 const ANTI_CHEAT_THRESHOLD = 5;
 
+// Guards the mic path against self-detecting the review target-pitch audition as the
+// child's own attempt (see reviewAuditionGuardUntilRef usage below). Hoisted to module
+// scope (WR-03) — has no dependency on props/state, so it doesn't need re-declaring
+// on every render like the file's other timing constants.
+const REVIEW_AUDITION_GUARD_MS = 500;
+
 // Semitone distance helper — used to exclude adjacent-pitch mic misdetections
 // from anti-cheat tracking (mic commonly oscillates ±1 semitone).
 const SEMITONE_MAP = {
@@ -1005,7 +1011,6 @@ export function SightReadingGame() {
   // or via the panel's "Play it" tap — arms this guard; handleNoteEvent's REVIEW branch
   // ignores mic pitch events until it expires. Keyboard/PC-key input is a physical tap and
   // is never affected by speaker audio, so this guard is only consulted on the mic path.
-  const REVIEW_AUDITION_GUARD_MS = 500;
   const reviewAuditionGuardUntilRef = useRef(0);
   const playReviewTarget = useCallback(() => {
     reviewAuditionGuardUntilRef.current =
