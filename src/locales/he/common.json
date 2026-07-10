@@ -1665,7 +1665,8 @@
       "tooEarly": "מוקדם",
       "tooLate": "מאוחר",
       "missed": "הוחמצו",
-      "wrongNotes": "תווים שגויים"
+      "wrongNotes": "תווים שגויים",
+      "practiceNotScored": "ריצת תרגול — לא מנוקד"
     },
     "inputMode": {
       "title": "בחרו כיצד לנגן את התווים",
@@ -1684,7 +1685,13 @@
     "controls": {
       "toggleMetronome": "הפעלה/כיבוי מטרונום",
       "switchToMic": "מעבר למיקרופון",
-      "switchToKeyboard": "מעבר למקלדת"
+      "switchToKeyboard": "מעבר למקלדת",
+      "replay": "שמעו שוב",
+      "modePractice": "תרגול",
+      "modeTest": "מבחן",
+      "modeToggleLabel": "מצב ניקוד",
+      "compare": "השוו את שלכם לנכון",
+      "review": "סקרו טעויות"
     },
     "session": {
       "victoryTitle": "ניצחון בסבב!",
@@ -1697,6 +1704,18 @@
       "keepGoing": "המשיכו כך!",
       "encourageBody": "סיימתם את כל {{count}} התרגילים. אתם רק כמה נקודות מפתיחת חגיגת הניצחון.",
       "totalXp": "{{score}} נקודות בסך הכול • כוונו ל-70% כדי לנצח."
+    },
+    "compare": {
+      "yours": "שלכם",
+      "correct": "נכון"
+    },
+    "review": {
+      "title": "סקרו טעויות",
+      "instruction": "נגנו את התו הזה",
+      "progress": "{{current}} מתוך {{total}}",
+      "playIt": "נגנו אותו",
+      "skip": "דלגו",
+      "done": "מעולה — הטעויות נסקרו!"
     },
     "errors": {
       "startPerformance": "התחלת הנגינה נכשלה. נסו שוב.",
