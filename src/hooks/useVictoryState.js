@@ -357,7 +357,17 @@ export function useVictoryState({
 
         if (suppressPersistence) {
           // Practice run: skip all trail-progress + XP persistence, but let
-          // the UI still settle (stars were already computed above).
+          // the UI still settle (stars were already computed above). Still
+          // derive exercisesRemaining/nodeComplete locally so the "Next
+          // Exercise" CTA works for multi-exercise nodes in Practice mode
+          // (CR-02) — without this, VictoryScreen always falls back to the
+          // "node complete" branch since exercisesRemaining stays at its
+          // useState(0) initial value.
+          if (exerciseIndex !== null && totalExercises !== null) {
+            const remaining = Math.max(0, totalExercises - exerciseIndex - 1);
+            setExercisesRemaining(remaining);
+            setNodeComplete(remaining === 0);
+          }
           setIsProcessingTrail(false);
           return;
         }
