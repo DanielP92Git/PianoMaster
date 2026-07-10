@@ -11,6 +11,14 @@ const TOTAL_EXERCISES_PER_SESSION = 10;
 const DEFAULT_MAX_SCORE_PER_EXERCISE = 100;
 const ON_FIRE_THRESHOLD = 5; // reuse NotesRecognitionGame's constant (D-06)
 
+// GRADING_MODES local fallback (D-05): Plan 02-01 (same wave, parallel worktree) creates
+// src/components/games/sight-reading-game/constants/gradingModes.js with this exact shape
+// (GRADING_MODES = { PRACTICE: "practice", TEST: "test" }). That file is not yet present in
+// this worktree, so the value is inlined here rather than importing a path that doesn't exist
+// yet (would break build/tests). Downstream integration (02-07) should switch this context to
+// import GRADING_MODES from the canonical constants file once both plans are merged.
+const GRADING_MODES = { PRACTICE: "practice", TEST: "test" };
+
 const createInitialState = () => ({
   totalExercises: TOTAL_EXERCISES_PER_SESSION,
   currentExerciseIndex: 0,
@@ -28,6 +36,35 @@ export function SightReadingSessionProvider({ children }) {
   const comboRef = useRef(0);
   const [isOnFire, setIsOnFire] = useState(false);
   const isOnFireRef = useRef(false);
+
+  // Session-scoped grading mode (D-05): Practice vs Test, with a lock to prevent switching
+  // mid-exercise. gradingModeRef mirrors gradingMode so synchronous detection callbacks (e.g.
+  // pitch-detection handlers) can read the current mode without a stale closure (Pattern 1).
+  const [gradingMode, setGradingModeState] = useState(GRADING_MODES.TEST);
+  const gradingModeRef = useRef(GRADING_MODES.TEST);
+  const [isModeLocked, setIsModeLocked] = useState(false);
+  const isModeLockedRef = useRef(false);
+
+  const setGradingMode = useCallback((mode) => {
+    if (isModeLockedRef.current) {
+      return;
+    }
+    if (mode !== GRADING_MODES.PRACTICE && mode !== GRADING_MODES.TEST) {
+      return;
+    }
+    gradingModeRef.current = mode;
+    setGradingModeState(mode);
+  }, []);
+
+  const lockMode = useCallback(() => {
+    isModeLockedRef.current = true;
+    setIsModeLocked(true);
+  }, []);
+
+  const unlockMode = useCallback(() => {
+    isModeLockedRef.current = false;
+    setIsModeLocked(false);
+  }, []);
 
   const incrementCombo = useCallback(() => {
     comboRef.current += 1;
@@ -157,6 +194,12 @@ export function SightReadingSessionProvider({ children }) {
       isOnFire,
       incrementCombo,
       resetCombo,
+      gradingMode,
+      isModeLocked,
+      gradingModeRef,
+      setGradingMode,
+      lockMode,
+      unlockMode,
     };
   }, [
     state,
@@ -168,6 +211,11 @@ export function SightReadingSessionProvider({ children }) {
     isOnFire,
     incrementCombo,
     resetCombo,
+    gradingMode,
+    isModeLocked,
+    setGradingMode,
+    lockMode,
+    unlockMode,
   ]);
 
   return (
