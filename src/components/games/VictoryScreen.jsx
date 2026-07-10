@@ -29,6 +29,7 @@ const VictoryScreen = ({
   challengeId = null, // Optional: daily challenge ID
   challengeXpReward = null, // Optional: bonus XP for challenge
   subtitle = null, // Optional: custom subtitle text (e.g., "You caught 5 out of 8 Middle C!")
+  suppressPersistence = false, // Optional: practice run — skip all XP/streak/trail/daily-challenge persistence
 }) => {
   const {
     // Core display data
@@ -78,11 +79,13 @@ const VictoryScreen = ({
     totalExercises,
     exerciseType,
     onNextExercise,
+    suppressPersistence,
   });
 
   // Mark daily challenge as complete
   const challengeCompletedRef = useRef(false);
   useEffect(() => {
+    if (suppressPersistence) return;
     if (
       challengeMode &&
       challengeId &&
@@ -94,7 +97,7 @@ const VictoryScreen = ({
         console.error("Failed to complete daily challenge:", err)
       );
     }
-  }, [challengeMode, challengeId, user?.id]);
+  }, [challengeMode, challengeId, user?.id, suppressPersistence]);
 
   // Stars to display: trail uses calculated stars, free play uses effectiveStars from celebrationData
   const displayStars = celebrationData.effectiveStars;
@@ -251,6 +254,13 @@ const VictoryScreen = ({
         {subtitle && (
           <p className="text-center text-base font-semibold text-white/90">
             {subtitle}
+          </p>
+        )}
+
+        {/* Practice run notice - shown when persistence is suppressed (D-06) */}
+        {suppressPersistence && (
+          <p className="text-center text-sm text-white/70">
+            {t("sightReading.summary.practiceNotScored")}
           </p>
         )}
 
