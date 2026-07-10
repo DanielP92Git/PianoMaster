@@ -121,6 +121,7 @@ function VexFlowStaffDisplayBase({
   performanceResults = [],
   gamePhase,
   keySignature = null, // VexFlow key string: 'G', 'D', 'A', 'F', 'Bb', 'Eb', or null
+  playbackHighlightIndex = -1, // Additive outline overlay for played-vs-correct comparison playback (PRAC-02); does not replace getNoteColor fills
 }) {
   // Generate unique ID for this component instance
   const uniqueId = useId();
@@ -1662,11 +1663,25 @@ function VexFlowStaffDisplayBase({
             noteElement.setAttribute("stroke", stroke || fill);
           }
         });
+
+        // Additive playback comparison outline (PRAC-02): overlays a glow/stroke-width bump
+        // on a single note during feedback/review, WITHOUT touching any other note's fill
+        // set above. Guarded to no-op when out of range or not in an applicable phase.
+        if (
+          (gamePhase === "feedback" || gamePhase === "review") &&
+          playbackHighlightIndex >= 0
+        ) {
+          const highlightElement = notesRef.current[playbackHighlightIndex];
+          if (highlightElement) {
+            highlightElement.classList.add("vf-playback-highlight");
+            highlightElement.setAttribute("stroke-width", "4");
+          }
+        }
       } catch (err) {
         console.warn("Failed to highlight note:", err);
       }
     },
-    [getNoteColor]
+    [getNoteColor, gamePhase, playbackHighlightIndex]
   );
 
   // Effect: Render staff when pattern, clef, or game phase changes
@@ -1723,10 +1738,16 @@ function VexFlowStaffDisplayBase({
     performanceResults.length,
   ]);
 
-  // Effect: Update note highlighting when currentNoteIndex or performanceResults change
+  // Effect: Update note highlighting when currentNoteIndex, performanceResults, or the
+  // playback comparison highlight index change (so the outline moves as playback advances)
   useEffect(() => {
     highlightNote(currentNoteIndex);
-  }, [currentNoteIndex, performanceResults, highlightNote]);
+  }, [
+    currentNoteIndex,
+    performanceResults,
+    playbackHighlightIndex,
+    highlightNote,
+  ]);
 
   // Effect: Start continuous smooth scroll animation during performance phase
   useEffect(() => {
