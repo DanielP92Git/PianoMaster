@@ -718,6 +718,7 @@ export function SightReadingGame() {
   const { buildTimingWindows, evaluateTiming, shortestNoteDurationMsRef } =
     useTimingAnalysis({
       tempo: gameSettings.tempo,
+      mode: gradingMode,
     });
   const rhythmPlayback = useRhythmPlayback({
     audioEngine,
@@ -784,10 +785,15 @@ export function SightReadingGame() {
         gamePhaseRef.current === GAME_PHASES.PERFORMANCE
       ) {
         abortPerformanceForPenalty();
-        setShowPenaltyModal(true);
+        // Practice mode (D-06/Pitfall 9): a punishment modal contradicts an explicitly
+        // unscored, psychologically-safe mode. Anti-cheat tracking above still runs
+        // unchanged in both modes; only the modal affordance is suppressed here.
+        if (gradingModeRef.current !== GRADING_MODES.PRACTICE) {
+          setShowPenaltyModal(true);
+        }
       }
     },
-    [abortPerformanceForPenalty]
+    [abortPerformanceForPenalty, gradingModeRef]
   );
   const trackFailedAttemptForAntiCheat = useCallback(
     (details) => {
@@ -1370,8 +1376,16 @@ export function SightReadingGame() {
 
     const pitchAccuracy = calculatePitchAccuracy(performanceResults);
     const rhythmAccuracy = calculateRhythmAccuracy(performanceResults);
-    const baseScore = calculateOverallScore(pitchAccuracy, rhythmAccuracy);
-    const penaltyPointsTotal = guessPenaltyRef.current || 0;
+    const baseScore = calculateOverallScore(
+      pitchAccuracy,
+      rhythmAccuracy,
+      gradingMode
+    );
+    // Practice mode (D-06/Pitfall 9): suppress the penalty-points display/effect on score —
+    // a punishment affordance contradicts an explicitly unscored, psychologically-safe mode.
+    // The anti-cheat tracking itself (guessPenaltyRef accumulation) keeps running unchanged.
+    const penaltyPointsTotal =
+      gradingMode === GRADING_MODES.PRACTICE ? 0 : guessPenaltyRef.current || 0;
     const overallScore = Math.max(0, baseScore - penaltyPointsTotal);
 
     const perNoteAccuracy = currentPattern.notes
@@ -1442,6 +1456,7 @@ export function SightReadingGame() {
     gameSettings.timeSignature,
     gameSettings.selectedNotes,
     getNoteLabel,
+    gradingMode,
   ]);
 
   // Note: Exercise result is recorded when clicking "Next Exercise", not automatically on FEEDBACK
@@ -1453,6 +1468,13 @@ export function SightReadingGame() {
     }
 
     if (!isStudent || !studentId) {
+      setScoreSyncStatus("skipped");
+      return;
+    }
+
+    // Practice mode (D-01/T-02-01): the ONE in-file persistence path. Reads the ref
+    // (not state) for the synchronous, stale-closure-free value per Pattern 1.
+    if (gradingModeRef.current === GRADING_MODES.PRACTICE) {
       setScoreSyncStatus("skipped");
       return;
     }
@@ -1524,6 +1546,8 @@ export function SightReadingGame() {
     scoreSubmitted,
     queryClient,
     currentPattern,
+    gradingMode,
+    gradingModeRef,
   ]);
 
   const recordPerformanceResult = useCallback((newResult) => {
@@ -2192,9 +2216,17 @@ export function SightReadingGame() {
       const last = allEvents[allEvents.length - 1];
       const micCompletionExtensionMs =
         inputMode === "mic" ? MIC_LATENCY_COMP_MS : 0;
+      // Practice mode widens the primary timing windows (windowEnd, read above), so the
+      // completion-threshold fallback must scale by the same multiplier here — otherwise
+      // the last note's widened Practice window can outlive this check and the exercise
+      // finalizes with an incorrect miss before the window actually closes (Pitfall 5).
+      const completionMissToleranceMs =
+        gradingModeRef.current === GRADING_MODES.PRACTICE
+          ? missToleranceMs * PRACTICE_TIMING.toleranceMultiplier
+          : missToleranceMs;
       const lastEndMs =
         (last?.endTime || last?.startTime || 0) * 1000 +
-        missToleranceMs +
+        completionMissToleranceMs +
         micCompletionExtensionMs;
       if (elapsedMs >= lastEndMs) {
         // #region agent log
@@ -3550,6 +3582,7 @@ export function SightReadingGame() {
           totalExercises={trailTotalExercises}
           exerciseType={trailExerciseType}
           onNextExercise={handleNextTrailExercise}
+          suppressPersistence={isPracticeMode}
         />
       </div>
     );
@@ -3859,6 +3892,7 @@ export function SightReadingGame() {
         nextButtonLabel={t("sightReading.nextExercise")}
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
+        gradingMode={gradingMode}
       />
 
       {isSessionComplete && (

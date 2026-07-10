@@ -78,6 +78,12 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
     isOnFire: false,
     incrementCombo: vi.fn(),
     resetCombo: vi.fn(),
+    gradingMode: "test",
+    gradingModeRef: { current: "test" },
+    isModeLocked: false,
+    setGradingMode: vi.fn(),
+    lockMode: vi.fn(),
+    unlockMode: vi.fn(),
   }),
 }));
 
