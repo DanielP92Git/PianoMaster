@@ -10,6 +10,7 @@ import {
   getDetailedBreakdown,
 } from "../utils/scoreCalculator";
 import { FEEDBACK_COLORS } from "../constants/feedbackPalette";
+import { GRADING_MODES } from "../constants/gradingModes";
 
 /**
  * A single labeled accuracy bar (Pitch / Rhythm).
@@ -43,6 +44,9 @@ export function FeedbackSummary({
   summaryStats,
   onTryAgain,
   onNextPattern,
+  onCompare,
+  onReview,
+  gradingMode = GRADING_MODES.TEST,
   nextButtonLabel = "Next Pattern",
   nextButtonDisabled = false,
   showNextButton = true,
@@ -66,7 +70,7 @@ export function FeedbackSummary({
     summaryStats?.rhythmAccuracy ?? fallbackRhythmAccuracy ?? 0;
   const overallScore =
     summaryStats?.overallScore ??
-    calculateOverallScore(pitchAccuracy, rhythmAccuracy);
+    calculateOverallScore(pitchAccuracy, rhythmAccuracy, gradingMode);
 
   const rating = useMemo(
     () => getPerformanceRating(overallScore),
@@ -77,6 +81,10 @@ export function FeedbackSummary({
     () => getDetailedBreakdown(performanceResults),
     [performanceResults]
   );
+
+  // D-20: the Review button is hidden (not disabled) on a clean run.
+  const hasMistakes = breakdown.wrongPitch + breakdown.missed > 0;
+  const isPracticeMode = gradingMode === GRADING_MODES.PRACTICE;
 
   // Only render breakdown chips for statuses that actually occurred, to stay compact.
   const breakdownChips = useMemo(
@@ -148,6 +156,13 @@ export function FeedbackSummary({
             ))}
           </div>
 
+          {/* D-06: practice mode is never persisted — make that legible without hiding the bars/stars */}
+          {isPracticeMode && (
+            <p className="text-xs font-medium italic text-white/60">
+              {t("sightReading.summary.practiceNotScored")}
+            </p>
+          )}
+
           {/* Pitch / Rhythm accuracy bars */}
           <div className="flex w-full max-w-xs flex-col gap-2">
             <AccuracyBar
@@ -182,7 +197,34 @@ export function FeedbackSummary({
             </div>
           )}
 
-          {/* Action Buttons — shared GameActionButton (single source of truth) */}
+          {/* Row 1 (learn, D-23) — lighter-weight than the primary CTAs below; collapses to
+              nothing when neither handler is provided. */}
+          {(onCompare || (onReview && hasMistakes)) && (
+            <div className="flex w-full max-w-xs items-center justify-center gap-x-4 gap-y-1">
+              {onCompare && (
+                <button
+                  type="button"
+                  onClick={onCompare}
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <span aria-hidden="true">♫</span>
+                  {t("sightReading.controls.compare")}
+                </button>
+              )}
+              {onReview && hasMistakes && (
+                <button
+                  type="button"
+                  onClick={onReview}
+                  className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                >
+                  <span aria-hidden="true">↺</span>
+                  {t("sightReading.controls.review")}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Row 2 (navigate) — shared GameActionButton (single source of truth) */}
           <div className="flex w-full max-w-xs gap-2.5">
             <GameActionButton
               tone="retry"
