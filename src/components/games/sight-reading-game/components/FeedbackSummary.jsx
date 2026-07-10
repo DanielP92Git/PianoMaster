@@ -50,6 +50,7 @@ export function FeedbackSummary({
   nextButtonLabel = "Next Pattern",
   nextButtonDisabled = false,
   showNextButton = true,
+  comparisonPass = null,
 }) {
   const { t } = useTranslation("common");
 
@@ -195,6 +196,18 @@ export function FeedbackSummary({
                 </span>
               ))}
             </div>
+          )}
+
+          {/* Comparison-playback pass label (WR-01): while "Hear yours vs correct" is
+              playing, announce which pass is currently sounding so the two
+              otherwise-identical moving-outline passes are distinguishable. */}
+          {comparisonPass && (
+            <p
+              aria-live="polite"
+              className="text-xs font-semibold uppercase tracking-wide text-indigo-200"
+            >
+              {t(`sightReading.compare.${comparisonPass}`)}
+            </p>
           )}
 
           {/* Row 1 (learn, D-23) — lighter-weight than the primary CTAs below; collapses to

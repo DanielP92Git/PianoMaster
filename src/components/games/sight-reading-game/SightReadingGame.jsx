@@ -272,6 +272,10 @@ export function SightReadingGame() {
   // -1 = no highlight. Distinct from currentNoteIndex (which drives DISPLAY/COUNT_IN/
   // PERFORMANCE highlighting) so comparison playback never disturbs it.
   const [playbackHighlightIndex, setPlaybackHighlightIndex] = useState(-1);
+  // Which comparison-playback pass is currently sounding: "yours" | "correct" | null
+  // (WR-01). Lets the UI label each pass so the two otherwise-identical-looking
+  // moving-outline passes are distinguishable to the child.
+  const [comparisonPass, setComparisonPass] = useState(null);
 
   // Session timeout controls - pause timer during active gameplay
   let pauseTimer = useCallback(() => {}, []);
@@ -2677,10 +2681,14 @@ export function SightReadingGame() {
     };
 
     const playCorrectPass = () => {
+      setComparisonPass("correct");
       playPass(
         pattern.notes,
         (i) => i,
-        () => setPlaybackHighlightIndex(-1)
+        () => {
+          setPlaybackHighlightIndex(-1);
+          setComparisonPass(null);
+        }
       );
     };
 
@@ -2690,6 +2698,7 @@ export function SightReadingGame() {
       return;
     }
 
+    setComparisonPass("yours");
     playPass(
       yours,
       (i) => yours[i]?.noteIndex ?? -1,
@@ -4104,6 +4113,7 @@ export function SightReadingGame() {
         gradingMode={gradingMode}
         onCompare={startComparison}
         onReview={handleEnterReview}
+        comparisonPass={comparisonPass}
       />
 
       {isSessionComplete && (
