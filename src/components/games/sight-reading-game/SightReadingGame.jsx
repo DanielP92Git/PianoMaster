@@ -18,8 +18,10 @@ import { FeedbackSummary } from "./components/FeedbackSummary";
 import { SightReadingLayout } from "./components/SightReadingLayout";
 import { MicErrorOverlay } from "./components/MicErrorOverlay";
 import { MicVolumeMeter, MicDebugPanel } from "./components/MicOverlays";
+import { ReviewDrillPanel } from "./components/ReviewDrillPanel";
 import { MetronomeDisplay } from "../rhythm-games/components/MetronomeDisplay";
 import { usePatternGeneration } from "./hooks/usePatternGeneration";
+import { useReviewDrill } from "./hooks/useReviewDrill";
 import { useRhythmPlayback } from "./hooks/useRhythmPlayback";
 import { useTimingAnalysis } from "./hooks/useTimingAnalysis";
 import BeethovenAvatar from "../../../assets/avatars/beethoven.png";
@@ -89,6 +91,11 @@ const GAME_PHASES = {
   DISPLAY: "display",
   PERFORMANCE: "performance",
   FEEDBACK: "feedback",
+  // Review-mistakes drill (PRAC-04) — entered from FEEDBACK via the Review button,
+  // exits back to FEEDBACK. An active, in-exercise phase like DISPLAY/PERFORMANCE:
+  // registered in the session-timeout activePhases list, showPlayableKeyboardBand,
+  // and the audio-interruption pause effect (Pitfall 4).
+  REVIEW: "review",
 };
 
 // Stable empty-array identity so memoized children (KlavierKeyboard) don't see a
@@ -279,11 +286,13 @@ export function SightReadingGame() {
 
   // Pause/resume inactivity timer based on game phase
   useEffect(() => {
-    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE
+    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE, REVIEW
+    // (REVIEW is the mistakes drill — child-safety timeout must not fire mid-drill).
     const activePhases = [
       GAME_PHASES.COUNT_IN,
       GAME_PHASES.DISPLAY,
       GAME_PHASES.PERFORMANCE,
+      GAME_PHASES.REVIEW,
     ];
     const isGameActive = activePhases.includes(gamePhase);
     if (isGameActive) {
@@ -971,8 +980,46 @@ export function SightReadingGame() {
     return MIC_INPUT_PRESETS.sightReading;
   }, [gameSettings?.tempo, gameSettings?.bpm, shortestPatternDuration]);
 
+  // Review-mistakes drill (PRAC-04, D-16/D-17/D-18/D-19/D-22). Isolated state machine —
+  // never touches combo/on-fire, never scores. `reviewDrillRef` mirrors the returned object
+  // (same ref-mirror discipline as gamePhaseRef/currentPatternRef) so the mic/keyboard/PC-key
+  // input-routing branches below always read the latest handlePitch without needing to list
+  // it in every callback's dependency array.
+  const reviewDrill = useReviewDrill({
+    performanceResults,
+    patternNotes: currentPattern?.notes,
+    playTargetPitch: (pitch) => audioEngine.playPianoSound(0.6, pitch),
+  });
+  const reviewDrillRef = useRef(reviewDrill);
+  useEffect(() => {
+    reviewDrillRef.current = reviewDrill;
+  });
+
+  // Guards the mic path against self-detecting the review target-pitch audition as the
+  // child's own attempt (same phantom-note leakage concern that kept Phase 01's on-fire
+  // celebration silent during active mic listening). Any playCurrentTarget() call — auto
+  // or via the panel's "Play it" tap — arms this guard; handleNoteEvent's REVIEW branch
+  // ignores mic pitch events until it expires. Keyboard/PC-key input is a physical tap and
+  // is never affected by speaker audio, so this guard is only consulted on the mic path.
+  const REVIEW_AUDITION_GUARD_MS = 500;
+  const reviewAuditionGuardUntilRef = useRef(0);
+  const playReviewTarget = useCallback(() => {
+    reviewAuditionGuardUntilRef.current =
+      performance.now() + REVIEW_AUDITION_GUARD_MS;
+    reviewDrillRef.current.playCurrentTarget();
+  }, []);
+
   const handleNoteEvent = useCallback(
     (event) => {
+      // D-22/Pitfall 3: route REVIEW input to the drill BEFORE any canScoreNow/scoring logic.
+      // The drill never scores, never touches combo (D-17/D-18) — it only advances its own
+      // local mistake-index state machine. Ignore mic events while the audition guard is
+      // armed so the target-pitch playback can't self-advance the drill.
+      if (gamePhaseRef.current === GAME_PHASES.REVIEW) {
+        if (performance.now() < reviewAuditionGuardUntilRef.current) return;
+        reviewDrillRef.current.handlePitch(event?.pitch);
+        return;
+      }
       if (!event || event.type !== "noteOn") return;
       pendingMicLatencyMsRef.current =
         typeof event.latencyMs === "number" ? event.latencyMs : null;
@@ -2042,6 +2089,14 @@ export function SightReadingGame() {
       const phase = gamePhaseRef.current;
       const pattern = currentPatternRef.current;
 
+      // D-22/Pitfall 3: route REVIEW input to the drill BEFORE canScoreNow — canScoreNow
+      // only allows COUNT_IN/PERFORMANCE, so without this branch keyboard input during the
+      // drill would be silently dropped.
+      if (phase === GAME_PHASES.REVIEW) {
+        reviewDrillRef.current.handlePitch(noteName);
+        return;
+      }
+
       if (phase === GAME_PHASES.PERFORMANCE && !canScoreNow(phase)) {
         registerKeyboardSpamAttempt();
       }
@@ -2075,6 +2130,15 @@ export function SightReadingGame() {
       if (!mappedPitch) return;
       // Use ref for real-time accuracy - check unified timing state
       const phase = gamePhaseRef.current;
+
+      // D-22/Pitfall 3: route REVIEW input BEFORE canScoreNow (which returns false for
+      // REVIEW and would otherwise silently eat PC-keyboard input during the drill).
+      // handleKeyboardNoteInput itself routes REVIEW input to reviewDrill.handlePitch.
+      if (phase === GAME_PHASES.REVIEW) {
+        event.preventDefault();
+        handleKeyboardNoteInput(mappedPitch);
+        return;
+      }
 
       if (!canScoreNow(phase)) {
         return;
@@ -2632,6 +2696,49 @@ export function SightReadingGame() {
       () => playCorrectPass()
     );
   }, [audioEngine, rhythmPlayback]);
+
+  /**
+   * Enter the Review-mistakes drill (PRAC-04) from FEEDBACK's Review button. Starts the
+   * drill's local state machine and manages the mic lifecycle: in mic mode, the button tap
+   * is the required user gesture to (re)start listening. The first target's audition is
+   * deferred until the mic is confirmed listening AND armed behind the audition guard
+   * (see playReviewTarget) so it can never self-advance the drill.
+   */
+  const handleEnterReview = useCallback(() => {
+    reviewDrill.start();
+    setGamePhase(GAME_PHASES.REVIEW);
+    if (inputMode === "mic") {
+      startListeningSync()
+        .then(() => {
+          playReviewTarget();
+        })
+        .catch(() => {
+          // Mic failed to start — the drill still works via keyboard/on-screen input in
+          // this low-stakes, unscored context (D-17); no error overlay is wired here.
+        });
+    } else {
+      playReviewTarget();
+    }
+  }, [reviewDrill, inputMode, startListeningSync, playReviewTarget]);
+
+  /**
+   * Exit the Review-mistakes drill back to FEEDBACK. The recorded score/summary is
+   * untouched (D-17) — this only stops the mic (mic mode) and returns the phase.
+   */
+  const handleExitReview = useCallback(() => {
+    if (inputMode === "mic") {
+      stopListeningSync();
+    }
+    setGamePhase(GAME_PHASES.FEEDBACK);
+  }, [inputMode, stopListeningSync]);
+
+  // Auto-exit once every mistake has been drilled. ReviewDrillPanel's "done" state still
+  // renders an explicit Exit CTA as a fallback in case this effect hasn't fired yet.
+  useEffect(() => {
+    if (gamePhase === GAME_PHASES.REVIEW && reviewDrill.isComplete) {
+      handleExitReview();
+    }
+  }, [gamePhase, reviewDrill.isComplete, handleExitReview]);
 
   /**
    * Mic error overlay: retry handler
@@ -3525,6 +3632,9 @@ export function SightReadingGame() {
   // child-safety inactivity timer during active gameplay, since gamePhase itself hasn't changed
   // and the phase effect wouldn't re-run to re-pause it. gamePhase is in the deps so this
   // doesn't act on a stale phase captured from the last time isInterrupted changed.
+  // GAME_PHASES.REVIEW is treated as active here the same way PERFORMANCE is — it is only
+  // excluded by naming SETUP/FEEDBACK, so an interruption during the review-mistakes drill
+  // correctly pauses the timer too (Pitfall 4).
   useEffect(() => {
     if (
       isInterrupted &&
@@ -3932,12 +4042,23 @@ export function SightReadingGame() {
           </span>
         )}
       </div>
+    ) : gamePhase === GAME_PHASES.REVIEW ? (
+      <ReviewDrillPanel
+        current={reviewDrill.currentMistakeIndex + 1}
+        total={reviewDrill.total}
+        targetNote={getNoteLabel(reviewDrill.currentTarget?.pitch)}
+        onPlayTarget={playReviewTarget}
+        onSkip={reviewDrill.skip}
+        onExit={handleExitReview}
+        isComplete={reviewDrill.isComplete}
+      />
     ) : null;
 
   const showPlayableKeyboardBand =
     (gamePhase === GAME_PHASES.DISPLAY ||
       gamePhase === GAME_PHASES.COUNT_IN ||
-      gamePhase === GAME_PHASES.PERFORMANCE) &&
+      gamePhase === GAME_PHASES.PERFORMANCE ||
+      gamePhase === GAME_PHASES.REVIEW) &&
     shouldShowKeyboard;
 
   const keyboardRegion = showPlayableKeyboardBand ? (
@@ -3982,6 +4103,7 @@ export function SightReadingGame() {
         showNextButton={!isSessionComplete}
         gradingMode={gradingMode}
         onCompare={startComparison}
+        onReview={handleEnterReview}
       />
 
       {isSessionComplete && (

@@ -1702,14 +1702,6 @@
       "yours": "Yours",
       "correct": "Correct"
     },
-    "review": {
-      "title": "Review mistakes",
-      "instruction": "Play this note",
-      "progress": "{{current}} of {{total}}",
-      "playIt": "Play it",
-      "skip": "Skip",
-      "done": "Great — mistakes reviewed!"
-    },
     "errors": {
       "startPerformance": "Failed to start performance. Please try again.",
       "startGame": "Failed to start game. Please try again."
