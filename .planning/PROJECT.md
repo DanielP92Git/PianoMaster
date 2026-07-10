@@ -311,7 +311,7 @@ These capabilities exist, are working, and have been shipped:
 **Target features (owner-agreed 3-phase split):**
 
 - **P1 — Engagement HUD parity (no DB):** combo / lives / on-fire, reusing the shared HUD components extracted in v3.6 (`UX-4`). Validated in Phase 01 (2026-07-09) — live session-wide combo + on-fire HUD shipped; lives/game-over deferred (no business upside for subscription-gated content; see 01-CONTEXT.md D-01/D-02).
-- **P2 — Practice tooling (no DB):** "hear it again" + played-vs-correct replay (feature 5); Practice vs Test mode with lenient/strict timing tolerances (feature 6); Review-mistakes mode stepping through only wrong/missed notes (feature 7).
+- **P2 — Practice tooling (no DB):** "hear it again" + played-vs-correct replay (feature 5); Practice vs Test mode with lenient/strict timing tolerances (feature 6); Review-mistakes mode stepping through only wrong/missed notes (feature 7). Validated in Phase 02 (2026-07-10) — all three features shipped (PRAC-01/02/03/04 + I18N-01); code review found and fixed 2 critical bugs (comparison-playback highlight leak, Practice-mode multi-exercise flow break); 4 device-verification items deferred and tracked in 02-HUMAN-UAT.md per established project pattern.
 - **P3 — Adaptive pedagogy (needs Supabase):** in-session progressive difficulty (feature 8); adaptive tempo (feature 9); persist per-note mastery via a JSONB addition on progress rows (feature 10) — gets its own `/gsd-secure-phase` pass.
 
 **Key context:** Source plan `~/.claude/plans/analyze-the-entire-codebase-valiant-hejlsberg.md` (Phase D, §"Missing Features" 5–10). P1/P2 are pure client work reusing existing infra — `timingStatus` already carries early/late, `performanceResults` carries `noteIndex`, and `perNoteAccuracy` is already computed per exercise then discarded. Only P3 touches the DB.
@@ -674,4 +674,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-10 — Phase 01 (Engagement HUD Parity) complete: live session-wide combo/on-fire HUD shipped, lives/game-over deferred. Requirements in `.planning/REQUIREMENTS.md`; roadmap in `.planning/ROADMAP.md`._
+_Last updated: 2026-07-10 — Phase 02 (Practice Tooling) complete: replay, played-vs-correct comparison, Practice/Test grading mode, and Review-mistakes drill all shipped; 2 critical bugs found and fixed via code review; device verification deferred and tracked. Requirements in `.planning/REQUIREMENTS.md`; roadmap in `.planning/ROADMAP.md`._
