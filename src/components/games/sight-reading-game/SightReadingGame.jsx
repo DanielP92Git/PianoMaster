@@ -36,6 +36,11 @@ import {
 } from "./utils/scoreCalculator";
 import { FIRST_NOTE_EARLY_MS, NOTE_LATE_MS } from "./constants/timingConstants";
 import { TIMING_FEEDBACK } from "./constants/feedbackPalette";
+import {
+  GRADING_MODES,
+  GRADING_MODE_STORAGE_KEY,
+  PRACTICE_TIMING,
+} from "./constants/gradingModes";
 import { useUser } from "../../../features/authentication/useUser";
 import { updateStudentScore } from "../../../services/apiScores";
 import toast from "react-hot-toast";
@@ -238,7 +243,16 @@ export function SightReadingGame() {
     isOnFire,
     incrementCombo,
     resetCombo,
+    gradingMode,
+    gradingModeRef,
+    isModeLocked,
+    setGradingMode,
+    lockMode,
+    unlockMode,
   } = useSightReadingSession();
+
+  // Practice-mode grading flag (PRAC-03/D-04): widens timing, grades pitch-only, persists nothing.
+  const isPracticeMode = gradingMode === GRADING_MODES.PRACTICE;
 
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
   const [gameSettings, setGameSettings] = useState(DEFAULT_SETTINGS);
@@ -318,6 +332,22 @@ export function SightReadingGame() {
   const countInEndWallClockMsRef = useRef(null); // Date.now() ms at count-in end (scheduled)
   const performanceStartAudioTimeRef = useRef(null); // AudioContext seconds at performance start (preferred timing baseline)
   const forcePerformanceWallClockRef = useRef(false); // true when count-in was force-completed on a stalled audio clock; performance then runs on the wall clock
+
+  // Initialize grading mode from localStorage on mount (mirrors inputMode's allowlist-with-
+  // default pattern at :336-340 below). Junk/unknown values fall back to the context's Test
+  // default (D-03) — only an exact "practice" match switches the mode.
+  useEffect(() => {
+    const storedGradingMode = localStorage.getItem(GRADING_MODE_STORAGE_KEY);
+    if (storedGradingMode === GRADING_MODES.PRACTICE) {
+      setGradingMode(GRADING_MODES.PRACTICE);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time mount effect; setGradingMode is stable (useCallback, empty deps in the context)
+  }, []);
+
+  // Persist grading mode changes to localStorage (mirrors inputMode's persistence effect at :602-607).
+  useEffect(() => {
+    localStorage.setItem(GRADING_MODE_STORAGE_KEY, gradingMode);
+  }, [gradingMode]);
 
   // Input mode state: "keyboard" or "mic"
   const [inputMode, setInputMode] = useState(() => {
@@ -688,6 +718,7 @@ export function SightReadingGame() {
   const { buildTimingWindows, evaluateTiming, shortestNoteDurationMsRef } =
     useTimingAnalysis({
       tempo: gameSettings.tempo,
+      mode: gradingMode,
     });
   const rhythmPlayback = useRhythmPlayback({
     audioEngine,
@@ -754,10 +785,15 @@ export function SightReadingGame() {
         gamePhaseRef.current === GAME_PHASES.PERFORMANCE
       ) {
         abortPerformanceForPenalty();
-        setShowPenaltyModal(true);
+        // Practice mode (D-06/Pitfall 9): a punishment modal contradicts an explicitly
+        // unscored, psychologically-safe mode. Anti-cheat tracking above still runs
+        // unchanged in both modes; only the modal affordance is suppressed here.
+        if (gradingModeRef.current !== GRADING_MODES.PRACTICE) {
+          setShowPenaltyModal(true);
+        }
       }
     },
-    [abortPerformanceForPenalty]
+    [abortPerformanceForPenalty, gradingModeRef]
   );
   const trackFailedAttemptForAntiCheat = useCallback(
     (details) => {
@@ -1340,8 +1376,16 @@ export function SightReadingGame() {
 
     const pitchAccuracy = calculatePitchAccuracy(performanceResults);
     const rhythmAccuracy = calculateRhythmAccuracy(performanceResults);
-    const baseScore = calculateOverallScore(pitchAccuracy, rhythmAccuracy);
-    const penaltyPointsTotal = guessPenaltyRef.current || 0;
+    const baseScore = calculateOverallScore(
+      pitchAccuracy,
+      rhythmAccuracy,
+      gradingMode
+    );
+    // Practice mode (D-06/Pitfall 9): suppress the penalty-points display/effect on score —
+    // a punishment affordance contradicts an explicitly unscored, psychologically-safe mode.
+    // The anti-cheat tracking itself (guessPenaltyRef accumulation) keeps running unchanged.
+    const penaltyPointsTotal =
+      gradingMode === GRADING_MODES.PRACTICE ? 0 : guessPenaltyRef.current || 0;
     const overallScore = Math.max(0, baseScore - penaltyPointsTotal);
 
     const perNoteAccuracy = currentPattern.notes
@@ -1412,6 +1456,7 @@ export function SightReadingGame() {
     gameSettings.timeSignature,
     gameSettings.selectedNotes,
     getNoteLabel,
+    gradingMode,
   ]);
 
   // Note: Exercise result is recorded when clicking "Next Exercise", not automatically on FEEDBACK
@@ -1423,6 +1468,13 @@ export function SightReadingGame() {
     }
 
     if (!isStudent || !studentId) {
+      setScoreSyncStatus("skipped");
+      return;
+    }
+
+    // Practice mode (D-01/T-02-01): the ONE in-file persistence path. Reads the ref
+    // (not state) for the synchronous, stale-closure-free value per Pattern 1.
+    if (gradingModeRef.current === GRADING_MODES.PRACTICE) {
       setScoreSyncStatus("skipped");
       return;
     }
@@ -1494,6 +1546,8 @@ export function SightReadingGame() {
     scoreSubmitted,
     queryClient,
     currentPattern,
+    gradingMode,
+    gradingModeRef,
   ]);
 
   const recordPerformanceResult = useCallback((newResult) => {
@@ -2162,9 +2216,17 @@ export function SightReadingGame() {
       const last = allEvents[allEvents.length - 1];
       const micCompletionExtensionMs =
         inputMode === "mic" ? MIC_LATENCY_COMP_MS : 0;
+      // Practice mode widens the primary timing windows (windowEnd, read above), so the
+      // completion-threshold fallback must scale by the same multiplier here — otherwise
+      // the last note's widened Practice window can outlive this check and the exercise
+      // finalizes with an incorrect miss before the window actually closes (Pitfall 5).
+      const completionMissToleranceMs =
+        gradingModeRef.current === GRADING_MODES.PRACTICE
+          ? missToleranceMs * PRACTICE_TIMING.toleranceMultiplier
+          : missToleranceMs;
       const lastEndMs =
         (last?.endTime || last?.startTime || 0) * 1000 +
-        missToleranceMs +
+        completionMissToleranceMs +
         micCompletionExtensionMs;
       if (elapsedMs >= lastEndMs) {
         // #region agent log
@@ -2433,11 +2495,19 @@ export function SightReadingGame() {
   ]);
 
   const handleStartNewSession = useCallback(() => {
+    // Session boundary (D-05): unlock the grading mode so the pill is selectable again.
+    unlockMode();
     stopMetronomePlayback();
     resetSession();
     startSession();
     loadExercisePattern();
-  }, [loadExercisePattern, resetSession, startSession, stopMetronomePlayback]);
+  }, [
+    loadExercisePattern,
+    resetSession,
+    startSession,
+    stopMetronomePlayback,
+    unlockMode,
+  ]);
 
   /**
    * Replay the same pattern (Try Again)
@@ -2542,6 +2612,8 @@ export function SightReadingGame() {
    * Return to setup screen
    */
   const returnToSetup = useCallback(() => {
+    // Session boundary (D-05): unlock the grading mode so the pill is selectable again.
+    unlockMode();
     // Stop any audio
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
@@ -2574,6 +2646,7 @@ export function SightReadingGame() {
     stopCountInVisualization,
     resetSession,
     startSession,
+    unlockMode,
   ]);
 
   // Trail-mode settings gear: open a focused in-game settings overlay instead of
@@ -2582,6 +2655,8 @@ export function SightReadingGame() {
   // which is declared later — safe here since it's only invoked at runtime, never in
   // a dependency array evaluated during render.
   const openSettingsModal = () => {
+    // Session boundary (D-05): unlock the grading mode so the pill is selectable again.
+    unlockMode();
     // Stop audio/mic so nothing plays or is detected behind the overlay
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
@@ -3009,6 +3084,10 @@ export function SightReadingGame() {
       // Start count-in phase
       resetPerformanceLiveState();
       setGamePhase(GAME_PHASES.COUNT_IN);
+      // Lock the grading mode for the rest of the session (D-05) — the pill stays
+      // disabled until a genuine session boundary (handleStartNewSession/returnToSetup/
+      // openSettingsModal) calls unlockMode(). Idempotent across exercises.
+      lockMode();
 
       // Ensure audio context is running before scheduling
       await ensureAudioContextRunning();
@@ -3277,6 +3356,7 @@ export function SightReadingGame() {
     startListeningSync,
     rhythmPlayback,
     t,
+    lockMode,
   ]);
 
   /**
@@ -3502,6 +3582,7 @@ export function SightReadingGame() {
           totalExercises={trailTotalExercises}
           exerciseType={trailExerciseType}
           onNextExercise={handleNextTrailExercise}
+          suppressPersistence={isPracticeMode}
         />
       </div>
     );
@@ -3644,6 +3725,27 @@ export function SightReadingGame() {
         <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
           {t("sightReading.bpm", { value: gameSettings.tempo })}
         </div>
+
+        {/* Practice/Test grading-mode pill (D-02/D-03/D-05) */}
+        <button
+          type="button"
+          onClick={() =>
+            setGradingMode(
+              isPracticeMode ? GRADING_MODES.TEST : GRADING_MODES.PRACTICE
+            )
+          }
+          disabled={isModeLocked}
+          aria-label={t("sightReading.controls.modeToggleLabel")}
+          className={`rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
+            isPracticeMode
+              ? "border-fuchsia-400/40 bg-fuchsia-500 text-white hover:bg-fuchsia-600"
+              : "border-white/20 bg-white/10 text-white/90 hover:bg-white/20"
+          } ${isModeLocked ? "cursor-not-allowed opacity-60" : ""}`}
+        >
+          {isPracticeMode
+            ? t("sightReading.controls.modePractice")
+            : t("sightReading.controls.modeTest")}
+        </button>
 
         {/* Input Mode Selector Button - shows icon of mode you can switch TO */}
         {currentPattern && gamePhase !== GAME_PHASES.SETUP && (
@@ -3790,6 +3892,7 @@ export function SightReadingGame() {
         nextButtonLabel={t("sightReading.nextExercise")}
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
+        gradingMode={gradingMode}
       />
 
       {isSessionComplete && (
