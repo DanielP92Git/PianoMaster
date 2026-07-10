@@ -34,6 +34,7 @@ import {
   calculateRhythmAccuracy,
   calculateOverallScore,
 } from "./utils/scoreCalculator";
+import { buildPlayedRendition } from "./utils/comparisonPattern";
 import { FIRST_NOTE_EARLY_MS, NOTE_LATE_MS } from "./constants/timingConstants";
 import { TIMING_FEEDBACK } from "./constants/feedbackPalette";
 import {
@@ -260,6 +261,10 @@ export function SightReadingGame() {
   const [currentBeat, setCurrentBeat] = useState(0);
   const hasAutoConfigured = useRef(false);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
+  // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
+  // -1 = no highlight. Distinct from currentNoteIndex (which drives DISPLAY/COUNT_IN/
+  // PERFORMANCE highlighting) so comparison playback never disturbs it.
+  const [playbackHighlightIndex, setPlaybackHighlightIndex] = useState(-1);
 
   // Session timeout controls - pause timer during active gameplay
   let pauseTimer = useCallback(() => {}, []);
@@ -298,6 +303,7 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     setCurrentBeat(0);
     setCurrentNoteIndex(-1);
+    setPlaybackHighlightIndex(-1);
     setTimingState(TIMING_STATE.OFF);
     setPerformanceResults([]);
     setSummaryStats(null);
@@ -2292,6 +2298,7 @@ export function SightReadingGame() {
         setCurrentPattern(pattern);
         currentPatternRef.current = pattern;
         setCurrentNoteIndex(0);
+        setPlaybackHighlightIndex(-1);
         setPerformanceResults([]);
         performanceResultsRef.current = [];
         lastDetectionTimesRef.current = {};
@@ -2519,6 +2526,7 @@ export function SightReadingGame() {
     stopMetronomePlayback();
     // Reset states
     setCurrentNoteIndex(0);
+    setPlaybackHighlightIndex(-1);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
@@ -2573,6 +2581,57 @@ export function SightReadingGame() {
       setCurrentNoteIndex(index);
     });
   }, [rhythmPlayback]);
+
+  /**
+   * FEEDBACK-phase played-vs-correct comparison (PRAC-02, D-13/D-14): reconstructs the
+   * child's rendition from performanceResults, plays it, then chains the correct pattern
+   * on the useRhythmPlayback end-of-pattern signal (onBeatChange(-1)) — never a bare
+   * setTimeout duration guess, which would drift against the audio clock. Drives a moving
+   * staff outline via playbackHighlightIndex on each pass. If everything was missed
+   * ("yours" is empty), skips pass 1 and plays only the correct pattern.
+   */
+  const startComparison = useCallback(async () => {
+    const pattern = currentPatternRef.current;
+    if (!pattern) return;
+    // The Compare tap is a user gesture — resume the audio context the same way
+    // beginPerformanceWithPattern does before scheduling any playback.
+    await audioEngine.resumeAudioContext();
+
+    const yours = buildPlayedRendition(
+      pattern.notes,
+      performanceResultsRef.current
+    );
+
+    const playPass = (notes, mapIndex, onDone) => {
+      rhythmPlayback.play(notes, (index) => {
+        if (index === -1) {
+          onDone();
+          return;
+        }
+        setPlaybackHighlightIndex(mapIndex(index));
+      });
+    };
+
+    const playCorrectPass = () => {
+      playPass(
+        pattern.notes,
+        (i) => i,
+        () => setPlaybackHighlightIndex(-1)
+      );
+    };
+
+    if (yours.length === 0) {
+      // Everything missed — nothing to compare against, play only the correct pass.
+      playCorrectPass();
+      return;
+    }
+
+    playPass(
+      yours,
+      (i) => yours[i]?.noteIndex ?? -1,
+      () => playCorrectPass()
+    );
+  }, [audioEngine, rhythmPlayback]);
 
   /**
    * Mic error overlay: retry handler
@@ -2641,6 +2700,7 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     currentPatternRef.current = null;
     setCurrentNoteIndex(-1);
+    setPlaybackHighlightIndex(-1);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
@@ -3094,6 +3154,7 @@ export function SightReadingGame() {
       forcePerformanceWallClockRef.current = false;
       setCurrentBeat(0);
       setCurrentNoteIndex(0);
+      setPlaybackHighlightIndex(-1);
       setPerformanceResults([]);
       performanceResultsRef.current = [];
       lastDetectionTimesRef.current = {};
@@ -3417,6 +3478,7 @@ export function SightReadingGame() {
           setCurrentPattern(pattern);
           currentPatternRef.current = pattern;
           setCurrentNoteIndex(0);
+          setPlaybackHighlightIndex(-1);
           setPerformanceResults([]);
           performanceResultsRef.current = [];
           lastDetectionTimesRef.current = {};
@@ -3901,6 +3963,7 @@ export function SightReadingGame() {
         performanceResults={performanceResults}
         gamePhase={gamePhase}
         keySignature={gameSettings.keySignature || null}
+        playbackHighlightIndex={playbackHighlightIndex}
       />
     </div>
   ) : null;
@@ -3918,6 +3981,7 @@ export function SightReadingGame() {
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
         gradingMode={gradingMode}
+        onCompare={startComparison}
       />
 
       {isSessionComplete && (
