@@ -89,6 +89,11 @@ const GAME_PHASES = {
   DISPLAY: "display",
   PERFORMANCE: "performance",
   FEEDBACK: "feedback",
+  // Review-mistakes drill (PRAC-04) — entered from FEEDBACK via the Review button,
+  // exits back to FEEDBACK. An active, in-exercise phase like DISPLAY/PERFORMANCE:
+  // registered in the session-timeout activePhases list, showPlayableKeyboardBand,
+  // and the audio-interruption pause effect (Pitfall 4).
+  REVIEW: "review",
 };
 
 // Stable empty-array identity so memoized children (KlavierKeyboard) don't see a
@@ -279,11 +284,13 @@ export function SightReadingGame() {
 
   // Pause/resume inactivity timer based on game phase
   useEffect(() => {
-    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE
+    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE, REVIEW
+    // (REVIEW is the mistakes drill — child-safety timeout must not fire mid-drill).
     const activePhases = [
       GAME_PHASES.COUNT_IN,
       GAME_PHASES.DISPLAY,
       GAME_PHASES.PERFORMANCE,
+      GAME_PHASES.REVIEW,
     ];
     const isGameActive = activePhases.includes(gamePhase);
     if (isGameActive) {
@@ -3525,6 +3532,9 @@ export function SightReadingGame() {
   // child-safety inactivity timer during active gameplay, since gamePhase itself hasn't changed
   // and the phase effect wouldn't re-run to re-pause it. gamePhase is in the deps so this
   // doesn't act on a stale phase captured from the last time isInterrupted changed.
+  // GAME_PHASES.REVIEW is treated as active here the same way PERFORMANCE is — it is only
+  // excluded by naming SETUP/FEEDBACK, so an interruption during the review-mistakes drill
+  // correctly pauses the timer too (Pitfall 4).
   useEffect(() => {
     if (
       isInterrupted &&
@@ -3937,7 +3947,8 @@ export function SightReadingGame() {
   const showPlayableKeyboardBand =
     (gamePhase === GAME_PHASES.DISPLAY ||
       gamePhase === GAME_PHASES.COUNT_IN ||
-      gamePhase === GAME_PHASES.PERFORMANCE) &&
+      gamePhase === GAME_PHASES.PERFORMANCE ||
+      gamePhase === GAME_PHASES.REVIEW) &&
     shouldShowKeyboard;
 
   const keyboardRegion = showPlayableKeyboardBand ? (
