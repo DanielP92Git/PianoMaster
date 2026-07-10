@@ -150,6 +150,17 @@ describe("calculateOverallScore", () => {
   });
 });
 
+describe("calculateOverallScore mode (PRAC-03 / D-04)", () => {
+  it("Test mode (explicit) blends pitch*0.7 + rhythm*0.3, same as no mode arg", () => {
+    expect(calculateOverallScore(90, 40)).toBe(90 * 0.7 + 40 * 0.3);
+    expect(calculateOverallScore(90, 40, "test")).toBe(90 * 0.7 + 40 * 0.3);
+  });
+
+  it("Practice mode returns pitch-only, ignoring rhythm entirely", () => {
+    expect(calculateOverallScore(90, 40, "practice")).toBe(90);
+  });
+});
+
 describe("getPerformanceRating (BUG-9 regression: parity with calculateStarsFromPercentage)", () => {
   it.each([
     [95, 3],
