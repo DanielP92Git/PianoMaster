@@ -1709,14 +1709,6 @@
       "yours": "שלכם",
       "correct": "נכון"
     },
-    "review": {
-      "title": "סקרו טעויות",
-      "instruction": "נגנו את התו הזה",
-      "progress": "{{current}} מתוך {{total}}",
-      "playIt": "נגנו אותו",
-      "skip": "דלגו",
-      "done": "מעולה — הטעויות נסקרו!"
-    },
     "errors": {
       "startPerformance": "התחלת הנגינה נכשלה. נסו שוב.",
       "startGame": "התחלת המשחק נכשלה. נסו שוב."
