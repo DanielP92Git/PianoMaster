@@ -6,18 +6,11 @@ import {
   useRef,
   useState,
 } from "react";
+import { GRADING_MODES } from "../components/games/sight-reading-game/constants/gradingModes";
 
 const TOTAL_EXERCISES_PER_SESSION = 10;
 const DEFAULT_MAX_SCORE_PER_EXERCISE = 100;
 const ON_FIRE_THRESHOLD = 5; // reuse NotesRecognitionGame's constant (D-06)
-
-// GRADING_MODES local fallback (D-05): Plan 02-01 (same wave, parallel worktree) creates
-// src/components/games/sight-reading-game/constants/gradingModes.js with this exact shape
-// (GRADING_MODES = { PRACTICE: "practice", TEST: "test" }). That file is not yet present in
-// this worktree, so the value is inlined here rather than importing a path that doesn't exist
-// yet (would break build/tests). Downstream integration (02-07) should switch this context to
-// import GRADING_MODES from the canonical constants file once both plans are merged.
-const GRADING_MODES = { PRACTICE: "practice", TEST: "test" };
 
 const createInitialState = () => ({
   totalExercises: TOTAL_EXERCISES_PER_SESSION,
