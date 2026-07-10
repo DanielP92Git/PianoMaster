@@ -2557,6 +2557,24 @@ export function SightReadingGame() {
   }, [replayPattern]);
 
   /**
+   * DISPLAY-phase replay (PRAC-01, D-07/D-10/D-11): plays the exercise again, on demand,
+   * unlimited times (D-08). Byte-for-byte the auto-play call scheduled by
+   * loadExercisePattern — no count-in, no click track. Clears any still-pending
+   * auto-play timeout first so a fast tap can never double-play (D-11).
+   */
+  const handleReplayPreview = useCallback(() => {
+    const pattern = currentPatternRef.current;
+    if (!pattern || gamePhaseRef.current !== GAME_PHASES.DISPLAY) return;
+    if (previewPlaybackTimeoutRef.current) {
+      clearTimeout(previewPlaybackTimeoutRef.current);
+      previewPlaybackTimeoutRef.current = null;
+    }
+    rhythmPlayback.play(pattern.notes, (index) => {
+      setCurrentNoteIndex(index);
+    });
+  }, [rhythmPlayback]);
+
+  /**
    * Mic error overlay: retry handler
    * Called by MicErrorOverlay when user taps "Try Again"
    */
@@ -3811,13 +3829,20 @@ export function SightReadingGame() {
 
   const guidanceRegion =
     gamePhase === GAME_PHASES.DISPLAY ? (
-      <div className="my-2 flex-shrink-0 text-center">
+      <div className="my-2 flex flex-shrink-0 items-center justify-center gap-2 text-center">
         <button
           onClick={() => beginPerformanceWithPattern()}
           disabled={!currentPattern || isStartingPerformance}
           className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
         >
           {t("sightReading.startPlaying")}
+        </button>
+        <button
+          onClick={handleReplayPreview}
+          disabled={!currentPattern}
+          className="rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-3 sm:text-base"
+        >
+          {t("sightReading.controls.replay")}
         </button>
       </div>
     ) : gamePhase === GAME_PHASES.COUNT_IN ? (
