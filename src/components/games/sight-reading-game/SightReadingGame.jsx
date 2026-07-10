@@ -3935,6 +3935,7 @@ export function SightReadingGame() {
           }
           disabled={isModeLocked}
           aria-label={t("sightReading.controls.modeToggleLabel")}
+          aria-pressed={isPracticeMode}
           className={`rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
             isPracticeMode
               ? "border-fuchsia-400/40 bg-fuchsia-500 text-white hover:bg-fuchsia-600"
