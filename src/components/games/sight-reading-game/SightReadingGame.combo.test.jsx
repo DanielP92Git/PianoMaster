@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -105,6 +105,22 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
 
     capturedIncrementCombo = incrementCombo;
 
+    // Grading-mode state (Plan 02-07, D-05) — stateful like combo/isOnFire above so the
+    // real mode-lock/pill behavior in SightReadingGame.jsx exercises genuinely, not a stub.
+    const [gradingMode, setGradingModeState] = useState("test");
+    const [isModeLocked, setIsModeLocked] = useState(false);
+    const gradingModeRef = useRef("test");
+    const setGradingMode = useCallback(
+      (mode) => {
+        if (isModeLocked) return;
+        gradingModeRef.current = mode;
+        setGradingModeState(mode);
+      },
+      [isModeLocked]
+    );
+    const lockMode = useCallback(() => setIsModeLocked(true), []);
+    const unlockMode = useCallback(() => setIsModeLocked(false), []);
+
     return {
       totalExercises: 3,
       currentExerciseNumber: 1,
@@ -123,6 +139,12 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
       isOnFire,
       incrementCombo,
       resetCombo,
+      gradingMode,
+      gradingModeRef,
+      isModeLocked,
+      setGradingMode,
+      lockMode,
+      unlockMode,
     };
   },
 }));
