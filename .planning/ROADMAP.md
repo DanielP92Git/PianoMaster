@@ -149,7 +149,7 @@ how strictly they're graded, and revisit only what they got wrong.
 - [x] 02-04-PLAN.md — i18n strings (EN+HE) + sightReading parity gate (Wave 1)
 - [x] 02-05-PLAN.md — Practice persistence suppression: useVictoryState + VictoryScreen (Wave 1)
 - [x] 02-06-PLAN.md — Feedback panel two-row (D-23) + SightReadingLayout review phase (Wave 2)
-- [ ] 02-07-PLAN.md — Mode wiring in SightReadingGame: pill, lock, grading + persistence gate (Wave 3)
+- [x] 02-07-PLAN.md — Mode wiring in SightReadingGame: pill, lock, grading + persistence gate (Wave 3)
 - [ ] 02-08-PLAN.md — Replay (PRAC-01) + comparison playback (PRAC-02) wiring (Wave 4)
 - [ ] 02-09-PLAN.md — Review-mistakes wiring: REVIEW phase, input routing, drill (Wave 5)
 
@@ -182,7 +182,7 @@ practice can target them, all while keeping a child's mastery data locked to tha
 | Phase                     | Plans Complete | Status      | Completed  |
 | ------------------------- | -------------- | ----------- | ---------- |
 | 01. Engagement HUD Parity | 2/2            | Complete    | 2026-07-09 |
-| 02. Practice Tooling      | 6/9            | In Progress |            |
+| 02. Practice Tooling      | 7/9            | In Progress |            |
 | 03. Adaptive Pedagogy     | 0/TBD          | Not started | -          |
 
 ---
