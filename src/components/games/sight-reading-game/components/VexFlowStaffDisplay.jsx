@@ -1661,6 +1661,9 @@ function VexFlowStaffDisplayBase({
             noteElement.setAttribute("class", `vf-stavenote ${className}`);
             noteElement.setAttribute("fill", fill);
             noteElement.setAttribute("stroke", stroke || fill);
+            // Clear any prior comparison-playback highlight bump so it moves
+            // with playbackHighlightIndex instead of accumulating (CR-01).
+            noteElement.removeAttribute("stroke-width");
           }
         });
 
