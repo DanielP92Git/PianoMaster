@@ -1,5 +1,6 @@
 import { useMemo, useCallback, useRef } from "react";
 import { TIMING_TOLERANCES, NOTE_LATE_MS } from "../constants/timingConstants";
+import { GRADING_MODES, PRACTICE_TIMING } from "../constants/gradingModes";
 
 const TIMING_STATUS_MAP = [
   { threshold: 100, status: "perfect", score: 1.0, label: "Perfect!" },
@@ -11,8 +12,15 @@ const TIMING_STATUS_MAP = [
  * Hook that centralizes all timing window calculations and evaluation logic.
  * Pattern generation already stores start/end times in seconds; this hook
  * converts them to ms and exposes helpers to evaluate real-time performance.
+ *
+ * `mode` (GRADING_MODES.TEST default, or GRADING_MODES.PRACTICE) scales both the base
+ * tolerance constants AND the duration-fraction clamps, plus the status thresholds used
+ * by evaluateTiming — Test mode output is byte-for-byte unchanged from before mode support.
  */
-export function useTimingAnalysis({ tempo = 80 } = {}) {
+export function useTimingAnalysis({
+  tempo = 80,
+  mode = GRADING_MODES.TEST,
+} = {}) {
   const beatDurationMs = useMemo(() => {
     const bpm = Number(tempo) || 80;
     const safeBpm = Math.max(bpm, 1);
@@ -23,11 +31,46 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
   // Consumers can use this for BPM-adaptive debounce.
   const shortestNoteDurationMsRef = useRef(250);
 
+  // Effective tolerances + status map for the current mode. Test mode reproduces the
+  // pre-mode-support constants/clamps exactly; Practice widens both per PRACTICE_TIMING.
+  const effectiveTolerances = useMemo(() => {
+    if (mode === GRADING_MODES.PRACTICE) {
+      return {
+        late: NOTE_LATE_MS * PRACTICE_TIMING.toleranceMultiplier,
+        early: TIMING_TOLERANCES.early * PRACTICE_TIMING.toleranceMultiplier,
+        firstNoteEarly:
+          TIMING_TOLERANCES.firstNoteEarly *
+          PRACTICE_TIMING.toleranceMultiplier,
+        lateClampFraction: PRACTICE_TIMING.lateClampFraction,
+        earlyClampFraction: PRACTICE_TIMING.earlyClampFraction,
+        statusMap: TIMING_STATUS_MAP.map((rule) => ({
+          ...rule,
+          threshold: rule.threshold * PRACTICE_TIMING.statusMultiplier,
+        })),
+      };
+    }
+    return {
+      late: NOTE_LATE_MS,
+      early: TIMING_TOLERANCES.early,
+      firstNoteEarly: TIMING_TOLERANCES.firstNoteEarly,
+      lateClampFraction: 0.6,
+      earlyClampFraction: 0.5,
+      statusMap: TIMING_STATUS_MAP,
+    };
+  }, [mode]);
+
   const buildTimingWindows = useCallback(
     (pattern) => {
       if (!pattern?.notes) return [];
 
       let minDurationMs = Infinity;
+      const {
+        late: effectiveLate,
+        early: effectiveEarly,
+        firstNoteEarly: effectiveFirstNoteEarly,
+        lateClampFraction,
+        earlyClampFraction,
+      } = effectiveTolerances;
 
       const windows = pattern.notes.map((event, index) => {
         const hasStart = typeof event.startTime === "number";
@@ -50,13 +93,20 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
 
         // BPM-adaptive tolerances: cap late/early to a fraction of note duration
         // to prevent massive window overlap at high BPM (e.g., 120 BPM 8th notes = 250ms)
-        const scaledLate = Math.min(NOTE_LATE_MS, durationMs * 0.6);
+        const scaledLate = Math.min(
+          effectiveLate,
+          durationMs * lateClampFraction
+        );
         const earlyAllowance = isFirstPlayable
-          ? TIMING_TOLERANCES.firstNoteEarly
-          : Math.min(TIMING_TOLERANCES.early, durationMs * 0.5);
+          ? effectiveFirstNoteEarly
+          : Math.min(effectiveEarly, durationMs * earlyClampFraction);
 
         // Track shortest playable note for debounce scaling
-        if (event.type !== "rest" && event.pitch && durationMs < minDurationMs) {
+        if (
+          event.type !== "rest" &&
+          event.pitch &&
+          durationMs < minDurationMs
+        ) {
           minDurationMs = durationMs;
         }
 
@@ -76,28 +126,31 @@ export function useTimingAnalysis({ tempo = 80 } = {}) {
 
       return windows;
     },
-    [beatDurationMs]
+    [beatDurationMs, effectiveTolerances]
   );
 
-  const evaluateTiming = useCallback((timeDiffMs) => {
-    const absDiff = Math.abs(timeDiffMs);
+  const evaluateTiming = useCallback(
+    (timeDiffMs) => {
+      const absDiff = Math.abs(timeDiffMs);
 
-    for (const rule of TIMING_STATUS_MAP) {
-      if (absDiff <= rule.threshold) {
-        return {
-          status: rule.status,
-          score: rule.score,
-          label: rule.label,
-        };
+      for (const rule of effectiveTolerances.statusMap) {
+        if (absDiff <= rule.threshold) {
+          return {
+            status: rule.status,
+            score: rule.score,
+            label: rule.label,
+          };
+        }
       }
-    }
 
-    return {
-      status: timeDiffMs < 0 ? "early" : "late",
-      score: 0.3,
-      label: timeDiffMs < 0 ? "Early" : "Late",
-    };
-  }, []);
+      return {
+        status: timeDiffMs < 0 ? "early" : "late",
+        score: 0.3,
+        label: timeDiffMs < 0 ? "Early" : "Late",
+      };
+    },
+    [effectiveTolerances]
+  );
 
   return {
     beatDurationMs,
