@@ -1658,7 +1658,8 @@
       "tooEarly": "Too Early",
       "tooLate": "Too Late",
       "missed": "Missed",
-      "wrongNotes": "Wrong Notes"
+      "wrongNotes": "Wrong Notes",
+      "practiceNotScored": "Practice run — not scored"
     },
     "inputMode": {
       "title": "Select how you want to play the notes",
@@ -1677,7 +1678,13 @@
     "controls": {
       "toggleMetronome": "Toggle metronome",
       "switchToMic": "Switch to microphone",
-      "switchToKeyboard": "Switch to keyboard"
+      "switchToKeyboard": "Switch to keyboard",
+      "replay": "Hear it again",
+      "modePractice": "Practice",
+      "modeTest": "Test",
+      "modeToggleLabel": "Grading mode",
+      "compare": "Hear yours vs correct",
+      "review": "Review mistakes"
     },
     "session": {
       "victoryTitle": "Session Victory!",
@@ -1690,6 +1697,18 @@
       "keepGoing": "Keep Going!",
       "encourageBody": "You finished all {{count}} exercises. You're only a few points away from unlocking the victory celebration.",
       "totalXp": "{{score}} total XP • Aim for 70% to achieve victory."
+    },
+    "compare": {
+      "yours": "Yours",
+      "correct": "Correct"
+    },
+    "review": {
+      "title": "Review mistakes",
+      "instruction": "Play this note",
+      "progress": "{{current}} of {{total}}",
+      "playIt": "Play it",
+      "skip": "Skip",
+      "done": "Great — mistakes reviewed!"
     },
     "errors": {
       "startPerformance": "Failed to start performance. Please try again.",
