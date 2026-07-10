@@ -17,8 +17,8 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 
 ### Practice Tooling (P2 — no DB)
 
-- [ ] **PRAC-01**: During the read/display phase the player can replay the exercise audio on demand ("hear it again"), beyond the single existing auto-play.
-- [ ] **PRAC-02**: In the feedback phase the player can hear a played-vs-correct comparison playback (their rendition vs the correct one).
+- [x] **PRAC-01**: During the read/display phase the player can replay the exercise audio on demand ("hear it again"), beyond the single existing auto-play.
+- [x] **PRAC-02**: In the feedback phase the player can hear a played-vs-correct comparison playback (their rendition vs the correct one).
 - [ ] **PRAC-03**: The player can select Practice vs Test mode — Practice grades with lenient timing tolerances (pitch-focused), Test uses strict timing tolerances.
 - [ ] **PRAC-04**: After an exercise the player can enter a Review-mistakes mode that steps through only the wrong/missed notes.
 
@@ -64,8 +64,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | HUD-01      | Phase 01    | Complete              |
 | HUD-02      | —           | Deferred (2026-07-09) |
 | HUD-03      | Phase 01    | Complete              |
-| PRAC-01     | Phase 02    | Pending               |
-| PRAC-02     | Phase 02    | Pending               |
+| PRAC-01     | Phase 02    | Complete              |
+| PRAC-02     | Phase 02    | Complete              |
 | PRAC-03     | Phase 02    | Pending               |
 | PRAC-04     | Phase 02    | Pending               |
 | ADAPT-01    | Phase 03    | Pending               |

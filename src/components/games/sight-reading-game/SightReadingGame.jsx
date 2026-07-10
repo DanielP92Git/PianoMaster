@@ -34,6 +34,7 @@ import {
   calculateRhythmAccuracy,
   calculateOverallScore,
 } from "./utils/scoreCalculator";
+import { buildPlayedRendition } from "./utils/comparisonPattern";
 import { FIRST_NOTE_EARLY_MS, NOTE_LATE_MS } from "./constants/timingConstants";
 import { TIMING_FEEDBACK } from "./constants/feedbackPalette";
 import {
@@ -260,6 +261,10 @@ export function SightReadingGame() {
   const [currentBeat, setCurrentBeat] = useState(0);
   const hasAutoConfigured = useRef(false);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
+  // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
+  // -1 = no highlight. Distinct from currentNoteIndex (which drives DISPLAY/COUNT_IN/
+  // PERFORMANCE highlighting) so comparison playback never disturbs it.
+  const [playbackHighlightIndex, setPlaybackHighlightIndex] = useState(-1);
 
   // Session timeout controls - pause timer during active gameplay
   let pauseTimer = useCallback(() => {}, []);
@@ -298,6 +303,7 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     setCurrentBeat(0);
     setCurrentNoteIndex(-1);
+    setPlaybackHighlightIndex(-1);
     setTimingState(TIMING_STATE.OFF);
     setPerformanceResults([]);
     setSummaryStats(null);
@@ -2292,6 +2298,7 @@ export function SightReadingGame() {
         setCurrentPattern(pattern);
         currentPatternRef.current = pattern;
         setCurrentNoteIndex(0);
+        setPlaybackHighlightIndex(-1);
         setPerformanceResults([]);
         performanceResultsRef.current = [];
         lastDetectionTimesRef.current = {};
@@ -2519,6 +2526,7 @@ export function SightReadingGame() {
     stopMetronomePlayback();
     // Reset states
     setCurrentNoteIndex(0);
+    setPlaybackHighlightIndex(-1);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
@@ -2555,6 +2563,75 @@ export function SightReadingGame() {
     penaltyLockRef.current = false;
     replayPattern();
   }, [replayPattern]);
+
+  /**
+   * DISPLAY-phase replay (PRAC-01, D-07/D-10/D-11): plays the exercise again, on demand,
+   * unlimited times (D-08). Byte-for-byte the auto-play call scheduled by
+   * loadExercisePattern — no count-in, no click track. Clears any still-pending
+   * auto-play timeout first so a fast tap can never double-play (D-11).
+   */
+  const handleReplayPreview = useCallback(() => {
+    const pattern = currentPatternRef.current;
+    if (!pattern || gamePhaseRef.current !== GAME_PHASES.DISPLAY) return;
+    if (previewPlaybackTimeoutRef.current) {
+      clearTimeout(previewPlaybackTimeoutRef.current);
+      previewPlaybackTimeoutRef.current = null;
+    }
+    rhythmPlayback.play(pattern.notes, (index) => {
+      setCurrentNoteIndex(index);
+    });
+  }, [rhythmPlayback]);
+
+  /**
+   * FEEDBACK-phase played-vs-correct comparison (PRAC-02, D-13/D-14): reconstructs the
+   * child's rendition from performanceResults, plays it, then chains the correct pattern
+   * on the useRhythmPlayback end-of-pattern signal (onBeatChange(-1)) — never a bare
+   * setTimeout duration guess, which would drift against the audio clock. Drives a moving
+   * staff outline via playbackHighlightIndex on each pass. If everything was missed
+   * ("yours" is empty), skips pass 1 and plays only the correct pattern.
+   */
+  const startComparison = useCallback(async () => {
+    const pattern = currentPatternRef.current;
+    if (!pattern) return;
+    // The Compare tap is a user gesture — resume the audio context the same way
+    // beginPerformanceWithPattern does before scheduling any playback.
+    await audioEngine.resumeAudioContext();
+
+    const yours = buildPlayedRendition(
+      pattern.notes,
+      performanceResultsRef.current
+    );
+
+    const playPass = (notes, mapIndex, onDone) => {
+      rhythmPlayback.play(notes, (index) => {
+        if (index === -1) {
+          onDone();
+          return;
+        }
+        setPlaybackHighlightIndex(mapIndex(index));
+      });
+    };
+
+    const playCorrectPass = () => {
+      playPass(
+        pattern.notes,
+        (i) => i,
+        () => setPlaybackHighlightIndex(-1)
+      );
+    };
+
+    if (yours.length === 0) {
+      // Everything missed — nothing to compare against, play only the correct pass.
+      playCorrectPass();
+      return;
+    }
+
+    playPass(
+      yours,
+      (i) => yours[i]?.noteIndex ?? -1,
+      () => playCorrectPass()
+    );
+  }, [audioEngine, rhythmPlayback]);
 
   /**
    * Mic error overlay: retry handler
@@ -2623,6 +2700,7 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     currentPatternRef.current = null;
     setCurrentNoteIndex(-1);
+    setPlaybackHighlightIndex(-1);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
@@ -3076,6 +3154,7 @@ export function SightReadingGame() {
       forcePerformanceWallClockRef.current = false;
       setCurrentBeat(0);
       setCurrentNoteIndex(0);
+      setPlaybackHighlightIndex(-1);
       setPerformanceResults([]);
       performanceResultsRef.current = [];
       lastDetectionTimesRef.current = {};
@@ -3399,6 +3478,7 @@ export function SightReadingGame() {
           setCurrentPattern(pattern);
           currentPatternRef.current = pattern;
           setCurrentNoteIndex(0);
+          setPlaybackHighlightIndex(-1);
           setPerformanceResults([]);
           performanceResultsRef.current = [];
           lastDetectionTimesRef.current = {};
@@ -3811,13 +3891,20 @@ export function SightReadingGame() {
 
   const guidanceRegion =
     gamePhase === GAME_PHASES.DISPLAY ? (
-      <div className="my-2 flex-shrink-0 text-center">
+      <div className="my-2 flex flex-shrink-0 items-center justify-center gap-2 text-center">
         <button
           onClick={() => beginPerformanceWithPattern()}
           disabled={!currentPattern || isStartingPerformance}
           className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
         >
           {t("sightReading.startPlaying")}
+        </button>
+        <button
+          onClick={handleReplayPreview}
+          disabled={!currentPattern}
+          className="rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-3 sm:text-base"
+        >
+          {t("sightReading.controls.replay")}
         </button>
       </div>
     ) : gamePhase === GAME_PHASES.COUNT_IN ? (
@@ -3876,6 +3963,7 @@ export function SightReadingGame() {
         performanceResults={performanceResults}
         gamePhase={gamePhase}
         keySignature={gameSettings.keySignature || null}
+        playbackHighlightIndex={playbackHighlightIndex}
       />
     </div>
   ) : null;
@@ -3893,6 +3981,7 @@ export function SightReadingGame() {
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
         gradingMode={gradingMode}
+        onCompare={startComparison}
       />
 
       {isSessionComplete && (
