@@ -173,18 +173,26 @@ practice can target them, all while keeping a child's mastery data locked to tha
 4. The persisted per-note mastery field can only be read and written by the authenticated owning student, verified under RLS mirroring the existing `student_skill_progress` protections (defense-in-depth: JS gate + DB RLS) — confirmed by a `/gsd-secure-phase` pass before this phase is considered done.
 5. All new adaptive-coaching and mode-related strings ship in EN+HE with RTL correctness.
 
-**Plans**: TBD
+**Plans**: 7 plans across 3 waves
+
+- [ ] 03-01-PLAN.md — Adaptive engine core: tier ladder + computeNextTier/applyTierToSettings/buildWeightedNotePool (Wave 1)
+- [ ] 03-02-PLAN.md — Persistence: note_mastery migration + skillProgressService JSONB merge param (Wave 1)
+- [ ] 03-03-PLAN.md — LevelUpCue escalation cue + EN/HE adaptive strings (Wave 1)
+- [ ] 03-04-PLAN.md — Adaptive session state + loadExercisePattern stale-closure plumbing (Wave 1)
+- [ ] 03-05-PLAN.md — In-session difficulty/tempo escalation + LevelUpCue wiring (Wave 2)
+- [ ] 03-07-PLAN.md — [BLOCKING] Apply note_mastery migration to production (Wave 2, owner-gated)
+- [ ] 03-06-PLAN.md — Per-note mastery accumulation/persistence + weak-note targeting (Wave 3)
 
 ## Progress
 
 **Total: 27 milestones shipped, 111 phases, ~273 plans | Active: v3.7 Sight-Reading Engagement & Pedagogy (3 phases, 0/3 complete)**
 
-| Phase                     | Plans Complete | Status      | Completed  |
-| ------------------------- | -------------- | ----------- | ---------- |
-| 01. Engagement HUD Parity | 2/2            | Complete    | 2026-07-09 |
-| 02. Practice Tooling      | 9/9            | Complete    | 2026-07-10 |
-| 03. Adaptive Pedagogy     | 0/TBD          | Not started | -          |
+| Phase                     | Plans Complete | Status   | Completed  |
+| ------------------------- | -------------- | -------- | ---------- |
+| 01. Engagement HUD Parity | 2/2            | Complete | 2026-07-09 |
+| 02. Practice Tooling      | 9/9            | Complete | 2026-07-10 |
+| 03. Adaptive Pedagogy     | 0/7            | Planned  | -          |
 
 ---
 
-_Last updated: 2026-07-09 -- v3.7 Sight-Reading Engagement & Pedagogy roadmap created (3 phases, 12/12 v1 requirements mapped). Phase 01 next via `/gsd-plan-phase 01`._
+_Last updated: 2026-07-12 -- Phase 03 (Adaptive Pedagogy) planned: 7 plans across 3 waves covering ADAPT-01..04 + I18N-01. Next: `/gsd-execute-phase 03`._
