@@ -443,22 +443,27 @@ CREATE POLICY student_skill_progress_update_own
 
 **If this table is empty:** N/A — see above; all three assumptions are grounded in explicit CONTEXT.md wording but require the stated confirmations/verifications before implementation.
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+_All three questions were decided during phase planning; the deciding plan/task is noted inline under each._
 
 1. **Should the per-note mastery DB write be skipped in Practice mode, matching the existing persistence-skip convention?**
    - What we know: Both existing persistence paths in this exact file/flow (`students_score` write, trail-progress write via `useVictoryState`) already skip entirely in Practice mode.
    - What's unclear: CONTEXT.md's D-13 only addresses ADAPT-01/02 (in-session behavior), not ADAPT-03 (cross-session persistence) — it's silent on whether Practice-mode attempts should contribute to the mastery dataset.
    - Recommendation: Default to gating mastery writes the same way as the other two persistence paths (skip in Practice mode) for consistency and to avoid contradicting the established "Practice mode persists nothing" UX invariant; flag this as a one-line confirmation for the planner/discuss-phase rather than silently deciding either way.
+   - **RESOLVED:** Plan 03-06 Task 1 — the mastery write is threaded through `useVictoryState` AFTER the existing `suppressPersistence` early-return, so Practice mode skips the mastery write "for free" (matching the other two persistence paths). No extra gate added.
 
 2. **Where exactly should the weak-note-mastery READ happen to seed the next node-session's selection weighting?**
    - What we know: `generatePatternData` is synchronous logic but is already invoked through an `async function` wrapper (`usePatternGeneration.generatePattern`); the trail-entry flow (`buildTrailSettingsFromNode`, `TrailNodeModal.jsx` navigation) doesn't currently fetch `student_skill_progress` before navigating.
    - What's unclear: Whether the mastery fetch should happen in `TrailNodeModal.jsx` before navigation (adding an extra round-trip before the game even mounts) or inside `SightReadingGame.jsx`'s own auto-configure effect (`buildTrailSettingsFromNode`) via a fresh `getNodeProgress(studentId, nodeId)` call.
    - Recommendation: Fetch inside `SightReadingGame.jsx`'s existing node-auto-configure effect (co-located with where `nodeConfig`/`nodeId` are already consumed) rather than in `TrailNodeModal.jsx`, to keep the mastery-aware pattern generation self-contained to the sight-reading game (per the "sight-reading only, no cross-game framework" scope constraint).
+   - **RESOLVED:** Plan 03-06 Task 2 — the mastery read is a `getNodeProgress(studentId, nodeId)` call inside `SightReadingGame.jsx`'s node-auto-configure effect, seeding the weighted note pool there (not in `TrailNodeModal.jsx`).
 
 3. **Exact tier count and step granularity for the D-01/D-05 ladder.**
    - What we know: D-03 specifies "drops back one difficulty tier" (implying a small ordered list of discrete tiers, not a continuous scale); D-06 bounds tempo to ±10-15 BPM per step within 0.75x-1.25x of base.
    - What's unclear: How many discrete tiers total (e.g., 3? 5?), and whether "one tier" of easing exactly undoes "one tier" of escalation symmetrically.
    - Recommendation: A small symmetric ladder (e.g., 5 tiers: -2, -1, 0/baseline, +1, +2) where tier 0 is the node's authored baseline settings, each step changes tempo by a fixed amount within the D-06 envelope and toggles rest-inclusion/note-pool-widening at the extremes, keeps the "one tier at a time" semantics of D-03 simple and testable.
+   - **RESOLVED:** Plan 03-01 Task 1 — `ADAPTIVE_TIERS` is exactly the 5-tier symmetric ladder (-2, -1, 0/baseline, +1, +2) with baseline at index 0, fixed `tempoDeltaBpm` per step inside the D-06 envelope and rest/note-pool widening toggled at the positive tiers.
 
 ## Environment Availability
 
