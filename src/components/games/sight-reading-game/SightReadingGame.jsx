@@ -69,13 +69,23 @@ import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
 import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
 import { AnimatePresence } from "framer-motion";
-import { computeNextTier, applyTierToSettings } from "./utils/adaptiveEngine";
+import {
+  computeNextTier,
+  applyTierToSettings,
+  buildWeightedNotePool,
+} from "./utils/adaptiveEngine";
 import {
   ADAPTIVE_TIERS,
   SUCCESS_ACCURACY,
   SUCCESS_MAX_MISSES,
+  MASTERY_MIN_ATTEMPTS,
 } from "./constants/adaptiveTiers";
 import { LevelUpCue } from "./components/LevelUpCue";
+import { getNodeProgress } from "../../../services/skillProgressService";
+
+// Phase 03 (ADAPT-03/D-09/D-11): first-exercise race timeout — the weak-note-mastery fetch
+// races this timeout so gameplay never blocks on the network. See seedMasteryBiasedSettings.
+const MASTERY_FETCH_TIMEOUT_MS = 800;
 
 // #region agent log (debug-mode instrumentation — dev only)
 const __srLog = import.meta.env.DEV
@@ -434,6 +444,39 @@ export function SightReadingGame() {
     [trailEnableSharps, trailEnableFlats, trailKeySignature]
   );
 
+  // Phase 03 (ADAPT-03/D-09/D-11): read persisted per-note mastery for (student, node) and bias
+  // the baseline pool toward historically-weak pitches — strictly within the node's own pool
+  // (D-09; buildWeightedNotePool only duplicates pitches already present in baseSettings.selectedNotes,
+  // never introduces new ones). Cold start / free-play / no qualifying pitch -> pool returned
+  // unchanged (uniform selection). Races an 800ms timeout so gameplay never blocks on the network
+  // (checker Warning 2 — the first-exercise race is handled deliberately, not left to chance):
+  // the PREFERRED option from 03-06-PLAN.md — gate exercise 1's pattern generation on this fetch.
+  const seedMasteryBiasedSettings = useCallback(
+    async (baseSettings) => {
+      if (!nodeId || !studentId) return baseSettings;
+      try {
+        const progress = await Promise.race([
+          getNodeProgress(studentId, nodeId),
+          new Promise((resolve) =>
+            setTimeout(() => resolve(null), MASTERY_FETCH_TIMEOUT_MS)
+          ),
+        ]);
+        const masteryMap = progress?.note_mastery || {};
+        const baseNotes = baseSettings?.selectedNotes || [];
+        const weighted = buildWeightedNotePool(
+          baseNotes,
+          masteryMap,
+          MASTERY_MIN_ATTEMPTS
+        );
+        return { ...baseSettings, selectedNotes: weighted };
+      } catch {
+        // Non-fatal: fall back to the uniform baseline (no biasing).
+        return baseSettings;
+      }
+    },
+    [nodeId, studentId]
+  );
+
   // Auto-configure and auto-start from trail node
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
@@ -457,12 +500,24 @@ export function SightReadingGame() {
 
       setGameSettings(trailSettings);
 
-      // Auto-start the game after a brief delay to ensure settings are applied
-      setTimeout(() => {
-        startGame(trailSettings);
-      }, 100);
+      // Phase 03 (ADAPT-03): gate exercise 1's pattern generation on the mastery-biased seed
+      // (racing an 800ms timeout — see seedMasteryBiasedSettings) so exercise 1 is already
+      // biased toward weak pitches, not just exercise 2 onward.
+      let cancelled = false;
+      (async () => {
+        const seededSettings = await seedMasteryBiasedSettings(trailSettings);
+        if (cancelled) return;
+        setGameSettings(seededSettings);
+        // Auto-start the game after a brief delay to ensure settings are applied
+        setTimeout(() => {
+          startGame(seededSettings);
+        }, 100);
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, buildTrailSettingsFromNode intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, buildTrailSettingsFromNode, seedMasteryBiasedSettings intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   // Trail-mode in-game settings overlay (gear icon). Free-play uses returnToSetup instead.
@@ -3755,8 +3810,19 @@ export function SightReadingGame() {
     hasAutoConfigured.current = true;
     const trailSettings = buildTrailSettingsFromNode(nodeConfig);
     setGameSettings(trailSettings);
-    setTimeout(() => startGame(trailSettings), 50);
-  }, [audioContextRef, nodeConfig, startGame, buildTrailSettingsFromNode]);
+    // Phase 03 (ADAPT-03): same mastery-biased seeding as the primary trail auto-start effect,
+    // so exercise 1 is biased on the iOS gesture-gated path too (Rule 2 — this path would
+    // otherwise silently never read mastery, since it bypasses the effect above entirely).
+    const seededSettings = await seedMasteryBiasedSettings(trailSettings);
+    setGameSettings(seededSettings);
+    setTimeout(() => startGame(seededSettings), 50);
+  }, [
+    audioContextRef,
+    nodeConfig,
+    startGame,
+    buildTrailSettingsFromNode,
+    seedMasteryBiasedSettings,
+  ]);
 
   // IOS-01/03: Freeze session timer when AudioContext is interrupted.
   // Resuming is owned entirely by the phase-based effect above (it already resumes whenever

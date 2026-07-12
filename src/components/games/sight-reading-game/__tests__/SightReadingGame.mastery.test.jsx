@@ -613,3 +613,99 @@ describe("useVictoryState session mastery persistence plumbing (ADAPT-03, Task 1
     expect(updateNodeProgressSpy).not.toHaveBeenCalled();
   });
 });
+
+describe("SightReadingGame reads persisted mastery + biases weak-note selection (ADAPT-03, Task 2)", () => {
+  const trailLocationState = {
+    nodeId: "test-node",
+    nodeConfig: {
+      notePool: ["C4", "D4"],
+      clef: "treble",
+      measuresPerPattern: 1,
+      timeSignature: "4/4",
+    },
+  };
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
+    localStorage.setItem("sightReadingInputMode", "mic");
+    generatePatternSpy.mockClear();
+    getNodeProgressSpy.mockClear();
+    capturedOnNoteEvent = null;
+    mockInitialGradingModeBox.current = "test";
+    mockUserBox.current = { user: { id: "student-1" }, isStudent: true };
+    mockLocationStateBox.current = trailLocationState;
+    mockTotalExercisesBox.current = 2;
+    patternNotesBox.current = [
+      { type: "note", pitch: "C4", startTime: 0, endTime: 1, duration: 1 },
+    ];
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  async function renderTrailGameAndFlush() {
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/", state: null }]}>
+        <SightReadingGame />
+      </MemoryRouter>
+    );
+
+    // Flush the mastery-fetch IIFE (Promise.race against an 800ms timeout — the mocked
+    // getNodeProgress resolves on a microtask, so it wins the race well before the timer
+    // would fire) and the subsequent setTimeout(...,100) that calls startGame.
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+  }
+
+  test("a historically-weak pitch (>= MASTERY_MIN_ATTEMPTS attempts, < WEAK_ACCURACY_THRESHOLD) is over-represented in exercise 1's generated pool", async () => {
+    getNodeProgressSpy.mockResolvedValueOnce({
+      note_mastery: { C4: { correct: 1, total: 6 } },
+    });
+
+    await renderTrailGameAndFlush();
+
+    expect(getNodeProgressSpy).toHaveBeenCalledWith("student-1", "test-node");
+    expect(generatePatternSpy).toHaveBeenCalledTimes(1);
+    const selectedNotesArg = generatePatternSpy.mock.calls[0][3];
+    const c4Count = selectedNotesArg.filter((n) => n === "C4").length;
+    expect(c4Count).toBeGreaterThan(1);
+    // D-09: biasing only duplicates pitches already in the node's own pool — never introduces
+    // a pitch outside it.
+    expect(selectedNotesArg.every((n) => ["C4", "D4"].includes(n))).toBe(true);
+  });
+
+  test("cold start (no qualifying pitch): the baseline pool is used unchanged (uniform selection)", async () => {
+    getNodeProgressSpy.mockResolvedValueOnce({ note_mastery: {} });
+
+    await renderTrailGameAndFlush();
+
+    expect(generatePatternSpy).toHaveBeenCalledTimes(1);
+    const selectedNotesArg = generatePatternSpy.mock.calls[0][3];
+    expect(selectedNotesArg).toEqual(["C4", "D4"]);
+  });
+
+  test("free play (no nodeId/studentId pairing needed): the mastery fetch is never attempted", async () => {
+    mockLocationStateBox.current = null; // no nodeConfig -> trail auto-start effect never runs
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/", state: null }]}>
+        <SightReadingGame />
+      </MemoryRouter>
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Start" }));
+      await Promise.resolve();
+    });
+
+    expect(getNodeProgressSpy).not.toHaveBeenCalled();
+  });
+});
