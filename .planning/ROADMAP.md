@@ -181,17 +181,17 @@ practice can target them, all while keeping a child's mastery data locked to tha
 - [x] 03-04-PLAN.md — Adaptive session state + loadExercisePattern stale-closure plumbing (Wave 1)
 - [x] 03-05-PLAN.md — In-session difficulty/tempo escalation + LevelUpCue wiring (Wave 2)
 - [x] 03-07-PLAN.md — [BLOCKING] Apply note_mastery migration to production (Wave 2, owner-gated)
-- [ ] 03-06-PLAN.md — Per-note mastery accumulation/persistence + weak-note targeting (Wave 3)
+- [x] 03-06-PLAN.md — Per-note mastery accumulation/persistence + weak-note targeting (Wave 3)
 
 ## Progress
 
 **Total: 27 milestones shipped, 111 phases, ~273 plans | Active: v3.7 Sight-Reading Engagement & Pedagogy (3 phases, 0/3 complete)**
 
-| Phase                     | Plans Complete | Status      | Completed  |
-| ------------------------- | -------------- | ----------- | ---------- |
-| 01. Engagement HUD Parity | 2/2            | Complete    | 2026-07-09 |
-| 02. Practice Tooling      | 9/9            | Complete    | 2026-07-10 |
-| 03. Adaptive Pedagogy     | 6/7            | In Progress |            |
+| Phase                     | Plans Complete | Status   | Completed  |
+| ------------------------- | -------------- | -------- | ---------- |
+| 01. Engagement HUD Parity | 2/2            | Complete | 2026-07-09 |
+| 02. Practice Tooling      | 9/9            | Complete | 2026-07-10 |
+| 03. Adaptive Pedagogy     | 7/7            | Complete | 2026-07-12 |
 
 ---
 
