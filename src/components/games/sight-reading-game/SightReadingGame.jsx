@@ -273,6 +273,10 @@ export function SightReadingGame() {
   const [currentPattern, setCurrentPattern] = useState(null);
   const [currentBeat, setCurrentBeat] = useState(0);
   const hasAutoConfigured = useRef(false);
+  // Phase 03 (D-02): the real "stretch" pool for widening is the NODE's full notePool (superset),
+  // NOT the exercise-level focusNotes (always empty for sight-reading, RESEARCH.md Pitfall 1).
+  // Free-play (no node) → empty, so tier widening degrades to tempo/rest-only (Assumption A3).
+  const nodeSupersetNotesRef = useRef([]);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
   // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
   // -1 = no highlight. Distinct from currentNoteIndex (which drives DISPLAY/COUNT_IN/
@@ -413,6 +417,13 @@ export function SightReadingGame() {
       }
 
       hasAutoConfigured.current = true;
+
+      // Phase 03 (D-02): the real "stretch" pool for widening is the NODE's full notePool
+      // (superset), NOT the exercise-level focusNotes (always empty for sight-reading,
+      // RESEARCH.md Pitfall 1). Free-play (no node) → empty, so tier widening degrades to
+      // tempo/rest-only (Assumption A3).
+      const adaptiveNode = nodeId ? getNodeById(nodeId) : null;
+      nodeSupersetNotesRef.current = adaptiveNode?.noteConfig?.notePool || [];
 
       const trailSettings = buildTrailSettingsFromNode(nodeConfig);
 
@@ -2345,8 +2356,9 @@ export function SightReadingGame() {
   ]);
 
   const loadExercisePattern = useCallback(
-    async () => {
+    async (overrideSettings) => {
       try {
+        const settings = overrideSettings ?? gameSettings;
         audioEngine.stopScheduler();
         rhythmPlayback.stop();
         stopMetronomePlayback();
@@ -2357,15 +2369,15 @@ export function SightReadingGame() {
         }
 
         const pattern = await generatePattern(
-          gameSettings.difficulty,
-          gameSettings.timeSignature,
-          gameSettings.tempo,
-          gameSettings.selectedNotes,
-          gameSettings.clef,
-          gameSettings.measuresPerPattern || 1,
-          gameSettings.rhythmSettings,
-          gameSettings.rhythmComplexity,
-          gameSettings.keySignature || null
+          settings.difficulty,
+          settings.timeSignature,
+          settings.tempo,
+          settings.selectedNotes,
+          settings.clef,
+          settings.measuresPerPattern || 1,
+          settings.rhythmSettings,
+          settings.rhythmComplexity,
+          settings.keySignature || null
         );
 
         setCurrentPattern(pattern);
