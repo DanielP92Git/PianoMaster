@@ -76,6 +76,7 @@ import {
 } from "./utils/adaptiveEngine";
 import {
   ADAPTIVE_TIERS,
+  BASELINE_TIER_INDEX,
   SUCCESS_ACCURACY,
   SUCCESS_MAX_MISSES,
   MASTERY_MIN_ATTEMPTS,
@@ -2702,9 +2703,14 @@ export function SightReadingGame() {
       triggerLevelUpCue();
     }
 
+    // WR-04 (03-REVIEW.md): fall back to the tier looked up by BASELINE_TIER_INDEX (the
+    // exported constant this module already exposes for exactly this purpose) rather than a
+    // positional ADAPTIVE_TIERS[2] index, which only happens to be the baseline tier today
+    // because of the array's current literal ordering and would silently resolve to the wrong
+    // tier if ADAPTIVE_TIERS is ever reordered or extended.
     const tier =
       ADAPTIVE_TIERS.find((tierDef) => tierDef.index === tierIndex) ??
-      ADAPTIVE_TIERS[2];
+      ADAPTIVE_TIERS.find((tierDef) => tierDef.index === BASELINE_TIER_INDEX);
     const base = baseAdaptiveSettingsRef.current || gameSettings;
     const adaptedSettings = applyTierToSettings(
       base,
