@@ -128,6 +128,17 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
     const lockMode = useCallback(() => setIsModeLocked(true), []);
     const unlockMode = useCallback(() => setIsModeLocked(false), []);
 
+    // Phase 03 (ADAPT-01/02): adaptive streak/tier ref-mirrored state, mirroring the real
+    // context's pattern (successStreakRef.current is read synchronously in handleNextExercise).
+    const successStreakRef = useRef(0);
+    const adaptiveTierIndexRef = useRef(0);
+    const setSuccessStreak = useCallback((n) => {
+      successStreakRef.current = n;
+    }, []);
+    const setAdaptiveTierIndex = useCallback((n) => {
+      adaptiveTierIndexRef.current = n;
+    }, []);
+
     return {
       totalExercises: 3,
       currentExerciseNumber: 1,
@@ -152,6 +163,10 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
       setGradingMode,
       lockMode,
       unlockMode,
+      successStreakRef,
+      setSuccessStreak,
+      adaptiveTierIndexRef,
+      setAdaptiveTierIndex,
     };
   },
 }));
