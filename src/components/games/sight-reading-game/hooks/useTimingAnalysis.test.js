@@ -17,6 +17,28 @@ function singleNotePattern(durationSeconds, { startTime = 0 } = {}) {
   };
 }
 
+// Helper: build a two-note pattern so the SECOND note's window exercises the
+// non-first-playable early-clamp branch (buildTimingWindows treats index 0 specially via
+// TIMING_TOLERANCES.firstNoteEarly, bypassing the duration-fraction clamp entirely).
+function twoNotePattern(durationSeconds) {
+  return {
+    notes: [
+      {
+        pitch: "c/4",
+        type: "note",
+        startTime: 0,
+        duration: durationSeconds,
+      },
+      {
+        pitch: "d/4",
+        type: "note",
+        startTime: durationSeconds,
+        duration: durationSeconds,
+      },
+    ],
+  };
+}
+
 describe("useTimingAnalysis - mode awareness", () => {
   it("Test mode (default, no mode passed) output is unchanged for a given tempo", () => {
     const { result } = renderHook(() => useTimingAnalysis({ tempo: 80 }));
@@ -92,5 +114,63 @@ describe("useTimingAnalysis - mode awareness", () => {
 
     expect(testResult.current.evaluateTiming(150).status).toBe("good");
     expect(practiceResult.current.evaluateTiming(150).status).toBe("perfect");
+  });
+});
+
+describe("useTimingAnalysis - tempo-extreme coverage at 1.25x base (Phase 03 ADAPT-01/02, Pitfall 5)", () => {
+  // Top of the D-06 adaptive tempo envelope: BASE_TEMPO_CLAMP_MAX_FRACTION = 1.25, applied to
+  // a representative node base tempo of 80 -> 100 BPM. At 100 BPM the fastest common note
+  // duration (an eighth note, half a beat = 300ms) is short enough that the duration-fraction
+  // clamp binds ahead of the raw tolerance constants in BOTH grading modes (Pitfall 5) —
+  // exactly the scenario that must stay usable (non-degenerate) at escalated tempo.
+  const baseTempo = 80;
+  const fastTempo = baseTempo * 1.25; // 100 BPM
+  const beatMs = (60 / fastTempo) * 1000; // 600ms
+  const eighthNoteSeconds = beatMs / 1000 / 2; // 0.3s — fastest common note duration at this tempo
+
+  it("TEST mode: late + early windows stay positive and non-degenerate at 100 BPM (eighth notes)", () => {
+    const { result } = renderHook(() =>
+      useTimingAnalysis({ tempo: fastTempo, mode: GRADING_MODES.TEST })
+    );
+    const pattern = twoNotePattern(eighthNoteSeconds);
+    const windows = result.current.buildTimingWindows(pattern);
+    // Second note: not first-playable, so earlyAllowance goes through the duration-fraction
+    // clamp (min(effectiveEarly, durationMs * earlyClampFraction)) — the Pitfall 5 path.
+    const win = windows[1];
+
+    const lateWindowMs = win.windowEnd - win.endMs;
+    const earlyWindowMs = win.startMs - win.windowStart;
+
+    // Test: scaledLate = min(300, 300*0.6=180) = 180; earlyAllowance = min(200, 300*0.5=150) = 150.
+    expect(lateWindowMs).toBeCloseTo(180, 5);
+    expect(earlyWindowMs).toBeCloseTo(150, 5);
+    expect(lateWindowMs).toBeGreaterThan(0);
+    expect(earlyWindowMs).toBeGreaterThan(0);
+  });
+
+  it("PRACTICE mode: late + early windows stay positive, non-degenerate, and wider than Test at 100 BPM (eighth notes)", () => {
+    const { result: testResult } = renderHook(() =>
+      useTimingAnalysis({ tempo: fastTempo, mode: GRADING_MODES.TEST })
+    );
+    const { result: practiceResult } = renderHook(() =>
+      useTimingAnalysis({ tempo: fastTempo, mode: GRADING_MODES.PRACTICE })
+    );
+    const pattern = twoNotePattern(eighthNoteSeconds);
+    const testWin = testResult.current.buildTimingWindows(pattern)[1];
+    const practiceWin = practiceResult.current.buildTimingWindows(pattern)[1];
+
+    const practiceLateMs = practiceWin.windowEnd - practiceWin.endMs;
+    const practiceEarlyMs = practiceWin.startMs - practiceWin.windowStart;
+
+    // Practice: scaledLate = min(600, 300*0.85=255) = 255; earlyAllowance = min(400, 300*0.75=225) = 225.
+    expect(practiceLateMs).toBeCloseTo(255, 5);
+    expect(practiceEarlyMs).toBeCloseTo(225, 5);
+    expect(practiceLateMs).toBeGreaterThan(0);
+    expect(practiceEarlyMs).toBeGreaterThan(0);
+
+    // Practice must stay strictly wider than Test at this same escalated tempo — the whole
+    // point of the leniency mode remains usable, not clamped down to (or below) Test width.
+    expect(practiceWin.windowEnd).toBeGreaterThan(testWin.windowEnd);
+    expect(practiceWin.windowStart).toBeLessThan(testWin.windowStart);
   });
 });
