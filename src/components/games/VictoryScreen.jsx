@@ -30,6 +30,7 @@ const VictoryScreen = ({
   challengeXpReward = null, // Optional: bonus XP for challenge
   subtitle = null, // Optional: custom subtitle text (e.g., "You caught 5 out of 8 Middle C!")
   suppressPersistence = false, // Optional: practice run — skip all XP/streak/trail/daily-challenge persistence
+  sessionMastery = null, // Optional: Phase 03 (ADAPT-03) accumulated { [pitch]: { correct, total } } for this session — relay only, no render use (mirrors suppressPersistence)
 }) => {
   const {
     // Core display data
@@ -80,6 +81,7 @@ const VictoryScreen = ({
     exerciseType,
     onNextExercise,
     suppressPersistence,
+    sessionMastery,
   });
 
   // Mark daily challenge as complete
