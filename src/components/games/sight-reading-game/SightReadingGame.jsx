@@ -3050,6 +3050,13 @@ export function SightReadingGame() {
 
   const handleApplySettings = (newSettings) => {
     setShowSettingsModal(false);
+    // WR-02 (03-REVIEW.md): a mid-session gear-icon settings change is USER-initiated — distinct
+    // from the tier-driven adaptive changes that intentionally leave this baseline untouched
+    // mid-session so successive tier deltas never compound (see startGame's `!currentPattern`
+    // guard, which is false here since a pattern is already loaded). Without this, the next
+    // "Next Exercise" boundary would recompute tempo from the STALE session-start baseline +
+    // tier delta, silently discarding the tempo/rhythm the user just chose via the gear icon.
+    baseAdaptiveSettingsRef.current = { ...newSettings };
     // startGame applies the (curriculum notes/clef preserved) settings and regenerates
     // the pattern, so the exercise restarts at the new tempo/rhythm.
     startGame(newSettings);
