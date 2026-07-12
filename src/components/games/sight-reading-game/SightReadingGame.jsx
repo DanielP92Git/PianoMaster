@@ -312,9 +312,19 @@ export function SightReadingGame() {
   const sessionMasteryRef = useRef({});
   // Escalation-only celebratory overlay (D-12) — no easing/negative variant exists.
   const [showLevelUpCue, setShowLevelUpCue] = useState(false);
+  // WR-05 (03-REVIEW.md): tracked in a ref (mirroring timingFeedbackTimeoutRef) and cleared in
+  // the file's existing unmount cleanup effect, so navigating away within 1500ms of a tier
+  // escalation doesn't fire setShowLevelUpCue on an unmounted component.
+  const levelUpCueTimeoutRef = useRef(null);
   const triggerLevelUpCue = useCallback(() => {
+    if (levelUpCueTimeoutRef.current) {
+      clearTimeout(levelUpCueTimeoutRef.current);
+    }
     setShowLevelUpCue(true);
-    setTimeout(() => setShowLevelUpCue(false), 1500);
+    levelUpCueTimeoutRef.current = setTimeout(() => {
+      setShowLevelUpCue(false);
+      levelUpCueTimeoutRef.current = null;
+    }, 1500);
   }, []);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
   // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
@@ -3939,6 +3949,11 @@ export function SightReadingGame() {
       if (previewPlaybackTimeoutRef.current) {
         clearTimeout(previewPlaybackTimeoutRef.current);
         previewPlaybackTimeoutRef.current = null;
+      }
+      // WR-05 (03-REVIEW.md): clear the LevelUpCue auto-hide timer on unmount.
+      if (levelUpCueTimeoutRef.current) {
+        clearTimeout(levelUpCueTimeoutRef.current);
+        levelUpCueTimeoutRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
