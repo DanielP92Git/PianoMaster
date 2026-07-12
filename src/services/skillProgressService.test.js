@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock supabase and its dependencies before importing service
 vi.mock("./supabase", () => ({
@@ -24,7 +24,13 @@ vi.mock("./sentryService", () => ({
   Sentry: { captureException: vi.fn() },
 }));
 
-import { calculateStarsFromPercentage } from "./skillProgressService";
+import {
+  calculateStarsFromPercentage,
+  updateNodeProgress,
+  updateExerciseProgress,
+} from "./skillProgressService";
+import supabase from "./supabase";
+import { checkRateLimit } from "./rateLimitService";
 
 describe("calculateStarsFromPercentage", () => {
   it("returns 3 stars for 100%", () => {
@@ -57,5 +63,222 @@ describe("calculateStarsFromPercentage", () => {
 
   it("returns 0 stars for 0%", () => {
     expect(calculateStarsFromPercentage(0)).toBe(0);
+  });
+});
+
+// ============================================
+// note_mastery merge-on-upsert (Phase 03 ADAPT-03/D-10)
+// ============================================
+
+/**
+ * Wires supabase.from() to satisfy both call shapes used by
+ * updateNodeProgress/updateExerciseProgress:
+ *   read:  .select('*').eq(...).eq(...).maybeSingle()
+ *   write: .upsert(progressData, opts).select().maybeSingle()
+ * Returns the upsert spy so tests can assert on the progressData passed in.
+ */
+function mockSupabaseFrom({ existingRow = null, writtenRow = {} } = {}) {
+  const upsertSpy = vi.fn(() => ({
+    select: vi.fn(() => ({
+      maybeSingle: vi.fn().mockResolvedValue({ data: writtenRow, error: null }),
+    })),
+  }));
+
+  supabase.from.mockReturnValue({
+    select: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          maybeSingle: vi
+            .fn()
+            .mockResolvedValue({ data: existingRow, error: null }),
+        })),
+      })),
+    })),
+    upsert: upsertSpy,
+  });
+
+  return upsertSpy;
+}
+
+describe("note_mastery merge (updateExerciseProgress)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    checkRateLimit.mockResolvedValue({ allowed: true });
+  });
+
+  it("merges a delta into existing note_mastery via pure per-pitch addition", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercise_progress: [],
+        note_mastery: { C4: { correct: 5, total: 6 } },
+      },
+    });
+
+    await updateExerciseProgress(
+      "student-1",
+      "node-1",
+      0,
+      "sight_reading",
+      2,
+      85,
+      1,
+      {},
+      { C4: { correct: 2, total: 3 } }
+    );
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.C4).toEqual({ correct: 7, total: 9 });
+  });
+
+  it("inserts a new pitch as-is and preserves stored pitches absent from the delta", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercise_progress: [],
+        note_mastery: { C4: { correct: 5, total: 6 } },
+      },
+    });
+
+    await updateExerciseProgress(
+      "student-1",
+      "node-1",
+      0,
+      "sight_reading",
+      2,
+      85,
+      1,
+      {},
+      { D4: { correct: 1, total: 1 } }
+    );
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.D4).toEqual({ correct: 1, total: 1 });
+    expect(progressData.note_mastery.C4).toEqual({ correct: 5, total: 6 });
+  });
+
+  it("omits note_mastery from progressData entirely when the param is not supplied", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercise_progress: [],
+        note_mastery: { C4: { correct: 5, total: 6 } },
+      },
+    });
+
+    await updateExerciseProgress(
+      "student-1",
+      "node-1",
+      0,
+      "sight_reading",
+      2,
+      85,
+      1
+    );
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData).not.toHaveProperty("note_mastery");
+  });
+
+  it("skips malformed delta entries (negative, non-integer, correct > total) but merges the rest", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercise_progress: [],
+        note_mastery: {},
+      },
+    });
+
+    await updateExerciseProgress(
+      "student-1",
+      "node-1",
+      0,
+      "sight_reading",
+      2,
+      85,
+      1,
+      {},
+      {
+        C4: { correct: 1, total: 2 }, // valid
+        D4: { correct: -1, total: 2 }, // negative -> skipped
+        E4: { correct: 1.5, total: 2 }, // non-integer -> skipped
+        F4: { correct: 3, total: 2 }, // correct > total -> skipped
+      }
+    );
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.C4).toEqual({ correct: 1, total: 2 });
+    expect(progressData.note_mastery).not.toHaveProperty("D4");
+    expect(progressData.note_mastery).not.toHaveProperty("E4");
+    expect(progressData.note_mastery).not.toHaveProperty("F4");
+  });
+});
+
+describe("note_mastery merge (updateNodeProgress)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    checkRateLimit.mockResolvedValue({ allowed: true });
+  });
+
+  it("merges a delta into existing note_mastery via pure per-pitch addition", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercises_completed: 1,
+        stars: 1,
+        best_score: 50,
+        note_mastery: { C4: { correct: 5, total: 6 } },
+      },
+    });
+
+    await updateNodeProgress(
+      "student-1",
+      "node-1",
+      2,
+      85,
+      {},
+      { C4: { correct: 2, total: 3 } }
+    );
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.C4).toEqual({ correct: 7, total: 9 });
+  });
+
+  it("omits note_mastery from progressData entirely when the param is not supplied", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercises_completed: 1,
+        stars: 1,
+        best_score: 50,
+        note_mastery: { C4: { correct: 5, total: 6 } },
+      },
+    });
+
+    await updateNodeProgress("student-1", "node-1", 2, 85);
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData).not.toHaveProperty("note_mastery");
+  });
+
+  it("skips malformed delta entries but merges the rest", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        exercises_completed: 1,
+        stars: 1,
+        best_score: 50,
+        note_mastery: {},
+      },
+    });
+
+    await updateNodeProgress(
+      "student-1",
+      "node-1",
+      2,
+      85,
+      {},
+      {
+        C4: { correct: 1, total: 2 }, // valid
+        D4: { correct: -1, total: 2 }, // negative -> skipped
+      }
+    );
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.C4).toEqual({ correct: 1, total: 2 });
+    expect(progressData.note_mastery).not.toHaveProperty("D4");
   });
 });
