@@ -1714,6 +1714,10 @@
       "skip": "Skip",
       "done": "Great job! You reviewed every mistake.",
       "exit": "Back to Feedback"
+    },
+    "adaptive": {
+      "levelUp": "Leveling Up!",
+      "levelUpSubtitle": "Nice streak — here comes a bigger challenge"
     }
   },
   "noteRecognition": {
