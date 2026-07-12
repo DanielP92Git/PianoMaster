@@ -28,6 +28,7 @@ import {
   calculateStarsFromPercentage,
   updateNodeProgress,
   updateExerciseProgress,
+  mergeNoteMasteryOnly,
 } from "./skillProgressService";
 import supabase from "./supabase";
 import { checkRateLimit } from "./rateLimitService";
@@ -280,5 +281,94 @@ describe("note_mastery merge (updateNodeProgress)", () => {
     const progressData = upsertSpy.mock.calls[0][0];
     expect(progressData.note_mastery.C4).toEqual({ correct: 1, total: 2 });
     expect(progressData.note_mastery).not.toHaveProperty("D4");
+  });
+});
+
+// ============================================
+// WR-01 (03-REVIEW.md): mergeNoteMasteryOnly — a lighter-weight persistence path for
+// non-victory ("encouragement") sessions, independent of the stars/XP rate-limit gate.
+// ============================================
+describe("mergeNoteMasteryOnly", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("merges a delta into existing note_mastery via pure per-pitch addition", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: { note_mastery: { C4: { correct: 5, total: 6 } } },
+    });
+
+    await mergeNoteMasteryOnly("student-1", "node-1", {
+      C4: { correct: 2, total: 3 },
+      D4: { correct: 0, total: 1 },
+    });
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.C4).toEqual({ correct: 7, total: 9 });
+    expect(progressData.note_mastery.D4).toEqual({ correct: 0, total: 1 });
+  });
+
+  it("does NOT include stars/best_score/exercises_completed in the upsert payload (WR-01: no graded-outcome fields)", async () => {
+    const upsertSpy = mockSupabaseFrom({
+      existingRow: {
+        stars: 2,
+        best_score: 90,
+        exercises_completed: 4,
+        note_mastery: {},
+      },
+    });
+
+    await mergeNoteMasteryOnly("student-1", "node-1", {
+      C4: { correct: 1, total: 1 },
+    });
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData).not.toHaveProperty("stars");
+    expect(progressData).not.toHaveProperty("best_score");
+    expect(progressData).not.toHaveProperty("exercises_completed");
+  });
+
+  it("does NOT call checkRateLimit (WR-01: telemetry, not a graded/anti-farming-gated write)", async () => {
+    mockSupabaseFrom({ existingRow: { note_mastery: {} } });
+
+    await mergeNoteMasteryOnly("student-1", "node-1", {
+      C4: { correct: 1, total: 1 },
+    });
+
+    expect(checkRateLimit).not.toHaveBeenCalled();
+  });
+
+  it("skips malformed delta entries but merges the rest", async () => {
+    const upsertSpy = mockSupabaseFrom({ existingRow: { note_mastery: {} } });
+
+    await mergeNoteMasteryOnly("student-1", "node-1", {
+      C4: { correct: 1, total: 2 }, // valid
+      D4: { correct: -1, total: 2 }, // negative -> skipped
+      E4: { correct: 3, total: 2 }, // correct > total -> skipped
+    });
+
+    const progressData = upsertSpy.mock.calls[0][0];
+    expect(progressData.note_mastery.C4).toEqual({ correct: 1, total: 2 });
+    expect(progressData.note_mastery).not.toHaveProperty("D4");
+    expect(progressData.note_mastery).not.toHaveProperty("E4");
+  });
+
+  it("returns null and never calls supabase for an empty perNoteMastery", async () => {
+    const upsertSpy = mockSupabaseFrom({ existingRow: { note_mastery: {} } });
+
+    const result = await mergeNoteMasteryOnly("student-1", "node-1", {});
+
+    expect(result).toBeNull();
+    expect(upsertSpy).not.toHaveBeenCalled();
+  });
+
+  it("returns null and never calls supabase for a null/undefined perNoteMastery", async () => {
+    const upsertSpy = mockSupabaseFrom({ existingRow: { note_mastery: {} } });
+
+    expect(await mergeNoteMasteryOnly("student-1", "node-1", null)).toBeNull();
+    expect(
+      await mergeNoteMasteryOnly("student-1", "node-1", undefined)
+    ).toBeNull();
+    expect(upsertSpy).not.toHaveBeenCalled();
   });
 });

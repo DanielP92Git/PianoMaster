@@ -12,6 +12,32 @@ import { isFreeNode } from "../config/subscriptionConfig";
 import { Sentry } from "./sentryService";
 
 /**
+ * Merge a per-pitch mastery delta into an existing note_mastery map via pure addition
+ * (Phase 03 ADAPT-03/D-10). Shared by updateNodeProgress, updateExerciseProgress, and
+ * mergeNoteMasteryOnly (WR-01, 03-REVIEW.md) so the same validation rules (non-negative
+ * integers, correct <= total) apply everywhere note_mastery is written.
+ * @param {Object} existingMastery - Current note_mastery map, e.g. { "C4": { correct, total } }
+ * @param {Object} perNoteMastery - Delta to merge in, same shape
+ * @returns {Object} New merged map (does not mutate existingMastery)
+ */
+const mergeMasteryDelta = (existingMastery, perNoteMastery) => {
+  const merged = { ...(existingMastery || {}) };
+  for (const [pitch, delta] of Object.entries(perNoteMastery || {})) {
+    const dCorrect = Number(delta?.correct);
+    const dTotal = Number(delta?.total);
+    // V5 input validation: non-negative integers, correct <= total, else skip this pitch.
+    if (!Number.isInteger(dCorrect) || !Number.isInteger(dTotal)) continue;
+    if (dCorrect < 0 || dTotal < 0 || dCorrect > dTotal) continue;
+    const prev = merged[pitch] || { correct: 0, total: 0 };
+    merged[pitch] = {
+      correct: prev.correct + dCorrect,
+      total: prev.total + dTotal,
+    };
+  }
+  return merged;
+};
+
+/**
  * Calculate stars based on score percentage
  * @param {number} percentage - Score percentage (0-100)
  * @returns {number} Stars earned (0-3)
@@ -112,20 +138,10 @@ export const updateNodeProgress = async (
     // No-op unless a delta is supplied (shared service — other games must be unaffected).
     let mergedMastery; // stays undefined => note_mastery key omitted from progressData
     if (perNoteMastery && typeof perNoteMastery === "object") {
-      const existingMastery = existingProgress?.note_mastery || {};
-      mergedMastery = { ...existingMastery };
-      for (const [pitch, delta] of Object.entries(perNoteMastery)) {
-        const dCorrect = Number(delta?.correct);
-        const dTotal = Number(delta?.total);
-        // V5 input validation: non-negative integers, correct <= total, else skip this pitch.
-        if (!Number.isInteger(dCorrect) || !Number.isInteger(dTotal)) continue;
-        if (dCorrect < 0 || dTotal < 0 || dCorrect > dTotal) continue;
-        const prev = mergedMastery[pitch] || { correct: 0, total: 0 };
-        mergedMastery[pitch] = {
-          correct: prev.correct + dCorrect,
-          total: prev.total + dTotal,
-        };
-      }
+      mergedMastery = mergeMasteryDelta(
+        existingProgress?.note_mastery,
+        perNoteMastery
+      );
     }
 
     const progressData = {
@@ -171,6 +187,67 @@ export const updateNodeProgress = async (
     console.error("Error updating node progress:", error);
     Sentry.captureException(error, {
       extra: { context: "updateNodeProgress" },
+    });
+    throw error;
+  }
+};
+
+/**
+ * Merge a per-pitch mastery delta into note_mastery WITHOUT touching stars/best_score/
+ * exercises_completed and WITHOUT rate limiting (WR-01, 03-REVIEW.md).
+ *
+ * updateNodeProgress/updateExerciseProgress only run at session-victory (>=70%) time, so a
+ * struggling ("encouragement") session's per-note telemetry — arguably the most valuable
+ * data for weak-note targeting — was previously discarded entirely. This is deliberately a
+ * separate, lighter-weight path: note_mastery is additive telemetry that biases future note
+ * selection, not a graded outcome, so it doesn't need the same anti-farming rate limit that
+ * protects stars/XP. Safe to call fire-and-forget from a non-victory screen.
+ * @param {string} studentId - The student's ID
+ * @param {string} nodeId - The node ID
+ * @param {Object} perNoteMastery - Per-pitch delta { "C4": { correct, total }, ... }
+ * @returns {Promise<Object|null>} Updated progress record, or null if perNoteMastery was empty
+ */
+export const mergeNoteMasteryOnly = async (
+  studentId,
+  nodeId,
+  perNoteMastery
+) => {
+  if (
+    !perNoteMastery ||
+    typeof perNoteMastery !== "object" ||
+    Object.keys(perNoteMastery).length === 0
+  ) {
+    return null;
+  }
+  await verifyStudentDataAccess(studentId);
+  try {
+    const existingProgress = await getNodeProgress(studentId, nodeId);
+    const mergedMastery = mergeMasteryDelta(
+      existingProgress?.note_mastery,
+      perNoteMastery
+    );
+
+    const progressData = {
+      student_id: studentId,
+      node_id: nodeId,
+      note_mastery: mergedMastery,
+      last_practiced: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("student_skill_progress")
+      .upsert(progressData, {
+        onConflict: "student_id,node_id",
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error merging note mastery:", error);
+    Sentry.captureException(error, {
+      extra: { context: "mergeNoteMasteryOnly" },
     });
     throw error;
   }
@@ -515,20 +592,10 @@ export const updateExerciseProgress = async (
     // No-op unless a delta is supplied (shared service — other games must be unaffected).
     let mergedMastery; // stays undefined => note_mastery key omitted from progressData
     if (perNoteMastery && typeof perNoteMastery === "object") {
-      const existingMastery = nodeProgress?.note_mastery || {};
-      mergedMastery = { ...existingMastery };
-      for (const [pitch, delta] of Object.entries(perNoteMastery)) {
-        const dCorrect = Number(delta?.correct);
-        const dTotal = Number(delta?.total);
-        // V5 input validation: non-negative integers, correct <= total, else skip this pitch.
-        if (!Number.isInteger(dCorrect) || !Number.isInteger(dTotal)) continue;
-        if (dCorrect < 0 || dTotal < 0 || dCorrect > dTotal) continue;
-        const prev = mergedMastery[pitch] || { correct: 0, total: 0 };
-        mergedMastery[pitch] = {
-          correct: prev.correct + dCorrect,
-          total: prev.total + dTotal,
-        };
-      }
+      mergedMastery = mergeMasteryDelta(
+        nodeProgress?.note_mastery,
+        perNoteMastery
+      );
     }
 
     const progressData = {
@@ -762,6 +829,7 @@ export default {
   getStudentProgress,
   getNodeProgress,
   updateNodeProgress,
+  mergeNoteMasteryOnly,
   getCompletedNodeIds,
   getAvailableNodes,
   getNextRecommendedNode,

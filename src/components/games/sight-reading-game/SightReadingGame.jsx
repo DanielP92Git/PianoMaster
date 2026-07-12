@@ -82,7 +82,10 @@ import {
   MASTERY_MIN_ATTEMPTS,
 } from "./constants/adaptiveTiers";
 import { LevelUpCue } from "./components/LevelUpCue";
-import { getNodeProgress } from "../../../services/skillProgressService";
+import {
+  getNodeProgress,
+  mergeNoteMasteryOnly,
+} from "../../../services/skillProgressService";
 
 // Phase 03 (ADAPT-03/D-09/D-11): first-exercise race timeout — the weak-note-mastery fetch
 // races this timeout so gameplay never blocks on the network. See seedMasteryBiasedSettings.
@@ -310,6 +313,11 @@ export function SightReadingGame() {
   // and threaded through VictoryScreen -> useVictoryState -> the service's perNoteMastery param at
   // session end. Practice mode skips the write for free (suppressPersistence's early-return in useVictoryState).
   const sessionMasteryRef = useRef({});
+  // WR-01 (03-REVIEW.md): guards the encouragement-screen fire-and-forget mastery persist
+  // (below) from re-firing on every re-render while showEncouragementScreen stays true. Reset
+  // alongside sessionMasteryRef at the same two true-session-start points (startGame's
+  // `!currentPattern` guard, handleStartNewSession) so a retried session gets its own save.
+  const encouragementMasterySavedRef = useRef(false);
   // Escalation-only celebratory overlay (D-12) — no easing/negative variant exists.
   const [showLevelUpCue, setShowLevelUpCue] = useState(false);
   // WR-05 (03-REVIEW.md): tracked in a ref (mirroring timingFeedbackTimeoutRef) and cleared in
@@ -977,6 +985,33 @@ export function SightReadingGame() {
       : sessionTotalExercises * SESSION_MAX_EXERCISE_SCORE;
   const showVictoryScreen = isSessionComplete && isVictory;
   const showEncouragementScreen = isSessionComplete && !isVictory;
+
+  // WR-01 (03-REVIEW.md): a session that falls below 70% never renders VictoryScreen, so
+  // updateNodeProgress/updateExerciseProgress (and their note_mastery merge) never run — the
+  // struggling session's per-note telemetry (arguably the MOST valuable data for weak-note
+  // targeting) was silently discarded. Persist it independently here, fire-and-forget, the
+  // moment the encouragement screen mounts: it's additive telemetry, not a graded outcome, so
+  // it doesn't need VictoryScreen's rate-limit/anti-farming protections (mergeNoteMasteryOnly
+  // intentionally skips those). Trail mode only (nodeId/studentId required, mirroring
+  // seedMasteryBiasedSettings' gate) and skipped in Practice mode (no persistence at all there,
+  // matching VictoryScreen's suppressPersistence contract). Guarded by
+  // encouragementMasterySavedRef so this fires once per session, not on every re-render while
+  // the encouragement screen stays mounted.
+  useEffect(() => {
+    if (!showEncouragementScreen || isPracticeMode) return;
+    if (!nodeId || !studentId) return;
+    if (encouragementMasterySavedRef.current) return;
+    const masteryToSave = sessionMasteryRef.current;
+    if (!masteryToSave || Object.keys(masteryToSave).length === 0) return;
+
+    encouragementMasterySavedRef.current = true;
+    mergeNoteMasteryOnly(studentId, nodeId, masteryToSave).catch((error) => {
+      console.error(
+        "Error persisting encouragement-screen note mastery:",
+        error
+      );
+    });
+  }, [showEncouragementScreen, isPracticeMode, nodeId, studentId]);
 
   // Handle navigation to next exercise in the trail node (different from handleNextExercise which advances within session)
   const handleNextTrailExercise = useCallback(() => {
@@ -2764,6 +2799,7 @@ export function SightReadingGame() {
     // startGame's guard on the next startGame() call).
     baseAdaptiveSettingsRef.current = null;
     sessionMasteryRef.current = {};
+    encouragementMasterySavedRef.current = false;
     loadExercisePattern();
   }, [
     loadExercisePattern,
@@ -3771,6 +3807,8 @@ export function SightReadingGame() {
         // Phase 03 (ADAPT-03): reset the session mastery accumulator at true session start only
         // (never on mid-session gear-icon settings changes, matching baseAdaptiveSettingsRef).
         sessionMasteryRef.current = {};
+        // WR-01 (03-REVIEW.md): also re-arm the encouragement-screen fire-and-forget save guard.
+        encouragementMasterySavedRef.current = false;
       }
 
       try {
