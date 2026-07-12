@@ -27,7 +27,7 @@ Requirements for this milestone. Each maps to exactly one roadmap phase.
 - [x] **ADAPT-01**: Within a session, difficulty progresses on sustained success (widen note range / add rests / raise tempo) and eases on struggle.
 - [x] **ADAPT-02**: Tempo adapts to performance — slows on struggle, speeds up on success.
 - [x] **ADAPT-03**: Per-note mastery (accuracy per pitch) persists across sessions via a JSONB field on the student progress row, enabling weak-note targeting across sessions.
-- [ ] **ADAPT-04**: Persisted per-note mastery is written and read only for the authenticated student under RLS, mirroring existing `student_skill_progress` protections (defense-in-depth: JS gate + DB RLS).
+- [x] **ADAPT-04**: Persisted per-note mastery is written and read only for the authenticated student under RLS, mirroring existing `student_skill_progress` protections (defense-in-depth: JS gate + DB RLS).
 
 ### Cross-cutting
 
@@ -71,7 +71,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ADAPT-01    | Phase 03    | Complete              |
 | ADAPT-02    | Phase 03    | Complete              |
 | ADAPT-03    | Phase 03    | Complete              |
-| ADAPT-04    | Phase 03    | Pending               |
+| ADAPT-04    | Phase 03    | Complete              |
 | I18N-01     | Phase 01–03 | Complete              |
 
 **Coverage:**
