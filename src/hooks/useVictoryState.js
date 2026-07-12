@@ -100,6 +100,7 @@ export function useVictoryState({
   exerciseType = null,
   onNextExercise = null,
   suppressPersistence = false,
+  sessionMastery = null,
 }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -400,6 +401,9 @@ export function useVictoryState({
               }
 
               // Update exercise-level progress
+              // Phase 03 (ADAPT-03): sessionMastery is passed as the trailing perNoteMastery
+              // arg. suppressPersistence returns early above this call (see the guard at the
+              // top of this branch), so Practice mode skips the mastery write for free.
               const result = await updateExerciseProgress(
                 user.id,
                 nodeId,
@@ -410,7 +414,8 @@ export function useVictoryState({
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
                 totalExercises,
-                progressOptions
+                progressOptions,
+                sessionMastery
               );
 
               // Check if rate limited
@@ -467,12 +472,15 @@ export function useVictoryState({
               }
 
               // Update node progress (pass percentage, not raw score)
+              // Phase 03 (ADAPT-03): sessionMastery is passed as the trailing perNoteMastery
+              // arg; suppressPersistence's early-return above skips this entirely in Practice mode.
               const result = await updateNodeProgress(
                 user.id,
                 nodeId,
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
-                progressOptions
+                progressOptions,
+                sessionMastery
               );
 
               // Check if rate limited
@@ -552,6 +560,7 @@ export function useVictoryState({
     isTeacher,
     comebackActive,
     suppressPersistence,
+    sessionMastery,
   ]);
 
   // Trigger confetti for full/epic tiers (non-blocking, after trail processing)

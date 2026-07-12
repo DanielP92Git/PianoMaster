@@ -293,6 +293,12 @@ export function SightReadingGame() {
   // session start in startGame — see the `!currentPattern` guard there), never compounding
   // across successive tier applications (RESEARCH.md Pitfall 5).
   const baseAdaptiveSettingsRef = useRef(null);
+  // Phase 03 (ADAPT-03): session-scoped per-pitch mastery accumulator, { [pitch]: { correct,
+  // total } }. Merged from each finished exercise's summaryStats.perNoteAccuracy (handleNextExercise),
+  // reset to {} at true session start (startGame's `!currentPattern` guard, same as baseAdaptiveSettingsRef),
+  // and threaded through VictoryScreen -> useVictoryState -> the service's perNoteMastery param at
+  // session end. Practice mode skips the write for free (suppressPersistence's early-return in useVictoryState).
+  const sessionMasteryRef = useRef({});
   // Escalation-only celebratory overlay (D-12) — no easing/negative variant exists.
   const [showLevelUpCue, setShowLevelUpCue] = useState(false);
   const triggerLevelUpCue = useCallback(() => {
@@ -2595,6 +2601,19 @@ export function SightReadingGame() {
         SESSION_MAX_EXERCISE_SCORE
       );
       setExerciseRecorded(true);
+
+      // Phase 03 (ADAPT-03): merge this exercise's perNoteAccuracy into the session-scoped
+      // mastery accumulator via pure per-pitch addition. Guarded by the same !exerciseRecorded
+      // check as recordSessionExercise so a Try-Again replay never double-counts.
+      const perNoteThisExercise = summaryStats?.perNoteAccuracy || {};
+      const masteryAcc = sessionMasteryRef.current;
+      for (const [pitch, v] of Object.entries(perNoteThisExercise)) {
+        const prev = masteryAcc[pitch] || { correct: 0, total: 0 };
+        masteryAcc[pitch] = {
+          correct: prev.correct + (v.correct || 0),
+          total: prev.total + (v.total || 0),
+        };
+      }
     }
 
     // Phase 03 (ADAPT-01/02): classify the finished exercise, drive the adaptive streak,
@@ -3658,6 +3677,9 @@ export function SightReadingGame() {
       // so they intentionally do NOT reset this baseline (never compounding across tiers).
       if (!currentPattern) {
         baseAdaptiveSettingsRef.current = { ...currentSettings };
+        // Phase 03 (ADAPT-03): reset the session mastery accumulator at true session start only
+        // (never on mid-session gear-icon settings changes, matching baseAdaptiveSettingsRef).
+        sessionMasteryRef.current = {};
       }
 
       try {
@@ -3884,6 +3906,7 @@ export function SightReadingGame() {
           exerciseType={trailExerciseType}
           onNextExercise={handleNextTrailExercise}
           suppressPersistence={isPracticeMode}
+          sessionMastery={sessionMasteryRef.current}
         />
       </div>
     );
