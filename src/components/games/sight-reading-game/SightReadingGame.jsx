@@ -69,6 +69,13 @@ import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
 import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
 import { AnimatePresence } from "framer-motion";
+import { computeNextTier, applyTierToSettings } from "./utils/adaptiveEngine";
+import {
+  ADAPTIVE_TIERS,
+  SUCCESS_ACCURACY,
+  SUCCESS_MAX_MISSES,
+} from "./constants/adaptiveTiers";
+import { LevelUpCue } from "./components/LevelUpCue";
 
 // #region agent log (debug-mode instrumentation — dev only)
 const __srLog = import.meta.env.DEV
@@ -263,6 +270,10 @@ export function SightReadingGame() {
     setGradingMode,
     lockMode,
     unlockMode,
+    successStreakRef,
+    setSuccessStreak,
+    adaptiveTierIndexRef,
+    setAdaptiveTierIndex,
   } = useSightReadingSession();
 
   // Practice-mode grading flag (PRAC-03/D-04): widens timing, grades pitch-only, persists nothing.
@@ -277,6 +288,17 @@ export function SightReadingGame() {
   // NOT the exercise-level focusNotes (always empty for sight-reading, RESEARCH.md Pitfall 1).
   // Free-play (no node) → empty, so tier widening degrades to tempo/rest-only (Assumption A3).
   const nodeSupersetNotesRef = useRef([]);
+  // Phase 03 (ADAPT-01/02): the PRISTINE per-session settings baseline. Tier tempo/notes
+  // are always computed as an absolute offset from THIS value (captured once, at true
+  // session start in startGame — see the `!currentPattern` guard there), never compounding
+  // across successive tier applications (RESEARCH.md Pitfall 5).
+  const baseAdaptiveSettingsRef = useRef(null);
+  // Escalation-only celebratory overlay (D-12) — no easing/negative variant exists.
+  const [showLevelUpCue, setShowLevelUpCue] = useState(false);
+  const triggerLevelUpCue = useCallback(() => {
+    setShowLevelUpCue(true);
+    setTimeout(() => setShowLevelUpCue(false), 1500);
+  }, []);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
   // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
   // -1 = no highlight. Distinct from currentNoteIndex (which drives DISPLAY/COUNT_IN/
@@ -2574,8 +2596,47 @@ export function SightReadingGame() {
       );
       setExerciseRecorded(true);
     }
+
+    // Phase 03 (ADAPT-01/02): classify the finished exercise, drive the adaptive streak,
+    // compute the next tier from the Plan 01 engine, and generate the NEXT pattern from the
+    // tier-adapted settings — applied at THIS boundary (N+1), never mid-pattern (D-04/D-07).
+    // Derive missedCount from the just-finished exercise's performanceResults (still in scope;
+    // loadExercisePattern below is what clears it for the next exercise).
+    const missedCount = Array.isArray(performanceResults)
+      ? performanceResults.filter((r) => r && r.isCorrect === false).length
+      : 0;
+    const exerciseAccuracy =
+      summaryStats?.pitchAccuracy ?? summaryStats?.overallScore ?? 0;
+    const isSuccess =
+      exerciseAccuracy >= SUCCESS_ACCURACY && missedCount <= SUCCESS_MAX_MISSES;
+
+    const nextStreak = isSuccess ? successStreakRef.current + 1 : 0;
+    setSuccessStreak(nextStreak);
+
+    const { tierIndex, didEscalate } = computeNextTier({
+      successStreak: nextStreak,
+      missRunInLastExercise: missedCount,
+      currentTierIndex: adaptiveTierIndexRef.current,
+    });
+    setAdaptiveTierIndex(tierIndex);
+    if (didEscalate) {
+      setSuccessStreak(0); // require a fresh streak to escalate again
+      triggerLevelUpCue();
+    }
+
+    const tier =
+      ADAPTIVE_TIERS.find((tierDef) => tierDef.index === tierIndex) ??
+      ADAPTIVE_TIERS[2];
+    const base = baseAdaptiveSettingsRef.current || gameSettings;
+    const adaptedSettings = applyTierToSettings(
+      base,
+      tier,
+      nodeSupersetNotesRef.current
+    );
+    setGameSettings(adaptedSettings);
+
     goToNextExercise();
-    loadExercisePattern();
+    loadExercisePattern(adaptedSettings);
   }, [
     loadExercisePattern,
     goToNextExercise,
@@ -2584,6 +2645,14 @@ export function SightReadingGame() {
     exerciseRecorded,
     recordSessionExercise,
     stopMetronomePlayback,
+    performanceResults,
+    successStreakRef,
+    setSuccessStreak,
+    adaptiveTierIndexRef,
+    setAdaptiveTierIndex,
+    triggerLevelUpCue,
+    gameSettings,
+    setGameSettings,
   ]);
 
   const handleStartNewSession = useCallback(() => {
@@ -3582,6 +3651,15 @@ export function SightReadingGame() {
         setGameSettings(overrideSettings);
       }
 
+      // Phase 03 (ADAPT-01/02): capture the pristine adaptive baseline once, at true session
+      // start (currentPattern is null — no exercise has been generated yet this session).
+      // Mid-session gear-icon settings changes (openSettingsModal -> handleApplySettings /
+      // handleCancelSettings) also call startGame, but by then currentPattern is already set,
+      // so they intentionally do NOT reset this baseline (never compounding across tiers).
+      if (!currentPattern) {
+        baseAdaptiveSettingsRef.current = { ...currentSettings };
+      }
+
       try {
         // Resume audio context (required after user interaction)
         await audioEngine.resumeAudioContext();
@@ -3633,7 +3711,14 @@ export function SightReadingGame() {
         rhythmPlayback.stop();
       }
     },
-    [gameSettings, audioEngine, generatePattern, rhythmPlayback, t]
+    [
+      gameSettings,
+      audioEngine,
+      generatePattern,
+      rhythmPlayback,
+      t,
+      currentPattern,
+    ]
   );
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
@@ -4272,6 +4357,9 @@ export function SightReadingGame() {
           </div>
         </div>
       )}
+
+      {/* Adaptive difficulty escalation cue (ADAPT-01/02, D-12: positive-only — easing is silent) */}
+      <LevelUpCue show={showLevelUpCue} />
 
       {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
       <AudioInterruptedOverlay

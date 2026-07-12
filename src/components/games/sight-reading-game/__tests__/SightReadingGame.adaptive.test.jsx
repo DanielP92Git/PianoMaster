@@ -2,20 +2,33 @@ import { useState, useCallback, useRef } from "react";
 import { render, screen, act, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-import { SightReadingGame } from "./SightReadingGame";
+import { SightReadingGame } from "../SightReadingGame";
 
-// ---- Shared spies + capture points (mirrors SightReadingGame.combo.test.jsx's pattern) ----
+// ---- Shared spies + capture points (mirrors SightReadingGame.replay.test.jsx's pattern) ----
 const incrementComboSpy = vi.hoisted(() => vi.fn());
 const resetComboSpy = vi.hoisted(() => vi.fn());
 const mockInitialGradingModeBox = vi.hoisted(() => ({ current: "test" }));
-// D-11 double-play guard assertion point: useRhythmPlayback's play/stop as spies so we can
-// assert exact call counts without depending on real Web Audio oscillator internals.
 const rhythmPlaySpy = vi.hoisted(() => vi.fn());
 const rhythmStopSpy = vi.hoisted(() => vi.fn());
 
+// Records every generatePattern(...) call's positional args so tests can assert exactly
+// which tempo/selectedNotes were used for each successive exercise's pattern (the
+// stale-closure regression this file exists to guard — Pitfall 2).
+const generatePatternSpy = vi.hoisted(() => vi.fn());
+
+// Mutable pattern shape returned by the mocked generatePattern. Default: a single note
+// (mirrors the replay test's "one correct hit finishes the exercise" pattern). The EASE
+// test overrides this to a multi-note pattern so a run of misses can be simulated via the
+// real timeline-miss-recording loop (no note events fired at all).
+const patternNotesBox = vi.hoisted(() => ({
+  current: [
+    { type: "note", pitch: "C4", startTime: 0, endTime: 1, duration: 1 },
+  ],
+}));
+
 let capturedOnNoteEvent = null;
 
-// ---- Mocks (mirrors SightReadingGame.combo.test.jsx's mocking conventions) ----
+// ---- Mocks (mirrors SightReadingGame.replay.test.jsx's mocking conventions) ----
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (key) => {
@@ -24,6 +37,8 @@ vi.mock("react-i18next", () => ({
         "sightReading.tryAgain": "Try Again",
         "sightReading.nextExercise": "Next Exercise",
         "sightReading.controls.replay": "Hear it again",
+        "sightReading.adaptive.levelUp": "Level Up!",
+        "sightReading.adaptive.levelUpSubtitle": "Keep up the great work!",
         "games.engagement.combo": "Combo",
         "games.engagement.onFire": "ON FIRE!",
       };
@@ -35,7 +50,7 @@ vi.mock("react-i18next", () => ({
   initReactI18next: { type: "3rdParty", init: vi.fn() },
 }));
 
-vi.mock("../../ui/BackButton", () => ({
+vi.mock("../../../ui/BackButton", () => ({
   default: () => null,
 }));
 
@@ -65,20 +80,22 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("../../../features/authentication/useUser", () => ({
+vi.mock("../../../../features/authentication/useUser", () => ({
   useUser: () => ({ user: null, isStudent: false }),
 }));
 
-vi.mock("../../../services/apiScores", () => ({
+vi.mock("../../../../services/apiScores", () => ({
   updateStudentScore: vi.fn(),
 }));
 
-vi.mock("../../../contexts/AccessibilityContext", () => ({
+vi.mock("../../../../contexts/AccessibilityContext", () => ({
   useAccessibility: vi.fn(() => ({ reducedMotion: false })),
 }));
 
-// Stateful mock: real React state, matching the combo test's convention.
-vi.mock("../../../contexts/SightReadingSessionContext", () => ({
+// Stateful mock: real React state, matching the sibling tests' convention. Includes the
+// Phase 03 successStreakRef/adaptiveTierIndexRef ref-mirror fields SightReadingGame.jsx
+// now reads/writes synchronously in handleNextExercise.
+vi.mock("../../../../contexts/SightReadingSessionContext", () => ({
   SIGHT_READING_SESSION_CONSTANTS: { DEFAULT_MAX_SCORE_PER_EXERCISE: 1000 },
   useSightReadingSession: () => {
     const [combo, setCombo] = useState(0);
@@ -115,8 +132,9 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
     const lockMode = useCallback(() => setIsModeLocked(true), []);
     const unlockMode = useCallback(() => setIsModeLocked(false), []);
 
-    // Phase 03 (ADAPT-01/02): adaptive streak/tier ref-mirrored state, mirroring the real
-    // context's pattern (successStreakRef.current is read synchronously in handleNextExercise).
+    // Phase 03 (ADAPT-01/02): real ref-mirrored state (not a stub) so handleNextExercise's
+    // successStreakRef.current reads see the value written by the PRIOR exercise boundary's
+    // setSuccessStreak call within the same test run — exactly like the production context.
     const successStreakRef = useRef(0);
     const adaptiveTierIndexRef = useRef(0);
     const setSuccessStreak = useCallback((n) => {
@@ -127,7 +145,7 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
     }, []);
 
     return {
-      totalExercises: 3,
+      totalExercises: 5,
       currentExerciseNumber: 1,
       progressFraction: 0,
       isSessionComplete: false,
@@ -149,28 +167,28 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
       isModeLocked,
       setGradingMode,
       lockMode,
+      unlockMode,
       successStreakRef,
       setSuccessStreak,
       adaptiveTierIndexRef,
       setAdaptiveTierIndex,
-      unlockMode,
     };
   },
 }));
 
-vi.mock("./components/VexFlowStaffDisplay", () => ({
+vi.mock("../components/VexFlowStaffDisplay", () => ({
   VexFlowStaffDisplay: () => <div data-testid="staff" />,
 }));
 
-vi.mock("./components/KlavierKeyboard", () => ({
+vi.mock("../components/KlavierKeyboard", () => ({
   KlavierKeyboard: () => <div data-testid="keyboard" />,
 }));
 
-vi.mock("../rhythm-games/components/MetronomeDisplay", () => ({
+vi.mock("../../rhythm-games/components/MetronomeDisplay", () => ({
   MetronomeDisplay: () => <div data-testid="metronome" />,
 }));
 
-vi.mock("./components/PreGameSetup", () => ({
+vi.mock("../components/PreGameSetup", () => ({
   PreGameSetup: ({ onStart }) => (
     <button type="button" onClick={() => onStart()} aria-label="Start">
       Start
@@ -178,16 +196,14 @@ vi.mock("./components/PreGameSetup", () => ({
   ),
 }));
 
-// D-11/D-08: play/stop as spies so the double-play guard and unlimited-taps behavior can be
-// asserted by call count without needing a real AudioContext/oscillator graph.
-vi.mock("./hooks/useRhythmPlayback", () => ({
+vi.mock("../hooks/useRhythmPlayback", () => ({
   useRhythmPlayback: () => ({ play: rhythmPlaySpy, stop: rhythmStopSpy }),
 }));
 
 const startListeningSpy = vi.fn(() => Promise.resolve());
 const stopListeningSpy = vi.fn();
 
-vi.mock("../../../hooks/useMicNoteInput", () => ({
+vi.mock("../../../../hooks/useMicNoteInput", () => ({
   useMicNoteInput: (opts) => {
     capturedOnNoteEvent = opts?.onNoteEvent ?? null;
     return {
@@ -200,7 +216,7 @@ vi.mock("../../../hooks/useMicNoteInput", () => ({
   },
 }));
 
-vi.mock("../../../contexts/AudioContextProvider", () => ({
+vi.mock("../../../../contexts/AudioContextProvider", () => ({
   useAudioContext: () => ({
     audioContextRef: {
       current: { state: "running", resume: vi.fn(async () => {}) },
@@ -222,7 +238,7 @@ vi.mock("../../../contexts/AudioContextProvider", () => ({
   }),
 }));
 
-vi.mock("../../../hooks/useAudioEngine", () => {
+vi.mock("../../../../hooks/useAudioEngine", () => {
   const makeEngine = () => ({
     isInitialized: true,
     audioSupported: true,
@@ -238,21 +254,16 @@ vi.mock("../../../hooks/useAudioEngine", () => {
   return { useAudioEngine: () => makeEngine() };
 });
 
-vi.mock("./hooks/usePatternGeneration", () => ({
+vi.mock("../hooks/usePatternGeneration", () => ({
   usePatternGeneration: () => ({
-    generatePattern: vi.fn(async () => ({
-      tempo: 80,
-      totalDuration: 1,
-      notes: [
-        {
-          type: "note",
-          pitch: "C4",
-          startTime: 0,
-          endTime: 1,
-          duration: 1,
-        },
-      ],
-    })),
+    generatePattern: (...args) => {
+      generatePatternSpy(...args);
+      return Promise.resolve({
+        tempo: args[2],
+        totalDuration: patternNotesBox.current.length,
+        notes: patternNotesBox.current,
+      });
+    },
   }),
 }));
 
@@ -270,8 +281,6 @@ async function renderGame() {
 }
 
 async function startPerformance() {
-  await renderGame();
-
   const startPlayingButtons = screen.getAllByRole("button", {
     name: /Start Playing/i,
   });
@@ -279,36 +288,47 @@ async function startPerformance() {
     fireEvent.click(startPlayingButtons[0]);
   });
 
-  // Advance through count-in (~3s) into performance, without yet closing the note's
-  // timing window (windowEnd ~= 1300ms after entering performance).
+  // Advance through count-in (~3s) into performance.
   await act(async () => {
     await vi.advanceTimersByTimeAsync(3200);
   });
 }
 
-async function reachFeedbackAndGoNext() {
-  await startPerformance();
-
-  await act(async () => {
-    capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
-  });
-
-  // Let the exercise complete (already-scored note, no miss) to reach FEEDBACK.
-  await act(async () => {
-    await vi.advanceTimersByTimeAsync(3000);
-  });
-
+async function clickNextExercise() {
   const nextButton = screen.getByRole("button", { name: "Next Exercise" });
   await act(async () => {
     fireEvent.click(nextButton);
     // Flush the async generatePattern() call inside loadExercisePattern so the new
-    // pattern/DISPLAY-phase transition (and its 500ms preview-play setTimeout) land.
+    // pattern/DISPLAY-phase transition lands before the next assertion/action.
     await Promise.resolve();
     await Promise.resolve();
   });
 }
 
-describe("SightReadingGame (replay + comparison playback)", () => {
+// One correct note, played on time -> a "success" exercise (accuracy 100%, 0 misses).
+async function playOneSuccessExercise() {
+  await startPerformance();
+  await act(async () => {
+    capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(3000);
+  });
+  await clickNextExercise();
+}
+
+// No note events fired at all -> every note in the pattern is recorded "missed" by the
+// real timeline loop once each note's timing window closes (SightReadingGame.jsx's
+// schedulePerformanceTimeline tick()), giving a genuine run-of-misses exercise.
+async function missEveryNoteExercise() {
+  await startPerformance();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(6000);
+  });
+  await clickNextExercise();
+}
+
+describe("SightReadingGame (adaptive difficulty — ADAPT-01/02)", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
@@ -317,77 +337,69 @@ describe("SightReadingGame (replay + comparison playback)", () => {
     resetComboSpy.mockClear();
     rhythmPlaySpy.mockClear();
     rhythmStopSpy.mockClear();
+    generatePatternSpy.mockClear();
     capturedOnNoteEvent = null;
     mockInitialGradingModeBox.current = "test";
+    // Reset to the default single-note pattern before every test.
+    patternNotesBox.current = [
+      { type: "note", pitch: "C4", startTime: 0, endTime: 1, duration: 1 },
+    ];
   });
 
   afterEach(() => {
     vi.useRealTimers();
   });
 
-  test("tapping replay before the pending 500ms auto-play timer fires calls play exactly once (D-11)", async () => {
-    await reachFeedbackAndGoNext();
-
-    // Now in DISPLAY for exercise 2, with loadExercisePattern's 500ms auto-play preview
-    // still pending (not yet fired). Nothing should have called play() yet.
-    expect(rhythmPlaySpy).not.toHaveBeenCalled();
-
-    const replayButton = screen.getByRole("button", { name: "Hear it again" });
-    await act(async () => {
-      fireEvent.click(replayButton);
-    });
-
-    // Flush well past the original pending auto-play timeout.
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(600);
-    });
-
-    expect(rhythmPlaySpy).toHaveBeenCalledTimes(1);
-  });
-
-  test("replay button is present in DISPLAY and absent outside DISPLAY", async () => {
+  test("STALE-CLOSURE GUARD: tier escalates after 2 consecutive successes and lands at exercise N+1 (not N+2) — Pitfall 2 regression", async () => {
     await renderGame();
 
-    expect(
-      screen.getByRole("button", { name: "Hear it again" })
-    ).toBeInTheDocument();
+    // Exercise 1's pattern (from startGame, no tier applied yet — baseline tempo).
+    expect(generatePatternSpy).toHaveBeenCalledTimes(1);
+    expect(generatePatternSpy.mock.calls[0][2]).toBe(80);
 
-    const startPlayingButtons = screen.getAllByRole("button", {
-      name: /Start Playing/i,
-    });
-    await act(async () => {
-      fireEvent.click(startPlayingButtons[0]);
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(3200);
-    });
-    await act(async () => {
-      capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
-    });
-    await act(async () => {
-      await vi.advanceTimersByTimeAsync(3000);
-    });
+    // First success: successStreak 0 -> 1. Not yet escalated (ESCALATE_SUCCESS_STREAK = 2).
+    await playOneSuccessExercise();
+    expect(generatePatternSpy).toHaveBeenCalledTimes(2);
+    expect(generatePatternSpy.mock.calls[1][2]).toBe(80);
+    expect(screen.queryByText("Level Up!")).not.toBeInTheDocument();
 
-    // Now in FEEDBACK — the replay button must not be present.
-    expect(
-      screen.queryByRole("button", { name: "Hear it again" })
-    ).not.toBeInTheDocument();
+    // Second consecutive success: successStreak 1 -> 2 -> escalates. The escalated tier
+    // must be applied to the VERY NEXT exercise's pattern generation (call index 2, i.e.
+    // exercise 3) — not delayed to exercise 4 (call index 3), which was the stale-closure bug.
+    await playOneSuccessExercise();
+    expect(generatePatternSpy).toHaveBeenCalledTimes(3);
+    expect(generatePatternSpy.mock.calls[2][2]).toBe(92); // base 80 + tier1 tempoDeltaBpm 12
   });
 
-  test("multiple replay taps each call play (unlimited, D-08)", async () => {
+  test("ESCALATE: shows the LevelUpCue on the escalating transition (positive-only, D-12)", async () => {
     await renderGame();
 
-    const replayButton = screen.getByRole("button", { name: "Hear it again" });
-    await act(async () => {
-      fireEvent.click(replayButton);
-    });
-    await act(async () => {
-      fireEvent.click(replayButton);
-    });
-    await act(async () => {
-      fireEvent.click(replayButton);
-    });
+    await playOneSuccessExercise();
+    await playOneSuccessExercise();
 
-    expect(rhythmPlaySpy).toHaveBeenCalledTimes(3);
+    // The escalation happened on this second "Next Exercise" click — the cue should be
+    // visible immediately after (before its 1500ms auto-hide timer has fired).
+    expect(screen.getByText("Level Up!")).toBeInTheDocument();
+    expect(screen.getByText("Keep up the great work!")).toBeInTheDocument();
+  });
+
+  test("EASE: a run of >= EASE_MISS_RUN missed notes in one exercise lowers the tier/tempo and shows NO LevelUpCue", async () => {
+    // Multi-note pattern so a genuine run of misses (3) can be recorded via the real
+    // timeline-miss loop (a single-note pattern can only ever produce 1 miss).
+    patternNotesBox.current = [
+      { type: "note", pitch: "C4", startTime: 0, endTime: 1, duration: 1 },
+      { type: "note", pitch: "D4", startTime: 1, endTime: 2, duration: 1 },
+      { type: "note", pitch: "E4", startTime: 2, endTime: 3, duration: 1 },
+    ];
+
+    await renderGame();
+    expect(generatePatternSpy.mock.calls[0][2]).toBe(80);
+
+    await missEveryNoteExercise();
+
+    expect(generatePatternSpy).toHaveBeenCalledTimes(2);
+    // Eased one tier down: base 80 + tier(-1) tempoDeltaBpm -12 = 68.
+    expect(generatePatternSpy.mock.calls[1][2]).toBe(68);
+    expect(screen.queryByText("Level Up!")).not.toBeInTheDocument();
   });
 });
