@@ -56,6 +56,9 @@ gets its own `/gsd-secure-phase` pass before merge.
   on exact N) and drops back one difficulty tier — narrows toward the node's core `focusNotes`,
   removes rests, lowers tempo. This is the first "shrink" mechanism in the codebase; there is no
   existing precedent to reuse (NotesRecognitionGame's auto-grow only ever grows).
+  _Owner-confirmed 2026-07-12: implemented as >=3 missed notes WITHIN one exercise, evaluated at the
+  exercise boundary (per-exercise miss count, not a live consecutive-miss run). This interpretation is
+  final — execute/verify should not re-flag it._
 - **D-04: Escalation/ease events apply only at the next exercise boundary**, never mid-pattern.
   Patterns are generated as a whole via a config-in/config-out call (`patternBuilder.js`
   `generatePatternData`) with baked-in `startTime`/`endTime` values for playback and mic timing
