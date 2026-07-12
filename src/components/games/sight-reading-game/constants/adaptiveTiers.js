@@ -32,8 +32,9 @@ export const SUCCESS_MAX_MISSES = 1;
 export const EASE_MISS_RUN = 3;
 
 // Weak-note targeting (D-09/D-11). A pitch must have >= MASTERY_MIN_ATTEMPTS recorded attempts
-// before its accuracy is trusted; below WEAK_ACCURACY_THRESHOLD it is duplicated WEAK_NOTE_WEIGHT
-// times in the pool so patternBuilder's uniform pick favors it.
+// before its accuracy is trusted; below WEAK_ACCURACY_THRESHOLD it gets a weight of
+// WEAK_NOTE_WEIGHT (vs. 1 for everyone else) in the per-pitch weight map patternBuilder's
+// weighted random pick uses to favor it (see CR-01, 03-REVIEW.md).
 export const MASTERY_MIN_ATTEMPTS = 4;
 export const WEAK_ACCURACY_THRESHOLD = 75;
 export const WEAK_NOTE_WEIGHT = 3;

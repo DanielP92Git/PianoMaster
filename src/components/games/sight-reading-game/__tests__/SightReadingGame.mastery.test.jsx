@@ -11,6 +11,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import { SightReadingGame } from "../SightReadingGame";
 import { useVictoryState } from "../../../../hooks/useVictoryState";
+import { WEAK_NOTE_WEIGHT } from "../constants/adaptiveTiers";
 
 // ============================================================================
 // Phase 03 (ADAPT-03/ADAPT-04): per-note mastery accumulation + persistence.
@@ -666,7 +667,7 @@ describe("SightReadingGame reads persisted mastery + biases weak-note selection 
     });
   }
 
-  test("a historically-weak pitch (>= MASTERY_MIN_ATTEMPTS attempts, < WEAK_ACCURACY_THRESHOLD) is over-represented in exercise 1's generated pool", async () => {
+  test("a historically-weak pitch (>= MASTERY_MIN_ATTEMPTS attempts, < WEAK_ACCURACY_THRESHOLD) gets a higher weight in exercise 1's noteWeights map (CR-01 fix — weight map, not array duplication)", async () => {
     getNodeProgressSpy.mockResolvedValueOnce({
       note_mastery: { C4: { correct: 1, total: 6 } },
     });
@@ -675,15 +676,18 @@ describe("SightReadingGame reads persisted mastery + biases weak-note selection 
 
     expect(getNodeProgressSpy).toHaveBeenCalledWith("student-1", "test-node");
     expect(generatePatternSpy).toHaveBeenCalledTimes(1);
+    // CR-01 (03-REVIEW.md): duplicating pitches in `selectedNotes` (arg index 3) was
+    // silently discarded by patternBuilder.js's dedup step, so the pool itself must stay
+    // exactly the node's authored set...
     const selectedNotesArg = generatePatternSpy.mock.calls[0][3];
-    const c4Count = selectedNotesArg.filter((n) => n === "C4").length;
-    expect(c4Count).toBeGreaterThan(1);
-    // D-09: biasing only duplicates pitches already in the node's own pool — never introduces
-    // a pitch outside it.
-    expect(selectedNotesArg.every((n) => ["C4", "D4"].includes(n))).toBe(true);
+    expect(selectedNotesArg).toEqual(["C4", "D4"]);
+    // ...and the bias is instead carried via the new `noteWeights` positional arg (index 9),
+    // which patternBuilder.js's weighted random pick actually consumes.
+    const noteWeightsArg = generatePatternSpy.mock.calls[0][9];
+    expect(noteWeightsArg).toEqual({ C4: WEAK_NOTE_WEIGHT, D4: 1 });
   });
 
-  test("cold start (no qualifying pitch): the baseline pool is used unchanged (uniform selection)", async () => {
+  test("cold start (no qualifying pitch): the baseline pool is used unchanged and noteWeights is uniform (all 1s)", async () => {
     getNodeProgressSpy.mockResolvedValueOnce({ note_mastery: {} });
 
     await renderTrailGameAndFlush();
@@ -691,6 +695,8 @@ describe("SightReadingGame reads persisted mastery + biases weak-note selection 
     expect(generatePatternSpy).toHaveBeenCalledTimes(1);
     const selectedNotesArg = generatePatternSpy.mock.calls[0][3];
     expect(selectedNotesArg).toEqual(["C4", "D4"]);
+    const noteWeightsArg = generatePatternSpy.mock.calls[0][9];
+    expect(noteWeightsArg).toEqual({ C4: 1, D4: 1 });
   });
 
   test("free play (no nodeId/studentId pairing needed): the mastery fetch is never attempted", async () => {

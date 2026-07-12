@@ -446,11 +446,14 @@ export function SightReadingGame() {
 
   // Phase 03 (ADAPT-03/D-09/D-11): read persisted per-note mastery for (student, node) and bias
   // the baseline pool toward historically-weak pitches — strictly within the node's own pool
-  // (D-09; buildWeightedNotePool only duplicates pitches already present in baseSettings.selectedNotes,
-  // never introduces new ones). Cold start / free-play / no qualifying pitch -> pool returned
-  // unchanged (uniform selection). Races an 800ms timeout so gameplay never blocks on the network
-  // (checker Warning 2 — the first-exercise race is handled deliberately, not left to chance):
-  // the PREFERRED option from 03-06-PLAN.md — gate exercise 1's pattern generation on this fetch.
+  // (D-09; buildWeightedNotePool returns a per-pitch WEIGHT MAP over baseSettings.selectedNotes,
+  // never introduces new pitches, and is consumed by patternBuilder.js's weighted random pick
+  // via the `noteWeights` settings field — see CR-01, 03-REVIEW.md, for why the previous
+  // duplication-based approach was a no-op). Cold start / free-play / no qualifying pitch ->
+  // uniform weights (1 each), i.e. unbiased selection. Races an 800ms timeout so gameplay never
+  // blocks on the network (checker Warning 2 — the first-exercise race is handled deliberately,
+  // not left to chance): the PREFERRED option from 03-06-PLAN.md — gate exercise 1's pattern
+  // generation on this fetch.
   const seedMasteryBiasedSettings = useCallback(
     async (baseSettings) => {
       if (!nodeId || !studentId) return baseSettings;
@@ -463,12 +466,12 @@ export function SightReadingGame() {
         ]);
         const masteryMap = progress?.note_mastery || {};
         const baseNotes = baseSettings?.selectedNotes || [];
-        const weighted = buildWeightedNotePool(
+        const noteWeights = buildWeightedNotePool(
           baseNotes,
           masteryMap,
           MASTERY_MIN_ATTEMPTS
         );
-        return { ...baseSettings, selectedNotes: weighted };
+        return { ...baseSettings, noteWeights };
       } catch {
         // Non-fatal: fall back to the uniform baseline (no biasing).
         return baseSettings;
@@ -2460,7 +2463,8 @@ export function SightReadingGame() {
           settings.measuresPerPattern || 1,
           settings.rhythmSettings,
           settings.rhythmComplexity,
-          settings.keySignature || null
+          settings.keySignature || null,
+          settings.noteWeights || null
         );
 
         setCurrentPattern(pattern);
@@ -3757,7 +3761,8 @@ export function SightReadingGame() {
           currentSettings.measuresPerPattern || 1,
           currentSettings.rhythmSettings,
           currentSettings.rhythmComplexity,
-          currentSettings.keySignature || null
+          currentSettings.keySignature || null,
+          currentSettings.noteWeights || null
         );
 
         // Use flushSync to ensure pattern state updates complete BEFORE phase transition

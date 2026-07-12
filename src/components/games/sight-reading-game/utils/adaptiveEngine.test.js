@@ -164,57 +164,63 @@ describe("applyTierToSettings", () => {
   });
 });
 
+// CR-01 (03-REVIEW.md): buildWeightedNotePool returns a per-pitch WEIGHT MAP, not a
+// duplicated array — patternBuilder.js hard-dedupes `selectedNotes` before picking a note,
+// so array-duplication-based weighting is silently discarded before it can have any effect.
+// The weight map is consumed by patternBuilder.js's weighted random pick instead (see the
+// unmocked integration regression test in patternBuilder.test.js, which exercises the real
+// weighted pick end-to-end and would catch this class of bug recurring).
 describe("buildWeightedNotePool", () => {
-  it("duplicates a weak pitch (total>=MASTERY_MIN_ATTEMPTS, accuracy<WEAK_ACCURACY_THRESHOLD) WEAK_NOTE_WEIGHT times", () => {
+  it("assigns a weak pitch (total>=MASTERY_MIN_ATTEMPTS, accuracy<WEAK_ACCURACY_THRESHOLD) weight WEAK_NOTE_WEIGHT", () => {
     const basePool = ["C4", "D4", "E4"];
     const masteryMap = {
       C4: { correct: 1, total: MASTERY_MIN_ATTEMPTS }, // 25% accuracy, weak
     };
     const result = buildWeightedNotePool(basePool, masteryMap);
-    const c4Count = result.filter((p) => p === "C4").length;
-    const d4Count = result.filter((p) => p === "D4").length;
-    expect(c4Count).toBe(WEAK_NOTE_WEIGHT);
-    expect(d4Count).toBe(1);
+    expect(result).toEqual({ C4: WEAK_NOTE_WEIGHT, D4: 1, E4: 1 });
   });
 
-  it("does not duplicate a pitch below the accuracy threshold if it lacks enough attempts", () => {
+  it("assigns weight 1 to a pitch below the accuracy threshold if it lacks enough attempts", () => {
     const basePool = ["C4", "D4"];
     const masteryMap = {
       C4: { correct: 0, total: MASTERY_MIN_ATTEMPTS - 1 },
     };
     const result = buildWeightedNotePool(basePool, masteryMap);
-    expect(result.filter((p) => p === "C4").length).toBe(1);
+    expect(result).toEqual({ C4: 1, D4: 1 });
   });
 
-  it("does not duplicate a pitch with enough attempts but accuracy >= threshold", () => {
+  it("assigns weight 1 to a pitch with enough attempts but accuracy >= threshold", () => {
     const basePool = ["C4", "D4"];
     const masteryMap = {
       C4: { correct: MASTERY_MIN_ATTEMPTS, total: MASTERY_MIN_ATTEMPTS },
     };
     expect(WEAK_ACCURACY_THRESHOLD).toBeLessThanOrEqual(100);
     const result = buildWeightedNotePool(basePool, masteryMap);
-    expect(result.filter((p) => p === "C4").length).toBe(1);
+    expect(result).toEqual({ C4: 1, D4: 1 });
   });
 
-  it("cold start: returns the base pool unchanged when no pitch meets MASTERY_MIN_ATTEMPTS", () => {
+  it("cold start: returns a uniform (all-1) weight map when no pitch meets MASTERY_MIN_ATTEMPTS", () => {
     const basePool = ["C4", "D4", "E4"];
     const masteryMap = {
       C4: { correct: 0, total: 1 },
       D4: { correct: 1, total: 2 },
     };
     const result = buildWeightedNotePool(basePool, masteryMap);
-    expect(result).toEqual(basePool);
+    expect(result).toEqual({ C4: 1, D4: 1, E4: 1 });
   });
 
-  it("cold start: returns the base pool unchanged for an empty masteryMap without throwing", () => {
+  it("cold start: returns a uniform (all-1) weight map for an empty masteryMap without throwing", () => {
     const basePool = ["C4", "D4"];
     expect(() => buildWeightedNotePool(basePool, {})).not.toThrow();
-    expect(buildWeightedNotePool(basePool, {})).toEqual(basePool);
+    expect(buildWeightedNotePool(basePool, {})).toEqual({ C4: 1, D4: 1 });
   });
 
-  it("cold start: returns the base pool unchanged for an undefined masteryMap without throwing", () => {
+  it("cold start: returns a uniform (all-1) weight map for an undefined masteryMap without throwing", () => {
     const basePool = ["C4", "D4"];
     expect(() => buildWeightedNotePool(basePool, undefined)).not.toThrow();
-    expect(buildWeightedNotePool(basePool, undefined)).toEqual(basePool);
+    expect(buildWeightedNotePool(basePool, undefined)).toEqual({
+      C4: 1,
+      D4: 1,
+    });
   });
 });

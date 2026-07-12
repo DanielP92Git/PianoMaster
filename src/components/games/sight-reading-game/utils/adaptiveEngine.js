@@ -81,15 +81,22 @@ export function applyTierToSettings(
   };
 }
 
-// buildWeightedNotePool(basePool, masteryMap, minAttempts = MASTERY_MIN_ATTEMPTS) => array (weak pitches duplicated)
+// buildWeightedNotePool(basePool, masteryMap, minAttempts = MASTERY_MIN_ATTEMPTS)
+//   => { [pitch]: weight } per-pitch weight map (never a duplicated array — see CR-01,
+//   03-REVIEW.md: patternBuilder.js hard-dedupes `selectedNotes` before picking a note, so
+//   duplication-based weighting is silently discarded before it can have any effect).
 // masteryMap shape: { [pitch]: { correct, total } }. accuracy = total ? correct/total*100 : 100.
+// Consumed by patternBuilder.js's weighted random note pick (generatePatternData's
+// `noteWeights` config field) — every pitch in basePool gets an entry (weak pitches get
+// WEAK_NOTE_WEIGHT, everyone else 1), so callers never need a separate "is this weighted"
+// branch downstream.
 export function buildWeightedNotePool(
   basePool = [],
   masteryMap = {},
   minAttempts = MASTERY_MIN_ATTEMPTS
 ) {
   const safeMasteryMap = masteryMap ?? {};
-  const pool = [];
+  const weights = {};
 
   for (const pitch of basePool) {
     const stats = safeMasteryMap[pitch];
@@ -98,11 +105,8 @@ export function buildWeightedNotePool(
     const accuracy = total ? (correct / total) * 100 : 100;
     const isWeak = total >= minAttempts && accuracy < WEAK_ACCURACY_THRESHOLD;
 
-    const weight = isWeak ? WEAK_NOTE_WEIGHT : 1;
-    for (let i = 0; i < weight; i += 1) {
-      pool.push(pitch);
-    }
+    weights[pitch] = isWeak ? WEAK_NOTE_WEIGHT : 1;
   }
 
-  return pool;
+  return weights;
 }

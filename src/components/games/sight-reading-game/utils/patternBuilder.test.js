@@ -28,7 +28,9 @@ describe("patternBuilder (noBeam tagging)", () => {
     const notes = Array.isArray(result?.notes) ? result.notes : [];
 
     // Find at least one dotted-quarter event.
-    const dottedQuarterIdx = notes.findIndex((n) => n?.notation === "dotted-quarter");
+    const dottedQuarterIdx = notes.findIndex(
+      (n) => n?.notation === "dotted-quarter"
+    );
     expect(dottedQuarterIdx).toBeGreaterThanOrEqual(0);
 
     // The next event should be an eighth with noBeam true.
@@ -151,9 +153,11 @@ describe("patternBuilder (key signature filtering)", () => {
       measuresPerPattern: 1,
       keySignature: "G",
     });
-    const pitches = result.notes.filter(n => n.type === "note").map(n => n.pitch);
+    const pitches = result.notes
+      .filter((n) => n.type === "note")
+      .map((n) => n.pitch);
     // F4 is NOT in G major (F# is). All pitches should be in-key.
-    expect(pitches.every(p => p !== "F4")).toBe(true);
+    expect(pitches.every((p) => p !== "F4")).toBe(true);
   });
 
   it("preserves all notes when keySignature is null", async () => {
@@ -268,7 +272,10 @@ describe("patternBuilder (6/8 compound timing)", () => {
     });
 
     const notes = result.notes || [];
-    const totalUnits = notes.reduce((sum, n) => sum + (n.sixteenthUnits || 0), 0);
+    const totalUnits = notes.reduce(
+      (sum, n) => sum + (n.sixteenthUnits || 0),
+      0
+    );
     expect(totalUnits).toBe(12);
   });
 });
@@ -280,9 +287,7 @@ describe("patternBuilder (accidental sorting)", () => {
 
   it("NOTE_FREQUENCIES['F#4'] is approximately 369.99 (between F4=349.23 and G4=392.0)", async () => {
     // Import NOTE_FREQUENCIES directly to verify the constant
-    const { NOTE_FREQUENCIES } = await import(
-      "../constants/staffPositions.js"
-    );
+    const { NOTE_FREQUENCIES } = await import("../constants/staffPositions.js");
     expect(NOTE_FREQUENCIES["F#4"]).toBeCloseTo(369.99, 1);
     // Also verify it sits between F4 and G4
     expect(NOTE_FREQUENCIES["F#4"]).toBeGreaterThan(NOTE_FREQUENCIES["F4"]);
@@ -536,5 +541,71 @@ describe("toVexFlowNote (accidentals via generatePatternData)", () => {
     noteVexEntries.forEach((entry) => {
       expect(entry.keys[0]).toBe("c/4");
     });
+  });
+});
+
+// CR-01 regression (03-REVIEW.md): buildWeightedNotePool's weight map is a no-op unless
+// patternBuilder.js's note-selection step actually respects it. This suite deliberately does
+// NOT mock usePatternGeneration/patternBuilder.js and does NOT stub Math.random — it exercises
+// the real, unmocked weighted pick end-to-end so this class of bug (weighting silently
+// discarded downstream) can't recur invisibly.
+describe("patternBuilder (weighted note selection — CR-01 regression, real RNG)", () => {
+  it("biases note selection heavily toward a weak pitch when noteWeights is provided", async () => {
+    const result = await generatePatternData({
+      difficulty: "intermediate", // skip the beginner-mode adjacency branch; exercise the weighted pick directly
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4", "F4"],
+      clef: "Treble",
+      measuresPerPattern: 8,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["16"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+      noteWeights: { C4: 20, D4: 1, E4: 1, F4: 1 },
+    });
+
+    const pitches = (result.notes || [])
+      .filter((n) => n?.type === "note")
+      .map((n) => n.pitch);
+
+    // 8 measures of straight sixteenths in 4/4 = 128 notes — plenty of samples.
+    expect(pitches.length).toBeGreaterThan(50);
+
+    const c4Ratio = pitches.filter((p) => p === "C4").length / pitches.length;
+    // Expected C4 share ≈ 20 / (20+1+1+1) ≈ 0.87. Assert well above uniform (0.25) so this
+    // fails loudly if the weighting is ever silently discarded again (e.g. by a dedup step
+    // upstream of the actual pick).
+    expect(c4Ratio).toBeGreaterThan(0.6);
+  });
+
+  it("falls back to roughly uniform selection when noteWeights is omitted", async () => {
+    const result = await generatePatternData({
+      difficulty: "intermediate",
+      timeSignature: "4/4",
+      tempo: 80,
+      selectedNotes: ["C4", "D4", "E4", "F4"],
+      clef: "Treble",
+      measuresPerPattern: 8,
+      rhythmSettings: {
+        allowRests: false,
+        allowedNoteDurations: ["16"],
+        allowedRestDurations: [],
+      },
+      rhythmComplexity: "simple",
+    });
+
+    const pitches = (result.notes || [])
+      .filter((n) => n?.type === "note")
+      .map((n) => n.pitch);
+
+    expect(pitches.length).toBeGreaterThan(50);
+
+    const c4Ratio = pitches.filter((p) => p === "C4").length / pitches.length;
+    // No pitch should dominate without noteWeights — expect roughly uniform (~0.25), with
+    // generous slack for RNG variance across a finite sample.
+    expect(c4Ratio).toBeLessThan(0.5);
   });
 });

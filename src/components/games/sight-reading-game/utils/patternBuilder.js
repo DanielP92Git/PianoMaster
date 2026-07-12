@@ -25,6 +25,39 @@ const debugLog = (...args) => {
   }
 };
 
+// Weighted random pick from `pool`, biased by per-pitch weights in `weights` (Phase 03
+// ADAPT-03/D-09/D-11 weak-note targeting — see CR-01, 03-REVIEW.md). Falls back to a plain
+// uniform pick when `weights` is absent, or when every pitch in `pool` resolves to a
+// non-positive/missing weight (defaults each pitch to weight 1, matching the pre-existing
+// uniform behavior). This is the ONLY place selection bias is applied — `buildWeightedNotePool`
+// intentionally returns a weight map, not a duplicated array, because `availableNotes` above is
+// already hard-deduplicated before a pool ever reaches this function.
+const pickWeightedNote = (pool, weights) => {
+  if (!Array.isArray(pool) || pool.length === 0) return undefined;
+  if (!weights || typeof weights !== "object") {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  let totalWeight = 0;
+  const resolvedWeights = pool.map((pitch) => {
+    const weight = Number(weights[pitch]);
+    const safeWeight = Number.isFinite(weight) && weight > 0 ? weight : 1;
+    totalWeight += safeWeight;
+    return safeWeight;
+  });
+
+  if (totalWeight <= 0) {
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  let roll = Math.random() * totalWeight;
+  for (let i = 0; i < pool.length; i += 1) {
+    roll -= resolvedWeights[i];
+    if (roll < 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+};
+
 export const inferClefForPitch = (pitch) => {
   if (!pitch) return "treble";
   const match = String(pitch).match(/^([A-G][#b]?)(\d+)$/i);
@@ -100,6 +133,7 @@ export async function generatePatternData({
   rhythmSettings,
   rhythmComplexity = "simple",
   keySignature = null,
+  noteWeights = null,
 }) {
   const clefKey = String(clef || "Treble").toLowerCase();
   const resolvedSignature = resolveTimeSignature(timeSignature);
@@ -169,14 +203,23 @@ export async function generatePatternData({
 
     currentSixteenth += eventUnits;
   }
-  
+
   // Sanity check: verify no events overlap (development-time assertion)
   if (isDebugEnabled) {
     const occupiedSlots = new Set();
     for (const obj of notationObjects) {
-      for (let slot = obj.startPosition; slot < obj.startPosition + obj.sixteenthUnits; slot++) {
+      for (
+        let slot = obj.startPosition;
+        slot < obj.startPosition + obj.sixteenthUnits;
+        slot++
+      ) {
         if (occupiedSlots.has(slot)) {
-          console.error("[PatternBuilder] OVERLAP DETECTED at slot", slot, "in", obj);
+          console.error(
+            "[PatternBuilder] OVERLAP DETECTED at slot",
+            slot,
+            "in",
+            obj
+          );
         }
         occupiedSlots.add(slot);
       }
@@ -279,7 +322,7 @@ export async function generatePatternData({
   // natural notes to their in-key accidental forms (e.g. F4 → F#4 in G major).
   // This ensures VexFlow renders notes without redundant accidentals and the
   // expected pitch for answer evaluation matches the key signature.
-  if (keySignature && keySignature !== 'C') {
+  if (keySignature && keySignature !== "C") {
     const filteredByKey = filterNotesToKey(availableNotes, keySignature);
     if (filteredByKey.length > 0) {
       // Map naturals to in-key forms (e.g. F4 → F#4 in G major)
@@ -288,9 +331,17 @@ export async function generatePatternData({
       const unique = [...new Set(mapped)];
       availableNotes.length = 0;
       availableNotes.push(...unique);
-      debugLog("Key signature filter+map:", keySignature, "→", availableNotes.length, "notes");
+      debugLog(
+        "Key signature filter+map:",
+        keySignature,
+        "→",
+        availableNotes.length,
+        "notes"
+      );
     } else {
-      debugLog("⚠ Key signature filter yielded 0 notes — keeping original set");
+      debugLog(
+        "⚠ Key signature filter yielded 0 notes — keeping original set"
+      );
     }
   }
 
@@ -361,7 +412,9 @@ export async function generatePatternData({
     for (const [patternId, eventIndices] of eventsByPattern) {
       // Use the beatIndex from the first event in the pattern
       const firstEvent = notationObjects[eventIndices[0]];
-      const beatIndex = firstEvent.beatIndex ?? Math.floor(firstEvent.startPosition / unitsPerBeat);
+      const beatIndex =
+        firstEvent.beatIndex ??
+        Math.floor(firstEvent.startPosition / unitsPerBeat);
       const targetStaff = staffPerBeat.get(beatIndex) || "treble";
       staffPerPattern.set(patternId, targetStaff);
     }
@@ -395,9 +448,14 @@ export async function generatePatternData({
       }
 
       // For beginner mode, use previous note from the same pattern if available
-      const patternPreviousNote = previousNotePerPattern.get(patternId) || previousNote;
-      
-      if (difficulty === "beginner" && patternPreviousNote && notePool.includes(patternPreviousNote)) {
+      const patternPreviousNote =
+        previousNotePerPattern.get(patternId) || previousNote;
+
+      if (
+        difficulty === "beginner" &&
+        patternPreviousNote &&
+        notePool.includes(patternPreviousNote)
+      ) {
         const prevIndex = notePool.indexOf(patternPreviousNote);
         const candidates = [
           notePool[prevIndex - 1],
@@ -409,12 +467,10 @@ export async function generatePatternData({
           selectedNote =
             candidates[Math.floor(Math.random() * candidates.length)];
         } else {
-          selectedNote =
-            notePool[Math.floor(Math.random() * notePool.length)];
+          selectedNote = pickWeightedNote(notePool, noteWeights);
         }
       } else {
-        selectedNote =
-          notePool[Math.floor(Math.random() * notePool.length)];
+        selectedNote = pickWeightedNote(notePool, noteWeights);
       }
 
       // Validate that the selected note is in availableNotes
@@ -480,6 +536,6 @@ export async function generatePatternData({
     tempo,
     easyscoreString,
     vexflowNotes,
-    keySignature,  // pass through for VexFlowStaffDisplay
+    keySignature, // pass through for VexFlowStaffDisplay
   };
 }
