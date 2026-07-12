@@ -38,6 +38,23 @@ export function SightReadingSessionProvider({ children }) {
   const [isModeLocked, setIsModeLocked] = useState(false);
   const isModeLockedRef = useRef(false);
 
+  // Phase 03 (ADAPT-01/02, D-01): adaptive-difficulty streak + current tier, SEPARATE from the HUD
+  // combo. Ref mirrors let handleNextExercise / mic callbacks read current values without a stale
+  // closure (same rationale as comboRef/gradingModeRef).
+  const [successStreak, setSuccessStreakState] = useState(0);
+  const successStreakRef = useRef(0);
+  const [adaptiveTierIndex, setAdaptiveTierIndexState] = useState(0); // 0 == baseline (adaptiveTiers.BASELINE_TIER_INDEX)
+  const adaptiveTierIndexRef = useRef(0);
+
+  const setSuccessStreak = useCallback((n) => {
+    successStreakRef.current = n;
+    setSuccessStreakState(n);
+  }, []);
+  const setAdaptiveTierIndex = useCallback((n) => {
+    adaptiveTierIndexRef.current = n;
+    setAdaptiveTierIndexState(n);
+  }, []);
+
   const setGradingMode = useCallback((mode) => {
     if (isModeLockedRef.current) {
       return;
@@ -87,6 +104,10 @@ export function SightReadingSessionProvider({ children }) {
     setCombo(0);
     isOnFireRef.current = false;
     setIsOnFire(false);
+    successStreakRef.current = 0;
+    setSuccessStreakState(0);
+    adaptiveTierIndexRef.current = 0;
+    setAdaptiveTierIndexState(0);
   }, []);
 
   const resetSession = useCallback(() => {
@@ -95,6 +116,10 @@ export function SightReadingSessionProvider({ children }) {
     setCombo(0);
     isOnFireRef.current = false;
     setIsOnFire(false);
+    successStreakRef.current = 0;
+    setSuccessStreakState(0);
+    adaptiveTierIndexRef.current = 0;
+    setAdaptiveTierIndexState(0);
   }, []);
 
   const recordExerciseResult = useCallback(
@@ -193,6 +218,12 @@ export function SightReadingSessionProvider({ children }) {
       setGradingMode,
       lockMode,
       unlockMode,
+      successStreak,
+      successStreakRef,
+      setSuccessStreak,
+      adaptiveTierIndex,
+      adaptiveTierIndexRef,
+      setAdaptiveTierIndex,
     };
   }, [
     state,
@@ -209,6 +240,10 @@ export function SightReadingSessionProvider({ children }) {
     setGradingMode,
     lockMode,
     unlockMode,
+    successStreak,
+    setSuccessStreak,
+    adaptiveTierIndex,
+    setAdaptiveTierIndex,
   ]);
 
   return (
