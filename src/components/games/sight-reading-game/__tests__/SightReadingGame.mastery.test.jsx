@@ -180,8 +180,16 @@ vi.mock("../../../../contexts/SightReadingSessionContext", () => ({
       totalScore: 0,
       maxPossibleScore: 0,
       status: "idle",
-      startSession: vi.fn(),
-      resetSession: vi.fn(),
+      // Both startSession/resetSession must be REFERENTIALLY STABLE (useCallback, not a fresh
+      // vi.fn() per render): SightReadingGame.jsx's mount effect depends on both
+      // (`useEffect(() => { startSession(); return () => resetSession(); }, [startSession,
+      // resetSession])`), so an unstable identity re-fires the cleanup+effect on every render.
+      // That was harmless while resetSession was a no-op stub, but now that it actually resets
+      // completedCount (needed for the CR-02 "Play Again" regression test below to start a
+      // genuine second session), an unstable identity would silently reset completedCount to 0
+      // on every re-render and isSessionComplete would never flip true.
+      startSession: useCallback(() => {}, []),
+      resetSession: useCallback(() => setCompletedCount(0), []),
       recordExerciseResult: useCallback(() => {
         setCompletedCount((c) => c + 1);
       }, []),
@@ -510,6 +518,61 @@ describe("SightReadingGame session mastery accumulation (ADAPT-03, Task 1)", () 
     const lastProps = victoryScreenPropsSpy.mock.calls.at(-1)[0];
     expect(lastProps.suppressPersistence).toBe(true);
     expect(lastProps.sessionMastery).toEqual({ C4: { correct: 1, total: 1 } });
+  });
+
+  // CR-02 regression (03-REVIEW.md): "Play Again" (VictoryScreen's onReset, wired to
+  // handleStartNewSession) must NOT leak the just-finished session's sessionMasteryRef/
+  // baseAdaptiveSettingsRef into the new session — otherwise session 1's already-persisted
+  // mastery counts get silently re-merged into session 2's payload, double-counting
+  // note_mastery.total/.correct server-side.
+  test("Play Again (onReset) does not leak session 1's sessionMastery counts into session 2's persisted payload", async () => {
+    await renderGame();
+
+    // ---- Session 1: C4 correct, D4 missed -> completes the (mocked) 2-exercise session. ----
+    await playCurrentNoteSuccessfully();
+    patternNotesBox.current = [
+      { type: "note", pitch: "D4", startTime: 0, endTime: 1, duration: 1 },
+    ];
+    await clickNextExercise();
+    await missCurrentNote();
+    await clickNextExercise();
+
+    expect(victoryScreenPropsSpy).toHaveBeenCalled();
+    const session1Props = victoryScreenPropsSpy.mock.calls.at(-1)[0];
+    expect(session1Props.sessionMastery).toEqual({
+      C4: { correct: 1, total: 1 },
+      D4: { correct: 0, total: 1 },
+    });
+
+    // ---- "Play Again": invoke the captured onReset (VictoryScreen is mocked, so we call the
+    // prop directly rather than clicking a rendered button — mirrors how this file already
+    // asserts on captured props elsewhere). ----
+    patternNotesBox.current = [
+      { type: "note", pitch: "E4", startTime: 0, endTime: 1, duration: 1 },
+    ];
+    await act(async () => {
+      session1Props.onReset();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // ---- Session 2: E4 correct, F4 missed -> completes the session again. ----
+    await playCurrentNoteSuccessfully();
+    patternNotesBox.current = [
+      { type: "note", pitch: "F4", startTime: 0, endTime: 1, duration: 1 },
+    ];
+    await clickNextExercise();
+    await missCurrentNote();
+    await clickNextExercise();
+
+    const session2Props = victoryScreenPropsSpy.mock.calls.at(-1)[0];
+    expect(session2Props.sessionMastery).toEqual({
+      E4: { correct: 1, total: 1 },
+      F4: { correct: 0, total: 1 },
+    });
+    // The regression this guards against: session 1's C4/D4 counts must NOT reappear.
+    expect(session2Props.sessionMastery).not.toHaveProperty("C4");
+    expect(session2Props.sessionMastery).not.toHaveProperty("D4");
   });
 });
 

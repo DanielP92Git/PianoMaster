@@ -2739,6 +2739,15 @@ export function SightReadingGame() {
     stopMetronomePlayback();
     resetSession();
     startSession();
+    // Phase 03 (ADAPT-01/02/03, CR-02 fix — see 03-REVIEW.md): this handler bypasses
+    // startGame()'s `!currentPattern` reset guard entirely (currentPattern is never nulled
+    // here), so without an explicit reset both session-scoped refs would leak the JUST-FINISHED
+    // session's values into the new one — re-merging already-persisted sessionMastery counts on
+    // top of the new session's, double-counting note_mastery.total/.correct in the DB. Mirrors
+    // the reset returnToSetup gets "for free" by nulling currentPattern (which re-arms
+    // startGame's guard on the next startGame() call).
+    baseAdaptiveSettingsRef.current = null;
+    sessionMasteryRef.current = {};
     loadExercisePattern();
   }, [
     loadExercisePattern,
