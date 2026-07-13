@@ -182,6 +182,11 @@ function isAdjacentSemitone(noteA, noteB) {
   return Math.abs(a - b) <= 1;
 }
 
+// Mic-only guard: ignore a detection in the first slice of a rest's window so the previous
+// note's decay tail / edge wobble isn't punished as "playing on the rest". Clean digital
+// input (keyboard / PC-key) is exempt from this guard.
+const REST_MIC_LEADIN_MS = 150;
+
 const PC_KEYBOARD_KEYS = [
   "a",
   "s",
@@ -1937,6 +1942,70 @@ export function SightReadingGame() {
             gamePhase: phase,
           });
         }
+
+        // Played on a rest: the detected note's onset falls inside a REST's window.
+        // Record a rest violation (red rest + red played note) instead of silently
+        // dropping it. Only the first detection per rest is recorded.
+        let restWindow = null;
+        for (let i = 0; i < timingWindows.length; i++) {
+          const w = timingWindows[i];
+          if (
+            w.event?.type === "rest" &&
+            elapsedTimeMs >= w.windowStart &&
+            elapsedTimeMs <= w.windowEnd
+          ) {
+            restWindow = w;
+            break;
+          }
+        }
+        if (restWindow) {
+          const restIdx = restWindow.noteIndex;
+          const alreadyForRest = performanceResultsRef.current.some(
+            (r) => r.noteIndex === restIdx
+          );
+          if (alreadyForRest) return; // one violation per rest is enough
+
+          // Mic guard: ignore the previous note's sustain/decay tail and an edge-of-window
+          // lead-in so a ringing note isn't falsely punished. Keyboard / PC-key onsets are
+          // clean and skip this guard entirely.
+          let micFalsePositive = false;
+          if (inputMode === "mic") {
+            let prevPitch = null;
+            for (let k = restIdx - 1; k >= 0; k--) {
+              const ev = pattern?.notes?.[k];
+              if (ev?.type === "note" && ev.pitch) {
+                prevPitch = ev.pitch;
+                break;
+              }
+            }
+            const isSustainOfPrev =
+              !!prevPitch &&
+              (noteToMidi(prevPitch) === noteToMidi(detectedNote) ||
+                isAdjacentSemitone(prevPitch, detectedNote));
+            const inLeadInBand =
+              elapsedTimeMs < restWindow.windowStart + REST_MIC_LEADIN_MS;
+            micFalsePositive = isSustainOfPrev || inLeadInBand;
+          }
+
+          if (!micFalsePositive) {
+            recordPerformanceResult({
+              noteIndex: restIdx,
+              expected: null,
+              detected: detectedNote,
+              frequency: -1,
+              timingStatus: "rest_violation",
+              timeDiff: 0,
+              isCorrect: false,
+              isRest: true,
+              timestamp: Date.now(),
+              phase,
+            });
+            resetCombo();
+          }
+          // A note during a rest is never an anti-cheat "no pattern pitch" event.
+          return;
+        }
+
         // Only count as a cheat attempt if the detected pitch isn't in the pattern
         // (or within 1 semitone of a pattern note for mic input — transient wobble).
         // Use MIDI comparison so enharmonic equivalents (e.g., C#4 == Db4) are treated
@@ -2209,6 +2278,7 @@ export function SightReadingGame() {
       showTimingFeedback,
       recordPerformanceResult,
       incrementCombo,
+      resetCombo,
       canScoreNow,
       getElapsedMsFromPerformanceStart,
       trackFailedAttemptForAntiCheat,
@@ -2360,11 +2430,11 @@ export function SightReadingGame() {
         setCurrentNoteIndex(activeIdx);
       }
 
-      // Record misses (notes only) once elapsed is past the *scoring window end* (preferred),
-      // or note end + tolerance as a fallback.
+      // Finalize each event once elapsed is past its *scoring window end* (preferred), or
+      // event end + tolerance as a fallback. Notes → record a miss/wrong-pitch; rests →
+      // record "correct" if the child stayed silent (no rest violation was recorded).
       for (let i = 0; i < allEvents.length; i++) {
         const ev = allEvents[i];
-        if (ev.type !== "note") continue;
         const endMs = (ev.endTime || ev.startTime || 0) * 1000;
         const windowEndMs =
           typeof timingWindowsRef.current?.[i]?.windowEnd === "number"
@@ -2374,7 +2444,26 @@ export function SightReadingGame() {
         const already = performanceResultsRef.current.some(
           (r) => r.noteIndex === i
         );
-        if (already) continue;
+        if (already) continue; // a rest violation recorded during the rest wins over correct
+
+        // Rest kept correctly: silence held through the whole window → green, full rhythm credit.
+        if (ev.type === "rest") {
+          recordPerformanceResult({
+            noteIndex: i,
+            expected: null,
+            detected: null,
+            frequency: -1,
+            timingStatus: "rest_correct",
+            timing: { score: 1.0 },
+            timeDiff: 0,
+            isCorrect: true,
+            isRest: true,
+            timestamp: Date.now(),
+            phase: GAME_PHASES.PERFORMANCE,
+          });
+          continue;
+        }
+        if (ev.type !== "note") continue;
 
         const wrongPitchSeen = Boolean(wrongPitchSeenRef.current?.[i]);
         const timingStatusToRecord = wrongPitchSeen ? "wrong_pitch" : "missed";

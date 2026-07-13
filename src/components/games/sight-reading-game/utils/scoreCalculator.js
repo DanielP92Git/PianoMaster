@@ -130,7 +130,13 @@ export function getDetailedBreakdown(performanceResults) {
   };
 
   performanceResults.forEach((result) => {
-    if (result.timingStatus === "missed") {
+    if (result.timingStatus === "rest_correct") {
+      // Rest kept correctly counts as a correct position.
+      breakdown.correct++;
+    } else if (result.timingStatus === "rest_violation") {
+      // Note played during a rest counts as a wrong position.
+      breakdown.wrongPitch++;
+    } else if (result.timingStatus === "missed") {
       breakdown.missed++;
     } else if (result.timingStatus === "wrong_pitch") {
       breakdown.wrongPitch++;

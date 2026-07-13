@@ -71,6 +71,23 @@ const late = () => ({
 });
 const missed = () => ({ isCorrect: false, timingStatus: "missed" });
 const wrongPitch = () => ({ isCorrect: false, timingStatus: "wrong_pitch" });
+// Rest kept correctly (silence held): counts as a correct position with full rhythm credit.
+const restCorrect = () => ({
+  isCorrect: true,
+  isRest: true,
+  timingStatus: "rest_correct",
+  timing: { score: 1.0 },
+  expected: null,
+  detected: null,
+});
+// Note played during a rest: a wrong position with no timing credit.
+const restViolation = () => ({
+  isCorrect: false,
+  isRest: true,
+  timingStatus: "rest_violation",
+  expected: null,
+  detected: "C4",
+});
 
 describe("calculatePitchAccuracy", () => {
   it("returns 0 for an empty array", () => {
@@ -158,6 +175,42 @@ describe("calculateOverallScore mode (PRAC-03 / D-04)", () => {
 
   it("Practice mode returns pitch-only, ignoring rhythm entirely", () => {
     expect(calculateOverallScore(90, 40, "practice")).toBe(90);
+  });
+});
+
+describe("rest scoring (played-on-rest = wrong, kept-rest = correct)", () => {
+  it("counts a kept rest as correct in pitch accuracy", () => {
+    // 2 notes correct + 2 rests kept = 4/4
+    const results = [perfect(), restCorrect(), good(), restCorrect()];
+    expect(calculatePitchAccuracy(results)).toBe(100);
+  });
+
+  it("counts a rest violation as wrong in pitch accuracy", () => {
+    // 3 correct positions (2 notes + 1 kept rest) out of 4
+    const results = [perfect(), restViolation(), good(), restCorrect()];
+    expect(calculatePitchAccuracy(results)).toBe(75);
+  });
+
+  it("gives a kept rest full rhythm credit and a violation none", () => {
+    // perfect(1.0) + restCorrect(1.0) + restViolation(0) = 2.0 / 3
+    const results = [perfect(), restCorrect(), restViolation()];
+    expect(calculateRhythmAccuracy(results)).toBeCloseTo((2 / 3) * 100, 5);
+  });
+
+  it("buckets rests correctly in getDetailedBreakdown", () => {
+    const results = [perfect(), restCorrect(), restViolation(), missed()];
+    const breakdown = getDetailedBreakdown(results);
+    expect(breakdown.total).toBe(4);
+    expect(breakdown.correct).toBe(2); // note perfect + kept rest
+    expect(breakdown.wrongPitch).toBe(1); // rest violation
+    expect(breakdown.missed).toBe(1);
+  });
+
+  it("a run that plays through every rest scores below one that keeps them", () => {
+    const kept = [perfect(), restCorrect(), perfect(), restCorrect()];
+    const violated = [perfect(), restViolation(), perfect(), restViolation()];
+    expect(calculatePitchAccuracy(kept)).toBe(100);
+    expect(calculatePitchAccuracy(violated)).toBe(50);
   });
 });
 
