@@ -11,6 +11,12 @@ const mockInitialGradingModeBox = vi.hoisted(() => ({ current: "test" }));
 const rhythmPlaySpy = vi.hoisted(() => vi.fn());
 const rhythmStopSpy = vi.hoisted(() => vi.fn());
 
+// Configurable session position so a test can place the game on its FINAL exercise
+// (currentExerciseNumber === totalExercises) to exercise the end-of-session bail in
+// handleNextExercise. Defaults keep every existing test on a non-final exercise.
+const mockCurrentExerciseNumberBox = vi.hoisted(() => ({ current: 1 }));
+const mockTotalExercisesBox = vi.hoisted(() => ({ current: 5 }));
+
 // Records every generatePattern(...) call's positional args so tests can assert exactly
 // which tempo/selectedNotes were used for each successive exercise's pattern (the
 // stale-closure regression this file exists to guard — Pitfall 2).
@@ -36,9 +42,11 @@ vi.mock("react-i18next", () => ({
         "sightReading.startPlaying": "Start Playing",
         "sightReading.tryAgain": "Try Again",
         "sightReading.nextExercise": "Next Exercise",
+        "sightReading.finishSession": "All Done!",
         "sightReading.controls.replay": "Hear it again",
         "sightReading.adaptive.levelUp": "Level Up!",
         "sightReading.adaptive.levelUpSubtitle": "Keep up the great work!",
+        "sightReading.adaptive.levelUpDismiss": "Got it!",
         "games.engagement.combo": "Combo",
         "games.engagement.onFire": "ON FIRE!",
       };
@@ -145,8 +153,8 @@ vi.mock("../../../../contexts/SightReadingSessionContext", () => ({
     }, []);
 
     return {
-      totalExercises: 5,
-      currentExerciseNumber: 1,
+      totalExercises: mockTotalExercisesBox.current,
+      currentExerciseNumber: mockCurrentExerciseNumberBox.current,
       progressFraction: 0,
       isSessionComplete: false,
       isVictory: false,
@@ -294,14 +302,23 @@ async function startPerformance() {
   });
 }
 
-async function clickNextExercise() {
-  const nextButton = screen.getByRole("button", { name: "Next Exercise" });
+async function clickNextExercise(name = "Next Exercise") {
+  const nextButton = screen.getByRole("button", { name });
   await act(async () => {
     fireEvent.click(nextButton);
     // Flush the async generatePattern() call inside loadExercisePattern so the new
     // pattern/DISPLAY-phase transition lands before the next assertion/action.
     await Promise.resolve();
     await Promise.resolve();
+  });
+}
+
+// Dismiss the escalation LevelUpCue via its explicit button. This closes the cue and
+// (via handleLevelUpDismiss -> handleReplayPreview) starts the deferred preview playback.
+async function dismissLevelUpCue() {
+  const dismissButton = screen.getByRole("button", { name: "Got it!" });
+  await act(async () => {
+    fireEvent.click(dismissButton);
   });
 }
 
@@ -340,6 +357,8 @@ describe("SightReadingGame (adaptive difficulty — ADAPT-01/02)", () => {
     generatePatternSpy.mockClear();
     capturedOnNoteEvent = null;
     mockInitialGradingModeBox.current = "test";
+    mockCurrentExerciseNumberBox.current = 1;
+    mockTotalExercisesBox.current = 5;
     // Reset to the default single-note pattern before every test.
     patternNotesBox.current = [
       { type: "note", pitch: "C4", startTime: 0, endTime: 1, duration: 1 },
@@ -378,7 +397,7 @@ describe("SightReadingGame (adaptive difficulty — ADAPT-01/02)", () => {
     await playOneSuccessExercise();
 
     // The escalation happened on this second "Next Exercise" click — the cue should be
-    // visible immediately after (before its 1500ms auto-hide timer has fired).
+    // visible and stay up until the child dismisses it (no auto-hide timer any more).
     expect(screen.getByText("Level Up!")).toBeInTheDocument();
     expect(screen.getByText("Keep up the great work!")).toBeInTheDocument();
   });
@@ -401,5 +420,101 @@ describe("SightReadingGame (adaptive difficulty — ADAPT-01/02)", () => {
     // Eased one tier down: base 80 + tier(-1) tempoDeltaBpm -12 = 68.
     expect(generatePatternSpy.mock.calls[1][2]).toBe(68);
     expect(screen.queryByText("Level Up!")).not.toBeInTheDocument();
+  });
+
+  // Issue 2 regression: after the FINAL exercise, handleNextExercise must bail before
+  // loadExercisePattern so no next pattern is generated and no preview playback is armed to
+  // fire over the Victory/Encouragement screen.
+  test("FINAL EXERCISE: finishing the last exercise generates no next pattern and arms no preview playback over the result screen", async () => {
+    // Place the game on its final exercise (currentExerciseNumber === totalExercises).
+    mockCurrentExerciseNumberBox.current = 5;
+    mockTotalExercisesBox.current = 5;
+
+    await renderGame();
+    expect(generatePatternSpy).toHaveBeenCalledTimes(1); // only the initial exercise
+
+    // Play the final exercise successfully, then clear the spies right before the final
+    // "Next" so the following assertions are purely about the (non-existent) next exercise.
+    await startPerformance();
+    await act(async () => {
+      capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    generatePatternSpy.mockClear();
+    rhythmPlaySpy.mockClear();
+    rhythmStopSpy.mockClear();
+
+    // On the final exercise the advance button reads the kid-friendly finish label.
+    await clickNextExercise("All Done!");
+
+    // Bail path: no pattern generated for a 6th exercise, and its playback is stopped.
+    expect(generatePatternSpy).not.toHaveBeenCalled();
+    expect(rhythmStopSpy).toHaveBeenCalled();
+
+    // Even past any preview delay, no stray preview melody starts over the result screen.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(rhythmPlaySpy).not.toHaveBeenCalled();
+  });
+
+  // Issue 1b regression (playtest follow-up): on an escalating boundary the next exercise's
+  // preview melody is NOT auto-played on a timer — it's deferred until the child dismisses
+  // the level-up cue, so cue and playback never compete ("show cue, then play").
+  test("ESCALATE: the next exercise's preview playback is deferred until the level-up cue is dismissed", async () => {
+    await renderGame();
+
+    // First success: streak 0 -> 1, no escalation.
+    await playOneSuccessExercise();
+
+    // Second success is the escalating boundary. Drive it manually so we control timers
+    // around the escalating "Next" click.
+    await startPerformance();
+    await act(async () => {
+      capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    rhythmPlaySpy.mockClear();
+
+    await clickNextExercise(); // streak 1 -> 2 -> escalates; cue shown, preview deferred
+    expect(screen.getByText("Level Up!")).toBeInTheDocument();
+
+    // No timer arms the preview while the cue is up — even well past the old delays.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(rhythmPlaySpy).not.toHaveBeenCalled();
+
+    // Dismissing the cue starts the preview exactly once.
+    await dismissLevelUpCue();
+    expect(rhythmPlaySpy).toHaveBeenCalledTimes(1);
+  });
+
+  // Issue 1b companion: a NON-escalating boundary keeps the normal ~500ms preview delay,
+  // proving the longer delay is specific to escalation and not a global change.
+  test("NON-ESCALATE: a non-escalating boundary keeps the normal ~500ms preview delay", async () => {
+    await renderGame();
+
+    // First success only: streak 0 -> 1, no escalation.
+    await startPerformance();
+    await act(async () => {
+      capturedOnNoteEvent({ type: "noteOn", pitch: "C4", frequency: 261.6 });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    rhythmPlaySpy.mockClear();
+
+    await clickNextExercise(); // no escalation; next preview armed at the default ~500ms
+    expect(screen.queryByText("Level Up!")).not.toBeInTheDocument();
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(rhythmPlaySpy).toHaveBeenCalledTimes(1);
   });
 });

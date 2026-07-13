@@ -1638,6 +1638,7 @@
     "startPlaying": "התחילו לנגן",
     "listenCountIn": "הקשיבו לספירה",
     "nextExercise": "התרגיל הבא",
+    "finishSession": "סיימנו!",
     "tryAgain": "נסו שוב",
     "changeSettings": "שנו הגדרות",
     "backToMenu": "חזרה לתפריט",
@@ -1723,8 +1724,9 @@
       "exit": "חזרה למשוב"
     },
     "adaptive": {
-      "levelUp": "עולים רמה!",
-      "levelUpSubtitle": "רצף יפה — מגיע אתגר גדול יותר"
+      "levelUp": "עולים שלב!",
+      "levelUpSubtitle": "הקצב עולה",
+      "levelUpDismiss": "הבנתי!"
     }
   },
   "noteRecognition": {

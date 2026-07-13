@@ -1631,6 +1631,7 @@
     "startPlaying": "Start Playing",
     "listenCountIn": "Listen to the count-in",
     "nextExercise": "Next Exercise",
+    "finishSession": "All Done!",
     "tryAgain": "Try Again",
     "changeSettings": "Change Settings",
     "backToMenu": "Back to Menu",
@@ -1717,7 +1718,8 @@
     },
     "adaptive": {
       "levelUp": "Leveling Up!",
-      "levelUpSubtitle": "Nice streak — here comes a bigger challenge"
+      "levelUpSubtitle": "Nice streak — here comes a bigger challenge",
+      "levelUpDismiss": "Got it!"
     }
   },
   "noteRecognition": {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { LevelUpCue } from "./LevelUpCue";
 
@@ -36,6 +36,7 @@ vi.mock("../../../../utils/useMotionTokens", () => ({
 
 vi.mock("lucide-react", () => ({
   ArrowUp: () => <span data-testid="arrow-up" />,
+  Check: () => <span data-testid="check" />,
 }));
 
 describe("LevelUpCue", () => {
@@ -70,5 +71,13 @@ describe("LevelUpCue", () => {
     render(<LevelUpCue show />);
     expect(lastAnimateProp.opacity).toBe(1);
     expect(lastAnimateProp.scale).toEqual([1, 1.15, 1]);
+  });
+
+  it("fires onDismiss when the dismiss button is clicked", () => {
+    reduceMock.mockReturnValueOnce(false);
+    const onDismiss = vi.fn();
+    render(<LevelUpCue show onDismiss={onDismiss} />);
+    fireEvent.click(screen.getByText("sightReading.adaptive.levelUpDismiss"));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 });

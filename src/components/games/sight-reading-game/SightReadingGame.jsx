@@ -320,19 +320,11 @@ export function SightReadingGame() {
   const encouragementMasterySavedRef = useRef(false);
   // Escalation-only celebratory overlay (D-12) — no easing/negative variant exists.
   const [showLevelUpCue, setShowLevelUpCue] = useState(false);
-  // WR-05 (03-REVIEW.md): tracked in a ref (mirroring timingFeedbackTimeoutRef) and cleared in
-  // the file's existing unmount cleanup effect, so navigating away within 1500ms of a tier
-  // escalation doesn't fire setShowLevelUpCue on an unmounted component.
-  const levelUpCueTimeoutRef = useRef(null);
+  // Phase 03 (playtest follow-up): the cue no longer auto-dismisses — the child closes it
+  // with the explicit button (LevelUpCue's onDismiss) at their own pace, which then starts
+  // the next exercise's preview. So triggering it is a plain state set with no timer.
   const triggerLevelUpCue = useCallback(() => {
-    if (levelUpCueTimeoutRef.current) {
-      clearTimeout(levelUpCueTimeoutRef.current);
-    }
     setShowLevelUpCue(true);
-    levelUpCueTimeoutRef.current = setTimeout(() => {
-      setShowLevelUpCue(false);
-      levelUpCueTimeoutRef.current = null;
-    }, 1500);
   }, []);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
   // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
@@ -2488,7 +2480,7 @@ export function SightReadingGame() {
   ]);
 
   const loadExercisePattern = useCallback(
-    async (overrideSettings) => {
+    async (overrideSettings, { skipPreview = false } = {}) => {
       try {
         const settings = overrideSettings ?? gameSettings;
         audioEngine.stopScheduler();
@@ -2534,12 +2526,17 @@ export function SightReadingGame() {
 
         setGamePhase(GAME_PHASES.DISPLAY);
 
-        previewPlaybackTimeoutRef.current = setTimeout(() => {
-          previewPlaybackTimeoutRef.current = null;
-          rhythmPlayback.play(pattern.notes, (index) => {
-            setCurrentNoteIndex(index);
-          });
-        }, 500);
+        // On escalation (skipPreview) the LevelUpCue is up: render the notation silently
+        // and let the cue's dismiss handler start the preview ("show cue, then play").
+        // Otherwise auto-play the preview shortly after the notation renders.
+        if (!skipPreview) {
+          previewPlaybackTimeoutRef.current = setTimeout(() => {
+            previewPlaybackTimeoutRef.current = null;
+            rhythmPlayback.play(pattern.notes, (index) => {
+              setCurrentNoteIndex(index);
+            });
+          }, 500);
+        }
       } catch (error) {
         console.error("Error loading exercise pattern:", error);
       }
@@ -2699,6 +2696,11 @@ export function SightReadingGame() {
       return;
     }
     stopMetronomePlayback();
+    // Phase 03 (Issue 2 fix): detect the final exercise from the render snapshot BEFORE
+    // recording (recording is async setState; currentExerciseNumber/sessionTotalExercises
+    // stay at this render's values). On the last exercise, completedExercises is still
+    // total-1 at entry, so currentExerciseNumber === total.
+    const isFinalExercise = currentExerciseNumber >= sessionTotalExercises;
     // Record the exercise result when moving to next (not on Try Again)
     if (summaryStats && !exerciseRecorded) {
       recordSessionExercise(
@@ -2719,6 +2721,22 @@ export function SightReadingGame() {
           total: prev.total + (v.total || 0),
         };
       }
+    }
+
+    // Phase 03 (Issue 2 fix): after the FINAL exercise, stop all playback and transition
+    // to Victory/Encouragement — do NOT compute a next tier, fire the level-up cue, or load
+    // a next pattern. Recording the last result above already flips isSessionComplete, which
+    // drives the render to the result screen; this bail prevents the unconditional
+    // loadExercisePattern from arming a stray preview timeout that would play over it.
+    if (isFinalExercise) {
+      audioEngine.stopScheduler();
+      rhythmPlayback.stop();
+      if (previewPlaybackTimeoutRef.current) {
+        clearTimeout(previewPlaybackTimeoutRef.current);
+        previewPlaybackTimeoutRef.current = null;
+      }
+      goToNextExercise(); // idempotent once complete; marks the session complete
+      return;
     }
 
     // Phase 03 (ADAPT-01/02): classify the finished exercise, drive the adaptive streak,
@@ -2765,7 +2783,14 @@ export function SightReadingGame() {
     setGameSettings(adaptedSettings);
 
     goToNextExercise();
-    loadExercisePattern(adaptedSettings);
+    // Phase 03 (Issue 1b fix): on escalation, load the notation silently (skipPreview) while
+    // the level-up cue is up; the cue's dismiss handler (handleLevelUpDismiss) starts the
+    // preview once the child taps through. Non-escalation advances with the normal ~500ms
+    // auto-preview.
+    loadExercisePattern(
+      adaptedSettings,
+      didEscalate ? { skipPreview: true } : undefined
+    );
   }, [
     loadExercisePattern,
     goToNextExercise,
@@ -2782,6 +2807,10 @@ export function SightReadingGame() {
     triggerLevelUpCue,
     gameSettings,
     setGameSettings,
+    currentExerciseNumber,
+    sessionTotalExercises,
+    audioEngine,
+    rhythmPlayback,
   ]);
 
   const handleStartNewSession = useCallback(() => {
@@ -2874,6 +2903,14 @@ export function SightReadingGame() {
       setCurrentNoteIndex(index);
     });
   }, [rhythmPlayback]);
+
+  // Phase 03 (playtest follow-up): dismissing the escalation cue closes it and then starts
+  // the next exercise's preview ("show cue, then play"). handleReplayPreview no-ops unless
+  // we're in DISPLAY with a loaded pattern, so a too-early tap simply skips the auto-preview.
+  const handleLevelUpDismiss = useCallback(() => {
+    setShowLevelUpCue(false);
+    handleReplayPreview();
+  }, [handleReplayPreview]);
 
   /**
    * FEEDBACK-phase played-vs-correct comparison (PRAC-02, D-13/D-14): reconstructs the
@@ -3995,11 +4032,6 @@ export function SightReadingGame() {
         clearTimeout(previewPlaybackTimeoutRef.current);
         previewPlaybackTimeoutRef.current = null;
       }
-      // WR-05 (03-REVIEW.md): clear the LevelUpCue auto-hide timer on unmount.
-      if (levelUpCueTimeoutRef.current) {
-        clearTimeout(levelUpCueTimeoutRef.current);
-        levelUpCueTimeoutRef.current = null;
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stopMetronomePlayback]);
@@ -4282,20 +4314,23 @@ export function SightReadingGame() {
 
   const guidanceRegion =
     gamePhase === GAME_PHASES.DISPLAY ? (
+      // Order: secondary "Hear it again" first, green "Start Playing" (proceed) last — so
+      // the green proceed button lands on the physical left in RTL (Hebrew), matching the
+      // FeedbackSummary advance button convention (green advance = last DOM child).
       <div className="my-2 flex flex-shrink-0 items-center justify-center gap-2 text-center">
+        <button
+          onClick={handleReplayPreview}
+          disabled={!currentPattern}
+          className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-3 sm:text-base"
+        >
+          {t("sightReading.controls.replay")}
+        </button>
         <button
           onClick={() => beginPerformanceWithPattern()}
           disabled={!currentPattern || isStartingPerformance}
           className="rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3 sm:text-base"
         >
           {t("sightReading.startPlaying")}
-        </button>
-        <button
-          onClick={handleReplayPreview}
-          disabled={!currentPattern}
-          className="rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-3 sm:text-base"
-        >
-          {t("sightReading.controls.replay")}
         </button>
       </div>
     ) : gamePhase === GAME_PHASES.COUNT_IN ? (
@@ -4370,6 +4405,11 @@ export function SightReadingGame() {
     </div>
   ) : null;
 
+  // Phase 03 (playtest follow-up): on the last exercise's feedback screen the advance
+  // button ends the session, so label it with a kid-friendly "finish" instead of "Next
+  // Exercise". Recording happens on click, so currentExerciseNumber still equals the total
+  // here on the final exercise.
+  const isFinalExercise = currentExerciseNumber >= sessionTotalExercises;
   const feedbackPanel = isFeedbackPhase ? (
     <>
       <FeedbackSummary
@@ -4379,7 +4419,11 @@ export function SightReadingGame() {
         summaryStats={summaryStats}
         onTryAgain={replayPattern}
         onNextPattern={handleNextExercise}
-        nextButtonLabel={t("sightReading.nextExercise")}
+        nextButtonLabel={
+          isFinalExercise
+            ? t("sightReading.finishSession")
+            : t("sightReading.nextExercise")
+        }
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
         gradingMode={gradingMode}
@@ -4528,7 +4572,7 @@ export function SightReadingGame() {
       )}
 
       {/* Adaptive difficulty escalation cue (ADAPT-01/02, D-12: positive-only — easing is silent) */}
-      <LevelUpCue show={showLevelUpCue} />
+      <LevelUpCue show={showLevelUpCue} onDismiss={handleLevelUpDismiss} />
 
       {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
       <AudioInterruptedOverlay

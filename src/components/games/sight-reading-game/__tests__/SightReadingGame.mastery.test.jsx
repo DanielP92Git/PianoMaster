@@ -73,6 +73,7 @@ vi.mock("react-i18next", () => ({
         "sightReading.startPlaying": "Start Playing",
         "sightReading.tryAgain": "Try Again",
         "sightReading.nextExercise": "Next Exercise",
+        "sightReading.finishSession": "All Done!",
       };
       return translations[key] ?? key;
     },
@@ -418,7 +419,11 @@ async function startPerformance() {
 }
 
 async function clickNextExercise() {
-  const nextButton = screen.getByRole("button", { name: "Next Exercise" });
+  // The advance button reads "Next Exercise" mid-session and the kid-friendly finish label
+  // ("All Done!") on the final exercise — accept either so full-session drives keep working.
+  const nextButton = screen.getByRole("button", {
+    name: /^(Next Exercise|All Done!)$/,
+  });
   await act(async () => {
     fireEvent.click(nextButton);
     await Promise.resolve();
