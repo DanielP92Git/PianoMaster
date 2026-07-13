@@ -4,17 +4,26 @@
 import {
   MIN_TIER_INDEX,
   MAX_TIER_INDEX,
+  BASELINE_TIER_INDEX,
   ESCALATE_SUCCESS_STREAK,
   EASE_MISS_RUN,
   BASE_TEMPO_CLAMP_MIN_FRACTION,
   BASE_TEMPO_CLAMP_MAX_FRACTION,
+  ABSOLUTE_MIN_BPM,
   MASTERY_MIN_ATTEMPTS,
   WEAK_ACCURACY_THRESHOLD,
   WEAK_NOTE_WEIGHT,
 } from "../constants/adaptiveTiers";
 
-// computeNextTier({ successStreak, missRunInLastExercise, currentTierIndex }) => { tierIndex, didEscalate }
-// Easing takes precedence over escalation. Uses MIN_TIER_INDEX/MAX_TIER_INDEX/ESCALATE_SUCCESS_STREAK/EASE_MISS_RUN.
+// computeNextTier({ successStreak, missRunInLastExercise, currentTierIndex })
+//   => { tierIndex, didEscalate, didRecover }
+// Precedence: easing > recovery > escalation.
+// - Easing: a run of misses eases one tier down (floor MIN_TIER_INDEX).
+// - Recovery: once BELOW baseline, a SINGLE successful exercise climbs one tier back toward
+//   baseline (capped at BASELINE_TIER_INDEX). Silent (didRecover, no level-up cue) — this just
+//   undoes an earlier slow-down so a child who answers correctly isn't left stuck slow.
+// - Escalation: only AT/ABOVE baseline, and only after ESCALATE_SUCCESS_STREAK consecutive
+//   successes, step up into a harder tier (didEscalate → level-up cue).
 export function computeNextTier({
   successStreak = 0,
   missRunInLastExercise = 0,
@@ -24,6 +33,17 @@ export function computeNextTier({
     return {
       tierIndex: Math.max(MIN_TIER_INDEX, currentTierIndex - 1),
       didEscalate: false,
+      didRecover: false,
+    };
+  }
+
+  // successStreak >= 1 means the just-finished exercise was a success (the caller resets the
+  // streak to 0 on any non-success). Below baseline, one success is enough to recover a notch.
+  if (successStreak >= 1 && currentTierIndex < BASELINE_TIER_INDEX) {
+    return {
+      tierIndex: Math.min(BASELINE_TIER_INDEX, currentTierIndex + 1),
+      didEscalate: false,
+      didRecover: true,
     };
   }
 
@@ -32,10 +52,11 @@ export function computeNextTier({
     return {
       tierIndex: nextTierIndex,
       didEscalate: nextTierIndex !== currentTierIndex,
+      didRecover: false,
     };
   }
 
-  return { tierIndex: currentTierIndex, didEscalate: false };
+  return { tierIndex: currentTierIndex, didEscalate: false, didRecover: false };
 }
 
 // applyTierToSettings(baseSettings, tier, nodeSupersetNotes = []) => new settings object
@@ -50,7 +71,14 @@ export function applyTierToSettings(
   const minTempo = baseTempo * BASE_TEMPO_CLAMP_MIN_FRACTION;
   const maxTempo = baseTempo * BASE_TEMPO_CLAMP_MAX_FRACTION;
   const rawTempo = baseTempo + (tier?.tempoDeltaBpm ?? 0);
-  const clampedTempo = Math.min(maxTempo, Math.max(minTempo, rawTempo));
+  // Fractional clamp first (0.75x–1.25x base), then an ABSOLUTE floor so easing never drops the
+  // tempo below ABSOLUTE_MIN_BPM. Since easing only produces rawTempo <= base and node/gear tempos
+  // are >= ABSOLUTE_MIN_BPM, this floor never raises tempo above base — it only prevents an
+  // unusably slow tempo on low-base nodes.
+  const clampedTempo = Math.max(
+    ABSOLUTE_MIN_BPM,
+    Math.min(maxTempo, Math.max(minTempo, rawTempo))
+  );
 
   const baseSelectedNotes = Array.isArray(baseSettings?.selectedNotes)
     ? baseSettings.selectedNotes

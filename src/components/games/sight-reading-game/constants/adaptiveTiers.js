@@ -21,6 +21,10 @@ export const MAX_TIER_INDEX = 2;
 // Tempo clamp fractions of the node's base tempo (D-06).
 export const BASE_TEMPO_CLAMP_MIN_FRACTION = 0.75;
 export const BASE_TEMPO_CLAMP_MAX_FRACTION = 1.25;
+// Absolute lower bound (BPM) — easing never slows the game below this regardless of base tempo,
+// so a young learner never faces an unusably slow tempo. Governs low-base nodes; the 0.75 fraction
+// still governs high-base nodes (e.g. a 100-BPM base floors at 75, not 60).
+export const ABSOLUTE_MIN_BPM = 60;
 
 // Escalation: N consecutive "success" exercises before stepping up one tier (D-01/D-05).
 export const ESCALATE_SUCCESS_STREAK = 2;

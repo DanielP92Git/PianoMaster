@@ -8,8 +8,10 @@ import {
   ADAPTIVE_TIERS,
   MIN_TIER_INDEX,
   MAX_TIER_INDEX,
+  BASELINE_TIER_INDEX,
   ESCALATE_SUCCESS_STREAK,
   EASE_MISS_RUN,
+  ABSOLUTE_MIN_BPM,
   MASTERY_MIN_ATTEMPTS,
   WEAK_ACCURACY_THRESHOLD,
   WEAK_NOTE_WEIGHT,
@@ -75,6 +77,59 @@ describe("computeNextTier", () => {
     expect(result.tierIndex).toBe(-1);
     expect(result.didEscalate).toBe(false);
   });
+
+  it("recovers one tier toward baseline on a SINGLE success when below baseline (didRecover, not didEscalate)", () => {
+    const result = computeNextTier({
+      successStreak: 1,
+      missRunInLastExercise: 0,
+      currentTierIndex: MIN_TIER_INDEX, // -2
+    });
+    expect(result.tierIndex).toBe(MIN_TIER_INDEX + 1); // -1
+    expect(result.didRecover).toBe(true);
+    expect(result.didEscalate).toBe(false);
+  });
+
+  it("caps recovery at BASELINE_TIER_INDEX (never overshoots into a harder tier)", () => {
+    const result = computeNextTier({
+      successStreak: 1,
+      missRunInLastExercise: 0,
+      currentTierIndex: BASELINE_TIER_INDEX - 1, // -1
+    });
+    expect(result.tierIndex).toBe(BASELINE_TIER_INDEX); // 0, not +1
+    expect(result.didRecover).toBe(true);
+    expect(result.didEscalate).toBe(false);
+  });
+
+  it("easing takes precedence over recovery when below baseline and missRun qualifies", () => {
+    const result = computeNextTier({
+      successStreak: 1,
+      missRunInLastExercise: EASE_MISS_RUN,
+      currentTierIndex: -1,
+    });
+    expect(result.tierIndex).toBe(-2); // eased further, not recovered
+    expect(result.didRecover).toBe(false);
+    expect(result.didEscalate).toBe(false);
+  });
+
+  it("does NOT single-success recover at/above baseline — escalation there still needs the full streak", () => {
+    const held = computeNextTier({
+      successStreak: 1,
+      missRunInLastExercise: 0,
+      currentTierIndex: BASELINE_TIER_INDEX, // 0
+    });
+    expect(held.tierIndex).toBe(BASELINE_TIER_INDEX); // holds, no step
+    expect(held.didRecover).toBe(false);
+    expect(held.didEscalate).toBe(false);
+
+    const escalated = computeNextTier({
+      successStreak: ESCALATE_SUCCESS_STREAK,
+      missRunInLastExercise: 0,
+      currentTierIndex: BASELINE_TIER_INDEX,
+    });
+    expect(escalated.tierIndex).toBe(BASELINE_TIER_INDEX + 1);
+    expect(escalated.didEscalate).toBe(true);
+    expect(escalated.didRecover).toBe(false);
+  });
 });
 
 describe("applyTierToSettings", () => {
@@ -92,6 +147,22 @@ describe("applyTierToSettings", () => {
   it("clamps tempo at the low extreme (base 80, -24 => 56, clamps to 60)", () => {
     const result = applyTierToSettings({ tempo: 80 }, tierMinus2, []);
     expect(result.tempo).toBe(60);
+  });
+
+  it("enforces the ABSOLUTE_MIN_BPM floor on a low-base node (base 62, -24 => 38, fraction 46.5, floored to 60)", () => {
+    const result = applyTierToSettings({ tempo: 62 }, tierMinus2, []);
+    expect(result.tempo).toBe(ABSOLUTE_MIN_BPM); // 60, not 38 or 46.5
+  });
+
+  it("leaves high-base nodes governed by the 0.75 fraction, not the absolute floor (base 100, -24 => 76)", () => {
+    const result = applyTierToSettings({ tempo: 100 }, tierMinus2, []);
+    expect(result.tempo).toBe(76); // fraction floor is 75; raw 76 > both floors
+    expect(result.tempo).toBeGreaterThan(ABSOLUTE_MIN_BPM);
+  });
+
+  it("never drops below ABSOLUTE_MIN_BPM even when the node base is exactly at the floor (base 60, -24)", () => {
+    const result = applyTierToSettings({ tempo: 60 }, tierMinus2, []);
+    expect(result.tempo).toBe(ABSOLUTE_MIN_BPM);
   });
 
   it("widens selectedNotes with the superset when widenNotes is true, deduped and order-stable", () => {

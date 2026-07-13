@@ -1861,7 +1861,20 @@ export function SightReadingGame() {
       let matchingEvent = null;
       let matchingWindow = null;
 
-      for (let i = 0; i < timingWindows.length; i++) {
+      // A detection whose onset lands inside a REST's un-padded core span [startMs, endMs) is a
+      // rest event, not a late/overlapping hit on the preceding note — core spans never overlap, so
+      // this is unambiguous. Skip note-window matching entirely in that case so the hit falls
+      // through to the rest-violation branch (matchingNoteIndex stays -1). Otherwise a preceding
+      // WRONG-played note (deferred, never recorded, so still selectable) whose padded late window
+      // overhangs the rest would swallow the hit, and the rest would finalize green.
+      const inRestCore = timingWindows.some(
+        (w) =>
+          w.event?.type === "rest" &&
+          elapsedTimeMs >= w.startMs &&
+          elapsedTimeMs < w.endMs
+      );
+
+      for (let i = 0; !inRestCore && i < timingWindows.length; i++) {
         const windowInfo = timingWindows[i];
         const event = windowInfo.event;
 
@@ -2856,15 +2869,20 @@ export function SightReadingGame() {
     const nextStreak = isSuccess ? successStreakRef.current + 1 : 0;
     setSuccessStreak(nextStreak);
 
-    const { tierIndex, didEscalate } = computeNextTier({
+    const { tierIndex, didEscalate, didRecover } = computeNextTier({
       successStreak: nextStreak,
       missRunInLastExercise: missedCount,
       currentTierIndex: adaptiveTierIndexRef.current,
     });
     setAdaptiveTierIndex(tierIndex);
+    if (didEscalate || didRecover) {
+      // Reset the streak after any tier step: escalation into harder content then needs a fresh
+      // ESCALATE_SUCCESS_STREAK of clean runs at/above baseline, and a recovery notch (below
+      // baseline) doesn't silently bank toward escalation.
+      setSuccessStreak(0);
+    }
     if (didEscalate) {
-      setSuccessStreak(0); // require a fresh streak to escalate again
-      triggerLevelUpCue();
+      triggerLevelUpCue(); // recovery is silent — only escalation into a harder tier cues a level-up
     }
 
     // WR-04 (03-REVIEW.md): fall back to the tier looked up by BASELINE_TIER_INDEX (the
@@ -3217,6 +3235,12 @@ export function SightReadingGame() {
     // Stop audio/mic so nothing plays or is detected behind the overlay
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
+    // stopScheduler() only drains the lookahead queue — it can't cancel the metronome's one-shot
+    // oscillator clicks, which are driven by an interval keyed on gamePhase===PERFORMANCE. Opening
+    // the overlay doesn't change gamePhase or unmount, so the metronome effect never tears down.
+    // Kill the interval directly and abort any pending count-in→performance transition.
+    stopMetronomePlayback();
+    clearCountInTimeouts();
     stopCountInVisualization();
     stopListeningSync();
     setShowSettingsModal(true);
