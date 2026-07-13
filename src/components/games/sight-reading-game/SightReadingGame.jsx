@@ -1946,18 +1946,30 @@ export function SightReadingGame() {
         // Played on a rest: the detected note's onset falls inside a REST's window.
         // Record a rest violation (red rest + red played note) instead of silently
         // dropping it. Only the first detection per rest is recorded.
+        // Consecutive rests' padded windows overlap (each window pads by the early/late
+        // tolerance), so a hit near rest N+1's onset also falls inside rest N's padded
+        // window. Iterating and breaking on the first padded match would then attribute the
+        // second rest's violation to the first — which is already recorded, so it gets
+        // dropped and rest N+1 is left unscored (finalized green). Match on the un-padded
+        // core span [startMs, endMs) first — core spans never overlap — so the onset lands
+        // on exactly the rest it belongs to; fall back to the padded window only when no
+        // core span contains it (edge-of-window wobble before/after a rest).
         let restWindow = null;
+        let restPaddedFallback = null;
         for (let i = 0; i < timingWindows.length; i++) {
           const w = timingWindows[i];
-          if (
-            w.event?.type === "rest" &&
-            elapsedTimeMs >= w.windowStart &&
-            elapsedTimeMs <= w.windowEnd
-          ) {
+          if (w.event?.type !== "rest") continue;
+          const inPadded =
+            elapsedTimeMs >= w.windowStart && elapsedTimeMs <= w.windowEnd;
+          if (!inPadded) continue;
+          const inCore = elapsedTimeMs >= w.startMs && elapsedTimeMs < w.endMs;
+          if (inCore) {
             restWindow = w;
             break;
           }
+          if (!restPaddedFallback) restPaddedFallback = w;
         }
+        restWindow = restWindow || restPaddedFallback;
         if (restWindow) {
           const restIdx = restWindow.noteIndex;
           const alreadyForRest = performanceResultsRef.current.some(
