@@ -291,6 +291,7 @@ describe("note_mastery merge (updateNodeProgress)", () => {
 describe("mergeNoteMasteryOnly", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    checkRateLimit.mockResolvedValue({ allowed: true });
   });
 
   it("merges a delta into existing note_mastery via pure per-pitch addition", async () => {
@@ -328,14 +329,26 @@ describe("mergeNoteMasteryOnly", () => {
     expect(progressData).not.toHaveProperty("exercises_completed");
   });
 
-  it("does NOT call checkRateLimit (WR-01: telemetry, not a graded/anti-farming-gated write)", async () => {
+  it("consumes the per-(student,node) rate-limit bucket (T-03-05: cap uncapped write frequency)", async () => {
     mockSupabaseFrom({ existingRow: { note_mastery: {} } });
 
     await mergeNoteMasteryOnly("student-1", "node-1", {
       C4: { correct: 1, total: 1 },
     });
 
-    expect(checkRateLimit).not.toHaveBeenCalled();
+    expect(checkRateLimit).toHaveBeenCalledWith("student-1", "node-1");
+  });
+
+  it("drops the write silently (returns null, no upsert) when rate limited (T-03-05: telemetry, not a graded outcome)", async () => {
+    checkRateLimit.mockResolvedValue({ allowed: false });
+    const upsertSpy = mockSupabaseFrom({ existingRow: { note_mastery: {} } });
+
+    const result = await mergeNoteMasteryOnly("student-1", "node-1", {
+      C4: { correct: 1, total: 1 },
+    });
+
+    expect(result).toBeNull();
+    expect(upsertSpy).not.toHaveBeenCalled();
   });
 
   it("skips malformed delta entries but merges the rest", async () => {

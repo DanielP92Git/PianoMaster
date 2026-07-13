@@ -194,18 +194,26 @@ export const updateNodeProgress = async (
 
 /**
  * Merge a per-pitch mastery delta into note_mastery WITHOUT touching stars/best_score/
- * exercises_completed and WITHOUT rate limiting (WR-01, 03-REVIEW.md).
+ * exercises_completed (WR-01, 03-REVIEW.md).
  *
  * updateNodeProgress/updateExerciseProgress only run at session-victory (>=70%) time, so a
  * struggling ("encouragement") session's per-note telemetry — arguably the most valuable
  * data for weak-note targeting — was previously discarded entirely. This is deliberately a
  * separate, lighter-weight path: note_mastery is additive telemetry that biases future note
- * selection, not a graded outcome, so it doesn't need the same anti-farming rate limit that
- * protects stars/XP. Safe to call fire-and-forget from a non-victory screen.
+ * selection, not a graded outcome. Safe to call fire-and-forget from a non-victory screen.
+ *
+ * Rate limiting (T-03-05, /gsd-secure-phase 03): although the UI fires this at most once per
+ * session (encouragementMasterySavedRef), the exported function is directly client-callable,
+ * so it shares the same per-(student,node) `check_rate_limit` bucket as the victory-path score
+ * write to cap uncapped write frequency to the caller's own row. Because this is telemetry, a
+ * rate-limited call is dropped SILENTLY (returns null) rather than thrown — it never blocks a
+ * graded outcome, and the encouragement (<70%) and victory (>=70%) paths never co-occur in one
+ * session, so sharing the bucket does not starve legitimate score submissions.
  * @param {string} studentId - The student's ID
  * @param {string} nodeId - The node ID
  * @param {Object} perNoteMastery - Per-pitch delta { "C4": { correct, total }, ... }
  * @returns {Promise<Object|null>} Updated progress record, or null if perNoteMastery was empty
+ *   or the write was rate limited
  */
 export const mergeNoteMasteryOnly = async (
   studentId,
@@ -220,6 +228,11 @@ export const mergeNoteMasteryOnly = async (
     return null;
   }
   await verifyStudentDataAccess(studentId);
+  const { allowed } = await checkRateLimit(studentId, nodeId);
+  if (!allowed) {
+    // Telemetry write, not a graded outcome — drop silently instead of throwing.
+    return null;
+  }
   try {
     const existingProgress = await getNodeProgress(studentId, nodeId);
     const mergedMastery = mergeMasteryDelta(
