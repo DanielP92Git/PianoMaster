@@ -46,7 +46,8 @@
       "submit": "התחבר",
       "orSocial": "או המשך עם",
       "noAccountPrompt": "חדשים ב-PianoMaster?",
-      "signupLink": "יצירת חשבון"
+      "signupLink": "יצירת חשבון",
+      "inactivityLogout": "התנתקתם עקב חוסר פעילות"
     },
     "forgotPassword": {
       "link": "שכחתי סיסמה?",
@@ -134,8 +135,7 @@
         "termsLink": "תנאי השימוש",
         "privacyLink": "מדיניות הפרטיות",
         "and": "ול"
-      },
-      "inactivityLogout": "התנתקתם עקב חוסר פעילות"
+      }
     }
   },
   "navigation": {

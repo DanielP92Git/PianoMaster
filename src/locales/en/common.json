@@ -46,7 +46,8 @@
       "submit": "Sign In",
       "orSocial": "Or continue with",
       "noAccountPrompt": "New to PianoMaster?",
-      "signupLink": "Create Account"
+      "signupLink": "Create Account",
+      "inactivityLogout": "You were logged out due to inactivity"
     },
     "forgotPassword": {
       "link": "Forgot password?",
@@ -134,8 +135,7 @@
         "termsLink": "Terms of Service",
         "privacyLink": "Privacy Policy",
         "and": "and"
-      },
-      "inactivityLogout": "You were logged out due to inactivity"
+      }
     }
   },
   "navigation": {
