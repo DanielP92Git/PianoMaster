@@ -830,6 +830,12 @@ export function SightReadingGame() {
   useEffect(() => {
     metronomeEnabledRef.current = metronomeEnabled;
   }, [metronomeEnabled]);
+  // The settings overlay doesn't unmount the game or change gamePhase, so the metronome's
+  // start/stop effect and the interval's self-guard both need to see it explicitly.
+  const showSettingsModalRef = useRef(false);
+  useEffect(() => {
+    showSettingsModalRef.current = showSettingsModal;
+  }, [showSettingsModal]);
 
   // Central metronome stop helper (stable; no dependencies).
   const stopMetronomePlayback = useCallback(() => {
@@ -2681,10 +2687,12 @@ export function SightReadingGame() {
         if (!resumed) {
           return;
         }
-        // If phase/toggle changed while awaiting audio context resume, bail.
+        // If phase/toggle changed — or the settings overlay opened — while awaiting audio
+        // context resume, bail.
         if (
           startToken !== metronomeStartTokenRef.current ||
           !metronomeEnabledRef.current ||
+          showSettingsModalRef.current ||
           gamePhaseRef.current !== GAME_PHASES.PERFORMANCE
         ) {
           return;
@@ -2737,9 +2745,10 @@ export function SightReadingGame() {
         }
 
         metronomeIntervalRef.current = setInterval(() => {
-          // Stop scheduling immediately if we leave performance or toggle off.
+          // Stop scheduling immediately if we leave performance, toggle off, or open settings.
           if (
             !metronomeEnabledRef.current ||
+            showSettingsModalRef.current ||
             gamePhaseRef.current !== GAME_PHASES.PERFORMANCE
           ) {
             stopMetronomePlayback();
@@ -2778,8 +2787,19 @@ export function SightReadingGame() {
     };
   }, [stopMetronomePlayback]);
 
+  // startMetronomePlayback depends on audioEngine, which is a NEW object every render (see the
+  // note on getElapsedMsFromPerformanceStart), so this effect re-runs on every render. That makes
+  // the condition below the only real source of truth for "is the metronome running": any
+  // imperative stop elsewhere is undone by the very next render, which re-enters this effect and
+  // sees the same state. Hence !showSettingsModal here rather than a stop call in
+  // openSettingsModal — the overlay neither unmounts the game nor changes gamePhase, so without
+  // it the metronome ticks on behind the overlay.
   useEffect(() => {
-    if (metronomeEnabled && gamePhase === GAME_PHASES.PERFORMANCE) {
+    if (
+      metronomeEnabled &&
+      gamePhase === GAME_PHASES.PERFORMANCE &&
+      !showSettingsModal
+    ) {
       startMetronomePlayback(performanceStartAudioTimeRef.current);
     } else {
       stopMetronomePlayback();
@@ -2787,6 +2807,7 @@ export function SightReadingGame() {
   }, [
     metronomeEnabled,
     gamePhase,
+    showSettingsModal,
     startMetronomePlayback,
     stopMetronomePlayback,
   ]);
@@ -3235,11 +3256,13 @@ export function SightReadingGame() {
     // Stop audio/mic so nothing plays or is detected behind the overlay
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
-    // stopScheduler() only drains the lookahead queue — it can't cancel the metronome's one-shot
-    // oscillator clicks, which are driven by an interval keyed on gamePhase===PERFORMANCE. Opening
-    // the overlay doesn't change gamePhase or unmount, so the metronome effect never tears down.
-    // Kill the interval directly and abort any pending count-in→performance transition.
+    // Belt-and-braces: showSettingsModal is what actually stops the metronome (its start/stop
+    // effect re-runs every render and gates on it — an imperative stop here alone would be undone
+    // by the very next render). This just kills the interval a tick sooner.
     stopMetronomePlayback();
+    // Abort any pending count-in→performance transition so the phase can't flip behind the
+    // overlay. Note: count-in clicks are one-shot oscillators scheduled up to a measure ahead —
+    // already-scheduled ones still sound; only the interval-driven performance metronome stops.
     clearCountInTimeouts();
     stopCountInVisualization();
     stopListeningSync();
