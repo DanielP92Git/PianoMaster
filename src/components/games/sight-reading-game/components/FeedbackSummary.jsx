@@ -12,6 +12,12 @@ import {
 import { FEEDBACK_COLORS } from "../constants/feedbackPalette";
 import { GRADING_MODES } from "../constants/gradingModes";
 
+// PRAC-02 "Hear yours vs correct" comparison playback is hidden for now: on a real device it made
+// the post-exercise screen too busy for the 8-year-old audience (owner playtest, v3.7). The
+// underlying feature is intact — startComparison, the onComplete-chained two-pass playback, and the
+// Yours/Correct labels all still work — so re-enabling is just flipping this flag back to true.
+const SHOW_COMPARE_FEATURE = false;
+
 /**
  * A single labeled accuracy bar (Pitch / Rhythm).
  */
@@ -86,6 +92,9 @@ export function FeedbackSummary({
   // D-20: the Review button is hidden (not disabled) on a clean run.
   const hasMistakes = breakdown.wrongPitch + breakdown.missed > 0;
   const isPracticeMode = gradingMode === GRADING_MODES.PRACTICE;
+  // Compare playback is gated off for now (see SHOW_COMPARE_FEATURE) even though the parent still
+  // wires onCompare — hide the button and its pass label without unwiring the feature.
+  const showCompare = SHOW_COMPARE_FEATURE && Boolean(onCompare);
 
   // Only render breakdown chips for statuses that actually occurred, to stay compact.
   const breakdownChips = useMemo(
@@ -201,7 +210,7 @@ export function FeedbackSummary({
           {/* Comparison-playback pass label (WR-01): while "Hear yours vs correct" is
               playing, announce which pass is currently sounding so the two
               otherwise-identical moving-outline passes are distinguishable. */}
-          {comparisonPass && (
+          {showCompare && comparisonPass && (
             <p
               aria-live="polite"
               className="text-xs font-semibold uppercase tracking-wide text-indigo-200"
@@ -212,9 +221,9 @@ export function FeedbackSummary({
 
           {/* Row 1 (learn, D-23) — lighter-weight than the primary CTAs below; collapses to
               nothing when neither handler is provided. */}
-          {(onCompare || (onReview && hasMistakes)) && (
+          {(showCompare || (onReview && hasMistakes)) && (
             <div className="flex w-full max-w-xs items-center justify-center gap-x-4 gap-y-1">
-              {onCompare && (
+              {showCompare && (
                 <button
                   type="button"
                   onClick={onCompare}

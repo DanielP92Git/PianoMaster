@@ -427,39 +427,16 @@ describe("SightReadingGame (review-mistakes drill)", () => {
     expect(pauseTimerSpy).toHaveBeenCalled();
   });
 
-  test("comparison playback: 'Yours' label persists through onBeat(-1) and only flips to 'Correct' on onComplete (PRAC-02 regression)", async () => {
-    // Clean run so the reconstructed 'yours' rendition is non-empty (C4 played correctly).
+  test("comparison playback ('Hear yours vs correct') is hidden — descoped for cognitive load (SHOW_COMPARE_FEATURE=false)", async () => {
+    // The Compare feature is intentionally gated off in FeedbackSummary: it made the post-exercise
+    // screen too busy for 8-year-olds (owner playtest, v3.7). The underlying two-pass playback is
+    // still wired (onCompare is passed) and unit-tested in hooks/useRhythmPlayback.test.js — this
+    // just guards that the button no longer reaches the child.
     await reachCleanFeedback();
 
-    const compareButton = screen.getByRole("button", {
-      name: "Hear yours vs correct",
-    });
-    await act(async () => {
-      fireEvent.click(compareButton);
-      // Flush startComparison's `await resumeAudioContext()` before pass 1 is scheduled.
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    // Pass 1 (yours) started: label shows "Yours", not yet "Correct".
-    expect(rhythmPlayCalls).toHaveLength(1);
-    expect(screen.getByText("Yours")).toBeInTheDocument();
-    expect(screen.queryByText("Correct")).not.toBeInTheDocument();
-
-    // The exact regression: onBeat(-1) fires during the scheduling lead-in / rests. It must NOT
-    // be treated as end-of-pattern — the label must stay "Yours" and no second pass may start.
-    await act(async () => {
-      rhythmPlayCalls[0].onBeat(-1);
-    });
-    expect(screen.getByText("Yours")).toBeInTheDocument();
-    expect(rhythmPlayCalls).toHaveLength(1);
-
-    // onComplete is the real end-of-pattern signal: it chains the correct pass.
-    await act(async () => {
-      rhythmPlayCalls[0].onComplete();
-    });
-    expect(rhythmPlayCalls).toHaveLength(2);
-    expect(screen.getByText("Correct")).toBeInTheDocument();
-    expect(screen.queryByText("Yours")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Hear yours vs correct" })
+    ).not.toBeInTheDocument();
+    expect(rhythmPlayCalls).toHaveLength(0);
   });
 });
