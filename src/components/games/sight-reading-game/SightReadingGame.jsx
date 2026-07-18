@@ -3055,10 +3055,11 @@ export function SightReadingGame() {
   /**
    * FEEDBACK-phase played-vs-correct comparison (PRAC-02, D-13/D-14): reconstructs the
    * child's rendition from performanceResults, plays it, then chains the correct pattern
-   * on the useRhythmPlayback end-of-pattern signal (onBeatChange(-1)) — never a bare
-   * setTimeout duration guess, which would drift against the audio clock. Drives a moving
-   * staff outline via playbackHighlightIndex on each pass. If everything was missed
-   * ("yours" is empty), skips pass 1 and plays only the correct pattern.
+   * on useRhythmPlayback's onComplete end-of-pattern callback — never onBeatChange(-1)
+   * (which fires immediately during the scheduling lead-in, not at end-of-pattern) and
+   * never a bare setTimeout duration guess (which would drift against the audio clock).
+   * Drives a moving staff outline via playbackHighlightIndex on each pass. If everything
+   * was missed ("yours" is empty), skips pass 1 and plays only the correct pattern.
    */
   const startComparison = useCallback(async () => {
     const pattern = currentPatternRef.current;
@@ -3073,13 +3074,15 @@ export function SightReadingGame() {
     );
 
     const playPass = (notes, mapIndex, onDone) => {
-      rhythmPlayback.play(notes, (index) => {
-        if (index === -1) {
-          onDone();
-          return;
-        }
-        setPlaybackHighlightIndex(mapIndex(index));
-      });
+      const started = rhythmPlayback.play(
+        notes,
+        (index) =>
+          setPlaybackHighlightIndex(index === -1 ? -1 : mapIndex(index)),
+        onDone
+      );
+      // play() bails without ever firing onComplete if the audio context is gone; don't
+      // strand the chain with the "Yours" label stuck on screen.
+      if (!started) onDone();
     };
 
     const playCorrectPass = () => {

@@ -108,6 +108,12 @@ export function SightReadingSessionProvider({ children }) {
     setSuccessStreakState(0);
     adaptiveTierIndexRef.current = 0;
     setAdaptiveTierIndexState(0);
+    // D-05: the mode lock is session-scoped like combo/streak/tier. Without resetting it here the
+    // lock outlives the game component (provider is at the app root, App.jsx), so every route exit
+    // leaves it stuck true and the Practice/Test pill renders permanently greyed on re-entry. See
+    // resetSession below (load-bearing: runs in the game's unmount cleanup).
+    isModeLockedRef.current = false;
+    setIsModeLocked(false);
   }, []);
 
   const resetSession = useCallback(() => {
@@ -120,6 +126,11 @@ export function SightReadingSessionProvider({ children }) {
     setSuccessStreakState(0);
     adaptiveTierIndexRef.current = 0;
     setAdaptiveTierIndexState(0);
+    // D-05 (see startSession): clears the mode lock as the game unmounts, so the next mount's
+    // localStorage grading-mode restore isn't silently dropped by the still-locked setGradingMode
+    // guard, and the Practice/Test pill is toggleable again on re-entry.
+    isModeLockedRef.current = false;
+    setIsModeLocked(false);
   }, []);
 
   const recordExerciseResult = useCallback(

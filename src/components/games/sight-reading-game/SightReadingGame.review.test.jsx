@@ -11,6 +11,11 @@ const resetComboSpy = vi.hoisted(() => vi.fn());
 const mockInitialGradingModeBox = vi.hoisted(() => ({ current: "test" }));
 const pauseTimerSpy = vi.hoisted(() => vi.fn());
 const resumeTimerSpy = vi.hoisted(() => vi.fn());
+// Controllable useRhythmPlayback fake: records every play() call's (pattern, onBeat, onComplete)
+// so the comparison-playback test can drive the two-pass chain by hand, without real audio/timers.
+// This is the exact seam the label regression lived in — the old inert `play: vi.fn()` stub never
+// invoked the callbacks, so the -1-as-end-of-pattern bug was invisible to tests.
+const rhythmPlayCalls = vi.hoisted(() => []);
 
 let capturedOnNoteEvent = null;
 
@@ -23,6 +28,8 @@ vi.mock("react-i18next", () => ({
         "sightReading.tryAgain": "Try Again",
         "sightReading.nextExercise": "Next Exercise",
         "sightReading.controls.compare": "Hear yours vs correct",
+        "sightReading.compare.yours": "Yours",
+        "sightReading.compare.correct": "Correct",
         "sightReading.controls.review": "Review mistakes",
         "sightReading.review.title": "Review Your Mistakes",
         "sightReading.review.instruction": "Play the note shown.",
@@ -235,6 +242,16 @@ vi.mock("../../../hooks/useAudioEngine", () => {
   return { useAudioEngine: () => makeEngine() };
 });
 
+vi.mock("./hooks/useRhythmPlayback", () => ({
+  useRhythmPlayback: () => ({
+    play: vi.fn((pattern, onBeat, onComplete) => {
+      rhythmPlayCalls.push({ pattern, onBeat, onComplete });
+      return true; // mirror the real hook's "started" return so playPass doesn't bail
+    }),
+    stop: vi.fn(),
+  }),
+}));
+
 vi.mock("./hooks/usePatternGeneration", () => ({
   usePatternGeneration: () => ({
     generatePattern: vi.fn(async () => ({
@@ -320,6 +337,7 @@ describe("SightReadingGame (review-mistakes drill)", () => {
     capturedOnNoteEvent = null;
     mockInitialGradingModeBox.current = "test";
     updateStudentScore.mockClear();
+    rhythmPlayCalls.length = 0;
   });
 
   afterEach(() => {
@@ -407,5 +425,41 @@ describe("SightReadingGame (review-mistakes drill)", () => {
     // If REVIEW were NOT in the session-timeout activePhases list, entering it would call
     // resumeTimer() instead (isGameActive would evaluate false for the "review" phase).
     expect(pauseTimerSpy).toHaveBeenCalled();
+  });
+
+  test("comparison playback: 'Yours' label persists through onBeat(-1) and only flips to 'Correct' on onComplete (PRAC-02 regression)", async () => {
+    // Clean run so the reconstructed 'yours' rendition is non-empty (C4 played correctly).
+    await reachCleanFeedback();
+
+    const compareButton = screen.getByRole("button", {
+      name: "Hear yours vs correct",
+    });
+    await act(async () => {
+      fireEvent.click(compareButton);
+      // Flush startComparison's `await resumeAudioContext()` before pass 1 is scheduled.
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // Pass 1 (yours) started: label shows "Yours", not yet "Correct".
+    expect(rhythmPlayCalls).toHaveLength(1);
+    expect(screen.getByText("Yours")).toBeInTheDocument();
+    expect(screen.queryByText("Correct")).not.toBeInTheDocument();
+
+    // The exact regression: onBeat(-1) fires during the scheduling lead-in / rests. It must NOT
+    // be treated as end-of-pattern — the label must stay "Yours" and no second pass may start.
+    await act(async () => {
+      rhythmPlayCalls[0].onBeat(-1);
+    });
+    expect(screen.getByText("Yours")).toBeInTheDocument();
+    expect(rhythmPlayCalls).toHaveLength(1);
+
+    // onComplete is the real end-of-pattern signal: it chains the correct pass.
+    await act(async () => {
+      rhythmPlayCalls[0].onComplete();
+    });
+    expect(rhythmPlayCalls).toHaveLength(2);
+    expect(screen.getByText("Correct")).toBeInTheDocument();
+    expect(screen.queryByText("Yours")).not.toBeInTheDocument();
   });
 });
