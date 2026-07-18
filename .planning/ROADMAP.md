@@ -29,10 +29,32 @@
 - ✅ **v3.4 Rhythm Games Responsive UX** — Phases 34-35 (shipped 2026-05-12)
 - ✅ **v3.6 Game Screen UI Unification** — Phase 36 (shipped 2026-06-14)
 - ✅ **v3.5 Rhythm Pedagogy** — Phase 1 (shipped 2026-06-29)
+- ✅ **v3.7 Sight-Reading Engagement & Pedagogy** — Phases 01-03 (shipped 2026-07-18)
 
 See `.planning/milestones/` for archived details of each milestone.
 
 ## Phases
+
+No milestone in progress. Run `/gsd-new-milestone` to start the next one.
+
+<details>
+<summary>✅ v3.7 Sight-Reading Engagement & Pedagogy (Phases 01-03) — SHIPPED 2026-07-18</summary>
+
+- [x] Phase 01: Engagement HUD Parity (2/2 plans) — completed 2026-07-09
+- [x] Phase 02: Practice Tooling (9/9 plans) — completed 2026-07-10
+- [x] Phase 03: Adaptive Pedagogy (7/7 plans) — completed 2026-07-12
+
+Turned the hardened sight-reading game (Phases A/B/C shipped on `main` as PRs #10/#11/#12) into an
+elite learning experience: session-wide combo/on-fire HUD parity, practice tooling (replay,
+Practice/Test grading mode, Review-mistakes drill), and adaptive per-note-mastery pedagogy
+(in-session difficulty/tempo + cross-session `note_mastery` JSONB persistence under RLS). 10/12
+requirements shipped; HUD-02 (lives/game-over) and PRAC-02 (comparison playback — built + device-
+verified, hidden as too busy for 8-year-olds) deferred. Audit PASSED; secure-phase 03 closed 12/12
+threats. Ships via PR #13.
+
+Full details: `.planning/milestones/v3.7-ROADMAP.md` · Requirements: `.planning/milestones/v3.7-REQUIREMENTS.md` · Audit: `.planning/milestones/v3.7-MILESTONE-AUDIT.md`
+
+</details>
 
 <details>
 <summary>v1.0 through v3.3 -- See milestones/ for archived details</summary>
@@ -86,8 +108,10 @@ Full details: `.planning/milestones/v3.6-ROADMAP.md` · Requirements: `.planning
 
 ## Progress
 
-**Total: 27 milestones shipped, 111 phases, ~273 plans | No active milestone — next via `/gsd-new-milestone`**
+**Total: 28 milestones shipped, 114 phases, ~291 plans | No milestone in progress — run `/gsd-new-milestone`**
+
+v3.7 phases 01-03 shipped 2026-07-18 (see the collapsed section above and `.planning/milestones/v3.7-ROADMAP.md`).
 
 ---
 
-_Last updated: 2026-06-29 -- v3.5 Rhythm Pedagogy (Phase 01, 10 plans) shipped and archived to `.planning/milestones/v3.5-*` (owner gates D-13 + SC-9 closed; milestone audit PASSED). No active milestone._
+_Last updated: 2026-07-18 -- v3.7 Sight-Reading Engagement & Pedagogy shipped and archived (10/12 requirements; HUD-02 + PRAC-02 deferred). Audit PASSED. Next: `/gsd-new-milestone`._

@@ -67,6 +67,28 @@ const colorForResult = (result) => {
     };
   }
 
+  // Rest kept correctly (silence through its window) → green rest glyph.
+  if (result.timingStatus === "rest_correct") {
+    return {
+      fill: FEEDBACK_COLORS.correct,
+      stroke: FEEDBACK_COLORS.correct,
+      class: "vf-note-correct",
+      animate: false,
+    };
+  }
+
+  // Note played during a rest → red rest glyph (the played note is drawn red separately
+  // by the wrong-note overlay, same as a wrong pitch). Must precede the generic
+  // !isCorrect → gray branch below, since a rest violation is also isCorrect:false.
+  if (result.timingStatus === "rest_violation") {
+    return {
+      fill: FEEDBACK_COLORS.wrongPitch,
+      stroke: FEEDBACK_COLORS.wrongPitch,
+      class: "vf-note-rest-violation",
+      animate: false,
+    };
+  }
+
   // Wrong pitch: gray the expected (target) note so it reads as "you should have
   // played this here" — distinct from green (correct). Played note shown in red separately.
   if (!result.isCorrect || result.timingStatus === "wrong_pitch") {
@@ -105,6 +127,17 @@ const colorForResult = (result) => {
   };
 };
 
+// The red "played note" overlay is drawn both for an actually-wrong pitch AND for a note
+// played during a rest (rest violation) — in the latter case the played note sits on the
+// rest's beat slot. Shared by all four render paths (grand/single staff × multi/single bar).
+const isWrongOverlayResult = (r) =>
+  (r.timingStatus === "wrong_pitch" || r.timingStatus === "rest_violation") &&
+  r.detected;
+
+// The overlay may land on a real note slot (wrong pitch) or on a rest slot (rest violation).
+const overlayAllowedForEvent = (event, result) =>
+  event.type !== "rest" || result?.timingStatus === "rest_violation";
+
 /**
  * VexFlowStaffDisplay Component
  * Renders musical notation using VexFlow library
@@ -121,6 +154,7 @@ function VexFlowStaffDisplayBase({
   performanceResults = [],
   gamePhase,
   keySignature = null, // VexFlow key string: 'G', 'D', 'A', 'F', 'Bb', 'Eb', or null
+  playbackHighlightIndex = -1, // Additive outline overlay for played-vs-correct comparison playback (PRAC-02); does not replace getNoteColor fills
 }) {
   // Generate unique ID for this component instance
   const uniqueId = useId();
@@ -821,9 +855,8 @@ function VexFlowStaffDisplayBase({
             let wrongBassVoice = null;
 
             if (gamePhase === "feedback" && performanceResults.length > 0) {
-              const wrongPitchResults = performanceResults.filter(
-                (r) => r.timingStatus === "wrong_pitch" && r.detected
-              );
+              const wrongPitchResults =
+                performanceResults.filter(isWrongOverlayResult);
 
               if (wrongPitchResults.length > 0) {
                 const wrongTrebleTickables = barEvents.map(
@@ -839,12 +872,13 @@ function VexFlowStaffDisplayBase({
 
                     if (
                       result &&
-                      event.type !== "rest" &&
+                      overlayAllowedForEvent(event, result) &&
                       eventClef === "treble"
                     ) {
                       const wrong = buildStaveNote({
                         pitchStr: result.detected,
-                        duration,
+                        // strip rest marker so a rest-violation slot renders the played note
+                        duration: String(duration).replace(/r$/, ""),
                         targetClef: "treble",
                       });
                       wrong.setStyle({
@@ -875,10 +909,15 @@ function VexFlowStaffDisplayBase({
                     (r) => r.noteIndex === globalIdx
                   );
 
-                  if (result && event.type !== "rest" && eventClef === "bass") {
+                  if (
+                    result &&
+                    overlayAllowedForEvent(event, result) &&
+                    eventClef === "bass"
+                  ) {
                     const wrong = buildStaveNote({
                       pitchStr: result.detected,
-                      duration,
+                      // strip rest marker so a rest-violation slot renders the played note
+                      duration: String(duration).replace(/r$/, ""),
                       targetClef: "bass",
                     });
                     wrong.setStyle({
@@ -1114,9 +1153,7 @@ function VexFlowStaffDisplayBase({
           const isFeedback =
             gamePhase === "feedback" && performanceResults.length > 0;
           const wrongPitchResults = isFeedback
-            ? performanceResults.filter(
-                (r) => r.timingStatus === "wrong_pitch" && r.detected
-              )
+            ? performanceResults.filter(isWrongOverlayResult)
             : [];
 
           let wrongTrebleVoice = null;
@@ -1127,10 +1164,15 @@ function VexFlowStaffDisplayBase({
               const duration = durations[idx] || "q";
               const eventClef = String(event?.clef || "treble").toLowerCase();
               const result = wrongPitchResults.find((r) => r.noteIndex === idx);
-              if (result && event.type !== "rest" && eventClef === "treble") {
+              if (
+                result &&
+                overlayAllowedForEvent(event, result) &&
+                eventClef === "treble"
+              ) {
                 const wrong = buildStaveNote({
                   pitchStr: result.detected,
-                  duration,
+                  // strip rest marker so a rest-violation slot renders the played note
+                  duration: String(duration).replace(/r$/, ""),
                   targetClef: "treble",
                 });
                 wrong.setStyle({
@@ -1154,10 +1196,15 @@ function VexFlowStaffDisplayBase({
               const duration = durations[idx] || "q";
               const eventClef = String(event?.clef || "treble").toLowerCase();
               const result = wrongPitchResults.find((r) => r.noteIndex === idx);
-              if (result && event.type !== "rest" && eventClef === "bass") {
+              if (
+                result &&
+                overlayAllowedForEvent(event, result) &&
+                eventClef === "bass"
+              ) {
                 const wrong = buildStaveNote({
                   pitchStr: result.detected,
-                  duration,
+                  // strip rest marker so a rest-violation slot renders the played note
+                  duration: String(duration).replace(/r$/, ""),
                   targetClef: "bass",
                 });
                 wrong.setStyle({
@@ -1375,9 +1422,8 @@ function VexFlowStaffDisplayBase({
             // Handle wrong pitch overlay
             let wrongVoice = null;
             if (gamePhase === "feedback" && performanceResults.length > 0) {
-              const wrongPitchResults = performanceResults.filter(
-                (r) => r.timingStatus === "wrong_pitch" && r.detected
-              );
+              const wrongPitchResults =
+                performanceResults.filter(isWrongOverlayResult);
 
               if (wrongPitchResults.length > 0) {
                 const wrongStaveNotes = barEvents.map((event, localIdx) => {
@@ -1387,7 +1433,7 @@ function VexFlowStaffDisplayBase({
                     (r) => r.noteIndex === globalIdx
                   );
 
-                  if (result && event.type !== "rest") {
+                  if (result && overlayAllowedForEvent(event, result)) {
                     const playedNote = result.detected;
                     const parsedPlayed = parsePitchForVexflow(playedNote);
                     const vexKey = parsedPlayed.key;
@@ -1513,9 +1559,8 @@ function VexFlowStaffDisplayBase({
           // Handle wrong pitch overlay
           let wrongVoice = null;
           if (gamePhase === "feedback" && performanceResults.length > 0) {
-            const wrongPitchResults = performanceResults.filter(
-              (r) => r.timingStatus === "wrong_pitch" && r.detected
-            );
+            const wrongPitchResults =
+              performanceResults.filter(isWrongOverlayResult);
 
             if (wrongPitchResults.length > 0) {
               const wrongStaveNotes = events.map((event, idx) => {
@@ -1524,7 +1569,7 @@ function VexFlowStaffDisplayBase({
                   (r) => r.noteIndex === idx
                 );
 
-                if (result && event.type !== "rest") {
+                if (result && overlayAllowedForEvent(event, result)) {
                   const playedNote = result.detected;
                   const parsedPlayed = parsePitchForVexflow(playedNote);
                   const vexKey = parsedPlayed.key;
@@ -1660,13 +1705,30 @@ function VexFlowStaffDisplayBase({
             noteElement.setAttribute("class", `vf-stavenote ${className}`);
             noteElement.setAttribute("fill", fill);
             noteElement.setAttribute("stroke", stroke || fill);
+            // Clear any prior comparison-playback highlight bump so it moves
+            // with playbackHighlightIndex instead of accumulating (CR-01).
+            noteElement.removeAttribute("stroke-width");
           }
         });
+
+        // Additive playback comparison outline (PRAC-02): overlays a glow/stroke-width bump
+        // on a single note during feedback/review, WITHOUT touching any other note's fill
+        // set above. Guarded to no-op when out of range or not in an applicable phase.
+        if (
+          (gamePhase === "feedback" || gamePhase === "review") &&
+          playbackHighlightIndex >= 0
+        ) {
+          const highlightElement = notesRef.current[playbackHighlightIndex];
+          if (highlightElement) {
+            highlightElement.classList.add("vf-playback-highlight");
+            highlightElement.setAttribute("stroke-width", "4");
+          }
+        }
       } catch (err) {
         console.warn("Failed to highlight note:", err);
       }
     },
-    [getNoteColor]
+    [getNoteColor, gamePhase, playbackHighlightIndex]
   );
 
   // Effect: Render staff when pattern, clef, or game phase changes
@@ -1723,10 +1785,16 @@ function VexFlowStaffDisplayBase({
     performanceResults.length,
   ]);
 
-  // Effect: Update note highlighting when currentNoteIndex or performanceResults change
+  // Effect: Update note highlighting when currentNoteIndex, performanceResults, or the
+  // playback comparison highlight index change (so the outline moves as playback advances)
   useEffect(() => {
     highlightNote(currentNoteIndex);
-  }, [currentNoteIndex, performanceResults, highlightNote]);
+  }, [
+    currentNoteIndex,
+    performanceResults,
+    playbackHighlightIndex,
+    highlightNote,
+  ]);
 
   // Effect: Start continuous smooth scroll animation during performance phase
   useEffect(() => {

@@ -74,6 +74,16 @@ vi.mock("../../../contexts/SightReadingSessionContext", () => ({
     resetSession: vi.fn(),
     recordExerciseResult: vi.fn(),
     goToNextExercise: vi.fn(),
+    combo: 0,
+    isOnFire: false,
+    incrementCombo: vi.fn(),
+    resetCombo: vi.fn(),
+    gradingMode: "test",
+    gradingModeRef: { current: "test" },
+    isModeLocked: false,
+    setGradingMode: vi.fn(),
+    lockMode: vi.fn(),
+    unlockMode: vi.fn(),
   }),
 }));
 
@@ -112,7 +122,9 @@ vi.mock("../../../hooks/useMicNoteInput", () => ({
 
 vi.mock("../../../contexts/AudioContextProvider", () => ({
   useAudioContext: () => ({
-    audioContextRef: { current: { state: "running", resume: vi.fn(async () => {}) } },
+    audioContextRef: {
+      current: { state: "running", resume: vi.fn(async () => {}) },
+    },
     analyserRef: { current: null },
     streamRef: { current: null },
     isReady: true,
@@ -223,5 +235,3 @@ describe("SightReadingGame (mic)", () => {
     expect(startListeningSpy).toHaveBeenCalledTimes(2);
   });
 });
-
-

@@ -3,11 +3,14 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
+import { GRADING_MODES } from "../components/games/sight-reading-game/constants/gradingModes";
 
 const TOTAL_EXERCISES_PER_SESSION = 10;
 const DEFAULT_MAX_SCORE_PER_EXERCISE = 100;
+const ON_FIRE_THRESHOLD = 5; // reuse NotesRecognitionGame's constant (D-06)
 
 const createInitialState = () => ({
   totalExercises: TOTAL_EXERCISES_PER_SESSION,
@@ -22,16 +25,112 @@ const SightReadingSessionContext = createContext(null);
 export function SightReadingSessionProvider({ children }) {
   const [state, setState] = useState(() => createInitialState());
 
+  const [combo, setCombo] = useState(0);
+  const comboRef = useRef(0);
+  const [isOnFire, setIsOnFire] = useState(false);
+  const isOnFireRef = useRef(false);
+
+  // Session-scoped grading mode (D-05): Practice vs Test, with a lock to prevent switching
+  // mid-exercise. gradingModeRef mirrors gradingMode so synchronous detection callbacks (e.g.
+  // pitch-detection handlers) can read the current mode without a stale closure (Pattern 1).
+  const [gradingMode, setGradingModeState] = useState(GRADING_MODES.TEST);
+  const gradingModeRef = useRef(GRADING_MODES.TEST);
+  const [isModeLocked, setIsModeLocked] = useState(false);
+  const isModeLockedRef = useRef(false);
+
+  // Phase 03 (ADAPT-01/02, D-01): adaptive-difficulty streak + current tier, SEPARATE from the HUD
+  // combo. Ref mirrors let handleNextExercise / mic callbacks read current values without a stale
+  // closure (same rationale as comboRef/gradingModeRef).
+  const [successStreak, setSuccessStreakState] = useState(0);
+  const successStreakRef = useRef(0);
+  const [adaptiveTierIndex, setAdaptiveTierIndexState] = useState(0); // 0 == baseline (adaptiveTiers.BASELINE_TIER_INDEX)
+  const adaptiveTierIndexRef = useRef(0);
+
+  const setSuccessStreak = useCallback((n) => {
+    successStreakRef.current = n;
+    setSuccessStreakState(n);
+  }, []);
+  const setAdaptiveTierIndex = useCallback((n) => {
+    adaptiveTierIndexRef.current = n;
+    setAdaptiveTierIndexState(n);
+  }, []);
+
+  const setGradingMode = useCallback((mode) => {
+    if (isModeLockedRef.current) {
+      return;
+    }
+    if (mode !== GRADING_MODES.PRACTICE && mode !== GRADING_MODES.TEST) {
+      return;
+    }
+    gradingModeRef.current = mode;
+    setGradingModeState(mode);
+  }, []);
+
+  const lockMode = useCallback(() => {
+    isModeLockedRef.current = true;
+    setIsModeLocked(true);
+  }, []);
+
+  const unlockMode = useCallback(() => {
+    isModeLockedRef.current = false;
+    setIsModeLocked(false);
+  }, []);
+
+  const incrementCombo = useCallback(() => {
+    comboRef.current += 1;
+    setCombo(comboRef.current);
+    if (comboRef.current >= ON_FIRE_THRESHOLD && !isOnFireRef.current) {
+      isOnFireRef.current = true;
+      setIsOnFire(true);
+    }
+  }, []);
+
+  const resetCombo = useCallback(() => {
+    comboRef.current = 0;
+    setCombo(0);
+    if (isOnFireRef.current) {
+      isOnFireRef.current = false;
+      setIsOnFire(false);
+    }
+  }, []);
+
   const startSession = useCallback(() => {
     setState(() => ({
       ...createInitialState(),
       status: "in-progress",
       sessionId: Date.now(),
     }));
+    comboRef.current = 0;
+    setCombo(0);
+    isOnFireRef.current = false;
+    setIsOnFire(false);
+    successStreakRef.current = 0;
+    setSuccessStreakState(0);
+    adaptiveTierIndexRef.current = 0;
+    setAdaptiveTierIndexState(0);
+    // D-05: the mode lock is session-scoped like combo/streak/tier. Without resetting it here the
+    // lock outlives the game component (provider is at the app root, App.jsx), so every route exit
+    // leaves it stuck true and the Practice/Test pill renders permanently greyed on re-entry. See
+    // resetSession below (load-bearing: runs in the game's unmount cleanup).
+    isModeLockedRef.current = false;
+    setIsModeLocked(false);
   }, []);
 
   const resetSession = useCallback(() => {
     setState(() => createInitialState());
+    comboRef.current = 0;
+    setCombo(0);
+    isOnFireRef.current = false;
+    setIsOnFire(false);
+    successStreakRef.current = 0;
+    setSuccessStreakState(0);
+    adaptiveTierIndexRef.current = 0;
+    setAdaptiveTierIndexState(0);
+    // D-05 (see startSession): clears the mode lock as the game unmounts, so the next mount's
+    // localStorage grading-mode restore isn't silently dropped by the still-locked setGradingMode
+    // guard, and the Practice/Test pill is toggleable again on re-entry.
+    isModeLockedRef.current = false;
+    setIsModeLocked(false);
   }, []);
 
   const recordExerciseResult = useCallback(
@@ -120,6 +219,22 @@ export function SightReadingSessionProvider({ children }) {
       resetSession,
       recordExerciseResult,
       goToNextExercise,
+      combo,
+      isOnFire,
+      incrementCombo,
+      resetCombo,
+      gradingMode,
+      isModeLocked,
+      gradingModeRef,
+      setGradingMode,
+      lockMode,
+      unlockMode,
+      successStreak,
+      successStreakRef,
+      setSuccessStreak,
+      adaptiveTierIndex,
+      adaptiveTierIndexRef,
+      setAdaptiveTierIndex,
     };
   }, [
     state,
@@ -127,6 +242,19 @@ export function SightReadingSessionProvider({ children }) {
     resetSession,
     recordExerciseResult,
     goToNextExercise,
+    combo,
+    isOnFire,
+    incrementCombo,
+    resetCombo,
+    gradingMode,
+    isModeLocked,
+    setGradingMode,
+    lockMode,
+    unlockMode,
+    successStreak,
+    setSuccessStreak,
+    adaptiveTierIndex,
+    setAdaptiveTierIndex,
   ]);
 
   return (

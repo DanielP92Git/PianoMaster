@@ -1638,6 +1638,7 @@
     "startPlaying": "התחילו לנגן",
     "listenCountIn": "הקשיבו לספירה",
     "nextExercise": "התרגיל הבא",
+    "finishSession": "סיימנו!",
     "tryAgain": "נסו שוב",
     "changeSettings": "שנו הגדרות",
     "backToMenu": "חזרה לתפריט",
@@ -1665,7 +1666,8 @@
       "tooEarly": "מוקדם",
       "tooLate": "מאוחר",
       "missed": "הוחמצו",
-      "wrongNotes": "תווים שגויים"
+      "wrongNotes": "תווים שגויים",
+      "practiceNotScored": "ריצת תרגול — לא מנוקד"
     },
     "inputMode": {
       "title": "בחרו כיצד לנגן את התווים",
@@ -1684,7 +1686,13 @@
     "controls": {
       "toggleMetronome": "הפעלה/כיבוי מטרונום",
       "switchToMic": "מעבר למיקרופון",
-      "switchToKeyboard": "מעבר למקלדת"
+      "switchToKeyboard": "מעבר למקלדת",
+      "replay": "שמעו שוב",
+      "modePractice": "תרגול",
+      "modeTest": "מבחן",
+      "modeToggleLabel": "מצב ניקוד",
+      "compare": "השוו את שלכם לנכון",
+      "review": "סקרו טעויות"
     },
     "session": {
       "victoryTitle": "ניצחון בסבב!",
@@ -1698,9 +1706,27 @@
       "encourageBody": "סיימתם את כל {{count}} התרגילים. אתם רק כמה נקודות מפתיחת חגיגת הניצחון.",
       "totalXp": "{{score}} נקודות בסך הכול • כוונו ל-70% כדי לנצח."
     },
+    "compare": {
+      "yours": "שלכם",
+      "correct": "נכון"
+    },
     "errors": {
       "startPerformance": "התחלת הנגינה נכשלה. נסו שוב.",
       "startGame": "התחלת המשחק נכשלה. נסו שוב."
+    },
+    "review": {
+      "title": "סקירת הטעויות שלכם",
+      "progress": "{{current}} מתוך {{total}}",
+      "instruction": "נגנו את התו המוצג כדי לעבור לתו הבא.",
+      "playIt": "נגנו את זה",
+      "skip": "דלגו",
+      "done": "כל הכבוד! סקרתם את כל הטעויות.",
+      "exit": "חזרה למשוב"
+    },
+    "adaptive": {
+      "levelUp": "עולים שלב!",
+      "levelUpSubtitle": "הקצב עולה",
+      "levelUpDismiss": "הבנתי!"
     }
   },
   "noteRecognition": {

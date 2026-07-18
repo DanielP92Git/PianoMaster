@@ -18,8 +18,10 @@ import { FeedbackSummary } from "./components/FeedbackSummary";
 import { SightReadingLayout } from "./components/SightReadingLayout";
 import { MicErrorOverlay } from "./components/MicErrorOverlay";
 import { MicVolumeMeter, MicDebugPanel } from "./components/MicOverlays";
+import { ReviewDrillPanel } from "./components/ReviewDrillPanel";
 import { MetronomeDisplay } from "../rhythm-games/components/MetronomeDisplay";
 import { usePatternGeneration } from "./hooks/usePatternGeneration";
+import { useReviewDrill } from "./hooks/useReviewDrill";
 import { useRhythmPlayback } from "./hooks/useRhythmPlayback";
 import { useTimingAnalysis } from "./hooks/useTimingAnalysis";
 import BeethovenAvatar from "../../../assets/avatars/beethoven.png";
@@ -34,8 +36,14 @@ import {
   calculateRhythmAccuracy,
   calculateOverallScore,
 } from "./utils/scoreCalculator";
+import { buildPlayedRendition } from "./utils/comparisonPattern";
 import { FIRST_NOTE_EARLY_MS, NOTE_LATE_MS } from "./constants/timingConstants";
 import { TIMING_FEEDBACK } from "./constants/feedbackPalette";
+import {
+  GRADING_MODES,
+  GRADING_MODE_STORAGE_KEY,
+  PRACTICE_TIMING,
+} from "./constants/gradingModes";
 import { useUser } from "../../../features/authentication/useUser";
 import { updateStudentScore } from "../../../services/apiScores";
 import toast from "react-hot-toast";
@@ -55,10 +63,33 @@ import { isIOSSafari } from "../../../utils/isIOSSafari.js";
 import { useTranslation } from "react-i18next";
 import { ProgressBar } from "../shared/hud/ProgressBar";
 import { ScorePill } from "../shared/hud/ScorePill";
+import { ComboPill } from "../shared/hud/ComboPill";
+import { OnFireBadge } from "../shared/hud/OnFireBadge";
 import { UnifiedGameSettings } from "../shared/UnifiedGameSettings";
 import { TIME_SIGNATURES } from "../rhythm-games/RhythmPatternGenerator";
 import { getAllComplexPatternIds } from "./utils/rhythmPatterns";
 import { AnimatePresence } from "framer-motion";
+import {
+  computeNextTier,
+  applyTierToSettings,
+  buildWeightedNotePool,
+} from "./utils/adaptiveEngine";
+import {
+  ADAPTIVE_TIERS,
+  BASELINE_TIER_INDEX,
+  SUCCESS_ACCURACY,
+  SUCCESS_MAX_MISSES,
+  MASTERY_MIN_ATTEMPTS,
+} from "./constants/adaptiveTiers";
+import { LevelUpCue } from "./components/LevelUpCue";
+import {
+  getNodeProgress,
+  mergeNoteMasteryOnly,
+} from "../../../services/skillProgressService";
+
+// Phase 03 (ADAPT-03/D-09/D-11): first-exercise race timeout — the weak-note-mastery fetch
+// races this timeout so gameplay never blocks on the network. See seedMasteryBiasedSettings.
+const MASTERY_FETCH_TIMEOUT_MS = 800;
 
 // #region agent log (debug-mode instrumentation — dev only)
 const __srLog = import.meta.env.DEV
@@ -81,6 +112,11 @@ const GAME_PHASES = {
   DISPLAY: "display",
   PERFORMANCE: "performance",
   FEEDBACK: "feedback",
+  // Review-mistakes drill (PRAC-04) — entered from FEEDBACK via the Review button,
+  // exits back to FEEDBACK. An active, in-exercise phase like DISPLAY/PERFORMANCE:
+  // registered in the session-timeout activePhases list, showPlayableKeyboardBand,
+  // and the audio-interruption pause effect (Pitfall 4).
+  REVIEW: "review",
 };
 
 // Stable empty-array identity so memoized children (KlavierKeyboard) don't see a
@@ -103,6 +139,12 @@ const MIC_FIRST_NOTE_LATE_GRACE_MS = 400;
 
 const ANTI_CHEAT_WINDOW_MS = 1500;
 const ANTI_CHEAT_THRESHOLD = 5;
+
+// Guards the mic path against self-detecting the review target-pitch audition as the
+// child's own attempt (see reviewAuditionGuardUntilRef usage below). Hoisted to module
+// scope (WR-03) — has no dependency on props/state, so it doesn't need re-declaring
+// on every render like the file's other timing constants.
+const REVIEW_AUDITION_GUARD_MS = 500;
 
 // Semitone distance helper — used to exclude adjacent-pitch mic misdetections
 // from anti-cheat tracking (mic commonly oscillates ±1 semitone).
@@ -139,6 +181,11 @@ function isAdjacentSemitone(noteA, noteB) {
   if (a == null || b == null) return false;
   return Math.abs(a - b) <= 1;
 }
+
+// Mic-only guard: ignore a detection in the first slice of a rest's window so the previous
+// note's decay tail / edge wobble isn't punished as "playing on the rest". Clean digital
+// input (keyboard / PC-key) is exempt from this guard.
+const REST_MIC_LEADIN_MS = 150;
 
 const PC_KEYBOARD_KEYS = [
   "a",
@@ -232,14 +279,67 @@ export function SightReadingGame() {
     resetSession,
     recordExerciseResult: recordSessionExercise,
     goToNextExercise,
+    combo,
+    isOnFire,
+    incrementCombo,
+    resetCombo,
+    gradingMode,
+    gradingModeRef,
+    isModeLocked,
+    setGradingMode,
+    lockMode,
+    unlockMode,
+    successStreakRef,
+    setSuccessStreak,
+    adaptiveTierIndexRef,
+    setAdaptiveTierIndex,
   } = useSightReadingSession();
+
+  // Practice-mode grading flag (PRAC-03/D-04): widens timing, grades pitch-only, persists nothing.
+  const isPracticeMode = gradingMode === GRADING_MODES.PRACTICE;
 
   const [gamePhase, setGamePhase] = useState(GAME_PHASES.SETUP);
   const [gameSettings, setGameSettings] = useState(DEFAULT_SETTINGS);
   const [currentPattern, setCurrentPattern] = useState(null);
   const [currentBeat, setCurrentBeat] = useState(0);
   const hasAutoConfigured = useRef(false);
+  // Phase 03 (D-02): the real "stretch" pool for widening is the NODE's full notePool (superset),
+  // NOT the exercise-level focusNotes (always empty for sight-reading, RESEARCH.md Pitfall 1).
+  // Free-play (no node) → empty, so tier widening degrades to tempo/rest-only (Assumption A3).
+  const nodeSupersetNotesRef = useRef([]);
+  // Phase 03 (ADAPT-01/02): the PRISTINE per-session settings baseline. Tier tempo/notes
+  // are always computed as an absolute offset from THIS value (captured once, at true
+  // session start in startGame — see the `!currentPattern` guard there), never compounding
+  // across successive tier applications (RESEARCH.md Pitfall 5).
+  const baseAdaptiveSettingsRef = useRef(null);
+  // Phase 03 (ADAPT-03): session-scoped per-pitch mastery accumulator, { [pitch]: { correct,
+  // total } }. Merged from each finished exercise's summaryStats.perNoteAccuracy (handleNextExercise),
+  // reset to {} at true session start (startGame's `!currentPattern` guard, same as baseAdaptiveSettingsRef),
+  // and threaded through VictoryScreen -> useVictoryState -> the service's perNoteMastery param at
+  // session end. Practice mode skips the write for free (suppressPersistence's early-return in useVictoryState).
+  const sessionMasteryRef = useRef({});
+  // WR-01 (03-REVIEW.md): guards the encouragement-screen fire-and-forget mastery persist
+  // (below) from re-firing on every re-render while showEncouragementScreen stays true. Reset
+  // alongside sessionMasteryRef at the same two true-session-start points (startGame's
+  // `!currentPattern` guard, handleStartNewSession) so a retried session gets its own save.
+  const encouragementMasterySavedRef = useRef(false);
+  // Escalation-only celebratory overlay (D-12) — no easing/negative variant exists.
+  const [showLevelUpCue, setShowLevelUpCue] = useState(false);
+  // Phase 03 (playtest follow-up): the cue no longer auto-dismisses — the child closes it
+  // with the explicit button (LevelUpCue's onDismiss) at their own pace, which then starts
+  // the next exercise's preview. So triggering it is a plain state set with no timer.
+  const triggerLevelUpCue = useCallback(() => {
+    setShowLevelUpCue(true);
+  }, []);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(-1);
+  // Moving outline index for played-vs-correct comparison playback (PRAC-02, D-14).
+  // -1 = no highlight. Distinct from currentNoteIndex (which drives DISPLAY/COUNT_IN/
+  // PERFORMANCE highlighting) so comparison playback never disturbs it.
+  const [playbackHighlightIndex, setPlaybackHighlightIndex] = useState(-1);
+  // Which comparison-playback pass is currently sounding: "yours" | "correct" | null
+  // (WR-01). Lets the UI label each pass so the two otherwise-identical-looking
+  // moving-outline passes are distinguishable to the child.
+  const [comparisonPass, setComparisonPass] = useState(null);
 
   // Session timeout controls - pause timer during active gameplay
   let pauseTimer = useCallback(() => {}, []);
@@ -254,11 +354,13 @@ export function SightReadingGame() {
 
   // Pause/resume inactivity timer based on game phase
   useEffect(() => {
-    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE
+    // Active phases where user is playing: COUNT_IN, DISPLAY, PERFORMANCE, REVIEW
+    // (REVIEW is the mistakes drill — child-safety timeout must not fire mid-drill).
     const activePhases = [
       GAME_PHASES.COUNT_IN,
       GAME_PHASES.DISPLAY,
       GAME_PHASES.PERFORMANCE,
+      GAME_PHASES.REVIEW,
     ];
     const isGameActive = activePhases.includes(gamePhase);
     if (isGameActive) {
@@ -278,6 +380,7 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     setCurrentBeat(0);
     setCurrentNoteIndex(-1);
+    setPlaybackHighlightIndex(-1);
     setTimingState(TIMING_STATE.OFF);
     setPerformanceResults([]);
     setSummaryStats(null);
@@ -313,6 +416,22 @@ export function SightReadingGame() {
   const performanceStartAudioTimeRef = useRef(null); // AudioContext seconds at performance start (preferred timing baseline)
   const forcePerformanceWallClockRef = useRef(false); // true when count-in was force-completed on a stalled audio clock; performance then runs on the wall clock
 
+  // Initialize grading mode from localStorage on mount (mirrors inputMode's allowlist-with-
+  // default pattern at :336-340 below). Junk/unknown values fall back to the context's Test
+  // default (D-03) — only an exact "practice" match switches the mode.
+  useEffect(() => {
+    const storedGradingMode = localStorage.getItem(GRADING_MODE_STORAGE_KEY);
+    if (storedGradingMode === GRADING_MODES.PRACTICE) {
+      setGradingMode(GRADING_MODES.PRACTICE);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time mount effect; setGradingMode is stable (useCallback, empty deps in the context)
+  }, []);
+
+  // Persist grading mode changes to localStorage (mirrors inputMode's persistence effect at :602-607).
+  useEffect(() => {
+    localStorage.setItem(GRADING_MODE_STORAGE_KEY, gradingMode);
+  }, [gradingMode]);
+
   // Input mode state: "keyboard" or "mic"
   const [inputMode, setInputMode] = useState(() => {
     const stored = localStorage.getItem("sightReadingInputMode");
@@ -341,6 +460,42 @@ export function SightReadingGame() {
     [trailEnableSharps, trailEnableFlats, trailKeySignature]
   );
 
+  // Phase 03 (ADAPT-03/D-09/D-11): read persisted per-note mastery for (student, node) and bias
+  // the baseline pool toward historically-weak pitches — strictly within the node's own pool
+  // (D-09; buildWeightedNotePool returns a per-pitch WEIGHT MAP over baseSettings.selectedNotes,
+  // never introduces new pitches, and is consumed by patternBuilder.js's weighted random pick
+  // via the `noteWeights` settings field — see CR-01, 03-REVIEW.md, for why the previous
+  // duplication-based approach was a no-op). Cold start / free-play / no qualifying pitch ->
+  // uniform weights (1 each), i.e. unbiased selection. Races an 800ms timeout so gameplay never
+  // blocks on the network (checker Warning 2 — the first-exercise race is handled deliberately,
+  // not left to chance): the PREFERRED option from 03-06-PLAN.md — gate exercise 1's pattern
+  // generation on this fetch.
+  const seedMasteryBiasedSettings = useCallback(
+    async (baseSettings) => {
+      if (!nodeId || !studentId) return baseSettings;
+      try {
+        const progress = await Promise.race([
+          getNodeProgress(studentId, nodeId),
+          new Promise((resolve) =>
+            setTimeout(() => resolve(null), MASTERY_FETCH_TIMEOUT_MS)
+          ),
+        ]);
+        const masteryMap = progress?.note_mastery || {};
+        const baseNotes = baseSettings?.selectedNotes || [];
+        const noteWeights = buildWeightedNotePool(
+          baseNotes,
+          masteryMap,
+          MASTERY_MIN_ATTEMPTS
+        );
+        return { ...baseSettings, noteWeights };
+      } catch {
+        // Non-fatal: fall back to the uniform baseline (no biasing).
+        return baseSettings;
+      }
+    },
+    [nodeId, studentId]
+  );
+
   // Auto-configure and auto-start from trail node
   useEffect(() => {
     if (nodeConfig && !hasAutoConfigured.current) {
@@ -353,16 +508,35 @@ export function SightReadingGame() {
 
       hasAutoConfigured.current = true;
 
+      // Phase 03 (D-02): the real "stretch" pool for widening is the NODE's full notePool
+      // (superset), NOT the exercise-level focusNotes (always empty for sight-reading,
+      // RESEARCH.md Pitfall 1). Free-play (no node) → empty, so tier widening degrades to
+      // tempo/rest-only (Assumption A3).
+      const adaptiveNode = nodeId ? getNodeById(nodeId) : null;
+      nodeSupersetNotesRef.current = adaptiveNode?.noteConfig?.notePool || [];
+
       const trailSettings = buildTrailSettingsFromNode(nodeConfig);
 
       setGameSettings(trailSettings);
 
-      // Auto-start the game after a brief delay to ensure settings are applied
-      setTimeout(() => {
-        startGame(trailSettings);
-      }, 100);
+      // Phase 03 (ADAPT-03): gate exercise 1's pattern generation on the mastery-biased seed
+      // (racing an 800ms timeout — see seedMasteryBiasedSettings) so exercise 1 is already
+      // biased toward weak pitches, not just exercise 2 onward.
+      let cancelled = false;
+      (async () => {
+        const seededSettings = await seedMasteryBiasedSettings(trailSettings);
+        if (cancelled) return;
+        setGameSettings(seededSettings);
+        // Auto-start the game after a brief delay to ensure settings are applied
+        setTimeout(() => {
+          startGame(seededSettings);
+        }, 100);
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, buildTrailSettingsFromNode intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time auto-start effect guarded by hasAutoConfigured ref; audioContextRef, startGame, buildTrailSettingsFromNode, seedMasteryBiasedSettings intentionally omitted to prevent re-triggering; only nodeConfig/nodeId changes should re-evaluate
   }, [nodeConfig, nodeId]);
   const [showInputModeModal, setShowInputModeModal] = useState(false);
   // Trail-mode in-game settings overlay (gear icon). Free-play uses returnToSetup instead.
@@ -656,6 +830,12 @@ export function SightReadingGame() {
   useEffect(() => {
     metronomeEnabledRef.current = metronomeEnabled;
   }, [metronomeEnabled]);
+  // The settings overlay doesn't unmount the game or change gamePhase, so the metronome's
+  // start/stop effect and the interval's self-guard both need to see it explicitly.
+  const showSettingsModalRef = useRef(false);
+  useEffect(() => {
+    showSettingsModalRef.current = showSettingsModal;
+  }, [showSettingsModal]);
 
   // Central metronome stop helper (stable; no dependencies).
   const stopMetronomePlayback = useCallback(() => {
@@ -682,6 +862,7 @@ export function SightReadingGame() {
   const { buildTimingWindows, evaluateTiming, shortestNoteDurationMsRef } =
     useTimingAnalysis({
       tempo: gameSettings.tempo,
+      mode: gradingMode,
     });
   const rhythmPlayback = useRhythmPlayback({
     audioEngine,
@@ -726,7 +907,15 @@ export function SightReadingGame() {
     // Leave PERFORMANCE so no FEEDBACK-phase effect can fire while the penalty modal is
     // showing (mirrors the DISPLAY phase replayPattern already returns to on "Try Again").
     setGamePhase(GAME_PHASES.DISPLAY);
-  }, [audioEngine, inputMode, rhythmPlayback, stopMetronomePlayback]);
+    // Keep the combo/on-fire HUD consistent with the score-side penalty (WR-01).
+    resetCombo();
+  }, [
+    audioEngine,
+    inputMode,
+    rhythmPlayback,
+    stopMetronomePlayback,
+    resetCombo,
+  ]);
 
   const registerGuessPenalty = useCallback(
     (context) => {
@@ -740,10 +929,15 @@ export function SightReadingGame() {
         gamePhaseRef.current === GAME_PHASES.PERFORMANCE
       ) {
         abortPerformanceForPenalty();
-        setShowPenaltyModal(true);
+        // Practice mode (D-06/Pitfall 9): a punishment modal contradicts an explicitly
+        // unscored, psychologically-safe mode. Anti-cheat tracking above still runs
+        // unchanged in both modes; only the modal affordance is suppressed here.
+        if (gradingModeRef.current !== GRADING_MODES.PRACTICE) {
+          setShowPenaltyModal(true);
+        }
       }
     },
-    [abortPerformanceForPenalty]
+    [abortPerformanceForPenalty, gradingModeRef]
   );
   const trackFailedAttemptForAntiCheat = useCallback(
     (details) => {
@@ -794,6 +988,33 @@ export function SightReadingGame() {
       : sessionTotalExercises * SESSION_MAX_EXERCISE_SCORE;
   const showVictoryScreen = isSessionComplete && isVictory;
   const showEncouragementScreen = isSessionComplete && !isVictory;
+
+  // WR-01 (03-REVIEW.md): a session that falls below 70% never renders VictoryScreen, so
+  // updateNodeProgress/updateExerciseProgress (and their note_mastery merge) never run — the
+  // struggling session's per-note telemetry (arguably the MOST valuable data for weak-note
+  // targeting) was silently discarded. Persist it independently here, fire-and-forget, the
+  // moment the encouragement screen mounts: it's additive telemetry, not a graded outcome, so
+  // it doesn't need VictoryScreen's rate-limit/anti-farming protections (mergeNoteMasteryOnly
+  // intentionally skips those). Trail mode only (nodeId/studentId required, mirroring
+  // seedMasteryBiasedSettings' gate) and skipped in Practice mode (no persistence at all there,
+  // matching VictoryScreen's suppressPersistence contract). Guarded by
+  // encouragementMasterySavedRef so this fires once per session, not on every re-render while
+  // the encouragement screen stays mounted.
+  useEffect(() => {
+    if (!showEncouragementScreen || isPracticeMode) return;
+    if (!nodeId || !studentId) return;
+    if (encouragementMasterySavedRef.current) return;
+    const masteryToSave = sessionMasteryRef.current;
+    if (!masteryToSave || Object.keys(masteryToSave).length === 0) return;
+
+    encouragementMasterySavedRef.current = true;
+    mergeNoteMasteryOnly(studentId, nodeId, masteryToSave).catch((error) => {
+      console.error(
+        "Error persisting encouragement-screen note mastery:",
+        error
+      );
+    });
+  }, [showEncouragementScreen, isPracticeMode, nodeId, studentId]);
 
   // Handle navigation to next exercise in the trail node (different from handleNextExercise which advances within session)
   const handleNextTrailExercise = useCallback(() => {
@@ -915,8 +1136,45 @@ export function SightReadingGame() {
     return MIC_INPUT_PRESETS.sightReading;
   }, [gameSettings?.tempo, gameSettings?.bpm, shortestPatternDuration]);
 
+  // Review-mistakes drill (PRAC-04, D-16/D-17/D-18/D-19/D-22). Isolated state machine —
+  // never touches combo/on-fire, never scores. `reviewDrillRef` mirrors the returned object
+  // (same ref-mirror discipline as gamePhaseRef/currentPatternRef) so the mic/keyboard/PC-key
+  // input-routing branches below always read the latest handlePitch without needing to list
+  // it in every callback's dependency array.
+  const reviewDrill = useReviewDrill({
+    performanceResults,
+    patternNotes: currentPattern?.notes,
+    playTargetPitch: (pitch) => audioEngine.playPianoSound(0.6, pitch),
+  });
+  const reviewDrillRef = useRef(reviewDrill);
+  useEffect(() => {
+    reviewDrillRef.current = reviewDrill;
+  });
+
+  // Guards the mic path against self-detecting the review target-pitch audition as the
+  // child's own attempt (same phantom-note leakage concern that kept Phase 01's on-fire
+  // celebration silent during active mic listening). Any playCurrentTarget() call — auto
+  // or via the panel's "Play it" tap — arms this guard; handleNoteEvent's REVIEW branch
+  // ignores mic pitch events until it expires. Keyboard/PC-key input is a physical tap and
+  // is never affected by speaker audio, so this guard is only consulted on the mic path.
+  const reviewAuditionGuardUntilRef = useRef(0);
+  const playReviewTarget = useCallback(() => {
+    reviewAuditionGuardUntilRef.current =
+      performance.now() + REVIEW_AUDITION_GUARD_MS;
+    reviewDrillRef.current.playCurrentTarget();
+  }, []);
+
   const handleNoteEvent = useCallback(
     (event) => {
+      // D-22/Pitfall 3: route REVIEW input to the drill BEFORE any canScoreNow/scoring logic.
+      // The drill never scores, never touches combo (D-17/D-18) — it only advances its own
+      // local mistake-index state machine. Ignore mic events while the audition guard is
+      // armed so the target-pitch playback can't self-advance the drill.
+      if (gamePhaseRef.current === GAME_PHASES.REVIEW) {
+        if (performance.now() < reviewAuditionGuardUntilRef.current) return;
+        reviewDrillRef.current.handlePitch(event?.pitch);
+        return;
+      }
       if (!event || event.type !== "noteOn") return;
       pendingMicLatencyMsRef.current =
         typeof event.latencyMs === "number" ? event.latencyMs : null;
@@ -1326,8 +1584,16 @@ export function SightReadingGame() {
 
     const pitchAccuracy = calculatePitchAccuracy(performanceResults);
     const rhythmAccuracy = calculateRhythmAccuracy(performanceResults);
-    const baseScore = calculateOverallScore(pitchAccuracy, rhythmAccuracy);
-    const penaltyPointsTotal = guessPenaltyRef.current || 0;
+    const baseScore = calculateOverallScore(
+      pitchAccuracy,
+      rhythmAccuracy,
+      gradingMode
+    );
+    // Practice mode (D-06/Pitfall 9): suppress the penalty-points display/effect on score —
+    // a punishment affordance contradicts an explicitly unscored, psychologically-safe mode.
+    // The anti-cheat tracking itself (guessPenaltyRef accumulation) keeps running unchanged.
+    const penaltyPointsTotal =
+      gradingMode === GRADING_MODES.PRACTICE ? 0 : guessPenaltyRef.current || 0;
     const overallScore = Math.max(0, baseScore - penaltyPointsTotal);
 
     const perNoteAccuracy = currentPattern.notes
@@ -1398,6 +1664,7 @@ export function SightReadingGame() {
     gameSettings.timeSignature,
     gameSettings.selectedNotes,
     getNoteLabel,
+    gradingMode,
   ]);
 
   // Note: Exercise result is recorded when clicking "Next Exercise", not automatically on FEEDBACK
@@ -1409,6 +1676,13 @@ export function SightReadingGame() {
     }
 
     if (!isStudent || !studentId) {
+      setScoreSyncStatus("skipped");
+      return;
+    }
+
+    // Practice mode (D-01/T-02-01): the ONE in-file persistence path. Reads the ref
+    // (not state) for the synchronous, stale-closure-free value per Pattern 1.
+    if (gradingModeRef.current === GRADING_MODES.PRACTICE) {
       setScoreSyncStatus("skipped");
       return;
     }
@@ -1480,6 +1754,8 @@ export function SightReadingGame() {
     scoreSubmitted,
     queryClient,
     currentPattern,
+    gradingMode,
+    gradingModeRef,
   ]);
 
   const recordPerformanceResult = useCallback((newResult) => {
@@ -1591,7 +1867,20 @@ export function SightReadingGame() {
       let matchingEvent = null;
       let matchingWindow = null;
 
-      for (let i = 0; i < timingWindows.length; i++) {
+      // A detection whose onset lands inside a REST's un-padded core span [startMs, endMs) is a
+      // rest event, not a late/overlapping hit on the preceding note — core spans never overlap, so
+      // this is unambiguous. Skip note-window matching entirely in that case so the hit falls
+      // through to the rest-violation branch (matchingNoteIndex stays -1). Otherwise a preceding
+      // WRONG-played note (deferred, never recorded, so still selectable) whose padded late window
+      // overhangs the rest would swallow the hit, and the rest would finalize green.
+      const inRestCore = timingWindows.some(
+        (w) =>
+          w.event?.type === "rest" &&
+          elapsedTimeMs >= w.startMs &&
+          elapsedTimeMs < w.endMs
+      );
+
+      for (let i = 0; !inRestCore && i < timingWindows.length; i++) {
         const windowInfo = timingWindows[i];
         const event = windowInfo.event;
 
@@ -1672,6 +1961,82 @@ export function SightReadingGame() {
             gamePhase: phase,
           });
         }
+
+        // Played on a rest: the detected note's onset falls inside a REST's window.
+        // Record a rest violation (red rest + red played note) instead of silently
+        // dropping it. Only the first detection per rest is recorded.
+        // Consecutive rests' padded windows overlap (each window pads by the early/late
+        // tolerance), so a hit near rest N+1's onset also falls inside rest N's padded
+        // window. Iterating and breaking on the first padded match would then attribute the
+        // second rest's violation to the first — which is already recorded, so it gets
+        // dropped and rest N+1 is left unscored (finalized green). Match on the un-padded
+        // core span [startMs, endMs) first — core spans never overlap — so the onset lands
+        // on exactly the rest it belongs to; fall back to the padded window only when no
+        // core span contains it (edge-of-window wobble before/after a rest).
+        let restWindow = null;
+        let restPaddedFallback = null;
+        for (let i = 0; i < timingWindows.length; i++) {
+          const w = timingWindows[i];
+          if (w.event?.type !== "rest") continue;
+          const inPadded =
+            elapsedTimeMs >= w.windowStart && elapsedTimeMs <= w.windowEnd;
+          if (!inPadded) continue;
+          const inCore = elapsedTimeMs >= w.startMs && elapsedTimeMs < w.endMs;
+          if (inCore) {
+            restWindow = w;
+            break;
+          }
+          if (!restPaddedFallback) restPaddedFallback = w;
+        }
+        restWindow = restWindow || restPaddedFallback;
+        if (restWindow) {
+          const restIdx = restWindow.noteIndex;
+          const alreadyForRest = performanceResultsRef.current.some(
+            (r) => r.noteIndex === restIdx
+          );
+          if (alreadyForRest) return; // one violation per rest is enough
+
+          // Mic guard: ignore the previous note's sustain/decay tail and an edge-of-window
+          // lead-in so a ringing note isn't falsely punished. Keyboard / PC-key onsets are
+          // clean and skip this guard entirely.
+          let micFalsePositive = false;
+          if (inputMode === "mic") {
+            let prevPitch = null;
+            for (let k = restIdx - 1; k >= 0; k--) {
+              const ev = pattern?.notes?.[k];
+              if (ev?.type === "note" && ev.pitch) {
+                prevPitch = ev.pitch;
+                break;
+              }
+            }
+            const isSustainOfPrev =
+              !!prevPitch &&
+              (noteToMidi(prevPitch) === noteToMidi(detectedNote) ||
+                isAdjacentSemitone(prevPitch, detectedNote));
+            const inLeadInBand =
+              elapsedTimeMs < restWindow.windowStart + REST_MIC_LEADIN_MS;
+            micFalsePositive = isSustainOfPrev || inLeadInBand;
+          }
+
+          if (!micFalsePositive) {
+            recordPerformanceResult({
+              noteIndex: restIdx,
+              expected: null,
+              detected: detectedNote,
+              frequency: -1,
+              timingStatus: "rest_violation",
+              timeDiff: 0,
+              isCorrect: false,
+              isRest: true,
+              timestamp: Date.now(),
+              phase,
+            });
+            resetCombo();
+          }
+          // A note during a rest is never an anti-cheat "no pattern pitch" event.
+          return;
+        }
+
         // Only count as a cheat attempt if the detected pitch isn't in the pattern
         // (or within 1 semitone of a pattern note for mic input — transient wobble).
         // Use MIDI comparison so enharmonic equivalents (e.g., C#4 == Db4) are treated
@@ -1856,6 +2221,7 @@ export function SightReadingGame() {
           });
         }
         recordPerformanceResult(result);
+        incrementCombo();
         // Clear wrong-pitch tracking for this note once correctly scored.
         wrongPitchSeenRef.current[matchingNoteIndex] = false;
         lastWrongPitchRef.current[matchingNoteIndex] = null;
@@ -1942,6 +2308,8 @@ export function SightReadingGame() {
       evaluateTiming,
       showTimingFeedback,
       recordPerformanceResult,
+      incrementCombo,
+      resetCombo,
       canScoreNow,
       getElapsedMsFromPerformanceStart,
       trackFailedAttemptForAntiCheat,
@@ -1965,6 +2333,14 @@ export function SightReadingGame() {
       // Use refs for real-time accuracy - state values can be stale in callbacks
       const phase = gamePhaseRef.current;
       const pattern = currentPatternRef.current;
+
+      // D-22/Pitfall 3: route REVIEW input to the drill BEFORE canScoreNow — canScoreNow
+      // only allows COUNT_IN/PERFORMANCE, so without this branch keyboard input during the
+      // drill would be silently dropped.
+      if (phase === GAME_PHASES.REVIEW) {
+        reviewDrillRef.current.handlePitch(noteName);
+        return;
+      }
 
       if (phase === GAME_PHASES.PERFORMANCE && !canScoreNow(phase)) {
         registerKeyboardSpamAttempt();
@@ -1999,6 +2375,15 @@ export function SightReadingGame() {
       if (!mappedPitch) return;
       // Use ref for real-time accuracy - check unified timing state
       const phase = gamePhaseRef.current;
+
+      // D-22/Pitfall 3: route REVIEW input BEFORE canScoreNow (which returns false for
+      // REVIEW and would otherwise silently eat PC-keyboard input during the drill).
+      // handleKeyboardNoteInput itself routes REVIEW input to reviewDrill.handlePitch.
+      if (phase === GAME_PHASES.REVIEW) {
+        event.preventDefault();
+        handleKeyboardNoteInput(mappedPitch);
+        return;
+      }
 
       if (!canScoreNow(phase)) {
         return;
@@ -2076,11 +2461,11 @@ export function SightReadingGame() {
         setCurrentNoteIndex(activeIdx);
       }
 
-      // Record misses (notes only) once elapsed is past the *scoring window end* (preferred),
-      // or note end + tolerance as a fallback.
+      // Finalize each event once elapsed is past its *scoring window end* (preferred), or
+      // event end + tolerance as a fallback. Notes → record a miss/wrong-pitch; rests →
+      // record "correct" if the child stayed silent (no rest violation was recorded).
       for (let i = 0; i < allEvents.length; i++) {
         const ev = allEvents[i];
-        if (ev.type !== "note") continue;
         const endMs = (ev.endTime || ev.startTime || 0) * 1000;
         const windowEndMs =
           typeof timingWindowsRef.current?.[i]?.windowEnd === "number"
@@ -2090,7 +2475,26 @@ export function SightReadingGame() {
         const already = performanceResultsRef.current.some(
           (r) => r.noteIndex === i
         );
-        if (already) continue;
+        if (already) continue; // a rest violation recorded during the rest wins over correct
+
+        // Rest kept correctly: silence held through the whole window → green, full rhythm credit.
+        if (ev.type === "rest") {
+          recordPerformanceResult({
+            noteIndex: i,
+            expected: null,
+            detected: null,
+            frequency: -1,
+            timingStatus: "rest_correct",
+            timing: { score: 1.0 },
+            timeDiff: 0,
+            isCorrect: true,
+            isRest: true,
+            timestamp: Date.now(),
+            phase: GAME_PHASES.PERFORMANCE,
+          });
+          continue;
+        }
+        if (ev.type !== "note") continue;
 
         const wrongPitchSeen = Boolean(wrongPitchSeenRef.current?.[i]);
         const timingStatusToRecord = wrongPitchSeen ? "wrong_pitch" : "missed";
@@ -2133,6 +2537,7 @@ export function SightReadingGame() {
         // #endregion
 
         recordPerformanceResult(missed);
+        resetCombo();
         // Clear wrong-pitch tracking once this note is finalized.
         wrongPitchSeenRef.current[i] = false;
         lastWrongPitchRef.current[i] = null;
@@ -2145,9 +2550,17 @@ export function SightReadingGame() {
       const last = allEvents[allEvents.length - 1];
       const micCompletionExtensionMs =
         inputMode === "mic" ? MIC_LATENCY_COMP_MS : 0;
+      // Practice mode widens the primary timing windows (windowEnd, read above), so the
+      // completion-threshold fallback must scale by the same multiplier here — otherwise
+      // the last note's widened Practice window can outlive this check and the exercise
+      // finalizes with an incorrect miss before the window actually closes (Pitfall 5).
+      const completionMissToleranceMs =
+        gradingModeRef.current === GRADING_MODES.PRACTICE
+          ? missToleranceMs * PRACTICE_TIMING.toleranceMultiplier
+          : missToleranceMs;
       const lastEndMs =
         (last?.endTime || last?.startTime || 0) * 1000 +
-        missToleranceMs +
+        completionMissToleranceMs +
         micCompletionExtensionMs;
       if (elapsedMs >= lastEndMs) {
         // #region agent log
@@ -2183,11 +2596,13 @@ export function SightReadingGame() {
     getElapsedMsFromPerformanceStart,
     inputMode,
     recordPerformanceResult,
+    resetCombo,
   ]);
 
   const loadExercisePattern = useCallback(
-    async () => {
+    async (overrideSettings, { skipPreview = false } = {}) => {
       try {
+        const settings = overrideSettings ?? gameSettings;
         audioEngine.stopScheduler();
         rhythmPlayback.stop();
         stopMetronomePlayback();
@@ -2198,20 +2613,22 @@ export function SightReadingGame() {
         }
 
         const pattern = await generatePattern(
-          gameSettings.difficulty,
-          gameSettings.timeSignature,
-          gameSettings.tempo,
-          gameSettings.selectedNotes,
-          gameSettings.clef,
-          gameSettings.measuresPerPattern || 1,
-          gameSettings.rhythmSettings,
-          gameSettings.rhythmComplexity,
-          gameSettings.keySignature || null
+          settings.difficulty,
+          settings.timeSignature,
+          settings.tempo,
+          settings.selectedNotes,
+          settings.clef,
+          settings.measuresPerPattern || 1,
+          settings.rhythmSettings,
+          settings.rhythmComplexity,
+          settings.keySignature || null,
+          settings.noteWeights || null
         );
 
         setCurrentPattern(pattern);
         currentPatternRef.current = pattern;
         setCurrentNoteIndex(0);
+        setPlaybackHighlightIndex(-1);
         setPerformanceResults([]);
         performanceResultsRef.current = [];
         lastDetectionTimesRef.current = {};
@@ -2229,12 +2646,17 @@ export function SightReadingGame() {
 
         setGamePhase(GAME_PHASES.DISPLAY);
 
-        previewPlaybackTimeoutRef.current = setTimeout(() => {
-          previewPlaybackTimeoutRef.current = null;
-          rhythmPlayback.play(pattern.notes, (index) => {
-            setCurrentNoteIndex(index);
-          });
-        }, 500);
+        // On escalation (skipPreview) the LevelUpCue is up: render the notation silently
+        // and let the cue's dismiss handler start the preview ("show cue, then play").
+        // Otherwise auto-play the preview shortly after the notation renders.
+        if (!skipPreview) {
+          previewPlaybackTimeoutRef.current = setTimeout(() => {
+            previewPlaybackTimeoutRef.current = null;
+            rhythmPlayback.play(pattern.notes, (index) => {
+              setCurrentNoteIndex(index);
+            });
+          }, 500);
+        }
       } catch (error) {
         console.error("Error loading exercise pattern:", error);
       }
@@ -2265,10 +2687,12 @@ export function SightReadingGame() {
         if (!resumed) {
           return;
         }
-        // If phase/toggle changed while awaiting audio context resume, bail.
+        // If phase/toggle changed — or the settings overlay opened — while awaiting audio
+        // context resume, bail.
         if (
           startToken !== metronomeStartTokenRef.current ||
           !metronomeEnabledRef.current ||
+          showSettingsModalRef.current ||
           gamePhaseRef.current !== GAME_PHASES.PERFORMANCE
         ) {
           return;
@@ -2321,9 +2745,10 @@ export function SightReadingGame() {
         }
 
         metronomeIntervalRef.current = setInterval(() => {
-          // Stop scheduling immediately if we leave performance or toggle off.
+          // Stop scheduling immediately if we leave performance, toggle off, or open settings.
           if (
             !metronomeEnabledRef.current ||
+            showSettingsModalRef.current ||
             gamePhaseRef.current !== GAME_PHASES.PERFORMANCE
           ) {
             stopMetronomePlayback();
@@ -2362,8 +2787,19 @@ export function SightReadingGame() {
     };
   }, [stopMetronomePlayback]);
 
+  // startMetronomePlayback depends on audioEngine, which is a NEW object every render (see the
+  // note on getElapsedMsFromPerformanceStart), so this effect re-runs on every render. That makes
+  // the condition below the only real source of truth for "is the metronome running": any
+  // imperative stop elsewhere is undone by the very next render, which re-enters this effect and
+  // sees the same state. Hence !showSettingsModal here rather than a stop call in
+  // openSettingsModal — the overlay neither unmounts the game nor changes gamePhase, so without
+  // it the metronome ticks on behind the overlay.
   useEffect(() => {
-    if (metronomeEnabled && gamePhase === GAME_PHASES.PERFORMANCE) {
+    if (
+      metronomeEnabled &&
+      gamePhase === GAME_PHASES.PERFORMANCE &&
+      !showSettingsModal
+    ) {
       startMetronomePlayback(performanceStartAudioTimeRef.current);
     } else {
       stopMetronomePlayback();
@@ -2371,6 +2807,7 @@ export function SightReadingGame() {
   }, [
     metronomeEnabled,
     gamePhase,
+    showSettingsModal,
     startMetronomePlayback,
     stopMetronomePlayback,
   ]);
@@ -2394,6 +2831,11 @@ export function SightReadingGame() {
       return;
     }
     stopMetronomePlayback();
+    // Phase 03 (Issue 2 fix): detect the final exercise from the render snapshot BEFORE
+    // recording (recording is async setState; currentExerciseNumber/sessionTotalExercises
+    // stay at this render's values). On the last exercise, completedExercises is still
+    // total-1 at entry, so currentExerciseNumber === total.
+    const isFinalExercise = currentExerciseNumber >= sessionTotalExercises;
     // Record the exercise result when moving to next (not on Try Again)
     if (summaryStats && !exerciseRecorded) {
       recordSessionExercise(
@@ -2401,9 +2843,94 @@ export function SightReadingGame() {
         SESSION_MAX_EXERCISE_SCORE
       );
       setExerciseRecorded(true);
+
+      // Phase 03 (ADAPT-03): merge this exercise's perNoteAccuracy into the session-scoped
+      // mastery accumulator via pure per-pitch addition. Guarded by the same !exerciseRecorded
+      // check as recordSessionExercise so a Try-Again replay never double-counts.
+      const perNoteThisExercise = summaryStats?.perNoteAccuracy || {};
+      const masteryAcc = sessionMasteryRef.current;
+      for (const [pitch, v] of Object.entries(perNoteThisExercise)) {
+        const prev = masteryAcc[pitch] || { correct: 0, total: 0 };
+        masteryAcc[pitch] = {
+          correct: prev.correct + (v.correct || 0),
+          total: prev.total + (v.total || 0),
+        };
+      }
     }
+
+    // Phase 03 (Issue 2 fix): after the FINAL exercise, stop all playback and transition
+    // to Victory/Encouragement — do NOT compute a next tier, fire the level-up cue, or load
+    // a next pattern. Recording the last result above already flips isSessionComplete, which
+    // drives the render to the result screen; this bail prevents the unconditional
+    // loadExercisePattern from arming a stray preview timeout that would play over it.
+    if (isFinalExercise) {
+      audioEngine.stopScheduler();
+      rhythmPlayback.stop();
+      if (previewPlaybackTimeoutRef.current) {
+        clearTimeout(previewPlaybackTimeoutRef.current);
+        previewPlaybackTimeoutRef.current = null;
+      }
+      goToNextExercise(); // idempotent once complete; marks the session complete
+      return;
+    }
+
+    // Phase 03 (ADAPT-01/02): classify the finished exercise, drive the adaptive streak,
+    // compute the next tier from the Plan 01 engine, and generate the NEXT pattern from the
+    // tier-adapted settings — applied at THIS boundary (N+1), never mid-pattern (D-04/D-07).
+    // Derive missedCount from the just-finished exercise's performanceResults (still in scope;
+    // loadExercisePattern below is what clears it for the next exercise).
+    const missedCount = Array.isArray(performanceResults)
+      ? performanceResults.filter((r) => r && r.isCorrect === false).length
+      : 0;
+    const exerciseAccuracy =
+      summaryStats?.pitchAccuracy ?? summaryStats?.overallScore ?? 0;
+    const isSuccess =
+      exerciseAccuracy >= SUCCESS_ACCURACY && missedCount <= SUCCESS_MAX_MISSES;
+
+    const nextStreak = isSuccess ? successStreakRef.current + 1 : 0;
+    setSuccessStreak(nextStreak);
+
+    const { tierIndex, didEscalate, didRecover } = computeNextTier({
+      successStreak: nextStreak,
+      missRunInLastExercise: missedCount,
+      currentTierIndex: adaptiveTierIndexRef.current,
+    });
+    setAdaptiveTierIndex(tierIndex);
+    if (didEscalate || didRecover) {
+      // Reset the streak after any tier step: escalation into harder content then needs a fresh
+      // ESCALATE_SUCCESS_STREAK of clean runs at/above baseline, and a recovery notch (below
+      // baseline) doesn't silently bank toward escalation.
+      setSuccessStreak(0);
+    }
+    if (didEscalate) {
+      triggerLevelUpCue(); // recovery is silent — only escalation into a harder tier cues a level-up
+    }
+
+    // WR-04 (03-REVIEW.md): fall back to the tier looked up by BASELINE_TIER_INDEX (the
+    // exported constant this module already exposes for exactly this purpose) rather than a
+    // positional ADAPTIVE_TIERS[2] index, which only happens to be the baseline tier today
+    // because of the array's current literal ordering and would silently resolve to the wrong
+    // tier if ADAPTIVE_TIERS is ever reordered or extended.
+    const tier =
+      ADAPTIVE_TIERS.find((tierDef) => tierDef.index === tierIndex) ??
+      ADAPTIVE_TIERS.find((tierDef) => tierDef.index === BASELINE_TIER_INDEX);
+    const base = baseAdaptiveSettingsRef.current || gameSettings;
+    const adaptedSettings = applyTierToSettings(
+      base,
+      tier,
+      nodeSupersetNotesRef.current
+    );
+    setGameSettings(adaptedSettings);
+
     goToNextExercise();
-    loadExercisePattern();
+    // Phase 03 (Issue 1b fix): on escalation, load the notation silently (skipPreview) while
+    // the level-up cue is up; the cue's dismiss handler (handleLevelUpDismiss) starts the
+    // preview once the child taps through. Non-escalation advances with the normal ~500ms
+    // auto-preview.
+    loadExercisePattern(
+      adaptedSettings,
+      didEscalate ? { skipPreview: true } : undefined
+    );
   }, [
     loadExercisePattern,
     goToNextExercise,
@@ -2412,14 +2939,44 @@ export function SightReadingGame() {
     exerciseRecorded,
     recordSessionExercise,
     stopMetronomePlayback,
+    performanceResults,
+    successStreakRef,
+    setSuccessStreak,
+    adaptiveTierIndexRef,
+    setAdaptiveTierIndex,
+    triggerLevelUpCue,
+    gameSettings,
+    setGameSettings,
+    currentExerciseNumber,
+    sessionTotalExercises,
+    audioEngine,
+    rhythmPlayback,
   ]);
 
   const handleStartNewSession = useCallback(() => {
+    // Session boundary (D-05): unlock the grading mode so the pill is selectable again.
+    unlockMode();
     stopMetronomePlayback();
     resetSession();
     startSession();
+    // Phase 03 (ADAPT-01/02/03, CR-02 fix — see 03-REVIEW.md): this handler bypasses
+    // startGame()'s `!currentPattern` reset guard entirely (currentPattern is never nulled
+    // here), so without an explicit reset both session-scoped refs would leak the JUST-FINISHED
+    // session's values into the new one — re-merging already-persisted sessionMastery counts on
+    // top of the new session's, double-counting note_mastery.total/.correct in the DB. Mirrors
+    // the reset returnToSetup gets "for free" by nulling currentPattern (which re-arms
+    // startGame's guard on the next startGame() call).
+    baseAdaptiveSettingsRef.current = null;
+    sessionMasteryRef.current = {};
+    encouragementMasterySavedRef.current = false;
     loadExercisePattern();
-  }, [loadExercisePattern, resetSession, startSession, stopMetronomePlayback]);
+  }, [
+    loadExercisePattern,
+    resetSession,
+    startSession,
+    stopMetronomePlayback,
+    unlockMode,
+  ]);
 
   /**
    * Replay the same pattern (Try Again)
@@ -2431,6 +2988,7 @@ export function SightReadingGame() {
     stopMetronomePlayback();
     // Reset states
     setCurrentNoteIndex(0);
+    setPlaybackHighlightIndex(-1);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
@@ -2467,6 +3025,134 @@ export function SightReadingGame() {
     penaltyLockRef.current = false;
     replayPattern();
   }, [replayPattern]);
+
+  /**
+   * DISPLAY-phase replay (PRAC-01, D-07/D-10/D-11): plays the exercise again, on demand,
+   * unlimited times (D-08). Byte-for-byte the auto-play call scheduled by
+   * loadExercisePattern — no count-in, no click track. Clears any still-pending
+   * auto-play timeout first so a fast tap can never double-play (D-11).
+   */
+  const handleReplayPreview = useCallback(() => {
+    const pattern = currentPatternRef.current;
+    if (!pattern || gamePhaseRef.current !== GAME_PHASES.DISPLAY) return;
+    if (previewPlaybackTimeoutRef.current) {
+      clearTimeout(previewPlaybackTimeoutRef.current);
+      previewPlaybackTimeoutRef.current = null;
+    }
+    rhythmPlayback.play(pattern.notes, (index) => {
+      setCurrentNoteIndex(index);
+    });
+  }, [rhythmPlayback]);
+
+  // Phase 03 (playtest follow-up): dismissing the escalation cue closes it and then starts
+  // the next exercise's preview ("show cue, then play"). handleReplayPreview no-ops unless
+  // we're in DISPLAY with a loaded pattern, so a too-early tap simply skips the auto-preview.
+  const handleLevelUpDismiss = useCallback(() => {
+    setShowLevelUpCue(false);
+    handleReplayPreview();
+  }, [handleReplayPreview]);
+
+  /**
+   * FEEDBACK-phase played-vs-correct comparison (PRAC-02, D-13/D-14): reconstructs the
+   * child's rendition from performanceResults, plays it, then chains the correct pattern
+   * on useRhythmPlayback's onComplete end-of-pattern callback — never onBeatChange(-1)
+   * (which fires immediately during the scheduling lead-in, not at end-of-pattern) and
+   * never a bare setTimeout duration guess (which would drift against the audio clock).
+   * Drives a moving staff outline via playbackHighlightIndex on each pass. If everything
+   * was missed ("yours" is empty), skips pass 1 and plays only the correct pattern.
+   */
+  const startComparison = useCallback(async () => {
+    const pattern = currentPatternRef.current;
+    if (!pattern) return;
+    // The Compare tap is a user gesture — resume the audio context the same way
+    // beginPerformanceWithPattern does before scheduling any playback.
+    await audioEngine.resumeAudioContext();
+
+    const yours = buildPlayedRendition(
+      pattern.notes,
+      performanceResultsRef.current
+    );
+
+    const playPass = (notes, mapIndex, onDone) => {
+      const started = rhythmPlayback.play(
+        notes,
+        (index) =>
+          setPlaybackHighlightIndex(index === -1 ? -1 : mapIndex(index)),
+        onDone
+      );
+      // play() bails without ever firing onComplete if the audio context is gone; don't
+      // strand the chain with the "Yours" label stuck on screen.
+      if (!started) onDone();
+    };
+
+    const playCorrectPass = () => {
+      setComparisonPass("correct");
+      playPass(
+        pattern.notes,
+        (i) => i,
+        () => {
+          setPlaybackHighlightIndex(-1);
+          setComparisonPass(null);
+        }
+      );
+    };
+
+    if (yours.length === 0) {
+      // Everything missed — nothing to compare against, play only the correct pass.
+      playCorrectPass();
+      return;
+    }
+
+    setComparisonPass("yours");
+    playPass(
+      yours,
+      (i) => yours[i]?.noteIndex ?? -1,
+      () => playCorrectPass()
+    );
+  }, [audioEngine, rhythmPlayback]);
+
+  /**
+   * Enter the Review-mistakes drill (PRAC-04) from FEEDBACK's Review button. Starts the
+   * drill's local state machine and manages the mic lifecycle: in mic mode, the button tap
+   * is the required user gesture to (re)start listening. The first target's audition is
+   * deferred until the mic is confirmed listening AND armed behind the audition guard
+   * (see playReviewTarget) so it can never self-advance the drill.
+   */
+  const handleEnterReview = useCallback(() => {
+    reviewDrill.start();
+    setGamePhase(GAME_PHASES.REVIEW);
+    if (inputMode === "mic") {
+      startListeningSync()
+        .then(() => {
+          playReviewTarget();
+        })
+        .catch(() => {
+          // Mic failed to start — the drill still works via keyboard/on-screen input in
+          // this low-stakes, unscored context (D-17); no error overlay is wired here.
+        });
+    } else {
+      playReviewTarget();
+    }
+  }, [reviewDrill, inputMode, startListeningSync, playReviewTarget]);
+
+  /**
+   * Exit the Review-mistakes drill back to FEEDBACK. The recorded score/summary is
+   * untouched (D-17) — this only stops the mic (mic mode) and returns the phase.
+   */
+  const handleExitReview = useCallback(() => {
+    if (inputMode === "mic") {
+      stopListeningSync();
+    }
+    setGamePhase(GAME_PHASES.FEEDBACK);
+  }, [inputMode, stopListeningSync]);
+
+  // Auto-exit once every mistake has been drilled. ReviewDrillPanel's "done" state still
+  // renders an explicit Exit CTA as a fallback in case this effect hasn't fired yet.
+  useEffect(() => {
+    if (gamePhase === GAME_PHASES.REVIEW && reviewDrill.isComplete) {
+      handleExitReview();
+    }
+  }, [gamePhase, reviewDrill.isComplete, handleExitReview]);
 
   /**
    * Mic error overlay: retry handler
@@ -2524,6 +3210,8 @@ export function SightReadingGame() {
    * Return to setup screen
    */
   const returnToSetup = useCallback(() => {
+    // Session boundary (D-05): unlock the grading mode so the pill is selectable again.
+    unlockMode();
     // Stop any audio
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
@@ -2533,6 +3221,7 @@ export function SightReadingGame() {
     setCurrentPattern(null);
     currentPatternRef.current = null;
     setCurrentNoteIndex(-1);
+    setPlaybackHighlightIndex(-1);
     setPerformanceResults([]);
     performanceResultsRef.current = [];
     setDetectedPitches([]);
@@ -2556,6 +3245,7 @@ export function SightReadingGame() {
     stopCountInVisualization,
     resetSession,
     startSession,
+    unlockMode,
   ]);
 
   // Trail-mode settings gear: open a focused in-game settings overlay instead of
@@ -2564,9 +3254,19 @@ export function SightReadingGame() {
   // which is declared later — safe here since it's only invoked at runtime, never in
   // a dependency array evaluated during render.
   const openSettingsModal = () => {
+    // Session boundary (D-05): unlock the grading mode so the pill is selectable again.
+    unlockMode();
     // Stop audio/mic so nothing plays or is detected behind the overlay
     audioEngine.stopScheduler();
     rhythmPlayback.stop();
+    // Belt-and-braces: showSettingsModal is what actually stops the metronome (its start/stop
+    // effect re-runs every render and gates on it — an imperative stop here alone would be undone
+    // by the very next render). This just kills the interval a tick sooner.
+    stopMetronomePlayback();
+    // Abort any pending count-in→performance transition so the phase can't flip behind the
+    // overlay. Note: count-in clicks are one-shot oscillators scheduled up to a measure ahead —
+    // already-scheduled ones still sound; only the interval-driven performance metronome stops.
+    clearCountInTimeouts();
     stopCountInVisualization();
     stopListeningSync();
     setShowSettingsModal(true);
@@ -2574,6 +3274,13 @@ export function SightReadingGame() {
 
   const handleApplySettings = (newSettings) => {
     setShowSettingsModal(false);
+    // WR-02 (03-REVIEW.md): a mid-session gear-icon settings change is USER-initiated — distinct
+    // from the tier-driven adaptive changes that intentionally leave this baseline untouched
+    // mid-session so successive tier deltas never compound (see startGame's `!currentPattern`
+    // guard, which is false here since a pattern is already loaded). Without this, the next
+    // "Next Exercise" boundary would recompute tempo from the STALE session-start baseline +
+    // tier delta, silently discarding the tempo/rhythm the user just chose via the gear icon.
+    baseAdaptiveSettingsRef.current = { ...newSettings };
     // startGame applies the (curriculum notes/clef preserved) settings and regenerates
     // the pattern, so the exercise restarts at the new tempo/rhythm.
     startGame(newSettings);
@@ -2983,6 +3690,7 @@ export function SightReadingGame() {
       forcePerformanceWallClockRef.current = false;
       setCurrentBeat(0);
       setCurrentNoteIndex(0);
+      setPlaybackHighlightIndex(-1);
       setPerformanceResults([]);
       performanceResultsRef.current = [];
       lastDetectionTimesRef.current = {};
@@ -2991,6 +3699,10 @@ export function SightReadingGame() {
       // Start count-in phase
       resetPerformanceLiveState();
       setGamePhase(GAME_PHASES.COUNT_IN);
+      // Lock the grading mode for the rest of the session (D-05) — the pill stays
+      // disabled until a genuine session boundary (handleStartNewSession/returnToSetup/
+      // openSettingsModal) calls unlockMode(). Idempotent across exercises.
+      lockMode();
 
       // Ensure audio context is running before scheduling
       await ensureAudioContextRunning();
@@ -3259,6 +3971,7 @@ export function SightReadingGame() {
     startListeningSync,
     rhythmPlayback,
     t,
+    lockMode,
   ]);
 
   /**
@@ -3270,6 +3983,20 @@ export function SightReadingGame() {
 
       if (overrideSettings) {
         setGameSettings(overrideSettings);
+      }
+
+      // Phase 03 (ADAPT-01/02): capture the pristine adaptive baseline once, at true session
+      // start (currentPattern is null — no exercise has been generated yet this session).
+      // Mid-session gear-icon settings changes (openSettingsModal -> handleApplySettings /
+      // handleCancelSettings) also call startGame, but by then currentPattern is already set,
+      // so they intentionally do NOT reset this baseline (never compounding across tiers).
+      if (!currentPattern) {
+        baseAdaptiveSettingsRef.current = { ...currentSettings };
+        // Phase 03 (ADAPT-03): reset the session mastery accumulator at true session start only
+        // (never on mid-session gear-icon settings changes, matching baseAdaptiveSettingsRef).
+        sessionMasteryRef.current = {};
+        // WR-01 (03-REVIEW.md): also re-arm the encouragement-screen fire-and-forget save guard.
+        encouragementMasterySavedRef.current = false;
       }
 
       try {
@@ -3292,7 +4019,8 @@ export function SightReadingGame() {
           currentSettings.measuresPerPattern || 1,
           currentSettings.rhythmSettings,
           currentSettings.rhythmComplexity,
-          currentSettings.keySignature || null
+          currentSettings.keySignature || null,
+          currentSettings.noteWeights || null
         );
 
         // Use flushSync to ensure pattern state updates complete BEFORE phase transition
@@ -3301,6 +4029,7 @@ export function SightReadingGame() {
           setCurrentPattern(pattern);
           currentPatternRef.current = pattern;
           setCurrentNoteIndex(0);
+          setPlaybackHighlightIndex(-1);
           setPerformanceResults([]);
           performanceResultsRef.current = [];
           lastDetectionTimesRef.current = {};
@@ -3322,7 +4051,14 @@ export function SightReadingGame() {
         rhythmPlayback.stop();
       }
     },
-    [gameSettings, audioEngine, generatePattern, rhythmPlayback, t]
+    [
+      gameSettings,
+      audioEngine,
+      generatePattern,
+      rhythmPlayback,
+      t,
+      currentPattern,
+    ]
   );
 
   // IOS-02: Handle user-gesture tap-to-start for trail auto-start when AudioContext was suspended
@@ -3337,8 +4073,19 @@ export function SightReadingGame() {
     hasAutoConfigured.current = true;
     const trailSettings = buildTrailSettingsFromNode(nodeConfig);
     setGameSettings(trailSettings);
-    setTimeout(() => startGame(trailSettings), 50);
-  }, [audioContextRef, nodeConfig, startGame, buildTrailSettingsFromNode]);
+    // Phase 03 (ADAPT-03): same mastery-biased seeding as the primary trail auto-start effect,
+    // so exercise 1 is biased on the iOS gesture-gated path too (Rule 2 — this path would
+    // otherwise silently never read mastery, since it bypasses the effect above entirely).
+    const seededSettings = await seedMasteryBiasedSettings(trailSettings);
+    setGameSettings(seededSettings);
+    setTimeout(() => startGame(seededSettings), 50);
+  }, [
+    audioContextRef,
+    nodeConfig,
+    startGame,
+    buildTrailSettingsFromNode,
+    seedMasteryBiasedSettings,
+  ]);
 
   // IOS-01/03: Freeze session timer when AudioContext is interrupted.
   // Resuming is owned entirely by the phase-based effect above (it already resumes whenever
@@ -3347,6 +4094,9 @@ export function SightReadingGame() {
   // child-safety inactivity timer during active gameplay, since gamePhase itself hasn't changed
   // and the phase effect wouldn't re-run to re-pause it. gamePhase is in the deps so this
   // doesn't act on a stale phase captured from the last time isInterrupted changed.
+  // GAME_PHASES.REVIEW is treated as active here the same way PERFORMANCE is — it is only
+  // excluded by naming SETUP/FEEDBACK, so an interruption during the review-mistakes drill
+  // correctly pauses the timer too (Pitfall 4).
   useEffect(() => {
     if (
       isInterrupted &&
@@ -3484,6 +4234,8 @@ export function SightReadingGame() {
           totalExercises={trailTotalExercises}
           exerciseType={trailExerciseType}
           onNextExercise={handleNextTrailExercise}
+          suppressPersistence={isPracticeMode}
+          sessionMastery={sessionMasteryRef.current}
         />
       </div>
     );
@@ -3608,6 +4360,15 @@ export function SightReadingGame() {
 
       {/* Right Controls: Score + BPM + Icons */}
       <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2">
+        {/* Combo / On-Fire (HUD-01, HUD-03) */}
+        {isOnFire && (
+          <div aria-label={t("games.engagement.onFire")}>
+            <OnFireBadge active={isOnFire} />
+          </div>
+        )}
+        <div role="status" aria-label={t("games.engagement.combo")}>
+          <ComboPill combo={combo} isOnFire={isOnFire} />
+        </div>
         {/* Score Pill */}
         <ScorePill
           value={Math.round(sessionTotalScore)}
@@ -3617,6 +4378,28 @@ export function SightReadingGame() {
         <div className="hidden items-center rounded-lg border border-white/20 bg-white/10 px-2 py-1 text-xs font-semibold text-white/90 sm:flex">
           {t("sightReading.bpm", { value: gameSettings.tempo })}
         </div>
+
+        {/* Practice/Test grading-mode pill (D-02/D-03/D-05) */}
+        <button
+          type="button"
+          onClick={() =>
+            setGradingMode(
+              isPracticeMode ? GRADING_MODES.TEST : GRADING_MODES.PRACTICE
+            )
+          }
+          disabled={isModeLocked}
+          aria-label={t("sightReading.controls.modeToggleLabel")}
+          aria-pressed={isPracticeMode}
+          className={`rounded-lg border px-2 py-1 text-xs font-semibold transition-colors ${
+            isPracticeMode
+              ? "border-fuchsia-400/40 bg-fuchsia-500 text-white hover:bg-fuchsia-600"
+              : "border-white/20 bg-white/10 text-white/90 hover:bg-white/20"
+          } ${isModeLocked ? "cursor-not-allowed opacity-60" : ""}`}
+        >
+          {isPracticeMode
+            ? t("sightReading.controls.modePractice")
+            : t("sightReading.controls.modeTest")}
+        </button>
 
         {/* Input Mode Selector Button - shows icon of mode you can switch TO */}
         {currentPattern && gamePhase !== GAME_PHASES.SETUP && (
@@ -3682,7 +4465,17 @@ export function SightReadingGame() {
 
   const guidanceRegion =
     gamePhase === GAME_PHASES.DISPLAY ? (
-      <div className="my-2 flex-shrink-0 text-center">
+      // Order: secondary "Hear it again" first, green "Start Playing" (proceed) last — so
+      // the green proceed button lands on the physical left in RTL (Hebrew), matching the
+      // FeedbackSummary advance button convention (green advance = last DOM child).
+      <div className="my-2 flex flex-shrink-0 items-center justify-center gap-2 text-center">
+        <button
+          onClick={handleReplayPreview}
+          disabled={!currentPattern}
+          className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-3 sm:text-base"
+        >
+          {t("sightReading.controls.replay")}
+        </button>
         <button
           onClick={() => beginPerformanceWithPattern()}
           disabled={!currentPattern || isStartingPerformance}
@@ -3716,12 +4509,23 @@ export function SightReadingGame() {
           </span>
         )}
       </div>
+    ) : gamePhase === GAME_PHASES.REVIEW ? (
+      <ReviewDrillPanel
+        current={reviewDrill.currentMistakeIndex + 1}
+        total={reviewDrill.total}
+        targetNote={getNoteLabel(reviewDrill.currentTarget?.pitch)}
+        onPlayTarget={playReviewTarget}
+        onSkip={reviewDrill.skip}
+        onExit={handleExitReview}
+        isComplete={reviewDrill.isComplete}
+      />
     ) : null;
 
   const showPlayableKeyboardBand =
     (gamePhase === GAME_PHASES.DISPLAY ||
       gamePhase === GAME_PHASES.COUNT_IN ||
-      gamePhase === GAME_PHASES.PERFORMANCE) &&
+      gamePhase === GAME_PHASES.PERFORMANCE ||
+      gamePhase === GAME_PHASES.REVIEW) &&
     shouldShowKeyboard;
 
   const keyboardRegion = showPlayableKeyboardBand ? (
@@ -3747,10 +4551,16 @@ export function SightReadingGame() {
         performanceResults={performanceResults}
         gamePhase={gamePhase}
         keySignature={gameSettings.keySignature || null}
+        playbackHighlightIndex={playbackHighlightIndex}
       />
     </div>
   ) : null;
 
+  // Phase 03 (playtest follow-up): on the last exercise's feedback screen the advance
+  // button ends the session, so label it with a kid-friendly "finish" instead of "Next
+  // Exercise". Recording happens on click, so currentExerciseNumber still equals the total
+  // here on the final exercise.
+  const isFinalExercise = currentExerciseNumber >= sessionTotalExercises;
   const feedbackPanel = isFeedbackPhase ? (
     <>
       <FeedbackSummary
@@ -3760,9 +4570,17 @@ export function SightReadingGame() {
         summaryStats={summaryStats}
         onTryAgain={replayPattern}
         onNextPattern={handleNextExercise}
-        nextButtonLabel={t("sightReading.nextExercise")}
+        nextButtonLabel={
+          isFinalExercise
+            ? t("sightReading.finishSession")
+            : t("sightReading.nextExercise")
+        }
         nextButtonDisabled={isSessionComplete}
         showNextButton={!isSessionComplete}
+        gradingMode={gradingMode}
+        onCompare={startComparison}
+        onReview={handleEnterReview}
+        comparisonPass={comparisonPass}
       />
 
       {isSessionComplete && (
@@ -3903,6 +4721,9 @@ export function SightReadingGame() {
           </div>
         </div>
       )}
+
+      {/* Adaptive difficulty escalation cue (ADAPT-01/02, D-12: positive-only — easing is silent) */}
+      <LevelUpCue show={showLevelUpCue} onDismiss={handleLevelUpDismiss} />
 
       {/* Audio Interrupted Overlay — shown on iOS Safari after phone call, app switch, lock screen */}
       <AudioInterruptedOverlay

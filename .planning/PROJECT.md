@@ -14,6 +14,18 @@ A piano learning PWA for 8-year-old learners with a Duolingo-style skill progres
 
 These capabilities exist, are working, and have been shipped:
 
+**v3.7 Sight-Reading Engagement & Pedagogy (shipped 2026-07-18):**
+
+- HUD-01/HUD-03: session-wide, live note-by-note combo (`ComboPill`) + on-fire badge reusing v3.6 shared HUD components (on-fire full-screen splash removed post-UAT — obstructed the staff)
+- PRAC-01: on-demand "hear it again" replay during the read/display phase
+- PRAC-03: Practice vs Test grading mode (lenient vs strict timing tolerances), session-locked at count-in
+- PRAC-04: Review-mistakes drill stepping through only wrong/missed notes (keyboard + mic)
+- ADAPT-01/ADAPT-02: in-session adaptive difficulty + tempo (5-tier ladder, one-good-round recovery, hard 60 BPM floor)
+- ADAPT-03/ADAPT-04: cross-session per-note mastery persisted to a `note_mastery` JSONB field under existing student RLS (dedicated `/gsd-secure-phase` pass, 12/12 threats closed)
+- I18N-01: all new sight-reading strings in EN+HE with RTL parity (59/59 keys, parity-gated)
+- Deferred: HUD-02 (lives/game-over — punishes rather than motivates in a high-cognitive-load game); PRAC-02 (played-vs-correct comparison — built and device-verified, hidden as too busy for 8-year-olds, `SHOW_COMPARE_FEATURE` one-line re-enable)
+- Milestone audit PASSED (10/12 requirements shipped, 2 deferred; 9/9 integration seams, 5/5 E2E flows). Open at close: PRAC-04 mic-review device UAT (accepted). Ships via PR #13.
+
 **v1.5 Trail Page Visual Redesign (shipped 2026-02-12):**
 
 - Enchanted forest CSS-only background with starfield, glow orbs, and multi-layer gradients
@@ -302,7 +314,19 @@ These capabilities exist, are working, and have been shipped:
 
 ### Active
 
-- _None._ v3.5 Rhythm Pedagogy shipped 2026-06-29 (owner gates closed). Awaiting next-milestone definition via `/gsd-new-milestone`.
+- **v3.7 Sight-Reading Engagement & Pedagogy** — see `## Current Milestone` below and `.planning/REQUIREMENTS.md`. Turns the correctness/perf/feedback-hardened sight-reading game (Phases A–C, PRs #10/#11/#12) into an elite learning experience: engagement HUD parity, practice tooling (replay / practice-vs-test / review-mistakes), and adaptive per-note-mastery pedagogy.
+
+## Current Milestone: v3.7 Sight-Reading Engagement & Pedagogy
+
+**Goal:** Turn the now-correct, performant, feedback-wired sight-reading game into an elite learning experience — engagement parity with the sibling games plus adaptive, mastery-driven pedagogy. (Phase D of the sight-reading deep audit; Phases A/B/C shipped as PRs #10/#11/#12.)
+
+**Target features (owner-agreed 3-phase split):**
+
+- **P1 — Engagement HUD parity (no DB):** combo / lives / on-fire, reusing the shared HUD components extracted in v3.6 (`UX-4`). Validated in Phase 01 (2026-07-09) — live session-wide combo + on-fire HUD shipped; lives/game-over deferred (no business upside for subscription-gated content; see 01-CONTEXT.md D-01/D-02).
+- **P2 — Practice tooling (no DB):** "hear it again" + played-vs-correct replay (feature 5); Practice vs Test mode with lenient/strict timing tolerances (feature 6); Review-mistakes mode stepping through only wrong/missed notes (feature 7). Validated in Phase 02 (2026-07-10) — all three features shipped (PRAC-01/02/03/04 + I18N-01); code review found and fixed 2 critical bugs (comparison-playback highlight leak, Practice-mode multi-exercise flow break); 4 device-verification items deferred and tracked in 02-HUMAN-UAT.md per established project pattern.
+- **P3 — Adaptive pedagogy (needs Supabase):** in-session progressive difficulty (feature 8); adaptive tempo (feature 9); persist per-note mastery via a JSONB addition on progress rows (feature 10). Validated in Phase 03 (2026-07-12) — `note_mastery` JSONB column live on production `student_skill_progress` (owner-approved apply, verified via MCP); adaptive tier/tempo escalation and cross-session weak-note targeting shipped (ADAPT-01/02/03); code review caught and fixed 2 critical bugs (weak-note weighting silently discarded by the pattern generator's dedup; mastery double-counted on "Play Again"/"Try Again") plus 5 warnings, all with fail-then-pass regression tests. ADAPT-04 (final RLS confirmation) intentionally deferred to its own `/gsd-secure-phase` pass.
+
+**Key context:** Source plan `~/.claude/plans/analyze-the-entire-codebase-valiant-hejlsberg.md` (Phase D, §"Missing Features" 5–10). P1/P2 are pure client work reusing existing infra — `timingStatus` already carries early/late, `performanceResults` carries `noteIndex`, and `perNoteAccuracy` is already computed per exercise then discarded. Only P3 touches the DB.
 
 ## Planning Next Milestone
 
@@ -662,4 +686,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-06-29 — v3.5 Rhythm Pedagogy (Phase 01) shipped and archived (owner gates D-13 + SC-9 closed; milestone audit PASSED). No active milestone; next via `/gsd-new-milestone`._
+_Last updated: 2026-07-18 after v3.7 milestone — Sight-Reading Engagement & Pedagogy shipped (10/12 requirements; HUD-02 + PRAC-02 deferred). Phase 02 device UAT completed at close (items 1/3/4 pass; mic-review item 2 accepted-open). Milestone audit PASSED; secure-phase 03 closed 12/12 threats. Ships via PR #13._

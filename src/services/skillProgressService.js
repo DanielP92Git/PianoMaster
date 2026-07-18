@@ -4,12 +4,38 @@
  * Handles CRUD operations for student skill trail progress
  */
 
-import supabase from './supabase';
-import { verifyStudentDataAccess } from './authorizationUtils';
-import { isNodeUnlocked, getUnlockedNodes } from '../data/skillTrail';
-import { checkRateLimit } from './rateLimitService';
-import { isFreeNode } from '../config/subscriptionConfig';
-import { Sentry } from './sentryService';
+import supabase from "./supabase";
+import { verifyStudentDataAccess } from "./authorizationUtils";
+import { isNodeUnlocked, getUnlockedNodes } from "../data/skillTrail";
+import { checkRateLimit } from "./rateLimitService";
+import { isFreeNode } from "../config/subscriptionConfig";
+import { Sentry } from "./sentryService";
+
+/**
+ * Merge a per-pitch mastery delta into an existing note_mastery map via pure addition
+ * (Phase 03 ADAPT-03/D-10). Shared by updateNodeProgress, updateExerciseProgress, and
+ * mergeNoteMasteryOnly (WR-01, 03-REVIEW.md) so the same validation rules (non-negative
+ * integers, correct <= total) apply everywhere note_mastery is written.
+ * @param {Object} existingMastery - Current note_mastery map, e.g. { "C4": { correct, total } }
+ * @param {Object} perNoteMastery - Delta to merge in, same shape
+ * @returns {Object} New merged map (does not mutate existingMastery)
+ */
+const mergeMasteryDelta = (existingMastery, perNoteMastery) => {
+  const merged = { ...(existingMastery || {}) };
+  for (const [pitch, delta] of Object.entries(perNoteMastery || {})) {
+    const dCorrect = Number(delta?.correct);
+    const dTotal = Number(delta?.total);
+    // V5 input validation: non-negative integers, correct <= total, else skip this pitch.
+    if (!Number.isInteger(dCorrect) || !Number.isInteger(dTotal)) continue;
+    if (dCorrect < 0 || dTotal < 0 || dCorrect > dTotal) continue;
+    const prev = merged[pitch] || { correct: 0, total: 0 };
+    merged[pitch] = {
+      correct: prev.correct + dCorrect,
+      total: prev.total + dTotal,
+    };
+  }
+  return merged;
+};
 
 /**
  * Calculate stars based on score percentage
@@ -32,15 +58,15 @@ export const getStudentProgress = async (studentId) => {
   await verifyStudentDataAccess(studentId);
   try {
     const { data, error } = await supabase
-      .from('student_skill_progress')
-      .select('*')
-      .eq('student_id', studentId)
-      .order('last_practiced', { ascending: false });
+      .from("student_skill_progress")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("last_practiced", { ascending: false });
 
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error fetching student progress:', error);
+    console.error("Error fetching student progress:", error);
     throw error;
   }
 };
@@ -55,10 +81,10 @@ export const getNodeProgress = async (studentId, nodeId) => {
   await verifyStudentDataAccess(studentId);
   try {
     const { data, error } = await supabase
-      .from('student_skill_progress')
-      .select('*')
-      .eq('student_id', studentId)
-      .eq('node_id', nodeId)
+      .from("student_skill_progress")
+      .select("*")
+      .eq("student_id", studentId)
+      .eq("node_id", nodeId)
       .maybeSingle();
 
     if (error) {
@@ -66,7 +92,7 @@ export const getNodeProgress = async (studentId, nodeId) => {
     }
     return data || null;
   } catch (error) {
-    console.error('Error fetching node progress:', error);
+    console.error("Error fetching node progress:", error);
     throw error;
   }
 };
@@ -79,9 +105,18 @@ export const getNodeProgress = async (studentId, nodeId) => {
  * @param {number} score - Score percentage achieved (0-100)
  * @param {Object} options - Optional configuration
  * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
+ * @param {Object|null} perNoteMastery - Optional per-pitch delta { "C4": { correct, total }, ... } merged
+ *   into note_mastery via pure addition (Phase 03 ADAPT-03/D-10). Omit for byte-for-byte legacy behavior.
  * @returns {Promise<Object>} Updated progress record, or { rateLimited: true, resetTime } if rate limited
  */
-export const updateNodeProgress = async (studentId, nodeId, stars, score, options = {}) => {
+export const updateNodeProgress = async (
+  studentId,
+  nodeId,
+  stars,
+  score,
+  options = {},
+  perNoteMastery = null
+) => {
   await verifyStudentDataAccess(studentId);
   try {
     // Check rate limit before saving (teachers bypass via options.skipRateLimit)
@@ -91,13 +126,23 @@ export const updateNodeProgress = async (studentId, nodeId, stars, score, option
       if (!rateLimitResult.allowed) {
         return {
           rateLimited: true,
-          resetTime: rateLimitResult.resetTime
+          resetTime: rateLimitResult.resetTime,
         };
       }
     }
 
     // Get existing progress
     const existingProgress = await getNodeProgress(studentId, nodeId);
+
+    // Phase 03 (ADAPT-03/D-10): merge per-pitch mastery deltas into note_mastery via pure addition.
+    // No-op unless a delta is supplied (shared service — other games must be unaffected).
+    let mergedMastery; // stays undefined => note_mastery key omitted from progressData
+    if (perNoteMastery && typeof perNoteMastery === "object") {
+      mergedMastery = mergeMasteryDelta(
+        existingProgress?.note_mastery,
+        perNoteMastery
+      );
+    }
 
     const progressData = {
       student_id: studentId,
@@ -107,18 +152,20 @@ export const updateNodeProgress = async (studentId, nodeId, stars, score, option
       exercises_completed: existingProgress
         ? existingProgress.exercises_completed + 1
         : 1,
-      last_practiced: new Date().toISOString()
+      last_practiced: new Date().toISOString(),
+      ...(mergedMastery ? { note_mastery: mergedMastery } : {}),
     };
 
     // If there's existing progress, only update if new score is better
     if (existingProgress) {
       const shouldUpdate =
-        score > existingProgress.best_score ||
-        stars > existingProgress.stars;
+        score > existingProgress.best_score || stars > existingProgress.stars;
 
       if (shouldUpdate) {
         progressData.stars = Math.max(stars, existingProgress.stars);
-        progressData.best_score = Math.round(Math.max(score, existingProgress.best_score));
+        progressData.best_score = Math.round(
+          Math.max(score, existingProgress.best_score)
+        );
       } else {
         progressData.stars = existingProgress.stars;
         progressData.best_score = existingProgress.best_score;
@@ -127,9 +174,9 @@ export const updateNodeProgress = async (studentId, nodeId, stars, score, option
 
     // Upsert (update or insert)
     const { data, error } = await supabase
-      .from('student_skill_progress')
+      .from("student_skill_progress")
       .upsert(progressData, {
-        onConflict: 'student_id,node_id'
+        onConflict: "student_id,node_id",
       })
       .select()
       .maybeSingle();
@@ -137,8 +184,84 @@ export const updateNodeProgress = async (studentId, nodeId, stars, score, option
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error updating node progress:', error);
-    Sentry.captureException(error, { extra: { context: 'updateNodeProgress' } });
+    console.error("Error updating node progress:", error);
+    Sentry.captureException(error, {
+      extra: { context: "updateNodeProgress" },
+    });
+    throw error;
+  }
+};
+
+/**
+ * Merge a per-pitch mastery delta into note_mastery WITHOUT touching stars/best_score/
+ * exercises_completed (WR-01, 03-REVIEW.md).
+ *
+ * updateNodeProgress/updateExerciseProgress only run at session-victory (>=70%) time, so a
+ * struggling ("encouragement") session's per-note telemetry — arguably the most valuable
+ * data for weak-note targeting — was previously discarded entirely. This is deliberately a
+ * separate, lighter-weight path: note_mastery is additive telemetry that biases future note
+ * selection, not a graded outcome. Safe to call fire-and-forget from a non-victory screen.
+ *
+ * Rate limiting (T-03-05, /gsd-secure-phase 03): although the UI fires this at most once per
+ * session (encouragementMasterySavedRef), the exported function is directly client-callable,
+ * so it shares the same per-(student,node) `check_rate_limit` bucket as the victory-path score
+ * write to cap uncapped write frequency to the caller's own row. Because this is telemetry, a
+ * rate-limited call is dropped SILENTLY (returns null) rather than thrown — it never blocks a
+ * graded outcome, and the encouragement (<70%) and victory (>=70%) paths never co-occur in one
+ * session, so sharing the bucket does not starve legitimate score submissions.
+ * @param {string} studentId - The student's ID
+ * @param {string} nodeId - The node ID
+ * @param {Object} perNoteMastery - Per-pitch delta { "C4": { correct, total }, ... }
+ * @returns {Promise<Object|null>} Updated progress record, or null if perNoteMastery was empty
+ *   or the write was rate limited
+ */
+export const mergeNoteMasteryOnly = async (
+  studentId,
+  nodeId,
+  perNoteMastery
+) => {
+  if (
+    !perNoteMastery ||
+    typeof perNoteMastery !== "object" ||
+    Object.keys(perNoteMastery).length === 0
+  ) {
+    return null;
+  }
+  await verifyStudentDataAccess(studentId);
+  const { allowed } = await checkRateLimit(studentId, nodeId);
+  if (!allowed) {
+    // Telemetry write, not a graded outcome — drop silently instead of throwing.
+    return null;
+  }
+  try {
+    const existingProgress = await getNodeProgress(studentId, nodeId);
+    const mergedMastery = mergeMasteryDelta(
+      existingProgress?.note_mastery,
+      perNoteMastery
+    );
+
+    const progressData = {
+      student_id: studentId,
+      node_id: nodeId,
+      note_mastery: mergedMastery,
+      last_practiced: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("student_skill_progress")
+      .upsert(progressData, {
+        onConflict: "student_id,node_id",
+      })
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error merging note mastery:", error);
+    Sentry.captureException(error, {
+      extra: { context: "mergeNoteMasteryOnly" },
+    });
     throw error;
   }
 };
@@ -153,11 +276,9 @@ export const getCompletedNodeIds = async (studentId) => {
   try {
     const progress = await getStudentProgress(studentId);
     // Consider a node completed if it has at least 1 star
-    return progress
-      .filter(p => p.stars > 0)
-      .map(p => p.node_id);
+    return progress.filter((p) => p.stars > 0).map((p) => p.node_id);
   } catch (error) {
-    console.error('Error fetching completed nodes:', error);
+    console.error("Error fetching completed nodes:", error);
     throw error;
   }
 };
@@ -175,14 +296,14 @@ export const getAvailableNodes = async (studentId) => {
 
     // Get progress for each unlocked node
     const progress = await getStudentProgress(studentId);
-    const progressMap = new Map(progress.map(p => [p.node_id, p]));
+    const progressMap = new Map(progress.map((p) => [p.node_id, p]));
 
-    return unlockedNodes.map(node => ({
+    return unlockedNodes.map((node) => ({
       ...node,
-      progress: progressMap.get(node.id) || null
+      progress: progressMap.get(node.id) || null,
     }));
   } catch (error) {
-    console.error('Error fetching available nodes:', error);
+    console.error("Error fetching available nodes:", error);
     throw error;
   }
 };
@@ -204,7 +325,7 @@ export const getNextRecommendedNode = async (studentId, isPremium = false) => {
 
     // Filter out premium-locked nodes for free-tier users
     if (!isPremium) {
-      availableNodes = availableNodes.filter(node => isFreeNode(node.id));
+      availableNodes = availableNodes.filter((node) => isFreeNode(node.id));
     }
 
     if (availableNodes.length === 0) {
@@ -213,17 +334,20 @@ export const getNextRecommendedNode = async (studentId, isPremium = false) => {
 
     // Priority 1: Nodes in progress (started but < 3 stars)
     const inProgressNodes = availableNodes.filter(
-      node => node.progress && node.progress.stars > 0 && node.progress.stars < 3
+      (node) =>
+        node.progress && node.progress.stars > 0 && node.progress.stars < 3
     );
     if (inProgressNodes.length > 0) {
       // Return most recently practiced
-      return inProgressNodes.sort((a, b) =>
-        new Date(b.progress.last_practiced) - new Date(a.progress.last_practiced)
+      return inProgressNodes.sort(
+        (a, b) =>
+          new Date(b.progress.last_practiced) -
+          new Date(a.progress.last_practiced)
       )[0];
     }
 
     // Priority 2: Available nodes not yet started
-    const unstartedNodes = availableNodes.filter(node => !node.progress);
+    const unstartedNodes = availableNodes.filter((node) => !node.progress);
     if (unstartedNodes.length > 0) {
       // Return first by order in each category
       return unstartedNodes.sort((a, b) => a.order - b.order)[0];
@@ -231,7 +355,7 @@ export const getNextRecommendedNode = async (studentId, isPremium = false) => {
 
     // Priority 3: Completed nodes that could be improved (< 3 stars)
     const improvableNodes = availableNodes.filter(
-      node => node.progress && node.progress.stars < 3
+      (node) => node.progress && node.progress.stars < 3
     );
     if (improvableNodes.length > 0) {
       return improvableNodes.sort((a, b) => a.order - b.order)[0];
@@ -240,7 +364,7 @@ export const getNextRecommendedNode = async (studentId, isPremium = false) => {
     // Fallback: Return first available node
     return availableNodes.sort((a, b) => a.order - b.order)[0];
   } catch (error) {
-    console.error('Error getting next recommended node:', error);
+    console.error("Error getting next recommended node:", error);
     throw error;
   }
 };
@@ -257,19 +381,23 @@ export const getTrailStats = async (studentId) => {
 
     return {
       totalNodes: progress.length,
-      nodesWithOneStars: progress.filter(p => p.stars === 1).length,
-      nodesWithTwoStars: progress.filter(p => p.stars === 2).length,
-      nodesWithThreeStars: progress.filter(p => p.stars === 3).length,
+      nodesWithOneStars: progress.filter((p) => p.stars === 1).length,
+      nodesWithTwoStars: progress.filter((p) => p.stars === 2).length,
+      nodesWithThreeStars: progress.filter((p) => p.stars === 3).length,
       totalStars: progress.reduce((sum, p) => sum + p.stars, 0),
-      totalExercisesCompleted: progress.reduce((sum, p) => sum + p.exercises_completed, 0),
-      lastPracticed: progress.length > 0
-        ? progress.sort((a, b) =>
-            new Date(b.last_practiced) - new Date(a.last_practiced)
-          )[0].last_practiced
-        : null
+      totalExercisesCompleted: progress.reduce(
+        (sum, p) => sum + p.exercises_completed,
+        0
+      ),
+      lastPracticed:
+        progress.length > 0
+          ? progress.sort(
+              (a, b) => new Date(b.last_practiced) - new Date(a.last_practiced)
+            )[0].last_practiced
+          : null,
     };
   } catch (error) {
-    console.error('Error fetching trail stats:', error);
+    console.error("Error fetching trail stats:", error);
     throw error;
   }
 };
@@ -286,7 +414,7 @@ export const checkNodeUnlocked = async (studentId, nodeId) => {
     const completedNodeIds = await getCompletedNodeIds(studentId);
     return isNodeUnlocked(nodeId, completedNodeIds);
   } catch (error) {
-    console.error('Error checking node unlock status:', error);
+    console.error("Error checking node unlock status:", error);
     throw error;
   }
 };
@@ -300,13 +428,13 @@ export const resetStudentProgress = async (studentId) => {
   await verifyStudentDataAccess(studentId);
   try {
     const { error } = await supabase
-      .from('student_skill_progress')
+      .from("student_skill_progress")
       .delete()
-      .eq('student_id', studentId);
+      .eq("student_id", studentId);
 
     if (error) throw error;
   } catch (error) {
-    console.error('Error resetting student progress:', error);
+    console.error("Error resetting student progress:", error);
     throw error;
   }
 };
@@ -330,7 +458,7 @@ export const getExerciseProgress = async (studentId, nodeId) => {
     }
     return nodeProgress.exercise_progress;
   } catch (error) {
-    console.error('Error fetching exercise progress:', error);
+    console.error("Error fetching exercise progress:", error);
     throw error;
   }
 };
@@ -342,16 +470,18 @@ export const getExerciseProgress = async (studentId, nodeId) => {
  * @param {number} totalExercises - Total number of exercises in the node
  * @returns {Promise<number|null>} Index of next exercise (0-based), or null if all complete
  */
-export const getNextExerciseIndex = async (studentId, nodeId, totalExercises) => {
+export const getNextExerciseIndex = async (
+  studentId,
+  nodeId,
+  totalExercises
+) => {
   await verifyStudentDataAccess(studentId);
   try {
     const exerciseProgress = await getExerciseProgress(studentId, nodeId);
 
     // Build a set of completed exercise indices
     const completedIndices = new Set(
-      exerciseProgress
-        .filter(ep => ep.stars > 0)
-        .map(ep => ep.index)
+      exerciseProgress.filter((ep) => ep.stars > 0).map((ep) => ep.index)
     );
 
     // Find the first uncompleted exercise
@@ -364,7 +494,7 @@ export const getNextExerciseIndex = async (studentId, nodeId, totalExercises) =>
     // All exercises complete
     return null;
   } catch (error) {
-    console.error('Error getting next exercise index:', error);
+    console.error("Error getting next exercise index:", error);
     throw error;
   }
 };
@@ -380,6 +510,8 @@ export const getNextExerciseIndex = async (studentId, nodeId, totalExercises) =>
  * @param {number} totalExercises - Total number of exercises in the node
  * @param {Object} options - Optional configuration
  * @param {boolean} options.skipRateLimit - If true, skip rate limit check (for teachers)
+ * @param {Object|null} perNoteMastery - Optional per-pitch delta { "C4": { correct, total }, ... } merged
+ *   into note_mastery via pure addition (Phase 03 ADAPT-03/D-10). Omit for byte-for-byte legacy behavior.
  * @returns {Promise<Object>} Updated progress record with node completion status, or { rateLimited: true, resetTime } if rate limited
  */
 export const updateExerciseProgress = async (
@@ -390,7 +522,8 @@ export const updateExerciseProgress = async (
   stars,
   score,
   totalExercises,
-  options = {}
+  options = {},
+  perNoteMastery = null
 ) => {
   await verifyStudentDataAccess(studentId);
   try {
@@ -401,7 +534,7 @@ export const updateExerciseProgress = async (
       if (!rateLimitResult.allowed) {
         return {
           rateLimited: true,
-          resetTime: rateLimitResult.resetTime
+          resetTime: rateLimitResult.resetTime,
         };
       }
     }
@@ -412,7 +545,7 @@ export const updateExerciseProgress = async (
 
     // Find existing exercise entry
     const existingExerciseIdx = exerciseProgressArray.findIndex(
-      ep => ep.index === exerciseIndex
+      (ep) => ep.index === exerciseIndex
     );
 
     const newExerciseEntry = {
@@ -420,7 +553,7 @@ export const updateExerciseProgress = async (
       type: exerciseType,
       stars: stars,
       bestScore: Math.round(score),
-      completedAt: new Date().toISOString()
+      completedAt: new Date().toISOString(),
     };
 
     if (existingExerciseIdx >= 0) {
@@ -428,7 +561,9 @@ export const updateExerciseProgress = async (
       const existing = exerciseProgressArray[existingExerciseIdx];
       if (score > existing.bestScore || stars > existing.stars) {
         newExerciseEntry.stars = Math.max(stars, existing.stars);
-        newExerciseEntry.bestScore = Math.round(Math.max(score, existing.bestScore));
+        newExerciseEntry.bestScore = Math.round(
+          Math.max(score, existing.bestScore)
+        );
       } else {
         newExerciseEntry.stars = existing.stars;
         newExerciseEntry.bestScore = existing.bestScore;
@@ -443,7 +578,9 @@ export const updateExerciseProgress = async (
     exerciseProgressArray.sort((a, b) => a.index - b.index);
 
     // Calculate node-level stats
-    const completedExercises = exerciseProgressArray.filter(ep => ep.stars > 0);
+    const completedExercises = exerciseProgressArray.filter(
+      (ep) => ep.stars > 0
+    );
     const allExercisesComplete = completedExercises.length >= totalExercises;
 
     // Node stars = minimum of all completed exercise stars (only if ALL complete)
@@ -451,13 +588,26 @@ export const updateExerciseProgress = async (
     let nodeBestScore = 0;
 
     if (allExercisesComplete) {
-      nodeStars = Math.min(...completedExercises.map(ep => ep.stars));
-      nodeBestScore = Math.round(Math.min(...completedExercises.map(ep => ep.bestScore)));
+      nodeStars = Math.min(...completedExercises.map((ep) => ep.stars));
+      nodeBestScore = Math.round(
+        Math.min(...completedExercises.map((ep) => ep.bestScore))
+      );
     } else if (completedExercises.length > 0) {
       // If not all complete, node is "in progress" (0 stars until all done)
       // But track the best score as the average so far
       nodeBestScore = Math.round(
-        completedExercises.reduce((sum, ep) => sum + ep.bestScore, 0) / completedExercises.length
+        completedExercises.reduce((sum, ep) => sum + ep.bestScore, 0) /
+          completedExercises.length
+      );
+    }
+
+    // Phase 03 (ADAPT-03/D-10): merge per-pitch mastery deltas into note_mastery via pure addition.
+    // No-op unless a delta is supplied (shared service — other games must be unaffected).
+    let mergedMastery; // stays undefined => note_mastery key omitted from progressData
+    if (perNoteMastery && typeof perNoteMastery === "object") {
+      mergedMastery = mergeMasteryDelta(
+        nodeProgress?.note_mastery,
+        perNoteMastery
       );
     }
 
@@ -468,14 +618,15 @@ export const updateExerciseProgress = async (
       best_score: nodeBestScore,
       exercises_completed: completedExercises.length,
       exercise_progress: exerciseProgressArray,
-      last_practiced: new Date().toISOString()
+      last_practiced: new Date().toISOString(),
+      ...(mergedMastery ? { note_mastery: mergedMastery } : {}),
     };
 
     // Upsert (update or insert)
     const { data, error } = await supabase
-      .from('student_skill_progress')
+      .from("student_skill_progress")
       .upsert(progressData, {
-        onConflict: 'student_id,node_id'
+        onConflict: "student_id,node_id",
       })
       .select()
       .maybeSingle();
@@ -485,10 +636,10 @@ export const updateExerciseProgress = async (
     return {
       ...data,
       nodeComplete: allExercisesComplete,
-      exercisesRemaining: totalExercises - completedExercises.length
+      exercisesRemaining: totalExercises - completedExercises.length,
     };
   } catch (error) {
-    console.error('Error updating exercise progress:', error);
+    console.error("Error updating exercise progress:", error);
     throw error;
   }
 };
@@ -504,10 +655,10 @@ export const isExerciseCompleted = async (studentId, nodeId, exerciseIndex) => {
   await verifyStudentDataAccess(studentId);
   try {
     const exerciseProgress = await getExerciseProgress(studentId, nodeId);
-    const exercise = exerciseProgress.find(ep => ep.index === exerciseIndex);
+    const exercise = exerciseProgress.find((ep) => ep.index === exerciseIndex);
     return exercise ? exercise.stars > 0 : false;
   } catch (error) {
-    console.error('Error checking exercise completion:', error);
+    console.error("Error checking exercise completion:", error);
     throw error;
   }
 };
@@ -522,24 +673,24 @@ export const isExerciseCompleted = async (studentId, nodeId, exerciseIndex) => {
 export const getUnitProgress = async (studentId, unitNumber, category) => {
   await verifyStudentDataAccess(studentId);
   try {
-    const { getNodesInUnit } = await import('../data/skillTrail.js');
+    const { getNodesInUnit } = await import("../data/skillTrail.js");
     const unitNodes = getNodesInUnit(unitNumber, category);
 
     // Get progress for all nodes in unit
     const progress = await getStudentProgress(studentId);
-    const progressMap = new Map(progress.map(p => [p.node_id, p]));
+    const progressMap = new Map(progress.map((p) => [p.node_id, p]));
 
-    const unitProgress = unitNodes.map(node => ({
+    const unitProgress = unitNodes.map((node) => ({
       nodeId: node.id,
       nodeName: node.name,
       stars: progressMap.get(node.id)?.stars || 0,
       bestScore: progressMap.get(node.id)?.best_score || 0,
-      completed: (progressMap.get(node.id)?.stars || 0) > 0
+      completed: (progressMap.get(node.id)?.stars || 0) > 0,
     }));
 
     const totalStars = unitProgress.reduce((sum, n) => sum + n.stars, 0);
     const maxStars = unitNodes.length * 3;
-    const completedNodes = unitProgress.filter(n => n.completed).length;
+    const completedNodes = unitProgress.filter((n) => n.completed).length;
 
     return {
       unitNumber,
@@ -549,10 +700,10 @@ export const getUnitProgress = async (studentId, unitNumber, category) => {
       maxStars,
       completedNodes,
       totalNodes: unitNodes.length,
-      isComplete: completedNodes === unitNodes.length
+      isComplete: completedNodes === unitNodes.length,
     };
   } catch (error) {
-    console.error('Error fetching unit progress:', error);
+    console.error("Error fetching unit progress:", error);
     throw error;
   }
 };
@@ -567,11 +718,11 @@ export const getUnitProgress = async (studentId, unitNumber, category) => {
 export const getCurrentUnitForCategory = async (studentId, category) => {
   await verifyStudentDataAccess(studentId);
   try {
-    const { getCurrentUnit } = await import('../data/skillTrail.js');
+    const { getCurrentUnit } = await import("../data/skillTrail.js");
     const completedNodeIds = await getCompletedNodeIds(studentId);
     return getCurrentUnit(completedNodeIds, category);
   } catch (error) {
-    console.error('Error getting current unit:', error);
+    console.error("Error getting current unit:", error);
     return 1; // Default to unit 1
   }
 };
@@ -589,20 +740,23 @@ export const getCurrentUnitForCategory = async (studentId, category) => {
 export const getNextNodeInPath = async (studentId, currentNodeId) => {
   await verifyStudentDataAccess(studentId);
   try {
-    const { getNodeById, SKILL_NODES, isNodeUnlocked } = await import('../data/skillTrail.js');
+    const { getNodeById, SKILL_NODES, isNodeUnlocked } = await import(
+      "../data/skillTrail.js"
+    );
     const currentNode = getNodeById(currentNodeId);
     if (!currentNode) return null;
 
     const completedNodeIds = await getCompletedNodeIds(studentId);
     const allProgress = await getStudentProgress(studentId);
-    const progressMap = new Map(allProgress.map(p => [p.node_id, p]));
+    const progressMap = new Map(allProgress.map((p) => [p.node_id, p]));
 
     // Priority 1: Next node in same unit (sequential orderInUnit)
     if (currentNode.unit) {
-      const sameUnitNodes = SKILL_NODES.filter(n =>
-        n.unit === currentNode.unit &&
-        n.category === currentNode.category &&
-        n.orderInUnit === currentNode.orderInUnit + 1
+      const sameUnitNodes = SKILL_NODES.filter(
+        (n) =>
+          n.unit === currentNode.unit &&
+          n.category === currentNode.category &&
+          n.orderInUnit === currentNode.orderInUnit + 1
       );
 
       if (sameUnitNodes.length > 0) {
@@ -614,14 +768,17 @@ export const getNextNodeInPath = async (studentId, currentNodeId) => {
     }
 
     // Priority 2: Any newly unlocked node (likely boss or next unit start)
-    const unlockedNodes = SKILL_NODES.filter(node =>
-      !completedNodeIds.includes(node.id) &&
-      isNodeUnlocked(node.id, completedNodeIds)
+    const unlockedNodes = SKILL_NODES.filter(
+      (node) =>
+        !completedNodeIds.includes(node.id) &&
+        isNodeUnlocked(node.id, completedNodeIds)
     );
 
     if (unlockedNodes.length > 0) {
       // Prefer nodes in same category, then lowest order
-      const sameCategoryNodes = unlockedNodes.filter(n => n.category === currentNode.category);
+      const sameCategoryNodes = unlockedNodes.filter(
+        (n) => n.category === currentNode.category
+      );
       if (sameCategoryNodes.length > 0) {
         return sameCategoryNodes.sort((a, b) => a.order - b.order)[0];
       }
@@ -629,14 +786,16 @@ export const getNextNodeInPath = async (studentId, currentNodeId) => {
     }
 
     // Priority 3: Improvable nodes (< 3 stars)
-    const improvableNodes = SKILL_NODES.filter(node => {
+    const improvableNodes = SKILL_NODES.filter((node) => {
       const progress = progressMap.get(node.id);
       return progress && progress.stars < 3 && progress.stars > 0;
     });
 
     if (improvableNodes.length > 0) {
       // Prefer nodes in same category
-      const sameCategoryNodes = improvableNodes.filter(n => n.category === currentNode.category);
+      const sameCategoryNodes = improvableNodes.filter(
+        (n) => n.category === currentNode.category
+      );
       if (sameCategoryNodes.length > 0) {
         return sameCategoryNodes.sort((a, b) => a.order - b.order)[0];
       }
@@ -645,7 +804,7 @@ export const getNextNodeInPath = async (studentId, currentNodeId) => {
 
     return null;
   } catch (error) {
-    console.error('Error getting next node in path:', error);
+    console.error("Error getting next node in path:", error);
     return null;
   }
 };
@@ -659,7 +818,7 @@ export const getNextNodeInPath = async (studentId, currentNodeId) => {
 export const getUnitsInCategory = async (studentId, category) => {
   await verifyStudentDataAccess(studentId);
   try {
-    const { getUnitsByCategory } = await import('../data/skillTrail.js');
+    const { getUnitsByCategory } = await import("../data/skillTrail.js");
     const units = getUnitsByCategory(category);
 
     const unitProgresses = await Promise.all(
@@ -667,14 +826,14 @@ export const getUnitsInCategory = async (studentId, category) => {
         const progress = await getUnitProgress(studentId, unit.order, category);
         return {
           ...unit,
-          progress
+          progress,
         };
       })
     );
 
     return unitProgresses;
   } catch (error) {
-    console.error('Error getting units in category:', error);
+    console.error("Error getting units in category:", error);
     throw error;
   }
 };
@@ -683,6 +842,7 @@ export default {
   getStudentProgress,
   getNodeProgress,
   updateNodeProgress,
+  mergeNoteMasteryOnly,
   getCompletedNodeIds,
   getAvailableNodes,
   getNextRecommendedNode,
@@ -698,5 +858,5 @@ export default {
   getUnitProgress,
   getCurrentUnitForCategory,
   getNextNodeInPath,
-  getUnitsInCategory
+  getUnitsInCategory,
 };

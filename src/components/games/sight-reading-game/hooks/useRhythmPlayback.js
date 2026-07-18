@@ -11,6 +11,7 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
   const playbackTimerRef = useRef(null);
   const startTimeRef = useRef(null);
   const onBeatCallbackRef = useRef(null);
+  const onCompleteCallbackRef = useRef(null);
 
   /**
    * Stop all currently playing/scheduled notes
@@ -40,29 +41,37 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
   }, [audioEngine]);
 
   /**
-   * Play a pattern with correct rhythm timing
+   * Play a pattern with correct rhythm timing.
    * @param {Array} pattern - Array of notation objects with timing info
-   * @param {Function} onBeatChange - Callback for visual highlighting (index)
+   * @param {Function} onBeatChange - Visual-highlight callback (index). An index of -1 means
+   *   "no note is currently sounding" — it fires during the 100ms scheduling lead-in, during
+   *   rests, and in any leading gap before the first note. It is NOT an end-of-pattern signal.
+   * @param {Function} [onComplete] - The ONLY end-of-pattern signal. Fires exactly once, after the
+   *   last note's end + 0.5s, just before the final highlight-clear. Use this (never onBeatChange(-1))
+   *   to chain a following pass.
+   * @returns {boolean} true if playback started; false if it bailed (empty pattern / no audio
+   *   context) — in which case onComplete never fires, so callers chaining passes must handle false.
    */
   const play = useCallback(
-    (pattern, onBeatChange) => {
+    (pattern, onBeatChange, onComplete) => {
       if (!pattern || pattern.length === 0) {
         console.warn("No pattern to play");
-        return;
+        return false;
       }
 
       // Stop any existing playback
       stop();
 
-      // Store callback
+      // Store callbacks (after stop(), which does not read them)
       onBeatCallbackRef.current = onBeatChange;
+      onCompleteCallbackRef.current = onComplete;
 
       const context = audioEngine.audioContextRef?.current;
       const masterGain = audioEngine.gainNodeRef?.current;
 
       if (!context || !masterGain) {
         console.error("Audio context not available");
-        return;
+        return false;
       }
 
       // Get start time (with small buffer for scheduling)
@@ -160,7 +169,6 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
         if (onBeatCallbackRef.current) {
           if (RHYTHM_DEBUG) {
             console.debug("[RhythmPlayback]", {
-              // eslint-disable-line no-console
               currentIndex,
               elapsedTime,
               audioCurrentTime: currentTime,
@@ -169,15 +177,28 @@ export function useRhythmPlayback({ audioEngine, tempo: _tempo }) {
           onBeatCallbackRef.current(currentIndex);
         }
 
-        // Stop timer when pattern is complete
-        const lastNote = pattern[pattern.length - 1];
-        if (elapsedTime > lastNote.endTime + 0.5) {
+        // Stop timer when pattern is complete. Use max endTime, not the last element's:
+        // buildPlayedRendition shifts each note by its own timeDiff, so array order doesn't
+        // guarantee monotonic end times (comparisonPattern.js:23-30).
+        const patternEndTime = pattern.reduce(
+          (max, o) => Math.max(max, o.endTime),
+          0
+        );
+        if (elapsedTime > patternEndTime + 0.5) {
+          // Capture and null the completion callback BEFORE stop()/invoke: onComplete may
+          // synchronously call play() again (pass chaining), which installs a fresh
+          // onCompleteCallbackRef we must not clobber or re-fire.
+          const done = onCompleteCallbackRef.current;
+          onCompleteCallbackRef.current = null;
           stop();
           if (onBeatCallbackRef.current) {
-            onBeatCallbackRef.current(-1); // Clear highlighting
+            onBeatCallbackRef.current(-1); // Clear highlighting — NOT an end-of-pattern signal
           }
+          if (done) done();
         }
       }, 50); // Update every 50ms for smooth visual feedback
+
+      return true;
     },
     [audioEngine, stop]
   );

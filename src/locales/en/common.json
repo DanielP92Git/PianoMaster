@@ -1631,6 +1631,7 @@
     "startPlaying": "Start Playing",
     "listenCountIn": "Listen to the count-in",
     "nextExercise": "Next Exercise",
+    "finishSession": "All Done!",
     "tryAgain": "Try Again",
     "changeSettings": "Change Settings",
     "backToMenu": "Back to Menu",
@@ -1658,7 +1659,8 @@
       "tooEarly": "Too Early",
       "tooLate": "Too Late",
       "missed": "Missed",
-      "wrongNotes": "Wrong Notes"
+      "wrongNotes": "Wrong Notes",
+      "practiceNotScored": "Practice run — not scored"
     },
     "inputMode": {
       "title": "Select how you want to play the notes",
@@ -1677,7 +1679,13 @@
     "controls": {
       "toggleMetronome": "Toggle metronome",
       "switchToMic": "Switch to microphone",
-      "switchToKeyboard": "Switch to keyboard"
+      "switchToKeyboard": "Switch to keyboard",
+      "replay": "Hear it again",
+      "modePractice": "Practice",
+      "modeTest": "Test",
+      "modeToggleLabel": "Grading mode",
+      "compare": "Hear yours vs correct",
+      "review": "Review mistakes"
     },
     "session": {
       "victoryTitle": "Session Victory!",
@@ -1691,9 +1699,27 @@
       "encourageBody": "You finished all {{count}} exercises. You're only a few points away from unlocking the victory celebration.",
       "totalXp": "{{score}} total XP • Aim for 70% to achieve victory."
     },
+    "compare": {
+      "yours": "Yours",
+      "correct": "Correct"
+    },
     "errors": {
       "startPerformance": "Failed to start performance. Please try again.",
       "startGame": "Failed to start game. Please try again."
+    },
+    "review": {
+      "title": "Review Your Mistakes",
+      "progress": "{{current}} of {{total}}",
+      "instruction": "Play the note shown to move to the next one.",
+      "playIt": "Play it",
+      "skip": "Skip",
+      "done": "Great job! You reviewed every mistake.",
+      "exit": "Back to Feedback"
+    },
+    "adaptive": {
+      "levelUp": "Leveling Up!",
+      "levelUpSubtitle": "Nice streak — here comes a bigger challenge",
+      "levelUpDismiss": "Got it!"
     }
   },
   "noteRecognition": {

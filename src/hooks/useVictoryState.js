@@ -21,10 +21,7 @@ import {
   getLevelProgress,
   PRESTIGE_XP_PER_TIER,
 } from "../utils/xpSystem";
-import {
-  getNodeById,
-  getTrailTabForNode,
-} from "../data/skillTrail";
+import { getNodeById, getTrailTabForNode } from "../data/skillTrail";
 import { streakService } from "../services/streakService";
 import { toast } from "react-hot-toast";
 import { useAccessibility } from "../contexts/AccessibilityContext";
@@ -102,6 +99,8 @@ export function useVictoryState({
   totalExercises = null,
   exerciseType = null,
   onNextExercise = null,
+  suppressPersistence = false,
+  sessionMastery = null,
 }) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -326,6 +325,7 @@ export function useVictoryState({
   // Note: Query invalidation is handled by useScores mutation
 
   useEffect(() => {
+    if (suppressPersistence) return;
     if (scorePercentage >= 80 && !hasCalledStreakUpdate.current) {
       hasCalledStreakUpdate.current = true;
       updateStreakWithAchievements.mutate(undefined, {
@@ -339,7 +339,7 @@ export function useVictoryState({
         },
       });
     }
-  }, [scorePercentage, updateStreakWithAchievements, t]);
+  }, [scorePercentage, updateStreakWithAchievements, t, suppressPersistence]);
 
   // Trail system: Calculate stars, update progress, and award XP
   useEffect(() => {
@@ -355,6 +355,23 @@ export function useVictoryState({
       // If this is a trail node, update progress and award XP
       if (nodeId) {
         hasProcessedTrail.current = true; // Mark as processed
+
+        if (suppressPersistence) {
+          // Practice run: skip all trail-progress + XP persistence, but let
+          // the UI still settle (stars were already computed above). Still
+          // derive exercisesRemaining/nodeComplete locally so the "Next
+          // Exercise" CTA works for multi-exercise nodes in Practice mode
+          // (CR-02) — without this, VictoryScreen always falls back to the
+          // "node complete" branch since exercisesRemaining stays at its
+          // useState(0) initial value.
+          if (exerciseIndex !== null && totalExercises !== null) {
+            const remaining = Math.max(0, totalExercises - exerciseIndex - 1);
+            setExercisesRemaining(remaining);
+            setNodeComplete(remaining === 0);
+          }
+          setIsProcessingTrail(false);
+          return;
+        }
 
         try {
           // Get node data
@@ -384,6 +401,9 @@ export function useVictoryState({
               }
 
               // Update exercise-level progress
+              // Phase 03 (ADAPT-03): sessionMastery is passed as the trailing perNoteMastery
+              // arg. suppressPersistence returns early above this call (see the guard at the
+              // top of this branch), so Practice mode skips the mastery write for free.
               const result = await updateExerciseProgress(
                 user.id,
                 nodeId,
@@ -394,7 +414,8 @@ export function useVictoryState({
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
                 totalExercises,
-                progressOptions
+                progressOptions,
+                sessionMastery
               );
 
               // Check if rate limited
@@ -451,12 +472,15 @@ export function useVictoryState({
               }
 
               // Update node progress (pass percentage, not raw score)
+              // Phase 03 (ADAPT-03): sessionMastery is passed as the trailing perNoteMastery
+              // arg; suppressPersistence's early-return above skips this entirely in Practice mode.
               const result = await updateNodeProgress(
                 user.id,
                 nodeId,
                 earnedStars,
                 Math.round(Math.min(scorePercentage, 100)),
-                progressOptions
+                progressOptions,
+                sessionMastery
               );
 
               // Check if rate limited
@@ -505,12 +529,14 @@ export function useVictoryState({
               scorePercentage,
               comebackActive ? 2 : 1
             );
-            if (freePlayXP > 0) {
-              const xpResult = await awardXP(user.id, freePlayXP);
-              setXpData({ totalXP: freePlayXP, ...xpResult });
-              queryClient.invalidateQueries({
-                queryKey: ["student-xp", user.id],
-              });
+            if (!suppressPersistence) {
+              if (freePlayXP > 0) {
+                const xpResult = await awardXP(user.id, freePlayXP);
+                setXpData({ totalXP: freePlayXP, ...xpResult });
+                queryClient.invalidateQueries({
+                  queryKey: ["student-xp", user.id],
+                });
+              }
             }
           } catch (error) {
             console.error("Error awarding free play XP:", error);
@@ -533,6 +559,8 @@ export function useVictoryState({
     queryClient,
     isTeacher,
     comebackActive,
+    suppressPersistence,
+    sessionMastery,
   ]);
 
   // Trigger confetti for full/epic tiers (non-blocking, after trail processing)

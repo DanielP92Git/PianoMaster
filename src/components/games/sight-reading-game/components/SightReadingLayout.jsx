@@ -11,7 +11,7 @@
  * - provide region JSX (header/staff/guidance/keyboard/feedback)
  *
  * Props (contract):
- * - phase: "setup" | "display" | "count-in" | "performance" | "feedback"
+ * - phase: "setup" | "display" | "count-in" | "performance" | "feedback" | "review"
  * - hasKeyboard: boolean (whether the keyboard region should be rendered/reserved)
  * - isFeedbackPhase: boolean (convenience; may influence stacking/spacing)
  * - isCompactLandscape?: boolean (layout hint computed by parent)
@@ -19,7 +19,10 @@
  * - isMultiBar?: boolean (signals multi-bar pattern; enables horizontal scroll in feedback)
  * - headerControls: JSX (Back button, progress, toggles)
  * - staff: JSX (VexFlow staff region only; no keyboard/guidance logic)
- * - guidance: JSX (Start Playing button or small phase text)
+ * - guidance: JSX (Start Playing button, small phase text, or — in the "review" phase —
+ *   the ReviewDrillPanel supplied by the game; this component stays "dumb" and never
+ *   imports ReviewDrillPanel itself, it only gives the "review" phase a dedicated,
+ *   visible guidance region instead of the incidental fixed-top overlay)
  * - keyboard: JSX | null (KlavierKeyboard wrapper or null)
  * - feedbackPanel: JSX | null (FeedbackSummary card or null)
  *
@@ -50,11 +53,17 @@ export function SightReadingLayout({
   const hasDockedBottom = hasDockedKeyboard;
   const bottomDockContent = keyboard;
 
+  // REVIEW is a real, active in-exercise phase (like DISPLAY/PERFORMANCE) — its guidance
+  // (the game-supplied ReviewDrillPanel) gets a dedicated, visible region below the staff
+  // card rather than the incidental fixed-top overlay used for count-in/performance hints.
+  const isReviewPhase = phase === "review";
+
   // Show guidance as an overlay to prevent it from affecting card layout
   // In DISPLAY phase: button is rendered over keyboard (see keyboard dock section)
+  // In REVIEW phase: guidance renders inline/prominent (see review-guidance region below)
   // In other phases: small text shown as centered overlay
   const showGuidanceOverlay =
-    guidance && !isFeedbackPhase && phase !== "display";
+    guidance && !isFeedbackPhase && !isReviewPhase && phase !== "display";
 
   // In DISPLAY phase without a bottom dock (e.g., mic mode with keyboard hidden),
   // render Start Playing as a floating overlay so it's still accessible.
@@ -128,7 +137,9 @@ export function SightReadingLayout({
           <div
             className={`flex min-h-0 w-full max-w-5xl ${isFeedbackPhase ? "" : "flex-1"} flex-col ${stackGap}`}
           >
-            <div className={`flex min-h-0 ${isFeedbackPhase ? "" : "flex-1"} flex-col`}>
+            <div
+              className={`flex min-h-0 ${isFeedbackPhase ? "" : "flex-1"} flex-col`}
+            >
               {/* Card with constrained height and grid interior */}
               <div
                 className={`relative ${isFeedbackPhase ? "" : "flex-1"} rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm ${cardMaxHeightClass}`}
@@ -157,6 +168,17 @@ export function SightReadingLayout({
             {isFeedbackPhase && feedbackPanel && (
               <div className="w-full flex-shrink-0">{feedbackPanel}</div>
             )}
+            {/* Review guidance - inline below card, same max-w-5xl width. Prominent
+                dedicated region (not a fixed overlay) so the ReviewDrillPanel the game
+                passes via `guidance` is fully visible and interactive. */}
+            {isReviewPhase && guidance && (
+              <div
+                className="w-full flex-shrink-0"
+                data-sr-region="review-guidance"
+              >
+                {guidance}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -182,7 +204,7 @@ export function SightReadingLayout({
           ) : null}
 
           <div
-            className="flex h-full items-center justify-center px-2 sm:px-0 landscape:px-4 pb-[env(safe-area-inset-bottom)]"
+            className="flex h-full items-center justify-center px-2 pb-[env(safe-area-inset-bottom)] sm:px-0 landscape:px-4"
             style={{
               paddingLeft: "env(safe-area-inset-left)",
               paddingRight: "env(safe-area-inset-right)",

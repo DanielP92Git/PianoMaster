@@ -47,13 +47,21 @@ export function calculateRhythmAccuracy(performanceResults) {
 
 /**
  * Calculate overall weighted score
- * Formula: (pitchAccuracy × 0.7) + (rhythmAccuracy × 0.3)
+ * Test mode formula: (pitchAccuracy × 0.7) + (rhythmAccuracy × 0.3) — unchanged.
+ * Practice mode: pitch-only (PRAC-03 / D-04) — wider timing windows in Practice mode
+ * cannot be gamed into a higher blended score, since rhythm isn't scored at all.
  * @param {number} pitchAccuracy - Pitch accuracy percentage
  * @param {number} rhythmAccuracy - Rhythm accuracy percentage
+ * @param {string} [mode="test"] - Grading mode: "test" (default) or "practice"
  * @returns {number} Overall score (0-100)
  */
-export function calculateOverallScore(pitchAccuracy, rhythmAccuracy) {
-  return pitchAccuracy * 0.7 + rhythmAccuracy * 0.3;
+export function calculateOverallScore(
+  pitchAccuracy,
+  rhythmAccuracy,
+  mode = "test"
+) {
+  if (mode === "practice") return pitchAccuracy; // pitch-focused grading (PRAC-03 / D-04)
+  return pitchAccuracy * 0.7 + rhythmAccuracy * 0.3; // Test: unchanged
 }
 
 /**
@@ -122,7 +130,13 @@ export function getDetailedBreakdown(performanceResults) {
   };
 
   performanceResults.forEach((result) => {
-    if (result.timingStatus === "missed") {
+    if (result.timingStatus === "rest_correct") {
+      // Rest kept correctly counts as a correct position.
+      breakdown.correct++;
+    } else if (result.timingStatus === "rest_violation") {
+      // Note played during a rest counts as a wrong position.
+      breakdown.wrongPitch++;
+    } else if (result.timingStatus === "missed") {
       breakdown.missed++;
     } else if (result.timingStatus === "wrong_pitch") {
       breakdown.wrongPitch++;

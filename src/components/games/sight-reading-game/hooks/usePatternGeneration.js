@@ -12,7 +12,8 @@ export function usePatternGeneration() {
       measuresPerPattern = 1,
       rhythmSettings,
       rhythmComplexity = "simple",
-      keySignature = null
+      keySignature = null,
+      noteWeights = null
     ) =>
       generatePatternData({
         difficulty,
@@ -24,6 +25,7 @@ export function usePatternGeneration() {
         rhythmSettings,
         rhythmComplexity,
         keySignature,
+        noteWeights,
       }),
     []
   );
