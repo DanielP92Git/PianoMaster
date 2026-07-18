@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v3.7
 milestone_name: Sight-Reading Engagement & Pedagogy
-status: milestone_complete
+status: completed
 stopped_at: Phase 03 context gathered
-last_updated: "2026-07-12T07:41:34.037Z"
-last_activity: 2026-07-12 -- Phase 03 execution started
+last_updated: "2026-07-18T12:37:14.492Z"
+last_activity: 2026-07-18
 progress:
   total_phases: 3
   completed_phases: 3
   total_plans: 18
-  completed_plans: 11
+  completed_plans: 18
   percent: 100
 ---
 
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-07-09 after v3.7 milestone opened)
+See: .planning/PROJECT.md (updated 2026-07-18 after v3.7 milestone shipped)
 
 **Core value:** Children's data must be protected and inaccessible to unauthorized users
-**Current focus:** Phase 03 — adaptive-pedagogy
+**Current focus:** None — v3.7 shipped. Run `/gsd-new-milestone` to start the next.
 
 ## Current Position
 
-Phase: 03
-Plan: Not started
-Status: Milestone complete
-Last activity: 2026-07-12
+Phase: — (v3.7 complete, all 3 phases shipped)
+Plan: —
+Status: Milestone v3.7 complete (archived 2026-07-18)
+Last activity: 2026-07-18
 
 Progress: [██████████] 100%
 
@@ -55,6 +55,20 @@ Progress: [██████████] 100%
 | 01-02 | 15 min   | 2     | 3     | Wired `incrementCombo()`/`resetCombo()` into the two existing record sites in `SightReadingGame.jsx`; rendered `ComboPill`/`OnFireBadge`/`OnFireSplash` in HUD + root. No fire sound (mic-safety). Full suite green (1975 passed). |
 
 ## Deferred Items
+
+Items acknowledged and deferred at **v3.7 milestone close on 2026-07-18** (artifact audit `audit-open`, 15 items — the 10 quick_tasks and the `assignment-update-400` debug session are pre-existing carry-overs from prior milestones; the 4 UAT/verification-gap items are v3.7's own, described below):
+
+| Category     | Item                                                                | Status                                                                                                                                              |
+| ------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| uat_gap      | PRAC-04 mic review (02-HUMAN-UAT item 2)                            | Accepted-open — owner testing on device separately; the 500ms audition guard is code-present but speaker-to-mic self-detection needs real hardware  |
+| deferred_req | PRAC-02 comparison playback                                         | Built + device-verified working, then hidden (`SHOW_COMPARE_FEATURE=false`, commit `9f199a00`) — too busy for 8-year-olds; one-line re-enable       |
+| verification | Phase 01/02 `VERIFICATION.md` flagged `human_needed`                | Superseded — Phase 01 UAT resolved; Phase 02 UAT completed at close (items 1/3/4 pass, item 2 accepted-open); milestone audit PASSED                |
+| test_gap     | No CR-02 regression test (`useVictoryState`/`VictoryScreen`)        | Partially mitigated — new `useRhythmPlayback` + context lock-lifecycle tests cover the two device-only bug seams; VictoryScreen path still untested |
+| tech_debt    | `window.location.reload()` in `handleNextTrailExercise` wipes state | Pre-existing D-05 deviation (lock/combo/streak/tier reset mid-node) — backlog                                                                       |
+| debug        | `assignment-update-400` debug session [investigating]               | Unrelated teacher-dashboard `assign_to` column bug from 2026-04-08; long-standing carry-over (also listed at v3.5 close)                            |
+| quick_task   | 10 historical quick tasks flagged `[missing]`                       | Same set acknowledged at v3.5 close (see below) — completed/historical, auditor status fields unparseable                                           |
+
+---
 
 Items acknowledged and deferred at **v3.5 milestone close on 2026-06-29** (artifact audit `audit-open`, 12 items — all pre-existing or stale-status; none a functional v3.5 gap):
 
@@ -134,7 +148,7 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ## Session Continuity
 
-**Next action:** Phase 01 (Engagement HUD Parity) is fully executed (Plans 01-01, 01-02) and ready for verification. Run `/gsd-verify-phase 01` (or equivalent phase-close step), then plan Phase 02 (Practice Tooling) via `/gsd-plan-phase 02`. Phase 03 additionally requires a `/gsd-secure-phase` pass before merge (JSONB per-note-mastery field on the student progress row, under RLS).
+**Next action:** v3.7 is shipped and archived. Merge PR #13 to `main` (owner action — the archive commit + `v3.7` tag live on this branch), then run `/gsd-new-milestone` to start the next cycle. Outstanding after merge: PRAC-04 mic-review device UAT (item 2) — owner testing separately.
 
 **Historical context (v3.5 Phase 01, retained for reference):**
 
@@ -147,4 +161,4 @@ Items acknowledged and deferred at v3.4 milestone close on 2026-05-12:
 
 ---
 
-_State updated: 2026-07-09 — v3.7 Sight-Reading Engagement & Pedagogy roadmap created: 3 phases (01 Engagement HUD Parity, 02 Practice Tooling, 03 Adaptive Pedagogy), 12/12 v1 requirements mapped, 0 gaps. Next: `/gsd-plan-phase 01`._
+_State updated: 2026-07-18 — v3.7 Sight-Reading Engagement & Pedagogy shipped and archived (10/12 requirements; HUD-02 + PRAC-02 deferred). Phase 02 device UAT completed at close; audit PASSED. Next: merge PR #13, then `/gsd-new-milestone`._

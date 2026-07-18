@@ -14,6 +14,18 @@ A piano learning PWA for 8-year-old learners with a Duolingo-style skill progres
 
 These capabilities exist, are working, and have been shipped:
 
+**v3.7 Sight-Reading Engagement & Pedagogy (shipped 2026-07-18):**
+
+- HUD-01/HUD-03: session-wide, live note-by-note combo (`ComboPill`) + on-fire badge reusing v3.6 shared HUD components (on-fire full-screen splash removed post-UAT — obstructed the staff)
+- PRAC-01: on-demand "hear it again" replay during the read/display phase
+- PRAC-03: Practice vs Test grading mode (lenient vs strict timing tolerances), session-locked at count-in
+- PRAC-04: Review-mistakes drill stepping through only wrong/missed notes (keyboard + mic)
+- ADAPT-01/ADAPT-02: in-session adaptive difficulty + tempo (5-tier ladder, one-good-round recovery, hard 60 BPM floor)
+- ADAPT-03/ADAPT-04: cross-session per-note mastery persisted to a `note_mastery` JSONB field under existing student RLS (dedicated `/gsd-secure-phase` pass, 12/12 threats closed)
+- I18N-01: all new sight-reading strings in EN+HE with RTL parity (59/59 keys, parity-gated)
+- Deferred: HUD-02 (lives/game-over — punishes rather than motivates in a high-cognitive-load game); PRAC-02 (played-vs-correct comparison — built and device-verified, hidden as too busy for 8-year-olds, `SHOW_COMPARE_FEATURE` one-line re-enable)
+- Milestone audit PASSED (10/12 requirements shipped, 2 deferred; 9/9 integration seams, 5/5 E2E flows). Open at close: PRAC-04 mic-review device UAT (accepted). Ships via PR #13.
+
 **v1.5 Trail Page Visual Redesign (shipped 2026-02-12):**
 
 - Enchanted forest CSS-only background with starfield, glow orbs, and multi-layer gradients
@@ -674,4 +686,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-07-12 — Phase 03 (Adaptive Pedagogy) complete: adaptive difficulty/tempo escalation, cross-session per-note mastery persistence (production migration applied), and weak-note targeting all shipped; 2 critical bugs found and fixed via code review. All 3 phases of v3.7 now complete — ADAPT-04 final RLS confirmation still needs a dedicated `/gsd-secure-phase 03` pass before milestone close. Requirements in `.planning/REQUIREMENTS.md`; roadmap in `.planning/ROADMAP.md`._
+_Last updated: 2026-07-18 after v3.7 milestone — Sight-Reading Engagement & Pedagogy shipped (10/12 requirements; HUD-02 + PRAC-02 deferred). Phase 02 device UAT completed at close (items 1/3/4 pass; mic-review item 2 accepted-open). Milestone audit PASSED; secure-phase 03 closed 12/12 threats. Ships via PR #13._

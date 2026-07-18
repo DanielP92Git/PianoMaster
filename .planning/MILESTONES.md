@@ -1,5 +1,41 @@
 # Project Milestones: PianoApp
 
+## v3.7 Sight-Reading Engagement & Pedagogy (Shipped: 2026-07-18)
+
+**Delivered:** Turned the hardened sight-reading game (Phases A/B/C shipped on `main` as PRs #10/#11/#12) into an elite learning experience — session-wide combo/on-fire HUD parity reusing the v3.6 shared components, practice tooling (on-demand replay, Practice/Test grading mode, Review-mistakes drill), and adaptive per-note-mastery pedagogy (in-session difficulty/tempo escalation with one-good-round recovery + a hard 60 BPM floor, plus a `note_mastery` JSONB field persisted across sessions under existing student RLS). Client-only except Phase 03's Supabase migration, which got its own `/gsd-secure-phase` pass (12/12 threats closed).
+
+**Phases completed:** 3 phases, 18 plans, 43 tasks
+**Requirements:** 10/12 shipped; 2 deferred — HUD-02 (lives/game-over, dropped 2026-07-09 as punishing in a high-cognitive-load game) and PRAC-02 (comparison playback: built and device-verified working, then hidden via `SHOW_COMPARE_FEATURE=false` as too busy for the 8-year-old audience — one-line re-enable).
+
+**Audit:** `.planning/milestones/v3.7-MILESTONE-AUDIT.md` — **PASSED** (10/12 requirements, 9/9 integration seams, 5/5 E2E flows, Nyquist compliant; security 12/12 threats closed). Phase 02 device UAT completed at close: items 1/3/4 PASS after two rounds of device-only bug fixes; item 2 (PRAC-04 mic review) accepted as a known-open item.
+
+**Known deferred items at close:** 15 (see STATE.md Deferred Items, v3.7 subsection) — 10 historical quick tasks + 1 unrelated teacher-dashboard debug session carried from prior milestones; plus 4 v3.7-specific: PRAC-04 mic-review UAT (accepted-open), PRAC-02 hidden (deferred), no VictoryScreen/CR-02 regression test (partially mitigated), and a pre-existing `window.location.reload()` state-wipe in `handleNextTrailExercise`.
+
+**Post-verification device bug fixes (this milestone):** rest-scoring polish (`fb70e572`/`8e8e5883`), metronome teardown on settings (`054fe3a5`), and the two Phase 02 UAT failures — comparison playback (overloaded `onBeatChange(-1)` → explicit `onComplete`) and the app-root grading-mode lock leak, both fixed in `4e37ac3d` with tests targeting the runtime seams the mocks hid; compare hidden in `9f199a00`.
+
+**Ships via:** PR #13 (`milestone-v37-sight-reading` → `main`).
+
+**Key accomplishments:**
+
+- Session-wide combo/on-fire state added to `SightReadingSessionContext` via the exact ref+state double-write pattern from `NotesRecognitionGame`, with a 6-case RED→GREEN unit test suite (the context's first-ever test file) and formal HUD-02 deferral confirmed in REQUIREMENTS.md.
+- Sight-reading players now see a live ComboPill + OnFireBadge in the game HUD (incrementing on every correct note, resetting on window-close misses) plus a one-shot OnFireSplash celebration at combo >= 5, reusing the shared v3.6 HUD components and existing EN/HE i18n keys verbatim.
+- Pure, tested Practice-vs-Test grading contract (PRAC-03/D-04): gradingModes.js constants, mode-aware useTimingAnalysis (wider windows + status thresholds), and mode-aware calculateOverallScore (pitch-only in Practice, unchanged blend in Test) — all isolated from SightReadingGame.jsx, ready for 02-07 to wire in.
+- Pure `buildPlayedRendition` reconstructor (child's rendition from in-memory performanceResults) plus an additive `playbackHighlightIndex` prop on VexFlowStaffDisplay for the played-vs-correct comparison playback (PRAC-02).
+- Session-scoped, lockable gradingMode state on SightReadingSessionContext plus two isolated Review-mistakes building blocks — the useReviewDrill enharmonic-aware mistake-advance state machine and the ReviewDrillPanel presentational UI — built and tested in isolation ahead of game-file wiring in 02-07/02-09.
+- Added a backward-compatible `suppressPersistence` flag that gates all four out-of-game D-01 persistence paths (streak update, trail progress + trail XP, free-play XP, daily-challenge completion) inside `useVictoryState`/`VictoryScreen`, plus a D-06 "practice run — not scored" notice.
+- Restructured FeedbackSummary into the owner-selected two-row D-23 layout (Compare/Review learn row above Try Again/Next navigate row) and taught SightReadingLayout to treat "review" as a real phase with a dedicated guidance region.
+- Wires the Practice-vs-Test grading mode into `SightReadingGame.jsx` end to end: a labeled, localStorage-persisted, session-locked header pill; mode-aware timing/scoring; the one in-file `updateStudentScore` persistence gate plus `suppressPersistence` on `VictoryScreen` (closing all four D-01 persistence paths); and Practice-mode suppression of the anti-cheat penalty modal/points display, with a completion-threshold fix so Practice's widened timing window can't outlive the miss-sweep.
+- Wires the two on-demand playback features into `SightReadingGame.jsx`: an unlimited-tap DISPLAY-phase "hear it again" replay button with a double-play guard (PRAC-01), and a FEEDBACK-phase yours-then-correct comparison playback with a moving staff outline, chained on the audio-clock end signal rather than a timer guess (PRAC-02).
+- Wires the Review-mistakes drill into `SightReadingGame.jsx`: a new `GAME_PHASES.REVIEW` registered in all three phase-gating lists, mic/keyboard/PC-key input routed to `useReviewDrill.handlePitch` before any scoring logic, a 500ms audition self-detection guard on the mic path, and `ReviewDrillPanel` rendered from the FEEDBACK panel's Review button through to an automatic return to FEEDBACK — closing PRAC-04 and completing Phase 02.
+- Pure-logic adaptive difficulty engine — 5-tier symmetric ladder constants plus three side-effect-free functions (computeNextTier, applyTierToSettings, buildWeightedNotePool), unit-tested with 22 passing tests covering clamp extremes, easing/escalation precedence, and cold-start weak-note targeting.
+- Authored the `note_mastery` JSONB migration (DDL-only, no RLS policy) and extended `updateExerciseProgress`/`updateNodeProgress` with an optional per-pitch mastery delta that merges into the existing single upsert via pure addition, defaulting to a byte-for-byte no-op when omitted.
+- Ref-mirrored successStreak/adaptiveTierIndex added to SightReadingSessionContext, plus an overrideSettings seam on loadExercisePattern and a nodeSupersetNotesRef capturing the node's full note pool — zero behavior change, defusing the stale-closure landmine before Plan 05 wires the adaptive engine.
+- handleNextExercise now classifies each finished exercise, drives the adaptive streak, computes the next difficulty tier from the Plan 01 engine, and generates the next pattern from tier-adapted settings passed explicitly (defeating the stale closure) — escalation shows LevelUpCue, easing is silent, and the tier lands at exercise N+1 not N+2 (regression-tested).
+- Session-scoped perNoteAccuracy accumulator persists to the live `note_mastery` column at session end (Practice-skipped for free) and a later session reads it back through the existing JS authorization gate to bias sight-reading note selection toward historically-weak pitches, closing the adaptive loop across sessions.
+- note_mastery JSONB column + GIN index applied to live production `student_skill_progress` table, RLS inheritance confirmed
+
+---
+
 ## v3.5 Rhythm Pedagogy (Shipped: 2026-06-29)
 
 **Delivered:** Restructured the active rhythm trail into a pedagogically coherent 10-unit / 55-node order anchored by three falsifiable principles — Pulse-first, Rests-woven, Concept-per-unit — enforced as build-time validator lint rules, and added 12 kid-friendly Duolingo-style intro/scaffolding screens (one per rhythmic concept). Existing student rhythm progress wiped on deploy via an atomic Supabase migration; `students_score.total_xp` preserved untouched. Rhythm-only — Treble / Bass / Ear-training unchanged.
