@@ -14,8 +14,12 @@ import { useNavigate } from "react-router-dom";
  * outward in both directions.
  *
  * Navigation mirrors BackButton (`to` or history-back) but the shell is a
- * 50px gradient square rather than BackButton's 36px round glass, so the two
- * do not share markup.
+ * gradient square rather than BackButton's 36px round glass, so the two do not
+ * share markup.
+ *
+ * Sized identically to TopBarIconButton (37/40/44px) so the bar reads as one
+ * set of controls; the gradient and glow are what mark it as the primary
+ * action, not extra bulk.
  *
  * @param {string} [props.to]      - Route to navigate to; falls back to back()
  * @param {() => void} [props.onClick] - Overrides navigation entirely
@@ -44,9 +48,9 @@ export function TopBarExitButton({ to, onClick, label, className = "" }) {
       onClick={handleClick}
       title={label}
       aria-label={label}
-      className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-[0_6px_20px_rgba(79,70,229,0.6)] transition-transform duration-200 hover:scale-[1.02] active:scale-95 motion-reduce:transform-none lg:h-[50px] lg:w-[50px] lg:rounded-[18px] landscape:h-[46px] landscape:w-[46px] ${className}`}
+      className={`flex h-[37px] w-[37px] flex-shrink-0 items-center justify-center rounded-[14px] bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-[0_6px_20px_rgba(79,70,229,0.6)] transition-transform duration-200 hover:scale-[1.02] active:scale-95 motion-reduce:transform-none lg:h-11 lg:w-11 max-lg:landscape:h-10 max-lg:landscape:w-10 ${className}`}
     >
-      <LogOut className="h-5 w-5 lg:h-6 lg:w-6 rtl:-scale-x-100" />
+      <LogOut className="h-[18px] w-[18px] lg:h-5 lg:w-5 rtl:-scale-x-100" />
     </button>
   );
 }

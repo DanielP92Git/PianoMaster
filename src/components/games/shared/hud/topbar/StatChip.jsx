@@ -31,7 +31,9 @@ export function StatChip({ label, value, tone = "neutral", className = "" }) {
 
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-2xl border px-3 py-1 lg:px-4 lg:py-1.5 ${shell} ${className}`}
+      // min-w keeps the chip from resizing as its value gains digits
+      // (score 0 -> 120), which would otherwise nudge its neighbours sideways.
+      className={`flex min-w-[52px] flex-col items-center justify-center rounded-2xl border px-3 py-1 lg:min-w-[60px] lg:px-4 lg:py-1.5 ${shell} ${className}`}
     >
       <span className="font-hebrew text-[10px] font-semibold leading-tight text-white/60">
         {label}

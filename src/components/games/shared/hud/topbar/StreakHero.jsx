@@ -98,44 +98,46 @@ export function StreakHero({
           ? { type: "tween", duration: 0.22, ease: "easeInOut" }
           : undefined
       }
-      className={`flex items-center gap-2 rounded-full border px-3 py-1 transition-colors duration-300 motion-reduce:transition-none lg:px-[18px] lg:py-1.5 ${
+      className={`flex min-w-[52px] flex-col items-center justify-center rounded-2xl border px-3 py-1 transition-colors duration-300 motion-reduce:transition-none lg:min-w-[60px] lg:px-4 lg:py-1.5 ${
         lit
           ? "border-orange-400/55 bg-gradient-to-br from-orange-400/[0.28] to-orange-600/[0.22]"
           : "border-white/15 bg-white/[0.06]"
       } ${lit && animate ? "animate-streakGlow" : ""} ${className}`}
     >
-      {active ? (
-        <img
-          src={flameIcon}
-          role="img"
-          aria-label={t("games.engagement.onFire")}
-          className={`h-6 w-6 drop-shadow-[0_0_6px_rgba(251,146,60,0.9)] lg:h-8 lg:w-8 ${
-            animate ? "animate-flameFlicker" : ""
-          }`}
-        />
-      ) : (
-        <img
-          src={flameIcon}
-          alt=""
-          className={`h-6 w-6 lg:h-8 lg:w-8 ${
-            lit
-              ? `drop-shadow-[0_0_6px_rgba(251,146,60,0.9)] ${animate ? "animate-flameFlicker" : ""}`
-              : "opacity-40 grayscale"
-          }`}
-        />
+      {showLabel && (
+        <span className="font-hebrew text-[10px] font-semibold leading-tight text-white/60">
+          {t("games.topBar.streakLabel")}
+        </span>
       )}
-      <span className="flex flex-col items-center leading-none">
+      {/* Value row: the flame sits on the number's line rather than beside a
+          stacked column, so this chip matches StatChip's box exactly. */}
+      <span className="flex items-center gap-1">
         <span
-          className={`font-fredoka text-lg font-bold lg:text-xl ${
+          className={`font-fredoka text-base font-bold leading-tight lg:text-[17px] ${
             lit ? "text-orange-200" : "text-white/70"
           }`}
         >
           {value}
         </span>
-        {showLabel && (
-          <span className="mt-0.5 font-hebrew text-[9px] font-semibold text-white/65">
-            {t("games.topBar.streakLabel")}
-          </span>
+        {active ? (
+          <img
+            src={flameIcon}
+            role="img"
+            aria-label={t("games.engagement.onFire")}
+            className={`h-4 w-4 drop-shadow-[0_0_6px_rgba(251,146,60,0.9)] lg:h-[18px] lg:w-[18px] ${
+              animate ? "animate-flameFlicker" : ""
+            }`}
+          />
+        ) : (
+          <img
+            src={flameIcon}
+            alt=""
+            className={`h-4 w-4 lg:h-[18px] lg:w-[18px] ${
+              lit
+                ? `drop-shadow-[0_0_6px_rgba(251,146,60,0.9)] ${animate ? "animate-flameFlicker" : ""}`
+                : "opacity-40 grayscale"
+            }`}
+          />
         )}
       </span>
     </motion.div>

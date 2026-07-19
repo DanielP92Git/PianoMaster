@@ -698,7 +698,6 @@
       "streakLabel": "רצף",
       "questionProgress": "שאלה {{current}} מתוך {{total}}",
       "progressCompact": "{{current}}/{{total}}",
-      "percentComplete": "{{value}}%",
       "progressAria": "הושלמו {{value}}%",
       "exitTo": "חזרה ל{{name}}"
     },

@@ -35,7 +35,11 @@ export function TopBarIconButton({
       title={title}
       aria-label={title}
       aria-pressed={active}
-      className={`flex h-[37px] w-[37px] items-center justify-center rounded-[14px] border transition-all duration-200 lg:h-11 lg:w-11 landscape:h-10 landscape:w-10 ${
+      // The landscape variant is scoped under max-lg: a bare `landscape:`
+      // outranks `lg:` in Tailwind's variant order, and desktop windows are
+      // themselves landscape, so it would pin desktop to 40px and the handoff's
+      // 44px desktop size would never render.
+      className={`flex h-[37px] w-[37px] items-center justify-center rounded-[14px] border transition-all duration-200 lg:h-11 lg:w-11 max-lg:landscape:h-10 max-lg:landscape:w-10 ${
         active
           ? "border-transparent bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-[0_4px_14px_rgba(37,99,235,0.55)]"
           : "border-white/10 bg-white/[0.08] text-white/80 hover:bg-white/15 hover:text-white"

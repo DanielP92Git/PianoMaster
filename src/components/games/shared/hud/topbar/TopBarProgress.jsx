@@ -6,8 +6,8 @@ import { useMotionTokens } from "../../../../../utils/useMotionTokens";
 /**
  * TopBarProgress
  *
- * Question-progress column for the game top bar: a label row (counter +
- * percent) over a slim gradient track.
+ * Question-progress column for the game top bar: a counter row over a slim
+ * gradient track.
  *
  * Deliberately separate from shared/hud/ProgressBar.jsx rather than a variant
  * of it — that component is a taller track with checkpoint dots and its own
@@ -54,11 +54,10 @@ export function TopBarProgress({
     <div
       className={`flex w-[150px] flex-col gap-1.5 lg:w-[230px] ${className}`}
     >
-      <div className="flex items-center justify-between font-hebrew text-[11px] font-semibold text-white/85 lg:text-xs">
+      {/* Counter only. A percent readout alongside "4/10" says the same thing
+          twice; the percentage is still exposed to assistive tech below. */}
+      <div className="flex items-center font-hebrew text-[11px] font-semibold text-white/85 lg:text-xs">
         <span>{counterText}</span>
-        <span className="text-green-300">
-          {t("games.topBar.percentComplete", { value: percent })}
-        </span>
       </div>
       <div
         role="progressbar"

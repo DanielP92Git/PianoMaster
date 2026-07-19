@@ -35,10 +35,12 @@ vi.mock("../../../../../utils/useMotionTokens", () => ({
 }));
 
 describe("TopBarProgress", () => {
-  it("renders the counter and percent for a mid-session state", () => {
+  it("renders the counter without a redundant percent readout", () => {
+    // "Question 5 of 10" and "40%" say the same thing twice. The percentage
+    // is still exposed to assistive tech via the progressbar below.
     render(<TopBarProgress current={4} total={10} />);
     expect(screen.getByText("Question 5 of 10")).toBeInTheDocument();
-    expect(screen.getByText("40%")).toBeInTheDocument();
+    expect(screen.queryByText("40%")).not.toBeInTheDocument();
   });
 
   it("exposes progressbar semantics with the current percentage", () => {

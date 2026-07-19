@@ -698,7 +698,6 @@
       "streakLabel": "Streak",
       "questionProgress": "Question {{current}} of {{total}}",
       "progressCompact": "{{current}}/{{total}}",
-      "percentComplete": "{{value}}%",
       "progressAria": "{{value}}% complete",
       "exitTo": "Back to {{name}}"
     },
