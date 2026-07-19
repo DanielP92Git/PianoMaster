@@ -4,6 +4,11 @@ import { Eye, EyeOff, Loader2, Lock, AlertCircle } from "lucide-react";
 import { useUpdatePassword } from "../features/authentication/useUpdatePassword";
 import { useTranslation } from "react-i18next";
 import supabase from "../services/supabase";
+import AuthShell from "../components/auth/AuthShell";
+import AuthInput from "../components/auth/AuthInput";
+import AuthCta from "../components/auth/AuthCta";
+import BrandTile from "../components/auth/BrandTile";
+import { AuthLanguageToggle } from "../components/auth/AuthLanguageToggle";
 
 const SESSION_TIMEOUT_MS = 10000;
 
@@ -17,7 +22,11 @@ function ResetPasswordPage() {
   const [isExpired, setIsExpired] = useState(false);
 
   const navigate = useNavigate();
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
+  const isHebrew = i18n.language?.startsWith("he");
+  // Fredoka One has no Hebrew glyphs, so Hebrew headings fall back to an
+  // arbitrary system face. Use the app's Hebrew stack at a heavy weight instead.
+  const headingFont = isHebrew ? "font-hebrew font-extrabold" : "font-playful";
   const { updatePassword, isPending, isSuccess } = useUpdatePassword();
 
   // Detect recovery session from Supabase auth
@@ -85,154 +94,178 @@ function ResetPasswordPage() {
     updatePassword({ password });
   };
 
+  const desktopHero = (
+    <>
+      <div className="flex items-center gap-[14px]">
+        <BrandTile className="h-[52px] w-[52px]" emojiClassName="text-[26px]" />
+        <span className="font-playful text-[26px] text-white">PianoMaster</span>
+      </div>
+      <div>
+        <h2
+          className={`max-w-[380px] text-[44px] leading-[1.1] text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] ${headingFont}`}
+        >
+          {t("auth.brand.tagline")}
+        </h2>
+        <p className="mt-4 max-w-[360px] text-[17px] leading-[1.55] text-white/[0.82]">
+          {t("auth.login.desktopSubcopy")}
+        </p>
+      </div>
+    </>
+  );
+
+  const backToLogin = (
+    <p className="mt-4 text-center text-sm text-white/70">
+      <button
+        type="button"
+        onClick={() => navigate("/login")}
+        className="font-semibold text-[#93c5fd] transition-colors hover:text-white"
+      >
+        {t("auth.forgotPassword.backToLogin")}
+      </button>
+    </p>
+  );
+
   // Expired/invalid link state
   if (isExpired && !isSessionReady) {
     return (
-      <div className="h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-        <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-md p-6 md:p-8 text-center">
-          <AlertCircle className="w-10 h-10 text-amber-400 mx-auto mb-3" />
-          <h1 className="text-xl font-bold text-white mb-2">
+      <AuthShell scrim="sent" layout="centered" desktopHero={desktopHero}>
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-[104px] w-[104px] items-center justify-center rounded-full border border-[rgba(252,211,77,0.4)] bg-[rgba(245,158,11,0.18)] shadow-[0_0_40px_rgba(245,158,11,0.3)]">
+            <AlertCircle
+              className="h-[52px] w-[52px] text-[#fcd34d]"
+              strokeWidth={2}
+            />
+          </div>
+
+          <h1 className={`mt-7 text-[27px] text-white ${headingFont}`}>
             {t("auth.resetPassword.title")}
           </h1>
-          <p className="text-white/70 text-sm mb-6">
+          <p className="mt-2.5 max-w-[280px] text-[15px] leading-[1.6] text-white/[0.82]">
             {t("auth.resetPassword.errorExpiredLink")}
           </p>
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="text-indigo-300 hover:text-indigo-200 text-sm font-medium transition-colors"
-          >
-            {t("auth.forgotPassword.backToLogin")}
-          </button>
+
+          <div className="mt-9 w-full max-w-[300px]">
+            <AuthCta variant="ghost" onClick={() => navigate("/login")}>
+              {t("auth.forgotPassword.backToLogin")}
+            </AuthCta>
+          </div>
         </div>
-      </div>
+      </AuthShell>
     );
   }
 
-  // Loading state while waiting for session detection
+  // Loading state while waiting for session detection. Rendered inside the
+  // shell so the backdrop doesn't flash between this and the form.
   if (!isSessionReady) {
     return (
-      <div className="h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-      </div>
+      <AuthShell scrim="forgot" layout="centered" desktopHero={desktopHero}>
+        <div className="flex justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-[#93c5fd]" />
+        </div>
+      </AuthShell>
     );
   }
 
+  const passwordToggle = (visible, setVisible) => (
+    <button
+      type="button"
+      onClick={() => setVisible(!visible)}
+      aria-label={t(
+        visible ? "auth.login.hidePassword" : "auth.login.showPassword"
+      )}
+      className="flex text-white/55 transition-colors hover:text-white focus:outline-none"
+      tabIndex={-1}
+    >
+      {visible ? (
+        <EyeOff className="h-[18px] w-[18px]" />
+      ) : (
+        <Eye className="h-[18px] w-[18px]" />
+      )}
+    </button>
+  );
+
   return (
-    <div className="h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl border border-white/20 w-full max-w-md p-6 md:p-8">
-        <Lock className="w-10 h-10 text-indigo-400 mx-auto mb-3" />
-        <h1 className="text-xl font-bold text-white text-center mb-6">
+    <AuthShell
+      scrim="forgot"
+      topEnd={<AuthLanguageToggle />}
+      desktopHero={desktopHero}
+      sheetClassName="gap-4 short:gap-2.5"
+      mobileHero={
+        <div className="flex flex-col items-center px-10 text-center">
+          <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[22px] border border-[rgba(96,165,250,0.4)] bg-[rgba(37,99,235,0.25)] text-[#93c5fd] short:h-14 short:w-14">
+            <Lock
+              className="h-[34px] w-[34px] short:h-7 short:w-7"
+              strokeWidth={1.8}
+            />
+          </div>
+          <h1
+            className={`mt-[18px] text-2xl text-white short:mt-3 short:text-xl ${headingFont}`}
+          >
+            {t("auth.resetPassword.title")}
+          </h1>
+        </div>
+      }
+    >
+      <div className="mb-6 hidden lg:block">
+        <h1 className={`text-[30px] text-white ${headingFont}`}>
           {t("auth.resetPassword.title")}
         </h1>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* New Password Field */}
-          <div className="group">
-            <label
-              htmlFor="new-password"
-              className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
-            >
-              {t("auth.resetPassword.newPasswordLabel")}
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="new-password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setValidationError(null);
-                }}
-                disabled={isPending || isSuccess}
-                className="w-full px-2.5 md:px-3 py-1.5 md:py-2 pr-9 md:pr-10 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                placeholder={t("auth.resetPassword.newPasswordPlaceholder")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 transition-colors focus:outline-none"
-                tabIndex={-1}
-              >
-                {showPassword ? (
-                  <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                ) : (
-                  <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Confirm Password Field */}
-          <div className="group">
-            <label
-              htmlFor="confirm-password"
-              className="block text-xs font-medium text-white/90 mb-0.5 group-hover:text-indigo-300 transition-colors"
-            >
-              {t("auth.resetPassword.confirmPasswordLabel")}
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirm-password"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setValidationError(null);
-                }}
-                disabled={isPending || isSuccess}
-                className="w-full px-2.5 md:px-3 py-1.5 md:py-2 pr-9 md:pr-10 text-sm rounded-lg border-2 border-white/20 bg-white/15 backdrop-blur-sm focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400/50 transition-all duration-300 text-white placeholder-white/70"
-                placeholder={t("auth.resetPassword.confirmPasswordPlaceholder")}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 hover:text-white/90 transition-colors focus:outline-none"
-                tabIndex={-1}
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                ) : (
-                  <Eye className="w-3.5 h-3.5 md:w-4 md:h-4" />
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Validation Error */}
-          {validationError && (
-            <div className="flex items-center gap-2 text-red-300 text-sm">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {validationError}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isPending || isSuccess || (!password && !confirmPassword)}
-            className="w-full h-9 md:h-10 flex items-center justify-center px-4 text-xs md:text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              t("auth.resetPassword.submitButton")
-            )}
-          </button>
-        </form>
-
-        {/* Back to login link */}
-        <div className="mt-4 text-center">
-          <button
-            type="button"
-            onClick={() => navigate("/login")}
-            className="text-white/60 hover:text-white/90 text-sm transition-colors"
-          >
-            {t("auth.forgotPassword.backToLogin")}
-          </button>
-        </div>
       </div>
-    </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 short:gap-2.5"
+      >
+        <AuthInput
+          id="new-password"
+          type={showPassword ? "text" : "password"}
+          label={t("auth.resetPassword.newPasswordLabel")}
+          icon={Lock}
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            setValidationError(null);
+          }}
+          placeholder={t("auth.resetPassword.newPasswordPlaceholder")}
+          disabled={isPending || isSuccess}
+          autoComplete="new-password"
+          trailing={passwordToggle(showPassword, setShowPassword)}
+        />
+
+        <AuthInput
+          id="confirm-password"
+          type={showConfirmPassword ? "text" : "password"}
+          label={t("auth.resetPassword.confirmPasswordLabel")}
+          icon={Lock}
+          value={confirmPassword}
+          onChange={(e) => {
+            setConfirmPassword(e.target.value);
+            setValidationError(null);
+          }}
+          placeholder={t("auth.resetPassword.confirmPasswordPlaceholder")}
+          disabled={isPending || isSuccess}
+          autoComplete="new-password"
+          trailing={passwordToggle(showConfirmPassword, setShowConfirmPassword)}
+        />
+
+        {validationError && (
+          <div className="flex items-center gap-2 rounded-[14px] border border-red-300/25 bg-red-500/15 p-3 text-[13px] text-red-100">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            {validationError}
+          </div>
+        )}
+
+        <AuthCta
+          type="submit"
+          loading={isPending}
+          disabled={isSuccess || (!password && !confirmPassword)}
+        >
+          {t("auth.resetPassword.submitButton")}
+        </AuthCta>
+      </form>
+
+      {backToLogin}
+    </AuthShell>
   );
 }
 

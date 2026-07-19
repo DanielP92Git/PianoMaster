@@ -8,24 +8,13 @@ import { AuthLanguageToggle } from "./AuthLanguageToggle";
 import AuthShell from "./AuthShell";
 import AuthInput from "./AuthInput";
 import AuthCta from "./AuthCta";
+import BrandTile from "./BrandTile";
 import CircleIconButton from "./CircleIconButton";
 import { lockOrientation } from "../../utils/pwa";
 import { Trans, useTranslation } from "react-i18next";
 
 const formatCountdown = (totalSeconds) =>
   `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
-
-function BrandTile({ className = "", emojiClassName = "" }) {
-  return (
-    <div
-      className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br from-[#4f46e5] to-[#c026d3] shadow-[0_8px_28px_rgba(192,38,211,0.5)] motion-safe:animate-pmfloat ${className}`}
-    >
-      <span className={emojiClassName} aria-hidden="true">
-        🎹
-      </span>
-    </div>
-  );
-}
 
 function LoginForm() {
   const [email, setEmail] = useState("");
