@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Viewport frames (dev harness)</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #14121f;
+        color: #cbd5e1;
+        font: 12px/1.4 system-ui, sans-serif;
+      }
+      .frame {
+        position: relative;
+        margin: 0 0 6px;
+      }
+      .frame > iframe {
+        border: 0;
+        display: block;
+        transform-origin: top left;
+      }
+      .label {
+        padding: 3px 6px;
+        background: #1e1b4b;
+        color: #a5b4fc;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="out"></div>
+    <script>
+      /*
+       * Dev-only viewport sandbox.
+       *
+       * The Chrome automation used with this repo cannot resize the browser
+       * window (resize_window is a no-op and outerWidth reports 0), so mobile
+       * breakpoints cannot be checked by shrinking the window. An iframe
+       * evaluates media queries against its OWN dimensions, so loading a page
+       * in a sized iframe reproduces any viewport regardless of window size.
+       * `scale` shrinks the result visually for screenshotting while leaving
+       * the layout viewport untouched.
+       *
+       * Usage:
+       *   /viewport-frames.html?url=/topbar-preview.html&v=390x844,760x390&scale=0.5
+       *
+       * Params:
+       *   url    page to load (default /)
+       *   v      comma-separated WxH viewports (default 390x844,760x390,1280x680)
+       *   scale  visual scale factor (default 0.5)
+       */
+      const q = new URLSearchParams(location.search);
+      const url = q.get("url") || "/";
+      // scale=fit sizes each frame to the real window width, so several
+      // viewports can be compared in one screenshot on a narrow window.
+      const rawScale = q.get("scale") || "0.5";
+      const fitMode = rawScale === "fit";
+      const viewports = (q.get("v") || "390x844,760x390,1280x680")
+        .split(",")
+        .map((s) => s.trim().split("x").map(Number));
+
+      const out = document.getElementById("out");
+      for (const [w, h] of viewports) {
+        const scale = fitMode
+          ? Math.min(1, document.documentElement.clientWidth / w)
+          : parseFloat(rawScale);
+        const wrap = document.createElement("div");
+        wrap.className = "frame";
+        const label = document.createElement("div");
+        label.className = "label";
+        label.textContent = `${w}x${h} @${scale.toFixed(2)}`;
+        const f = document.createElement("iframe");
+        f.src = url;
+        f.width = w;
+        f.height = h;
+        f.style.transform = `scale(${scale})`;
+        wrap.appendChild(label);
+        wrap.appendChild(f);
+        // Reserve the post-scale box so frames stack without overlapping.
+        const spacer = document.createElement("div");
+        spacer.style.height = h * scale + "px";
+        wrap.appendChild(spacer);
+        f.style.position = "absolute";
+        f.style.top = "20px";
+        f.style.left = "0";
+        out.appendChild(wrap);
+      }
+    </script>
+  </body>
+</html>

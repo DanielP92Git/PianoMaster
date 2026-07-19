@@ -4402,7 +4402,7 @@ export function SightReadingGame() {
           label: t("games.topBar.bpmLabel"),
           value: gameSettings.tempo,
           tone: "purple",
-          hideOnPortrait: true,
+          hideWhenStacked: true,
         },
         {
           id: "score",

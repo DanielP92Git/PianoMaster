@@ -19,6 +19,7 @@ export function SegmentedModeSwitch({
   onChange,
   disabled = false,
   label,
+  className = "",
 }) {
   return (
     <div
@@ -27,7 +28,7 @@ export function SegmentedModeSwitch({
       aria-disabled={disabled || undefined}
       className={`flex items-center gap-1 rounded-full border border-white/[0.12] bg-white/[0.06] p-1 ${
         disabled ? "cursor-not-allowed opacity-60" : ""
-      }`}
+      } ${className}`}
     >
       {options.map((option) => {
         const isActive = option.value === value;
