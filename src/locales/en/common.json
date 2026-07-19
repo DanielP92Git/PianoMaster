@@ -163,7 +163,20 @@
         "termsLink": "Terms of Service",
         "privacyLink": "Privacy Policy",
         "and": "and"
-      }
+      },
+      "successStudent": "Your account is ready — let's play!",
+      "successTeacher": "Your teacher account is ready!"
+    },
+    "errors": {
+      "invalidCredentials": "That email and password don't match. Want to try again?",
+      "emailNotConfirmed": "Almost there! Check your email for the confirmation link first.",
+      "tooManyRequests": "Too many tries just now. Wait a moment, then try again.",
+      "network": "Can't reach the internet right now. Check your connection and try again.",
+      "accountExists": "An account with this email already exists. Try logging in instead.",
+      "signInFailed": "Oops, we couldn't sign you in. Try again?",
+      "signupFailed": "Oops, we couldn't create your account. Try again?",
+      "generic": "Oops, something went wrong. Try again?",
+      "socialSuccess": "You're in!"
     }
   },
   "navigation": {
