@@ -2,50 +2,57 @@
 // Import fonts FIRST, before any other imports
 
 // Outfit: Primary sans-serif (font-outfit)
-import '@fontsource/outfit/400.css';
-import '@fontsource/outfit/500.css';
-import '@fontsource/outfit/600.css';
-import '@fontsource/outfit/700.css';
+import "@fontsource/outfit/400.css";
+import "@fontsource/outfit/500.css";
+import "@fontsource/outfit/600.css";
+import "@fontsource/outfit/700.css";
 
 // Comic Neue: Playful/comic font (font-comic)
-import '@fontsource/comic-neue/300.css';
-import '@fontsource/comic-neue/400.css';
-import '@fontsource/comic-neue/700.css';
+import "@fontsource/comic-neue/300.css";
+import "@fontsource/comic-neue/400.css";
+import "@fontsource/comic-neue/700.css";
 
 // Nunito: Rounded sans-serif (font-rounded)
-import '@fontsource/nunito/300.css';
-import '@fontsource/nunito/400.css';
-import '@fontsource/nunito/600.css';
-import '@fontsource/nunito/700.css';
-import '@fontsource/nunito/800.css';
+import "@fontsource/nunito/300.css";
+import "@fontsource/nunito/400.css";
+import "@fontsource/nunito/600.css";
+import "@fontsource/nunito/700.css";
+import "@fontsource/nunito/800.css";
 
 // Fredoka One: Display/playful font (font-playful)
-import '@fontsource/fredoka-one/400.css';
+import "@fontsource/fredoka-one/400.css";
+
+// Fredoka: Display numerals in game HUD top bar (font-fredoka).
+// Distinct from Fredoka One above: this is the modern variable family with
+// real 500/600/700 weights, needed for the top bar's bold stat values.
+import "@fontsource/fredoka/500.css";
+import "@fontsource/fredoka/600.css";
+import "@fontsource/fredoka/700.css";
 
 // Dancing Script: Signature/cursive font (font-signature)
-import '@fontsource/dancing-script/400.css';
-import '@fontsource/dancing-script/500.css';
-import '@fontsource/dancing-script/600.css';
-import '@fontsource/dancing-script/700.css';
+import "@fontsource/dancing-script/400.css";
+import "@fontsource/dancing-script/500.css";
+import "@fontsource/dancing-script/600.css";
+import "@fontsource/dancing-script/700.css";
 
 // Heebo: Hebrew/RTL font (font-hebrew)
-import '@fontsource/heebo/400.css';
-import '@fontsource/heebo/500.css';
-import '@fontsource/heebo/600.css';
-import '@fontsource/heebo/700.css';
-import '@fontsource/heebo/800.css';
+import "@fontsource/heebo/400.css";
+import "@fontsource/heebo/500.css";
+import "@fontsource/heebo/600.css";
+import "@fontsource/heebo/700.css";
+import "@fontsource/heebo/800.css";
 
 // Assistant: Hebrew/RTL font (font-hebrew)
-import '@fontsource/assistant/400.css';
-import '@fontsource/assistant/500.css';
-import '@fontsource/assistant/600.css';
-import '@fontsource/assistant/700.css';
-import '@fontsource/assistant/800.css';
+import "@fontsource/assistant/400.css";
+import "@fontsource/assistant/500.css";
+import "@fontsource/assistant/600.css";
+import "@fontsource/assistant/700.css";
+import "@fontsource/assistant/800.css";
 
 // Quicksand: Rounded kid-friendly font for trail page (font-quicksand)
-import '@fontsource/quicksand/400.css';
-import '@fontsource/quicksand/600.css';
-import '@fontsource/quicksand/700.css';
+import "@fontsource/quicksand/400.css";
+import "@fontsource/quicksand/600.css";
+import "@fontsource/quicksand/700.css";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";

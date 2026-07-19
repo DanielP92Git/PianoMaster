@@ -85,14 +85,16 @@ export function SightReadingLayout({
     : "gap-2.5 sm:gap-3";
 
   // Step 2: Constrain card height to prevent overflow
-  // Mobile and desktop need to account for keyboard/feedback dock when present
-  // Mobile: subtract header (~64px) and keyboard dock height
-  // Desktop: subtract header (~50px) and keyboard dock height with extra spacing
+  // Subtracts the live top bar height and the keyboard/feedback dock height.
+  // --game-topbar-height is published by GameTopBar via ResizeObserver; the
+  // fallbacks match the pre-GameTopBar constants so first paint (and any game
+  // not yet using GameTopBar) still lays out sanely. Desktop keeps its extra
+  // ~50px of breathing room below the card.
   const cardMaxHeightClass = isFeedbackPhase
     ? "max-h-[45dvh] md:max-h-[45vh]"
     : hasDockedBottom
-      ? "max-h-[calc(100dvh-64px-var(--sr-kb-height))] md:max-h-[calc(100vh-50px-var(--sr-kb-height))]"
-      : "max-h-[calc(100dvh-64px)] md:max-h-[calc(100vh-100px)]";
+      ? "max-h-[calc(100dvh-var(--game-topbar-height,64px)-var(--sr-kb-height))] md:max-h-[calc(100vh-var(--game-topbar-height,50px)-var(--sr-kb-height))]"
+      : "max-h-[calc(100dvh-var(--game-topbar-height,64px))] md:max-h-[calc(100vh-var(--game-topbar-height,50px)-50px)]";
 
   // Step 3: Grid-based vertical allocation on desktop
   // Mobile uses flex, desktop uses grid to prevent staff from dominating
@@ -122,8 +124,9 @@ export function SightReadingLayout({
         })
       }
     >
-      {/* Header - fixed height, no flex grow */}
-      <div className="flex-shrink-0 landscape:py-1">{headerControls}</div>
+      {/* Header - fixed height, no flex grow. The bar owns its own padding
+          (GameTopBar), so no extra landscape padding is added here. */}
+      <div className="flex-shrink-0">{headerControls}</div>
 
       {/* Main content area */}
       <div className="relative min-h-0 flex-1">
@@ -231,9 +234,11 @@ export function SightReadingLayout({
       {/* Guidance overlay: for count-in and performance phase text */}
       {showGuidanceOverlay ? (
         <div
-          className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center pt-24"
+          className="pointer-events-none fixed inset-0 z-50 flex items-start justify-center"
           data-sr-region="guidance-overlay"
           style={{
+            // Clear the top bar rather than assuming a fixed 6rem header.
+            paddingTop: "calc(var(--game-topbar-height, 64px) + 2rem)",
             paddingBottom:
               "calc(var(--sr-kb-height) + env(safe-area-inset-bottom))",
           }}

@@ -343,11 +343,14 @@ describe("SightReadingGame (Practice/Test grading mode)", () => {
       await Promise.resolve();
     });
 
-    // Before COUNT_IN: pill is enabled (not locked).
-    const pillBeforeCountIn = screen.getByRole("button", {
+    // Before COUNT_IN: the switch is enabled (not locked). The grading control
+    // is a two-segment radiogroup, so "locked" is aria-disabled on the group
+    // and disabled on each segment.
+    const switchBeforeCountIn = screen.getByRole("radiogroup", {
       name: "Grading mode",
     });
-    expect(pillBeforeCountIn).not.toBeDisabled();
+    expect(switchBeforeCountIn).not.toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("radio", { name: "Practice" })).not.toBeDisabled();
 
     const startPlayingButtons = screen.getAllByRole("button", {
       name: /Start Playing/i,
@@ -358,10 +361,11 @@ describe("SightReadingGame (Practice/Test grading mode)", () => {
 
     expect(lockModeSpy).toHaveBeenCalled();
 
-    const pillDuringCountIn = screen.getByRole("button", {
+    const switchDuringCountIn = screen.getByRole("radiogroup", {
       name: "Grading mode",
     });
-    expect(pillDuringCountIn).toBeDisabled();
+    expect(switchDuringCountIn).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("radio", { name: "Practice" })).toBeDisabled();
   });
 
   test("Mode persists to localStorage (sightReadingGradingMode)", async () => {
@@ -376,10 +380,12 @@ describe("SightReadingGame (Practice/Test grading mode)", () => {
       await Promise.resolve();
     });
 
-    const pill = screen.getByRole("button", { name: "Grading mode" });
-    // Toggle Test -> Practice (mode is not yet locked pre-COUNT_IN).
+    // Switch Test -> Practice (mode is not yet locked pre-COUNT_IN). With a
+    // radiogroup the target segment is selected directly rather than toggled.
+    const practiceSegment = screen.getByRole("radio", { name: "Practice" });
+    expect(practiceSegment).toHaveAttribute("aria-checked", "false");
     await act(async () => {
-      fireEvent.click(pill);
+      fireEvent.click(practiceSegment);
     });
 
     expect(localStorage.getItem("sightReadingGradingMode")).toBe("practice");

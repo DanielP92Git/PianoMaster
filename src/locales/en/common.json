@@ -692,6 +692,16 @@
       "triplePoints": "TRIPLE XP!",
       "onFire": "ON FIRE!"
     },
+    "topBar": {
+      "landmark": "Game controls",
+      "bpmLabel": "BPM",
+      "streakLabel": "Streak",
+      "questionProgress": "Question {{current}} of {{total}}",
+      "progressCompact": "{{current}}/{{total}}",
+      "percentComplete": "{{value}}%",
+      "progressAria": "{{value}}% complete",
+      "exitTo": "Back to {{name}}"
+    },
     "difficulties": {
       "easy": "Easy",
       "medium": "Medium",
