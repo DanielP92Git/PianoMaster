@@ -15,6 +15,11 @@ module.exports = {
       screens: {
         // portrait/landscape removed — Tailwind v3.2+ built-in variants
         // support modifier stacking (sm:landscape:) which custom screens cannot
+
+        // Height-based, for short phones (iPhone SE is 667px tall). Used by the
+        // auth shell to tighten vertical rhythm so the sheet never needs to
+        // scroll. NOTE: this is max-HEIGHT — `max-[700px]:` would be max-width.
+        short: { raw: "(max-height: 700px)" },
       },
       fontFamily: {
         outfit: ["Outfit", "sans-serif"],
@@ -30,7 +35,7 @@ module.exports = {
           "Arial",
           "sans-serif",
         ],
-        quicksand: ['Quicksand', 'Nunito', 'sans-serif'],
+        quicksand: ["Quicksand", "Nunito", "sans-serif"],
       },
       fontSize: {
         xs: ["0.75rem", { lineHeight: "1.5" }],
@@ -52,6 +57,10 @@ module.exports = {
         floatUp: {
           "0%": { transform: "translateY(10px)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        pmfloat: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-7px)" },
         },
         shimmer: {
           "0%": { backgroundPosition: "200% 0" },
@@ -83,6 +92,7 @@ module.exports = {
       animation: {
         celebration: "celebration 2s ease-in-out infinite",
         floatUp: "floatUp 0.6s ease-out forwards",
+        pmfloat: "pmfloat 4s ease-in-out infinite",
         shimmer: "shimmer 3s linear infinite",
         fadeIn: "fadeIn 0.3s ease-in-out forwards",
         bounce: "bounce 1s infinite",
@@ -335,11 +345,11 @@ module.exports = {
           error: "#ff0000",
         },
         trail: {
-          'cyan-glow': '#00f2ff',
-          'purple-glow': '#aa00ff',
-          'forest-base': '#0f172a',
-          'forest-mid': '#1a1040',
-          'forest-accent': '#2d1b69',
+          "cyan-glow": "#00f2ff",
+          "purple-glow": "#aa00ff",
+          "forest-base": "#0f172a",
+          "forest-mid": "#1a1040",
+          "forest-accent": "#2d1b69",
         },
       },
       borderRadius: {
@@ -379,14 +389,14 @@ module.exports = {
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
         "2xl": "var(--shadow-2xl)",
-        'node-3d': '0 6px 0 #009eb3, 0 10px 20px rgba(0, 242, 255, 0.4)',
-        'node-3d-pressed': '0 2px 0 #009eb3, 0 5px 10px rgba(0, 242, 255, 0.4)',
-        'glow-cyan': '0 0 20px rgba(0, 242, 255, 0.6)',
-        'glow-purple': '0 0 15px rgba(147, 51, 234, 0.5)',
+        "node-3d": "0 6px 0 #009eb3, 0 10px 20px rgba(0, 242, 255, 0.4)",
+        "node-3d-pressed": "0 2px 0 #009eb3, 0 5px 10px rgba(0, 242, 255, 0.4)",
+        "glow-cyan": "0 0 20px rgba(0, 242, 255, 0.6)",
+        "glow-purple": "0 0 15px rgba(147, 51, 234, 0.5)",
       },
       dropShadow: {
-        'glow-cyan': '0 0 8px #00FFFF',
-        'glow-purple': '0 0 6px #aa00ff',
+        "glow-cyan": "0 0 8px #00FFFF",
+        "glow-purple": "0 0 6px #aa00ff",
       },
       transitionDuration: {
         fast: "var(--transition-fast)",

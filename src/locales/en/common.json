@@ -37,13 +37,26 @@
     "logIn": "Log in",
     "logOut": "Log out",
     "loggingOut": "Logging out...",
+    "brand": {
+      "tagline": "Where practice feels like play"
+    },
     "login": {
       "subtitle": "Begin your musical adventure!",
+      "heading": "Welcome back!",
+      "headingSub": "Log in to keep your streak going",
       "emailLabel": "Email",
-      "emailPlaceholder": "Enter your email",
+      "emailPlaceholder": "you@example.com",
       "passwordLabel": "Password",
       "passwordPlaceholder": "Enter your password",
+      "showPassword": "Show password",
+      "hidePassword": "Hide password",
       "submit": "Sign In",
+      "cta": "Let's play! 🎹",
+      "or": "or",
+      "google": "Continue with Google",
+      "newHere": "New here?",
+      "createAccount": "Create an account",
+      "desktopSubcopy": "Log in to keep your streak alive, master new skills, and level up on the trail.",
       "orSocial": "Or continue with",
       "noAccountPrompt": "New to PianoMaster?",
       "signupLink": "Create Account",
@@ -52,12 +65,17 @@
     "forgotPassword": {
       "link": "Forgot password?",
       "title": "Reset Password",
-      "emailLabel": "Email address",
-      "emailPlaceholder": "Enter your email",
-      "submitButton": "Send Reset Link",
+      "heading": "Forgot your password?",
+      "body": "No worries! Enter your email and we'll send you a reset link.",
+      "emailLabel": "Email",
+      "emailPlaceholder": "you@example.com",
+      "submitButton": "Send reset link",
       "sending": "Sending...",
-      "backToLogin": "Back to login",
+      "backToLogin": "Back to log in",
       "successTitle": "Check your email",
+      "sentTitle": "Check your inbox!",
+      "sentBody": "We sent a reset link to <strong>{{email}}</strong>. Tap it to choose a new password.",
+      "resendIn": "Didn't get it? Resend in <time>{{time}}</time>",
       "successMessage": "We sent a password reset link to your email. Check your inbox and follow the link to set a new password.",
       "cooldownMessage": "You can send another link in {{seconds}}s",
       "errorGeneric": "Something went wrong. Please try again."
@@ -93,10 +111,12 @@
         "student": "Student",
         "studentDesc": "Learn and practice piano",
         "teacher": "Teacher",
-        "teacherDesc": "Teach and track students"
+        "teacherDesc": "Teach and track students",
+        "continue": "Continue"
       },
       "ageGate": {
         "question": "What year were you born?",
+        "label": "Birth year",
         "selectYear": "Select year",
         "continue": "Continue",
         "errorRequired": "Please select your birth year",
@@ -125,7 +145,15 @@
         "submitTeacher": "Create Teacher Account"
       },
       "social": {
-        "divider": "Or join with"
+        "divider": "Or join with",
+        "google": "Sign up with Google"
+      },
+      "desktopHeadline": "Start your journey today",
+      "desktopSubcopy": "Create a free account and take your first lesson in under a minute.",
+      "benefits": {
+        "games": "Learn with games, not drills",
+        "progress": "Track your streak & progress",
+        "free": "Start free — no card needed"
       },
       "back": "Back",
       "alreadyHaveAccount": "Already have an account?",

@@ -1,13 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useLogin } from "../../features/authentication/useLogin";
 import { useResetPassword } from "../../features/authentication/useResetPassword";
-import { Loader2, Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, CheckCircle2 } from "lucide-react";
 import { SocialLogin } from "../../components/auth/SocialLogin";
 import SignupForm from "../../components/auth/SignupForm";
 import { AuthLanguageToggle } from "./AuthLanguageToggle";
+import AuthShell from "./AuthShell";
+import AuthInput from "./AuthInput";
+import AuthCta from "./AuthCta";
+import CircleIconButton from "./CircleIconButton";
 import { lockOrientation } from "../../utils/pwa";
-import { useTranslation } from "react-i18next";
-// import Spinner from "../ui/Spinner";
+import { Trans, useTranslation } from "react-i18next";
+
+const formatCountdown = (totalSeconds) =>
+  `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+
+function BrandTile({ className = "", emojiClassName = "" }) {
+  return (
+    <div
+      className={`flex items-center justify-center rounded-[20px] bg-gradient-to-br from-[#4f46e5] to-[#c026d3] shadow-[0_8px_28px_rgba(192,38,211,0.5)] motion-safe:animate-pmfloat ${className}`}
+    >
+      <span className={emojiClassName} aria-hidden="true">
+        🎹
+      </span>
+    </div>
+  );
+}
 
 function LoginForm() {
   const [email, setEmail] = useState("");
@@ -20,8 +38,10 @@ function LoginForm() {
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const { login, isPending } = useLogin();
   const { t, i18n } = useTranslation("common");
-  const isRTL = i18n.dir() === "rtl";
-  const isHebrew = i18n.language === "he";
+  const isHebrew = i18n.language?.startsWith("he");
+  // Fredoka One has no Hebrew glyphs, so Hebrew headings fall back to an
+  // arbitrary system face. Use the app's Hebrew stack at a heavy weight instead.
+  const headingFont = isHebrew ? "font-hebrew font-extrabold" : "font-playful";
   const {
     resetPassword,
     isPending: isResetPending,
@@ -77,313 +97,281 @@ function LoginForm() {
     resetPassword({ email: resetEmail });
   };
 
-  return (
-    <div
-      className={`relative flex h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 p-4 ${isHebrew ? "font-hebrew" : ""}`}
-      dir={i18n.dir()}
-      lang={i18n.language}
-    >
-      {/* Language toggle */}
-      <div className={`absolute top-4 z-20 ${isRTL ? "left-4" : "right-4"}`}>
-        <AuthLanguageToggle />
+  const backToLogin = () => {
+    setView("login");
+    resetMutation();
+  };
+
+  // Signup keeps its 4-step COPPA wizard; it now owns its own AuthShell.
+  if (isSignup) {
+    return <SignupForm onBackToLogin={() => setIsSignup(false)} />;
+  }
+
+  const desktopHero = (
+    <>
+      <div className="flex items-center gap-[14px]">
+        <BrandTile className="h-[52px] w-[52px]" emojiClassName="text-[26px]" />
+        <span className="font-playful text-[26px] text-white">PianoMaster</span>
       </div>
-
-      <div className="relative flex h-full w-full max-w-5xl items-center justify-center py-4">
-        <div
-          className="relative h-[64vh] max-h-[820px] min-h-[520px] w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-white/10 shadow-2xl backdrop-blur-lg md:h-[66vh] md:max-w-2xl lg:h-[70vh] lg:max-w-5xl"
-          style={{
-            backgroundImage: 'url("/images/dashboard-hero.png")',
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
+      <div>
+        <h2
+          className={`max-w-[380px] text-[44px] leading-[1.1] text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] ${headingFont}`}
         >
-          {/* Dark overlay for better text readability - lighter and more balanced */}
-          <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-900/60 via-purple-900/50 to-violet-900/60" />
+          {t("auth.brand.tagline")}
+        </h2>
+        <p className="mt-4 max-w-[360px] text-[17px] leading-[1.55] text-white/[0.82]">
+          {t("auth.login.desktopSubcopy")}
+        </p>
+      </div>
+    </>
+  );
 
-          {isSignup ? (
-            <SignupForm onBackToLogin={() => setIsSignup(false)} />
-          ) : view === "forgotPassword" || view === "resetSent" ? (
-            <div className="relative z-10 flex h-full flex-col items-center justify-center p-3 md:p-4 lg:p-5">
-              {view === "forgotPassword" ? (
-                /* Forgot Password Email Form */
-                <div className="w-full max-w-sm">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setView("login");
-                      resetMutation();
-                    }}
-                    className="mb-4 flex items-center gap-1.5 text-sm text-white/70 transition-colors hover:text-white"
-                  >
-                    <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-                    {t("auth.forgotPassword.backToLogin")}
-                  </button>
-
-                  <h2 className="mb-1 text-lg font-semibold text-white">
-                    {t("auth.forgotPassword.title")}
-                  </h2>
-
-                  <form onSubmit={handleResetSubmit} className="mt-4 space-y-3">
-                    <div className="group">
-                      <label
-                        htmlFor="reset-email"
-                        className="mb-0.5 block text-xs font-medium text-white/90 transition-colors group-hover:text-indigo-300"
-                      >
-                        {t("auth.forgotPassword.emailLabel")}
-                      </label>
-                      <input
-                        type="email"
-                        id="reset-email"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        disabled={isResetPending}
-                        className="w-full rounded-lg border-2 border-white/20 bg-white/15 px-2.5 py-1.5 text-sm text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300 focus:border-indigo-400/50 focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 md:px-3 md:py-2"
-                        placeholder={t("auth.forgotPassword.emailPlaceholder")}
-                        required
-                      />
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={
-                        isResetPending || cooldownSeconds > 0 || !resetEmail
-                      }
-                      className="flex h-9 w-full items-center justify-center rounded-lg bg-indigo-600 px-4 text-xs font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 md:h-10 md:text-sm"
-                    >
-                      {isResetPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        t("auth.forgotPassword.submitButton")
-                      )}
-                    </button>
-
-                    {cooldownSeconds > 0 && (
-                      <p className="text-center text-xs text-white/50">
-                        {t("auth.forgotPassword.cooldownMessage", {
-                          seconds: cooldownSeconds,
-                        })}
-                      </p>
-                    )}
-                  </form>
-                </div>
-              ) : (
-                /* Reset Sent Success State */
-                <div className="flex w-full max-w-sm flex-col items-center text-center">
-                  <CheckCircle2 className="mx-auto mb-3 h-12 w-12 text-green-400" />
-                  <h2 className="text-center text-lg font-semibold text-white">
-                    {t("auth.forgotPassword.successTitle")}
-                  </h2>
-                  <p className="mx-auto mt-2 max-w-sm text-center text-sm text-white/70">
-                    {t("auth.forgotPassword.successMessage")}
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setView("login");
-                      resetMutation();
-                    }}
-                    className="mt-4 text-sm font-medium text-indigo-300 transition-colors hover:text-indigo-200"
-                  >
-                    {t("auth.forgotPassword.backToLogin")}
-                  </button>
-
-                  {cooldownSeconds > 0 && (
-                    <p className="mt-2 text-xs text-white/50">
-                      {t("auth.forgotPassword.cooldownMessage", {
-                        seconds: cooldownSeconds,
-                      })}
-                    </p>
-                  )}
-                </div>
-              )}
+  if (view === "forgotPassword") {
+    return (
+      <AuthShell
+        scrim="forgot"
+        topStart={
+          <CircleIconButton
+            onClick={backToLogin}
+            label={t("auth.forgotPassword.backToLogin")}
+          >
+            <ArrowLeft className="h-5 w-5 rtl:rotate-180" />
+          </CircleIconButton>
+        }
+        desktopHero={desktopHero}
+        sheetClassName="gap-4"
+        mobileHero={
+          <div className="flex flex-col items-center px-10 text-center">
+            <div className="flex h-[72px] w-[72px] items-center justify-center rounded-[22px] border border-[rgba(96,165,250,0.4)] bg-[rgba(37,99,235,0.25)] text-[#93c5fd]">
+              <Mail className="h-[34px] w-[34px]" strokeWidth={1.8} />
             </div>
-          ) : (
-            <div className="relative z-10 flex h-full flex-col p-3 md:p-4 lg:p-5">
-              {/* Inactivity logout message */}
-              {logoutMessage && (
-                <div className="mb-3 rounded-lg border border-blue-400/30 bg-blue-500/20 p-3 text-center text-sm text-blue-200 backdrop-blur-sm">
-                  {t("auth.login.inactivityLogout")}
-                </div>
-              )}
+            <h1 className={`mt-[18px] text-2xl text-white ${headingFont}`}>
+              {t("auth.forgotPassword.heading")}
+            </h1>
+            <p className="mt-1.5 text-[14.5px] leading-[1.5] text-white/[0.78]">
+              {t("auth.forgotPassword.body")}
+            </p>
+          </div>
+        }
+      >
+        <div className="mb-6 hidden lg:block">
+          <h1 className={`text-[30px] text-white ${headingFont}`}>
+            {t("auth.forgotPassword.heading")}
+          </h1>
+          <p className="mt-1 text-[15px] text-white/60">
+            {t("auth.forgotPassword.body")}
+          </p>
+        </div>
 
-              {/* Title + Subtitle at the top (kept pinned to top) */}
-              <div className="mb-3 text-center md:mb-4">
-                <h1 className="animate-gradient mb-0.5 bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-xl font-bold text-transparent md:text-2xl lg:text-2xl">
-                  PianoMaster
-                </h1>
-                <p className="text-xs text-white/90">
-                  {t("auth.login.subtitle")}
-                </p>
-              </div>
+        <form onSubmit={handleResetSubmit} className="flex flex-col gap-4">
+          <AuthInput
+            id="reset-email"
+            type="email"
+            label={t("auth.forgotPassword.emailLabel")}
+            icon={Mail}
+            value={resetEmail}
+            onChange={(e) => setResetEmail(e.target.value)}
+            placeholder={t("auth.forgotPassword.emailPlaceholder")}
+            disabled={isResetPending}
+            autoComplete="email"
+            required
+          />
 
-              {/* Two-column layout on desktop - centered vertically below the title */}
-              <div className="flex flex-1 items-center">
-                <div className="mx-auto w-full max-w-4xl lg:max-w-5xl">
-                  <div className="flex flex-col items-center gap-4 lg:flex-row lg:gap-8">
-                    {/* Left Column: Form Fields */}
-                    <div className="flex-1 lg:pr-8">
-                      <div className="lg:border-r lg:border-white/20 lg:pr-8">
-                        <form
-                          id="login-form"
-                          onSubmit={handleSubmit}
-                          className="space-y-2.5 md:space-y-3"
-                        >
-                          <div className="space-y-2 md:space-y-2.5">
-                            <div className="group">
-                              <label
-                                htmlFor="email"
-                                className="mb-0.5 block text-xs font-medium text-white/90 transition-colors group-hover:text-indigo-300"
-                              >
-                                {t("auth.login.emailLabel")}
-                              </label>
-                              <input
-                                type="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                disabled={isPending}
-                                className="w-full rounded-lg border-2 border-white/20 bg-white/15 px-2.5 py-1.5 text-sm text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300 focus:border-indigo-400/50 focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 md:px-3 md:py-2"
-                                placeholder={t("auth.login.emailPlaceholder")}
-                                required
-                              />
-                            </div>
-                            <div className="group">
-                              <label
-                                htmlFor="password"
-                                className="mb-0.5 block text-xs font-medium text-white/90 transition-colors group-hover:text-indigo-300"
-                              >
-                                {t("auth.login.passwordLabel")}
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type={showPassword ? "text" : "password"}
-                                  id="password"
-                                  value={password}
-                                  onChange={(e) => setPassword(e.target.value)}
-                                  disabled={isPending}
-                                  className="w-full rounded-lg border-2 border-white/20 bg-white/15 px-2.5 py-1.5 pr-9 text-sm text-white placeholder-white/70 backdrop-blur-sm transition-all duration-300 focus:border-indigo-400/50 focus:bg-white/25 focus:ring-2 focus:ring-indigo-500 md:px-3 md:py-2 md:pr-10"
-                                  placeholder={t(
-                                    "auth.login.passwordPlaceholder"
-                                  )}
-                                  required
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70 transition-colors hover:text-white/90 focus:outline-none"
-                                  tabIndex={-1}
-                                >
-                                  {showPassword ? (
-                                    <EyeOff className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                                  ) : (
-                                    <Eye className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
+          <AuthCta
+            type="submit"
+            loading={isResetPending}
+            disabled={cooldownSeconds > 0 || !resetEmail}
+          >
+            {t("auth.forgotPassword.submitButton")}
+          </AuthCta>
+        </form>
 
-                          {/* Forgot password link - right-aligned, subtle */}
-                          <div className="mt-1 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setView("forgotPassword");
-                                setResetEmail(email);
-                                resetMutation();
-                              }}
-                              className="text-xs text-white/60 transition-colors hover:text-white/90"
-                            >
-                              {t("auth.forgotPassword.link")}
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    </div>
+        <p className="mt-4 text-center text-sm text-white/70">
+          <button
+            type="button"
+            onClick={backToLogin}
+            className="font-semibold text-[#93c5fd] transition-colors hover:text-white"
+          >
+            {t("auth.forgotPassword.backToLogin")}
+          </button>
+        </p>
+      </AuthShell>
+    );
+  }
 
-                    {/* Right Column: Actions and Links */}
-                    <div className="flex flex-col justify-start space-y-3 md:space-y-4 lg:min-w-[300px] lg:justify-center lg:pl-0">
-                      <form onSubmit={handleSubmit}>
-                        <button
-                          type="submit"
-                          form="login-form"
-                          disabled={isPending}
-                          className="flex h-9 w-full items-center justify-center rounded-lg bg-indigo-600 px-4 text-xs font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 md:h-10 md:text-sm lg:h-11"
-                        >
-                          {isPending ? (
-                            <Loader2 className="h-4 w-4 animate-spin md:h-5 md:w-5" />
-                          ) : (
-                            t("auth.login.submit")
-                          )}
-                        </button>
-                      </form>
+  if (view === "resetSent") {
+    return (
+      <AuthShell scrim="sent" layout="centered" desktopHero={desktopHero}>
+        <div className="flex flex-col items-center text-center">
+          <div className="flex h-[104px] w-[104px] items-center justify-center rounded-full border border-[rgba(134,239,172,0.4)] bg-[rgba(34,197,94,0.18)] shadow-[0_0_40px_rgba(34,197,94,0.35)] motion-safe:animate-pmfloat">
+            <CheckCircle2
+              className="h-[52px] w-[52px] text-[#86efac]"
+              strokeWidth={2}
+            />
+          </div>
 
-                      <div className="space-y-1.5 text-center md:space-y-2">
-                        <div className="relative">
-                          <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-white/10" />
-                          </div>
-                          <div className="relative flex justify-center text-xs">
-                            <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-0.5 text-white/80 backdrop-blur-sm">
-                              {t("auth.login.orSocial")}
-                            </span>
-                          </div>
-                        </div>
+          <h1 className={`mt-7 text-[27px] text-white ${headingFont}`}>
+            {t("auth.forgotPassword.sentTitle")}
+          </h1>
+          <p className="mt-2.5 max-w-[280px] text-[15px] leading-[1.6] text-white/[0.82]">
+            <Trans
+              t={t}
+              i18nKey="auth.forgotPassword.sentBody"
+              values={{ email: resetEmail }}
+              components={{
+                strong: <span className="font-semibold text-white" />,
+              }}
+            />
+          </p>
 
-                        <div>
-                          <SocialLogin />
-                        </div>
-                      </div>
+          <div className="mt-9 w-full max-w-[300px]">
+            <AuthCta variant="ghost" onClick={backToLogin}>
+              {t("auth.forgotPassword.backToLogin")}
+            </AuthCta>
+          </div>
 
-                      <div className="pt-1 text-center text-xs">
-                        <span className="inline-block rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-white/80 backdrop-blur-sm">
-                          {t("auth.login.noAccountPrompt")}{" "}
-                          <button
-                            type="button"
-                            onClick={() => setIsSignup(true)}
-                            className="font-medium text-indigo-300 transition-colors hover:text-indigo-200"
-                          >
-                            {t("auth.login.signupLink")}
-                          </button>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          {cooldownSeconds > 0 && (
+            <p className="mt-[18px] text-[13px] text-white/55">
+              <Trans
+                t={t}
+                i18nKey="auth.forgotPassword.resendIn"
+                values={{ time: formatCountdown(cooldownSeconds) }}
+                components={{
+                  time: <span className="font-semibold text-[#fcd34d]" />,
+                }}
+              />
+            </p>
           )}
         </div>
-      </div>
+      </AuthShell>
+    );
+  }
 
-      {/* Terms text pinned near bottom of screen on signup only */}
-      {isSignup && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center px-4">
-          <div className="pointer-events-auto max-w-xl rounded-full border border-white/15 bg-white/10 px-3 py-1 text-center text-[11px] text-white/80 backdrop-blur-sm md:text-xs">
-            {t("auth.signup.terms.text")}{" "}
-            <a
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline transition-colors hover:text-indigo-300"
-            >
-              {t("auth.signup.terms.termsLink")}
-            </a>{" "}
-            {t("auth.signup.terms.and")}{" "}
-            <a
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="underline transition-colors hover:text-indigo-300"
-            >
-              {t("auth.signup.terms.privacyLink")}
-            </a>
-          </div>
+  return (
+    <AuthShell
+      scrim="login"
+      topEnd={<AuthLanguageToggle />}
+      desktopHero={desktopHero}
+      sheetClassName="gap-[15px] short:gap-2.5"
+      mobileHero={
+        <div className="flex flex-col items-center">
+          <BrandTile
+            className="h-16 w-16 short:h-12 short:w-12"
+            emojiClassName="text-[32px] leading-none short:text-[24px]"
+          />
+          <h1 className="mt-4 font-playful text-[34px] text-white [text-shadow:0_2px_16px_rgba(0,0,0,0.4)] short:mt-2 short:text-[26px]">
+            PianoMaster
+          </h1>
+          <p className="mt-0.5 text-[14.5px] text-white/[0.82] short:text-[13px]">
+            {t("auth.brand.tagline")}
+          </p>
+        </div>
+      }
+    >
+      {logoutMessage && (
+        <div className="mb-1 rounded-xl border border-blue-400/30 bg-blue-500/20 p-3 text-center text-sm text-blue-100 backdrop-blur-sm">
+          {t("auth.login.inactivityLogout")}
         </div>
       )}
-    </div>
+
+      <div className="text-center lg:text-start">
+        <h2 className={`text-[22px] text-white lg:text-[30px] ${headingFont}`}>
+          {t("auth.login.heading")}
+        </h2>
+        <p className="mt-0.5 text-sm text-white/60 lg:mt-1 lg:text-[15px]">
+          {t("auth.login.headingSub")}
+        </p>
+      </div>
+
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-[15px] short:gap-2.5"
+      >
+        <AuthInput
+          id="email"
+          type="email"
+          label={t("auth.login.emailLabel")}
+          icon={Mail}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t("auth.login.emailPlaceholder")}
+          disabled={isPending}
+          autoComplete="email"
+          required
+        />
+
+        <AuthInput
+          id="password"
+          type={showPassword ? "text" : "password"}
+          label={t("auth.login.passwordLabel")}
+          icon={Lock}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={t("auth.login.passwordPlaceholder")}
+          disabled={isPending}
+          autoComplete="current-password"
+          required
+          trailing={
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={t(
+                showPassword
+                  ? "auth.login.hidePassword"
+                  : "auth.login.showPassword"
+              )}
+              className="flex text-white/55 transition-colors hover:text-white focus:outline-none"
+              tabIndex={-1}
+            >
+              {showPassword ? (
+                <EyeOff className="h-[18px] w-[18px]" />
+              ) : (
+                <Eye className="h-[18px] w-[18px]" />
+              )}
+            </button>
+          }
+        />
+
+        <div className="-mt-1 flex justify-end">
+          <button
+            type="button"
+            onClick={() => {
+              setView("forgotPassword");
+              setResetEmail(email);
+              resetMutation();
+            }}
+            className="text-[13px] font-medium text-[#93c5fd] transition-colors hover:text-white"
+          >
+            {t("auth.forgotPassword.link")}
+          </button>
+        </div>
+
+        <AuthCta type="submit" loading={isPending}>
+          {t("auth.login.cta")}
+        </AuthCta>
+      </form>
+
+      <div className="my-0.5 flex items-center gap-3">
+        <span className="h-px flex-1 bg-white/15" />
+        <span className="text-xs font-medium text-white/50">
+          {t("auth.login.or")}
+        </span>
+        <span className="h-px flex-1 bg-white/15" />
+      </div>
+
+      <SocialLogin />
+
+      <p className="mt-1 text-center text-sm text-white/70">
+        {t("auth.login.newHere")}{" "}
+        <button
+          type="button"
+          onClick={() => setIsSignup(true)}
+          className="font-semibold text-[#f0abfc] transition-colors hover:text-white"
+        >
+          {t("auth.login.createAccount")}
+        </button>
+      </p>
+    </AuthShell>
   );
 }
 

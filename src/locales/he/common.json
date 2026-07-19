@@ -37,13 +37,26 @@
     "logIn": "התחבר",
     "logOut": "התנתק",
     "loggingOut": "מתנתק...",
+    "brand": {
+      "tagline": "כשהתרגול מרגיש כמו משחק"
+    },
     "login": {
       "subtitle": "התחילו את המסע המוזיקלי שלכם!",
+      "heading": "ברוכים השבים!",
+      "headingSub": "התחברו כדי לשמור על הרצף",
       "emailLabel": "אימייל",
-      "emailPlaceholder": "הקלד כתובת אימייל",
+      "emailPlaceholder": "you@example.com",
       "passwordLabel": "סיסמה",
       "passwordPlaceholder": "הקלד סיסמה",
+      "showPassword": "הצג סיסמה",
+      "hidePassword": "הסתר סיסמה",
       "submit": "התחבר",
+      "cta": "בואו נשחק! 🎹",
+      "or": "או",
+      "google": "המשך עם Google",
+      "newHere": "חדשים כאן?",
+      "createAccount": "יצירת חשבון",
+      "desktopSubcopy": "התחברו כדי לשמור על הרצף, לשלוט במיומנויות חדשות ולהתקדם בהרפתקאה.",
       "orSocial": "או המשך עם",
       "noAccountPrompt": "חדשים ב-PianoMaster?",
       "signupLink": "יצירת חשבון",
@@ -52,12 +65,17 @@
     "forgotPassword": {
       "link": "שכחתי סיסמה?",
       "title": "איפוס סיסמה",
-      "emailLabel": "כתובת אימייל",
-      "emailPlaceholder": "הקלד כתובת אימייל",
+      "heading": "שכחתם את הסיסמה?",
+      "body": "אין בעיה! הזינו את כתובת האימייל שלכם ונשלח לכם קישור לאיפוס.",
+      "emailLabel": "אימייל",
+      "emailPlaceholder": "you@example.com",
       "submitButton": "שלח קישור לאיפוס",
       "sending": "שולח...",
       "backToLogin": "חזרה להתחברות",
       "successTitle": "בדקו את האימייל",
+      "sentTitle": "בדקו את תיבת הדואר!",
+      "sentBody": "שלחנו קישור לאיפוס אל <strong>{{email}}</strong>. לחצו עליו כדי לבחור סיסמה חדשה.",
+      "resendIn": "לא קיבלתם? שליחה חוזרת בעוד <time>{{time}}</time>",
       "successMessage": "שלחנו קישור לאיפוס סיסמה לאימייל שלכם. בדקו את תיבת הדואר ולחצו על הקישור.",
       "cooldownMessage": "ניתן לשלוח קישור נוסף בעוד {{seconds}} שניות",
       "errorGeneric": "משהו השתבש. נסו שוב."
@@ -93,10 +111,12 @@
         "student": "תלמיד/ה",
         "studentDesc": "ללמוד ולתרגל פסנתר",
         "teacher": "מורה",
-        "teacherDesc": "ללמד ולעקוב אחרי תלמידים"
+        "teacherDesc": "ללמד ולעקוב אחרי תלמידים",
+        "continue": "המשך"
       },
       "ageGate": {
         "question": "באיזו שנה נולדת?",
+        "label": "שנת לידה",
         "selectYear": "בחרו שנה",
         "continue": "המשך",
         "errorRequired": "אנא בחרו שנת לידה",
@@ -125,7 +145,15 @@
         "submitTeacher": "יצירת חשבון מורה"
       },
       "social": {
-        "divider": "או הצטרפו עם"
+        "divider": "או הצטרפו עם",
+        "google": "הרשמה עם Google"
+      },
+      "desktopHeadline": "מתחילים את המסע כבר היום",
+      "desktopSubcopy": "פתחו חשבון חינם והתחילו את השיעור הראשון בפחות מדקה.",
+      "benefits": {
+        "games": "לומדים דרך משחק, לא דרך תרגילים",
+        "progress": "עוקבים אחרי הרצף וההתקדמות",
+        "free": "מתחילים בחינם — בלי כרטיס אשראי"
       },
       "back": "חזרה",
       "alreadyHaveAccount": "כבר יש לכם חשבון?",
