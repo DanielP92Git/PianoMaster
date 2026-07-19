@@ -167,6 +167,17 @@
       "successStudent": "Your account is ready — let's play!",
       "successTeacher": "Your teacher account is ready!"
     },
+    "roleSelection": {
+      "title": "Welcome to PianoMaster!",
+      "subtitle": "Pick how you'll be using the app",
+      "student": "Student",
+      "studentDesc": "Learn piano with games and lessons",
+      "teacher": "Teacher",
+      "teacherDesc": "Manage students and track their progress",
+      "continue": "Continue",
+      "successMessage": "You're all set!",
+      "errorGeneric": "Oops, we couldn't set up your profile. Try again?"
+    },
     "errors": {
       "invalidCredentials": "That email and password don't match. Want to try again?",
       "emailNotConfirmed": "Almost there! Check your email for the confirmation link first.",

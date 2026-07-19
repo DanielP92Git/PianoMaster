@@ -1,12 +1,30 @@
 import { useState } from "react";
-import { GraduationCap, Users, Loader2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import supabase from "../../services/supabase";
+import { useTranslation } from "react-i18next";
 import toast from "react-hot-toast";
+import supabase from "../../services/supabase";
+import { AuthLanguageToggle } from "./AuthLanguageToggle";
+import AuthShell from "./AuthShell";
+import AuthCta from "./AuthCta";
+import BrandTile from "./BrandTile";
+import RoleCard from "./RoleCard";
 
+/**
+ * Full-screen interrupt for an authenticated user with no profile row — in
+ * practice, a new OAuth sign-up. Rendered by AuthenticatedWrapper ahead of the
+ * router, so it has no route of its own.
+ *
+ * There is deliberately no back affordance: the user has a session but no
+ * profile, so returning to /login would only bounce them straight back here.
+ */
 export function RoleSelection({ user, onRoleSelected }) {
   const [selectedRole, setSelectedRole] = useState(null);
   const queryClient = useQueryClient();
+  const { t, i18n } = useTranslation("common");
+  const isHebrew = i18n.language?.startsWith("he");
+  // Fredoka One has no Hebrew glyphs, so Hebrew headings fall back to an
+  // arbitrary system face. Use the app's Hebrew stack at a heavy weight instead.
+  const headingFont = isHebrew ? "font-hebrew font-extrabold" : "font-playful";
 
   const { mutate: createProfile, isPending } = useMutation({
     mutationFn: async (role) => {
@@ -54,13 +72,13 @@ export function RoleSelection({ user, onRoleSelected }) {
       }
     },
     onSuccess: () => {
-      toast.success("Profile created successfully!");
+      toast.success(t("auth.roleSelection.successMessage"));
       // Invalidate user query to refetch with new profile
       queryClient.invalidateQueries({ queryKey: ["user"] });
       onRoleSelected && onRoleSelected();
     },
     onError: (error) => {
-      toast.error("Failed to create profile. Please try again.");
+      toast.error(t("auth.roleSelection.errorGeneric"));
       console.error("Profile creation error:", error);
     },
   });
@@ -71,74 +89,82 @@ export function RoleSelection({ user, onRoleSelected }) {
     createProfile(selectedRole);
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white/10 backdrop-blur-lg rounded-3xl shadow-2xl p-8 space-y-6 border border-white/20">
-          <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold text-white">
-              Welcome to PianoMaster!
-            </h1>
-            <p className="text-white/80">
-              Please select your role to get started
-            </p>
-          </div>
+  const heading = (
+    <>
+      <h1 className={`text-[26px] text-white short:text-[22px] ${headingFont}`}>
+        {t("auth.roleSelection.title")}
+      </h1>
+      <p className="mt-1 text-[14px] text-white/[0.82] short:text-[13px]">
+        {t("auth.roleSelection.subtitle")}
+      </p>
+    </>
+  );
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-4">
-              <div
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  selectedRole === "student"
-                    ? "border-indigo-500 bg-indigo-500/20"
-                    : "border-white/20 bg-white/5 hover:bg-white/10"
-                }`}
-                onClick={() => setSelectedRole("student")}
-              >
-                <div className="flex items-center space-x-3">
-                  <Users className="w-6 h-6 text-blue-400" />
-                  <div>
-                    <h3 className="text-lg font-medium text-white">Student</h3>
-                    <p className="text-sm text-white/60">
-                      Learn piano with interactive lessons and games
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                  selectedRole === "teacher"
-                    ? "border-purple-500 bg-purple-500/20"
-                    : "border-white/20 bg-white/5 hover:bg-white/10"
-                }`}
-                onClick={() => setSelectedRole("teacher")}
-              >
-                <div className="flex items-center space-x-3">
-                  <GraduationCap className="w-6 h-6 text-purple-400" />
-                  <div>
-                    <h3 className="text-lg font-medium text-white">Teacher</h3>
-                    <p className="text-sm text-white/60">
-                      Manage students and track their progress
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={!selectedRole || isPending}
-              className="w-full h-12 flex items-center justify-center px-6 text-lg font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isPending ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                "Continue"
-              )}
-            </button>
-          </form>
-        </div>
+  const desktopHero = (
+    <>
+      <div className="flex items-center gap-[14px]">
+        <BrandTile className="h-[52px] w-[52px]" emojiClassName="text-[26px]" />
+        <span className="font-playful text-[26px] text-white">PianoMaster</span>
       </div>
-    </div>
+      <div>
+        <h2
+          className={`max-w-[380px] text-[44px] leading-[1.1] text-white [text-shadow:0_2px_20px_rgba(0,0,0,0.4)] ${headingFont}`}
+        >
+          {t("auth.brand.tagline")}
+        </h2>
+        <p className="mt-4 max-w-[360px] text-[17px] leading-[1.55] text-white/[0.82]">
+          {t("auth.signup.desktopSubcopy")}
+        </p>
+      </div>
+    </>
+  );
+
+  return (
+    <AuthShell
+      scrim="signup"
+      topEnd={<AuthLanguageToggle />}
+      desktopHero={desktopHero}
+      sheetClassName="gap-[14px] short:gap-2.5"
+      mobileHero={
+        <div className="flex w-full flex-col items-center px-8 text-center">
+          <BrandTile
+            className="mb-4 h-16 w-16 short:mb-2 short:h-12 short:w-12"
+            emojiClassName="text-[32px] leading-none short:text-[24px]"
+          />
+          {heading}
+        </div>
+      }
+    >
+      <div className="mb-6 hidden lg:block">{heading}</div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        <RoleCard
+          selected={selectedRole === "student"}
+          onClick={() => setSelectedRole("student")}
+          tileClassName="from-[#4f46e5] to-[#3b82f6]"
+          emoji="🎹"
+          label={t("auth.roleSelection.student")}
+          description={t("auth.roleSelection.studentDesc")}
+        />
+        <RoleCard
+          selected={selectedRole === "teacher"}
+          onClick={() => setSelectedRole("teacher")}
+          tileClassName="from-[#c026d3] to-[#a21caf]"
+          emoji="🎓"
+          label={t("auth.roleSelection.teacher")}
+          description={t("auth.roleSelection.teacherDesc")}
+        />
+
+        <AuthCta
+          variant="secondary"
+          type="submit"
+          loading={isPending}
+          disabled={!selectedRole}
+          className="mt-2"
+        >
+          {t("auth.roleSelection.continue")}
+        </AuthCta>
+      </form>
+    </AuthShell>
   );
 }

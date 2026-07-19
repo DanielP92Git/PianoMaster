@@ -167,6 +167,17 @@
       "successStudent": "החשבון שלכם מוכן — בואו נשחק!",
       "successTeacher": "חשבון המורה שלכם מוכן!"
     },
+    "roleSelection": {
+      "title": "ברוכים הבאים ל-PianoMaster!",
+      "subtitle": "בחרו איך תשתמשו באפליקציה",
+      "student": "תלמיד/ה",
+      "studentDesc": "ללמוד פסנתר עם משחקים ושיעורים",
+      "teacher": "מורה",
+      "teacherDesc": "לנהל תלמידים ולעקוב אחרי ההתקדמות",
+      "continue": "המשך",
+      "successMessage": "הכול מוכן!",
+      "errorGeneric": "אופס, לא הצלחנו להגדיר את הפרופיל. רוצים לנסות שוב?"
+    },
     "errors": {
       "invalidCredentials": "האימייל או הסיסמה לא מתאימים. רוצים לנסות שוב?",
       "emailNotConfirmed": "כמעט שם! בדקו את האימייל ולחצו על קישור האישור.",

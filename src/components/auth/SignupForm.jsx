@@ -1,14 +1,5 @@
 import { useState } from "react";
-import {
-  Eye,
-  EyeOff,
-  ArrowLeft,
-  Mail,
-  Lock,
-  User,
-  Check,
-  CheckCircle2,
-} from "lucide-react";
+import { Eye, EyeOff, ArrowLeft, Mail, Lock, User, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SocialLogin } from "./SocialLogin";
 import { useSignup } from "../../features/authentication/useSignup";
@@ -19,6 +10,7 @@ import AuthShell from "./AuthShell";
 import AuthInput from "./AuthInput";
 import AuthCta from "./AuthCta";
 import CircleIconButton from "./CircleIconButton";
+import RoleCard from "./RoleCard";
 
 // Step sequences per role (D-01, D-02, D-03)
 const STUDENT_STEPS = ["role", "birth-year", "parent-email", "credentials"];
@@ -53,59 +45,6 @@ function StepDots({ step, role, className = "" }) {
         />
       ))}
     </div>
-  );
-}
-
-/**
- * RoleCard — a selectable Student/Teacher row (design screen 5).
- * The label and description stay separate text nodes so they can be queried
- * independently.
- */
-function RoleCard({
-  selected,
-  onClick,
-  tileClassName,
-  emoji,
-  label,
-  description,
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={selected}
-      className={`w-full rounded-[16px] border-2 p-4 text-start transition-all duration-200 ${
-        selected
-          ? "border-[#60a5fa] bg-white/[0.18]"
-          : "border-white/[0.18] bg-white/[0.12] hover:bg-white/[0.16]"
-      }`}
-    >
-      <div className="flex items-center gap-3">
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-gradient-to-br text-[22px] ${tileClassName}`}
-          aria-hidden="true"
-        >
-          {emoji}
-        </div>
-        <div className="min-w-0 flex-1">
-          <span className="block text-[15px] font-semibold text-white">
-            {label}
-          </span>
-          <span className="block text-[13px] text-white/60">{description}</span>
-        </div>
-        {selected ? (
-          <CheckCircle2
-            className="h-5 w-5 shrink-0 text-[#60a5fa]"
-            aria-hidden="true"
-          />
-        ) : (
-          <span
-            className="h-5 w-5 shrink-0 rounded-full border-2 border-white/30"
-            aria-hidden="true"
-          />
-        )}
-      </div>
-    </button>
   );
 }
 
