@@ -168,6 +168,11 @@ function VexFlowStaffDisplayBase({
   const prevPatternRef = useRef(null);
   const prevClefRef = useRef(null);
   const prevGamePhaseRef = useRef(null);
+  // Dimensions the currently-drawn SVG was rendered against. The render effect below is
+  // guarded, so without these a pure size change (first real measurement, rotation, the
+  // keyboard dock returning after feedback) updates state but never reaches the canvas.
+  const prevRenderWidthRef = useRef(null);
+  const prevRenderHeightRef = useRef(null);
   const maxScrollRef = useRef(0); // Track maximum scroll position to prevent backward scrolling
   const scrollAnimationRef = useRef(null); // Track ongoing scroll animation frame
   const targetScrollRef = useRef(0); // Target scroll position for smooth interpolation
@@ -185,6 +190,12 @@ function VexFlowStaffDisplayBase({
 
   // Error state
   const [error, setError] = useState(null);
+
+  // Bumped after every redraw so the note-colouring effect below re-applies. renderStaff
+  // draws notes plain, and colour lives in a separate effect keyed on note index/results —
+  // so a redraw triggered by anything else (a resize mid-performance) would otherwise strip
+  // the colours until the child played the next note.
+  const [redrawNonce, setRedrawNonce] = useState(0);
 
   // Memoize width calculation for performance
   const staffWidth = useMemo(() => {
@@ -1761,12 +1772,22 @@ function VexFlowStaffDisplayBase({
     const justLeftFeedback =
       prevGamePhaseRef.current === "feedback" && gamePhase !== "feedback";
 
+    // IMPORTANT: Re-render when the container has been re-measured. containerSize starts as
+    // a viewport ESTIMATE, so the first exercise is drawn too wide and then letterboxed down
+    // by preserveAspectRatio="xMidYMid meet" — visibly smaller than every later exercise,
+    // which got a correct redraw for free via patternChanged. This also covers mid-exercise
+    // rotation and the dock-returns-after-feedback regrowth.
+    const sizeChanged =
+      prevRenderWidthRef.current !== responsiveWidth ||
+      prevRenderHeightRef.current !== responsiveHeight;
+
     if (
       patternChanged ||
       clefChanged ||
       containerEmpty ||
       justEnteredFeedback ||
-      justLeftFeedback
+      justLeftFeedback ||
+      sizeChanged
     ) {
       if (import.meta.env.DEV) {
         console.debug("[VexFlowStaffDisplay]", {
@@ -1775,6 +1796,7 @@ function VexFlowStaffDisplayBase({
           containerEmpty,
           justEnteredFeedback,
           justLeftFeedback,
+          sizeChanged,
           gamePhase,
           prevGamePhase: prevGamePhaseRef.current,
         });
@@ -1782,6 +1804,10 @@ function VexFlowStaffDisplayBase({
       renderStaff();
       prevPatternRef.current = pattern?.easyscoreString;
       prevClefRef.current = clef;
+      prevRenderWidthRef.current = responsiveWidth;
+      prevRenderHeightRef.current = responsiveHeight;
+      // renderStaff() drew plain notes; ask the highlight effect to re-apply colours.
+      setRedrawNonce((n) => n + 1);
     }
 
     // Always update prevGamePhaseRef
@@ -1792,6 +1818,8 @@ function VexFlowStaffDisplayBase({
     renderStaff,
     gamePhase,
     performanceResults.length,
+    responsiveWidth,
+    responsiveHeight,
   ]);
 
   // Effect: Update note highlighting when currentNoteIndex, performanceResults, or the
@@ -1803,6 +1831,8 @@ function VexFlowStaffDisplayBase({
     performanceResults,
     playbackHighlightIndex,
     highlightNote,
+    // Re-apply after any redraw — renderStaff() replaces the note elements with plain ones.
+    redrawNonce,
   ]);
 
   // Effect: Start continuous smooth scroll animation during performance phase

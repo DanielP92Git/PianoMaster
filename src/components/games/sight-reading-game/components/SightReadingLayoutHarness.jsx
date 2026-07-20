@@ -1,17 +1,66 @@
 import { useMemo, useState } from "react";
 import { SightReadingLayout } from "./SightReadingLayout";
 import { FeedbackSummary } from "./FeedbackSummary";
+import { VexFlowStaffDisplay } from "./VexFlowStaffDisplay";
 
 const PHASES = ["setup", "display", "count-in", "performance", "feedback"];
+
+// Minimal pattern objects for the real-staff mode. VexFlowStaffDisplay only reads
+// easyscoreString / timeSignature / totalDuration / measuresPerPattern for sizing, so these
+// are enough to reproduce the geometry of a live session without needing auth.
+// Two distinct patterns so `patternChanged` fires when advancing exercise 1 -> 2, which is
+// the transition where the notation size inconsistency was reported.
+const mockNotes = (pitches) =>
+  pitches.map((pitch, index) => ({
+    type: "note",
+    pitch,
+    notation: "quarter",
+    clef: "treble",
+    index,
+  }));
+
+const MOCK_PATTERNS = [
+  {
+    easyscoreString: "C4/q, D4/q, E4/q, F4/q",
+    timeSignature: "4/4",
+    totalDuration: 4,
+    measuresPerPattern: 1,
+    notes: mockNotes(["C4", "D4", "E4", "F4"]),
+  },
+  {
+    easyscoreString: "G4/q, F4/q, E4/q, D4/q",
+    timeSignature: "4/4",
+    totalDuration: 4,
+    measuresPerPattern: 1,
+    notes: mockNotes(["G4", "F4", "E4", "D4"]),
+  },
+];
 
 // Mirrors the reported screenshot: 3 correct + 1 wrong pitch -> 75% / 75%.
 // Uses the REAL FeedbackSummary (not a placeholder) so the feedback column's height in
 // short-landscape is measurable here rather than only in a live authenticated session.
+// noteIndex is required: getNoteColor matches results to noteheads by it, so without it
+// every note stays black and any colour assertion here would be vacuous.
 const MOCK_PERFORMANCE_RESULTS = [
-  { isCorrect: true, timingStatus: "perfect", timing: { score: 1 } },
-  { isCorrect: true, timingStatus: "good", timing: { score: 0.8 } },
-  { isCorrect: true, timingStatus: "okay", timing: { score: 0.5 } },
-  { isCorrect: false, timingStatus: "wrong_pitch", timing: null },
+  {
+    noteIndex: 0,
+    isCorrect: true,
+    timingStatus: "perfect",
+    timing: { score: 1 },
+  },
+  {
+    noteIndex: 1,
+    isCorrect: true,
+    timingStatus: "good",
+    timing: { score: 0.8 },
+  },
+  {
+    noteIndex: 2,
+    isCorrect: true,
+    timingStatus: "okay",
+    timing: { score: 0.5 },
+  },
+  { noteIndex: 3, isCorrect: false, timingStatus: "wrong_pitch", timing: null },
 ];
 
 const MOCK_SUMMARY_STATS = {
@@ -26,6 +75,8 @@ export function SightReadingLayoutHarness() {
   const [isCompactLandscape, setIsCompactLandscape] = useState(false);
   const [isTallStaffLayout, setIsTallStaffLayout] = useState(false);
   const [showSessionComplete, setShowSessionComplete] = useState(false);
+  const [useRealStaff, setUseRealStaff] = useState(false);
+  const [exerciseIndex, setExerciseIndex] = useState(0);
 
   const isFeedbackPhase = phase === "feedback";
 
@@ -83,11 +134,44 @@ export function SightReadingLayoutHarness() {
           />
           sessionComplete
         </label>
+
+        <label className="flex items-center gap-2 text-xs font-semibold">
+          <input
+            type="checkbox"
+            checked={useRealStaff}
+            onChange={(e) => setUseRealStaff(e.target.checked)}
+          />
+          realStaff
+        </label>
+
+        <button
+          type="button"
+          data-sr-harness="next-exercise"
+          className="rounded-md bg-white/10 px-2 py-1 text-xs font-semibold ring-1 ring-white/15"
+          onClick={() =>
+            setExerciseIndex((i) => (i + 1) % MOCK_PATTERNS.length)
+          }
+        >
+          exercise {exerciseIndex + 1}/{MOCK_PATTERNS.length} →
+        </button>
       </div>
     </div>
   );
 
   const staff = useMemo(() => {
+    // Real VexFlow render — used to measure actual staff geometry across exercises.
+    if (useRealStaff) {
+      return (
+        <VexFlowStaffDisplay
+          pattern={MOCK_PATTERNS[exerciseIndex]}
+          currentNoteIndex={-1}
+          clef="treble"
+          performanceResults={isFeedbackPhase ? MOCK_PERFORMANCE_RESULTS : []}
+          gamePhase={phase}
+        />
+      );
+    }
+
     const heightClass = isTallStaffLayout ? "min-h-[300px]" : "";
     return (
       <div
@@ -103,7 +187,7 @@ export function SightReadingLayoutHarness() {
         </div>
       </div>
     );
-  }, [isTallStaffLayout]);
+  }, [isTallStaffLayout, useRealStaff, exerciseIndex, isFeedbackPhase, phase]);
 
   const guidance = useMemo(() => {
     if (phase === "display") {
