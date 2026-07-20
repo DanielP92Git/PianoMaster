@@ -293,14 +293,21 @@ function VexFlowStaffDisplayBase({
         svg.style.width = `${svgWidth}px`; // Use actual pixel width - no scaling
         svg.style.maxWidth = "none"; // Remove max-width constraint
         svg.style.height = "auto"; // Let height follow aspect ratio
+        svg.style.maxHeight = "none"; // Clear any cap left by the single-bar branch
         svg.style.display = "block";
         svg.style.overflow = "visible";
       } else {
-        // Single bar: fit to container (original responsive behavior)
+        // Single bar: fit to container in BOTH axes.
+        // Previously height was "auto", i.e. derived from width alone with no vertical
+        // constraint. In a short slot (landscape phone, grand staff) the SVG then rendered
+        // taller than .vexflow-container and was CROPPED by its overflow:hidden rather
+        // than scaled. Pinning both axes at 100% lets preserveAspectRatio="xMidYMid meet"
+        // do what it says: scale down to the smaller axis and letterbox.
         svg.setAttribute("preserveAspectRatio", "xMidYMid meet"); // Center horizontally and vertically
         svg.style.width = "100%";
         svg.style.maxWidth = "100%";
-        svg.style.height = "auto"; // Let height follow aspect ratio
+        svg.style.height = "100%";
+        svg.style.maxHeight = "100%";
         svg.style.display = "block";
         svg.style.overflow = "visible";
       }
@@ -311,7 +318,9 @@ function VexFlowStaffDisplayBase({
   /**
    * Fit the SVG viewBox to the rendered notation bounds (prevents internal SVG cropping).
    * This keeps all staff elements (clefs, braces, ledger lines, barlines) visible even
-   * when the available slot is short; the SVG will scale down uniformly to fit.
+   * when the available slot is short. Uniform scale-down to fit is then handled by
+   * makeSvgResponsive's single-bar branch, which pins width AND height to 100% so
+   * preserveAspectRatio="xMidYMid meet" applies on both axes.
    */
   const fitSvgViewBoxToContent = useCallback(() => {
     if (!vexContainerRef.current) return;
@@ -1979,7 +1988,7 @@ function VexFlowStaffDisplayBase({
       ) : (
         <div
           ref={containerRef}
-          className="vexflow-container relative flex w-full items-center justify-center bg-transparent"
+          className="vexflow-container relative flex h-full min-h-0 w-full items-center justify-center bg-transparent"
           style={{
             maxHeight: "100%",
             overflowX: gamePhase === "feedback" ? "auto" : "hidden", // Scrollbar only during feedback; auto-scroll still works programmatically

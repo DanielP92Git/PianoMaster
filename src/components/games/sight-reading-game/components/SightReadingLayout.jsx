@@ -29,6 +29,21 @@
  * Scrolling contract (Phase 0 principle):
  * - Desktop (>= md): no outer/page scrolling in the game route; fit into `h-screen`.
  * - Mobile (< md): allow at most ONE vertical scrollbar (root/page), avoid nested scrollers.
+ * - EXCEPTION — feedback phase in `short-landscape` (see below): the two columns are
+ *   side by side and the notation column must stay pinned, so a page scroll would be
+ *   wrong. The root is locked (`overflow-y-hidden`) and the single permitted scroller
+ *   moves *into* the feedback column. This is still one scrollbar, just not the page's.
+ *
+ * Short-landscape feedback layout:
+ * - In portrait/tablet/desktop, feedback stacks below the notation card (unchanged).
+ * - On short landscape phones (`@media (orientation: landscape) and (max-height: 500px)`,
+ *   registered in tailwind.config.js) the stack becomes a ROW: notation card takes the
+ *   flexible column, feedback takes a fixed 18rem column. `flex-direction: row` follows
+ *   writing direction, so Hebrew RTL mirrors for free — no left/right, no order-*.
+ * - Rationale for flipping here rather than letting the column shrink: the feedback slot
+ *   is `flex-shrink-0`, so in a short viewport the notation card (the only shrinkable
+ *   sibling, and it carries `min-h-0`) absorbed the entire deficit and collapsed to a
+ *   ~10px sliver, with the card's `overflow: hidden` clipping the staff out of view.
  *
  * Phase 4 tuning:
  * - Uses CSS Grid on desktop to constrain vertical space allocation.
@@ -90,8 +105,10 @@ export function SightReadingLayout({
   // fallbacks match the pre-GameTopBar constants so first paint (and any game
   // not yet using GameTopBar) still lays out sanely. Desktop keeps its extra
   // ~50px of breathing room below the card.
+  // In short-landscape the card owns its whole column, so the 45dvh cap (only ~185px at
+  // 412px tall) must not apply.
   const cardMaxHeightClass = isFeedbackPhase
-    ? "max-h-[45dvh] md:max-h-[45vh]"
+    ? "max-h-[45dvh] md:max-h-[45vh] short-landscape:max-h-full"
     : hasDockedBottom
       ? "max-h-[calc(100dvh-var(--game-topbar-height,64px)-var(--sr-kb-height))] md:max-h-[calc(100vh-var(--game-topbar-height,50px)-var(--sr-kb-height))]"
       : "max-h-[calc(100dvh-var(--game-topbar-height,64px))] md:max-h-[calc(100vh-var(--game-topbar-height,50px)-50px)]";
@@ -105,7 +122,9 @@ export function SightReadingLayout({
   return (
     <div
       className={`relative flex h-[100dvh] min-h-screen flex-col overflow-x-hidden bg-gradient-to-br from-indigo-900 via-purple-900 to-violet-900 ${
-        isFeedbackPhase ? "overflow-y-auto" : "overflow-y-hidden"
+        isFeedbackPhase
+          ? "overflow-y-auto short-landscape:overflow-y-hidden"
+          : "overflow-y-hidden"
       }`}
       data-sr-phase={phase}
       data-sr-has-keyboard={hasKeyboard ? "true" : "false"}
@@ -138,14 +157,27 @@ export function SightReadingLayout({
           }}
         >
           <div
-            className={`flex min-h-0 w-full max-w-5xl ${isFeedbackPhase ? "" : "flex-1"} flex-col ${stackGap}`}
+            className={`flex min-h-0 w-full max-w-5xl ${isFeedbackPhase ? "" : "flex-1"} flex-col ${stackGap} ${
+              isFeedbackPhase
+                ? "short-landscape:h-full short-landscape:flex-1 short-landscape:flex-row short-landscape:items-stretch"
+                : ""
+            }`}
           >
+            {/* `min-w-0` is load-bearing: without it this flex item's default
+                `min-width: auto` floors at the staff SVG's intrinsic width and pushes the
+                feedback column off the inline edge. */}
             <div
-              className={`flex min-h-0 ${isFeedbackPhase ? "" : "flex-1"} flex-col`}
+              className={`flex min-h-0 ${isFeedbackPhase ? "" : "flex-1"} flex-col ${
+                isFeedbackPhase
+                  ? "short-landscape:min-w-0 short-landscape:flex-1"
+                  : ""
+              }`}
             >
               {/* Card with constrained height and grid interior */}
               <div
-                className={`relative ${isFeedbackPhase ? "" : "flex-1"} rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm ${cardMaxHeightClass}`}
+                className={`relative ${isFeedbackPhase ? "" : "flex-1"} rounded-2xl bg-white/95 shadow-2xl backdrop-blur-sm ${cardMaxHeightClass} ${
+                  isFeedbackPhase ? "short-landscape:h-full" : ""
+                }`}
                 data-sr-region="card"
                 style={{
                   overflowX: "hidden",
@@ -167,9 +199,24 @@ export function SightReadingLayout({
                 </div>
               </div>
             </div>
-            {/* Feedback panel - inline below card, same max-w-5xl width */}
+            {/* Feedback panel - inline below card (same max-w-5xl width), or a fixed
+                18rem side column in short-landscape.
+
+                grow-0/shrink/basis-72 are deliberately three LONGHANDS: `flex-none` would
+                emit the `flex` shorthand, which resets `flex-basis: auto` and then races
+                `basis-72` on stylesheet order. flex-basis also beats the base `w-full`
+                cleanly, since basis wins over `width` for a flex item's main size.
+                `shrink` (not `shrink-0`) lets the column give ground on narrow viewports.
+
+                overflow-y-auto is the safety valve for the session-complete block, which
+                cannot fit by any amount of compaction — see the scrolling contract above. */}
             {isFeedbackPhase && feedbackPanel && (
-              <div className="w-full flex-shrink-0">{feedbackPanel}</div>
+              <div
+                className="w-full flex-shrink-0 short-landscape:h-full short-landscape:min-h-0 short-landscape:min-w-0 short-landscape:shrink short-landscape:grow-0 short-landscape:basis-72 short-landscape:overflow-y-auto short-landscape:overscroll-contain"
+                data-sr-region="feedback-panel"
+              >
+                {feedbackPanel}
+              </div>
             )}
             {/* Review guidance - inline below card, same max-w-5xl width. Prominent
                 dedicated region (not a fixed overlay) so the ReviewDrillPanel the game

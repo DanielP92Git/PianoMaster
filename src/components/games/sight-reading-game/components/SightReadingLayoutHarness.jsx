@@ -1,13 +1,31 @@
 import { useMemo, useState } from "react";
 import { SightReadingLayout } from "./SightReadingLayout";
+import { FeedbackSummary } from "./FeedbackSummary";
 
 const PHASES = ["setup", "display", "count-in", "performance", "feedback"];
+
+// Mirrors the reported screenshot: 3 correct + 1 wrong pitch -> 75% / 75%.
+// Uses the REAL FeedbackSummary (not a placeholder) so the feedback column's height in
+// short-landscape is measurable here rather than only in a live authenticated session.
+const MOCK_PERFORMANCE_RESULTS = [
+  { isCorrect: true, timingStatus: "perfect", timing: { score: 1 } },
+  { isCorrect: true, timingStatus: "good", timing: { score: 0.8 } },
+  { isCorrect: true, timingStatus: "okay", timing: { score: 0.5 } },
+  { isCorrect: false, timingStatus: "wrong_pitch", timing: null },
+];
+
+const MOCK_SUMMARY_STATS = {
+  pitchAccuracy: 75,
+  rhythmAccuracy: 75,
+  overallScore: 75,
+};
 
 export function SightReadingLayoutHarness() {
   const [phase, setPhase] = useState("display");
   const [hasKeyboard, setHasKeyboard] = useState(true);
   const [isCompactLandscape, setIsCompactLandscape] = useState(false);
   const [isTallStaffLayout, setIsTallStaffLayout] = useState(false);
+  const [showSessionComplete, setShowSessionComplete] = useState(false);
 
   const isFeedbackPhase = phase === "feedback";
 
@@ -56,6 +74,15 @@ export function SightReadingLayoutHarness() {
           />
           isTallStaffLayout
         </label>
+
+        <label className="flex items-center gap-2 text-xs font-semibold">
+          <input
+            type="checkbox"
+            checked={showSessionComplete}
+            onChange={(e) => setShowSessionComplete(e.target.checked)}
+          />
+          sessionComplete
+        </label>
       </div>
     </div>
   );
@@ -63,7 +90,9 @@ export function SightReadingLayoutHarness() {
   const staff = useMemo(() => {
     const heightClass = isTallStaffLayout ? "min-h-[300px]" : "";
     return (
-      <div className={`flex h-full w-full items-center justify-center ${heightClass}`}>
+      <div
+        className={`flex h-full w-full items-center justify-center ${heightClass}`}
+      >
         <div className="w-full rounded-lg bg-gradient-to-r from-indigo-50 to-violet-50 p-4 text-center">
           <div className="text-sm font-bold text-slate-700">
             Staff content (mock) {isTallStaffLayout && "- TALL"}
@@ -111,11 +140,7 @@ export function SightReadingLayoutHarness() {
           </div>
           <div className="mt-2 grid grid-cols-12 gap-1">
             {Array.from({ length: 24 }).map((_, idx) => (
-              <div
-                 
-                key={idx}
-                className="h-10 rounded bg-slate-200"
-              />
+              <div key={idx} className="h-10 rounded bg-slate-200" />
             ))}
           </div>
         </div>
@@ -126,16 +151,36 @@ export function SightReadingLayoutHarness() {
   const feedbackPanel = useMemo(() => {
     if (!isFeedbackPhase) return null;
     return (
-      <div className="rounded-2xl bg-white p-4 shadow-lg">
-        <div className="text-sm font-bold text-slate-800">
-          Feedback panel (mock)
-        </div>
-        <div className="mt-1 text-xs text-slate-600">
-          This should appear in the feedback band below the card.
-        </div>
-      </div>
+      <>
+        <FeedbackSummary
+          performanceResults={MOCK_PERFORMANCE_RESULTS}
+          summaryStats={MOCK_SUMMARY_STATS}
+          onTryAgain={() => {}}
+          onNextPattern={() => {}}
+          onReview={() => {}}
+          nextButtonLabel="Next Exercise"
+        />
+        {showSessionComplete && (
+          <div className="mt-4 space-y-3 text-center short-landscape:mt-2 short-landscape:space-y-2">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-700 short-landscape:px-3 short-landscape:py-2">
+              <p className="text-lg font-bold short-landscape:text-sm">
+                Session complete (mock)
+              </p>
+              <p className="text-sm">Final XP: 75% — 3/4</p>
+              <p className="mt-1 text-sm text-slate-600">
+                You finished all 4 exercises!
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2">
+              <button className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white">
+                Start new session
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     );
-  }, [isFeedbackPhase]);
+  }, [isFeedbackPhase, showSessionComplete]);
 
   return (
     <SightReadingLayout
@@ -152,4 +197,3 @@ export function SightReadingLayoutHarness() {
     />
   );
 }
-
