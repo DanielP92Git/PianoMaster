@@ -56,6 +56,46 @@ export function useVexFlowResize(containerRef, onResize, debounceMs = 150) {
     [onResize, debounceMs]
   );
 
+  /**
+   * Measure the observed element RIGHT NOW, synchronously.
+   *
+   * Consumers that draw in a layout effect need the box as it is in the DOM this instant,
+   * not the one the debounced observer reported up to 150ms ago — drawing from the stale
+   * value paints the previous layout's geometry for a frame or more.
+   *
+   * This deliberately lives in the hook rather than the component so that:
+   *  - there is one measurement implementation, and
+   *  - it can write `lastSizeRef`, keeping the observer's dedupe coherent. Without that the
+   *    observer would re-deliver the same size ~150ms later as if it were new.
+   *
+   * It must return the CONTENT box, because that is what `entry.contentRect` gives above.
+   * Mixing in a border box (what getBoundingClientRect returns) agrees only while the
+   * element has no padding or border, and would otherwise alternate forever.
+   */
+  const measureNow = useCallback(() => {
+    const element = containerRef.current;
+    if (!element) return null;
+
+    const rect = element.getBoundingClientRect();
+    const styles = window.getComputedStyle(element);
+    const horizontal =
+      parseFloat(styles.paddingLeft) +
+      parseFloat(styles.paddingRight) +
+      parseFloat(styles.borderLeftWidth) +
+      parseFloat(styles.borderRightWidth);
+    const vertical =
+      parseFloat(styles.paddingTop) +
+      parseFloat(styles.paddingBottom) +
+      parseFloat(styles.borderTopWidth) +
+      parseFloat(styles.borderBottomWidth);
+
+    const width = Math.round(Math.max(rect.width - horizontal, 0));
+    const height = Math.round(Math.max(rect.height - vertical, 0));
+
+    lastSizeRef.current = { width, height };
+    return { width, height };
+  }, [containerRef]);
+
   useEffect(() => {
     const element = containerRef.current;
     if (!element) return;
@@ -87,4 +127,6 @@ export function useVexFlowResize(containerRef, onResize, debounceMs = 150) {
       }
     };
   }, [containerRef, debouncedCallback, onResize]);
+
+  return { measureNow };
 }

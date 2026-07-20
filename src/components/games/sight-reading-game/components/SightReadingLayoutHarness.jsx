@@ -34,6 +34,25 @@ const MOCK_PATTERNS = [
     measuresPerPattern: 1,
     notes: mockNotes(["G4", "F4", "E4", "D4"]),
   },
+  // Multi-bar: takes the totalBars > 1 branch, which sizes the SVG in explicit pixels and
+  // scrolls horizontally rather than scaling to the container. Kept here as a regression
+  // guard — the synchronous-width redraw must not turn this back into a scaled single-bar.
+  // barIndex is required: the multi-bar path filters events per stave by it, so without it
+  // every note lands in bar 0 and the empty second voice throws inside VexFlow.
+  {
+    easyscoreString: "C4/q, D4/q, E4/q, F4/q, G4/q, A4/q, B4/q, C5/q",
+    timeSignature: "4/4",
+    totalDuration: 8,
+    measuresPerPattern: 2,
+    notes: mockNotes(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"]).map(
+      (note, index) => ({
+        ...note,
+        barIndex: Math.floor(index / 4),
+        startPosition: index * 4,
+        sixteenthUnits: 4,
+      })
+    ),
+  },
 ];
 
 // Mirrors the reported screenshot: 3 correct + 1 wrong pitch -> 75% / 75%.

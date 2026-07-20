@@ -1,6 +1,7 @@
 import {
   memo,
   useEffect,
+  useLayoutEffect,
   useRef,
   useCallback,
   useMemo,
@@ -12,6 +13,10 @@ import {
   calculateOptimalWidth,
 } from "../utils/vexflowHelpers";
 import { useVexFlowResize } from "../../../../hooks/useVexFlowResize";
+import {
+  deriveResponsiveWidth,
+  deriveResponsiveHeight,
+} from "../utils/staffSizing";
 import {
   Formatter,
   Stave,
@@ -147,6 +152,22 @@ const overlayAllowedForEvent = (event, result) =>
  * @param {string} clef - 'treble' or 'bass' (default: 'treble')
  * @param {Array} performanceResults - Array of performance results for each note (optional, for feedback)
  */
+// Resolves once per session. VexFlow 5 draws glyphs as <text> in the Bravura webfont
+// (vexflow/src/svgcontext.js), so both getBBox() AND the measureText() calls VexFlow makes
+// during layout return fallback metrics until the font is ready — the staff is drawn at the
+// wrong scale and, because nothing redraws afterwards, stays that way for the whole session.
+let bravuraReadyPromise = null;
+function whenBravuraReady() {
+  if (typeof document === "undefined" || !document.fonts) return null;
+  try {
+    if (document.fonts.check('30pt Bravura')) return null; // already loaded — draw is valid
+  } catch {
+    return null; // check() can throw on an unparseable font shorthand; assume ready
+  }
+  if (!bravuraReadyPromise) bravuraReadyPromise = document.fonts.ready;
+  return bravuraReadyPromise;
+}
+
 function VexFlowStaffDisplayBase({
   pattern,
   currentNoteIndex,
@@ -173,6 +194,8 @@ function VexFlowStaffDisplayBase({
   // keyboard dock returning after feedback) updates state but never reaches the canvas.
   const prevRenderWidthRef = useRef(null);
   const prevRenderHeightRef = useRef(null);
+  // Cancels a pending font-ready redraw if the effect re-runs or the component unmounts.
+  const cleanupRef = useRef(null);
   const maxScrollRef = useRef(0); // Track maximum scroll position to prevent backward scrolling
   const scrollAnimationRef = useRef(null); // Track ongoing scroll animation frame
   const targetScrollRef = useRef(0); // Target scroll position for smooth interpolation
@@ -212,32 +235,22 @@ function VexFlowStaffDisplayBase({
   }, []);
 
   // Track container dimensions for responsive rendering with debounced resize
-  useVexFlowResize(containerRef, handleContainerResize, 150);
+  const { measureNow } = useVexFlowResize(containerRef, handleContainerResize, 150);
 
-  const responsiveWidth = useMemo(() => {
-    if (!containerSize.width) return staffWidth;
-    const padding = 16; // allow for minimal card inner padding
-    const availableWidth = Math.max(containerSize.width - padding, 320);
-    // Don't constrain to container width - allow horizontal scroll for multi-bar patterns
-    // Only use container width for single bar patterns
-    const totalBars = Math.max(1, Number(pattern?.measuresPerPattern || 1));
-    if (totalBars === 1) {
-      const maxWidth = 1400;
-      return Math.min(availableWidth, maxWidth);
-    }
-    // For multi-bar patterns, use fixed width per bar to ensure consistent notation size
-    return availableWidth; // Return available width but we'll override in canvasWidth calculation
-  }, [containerSize.width, staffWidth, pattern?.measuresPerPattern]);
+  const responsiveWidth = useMemo(
+    () =>
+      deriveResponsiveWidth(
+        containerSize.width,
+        staffWidth,
+        pattern?.measuresPerPattern
+      ),
+    [containerSize.width, staffWidth, pattern?.measuresPerPattern]
+  );
 
-  const responsiveHeight = useMemo(() => {
-    const MIN_STAFF_HEIGHT = 180; // Minimum height for ledger lines
-    const MAX_STAFF_HEIGHT = 320; // Prevent runaway heights; SVG will scale to slot
-    if (!containerSize.height) return MIN_STAFF_HEIGHT;
-    return Math.max(
-      MIN_STAFF_HEIGHT,
-      Math.min(containerSize.height, MAX_STAFF_HEIGHT)
-    );
-  }, [containerSize.height]);
+  const responsiveHeight = useMemo(
+    () => deriveResponsiveHeight(containerSize.height),
+    [containerSize.height]
+  );
 
   /**
    * Extract note SVG elements from rendered VexFlow for highlighting
@@ -333,13 +346,17 @@ function VexFlowStaffDisplayBase({
    * makeSvgResponsive's single-bar branch, which pins width AND height to 100% so
    * preserveAspectRatio="xMidYMid meet" applies on both axes.
    */
+  // Returns true if the viewBox was fitted, false if the bbox wasn't measurable yet, so the
+  // caller can decide whether a deferred retry is needed. On false the PADDED viewBox stays
+  // in place, which renders the notation at roughly 2x the intended size — so a failure here
+  // must never pass silently.
   const fitSvgViewBoxToContent = useCallback(() => {
-    if (!vexContainerRef.current) return;
+    if (!vexContainerRef.current) return false;
     const svg = vexContainerRef.current.querySelector("svg");
-    if (!svg) return;
+    if (!svg) return false;
     try {
       const bbox = svg.getBBox?.();
-      if (!bbox || bbox.width <= 0 || bbox.height <= 0) return;
+      if (!bbox || bbox.width <= 0 || bbox.height <= 0) return false;
 
       const padX = 40;
       // Increase vertical padding to ensure low bass notes with ledger lines are visible
@@ -350,16 +367,22 @@ function VexFlowStaffDisplayBase({
       const h = Math.ceil(bbox.height + padY * 2);
 
       svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
+      return true;
     } catch (err) {
       // Some browsers may throw if the SVG isn't fully laid out yet.
       console.warn("Failed to fit SVG viewBox to content:", err);
+      return false;
     }
   }, []);
 
   /**
-   * Render staff with VexFlow using lower-level API
+   * Render staff with VexFlow using lower-level API.
+   *
+   * Takes the dimensions to draw against explicitly (required, not defaulted) so the caller
+   * can pass a size it measured synchronously this frame instead of the memoized state,
+   * which lags the DOM by up to one debounce interval after a phase or layout change.
    */
-  const renderStaff = useCallback(() => {
+  const renderStaff = useCallback(({ width, height }) => {
     if (!vexContainerRef.current || !pattern?.easyscoreString) return;
 
     try {
@@ -444,8 +467,7 @@ function VexFlowStaffDisplayBase({
       // Determine responsive canvas dimensions.
       // Add extra height to account for ledger lines (especially bottom space for bass notes).
       // When the available slot is tight, reduce buffers so the notation can scale down cleanly.
-      const isTightHeight =
-        (responsiveHeight || 0) > 0 && responsiveHeight < 220;
+      const isTightHeight = (height || 0) > 0 && height < 220;
       const ledgerLineBuffer =
         clefKey === "both"
           ? isTightHeight
@@ -467,7 +489,7 @@ function VexFlowStaffDisplayBase({
             : 1.15;
 
       // Keep canvas dimensions in original coordinates (context scaling will handle rendering size)
-      const canvasHeight = (responsiveHeight || 200) + ledgerLineBuffer;
+      const canvasHeight = (height || 200) + ledgerLineBuffer;
 
       // Dynamic width calculation for multi-bar support with horizontal scroll
       // Set fixed width per bar to ensure consistent notation size regardless of number of bars
@@ -477,7 +499,7 @@ function VexFlowStaffDisplayBase({
       // For single bar, use responsive width; for multi-bar, use fixed width per bar
       const BASE_STAVE_WIDTH =
         totalBars === 1
-          ? Math.max(responsiveWidth - 100, 240)
+          ? Math.max(width - 100, 240)
           : FIXED_STAVE_WIDTH_PER_BAR * totalBars;
 
       const requiredStaveWidth = BASE_STAVE_WIDTH;
@@ -486,7 +508,7 @@ function VexFlowStaffDisplayBase({
       // This enables horizontal scroll when patterns are wider than container
       const canvasWidth =
         totalBars === 1
-          ? Math.max(requiredStaveWidth + 100, responsiveWidth || staffWidth)
+          ? Math.max(requiredStaveWidth + 100, width || staffWidth)
           : requiredStaveWidth + 100; // For multi-bar, always use calculated width
 
       // Add padding to renderer size to prevent clipping (MOST IMPORTANT FIX)
@@ -1655,10 +1677,16 @@ function VexFlowStaffDisplayBase({
         });
       }
 
-      // Fit SVG viewBox to rendered content after VexFlow completes drawing
-      requestAnimationFrame(() => {
-        fitSvgViewBoxToContent();
-      });
+      // Fit the viewBox to the rendered content SYNCHRONOUSLY. makeSvgResponsive above left
+      // the viewBox at the padded renderer dimensions, which is a substantially different
+      // scale (measured: 836-wide padded vs 417-wide fitted), so any frame painted between
+      // the two shows the notation at the wrong size. Deferring this to rAF is what made
+      // that intermediate state visible. Only fall back to rAF if the bbox isn't ready yet.
+      if (!fitSvgViewBoxToContent()) {
+        requestAnimationFrame(() => {
+          fitSvgViewBoxToContent();
+        });
+      }
 
       // Clear any previous error
       setError(null);
@@ -1669,8 +1697,6 @@ function VexFlowStaffDisplayBase({
   }, [
     containerId,
     staffWidth,
-    responsiveWidth,
-    responsiveHeight,
     pattern,
     clef,
     keySignature,
@@ -1751,9 +1777,13 @@ function VexFlowStaffDisplayBase({
     [getNoteColor, gamePhase, playbackHighlightIndex]
   );
 
-  // Effect: Render staff when pattern, clef, or game phase changes
-  // Optimized to avoid unnecessary re-renders
-  useEffect(() => {
+  // Effect: Render staff when pattern, clef, or game phase changes.
+  //
+  // LAYOUT effect, not a passive one: a phase change swaps the layout classes (the feedback
+  // column takes ~288px in short-landscape) and React would otherwise paint the OLD staff
+  // re-laid-out into the NEW box before the redraw ran. Drawing pre-paint means the first
+  // frame the user sees is already correct.
+  useLayoutEffect(() => {
     // Check if pattern or clef actually changed
     const patternChanged = prevPatternRef.current !== pattern?.easyscoreString;
     const clefChanged = prevClefRef.current !== clef;
@@ -1772,14 +1802,33 @@ function VexFlowStaffDisplayBase({
     const justLeftFeedback =
       prevGamePhaseRef.current === "feedback" && gamePhase !== "feedback";
 
+    // Measure the container as it is RIGHT NOW rather than trusting containerSize, which is
+    // fed by a 150ms-debounced observer and therefore still describes the previous phase's
+    // layout at this point in the commit. Drawing from the stale value is what produced the
+    // "notation flashes at the wrong size then corrects" behaviour.
+    //
+    // Width only. Width is provably content-independent here (the container is
+    // overflow-x:auto, so its min-content contribution is 0 and no ancestor's min-width:auto
+    // can be floored by the SVG). Height is NOT: in portrait feedback the card drops flex-1
+    // and the whole height chain becomes content-driven, so feeding a measured height back in
+    // could oscillate across the isTightHeight threshold. Height keeps coming from the
+    // debounced observer, where that loop stays damped.
+    const measured = measureNow();
+    const nextWidth = measured
+      ? deriveResponsiveWidth(
+          measured.width,
+          staffWidth,
+          pattern?.measuresPerPattern
+        )
+      : responsiveWidth;
+    const nextHeight = responsiveHeight;
+
     // IMPORTANT: Re-render when the container has been re-measured. containerSize starts as
-    // a viewport ESTIMATE, so the first exercise is drawn too wide and then letterboxed down
-    // by preserveAspectRatio="xMidYMid meet" — visibly smaller than every later exercise,
-    // which got a correct redraw for free via patternChanged. This also covers mid-exercise
-    // rotation and the dock-returns-after-feedback regrowth.
+    // a viewport ESTIMATE, so the first exercise would otherwise be drawn against a guess.
+    // This also covers mid-exercise rotation and the dock-returns-after-feedback regrowth.
     const sizeChanged =
-      prevRenderWidthRef.current !== responsiveWidth ||
-      prevRenderHeightRef.current !== responsiveHeight;
+      prevRenderWidthRef.current !== nextWidth ||
+      prevRenderHeightRef.current !== nextHeight;
 
     if (
       patternChanged ||
@@ -1801,17 +1850,51 @@ function VexFlowStaffDisplayBase({
           prevGamePhase: prevGamePhaseRef.current,
         });
       }
-      renderStaff();
+      renderStaff({ width: nextWidth, height: nextHeight });
       prevPatternRef.current = pattern?.easyscoreString;
       prevClefRef.current = clef;
-      prevRenderWidthRef.current = responsiveWidth;
-      prevRenderHeightRef.current = responsiveHeight;
+      // Must record what was actually DRAWN, not what state says — otherwise the guard
+      // desynchronises into either a permanent no-redraw or a redraw storm.
+      prevRenderWidthRef.current = nextWidth;
+      prevRenderHeightRef.current = nextHeight;
       // renderStaff() drew plain notes; ask the highlight effect to re-apply colours.
       setRedrawNonce((n) => n + 1);
+
+      // VexFlow lays out against font metrics, so a draw made before Bravura is available is
+      // wrong in glyph positions as well as bbox — a full redraw is required, not a refit.
+      const fontsPending = whenBravuraReady();
+      if (fontsPending) {
+        let cancelled = false;
+        cleanupRef.current = () => {
+          cancelled = true;
+        };
+        fontsPending.then(() => {
+          if (cancelled || !vexContainerRef.current) return;
+          renderStaff({ width: nextWidth, height: nextHeight });
+          setRedrawNonce((n) => n + 1);
+        });
+      }
+
+      // Converge state with reality. Functional form with an equality bail-out is required:
+      // a fresh object literal always fails Object.is and would re-render every pass.
+      if (measured) {
+        setContainerSize((prev) =>
+          prev.width === measured.width
+            ? prev
+            : { ...prev, width: measured.width }
+        );
+      }
     }
 
     // Always update prevGamePhaseRef
     prevGamePhaseRef.current = gamePhase;
+
+    return () => {
+      if (cleanupRef.current) {
+        cleanupRef.current();
+        cleanupRef.current = null;
+      }
+    };
   }, [
     pattern?.easyscoreString,
     clef,
@@ -1820,6 +1903,9 @@ function VexFlowStaffDisplayBase({
     performanceResults.length,
     responsiveWidth,
     responsiveHeight,
+    measureNow,
+    staffWidth,
+    pattern?.measuresPerPattern,
   ]);
 
   // Effect: Update note highlighting when currentNoteIndex, performanceResults, or the
@@ -1978,18 +2064,27 @@ function VexFlowStaffDisplayBase({
     });
   }, [gamePhase]);
 
-  // Effect: Cleanup VexFlow content on unmount or pattern change
+  // Effect: Cleanup VexFlow content on unmount.
+  //
+  // Deliberately NOT keyed on the pattern. The draw happens in a layout effect, and layout
+  // effects run BEFORE passive effects — so a pattern-keyed cleanup here would fire straight
+  // after the new staff was drawn and wipe it, leaving an empty container that nothing
+  // redraws (the guard has already recorded the new pattern). Clearing on pattern change is
+  // redundant regardless: renderStaff empties the container itself before every draw.
   useEffect(() => {
-    const currentContainer = vexContainerRef.current;
     return () => {
-      // Clean up VexFlow-only content (not React-managed children)
-      if (currentContainer) {
-        currentContainer.innerHTML = "";
+      // Read the ref at cleanup time rather than capturing it at mount: the container is
+      // remounted whenever the `error` branch toggles, so a mount-time capture could point
+      // at a detached node. Clearing whatever is current (or nothing, if React already
+      // detached the ref on unmount) is correct — the node is discarded either way, and the
+      // point of this cleanup is dropping notesRef so the SVG elements can be collected.
+      if (vexContainerRef.current) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        vexContainerRef.current.innerHTML = "";
       }
-      // Reset refs
       notesRef.current = [];
     };
-  }, [pattern?.easyscoreString]); // Re-run cleanup when pattern changes
+  }, []);
 
   // Early return if no pattern
   if (!pattern || !pattern.notes) {
